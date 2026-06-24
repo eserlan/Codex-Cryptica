@@ -6,6 +6,7 @@ import {
   getEntityCreatedAt,
   getEntityModifiedAt,
   type SortState,
+  type ConnectionSummary,
 } from "../entityTableSort";
 
 function entity(
@@ -123,6 +124,25 @@ describe("sortEntities", () => {
   it("sorts by type, tie-broken by title", () => {
     const out = sortEntities(items, { key: "type", direction: "asc" });
     expect(titles(out)).toEqual(["apple", "Banana", "Cherry"]);
+  });
+
+  it("sorts by total connections while retaining unconnected entities", () => {
+    const counts: Record<string, ConnectionSummary> = {
+      a: { inbound: 1, outbound: 2, total: 3 },
+      b: { inbound: 0, outbound: 0, total: 0 },
+      c: { inbound: 2, outbound: 3, total: 5 },
+    };
+
+    expect(
+      titles(
+        sortEntities(items, { key: "connections", direction: "asc" }, counts),
+      ),
+    ).toEqual(["Banana", "apple", "Cherry"]);
+    expect(
+      titles(
+        sortEntities(items, { key: "connections", direction: "desc" }, counts),
+      ),
+    ).toEqual(["Cherry", "apple", "Banana"]);
   });
 
   it("puts entities missing the sort value last regardless of direction", () => {

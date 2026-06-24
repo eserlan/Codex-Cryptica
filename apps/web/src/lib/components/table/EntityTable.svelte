@@ -1,12 +1,17 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import type { SortKey, SortState } from "./entityTableSort";
+  import type {
+    ConnectionSummary,
+    SortKey,
+    SortState,
+  } from "./entityTableSort";
   import EntityTableRow from "./EntityTableRow.svelte";
 
   let {
     entities,
     vaultId,
     sort,
+    connectionCounts = {},
     onSort,
     selectedIds = new Set<string>(),
     allSelected = false,
@@ -17,6 +22,7 @@
     entities: Entity[];
     vaultId: string;
     sort: SortState;
+    connectionCounts?: Record<string, ConnectionSummary>;
     onSort: (key: SortKey) => void;
     selectedIds?: Set<string>;
     allSelected?: boolean;
@@ -41,6 +47,7 @@
   const columns: Column[] = [
     { key: "title", label: "Name", class: "min-w-[12rem]" },
     { key: "type", label: "Type", class: "min-w-[8rem]" },
+    { key: "connections", label: "Connections", class: "min-w-[9rem]" },
     { key: null, label: "Summary", class: "min-w-[16rem]" },
     { key: null, label: "Tags", class: "min-w-[8rem]" },
     { key: "created", label: "Created", class: "min-w-[7rem]" },
@@ -111,6 +118,11 @@
           {vaultId}
           selected={selectedIds.has(entity.id)}
           onToggleSelect={onToggleRow}
+          connectionSummary={connectionCounts[entity.id] ?? {
+            inbound: 0,
+            outbound: 0,
+            total: 0,
+          }}
         />
       {/each}
     </tbody>
