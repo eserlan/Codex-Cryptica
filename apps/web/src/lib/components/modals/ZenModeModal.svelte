@@ -3,6 +3,7 @@
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { base } from "$app/paths";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { openEntityPopout } from "$lib/utils/zen-popout";
   import ZenView from "../zen/ZenView.svelte";
@@ -32,7 +33,24 @@
         message: `Close the tab for "${entity?.title ?? "this entity"}"?`,
         confirmLabel: "Close tab",
       });
-      if (confirmed) window.close();
+      if (!confirmed) return;
+
+      // window.close() only works for tabs a script opened (the "pop out"
+      // action). When this route is reached by normal navigation — e.g.
+      // opening an entity from the Table view, or a deep link on mobile — the
+      // tab is not script-closable and window.close() is a silent no-op, which
+      // would strand the user on a blank entity page. Try to close, then fall
+      // back to leaving the standalone entity view.
+      window.close();
+      setTimeout(() => {
+        if (typeof window !== "undefined" && window.closed) return;
+        modalUIStore.closeZenMode();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          void goto(`${base}/`);
+        }
+      }, 50);
       return;
     }
     modalUIStore.closeZenMode();
