@@ -1,0 +1,1720 @@
+diff --git a/apps/web/src/lib/components/seo/ProvenanceBadge.svelte b/apps/web/src/lib/components/seo/ProvenanceBadge.svelte
+new file mode 100644
+index 00000000..05252d71
+--- /dev/null
++++ b/apps/web/src/lib/components/seo/ProvenanceBadge.svelte
+@@ -0,0 +1,45 @@
++<script lang="ts">
++  import type { ProvenanceRecord } from "generator-engine";
++  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
++
++  let {
++    record,
++    onSelect,
++  }: {
++    record: ProvenanceRecord | undefined;
++    onSelect: (entity: any) => void;
++  } = $props();
++
++  const usedEntities = $derived(
++    record
++      ? record.usedEntityIds
++          .map((id) => sessionHubStore.entities.find((e) => e.id === id))
++          .filter(Boolean)
++      : [],
++  );
++</script>
++
++{#if usedEntities.length > 0}
++  <div
++    class="mt-4 p-3 bg-theme-primary/5 border border-theme-primary/20 rounded-xl flex items-start gap-2 text-[10px] text-theme-text/80 animate-in fade-in"
++  >
++    <span
++      class="icon-[lucide--zap] w-3.5 h-3.5 text-theme-primary shrink-0 mt-0.5"
++    ></span>
++    <div class="flex flex-wrap items-center gap-1.5 leading-tight">
++      <span
++        class="text-theme-muted uppercase font-bold tracking-wider font-header"
++        >Used context:</span
++      >
++      {#each usedEntities as entity (entity!.id)}
++        <button
++          type="button"
++          onclick={() => onSelect(entity)}
++          class="inline-flex items-center gap-1 hover:text-theme-primary transition-colors underline decoration-theme-primary/30 underline-offset-2"
++        >
++          {entity!.title}
++        </button>
++      {/each}
++    </div>
++  </div>
++{/if}
+diff --git a/apps/web/src/lib/components/seo/ProvenanceBadge.test.ts b/apps/web/src/lib/components/seo/ProvenanceBadge.test.ts
+new file mode 100644
+index 00000000..3bc78500
+--- /dev/null
++++ b/apps/web/src/lib/components/seo/ProvenanceBadge.test.ts
+@@ -0,0 +1,78 @@
++/** @vitest-environment jsdom */
++import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
++import { render, screen, fireEvent } from "@testing-library/svelte";
++import ProvenanceBadge from "./ProvenanceBadge.svelte";
++import { sessionHubStore } from "$lib/stores/session-hub.svelte";
++
++describe("ProvenanceBadge", () => {
++  beforeEach(() => {
++    sessionHubStore.clear();
++  });
++
++  it("renders nothing if there is no record", () => {
++    const { container } = render(ProvenanceBadge, { props: { record: undefined, onSelect: vi.fn() } });
++    expect(container.innerHTML).toBe("<!---->");
++  });
++
++  it("renders nothing if there are no used entities", () => {
++    const record = {
++      resultEntityId: "123",
++      usedEntityIds: [],
++      offeredEntityIds: ["abc"],
++      trimmed: false
++    };
++    const { container } = render(ProvenanceBadge, { props: { record, onSelect: vi.fn() } });
++    expect(container.innerHTML).toBe("<!---->");
++  });
++
++  it("renders the badge when used entities are present and in the store", async () => {
++    const id = sessionHubStore.addEntity({
++      type: "character",
++      title: "Lord Vane",
++      content: "A lord",
++      labels: [],
++      status: "active",
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    const record = {
++      resultEntityId: "123",
++      usedEntityIds: [id],
++      offeredEntityIds: [id],
++      trimmed: false
++    };
++
++    render(ProvenanceBadge, { props: { record, onSelect: vi.fn() } });
++    expect(screen.getByText("Used context:")).toBeTruthy();
++    expect(screen.getByText("Lord Vane")).toBeTruthy();
++  });
++
++  it("calls onSelect when an entity link is clicked", async () => {
++    const id = sessionHubStore.addEntity({
++      type: "character",
++      title: "Lord Vane",
++      content: "A lord",
++      labels: [],
++      status: "active",
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    const record = {
++      resultEntityId: "123",
++      usedEntityIds: [id],
++      offeredEntityIds: [id],
++      trimmed: false
++    };
++
++    const onSelect = vi.fn();
++    render(ProvenanceBadge, { props: { record, onSelect } });
++
++    const btn = screen.getByText("Lord Vane");
++    await fireEvent.click(btn);
++
++    expect(onSelect).toHaveBeenCalledTimes(1);
++    expect(onSelect.mock.calls[0][0].id).toBe(id);
++  });
++});
+diff --git a/apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte b/apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+index 00c9d43a..80550e0f 100644
+--- a/apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
++++ b/apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+@@ -14,10 +14,14 @@
+   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
+   import {
+     renderGeneratorMarkdown,
+     renderGeneratorLore,
+   } from "$lib/components/seo/markdown-renderers";
++  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
++  import SessionHubWidget from "./SessionHubWidget.svelte";
++  import ProvenanceBadge from "./ProvenanceBadge.svelte";
++  import { getContextSelection, computeProvenance, type SessionEntity } from "generator-engine";
+ 
+   let {
+     canonicalPath,
+     pageTitle = "Free RPG Generator | Codex Cryptica",
+     metaDescription = "Generate high-quality detailed campaign drafts using our interactive local-first generators.",
+@@ -406,10 +410,39 @@
+     // still routes correctly (#1494).
+     const useAINow =
+       useAI && (browser ? navigator.onLine : onlineStatus.current);
+     try {
+       generatedData = await generate({ useAI: useAINow });
++      
++      if (generatedData) {
++        const content = generatedData.summary
++          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
++          : documentLayout.content;
++          
++        const currentContext = $state.snapshot(contextSelection);
++
++        currentEntityId = sessionHubStore.addEntity({
++          type: generatedData.type,
++          title: generatedData.title,
++          summary: generatedData.summary,
++          content,
++          lore: documentLayout.lore,
++          labels: generatedData.labels,
++          status: generatedData.status,
++          reuseEnabled: true,
++          pinned: false
++        });
++
++        const record = computeProvenance(
++          currentEntityId,
++          content + "\n" + (documentLayout.lore || ""),
++          currentContext.entities,
++          currentContext.trimmed
++        );
++        sessionHubStore.addProvenance(record);
++      }
++
+       if (browser && window.innerWidth < 1024 && outputCard) {
+         await tick();
+         outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
+       }
+     } catch (err: any) {
+@@ -417,81 +450,39 @@
+     } finally {
+       isGenerating = false;
+     }
+   }
+ 
+-  interface SessionDraft {
+-    type: string;
+-    title: string;
+-    content: string;
+-    lore?: string;
+-    labels: string[];
+-    status: string;
+-  }
+-
+-  let sessionDrafts = $state<SessionDraft[]>([]);
++  let selectedHubEntity = $state<SessionEntity | null>(null);
++  let currentEntityId = $state<string | null>(null);
++  const contextSelection = $derived(getContextSelection(sessionHubStore.entities));
+ 
+-  onMount(() => {
++  function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
++    if (entitiesToSave.length === 0) return;
+     try {
+-      const stored = sessionStorage.getItem(SESSION_DRAFTS_KEY);
+-      if (stored) {
+-        const parsed = JSON.parse(stored);
+-        if (Array.isArray(parsed)) {
+-          sessionDrafts = parsed;
++      const draftsToSave = entitiesToSave.map(e => {
++        const prov = sessionHubStore.provenance[e.id];
++        let references: string[] | undefined;
++        if (prov && prov.usedEntityIds.length > 0) {
++          references = prov.usedEntityIds
++            .map(uid => sessionHubStore.entities.find(en => en.id === uid)?.title)
++            .filter((title): title is string => !!title);
+         }
+-      }
+-    } catch {
+-      // sessionStorage may be blocked (privacy mode) or hold invalid JSON
+-    }
+-  });
+-
+-  function saveSessionDrafts(newDrafts: SessionDraft[]) {
+-    sessionDrafts = newDrafts;
+-    try {
+-      sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(newDrafts));
+-    } catch {
+-      // sessionStorage may be blocked; hub still works in-memory for this page
+-    }
+-  }
+-
+-  function addToSessionHub() {
+-    if (!generatedData) return;
+-    const content = generatedData.summary
+-      ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+-      : documentLayout.content;
+-    const newDraft: SessionDraft = {
+-      type: generatedData.type,
+-      title: generatedData.title,
+-      content,
+-      lore: documentLayout.lore,
+-      labels: generatedData.labels,
+-      status: generatedData.status,
+-    };
+-
+-    const exists = sessionDrafts.some(
+-      (d) => d.title.toLowerCase() === newDraft.title.toLowerCase(),
+-    );
+-    if (!exists) {
+-      saveSessionDrafts([...sessionDrafts, newDraft]);
+-    }
+-    onLinkToHub?.();
+-  }
+-
+-  function removeFromSessionHub(title: string) {
+-    saveSessionDrafts(sessionDrafts.filter((d) => d.title !== title));
+-  }
+-
+-  function clearSessionHub() {
+-    saveSessionDrafts([]);
+-  }
+-
+-  function handleSaveAllToCodex() {
+-    if (sessionDrafts.length === 0) return;
+-    try {
++        
++        return {
++          type: e.type,
++          title: e.title,
++          content: e.content,
++          lore: e.lore,
++          labels: e.labels,
++          status: e.status,
++          references
++        };
++      });
+       localStorage.setItem(
+         "__codex_pending_import",
+-        JSON.stringify(sessionDrafts),
++        JSON.stringify(draftsToSave),
+       );
+       redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
+       showSaveModal = true;
+     } catch {
+       errorMessage = "Storage access is blocked. Please copy drafts manually.";
+@@ -817,23 +808,10 @@
+                       id="save-to-codex-btn"
+                       title="Import this draft into your local Codex Cryptica vault"
+                     >
+                       Save to Codex
+                     </button>
+-                    <button
+-                      type="button"
+-                      onclick={addToSessionHub}
+-                      class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/45 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
+-                      id="add-to-hub-btn"
+-                      title="Add this draft to the Session Hub to bundle several drafts before exporting"
+-                    >
+-                      <span
+-                        class="icon-[lucide--link] w-3.5 h-3.5"
+-                        aria-hidden="true"
+-                      ></span>
+-                      Link to Hub
+-                    </button>
+                   {/if}
+                   <button
+                     type="button"
+                     onclick={handleCopyMarkdown}
+                     class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
+@@ -942,13 +920,19 @@
+           class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
+         >
+           {#if generatedData}
+             <div
+               in:fade={{ duration: 250 }}
+-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85"
++              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
++              'names'
++                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
++                : ''}"
+             >
+-              {@html renderGeneratorLore(documentLayout.lore, variant)}
++              {@html renderGeneratorMarkdown(documentLayout.content, variant)}
++              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
++                <ProvenanceBadge record={sessionHubStore.provenance[currentEntityId]} onSelect={(e) => selectedHubEntity = e} />
++              {/if}
+             </div>
+           {:else}
+             <div
+               class="flex flex-col items-center text-center text-theme-muted/40 py-8"
+             >
+@@ -962,91 +946,22 @@
+             </div>
+           {/if}
+         </div>
+ 
+         <!-- Session Hub Widget -->
+-        <div
+-          class="p-5 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex-col gap-3 {variant ===
+-          'names'
+-            ? 'hidden'
+-            : 'flex'}"
+-        >
+-          <div
+-            class="flex items-center justify-between border-b border-theme-border/60 pb-2"
+-          >
+-            <h3
+-              class="font-header font-bold text-xs uppercase tracking-wider text-theme-text/70"
+-            >
+-              Session Hub
+-            </h3>
+-            {#if sessionDrafts.length > 0}
+-              <button
+-                type="button"
+-                onclick={clearSessionHub}
+-                class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300"
+-              >
+-                Clear
+-              </button>
+-            {/if}
+-          </div>
+-          {#if sessionDrafts.length === 0}
+-            <p class="text-[10px] text-theme-muted leading-relaxed">
+-              Generate drafts and click "Link to Hub" to build a connected
+-              campaign vault before exporting.
+-            </p>
+-          {:else}
+-            <ul class="space-y-2 max-h-[200px] overflow-y-auto">
+-              {#each sessionDrafts as draft (draft.title)}
+-                <li
+-                  class="flex items-center justify-between gap-2 p-2 bg-theme-surface/45 border border-theme-border/30 rounded-lg text-xs"
+-                >
+-                  <span
+-                    class="truncate font-medium text-theme-text/90 flex items-center gap-1.5"
+-                  >
+-                    {#if draft.type === "character"}
+-                      <span
+-                        class="icon-[lucide--user] w-3.5 h-3.5 text-theme-primary"
+-                      ></span>
+-                    {:else if draft.type === "faction"}
+-                      <span
+-                        class="icon-[lucide--flag] w-3.5 h-3.5 text-theme-primary"
+-                      ></span>
+-                    {:else if draft.type === "settlement" || draft.type === "location"}
+-                      <span
+-                        class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+-                      ></span>
+-                    {:else if draft.type === "item"}
+-                      <span
+-                        class="icon-[lucide--sparkles] w-3.5 h-3.5 text-theme-primary"
+-                      ></span>
+-                    {:else}
+-                      <span
+-                        class="icon-[lucide--file-text] w-3.5 h-3.5 text-theme-primary"
+-                      ></span>
+-                    {/if}
+-                    {draft.title}
+-                  </span>
+-                  <button
+-                    type="button"
+-                    onclick={() => removeFromSessionHub(draft.title)}
+-                    class="text-theme-muted hover:text-rose-400 transition-colors flex-shrink-0"
+-                    aria-label="Remove draft"
+-                  >
+-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+-                  </button>
+-                </li>
+-              {/each}
+-            </ul>
+-            <button
+-              type="button"
+-              onclick={handleSaveAllToCodex}
+-              class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-1"
+-            >
+-              Save Hub to Codex ({sessionDrafts.length})
+-            </button>
++        {#if variant !== "names"}
++          <SessionHubWidget 
++            onSelect={(entity) => selectedHubEntity = entity}
++            onSave={handleSaveHubToCodex} 
++          />
++          {#if contextSelection.trimmed}
++            <div class="mt-2 text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
++              <span class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"></span>
++              <p>Some older unpinned context is omitted from prompts to manage AI limits. Pin items to prioritize them.</p>
++            </div>
+           {/if}
+-        </div>
++        {/if}
+       </div>
+     </div>
+ 
+     <!-- Parameters Column: rendered last in DOM, positioned on the left on desktop -->
+     <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
+@@ -1371,10 +1286,61 @@
+         </div>
+       </div>
+     </div>
+   {/if}
+ 
++  <!-- Detail Review Modal -->
++  {#if selectedHubEntity}
++    <div
++      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
++      transition:fade={{ duration: 150 }}
++    >
++      <div
++        class="bg-theme-surface border border-theme-border max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-xl flex flex-col text-left overflow-hidden animate-in fade-in zoom-in-95 duration-200"
++      >
++        <div class="px-6 py-4 border-b border-theme-border/60 flex items-center justify-between bg-theme-surface/60">
++          <div class="flex items-center gap-3">
++            <span class="text-[10px] uppercase tracking-wider text-theme-primary px-2 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20">{selectedHubEntity.type}</span>
++            <h3 class="font-header font-bold text-xl text-theme-text">{selectedHubEntity.title}</h3>
++          </div>
++          <button
++            type="button"
++            onclick={() => selectedHubEntity = null}
++            class="p-2 text-theme-muted hover:text-theme-text transition-colors"
++            aria-label="Close detail view"
++          >
++            <span class="icon-[lucide--x] w-5 h-5"></span>
++          </button>
++        </div>
++        
++        <div class="p-6 overflow-y-auto seo-md">
++          {#if selectedHubEntity.summary}
++            <p class="italic text-theme-text/80 mb-4 pb-4 border-b border-theme-border/30">{selectedHubEntity.summary}</p>
++          {/if}
++          {@html renderGeneratorMarkdown(selectedHubEntity.content, "default")}
++          
++          {#if selectedHubEntity.lore}
++            <div class="mt-6 pt-6 border-t border-theme-border/50">
++              <h4 class="font-header font-bold text-sm uppercase tracking-wider text-theme-primary mb-3">At the Table</h4>
++              {@html renderGeneratorLore(selectedHubEntity.lore, "default")}
++            </div>
++          {/if}
++        </div>
++        
++        <div class="px-6 py-4 border-t border-theme-border/60 bg-theme-surface/40 flex justify-end">
++          <button
++            type="button"
++            onclick={() => selectedHubEntity = null}
++            class="px-4 py-2 bg-theme-surface/60 border border-theme-border/60 text-theme-text font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-surface transition-all"
++          >
++            Close
++          </button>
++        </div>
++      </div>
++    </div>
++  {/if}
++
+   <!-- Marketing Footer -->
+   <footer
+     class="border-t border-theme-border/60 bg-theme-surface/20 px-6 py-8 mt-auto text-center text-[10px] text-theme-muted tracking-wider uppercase font-header"
+   >
+     <div
+diff --git a/apps/web/src/lib/components/seo/SessionHubWidget.svelte b/apps/web/src/lib/components/seo/SessionHubWidget.svelte
+new file mode 100644
+index 00000000..9f8a7915
+--- /dev/null
++++ b/apps/web/src/lib/components/seo/SessionHubWidget.svelte
+@@ -0,0 +1,128 @@
++<script lang="ts">
++  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
++  import type { SessionEntity } from "generator-engine";
++
++  let {
++    onSelect,
++    onSave,
++  }: {
++    onSelect?: (entity: SessionEntity) => void;
++    onSave?: (entitiesToSave: SessionEntity[]) => void;
++  } = $props();
++
++  const entities = $derived(sessionHubStore.entities.slice().reverse()); // Show most recent at top
++  let selectedIds = $state(new Set<string>());
++
++  function toggleSelection(id: string) {
++    if (selectedIds.has(id)) {
++      selectedIds.delete(id);
++    } else {
++      selectedIds.add(id);
++    }
++  }
++</script>
++
++<div class="flex flex-col gap-2 w-full bg-theme-surface/30 p-4 border border-theme-border/60 rounded-xl">
++  <div class="flex items-center justify-between pb-2 border-b border-theme-border/50">
++    <h3 class="text-xs font-bold uppercase tracking-wider text-theme-text/70 font-header">Session Hub</h3>
++    {#if entities.length > 0}
++      <button
++        type="button"
++        onclick={() => sessionHubStore.clear()}
++        class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300 transition-colors"
++      >
++        Clear
++      </button>
++    {/if}
++  </div>
++  
++  {#if entities.length === 0}
++    <p class="text-[10px] text-theme-muted leading-relaxed">
++      Generate drafts and click "Link to Hub" to build a connected campaign vault before exporting.
++    </p>
++  {:else}
++    <ul class="flex flex-col gap-1.5 overflow-y-auto max-h-[500px] pr-1">
++      {#each entities as entity (entity.id)}
++        <li class="flex items-center gap-1">
++          <button
++            type="button"
++            onclick={(e) => {
++              // Toggle selection if clicking the checkbox wrapper, otherwise select entity
++              if ((e.target as HTMLElement).closest('.selection-toggle')) {
++                toggleSelection(entity.id);
++                return;
++              }
++              onSelect?.(entity);
++            }}
++            class="flex-grow text-left p-2.5 rounded-lg bg-theme-surface/20 hover:bg-theme-surface/60 transition-colors border {selectedIds.has(entity.id) ? 'border-theme-primary/50 bg-theme-primary/5' : 'border-theme-border/30 hover:border-theme-border/50'} flex flex-col gap-1 group relative"
++          >
++            <div class="selection-toggle absolute left-2 top-3 w-4 h-4 rounded border {selectedIds.has(entity.id) ? 'bg-theme-primary border-theme-primary text-theme-bg' : 'border-theme-border/60 bg-theme-surface/50'} flex items-center justify-center transition-colors">
++              {#if selectedIds.has(entity.id)}
++                <span class="icon-[lucide--check] w-3 h-3"></span>
++              {/if}
++            </div>
++            <div class="flex items-center justify-between gap-2 pl-6">
++              <span class="text-sm font-bold text-theme-text truncate flex items-center gap-1.5">
++                {#if entity.type === "character"}
++                  <span class="icon-[lucide--user] w-3.5 h-3.5 text-theme-primary"></span>
++                {:else if entity.type === "faction"}
++                  <span class="icon-[lucide--flag] w-3.5 h-3.5 text-theme-primary"></span>
++                {:else if entity.type === "settlement" || entity.type === "location"}
++                  <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"></span>
++                {:else if entity.type === "item"}
++                  <span class="icon-[lucide--sparkles] w-3.5 h-3.5 text-theme-primary"></span>
++                {:else}
++                  <span class="icon-[lucide--file-text] w-3.5 h-3.5 text-theme-primary"></span>
++                {/if}
++                {entity.title}
++              </span>
++              <span class="text-[9px] uppercase tracking-wider text-theme-primary px-1.5 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20 shrink-0">{entity.type}</span>
++            </div>
++            {#if entity.summary}
++              <span class="text-[10px] text-theme-muted truncate group-hover:text-theme-text/80 transition-colors pl-[2.25rem]">{entity.summary}</span>
++            {/if}
++          </button>
++          <div class="flex flex-col gap-0.5 shrink-0 px-1 py-1 bg-theme-surface/20 rounded-lg border border-theme-border/20">
++            <button
++              type="button"
++              onclick={() => sessionHubStore.updateEntity(entity.id, { reuseEnabled: !entity.reuseEnabled })}
++              class="p-1.5 rounded flex items-center justify-center transition-colors {entity.reuseEnabled ? 'text-theme-primary bg-theme-primary/10 hover:bg-theme-primary/20' : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
++              title={entity.reuseEnabled ? "Context reuse enabled" : "Context reuse disabled"}
++            >
++              <span class="icon-[lucide--zap] w-3.5 h-3.5"></span>
++            </button>
++            <button
++              type="button"
++              onclick={() => sessionHubStore.updateEntity(entity.id, { pinned: !entity.pinned })}
++              class="p-1.5 rounded flex items-center justify-center transition-colors {entity.pinned ? 'text-theme-primary bg-theme-primary/10 hover:bg-theme-primary/20' : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
++              title={entity.pinned ? "Pinned in context" : "Not pinned"}
++            >
++              <span class="icon-[lucide--pin] w-3.5 h-3.5"></span>
++            </button>
++            <button
++              type="button"
++              onclick={() => sessionHubStore.removeEntity(entity.id)}
++              class="p-1.5 rounded flex items-center justify-center text-theme-muted hover:text-rose-400 hover:bg-rose-400/10 transition-colors"
++              title="Remove draft"
++            >
++              <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
++            </button>
++          </div>
++        </li>
++      {/each}
++    </ul>
++    <button
++      type="button"
++      onclick={() => {
++        const toSave = selectedIds.size > 0 
++          ? entities.filter(e => selectedIds.has(e.id)) 
++          : entities;
++        onSave?.(toSave);
++        selectedIds.clear();
++      }}
++      class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-2"
++    >
++      {selectedIds.size > 0 ? `Save Selected (${selectedIds.size})` : `Save Hub to Codex (${entities.length})`}
++    </button>
++  {/if}
++</div>
+diff --git a/apps/web/src/lib/components/seo/SessionHubWidget.test.ts b/apps/web/src/lib/components/seo/SessionHubWidget.test.ts
+new file mode 100644
+index 00000000..bb6ee096
+--- /dev/null
++++ b/apps/web/src/lib/components/seo/SessionHubWidget.test.ts
+@@ -0,0 +1,139 @@
++// @vitest-environment jsdom
++import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
++import { render, screen, fireEvent } from '@testing-library/svelte';
++import SessionHubWidget from './SessionHubWidget.svelte';
++import { sessionHubStore } from '$lib/stores/session-hub.svelte';
++
++describe('SessionHubWidget', () => {
++  beforeEach(() => {
++    // Add mock sessionStorage for the store if needed
++    const mockStorage: Record<string, string> = {};
++    vi.stubGlobal('sessionStorage', {
++      getItem: (key: string) => mockStorage[key] || null,
++      setItem: (key: string, value: string) => { mockStorage[key] = value; },
++      removeItem: (key: string) => { delete mockStorage[key]; },
++      clear: () => { for (const key in mockStorage) delete mockStorage[key]; }
++    });
++    sessionHubStore.clear();
++  });
++
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it('renders empty state when no entities', () => {
++    render(SessionHubWidget);
++    expect(screen.getByText('Session Hub')).toBeTruthy();
++    expect(screen.getByText(/Generate drafts and click/i)).toBeTruthy();
++  });
++
++  it('renders a list of entities from the store', async () => {
++    sessionHubStore.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'A hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++    sessionHubStore.addEntity({
++      type: 'location',
++      title: 'Waterdeep',
++      content: 'A city',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    render(SessionHubWidget);
++
++    expect(screen.getByText('Elara')).toBeTruthy();
++    expect(screen.getByText('Waterdeep')).toBeTruthy();
++    expect(screen.getByText('character')).toBeTruthy();
++    expect(screen.getByText('location')).toBeTruthy();
++  });
++
++  it('calls onSelect when an item is clicked', async () => {
++    const id = sessionHubStore.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'A hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    const onSelect = vi.fn();
++    render(SessionHubWidget, { props: { onSelect } });
++
++    const btn = screen.getByText('Elara').closest('button');
++    expect(btn).not.toBeNull();
++    
++    if (btn) {
++      await fireEvent.click(btn);
++    }
++
++    expect(onSelect).toHaveBeenCalledTimes(1);
++    expect(onSelect.mock.calls[0][0].id).toBe(id);
++    expect(onSelect.mock.calls[0][0].title).toBe('Elara');
++  });
++
++  it('toggles reuseEnabled when the zap button is clicked', async () => {
++    sessionHubStore.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'A hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    render(SessionHubWidget);
++    
++    const toggleBtn = screen.getByTitle('Context reuse enabled');
++    await fireEvent.click(toggleBtn);
++    
++    expect(sessionHubStore.entities[0].reuseEnabled).toBe(false);
++  });
++
++  it('toggles pinned when the pin button is clicked', async () => {
++    sessionHubStore.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'A hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    render(SessionHubWidget);
++    
++    const toggleBtn = screen.getByTitle('Not pinned');
++    await fireEvent.click(toggleBtn);
++    
++    expect(sessionHubStore.entities[0].pinned).toBe(true);
++  });
++
++  it('removes entity when trash button is clicked', async () => {
++    sessionHubStore.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'A hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    render(SessionHubWidget);
++    const removeBtn = screen.getByTitle('Remove draft');
++    await fireEvent.click(removeBtn);
++    
++    expect(sessionHubStore.entities.length).toBe(0);
++  });
++});
+diff --git a/apps/web/src/lib/services/seo/import-handler.test.ts b/apps/web/src/lib/services/seo/import-handler.test.ts
+index 582590f4..8d2f9ec8 100644
+--- a/apps/web/src/lib/services/seo/import-handler.test.ts
++++ b/apps/web/src/lib/services/seo/import-handler.test.ts
+@@ -333,6 +333,38 @@ describe("SeoImportService", () => {
+     expect(mockVaultStore.createEntity).toHaveBeenCalled();
+     // Consumed from the injected storage, not the stubbed global.
+     expect(mem.has("__codex_pending_import")).toBe(false);
+     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
+   });
++
++  it("should wire explicit references to connections", async () => {
++    mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
++    mockVaultStore.createEntity = vi
++      .fn()
++      .mockResolvedValueOnce("id-elara")
++      .mockResolvedValueOnce("id-king");
++
++    const drafts = [
++      {
++        type: "character",
++        title: "Elara",
++        content: "A brave warrior.",
++        references: ["Goblin King"],
++      },
++      {
++        type: "character",
++        title: "Goblin King",
++        content: "The evil king.",
++      },
++    ];
++    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
++
++    await service.checkAndHandlePendingImport();
++
++    expect(mockVaultStore.addConnection).toHaveBeenCalledWith(
++      "id-elara",
++      "id-king",
++      "references",
++      "Goblin King",
++    );
++  });
+ });
+diff --git a/apps/web/src/lib/services/seo/import-handler.ts b/apps/web/src/lib/services/seo/import-handler.ts
+index 792cf5fd..ccdc28cd 100644
+--- a/apps/web/src/lib/services/seo/import-handler.ts
++++ b/apps/web/src/lib/services/seo/import-handler.ts
+@@ -16,10 +16,11 @@ export const ImportDraftSchema = z.object({
+   title: z.string().min(1),
+   content: z.string().default(""),
+   lore: z.string().optional(),
+   labels: z.array(z.string()).default(["imported-draft"]),
+   status: z.enum(["active", "draft"]).default("active"),
++  references: z.array(z.string()).optional(),
+ });
+ 
+ export type ImportDraft = z.infer<typeof ImportDraftSchema>;
+ 
+ export class SeoImportService {
+@@ -132,32 +133,51 @@ export class SeoImportService {
+         // user at least gets the entities that succeeded; clear to prevent
+         // double-import on any subsequent load.
+         this.storage.removeItem("__codex_pending_import");
+       }
+ 
+-      // Wire [[wiki links]] between imported entities
++      // Wire [[wiki links]] and explicit references between imported entities
+       for (const draft of drafts) {
+         const sourceId = titleToId.get(draft.title.toLowerCase());
+-        if (!sourceId || !draft.content) continue;
+-
+-        const wikiLinkPattern = /\[\[([^\]]+)\]\]/g;
+-        let match: RegExpExecArray | null;
+-        while ((match = wikiLinkPattern.exec(draft.content)) !== null) {
+-          const targetId = titleToId.get(match[1].toLowerCase());
+-          if (targetId && targetId !== sourceId) {
+-            try {
+-              await this.vaultStore.addConnection(
+-                sourceId,
+-                targetId,
+-                "references",
+-                match[1],
+-              );
+-            } catch {
+-              // Non-fatal: link wiring is best-effort
++        if (!sourceId) continue;
++
++        const targetsToConnect = new Map<string, string>(); // targetId -> label
++
++        // 1. Explicit references (from provenance)
++        if (draft.references) {
++          for (const refTitle of draft.references) {
++            const targetId = titleToId.get(refTitle.toLowerCase());
++            if (targetId && targetId !== sourceId) {
++              targetsToConnect.set(targetId, refTitle);
+             }
+           }
+         }
++
++        // 2. Wiki links
++        if (draft.content) {
++          const wikiLinkPattern = /\[\[([^\]]+)\]\]/g;
++          let match: RegExpExecArray | null;
++          while ((match = wikiLinkPattern.exec(draft.content)) !== null) {
++            const targetId = titleToId.get(match[1].toLowerCase());
++            if (targetId && targetId !== sourceId) {
++              targetsToConnect.set(targetId, match[1]);
++            }
++          }
++        }
++
++        for (const [targetId, label] of targetsToConnect.entries()) {
++          try {
++            await this.vaultStore.addConnection(
++              sourceId,
++              targetId,
++              "references",
++              label,
++            );
++          } catch {
++            // Non-fatal: link wiring is best-effort
++          }
++        }
+       }
+ 
+       // Select the last imported entity
+       if (lastImportedId) {
+         this.vaultStore.selectedEntityId = lastImportedId;
+diff --git a/apps/web/src/lib/services/seo/session-context.test.ts b/apps/web/src/lib/services/seo/session-context.test.ts
+new file mode 100644
+index 00000000..3f84c6df
+--- /dev/null
++++ b/apps/web/src/lib/services/seo/session-context.test.ts
+@@ -0,0 +1,103 @@
++/** @vitest-environment jsdom */
++import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
++import { getSessionContext } from "./session-context";
++import { sessionHubStore } from "$lib/stores/session-hub.svelte";
++
++describe("getSessionContext", () => {
++  beforeEach(() => {
++    // Add mock sessionStorage for the store if needed
++    const mockStorage: Record<string, string> = {};
++    vi.stubGlobal('sessionStorage', {
++      getItem: (key: string) => mockStorage[key] || null,
++      setItem: (key: string, value: string) => { mockStorage[key] = value; },
++      removeItem: (key: string) => { delete mockStorage[key]; },
++      clear: () => { for (const key in mockStorage) delete mockStorage[key]; }
++    });
++    sessionHubStore.clear();
++  });
++
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it("returns empty string when there are no entities", () => {
++    expect(getSessionContext()).toBe("");
++  });
++
++  it("returns formatted context string for available entities", () => {
++    sessionHubStore.addEntity({
++      type: "character",
++      title: "Elara",
++      summary: "A heroic warrior",
++      content: "Deep lore about Elara",
++      labels: [],
++      status: "active",
++      reuseEnabled: true,
++      pinned: false
++    });
++    sessionHubStore.addEntity({
++      type: "location",
++      title: "Waterdeep",
++      summary: "A bustling city",
++      content: "Details about the city",
++      labels: [],
++      status: "active",
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    const context = getSessionContext();
++    expect(context).toContain("Existing campaign elements created this session");
++    expect(context).toContain("- Elara (character): A heroic warrior");
++    expect(context).toContain("- Waterdeep (location): A bustling city");
++  });
++
++  it("ignores entities with reuseEnabled set to false", () => {
++    sessionHubStore.addEntity({
++      type: "character",
++      title: "Elara",
++      summary: "A heroic warrior",
++      content: "",
++      labels: [],
++      status: "active",
++      reuseEnabled: false,
++      pinned: false
++    });
++    sessionHubStore.addEntity({
++      type: "location",
++      title: "Waterdeep",
++      summary: "A bustling city",
++      content: "",
++      labels: [],
++      status: "active",
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    const context = getSessionContext();
++    expect(context).not.toContain("Elara");
++    expect(context).toContain("Waterdeep");
++  });
++
++  it("enforces context budget and truncates over limit", () => {
++    // Default budget is 50 in getContextSelection
++    for (let i = 0; i < 55; i++) {
++      sessionHubStore.addEntity({
++        type: "item",
++        title: `Item ${i}`,
++        summary: `Item description ${i}`,
++        content: "",
++        labels: [],
++        status: "active",
++        reuseEnabled: true,
++        pinned: false
++      });
++    }
++
++    const context = getSessionContext();
++    const lines = context.split("\\n");
++    // Should be exactly 50 entities included
++    const entityLines = lines.filter((l) => l.startsWith("- Item"));
++    expect(entityLines.length).toBe(50);
++  });
++});
+diff --git a/apps/web/src/lib/services/seo/session-context.ts b/apps/web/src/lib/services/seo/session-context.ts
+index 3b8767d2..84921a58 100644
+--- a/apps/web/src/lib/services/seo/session-context.ts
++++ b/apps/web/src/lib/services/seo/session-context.ts
+@@ -1,30 +1,25 @@
+-/**
+- * Builds an AI prompt fragment from the Session Hub drafts stored in
+- * sessionStorage, so generators can reference elements the user already
+- * created this session (e.g. an NPC can belong to a generated faction).
+- */
+-export const SESSION_DRAFTS_KEY = "__codex_session_drafts";
++import { sessionHubStore } from "$lib/stores/session-hub.svelte";
++import { getContextSelection } from "generator-engine";
++
++export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
+ 
+ export function getSessionContext(): string {
+-  if (typeof sessionStorage === "undefined") return "";
+-  try {
+-    const raw = sessionStorage.getItem(SESSION_DRAFTS_KEY);
+-    if (!raw) return "";
+-    const drafts = JSON.parse(raw);
+-    if (!Array.isArray(drafts) || drafts.length === 0) return "";
+-    const lines = drafts.slice(0, 8).map((d) => {
+-      const excerpt = String(d.summary || d.content || "")
+-        .replace(/[#*`]+/g, "")
+-        .replace(/\s+/g, " ")
+-        .trim()
+-        .slice(0, 180);
+-      return `- ${d.title} (${d.type}): ${excerpt}`;
+-    });
+-    return (
+-      "Existing campaign elements created this session — weave in references to one or more of them for continuity where it fits naturally, but do not duplicate them:\n" +
+-      lines.join("\n")
+-    );
+-  } catch {
+-    return "";
+-  }
++  if (typeof window === "undefined") return "";
++  
++  const selection = getContextSelection(sessionHubStore.entities);
++  if (selection.entities.length === 0) return "";
++  
++  const lines = selection.entities.map((d) => {
++    const excerpt = String(d.summary || d.content || "")
++      .replace(/[#*`]+/g, "")
++      .replace(/\s+/g, " ")
++      .trim()
++      .slice(0, 180);
++    return `- ${d.title} (${d.type}): ${excerpt}`;
++  });
++
++  return (
++    "Existing campaign elements created this session — weave in references to one or more of them for continuity where it fits naturally, but do not duplicate them:\n" +
++    lines.join("\n")
++  );
+ }
+diff --git a/apps/web/src/lib/stores/session-hub.svelte.test.ts b/apps/web/src/lib/stores/session-hub.svelte.test.ts
+new file mode 100644
+index 00000000..7b7ec177
+--- /dev/null
++++ b/apps/web/src/lib/stores/session-hub.svelte.test.ts
+@@ -0,0 +1,126 @@
++// @vitest-environment jsdom
++import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
++import { SessionHubStore, SESSION_DRAFTS_KEY } from './session-hub.svelte.js';
++
++
++describe('SessionHubStore', () => {
++  let store: SessionHubStore;
++
++  beforeEach(() => {
++    sessionStorage.clear();
++    store = new SessionHubStore();
++  });
++
++  afterEach(() => {
++    vi.restoreAllMocks();
++  });
++
++  it('initializes with empty state', () => {
++    expect(store.entities).toEqual([]);
++    expect(store.provenance).toEqual({});
++    expect(store.nextOrder).toBe(1);
++  });
++
++  it('adds an entity and updates order', () => {
++    const id = store.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'Brave hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    expect(id).toBeDefined();
++    expect(store.entities).toHaveLength(1);
++    expect(store.entities[0].id).toBe(id);
++    expect(store.entities[0].title).toBe('Elara');
++    expect(store.entities[0].createdOrder).toBe(1);
++    expect(store.nextOrder).toBe(2);
++  });
++
++  it('updates an entity', () => {
++    const id = store.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'Brave hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    store.updateEntity(id, { title: 'Elara the Brave', pinned: true });
++    expect(store.entities[0].title).toBe('Elara the Brave');
++    expect(store.entities[0].pinned).toBe(true);
++  });
++
++  it('removes an entity and its provenance', () => {
++    const id = store.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'Brave hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++
++    store.addProvenance({
++      resultEntityId: id,
++      usedEntityIds: [],
++      offeredEntityIds: [],
++      trimmed: false
++    });
++
++    store.removeEntity(id);
++    expect(store.entities).toHaveLength(0);
++    expect(store.provenance[id]).toBeUndefined();
++  });
++
++  it('loads from sessionStorage', () => {
++    const mockState = {
++      version: 2,
++      entities: [{ id: '1', title: 'Test', createdOrder: 1, reuseEnabled: true }],
++      provenance: { '1': { resultEntityId: '1', usedEntityIds: [], offeredEntityIds: [], trimmed: false } },
++      nextOrder: 2
++    };
++    sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(mockState));
++
++    const newStore = new SessionHubStore();
++    expect(newStore.entities).toHaveLength(1);
++    expect(newStore.entities[0].title).toBe('Test');
++    expect(newStore.provenance['1']).toBeDefined();
++    expect(newStore.nextOrder).toBe(2);
++  });
++
++  it('migrates from v1 SessionDraft format', () => {
++    const oldFormat = [
++      { type: 'character', title: 'Old Draft', content: 'content', status: 'draft' }
++    ];
++    sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(oldFormat));
++
++    const newStore = new SessionHubStore();
++    expect(newStore.entities).toHaveLength(1);
++    expect(newStore.entities[0].title).toBe('Old Draft');
++    expect(newStore.entities[0].id).toBeDefined();
++    expect(newStore.entities[0].reuseEnabled).toBe(true);
++    expect(newStore.nextOrder).toBe(2);
++  });
++
++  it('clears all state', () => {
++    store.addEntity({
++      type: 'character',
++      title: 'Elara',
++      content: 'Brave hero',
++      labels: [],
++      status: 'active',
++      reuseEnabled: true,
++      pinned: false
++    });
++    store.clear();
++    expect(store.entities).toHaveLength(0);
++    expect(store.nextOrder).toBe(1);
++  });
++});
+diff --git a/apps/web/src/lib/stores/session-hub.svelte.ts b/apps/web/src/lib/stores/session-hub.svelte.ts
+new file mode 100644
+index 00000000..33c2d18f
+--- /dev/null
++++ b/apps/web/src/lib/stores/session-hub.svelte.ts
+@@ -0,0 +1,122 @@
++import { type SessionEntity, type ProvenanceRecord } from "generator-engine";
++
++export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
++
++export interface SessionHubState {
++  version: 2;
++  entities: SessionEntity[];
++  provenance: Record<string, ProvenanceRecord>;
++  nextOrder: number;
++}
++
++// Ensure unique IDs
++function generateId() {
++  if (typeof crypto !== "undefined" && crypto.randomUUID) {
++    return crypto.randomUUID();
++  }
++  return Math.random().toString(36).substring(2, 15);
++}
++
++export class SessionHubStore {
++  entities = $state<SessionEntity[]>([]);
++  provenance = $state<Record<string, ProvenanceRecord>>({});
++  nextOrder = $state(1);
++
++  constructor() {
++    // Only access sessionStorage in browser environments
++    if (typeof window !== "undefined") {
++      this.load();
++    }
++  }
++
++  load() {
++    try {
++      const data = sessionStorage.getItem(SESSION_DRAFTS_KEY);
++      if (!data) return;
++
++      const parsed = JSON.parse(data);
++
++      if (Array.isArray(parsed)) {
++        // Migration from version 1 (SessionDraft[])
++        let order = 1;
++        this.entities = parsed.map((draft: any) => ({
++          id: draft.id || generateId(),
++          type: draft.type || "note",
++          title: draft.title || "Untitled",
++          summary: draft.summary,
++          content: draft.content || "",
++          lore: draft.lore,
++          labels: Array.isArray(draft.labels) ? draft.labels : [],
++          status: draft.status || "draft",
++          reuseEnabled: true,
++          pinned: false,
++          createdOrder: order++
++        }));
++        this.provenance = {};
++        this.nextOrder = order;
++        this.save();
++      } else if (parsed && parsed.version === 2) {
++        this.entities = parsed.entities || [];
++        this.provenance = parsed.provenance || {};
++        this.nextOrder = parsed.nextOrder || 1;
++      }
++    } catch (err) {
++      console.warn("[SessionHubStore] Failed to load from sessionStorage", err);
++    }
++  }
++
++  save() {
++    if (typeof window === "undefined") return;
++    try {
++      const state: SessionHubState = {
++        version: 2,
++        entities: $state.snapshot(this.entities),
++        provenance: $state.snapshot(this.provenance),
++        nextOrder: this.nextOrder
++      };
++      sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(state));
++    } catch (err) {
++      console.warn("[SessionHubStore] Failed to save to sessionStorage", err);
++    }
++  }
++
++  addEntity(entityData: Omit<SessionEntity, "id" | "createdOrder">): string {
++    const id = generateId();
++    const newEntity: SessionEntity = {
++      ...entityData,
++      id,
++      createdOrder: this.nextOrder++
++    };
++    this.entities.push(newEntity);
++    this.save();
++    return id;
++  }
++
++  updateEntity(id: string, updates: Partial<SessionEntity>) {
++    const index = this.entities.findIndex((e) => e.id === id);
++    if (index !== -1) {
++      this.entities[index] = { ...this.entities[index], ...updates };
++      this.save();
++    }
++  }
++
++  removeEntity(id: string) {
++    this.entities = this.entities.filter((e) => e.id !== id);
++    delete this.provenance[id];
++    this.save();
++  }
++
++  addProvenance(record: ProvenanceRecord) {
++    this.provenance[record.resultEntityId] = record;
++    this.save();
++  }
++
++  clear() {
++    this.entities = [];
++    this.provenance = {};
++    this.nextOrder = 1;
++    this.save();
++  }
++}
++
++export const sessionHubStore = new SessionHubStore();
+diff --git a/packages/generator-engine/src/index.ts b/packages/generator-engine/src/index.ts
+index fdd26c25..04c5939e 100644
+--- a/packages/generator-engine/src/index.ts
++++ b/packages/generator-engine/src/index.ts
+@@ -140,7 +140,7 @@ export {
+   acceptedEntityToLoreEntry,
+   buildGeneratorLoreEntries,
+   buildGeneratorSessionInput,
+   draftToAcceptedEntity,
+   type GeneratorAcceptedEntity,
+-  type GeneratorSessionTurn,
+ } from "./generator-session";
++export * from "./session-hub-helpers";
+diff --git a/packages/generator-engine/src/session-hub-helpers.test.ts b/packages/generator-engine/src/session-hub-helpers.test.ts
+new file mode 100644
+index 00000000..fd1e3595
+--- /dev/null
++++ b/packages/generator-engine/src/session-hub-helpers.test.ts
+@@ -0,0 +1,112 @@
++import { describe, it, expect } from 'vitest';
++import { getContextSelection, computeProvenance, type SessionEntity } from './session-hub-helpers.js';
++
++describe('session-hub-helpers', () => {
++  const createEntity = (id: string, title: string, createdOrder: number, pinned: boolean = false, reuseEnabled: boolean = true): SessionEntity => ({
++    id,
++    type: 'character',
++    title,
++    content: 'Some content',
++    labels: [],
++    status: 'active',
++    reuseEnabled,
++    pinned,
++    createdOrder
++  });
++
++  describe('getContextSelection', () => {
++    it('returns all active entities if within budget', () => {
++      const entities = [
++        createEntity('1', 'One', 1),
++        createEntity('2', 'Two', 2)
++      ];
++      const result = getContextSelection(entities, 5);
++      expect(result.trimmed).toBe(false);
++      expect(result.entities).toHaveLength(2);
++    });
++
++    it('filters out entities with reuseEnabled = false', () => {
++      const entities = [
++        createEntity('1', 'One', 1, false, true),
++        createEntity('2', 'Two', 2, false, false)
++      ];
++      const result = getContextSelection(entities, 5);
++      expect(result.trimmed).toBe(false);
++      expect(result.entities).toHaveLength(1);
++      expect(result.entities[0].id).toBe('1');
++    });
++
++    it('trims entities based on recency if budget is exceeded', () => {
++      const entities = [
++        createEntity('1', 'One', 1),
++        createEntity('2', 'Two', 2),
++        createEntity('3', 'Three', 3)
++      ];
++      const result = getContextSelection(entities, 2);
++      expect(result.trimmed).toBe(true);
++      expect(result.entities).toHaveLength(2);
++      // Should keep the most recent ones (2 and 3)
++      expect(result.entities.map(e => e.id)).toEqual(['2', '3']);
++    });
++
++    it('prioritizes pinned entities over recent ones when trimming', () => {
++      const entities = [
++        createEntity('1', 'One', 1, true), // pinned
++        createEntity('2', 'Two', 2),
++        createEntity('3', 'Three', 3)
++      ];
++      const result = getContextSelection(entities, 2);
++      expect(result.trimmed).toBe(true);
++      expect(result.entities).toHaveLength(2);
++      // Should keep pinned (1) and most recent of the rest (3)
++      expect(result.entities.map(e => e.id)).toEqual(['1', '3']);
++    });
++
++    it('handles more pinned entities than budget allows', () => {
++      const entities = [
++        createEntity('1', 'One', 1, true),
++        createEntity('2', 'Two', 2, true),
++        createEntity('3', 'Three', 3, true)
++      ];
++      const result = getContextSelection(entities, 2);
++      expect(result.trimmed).toBe(true);
++      // Since all are pinned, they will all be returned
++      expect(result.entities.map(e => e.id)).toEqual(['1', '2', '3']);
++    });
++  });
++
++  describe('computeProvenance', () => {
++    it('finds used entities based on whole word title matching', () => {
++      const offered = [
++        createEntity('1', 'Goblin King', 1),
++        createEntity('2', 'Elara', 2),
++        createEntity('3', 'Not Mentioned', 3)
++      ];
++      const generatedText = "The brave Elara fought the evil Goblin King in the dark caves.";
++      const result = computeProvenance('result1', generatedText, offered, false);
++      expect(result.usedEntityIds).toEqual(['1', '2']);
++      expect(result.offeredEntityIds).toEqual(['1', '2', '3']);
++      expect(result.trimmed).toBe(false);
++      expect(result.resultEntityId).toBe('result1');
++    });
++
++    it('is case-insensitive and ignores partial words', () => {
++      const offered = [
++        createEntity('1', 'King', 1),
++        createEntity('2', 'Elara', 2)
++      ];
++      const generatedText = "ELARA met the kingdom's guards."; // kingdom should not match King
++      const result = computeProvenance('result1', generatedText, offered, false);
++      expect(result.usedEntityIds).toEqual(['2']);
++    });
++
++    it('matches titles with special characters', () => {
++      const offered = [
++        createEntity('1', 'King(dom)', 1)
++      ];
++      const generatedText = "We arrived at King(dom) today.";
++      const result = computeProvenance('result1', generatedText, offered, false);
++      expect(result.usedEntityIds).toEqual(['1']);
++    });
++  });
++});
+diff --git a/packages/generator-engine/src/session-hub-helpers.ts b/packages/generator-engine/src/session-hub-helpers.ts
+new file mode 100644
+index 00000000..ba3e787e
+--- /dev/null
++++ b/packages/generator-engine/src/session-hub-helpers.ts
+@@ -0,0 +1,105 @@
++export interface SessionEntity {
++  id: string;
++  type: string;
++  title: string;
++  summary?: string;
++  content: string;
++  lore?: string;
++  labels: string[];
++  status: "active" | "draft";
++  reuseEnabled: boolean;
++  pinned: boolean;
++  createdOrder: number;
++}
++
++export interface ContextSelection {
++  entities: SessionEntity[];
++  trimmed: boolean;
++}
++
++export interface ProvenanceRecord {
++  resultEntityId: string;
++  usedEntityIds: string[];
++  offeredEntityIds: string[];
++  trimmed: boolean;
++}
++
++/**
++ * Derives the active context selection from the available session entities.
++ * Applies budgeting if the selection exceeds the budget limit.
++ * Keeps all pinned entities first, then most recent by createdOrder, up to budget.
++ */
++export function getContextSelection(
++  entities: SessionEntity[],
++  budget: number = 50
++): ContextSelection {
++  const activeEntities = entities.filter((e) => e.reuseEnabled);
++  
++  if (activeEntities.length <= budget) {
++    return {
++      entities: activeEntities,
++      trimmed: false
++    };
++  }
++
++  const pinned = activeEntities.filter((e) => e.pinned);
++  const unpinned = activeEntities.filter((e) => !e.pinned);
++
++  // Sort unpinned by createdOrder descending (most recent first)
++  unpinned.sort((a, b) => b.createdOrder - a.createdOrder);
++
++  // Keep all pinned first, then fill remaining budget with unpinned
++  const result: SessionEntity[] = [...pinned];
++  
++  if (result.length < budget) {
++    const remainingBudget = budget - result.length;
++    result.push(...unpinned.slice(0, remainingBudget));
++  }
++
++  // Restore original sorting (createdOrder ascending)
++  result.sort((a, b) => a.createdOrder - b.createdOrder);
++
++  return {
++    entities: result,
++    trimmed: true
++  };
++}
++
++/**
++ * Computes post-hoc matching between generated text and offered entities
++ * to find which ones were actually used (referenced by title).
++ */
++export function computeProvenance(
++  resultEntityId: string,
++  generatedText: string,
++  offeredEntities: SessionEntity[],
++  trimmed: boolean
++): ProvenanceRecord {
++  const usedEntityIds: string[] = [];
++  
++  for (const entity of offeredEntities) {
++    if (!entity.title) continue;
++    
++    // Escape regex specials from title
++    const escapedTitle = entity.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++    
++    // Check if the title is mentioned as a whole word, case insensitive
++    // If title has no word characters, fallback to simple includes
++    const hasWordChars = /\w/.test(entity.title);
++    
++    const isMatch = hasWordChars
++      ? new RegExp(`(?<=^|\\W)${escapedTitle}(?=$|\\W)`, 'i').test(generatedText)
++      : generatedText.toLowerCase().includes(entity.title.toLowerCase());
++
++    if (isMatch) {
++      usedEntityIds.push(entity.id);
++    }
++  }
++
++  return {
++    resultEntityId,
++    usedEntityIds,
++    offeredEntityIds: offeredEntities.map((e) => e.id),
++    trimmed
++  };
++}
+diff --git a/specs/137-standalone-generator-session-hub/tasks.md b/specs/137-standalone-generator-session-hub/tasks.md
+index 2e50000b..95fb69ee 100644
+--- a/specs/137-standalone-generator-session-hub/tasks.md
++++ b/specs/137-standalone-generator-session-hub/tasks.md
+@@ -13,27 +13,27 @@
+ 
+ ## Phase 1: Setup (Shared Infrastructure)
+ 
+ **Purpose**: Project initialization and validation of workspace dependencies.
+ 
+-- [ ] T001 Verify project structures and package files in packages/generator-engine/package.json and apps/web/package.json
++- [x] T001 Verify project structures and package files in packages/generator-engine/package.json and apps/web/package.json
+ 
+ ---
+ 
+ ## Phase 2: Foundational (Blocking Prerequisites)
+ 
+ **Purpose**: Core logic and shared utilities that must be completed before any user story can be implemented.
+ 
+ **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
+ 
+-- [ ] T002 [P] Implement context budgeting and title matching helpers in packages/generator-engine/src/session-hub-helpers.ts
+-- [ ] T003 [P] Add unit tests for budgeting and matching helpers in packages/generator-engine/src/session-hub-helpers.test.ts
+-- [ ] T004 [P] Export helpers in packages/generator-engine/src/index.ts
+-- [ ] T005 Implement Svelte 5 store managing session-local drafts in apps/web/src/lib/stores/session-hub.svelte.ts
+-- [ ] T006 Add unit tests for the session-hub store in apps/web/src/lib/stores/session-hub.svelte.test.ts
+-- [ ] T007 Update pending import schema and logic to support connection mapping in apps/web/src/lib/services/seo/import-handler.ts
+-- [ ] T008 Add unit tests for relationships import logic in apps/web/src/lib/services/seo/import-handler.test.ts
++- [x] T002 [P] Implement context budgeting and title matching helpers in packages/generator-engine/src/session-hub-helpers.ts
++- [x] T003 [P] Add unit tests for budgeting and matching helpers in packages/generator-engine/src/session-hub-helpers.test.ts
++- [x] T004 [P] Export helpers in packages/generator-engine/src/index.ts
++- [x] T005 Implement Svelte 5 store managing session-local drafts in apps/web/src/lib/stores/session-hub.svelte.ts
++- [x] T006 Add unit tests for the session-hub store in apps/web/src/lib/stores/session-hub.svelte.test.ts
++- [x] T007 Update pending import schema and logic to support connection mapping in apps/web/src/lib/services/seo/import-handler.ts
++- [x] T008 Add unit tests for relationships import logic in apps/web/src/lib/services/seo/import-handler.test.ts
+ 
+ **Checkpoint**: Foundation ready - user story implementation can now begin.
+ 
+ ---
+ 
+@@ -43,17 +43,17 @@
+ 
+ **Independent Test**: Generate three entities, verify all three are added automatically, click to view detail card, and return to generator options with the active form inputs preserved.
+ 
+ ### Tests for User Story 1
+ 
+-- [ ] T009 [P] [US1] Add unit tests for list rendering and item actions in apps/web/src/lib/components/seo/SessionHubWidget.test.ts
++- [x] T009 [P] [US1] Add unit tests for list rendering and item actions in apps/web/src/lib/components/seo/SessionHubWidget.test.ts
+ 
+ ### Implementation for User Story 1
+ 
+-- [ ] T010 [P] [US1] Create the session list UI widget in apps/web/src/lib/components/seo/SessionHubWidget.svelte
+-- [ ] T011 [US1] Integrate session store and trigger auto-saving on generation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+-- [ ] T012 [US1] Implement detail review modal and navigation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
++- [x] T010 [P] [US1] Create the session list UI widget in apps/web/src/lib/components/seo/SessionHubWidget.svelte
++- [x] T011 [US1] Integrate session store and trigger auto-saving on generation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
++- [x] T012 [US1] Implement detail review modal and navigation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+ 
+ **Checkpoint**: User Story 1 is functional and testable as the feature's MVP.
+ 
+ ---
+ 
+@@ -63,17 +63,14 @@
+ 
+ **Independent Test**: Generate a settlement and check that reuse is ON by default. Generate a faction and verify the AI includes references to the settlement. Toggle reuse OFF for the settlement, generate a new faction, and verify the settlement is excluded.
+ 
+ ### Tests for User Story 2
+ 
+-- [ ] T013 [P] [US2] Add unit test cases for prompt context formatting in apps/web/src/lib/services/seo/generator-engine.test.ts
+-
+-### Implementation for User Story 2
+-
+-- [ ] T014 [US2] Add checkbox toggles for reuse and pin settings to each item in apps/web/src/lib/components/seo/SessionHubWidget.svelte
+-- [ ] T015 [US2] Retrieve and format active session context in apps/web/src/lib/services/seo/generator-engine.ts
+-- [ ] T016 [US2] Render context budgeting trim warning notification in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
++- [x] T013 [P] [US2] Add unit test cases for prompt context formatting in apps/web/src/lib/services/seo/generator-engine.test.ts
++- [x] T014 [US2] Add checkbox toggles for reuse and pin settings to each item in apps/web/src/lib/components/seo/SessionHubWidget.svelte
++- [x] T015 [US2] Retrieve and format active session context in apps/web/src/lib/services/seo/generator-engine.ts
++- [x] T016 [US2] Render context budgeting trim warning notification in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+ 
+ **Checkpoint**: Core context chaining behavior is complete.
+ 
+ ---
+ 
+@@ -83,16 +80,16 @@
+ 
+ **Independent Test**: Generate a character with multiple context items active, confirm the results card displays a "Used: ..." line naming only those actually mentioned, and click each link to inspect details.
+ 
+ ### Tests for User Story 3
+ 
+-- [ ] T017 [P] [US3] Add unit tests for provenance display and navigation triggers in apps/web/src/lib/components/seo/ProvenanceBadge.test.ts
++- [x] T017 [P] [US3] Add unit tests for provenance display and navigation triggers in apps/web/src/lib/components/seo/ProvenanceBadge.test.ts
+ 
+ ### Implementation for User Story 3
+ 
+-- [ ] T018 [P] [US3] Create the provenance badge component in apps/web/src/lib/components/seo/ProvenanceBadge.svelte
+-- [ ] T019 [US3] Embed provenance badge in the result card layout in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
++- [x] T018 [P] [US3] Create the provenance badge component in apps/web/src/lib/components/seo/ProvenanceBadge.svelte
++- [x] T019 [US3] Embed provenance badge in the result card layout in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+ 
+ **Checkpoint**: Connection provenance is visible and inspectable.
+ 
+ ---
+ 
+@@ -102,24 +99,24 @@
+ 
+ **Independent Test**: Select two related entities from the hub, click "Save Selected", open a vault, and verify both entities exist and are connected with the correct relationship.
+ 
+ ### Implementation for User Story 4
+ 
+-- [ ] T020 [US4] Add selection checkboxes and action buttons to apps/web/src/lib/components/seo/SessionHubWidget.svelte
+-- [ ] T021 [US4] Implement selection packaging and connection mapping in apps/web/src/lib/stores/session-hub.svelte.ts
++- [x] T020 [US4] Add selection checkboxes and action buttons to apps/web/src/lib/components/seo/SessionHubWidget.svelte
++- [x] T021 [US4] Implement selection packaging and connection mapping in apps/web/src/lib/stores/session-hub.svelte.ts
+ 
+ **Checkpoint**: Multi-save capabilities and relationship preservation work end-to-end.
+ 
+ ---
+ 
+ ## Phase 7: Polish & Cross-Cutting Concerns
+ 
+ **Purpose**: Styling, formatting, and final quality gates.
+ 
+-- [ ] T022 Apply visual styling matching docs/STYLE_GUIDE.md to widgets in apps/web/src/lib/components/seo/SessionHubWidget.svelte
+-- [ ] T023 Run Vitest test suites via bun run test in repository root
+-- [ ] T024 Run code linting verification via bun run lint in repository root
++- [x] T022 Apply visual styling matching docs/STYLE_GUIDE.md to widgets in apps/web/src/lib/components/seo/SessionHubWidget.svelte
++- [x] T023 Run Vitest test suites via bun run test in repository root
++- [x] T024 Run code linting verification via bun run lint in repository root
+ 
+ ---
+ 
+ ## Dependencies & Execution Order
+ 
