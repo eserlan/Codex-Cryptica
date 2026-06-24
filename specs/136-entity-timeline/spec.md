@@ -97,7 +97,7 @@ The user opens the Timeline for an entity that has no linked events and is told,
 
 ### Functional Requirements
 
-- **FR-001**: The entity detail page MUST present the Timeline as a dedicated tab, alongside the entity's existing detail tabs. The tab is shown for all entity types (every entity may hold links to events); at minimum it MUST work for factions, characters, locations, and items. When the entity is itself an event, the tab simply shows the events linked to that event.
+- **FR-001**: The Timeline MUST be presented as a dedicated tab in both the entity detail panel (sidebar/full-page) and Zen Mode — the primary mobile entry point. The tab is shown for all entity types (every entity may hold links to events); at minimum it MUST work for factions, characters, locations, and items. When the entity is itself an event, the tab simply shows the events linked to that event.
 - **FR-002**: The Timeline MUST show the events directly linked to the current entity — events one hop away where the entity is a participant/related entity — and only those events. The Timeline MUST NOT traverse multi-hop relationships to surface indirectly connected events.
 - **FR-003**: The Timeline MUST order dated events chronologically from earliest to latest.
 - **FR-004**: Each timeline entry MUST display the event title.
@@ -133,7 +133,7 @@ The user opens the Timeline for an entity that has no linked events and is told,
 
 - "Linked events" means events directly (one hop) associated with the entity through the existing entity/event linking model — the entity appears as a participant/related entity of the event. This feature surfaces those direct links and does not define new linking mechanics or traverse multi-hop relationships.
 - Events are represented as entities of the "event" type and may carry exact dates, date ranges, or partial-precision dates already supported by the world calendar; no new date model is introduced.
-- The entity detail page already supports a tabbed/sectioned layout into which a Timeline can be added.
+- The Timeline tab is surfaced in both `EntityDetailPanel` (sidebar/full-page views) and `ZenView` (zen mode / modal), which is the primary entry point on mobile.
 - Chronological ordering uses each event's existing date information; events with only partial precision are ordered using the precision available.
 - "Inexpensive to show" participant/summary data means data already available alongside the linked events without additional heavy lookups; if such data is not cheaply available for a given event, that field may be omitted for that row.
 
