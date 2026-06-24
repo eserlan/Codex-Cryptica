@@ -41,7 +41,22 @@
     }),
   );
 
-  const rows = $derived(sortEntities(filtered, sort));
+  const connectionCounts = $derived.by(() => {
+    const inboundConnections = vault.inboundConnections;
+
+    return Object.fromEntries(
+      vault.allEntities.map((entity) => {
+        const inbound = inboundConnections[entity.id]?.length ?? 0;
+        const outbound =
+          entity.connections?.filter((connection) => connection.target)
+            .length ?? 0;
+
+        return [entity.id, { inbound, outbound, total: inbound + outbound }];
+      }),
+    );
+  });
+
+  const rows = $derived(sortEntities(filtered, sort, connectionCounts));
 
   function handleSort(key: SortKey) {
     sort = nextSortState(sort, key);
@@ -71,7 +86,10 @@
   <title>Entity Table</title>
 </svelte:head>
 
-<div class="flex h-full flex-col gap-4 p-4 md:p-6">
+<div
+  class="flex h-full flex-col gap-4 bg-theme-bg p-4 md:p-6"
+  style:background-image="var(--bg-texture-overlay)"
+>
   <header class="flex flex-col gap-1">
     <h1
       class="font-header text-lg font-bold uppercase tracking-wider text-theme-text"
@@ -177,7 +195,13 @@
           {rows.length}
           {rows.length === 1 ? "entity" : "entities"}
         </p>
-        <EntityTable entities={rows} {vaultId} {sort} onSort={handleSort} />
+        <EntityTable
+          entities={rows}
+          {vaultId}
+          {sort}
+          {connectionCounts}
+          onSort={handleSort}
+        />
       {/if}
     </div>
   {/if}
