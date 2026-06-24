@@ -824,4 +824,84 @@ describe("SyncStore", () => {
       expect(testStore.status).toBe("idle");
     });
   });
+
+  describe("loadPhase indicator", () => {
+    it("advances to 'parsing' during a cold load and resets to null afterwards", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+
+      let phaseDuringParse: string | null = null;
+      repository.loadFiles.mockImplementation(
+        async (_vId, _handle, onProgress) => {
+          // loadPhase should be "parsing" by the time the parse loop reports.
+          phaseDuringParse = (store as any).loadPhase;
+          repository.entities = { "entity-1": {} };
+          await onProgress({}, 1, 1, { "entity-1": {} });
+        },
+      );
+
+      expect(store.loadPhase).toBe(null);
+
+      await store.loadFiles(false); // Force full sync (cold load)
+
+      expect(phaseDuringParse).toBe("parsing");
+      expect(store.loadPhase).toBe(null);
+    });
+
+    it("resets loadPhase to null even when the load throws", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+      repository.loadFiles.mockRejectedValue(new Error("boom"));
+
+      await store.loadFiles(false);
+
+      expect(store.loadPhase).toBe(null);
+    });
+  });
+
+  describe("loadPublishRegistry dep", () => {
+    it("calls loadPublishRegistry alongside loadMaps and loadCanvases after OPFS sync", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+      const loadPublishRegistry = vi.fn().mockResolvedValue(undefined);
+      const loadMaps = vi.fn().mockResolvedValue(undefined);
+      const loadCanvases = vi.fn().mockResolvedValue(undefined);
+
+      const testStore = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue(null),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(null),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps,
+        loadCanvases,
+        loadPublishRegistry,
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await testStore.loadFiles(false);
+
+      expect(loadMaps).toHaveBeenCalledWith("vault-1");
+      expect(loadCanvases).toHaveBeenCalledWith("vault-1");
+      expect(loadPublishRegistry).toHaveBeenCalledWith("vault-1", opfsHandle);
+    });
+
+    it("works without loadPublishRegistry dep (backward compat)", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+
+      const testStore = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue(null),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(null),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await expect(testStore.loadFiles(false)).resolves.toBeUndefined();
+    });
+  });
 });

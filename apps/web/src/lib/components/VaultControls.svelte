@@ -275,15 +275,31 @@
       aria-live="polite"
     >
       {#if vault.status === "loading"}
+        {@const determinate =
+          vault.loadPhase === "parsing" && vault.syncStats.total > 0}
         <div class="flex flex-col gap-1 items-center min-w-[100px] py-1">
-          <span class="animate-pulse text-chrome-accent font-bold font-sans"
-            >LOADING... {vault.syncStats.progress}%</span
-          >
+          <span class="animate-pulse text-chrome-accent font-bold font-sans">
+            {#if determinate}
+              LOADING... {vault.syncStats.progress}%
+            {:else if vault.loadPhase === "syncing"}
+              SYNCING...
+            {:else if vault.loadPhase === "scanning"}
+              PREPARING...
+            {:else}
+              LOADING...
+            {/if}
+          </span>
           <div class="w-full h-1 bg-chrome-border rounded-full overflow-hidden">
-            <div
-              class="h-full bg-chrome-accent transition-all duration-300 ease-out"
-              style="width: {vault.syncStats.progress}%"
-            ></div>
+            {#if determinate}
+              <div
+                class="h-full bg-chrome-accent transition-all duration-300 ease-out"
+                style="width: {vault.syncStats.progress}%"
+              ></div>
+            {:else}
+              <div
+                class="vault-load-indeterminate h-full bg-chrome-accent"
+              ></div>
+            {/if}
           </div>
         </div>
       {:else if vault.status === "error" || vault.failedFiles.length > 0}
@@ -632,3 +648,41 @@
     </form>
   {/if}
 </div>
+
+<style>
+  /* Indeterminate loading bar for phases without determinate progress
+     (scanning the folder tree, syncing the local folder). A partial-width
+     element slides across the track so the user sees motion instead of a
+     bar frozen at 0%. */
+  .vault-load-indeterminate {
+    width: 40%;
+    border-radius: 9999px;
+    animation: vault-load-slide 1.2s ease-in-out infinite;
+  }
+
+  @keyframes vault-load-slide {
+    0% {
+      transform: translateX(-110%);
+    }
+    100% {
+      transform: translateX(310%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vault-load-indeterminate {
+      width: 100%;
+      animation: vault-load-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes vault-load-pulse {
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+  }
+</style>

@@ -58,6 +58,8 @@ export function createEntity(
     lore: "",
     metadata: {},
     updatedAt: Date.now(),
+    createdAt: Date.now(),
+    modifiedAt: Date.now(),
     ...initialData,
   } as LocalEntity;
 
@@ -80,6 +82,8 @@ export function updateEntity(
     ...entity,
     ...updates,
     updatedAt: Date.now(),
+    modifiedAt: Date.now(),
+    // createdAt is preserved via the spread above; never overwritten on update.
   } as LocalEntity;
 
   if (updated.parent) {
@@ -210,6 +214,7 @@ export function addLabel(
     ...entity,
     labels: [...labels, normalizedLabel],
     updatedAt: Date.now(),
+    modifiedAt: Date.now(),
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -234,6 +239,7 @@ export function removeLabel(
     ...entity,
     labels: labels.filter((l) => l.toLowerCase() !== normalizedLabel),
     updatedAt: Date.now(),
+    modifiedAt: Date.now(),
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -266,6 +272,7 @@ export function addConnection(
     ...source,
     connections: [...source.connections, connection],
     updatedAt: Date.now(),
+    modifiedAt: Date.now(),
   } as LocalEntity;
 
   return {
@@ -299,6 +306,7 @@ export function updateConnection(
     ...source,
     connections,
     updatedAt: Date.now(),
+    modifiedAt: Date.now(),
   } as LocalEntity;
 
   return {
@@ -327,6 +335,7 @@ export function removeConnection(
     ...source,
     connections,
     updatedAt: Date.now(),
+    modifiedAt: Date.now(),
   } as LocalEntity;
 
   return {
@@ -354,6 +363,7 @@ export function bulkAddLabel(
       ...entity,
       labels: [...labels, normalizedLabel],
       updatedAt: Date.now(),
+      modifiedAt: Date.now(),
     } as LocalEntity;
     modifiedIds.push(id);
   }
@@ -380,6 +390,7 @@ export function bulkRemoveLabel(
       ...entity,
       labels: labels.filter((l) => l.toLowerCase() !== normalizedLabel),
       updatedAt: Date.now(),
+      modifiedAt: Date.now(),
     } as LocalEntity;
     modifiedIds.push(id);
   }
@@ -401,6 +412,8 @@ export function batchCreateEntities(
       entity = {
         ...item,
         updatedAt: Date.now(),
+        createdAt: (item as Partial<Entity>).createdAt ?? Date.now(),
+        modifiedAt: Date.now(),
       } as LocalEntity;
     } else {
       entity = createEntity(

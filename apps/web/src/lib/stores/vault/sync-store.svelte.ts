@@ -19,6 +19,10 @@ export interface SyncStoreDependencies {
   ensureServicesInitialized: () => Promise<void>;
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
+  loadPublishRegistry?: (
+    vaultId: string,
+    vaultHandle: FileSystemDirectoryHandle,
+  ) => Promise<void>;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
   flushPendingSaves?: (timeoutMs?: number) => Promise<void>;
 }
@@ -29,6 +33,12 @@ export class SyncStore {
   >("idle");
   errorMessage = $state<string | null>(null);
   syncType = $state<"local" | null>(null);
+  /**
+   * Which phase of a load is currently running. Drives a phase-aware loading
+   * indicator: "scanning"/"syncing" have no determinate progress (show an
+   * indeterminate bar), while "parsing" reports real `syncStats.progress`.
+   */
+  loadPhase = $state<null | "scanning" | "syncing" | "parsing">(null);
   syncStats = $state({
     updated: 0,
     created: 0,
@@ -148,6 +158,7 @@ export class SyncStore {
     const signal = this.syncAbortController.signal;
 
     this._status = "loading";
+    this.loadPhase = "scanning";
     this.errorMessage = null;
     this.syncStats = {
       updated: 0,
@@ -243,6 +254,7 @@ export class SyncStore {
       }
 
       if (localHandle && !skipLocalSync) {
+        this.loadPhase = "syncing";
         debugStore.log(
           `[SyncStore] Local sync handle found for ${vaultIdAtStart}. Synchronizing...`,
         );
@@ -305,6 +317,7 @@ export class SyncStore {
         this._status = "idle";
       }
 
+      this.loadPhase = "parsing";
       const syncPromise = this.deps.repository
         .loadFiles(
           vaultIdAtStart,
@@ -345,6 +358,9 @@ export class SyncStore {
       await Promise.all([
         this.deps.loadMaps(vaultIdAtStart),
         this.deps.loadCanvases(vaultIdAtStart),
+        vaultDir && this.deps.loadPublishRegistry
+          ? this.deps.loadPublishRegistry(vaultIdAtStart, vaultDir)
+          : Promise.resolve(),
       ]);
 
       if (this._status === "loading") {
@@ -361,6 +377,12 @@ export class SyncStore {
       this.setStatus("error");
       this.errorMessage = err.message;
     } finally {
+      // Only clear the phase if this invocation is still the active one. A
+      // stale (aborted) load must not null out the phase of the newer load
+      // that superseded it — same guard the status reset below uses.
+      if (!signal.aborted) {
+        this.loadPhase = null;
+      }
       if (!signal.aborted) {
         await this.checkForConflicts(signal);
       }

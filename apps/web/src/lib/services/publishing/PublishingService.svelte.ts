@@ -44,6 +44,22 @@ export class PublishingService {
     }
   }
 
+  async loadFromVault(vaultId: string, vaultHandle: FileSystemDirectoryHandle) {
+    const diskRegistry = await loadPublishRegistryFromDisk(vaultHandle);
+    if (!diskRegistry) return;
+    const idbRegistry = await this.deps.getPublishRegistry(vaultId);
+    if (
+      !idbRegistry ||
+      diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
+    ) {
+      await this.deps.savePublishRegistry(diskRegistry);
+      this.publishedVaults = {
+        ...this.publishedVaults,
+        [vaultId]: diskRegistry,
+      };
+    }
+  }
+
   private isLocalPath(path: string): boolean {
     if (!path) return false;
     const p = path.trim();
@@ -494,6 +510,11 @@ import { mapRegistry } from "../../stores/map-registry.svelte";
 import { canvasRegistry } from "../../stores/canvas-registry.svelte";
 import { themeStore } from "../../stores/theme.svelte";
 import { notificationStore } from "../../stores/ui/notification.svelte";
+import {
+  savePublishRegistryToDisk,
+  loadPublishRegistryFromDisk,
+  deletePublishRegistryFromDisk,
+} from "../../stores/vault/io";
 
 const KEY = "__codex_publishing_service__";
 export const publishingService: PublishingService =
@@ -507,12 +528,16 @@ export const publishingService: PublishingService =
     savePublishRegistry: async (registry) => {
       const { savePublishRegistry } =
         await import("../../stores/vault/registry");
-      return savePublishRegistry(registry);
+      await savePublishRegistry(registry);
+      const handle = await vault.getSpecificVaultHandle(registry.vaultId);
+      if (handle) await savePublishRegistryToDisk(handle, registry);
     },
     deletePublishRegistry: async (id) => {
       const { deletePublishRegistry } =
         await import("../../stores/vault/registry");
-      return deletePublishRegistry(id);
+      await deletePublishRegistry(id);
+      const handle = await vault.getSpecificVaultHandle(id);
+      if (handle) await deletePublishRegistryFromDisk(handle);
     },
     listPublishRegistries: async () => {
       const { listPublishRegistries } =

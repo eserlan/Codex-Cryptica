@@ -9,10 +9,56 @@ import { debugStore } from "../debug.svelte";
 import { stringifyEntity } from "../../utils/markdown";
 import type { LocalEntity } from "./types";
 
-import type { Map, GuestChatTranscript } from "schema";
+import type { Map, GuestChatTranscript, PublishRegistry } from "schema";
 
 // Clock skew tolerance for comparing timestamps across different filesystems
 const SKEW_MS = 2000;
+
+export async function savePublishRegistryToDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  registry: PublishRegistry,
+) {
+  if (!vaultHandle) return;
+  await writeOpfsFile(
+    [".codex", "publish-registry.json"],
+    JSON.stringify(registry, null, 2),
+    vaultHandle,
+    vaultHandle.name,
+  );
+}
+
+export async function loadPublishRegistryFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+): Promise<PublishRegistry | null> {
+  if (!vaultHandle) return null;
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: false,
+    });
+    const fileHandle = await codexDir.getFileHandle("publish-registry.json");
+    const file = await fileHandle.getFile();
+    return JSON.parse(await file.text()) as PublishRegistry;
+  } catch {
+    return null;
+  }
+}
+
+export async function deletePublishRegistryFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+) {
+  if (!vaultHandle) return;
+  try {
+    await deleteOpfsEntry(
+      vaultHandle,
+      [".codex", "publish-registry.json"],
+      vaultHandle.name,
+    );
+  } catch (err: any) {
+    if (err.name !== "NotFoundError") {
+      console.warn("[VaultIO] Failed to delete publish-registry.json", err);
+    }
+  }
+}
 
 export async function saveMapsToDisk(
   vaultHandle: FileSystemDirectoryHandle,
