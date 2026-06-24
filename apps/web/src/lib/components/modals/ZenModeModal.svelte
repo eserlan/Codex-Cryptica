@@ -8,7 +8,6 @@
   import { openEntityPopout } from "$lib/utils/zen-popout";
   import ZenView from "../zen/ZenView.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const isPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
@@ -26,15 +25,8 @@
     }
   });
 
-  const handleClose = async () => {
+  const handleClose = () => {
     if (isPopout) {
-      const confirmed = await notificationStore.confirm({
-        title: "Close tab?",
-        message: `Close the tab for "${entity?.title ?? "this entity"}"?`,
-        confirmLabel: "Close tab",
-      });
-      if (!confirmed) return;
-
       // window.close() only works for tabs a script opened (the "pop out"
       // action). When this route is reached by normal navigation — e.g.
       // opening an entity from the Table view, or a deep link on mobile — the

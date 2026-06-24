@@ -30,7 +30,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 
 import ZenModeModal from "./ZenModeModal.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { goto } from "$app/navigation";
 
 describe("ZenModeModal close (standalone entity route)", () => {
@@ -50,7 +49,7 @@ describe("ZenModeModal close (standalone entity route)", () => {
     modalUIStore.zenModeActiveTab = "overview";
   });
 
-  it("navigates out instead of stranding the user when the tab cannot be closed", async () => {
+  it("closes immediately without a confirmation prompt", async () => {
     // jsdom's window.close() is a no-op and leaves window.closed === false,
     // mirroring a tab reached by normal navigation (e.g. from the Table view)
     // rather than one opened by window.open().
@@ -58,37 +57,20 @@ describe("ZenModeModal close (standalone entity route)", () => {
     const backSpy = vi
       .spyOn(window.history, "back")
       .mockImplementation(() => {});
-    const confirmSpy = vi
-      .spyOn(notificationStore, "confirm")
-      .mockResolvedValue(true);
 
     render(ZenModeModal);
     await fireEvent.click(screen.getByTestId("zen-close"));
 
-    await waitFor(() => expect(confirmSpy).toHaveBeenCalled());
+    // No "Close tab?" dialog — close is attempted straight away.
     expect(closeSpy).toHaveBeenCalled();
 
+    // Falls back to navigating out when the tab cannot be closed, so the user
+    // is never stranded on a blank entity page.
     await waitFor(() => {
       const navigatedOut =
         (goto as unknown as ReturnType<typeof vi.fn>).mock.calls.length > 0 ||
         backSpy.mock.calls.length > 0;
       expect(navigatedOut).toBe(true);
     });
-  });
-
-  it("does nothing when the close confirmation is dismissed", async () => {
-    const closeSpy = vi.spyOn(window, "close").mockImplementation(() => {});
-    const backSpy = vi
-      .spyOn(window.history, "back")
-      .mockImplementation(() => {});
-    vi.spyOn(notificationStore, "confirm").mockResolvedValue(false);
-
-    render(ZenModeModal);
-    await fireEvent.click(screen.getByTestId("zen-close"));
-
-    await new Promise((r) => setTimeout(r, 80));
-    expect(closeSpy).not.toHaveBeenCalled();
-    expect(backSpy).not.toHaveBeenCalled();
-    expect(goto).not.toHaveBeenCalled();
   });
 });
