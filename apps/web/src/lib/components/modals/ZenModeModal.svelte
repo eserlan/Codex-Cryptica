@@ -3,15 +3,29 @@
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { base } from "$app/paths";
+  import { goto, beforeNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import { openEntityPopout } from "$lib/utils/zen-popout";
   import ZenView from "../zen/ZenView.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-  const isPopout = $derived(
-    /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
-  );
+  const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
+
+  const isPopout = $derived(ENTITY_ROUTE.test(page.url.pathname));
+
+  // Remember the last in-app view we were on before landing on a standalone
+  // entity route. Closing the entity returns the user there (e.g. the Table
+  // view) instead of stranding them on the blank entity backdrop. We can't rely
+  // on history.back() here: it steps only one history entry, which may itself be
+  // ANOTHER standalone entity route (whose page is just a black backdrop with
+  // Zen mode closed), leaving the user on a blank screen.
+  let lastAppPath: string | null = null;
+  beforeNavigate((nav) => {
+    const fromPath = nav.from?.url.pathname;
+    if (fromPath && !ENTITY_ROUTE.test(fromPath)) {
+      lastAppPath = fromPath;
+    }
+  });
 
   let entityId = $derived(modalUIStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
@@ -25,14 +39,20 @@
     }
   });
 
-  const handleClose = async () => {
+  const handleClose = () => {
     if (isPopout) {
-      const confirmed = await notificationStore.confirm({
-        title: "Close tab?",
-        message: `Close the tab for "${entity?.title ?? "this entity"}"?`,
-        confirmLabel: "Close tab",
-      });
-      if (confirmed) window.close();
+      // window.close() only works for tabs a script opened (the "pop out"
+      // action). When this route is reached by normal navigation — e.g.
+      // opening an entity from the Table view, or a deep link on mobile — the
+      // tab is not script-closable and window.close() is a silent no-op, which
+      // would strand the user on a blank entity page. Try to close, then fall
+      // back to leaving the standalone entity view.
+      window.close();
+      setTimeout(() => {
+        if (typeof window !== "undefined" && window.closed) return;
+        modalUIStore.closeZenMode();
+        void goto(lastAppPath ?? `${base}/`);
+      }, 50);
       return;
     }
     modalUIStore.closeZenMode();

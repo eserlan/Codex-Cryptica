@@ -25,7 +25,10 @@
         icon: "icon-[lucide--network]",
         label: "Graph",
         title: "Knowledge Graph",
-        href: sessionModeStore.isGuestMode && guestVault.publishId ? `${base}/guest/${guestVault.publishId}` : `${base}/`,
+        href:
+          sessionModeStore.isGuestMode && guestVault.publishId
+            ? `${base}/guest/${guestVault.publishId}`
+            : `${base}/`,
       },
       {
         id: "map",
@@ -47,6 +50,13 @@
         label: "Timeline",
         title: "World Chronology",
         href: `${base}/timeline`,
+      },
+      {
+        id: "table",
+        icon: "icon-[lucide--table]",
+        label: "Table",
+        title: "Entity Table — overview, filter, and sort all entities",
+        href: `${base}/table`,
       },
     ];
   });

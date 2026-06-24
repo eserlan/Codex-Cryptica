@@ -164,6 +164,11 @@ export const EntitySchema = z.object({
   discoverySource: z.string().optional(),
   lastUpdated: z.number().optional(),
   updatedAt: z.number().optional(),
+  // Epoch ms. createdAt is set once at creation and preserved across edits;
+  // modifiedAt is refreshed on every mutation (kept alongside updatedAt, which
+  // remains the load-bearing field for sync scanning).
+  createdAt: z.number().optional(),
+  modifiedAt: z.number().optional(),
   _path: z.union([z.string(), z.array(z.string())]).optional(),
   parent: z.string().optional(),
   soundBite: SoundBiteSchema.optional(),
