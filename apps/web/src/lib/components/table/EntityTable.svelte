@@ -13,13 +13,29 @@
     sort,
     connectionCounts = {},
     onSort,
+    selectedIds = new Set<string>(),
+    allSelected = false,
+    someSelected = false,
+    onToggleRow,
+    onToggleAll,
   }: {
     entities: Entity[];
     vaultId: string;
     sort: SortState;
     connectionCounts?: Record<string, ConnectionSummary>;
     onSort: (key: SortKey) => void;
+    selectedIds?: Set<string>;
+    allSelected?: boolean;
+    someSelected?: boolean;
+    onToggleRow?: (id: string) => void;
+    onToggleAll?: () => void;
   } = $props();
+
+  // <input indeterminate> can't be set via attribute — bind the element.
+  let selectAllEl = $state<HTMLInputElement | null>(null);
+  $effect(() => {
+    if (selectAllEl) selectAllEl.indeterminate = someSelected;
+  });
 
   interface Column {
     key: SortKey | null;
@@ -48,6 +64,17 @@
   <table class="w-full border-collapse text-left" data-testid="entity-table">
     <thead class="sticky top-0 z-10 bg-theme-surface">
       <tr class="border-b border-theme-border">
+        <th scope="col" class="px-3 py-2 w-10">
+          <input
+            type="checkbox"
+            bind:this={selectAllEl}
+            checked={allSelected}
+            onchange={() => onToggleAll?.()}
+            aria-label="Select all filtered entities"
+            data-testid="entity-table-select-all"
+            class="h-4 w-4 cursor-pointer accent-theme-primary"
+          />
+        </th>
         {#each columns as col (col.label)}
           <th
             scope="col"
@@ -89,6 +116,8 @@
         <EntityTableRow
           {entity}
           {vaultId}
+          selected={selectedIds.has(entity.id)}
+          onToggleSelect={onToggleRow}
           connectionSummary={connectionCounts[entity.id] ?? {
             inbound: 0,
             outbound: 0,
