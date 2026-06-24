@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 
-vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
+vi.mock("$app/navigation", () => ({ goto: vi.fn(), beforeNavigate: vi.fn() }));
 
 // Popout-style URL → ZenModeModal treats itself as a standalone entity view.
 vi.mock("$app/state", () => ({
@@ -54,9 +54,6 @@ describe("ZenModeModal close (standalone entity route)", () => {
     // mirroring a tab reached by normal navigation (e.g. from the Table view)
     // rather than one opened by window.open().
     const closeSpy = vi.spyOn(window, "close").mockImplementation(() => {});
-    const backSpy = vi
-      .spyOn(window.history, "back")
-      .mockImplementation(() => {});
 
     render(ZenModeModal);
     await fireEvent.click(screen.getByTestId("zen-close"));
@@ -64,13 +61,10 @@ describe("ZenModeModal close (standalone entity route)", () => {
     // No "Close tab?" dialog — close is attempted straight away.
     expect(closeSpy).toHaveBeenCalled();
 
-    // Falls back to navigating out when the tab cannot be closed, so the user
-    // is never stranded on a blank entity page.
+    // Falls back to navigating into the app when the tab cannot be closed, so
+    // the user is never stranded on the blank standalone entity backdrop.
     await waitFor(() => {
-      const navigatedOut =
-        (goto as unknown as ReturnType<typeof vi.fn>).mock.calls.length > 0 ||
-        backSpy.mock.calls.length > 0;
-      expect(navigatedOut).toBe(true);
+      expect(goto as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalled();
     });
   });
 });

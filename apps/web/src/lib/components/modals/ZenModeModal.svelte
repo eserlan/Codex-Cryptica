@@ -3,15 +3,29 @@
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { base } from "$app/paths";
-  import { goto } from "$app/navigation";
+  import { goto, beforeNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import { openEntityPopout } from "$lib/utils/zen-popout";
   import ZenView from "../zen/ZenView.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  const isPopout = $derived(
-    /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
-  );
+  const ENTITY_ROUTE = /\/vault\/[^/]+\/entity\/[^/]+$/;
+
+  const isPopout = $derived(ENTITY_ROUTE.test(page.url.pathname));
+
+  // Remember the last in-app view we were on before landing on a standalone
+  // entity route. Closing the entity returns the user there (e.g. the Table
+  // view) instead of stranding them on the blank entity backdrop. We can't rely
+  // on history.back() here: it steps only one history entry, which may itself be
+  // ANOTHER standalone entity route (whose page is just a black backdrop with
+  // Zen mode closed), leaving the user on a blank screen.
+  let lastAppPath: string | null = null;
+  beforeNavigate((nav) => {
+    const fromPath = nav.from?.url.pathname;
+    if (fromPath && !ENTITY_ROUTE.test(fromPath)) {
+      lastAppPath = fromPath;
+    }
+  });
 
   let entityId = $derived(modalUIStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
@@ -37,11 +51,7 @@
       setTimeout(() => {
         if (typeof window !== "undefined" && window.closed) return;
         modalUIStore.closeZenMode();
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          void goto(`${base}/`);
-        }
+        void goto(lastAppPath ?? `${base}/`);
       }, 50);
       return;
     }
