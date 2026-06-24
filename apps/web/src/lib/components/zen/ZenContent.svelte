@@ -6,6 +6,7 @@
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
+  import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import { isEntityVisible, type Entity } from "schema";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
@@ -675,5 +676,10 @@
     {/if}
 
     <DetailProposals isEditing={editState.isEditing} entityId={entity?.id} />
+    <EntityProposals
+      content={entity?.content || ""}
+      isEditing={editState.isEditing}
+      entityId={entity?.id}
+    />
   </div>
 </div>
