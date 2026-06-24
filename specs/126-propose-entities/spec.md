@@ -2,7 +2,7 @@
 
 **Feature Branch**: `126-propose-entities`  
 **Created**: 2026-05-30  
-**Status**: Draft  
+**Status**: Restored — manual creation only
 **Input**: User description: "propose new entities in the entities detail views (sidebar + zen mode). similar to how we propose connections, we should also propose entities. use the same simle rule, if its in bold, it can be a entity."
 
 ## Clarifications
@@ -45,7 +45,7 @@ As a user viewing an entity in Zen mode, I want to see proposed entities based o
 
 ### User Story 3 - Accept Entity Proposals (Priority: P2)
 
-As a user seeing a list of proposed entities, I want to be able to accept a proposal to quickly create a new entity from it. The system should intelligently guess the category, use the corresponding template, and use the current page's content as context.
+As a user seeing a list of proposed entities, I want to open the normal creation form with a proposed title prefilled, so I can choose the category and explicitly decide whether to create it.
 
 **Why this priority**: Merely seeing proposals isn't enough; the user needs an actionable, intelligent way to create them that minimizes manual data entry.
 
@@ -75,9 +75,9 @@ As a user seeing a list of proposed entities, I want to be able to accept a prop
 - **FR-004**: The system MUST provide an interaction (e.g., a button) to create a new entity from a proposal.
 - **FR-005**: The system MUST ensure the proposed entity rule mirrors the simplicity of the proposed connections rule (if it is bold, it is a candidate).
 - **FR-006**: The system MUST NOT propose bold text as a new entity if that text is already formatted as a Markdown link (e.g., `[**text**](...)` or `**[text](...)**`).
-- **FR-007**: When creating an entity from a proposal, the system MUST infer a "best guess" for the entity's category.
-- **FR-008**: The system MUST use the inferred category's template to initialize the newly created entity.
-- **FR-009**: The system MUST provide the content from the current page (where the proposal was found) as input context when creating the new entity.
+- **FR-007**: Selecting a proposal MUST open the normal entity creation form with its title prefilled.
+- **FR-008**: The system MUST NOT create an entity, call AI, or infer a category until the user explicitly submits the creation form.
+- **FR-009**: The normal creation form remains responsible for the selected category and template behavior.
 
 ### Key Entities
 
