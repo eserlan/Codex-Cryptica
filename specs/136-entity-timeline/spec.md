@@ -103,7 +103,7 @@ The user opens the Timeline for an entity that has no linked events and is told,
 - **FR-004**: Each timeline entry MUST display the event title.
 - **FR-005**: Each timeline entry MUST display the event's date or date range when a date is available.
 - **FR-006**: Each timeline entry MUST display the event's category, a short summary/snippet, and related participants when those are available and inexpensive to show. The event "category" is derived from the event's Labels (never the entity-type value `"event"`, which is identical for every row), and MUST be presented as a Label — not a "Tag".
-- **FR-007**: Users MUST be able to click a timeline entry to open that event's detail page.
+- **FR-007**: Users MUST be able to click a timeline entry to open that event in the same view they are currently in — Zen Mode opens the event in Zen Mode; the entity detail panel opens it in the sidebar panel.
 - **FR-008**: The Timeline MUST place events that have no date in a clearly labelled "Undated" group, ordered after all dated events.
 - **FR-009**: The system MUST NOT invent, infer, or auto-assign dates for undated events.
 - **FR-010**: The Timeline MUST be read-only: it MUST NOT create, edit, delete, reorder, or otherwise mutate events, the entity, or any lore as a side effect of viewing it.
