@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import EntityTable from "../EntityTable.svelte";
 import type { SortKey, SortState } from "../entityTableSort";
+import { goto } from "$app/navigation";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -86,5 +87,79 @@ describe("EntityTable", () => {
 
     const nameHeader = screen.getByText("Name").closest("th");
     expect(nameHeader?.getAttribute("aria-sort")).toBe("ascending");
+  });
+
+  it("renders a select checkbox per row plus a select-all header checkbox", () => {
+    render(EntityTable, {
+      props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+    });
+
+    expect(screen.getByTestId("entity-table-select-all")).toBeTruthy();
+    expect(screen.getAllByTestId("entity-table-row-select")).toHaveLength(2);
+  });
+
+  it("reflects the selected set and toggles a row without navigating", async () => {
+    const onToggleRow = vi.fn<(id: string) => void>();
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        selectedIds: new Set(["e1"]),
+        onToggleRow,
+      },
+    });
+
+    const boxes = screen.getAllByTestId(
+      "entity-table-row-select",
+    ) as HTMLInputElement[];
+    expect(boxes[0].checked).toBe(true);
+    expect(boxes[1].checked).toBe(false);
+
+    await fireEvent.click(boxes[1]);
+    expect(onToggleRow).toHaveBeenCalledWith("e2");
+    expect(goto).not.toHaveBeenCalled();
+  });
+
+  it("checks select-all when every row is selected and calls onToggleAll", async () => {
+    const onToggleAll = vi.fn();
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        selectedIds: new Set(["e1", "e2"]),
+        allSelected: true,
+        onToggleAll,
+      },
+    });
+
+    const selectAll = screen.getByTestId(
+      "entity-table-select-all",
+    ) as HTMLInputElement;
+    expect(selectAll.checked).toBe(true);
+
+    await fireEvent.click(selectAll);
+    expect(onToggleAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the select-all checkbox as indeterminate on a partial selection", () => {
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        selectedIds: new Set(["e1"]),
+        someSelected: true,
+      },
+    });
+
+    const selectAll = screen.getByTestId(
+      "entity-table-select-all",
+    ) as HTMLInputElement;
+    expect(selectAll.indeterminate).toBe(true);
   });
 });

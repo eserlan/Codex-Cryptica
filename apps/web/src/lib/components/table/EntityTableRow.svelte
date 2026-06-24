@@ -10,9 +10,13 @@
   let {
     entity,
     vaultId,
+    selected = false,
+    onToggleSelect,
   }: {
     entity: Entity;
     vaultId: string;
+    selected?: boolean;
+    onToggleSelect?: (id: string) => void;
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
@@ -46,15 +50,31 @@
   function handleRowClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (target.closest("a")) return; // let the title link handle it
+    if (target.closest("[data-row-select]")) return; // let the checkbox toggle
     void goto(href);
   }
 </script>
 
 <tr
-  class="group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5"
+  class="group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5 {selected
+    ? 'bg-theme-primary/10'
+    : ''}"
   data-testid="entity-table-row"
+  data-selected={selected}
   onclick={handleRowClick}
 >
+  <!-- Select -->
+  <td class="px-3 py-2 align-top" data-row-select>
+    <input
+      type="checkbox"
+      checked={selected}
+      onchange={() => onToggleSelect?.(entity.id)}
+      aria-label="Select {entity.title}"
+      data-testid="entity-table-row-select"
+      class="h-4 w-4 cursor-pointer accent-theme-primary"
+    />
+  </td>
+
   <!-- Name -->
   <td class="px-3 py-2 align-top">
     <a

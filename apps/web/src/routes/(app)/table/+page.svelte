@@ -1,6 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import {
     filterEntities,
@@ -42,6 +43,48 @@
   );
 
   const rows = $derived(sortEntities(filtered, sort));
+
+  // ─── Row selection + bulk actions ───────────────────────────────────────
+  let selectedIds = $state<Set<string>>(new Set());
+
+  // Selection respects the current filtered set: clear it whenever the filters
+  // change so we never act on rows the user can no longer see. (Sorting keeps
+  // the same set, so it doesn't clear.)
+  $effect(() => {
+    void searchQuery;
+    void typeFilters;
+    selectedIds = new Set();
+  });
+
+  const selectedVisible = $derived(rows.filter((e) => selectedIds.has(e.id)));
+  const allSelected = $derived(
+    rows.length > 0 && rows.every((e) => selectedIds.has(e.id)),
+  );
+  const someSelected = $derived(selectedVisible.length > 0 && !allSelected);
+
+  function toggleRow(id: string) {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    selectedIds = next;
+  }
+
+  function toggleAll() {
+    if (allSelected) {
+      selectedIds = new Set();
+    } else {
+      selectedIds = new Set(rows.map((e) => e.id));
+    }
+  }
+
+  function clearSelection() {
+    selectedIds = new Set();
+  }
+
+  function openBulkLabels() {
+    if (selectedVisible.length === 0) return;
+    modalUIStore.openBulkLabelDialog(selectedVisible.map((e) => e.id));
+  }
 
   function handleSort(key: SortKey) {
     sort = nextSortState(sort, key);
@@ -170,14 +213,56 @@
           onCta={clearFilters}
         />
       {:else}
-        <p
-          class="mb-2 text-xs text-theme-muted"
-          data-testid="entity-table-count"
-        >
-          {rows.length}
-          {rows.length === 1 ? "entity" : "entities"}
-        </p>
-        <EntityTable entities={rows} {vaultId} {sort} onSort={handleSort} />
+        {#if selectedVisible.length > 0}
+          <div
+            class="mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2"
+            data-testid="entity-table-selection-toolbar"
+          >
+            <span
+              class="text-xs font-semibold text-theme-text"
+              data-testid="entity-table-selection-count"
+            >
+              {selectedVisible.length} selected
+            </span>
+            <button
+              type="button"
+              onclick={openBulkLabels}
+              data-testid="entity-table-bulk-label"
+              class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+            >
+              <span class="icon-[lucide--tags] h-3.5 w-3.5" aria-hidden="true"
+              ></span>
+              Add / remove labels
+            </button>
+            <button
+              type="button"
+              onclick={clearSelection}
+              data-testid="entity-table-selection-clear"
+              class="ml-auto rounded text-xs text-theme-muted underline hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+            >
+              Clear selection
+            </button>
+          </div>
+        {:else}
+          <p
+            class="mb-2 text-xs text-theme-muted"
+            data-testid="entity-table-count"
+          >
+            {rows.length}
+            {rows.length === 1 ? "entity" : "entities"}
+          </p>
+        {/if}
+        <EntityTable
+          entities={rows}
+          {vaultId}
+          {sort}
+          onSort={handleSort}
+          {selectedIds}
+          {allSelected}
+          {someSelected}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+        />
       {/if}
     </div>
   {/if}
