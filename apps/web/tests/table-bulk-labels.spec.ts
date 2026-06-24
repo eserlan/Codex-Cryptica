@@ -54,12 +54,25 @@ test.describe("Table row selection + bulk labels", () => {
     await page.getByRole("button", { name: "Done" }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
 
-    // Re-opening the dialog surfaces the just-applied label as a recent one
-    // (mirrors the graph bulk-labels assertion that the apply persisted).
-    await page.getByTestId("entity-table-bulk-label").click();
-    await page.getByPlaceholder("Label name…").click();
-    await expect(page.getByText("Recent Labels")).toBeVisible();
-    await expect(page.getByRole("option", { name: "party" })).toBeVisible();
+    // Persisted to exactly the selected entities and survives a full reload
+    // (frontmatter round-trip — Gamma was never selected, so stays untagged).
+    await page.reload();
+    await expect(page.getByTestId("entity-table-row")).toHaveCount(3);
+    await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        const labels = (t: string) =>
+          (
+            (
+              Object.values(vault.entities).find(
+                (e: any) => e.title === t,
+              ) as any
+            )?.labels ?? []
+          ).includes("party");
+        return labels("Alpha") && labels("Beta") && !labels("Gamma");
+      },
+      { timeout: 10000 },
+    );
   });
 
   test("select-all toggles every filtered row and clears on filter change", async ({
