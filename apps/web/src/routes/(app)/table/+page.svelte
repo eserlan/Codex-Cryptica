@@ -42,7 +42,7 @@
   );
 
   const connectionCounts = $derived.by(() => {
-    const inboundConnections = vault.inboundConnections;
+    const inboundConnections = vault.inboundConnections ?? {};
 
     return Object.fromEntries(
       vault.allEntities.map((entity) => {
