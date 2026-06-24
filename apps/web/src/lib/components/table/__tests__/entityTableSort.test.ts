@@ -3,7 +3,8 @@ import type { Entity } from "schema";
 import {
   sortEntities,
   nextSortState,
-  getEntityUpdatedAt,
+  getEntityCreatedAt,
+  getEntityModifiedAt,
   type SortState,
 } from "../entityTableSort";
 
@@ -24,31 +25,74 @@ function entity(
 
 const titles = (entities: Entity[]) => entities.map((e) => e.title);
 
-describe("getEntityUpdatedAt", () => {
-  it("prefers updatedAt over lastUpdated", () => {
+describe("getEntityCreatedAt", () => {
+  it("returns createdAt when set", () => {
     expect(
-      getEntityUpdatedAt(
-        entity({ id: "a", title: "A", updatedAt: 5, lastUpdated: 1 }),
-      ),
-    ).toBe(5);
+      getEntityCreatedAt(entity({ id: "a", title: "A", createdAt: 7 })),
+    ).toBe(7);
   });
 
-  it("falls back to lastUpdated", () => {
+  it("returns undefined when createdAt is absent", () => {
     expect(
-      getEntityUpdatedAt(entity({ id: "a", title: "A", lastUpdated: 9 })),
+      getEntityCreatedAt(entity({ id: "a", title: "A", updatedAt: 5 })),
+    ).toBeUndefined();
+  });
+});
+
+describe("getEntityModifiedAt", () => {
+  it("prefers modifiedAt over updatedAt and lastUpdated", () => {
+    expect(
+      getEntityModifiedAt(
+        entity({
+          id: "a",
+          title: "A",
+          modifiedAt: 9,
+          updatedAt: 5,
+          lastUpdated: 1,
+        }),
+      ),
     ).toBe(9);
   });
 
-  it("returns undefined when neither is set", () => {
-    expect(getEntityUpdatedAt(entity({ id: "a", title: "A" }))).toBeUndefined();
+  it("falls back to updatedAt then lastUpdated", () => {
+    expect(
+      getEntityModifiedAt(entity({ id: "a", title: "A", updatedAt: 5 })),
+    ).toBe(5);
+    expect(
+      getEntityModifiedAt(entity({ id: "a", title: "A", lastUpdated: 3 })),
+    ).toBe(3);
+  });
+
+  it("returns undefined when no timestamp is set", () => {
+    expect(
+      getEntityModifiedAt(entity({ id: "a", title: "A" })),
+    ).toBeUndefined();
   });
 });
 
 describe("sortEntities", () => {
   const items: Entity[] = [
-    entity({ id: "b", title: "Banana", type: "item", updatedAt: 200 }),
-    entity({ id: "a", title: "apple", type: "character", updatedAt: 100 }),
-    entity({ id: "c", title: "Cherry", type: "item", updatedAt: 300 }),
+    entity({
+      id: "b",
+      title: "Banana",
+      type: "item",
+      createdAt: 20,
+      modifiedAt: 200,
+    }),
+    entity({
+      id: "a",
+      title: "apple",
+      type: "character",
+      createdAt: 30,
+      modifiedAt: 100,
+    }),
+    entity({
+      id: "c",
+      title: "Cherry",
+      type: "item",
+      createdAt: 10,
+      modifiedAt: 300,
+    }),
   ];
 
   it("sorts by title ascending (case-insensitive)", () => {
@@ -61,13 +105,18 @@ describe("sortEntities", () => {
     expect(titles(out)).toEqual(["Cherry", "Banana", "apple"]);
   });
 
-  it("sorts by updated ascending", () => {
-    const out = sortEntities(items, { key: "updated", direction: "asc" });
+  it("sorts by created ascending", () => {
+    const out = sortEntities(items, { key: "created", direction: "asc" });
+    expect(titles(out)).toEqual(["Cherry", "Banana", "apple"]);
+  });
+
+  it("sorts by modified ascending", () => {
+    const out = sortEntities(items, { key: "modified", direction: "asc" });
     expect(titles(out)).toEqual(["apple", "Banana", "Cherry"]);
   });
 
-  it("sorts by updated descending", () => {
-    const out = sortEntities(items, { key: "updated", direction: "desc" });
+  it("sorts by modified descending", () => {
+    const out = sortEntities(items, { key: "modified", direction: "desc" });
     expect(titles(out)).toEqual(["Cherry", "Banana", "apple"]);
   });
 
@@ -76,17 +125,17 @@ describe("sortEntities", () => {
     expect(titles(out)).toEqual(["apple", "Banana", "Cherry"]);
   });
 
-  it("puts entities missing the updated value last regardless of direction", () => {
+  it("puts entities missing the sort value last regardless of direction", () => {
     const withGaps: Entity[] = [
-      entity({ id: "x", title: "Xeno" }), // no timestamp
-      entity({ id: "y", title: "Yak", updatedAt: 50 }),
-      entity({ id: "z", title: "Zed", updatedAt: 10 }),
+      entity({ id: "x", title: "Xeno" }), // no timestamps
+      entity({ id: "y", title: "Yak", modifiedAt: 50 }),
+      entity({ id: "z", title: "Zed", modifiedAt: 10 }),
     ];
     expect(
-      titles(sortEntities(withGaps, { key: "updated", direction: "asc" })),
+      titles(sortEntities(withGaps, { key: "modified", direction: "asc" })),
     ).toEqual(["Zed", "Yak", "Xeno"]);
     expect(
-      titles(sortEntities(withGaps, { key: "updated", direction: "desc" })),
+      titles(sortEntities(withGaps, { key: "modified", direction: "desc" })),
     ).toEqual(["Yak", "Zed", "Xeno"]);
   });
 
@@ -115,9 +164,9 @@ describe("nextSortState", () => {
 
   it("defaults to ascending when switching columns", () => {
     expect(
-      nextSortState({ key: "title", direction: "desc" }, "updated"),
+      nextSortState({ key: "title", direction: "desc" }, "modified"),
     ).toEqual({
-      key: "updated",
+      key: "modified",
       direction: "asc",
     });
   });

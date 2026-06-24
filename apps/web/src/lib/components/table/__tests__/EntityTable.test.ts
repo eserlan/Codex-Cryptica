@@ -33,7 +33,8 @@ const rows: Entity[] = [
     type: "character",
     content: "A weary knight.",
     labels: ["hero"],
-    updatedAt: 1_700_000_000_000,
+    createdAt: 1_600_000_000_000,
+    modifiedAt: 1_700_000_000_000,
   }),
   entity({ id: "e2", title: "Brindlewood", type: "location" }),
 ];
@@ -66,8 +67,11 @@ describe("EntityTable", () => {
       props: { entities: rows, vaultId: "v1", sort, onSort },
     });
 
-    await fireEvent.click(screen.getByTestId("entity-table-sort-updated"));
-    expect(onSort).toHaveBeenCalledWith("updated");
+    await fireEvent.click(screen.getByTestId("entity-table-sort-modified"));
+    expect(onSort).toHaveBeenCalledWith("modified");
+
+    await fireEvent.click(screen.getByTestId("entity-table-sort-created"));
+    expect(onSort).toHaveBeenCalledWith("created");
   });
 
   it("marks the active sort column with aria-sort", () => {

@@ -5,7 +5,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { entitySnippet } from "./entityTableSnippet";
-  import { getEntityUpdatedAt } from "./entityTableSort";
+  import { getEntityCreatedAt, getEntityModifiedAt } from "./entityTableSort";
 
   let {
     entity,
@@ -29,7 +29,8 @@
         : (entity.tags?.length ?? 0)) - chips.length,
     ),
   );
-  const updatedAt = $derived(getEntityUpdatedAt(entity));
+  const createdAt = $derived(getEntityCreatedAt(entity));
+  const modifiedAt = $derived(getEntityModifiedAt(entity));
 
   function formatDate(ts: number | undefined): string {
     if (!ts) return "";
@@ -109,17 +110,21 @@
     {/if}
   </td>
 
-  <!-- Created (schema has no created timestamp yet) -->
+  <!-- Created -->
   <td class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90">
-    <span class="text-theme-muted/50" aria-label="No created date">—</span>
+    {#if createdAt}
+      {formatDate(createdAt)}
+    {:else}
+      <span class="text-theme-muted/50" aria-label="No created date">—</span>
+    {/if}
   </td>
 
-  <!-- Updated -->
+  <!-- Modified -->
   <td class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90">
-    {#if updatedAt}
-      {formatDate(updatedAt)}
+    {#if modifiedAt}
+      {formatDate(modifiedAt)}
     {:else}
-      <span class="text-theme-muted/50" aria-label="No updated date">—</span>
+      <span class="text-theme-muted/50" aria-label="No modified date">—</span>
     {/if}
   </td>
 </tr>

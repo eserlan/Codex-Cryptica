@@ -208,6 +208,7 @@ export class EntityMutationService {
             : current.content,
         lore: patch.lore !== undefined ? patch.lore : current.lore,
         updatedAt: Date.now(),
+        modifiedAt: Date.now(),
       } as LocalEntity;
 
       newEntities[id] = merged;

@@ -27,8 +27,8 @@
     { key: "type", label: "Type", class: "min-w-[8rem]" },
     { key: null, label: "Summary", class: "min-w-[16rem]" },
     { key: null, label: "Tags", class: "min-w-[8rem]" },
-    { key: null, label: "Created", class: "min-w-[7rem]" },
-    { key: "updated", label: "Updated", class: "min-w-[7rem]" },
+    { key: "created", label: "Created", class: "min-w-[7rem]" },
+    { key: "modified", label: "Modified", class: "min-w-[7rem]" },
   ];
 
   function ariaSort(key: SortKey | null): "ascending" | "descending" | "none" {

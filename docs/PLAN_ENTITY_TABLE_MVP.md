@@ -5,13 +5,13 @@
 
 ## Design decisions (resolved up front)
 
-| Question                | Decision                                                                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Where it lives          | New route `vault/[id]/table` + an `ActivityBar` view entry (peer to Graph/Map/Canvas/Timeline), per the epic framing it as a distinct mode.                  |
-| Data source             | Reuse `vault.allEntities` (already loaded into the store) — no new loading path.                                                                             |
-| "Created date" column   | Schema has no `createdAt`. Show `updatedAt`/`lastUpdated` for "Updated"; show "Created" as `—` unless a value exists. Flagged as a known gap, not a blocker. |
-| Mobile                  | Horizontal scroll within a constrained container (keep all columns); no card fallback in MVP. Header stays sticky.                                           |
-| Filtering/sorting logic | Reuse `filterEntities` / `countEntityTypes` from `explorer/entityListFiltering.ts` where possible; add a small sort helper.                                  |
+| Question                | Decision                                                                                                                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Where it lives          | New route `vault/[id]/table` + an `ActivityBar` view entry (peer to Graph/Map/Canvas/Timeline), per the epic framing it as a distinct mode.                                                                                    |
+| Data source             | Reuse `vault.allEntities` (already loaded into the store) — no new loading path.                                                                                                                                               |
+| "Created date" column   | Schema now carries `createdAt` + `modifiedAt` (set in `entities.ts`/`entity-mutations.ts`). Created shows `createdAt`; Modified shows `modifiedAt ?? updatedAt ?? lastUpdated`. Legacy entities without timestamps render `—`. |
+| Mobile                  | Horizontal scroll within a constrained container (keep all columns); no card fallback in MVP. Header stays sticky.                                                                                                             |
+| Filtering/sorting logic | Reuse `filterEntities` / `countEntityTypes` from `explorer/entityListFiltering.ts` where possible; add a small sort helper.                                                                                                    |
 
 ## Baseline columns (MVP)
 
