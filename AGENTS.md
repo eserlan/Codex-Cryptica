@@ -53,11 +53,12 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/132-calendar-agenda-view/plan.md).
+shell commands, and other important information, read the [current plan](./specs/136-entity-timeline/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
 - TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, existing layout UI (133-entity-explorer-layout)
 - Existing browser-local sidebar-open and active-tool preferences; no new (133-entity-explorer-layout)
 
