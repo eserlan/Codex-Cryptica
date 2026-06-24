@@ -8,6 +8,7 @@
   import ZenContent from "./ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
+  import DetailTimelineTab from "$lib/components/entity-detail/DetailTimelineTab.svelte";
   import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -56,6 +57,7 @@
   let tabOverview = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
   let tabChats = $state<HTMLButtonElement>();
+  let tabTimeline = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
@@ -168,13 +170,14 @@
   };
 
   const visibleZenTabs = $derived.by(() => {
-    const list: ("overview" | "map" | "chats")[] = ["overview"];
+    const list: ("overview" | "map" | "chats" | "timeline")[] = ["overview"];
     if (!vault.isGuest) {
       list.push("map");
     }
     if (entity?.type === "character") {
       list.push("chats");
     }
+    list.push("timeline");
     return list;
   });
 
@@ -193,6 +196,7 @@
       if (nextTab === "overview") tabOverview?.focus();
       else if (nextTab === "map") tabMap?.focus();
       else if (nextTab === "chats") tabChats?.focus();
+      else if (nextTab === "timeline") tabTimeline?.focus();
     }
   };
 
@@ -393,6 +397,23 @@
           CHATS
         </button>
       {/if}
+
+      <button
+        bind:this={tabTimeline}
+        role="tab"
+        id="tab-timeline"
+        aria-selected={activeTab === "timeline"}
+        aria-controls="panel-timeline"
+        tabindex={activeTab === "timeline" ? 0 : -1}
+        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        'timeline'
+          ? 'text-theme-primary border-theme-primary'
+          : 'text-theme-muted border-transparent hover:text-theme-text'}"
+        onclick={() => (modalUIStore.zenModeActiveTab = "timeline")}
+        onkeydown={handleTabKeydown}
+      >
+        TIMELINE
+      </button>
     </div>
 
     <!-- Main Body -->
@@ -458,6 +479,16 @@
           >
             <DetailChatsTab {entity} />
           </div>
+        </div>
+      {:else if activeTab === "timeline"}
+        <div
+          role="tabpanel"
+          id="panel-timeline"
+          aria-labelledby="tab-timeline"
+          class="flex-1 w-full h-full overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <DetailTimelineTab {entity} />
         </div>
       {/if}
     </div>
