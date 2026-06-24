@@ -488,7 +488,7 @@
           class="flex-1 w-full h-full overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
-          <DetailTimelineTab {entity} />
+          <DetailTimelineTab {entity} onNavigate={navigateTo} />
         </div>
       {/if}
     </div>

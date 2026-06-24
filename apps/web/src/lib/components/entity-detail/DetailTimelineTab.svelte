@@ -5,15 +5,16 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
 
-  let { entity } = $props<{ entity: Entity }>();
+  let {
+    entity,
+    onNavigate = (id: string) => {
+      vault.selectedEntityId = id;
+    },
+  } = $props<{ entity: Entity; onNavigate?: (id: string) => void }>();
 
   const timeline = $derived<EntityTimeline>(
     buildEntityTimeline(entity, vault.allEntities, calendarStore.config),
   );
-
-  function openEvent(eventId: string) {
-    vault.selectedEntityId = eventId;
-  }
 </script>
 
 {#if timeline.isEmpty}
@@ -43,11 +44,11 @@
                 type="button"
                 class="w-full text-left rounded border border-theme-border bg-theme-bg hover:border-theme-primary hover:bg-theme-hover transition-colors px-3 py-2 focus:outline-none focus:ring-1 focus:ring-theme-primary"
                 data-testid="timeline-row"
-                onclick={() => openEvent(row.eventId)}
+                onclick={() => onNavigate(row.eventId)}
                 onkeydown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    openEvent(row.eventId);
+                    onNavigate(row.eventId);
                   }
                 }}
               >
