@@ -102,6 +102,7 @@ jobs:
         run: |
           git fetch origin blog
           git checkout origin/blog -- apps/web/src/lib/content/blog/
+          git checkout origin/blog -- apps/web/static/images/ || true
           echo "Blog articles overlaid onto main:"
           ls -1 apps/web/src/lib/content/blog/
 
