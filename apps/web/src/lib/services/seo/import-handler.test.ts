@@ -335,4 +335,36 @@ describe("SeoImportService", () => {
     expect(mem.has("__codex_pending_import")).toBe(false);
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
   });
+
+  it("should wire explicit references to connections", async () => {
+    mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+    mockVaultStore.createEntity = vi
+      .fn()
+      .mockResolvedValueOnce("id-elara")
+      .mockResolvedValueOnce("id-king");
+
+    const drafts = [
+      {
+        type: "character",
+        title: "Elara",
+        content: "A brave warrior.",
+        references: ["Goblin King"],
+      },
+      {
+        type: "character",
+        title: "Goblin King",
+        content: "The evil king.",
+      },
+    ];
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+
+    await service.checkAndHandlePendingImport();
+
+    expect(mockVaultStore.addConnection).toHaveBeenCalledWith(
+      "id-elara",
+      "id-king",
+      "references",
+      "Goblin King",
+    );
+  });
 });

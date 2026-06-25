@@ -1,11 +1,14 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-06-22
+Auto-generated from all feature plans. Last updated: 2026-06-25
 
 ## Active Technologies
+
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility (135-guest-vault-r2)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for hosted files, IndexedDB (`PublishRegistry`) for local host settings (135-guest-vault-r2)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for hosted files, IndexedDB (`PublishRegistry`) for local host settings, `localStorage` (`GuestHistory`) for guest browser history (135-guest-vault-r2)
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, Tailwind 4, `@codex/events`, `generator-engine` (137-standalone-generator-session-hub)
+- Client-side `sessionStorage` (session lifecycle) and `localStorage` (handoff payload `__codex_pending_import` for vault saving) (137-standalone-generator-session-hub)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4 (134-entity-navigation-history)
 - N/A (In-memory session state) (134-entity-navigation-history)
@@ -209,12 +212,10 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+
+- 137-standalone-generator-session-hub: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, Tailwind 4, `@codex/events`, `generator-engine`
 - 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
 - 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
-
-- 134-entity-navigation-history: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4
-
-
 
 <!-- MANUAL ADDITIONS START -->
 

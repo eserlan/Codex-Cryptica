@@ -2,6 +2,7 @@ import { untrack } from "svelte";
 import type { Core } from "cytoscape";
 import {
   initGraph,
+  isLayoutCollinear,
   LayoutManager,
   GraphImageManager,
   setupGraphEvents,
@@ -83,6 +84,25 @@ export class GraphViewController {
 
   private resizeTimer: number | null = null;
   private lastOrientation: "landscape" | "portrait" | null = null;
+
+  // Tracks the vault the live cy instance is currently showing, so a switch
+  // that reuses the controller can restart the load state machine. (A switch
+  // that recreates the controller gets a fresh "idle" phase for free.)
+  private lastVaultId: string | null | undefined = undefined;
+
+  // Post-load "diagonal slash" safety net. A vault whose saved coordinates
+  // collapsed onto a line can have those coords applied to cy by a late element
+  // re-sync *after* the initial layout already ran, so no layout pass ever sees
+  // the slash. After the vault settles we re-check the actual rendered positions
+  // and re-solve once. Re-armed on every fresh load / vault change.
+  private slashRecoveryDone = false;
+  private slashGuardTimer: number | null = null;
+  private readonly SLASH_GUARD_DELAY_MS = 1500;
+
+  // True when the vault being finalized had degenerate (collinear) saved
+  // coordinates that the transformer discarded — so the initial solve should be
+  // persisted to permanently clean the data instead of re-solving every load.
+  private savedCoordsDegenerate = false;
 
   private isDestroyed = false;
 
@@ -264,6 +284,10 @@ export class GraphViewController {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
     }
+    if (this.slashGuardTimer) {
+      clearTimeout(this.slashGuardTimer);
+      this.slashGuardTimer = null;
+    }
     if (this.searchFocusListener) {
       window.removeEventListener(
         SEARCH_ENTITY_FOCUS_EVENT,
@@ -339,10 +363,20 @@ export class GraphViewController {
             this.loadPhase = "ready";
           }
         },
-        onPositionsUpdated: (updates) => {
-          const isReady =
-            this.loadPhase === "ready" && this.deps.vault.status !== "loading";
-          if (!isInitial && isReady) {
+        onPositionsUpdated: (updates, meta) => {
+          const notLoading = this.deps.vault.status !== "loading";
+          const isReady = this.loadPhase === "ready" && notLoading;
+          // Persist the initial layout when it heals a degenerate vault — either
+          // a runtime re-solve (meta.healed) or the first solve of a vault whose
+          // saved coords were a discarded slash. This lands the fix in the vault
+          // so it stops reshuffling every load and a Save cleans the on-disk
+          // diagonal, instead of being skipped just because it's the initial pass.
+          const isHealPersist = meta?.healed || this.savedCoordsDegenerate;
+          const shouldPersist = isHealPersist
+            ? notLoading
+            : !isInitial && isReady;
+          if (shouldPersist) {
+            this.savedCoordsDegenerate = false;
             this.deps.vault.batchUpdate(
               updates as Record<string, Partial<LocalEntity>>,
             );
@@ -488,9 +522,22 @@ export class GraphViewController {
   };
 
   reconcileLoadState = () => {
-    const { status, allEntities } = this.deps.vault;
-    if (status === "loading" && allEntities.length === 0) {
+    const { status, allEntities, activeVaultId } = this.deps.vault;
+
+    // A vault switch under a reused controller never reactively empties the
+    // entity index (it swaps old→new), so restart the load machine when the
+    // active id changes. (When the controller is recreated on switch this is a
+    // no-op — it already starts fresh.)
+    const vaultChanged = this.cy != null && activeVaultId !== this.lastVaultId;
+    this.lastVaultId = activeVaultId;
+
+    if (vaultChanged || (status === "loading" && allEntities.length === 0)) {
       this.loadPhase = "idle";
+      this.slashRecoveryDone = false;
+      if (this.slashGuardTimer) {
+        clearTimeout(this.slashGuardTimer);
+        this.slashGuardTimer = null;
+      }
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
@@ -498,8 +545,10 @@ export class GraphViewController {
         } as any);
       return;
     }
+
     if (status === "idle" && this.loadPhase === "elements") {
       this.loadPhase = "finalized";
+      this.savedCoordsDegenerate = this.areSavedCoordsDegenerate();
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
@@ -509,6 +558,57 @@ export class GraphViewController {
         isForced: true,
       });
     }
+
+    // Once the vault is idle with content, (re)arm the slash guard. Debounced
+    // via clearTimeout so it fires only after positions have stopped churning.
+    if (
+      status === "idle" &&
+      !this.slashRecoveryDone &&
+      this.cy &&
+      this.cy.nodes().length > 0
+    ) {
+      this.scheduleSlashGuard();
+    }
+  };
+
+  private areSavedCoordsDegenerate = (): boolean => {
+    const positions: { x: number; y: number }[] = [];
+    for (const entity of this.deps.vault.allEntities) {
+      const c = entity?.metadata?.coordinates;
+      if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
+        positions.push({ x: c.x, y: c.y });
+      }
+    }
+    return isLayoutCollinear(positions);
+  };
+
+  private scheduleSlashGuard = () => {
+    if (this.slashGuardTimer) clearTimeout(this.slashGuardTimer);
+    this.slashGuardTimer = window.setTimeout(() => {
+      this.slashGuardTimer = null;
+      this.recoverFromSlashIfNeeded();
+    }, this.SLASH_GUARD_DELAY_MS);
+  };
+
+  private recoverFromSlashIfNeeded = () => {
+    if (this.slashRecoveryDone || !this.cy || this.cy.destroyed()) return;
+    if (this.deps.vault.status === "loading") return;
+    const nodes = this.cy.nodes();
+    if (nodes.length < 12) return;
+
+    const positions = nodes.map((n) => n.position());
+    if (!isLayoutCollinear(positions)) return;
+
+    this.slashRecoveryDone = true;
+    this.deps.debugStore.log(
+      "[GraphView] Degenerate slash layout detected after load — re-solving.",
+    );
+    this.applyCurrentLayout({
+      reason: "Slash Recovery",
+      isInitial: true,
+      isForced: true,
+      reseed: true,
+    });
   };
 
   handleModeChange = () => {

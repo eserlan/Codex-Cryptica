@@ -112,7 +112,7 @@ Codex Cryptica provides multiple ways to visualize and interact with your lore, 
 The Lore Oracle is your co-author and worldbuilding assistant, powered by Google Gemini.
 
 - **Context-Aware Chat**: Unlike generic AI chatbots, the Oracle retrieves relevant entities, notes, and local neighbor nodes from your graph to ground its responses in your specific world lore.
-- **Keys**: Configure your private Google Gemini key in Settings (stored locally in IndexedDB) or use the Shared Tier (Lite).
+- **Keys**: Configure your private Google Gemini key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
   - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.

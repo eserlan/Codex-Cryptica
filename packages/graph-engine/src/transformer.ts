@@ -5,6 +5,7 @@ import type {
   StylingTemplate,
 } from "schema";
 import { CONNECTION_COLORS } from "./defaults";
+import { isLayoutCollinear } from "./geometry";
 
 export interface GraphNode {
   group: "nodes";
@@ -117,6 +118,21 @@ export class GraphTransformer {
       }
     }
 
+    // Detect a degenerate "diagonal slash" in the SAVED coordinates — a vault
+    // whose persisted layout collapsed onto a line. If found, treat every node
+    // as unplaced: it falls back to the spiral seed AND is marked pending, so
+    // the slash is never rendered (pending nodes are hidden) and the next layout
+    // solves cleanly. This keeps the bad coordinates from flashing on screen
+    // during the load before the heal runs.
+    const savedPositions: { x: number; y: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const c = entities[i]?.metadata?.coordinates;
+      if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
+        savedPositions.push(c as { x: number; y: number });
+      }
+    }
+    const discardSavedCoords = isLayoutCollinear(savedPositions);
+
     // phyllotaxis spiral distribution for unplaced nodes
     const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
     // Initial radius provides a decent base spread even for small graphs
@@ -182,12 +198,14 @@ export class GraphTransformer {
       if (isRevealed) (nodeData as any).isRevealed = true;
 
       const coords = entity.metadata?.coordinates;
-      const hasValidCoords = !!(
-        coords?.x != null &&
-        coords?.y != null &&
-        Number.isFinite(coords.x) &&
-        Number.isFinite(coords.y)
-      );
+      const hasValidCoords =
+        !discardSavedCoords &&
+        !!(
+          coords?.x != null &&
+          coords?.y != null &&
+          Number.isFinite(coords.x) &&
+          Number.isFinite(coords.y)
+        );
 
       // Assign a stable-ish random position based on ID if no coords exist.
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.

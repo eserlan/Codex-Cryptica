@@ -57,6 +57,8 @@ vi.mock("graph-engine", () => {
     animate: vi.fn().mockResolvedValue(undefined),
     center: vi.fn(),
     style: vi.fn(),
+    destroyed: vi.fn().mockReturnValue(false),
+    nodes: vi.fn().mockReturnValue({ length: 0, map: vi.fn(() => []) }),
   };
 
   function MockLayoutManager() {
@@ -79,6 +81,7 @@ vi.mock("graph-engine", () => {
     GraphImageManager: vi.fn().mockImplementation(MockGraphImageManager),
     setupGraphEvents: vi.fn().mockReturnValue(vi.fn()),
     syncGraphElements: vi.fn(),
+    isLayoutCollinear: vi.fn().mockReturnValue(false),
   };
 });
 
@@ -260,6 +263,40 @@ describe("GraphViewController", () => {
       deps.vault.allEntities = [];
       controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("idle");
+    });
+
+    it("restarts the load machine on a vault switch (active id changes)", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+
+      // Simulate the first vault settling into the ready phase.
+      deps.vault.activeVaultId = "vault-a";
+      controller.reconcileLoadState();
+      controller.loadPhase = "ready";
+
+      // Switching to another vault keeps status idle and a non-empty index, but
+      // the active id changes — loadPhase must reset so finalize can run again.
+      deps.vault.status = "idle";
+      deps.vault.allEntities = [{ id: "x" }];
+      deps.vault.activeVaultId = "vault-b";
+      controller.reconcileLoadState();
+
+      expect(controller.loadPhase).toBe<LoadPhase>("idle");
+    });
+
+    it("does not reset when the active vault id is unchanged", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+
+      deps.vault.activeVaultId = "vault-a";
+      controller.reconcileLoadState();
+      controller.loadPhase = "ready";
+
+      // Same vault, still idle — must not bounce back to idle.
+      deps.vault.status = "idle";
+      controller.reconcileLoadState();
+
+      expect(controller.loadPhase).toBe<LoadPhase>("ready");
     });
   });
 

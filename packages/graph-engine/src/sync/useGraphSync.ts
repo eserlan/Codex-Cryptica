@@ -356,7 +356,7 @@ export function resolveLayoutTrigger(
 ): LayoutRequest | null {
   if (!hasNewNodes && !hasDeletions && !isFirstElements) return null;
   if (isFirstElements) return null; // handled by onFirstElements + cy.fit
-  if (isVaultLoading && !initialLoaded) return null;
+  if (isVaultLoading) return null;
   const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
   return {
     reason: "Elements Update",

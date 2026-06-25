@@ -4,7 +4,8 @@ import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import EntityTable from "../EntityTable.svelte";
-import type { SortKey, SortState } from "../entityTableSort";
+import type { ConnectionSummary, SortKey, SortState } from "../entityTableSort";
+import { goto } from "$app/navigation";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -39,10 +40,21 @@ const rows: Entity[] = [
   entity({ id: "e2", title: "Brindlewood", type: "location" }),
 ];
 
+const connectionCounts: Record<string, ConnectionSummary> = {
+  e1: { inbound: 2, outbound: 1, total: 3 },
+  e2: { inbound: 0, outbound: 0, total: 0 },
+};
+
 describe("EntityTable", () => {
   it("renders a row per entity with a link to the entity page", () => {
     render(EntityTable, {
-      props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        connectionCounts,
+        onSort: vi.fn(),
+      },
     });
 
     const renderedRows = screen.getAllByTestId("entity-table-row");
@@ -50,6 +62,25 @@ describe("EntityTable", () => {
 
     const link = screen.getByText("Aldric").closest("a");
     expect(link?.getAttribute("href")).toBe("/vault/v1/entity/e1");
+  });
+
+  it("renders combined inbound and outbound connection counts, including zero", () => {
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        connectionCounts,
+        onSort: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByTestId("entity-table-connections-e1").textContent,
+    ).toContain("3 2 in · 1 out");
+    expect(
+      screen.getByTestId("entity-table-connections-e2").textContent?.trim(),
+    ).toBe("0");
   });
 
   it("shows an em dash for missing summary, tags, and dates", () => {
@@ -64,7 +95,7 @@ describe("EntityTable", () => {
   it("calls onSort with the column key when a sortable header is clicked", async () => {
     const onSort = vi.fn<(key: SortKey) => void>();
     render(EntityTable, {
-      props: { entities: rows, vaultId: "v1", sort, onSort },
+      props: { entities: rows, vaultId: "v1", sort, connectionCounts, onSort },
     });
 
     await fireEvent.click(screen.getByTestId("entity-table-sort-modified"));
@@ -72,6 +103,9 @@ describe("EntityTable", () => {
 
     await fireEvent.click(screen.getByTestId("entity-table-sort-created"));
     expect(onSort).toHaveBeenCalledWith("created");
+
+    await fireEvent.click(screen.getByTestId("entity-table-sort-connections"));
+    expect(onSort).toHaveBeenCalledWith("connections");
   });
 
   it("marks the active sort column with aria-sort", () => {
@@ -80,11 +114,86 @@ describe("EntityTable", () => {
         entities: rows,
         vaultId: "v1",
         sort: { key: "title", direction: "asc" },
+        connectionCounts,
         onSort: vi.fn(),
       },
     });
 
     const nameHeader = screen.getByText("Name").closest("th");
     expect(nameHeader?.getAttribute("aria-sort")).toBe("ascending");
+  });
+
+  it("renders a select checkbox per row plus a select-all header checkbox", () => {
+    render(EntityTable, {
+      props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+    });
+
+    expect(screen.getByTestId("entity-table-select-all")).toBeTruthy();
+    expect(screen.getAllByTestId("entity-table-row-select")).toHaveLength(2);
+  });
+
+  it("reflects the selected set and toggles a row without navigating", async () => {
+    const onToggleRow = vi.fn<(id: string) => void>();
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        selectedIds: new Set(["e1"]),
+        onToggleRow,
+      },
+    });
+
+    const boxes = screen.getAllByTestId(
+      "entity-table-row-select",
+    ) as HTMLInputElement[];
+    expect(boxes[0].checked).toBe(true);
+    expect(boxes[1].checked).toBe(false);
+
+    await fireEvent.click(boxes[1]);
+    expect(onToggleRow).toHaveBeenCalledWith("e2");
+    expect(goto).not.toHaveBeenCalled();
+  });
+
+  it("checks select-all when every row is selected and calls onToggleAll", async () => {
+    const onToggleAll = vi.fn();
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        selectedIds: new Set(["e1", "e2"]),
+        allSelected: true,
+        onToggleAll,
+      },
+    });
+
+    const selectAll = screen.getByTestId(
+      "entity-table-select-all",
+    ) as HTMLInputElement;
+    expect(selectAll.checked).toBe(true);
+
+    await fireEvent.click(selectAll);
+    expect(onToggleAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the select-all checkbox as indeterminate on a partial selection", () => {
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        selectedIds: new Set(["e1"]),
+        someSelected: true,
+      },
+    });
+
+    const selectAll = screen.getByTestId(
+      "entity-table-select-all",
+    ) as HTMLInputElement;
+    expect(selectAll.indeterminate).toBe(true);
   });
 });
