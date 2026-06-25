@@ -1264,6 +1264,7 @@ Parameters:
 Return a valid JSON object matching this structure exactly:
 {
   "title": "A single string for the settlement name",
+  "summary": "One sentence: what this settlement is and what makes it interesting (e.g. 'A sunbaked salt-mining town built into a dormant volcano, ruled by a cartel of water-merchants.').",
   "content": "Prose description (markdown). Include these sections:\\n## Core Concept\\n[What makes this place distinct — 2–3 sentences answering why it exists]\\n\\n## First Impression\\n[What visitors notice first — sensory, atmospheric, genre-appropriate]\\n\\n## History\\n[How the settlement came to be and what shaped it — 2–3 sentences]",
   "lore": "Structured GM reference (markdown). Use EXACTLY this structure:\\n### GM Reference Information\\n- **Scale**: ${size} (${population})\\n- **Genre / Setting**: ${genre}\\n- **Environment**: ${environment}\\n- **Primary Function**: ${primaryFunction}\\n- **Official Authority**: ${authorityType}\\n- **Tone**: ${tone}\\n\\n### Points of Interest\\n- **📍 Location Name**: one-line purpose or detail (exactly ${pointsOfInterestCount} item${pointsOfInterestCount === 1 ? "" : "s"}, genre-appropriate)\\n\\n### Controlling Factions\\n- **👥 Faction Name**: one-line influence summary (2–3 factions)\\n\\n### Current Tension\\n[2–3 sentences on the dominant tension and what makes it escalate. Name real people or groups involved.]\\n\\n### Adventure Hooks\\n- [Hook tied to the tension]\\n- [Hook tied to the power structure or hidden authority]\\n- [Hook tied to the location or function of the settlement]",
   "labels": ["rpg-location", "imported-draft"]
@@ -1464,10 +1465,12 @@ ${mainTension} is the open secret nobody is addressing. The longer it goes unres
 - The ${authorityType.toLowerCase()} wants outside help to deal with ${faction2.toLowerCase()} without showing weakness.
 - Something tied to the settlement's history as a ${primaryFunction.toLowerCase()} has surfaced — and whoever controls it controls the settlement.`;
 
+  const summary = `A ${tone.toLowerCase()} ${size.toLowerCase()} built around ${primaryFunction.toLowerCase()} in a ${environment.toLowerCase()} setting.`;
+
   return {
     type: "location",
     title: name,
-    summary: "",
+    summary,
     content,
     lore,
     labels: ["rpg-location", "imported-draft"],

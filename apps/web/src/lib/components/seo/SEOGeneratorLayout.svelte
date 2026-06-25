@@ -912,6 +912,29 @@
           </div>
         {/if}
       </div>
+
+      <!-- Session Hub Widget — full center-column width so titles aren't cramped -->
+      {#if variant !== "names"}
+        <div class="mt-6">
+          <SessionHubWidget
+            onSelect={(entity) => (selectedHubEntity = entity)}
+            onSave={handleSaveHubToCodex}
+          />
+          {#if contextSelection.trimmed}
+            <div
+              class="mt-2 text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
+            >
+              <span
+                class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"
+              ></span>
+              <p>
+                Some older unpinned context is omitted from prompts to manage AI
+                limits. Pin items to prioritize them.
+              </p>
+            </div>
+          {/if}
+        </div>
+      {/if}
     </div>
 
     <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
@@ -934,7 +957,7 @@
                 ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
                 : ''}"
             >
-              {@html renderGeneratorMarkdown(documentLayout.content, variant)}
+              {@html renderGeneratorLore(documentLayout.lore, variant)}
               {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
                 <ProvenanceBadge
                   record={sessionHubStore.provenance[currentEntityId]}
@@ -956,27 +979,6 @@
             </div>
           {/if}
         </div>
-
-        <!-- Session Hub Widget -->
-        {#if variant !== "names"}
-          <SessionHubWidget
-            onSelect={(entity) => (selectedHubEntity = entity)}
-            onSave={handleSaveHubToCodex}
-          />
-          {#if contextSelection.trimmed}
-            <div
-              class="mt-2 text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
-            >
-              <span
-                class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"
-              ></span>
-              <p>
-                Some older unpinned context is omitted from prompts to manage AI
-                limits. Pin items to prioritize them.
-              </p>
-            </div>
-          {/if}
-        {/if}
       </div>
     </div>
 
@@ -1337,13 +1339,8 @@
         </div>
 
         <div class="p-6 overflow-y-auto seo-md">
-          {#if selectedHubEntity.summary}
-            <p
-              class="italic text-theme-text/80 mb-4 pb-4 border-b border-theme-border/30"
-            >
-              {selectedHubEntity.summary}
-            </p>
-          {/if}
+          <!-- content already leads with the italicized summary, so no separate
+               summary block here (would duplicate it). -->
           {@html renderGeneratorMarkdown(selectedHubEntity.content, "default")}
 
           {#if selectedHubEntity.lore}
