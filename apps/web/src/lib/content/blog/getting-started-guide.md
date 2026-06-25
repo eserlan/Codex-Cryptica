@@ -1,13 +1,28 @@
 ---
-id: intro
-title: Getting Started
-tags: [basics, vault, workflow]
-rank: 1
+id: getting-started-guide
+slug: getting-started-guide
+title: "Getting Started with Codex Cryptica: A Comprehensive Guide"
+description: "A complete step-by-step introduction to managing your tabletop worldbuilding notes, interactive spatial graphs, timelines, and AI co-authoring tools locally and privately."
+keywords:
+  [
+    "Tabletop Worldbuilding",
+    "Getting Started Guide",
+    "Local-First Campaign Manager",
+    "Interactive Lore Graph",
+    "Custom Timelines",
+    "Lore Oracle AI",
+    "Data Sovereignty",
+  ]
+publishedAt: 2026-06-25T14:00:00Z
 ---
 
-## Welcome to Codex Cryptica
+![Getting Started with Codex Cryptica](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/getting-started/getting-started-hero.jpg)
+
+_Note: the images in this post are illustrative concepts, not literal screenshots from Codex Cryptica._
 
 Codex Cryptica (CC) is a **local-first, privacy-first tabletop worldbuilding campaign manager**. It is designed to give you **absolute sovereignty** over your lore. Everything you create is saved directly on your own computer as clean Markdown files, meaning your worlds remain completely yours, fully functional offline, and safe from cloud platform lock-in.
+
+Whether you are running a sprawling D&D sandbox, a tactical sci-fi campaign, or writing a novel, this guide will walk you through the core workflows of Codex Cryptica to help you get up and running.
 
 ---
 
@@ -15,9 +30,9 @@ Codex Cryptica (CC) is a **local-first, privacy-first tabletop worldbuilding cam
 
 Your worldbuilding begins with a **Vault**—a dedicated workspace containing all of your campaign's entities, relationships, custom calendars, and spatial layouts.
 
-- **Absolute Sovereignty**: Vault files reside locally in your browser's **Origin Private File System (OPFS)**.
+- **Absolute Sovereignty**: Vault files reside locally in your browser's **Origin Private File System (OPFS)**. They are not stored on external servers by default.
 - **Opening/Switching Vaults**: Click the vault indicator or the **folder icon** in the top-left toolbar to switch campaigns or initialize a new vault.
-- **Importing existing campaigns**: You can import existing markdown folders or JSON structures using the **Import** utility to seed your Codex instantly.
+- **Importing existing campaigns**: If you have existing markdown notes or JSON campaign data from other applications, you can import them using the **Import** utility to seed your Codex instantly.
 
 ---
 
@@ -26,7 +41,7 @@ Your worldbuilding begins with a **Vault**—a dedicated workspace containing al
 Every person, place, or thing in your world is represented as an **Entity**.
 
 - **Entities**: Classified by type (NPC, Location, Item, Faction, Event, or Custom).
-- **Chronicles**: The main text content of your entity, written in Markdown. This is public/player-facing information.
+- **Chronicles**: The main text content of your entity, written in Markdown. This is public/player-safe information.
 - **Lore**: Hidden metadata and secrets. The Lore section is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
 - **Hierarchy & Nesting**: In the left-hand Explorer panel, drag and drop entities to nest them (e.g., place a _Tavern_ inside a _City_). CC automatically checks for recursive loops to prevent cycle errors, and deleting a parent automatically promotes child entities to the root level.
 
@@ -60,9 +75,9 @@ CC features a bidirectional link editor (built on **Tiptap**). Connecting your n
   - `/merge`: Consolidate duplicate entries.
 - **Efficient Connecting**:
   - _Visual Connector_: Use the **Chain Link** icon in the graph toolbar.
-  - _Quick Connect_: Type `/connect "Eldrin" is the mentor of "Kaelen"` to create a relationship.
+  - _Quick Connect_: Type `/connect \"Eldrin\" is the mentor of \"Kaelen\"` to create a relationship.
   - _Tab Sequence_: Type `/connect` and press **Enter** to open the wizard, then use `Tab` to cycle from **Source** $\rightarrow$ **Label** $\rightarrow$ **Target** with keyboard auto-completion.
-- **Merging Entities**: Consolidate redundant files via `/merge "Old Notes" into "Kingdom of Aethel"`. CC redirects all incoming/outgoing graph connections automatically. Type `/merge oracle` to open the AI Merge Wizard to synthesize the texts into a single cohesive lore chronicle.
+- **Merging Entities**: Consolidate redundant files via `/merge \"Old Notes\" into \"Kingdom of Aethel\"`. CC redirects all incoming/outgoing graph connections automatically. Type `/merge oracle` to open the AI Merge Wizard to synthesize the texts into a single cohesive lore chronicle.
 
 ---
 
@@ -74,7 +89,7 @@ Browse your campaign history through a month-grid calendar, running agenda list,
   - **Granularity**: Select dates by Year, Month, Day, or **Anchor** (intercalary festival days outside standard months).
   - **Keyboard Override**: Click the keyboard icon on any wheel to type a year directly.
   - **Conflict Repair**: If calendar settings are modified, the picker alerts you of invalid dates and prompts an auto-repair.
-- **Custom Campaign Calendars**: Go to **Vault Settings** to disable the standard Gregorian calendar and define custom months, lengths, and epoch suffixes (e.g. "AF" or "BCE").
+- **Custom Campaign Calendars**: Go to **Vault Settings** to disable the standard Gregorian calendar and define custom months, lengths, and epoch suffixes (e.g. \"AF\" or \"BCE\").
 - **Undated & Approximate Events**: Approximate events are safely displayed under a special **Undated/Approximate** section in the Agenda to keep the calendar grid clean.
 
 ---
@@ -111,3 +126,9 @@ Quickly populate your world with rich lore, even when offline.
   - Redacts all GM-only/Private nodes and maps.
   - Redacts the `Lore` and `Art Direction` fields.
   - Replaces links to secret files with `[Redacted]`.
+
+---
+
+## Ready to Build?
+
+Codex Cryptica is designed to step out of your way and let you build immersive settings. Start by creating a vault, sketching out a handful of core characters and locations, and let the graph and the Oracle help connect the dots!
