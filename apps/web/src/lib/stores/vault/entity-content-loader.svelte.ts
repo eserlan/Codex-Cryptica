@@ -6,6 +6,28 @@ import { readFileAsText } from "../../utils/opfs";
 import { parseMarkdown, sanitizeId } from "../../utils/markdown";
 import { VaultRepository } from "@codex/vault-engine";
 
+/**
+ * Lazy content loads read a file's frontmatter to RESTORE metadata that was
+ * never hydrated in memory — but the file can be stale relative to the live
+ * entity (e.g. a label the user just applied whose debounced save hasn't hit
+ * disk yet). Only fill in keys that are absent/undefined in memory so we never
+ * clobber fresher in-memory edits with stale disk values.
+ */
+export function restoreMissingMetadata(
+  entity: Record<string, unknown>,
+  diskMetadata: Record<string, unknown>,
+): Record<string, unknown> {
+  const restored: Record<string, unknown> = {};
+  for (const key of Object.keys(diskMetadata)) {
+    const value = diskMetadata[key];
+    if (value === undefined) continue;
+    if (!(key in entity) || entity[key] === undefined) {
+      restored[key] = value;
+    }
+  }
+  return restored;
+}
+
 export interface ContentLoaderDependencies {
   repository: VaultRepository;
   activeVaultId: () => string | null;
@@ -112,10 +134,11 @@ export class EntityContentLoader {
               delete mergedMetadata[key];
             }
           }
+          const latestGuest = this.entities[id] ?? currentEntity;
           this.deps.repository.entities[id] = {
-            ...currentEntity,
-            ...mergedMetadata,
-            content: freshContent || currentEntity.content || "",
+            ...latestGuest,
+            ...restoreMissingMetadata(latestGuest, mergedMetadata),
+            content: freshContent || latestGuest.content || "",
             lore: "",
           } as LocalEntity;
           this._contentLoadedIds.add(id);
@@ -210,7 +233,7 @@ export class EntityContentLoader {
 
             const updatedEntity = {
               ...entityToUpdate,
-              ...mergedMetadata,
+              ...restoreMissingMetadata(entityToUpdate, mergedMetadata),
               content: finalContent,
               lore: finalLore,
             } as LocalEntity;
@@ -294,9 +317,10 @@ export class EntityContentLoader {
           }
         }
 
+        const latest = this.entities[id] ?? currentEntity;
         this.deps.repository.entities[id] = {
-          ...currentEntity,
-          ...mergedMetadata,
+          ...latest,
+          ...restoreMissingMetadata(latest, mergedMetadata),
           content: result.content,
           lore: result.lore,
         };

@@ -146,10 +146,12 @@
       if (showAutocomplete) {
         autocompleteDismissed = true;
         event.preventDefault();
+        event.stopPropagation();
         return;
       }
       searchStore.close();
       event.preventDefault();
+      event.stopPropagation();
       return;
     }
 

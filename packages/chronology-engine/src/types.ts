@@ -177,3 +177,26 @@ export interface CalendarCurrentDateSource {
 export interface VaultCalendarSettings {
   currentYear: number | null;
 }
+
+export interface EntityTimelineRow {
+  eventId: string;
+  title: string;
+  dateKind: "exact" | "approximate" | "missing";
+  displayDateLabel: string;
+  isRange: boolean;
+  sortKey: number | undefined;
+  eventCategory: string | undefined; // from event.labels, never the entity-type value "event"
+  summary: string | undefined; // trimmed snippet from content
+  participantTitles: string[]; // related entity titles excluding the subject
+}
+
+export interface EntityTimelineGroup {
+  kind: "dated" | "undated";
+  label: string;
+  rows: EntityTimelineRow[];
+}
+
+export interface EntityTimeline {
+  groups: EntityTimelineGroup[];
+  isEmpty: boolean;
+}

@@ -432,6 +432,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
+  "entity-timeline": {
+    id: "entity-timeline",
+    title: "Entity Timeline",
+    content:
+      "Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity — battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.",
+    icon: "icon-[lucide--clock]",
+  },
   "generator-local-mode": {
     id: "generator-local-mode",
     title: "Generators Work Offline",

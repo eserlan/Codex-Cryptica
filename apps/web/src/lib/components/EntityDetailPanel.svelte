@@ -13,6 +13,7 @@
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
+  import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
@@ -503,6 +504,17 @@
               >
                 {#if activeTab === "chats" && activeEntity.type === "character"}
                   <DetailChatsTab entity={activeEntity} />
+                {/if}
+              </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.timeline}
+                aria-labelledby={tabIds.timeline}
+                hidden={activeTab !== "timeline"}
+              >
+                {#if activeTab === "timeline"}
+                  <DetailTimelineTab entity={activeEntity} />
                 {/if}
               </div>
             </div>

@@ -142,5 +142,5 @@ export {
   buildGeneratorSessionInput,
   draftToAcceptedEntity,
   type GeneratorAcceptedEntity,
-  type GeneratorSessionTurn,
 } from "./generator-session";
+export * from "./session-hub-helpers";

@@ -4,6 +4,8 @@
   import { vault } from "$lib/stores/vault.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import { revisionService } from "$lib/services/RevisionService.svelte";
+  import DetailProposals from "./proposals/DetailProposals.svelte";
+  import EntityProposals from "./EntityProposals.svelte";
 
   let {
     entity,
@@ -74,6 +76,12 @@
         </div>
       {/if}
     </div>
+    <DetailProposals {isEditing} entityId={entity.id} />
+    <EntityProposals
+      content={entity.lore || ""}
+      {isEditing}
+      entityId={entity.id}
+    />
   </div>
 {/if}
 
