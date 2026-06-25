@@ -11,15 +11,6 @@
   } = $props();
 
   const entities = $derived(sessionHubStore.entities.slice().reverse()); // Show most recent at top
-  let selectedIds = $state(new Set<string>());
-
-  function toggleSelection(id: string) {
-    if (selectedIds.has(id)) {
-      selectedIds.delete(id);
-    } else {
-      selectedIds.add(id);
-    }
-  }
 </script>
 
 <div
@@ -55,32 +46,11 @@
         <li class="flex items-center gap-1">
           <button
             type="button"
-            onclick={(e) => {
-              // Toggle selection if clicking the checkbox wrapper, otherwise select entity
-              if ((e.target as HTMLElement).closest(".selection-toggle")) {
-                toggleSelection(entity.id);
-                return;
-              }
-              onSelect?.(entity);
-            }}
-            class="flex-grow text-left p-2.5 rounded-lg bg-theme-surface/20 hover:bg-theme-surface/60 transition-colors border {selectedIds.has(
-              entity.id,
-            )
-              ? 'border-theme-primary/50 bg-theme-primary/5'
-              : 'border-theme-border/30 hover:border-theme-border/50'} flex flex-col gap-1 group relative"
+            title={entity.summary}
+            onclick={() => onSelect?.(entity)}
+            class="flex-grow text-left p-2.5 rounded-lg bg-theme-surface/20 hover:bg-theme-surface/60 transition-colors border border-theme-border/30 hover:border-theme-border/50 flex flex-col gap-1 group relative"
           >
-            <div
-              class="selection-toggle absolute left-2 top-3 w-4 h-4 rounded border {selectedIds.has(
-                entity.id,
-              )
-                ? 'bg-theme-primary border-theme-primary text-theme-bg'
-                : 'border-theme-border/60 bg-theme-surface/50'} flex items-center justify-center transition-colors"
-            >
-              {#if selectedIds.has(entity.id)}
-                <span class="icon-[lucide--check] w-3 h-3"></span>
-              {/if}
-            </div>
-            <div class="flex items-center justify-between gap-2 pl-6">
+            <div class="flex items-center justify-between gap-2">
               <span
                 class="text-sm font-bold text-theme-text truncate flex items-center gap-1.5"
               >
@@ -107,20 +77,10 @@
                 {/if}
                 {entity.title}
               </span>
-              <span
-                class="text-[9px] uppercase tracking-wider text-theme-primary px-1.5 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20 shrink-0"
-                >{entity.type}</span
-              >
             </div>
-            {#if entity.summary}
-              <span
-                class="text-[10px] text-theme-muted truncate group-hover:text-theme-text/80 transition-colors pl-[2.25rem]"
-                >{entity.summary}</span
-              >
-            {/if}
           </button>
           <div
-            class="flex flex-col gap-0.5 shrink-0 px-1 py-1 bg-theme-surface/20 rounded-lg border border-theme-border/20"
+            class="flex flex-row items-center gap-0.5 shrink-0 px-1 py-1 bg-theme-surface/20 rounded-lg border border-theme-border/20"
           >
             <button
               type="button"
@@ -164,19 +124,10 @@
     </ul>
     <button
       type="button"
-      onclick={() => {
-        const toSave =
-          selectedIds.size > 0
-            ? entities.filter((e) => selectedIds.has(e.id))
-            : entities;
-        onSave?.(toSave);
-        selectedIds.clear();
-      }}
+      onclick={() => onSave?.(entities)}
       class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-2"
     >
-      {selectedIds.size > 0
-        ? `Save Selected (${selectedIds.size})`
-        : `Save Hub to Codex (${entities.length})`}
+      Save Hub to Codex ({entities.length})
     </button>
   {/if}
 </div>

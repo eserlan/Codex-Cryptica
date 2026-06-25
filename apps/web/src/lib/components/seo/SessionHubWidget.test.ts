@@ -57,8 +57,9 @@ describe("SessionHubWidget", () => {
 
     expect(screen.getByText("Elara")).toBeTruthy();
     expect(screen.getByText("Waterdeep")).toBeTruthy();
-    expect(screen.getByText("character")).toBeTruthy();
-    expect(screen.getByText("location")).toBeTruthy();
+    // Type is conveyed by an icon before the name (no text label).
+    expect(document.querySelector(".icon-\\[lucide--user\\]")).toBeTruthy();
+    expect(document.querySelector(".icon-\\[lucide--map-pin\\]")).toBeTruthy();
   });
 
   it("calls onSelect when an item is clicked", async () => {
