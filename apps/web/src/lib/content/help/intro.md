@@ -7,6 +7,8 @@ rank: 1
 
 ## Welcome to Codex Cryptica
 
+![Codex Cryptica Dashboard](/images/rpg-vault-mockup.png)
+
 Codex Cryptica (CC) is a **local-first, privacy-first tabletop worldbuilding campaign manager**. It is designed to give you **absolute sovereignty** over your lore. Everything you create is saved directly on your own computer as clean Markdown files, meaning your worlds remain completely yours, fully functional offline, and safe from cloud platform lock-in.
 
 ---
@@ -76,6 +78,8 @@ Browse your campaign history through a month-grid calendar, running agenda list,
 
 ## 5. Campaign Views: Graph, Canvas, Map, Calendar, & Table
 
+![Interactive Relational Knowledge Graph](/images/living-lore-graph.png)
+
 Codex Cryptica provides multiple ways to visualize and interact with your lore, allowing you to swap perspectives on the fly:
 
 - **Interactive Knowledge Graph**: The default web showing how character networks, factions, and locations connect. Use `Scroll` to zoom, `Drag` to pan, and click a node to open its details. Swappable layout modes (Redraw, Stable Pin, Orbit, Timeline) help organize your space.
@@ -94,10 +98,12 @@ Codex Cryptica provides multiple ways to visualize and interact with your lore, 
 
 ## 6. The Lore Oracle (AI Assistant)
 
+![The Lore Oracle AI Assistant Chat](/images/oracle-chat-mockup.jpg)
+
 The Lore Oracle is your co-author and worldbuilding assistant, powered by Google Gemini.
 
 - **Context-Aware Chat**: Unlike generic AI chatbots, the Oracle retrieves relevant entities, notes, and local neighbor nodes from your graph to ground its responses in your specific world lore.
-- **Keys**: Configure your private Google Gemini key in Settings (stored locally in IndexedDB) or use the Shared Tier (Lite).
+- **Keys**: Configure your private Google Gemini key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
   - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.
