@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import { load, dump } from "js-yaml";
 import type { Entity } from "schema";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -63,7 +63,7 @@ export function parseMarkdown(raw: string): ParseResult {
   if (match) {
     try {
       const yamlContent = match[1];
-      const parsed = yaml.load(yamlContent) as any;
+      const parsed = load(yamlContent) as any;
       if (typeof parsed === "object" && parsed !== null) {
         metadata = parsed;
       }
@@ -102,7 +102,7 @@ export function stringifyEntity(entity: Entity): string {
   orderedMetadata.connections = entity.connections;
 
   // Use sortKeys: false to preserve our specific order
-  const yamlStr = yaml.dump(orderedMetadata, { sortKeys: false });
+  const yamlStr = dump(orderedMetadata, { sortKeys: false });
   return `---\n${yamlStr}---\n${content || ""}`;
 }
 
