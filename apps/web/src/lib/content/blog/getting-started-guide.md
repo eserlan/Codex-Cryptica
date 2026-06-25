@@ -53,8 +53,8 @@ Your worldbuilding begins with a **Vault**—a dedicated workspace containing al
 
 Every person, place, or thing in your world is represented as an **Entity**.
 
-- **Entities**: Classified by type (NPC, Location, Item, Faction, Event, or Custom).
-- **Chronicles**: The main text content of your entity, written in Markdown. This is public/player-safe information.
+- **Entities**: Classified by category (Character, Creature, Location, Item, Event, Faction, or Note).
+- **Chronicles**: The primary, public-facing text field of your entity, written in Markdown. Think of it as the entity's main description or log (which can be styled and custom-renamed under different world themes as a _Tome_, _Log_, or _Journal_ for flavor).
 - **Lore**: Hidden metadata and secrets. The Lore section is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
 - **Hierarchy & Nesting**: In the left-hand Explorer panel, drag and drop entities to nest them (e.g., place a _Tavern_ inside a _City_). CC automatically checks for recursive loops to prevent cycle errors, and deleting a parent automatically promotes child entities to the root level.
 
@@ -117,7 +117,7 @@ The Lore Oracle is your co-author and worldbuilding assistant, powered by Google
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
   - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.
   - `/create [concept]`: Ask the Oracle to draft a new entity.
-- **Guest Character Chat**: Let players chat in-character with NPCs. GMs can review transcripts to turn conversational roleplay into official lore.
+- **Guest Character Chat**: Let players chat in-character with Characters. GMs can review transcripts to turn conversational roleplay into official lore.
 
 ---
 
@@ -125,7 +125,7 @@ The Lore Oracle is your co-author and worldbuilding assistant, powered by Google
 
 Quickly populate your world with rich lore, even when offline.
 
-- **Campaign Generators**: Click the **Wand** icon in the explorer to generate NPCs, Factions, Settlements, or Magic Items.
+- **Campaign Generators**: Click the **Wand** icon in the explorer to generate Characters, Creatures, Locations, Items, Factions, or Events directly inside your active campaign vault.
 - **Local vs. Co-Author Mode**: Online, the Oracle writes custom descriptions. Offline, the generators fall back to built-in local random tables, guaranteeing you always get a result.
 - **Generator Hub**: Swap to the standalone **Generator Hub** to generate content in a sandbox workspace. Review, edit, and tweak drafts, then hand them off directly into your active campaign.
 
