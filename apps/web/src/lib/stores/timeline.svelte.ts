@@ -211,12 +211,11 @@ export class TimelineStore {
     for (const entity of this.deps.vault.allEntities) {
       const primaryDate =
         entity.date ?? entity.start_date ?? entity.end_date ?? undefined;
-      const entityEntries = [
-        toCalendarEntry(entity, primaryDate, config),
-      ].filter((entry): entry is CalendarEventEntry => entry !== null);
+      const calendarEntry = toCalendarEntry(entity, primaryDate, config);
 
-      for (const entry of entityEntries) {
-        entries.push(entry);
+      // ⚡ Bolt Optimization: Replace [entry].filter() with a null check
+      if (calendarEntry !== null) {
+        entries.push(calendarEntry);
       }
 
       if (
@@ -312,17 +311,24 @@ export class TimelineStore {
     });
   });
 
-  filteredEntries = $derived.by(() =>
-    this.filteredCalendarEntries
-      .filter((entry) => entry.date !== null)
-      .map((entry) => ({
-        entityId: entry.entityId,
-        title: entry.title,
-        type: entry.entityType,
-        date: entry.exactDate ?? (entry.date as TemporalMetadata),
-        eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
-      })),
-  );
+  filteredEntries = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
+    const results: TimelineEntry[] = [];
+    const len = this.filteredCalendarEntries.length;
+    for (let i = 0; i < len; i++) {
+      const entry = this.filteredCalendarEntries[i];
+      if (entry.date !== null) {
+        results.push({
+          entityId: entry.entityId,
+          title: entry.title,
+          type: entry.entityType,
+          date: entry.exactDate ?? (entry.date as TemporalMetadata),
+          eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
+        });
+      }
+    }
+    return results;
+  });
 
   calendarMonthView = $derived.by(
     (): CalendarMonthViewModel =>
