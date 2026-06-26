@@ -1,5 +1,5 @@
 import { EntitySchema } from "schema";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 const MarkdownFrontmatterSchema = EntitySchema.partial()
   .omit({ tags: true })
