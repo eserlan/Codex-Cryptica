@@ -54,7 +54,7 @@ describe("HelpStore", () => {
   });
 
   it("should search articles by content", () => {
-    helpStore.setSearchQuery("sovereignty");
+    helpStore.setSearchQuery("backups");
     expect(helpStore.searchResults.some((a) => a.id === "intro")).toBe(true);
   });
 
