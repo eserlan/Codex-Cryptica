@@ -106,13 +106,13 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <!-- Backdrop -->
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div
-  class="fixed inset-0 z-[90] bg-black/30"
+<button
+  type="button"
+  class="fixed inset-0 z-[90] bg-black/30 w-full h-full focus-visible:ring-2 focus:outline-none focus-visible:ring-inset"
   onclick={close}
-  aria-hidden="true"
+  aria-label="Close sheet"
   transition:fade={{ duration: 500 }}
-></div>
+></button>
 
 <!-- Sheet -->
 <div

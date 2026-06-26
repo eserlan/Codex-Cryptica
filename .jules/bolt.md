@@ -144,8 +144,16 @@
 **Action:** Always replace `Object.values(vault.entities)` with `vault.allEntities` in Svelte components. For chained array operations (like `.filter().slice()`), use an imperative `for...of` or `for (let i = 0; i < allEntities.length; i++)` loop with `break` limits to avoid redundant array creation and full dataset traversal.
 
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(guestStore.guestRoster) to pre-cached guestStore.allGuests]
+
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
 ## 2024-06-26 - Svelte 5 $derived.by() Array Allocations
+
 **Learning:** In Svelte 5, using chained array methods like `.filter().map()` inside reactive `$derived.by()` blocks creates multiple intermediate array allocations on every UI update (e.g., keystrokes). Because Svelte 5 triggers reactivity synchronously and rapidly, these allocations quickly build up GC pressure on the hot path.
 **Action:** Replace chained `.filter().map()` with a single imperative `for...of` loop and a pre-allocated array (using `.push()`) inside hot `$derived` blocks to eliminate intermediate array closures and significantly reduce garbage collection overhead.
+
+## 2025-02-18 - [Optimize Timeline Store]
+
+**Learning:** In Svelte 5 `$derived` blocks, chained array operations (like `.filter().map()`) or wrapping and filtering (`[item].filter()`) create unnecessary intermediate arrays. This adds garbage collection pressure, which can become noticeable in high-frequency reactivity paths or when dealing with large datasets (like `vault.allEntities`).
+**Action:** Replace chained `.filter().map()` operations or single-item array filters inside large loops with imperative loops (e.g., `for...of` or traditional `for`) and early exits/conditions to minimize intermediate array allocations.

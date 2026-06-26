@@ -211,12 +211,11 @@ export class TimelineStore {
     for (const entity of this.deps.vault.allEntities) {
       const primaryDate =
         entity.date ?? entity.start_date ?? entity.end_date ?? undefined;
-      const entityEntries = [
-        toCalendarEntry(entity, primaryDate, config),
-      ].filter((entry): entry is CalendarEventEntry => entry !== null);
+      const calendarEntry = toCalendarEntry(entity, primaryDate, config);
 
-      for (const entry of entityEntries) {
-        entries.push(entry);
+      // ⚡ Bolt Optimization: Replace [entry].filter() with a null check
+      if (calendarEntry !== null) {
+        entries.push(calendarEntry);
       }
 
       if (
@@ -314,11 +313,12 @@ export class TimelineStore {
 
   filteredEntries = $derived.by(() => {
     // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
-    // to avoid intermediate array allocations and reduce GC pressure during rapid UI updates.
-    const result = [];
-    for (const entry of this.filteredCalendarEntries) {
+    const results: TimelineEntry[] = [];
+    const len = this.filteredCalendarEntries.length;
+    for (let i = 0; i < len; i++) {
+      const entry = this.filteredCalendarEntries[i];
       if (entry.date !== null) {
-        result.push({
+        results.push({
           entityId: entry.entityId,
           title: entry.title,
           type: entry.entityType,
@@ -327,7 +327,7 @@ export class TimelineStore {
         });
       }
     }
-    return result;
+    return results;
   });
 
   calendarMonthView = $derived.by(
