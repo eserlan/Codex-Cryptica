@@ -24,7 +24,7 @@
         "gitmoji-cli": "^9.7.0",
         "globals": "^17.6.0",
         "husky": "^9.1.7",
-        "js-yaml": "^4.1.1",
+        "js-yaml": "^5.1.0",
         "lint-staged": "^17.0.5",
         "prettier": "3.8.4",
         "prettier-plugin-svelte": "^4.0.1",
@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.27.0",
+      "version": "0.27.5",
       "dependencies": {
         "@codex/canvas-engine": "workspace:*",
         "@codex/events": "workspace:*",
@@ -79,7 +79,7 @@
         "generator-engine": "workspace:*",
         "graph-engine": "workspace:*",
         "idb": "^8.0.3",
-        "js-yaml": "^4.1.1",
+        "js-yaml": "^5.1.0",
         "lucide-svelte": "^1.0.1",
         "map-engine": "workspace:*",
         "markdown-it-task-lists": "^2.1.1",
@@ -171,7 +171,7 @@
         "@tiptap/core": "^3.23.6",
         "@tiptap/pm": "^3.23.6",
         "@tiptap/starter-kit": "^3.23.6",
-        "js-yaml": "^4.1.0",
+        "js-yaml": "^5.1.0",
         "schema": "workspace:*",
       },
       "devDependencies": {
@@ -335,7 +335,7 @@
         "@codex/events": "workspace:*",
         "dexie": "^4.4.2",
         "idb": "^8.0.3",
-        "js-yaml": "^4.1.1",
+        "js-yaml": "^5.1.0",
         "schema": "workspace:*",
       },
       "devDependencies": {
@@ -1424,7 +1424,7 @@
 
     "js-tokens": ["js-tokens@10.0.0", "", {}, "sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q=="],
 
-    "js-yaml": ["js-yaml@4.1.1", "", { "dependencies": { "argparse": "2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA=="],
+    "js-yaml": ["js-yaml@5.1.0", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.mjs" } }, "sha512-s8VA5jkR8f22S3NAXmhKPFqGUduqZGlsufabVOgN14iTdw/RXcym7bKkbwjxLK9Yw2lEvvmJjFp119+KPeo8Kg=="],
 
     "jsdom": ["jsdom@29.1.1", "", { "dependencies": { "@asamuzakjp/css-color": "^5.1.11", "@asamuzakjp/dom-selector": "^7.1.1", "@bramus/specificity": "^2.4.2", "@csstools/css-syntax-patches-for-csstree": "^1.1.3", "@exodus/bytes": "^1.15.0", "css-tree": "^3.2.1", "data-urls": "^7.0.0", "decimal.js": "^10.6.0", "html-encoding-sniffer": "^6.0.0", "is-potential-custom-element-name": "^1.0.1", "lru-cache": "^11.3.5", "parse5": "^8.0.1", "saxes": "^6.0.0", "symbol-tree": "^3.2.4", "tough-cookie": "^6.0.1", "undici": "^7.25.0", "w3c-xmlserializer": "^5.0.0", "webidl-conversions": "^8.0.1", "whatwg-mimetype": "^5.0.0", "whatwg-url": "^16.0.1", "xml-name-validator": "^5.0.0" }, "peerDependencies": { "canvas": "^3.0.0" }, "optionalPeers": ["canvas"] }, "sha512-ECi4Fi2f7BdJtUKTflYRTiaMxIB0O6zfR1fX0GXpUrf6flp8QIYn1UT20YQqdSOfk2dfkCwS8LAFoJDEppNK5Q=="],
 
@@ -2029,6 +2029,8 @@
     "config-chain/ini": ["ini@1.3.8", "", {}, "sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew=="],
 
     "cosmiconfig/env-paths": ["env-paths@2.2.1", "", {}, "sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A=="],
+
+    "cosmiconfig/js-yaml": ["js-yaml@4.1.1", "", { "dependencies": { "argparse": "2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA=="],
 
     "cosmiconfig-typescript-loader/@types/node": ["@types/node@25.7.0", "", { "dependencies": { "undici-types": "7.21.0" } }, "sha512-z+pdZyxE+RTQE9AcboAZCb4otwcrvgHD+GlBpPgn0emDVt0ohrTMhAwlr2Wd9nZ+nihhYFxO2pThz3C5qSu2Eg=="],
 
