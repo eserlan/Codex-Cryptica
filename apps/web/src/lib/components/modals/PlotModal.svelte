@@ -14,6 +14,35 @@
   let result = $state<string>("");
   let errorMsg = $state<string>("");
 
+  const LOADING_MSGS = [
+    "Consulting the ancient tomes…",
+    "Weaving threads of fate…",
+    "Summoning narrative spirits…",
+    "Eavesdropping on the tavern…",
+    "Bribing the story gods…",
+    "Rolling for inspiration…",
+    "Deciphering cryptic prophecies…",
+    "Forging unlikely alliances…",
+    "Unleashing narrative chaos…",
+    "Reading entrails (metaphorically)…",
+  ];
+  let loadingMsgIndex = $state(0);
+  let loadingInterval: ReturnType<typeof setInterval> | null = null;
+
+  function startLoadingMessages() {
+    loadingMsgIndex = Math.floor(Math.random() * LOADING_MSGS.length);
+    loadingInterval = setInterval(() => {
+      loadingMsgIndex = (loadingMsgIndex + 1) % LOADING_MSGS.length;
+    }, 2200);
+  }
+
+  function stopLoadingMessages() {
+    if (loadingInterval) {
+      clearInterval(loadingInterval);
+      loadingInterval = null;
+    }
+  }
+
   const renderedHtml = $derived(result ? (marked.parse(result) as string) : "");
 
   $effect(() => {
@@ -27,6 +56,7 @@
     status = "loading";
     result = "";
     errorMsg = "";
+    startLoadingMessages();
 
     try {
       const apiKey = oracle.effectiveApiKey ?? "";
@@ -92,8 +122,10 @@
         connected,
         `/plot ${entity.title}`,
       );
+      stopLoadingMessages();
       status = "done";
     } catch (err: any) {
+      stopLoadingMessages();
       errorMsg = err?.message ?? "Plot generation failed.";
       status = "error";
     }
@@ -105,6 +137,7 @@
   }
 
   function handleClose() {
+    stopLoadingMessages();
     modalUIStore.closePlotDialog();
     status = "idle";
     result = "";
@@ -171,12 +204,18 @@
       <div class="flex-1 min-h-0 overflow-y-auto px-5 py-4 custom-scrollbar">
         {#if status === "loading"}
           <div
-            class="flex flex-col items-center justify-center gap-3 py-12 text-theme-muted"
+            class="flex flex-col items-center justify-center gap-4 py-12 text-theme-muted"
           >
-            <span class="icon-[lucide--loader-2] w-6 h-6 animate-spin"></span>
-            <span class="text-xs tracking-widest uppercase"
-              >Generating plot…</span
-            >
+            <span
+              class="icon-[lucide--loader-2] w-6 h-6 animate-spin text-theme-primary"
+            ></span>
+            {#key loadingMsgIndex}
+              <span
+                class="text-xs tracking-wide text-center italic loading-msg"
+              >
+                {LOADING_MSGS[loadingMsgIndex]}
+              </span>
+            {/key}
           </div>
         {:else if status === "error"}
           <p class="text-sm text-red-500">{errorMsg}</p>
@@ -221,6 +260,21 @@
 {/if}
 
 <style>
+  .loading-msg {
+    animation: msg-fade 0.5s ease-in-out;
+  }
+
+  @keyframes msg-fade {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
