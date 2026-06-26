@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import type { Entity } from "schema";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -63,9 +63,17 @@ export function parseMarkdown(raw: string): ParseResult {
   if (match) {
     try {
       const yamlContent = match[1];
-      const parsed = yaml.load(yamlContent) as any;
-      if (typeof parsed === "object" && parsed !== null) {
-        metadata = parsed;
+      try {
+        const parsed = yaml.load(yamlContent) as any;
+        // js-yaml@4 handles `: malformed: yaml` differently and doesn't throw,
+        // so we check if it parsed it into a weird {"null": ...} object.
+        if (typeof parsed === "object" && parsed !== null && !("null" in parsed)) {
+          metadata = parsed;
+        } else if (typeof parsed === "object" && parsed !== null && "null" in parsed) {
+          throw new Error("Malformed YAML");
+        }
+      } catch (e) {
+        throw e;
       }
     } catch (e) {
       console.error("Failed to parse frontmatter", e);
