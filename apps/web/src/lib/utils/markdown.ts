@@ -63,17 +63,9 @@ export function parseMarkdown(raw: string): ParseResult {
   if (match) {
     try {
       const yamlContent = match[1];
-      try {
-        const parsed = yaml.load(yamlContent) as any;
-        // js-yaml@4 handles `: malformed: yaml` differently and doesn't throw,
-        // so we check if it parsed it into a weird {"null": ...} object.
-        if (typeof parsed === "object" && parsed !== null && !("null" in parsed)) {
-          metadata = parsed;
-        } else if (typeof parsed === "object" && parsed !== null && "null" in parsed) {
-          throw new Error("Malformed YAML");
-        }
-      } catch (e) {
-        throw e;
+      const parsed = yaml.load(yamlContent) as any;
+      if (typeof parsed === "object" && parsed !== null) {
+        metadata = parsed;
       }
     } catch (e) {
       console.error("Failed to parse frontmatter", e);
