@@ -14,25 +14,107 @@
   let result = $state<string>("");
   let errorMsg = $state<string>("");
 
-  const LOADING_MSGS = [
-    "Consulting the ancient tomes…",
-    "Weaving threads of fate…",
-    "Summoning narrative spirits…",
-    "Eavesdropping on the tavern…",
-    "Bribing the story gods…",
-    "Rolling for inspiration…",
-    "Deciphering cryptic prophecies…",
-    "Forging unlikely alliances…",
-    "Unleashing narrative chaos…",
-    "Reading entrails (metaphorically)…",
-  ];
+  function buildLoadingMsgs(
+    name: string,
+    type: string,
+    connectedNames: string[],
+  ): string[] {
+    const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+    const conn = connectedNames.length > 0 ? pick(connectedNames) : null;
+
+    const typeMessages: Record<string, string[]> = {
+      character: [
+        `Trailing ${name} through the shadows…`,
+        `Reading ${name}'s letters by candlelight…`,
+        `Asking what ${name} really wants…`,
+        `Digging up ${name}'s past…`,
+        `Counting ${name}'s enemies…`,
+      ],
+      faction: [
+        `Infiltrating ${name}'s inner circle…`,
+        `Mapping ${name}'s web of influence…`,
+        `Listening at ${name}'s closed doors…`,
+        `Tracing ${name}'s money…`,
+        `Finding the cracks within ${name}…`,
+      ],
+      location: [
+        `Surveying the dark corners of ${name}…`,
+        `Unearthing what's buried beneath ${name}…`,
+        `Listening to the rumours around ${name}…`,
+        `Charting the dangers of ${name}…`,
+        `Asking who controls ${name}…`,
+      ],
+      item: [
+        `Tracing ${name}'s chain of ownership…`,
+        `Deciphering the markings on ${name}…`,
+        `Sensing the power hidden within ${name}…`,
+        `Asking who wants ${name} back…`,
+        `Following the trail ${name} left behind…`,
+      ],
+      creature: [
+        `Tracking ${name}'s movements at dusk…`,
+        `Studying the lair of ${name}…`,
+        `Counting the signs of ${name}'s passage…`,
+        `Asking the locals about ${name}…`,
+        `Mapping the territory ${name} claims…`,
+      ],
+      settlement: [
+        `Eavesdropping at ${name}'s market…`,
+        `Reading the mood in ${name}'s streets…`,
+        `Counting the guards at ${name}'s gates…`,
+        `Listening to ${name}'s grievances…`,
+        `Tracing the tensions brewing in ${name}…`,
+      ],
+    };
+
+    const typeMsgs = typeMessages[type.toLowerCase()] ?? [
+      `Pulling the threads around ${name}…`,
+      `Consulting those who know ${name}…`,
+      `Weighing what ${name} means for the story…`,
+      `Tracing ${name}'s place in the world…`,
+      `Asking what happens because of ${name}…`,
+    ];
+
+    const connMsgs = conn
+      ? [
+          `Cross-referencing ${name} with ${conn}…`,
+          `Wondering what ${conn} knows about ${name}…`,
+          `Mapping the tension between ${name} and ${conn}…`,
+          `Asking how ${conn} fits into ${name}'s story…`,
+        ]
+      : [];
+
+    const fallbackMsgs = [
+      "Weaving threads of fate…",
+      "Rolling for inspiration…",
+      "Bribing the story gods…",
+      "Reading entrails (metaphorically)…",
+      "Unleashing narrative chaos…",
+    ];
+
+    const pool = [...typeMsgs, ...connMsgs, ...fallbackMsgs];
+    // Shuffle
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool;
+  }
+
+  let loadingMsgs = $state<string[]>([]);
   let loadingMsgIndex = $state(0);
   let loadingInterval: ReturnType<typeof setInterval> | null = null;
 
-  function startLoadingMessages() {
-    loadingMsgIndex = Math.floor(Math.random() * LOADING_MSGS.length);
+  function startLoadingMessages(connectedNames: string[]) {
+    if (!entity) return;
+    loadingMsgs = buildLoadingMsgs(
+      entity.title,
+      entity.type ?? "",
+      connectedNames,
+    );
+    loadingMsgIndex = 0;
     loadingInterval = setInterval(() => {
-      loadingMsgIndex = (loadingMsgIndex + 1) % LOADING_MSGS.length;
+      loadingMsgIndex = (loadingMsgIndex + 1) % loadingMsgs.length;
     }, 2200);
   }
 
@@ -56,7 +138,6 @@
     status = "loading";
     result = "";
     errorMsg = "";
-    startLoadingMessages();
 
     try {
       const apiKey = oracle.effectiveApiKey ?? "";
@@ -114,6 +195,8 @@
           }
         }
       }
+
+      startLoadingMessages(connected.map((c) => c.entity.title));
 
       result = await oracle.textGeneration.generatePlotAnalysis(
         apiKey,
@@ -213,7 +296,7 @@
               <span
                 class="text-xs tracking-wide text-center italic loading-msg"
               >
-                {LOADING_MSGS[loadingMsgIndex]}
+                {loadingMsgs[loadingMsgIndex] ?? ""}
               </span>
             {/key}
           </div>
