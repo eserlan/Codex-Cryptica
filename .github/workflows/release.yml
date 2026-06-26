@@ -15,7 +15,7 @@ jobs:
       before_sha: ${{ steps.check.outputs.before_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
         with:
           fetch-depth: 5 # Get enough history to find previous versions
 
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -68,7 +68,7 @@ jobs:
           node-version: 24
 
       - name: Setup Bun cache
-        uses: actions/cache@v6
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
