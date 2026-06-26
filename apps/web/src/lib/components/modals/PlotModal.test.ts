@@ -65,11 +65,12 @@ vi.mock("marked", () => ({
 
 // --- tests ---
 
-import PlotModal from "./PlotModal.svelte";
+import PlotModal, { clearPlotCache } from "./PlotModal.svelte";
 
 describe("PlotModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearPlotCache();
     plotDialogState = { open: false, entityId: null };
     mockSearch.mockResolvedValue([]);
     mockGeneratePlotAnalysis.mockResolvedValue("# Plot\nA story hook.");
@@ -121,6 +122,39 @@ describe("PlotModal", () => {
       expect(getByText(/Regenerate/i)).toBeTruthy();
       expect(getByText(/Copy/i)).toBeTruthy();
     });
+  });
+
+  it("shows cached result immediately on second open without re-generating", async () => {
+    // First open — generates and caches
+    plotDialogState = { open: true, entityId: "entity-1" };
+    const { unmount } = render(PlotModal);
+    await waitFor(() =>
+      expect(mockGeneratePlotAnalysis).toHaveBeenCalledTimes(1),
+    );
+    unmount();
+
+    // Second open — should use cache, no new generate call
+    mockGeneratePlotAnalysis.mockClear();
+    plotDialogState = { open: true, entityId: "entity-1" };
+    render(PlotModal);
+
+    // Give it a tick to settle
+    await waitFor(() => {
+      expect(mockGeneratePlotAnalysis).not.toHaveBeenCalled();
+    });
+  });
+
+  it("re-generates and busts cache when Regenerate is clicked", async () => {
+    plotDialogState = { open: true, entityId: "entity-1" };
+    const { getByText } = render(PlotModal);
+
+    await waitFor(() => expect(getByText(/Regenerate/i)).toBeTruthy());
+    mockGeneratePlotAnalysis.mockClear();
+    await fireEvent.click(getByText(/Regenerate/i));
+
+    await waitFor(() =>
+      expect(mockGeneratePlotAnalysis).toHaveBeenCalledTimes(1),
+    );
   });
 
   it("calls closePlotDialog when Close is clicked", async () => {

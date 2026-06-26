@@ -1,3 +1,11 @@
+<script module>
+  // Session-scoped cache — survives modal close/reopen within the same page load
+  const plotCache = new Map<string, string>();
+  export function clearPlotCache() {
+    plotCache.clear();
+  }
+</script>
+
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
   import { marked } from "marked";
@@ -129,12 +137,19 @@
 
   $effect(() => {
     if (modalUIStore.plotDialog.open && entity) {
-      void generate();
+      const cached = plotCache.get(entity.id);
+      if (cached) {
+        result = cached;
+        status = "done";
+      } else {
+        void generate();
+      }
     }
   });
 
-  async function generate() {
+  async function generate(bust = false) {
     if (!entity) return;
+    if (bust) plotCache.delete(entity.id);
     status = "loading";
     result = "";
     errorMsg = "";
@@ -210,6 +225,7 @@
         plainConnected,
         `/plot ${entity.title}`,
       );
+      plotCache.set(entity.id, result);
       stopLoadingMessages();
       status = "done";
     } catch (err: any) {
@@ -329,7 +345,7 @@
         {/if}
         {#if status === "done" || status === "error"}
           <button
-            onclick={generate}
+            onclick={() => generate(true)}
             class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-secondary hover:text-theme-primary border border-theme-border hover:border-theme-primary px-3 py-2 rounded transition"
           >
             <span class="icon-[lucide--refresh-cw] w-3.5 h-3.5"></span>
@@ -374,17 +390,51 @@
     border-radius: 2px;
   }
 
-  /* Tune prose colors to match theme */
-  .plot-modal-prose :global(h1),
-  .plot-modal-prose :global(h2),
-  .plot-modal-prose :global(h3) {
+  .plot-modal-prose :global(h2) {
+    font-size: 0.95rem;
+    font-weight: 700;
     color: var(--theme-text);
+    margin-top: 1.25rem;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.01em;
   }
-  .plot-modal-prose :global(p),
-  .plot-modal-prose :global(li) {
+  .plot-modal-prose :global(h3) {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--theme-primary);
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .plot-modal-prose :global(p) {
+    font-size: 0.8rem;
+    line-height: 1.65;
     color: var(--theme-text-secondary, var(--theme-text));
+    margin-bottom: 0.5rem;
   }
   .plot-modal-prose :global(strong) {
+    font-weight: 700;
     color: var(--theme-text);
+  }
+  .plot-modal-prose :global(ul) {
+    margin: 0.4rem 0 0.6rem 1rem;
+    list-style-type: disc;
+  }
+  .plot-modal-prose :global(li) {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--theme-text-secondary, var(--theme-text));
+    margin-bottom: 0.25rem;
+  }
+  .plot-modal-prose :global(hr) {
+    border-color: var(--theme-border);
+    margin: 1rem 0;
+  }
+  /* First element — no top margin */
+  .plot-modal-prose :global(h2:first-child),
+  .plot-modal-prose :global(h3:first-child),
+  .plot-modal-prose :global(p:first-child) {
+    margin-top: 0;
   }
 </style>
