@@ -41,11 +41,6 @@ Follow this quick checklist to set up your first vault and see Codex Cryptica's 
 />
 
 1.  **Initialize your Space**: Click the folder icon in the top-left toolbar, select **New Vault**, and give it a name.
-2.  **Create your First Cast Member**: Click the `+` icon in the explorer sidebar, select the **Character** category, type `Eldrin` as the title, and hit Save.
-3.  **Write and Link**: Double-click Eldrin in the list to open his profile, click the Chronicle text area to edit, and type:
-    `A legendary mage living in [[Kingdom of Aethel]].`
-4.  **Confirm the Location**: The name `Kingdom of Aethel` will automatically create a draft entity link. Click that link in read mode to create the new Faction/Location record.
-5.  **Open the Knowledge Graph**: Select the Graph tab in the main navigation. You will see Eldrin and the Kingdom of Aethel mapped visually, with a connecting edge automatically drawn!
 
 <img
   src="https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/getting-started/create-entity.jpg"
@@ -53,11 +48,18 @@ Follow this quick checklist to set up your first vault and see Codex Cryptica's 
   title="Create your first campaign entity"
 />
 
+2.  **Create your First Cast Member**: Click the `+` icon in the explorer sidebar, select the **Character** category, type `Eldrin` as the title, and hit Save.
+
 <img
   src="https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/getting-started/chronicle-linking.jpg"
   alt="Entity editor with a Chronicle field and a wiki-style linked location"
   title="Write a Chronicle and link new lore as you type"
 />
+
+3.  **Write and Link**: Double-click Eldrin in the list to open his profile, click the Chronicle text area to edit, and type:
+    `A legendary mage living in [[Kingdom of Aethel]].`
+4.  **Confirm the Location**: The name `Kingdom of Aethel` will automatically create a draft entity link. Click that link in read mode to create the new Faction/Location record.
+5.  **Open the Knowledge Graph**: Select the Graph tab in the main navigation. You will see Eldrin and the Kingdom of Aethel mapped visually, with a connecting edge automatically drawn!
 
 ### A Simple Starter Pattern
 
