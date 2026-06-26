@@ -60,6 +60,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     showShare: false,
     imagePromptReview: { open: false, target: null, prompt: "" },
     revisionDialog: { open: false, entityId: null, instructions: "" },
+    plotDialog: { open: false, entityId: null },
     generatorWorkflow: {
       open: false,
       launchMode: "workspace",
