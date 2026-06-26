@@ -523,6 +523,7 @@
       </div>
 
       <DetailFooter
+        entityId={activeEntity.id}
         {isEditing}
         {isSaving}
         {isDirty}
