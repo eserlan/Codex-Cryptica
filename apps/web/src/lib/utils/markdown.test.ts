@@ -101,7 +101,7 @@ describe("markdown.ts utility", () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      const raw = "---\n: malformed: yaml\n---\n# Content";
+      const raw = "---\n[unclosed bracket\n---\n# Content";
       const result = parseMarkdown(raw);
       expect(result.metadata).toEqual({});
       expect(result.content).toBe("# Content");
