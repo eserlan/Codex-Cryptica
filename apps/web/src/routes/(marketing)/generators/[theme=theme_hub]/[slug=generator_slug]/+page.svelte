@@ -1,6 +1,6 @@
 <script lang="ts">
   import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
-  import type { ValidSlug } from "$lib/components/seo/GeneratorPageContent.svelte";
+  import type { ValidSlug } from "$lib/services/seo/generator-slugs";
 
   let { data } = $props();
 </script>
