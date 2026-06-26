@@ -198,11 +198,16 @@
 
       startLoadingMessages(connected.map((c) => c.entity.title));
 
+      // Svelte $state proxies can't cross the worker postMessage boundary —
+      // strip them to plain objects before the Comlink call.
+      const plainEntity = JSON.parse(JSON.stringify(entity));
+      const plainConnected = JSON.parse(JSON.stringify(connected));
+
       result = await oracle.textGeneration.generatePlotAnalysis(
         apiKey,
         modelName,
-        entity,
-        connected,
+        plainEntity,
+        plainConnected,
         `/plot ${entity.title}`,
       );
       stopLoadingMessages();
