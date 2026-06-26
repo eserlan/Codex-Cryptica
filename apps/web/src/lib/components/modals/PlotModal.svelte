@@ -1,14 +1,11 @@
 <script module>
-  // Session-scoped cache — survives modal close/reopen within the same page load
-  const plotCache = new Map<string, string>();
-  export function clearPlotCache() {
-    plotCache.clear();
-  }
+  export { clearPlotCache } from "$lib/stores/plot-cache";
 </script>
 
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
   import { marked } from "marked";
+  import { plotCache } from "$lib/stores/plot-cache";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
