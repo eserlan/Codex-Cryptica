@@ -1,5 +1,5 @@
 import { EntitySchema } from "schema";
-import * as yaml from "js-yaml";
+import { load as yamlLoad } from "js-yaml";
 
 const MarkdownFrontmatterSchema = EntitySchema.partial()
   .omit({ tags: true })
@@ -19,7 +19,7 @@ export function validateMarkdownFrontmatter(text: string): {
   if (match) {
     try {
       const yamlContent = match[1];
-      const parsed = yaml.load(yamlContent) ?? {};
+      const parsed = yamlLoad(yamlContent) ?? {};
 
       const validationResult = MarkdownFrontmatterSchema.safeParse(parsed);
       if (!validationResult.success) {
