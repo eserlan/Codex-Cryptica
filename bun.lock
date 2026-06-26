@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.27.0",
+      "version": "0.27.6",
       "dependencies": {
         "@codex/canvas-engine": "workspace:*",
         "@codex/events": "workspace:*",
@@ -228,7 +228,9 @@
         "@types/turndown": "^5.0.6",
         "idb": "^8.0.3",
         "mammoth": "^1.12.0",
+        "schema": "workspace:*",
         "turndown": "^7.2.4",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@types/node": "^25.9.1",
