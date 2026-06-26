@@ -63,8 +63,13 @@ describe("Vault Data Validation", () => {
 
   it("should reject invalid YAML frontmatter", () => {
     const validMarkdown = `---
+id: "test-note"
 type: "note"
 title: "Test"
+labels: []
+aliases: []
+connections: []
+content: ""
 ---
 Content
 `;

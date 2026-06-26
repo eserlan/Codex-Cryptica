@@ -14,7 +14,7 @@
     "@codex/events": "workspace:*",
     "dexie": "^4.4.2",
     "idb": "^8.0.3",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.1.0",
     "schema": "workspace:*"
   },
   "devDependencies": {

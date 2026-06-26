@@ -17,3 +17,8 @@
 
 **Learning:** When extracting logic from a Svelte component that relies on reactive `$state` (e.g. `editLore` being updated while an async AI generation streams in), be careful not to create state closure traps. Passing the raw string value creates a snapshot.
 **Action:** When extracting async generation functions from UI components, pass reactive state getters (`getEditLore: () => string`) rather than static snapshot variables (`editLore: string`) to preserve the component's original closure-updating behavior.
+
+## 2025-06-26 - Generator Page Content Slug Extraction
+
+**Learning:** Large Svelte page component files (like `GeneratorPageContent.svelte`) often embed large routing-level configuration constants (like `GENERATOR_SLUGS_WITH_THEME`) and simple mapping helpers that don't depend on Svelte state. Since these are used by other routing modules (for types like `ValidSlug`), they should be extracted to their own domain-specific service files.
+**Action:** When finding complex routing slug constants and their dependent helpers in root page components, extract them to a dedicated typescript file (e.g., `generator-slugs.ts`) in the appropriate feature directory (`services/seo`) to make the UI component easier to scan and the logic independently testable.

@@ -64,6 +64,7 @@
 **Action:** Add Tailwind focus-visible utilities to ensure accessibility without degrading the mouse user experience.
 
 ## 2024-06-17 - Button Toggle State Accessibility\n\n**Learning:** Found custom toggle buttons (like the App Appearance theme switchers) that changed visual state via classes but didn't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode was active.\n**Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.\n
+
 ## 2026-06-12 - Semantic Modal Backdrops
 
 **Learning:** Found multiple modals (`ConfirmationModal`, `ChangelogModal`, `ImagePromptReviewModal`, `SettingsModal`, `SearchModal`, `ShareModal`, `MobileCreateEntitySheet`) using `div` elements with `svelte-ignore` comments for backdrops. This anti-pattern prevents keyboard navigation and violates accessibility rules.
