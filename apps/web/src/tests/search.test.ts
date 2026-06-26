@@ -217,7 +217,7 @@ describe("SearchService", () => {
     expect(putArg.updatedAt).toEqual(expect.any(Number));
 
     const savedData = putArg.data;
-    if (savedData instanceof Blob || savedData.constructor.name === "Blob") {
+    if (savedData instanceof Blob) {
       let text: string;
       if (typeof DecompressionStream !== "undefined") {
         const rawStream =

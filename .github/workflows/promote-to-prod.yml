@@ -68,7 +68,7 @@ jobs:
       name: production
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.find-staging-build.outputs.commit_sha }}
           fetch-depth: 0
