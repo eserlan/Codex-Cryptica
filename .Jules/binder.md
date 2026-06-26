@@ -17,3 +17,6 @@
 ## 2025-02-23 - Inject systemClock and systemIdGenerator into UndoRedoService
 **Learning:** `oracle-engine` uses a pattern of injecting `systemClock` and `systemIdGenerator` from `./runtime.ts` into constructors to allow faking time and randomness in tests.
 **Action:** When working in `oracle-engine`, ensure `Date.now()` and `crypto.randomUUID()` calls are replaced with injected dependencies from `./runtime.ts` using this pattern.
+## 2026-06-26 - Injecting Time Dependency into VTTSessionService
+**Learning:** Date.now() used directly in `saveEncounterSnapshot` couples the implementation to the system clock, making tests awkward (e.g. not verifying exact timestamps or relying on imprecise checks).
+**Action:** Passed `clock: Clock = systemClock` into `VTTSessionServiceDeps` and used `clock.now()` to let tests supply a fixed timestamp object deterministically.

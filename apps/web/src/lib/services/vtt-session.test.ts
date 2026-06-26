@@ -91,8 +91,10 @@ describe("vtt-session", () => {
 
   it("saves and loads snapshots in OPFS", async () => {
     const vaultHandle = { name: "vault" } as FileSystemDirectoryHandle;
+    const mockClock = { now: () => 1234567890 };
     const service = new VTTSessionService({
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
+      clock: mockClock,
     });
 
     await service.saveEncounterSnapshot(
@@ -105,6 +107,12 @@ describe("vtt-session", () => {
       vaultHandle,
       "vault",
     );
+
+    const callArgs = vi.mocked(writeOpfsFile).mock.calls[0];
+    const blobArg = callArgs[1] as Blob;
+    const jsonContent = await blobArg.text();
+    const parsedPayload = JSON.parse(jsonContent);
+    expect(parsedPayload.savedAt).toBe(1234567890);
 
     (readOpfsBlob as any).mockResolvedValue(
       new Blob(
