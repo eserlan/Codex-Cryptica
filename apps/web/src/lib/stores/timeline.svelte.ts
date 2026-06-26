@@ -312,17 +312,23 @@ export class TimelineStore {
     });
   });
 
-  filteredEntries = $derived.by(() =>
-    this.filteredCalendarEntries
-      .filter((entry) => entry.date !== null)
-      .map((entry) => ({
-        entityId: entry.entityId,
-        title: entry.title,
-        type: entry.entityType,
-        date: entry.exactDate ?? (entry.date as TemporalMetadata),
-        eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
-      })),
-  );
+  filteredEntries = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
+    // to avoid intermediate array allocations and reduce GC pressure during rapid UI updates.
+    const result = [];
+    for (const entry of this.filteredCalendarEntries) {
+      if (entry.date !== null) {
+        result.push({
+          entityId: entry.entityId,
+          title: entry.title,
+          type: entry.entityType,
+          date: entry.exactDate ?? (entry.date as TemporalMetadata),
+          eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
+        });
+      }
+    }
+    return result;
+  });
 
   calendarMonthView = $derived.by(
     (): CalendarMonthViewModel =>
