@@ -184,6 +184,22 @@ export class OracleContextManager {
           if (entityId) plotCache.set(entityId, result);
           return result;
         },
+        generateEntitiesFromPlot: s.textGeneration.generateEntitiesFromPlot
+          ? (
+              apiKey: string,
+              modelName: string,
+              plotHookText: string,
+              sourceEntityTitle: string,
+              availableCategories: string[],
+            ) =>
+              s.textGeneration.generateEntitiesFromPlot!(
+                apiKey,
+                modelName,
+                plotHookText,
+                sourceEntityTitle,
+                availableCategories,
+              )
+          : undefined,
       },
       searchService: {
         search: s.searchService.search

@@ -37,6 +37,10 @@ import {
   buildStructuredDraftingPrompt,
 } from "./prompts/entity-creation";
 import { buildRelatedEntityGenerationPrompt } from "./prompts/related-entity-generation";
+import {
+  buildPlotEntitiesExtractionPrompt,
+  type PlotEntityStub,
+} from "./prompts/plot-entities";
 import { isAIEnabled } from "./capability-guard";
 import { resolvePronounsLocally } from "./resolve-pronouns";
 
@@ -886,6 +890,36 @@ export class DefaultTextGenerationService implements TextGenerationService {
       throw new Error(`Related entity generation failed: ${err.message}`, {
         cause: err,
       });
+    }
+  }
+  async generateEntitiesFromPlot(
+    apiKey: string,
+    modelName: string,
+    plotHookText: string,
+    sourceEntityTitle: string,
+    availableCategories: string[],
+  ): Promise<PlotEntityStub[]> {
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
+    const prompt = buildPlotEntitiesExtractionPrompt(
+      plotHookText,
+      sourceEntityTitle,
+      availableCategories,
+    );
+    const result = await model.generateContent(prompt);
+    const raw = result.response.text().trim();
+    // Strip any accidental markdown fences
+    const json = raw
+      .replace(/^```json?\s*/i, "")
+      .replace(/\s*```$/, "")
+      .trim();
+    try {
+      const parsed = JSON.parse(json);
+      if (!Array.isArray(parsed)) throw new Error("Expected array");
+      return parsed.filter(
+        (e: any) => typeof e.title === "string" && typeof e.type === "string",
+      );
+    } catch {
+      throw new Error("Failed to parse entity stubs from plot response");
     }
   }
 }

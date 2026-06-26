@@ -8,6 +8,7 @@
   import { plotCache } from "$lib/stores/plot-cache";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { searchService } from "$lib/services/search.svelte";
   import type { PlotAnalysisEntity } from "schema";
@@ -18,6 +19,70 @@
   let status = $state<"idle" | "loading" | "done" | "error">("idle");
   let result = $state<string>("");
   let errorMsg = $state<string>("");
+
+  // --- Plot section selector ---
+  interface PlotSection {
+    title: string;
+    raw: string;
+  }
+
+  const plotSections = $derived.by<PlotSection[]>(() => {
+    if (!result) return [];
+    // Split on ## headings — each h2 is one plot hook
+    const parts = result.split(/(?=^## )/m).filter((s) => s.trim());
+    return parts.map((raw) => {
+      const titleMatch = raw.match(/^## (.+)/m);
+      return { title: titleMatch ? titleMatch[1].trim() : "Plot Hook", raw };
+    });
+  });
+
+  let selectedPlotIndex = $state<number | null>(null);
+
+  // --- Entity extraction ---
+  type ExtractStatus = "idle" | "extracting" | "creating" | "done" | "error";
+  let extractStatus = $state<ExtractStatus>("idle");
+  let extractError = $state<string>("");
+  let createdEntityTitles = $state<string[]>([]);
+
+  async function generateEntitiesFromSelectedPlot() {
+    if (selectedPlotIndex === null || !entity) return;
+    const hook = plotSections[selectedPlotIndex];
+    if (!hook) return;
+
+    extractStatus = "extracting";
+    extractError = "";
+    createdEntityTitles = [];
+
+    try {
+      const apiKey = oracle.effectiveApiKey ?? "";
+      const modelName = oracle.modelName;
+      const catIds = categories.list.map((c) => c.id);
+
+      const stubs = await oracle.textGeneration.generateEntitiesFromPlot!(
+        apiKey,
+        modelName,
+        hook.raw,
+        entity.title,
+        catIds,
+      );
+
+      extractStatus = "creating";
+
+      for (const stub of stubs) {
+        const newId = await vault.createEntity(stub.type, stub.title, {
+          content: stub.content,
+        });
+        // Connect source entity → new entity
+        await vault.addConnection(entity.id, newId, "related", "from plot");
+        createdEntityTitles = [...createdEntityTitles, stub.title];
+      }
+
+      extractStatus = "done";
+    } catch (err: any) {
+      extractError = err?.message ?? "Entity generation failed.";
+      extractStatus = "error";
+    }
+  }
 
   function buildLoadingMsgs(
     name: string,
@@ -144,9 +209,17 @@
     }
   });
 
+  function resetExtractState() {
+    extractStatus = "idle";
+    extractError = "";
+    createdEntityTitles = [];
+    selectedPlotIndex = null;
+  }
+
   async function generate(bust = false) {
     if (!entity) return;
     if (bust) plotCache.delete(entity.id);
+    resetExtractState();
     status = "loading";
     result = "";
     errorMsg = "";
@@ -240,6 +313,7 @@
   function handleClose() {
     stopLoadingMessages();
     modalUIStore.closePlotDialog();
+    resetExtractState();
     status = "idle";
     result = "";
     errorMsg = "";
@@ -324,6 +398,72 @@
           <div class="prose prose-sm max-w-none plot-modal-prose">
             {@html renderedHtml}
           </div>
+
+          {#if plotSections.length > 1}
+            <!-- Plot selector + entity generation panel -->
+            <div class="mt-5 pt-4 border-t border-theme-border">
+              <p
+                class="text-[10px] font-bold uppercase tracking-widest text-theme-muted mb-3"
+              >
+                Generate &amp; Connect Entities
+              </p>
+              <div class="flex flex-col gap-2 mb-3">
+                {#each plotSections as section, i (i)}
+                  <button
+                    type="button"
+                    onclick={() =>
+                      (selectedPlotIndex = selectedPlotIndex === i ? null : i)}
+                    class="text-left px-3 py-2 rounded border text-xs transition {selectedPlotIndex ===
+                    i
+                      ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-semibold'
+                      : 'border-theme-border text-theme-secondary hover:border-theme-primary/50 hover:text-theme-text'}"
+                  >
+                    {section.title.replace(/^\[|\]$/g, "")}
+                  </button>
+                {/each}
+              </div>
+
+              {#if selectedPlotIndex !== null}
+                {#if extractStatus === "idle" || extractStatus === "error"}
+                  {#if extractStatus === "error"}
+                    <p class="text-xs text-red-500 mb-2">{extractError}</p>
+                  {/if}
+                  <button
+                    onclick={generateEntitiesFromSelectedPlot}
+                    class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-primary border border-theme-primary/40 hover:bg-theme-primary/10 px-3 py-2 rounded transition"
+                  >
+                    <span class="icon-[lucide--wand-2] w-3.5 h-3.5"></span>
+                    Generate &amp; Connect Entities
+                  </button>
+                {:else if extractStatus === "extracting" || extractStatus === "creating"}
+                  <div class="flex items-center gap-2 text-xs text-theme-muted">
+                    <span
+                      class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin text-theme-primary"
+                    ></span>
+                    {extractStatus === "extracting"
+                      ? "Extracting entities from plot…"
+                      : `Creating ${createdEntityTitles.length > 0 ? createdEntityTitles[createdEntityTitles.length - 1] + "…" : "entities…"}`}
+                  </div>
+                {:else if extractStatus === "done"}
+                  <div class="flex flex-col gap-1">
+                    <div
+                      class="flex items-center gap-1.5 text-xs text-theme-primary mb-1"
+                    >
+                      <span class="icon-[lucide--check-circle] w-3.5 h-3.5"
+                      ></span>
+                      Created and connected {createdEntityTitles.length} entities
+                    </div>
+                    {#each createdEntityTitles as title (title)}
+                      <span
+                        class="text-[10px] text-theme-muted pl-5 before:content-['·'] before:mr-1.5 before:text-theme-primary"
+                        >{title}</span
+                      >
+                    {/each}
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          {/if}
         {/if}
       </div>
 
