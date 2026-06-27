@@ -52,6 +52,78 @@ describe("WebVaultWriter", () => {
     });
   });
 
+  it("uses batchCreateEntities when the vault store supports it", async () => {
+    const batchCreateEntities = vi.fn(async (_entities) => {
+      store.entities.hero = {
+        id: "hero",
+        title: "Hero",
+        discoverySource: "scabard:id:1",
+      };
+      store.entities.harbor = {
+        id: "harbor",
+        title: "Moon Harbor",
+        discoverySource: "scabard:id:2",
+      };
+    });
+    const store = {
+      entities: {} as Record<string, any>,
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      batchCreateEntities,
+      addConnection: vi.fn(),
+    };
+    const writer = new WebVaultWriter(store);
+
+    const result = await writer.batchCreateEntities([
+      {
+        type: "character",
+        title: "Hero",
+        content: "Lore",
+        tags: ["important"],
+        discoverySource: "scabard:id:1",
+      },
+      {
+        type: "location",
+        title: "Moon Harbor",
+        content: "Harbor note",
+        tags: ["port"],
+        discoverySource: "scabard:id:2",
+      },
+    ]);
+
+    expect(batchCreateEntities).toHaveBeenCalledWith([
+      {
+        type: "character",
+        title: "Hero",
+        initialData: {
+          content: "Lore",
+          lore: undefined,
+          tags: ["important"],
+          labels: ["important"],
+          metadata: undefined,
+          discoverySource: "scabard:id:1",
+          parent: undefined,
+          connections: undefined,
+        },
+      },
+      {
+        type: "location",
+        title: "Moon Harbor",
+        initialData: {
+          content: "Harbor note",
+          lore: undefined,
+          tags: ["port"],
+          labels: ["port"],
+          metadata: undefined,
+          discoverySource: "scabard:id:2",
+          parent: undefined,
+          connections: undefined,
+        },
+      },
+    ]);
+    expect(result).toEqual([{ id: "hero" }, { id: "harbor" }]);
+  });
+
   it("maps patch tags to labels on update", async () => {
     const updateEntity = vi.fn().mockResolvedValue(true);
     const writer = new WebVaultWriter({

@@ -15,6 +15,13 @@ export interface VaultWriterStoreLike {
     initialData?: Partial<Entity>,
   ): Promise<string>;
   updateEntity(id: string, updates: Partial<Entity>): Promise<boolean>;
+  batchCreateEntities?(
+    newEntitiesList: Array<{
+      type: string;
+      title: string;
+      initialData: Partial<Entity>;
+    }>,
+  ): Promise<void>;
   addConnection(
     sourceId: string,
     targetId: string,
@@ -54,6 +61,59 @@ export class WebVaultWriter implements VaultWriter {
     );
 
     return { id };
+  }
+
+  async batchCreateEntities(
+    entities: NewEntityInput[],
+  ): Promise<Array<{ id: string }>> {
+    if (!this.store.batchCreateEntities) {
+      const created: Array<{ id: string }> = [];
+      for (const entity of entities) {
+        created.push(await this.createEntity(entity));
+      }
+      return created;
+    }
+
+    const knownIds = new Set(
+      Object.values(this.store.entities)
+        .map((entity) => entity.id)
+        .filter((id): id is string => typeof id === "string"),
+    );
+
+    await this.store.batchCreateEntities(
+      entities.map((entity) => ({
+        type: entity.type,
+        title: entity.title,
+        initialData: {
+          content: entity.content,
+          lore: entity.lore,
+          tags: entity.tags,
+          labels: entity.tags,
+          metadata: entity.metadata as Entity["metadata"],
+          discoverySource: entity.discoverySource,
+          parent: entity.parent,
+          connections: entity.connections as Entity["connections"],
+        },
+      })),
+    );
+
+    return entities.map((entity) => {
+      const match = Object.values(this.store.entities).find(
+        (candidate) =>
+          typeof candidate.id === "string" &&
+          !knownIds.has(candidate.id) &&
+          candidate.discoverySource === entity.discoverySource,
+      );
+
+      if (!match?.id) {
+        throw new Error(
+          `Batch-created entity for ${entity.discoverySource} could not be resolved`,
+        );
+      }
+
+      knownIds.add(match.id);
+      return { id: match.id };
+    });
   }
 
   async updateEntity(id: string, patch: EntityPatch): Promise<void> {
