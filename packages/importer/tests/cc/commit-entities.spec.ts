@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { ImportEngine } from "../../src/cc/engine";
 import { FakeVaultWriter } from "./fixtures/fake-vault-writer";
 import { kankaMinimal } from "./fixtures/kanka-minimal";
@@ -74,5 +74,34 @@ describe("commit — entities", () => {
     const report = await engine.commit(session);
     expect(report.failures.length).toBe(1);
     expect(report.entitiesCreated).toBe(1);
+  });
+
+  it("uses batch create when the writer supports it", async () => {
+    const writer = new FakeVaultWriter();
+    const batchCreateEntities = vi.fn(async (entities) =>
+      Promise.all(entities.map((entity) => writer.createEntity(entity))),
+    );
+    const createEntity = vi.fn(writer.createEntity.bind(writer));
+
+    const engine = new ImportEngine(
+      {
+        writer: {
+          findBySourceRef: writer.findBySourceRef.bind(writer),
+          batchCreateEntities,
+          createEntity,
+          updateEntity: writer.updateEntity.bind(writer),
+          appendConnection: writer.appendConnection.bind(writer),
+          saveAsset: writer.saveAsset.bind(writer),
+        },
+      },
+      { mappingRules: rules },
+    );
+
+    const session = await engine.prepare(kankaMinimal);
+    const report = await engine.commit(session);
+
+    expect(report.entitiesCreated).toBe(2);
+    expect(batchCreateEntities).toHaveBeenCalledTimes(1);
+    expect(createEntity).not.toHaveBeenCalled();
   });
 });

@@ -39,6 +39,9 @@ export interface Connection {
 export interface VaultWriter {
   findBySourceRef(sourceRef: string): Promise<{ id: string } | null>;
   createEntity(entity: NewEntityInput): Promise<{ id: string }>;
+  batchCreateEntities?(
+    entities: NewEntityInput[],
+  ): Promise<Array<{ id: string }>>;
   updateEntity(id: string, patch: EntityPatch): Promise<void>;
   /** Appends a single connection to an entity without touching its other connections. */
   appendConnection(id: string, connection: Connection): Promise<void>;

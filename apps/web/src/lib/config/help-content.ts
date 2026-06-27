@@ -31,6 +31,7 @@ export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
   DETERMINISTIC_IMPORTS: "deterministic-imports-hint-seen",
+  CHRONICA_IMPORTS: "chronica-imports-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -271,6 +272,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Scabard JSON imports open a review step before anything is written. Keep or ignore each draft, choose whether matched entries should update, skip, or create a new record, and check unresolved links in the final report. Imported categories appear as Labels in your vault.",
     icon: "icon-[lucide--file-check-2]",
+  },
+  "chronica-imports": {
+    id: "chronica-imports",
+    title: "Chronica Imports",
+    content:
+      "Chronica exports can span multiple JSON files from the same campaign. Upload one or more export files together to combine characters, places, kinships, quests, maps, and other supported records into a single review before import.",
+    icon: "icon-[lucide--files]",
   },
   themes: {
     id: "themes",

@@ -1,11 +1,31 @@
 {
   "sourceSystem": "chronica",
-  "campaign": "Grecia",
+  "campaignId": "grecia-1",
+  "campaignName": "Grecia",
   "fixturePurpose": "Reference manifest for real Chronica campaign exports supplied for issue #1557.",
   "notes": [
     "The raw export files were supplied during issue discovery and should be used as adapter reference/test data.",
     "Each export file shares a top-level campaign object and export_created_at field.",
-    "Each file appears to contain one main export area under campaign. Multiple files for the same campaign should be merged into one CC import package keyed by campaign id."
+    "Each file appears to contain one main export area under campaign. Multiple files for the same campaign should be merged into one CC import package keyed by campaign id.",
+    "This checkout keeps a subset of small raw fixtures directly in the repository and can add more files as parser coverage expands."
+  ],
+  "observedDomains": [
+    "characters",
+    "places",
+    "quests",
+    "adventure_notes",
+    "encounters",
+    "entities",
+    "entity_folders",
+    "kinships",
+    "kinship_folders",
+    "maps",
+    "stat_groups"
+  ],
+  "localFixtures": [
+    "chronica.ventures-campaign-Grecia-export-5-characters.json",
+    "chronica.ventures-campaign-Grecia-export-13-places.json",
+    "chronica.ventures-campaign-Grecia-export-16-stat-groups.json"
   ],
   "exports": [
     {

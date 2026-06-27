@@ -1,1 +1,53 @@
-{"campaign":{"id":3890,"name":"Grecia","about":"<p>Set in Ancient Greece, we're following the adventures of Spartan heroes!</p>","created_at":"2020-01-28T19:18:39.212+01:00","updated_at":"2022-01-10T21:59:26.741+01:00","gm_secrets":"<p><br></p>","game_system":"D&D 5","party_wealth":"4.4","players_count":5,"stat_group_folders":[],"stat_groups":[{"id":3787,"name":"Description","campaign_id":3890,"created_at":"2020-02-08T21:46:22.254+01:00","updated_at":"2023-12-07T01:11:58.488+01:00","pc_secret":false,"position":null,"origin_id":null,"stat_group_folder_id":null,"stats_count":1,"categories":["characters","entities"],"private":false,"stats":[{"id":23123,"name":"Age","icon_id":null,"stat_type":null,"color":"","created_at":"2020-02-08T21:48:51.369+01:00","updated_at":"2020-02-08T21:48:51.369+01:00","stat_group_id":3787,"position":null,"origin_id":null,"origin_stat_group_id":null,"input_type":"text","input_count":"1","custom_input_count":false,"input_labels":[["",""],["",""]]}]}]},"export_created_at":"2026-06-27T22:54:27.544+02:00"}
+{
+  "campaign": {
+    "id": 3890,
+    "name": "Grecia",
+    "about": "<p>Set in Ancient Greece, we're following the adventures of Spartan heroes!</p>",
+    "created_at": "2020-01-28T19:18:39.212+01:00",
+    "updated_at": "2022-01-10T21:59:26.741+01:00",
+    "gm_secrets": "<p><br></p>",
+    "game_system": "D&D 5",
+    "party_wealth": "4.4",
+    "players_count": 5,
+    "stat_group_folders": [],
+    "stat_groups": [
+      {
+        "id": 3787,
+        "name": "Description",
+        "campaign_id": 3890,
+        "created_at": "2020-02-08T21:46:22.254+01:00",
+        "updated_at": "2023-12-07T01:11:58.488+01:00",
+        "pc_secret": false,
+        "position": null,
+        "origin_id": null,
+        "stat_group_folder_id": null,
+        "stats_count": 1,
+        "categories": ["characters", "entities"],
+        "private": false,
+        "stats": [
+          {
+            "id": 23123,
+            "name": "Age",
+            "icon_id": null,
+            "stat_type": null,
+            "color": "",
+            "created_at": "2020-02-08T21:48:51.369+01:00",
+            "updated_at": "2020-02-08T21:48:51.369+01:00",
+            "stat_group_id": 3787,
+            "position": null,
+            "origin_id": null,
+            "origin_stat_group_id": null,
+            "input_type": "text",
+            "input_count": "1",
+            "custom_input_count": false,
+            "input_labels": [
+              ["", ""],
+              ["", ""]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "export_created_at": "2026-06-27T22:54:27.544+02:00"
+}

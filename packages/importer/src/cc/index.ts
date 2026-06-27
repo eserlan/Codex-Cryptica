@@ -7,3 +7,4 @@ export * from "./session";
 export * from "./report";
 export * from "./engine";
 export * from "./scabard";
+export * from "./chronica";

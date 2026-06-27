@@ -148,6 +148,31 @@ export class ImportEngine {
     // Track source-ref → committed id for connection resolution
     const committedIds = new Map<string, string>();
     const failures: CommitFailure[] = [];
+    const createSingleEntity = async (item: PreviewItem): Promise<void> => {
+      const fields = mapDraftToFields(
+        item.draft,
+        item.resolvedType,
+        item.sourceRef,
+      );
+      const input: NewEntityInput = {
+        type: fields.type,
+        title: fields.title,
+        content: fields.content,
+        lore: fields.lore,
+        tags: fields.tags,
+        metadata: fields.metadata,
+        parent: fields.parent,
+        discoverySource: fields.discoverySource,
+      };
+      const { id } = await this.writer.createEntity(input);
+      report.entitiesCreated++;
+      committedIds.set(item.sourceRef, id);
+    };
+    const creates: Array<{
+      item: PreviewItem;
+      ref: string;
+      input: NewEntityInput;
+    }> = [];
 
     // Phase 1: entities
     for (const item of session.items) {
@@ -194,14 +219,15 @@ export class ImportEngine {
         // "create" — fall through to create new
       }
 
-      // Create new entity
-      try {
-        const fields = mapDraftToFields(
-          item.draft,
-          item.resolvedType,
-          item.sourceRef,
-        );
-        const input: NewEntityInput = {
+      const fields = mapDraftToFields(
+        item.draft,
+        item.resolvedType,
+        item.sourceRef,
+      );
+      creates.push({
+        item,
+        ref,
+        input: {
           type: fields.type,
           title: fields.title,
           content: fields.content,
@@ -210,12 +236,53 @@ export class ImportEngine {
           metadata: fields.metadata,
           parent: fields.parent,
           discoverySource: fields.discoverySource,
-        };
-        const { id } = await this.writer.createEntity(input);
-        report.entitiesCreated++;
-        committedIds.set(item.sourceRef, id);
-      } catch (err) {
-        failures.push({ ref, stage: "entity", message: String(err) });
+        },
+      });
+    }
+
+    if (creates.length > 0) {
+      if (this.writer.batchCreateEntities) {
+        try {
+          const results = await this.writer.batchCreateEntities(
+            creates.map(({ input }) => input),
+          );
+          if (results.length !== creates.length) {
+            throw new Error(
+              `Batch create returned ${results.length} ids for ${creates.length} entities`,
+            );
+          }
+
+          for (let index = 0; index < creates.length; index += 1) {
+            const created = creates[index];
+            const result = results[index];
+            report.entitiesCreated++;
+            committedIds.set(created.item.sourceRef, result.id);
+          }
+        } catch (err) {
+          for (const created of creates) {
+            try {
+              await createSingleEntity(created.item);
+            } catch (singleErr) {
+              failures.push({
+                ref: created.ref,
+                stage: "entity",
+                message: String(singleErr ?? err),
+              });
+            }
+          }
+        }
+      } else {
+        for (const created of creates) {
+          try {
+            await createSingleEntity(created.item);
+          } catch (err) {
+            failures.push({
+              ref: created.ref,
+              stage: "entity",
+              message: String(err),
+            });
+          }
+        }
       }
     }
 

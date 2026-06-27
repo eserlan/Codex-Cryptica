@@ -1,5 +1,3 @@
-Raw Chronica Grecia export files supplied for #1557:
-
 - chronica.ventures-campaign-Grecia-export (1).json
 - chronica.ventures-campaign-Grecia-export (5).json
 - chronica.ventures-campaign-Grecia-export (8).json

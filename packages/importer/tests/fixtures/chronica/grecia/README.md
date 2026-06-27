@@ -1,6 +1,6 @@
 # Chronica Grecia export fixtures
 
-These fixtures support #1557, the mechanical Chronica export adapter.
+These fixtures support `#1557`, the Chronica multi-file campaign importer.
 
 The user supplied real Chronica JSON exports for the `Grecia` campaign. The full uploaded set included exports for:
 
@@ -14,15 +14,27 @@ The user supplied real Chronica JSON exports for the `Grecia` campaign. The full
 - maps
 - stat groups
 
-`export-manifest.json` documents the observed file set, counts, important fields, and deterministic CC mappings.
+Current local fixture coverage in this checkout:
 
-`chronica.ventures-campaign-Grecia-export-16-stat-groups.json` is an actual raw Chronica export fixture from the supplied set. It is small enough to keep directly in the repository and covers the shared Chronica export shape:
+- `export-manifest.json`
+- `raw-uploaded-files.txt`
+- `chronica.ventures-campaign-Grecia-export-5-characters.json`
+- `chronica.ventures-campaign-Grecia-export-13-places.json`
+- `chronica.ventures-campaign-Grecia-export-16-stat-groups.json`
+
+The smaller committed JSON files capture the shared Chronica export shape:
 
 - top-level `campaign`
 - top-level `export_created_at`
 - campaign metadata
-- one domain-specific export area under `campaign`
+- one primary domain-specific export area under `campaign`
 
-Adapter tests should support multiple Chronica export JSON files for the same campaign and merge them into one CC import package keyed by campaign ID.
+First-pass parser policy:
 
-The remaining larger raw exports can be added here as direct JSON fixtures when needed by specific parser tests.
+- self-consistent partial campaign imports are allowed
+- multiple export files for the same campaign are merged into one CC package keyed by campaign ID
+- mixed Chronica campaign IDs are rejected
+- missing cross-file targets become unresolved references
+- metadata-only domains such as `stat_groups` do not create standard entity drafts by default
+
+Additional raw export files can be added here directly as parser coverage expands.
