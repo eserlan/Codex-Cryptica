@@ -53,6 +53,13 @@ describe("Scabard Campaign Export Importer Adapter", () => {
         to: "Strength Stat",
         toid: 8888888,
       },
+      {
+        from: "Dark Cities",
+        fromid: 123456,
+        relationship: "PLACE_CATEGORY_OF",
+        to: "London",
+        toid: 5271180,
+      },
     ],
     pages: [
       {
@@ -230,5 +237,15 @@ describe("Scabard Campaign Export Importer Adapter", () => {
   it("should throw an error on invalid JSON input", () => {
     expect(() => parseScabardExport("invalid-json")).toThrow();
     expect(() => parseScabardExport({})).toThrow();
+  });
+
+  it("should map place_category_of and other *_category_of relationships to entity tags/labels", () => {
+    const pkg = parseScabardExport(mockCampaign);
+
+    const locationDraft = pkg.entityDrafts.find(
+      (d) => d.sourceId === "5271180",
+    );
+    expect(locationDraft).toBeDefined();
+    expect(locationDraft?.tags).toContain("Dark Cities");
   });
 });

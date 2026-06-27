@@ -123,6 +123,8 @@ export function parseScabardExport(
       .toLowerCase();
   };
 
+  const draftsMap = new Map<string, EntityDraft>();
+
   for (const wrapper of exportData.pages) {
     const page = wrapper.page;
     if (!page || typeof page !== "object") continue;
@@ -175,12 +177,26 @@ export function parseScabardExport(
     };
 
     entityDrafts.push(draft);
+    draftsMap.set(sourceId, draft);
   }
 
   // Map relationships
   for (const conn of conns) {
     const relationshipType = conn.relationship || "RELATED_TO";
     const relationshipTypeUpper = relationshipType.toUpperCase();
+
+    // Map *_CATEGORY_OF relationships (e.g. PLACE_CATEGORY_OF, CHAR_CATEGORY_OF) to entity tags/labels
+    if (relationshipTypeUpper.endsWith("_CATEGORY_OF")) {
+      const targetId = conn.toid.toString();
+      const draft = draftsMap.get(targetId);
+      if (draft) {
+        const categoryName = conn.from;
+        if (categoryName && !draft.tags.includes(categoryName)) {
+          draft.tags.push(categoryName);
+        }
+      }
+      continue;
+    }
 
     // Skip internal meta/schema relationships
     if (
