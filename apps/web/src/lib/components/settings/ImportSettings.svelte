@@ -20,6 +20,7 @@
     mergeEntities,
     getFileExtension,
     validateImportFile,
+    parseScabardExport,
   } from "@codex/importer";
   import type { DiscoveredEntity } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
@@ -76,6 +77,87 @@
     return markdownFrontmatterValidator;
   };
 
+  const isScabardExport = (jsonObj: any): boolean => {
+    return (
+      jsonObj &&
+      typeof jsonObj === "object" &&
+      Array.isArray(jsonObj.pages) &&
+      Array.isArray(jsonObj.conns)
+    );
+  };
+
+  const ccImportToDiscoveredEntities = (
+    pkg: any,
+    knownEntities: Record<string, string>,
+  ): DiscoveredEntity[] => {
+    const entityMap = new Map<string, any>();
+    pkg.entityDrafts.forEach((d: any) => {
+      if (d.sourceId) entityMap.set(d.sourceId, d);
+    });
+
+    return pkg.entityDrafts.map((draft: any) => {
+      const suggestedTitle = draft.title;
+      let suggestedType: DiscoveredEntity["suggestedType"] = "Unknown";
+      const type = draft.sourceType?.toLowerCase();
+      if (type === "character") suggestedType = "Character";
+      else if (type === "location" || type === "place")
+        suggestedType = "Location";
+      else if (type === "item" || type === "vehicle") suggestedType = "Item";
+      else if (
+        ["faction", "group", "event", "note", "ccategory", "folder"].includes(
+          type,
+        )
+      ) {
+        suggestedType = "Lore";
+      }
+
+      const chronicle = draft.content || "";
+      const detectedLinks: DiscoveredEntity["detectedLinks"] = [];
+      pkg.relationshipDrafts.forEach((rel: any) => {
+        if (rel.fromRef === draft.sourceId) {
+          let targetName: string;
+          const targetDraft = entityMap.get(rel.toRef);
+          if (targetDraft) {
+            targetName = targetDraft.title;
+          } else {
+            const matched = Object.entries(knownEntities).find(
+              ([_, id]) => id === rel.toRef,
+            );
+            if (matched) {
+              targetName = matched[0];
+            } else {
+              targetName = rel.toRef;
+            }
+          }
+
+          detectedLinks.push({
+            target: targetName,
+            label: rel.label || rel.type,
+            type: rel.type,
+          });
+        }
+      });
+
+      const metadata = { ...draft.metadata };
+
+      return {
+        id: draft.sourceId || Math.random().toString(),
+        suggestedTitle,
+        suggestedType,
+        chronicle,
+        lore: draft.lore || "",
+        content: draft.content,
+        frontmatter: {
+          ...metadata,
+          labels: draft.tags || [],
+        },
+        confidence: 1.0,
+        suggestedFilename: suggestedTitle,
+        detectedLinks,
+      };
+    });
+  };
+
   const handleFiles = async (files: File[]) => {
     const apiKey = oracle.effectiveApiKey || "";
 
@@ -128,6 +210,30 @@
       try {
         statusMessage = `Parsing ${file.name}...`;
         const result = await parser.parse(file);
+
+        let isScabard = false;
+        try {
+          const parsedJson = JSON.parse(result.text);
+          if (isScabardExport(parsedJson)) {
+            isScabard = true;
+          }
+        } catch {
+          // Ignore JSON parsing errors for non-Scabard formats
+        }
+
+        if (isScabard) {
+          statusMessage = `Parsing Scabard campaign export...`;
+          const scabardPackage = parseScabardExport(result.text);
+          const mappedEntities = ccImportToDiscoveredEntities(
+            scabardPackage,
+            knownEntities,
+          );
+          discoveredEntities = mergeEntities([
+            ...discoveredEntities,
+            ...mappedEntities,
+          ]);
+          continue;
+        }
 
         if (isMarkdown) {
           const validateMarkdownFrontmatter =
