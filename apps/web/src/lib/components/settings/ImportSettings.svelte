@@ -103,13 +103,11 @@
       else if (type === "location" || type === "place")
         suggestedType = "Location";
       else if (type === "item" || type === "vehicle") suggestedType = "Item";
-      else if (
-        ["faction", "group", "event", "note", "ccategory", "folder"].includes(
-          type,
-        )
-      ) {
-        suggestedType = "Lore";
-      }
+      else if (type === "event") suggestedType = "Event";
+      else if (type === "faction" || type === "group")
+        suggestedType = "Faction";
+      else if (type === "note" || type === "ccategory" || type === "folder")
+        suggestedType = "Note";
 
       const chronicle = draft.content || "";
       const detectedLinks: DiscoveredEntity["detectedLinks"] = [];
