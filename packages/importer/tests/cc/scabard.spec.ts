@@ -88,8 +88,27 @@ describe("Scabard Campaign Export Importer Adapter", () => {
         to: "Benjamin Bowman",
         toid: 4543966,
       },
+      {
+        from: "Event",
+        fromid: 66,
+        relationship: "CATEGORY_OF",
+        to: "The Red Wedding",
+        toid: 9999993,
+      },
     ],
     pages: [
+      {
+        concept: "ccategory",
+        id: 9999993,
+        isGoldStar: false,
+        page: {
+          id: 9999993,
+          name: "The Red Wedding",
+          concept: "ccategory",
+          description: "<p>A tragic banquet event.</p>",
+        },
+        uri: "/campaign/4543909/ccategory/9999993",
+      },
       {
         concept: "Character",
         id: 4543966,
@@ -189,7 +208,7 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(pkg.version).toBe("1.0");
     expect(pkg.sourceSystem).toBe("scabard");
     expect(pkg.sourceLabel).toBe("Scabard Campaign 4543909");
-    expect(pkg.entityDrafts.length).toBe(3);
+    expect(pkg.entityDrafts.length).toBe(4);
     expect(pkg.relationshipDrafts.length).toBe(2); // MEMBER_OF and PARTICIPANT_OF, CONCEPT_OF and CATEGORY_OF skipped
   });
 
@@ -285,5 +304,15 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft?.tags).toContain("Adventurers");
     expect(characterDraft?.tags).toContain("Brujah Clan");
     expect(characterDraft?.tags).not.toContain("Character");
+  });
+
+  it("should infer entity types from CATEGORY_OF connections linking standard categories to generic pages", () => {
+    const pkg = parseScabardExport(mockCampaign);
+
+    const eventDraft = pkg.entityDrafts.find((d) => d.sourceId === "9999993");
+    expect(eventDraft).toBeDefined();
+    expect(eventDraft?.sourceType).toBe("Event");
+    expect(eventDraft?.title).toBe("The Red Wedding");
+    expect(eventDraft?.content).toContain("A tragic banquet event.");
   });
 });

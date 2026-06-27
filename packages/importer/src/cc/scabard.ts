@@ -91,8 +91,10 @@ export function parseScabardExport(
   const conns = Array.isArray(exportData.conns) ? exportData.conns : [];
 
   // Determine campaign name/id if possible, or fallback
-  const firstPage = exportData.pages[0]?.page;
-  const campaignIdMatch = firstPage?.uri?.match(/\/campaign\/(\d+)/);
+  const firstWrapper = exportData.pages[0];
+  const firstPage = firstWrapper?.page;
+  const uriToMatch = firstPage?.uri || firstWrapper?.uri;
+  const campaignIdMatch = uriToMatch?.match(/\/campaign\/(\d+)/);
   const campaignId = campaignIdMatch ? campaignIdMatch[1] : "unknown-campaign";
 
   const sourceLabel = `Scabard Campaign ${campaignId}`;
@@ -146,22 +148,62 @@ export function parseScabardExport(
 
   const draftsMap = new Map<string, EntityDraft>();
 
+  // Pre-pass: Infer types from CATEGORY_OF and CONCEPT_OF connections where one side is a standard type name
+  const inferredTypes = new Map<string, string>();
+
+  const getStandardTypeFromCategoryName = (name: string): string | null => {
+    const n = name.toLowerCase();
+    if (n === "character") return "Character";
+    if (n === "place" || n === "location") return "Location";
+    if (n === "group" || n === "faction") return "Faction";
+    if (n === "item" || n === "vehicle" || n === "vehicle type") return "Item";
+    if (n === "event") return "Event";
+    if (n === "note") return "Note";
+    return null;
+  };
+
+  for (const conn of conns) {
+    const relationshipType = conn.relationship || "RELATED_TO";
+    const relationshipTypeUpper = relationshipType.toUpperCase();
+
+    if (
+      relationshipTypeUpper === "CATEGORY_OF" ||
+      relationshipTypeUpper === "CONCEPT_OF" ||
+      relationshipTypeUpper.endsWith("_CATEGORY_OF")
+    ) {
+      // Check Direction 1: conn.from is the category name, conn.toid is the target page
+      const standardTypeFrom = getStandardTypeFromCategoryName(conn.from);
+      if (standardTypeFrom) {
+        inferredTypes.set(conn.toid.toString(), standardTypeFrom);
+      }
+
+      // Check Direction 2: conn.to is the category name, conn.fromid is the target page
+      const standardTypeTo = getStandardTypeFromCategoryName(conn.to);
+      if (standardTypeTo) {
+        inferredTypes.set(conn.fromid.toString(), standardTypeTo);
+      }
+    }
+  }
+
   for (const wrapper of exportData.pages) {
     const page = wrapper.page;
     if (!page || typeof page !== "object") continue;
 
+    const sourceId = (wrapper.id ?? page.id).toString();
     const conceptStr = page.concept ?? wrapper.concept ?? "Note";
     const conceptStrLower = conceptStr.toLowerCase();
 
-    // Skip internal structural / metadata page types
+    const inferredType = inferredTypes.get(sourceId);
+
+    // Skip internal structural / metadata page types unless type can be inferred
     if (
+      !inferredType &&
       ["ccategory", "category", "folder", "attribute"].includes(conceptStrLower)
     ) {
       continue;
     }
 
-    const sourceId = (wrapper.id ?? page.id).toString();
-    const resolvedType = mapConceptType(conceptStr);
+    const resolvedType = inferredType || mapConceptType(conceptStr);
 
     // Convert HTML contents to Markdown
     const content = page.description ? htmlToMarkdown(page.description) : "";
