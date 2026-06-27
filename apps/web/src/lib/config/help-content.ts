@@ -30,6 +30,7 @@ export interface FeatureHint {
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
+  DETERMINISTIC_IMPORTS: "deterministic-imports-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -263,6 +264,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
     icon: "icon-[lucide--file-up]",
+  },
+  "deterministic-imports": {
+    id: "deterministic-imports",
+    title: "Deterministic Imports",
+    content:
+      "Scabard JSON imports open a review step before anything is written. Keep or ignore each draft, choose whether matched entries should update, skip, or create a new record, and check unresolved links in the final report. Imported categories appear as Labels in your vault.",
+    icon: "icon-[lucide--file-check-2]",
   },
   themes: {
     id: "themes",

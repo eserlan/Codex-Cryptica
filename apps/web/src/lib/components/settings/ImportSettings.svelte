@@ -4,6 +4,10 @@
   import { importQueue } from "$lib/stores/import-queue.svelte";
   import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
   import ReviewList from "$lib/features/importer/ReviewList.svelte";
+  import CCImportReview from "$lib/features/importer/CCImportReview.svelte";
+  import CCImportReport from "$lib/features/importer/CCImportReport.svelte";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
+  import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
   import ImportProgress from "../import/ImportProgress.svelte";
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
   import {
@@ -21,8 +25,17 @@
     getFileExtension,
     validateImportFile,
     parseScabardExport,
+    ImportEngine,
+    setItemDecision,
+    setMatchDecision,
   } from "@codex/importer";
-  import type { DiscoveredEntity } from "@codex/importer";
+  import type {
+    DiscoveredEntity,
+    CCImportSession,
+    ImportReport,
+    ItemDecision,
+    MatchDecision,
+  } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
   import { slide, fade } from "svelte/transition";
   import { aiClientManager } from "$lib/services/ai/client-manager";
@@ -32,20 +45,32 @@
 
   type MarkdownFrontmatterValidator =
     typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
+  type ImportMode = "oracle" | "cc" | null;
 
   let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
 
-  let step = $state<"upload" | "processing" | "review" | "complete">("upload");
+  let step = $state<"upload" | "processing" | "review" | "complete" | "report">(
+    "upload",
+  );
+  let importMode = $state<ImportMode>(null);
   let statusMessage = $state("");
   let discoveredEntities = $state<DiscoveredEntity[]>([]);
+  let ccSession = $state<CCImportSession | null>(null);
+  let ccReport = $state<ImportReport | null>(null);
   let extractedAssets = new Map<string, any>(); // filename -> asset
   let totalChunks = $state(0);
   let showResumeToast = $state(false);
   let currentFileHash = $state("");
   let rejectedFiles = $state<{ name: string; reason: string }[]>([]);
+  let processingSubtitle = $derived(
+    importMode === "cc"
+      ? "Deterministic import is preparing your review"
+      : "Oracle is interpreting your notes",
+  );
 
   $effect(() => {
-    modalUIStore.isImporting = step === "processing" || step === "review";
+    modalUIStore.isImporting =
+      step === "processing" || step === "review" || step === "report";
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (step === "processing") {
@@ -85,96 +110,24 @@
       Array.isArray(jsonObj.conns)
     );
   };
-
-  const ccImportToDiscoveredEntities = (
-    pkg: any,
-    knownEntities: Record<string, string>,
-  ): DiscoveredEntity[] => {
-    const entityMap = new Map<string, any>();
-    pkg.entityDrafts.forEach((d: any) => {
-      if (d.sourceId) entityMap.set(d.sourceId, d);
-    });
-
-    return pkg.entityDrafts.map((draft: any) => {
-      const suggestedTitle = draft.title;
-      let suggestedType: DiscoveredEntity["suggestedType"] = "Unknown";
-      const type = draft.sourceType?.toLowerCase();
-      if (type === "character") suggestedType = "Character";
-      else if (type === "location" || type === "place")
-        suggestedType = "Location";
-      else if (type === "item" || type === "vehicle") suggestedType = "Item";
-      else if (type === "event") suggestedType = "Event";
-      else if (type === "faction" || type === "group")
-        suggestedType = "Faction";
-      else if (type === "note" || type === "ccategory" || type === "folder")
-        suggestedType = "Note";
-
-      const chronicle = draft.content || "";
-      const detectedLinks: DiscoveredEntity["detectedLinks"] = [];
-      pkg.relationshipDrafts.forEach((rel: any) => {
-        if (rel.fromRef === draft.sourceId) {
-          let targetName: string;
-          const targetDraft = entityMap.get(rel.toRef);
-          if (targetDraft) {
-            targetName = targetDraft.title;
-          } else {
-            const matched = Object.entries(knownEntities).find(
-              ([_, id]) => id === rel.toRef,
-            );
-            if (matched) {
-              targetName = matched[0];
-            } else {
-              targetName = rel.toRef;
-            }
-          }
-
-          detectedLinks.push({
-            target: targetName,
-            label: rel.label || rel.type,
-            type: rel.type,
-          });
-        }
-      });
-
-      const metadata = { ...draft.metadata };
-
-      return {
-        id: draft.sourceId || Math.random().toString(),
-        suggestedTitle,
-        suggestedType,
-        chronicle,
-        lore: draft.lore || "",
-        content: draft.content,
-        frontmatter: {
-          ...metadata,
-          labels: draft.tags || [],
-        },
-        confidence: 1.0,
-        suggestedFilename: suggestedTitle,
-        detectedLinks,
-      };
-    });
-  };
+  const createEngine = () =>
+    new ImportEngine({ writer: createWebVaultWriter(vault) });
 
   const handleFiles = async (files: File[]) => {
-    const apiKey = oracle.effectiveApiKey || "";
-
     step = "processing";
-    const analyzer = new OracleAnalyzer((modelName: string) =>
-      aiClientManager.getModel(apiKey, modelName),
-    );
-
+    importMode = null;
     discoveredEntities = [];
+    ccSession = null;
+    ccReport = null;
     extractedAssets.clear();
     rejectedFiles = [];
+    totalChunks = 0;
+    showResumeToast = false;
 
     const signal = connectionModeStore.abortSignal;
-
-    // Build known entities map for revision
-    const knownEntities: Record<string, string> = {};
-    Object.values(vault.entities).forEach((e) => {
-      knownEntities[e.title] = e.id;
-    });
+    const apiKey = oracle.effectiveApiKey || "";
+    let analyzer: OracleAnalyzer | null = null;
+    let lockedMode: ImportMode = null;
 
     for (const file of files) {
       if (signal.aborted) break;
@@ -209,29 +162,66 @@
         statusMessage = `Parsing ${file.name}...`;
         const result = await parser.parse(file);
 
-        let isScabard = false;
+        let parsedJson: unknown = null;
         try {
-          const parsedJson = JSON.parse(result.text);
-          if (isScabardExport(parsedJson)) {
-            isScabard = true;
-          }
+          parsedJson = JSON.parse(result.text);
         } catch {
-          // Ignore JSON parsing errors for non-Scabard formats
+          parsedJson = null;
+        }
+
+        const isScabard = isScabardExport(parsedJson);
+
+        if (isScabard && lockedMode === "oracle") {
+          rejectedFiles.push({
+            name: file.name,
+            reason: "Run Scabard imports on their own",
+          });
+          continue;
+        }
+
+        if (!isScabard && lockedMode === "cc") {
+          rejectedFiles.push({
+            name: file.name,
+            reason: "Scabard imports cannot be mixed with Oracle imports",
+          });
+          continue;
         }
 
         if (isScabard) {
-          statusMessage = `Parsing Scabard campaign export...`;
-          const scabardPackage = parseScabardExport(result.text);
-          const mappedEntities = ccImportToDiscoveredEntities(
-            scabardPackage,
-            knownEntities,
-          );
-          discoveredEntities = mergeEntities([
-            ...discoveredEntities,
-            ...mappedEntities,
-          ]);
+          importMode = "cc";
+          lockedMode = "cc";
+          statusMessage = `Preparing Scabard import review...`;
+
+          try {
+            const scabardPackage = parseScabardExport(result.text);
+            ccSession = await createEngine().prepare(scabardPackage);
+          } catch (error) {
+            rejectedFiles.push({
+              name: file.name,
+              reason:
+                error instanceof Error
+                  ? error.message
+                  : "Invalid Scabard import package",
+            });
+          }
+
           continue;
         }
+
+        importMode = "oracle";
+        lockedMode = "oracle";
+
+        if (!oracle.isEnabled) {
+          rejectedFiles.push({
+            name: file.name,
+            reason: "This file needs Oracle. Scabard JSON works without AI.",
+          });
+          continue;
+        }
+
+        analyzer ??= new OracleAnalyzer((modelName: string) =>
+          aiClientManager.getModel(apiKey, modelName),
+        );
 
         if (isMarkdown) {
           const validateMarkdownFrontmatter =
@@ -250,6 +240,11 @@
         // Store assets for dimension lookups later
         result.assets.forEach((asset) => {
           extractedAssets.set(asset.placementRef, asset);
+        });
+
+        const knownEntities: Record<string, string> = {};
+        Object.values(vault.entities).forEach((e) => {
+          knownEntities[e.title] = e.id;
         });
 
         const chunks = splitTextIntoChunks(result.text);
@@ -335,13 +330,26 @@
 
     if (signal.aborted) {
       step = "upload";
-
       discoveredEntities = [];
+      ccSession = null;
+      ccReport = null;
+      importMode = null;
 
       return;
     }
 
-    step = "review";
+    if (importMode === "cc") {
+      step = ccSession ? "review" : "upload";
+      if (!ccSession && rejectedFiles.length === 0) {
+        statusMessage = "No Scabard package was prepared.";
+      }
+      return;
+    }
+
+    step =
+      discoveredEntities.length > 0 || rejectedFiles.length > 0
+        ? "review"
+        : "upload";
   };
 
   const handleRestart = async () => {
@@ -352,10 +360,16 @@
 
       statusMessage = "Progress cleared. Please select the file again.";
     }
+    discoveredEntities = [];
+    ccSession = null;
+    ccReport = null;
+    importMode = null;
+    rejectedFiles = [];
   };
 
-  const handleSave = async (toSave: DiscoveredEntity[]) => {
+  const handleOracleSave = async (toSave: DiscoveredEntity[]) => {
     step = "processing";
+    importMode = "oracle";
 
     statusMessage = `Finalizing ${toSave.length} entities...`;
 
@@ -530,6 +544,52 @@
       discoveredEntities = [];
     }, 3000);
   };
+
+  const handleCCItemDecisionChange = (
+    draftRef: string,
+    decision: ItemDecision,
+  ) => {
+    if (!ccSession) return;
+    ccSession = setItemDecision(ccSession, draftRef, decision);
+  };
+
+  const handleCCMatchDecisionChange = (
+    draftRef: string,
+    decision: MatchDecision,
+  ) => {
+    if (!ccSession) return;
+    ccSession = setMatchDecision(ccSession, draftRef, decision);
+  };
+
+  const handleCCCommit = async () => {
+    if (!ccSession) return;
+
+    step = "processing";
+    importMode = "cc";
+    statusMessage = `Importing ${ccSession.sourceLabel}...`;
+
+    try {
+      ccReport = await createEngine().commit(ccSession);
+      step = "report";
+    } catch (error) {
+      notificationStore.notify(
+        error instanceof Error
+          ? error.message
+          : "Import failed before the report could be created.",
+        "error",
+      );
+      step = "review";
+    }
+  };
+
+  const handleCCReportDone = () => {
+    step = "upload";
+    importMode = null;
+    ccSession = null;
+    ccReport = null;
+    rejectedFiles = [];
+    statusMessage = "";
+  };
 </script>
 
 <div class="space-y-4 {isStandalone ? 'flex-1 flex flex-col min-h-0' : ''}">
@@ -552,156 +612,173 @@
       <InlineKeySetup />
     {:else}
       <div
-        class="p-4 bg-red-500/10 border border-red-500/20 rounded flex items-start gap-3"
+        class="p-4 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-start gap-3"
       >
         <span
-          class="icon-[lucide--alert-triangle] w-5 h-5 text-red-400 shrink-0 mt-0.5"
+          class="icon-[lucide--info] w-5 h-5 text-theme-secondary shrink-0 mt-0.5"
         ></span>
 
         <div class="flex flex-col gap-1">
           <span
-            class="text-sm font-bold text-red-400 uppercase font-header tracking-wider"
-            >Oracle Connection Required</span
+            class="text-sm font-bold text-theme-secondary uppercase font-header tracking-wider"
+            >AI Optional</span
           >
 
-          <p class="text-xs text-red-400/80 leading-tight">
-            Intelligent importing requires an active Gemini API key. Please
-            configure your access in the
-
+          <p class="text-xs text-theme-text/70 leading-tight">
+            Scabard JSON imports work without AI. Text, PDF, DOCX, and generic
+            JSON analysis still need a Gemini key in the
             <button
-              class="underline hover:text-red-300"
+              class="underline hover:text-theme-text"
               onclick={() => (modalUIStore.activeSettingsTab = "intelligence")}
               >AI</button
-            > tab.
+            >
+            tab.
           </p>
         </div>
       </div>
     {/if}
-  {:else}
-    {#if showResumeToast}
-      <div
-        transition:slide
-        class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
-      >
-        <div
-          class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
-        >
-          <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+  {/if}
 
-          Resuming previous import
-        </div>
-
-        <button
-          onclick={handleRestart}
-          class="text-[9px] font-bold underline hover:text-theme-text"
-        >
-          START OVER
-        </button>
-      </div>
-    {/if}
-
+  {#if showResumeToast}
     <div
-      class="flex-1 flex flex-col relative overflow-hidden {isStandalone
-        ? ''
-        : 'bg-theme-surface border border-theme-border p-4 rounded-lg justify-center'}"
+      transition:slide
+      class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
     >
-      {#if step === "upload"}
-        <div class="flex-1 flex flex-col min-h-0">
-          <ImportDropzone onFileSelect={handleFiles} {isStandalone} />
-        </div>
-      {:else if step === "processing"}
-        <div class="flex flex-col items-center gap-6 py-8">
-          <div class="relative">
-            <div
-              class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
-            ></div>
+      <div
+        class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+      >
+        <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
 
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span
-                class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
-              ></span>
-            </div>
-          </div>
+        Resuming previous import
+      </div>
 
+      <button
+        onclick={handleRestart}
+        class="text-[9px] font-bold underline hover:text-theme-text"
+      >
+        START OVER
+      </button>
+    </div>
+  {/if}
+
+  <div
+    class="flex-1 flex flex-col relative overflow-hidden {isStandalone
+      ? ''
+      : 'bg-theme-surface border border-theme-border p-4 rounded-lg justify-center'}"
+  >
+    {#if step === "upload"}
+      <div class="flex-1 flex flex-col min-h-0">
+        <ImportDropzone onFileSelect={handleFiles} {isStandalone} />
+      </div>
+    {:else if step === "processing"}
+      <div class="flex flex-col items-center gap-6 py-8">
+        <div class="relative">
           <div
-            class="text-center space-y-1"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <p
-              class="text-xs font-mono text-theme-primary uppercase tracking-tight"
-            >
-              {statusMessage}
-            </p>
+            class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
+          ></div>
 
-            <p
-              class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
-            >
-              Oracle is interpreting your notes
-            </p>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <span
+              class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
+            ></span>
           </div>
-
-          {#if totalChunks > 0}
-            <div transition:fade class="w-full max-w-md px-4">
-              <ImportProgress {totalChunks} />
-            </div>
-          {/if}
-
-          <button
-            onclick={() => connectionModeStore.abortActiveOperations()}
-            class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
-          >
-            Cancel Import
-          </button>
         </div>
-      {:else if step === "review"}
-        {#if rejectedFiles.length > 0}
-          <div
-            class="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded flex flex-col gap-2"
-            transition:slide
+
+        <div
+          class="text-center space-y-1"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <p
+            class="text-xs font-mono text-theme-primary uppercase tracking-tight"
           >
-            <div class="flex items-center gap-2">
-              <span class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400"
-              ></span>
-              <span
-                class="text-sm font-bold text-red-400 uppercase tracking-wider"
-                >Skipped {rejectedFiles.length} Invalid File(s)</span
-              >
-            </div>
-            <ul
-              class="text-xs text-red-400/80 leading-tight space-y-1 pl-6 list-disc"
-            >
-              {#each rejectedFiles as file (`${file.name}:${file.reason}`)}
-                <li><strong>{file.name}</strong>: {file.reason}</li>
-              {/each}
-            </ul>
+            {statusMessage}
+          </p>
+
+          <p
+            class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
+          >
+            {processingSubtitle}
+          </p>
+        </div>
+
+        {#if totalChunks > 0}
+          <div transition:fade class="w-full max-w-md px-4">
+            <ImportProgress {totalChunks} />
           </div>
         {/if}
+
+        <button
+          onclick={() => connectionModeStore.abortActiveOperations()}
+          class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
+        >
+          Cancel Import
+        </button>
+      </div>
+    {:else if step === "review"}
+      {#if rejectedFiles.length > 0}
+        <div
+          class="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded flex flex-col gap-2"
+          transition:slide
+        >
+          <div class="flex items-center gap-2">
+            <span class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400"
+            ></span>
+            <span
+              class="text-sm font-bold text-red-400 uppercase tracking-wider"
+              >Skipped {rejectedFiles.length} Invalid File(s)</span
+            >
+          </div>
+          <ul
+            class="text-xs text-red-400/80 leading-tight space-y-1 pl-6 list-disc"
+          >
+            {#each rejectedFiles as file (`${file.name}:${file.reason}`)}
+              <li><strong>{file.name}</strong>: {file.reason}</li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+
+      {#if importMode === "cc" && ccSession}
+        <div class="flex flex-col gap-4">
+          <FeatureHint hintId="deterministic-imports" />
+          <CCImportReview
+            session={ccSession}
+            onItemDecisionChange={handleCCItemDecisionChange}
+            onMatchDecisionChange={handleCCMatchDecisionChange}
+            onCommit={handleCCCommit}
+            onCancel={handleCCReportDone}
+            {isStandalone}
+          />
+        </div>
+      {:else}
         <ReviewList
           entities={discoveredEntities}
-          onSave={handleSave}
+          onSave={handleOracleSave}
           onCancel={() => (step = "upload")}
           {isStandalone}
         />
-      {:else if step === "complete"}
-        <div
-          class="flex flex-col items-center gap-2 py-8 text-theme-primary"
-          transition:fade
-        >
-          <div
-            class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
-          >
-            <span class="icon-[lucide--check-circle] w-8 h-8"></span>
-          </div>
-          <p class="text-base font-bold uppercase font-header tracking-widest">
-            Import Successful
-          </p>
-          <p class="text-[11px] text-theme-muted uppercase font-mono">
-            Archive updated with {discoveredEntities.length} records
-          </p>
-        </div>
       {/if}
-    </div>
-  {/if}
+    {:else if step === "report" && ccReport}
+      <CCImportReport report={ccReport} onDone={handleCCReportDone} />
+    {:else if step === "complete"}
+      <div
+        class="flex flex-col items-center gap-2 py-8 text-theme-primary"
+        transition:fade
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
+        >
+          <span class="icon-[lucide--check-circle] w-8 h-8"></span>
+        </div>
+        <p class="text-base font-bold uppercase font-header tracking-widest">
+          Import Successful
+        </p>
+        <p class="text-[11px] text-theme-muted uppercase font-mono">
+          Archive updated with {discoveredEntities.length} records
+        </p>
+      </div>
+    {/if}
+  </div>
 </div>
