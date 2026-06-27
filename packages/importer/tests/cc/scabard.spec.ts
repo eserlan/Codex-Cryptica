@@ -81,6 +81,13 @@ describe("Scabard Campaign Export Importer Adapter", () => {
         to: "Benjamin Bowman",
         toid: 4543966,
       },
+      {
+        from: "Brujah Clan",
+        fromid: 123458,
+        relationship: "GROUP_CATEGORY_OF",
+        to: "Benjamin Bowman",
+        toid: 4543966,
+      },
     ],
     pages: [
       {
@@ -276,6 +283,7 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft?.tags).toContain("Vampire");
     expect(characterDraft?.tags).toContain("Chaotic Neutral");
     expect(characterDraft?.tags).toContain("Adventurers");
+    expect(characterDraft?.tags).toContain("Brujah Clan");
     expect(characterDraft?.tags).not.toContain("Character");
   });
 });
