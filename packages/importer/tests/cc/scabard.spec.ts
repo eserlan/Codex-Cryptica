@@ -60,6 +60,20 @@ describe("Scabard Campaign Export Importer Adapter", () => {
         to: "London",
         toid: 5271180,
       },
+      {
+        from: "Benjamin Bowman",
+        fromid: 4543966,
+        relationship: "ALIGNMENT_OF",
+        to: "Chaotic Neutral",
+        toid: 9999991,
+      },
+      {
+        from: "Vampire",
+        fromid: 9999992,
+        relationship: "CONCEPT_OF",
+        to: "Benjamin Bowman",
+        toid: 4543966,
+      },
     ],
     pages: [
       {
@@ -247,5 +261,13 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     );
     expect(locationDraft).toBeDefined();
     expect(locationDraft?.tags).toContain("Dark Cities");
+
+    const characterDraft = pkg.entityDrafts.find(
+      (d) => d.sourceId === "4543966",
+    );
+    expect(characterDraft).toBeDefined();
+    expect(characterDraft?.tags).toContain("Vampire");
+    expect(characterDraft?.tags).toContain("Chaotic Neutral");
+    expect(characterDraft?.tags).not.toContain("Character");
   });
 });

@@ -40,6 +40,27 @@ export interface ScabardCampaignExport {
   pages: ScabardPageWrapper[];
 }
 
+const isStandardMetadataName = (name: string): boolean => {
+  const n = name.toLowerCase();
+  return [
+    "character",
+    "place",
+    "location",
+    "group",
+    "faction",
+    "item",
+    "event",
+    "vehicle",
+    "vehicle type",
+    "note",
+    "ccategory",
+    "category",
+    "folder",
+    "attribute",
+    "alignment",
+  ].includes(n);
+};
+
 /**
  * Parses a Scabard Campaign Export JSON structure and converts it into a CCImportPackage.
  */
@@ -185,14 +206,35 @@ export function parseScabardExport(
     const relationshipType = conn.relationship || "RELATED_TO";
     const relationshipTypeUpper = relationshipType.toUpperCase();
 
-    // Map *_CATEGORY_OF relationships (e.g. PLACE_CATEGORY_OF, CHAR_CATEGORY_OF) to entity tags/labels
-    if (relationshipTypeUpper.endsWith("_CATEGORY_OF")) {
-      const targetId = conn.toid.toString();
-      const draft = draftsMap.get(targetId);
-      if (draft) {
-        const categoryName = conn.from;
-        if (categoryName && !draft.tags.includes(categoryName)) {
-          draft.tags.push(categoryName);
+    // Map internal classification relationships to entity tags/labels
+    if (
+      relationshipTypeUpper.endsWith("_CATEGORY_OF") ||
+      relationshipTypeUpper === "CONCEPT_OF" ||
+      relationshipTypeUpper === "ALIGNMENT_OF"
+    ) {
+      // Direction 1: Target is the entity, Source is the classification name
+      const targetDraft = draftsMap.get(conn.toid.toString());
+      if (targetDraft) {
+        const labelName = conn.from;
+        if (
+          labelName &&
+          !isStandardMetadataName(labelName) &&
+          !targetDraft.tags.includes(labelName)
+        ) {
+          targetDraft.tags.push(labelName);
+        }
+      }
+
+      // Direction 2: Source is the entity, Target is the classification name
+      const sourceDraft = draftsMap.get(conn.fromid.toString());
+      if (sourceDraft) {
+        const labelName = conn.to;
+        if (
+          labelName &&
+          !isStandardMetadataName(labelName) &&
+          !sourceDraft.tags.includes(labelName)
+        ) {
+          sourceDraft.tags.push(labelName);
         }
       }
       continue;
@@ -206,6 +248,7 @@ export function parseScabardExport(
         "FOLDER_OF",
         "PARENT_FOLDER",
         "ATTRIBUTE_OF",
+        "ALIGNMENT_OF",
       ].includes(relationshipTypeUpper)
     ) {
       continue;
