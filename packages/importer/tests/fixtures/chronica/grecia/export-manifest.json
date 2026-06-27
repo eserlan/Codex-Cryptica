@@ -1,0 +1,25 @@
+{
+  "campaignId": "grecia-1",
+  "campaignName": "Grecia",
+  "observedDomains": [
+    "characters",
+    "places",
+    "quests",
+    "adventure_notes",
+    "encounters",
+    "entities",
+    "entity_folders",
+    "kinships",
+    "kinship_folders",
+    "maps",
+    "stat_groups"
+  ],
+  "localFixtures": [
+    "chronica.ventures-campaign-Grecia-export-5-characters.json",
+    "chronica.ventures-campaign-Grecia-export-13-places.json"
+  ],
+  "notes": [
+    "This checkout does not include every raw export file referenced in issue #1557.",
+    "Additional raw fixture files can be added incrementally as parser coverage expands."
+  ]
+}

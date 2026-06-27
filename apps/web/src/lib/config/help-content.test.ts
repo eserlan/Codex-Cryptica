@@ -28,4 +28,17 @@ describe("help-content feature hints", () => {
       "deterministic-imports-hint-seen",
     );
   });
+
+  it("FEATURE_HINTS includes chronica-imports entry", () => {
+    expect(FEATURE_HINTS["chronica-imports"]).toBeDefined();
+    expect(FEATURE_HINTS["chronica-imports"].id).toBe("chronica-imports");
+    expect(FEATURE_HINTS["chronica-imports"].title).toBeTruthy();
+    expect(FEATURE_HINTS["chronica-imports"].content).toContain(
+      "multiple JSON files",
+    );
+  });
+
+  it("HINT_KEYS includes CHRONICA_IMPORTS key", () => {
+    expect(HINT_KEYS.CHRONICA_IMPORTS).toBe("chronica-imports-hint-seen");
+  });
 });

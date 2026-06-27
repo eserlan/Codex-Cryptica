@@ -37,6 +37,40 @@ const scabardSession = {
   },
 };
 
+const chronicaSession = {
+  sourceLabel: "Chronica Campaign Grecia",
+  warnings: [],
+  relationships: [],
+  assets: [],
+  items: [
+    {
+      sourceRef: "chronica:character:grecia-1:characters:char-1",
+      draft: {
+        title: "Ariadne",
+        type: "character",
+        content: "Scout of the party.",
+        lore: "Secret heir.",
+        tags: [],
+        metadata: {},
+        sourceId: "grecia-1:characters:char-1",
+      },
+      match: null,
+      decision: "include",
+      matchDecision: "create",
+      resolvedType: "character",
+      typeFallback: false,
+    },
+  ],
+  stats: {
+    totalItems: 1,
+    includedItems: 1,
+    matchedItems: 0,
+    warningCount: 0,
+    relationshipCount: 0,
+    assetCount: 0,
+  },
+};
+
 vi.mock("$lib/components/help/FeatureHint.svelte", () => ({
   default: function FeatureHintMock() {
     return {};
@@ -147,10 +181,30 @@ vi.mock("@codex/importer", () => ({
   mergeEntities: vi.fn((entities) => entities.flat()),
   getFileExtension: vi.fn((name: string) => `.${name.split(".").pop()}`),
   validateImportFile: vi.fn(() => ({ success: true })),
+  detectChronicaExport: vi.fn((value: any) =>
+    value?.campaign?.characters || value?.campaign?.places
+      ? {
+          campaignId: "grecia-1",
+          campaignName: "Grecia",
+          domains: value.campaign.characters ? ["characters"] : ["places"],
+        }
+      : null,
+  ),
+  parseChronicaExports: vi.fn(() => ({
+    version: "1.0",
+    sourceSystem: "chronica",
+    sourceLabel: "Chronica Campaign Grecia",
+    entityDrafts: [],
+    relationshipDrafts: [],
+    assetDrafts: [],
+    warnings: [],
+  })),
   parseScabardExport: vi.fn(() => ({ sourceLabel: "Scabard Campaign 7" })),
   ImportEngine: class {
-    async prepare() {
-      return scabardSession;
+    async prepare(pkg: any) {
+      return pkg?.sourceSystem === "chronica"
+        ? chronicaSession
+        : scabardSession;
     }
     async commit() {
       return {
@@ -200,5 +254,53 @@ describe("ImportSettings", () => {
         "This file needs Oracle. Scabard JSON works without AI.",
       ),
     ).toBeNull();
+  });
+
+  it("routes grouped Chronica JSON files to CC review without Oracle enabled", async () => {
+    const { container } = render(ImportSettings, { isStandalone: false });
+
+    const input = container.querySelector('input[type="file"]');
+    expect(input).toBeTruthy();
+
+    await fireEvent.change(input!, {
+      target: {
+        files: [
+          new File(
+            [
+              JSON.stringify({
+                export_created_at: "2026-06-27T20:00:00Z",
+                campaign: {
+                  id: "grecia-1",
+                  name: "Grecia",
+                  characters: [{ id: "char-1", name: "Ariadne" }],
+                },
+              }),
+            ],
+            "characters.json",
+            { type: "application/json" },
+          ),
+          new File(
+            [
+              JSON.stringify({
+                export_created_at: "2026-06-27T20:00:01Z",
+                campaign: {
+                  id: "grecia-1",
+                  name: "Grecia",
+                  places: [{ id: "place-1", name: "Knossos" }],
+                },
+              }),
+            ],
+            "places.json",
+            { type: "application/json" },
+          ),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Chronica Campaign Grecia")).toBeTruthy();
+    });
+
+    expect(screen.getByText("Ariadne")).toBeTruthy();
   });
 });

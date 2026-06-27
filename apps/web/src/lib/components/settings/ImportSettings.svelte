@@ -25,6 +25,8 @@
     getFileExtension,
     validateImportFile,
     parseScabardExport,
+    detectChronicaExport,
+    parseChronicaExports,
     ImportEngine,
     setItemDecision,
     setMatchDecision,
@@ -35,6 +37,8 @@
     ImportReport,
     ItemDecision,
     MatchDecision,
+    MappingRuleSet,
+    ChronicaExportDocument,
   } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
   import { slide, fade } from "svelte/transition";
@@ -110,8 +114,29 @@
       Array.isArray(jsonObj.conns)
     );
   };
+
+  const ccMappingRules: MappingRuleSet = {
+    rules: [
+      { when: { sourceType: "Character" }, thenType: "character" },
+      { when: { sourceType: "Location" }, thenType: "location" },
+      { when: { sourceType: "Faction" }, thenType: "faction" },
+      { when: { sourceType: "Item" }, thenType: "item" },
+      { when: { sourceType: "Event" }, thenType: "event" },
+      { when: { sourceType: "Note" }, thenType: "note" },
+      { when: { sourceType: "character" }, thenType: "character" },
+      { when: { sourceType: "place" }, thenType: "location" },
+      { when: { sourceType: "faction" }, thenType: "faction" },
+      { when: { sourceType: "item" }, thenType: "item" },
+      { when: { sourceType: "event" }, thenType: "event" },
+      { when: { sourceType: "note" }, thenType: "note" },
+    ],
+    defaultType: "note",
+  };
   const createEngine = () =>
-    new ImportEngine({ writer: createWebVaultWriter(vault) });
+    new ImportEngine(
+      { writer: createWebVaultWriter(vault) },
+      { mappingRules: ccMappingRules },
+    );
 
   const handleFiles = async (files: File[]) => {
     step = "processing";
@@ -128,6 +153,110 @@
     const apiKey = oracle.effectiveApiKey || "";
     let analyzer: OracleAnalyzer | null = null;
     let lockedMode: ImportMode = null;
+
+    const chronicaDocuments: ChronicaExportDocument[] = [];
+    const chronicaMixedRejections: { name: string; reason: string }[] = [];
+
+    for (const file of files) {
+      const fileValidation = validateImportFile(file);
+      if (!fileValidation.success) {
+        continue;
+      }
+
+      const parser = parsers.find((p) => p.accepts(file));
+      if (!(parser instanceof JsonParser)) continue;
+
+      try {
+        const result = await parser.parse(file);
+        const parsedJson = JSON.parse(result.text);
+        if (detectChronicaExport(parsedJson)) {
+          chronicaDocuments.push({
+            fileName: file.name,
+            json: parsedJson,
+          });
+          continue;
+        }
+
+        chronicaMixedRejections.push({
+          name: file.name,
+          reason: "Chronica imports cannot be mixed with other import types",
+        });
+      } catch {
+        // Invalid JSON is surfaced in the main pass below so the existing
+        // rejected-file messaging stays consistent.
+      }
+    }
+
+    if (chronicaDocuments.length > 0) {
+      importMode = "cc";
+      statusMessage = "Preparing Chronica import review...";
+
+      for (const rejection of chronicaMixedRejections) {
+        rejectedFiles.push(rejection);
+      }
+
+      for (const file of files) {
+        if (chronicaDocuments.some((doc) => doc.fileName === file.name))
+          continue;
+        if (chronicaMixedRejections.some((entry) => entry.name === file.name))
+          continue;
+
+        const fileValidation = validateImportFile(file);
+        if (!fileValidation.success) {
+          rejectedFiles.push({
+            name: file.name,
+            reason: fileValidation.reason,
+          });
+          continue;
+        }
+
+        const parser = parsers.find((p) => p.accepts(file));
+        if (!parser) {
+          rejectedFiles.push({
+            name: file.name,
+            reason: "Unsupported file type",
+          });
+          continue;
+        }
+
+        if (parser instanceof JsonParser) {
+          try {
+            const result = await parser.parse(file);
+            JSON.parse(result.text);
+          } catch {
+            rejectedFiles.push({
+              name: file.name,
+              reason: "Invalid JSON",
+            });
+          }
+          continue;
+        }
+
+        rejectedFiles.push({
+          name: file.name,
+          reason: "Chronica imports cannot be mixed with other import types",
+        });
+      }
+
+      try {
+        const chronicaPackage = parseChronicaExports(chronicaDocuments);
+        ccSession = await createEngine().prepare(chronicaPackage);
+      } catch (error) {
+        rejectedFiles.push({
+          name: chronicaDocuments.map((doc) => doc.fileName).join(", "),
+          reason:
+            error instanceof Error
+              ? error.message
+              : "Invalid Chronica import package",
+        });
+      }
+
+      step = ccSession ? "review" : "upload";
+      if (!ccSession && rejectedFiles.length === 0) {
+        statusMessage = "No Chronica package was prepared.";
+      }
+      return;
+    }
 
     for (const file of files) {
       if (signal.aborted) break;
@@ -742,7 +871,11 @@
 
       {#if importMode === "cc" && ccSession}
         <div class="flex flex-col gap-4">
-          <FeatureHint hintId="deterministic-imports" />
+          <FeatureHint
+            hintId={ccSession.sourceSystem === "chronica"
+              ? "chronica-imports"
+              : "deterministic-imports"}
+          />
           <CCImportReview
             session={ccSession}
             onItemDecisionChange={handleCCItemDecisionChange}
