@@ -1,0 +1,97 @@
+{
+  "sourceSystem": "chronica",
+  "campaign": "Grecia",
+  "fixturePurpose": "Reference manifest for real Chronica campaign exports supplied for issue #1557.",
+  "notes": [
+    "The raw export files were supplied during issue discovery and should be used as adapter reference/test data.",
+    "Each export file shares a top-level campaign object and export_created_at field.",
+    "Each file appears to contain one main export area under campaign. Multiple files for the same campaign should be merged into one CC import package keyed by campaign id."
+  ],
+  "exports": [
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (1).json",
+      "mainArea": "adventure_notes",
+      "count": 7,
+      "ccMapping": "Note or Chronicle drafts"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (5).json",
+      "mainArea": "characters",
+      "count": 37,
+      "ccMapping": "Character drafts"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (8).json",
+      "mainArea": "encounters",
+      "count": 3,
+      "ccMapping": "Encounter or Scene drafts; fallback to Note if no encounter type exists"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (9).json",
+      "mainArea": "entities",
+      "count": 1,
+      "ccMapping": "Generic Entity, Item, Creature, or Note fallback depending on entity_type"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (11).json",
+      "mainArea": "kinships",
+      "count": 0,
+      "nestedArea": "kinship_folders[].kinships",
+      "ccMapping": "Faction, Group, or Family drafts based on kintype"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (13).json",
+      "mainArea": "places",
+      "count": 11,
+      "ccMapping": "Location or Settlement drafts"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (14).json",
+      "mainArea": "quests",
+      "count": 5,
+      "ccMapping": "Quest drafts"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (15).json",
+      "mainArea": "maps",
+      "count": 1,
+      "ccMapping": "Map or Source Document drafts, with tiles as metadata or child records"
+    },
+    {
+      "originalFilename": "chronica.ventures-campaign-Grecia-export (16).json",
+      "mainArea": "stat_groups",
+      "count": 1,
+      "ccMapping": "Schema/custom-field metadata, not normal entities by default"
+    }
+  ],
+  "importantFieldsToPreserve": [
+    "id",
+    "name",
+    "title",
+    "description",
+    "notes",
+    "content",
+    "about",
+    "gm_secrets",
+    "pc_secret",
+    "private",
+    "public",
+    "published",
+    "folder_id",
+    "map_folder_id",
+    "stat_group_folder_id",
+    "place_id",
+    "character_id",
+    "character_alt_id",
+    "kinship_id",
+    "quest_id",
+    "entity_id",
+    "disposition",
+    "status",
+    "faction",
+    "race",
+    "npc_class",
+    "quest_type",
+    "ancestry"
+  ]
+}
