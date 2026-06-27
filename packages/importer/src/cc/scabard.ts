@@ -127,8 +127,17 @@ export function parseScabardExport(
     const page = wrapper.page;
     if (!page || typeof page !== "object") continue;
 
-    const sourceId = (wrapper.id ?? page.id).toString();
     const conceptStr = page.concept ?? wrapper.concept ?? "Note";
+    const conceptStrLower = conceptStr.toLowerCase();
+
+    // Skip internal structural / metadata page types
+    if (
+      ["ccategory", "category", "folder", "attribute"].includes(conceptStrLower)
+    ) {
+      continue;
+    }
+
+    const sourceId = (wrapper.id ?? page.id).toString();
     const resolvedType = mapConceptType(conceptStr);
 
     // Convert HTML contents to Markdown
@@ -174,8 +183,17 @@ export function parseScabardExport(
     const relationshipTypeUpper = relationshipType.toUpperCase();
 
     // Skip internal meta/schema relationships
-    if (relationshipTypeUpper === "CONCEPT_OF") continue;
-    if (relationshipTypeUpper === "CATEGORY_OF") continue;
+    if (
+      [
+        "CONCEPT_OF",
+        "CATEGORY_OF",
+        "FOLDER_OF",
+        "PARENT_FOLDER",
+        "ATTRIBUTE_OF",
+      ].includes(relationshipTypeUpper)
+    ) {
+      continue;
+    }
 
     relationshipDrafts.push({
       fromRef: conn.fromid.toString(),
