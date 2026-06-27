@@ -770,14 +770,19 @@ export class DefaultTextGenerationService implements TextGenerationService {
   /** Render prior chat turns as a plain-text transcript for replay. */
   private formatHistoryTranscript(history: any[]): string {
     if (!history?.length) return "";
-    const lines = history
-      .filter((m) => m?.role === "user" || m?.role === "assistant")
-      .map((m) => {
-        const who = m.role === "assistant" ? "Oracle" : "User";
+
+    // ⚡ Bolt Optimization: Replace chained .filter().map().filter(Boolean) with a single imperative loop.
+    const lines: string[] = [];
+    for (const m of history) {
+      if (m?.role === "user" || m?.role === "assistant") {
         const content = (m.content || "").trim();
-        return content ? `${who}: ${content}` : "";
-      })
-      .filter(Boolean);
+        if (content) {
+          const who = m.role === "assistant" ? "Oracle" : "User";
+          lines.push(`${who}: ${content}`);
+        }
+      }
+    }
+
     if (lines.length === 0) return "";
     return `[CONVERSATION SO FAR]\n${lines.join("\n")}\n\n`;
   }
