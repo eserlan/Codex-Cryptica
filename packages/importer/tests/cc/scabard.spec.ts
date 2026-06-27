@@ -74,6 +74,13 @@ describe("Scabard Campaign Export Importer Adapter", () => {
         to: "Benjamin Bowman",
         toid: 4543966,
       },
+      {
+        from: "Adventurers",
+        fromid: 123457,
+        relationship: "CATEGORY_OF",
+        to: "Benjamin Bowman",
+        toid: 4543966,
+      },
     ],
     pages: [
       {
@@ -268,6 +275,7 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft).toBeDefined();
     expect(characterDraft?.tags).toContain("Vampire");
     expect(characterDraft?.tags).toContain("Chaotic Neutral");
+    expect(characterDraft?.tags).toContain("Adventurers");
     expect(characterDraft?.tags).not.toContain("Character");
   });
 });

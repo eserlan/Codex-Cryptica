@@ -209,6 +209,7 @@ export function parseScabardExport(
     // Map internal classification relationships to entity tags/labels
     if (
       relationshipTypeUpper.endsWith("_CATEGORY_OF") ||
+      relationshipTypeUpper === "CATEGORY_OF" ||
       relationshipTypeUpper === "CONCEPT_OF" ||
       relationshipTypeUpper === "ALIGNMENT_OF"
     ) {
