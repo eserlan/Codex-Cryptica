@@ -217,16 +217,17 @@ describe("SearchService", () => {
     expect(putArg.updatedAt).toEqual(expect.any(Number));
 
     const savedData = putArg.data;
-    if (savedData instanceof Blob) {
+    if (savedData instanceof Blob || savedData.constructor.name === "Blob") {
+      const blobData = savedData as Blob;
       let text: string;
       if (typeof DecompressionStream !== "undefined") {
         const rawStream =
-          typeof savedData.stream === "function"
-            ? savedData.stream()
+          typeof blobData.stream === "function"
+            ? blobData.stream()
             : new ReadableStream({
                 async start(controller) {
                   try {
-                    const arrayBuffer = await savedData.arrayBuffer();
+                    const arrayBuffer = await blobData.arrayBuffer();
                     controller.enqueue(new Uint8Array(arrayBuffer));
                   } catch (err) {
                     controller.error(err);
@@ -239,7 +240,7 @@ describe("SearchService", () => {
         );
         text = await new Response(stream).text();
       } else {
-        text = await savedData.text();
+        text = await blobData.text();
       }
       expect(JSON.parse(text)).toEqual(expectedData);
     } else {

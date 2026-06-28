@@ -22,12 +22,10 @@ describe("vtt-session", () => {
     const mockIdGenerator = { uuid: () => "mock-uuid" };
     const mockClock = { now: () => 1234567890 };
 
-    const session = createEncounterSession(
-      "map-1",
-      undefined,
-      undefined,
-      { idGenerator: mockIdGenerator, clock: mockClock }
-    );
+    const session = createEncounterSession("map-1", undefined, undefined, {
+      idGenerator: mockIdGenerator,
+      clock: mockClock,
+    });
 
     expect(session.id).toBe("mock-uuid");
     expect(session.name).toBe("Encounter mock-uui");
@@ -35,11 +33,7 @@ describe("vtt-session", () => {
   });
 
   it("creates, sanitizes, and summarizes encounters", () => {
-    const session = createEncounterSession(
-      "map-1",
-      "enc-1",
-      "Goblin Ambush",
-    );
+    const session = createEncounterSession("map-1", "enc-1", "Goblin Ambush");
     session.tokens = {
       token: {
         id: "token",
@@ -91,8 +85,10 @@ describe("vtt-session", () => {
 
   it("saves and loads snapshots in OPFS", async () => {
     const vaultHandle = { name: "vault" } as FileSystemDirectoryHandle;
+    const mockClock = { now: () => 1234567890 };
     const service = new VTTSessionService({
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
+      clock: mockClock,
     });
 
     await service.saveEncounterSnapshot(
@@ -105,6 +101,12 @@ describe("vtt-session", () => {
       vaultHandle,
       "vault",
     );
+
+    const callArgs = vi.mocked(writeOpfsFile).mock.calls[0];
+    const blobArg = callArgs[1] as Blob;
+    const jsonContent = await blobArg.text();
+    const parsedPayload = JSON.parse(jsonContent);
+    expect(parsedPayload.savedAt).toBe(1234567890);
 
     (readOpfsBlob as any).mockResolvedValue(
       new Blob(

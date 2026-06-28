@@ -75,8 +75,7 @@ export function parseBlogArticle(
       return null;
     }
 
-    const finalPublishedAt =
-      publishedAt instanceof Date ? publishedAt.toISOString() : publishedAt;
+    const finalPublishedAt = new Date(publishedAt).toISOString();
 
     return {
       id: String(metadata.id),

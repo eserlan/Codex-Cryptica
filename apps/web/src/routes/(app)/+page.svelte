@@ -11,6 +11,7 @@
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { helpStore } from "$lib/stores/help.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { DEFAULT_CATEGORIES } from "schema";
   import { focusEntity } from "$lib/stores/ui/navigation";
@@ -692,6 +693,21 @@
                   {action.label}
                 </button>
               {/each}
+              <a
+                href="#help/intro"
+                onclick={(e) => {
+                  e.preventDefault();
+                  helpStore.openHelpToArticle("intro");
+                }}
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                data-testid="welcome-guide-button"
+              >
+                <span
+                  class="icon-[lucide--book-open] w-4 h-4"
+                  aria-hidden="true"
+                ></span>
+                Getting Started
+              </a>
             </div>
             <p
               class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center"
@@ -771,6 +787,19 @@
               <span class="icon-[lucide--zap] w-3 h-3" aria-hidden="true"
               ></span>
               Features
+            </a>
+            <a
+              href="#help/intro"
+              onclick={(e) => {
+                e.preventDefault();
+                helpStore.openHelpToArticle("intro");
+              }}
+              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              data-testid="welcome-guide-link"
+            >
+              <span class="icon-[lucide--book-open] w-3 h-3" aria-hidden="true"
+              ></span>
+              Getting Started
             </a>
             <a
               href="{base}/changelog"

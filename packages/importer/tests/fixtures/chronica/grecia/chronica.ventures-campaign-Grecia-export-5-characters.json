@@ -1,0 +1,16 @@
+{
+  "export_created_at": "2026-06-27T20:00:00Z",
+  "campaign": {
+    "id": "grecia-1",
+    "name": "Grecia",
+    "characters": [
+      {
+        "id": "char-1",
+        "name": "Ariadne",
+        "description": "<p>Scout of the party.</p>",
+        "gm_secrets": "<p>Secret heir.</p>",
+        "place_id": "place-1"
+      }
+    ]
+  }
+}

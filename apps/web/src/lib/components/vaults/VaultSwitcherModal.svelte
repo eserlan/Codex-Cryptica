@@ -384,7 +384,7 @@
     >
       {#if showCreate}
         <form
-          class="flex gap-2 flex-1 animate-in fade-in slide-in-from-bottom-1"
+          class="flex flex-col gap-2 flex-1 animate-in fade-in slide-in-from-bottom-1"
           onsubmit={(e) => {
             e.preventDefault();
             handleCreate();
@@ -398,14 +398,14 @@
           />
           {#if vault.errorMessage}
             <div
-              class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2"
+              class="p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2"
             >
               <span class="icon-[lucide--alert-circle] w-4 h-4 shrink-0"></span>
               <p>{vault.errorMessage}</p>
             </div>
           {/if}
 
-          <div class="flex justify-end gap-3 mt-8">
+          <div class="flex justify-end gap-3 mt-1">
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"

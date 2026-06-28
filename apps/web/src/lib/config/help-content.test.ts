@@ -13,4 +13,32 @@ describe("help-content feature hints", () => {
   it("HINT_KEYS includes IN_APP_GENERATORS key", () => {
     expect(HINT_KEYS.IN_APP_GENERATORS).toBe("in-app-generators-hint-seen");
   });
+
+  it("FEATURE_HINTS includes deterministic-imports entry", () => {
+    expect(FEATURE_HINTS["deterministic-imports"]).toBeDefined();
+    expect(FEATURE_HINTS["deterministic-imports"].id).toBe(
+      "deterministic-imports",
+    );
+    expect(FEATURE_HINTS["deterministic-imports"].title).toBeTruthy();
+    expect(FEATURE_HINTS["deterministic-imports"].content).toContain("Labels");
+  });
+
+  it("HINT_KEYS includes DETERMINISTIC_IMPORTS key", () => {
+    expect(HINT_KEYS.DETERMINISTIC_IMPORTS).toBe(
+      "deterministic-imports-hint-seen",
+    );
+  });
+
+  it("FEATURE_HINTS includes chronica-imports entry", () => {
+    expect(FEATURE_HINTS["chronica-imports"]).toBeDefined();
+    expect(FEATURE_HINTS["chronica-imports"].id).toBe("chronica-imports");
+    expect(FEATURE_HINTS["chronica-imports"].title).toBeTruthy();
+    expect(FEATURE_HINTS["chronica-imports"].content).toContain(
+      "multiple JSON files",
+    );
+  });
+
+  it("HINT_KEYS includes CHRONICA_IMPORTS key", () => {
+    expect(HINT_KEYS.CHRONICA_IMPORTS).toBe("chronica-imports-hint-seen");
+  });
 });
