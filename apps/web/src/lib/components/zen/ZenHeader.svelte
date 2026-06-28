@@ -194,17 +194,6 @@
             <span class="icon-[lucide--target] w-4 h-4"></span>
           </button>
         {/if}
-        {#if entity && !vault.isGuest}
-          <button
-            onclick={() => modalUIStore.openPlotDialog(entity.id)}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
-            title="Generate plot ideas for this entity"
-            aria-label="Plot"
-            data-testid="zen-plot-button"
-          >
-            <span class="icon-[lucide--scroll] w-4 h-4"></span>
-          </button>
-        {/if}
         {#if entity && (!vault.isGuest || entity.soundBite)}
           <button
             onclick={() => {

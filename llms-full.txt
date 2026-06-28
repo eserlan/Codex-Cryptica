@@ -151,110 +151,18 @@ Invite world participants to chat in-character with NPCs. GMs can enable guest c
 ### Campaign Generators
 Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.
 
-### Entity Timeline
-Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity — battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.
-
-### Generators Work Offline
-The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.
-
 
 ## Help Documentation
 
 ### GETTING STARTED
 
-<img
-  src="https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/help/getting-started/dashboard.jpg"
-  alt="Codex Cryptica dashboard showing a local campaign vault"
-  title="Codex Cryptica campaign workspace"
-/>
+Codex Cryptica is designed to give you **absolute sovereignty** over your lore. Everything you write is saved as a Markdown file in your local vault.
 
-Codex Cryptica (CC) is a **local-first, privacy-first tabletop worldbuilding campaign manager**. Your vault is stored locally in your browser-backed private storage, and you can export or sync it when you want ordinary files or backups outside the browser.
+### Core Concepts
 
-You do not need an account or an AI key to create, edit, link, search, map, or organize your vault. The Lore Oracle and other AI tools are optional.
-
----
-
-## Quick Start: Your First 5 Minutes
-
-Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action:
-
-<img
-  src="https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/help/getting-started/first-entity.jpg"
-  alt="Creating a first entity in Codex Cryptica"
-  title="Create your first entity"
-/>
-
-1.  **Initialize your Space**: Click the folder icon in the top-left toolbar, select **New Vault**, and give it a name.
-2.  **Create your First Cast Member**: Click the `+` icon in the explorer sidebar, select the **Character** category, type `Eldrin` as the title, and hit Save.
-3.  **Write and Link**: Double-click Eldrin in the list to open his profile, click the Chronicle text area to edit, and type:
-    `A legendary mage living in [[Kingdom of Aethel]].`
-4.  **Confirm the Location**: The name `Kingdom of Aethel` will automatically create a draft entity link. Click that link in read mode to create the new Faction/Location record.
-5.  **Open the Knowledge Graph**: Select the Graph tab in the main navigation. You will see Eldrin and the Kingdom of Aethel mapped visually, with a connecting edge automatically drawn!
-
----
-
-## What to Create First
-
-If you are starting from an empty campaign, create five entities:
-
-- one important location
-- two major characters
-- one faction
-- one current conflict or mystery
-
-Write one or two sentences for each, then link names as they come up. This gives the graph enough structure to become useful without needing to plan the whole world first.
-
----
-
-## Core Concepts
-
-- **Vault**: Your campaign workspace. It contains entities, relationships, maps, calendars, and layouts.
-- **Entity**: A person, place, faction, event, item, creature, or note.
-- **Chronicle**: The main public-facing text for an entity.
-- **Lore**: Private GM notes and secrets. Lore is kept separate from player-facing exports.
-- **Connections**: Relationships between entities. Connections power the graph and make the vault easier to navigate.
-
----
-
-## Write and Link
-
-Write in the Chronicle field the same way you would write campaign notes. In read mode, names that match existing entities or aliases are highlighted as clickable links.
-
-For faster relationship work, use `/connect` from the command bar or the graph connection tools. Use `/merge` when you need to combine duplicate entities.
-
----
-
-## Useful Views
-
-<img
-  src="https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/help/getting-started/graph.jpg"
-  alt="Knowledge graph showing connected campaign entities"
-  title="Open the graph to see how your lore connects"
-/>
-
-Use the activity bar to switch between different ways of looking at the same vault:
-
-- **Graph**: See how people, places, factions, and events connect.
-- **Table**: Sort, filter, and scan many entities at once.
-- **Timeline / Calendar / Agenda**: Track dated and approximate events when your campaign history gets larger.
-- **Canvas**: Arrange notes and entities spatially for planning.
-- **Map**: Add maps, pins, tokens, measurements, and map fog-of-war.
-
-In the graph, press `C` to toggle connect mode and `L` to toggle node labels. Mark entities private or GM-only when they should be omitted from player-facing exports.
-
----
-
-## Optional AI
-
-The Lore Oracle can help brainstorm, revise, summarize, create drafts, and suggest possible connections. Configure a Gemini key in Settings if you want to use AI-backed features. Your core vault remains usable without it.
-
----
-
-## Back Up and Share
-
-Vaults are local by default, so backups are important. Export or sync important vaults regularly, especially before clearing browser data or moving to a new device.
-
-When you are ready to share with players, use publishing/player snapshot features. Private and GM-only content is kept separate from player-facing exports.
+- **Entities**: The building blocks of your world (NPCs, Locations, Items).
+- **Chronicles**: The main text content of an entity.
+- **Lore**: Hidden attributes and meta-data used by the Oracle for context.
 
 ---
 
@@ -409,39 +317,6 @@ The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves
 - **Context Fusion**: Combines visible chronicles and hidden lore.
 - **Image Generation**: Type `/draw [description]` to visualize your world.
 - **Instant Visualization**: Advanced Tier users will see a "DRAW VISUAL" button on Oracle responses and empty Entity profiles to quickly generate images based on lore.
-
-## Plot — Narrative Tension Analysis
-
-The **Plot** action generates campaign-ready plot ideas seeded by a specific entity. It analyses the entity's connections, relationships, and any other entities that mention it, then produces a structured story hook with a premise, key NPCs, escalation, and possible outcomes.
-
-### How to trigger it
-
-There are two ways to run a plot analysis:
-
-- **Entity detail panel** — Open any entity and click the **PLOT** button in the footer (view mode only).
-- **ZenView** — Open an entity in full-screen mode and click the scroll icon in the header toolbar.
-- **Oracle chat** — Type `/plot [entity name]` directly in the Oracle chat input.
-
-The button approach pre-fills all context automatically and shows the result in a focused modal. The Oracle chat approach works the same way but the result appears in the chat history.
-
-### What it uses as context
-
-- The entity's own lore, chronicle, and fields
-- All outbound and inbound graph connections
-- Other entities that mention the entity by name in their content (even if not explicitly linked)
-
-### The result
-
-The generated plot appears in a modal with:
-
-- A title and one-sentence premise
-- What is really going on
-- Key NPCs and entities involved
-- An escalation or twist
-- A player-facing hook
-- Possible outcomes
-
-Use **Regenerate** to get a different take, or **Copy** to paste the result elsewhere.
 
 ---
 
@@ -749,38 +624,6 @@ When you're ready to turn a fleeting draft into a formal wiki article, let the L
 2. The AI reads your raw draft, retrieves semantic context from your vault, and structures the note into a rich draft entity (determining `Name`, `Type`, `Chronicle`, and `Lore`).
 3. The newly generated draft is loaded into your sidebar review panel, complete with a `discoverySource` back-link referencing your original QuickNote.
 4. When you click **Verify/Approve** on the Svelte sidebar draft banner, the original QuickNote is automatically archived, keeping your scratchpad perfectly clean.
-
----
-
-### ENTITY TIMELINE
-
-The Entity Timeline gives each entity its own focused history view. Open any entity's detail panel and click the **Timeline** tab to see every event linked to that entity, sorted from earliest to latest.
-
-## Reading the Timeline
-
-Each row shows:
-
-- **Event title**
-- **Date or date range**, formatted to your campaign calendar
-- **Category label**, if the event has one
-- **Summary**, a short excerpt from the event's notes
-- **Participants**, other entities linked to the same event
-
-Click any row to open that event's full detail page.
-
-## Undated Events
-
-Events that have no date assigned still appear in the Timeline, grouped under an **Undated** heading at the bottom. No date is invented or guessed — the event is shown as-is.
-
-## Empty State
-
-If an entity has no linked events yet, the Timeline shows a prompt explaining that. To start building the entity's history, open or create an event and link it to the entity using the entity's connections.
-
-## What Counts as Linked
-
-An event appears in the Timeline when there is a direct connection between the entity and the event — either the entity links to the event, or the event links to the entity. Indirect connections (links of links) are not followed.
-
-The Timeline is read-only. It never creates, edits, or infers lore.
 
 ---
 

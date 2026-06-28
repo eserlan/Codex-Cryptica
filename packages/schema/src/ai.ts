@@ -186,13 +186,6 @@ export interface TextGenerationService {
     plotHook?: string;
     relationshipBack?: string;
   }>;
-  generateEntitiesFromPlot?(
-    apiKey: string,
-    modelName: string,
-    plotHookText: string,
-    sourceEntityTitle: string,
-    availableCategories: string[],
-  ): Promise<{ title: string; type: string; content: string }[]>;
 }
 
 export interface ConnectedEntityPromptContext {

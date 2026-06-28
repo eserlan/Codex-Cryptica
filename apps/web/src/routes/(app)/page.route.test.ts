@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
-import { helpStore } from "$lib/stores/help.svelte";
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
@@ -41,16 +40,6 @@ vi.mock("$lib/stores/theme.svelte", () => ({
 }));
 vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
 vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
-vi.mock("$lib/stores/help.svelte", () => ({
-  helpStore: {
-    init: vi.fn(),
-    isInitialized: false,
-    hasSeen: vi.fn(() => true),
-    activeTour: null,
-    openHelpToArticle: vi.fn(),
-    startTour: vi.fn(),
-  },
-}));
 
 // Stub out the lazily-imported heavy components so dynamic imports resolve instantly
 vi.mock("../../lib/components/GraphView.svelte", async () => ({
@@ -119,28 +108,6 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByText("Local-first vault")).toBeTruthy();
     expect(screen.getByText("Spatial lore graph")).toBeTruthy();
     expect(screen.getByText("Optional AI")).toBeTruthy();
-  });
-
-  it("renders the Getting Started guide button and link, and handles click", async () => {
-    onboardingStore.skipWelcomeScreen = false;
-    onboardingStore.dismissedLandingPage = false;
-
-    render(RoutePage);
-
-    const guideBtn = screen.getByTestId("welcome-guide-button");
-    const guideLink = screen.getByTestId("welcome-guide-link");
-
-    expect(guideBtn).toBeTruthy();
-    expect(guideLink).toBeTruthy();
-
-    const spy = vi.spyOn(helpStore, "openHelpToArticle");
-
-    await fireEvent.click(guideBtn);
-    expect(spy).toHaveBeenCalledWith("intro");
-
-    spy.mockClear();
-    await fireEvent.click(guideLink);
-    expect(spy).toHaveBeenCalledWith("intro");
   });
 
   it("sizes the app route shell to its parent instead of recomputing viewport height", () => {

@@ -11,7 +11,6 @@
   let dragging = $state(false);
   let content = $state("");
   let editorRef: HTMLDivElement;
-  let fileInputRef: HTMLInputElement;
 
   const handleDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -97,14 +96,17 @@
         <line x1="12" y1="3" x2="12" y2="15"></line>
       </svg>
       <p>Drag files here or paste content</p>
-      <button class="upload-btn" onclick={() => fileInputRef?.click()}>
+      <button
+        class="upload-btn"
+        onclick={() => document.getElementById("file-input")?.click()}
+      >
         Browse Files
       </button>
     </div>
   {/if}
 
   <input
-    bind:this={fileInputRef}
+    id="file-input"
     type="file"
     multiple
     accept=".pdf,.docx,.txt,.md,.json"
@@ -169,7 +171,6 @@
     gap: 1rem;
     pointer-events: none;
     opacity: 0.6;
-    z-index: 20;
   }
 
   /* Hide placeholder when editor has focus or content */

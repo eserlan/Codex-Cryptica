@@ -103,22 +103,6 @@ class OracleWorker {
     );
   }
 
-  async generateEntitiesFromPlot(
-    apiKey: string,
-    modelName: string,
-    plotHookText: string,
-    sourceEntityTitle: string,
-    availableCategories: string[],
-  ) {
-    return this.textGeneration.generateEntitiesFromPlot(
-      apiKey,
-      modelName,
-      plotHookText,
-      sourceEntityTitle,
-      availableCategories,
-    );
-  }
-
   async generateResponse(
     apiKey: string,
     query: string,

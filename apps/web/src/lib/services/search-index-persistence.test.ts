@@ -103,9 +103,7 @@ describe("SearchIndexPersistence", () => {
 
       const putArg = mockDb.searchIndex.put.mock.calls[0][0];
       expect(putArg.vaultId).toBe("vault-1");
-      expect(
-        putArg.data instanceof Blob || putArg.data.constructor.name === "Blob",
-      ).toBe(true);
+      expect(putArg.data.constructor.name).toBe("Blob");
 
       // Verify the Blob contents by decompressing it
       const blob = putArg.data as Blob;
@@ -153,9 +151,7 @@ describe("SearchIndexPersistence", () => {
       expect(mockDb.searchIndex.put).toHaveBeenCalledTimes(1);
 
       const putArg = mockDb.searchIndex.put.mock.calls[0][0];
-      expect(
-        putArg.data instanceof Blob || putArg.data.constructor.name === "Blob",
-      ).toBe(true);
+      expect(putArg.data.constructor.name).toBe("Blob");
 
       const blob = putArg.data as Blob;
       let text: string;

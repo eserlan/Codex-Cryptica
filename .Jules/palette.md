@@ -65,7 +65,7 @@
 
 ## 2024-06-17 - Button Toggle State Accessibility\n\n**Learning:** Found custom toggle buttons (like the App Appearance theme switchers) that changed visual state via classes but didn't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode was active.\n**Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.\n
 
-## 2026-06-12 - Semantic Modal Backdrops
+## 2024-11-20 - Full-Screen Overlay Cursors
 
-**Learning:** Found multiple modals (`ConfirmationModal`, `ChangelogModal`, `ImagePromptReviewModal`, `SettingsModal`, `SearchModal`, `ShareModal`, `MobileCreateEntitySheet`) using `div` elements with `svelte-ignore` comments for backdrops. This anti-pattern prevents keyboard navigation and violates accessibility rules.
-**Action:** Replace the `div` backdrops with semantic `<button type="button">` elements. Ensure they have proper ARIA labels (e.g., `aria-label="Close dialog"`) and focus styling (`focus-visible:ring-2 focus:outline-none focus-visible:ring-inset`) to allow screen readers and keyboard users to correctly navigate and interact with the overlays. Add `onpointerdown={(e) => e.preventDefault()}` to prevent the backdrop from stealing focus when close is aborted. For modals where focus can move away from the trigger input (e.g. into result lists), add `onkeydown` and `tabindex="-1"` to the dialog container so Escape is always caught.
+**Learning:** When converting full-screen clickable `<div>` backdrops (like modal or menu dismiss overlays) to semantic `<button>` elements to resolve accessibility warnings, the entire screen gets a pointer cursor because it's technically a button, which is confusing UX.
+**Action:** Always add the `cursor-default` utility class to full-screen backdrop buttons to ensure the mouse cursor remains a standard arrow over the non-interactive areas.

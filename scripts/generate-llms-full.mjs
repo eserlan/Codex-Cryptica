@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { load as yamlLoad } from 'js-yaml';
+import yaml from 'js-yaml';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -78,7 +78,7 @@ if (helpFiles.length > 0) {
     
     if (frontmatterMatch) {
       try {
-        metadata = yamlLoad(frontmatterMatch[1]);
+        metadata = yaml.load(frontmatterMatch[1]);
         content = rawContent.slice(frontmatterMatch[0].length).trim();
       } catch (e) {
         console.warn(`Failed to parse YAML in ${filename}:`, e.message);

@@ -13,7 +13,6 @@ import {
 
 export interface VTTSessionServiceDeps {
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  clock?: Clock;
 }
 
 function createEmptyFogMask(): string | null {
@@ -109,10 +108,9 @@ export class VTTSessionService {
       throw new Error("Vault is not available");
     }
 
-    const clock = this.deps.clock ?? systemClock;
     const payload = sanitizeEncounterSession({
       ...session,
-      savedAt: clock.now(),
+      savedAt: Date.now(),
     });
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",
