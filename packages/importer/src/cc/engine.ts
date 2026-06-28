@@ -131,7 +131,14 @@ export class ImportEngine {
     };
   }
 
-  async commit(session: CCImportSession): Promise<ImportReport> {
+  async commit(
+    session: CCImportSession,
+    onProgress?: (
+      stage: "entity" | "connection" | "asset",
+      current: number,
+      total: number,
+    ) => void,
+  ): Promise<ImportReport> {
     const report = createEmptyReport(session.sourceSystem, session.sourceLabel);
     report.warnings = [...session.warnings];
 
@@ -148,6 +155,12 @@ export class ImportEngine {
     // Track source-ref → committed id for connection resolution
     const committedIds = new Map<string, string>();
     const failures: CommitFailure[] = [];
+
+    const totalEntities = session.items.filter(
+      (item) => item.decision !== "ignore",
+    ).length;
+    let entityProgress = 0;
+
     const createSingleEntity = async (item: PreviewItem): Promise<void> => {
       const fields = mapDraftToFields(
         item.draft,
@@ -167,7 +180,10 @@ export class ImportEngine {
       const { id } = await this.writer.createEntity(input);
       report.entitiesCreated++;
       committedIds.set(item.sourceRef, id);
+      entityProgress++;
+      onProgress?.("entity", entityProgress, totalEntities);
     };
+
     const creates: Array<{
       item: PreviewItem;
       ref: string;
@@ -190,6 +206,8 @@ export class ImportEngine {
           report.itemsSkipped++;
           // Still register the id so connections to this entity remain resolvable.
           committedIds.set(item.sourceRef, item.match.entityId);
+          entityProgress++;
+          onProgress?.("entity", entityProgress, totalEntities);
           continue;
         }
         if (decision === "update") {
@@ -211,8 +229,12 @@ export class ImportEngine {
             await this.writer.updateEntity(item.match.entityId, patch);
             report.entitiesUpdated++;
             committedIds.set(item.sourceRef, item.match.entityId);
+            entityProgress++;
+            onProgress?.("entity", entityProgress, totalEntities);
           } catch (err) {
             failures.push({ ref, stage: "entity", message: String(err) });
+            entityProgress++;
+            onProgress?.("entity", entityProgress, totalEntities);
           }
           continue;
         }
@@ -257,7 +279,9 @@ export class ImportEngine {
             const result = results[index];
             report.entitiesCreated++;
             committedIds.set(created.item.sourceRef, result.id);
+            entityProgress++;
           }
+          onProgress?.("entity", entityProgress, totalEntities);
         } catch (err) {
           for (const created of creates) {
             try {
@@ -268,6 +292,8 @@ export class ImportEngine {
                 stage: "entity",
                 message: String(singleErr ?? err),
               });
+              entityProgress++;
+              onProgress?.("entity", entityProgress, totalEntities);
             }
           }
         }
@@ -281,12 +307,17 @@ export class ImportEngine {
               stage: "entity",
               message: String(err),
             });
+            entityProgress++;
+            onProgress?.("entity", entityProgress, totalEntities);
           }
         }
       }
     }
 
     // Phase 2: connections (after entities so targets exist)
+    const totalConnections = session.relationships.length;
+    let connectionProgress = 0;
+
     for (const rel of session.relationships) {
       const fromRef = this._resolveRef(
         rel.draft.fromRef,
@@ -305,6 +336,8 @@ export class ImportEngine {
           type: rel.draft.type,
           reason,
         });
+        connectionProgress++;
+        onProgress?.("connection", connectionProgress, totalConnections);
         continue;
       }
 
@@ -315,6 +348,8 @@ export class ImportEngine {
           type: rel.draft.type,
           reason: "Self-referential relationship",
         });
+        connectionProgress++;
+        onProgress?.("connection", connectionProgress, totalConnections);
         continue;
       }
 
@@ -332,16 +367,24 @@ export class ImportEngine {
           stage: "connection",
           message: String(err),
         });
+      } finally {
+        connectionProgress++;
+        onProgress?.("connection", connectionProgress, totalConnections);
       }
     }
 
     // Phase 3: assets
+    const totalAssets = session.assets.length;
+    let assetProgress = 0;
+
     for (const pa of session.assets) {
       if (!pa.eligible || !pa.draft.bytes) {
         report.assetsSkipped.push({
           id: pa.draft.id,
           reason: pa.skipReason ?? "Not eligible",
         });
+        assetProgress++;
+        onProgress?.("asset", assetProgress, totalAssets);
         continue;
       }
       try {
@@ -357,6 +400,9 @@ export class ImportEngine {
           stage: "asset",
           message: String(err),
         });
+      } finally {
+        assetProgress++;
+        onProgress?.("asset", assetProgress, totalAssets);
       }
     }
 

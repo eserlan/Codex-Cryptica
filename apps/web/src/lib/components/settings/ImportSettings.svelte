@@ -698,7 +698,18 @@
     statusMessage = `Importing ${ccSession.sourceLabel}...`;
 
     try {
-      ccReport = await createEngine().commit(ccSession);
+      ccReport = await createEngine().commit(
+        ccSession,
+        (stage, current, total) => {
+          if (stage === "entity") {
+            statusMessage = `Importing entities (${current}/${total})...`;
+          } else if (stage === "connection") {
+            statusMessage = `Importing connections (${current}/${total})...`;
+          } else if (stage === "asset") {
+            statusMessage = `Importing assets (${current}/${total})...`;
+          }
+        },
+      );
       step = "report";
     } catch (error) {
       notificationStore.notify(
