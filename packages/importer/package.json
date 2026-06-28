@@ -12,8 +12,6 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "schema": "workspace:*",
-    "zod": "^4.4.3",
     "@types/turndown": "^5.0.6",
     "idb": "^8.0.3",
     "mammoth": "^1.12.0",

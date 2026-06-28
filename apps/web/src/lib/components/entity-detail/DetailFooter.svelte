@@ -1,10 +1,8 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
-    entityId = null,
     isEditing,
     isSaving = false,
     isDirty = false,
@@ -15,7 +13,6 @@
     onDelete,
     onStartEdit,
   } = $props<{
-    entityId?: string | null;
     isEditing: boolean;
     isSaving?: boolean;
     isDirty?: boolean;
@@ -70,18 +67,8 @@
       </button>
     </div>
   {:else}
-    <div class="flex gap-2">
-      {#if entityId && !vault.isGuest}
-        <button
-          onclick={() => modalUIStore.openPlotDialog(entityId)}
-          title="Generate plot ideas seeded by this entity"
-          class="flex items-center gap-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary text-[10px] font-bold px-3 py-2 rounded tracking-widest transition"
-        >
-          <span class="icon-[lucide--scroll] w-3.5 h-3.5"></span>
-          PLOT
-        </button>
-      {/if}
-    </div>
+    <div></div>
+    <!-- Spacer -->
     <div class="flex gap-2">
       {#if !vault.isGuest}
         <button

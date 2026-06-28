@@ -51,14 +51,7 @@ export interface DiscoveredLink {
 export interface DiscoveredEntity {
   id: string; // Temp ID
   suggestedTitle: string;
-  suggestedType:
-    | "Character"
-    | "Location"
-    | "Item"
-    | "Event"
-    | "Faction"
-    | "Note"
-    | "Unknown";
+  suggestedType: "Character" | "Location" | "Item" | "Lore" | "Unknown";
   chronicle: string; // Short Markdown summary
   lore: string; // Detailed background
   content: string; // Markdown body (full combined content)
