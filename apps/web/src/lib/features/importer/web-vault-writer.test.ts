@@ -48,7 +48,7 @@ describe("WebVaultWriter", () => {
       metadata: undefined,
       discoverySource: "scabard:id:1",
       parent: undefined,
-      connections: undefined,
+      connections: [],
     });
   });
 
@@ -103,7 +103,7 @@ describe("WebVaultWriter", () => {
           metadata: undefined,
           discoverySource: "scabard:id:1",
           parent: undefined,
-          connections: undefined,
+          connections: [],
         },
       },
       {
@@ -117,7 +117,7 @@ describe("WebVaultWriter", () => {
           metadata: undefined,
           discoverySource: "scabard:id:2",
           parent: undefined,
-          connections: undefined,
+          connections: [],
         },
       },
     ]);
@@ -147,7 +147,7 @@ describe("WebVaultWriter", () => {
       labels: ["story"],
       metadata: undefined,
       parent: undefined,
-      connections: undefined,
+      connections: [],
     });
   });
 

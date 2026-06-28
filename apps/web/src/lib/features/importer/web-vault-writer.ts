@@ -32,16 +32,25 @@ export interface VaultWriterStoreLike {
 }
 
 export class WebVaultWriter implements VaultWriter {
+  private sourceMap: Map<string, string> | null = null;
+
   constructor(private store: VaultWriterStoreLike) {}
 
-  async findBySourceRef(sourceRef: string): Promise<{ id: string } | null> {
+  private getSourceMap(): Map<string, string> {
+    if (this.sourceMap) return this.sourceMap;
+    const map = new Map<string, string>();
     for (const entity of Object.values(this.store.entities)) {
-      if (entity.id && entity.discoverySource === sourceRef) {
-        return { id: entity.id };
+      if (entity.id && entity.discoverySource) {
+        map.set(entity.discoverySource, entity.id);
       }
     }
+    this.sourceMap = map;
+    return map;
+  }
 
-    return null;
+  async findBySourceRef(sourceRef: string): Promise<{ id: string } | null> {
+    const id = this.getSourceMap().get(sourceRef);
+    return id ? { id } : null;
   }
 
   async createEntity(entity: NewEntityInput): Promise<{ id: string }> {
@@ -59,6 +68,10 @@ export class WebVaultWriter implements VaultWriter {
         connections: (entity.connections ?? []) as Entity["connections"],
       },
     );
+
+    if (entity.discoverySource) {
+      this.getSourceMap().set(entity.discoverySource, id);
+    }
 
     return { id };
   }
@@ -112,6 +125,9 @@ export class WebVaultWriter implements VaultWriter {
       }
 
       knownIds.add(match.id);
+      if (entity.discoverySource) {
+        this.getSourceMap().set(entity.discoverySource, match.id);
+      }
       return { id: match.id };
     });
   }
