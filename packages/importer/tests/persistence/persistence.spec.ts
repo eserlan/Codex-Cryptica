@@ -37,10 +37,6 @@ describe("Persistence", () => {
     const testHash = "test-hash";
     const testFile = "test.docx";
 
-    beforeEach(() => {
-      vi.useRealTimers();
-    });
-
     it("creates a new registry record if none exists", async () => {
       const record = await getRegistry(testHash, testFile, 5);
       expect(record.hash).toBe(testHash);
@@ -68,20 +64,18 @@ describe("Persistence", () => {
 
     it("prunes registry to maintain size limit (LRU)", async () => {
       // Add 11 unique entries
-      // We manually mock Date.now to ensure distinct timestamps for LRU
-      const now = Date.now();
+      // We inject an explicit 'now' function to ensure distinct timestamps for LRU
+      const baseTime = Date.now();
       let offset = 0;
-      vi.spyOn(Date, "now").mockImplementation(() => now + offset++);
+      const explicitNow = () => baseTime + offset++;
 
       for (let i = 0; i < 11; i++) {
-        await getRegistry(`hash-${i}`, `file-${i}.txt`, 1);
+        await getRegistry(`hash-${i}`, `file-${i}.txt`, 1, explicitNow);
       }
 
-      const record0 = await getRegistry("hash-0", "file-0.txt", 1);
+      const record0 = await getRegistry("hash-0", "file-0.txt", 1, explicitNow);
       // If pruned, it should be a fresh record with empty indices
       expect(record0.completedIndices).toEqual([]);
-
-      vi.restoreAllMocks();
     });
   });
 });
