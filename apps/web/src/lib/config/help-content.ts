@@ -30,6 +30,7 @@ export interface FeatureHint {
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
+  CREATURE_PACKS: "creature-packs-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -263,6 +264,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
     icon: "icon-[lucide--file-up]",
+  },
+  "creature-packs": {
+    id: "creature-packs",
+    title: "Creature Packs",
+    content:
+      "Populate a new vault fast with Creature Packs — curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.",
+    icon: "icon-[lucide--book-open]",
   },
   themes: {
     id: "themes",

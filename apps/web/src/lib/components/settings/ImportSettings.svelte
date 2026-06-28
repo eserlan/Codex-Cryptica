@@ -28,6 +28,9 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { listPacks, packToDiscoveredEntities } from "@codex/content-packs";
+  import type { CreaturePack } from "@codex/content-packs";
 
   type MarkdownFrontmatterValidator =
     typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
@@ -42,6 +45,82 @@
   let showResumeToast = $state(false);
   let currentFileHash = $state("");
   let rejectedFiles = $state<{ name: string; reason: string }[]>([]);
+
+  const availablePacks = listPacks();
+  const targetGenre = $derived.by(() => {
+    const rawId = (
+      themeStore?.worldThemeId ||
+      themeStore?.activeTheme?.id ||
+      ""
+    ).toLowerCase();
+    if (
+      [
+        "scifi",
+        "starwars",
+        "startrek",
+        "lancer",
+        "space-opera-resistance",
+      ].includes(rawId)
+    )
+      return "scifi";
+    if (["cyberpunk", "modern"].includes(rawId)) return "cyberpunk";
+    if (["apocalyptic", "fallout"].includes(rawId)) return "apocalyptic";
+    if (["horror"].includes(rawId)) return "horror";
+    if (["steampunk", "western"].includes(rawId)) return "steampunk";
+    return "fantasy";
+  });
+  const masterPacks = $derived(
+    availablePacks.filter(
+      (p) => !p.parentPackId && (p.genre || "fantasy") === targetGenre,
+    ),
+  );
+  const getSubpacks = (masterId: string) =>
+    availablePacks.filter((p) => p.parentPackId === masterId);
+
+  let expandedPacks = $state<Record<string, boolean>>({});
+
+  const getPackImportStatus = (pack: CreaturePack) => {
+    const existingSlugs = new Set(
+      Object.values(vault.entities).map((e) =>
+        e.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, ""),
+      ),
+    );
+    let importedCount = 0;
+    for (const entry of pack.entries) {
+      const slug = entry.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      if (existingSlugs.has(slug)) {
+        importedCount++;
+      }
+    }
+    return {
+      importedCount,
+      total: pack.entries.length,
+      isFullyImported:
+        pack.entries.length > 0 && importedCount === pack.entries.length,
+      isPartiallyImported:
+        importedCount > 0 && importedCount < pack.entries.length,
+    };
+  };
+
+  function handlePackSelect(pack: CreaturePack) {
+    const knownTitleToId = new Map(
+      Object.entries(vault.entities).map(([id, e]) => [
+        e.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, ""),
+        id,
+      ]),
+    );
+    discoveredEntities = packToDiscoveredEntities(pack, knownTitleToId);
+    step = "review";
+  }
 
   $effect(() => {
     modalUIStore.isImporting = step === "processing" || step === "review";
@@ -261,6 +340,8 @@
       const t = type.toLowerCase();
 
       if (t === "character") return "character";
+
+      if (t === "creature") return "creature";
 
       if (["location", "item", "event", "faction", "note"].includes(t))
         return t;
@@ -502,8 +583,181 @@
         : 'bg-theme-surface border border-theme-border p-4 rounded-lg justify-center'}"
     >
       {#if step === "upload"}
-        <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex-1 flex flex-col min-h-0 gap-4">
           <ImportDropzone onFileSelect={handleFiles} {isStandalone} />
+
+          {#if masterPacks.length > 0}
+            <div class="px-1" data-testid="creature-packs-section">
+              <p
+                class="text-[10px] font-bold uppercase tracking-widest text-theme-muted font-header mb-2"
+              >
+                Creature Packs
+              </p>
+              <div class="flex flex-col gap-2">
+                {#each masterPacks as masterPack (masterPack.id)}
+                  {@const subpacks = getSubpacks(masterPack.id)}
+                  {@const status = getPackImportStatus(masterPack)}
+                  <div
+                    class="flex flex-col rounded-lg border border-theme-border bg-theme-surface overflow-hidden transition-colors"
+                    data-testid="creature-pack-card"
+                  >
+                    <div
+                      class="p-3 flex items-start justify-between gap-3 bg-theme-surface hover:bg-theme-primary/5 transition-colors"
+                    >
+                      <button
+                        onclick={() => handlePackSelect(masterPack)}
+                        class="flex items-start gap-3 text-left flex-1 min-w-0 group"
+                        aria-label="Import {masterPack.name}"
+                      >
+                        <span
+                          class="icon-[lucide--book-open] w-4 h-4 mt-0.5 text-theme-muted group-hover:text-theme-primary shrink-0 transition-colors"
+                        ></span>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <p
+                              class="text-xs font-bold text-theme-primary truncate"
+                            >
+                              {masterPack.name}
+                            </p>
+                            {#if status.isFullyImported}
+                              <span
+                                class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-1 shrink-0"
+                              >
+                                <span class="icon-[lucide--check] w-2.5 h-2.5"
+                                ></span> Imported
+                              </span>
+                            {:else if status.isPartiallyImported}
+                              <span
+                                class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
+                              >
+                                {status.importedCount}/{status.total} Imported
+                              </span>
+                            {/if}
+                          </div>
+                          <p
+                            class="text-[10px] text-theme-muted leading-snug mt-0.5"
+                          >
+                            {masterPack.description}
+                          </p>
+                          <div
+                            class="flex items-center justify-between gap-2 mt-1 flex-wrap"
+                          >
+                            <p
+                              class="text-[10px] text-theme-muted/60 font-mono"
+                            >
+                              {masterPack.entries.length} creatures total
+                            </p>
+                            {#if masterPack.credits}
+                              <p
+                                class="text-[9px] text-theme-muted/50 italic truncate max-w-[240px]"
+                                title={masterPack.credits}
+                              >
+                                🎨 {masterPack.credits}
+                              </p>
+                            {/if}
+                          </div>
+                        </div>
+                      </button>
+
+                      {#if subpacks.length > 0}
+                        <button
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            expandedPacks[masterPack.id] =
+                              !expandedPacks[masterPack.id];
+                          }}
+                          class="px-2 py-1 rounded border border-theme-border bg-theme-base/50 hover:bg-theme-primary/10 hover:border-theme-primary/30 text-theme-muted hover:text-theme-primary flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shrink-0 transition-all mt-0.5"
+                          aria-expanded={!!expandedPacks[masterPack.id]}
+                        >
+                          <span>{subpacks.length} Subpacks</span>
+                          <span
+                            class="icon-[lucide--chevron-down] w-3.5 h-3.5 transition-transform duration-200 {expandedPacks[
+                              masterPack.id
+                            ]
+                              ? 'rotate-180'
+                              : ''}"
+                          ></span>
+                        </button>
+                      {/if}
+                    </div>
+
+                    {#if subpacks.length > 0 && expandedPacks[masterPack.id]}
+                      <div
+                        transition:slide={{ duration: 200 }}
+                        class="border-t border-theme-border/60 bg-theme-base/30 p-2.5 flex flex-col gap-1.5"
+                      >
+                        <p
+                          class="text-[9px] font-bold uppercase tracking-widest text-theme-muted/80 font-header px-1 pb-0.5"
+                        >
+                          Modular Themed Packs
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {#each subpacks as subpack (subpack.id)}
+                            {@const subStatus = getPackImportStatus(subpack)}
+                            <button
+                              onclick={() => handlePackSelect(subpack)}
+                              class="flex items-start gap-2.5 text-left p-2.5 rounded-md border border-theme-border/50 bg-theme-surface hover:border-theme-primary/40 hover:bg-theme-primary/5 transition-all group"
+                              data-testid="creature-subpack-card"
+                              aria-label="Import {subpack.name}"
+                            >
+                              <span
+                                class="icon-[lucide--folder] w-3.5 h-3.5 mt-0.5 text-theme-muted group-hover:text-theme-primary shrink-0 transition-colors"
+                              ></span>
+                              <div class="min-w-0 flex-1">
+                                <div
+                                  class="flex items-center justify-between gap-1.5 flex-wrap"
+                                >
+                                  <p
+                                    class="text-[11px] font-bold text-theme-primary truncate"
+                                  >
+                                    {subpack.name
+                                      .replace("Fantasy ", "")
+                                      .replace(" Pack", "")}
+                                  </p>
+                                  {#if subStatus.isFullyImported}
+                                    <span
+                                      class="px-1 py-0.5 text-[8px] font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-0.5 shrink-0"
+                                    >
+                                      <span class="icon-[lucide--check] w-2 h-2"
+                                      ></span> Imported
+                                    </span>
+                                  {:else if subStatus.isPartiallyImported}
+                                    <span
+                                      class="px-1 py-0.5 text-[8px] font-bold uppercase rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
+                                    >
+                                      {subStatus.importedCount}/{subStatus.total}
+                                    </span>
+                                  {:else}
+                                    <span
+                                      class="text-[9px] text-theme-muted/60 font-mono shrink-0"
+                                      >{subpack.entries.length}</span
+                                    >
+                                  {/if}
+                                </div>
+                                <p
+                                  class="text-[9px] text-theme-muted leading-tight mt-0.5 line-clamp-2"
+                                >
+                                  {subpack.description}
+                                </p>
+                                {#if subpack.credits}
+                                  <p
+                                    class="text-[8px] text-theme-muted/50 italic truncate mt-1"
+                                    title={subpack.credits}
+                                  >
+                                    🎨 {subpack.credits}
+                                  </p>
+                                {/if}
+                              </div>
+                            </button>
+                          {/each}
+                        </div>
+                      </div>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/if}
         </div>
       {:else if step === "processing"}
         <div class="flex flex-col items-center gap-6 py-8">
