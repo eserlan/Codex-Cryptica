@@ -185,6 +185,18 @@ export function parseScabardExport(
     }
   }
 
+  const pageConcepts = new Map<string, string>();
+  for (const wrapper of exportData.pages) {
+    const page = wrapper.page;
+    if (page) {
+      const id = (wrapper.id ?? page.id).toString();
+      pageConcepts.set(
+        id,
+        (page.concept ?? wrapper.concept ?? "Note").toLowerCase(),
+      );
+    }
+  }
+
   for (const wrapper of exportData.pages) {
     const page = wrapper.page;
     if (!page || typeof page !== "object") continue;
@@ -247,6 +259,11 @@ export function parseScabardExport(
   for (const conn of conns) {
     const relationshipType = conn.relationship || "RELATED_TO";
     const relationshipTypeUpper = relationshipType.toUpperCase();
+    // Map connections originating from/to classification category pages to entity tags/labels
+    const fromId = conn.fromid.toString();
+    const toId = conn.toid.toString();
+    const fromConcept = pageConcepts.get(fromId);
+    const toConcept = pageConcepts.get(toId);
 
     // Map internal classification relationships to entity tags/labels
     if (
@@ -278,6 +295,46 @@ export function parseScabardExport(
           !sourceDraft.tags.includes(labelName)
         ) {
           sourceDraft.tags.push(labelName);
+        }
+      }
+      continue;
+    }
+
+    // Map connections originating from/to classification category pages to entity tags/labels
+    const isFromSkipped =
+      fromConcept &&
+      ["ccategory", "category", "folder", "attribute"].includes(fromConcept) &&
+      !draftsMap.has(fromId);
+    const isToSkipped =
+      toConcept &&
+      ["ccategory", "category", "folder", "attribute"].includes(toConcept) &&
+      !draftsMap.has(toId);
+
+    if (isFromSkipped || isToSkipped) {
+      if (isFromSkipped) {
+        const targetDraft = draftsMap.get(toId);
+        if (targetDraft) {
+          const labelName = conn.from;
+          if (
+            labelName &&
+            !isStandardMetadataName(labelName) &&
+            !targetDraft.tags.includes(labelName)
+          ) {
+            targetDraft.tags.push(labelName);
+          }
+        }
+      }
+      if (isToSkipped) {
+        const sourceDraft = draftsMap.get(fromId);
+        if (sourceDraft) {
+          const labelName = conn.to;
+          if (
+            labelName &&
+            !isStandardMetadataName(labelName) &&
+            !sourceDraft.tags.includes(labelName)
+          ) {
+            sourceDraft.tags.push(labelName);
+          }
         }
       }
       continue;

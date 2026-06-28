@@ -315,4 +315,70 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(eventDraft?.title).toBe("The Red Wedding");
     expect(eventDraft?.content).toContain("A tragic banquet event.");
   });
+
+  it("should map connections pointing from skipped custom category pages (gender_of, race_of) to tags/labels", () => {
+    const customCampaign = {
+      conns: [
+        {
+          from: "Female",
+          fromid: 5626268,
+          relationship: "gender_of",
+          to: "Benjamin Bowman",
+          toid: 4543966,
+        },
+        {
+          from: "Human",
+          fromid: 5625208,
+          relationship: "race_of",
+          to: "Benjamin Bowman",
+          toid: 4543966,
+        },
+      ],
+      pages: [
+        {
+          concept: "ccategory",
+          id: 5626268,
+          isGoldStar: false,
+          page: {
+            id: 5626268,
+            name: "Female",
+            concept: "ccategory",
+            description: "",
+          },
+          uri: "/campaign/4543909/ccategory/5626268",
+        },
+        {
+          concept: "ccategory",
+          id: 5625208,
+          isGoldStar: false,
+          page: {
+            id: 5625208,
+            name: "Human",
+            concept: "ccategory",
+            description: "",
+          },
+          uri: "/campaign/4543909/ccategory/5625208",
+        },
+        {
+          concept: "Character",
+          id: 4543966,
+          isGoldStar: false,
+          page: {
+            id: 4543966,
+            name: "Benjamin Bowman",
+            concept: "Character",
+            description: "<p>GYPTOLOGIST</p>",
+          },
+          uri: "/campaign/4543909/character/4543966",
+        },
+      ],
+    };
+
+    const pkg = parseScabardExport(customCampaign);
+    const draft = pkg.entityDrafts.find((d) => d.sourceId === "4543966");
+    expect(draft).toBeDefined();
+    expect(draft?.tags).toContain("Female");
+    expect(draft?.tags).toContain("Human");
+    expect(pkg.relationshipDrafts.length).toBe(0);
+  });
 });
