@@ -84,7 +84,7 @@
         {#if report.unresolvedReferences.length === 0}
           <p class="text-xs text-theme-muted">No unresolved references.</p>
         {:else}
-          {#each report.unresolvedReferences as unresolved (`${unresolved.fromRef}:${unresolved.toRef}:${unresolved.type}`)}
+          {#each report.unresolvedReferences as unresolved, i (`${unresolved.fromRef}:${unresolved.toRef}:${unresolved.type}:${i}`)}
             <div class="text-xs text-theme-text">
               <div class="font-semibold break-all">
                 {unresolved.fromRef} -> {unresolved.toRef}
@@ -107,7 +107,7 @@
         {#if report.failures.length === 0}
           <p class="text-xs text-theme-muted">No failures.</p>
         {:else}
-          {#each report.failures as failure (`${failure.ref}:${failure.stage}:${failure.message}`)}
+          {#each report.failures as failure, i (`${failure.ref}:${failure.stage}:${failure.message}:${i}`)}
             <div class="text-xs text-theme-text">
               <div class="font-semibold break-all">{failure.ref}</div>
               <div

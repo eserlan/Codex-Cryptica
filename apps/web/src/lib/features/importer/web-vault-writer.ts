@@ -56,7 +56,7 @@ export class WebVaultWriter implements VaultWriter {
         metadata: entity.metadata as Entity["metadata"],
         discoverySource: entity.discoverySource,
         parent: entity.parent,
-        connections: entity.connections as Entity["connections"],
+        connections: (entity.connections ?? []) as Entity["connections"],
       },
     );
 
@@ -92,7 +92,7 @@ export class WebVaultWriter implements VaultWriter {
           metadata: entity.metadata as Entity["metadata"],
           discoverySource: entity.discoverySource,
           parent: entity.parent,
-          connections: entity.connections as Entity["connections"],
+          connections: (entity.connections ?? []) as Entity["connections"],
         },
       })),
     );
@@ -126,7 +126,7 @@ export class WebVaultWriter implements VaultWriter {
       labels: patch.tags,
       metadata: patch.metadata as Entity["metadata"],
       parent: patch.parent,
-      connections: patch.connections as Entity["connections"],
+      connections: (patch.connections ?? []) as Entity["connections"],
     });
 
     if (!success) {
