@@ -145,6 +145,7 @@ export class ImportEngine {
       current: number,
       total: number,
     ) => void,
+    signal?: AbortSignal,
   ): Promise<ImportReport> {
     const report = createEmptyReport(session.sourceSystem, session.sourceLabel);
     report.warnings = [...session.warnings];
@@ -204,6 +205,7 @@ export class ImportEngine {
 
     // Phase 1: entities
     for (const item of session.items) {
+      if (signal?.aborted) throw new Error("Import aborted");
       const ref =
         item.draft.sourceId ?? item.draft.sourcePath ?? item.sourceRef;
 
@@ -337,6 +339,7 @@ export class ImportEngine {
     let connectionProgress = 0;
 
     for (const rel of session.relationships) {
+      if (signal?.aborted) throw new Error("Import aborted");
       const fromRef = await this._resolveRef(
         rel.draft.fromRef,
         committedIds,
@@ -400,6 +403,7 @@ export class ImportEngine {
     let assetProgress = 0;
 
     for (const pa of session.assets) {
+      if (signal?.aborted) throw new Error("Import aborted");
       if (!pa.eligible || !pa.draft.bytes) {
         report.assetsSkipped.push({
           id: pa.draft.id,

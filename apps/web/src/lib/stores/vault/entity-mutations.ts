@@ -366,7 +366,7 @@ export class EntityMutationService {
     );
     if (updatedSource) {
       this.entities = entities;
-      await this.deps.persistence.scheduleSave(updatedSource);
+      this.deps.persistence.scheduleSave(updatedSource);
 
       const newConn = updatedSource.connections.find(
         (c) => c.target === targetId && c.type === type,
@@ -410,7 +410,7 @@ export class EntityMutationService {
     );
     if (updatedSource) {
       this.entities = entities;
-      await this.deps.persistence.scheduleSave(updatedSource);
+      this.deps.persistence.scheduleSave(updatedSource);
 
       const updatedConn = updatedSource.connections.find(
         (c) => c.target === targetId && c.type === newType,
@@ -450,7 +450,7 @@ export class EntityMutationService {
     );
     if (updatedSource) {
       this.entities = entities;
-      await this.deps.persistence.scheduleSave(updatedSource);
+      this.deps.persistence.scheduleSave(updatedSource);
 
       if (this.deps.onConnectionRemoved) {
         this.deps.onConnectionRemoved(sourceId, targetId, type);
@@ -478,7 +478,7 @@ export class EntityMutationService {
     );
     if (updated) {
       this.entities = entities;
-      await this.deps.persistence.scheduleSave(updated);
+      this.deps.persistence.scheduleSave(updated);
 
       vaultEventBus.emit({
         type: "ENTITY_UPDATED",
@@ -500,7 +500,7 @@ export class EntityMutationService {
     );
     if (updated) {
       this.entities = entities;
-      await this.deps.persistence.scheduleSave(updated);
+      this.deps.persistence.scheduleSave(updated);
 
       vaultEventBus.emit({
         type: "ENTITY_UPDATED",

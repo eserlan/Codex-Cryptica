@@ -699,6 +699,8 @@
     importMode = "cc";
     statusMessage = `Importing ${ccSession.sourceLabel}...`;
 
+    const signal = connectionModeStore.abortSignal;
+
     try {
       ccReport = await createEngine().commit(
         ccSession,
@@ -711,18 +713,29 @@
             statusMessage = `Importing assets (${current}/${total})...`;
           }
         },
+        signal,
       );
+      if (signal.aborted) {
+        throw new Error("Import aborted");
+      }
       statusMessage = "Finalizing and saving to vault...";
       await vault.flushPendingSaves();
       step = "report";
     } catch (error) {
-      notificationStore.notify(
-        error instanceof Error
-          ? error.message
-          : "Import failed before the report could be created.",
-        "error",
-      );
-      step = "review";
+      if (
+        signal.aborted ||
+        (error instanceof Error && error.message === "Import aborted")
+      ) {
+        step = "review";
+      } else {
+        notificationStore.notify(
+          error instanceof Error
+            ? error.message
+            : "Import failed before the report could be created.",
+          "error",
+        );
+        step = "review";
+      }
     }
   };
 
