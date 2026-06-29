@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, fireEvent, within } from "@testing-library/svelte";
+import { render, fireEvent, screen, within } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -114,6 +114,13 @@ vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
 vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
   default: vi.fn(),
 }));
+
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+  const mod = await import("../entity-detail/MockAutocomplete.svelte");
+  return {
+    default: mod.default,
+  };
+});
 
 describe("ZenSidebar with duplicate/mutual connections", () => {
   it("renders connections successfully without key duplication Svelte errors", () => {
@@ -234,5 +241,38 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     // Verify form fields
     expect(getByRole("button", { name: /^connect$/i })).toBeTruthy();
     expect(getByRole("button", { name: /^cancel$/i })).toBeTruthy();
+  });
+
+  it("prefills the extracted connection creator from establish custom connection", async () => {
+    const mockEntity = vault.entities["entity-1"];
+
+    render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    const establishButtons = screen.getAllByLabelText(
+      "Establish custom connection",
+    );
+    expect(establishButtons.length).toBeGreaterThan(0);
+
+    await fireEvent.click(establishButtons[0]);
+
+    expect(
+      (screen.getByTestId("mock-autocomplete") as HTMLInputElement).value,
+    ).toBe("Entity Child");
+
+    await fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "entity-child",
+      "related_to",
+      undefined,
+    );
   });
 });

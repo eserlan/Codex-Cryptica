@@ -17,3 +17,8 @@
 
 **Learning:** When extracting logic from a Svelte component that relies on reactive `$state` (e.g. `editLore` being updated while an async AI generation streams in), be careful not to create state closure traps. Passing the raw string value creates a snapshot.
 **Action:** When extracting async generation functions from UI components, pass reactive state getters (`getEditLore: () => string`) rather than static snapshot variables (`editLore: string`) to preserve the component's original closure-updating behavior.
+
+## 2025-06-28 - Extracted Presentational UI with Bounded State
+
+**Learning:** Svelte UI component files (like `DetailStatusTab.svelte`, `ZenContent.svelte`, and `ZenSidebar.svelte`) often bloat by inlining presentational UI that manages its own distinct internal state (like creating a new entity connection). This violates the Single Responsibility Principle and causes widespread code duplication.
+**Action:** When you encounter a repeated block of presentational UI that requires its own distinct internal state (e.g. `isConnecting`, `addConnectionError`, form fields) and lifecycle methods (`handleAddConnection`), extract it into a small presentational subcomponent. Let the parent only control whether the component is visible (e.g., `isAddingConnection`).
