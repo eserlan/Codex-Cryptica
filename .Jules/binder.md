@@ -17,7 +17,10 @@
 ## 2025-02-23 - Inject systemClock and systemIdGenerator into UndoRedoService
 **Learning:** `oracle-engine` uses a pattern of injecting `systemClock` and `systemIdGenerator` from `./runtime.ts` into constructors to allow faking time and randomness in tests.
 **Action:** When working in `oracle-engine`, ensure `Date.now()` and `crypto.randomUUID()` calls are replaced with injected dependencies from `./runtime.ts` using this pattern.
-
 ## 2025-06-28 - [Inject time dependencies to improve test isolation]
 **Learning:** Global monkey-patching of ambient runtime dependencies like `Date.now()` with `vi.spyOn(Date, "now")` can cause unexpected test suite crashes in some Vitest/Bun configurations, particularly when tests pollute each other across module boundaries or fail due to mismatched testing environments.
 **Action:** Inject ambient dependencies like time (`now()`) or ID generators directly into functions or service constructors as optional defaults (e.g., `now: () => number = Date.now`). This allows fakes to be explicitly passed in tests, isolating state, avoiding global mocks, and preserving production behavior.
+
+## 2026-06-29 - Update subclasses when injecting into BaseExecutor constructors
+**Learning:** When injecting time dependencies (or any dependencies) into the constructor of an abstract base class (`BaseExecutor`), all concrete subclasses (e.g. `PlotExecutor`, `ChatExecutor`, `ReviseExecutor`) must be updated to also accept that dependency (often as an optional parameter) and pass it to `super(clock)`. Otherwise, the dependency cannot actually be injected when instantiating the concrete classes, defeating the purpose of the test seam.
+**Action:** When modifying a base class constructor to inject dependencies, search for all occurrences of `extends BaseClass` and update their constructors accordingly.

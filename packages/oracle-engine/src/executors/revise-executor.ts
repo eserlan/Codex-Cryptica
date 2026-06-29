@@ -8,6 +8,7 @@ import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type { OracleGenerator } from "../oracle-generator";
 import { buildRelatedEntityContext } from "../revision-context";
+import type { Clock } from "../runtime";
 
 export class ReviseExecutor
   extends BaseExecutor
@@ -15,8 +16,11 @@ export class ReviseExecutor
 {
   private isExecuting = false;
 
-  constructor(private generator?: OracleGenerator) {
-    super();
+  constructor(
+    private generator?: OracleGenerator,
+    clock?: Clock,
+  ) {
+    super(clock);
   }
 
   async execute(
