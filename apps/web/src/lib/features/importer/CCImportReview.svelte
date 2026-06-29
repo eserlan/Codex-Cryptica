@@ -93,10 +93,25 @@
   <section
     class="border border-theme-border bg-theme-surface rounded-lg overflow-hidden min-h-0 flex flex-col"
   >
+    <div class="border-b border-theme-border px-4 py-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h4
+          class="text-xs font-bold text-theme-primary uppercase font-header tracking-widest"
+        >
+          Found entities
+        </h4>
+        <span
+          class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+        >
+          {session.items.length} detected
+        </span>
+      </div>
+    </div>
+
     <div
       class="grid grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)_minmax(0,0.9fr)_auto] gap-3 px-4 py-2 border-b border-theme-border text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted"
     >
-      <span>Item</span>
+      <span>Entity</span>
       <span>Type</span>
       <span>Match</span>
       <span>Action</span>
@@ -243,11 +258,14 @@
       </div>
     </details>
 
-    <details class="border border-theme-border bg-theme-surface rounded-lg p-4">
+    <details
+      class="border border-theme-border bg-theme-surface rounded-lg p-4"
+      open
+    >
       <summary
         class="cursor-pointer list-none text-xs font-bold text-theme-primary uppercase font-header tracking-widest"
       >
-        Links
+        Found links
       </summary>
       <div class="mt-3 space-y-2">
         {#if session.relationships.length === 0}

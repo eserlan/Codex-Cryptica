@@ -6,6 +6,7 @@ import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
+import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
 import { sanitizeId } from "$lib/utils/markdown";
 import { listPacks, packToDiscoveredEntities } from "@codex/content-packs";
 import type { CreaturePack } from "@codex/content-packs";
@@ -121,7 +122,7 @@ export class ImportSettingsController {
       ? "Deterministic import is preparing your review"
       : "Oracle is interpreting your notes",
   );
-  oracleEnabled = $derived(this.deps.oracle.isEnabled);
+  oracleEnabled = $derived.by(() => this.deps.oracle.isEnabled);
 
   availablePacks = listPacks();
   targetGenre = $derived.by(() =>
@@ -131,7 +132,7 @@ export class ImportSettingsController {
         "",
     ),
   );
-  masterPacks = $derived(
+  masterPacks = $derived.by(() =>
     this.availablePacks.filter(
       (p) => !p.parentPackId && (p.genre || "fantasy") === this.targetGenre,
     ),

@@ -17,6 +17,7 @@
     showResumeToast: boolean;
     onRestart: () => void;
     onFileSelect: (files: File[]) => void | Promise<void>;
+    rejectedFiles?: { name: string; reason: string }[];
     masterPacks: CreaturePack[];
     getSubpacks: (masterId: string) => CreaturePack[];
     getPackImportStatus: (pack: CreaturePack) => PackImportStatus;
@@ -31,6 +32,7 @@
     showResumeToast,
     onRestart,
     onFileSelect,
+    rejectedFiles = [],
     masterPacks,
     getSubpacks,
     getPackImportStatus,
@@ -93,6 +95,28 @@
 {/if}
 
 <div class="flex-1 flex flex-col min-h-0 gap-4">
+  {#if rejectedFiles.length > 0}
+    <div
+      class="rounded border border-red-500/20 bg-red-500/10 p-3"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="flex items-center gap-2">
+        <span class="icon-[lucide--alert-triangle] h-4 w-4 text-red-400"></span>
+        <p class="text-xs font-bold uppercase tracking-wider text-red-400">
+          Import could not be prepared
+        </p>
+      </div>
+      <ul
+        class="mt-2 list-disc space-y-1 pl-6 text-xs leading-tight text-red-400/80"
+      >
+        {#each rejectedFiles as file (`${file.name}:${file.reason}`)}
+          <li><strong>{file.name}</strong>: {file.reason}</li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+
   <div
     class="grid gap-2 rounded border border-theme-border bg-theme-surface/70 p-3 text-xs text-theme-text sm:grid-cols-2"
     aria-label="Supported import modes"

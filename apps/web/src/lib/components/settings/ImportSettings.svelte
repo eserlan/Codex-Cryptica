@@ -57,6 +57,7 @@
         showResumeToast={controller.showResumeToast}
         onRestart={controller.handleRestart}
         onFileSelect={controller.handleFiles}
+        rejectedFiles={controller.rejectedFiles}
         masterPacks={controller.masterPacks}
         getSubpacks={controller.getSubpacks}
         getPackImportStatus={controller.getPackImportStatus}
