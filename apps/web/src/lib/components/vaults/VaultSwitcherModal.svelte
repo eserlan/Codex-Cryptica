@@ -14,6 +14,9 @@
   let isLoading = $state(false);
   let showCreate = $state(false);
   let selectedThemeId = $state<WorldThemeId>(DEFAULT_THEME.id);
+  let showThemeSelection = $state(false);
+  let themeSelectionVaultId = $state<string | null>(null);
+  let checkedThemeVaultId = $state<string | null>(null);
 
   // Honor the intent the switcher was opened with (e.g. from the welcome screen
   // "Create New Vault" action), then consume it so it doesn't re-fire.
@@ -23,6 +26,27 @@
       modalUIStore.vaultSwitcherIntent = null;
     }
   });
+
+  $effect(() => {
+    const activeVaultId = vaultRegistry.activeVaultId;
+    if (
+      !activeVaultId ||
+      showCreate ||
+      showThemeSelection ||
+      modalUIStore.vaultSwitcherIntent === "create" ||
+      checkedThemeVaultId === activeVaultId
+    ) {
+      return;
+    }
+
+    checkedThemeVaultId = activeVaultId;
+    void themeStore.hasSavedThemeForVault(activeVaultId).then((hasTheme) => {
+      if (!hasTheme && vaultRegistry.activeVaultId === activeVaultId) {
+        openThemeSelection(activeVaultId);
+      }
+    });
+  });
+
   let newVaultName = $state("");
   let editingId = $state<string | null>(null);
   let editName = $state("");
@@ -51,7 +75,11 @@
     isLoading = true;
     try {
       await vault.switchVault(id);
-      onClose();
+      if (await themeStore.hasSavedThemeForVault(id)) {
+        onClose();
+      } else {
+        openThemeSelection(id);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -105,9 +133,10 @@
     if (!newVaultName.trim()) return;
     isLoading = true;
     try {
-      await vault.createVault(newVaultName);
-      await themeStore.setTheme(selectedThemeId);
-      onClose();
+      const newId = await vault.createVault(newVaultName);
+      newVaultName = "";
+      showCreate = false;
+      openThemeSelection(newId);
     } catch (e) {
       console.error(e);
     } finally {
@@ -123,7 +152,7 @@
       const handle = await window.showDirectoryPicker({ mode: "read" });
 
       // 2. Create the vault
-      const _id = await vault.createVault(newVaultName);
+      const newId = await vault.createVault(newVaultName);
 
       // 3. Trigger import into that vault using the handle we already got
       // Note: vault.switchVault is called inside createVault,
@@ -131,8 +160,12 @@
       const success = await vault.importFromFolder(handle);
 
       // Only close if we actually finished or the user didn't cancel/fail
-      if (success) {
+      if (success && (await themeStore.hasSavedThemeForVault(newId))) {
         onClose();
+      } else if (success) {
+        newVaultName = "";
+        showCreate = false;
+        openThemeSelection(newId);
       }
     } catch (e) {
       console.error(e);
@@ -173,8 +206,29 @@
   };
 
   const openCreate = () => {
-    selectedThemeId = DEFAULT_THEME.id;
     showCreate = true;
+  };
+
+  const openThemeSelection = (vaultId: string) => {
+    selectedThemeId = DEFAULT_THEME.id;
+    themeSelectionVaultId = vaultId;
+    showThemeSelection = true;
+    showCreate = false;
+  };
+
+  const handleThemeSelection = async () => {
+    if (!themeSelectionVaultId) return;
+    isLoading = true;
+    try {
+      await themeStore.setTheme(selectedThemeId);
+      showThemeSelection = false;
+      themeSelectionVaultId = null;
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      isLoading = false;
+    }
   };
 </script>
 
@@ -315,7 +369,7 @@
                   type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => vault.loadFromFolder()}
-                  title="Load from Folder — pulls changes from your linked folder into the archive."
+                  title="Load from Folder - pulls changes from your linked folder into the archive."
                   aria-label="Load from Folder"
                   disabled={isLoading || !!editingId}
                 >
@@ -328,9 +382,9 @@
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                   onclick={() => vault.saveToFolder()}
                   title={!vault.hasFolderHandle
-                    ? "No folder linked — select a local folder to enable saving."
+                    ? "No folder linked - select a local folder to enable saving."
                     : vault.isDirty
-                      ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                      ? "Save to folder - writes all changes from the internal archive to your linked folder."
                       : "Up to date with local folder."}
                   aria-label="Save to Folder"
                   aria-busy={vault.status === "saving"}
@@ -406,13 +460,6 @@
             placeholder="Vault Name..."
             class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
           />
-          <WorldThemePicker
-            {selectedThemeId}
-            onSelect={(themeId) => (selectedThemeId = themeId)}
-            heading="Initial World Theme"
-            descriptionClass="text-xs text-theme-muted/70 leading-relaxed"
-            cardClass="bg-theme-bg/70 border-theme-border hover:border-theme-primary/40"
-          />
           {#if vault.errorMessage}
             <div
               class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2"
@@ -422,7 +469,7 @@
             </div>
           {/if}
 
-          <div class="flex justify-end gap-3 mt-8">
+          <div class="flex justify-end gap-3">
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
@@ -431,39 +478,37 @@
             >
               CANCEL
             </button>
-            <div class="flex gap-2">
-              <button
-                type="submit"
-                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                disabled={isLoading || !newVaultName.trim()}
-                aria-busy={isLoading}
-              >
-                {#if isLoading}
-                  <span
-                    class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-                    aria-hidden="true"
-                  ></span>
-                  CREATING...
-                {:else}
-                  CREATE
-                {/if}
-              </button>
-              <button
-                type="button"
-                class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                onclick={handleImport}
-                disabled={isLoading || !newVaultName.trim()}
-              >
-                {#if isLoading && vault.status === "loading"}
-                  <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
-                  ></span>
-                  IMPORTING...
-                {:else}
-                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
-                  IMPORT
-                {/if}
-              </button>
-            </div>
+            <button
+              type="submit"
+              class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={isLoading || !newVaultName.trim()}
+              aria-busy={isLoading}
+            >
+              {#if isLoading}
+                <span
+                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                  aria-hidden="true"
+                ></span>
+                CREATING...
+              {:else}
+                CREATE
+              {/if}
+            </button>
+            <button
+              type="button"
+              class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onclick={handleImport}
+              disabled={isLoading || !newVaultName.trim()}
+            >
+              {#if isLoading && vault.status === "loading"}
+                <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                ></span>
+                IMPORTING...
+              {:else}
+                <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                IMPORT
+              {/if}
+            </button>
           </div>
         </form>
       {:else}
@@ -490,4 +535,71 @@
       {/if}
     </div>
   </div>
+
+  {#if showThemeSelection}
+    <div
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      transition:fade
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vault-theme-title"
+        class="bg-theme-surface border border-theme-border rounded-lg shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        transition:scale
+        data-testid="vault-theme-modal"
+      >
+        <div
+          class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg"
+        >
+          <h2
+            id="vault-theme-title"
+            class="text-lg font-bold text-theme-primary tracking-wide"
+          >
+            CHOOSE VAULT THEME
+          </h2>
+          <button
+            onclick={onClose}
+            class="text-theme-muted hover:text-theme-text"
+            title="Close Theme Selector"
+            aria-label="Close Theme Selector"
+          >
+            <span class="icon-[lucide--x] w-5 h-5"></span>
+          </button>
+        </div>
+
+        <div class="overflow-y-auto p-4 flex-1 bg-theme-bg/50">
+          <WorldThemePicker
+            {selectedThemeId}
+            onSelect={(themeId) => (selectedThemeId = themeId)}
+            heading="World Theme"
+            descriptionClass="text-xs text-theme-muted/70 leading-relaxed"
+            cardClass="bg-theme-bg/70 border-theme-border hover:border-theme-primary/40"
+          />
+        </div>
+
+        <div
+          class="p-4 border-t border-theme-border bg-theme-surface flex justify-end gap-3"
+        >
+          <button
+            type="button"
+            class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={isLoading}
+            aria-busy={isLoading}
+            onclick={handleThemeSelection}
+          >
+            {#if isLoading}
+              <span
+                class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                aria-hidden="true"
+              ></span>
+              APPLYING...
+            {:else}
+              USE THEME
+            {/if}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
