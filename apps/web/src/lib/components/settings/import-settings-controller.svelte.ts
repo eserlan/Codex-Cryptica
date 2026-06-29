@@ -116,6 +116,7 @@ export class ImportSettingsController {
   currentFileHash = $state("");
   rejectedFiles = $state<{ name: string; reason: string }[]>([]);
   expandedPacks = $state<Record<string, boolean>>({});
+  importProgress = $state<{ current: number; total: number } | null>(null);
 
   processingSubtitle = $derived(
     this.importMode === "cc"
@@ -250,6 +251,7 @@ export class ImportSettingsController {
     this.rejectedFiles = [];
     this.totalChunks = 0;
     this.showResumeToast = false;
+    this.importProgress = null;
 
     const signal = this.deps.connectionModeStore.abortSignal;
     const apiKey = this.deps.oracle.effectiveApiKey || "";
@@ -709,6 +711,7 @@ export class ImportSettingsController {
     this.step = "processing";
     this.importMode = "cc";
     this.statusMessage = `Importing ${this.ccSession.sourceLabel}...`;
+    this.importProgress = null;
 
     const signal = this.deps.connectionModeStore.abortSignal;
 
@@ -717,6 +720,7 @@ export class ImportSettingsController {
       this.ccReport = await this.createEngine().commit(
         this.ccSession,
         (stage, current, total) => {
+          this.importProgress = { current, total };
           if (stage === "entity") {
             this.statusMessage = `Importing entities (${current}/${total})...`;
           } else if (stage === "connection") {
@@ -760,5 +764,6 @@ export class ImportSettingsController {
     this.ccReport = null;
     this.rejectedFiles = [];
     this.statusMessage = "";
+    this.importProgress = null;
   };
 }

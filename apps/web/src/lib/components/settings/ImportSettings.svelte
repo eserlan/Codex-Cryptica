@@ -104,6 +104,35 @@
           </div>
         {/if}
 
+        {#if controller.importProgress}
+          <div transition:fade class="w-full max-w-md px-4">
+            <div
+              class="h-2 w-full bg-theme-bg border border-theme-border/20 rounded-full overflow-hidden"
+            >
+              <div
+                class="h-full bg-theme-primary transition-all duration-300"
+                style:width="{(
+                  (controller.importProgress.current /
+                    (controller.importProgress.total || 1)) *
+                  100
+                ).toFixed(0)}%"
+              ></div>
+            </div>
+            <div
+              class="flex justify-between text-[9px] uppercase tracking-wider text-theme-muted mt-1 font-mono"
+            >
+              <span>Progress</span>
+              <span
+                >{(
+                  (controller.importProgress.current /
+                    (controller.importProgress.total || 1)) *
+                  100
+                ).toFixed(0)}%</span
+              >
+            </div>
+          </div>
+        {/if}
+
         <button
           onclick={() => connectionModeStore.abortActiveOperations()}
           class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"

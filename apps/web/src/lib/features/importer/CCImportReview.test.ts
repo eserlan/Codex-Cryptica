@@ -87,7 +87,7 @@ describe("CCImportReview", () => {
     expect(screen.getByText("Found links")).toBeTruthy();
     expect(screen.getByText("Valeria")).toBeTruthy();
     expect(screen.getByText("Moon Harbor")).toBeTruthy();
-    expect(screen.getByText("hero-1 -> town-1")).toBeTruthy();
+    expect(screen.getByText("1 relationship found.")).toBeTruthy();
     expect(screen.getByText("Type fallback")).toBeTruthy();
     expect(screen.getByText("No bytes provided")).toBeTruthy();
   });

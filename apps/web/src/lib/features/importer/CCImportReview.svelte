@@ -271,23 +271,12 @@
         {#if session.relationships.length === 0}
           <p class="text-xs text-theme-muted">No relationships.</p>
         {:else}
-          {#each session.relationships as relationship, i (`${i}:${relationship.draft.fromRef}:${relationship.draft.toRef}:${relationship.draft.type}`)}
-            <div class="text-xs text-theme-text">
-              <div class="font-semibold break-all">
-                {relationship.draft.fromRef} -> {relationship.draft.toRef}
-              </div>
-              <div class="text-theme-muted">
-                {relationship.draft.label ?? relationship.draft.type}
-              </div>
-              <div
-                class="mt-1 text-[10px] uppercase font-header tracking-wider text-theme-muted"
-              >
-                {relationship.status === "resolved"
-                  ? "Resolved"
-                  : (relationship.reason ?? "Checked on import")}
-              </div>
-            </div>
-          {/each}
+          <p class="text-xs text-theme-text">
+            {session.relationships.length} relationship{session.relationships
+              .length === 1
+              ? ""
+              : "s"} found.
+          </p>
         {/if}
       </div>
     </details>
