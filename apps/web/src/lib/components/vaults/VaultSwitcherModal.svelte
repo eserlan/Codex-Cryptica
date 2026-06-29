@@ -1,15 +1,19 @@
 <script lang="ts">
+  import WorldThemePicker from "$lib/components/settings/WorldThemePicker.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { DEFAULT_THEME, type WorldThemeId } from "schema";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
   let isLoading = $state(false);
   let showCreate = $state(false);
+  let selectedThemeId = $state<WorldThemeId>(DEFAULT_THEME.id);
 
   // Honor the intent the switcher was opened with (e.g. from the welcome screen
   // "Create New Vault" action), then consume it so it doesn't re-fire.
@@ -102,6 +106,7 @@
     isLoading = true;
     try {
       await vault.createVault(newVaultName);
+      await themeStore.setTheme(selectedThemeId);
       onClose();
     } catch (e) {
       console.error(e);
@@ -165,6 +170,11 @@
 
   const focusNode = (node: HTMLElement) => {
     node.focus();
+  };
+
+  const openCreate = () => {
+    selectedThemeId = DEFAULT_THEME.id;
+    showCreate = true;
   };
 </script>
 
@@ -396,6 +406,13 @@
             placeholder="Vault Name..."
             class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
           />
+          <WorldThemePicker
+            {selectedThemeId}
+            onSelect={(themeId) => (selectedThemeId = themeId)}
+            heading="Initial World Theme"
+            descriptionClass="text-xs text-theme-muted/70 leading-relaxed"
+            cardClass="bg-theme-bg/70 border-theme-border hover:border-theme-primary/40"
+          />
           {#if vault.errorMessage}
             <div
               class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2"
@@ -452,7 +469,7 @@
       {:else}
         <button
           class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={() => (showCreate = true)}
+          onclick={openCreate}
         >
           <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
         </button>
