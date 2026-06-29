@@ -93,6 +93,44 @@
 {/if}
 
 <div class="flex-1 flex flex-col min-h-0 gap-4">
+  <div
+    class="grid gap-2 rounded border border-theme-border bg-theme-surface/70 p-3 text-xs text-theme-text sm:grid-cols-2"
+    aria-label="Supported import modes"
+  >
+    <div class="flex items-start gap-2">
+      <span
+        class="icon-[lucide--database-zap] mt-0.5 h-4 w-4 shrink-0 text-theme-primary"
+      ></span>
+      <div class="min-w-0">
+        <p
+          class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+        >
+          Scabard and Chronica
+        </p>
+        <p class="mt-0.5 leading-snug text-theme-muted">
+          JSON exports use a deterministic review and import flow. No AI key is
+          needed.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-2">
+      <span
+        class="icon-[lucide--sparkles] mt-0.5 h-4 w-4 shrink-0 text-theme-secondary"
+      ></span>
+      <div class="min-w-0">
+        <p
+          class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+        >
+          Documents and notes
+        </p>
+        <p class="mt-0.5 leading-snug text-theme-muted">
+          PDF, DOCX, Markdown, text, and generic JSON are analyzed by Oracle.
+        </p>
+      </div>
+    </div>
+  </div>
+
   <ImportDropzone {onFileSelect} {isStandalone} />
 
   {#if masterPacks.length > 0}

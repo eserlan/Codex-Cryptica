@@ -135,6 +135,29 @@
       {/if}
 
       {#if controller.importMode === "cc" && controller.ccSession}
+        <section
+          class="mb-4 rounded border border-theme-primary/30 bg-theme-primary/10 p-3"
+          aria-label="Deterministic import ready"
+        >
+          <div class="flex items-start gap-2">
+            <span
+              class="icon-[lucide--database-zap] mt-0.5 h-4 w-4 shrink-0 text-theme-primary"
+            ></span>
+            <div class="min-w-0">
+              <p
+                class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+              >
+                {controller.ccSession.sourceSystem === "scabard"
+                  ? "Scabard import ready"
+                  : "Chronica import ready"}
+              </p>
+              <p class="mt-1 text-xs leading-snug text-theme-muted">
+                Review the detected records, matches, and links before writing
+                anything to your vault.
+              </p>
+            </div>
+          </div>
+        </section>
         <CCImportReview
           session={controller.ccSession}
           onItemDecisionChange={controller.handleCCItemDecisionChange}
