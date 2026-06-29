@@ -31,14 +31,15 @@
 
 <svelte:window onkeydown={onKeyDown} />
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<div
-  class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
-  onclick={close}
->
+<div class="fixed inset-0 flex items-center justify-center z-[200] p-4">
+  <button
+    type="button"
+    class="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-sm cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+    onclick={close}
+    aria-label="Dismiss Grid Settings Backdrop"
+  ></button>
   <div
-    class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-sm w-full shadow-2xl relative"
+    class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-sm w-full shadow-2xl relative z-10"
     onclick={(e) => e.stopPropagation()}
     transition:fade={{ duration: 150 }}
     role="dialog"
