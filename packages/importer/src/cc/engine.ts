@@ -84,13 +84,21 @@ export class ImportEngine {
 
     // Build PreviewItems
     const items: PreviewItem[] = [];
-    for (const draft of pkg.entityDrafts) {
+    const existingMatches = await Promise.all(
+      pkg.entityDrafts.map((draft) => {
+        const sourceRef = buildEntitySourceRef(pkg.sourceSystem, draft);
+        return this.writer.findBySourceRef(sourceRef);
+      }),
+    );
+
+    for (let i = 0; i < pkg.entityDrafts.length; i++) {
+      const draft = pkg.entityDrafts[i];
+      const existing = existingMatches[i];
       const { resolvedType, typeFallback } = mapDraftToType(
         draft,
         this.options.mappingRules,
       );
       const sourceRef = buildEntitySourceRef(pkg.sourceSystem, draft);
-      const existing = await this.writer.findBySourceRef(sourceRef);
       items.push({
         draft,
         resolvedType,
