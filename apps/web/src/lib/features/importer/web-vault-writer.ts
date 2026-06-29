@@ -34,19 +34,27 @@ export interface VaultWriterStoreLike {
 
 export class WebVaultWriter implements VaultWriter {
   private sourceMap: Map<string, string> | null = null;
+  private titleMap: Map<string, string> | null = null;
+  private sanitizedIdMap: Map<string, string> | null = null;
 
   constructor(private store: VaultWriterStoreLike) {}
 
-  private getSourceMap(): Map<string, string> {
-    if (this.sourceMap) return this.sourceMap;
-    const map = new Map<string, string>();
+  private initMaps() {
+    if (this.sourceMap) return;
+    this.sourceMap = new Map<string, string>();
+    this.titleMap = new Map<string, string>();
+    this.sanitizedIdMap = new Map<string, string>();
     for (const entity of Object.values(this.store.entities)) {
-      if (entity.id && entity.discoverySource) {
-        map.set(entity.discoverySource, entity.id);
+      if (typeof entity.id === "string") {
+        if (entity.discoverySource) {
+          this.sourceMap.set(entity.discoverySource, entity.id);
+        }
+        if (entity.title) {
+          this.titleMap.set(entity.title.toLowerCase(), entity.id);
+        }
+        this.sanitizedIdMap.set(entity.id, entity.id);
       }
     }
-    this.sourceMap = map;
-    return map;
   }
 
   private draftTitleMap = new Map<string, string>();
@@ -59,23 +67,19 @@ export class WebVaultWriter implements VaultWriter {
   }
 
   async findBySourceRef(sourceRef: string): Promise<{ id: string } | null> {
-    const id = this.getSourceMap().get(sourceRef);
+    this.initMaps();
+    const id = this.sourceMap!.get(sourceRef);
     if (id) return { id };
 
     // Fallback: match by title / sanitized ID
     const title = this.draftTitleMap.get(sourceRef);
     if (title) {
       const sanitized = sanitizeEntityId(title);
-      for (const entity of Object.values(this.store.entities)) {
-        if (
-          typeof entity.id === "string" &&
-          (entity.id === sanitized ||
-            (entity.title &&
-              entity.title.toLowerCase() === title.toLowerCase()))
-        ) {
-          return { id: entity.id };
-        }
-      }
+      const matchIdBySanitized = this.sanitizedIdMap!.get(sanitized);
+      if (matchIdBySanitized) return { id: matchIdBySanitized };
+
+      const matchIdByTitle = this.titleMap!.get(title.toLowerCase());
+      if (matchIdByTitle) return { id: matchIdByTitle };
     }
     return null;
   }
@@ -98,9 +102,12 @@ export class WebVaultWriter implements VaultWriter {
       },
     );
 
+    this.initMaps();
     if (entity.discoverySource) {
-      this.getSourceMap().set(entity.discoverySource, id);
+      this.sourceMap!.set(entity.discoverySource, id);
     }
+    this.titleMap!.set(entity.title.toLowerCase(), id);
+    this.sanitizedIdMap!.set(id, id);
 
     return { id };
   }
@@ -141,25 +148,38 @@ export class WebVaultWriter implements VaultWriter {
       })),
     );
 
-    return entities.map((entity) => {
-      const match = Object.values(this.store.entities).find(
-        (candidate) =>
-          typeof candidate.id === "string" &&
-          !knownIds.has(candidate.id) &&
-          candidate.discoverySource === entity.discoverySource,
-      );
+    const currentEntities = Object.values(this.store.entities);
+    const candidateMap = new Map<string, string>();
+    for (const candidate of currentEntities) {
+      if (
+        typeof candidate.id === "string" &&
+        !knownIds.has(candidate.id) &&
+        candidate.discoverySource
+      ) {
+        candidateMap.set(candidate.discoverySource, candidate.id);
+      }
+    }
 
-      if (!match?.id) {
+    this.initMaps();
+
+    return entities.map((entity) => {
+      const matchId = entity.discoverySource
+        ? candidateMap.get(entity.discoverySource)
+        : undefined;
+
+      if (!matchId) {
         throw new Error(
           `Batch-created entity for ${entity.discoverySource} could not be resolved`,
         );
       }
 
-      knownIds.add(match.id);
+      knownIds.add(matchId);
       if (entity.discoverySource) {
-        this.getSourceMap().set(entity.discoverySource, match.id);
+        this.sourceMap!.set(entity.discoverySource, matchId);
       }
-      return { id: match.id };
+      this.titleMap!.set(entity.title.toLowerCase(), matchId);
+      this.sanitizedIdMap!.set(matchId, matchId);
+      return { id: matchId };
     });
   }
 
@@ -183,6 +203,11 @@ export class WebVaultWriter implements VaultWriter {
 
     if (!success) {
       throw new Error(`Entity ${id} not found`);
+    }
+
+    if (patch.title) {
+      this.initMaps();
+      this.titleMap!.set(patch.title.toLowerCase(), id);
     }
   }
 
