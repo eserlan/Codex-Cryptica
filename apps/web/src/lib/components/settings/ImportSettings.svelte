@@ -517,138 +517,141 @@
 
     const batchData: any[] = [];
 
-    for (const entity of toSave) {
-      if (signal.aborted) break;
-
-      const title = entity.suggestedTitle;
-
-      const entityId = sanitizeId(title) || "untitled";
-
-      const type = mapType(entity.suggestedType) as any;
-
-      const existingId =
-        entity.matchedEntityId || (vault.entities[entityId] ? entityId : null);
-
-      if (existingId && vault.entities[existingId]) {
-        const existing = vault.entities[existingId];
-
-        statusMessage = `Updating connections for existing entity: ${existing.title}...`;
-
-        const newConnections = (entity.detectedLinks || [])
-
-          .map((link) => {
-            const targetName = typeof link === "string" ? link : link.target;
-
-            const label =
-              typeof link === "string" ? link : link.label || link.target;
-
-            return {
-              target: sanitizeId(targetName) || "untitled",
-
-              label,
-
-              type: "related_to",
-
-              strength: 1,
-            };
-          })
-
-          .filter(
-            (newConn) =>
-              !existing.connections.some(
-                (c) => c.target === newConn.target && c.label === newConn.label,
-              ),
-          );
-
-        if (newConnections.length > 0) {
-          await vault.updateEntity(existing.id, {
-            connections: [...existing.connections, ...newConnections],
-          });
-        }
-
-        continue;
-      }
-
-      // Check for image metadata in extracted assets
-
-      const imgRef = entity.frontmatter.image;
-
-      let width = entity.frontmatter.width;
-
-      let height = entity.frontmatter.height;
-
-      let imagePath = entity.frontmatter.image;
-
-      let thumbnailPath = entity.frontmatter.thumbnail;
-
-      if (imgRef && extractedAssets.has(imgRef)) {
-        const asset = extractedAssets.get(imgRef);
-
-        width = width || asset.width;
-        height = height || asset.height;
-
-        try {
-          const savedAssets = await vault.saveImageToVault(
-            asset.blob,
-            entityId,
-            asset.originalName,
-          );
-          imagePath = savedAssets.image;
-          thumbnailPath = savedAssets.thumbnail;
-        } catch (err) {
-          console.error("Failed to save imported asset:", err);
-        }
-      }
-
-      batchData.push({
-        type,
-
-        title,
-
-        initialData: {
-          content: entity.chronicle || entity.content,
-
-          lore: entity.lore,
-
-          labels: entity.frontmatter.labels || [],
-
-          metadata: {
-            width: typeof width === "number" ? width : undefined,
-
-            height: typeof height === "number" ? height : undefined,
-          },
-
-          image: imagePath,
-
-          thumbnail: thumbnailPath,
-
-          connections: (entity.detectedLinks || []).map((link) => {
-            const targetName = typeof link === "string" ? link : link.target;
-
-            const label =
-              typeof link === "string" ? link : link.label || link.target;
-
-            return {
-              target: sanitizeId(targetName) || "untitled",
-
-              label: label,
-
-              type: "related_to",
-
-              strength: 1,
-            };
-          }),
-        },
-      });
-    }
-
-    if (signal.aborted) {
-      step = "review";
-
-      return;
-    }
-
+    vault.suspendSaving();
     try {
+      for (const entity of toSave) {
+        if (signal.aborted) break;
+
+        const title = entity.suggestedTitle;
+
+        const entityId = sanitizeId(title) || "untitled";
+
+        const type = mapType(entity.suggestedType) as any;
+
+        const existingId =
+          entity.matchedEntityId ||
+          (vault.entities[entityId] ? entityId : null);
+
+        if (existingId && vault.entities[existingId]) {
+          const existing = vault.entities[existingId];
+
+          statusMessage = `Updating connections for existing entity: ${existing.title}...`;
+
+          const newConnections = (entity.detectedLinks || [])
+
+            .map((link) => {
+              const targetName = typeof link === "string" ? link : link.target;
+
+              const label =
+                typeof link === "string" ? link : link.label || link.target;
+
+              return {
+                target: sanitizeId(targetName) || "untitled",
+
+                label,
+
+                type: "related_to",
+
+                strength: 1,
+              };
+            })
+
+            .filter(
+              (newConn) =>
+                !existing.connections.some(
+                  (c) =>
+                    c.target === newConn.target && c.label === newConn.label,
+                ),
+            );
+
+          if (newConnections.length > 0) {
+            await vault.updateEntity(existing.id, {
+              connections: [...existing.connections, ...newConnections],
+            });
+          }
+
+          continue;
+        }
+
+        // Check for image metadata in extracted assets
+
+        const imgRef = entity.frontmatter.image;
+
+        let width = entity.frontmatter.width;
+
+        let height = entity.frontmatter.height;
+
+        let imagePath = entity.frontmatter.image;
+
+        let thumbnailPath = entity.frontmatter.thumbnail;
+
+        if (imgRef && extractedAssets.has(imgRef)) {
+          const asset = extractedAssets.get(imgRef);
+
+          width = width || asset.width;
+          height = height || asset.height;
+
+          try {
+            const savedAssets = await vault.saveImageToVault(
+              asset.blob,
+              entityId,
+              asset.originalName,
+            );
+            imagePath = savedAssets.image;
+            thumbnailPath = savedAssets.thumbnail;
+          } catch (err) {
+            console.error("Failed to save imported asset:", err);
+          }
+        }
+
+        batchData.push({
+          type,
+
+          title,
+
+          initialData: {
+            content: entity.chronicle || entity.content,
+
+            lore: entity.lore,
+
+            labels: entity.frontmatter.labels || [],
+
+            metadata: {
+              width: typeof width === "number" ? width : undefined,
+
+              height: typeof height === "number" ? height : undefined,
+            },
+
+            image: imagePath,
+
+            thumbnail: thumbnailPath,
+
+            connections: (entity.detectedLinks || []).map((link) => {
+              const targetName = typeof link === "string" ? link : link.target;
+
+              const label =
+                typeof link === "string" ? link : link.label || link.target;
+
+              return {
+                target: sanitizeId(targetName) || "untitled",
+
+                label: label,
+
+                type: "related_to",
+
+                strength: 1,
+              };
+            }),
+          },
+        });
+      }
+
+      if (signal.aborted) {
+        step = "review";
+
+        return;
+      }
+
       if (batchData.length > 0) {
         await vault.batchCreateEntities(batchData);
       }
@@ -667,6 +670,8 @@
       step = "review";
 
       return;
+    } finally {
+      vault.resumeSaving();
     }
 
     setTimeout(() => {
@@ -701,6 +706,7 @@
 
     const signal = connectionModeStore.abortSignal;
 
+    vault.suspendSaving();
     try {
       ccReport = await createEngine().commit(
         ccSession,
@@ -736,6 +742,8 @@
         );
         step = "review";
       }
+    } finally {
+      vault.resumeSaving();
     }
   };
 

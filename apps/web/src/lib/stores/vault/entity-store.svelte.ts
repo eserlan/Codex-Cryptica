@@ -640,6 +640,14 @@ export class EntityStore {
     return this.persistence.flushPendingSaves(timeoutMs);
   }
 
+  suspendSaving() {
+    this.persistence.suspendSaving();
+  }
+
+  resumeSaving() {
+    this.persistence.resumeSaving();
+  }
+
   // --- Loader Delegation ---
 
   async loadEntityContent(id: string): Promise<void> {

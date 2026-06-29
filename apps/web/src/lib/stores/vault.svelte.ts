@@ -635,6 +635,15 @@ export class VaultStore {
 
   async flushPendingSaves(timeoutMs?: number): Promise<void> {
     await this.entityStore?.flushPendingSaves(timeoutMs);
+    this.broadcastVaultUpdate();
+  }
+
+  suspendSaving() {
+    this.entityStore?.suspendSaving();
+  }
+
+  resumeSaving() {
+    this.entityStore?.resumeSaving();
   }
 }
 

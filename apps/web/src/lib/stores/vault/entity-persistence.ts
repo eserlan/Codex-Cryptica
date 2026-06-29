@@ -60,6 +60,16 @@ export class EntityPersistenceService {
     return this.deps.repository.entities;
   }
 
+  private _savingSuspended = false;
+
+  suspendSaving() {
+    this._savingSuspended = true;
+  }
+
+  resumeSaving() {
+    this._savingSuspended = false;
+  }
+
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.deps.onEntityUpdate)
       this.deps.onEntityUpdate(entity as LocalEntity);
@@ -76,11 +86,18 @@ export class EntityPersistenceService {
 
     // Debounce: cancel any pending timer for this entity and restart it.
     const existing = this._saveTimers.get(id);
-    if (existing) clearTimeout(existing);
+    if (existing) {
+      clearTimeout(existing);
+      this._saveTimers.delete(id);
+    }
 
     // Store the vault ID so flushPendingSaves uses the original context, not
     // whatever vault happens to be active at flush time.
     this._saveVaultIds.set(id, vaultIdAtStart);
+
+    if (this._savingSuspended) {
+      return Promise.resolve();
+    }
 
     return new Promise<void>((resolve) => {
       const resolvers = this._saveResolvers.get(id) ?? [];
@@ -104,9 +121,14 @@ export class EntityPersistenceService {
 
   async flushPendingSaves(timeoutMs?: number): Promise<void> {
     const promises: Promise<void>[] = [];
-    for (const [id, timer] of this._saveTimers) {
-      clearTimeout(timer);
-      this._saveTimers.delete(id);
+    const pendingIds = Array.from(this._saveVaultIds.keys());
+
+    for (const id of pendingIds) {
+      const timer = this._saveTimers.get(id);
+      if (timer) {
+        clearTimeout(timer);
+        this._saveTimers.delete(id);
+      }
       const resolvers = this._saveResolvers.get(id) ?? [];
       this._saveResolvers.delete(id);
       // Use the vault ID captured when the save was scheduled, not the vault
