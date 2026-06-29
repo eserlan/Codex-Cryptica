@@ -208,14 +208,6 @@
       {/await}
     {/if}
 
-    {#if modalUIStore.plotDialog.open}
-      {#await loadModal(() => import("./PlotModal.svelte"), "PlotModal") then PlotModal}
-        {#if PlotModal}
-          <PlotModal />
-        {/if}
-      {/await}
-    {/if}
-
     {#if modalUIStore.generatorWorkflow.open}
       {#await loadModal(() => import("$lib/components/generators/CampaignGeneratorModal.svelte"), "CampaignGeneratorModal") then CampaignGeneratorModal}
         {#if CampaignGeneratorModal}

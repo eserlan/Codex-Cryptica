@@ -55,9 +55,8 @@ export interface DiscoveredEntity {
     | "Character"
     | "Location"
     | "Item"
-    | "Event"
-    | "Faction"
-    | "Note"
+    | "Lore"
+    | "Creature"
     | "Unknown";
   chronicle: string; // Short Markdown summary
   lore: string; // Detailed background

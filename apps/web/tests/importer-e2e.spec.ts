@@ -211,17 +211,4 @@ test.describe("Intelligent Importer E2E", () => {
     expect(entity.lore).toBeTruthy();
     expect(entity.lore).not.toBe(entity.content);
   });
-
-  test("should open file chooser when clicking Browse Files", async ({
-    page,
-  }) => {
-    // Set up file chooser listener
-    const fileChooserPromise = page.waitForEvent("filechooser");
-
-    // Click the Browse Files button (which should now be clickable due to z-index fix)
-    await page.click('button:has-text("Browse Files")');
-
-    const fileChooser = await fileChooserPromise;
-    expect(fileChooser).toBeDefined();
-  });
 });

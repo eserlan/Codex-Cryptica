@@ -25,6 +25,7 @@ export async function getRegistry(
   hash: string,
   fileName: string,
   totalChunks: number,
+  now: () => number = Date.now,
 ): Promise<ImportRegistry> {
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
@@ -40,11 +41,11 @@ export async function getRegistry(
       fileName,
       totalChunks,
       completedIndices: [],
-      createdAt: Date.now(),
-      lastUsedAt: Date.now(),
+      createdAt: now(),
+      lastUsedAt: now(),
     };
   } else {
-    record.lastUsedAt = Date.now();
+    record.lastUsedAt = now();
     record.totalChunks = totalChunks; // Update if chunking logic changed
   }
 
@@ -65,6 +66,7 @@ export async function getRegistry(
 export async function markChunkComplete(
   hash: string,
   index: number,
+  now: () => number = Date.now,
 ): Promise<void> {
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
@@ -74,7 +76,7 @@ export async function markChunkComplete(
   if (record) {
     if (!record.completedIndices.includes(index)) {
       record.completedIndices.push(index);
-      record.lastUsedAt = Date.now();
+      record.lastUsedAt = now();
       await store.put(record);
     }
   }

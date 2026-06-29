@@ -2,28 +2,22 @@
 
 **Learning:** Global browser APIs (`crypto.getRandomValues`) and time sources (`Date.now()`) create hidden side effects and testability issues, often requiring awkward global `vi.spyOn` mocks and manipulation of a class's internal state to ensure test stability.
 **Action:** Always wrap and inject `getRandomValues` and `now` as optional dependencies with production defaults. This simplifies tests by passing explicit mock dependencies when initializing the class, rather than mocking globals and reaching into encapsulated variables like `(engine as any).bufferIndex`.
-
 ## 2026-06-18 - Time injection needs to evaluate on demand
-
 **Learning:** When injecting time dependencies (e.g., `Date.now()`), evaluating it once and storing it in a local variable before asynchronous operations (like `await`) will cause subsequent logic or events to use stale timestamps.
 **Action:** Always use a helper method (e.g., `getNow()`) to fetch the injected time exactly at the moment it is needed.
 
 ## 2024-05-18 - CloudSyncMetadataService Clock Injection
-
 **Learning:** Hardcoded `Date.now()` inside business logic classes (like CloudSyncMetadataService) forces tests to use imprecise assertions like `toBeGreaterThanOrEqual` and relies on time-sensitive local variables.
 **Action:** Inject `now: () => number = Date.now` as an optional constructor dependency for stateful services, allowing tests to pass a frozen time function (`() => 150000`) and assert exact outcomes deterministically without global monkey-patching.
 
 ## 2024-06-22 - Inject dependencies into createEncounterSession
-
-**Learning:** The `apps/web` application defines ambient runtime dependencies (e.g., `systemIdGenerator`, `systemClock`, `IdGenerator`, `Clock`) in `src/lib/utils/runtime-deps.ts`. These can be used as default parameter values to inject ID generation and time into session creation logic without breaking existing call sites.
-**Action:** When injecting time and id dependencies into `createEncounterSession`, add a `deps` parameter at the end to maintain backward compatibility with `id` and `name` positional arguments.
+ **Learning:** The `apps/web` application defines ambient runtime dependencies (e.g., `systemIdGenerator`, `systemClock`, `IdGenerator`, `Clock`) in `src/lib/utils/runtime-deps.ts`. These can be used as default parameter values to inject ID generation and time into session creation logic without breaking existing call sites.
+ **Action:** When injecting time and id dependencies into `createEncounterSession`, add a `deps` parameter at the end to maintain backward compatibility with `id` and `name` positional arguments.
 
 ## 2025-02-23 - Inject systemClock and systemIdGenerator into UndoRedoService
-
 **Learning:** `oracle-engine` uses a pattern of injecting `systemClock` and `systemIdGenerator` from `./runtime.ts` into constructors to allow faking time and randomness in tests.
 **Action:** When working in `oracle-engine`, ensure `Date.now()` and `crypto.randomUUID()` calls are replaced with injected dependencies from `./runtime.ts` using this pattern.
 
-## 2026-06-26 - Injecting Time Dependency into VTTSessionService
-
-**Learning:** Date.now() used directly in `saveEncounterSnapshot` couples the implementation to the system clock, making tests awkward (e.g. not verifying exact timestamps or relying on imprecise checks).
-**Action:** Passed `clock: Clock = systemClock` into `VTTSessionServiceDeps` and used `clock.now()` to let tests supply a fixed timestamp object deterministically.
+## 2025-06-28 - [Inject time dependencies to improve test isolation]
+**Learning:** Global monkey-patching of ambient runtime dependencies like `Date.now()` with `vi.spyOn(Date, "now")` can cause unexpected test suite crashes in some Vitest/Bun configurations, particularly when tests pollute each other across module boundaries or fail due to mismatched testing environments.
+**Action:** Inject ambient dependencies like time (`now()`) or ID generators directly into functions or service constructors as optional defaults (e.g., `now: () => number = Date.now`). This allows fakes to be explicitly passed in tests, isolating state, avoiding global mocks, and preserving production behavior.

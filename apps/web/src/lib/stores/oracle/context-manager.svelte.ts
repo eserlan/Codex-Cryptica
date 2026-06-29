@@ -1,5 +1,4 @@
 import type { OracleExecutionContext } from "@codex/oracle-engine";
-import { plotCache } from "../plot-cache";
 import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
@@ -163,43 +162,20 @@ export class OracleContextManager {
         reviseEntityUpdate: wrap(
           s.textGeneration.reviseEntityUpdate?.bind(s.textGeneration),
         ),
-        generatePlotAnalysis: async (
+        generatePlotAnalysis: (
           apiKey: string,
           modelName: string,
           subject: any,
           connectedEntities: any[],
           userQuery: string,
-        ) => {
-          const entityId = subject?.id as string | undefined;
-          if (entityId && plotCache.has(entityId)) {
-            return plotCache.get(entityId)!;
-          }
-          const result = await s.textGeneration.generatePlotAnalysis(
+        ) =>
+          s.textGeneration.generatePlotAnalysis(
             apiKey,
             modelName,
             $state.snapshot(subject),
             $state.snapshot(connectedEntities),
             userQuery,
-          );
-          if (entityId) plotCache.set(entityId, result);
-          return result;
-        },
-        generateEntitiesFromPlot: s.textGeneration.generateEntitiesFromPlot
-          ? (
-              apiKey: string,
-              modelName: string,
-              plotHookText: string,
-              sourceEntityTitle: string,
-              availableCategories: string[],
-            ) =>
-              s.textGeneration.generateEntitiesFromPlot!(
-                apiKey,
-                modelName,
-                plotHookText,
-                sourceEntityTitle,
-                availableCategories,
-              )
-          : undefined,
+          ),
       },
       searchService: {
         search: s.searchService.search

@@ -78,8 +78,8 @@ describe("commit — entities", () => {
 
   it("uses batch create when the writer supports it", async () => {
     const writer = new FakeVaultWriter();
-    const batchCreateEntities = vi.fn(async (entities) =>
-      Promise.all(entities.map((entity) => writer.createEntity(entity))),
+    const batchCreateEntities = vi.fn(async (entities: any[]) =>
+      Promise.all(entities.map((entity: any) => writer.createEntity(entity))),
     );
     const createEntity = vi.fn(writer.createEntity.bind(writer));
 
