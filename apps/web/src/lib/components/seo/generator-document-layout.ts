@@ -23,6 +23,14 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set(["GM Reference Information"]),
   },
   {
+    label: "nomad-clan",
+    railSections: new Set(["Clan Profile", "Notable Members", "Rival Faction"]),
+    documentBullets: {
+      labels: new Set(["Secret", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
+  {
     label: "faction-generator",
     railSections: new Set(["At the Table", "Notable NPCs", "Rival Faction"]),
     documentBullets: {

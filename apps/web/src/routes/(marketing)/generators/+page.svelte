@@ -42,6 +42,13 @@
           icon: "icon-[lucide--moon]",
         },
         {
+          href: "/generators/nomad-clan",
+          label: "Nomad Clan Generator",
+          summary:
+            "Build cyberpunk nomad convoys with territory routes, clan codes, corporate enemies, and road-ready hooks.",
+          icon: "icon-[lucide--truck]",
+        },
+        {
           href: "/generators/names",
           label: "RPG Name Generator",
           summary:

@@ -88,6 +88,7 @@
         { label: "RPG NPC Generator", path: "/generators/npc" },
         { label: "D&D NPC Generator", path: "/generators/dnd-npc" },
         { label: "Vampire Clan Generator", path: "/generators/vampire-clan" },
+        { label: "Nomad Clan Generator", path: "/generators/nomad-clan" },
         { label: "RPG Name Generator", path: "/generators/names" },
         { label: "Fantasy Name Generator", path: "/generators/fantasy-names" },
       ],
