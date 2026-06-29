@@ -146,3 +146,8 @@
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(guestStore.guestRoster) to pre-cached guestStore.allGuests]
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2026-06-29 - [Performance Insight: Array allocation in object fromEntries]
+
+**Learning:** When generating lookup objects from an array of items (like connection counts per entity) in a `$derived` block, using `Object.fromEntries(vault.allEntities.map(...))` creates two intermediate arrays: one for the mapped tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure during frequent reactive updates.
+**Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop that constructs a new `Record` natively to reduce garbage collection pressure.
