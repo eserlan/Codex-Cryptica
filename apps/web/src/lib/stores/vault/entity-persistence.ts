@@ -38,11 +38,21 @@ export interface PersistenceDependencies {
 
 const SAVE_DEBOUNCE_MS = 400;
 
+// Disk-write resilience tuning. A single _persistEntity call retries the OPFS
+// write a few times; if it still fails the save is re-queued a bounded number
+// of times so a transient failure can't silently and permanently drop the write.
+const DISK_WRITE_ATTEMPTS = 3;
+const DISK_RETRY_BASE_MS = 50;
+const DISK_REQUEUE_BASE_MS = 250;
+const MAX_FAILED_SAVE_REQUEUES = 3;
+
 export class EntityPersistenceService {
   private _saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _saveResolvers = new Map<string, Array<() => void>>();
   /** Vault ID captured at scheduleSave time, keyed by entity ID. */
   private _saveVaultIds = new Map<string, string>();
+  /** Bounded retry counter for entities whose disk write keeps failing. */
+  private _failedSaveRetries = new Map<string, number>();
 
   constructor(private deps: PersistenceDependencies) {}
 
@@ -148,12 +158,18 @@ export class EntityPersistenceService {
         return;
       }
 
-      await this.deps.repository.saveToDisk(
+      // Retry the disk write a few times before giving up. Bulk imports issue
+      // many OPFS writes in quick succession and a transient failure here used
+      // to be swallowed, silently dropping the write (e.g. an entity's freshly
+      // added connections) while the in-memory/cache copy still looked saved.
+      await this._saveToDiskWithRetry(
         vaultHandle,
         vaultIdAtStart,
         latestEntity,
-        this.deps.isGuest(),
       );
+
+      // Disk write succeeded — clear any prior failure bookkeeping for this id.
+      this._failedSaveRetries.delete(id);
 
       // Update dirty tracking timestamp
       import("./registry").then((m) =>
@@ -176,6 +192,56 @@ export class EntityPersistenceService {
       );
       this.deps.setStatus("error");
       this.deps.setErrorMessage("Failed to access storage for saving.");
+
+      // Don't silently drop the write: re-queue a bounded number of times so a
+      // transient OPFS failure during a bulk import can't permanently corrupt
+      // the on-disk file (which the cache would otherwise mask).
+      this._requeueFailedSave(id, vaultIdAtStart);
     }
+  }
+
+  private async _saveToDiskWithRetry(
+    vaultHandle: FileSystemDirectoryHandle,
+    vaultIdAtStart: string,
+    entity: LocalEntity,
+  ): Promise<void> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < DISK_WRITE_ATTEMPTS; attempt++) {
+      try {
+        await this.deps.repository.saveToDisk(
+          vaultHandle,
+          vaultIdAtStart,
+          entity,
+          this.deps.isGuest(),
+        );
+        return;
+      } catch (error) {
+        lastError = error;
+        if (attempt < DISK_WRITE_ATTEMPTS - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, DISK_RETRY_BASE_MS * (attempt + 1)),
+          );
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  private _requeueFailedSave(id: string, vaultIdAtStart: string): void {
+    const retries = this._failedSaveRetries.get(id) ?? 0;
+    if (retries >= MAX_FAILED_SAVE_REQUEUES) {
+      this._failedSaveRetries.delete(id);
+      return;
+    }
+    this._failedSaveRetries.set(id, retries + 1);
+    setTimeout(
+      () => {
+        if (this.deps.activeVaultId() !== vaultIdAtStart) return;
+        void this.deps.repository
+          .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+          .catch(() => {});
+      },
+      DISK_REQUEUE_BASE_MS * (retries + 1),
+    );
   }
 }

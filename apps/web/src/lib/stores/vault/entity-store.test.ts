@@ -70,6 +70,8 @@ describe("EntityStore", () => {
     entities: Record<string, LocalEntity>;
     saveQueue: any;
     enqueueSave: ReturnType<typeof vi.fn>;
+    saveToDisk?: ReturnType<typeof vi.fn>;
+    waitForAllSaves?: ReturnType<typeof vi.fn>;
   };
   let store: EntityStore;
 
@@ -106,6 +108,8 @@ describe("EntityStore", () => {
         enqueue: vi.fn((_key, fn) => fn()),
       },
       enqueueSave: vi.fn(),
+      saveToDisk: vi.fn().mockResolvedValue(undefined),
+      waitForAllSaves: vi.fn().mockResolvedValue(undefined),
     };
     // Delegate enqueueSave → saveQueue.enqueue so existing assertions on saveQueue.enqueue still pass.
     repository.enqueueSave.mockImplementation((_key: any, fn: any) =>
@@ -294,6 +298,37 @@ describe("EntityStore", () => {
     const success = await store.addConnection("hero", "place", "ref");
     expect(success).toBe(true);
     expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    expect(vaultEventBus.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CONNECTION_ADDED",
+        sourceId: "hero",
+        targetId: "place",
+        connectionType: "ref",
+      }),
+    );
+  });
+
+  it("replaces graph-facing entity arrays for connection-only updates", async () => {
+    const updatedSource = {
+      ...repository.entities.hero,
+      connections: [{ target: "place", type: "ref", strength: 1 }],
+    };
+    vi.mocked(vaultEntities.addConnection).mockReturnValue({
+      entities: { ...repository.entities, hero: updatedSource },
+      updatedSource,
+    });
+
+    const previousAllEntities = store.allEntities;
+    const previousActiveEntities = store.allActiveEntities;
+
+    const success = await store.addConnection("hero", "place", "ref");
+
+    expect(success).toBe(true);
+    expect(store.allEntities).not.toBe(previousAllEntities);
+    expect(store.allActiveEntities).not.toBe(previousActiveEntities);
+    expect(
+      store.allEntities.find((entity) => entity.id === "hero")?.connections,
+    ).toEqual([{ target: "place", type: "ref", strength: 1 }]);
   });
 
   it("handles label operations", async () => {

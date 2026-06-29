@@ -49,6 +49,58 @@ describe("link resolution", () => {
     expect(report.unresolvedReferences).toHaveLength(0);
   });
 
+  it("resolves in-package links that use full source refs", async () => {
+    const writer = new FakeVaultWriter();
+    const engine = new ImportEngine({ writer }, { mappingRules: rules });
+    const fullRefPkg: CCImportPackage = {
+      ...pkg,
+      relationshipDrafts: [
+        {
+          fromRef: "kanka:Character:char-1",
+          toRef: "kanka:Location:loc-1",
+          type: "located_in",
+        },
+      ],
+    };
+
+    const session = await engine.prepare(fullRefPkg);
+    const report = await engine.commit(session);
+
+    expect(report.relationshipsCreated).toBe(1);
+    expect(report.unresolvedReferences).toHaveLength(0);
+  });
+
+  it("resolves out-of-package targets by exact vault source ref", async () => {
+    const writer = new FakeVaultWriter();
+    writer.seed("existing-location", {
+      type: "location",
+      title: "Existing Rivertown",
+      content: "",
+      tags: [],
+      discoverySource: "kanka:Location:existing-loc",
+    });
+    const engine = new ImportEngine({ writer }, { mappingRules: rules });
+    const externalTargetPkg: CCImportPackage = {
+      ...pkg,
+      entityDrafts: [pkg.entityDrafts[0]],
+      relationshipDrafts: [
+        {
+          fromRef: "char-1",
+          toRef: "kanka:Location:existing-loc",
+          type: "located_in",
+        },
+      ],
+    };
+
+    const session = await engine.prepare(externalTargetPkg);
+    const report = await engine.commit(session);
+    const alice = writer.allEntities().find((e) => e.title === "Alice");
+
+    expect(report.relationshipsCreated).toBe(1);
+    expect(report.unresolvedReferences).toHaveLength(0);
+    expect(alice?.connections?.[0]?.target).toBe("existing-location");
+  });
+
   it("unresolved reference when target does not exist", async () => {
     const writer = new FakeVaultWriter();
     const engine = new ImportEngine({ writer }, { mappingRules: rules });

@@ -1,5 +1,6 @@
 import type { Entity } from "schema";
 import type {
+  AssociatedDraft,
   AssetInput,
   Connection,
   EntityPatch,
@@ -48,9 +49,35 @@ export class WebVaultWriter implements VaultWriter {
     return map;
   }
 
+  private draftTitleMap = new Map<string, string>();
+
+  associateDrafts(drafts: AssociatedDraft[]) {
+    this.draftTitleMap.clear();
+    for (const draft of drafts) {
+      this.draftTitleMap.set(draft.sourceRef, draft.title);
+    }
+  }
+
   async findBySourceRef(sourceRef: string): Promise<{ id: string } | null> {
     const id = this.getSourceMap().get(sourceRef);
-    return id ? { id } : null;
+    if (id) return { id };
+
+    // Fallback: match by title / sanitized ID
+    const title = this.draftTitleMap.get(sourceRef);
+    if (title) {
+      const sanitized = sanitizeEntityId(title);
+      for (const entity of Object.values(this.store.entities)) {
+        if (
+          typeof entity.id === "string" &&
+          (entity.id === sanitized ||
+            (entity.title &&
+              entity.title.toLowerCase() === title.toLowerCase()))
+        ) {
+          return { id: entity.id };
+        }
+      }
+    }
+    return null;
   }
 
   async createEntity(entity: NewEntityInput): Promise<{ id: string }> {
@@ -61,7 +88,9 @@ export class WebVaultWriter implements VaultWriter {
         content: entity.content,
         lore: entity.lore,
         tags: entity.tags,
-        labels: entity.tags,
+        labels: entity.labels ?? [],
+        image: entity.image,
+        thumbnail: entity.thumbnail,
         metadata: entity.metadata as Entity["metadata"],
         discoverySource: entity.discoverySource,
         parent: entity.parent,
@@ -101,7 +130,9 @@ export class WebVaultWriter implements VaultWriter {
           content: entity.content,
           lore: entity.lore,
           tags: entity.tags,
-          labels: entity.tags,
+          labels: entity.labels ?? [],
+          image: entity.image,
+          thumbnail: entity.thumbnail,
           metadata: entity.metadata as Entity["metadata"],
           discoverySource: entity.discoverySource,
           parent: entity.parent,
@@ -133,17 +164,22 @@ export class WebVaultWriter implements VaultWriter {
   }
 
   async updateEntity(id: string, patch: EntityPatch): Promise<void> {
-    const success = await this.store.updateEntity(id, {
+    const updates: Partial<Entity> = {
       type: patch.type as Entity["type"],
       title: patch.title,
       content: patch.content,
       lore: patch.lore,
       tags: patch.tags,
-      labels: patch.tags,
+      labels: patch.labels,
+      image: patch.image,
+      thumbnail: patch.thumbnail,
       metadata: patch.metadata as Entity["metadata"],
       parent: patch.parent,
-      connections: (patch.connections ?? []) as Entity["connections"],
-    });
+    };
+    if (patch.connections !== undefined) {
+      updates.connections = patch.connections as Entity["connections"];
+    }
+    const success = await this.store.updateEntity(id, updates);
 
     if (!success) {
       throw new Error(`Entity ${id} not found`);
@@ -151,6 +187,27 @@ export class WebVaultWriter implements VaultWriter {
   }
 
   async appendConnection(id: string, connection: Connection): Promise<void> {
+    const source = this.store.entities[id];
+    if (!source) {
+      throw new Error(`Entity ${id} not found`);
+    }
+
+    const existingConnections = (source.connections ??
+      []) as Entity["connections"];
+    const nextConnection = {
+      ...connection,
+      strength: 1,
+    } as Entity["connections"][number];
+
+    const alreadyExists = existingConnections.some(
+      (existing) =>
+        existing.target === nextConnection.target &&
+        existing.type === nextConnection.type &&
+        existing.label === nextConnection.label,
+    );
+
+    if (alreadyExists) return;
+
     const success = await this.store.addConnection(
       id,
       connection.target,
@@ -169,6 +226,15 @@ export class WebVaultWriter implements VaultWriter {
       "Generic CC asset persistence is not supported by the web vault adapter yet",
     );
   }
+}
+
+function sanitizeEntityId(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 export function createWebVaultWriter(store: VaultWriterStoreLike) {

@@ -653,6 +653,8 @@
         await vault.batchCreateEntities(batchData);
       }
 
+      statusMessage = "Finalizing and saving to vault...";
+      await vault.flushPendingSaves();
       step = "complete";
     } catch (err) {
       console.error("Batch import failed:", err);
@@ -710,6 +712,8 @@
           }
         },
       );
+      statusMessage = "Finalizing and saving to vault...";
+      await vault.flushPendingSaves();
       step = "report";
     } catch (error) {
       notificationStore.notify(

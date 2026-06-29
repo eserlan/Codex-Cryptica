@@ -30,7 +30,7 @@ import {
   type ImportReport,
   type CommitFailure,
 } from "./report";
-import type { VaultWriter, NewEntityInput } from "./ports";
+import type { VaultWriter, NewEntityInput, AssociatedDraft } from "./ports";
 
 export interface ImportEngineOptions {
   mappingRules?: MappingRuleSet;
@@ -74,6 +74,13 @@ export class ImportEngine {
       ...(validation.warnings ?? []),
       ...pkg.warnings,
     ];
+
+    const associatedDrafts = pkg.entityDrafts.map((draft) => ({
+      sourceRef: buildEntitySourceRef(pkg.sourceSystem, draft),
+      title: draft.title,
+    }));
+
+    this.writer.associateDrafts?.(associatedDrafts);
 
     // Build PreviewItems
     const items: PreviewItem[] = [];
@@ -142,6 +149,8 @@ export class ImportEngine {
     const report = createEmptyReport(session.sourceSystem, session.sourceLabel);
     report.warnings = [...session.warnings];
 
+    this.writer.associateDrafts?.(this._associatedDraftsFromSession(session));
+
     // Carry through type fallback warnings
     for (const item of session.items) {
       if (item.typeFallback) {
@@ -173,6 +182,9 @@ export class ImportEngine {
         content: fields.content,
         lore: fields.lore,
         tags: fields.tags,
+        labels: fields.labels,
+        image: fields.image,
+        thumbnail: fields.thumbnail,
         metadata: fields.metadata,
         parent: fields.parent,
         discoverySource: fields.discoverySource,
@@ -223,6 +235,9 @@ export class ImportEngine {
               content: fields.content,
               lore: fields.lore,
               tags: fields.tags,
+              labels: fields.labels,
+              image: fields.image,
+              thumbnail: fields.thumbnail,
               metadata: fields.metadata,
               parent: fields.parent,
             };
@@ -255,6 +270,9 @@ export class ImportEngine {
           content: fields.content,
           lore: fields.lore,
           tags: fields.tags,
+          labels: fields.labels,
+          image: fields.image,
+          thumbnail: fields.thumbnail,
           metadata: fields.metadata,
           parent: fields.parent,
           discoverySource: fields.discoverySource,
@@ -319,12 +337,16 @@ export class ImportEngine {
     let connectionProgress = 0;
 
     for (const rel of session.relationships) {
-      const fromRef = this._resolveRef(
+      const fromRef = await this._resolveRef(
         rel.draft.fromRef,
         committedIds,
         session,
       );
-      const toRef = this._resolveRef(rel.draft.toRef, committedIds, session);
+      const toRef = await this._resolveRef(
+        rel.draft.toRef,
+        committedIds,
+        session,
+      );
 
       if (!fromRef || !toRef) {
         const reason = !fromRef
@@ -410,21 +432,39 @@ export class ImportEngine {
     return report;
   }
 
-  private _resolveRef(
+  private _associatedDraftsFromSession(
+    session: CCImportSession,
+  ): AssociatedDraft[] {
+    return session.items.map((item) => ({
+      sourceRef: item.sourceRef,
+      title: item.draft.title,
+    }));
+  }
+
+  private async _resolveRef(
     ref: string,
     committedIds: Map<string, string>,
     session: CCImportSession,
-  ): string | null {
-    // Try to find the source item in the session by sourceId or sourcePath
+  ): Promise<string | null> {
+    const committedId = committedIds.get(ref);
+    if (committedId) return committedId;
+
+    // Try to find the source item in the session by raw id/path or full source ref.
     for (const item of session.items) {
-      if (item.draft.sourceId === ref || item.draft.sourcePath === ref) {
+      if (
+        item.sourceRef === ref ||
+        item.draft.sourceId === ref ||
+        item.draft.sourcePath === ref
+      ) {
         // Ignored items can't be relationship endpoints
         if (item.decision === "ignore") return null;
         return committedIds.get(item.sourceRef) ?? null;
       }
     }
-    // Not in session — return ref as-is for vault lookup (handled by caller when writing connection)
-    return null;
+
+    // Not in session: allow exact source-ref matches to already imported vault entities.
+    const existing = await this.writer.findBySourceRef(ref);
+    return existing?.id ?? null;
   }
 }
 

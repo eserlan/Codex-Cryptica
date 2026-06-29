@@ -1,6 +1,7 @@
 import type {
   CCImportPackage,
   EntityDraft,
+  ImportWarning,
   RelationshipDraft,
 } from "./package";
 import { htmlToMarkdown } from "../utils";
@@ -23,6 +24,7 @@ export interface ScabardPageDetails {
   gmSecrets?: string;
   aliases?: string;
   imageURL?: string;
+  largeImageURL?: string;
   isSecret?: boolean;
   uri?: string;
 }
@@ -59,6 +61,21 @@ const isStandardMetadataName = (name: string): boolean => {
     "attribute",
     "alignment",
   ].includes(n);
+};
+
+const SCABARD_ASSET_BASE_URL = "https://www.scabard.com";
+
+const normalizeScabardImageUrl = (
+  value: string | undefined,
+): string | undefined => {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (/^(data:|blob:|https?:\/\/)/i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("/")) {
+    return new URL(trimmed, SCABARD_ASSET_BASE_URL).toString();
+  }
+  return trimmed;
 };
 
 /**
@@ -101,6 +118,7 @@ export function parseScabardExport(
 
   const entityDrafts: EntityDraft[] = [];
   const relationshipDrafts: RelationshipDraft[] = [];
+  const warnings: ImportWarning[] = [];
 
   // Map concept types
   const mapConceptType = (concept: string): string => {
@@ -147,6 +165,10 @@ export function parseScabardExport(
   };
 
   const draftsMap = new Map<string, EntityDraft>();
+  let metadataConnectionCount = 0;
+  let labelConnectionCount = 0;
+  let skippedStructuralConnectionCount = 0;
+  let unresolvedEndpointConnectionCount = 0;
 
   // Pre-pass: Infer types from CATEGORY_OF and CONCEPT_OF connections where one side is a standard type name
   const inferredTypes = new Map<string, string>();
@@ -232,9 +254,15 @@ export function parseScabardExport(
     if (page.imageURL) {
       metadata.imageURL = page.imageURL;
     }
+    if (page.largeImageURL) {
+      metadata.largeImageURL = page.largeImageURL;
+    }
     if (page.isSecret !== undefined) {
       metadata.isSecret = page.isSecret;
     }
+
+    const thumbnail = normalizeScabardImageUrl(page.imageURL);
+    const image = normalizeScabardImageUrl(page.largeImageURL) ?? thumbnail;
 
     // Build the draft
     const draft: EntityDraft = {
@@ -248,6 +276,9 @@ export function parseScabardExport(
       content,
       lore: lore || undefined,
       tags: [],
+      labels: [],
+      image,
+      thumbnail,
       metadata,
     };
 
@@ -256,51 +287,67 @@ export function parseScabardExport(
   }
 
   // Map relationships
+  const sourceRefForEndpoint = (sourceId: string): string => {
+    const draft = draftsMap.get(sourceId);
+    return draft
+      ? `scabard:${draft.sourceType ?? "Note"}:${sourceId}`
+      : sourceId;
+  };
+
+  const addLabel = (
+    draft: EntityDraft,
+    labelName: string | undefined,
+  ): boolean => {
+    if (!labelName || isStandardMetadataName(labelName)) {
+      return false;
+    }
+    if (!draft.labels) {
+      draft.labels = [];
+    }
+    if (!draft.labels.includes(labelName)) {
+      draft.labels.push(labelName);
+      return true;
+    }
+    return false;
+  };
+
+  // Track emitted relationships so duplicate Scabard connections (same
+  // endpoints + type) collapse into a single draft instead of producing
+  // redundant links and duplicate keys downstream.
+  const seenRelationshipKeys = new Set<string>();
+
   for (const conn of conns) {
     const relationshipType = conn.relationship || "RELATED_TO";
     const relationshipTypeUpper = relationshipType.toUpperCase();
-    // Map connections originating from/to classification category pages to entity tags/labels
+    // Map connections originating from/to classification category pages to entity labels.
     const fromId = conn.fromid.toString();
     const toId = conn.toid.toString();
     const fromConcept = pageConcepts.get(fromId);
     const toConcept = pageConcepts.get(toId);
 
-    // Map internal classification relationships to entity tags/labels
+    // Map internal classification relationships to entity labels.
     if (
       relationshipTypeUpper.endsWith("_CATEGORY_OF") ||
       relationshipTypeUpper === "CATEGORY_OF" ||
       relationshipTypeUpper === "CONCEPT_OF" ||
       relationshipTypeUpper === "ALIGNMENT_OF"
     ) {
+      metadataConnectionCount++;
       // Direction 1: Target is the entity, Source is the classification name
       const targetDraft = draftsMap.get(conn.toid.toString());
       if (targetDraft) {
-        const labelName = conn.from;
-        if (
-          labelName &&
-          !isStandardMetadataName(labelName) &&
-          !targetDraft.tags.includes(labelName)
-        ) {
-          targetDraft.tags.push(labelName);
-        }
+        if (addLabel(targetDraft, conn.from)) labelConnectionCount++;
       }
 
       // Direction 2: Source is the entity, Target is the classification name
       const sourceDraft = draftsMap.get(conn.fromid.toString());
       if (sourceDraft) {
-        const labelName = conn.to;
-        if (
-          labelName &&
-          !isStandardMetadataName(labelName) &&
-          !sourceDraft.tags.includes(labelName)
-        ) {
-          sourceDraft.tags.push(labelName);
-        }
+        if (addLabel(sourceDraft, conn.to)) labelConnectionCount++;
       }
       continue;
     }
 
-    // Map connections originating from/to classification category pages to entity tags/labels
+    // Map connections originating from/to classification category pages to entity labels.
     const isFromSkipped =
       fromConcept &&
       ["ccategory", "category", "folder", "attribute"].includes(fromConcept) &&
@@ -311,30 +358,17 @@ export function parseScabardExport(
       !draftsMap.has(toId);
 
     if (isFromSkipped || isToSkipped) {
+      metadataConnectionCount++;
       if (isFromSkipped) {
         const targetDraft = draftsMap.get(toId);
         if (targetDraft) {
-          const labelName = conn.from;
-          if (
-            labelName &&
-            !isStandardMetadataName(labelName) &&
-            !targetDraft.tags.includes(labelName)
-          ) {
-            targetDraft.tags.push(labelName);
-          }
+          if (addLabel(targetDraft, conn.from)) labelConnectionCount++;
         }
       }
       if (isToSkipped) {
         const sourceDraft = draftsMap.get(fromId);
         if (sourceDraft) {
-          const labelName = conn.to;
-          if (
-            labelName &&
-            !isStandardMetadataName(labelName) &&
-            !sourceDraft.tags.includes(labelName)
-          ) {
-            sourceDraft.tags.push(labelName);
-          }
+          if (addLabel(sourceDraft, conn.to)) labelConnectionCount++;
         }
       }
       continue;
@@ -351,14 +385,39 @@ export function parseScabardExport(
         "ALIGNMENT_OF",
       ].includes(relationshipTypeUpper)
     ) {
+      skippedStructuralConnectionCount++;
       continue;
     }
 
+    const fromRef = sourceRefForEndpoint(fromId);
+    const toRef = sourceRefForEndpoint(toId);
+    const type = toSnakeCase(relationshipType);
+
+    // Collapse duplicate connections (same endpoints + type) that some Scabard
+    // exports contain; emitting them twice yields redundant links and breaks
+    // keyed rendering in the import review UI.
+    const relationshipKey = `${fromRef}:${toRef}:${type}`;
+    if (seenRelationshipKeys.has(relationshipKey)) {
+      continue;
+    }
+    seenRelationshipKeys.add(relationshipKey);
+
+    if (!draftsMap.has(fromId) || !draftsMap.has(toId)) {
+      unresolvedEndpointConnectionCount++;
+    }
+
     relationshipDrafts.push({
-      fromRef: conn.fromid.toString(),
-      toRef: conn.toid.toString(),
-      type: toSnakeCase(relationshipType),
+      fromRef,
+      toRef,
+      type,
       label: toTitleCase(relationshipType),
+    });
+  }
+
+  if (conns.length > 0) {
+    warnings.push({
+      code: "SCABARD_CONNECTION_SUMMARY",
+      message: `Scabard export contained ${conns.length} connections: ${relationshipDrafts.length} imported as links, ${metadataConnectionCount} treated as classification metadata (${labelConnectionCount} labels added), ${skippedStructuralConnectionCount} skipped as structural metadata, and ${unresolvedEndpointConnectionCount} kept for unresolved reporting.`,
     });
   }
 
@@ -369,6 +428,6 @@ export function parseScabardExport(
     entityDrafts,
     relationshipDrafts,
     assetDrafts: [],
-    warnings: [],
+    warnings,
   };
 }

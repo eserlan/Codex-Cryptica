@@ -131,6 +131,8 @@ describe("CCImportReview", () => {
           matchDecision: "skip",
         },
       ],
+      relationships: [],
+      assets: [],
     };
 
     render(CCImportReview, {
@@ -141,9 +143,8 @@ describe("CCImportReview", () => {
       onCancel: vi.fn(),
     });
 
-    expect(screen.getByRole("button", { name: /Import 0/i })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(
+      screen.getByRole("button", { name: /Import Assets/i }),
+    ).toHaveProperty("disabled", true);
   });
 });

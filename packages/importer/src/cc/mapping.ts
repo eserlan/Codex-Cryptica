@@ -55,6 +55,9 @@ export function mapDraftToFields(
   content: string;
   lore?: string;
   tags: string[];
+  labels: string[];
+  image?: string;
+  thumbnail?: string;
   metadata?: Record<string, unknown>;
   parent?: string;
   discoverySource: string;
@@ -65,6 +68,12 @@ export function mapDraftToFields(
     content: draft.content ?? "",
     lore: draft.lore,
     tags: draft.tags ?? [],
+    labels:
+      draft.labels && draft.labels.length > 0
+        ? draft.labels
+        : (draft.tags ?? []),
+    image: draft.image,
+    thumbnail: draft.thumbnail,
     metadata: draft.metadata,
     parent: draft.parentRef,
     discoverySource,

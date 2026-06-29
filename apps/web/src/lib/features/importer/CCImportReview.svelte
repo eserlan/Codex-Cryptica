@@ -31,6 +31,12 @@
     }).length,
   );
 
+  let canCommit = $derived(
+    actionableCount > 0 ||
+      session.relationships.length > 0 ||
+      session.assets.length > 0,
+  );
+
   const draftRefFor = (item: CCImportSession["items"][number]) =>
     item.draft.sourceId ?? item.draft.sourcePath ?? item.sourceRef;
 
@@ -247,7 +253,7 @@
         {#if session.relationships.length === 0}
           <p class="text-xs text-theme-muted">No relationships.</p>
         {:else}
-          {#each session.relationships as relationship (`${relationship.draft.fromRef}:${relationship.draft.toRef}:${relationship.draft.type}`)}
+          {#each session.relationships as relationship, i (`${i}:${relationship.draft.fromRef}:${relationship.draft.toRef}:${relationship.draft.type}`)}
             <div class="text-xs text-theme-text">
               <div class="font-semibold break-all">
                 {relationship.draft.fromRef} -> {relationship.draft.toRef}
@@ -312,9 +318,15 @@
         type="button"
         class="px-3 py-2 bg-theme-primary text-theme-bg text-xs font-bold uppercase font-header tracking-widest rounded disabled:opacity-50 disabled:cursor-not-allowed"
         onclick={onCommit}
-        disabled={actionableCount === 0}
+        disabled={!canCommit}
       >
-        Import {actionableCount}
+        {#if actionableCount > 0}
+          Import {actionableCount}
+        {:else if session.relationships.length > 0}
+          Import Links
+        {:else}
+          Import Assets
+        {/if}
       </button>
     </div>
   </div>

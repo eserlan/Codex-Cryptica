@@ -632,6 +632,10 @@ export class VaultStore {
     const db = await getDB();
     await db.put("settings", v, "defaultVisibility");
   }
+
+  async flushPendingSaves(timeoutMs?: number): Promise<void> {
+    await this.entityStore?.flushPendingSaves(timeoutMs);
+  }
 }
 
 const VAULT_KEY = "__codex_vault_instance__";

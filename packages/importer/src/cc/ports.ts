@@ -1,9 +1,17 @@
+export interface AssociatedDraft {
+  sourceRef: string;
+  title: string;
+}
+
 export interface NewEntityInput {
   type: string;
   title: string;
   content: string;
   lore?: string;
   tags: string[];
+  labels?: string[];
+  image?: string;
+  thumbnail?: string;
   connections?: Connection[];
   discoverySource: string;
   metadata?: Record<string, unknown>;
@@ -18,6 +26,9 @@ export type EntityPatch = Partial<
     | "content"
     | "lore"
     | "tags"
+    | "labels"
+    | "image"
+    | "thumbnail"
     | "connections"
     | "metadata"
     | "parent"
@@ -45,5 +56,6 @@ export interface VaultWriter {
   updateEntity(id: string, patch: EntityPatch): Promise<void>;
   /** Appends a single connection to an entity without touching its other connections. */
   appendConnection(id: string, connection: Connection): Promise<void>;
+  associateDrafts?(drafts: AssociatedDraft[]): void;
   saveAsset(asset: AssetInput): Promise<{ ref: string }>;
 }

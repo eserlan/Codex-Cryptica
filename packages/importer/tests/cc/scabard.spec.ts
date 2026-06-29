@@ -122,6 +122,7 @@ describe("Scabard Campaign Export Importer Adapter", () => {
           gmSecrets: "<p>Secretly a vampire of the Brujah clan.</p>",
           aliases: "The Egyptologist, Bowman",
           imageURL: "https://img.example.com/bowman.jpg",
+          largeImageURL: "/assets/rf_images/character/bowman_large.png",
           isSecret: false,
           uri: "/campaign/4543909/character/4543966",
         },
@@ -209,7 +210,10 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(pkg.sourceSystem).toBe("scabard");
     expect(pkg.sourceLabel).toBe("Scabard Campaign 4543909");
     expect(pkg.entityDrafts.length).toBe(4);
-    expect(pkg.relationshipDrafts.length).toBe(2); // MEMBER_OF and PARTICIPANT_OF, CONCEPT_OF and CATEGORY_OF skipped
+    expect(pkg.relationshipDrafts.length).toBe(2); // MEMBER_OF and PARTICIPANT_OF, CONCEPT_OF and CATEGORY_OF become labels/metadata
+    expect(pkg.warnings).toContainEqual(
+      expect.objectContaining({ code: "SCABARD_CONNECTION_SUMMARY" }),
+    );
   });
 
   it("should map concept types to standard CC types", () => {
@@ -260,6 +264,15 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(characterDraft?.metadata?.imageURL).toBe(
       "https://img.example.com/bowman.jpg",
     );
+    expect(characterDraft?.metadata?.largeImageURL).toBe(
+      "/assets/rf_images/character/bowman_large.png",
+    );
+    expect(characterDraft?.image).toBe(
+      "https://www.scabard.com/assets/rf_images/character/bowman_large.png",
+    );
+    expect(characterDraft?.thumbnail).toBe(
+      "https://img.example.com/bowman.jpg",
+    );
     expect(characterDraft?.metadata?.isSecret).toBe(false);
   });
 
@@ -267,14 +280,18 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     const pkg = parseScabardExport(mockCampaign);
 
     const memberOfConn = pkg.relationshipDrafts.find(
-      (r) => r.fromRef === "4543966" && r.toRef === "5271180",
+      (r) =>
+        r.fromRef === "scabard:Character:4543966" &&
+        r.toRef === "scabard:Location:5271180",
     );
     expect(memberOfConn).toBeDefined();
     expect(memberOfConn?.type).toBe("member_of");
     expect(memberOfConn?.label).toBe("Member Of");
 
     const participantOfConn = pkg.relationshipDrafts.find(
-      (r) => r.fromRef === "4543966" && r.toRef === "4543885",
+      (r) =>
+        r.fromRef === "scabard:Character:4543966" &&
+        r.toRef === "scabard:Event:4543885",
     );
     expect(participantOfConn).toBeDefined();
     expect(participantOfConn?.type).toBe("participant_of");
@@ -286,24 +303,26 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(() => parseScabardExport({})).toThrow();
   });
 
-  it("should map place_category_of and other *_category_of relationships to entity tags/labels", () => {
+  it("should map place_category_of and other *_category_of relationships to entity labels", () => {
     const pkg = parseScabardExport(mockCampaign);
 
     const locationDraft = pkg.entityDrafts.find(
       (d) => d.sourceId === "5271180",
     );
     expect(locationDraft).toBeDefined();
-    expect(locationDraft?.tags).toContain("Dark Cities");
+    expect(locationDraft?.labels).toContain("Dark Cities");
+    expect(locationDraft?.tags).toEqual([]);
 
     const characterDraft = pkg.entityDrafts.find(
       (d) => d.sourceId === "4543966",
     );
     expect(characterDraft).toBeDefined();
-    expect(characterDraft?.tags).toContain("Vampire");
-    expect(characterDraft?.tags).toContain("Chaotic Neutral");
-    expect(characterDraft?.tags).toContain("Adventurers");
-    expect(characterDraft?.tags).toContain("Brujah Clan");
-    expect(characterDraft?.tags).not.toContain("Character");
+    expect(characterDraft?.labels).toContain("Vampire");
+    expect(characterDraft?.labels).toContain("Chaotic Neutral");
+    expect(characterDraft?.labels).toContain("Adventurers");
+    expect(characterDraft?.labels).toContain("Brujah Clan");
+    expect(characterDraft?.labels).not.toContain("Character");
+    expect(characterDraft?.tags).toEqual([]);
   });
 
   it("should infer entity types from CATEGORY_OF connections linking standard categories to generic pages", () => {
@@ -316,7 +335,7 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(eventDraft?.content).toContain("A tragic banquet event.");
   });
 
-  it("should map connections pointing from skipped custom category pages (gender_of, race_of) to tags/labels", () => {
+  it("should map connections pointing from skipped custom category pages (gender_of, race_of) to labels", () => {
     const customCampaign = {
       conns: [
         {
@@ -377,8 +396,52 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     const pkg = parseScabardExport(customCampaign);
     const draft = pkg.entityDrafts.find((d) => d.sourceId === "4543966");
     expect(draft).toBeDefined();
-    expect(draft?.tags).toContain("Female");
-    expect(draft?.tags).toContain("Human");
+    expect(draft?.labels).toContain("Female");
+    expect(draft?.labels).toContain("Human");
+    expect(draft?.tags).toEqual([]);
     expect(pkg.relationshipDrafts.length).toBe(0);
+    expect(pkg.warnings).toContainEqual(
+      expect.objectContaining({ code: "SCABARD_CONNECTION_SUMMARY" }),
+    );
+  });
+
+  it("collapses duplicate connections with identical endpoints and type", () => {
+    const duplicateConn = {
+      from: "Faction A",
+      fromid: 100,
+      relationship: "PINNER_OF",
+      to: "Faction B",
+      toid: 200,
+    };
+    const campaign = {
+      conns: [duplicateConn, { ...duplicateConn }],
+      pages: [
+        {
+          concept: "Group",
+          id: 100,
+          isGoldStar: false,
+          page: { id: 100, name: "Faction A", concept: "Group" },
+          uri: "/campaign/1/group/100",
+        },
+        {
+          concept: "Group",
+          id: 200,
+          isGoldStar: false,
+          page: { id: 200, name: "Faction B", concept: "Group" },
+          uri: "/campaign/1/group/200",
+        },
+      ],
+    };
+
+    const pkg = parseScabardExport(campaign);
+
+    // Both connections are identical, so only one relationship draft survives.
+    expect(pkg.relationshipDrafts.length).toBe(1);
+
+    // The keys used by the review UI must be unique.
+    const keys = pkg.relationshipDrafts.map(
+      (r) => `${r.fromRef}:${r.toRef}:${r.type}`,
+    );
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { ImportEngine } from "@codex/importer";
+import { ImportEngine, parseScabardExport } from "@codex/importer";
 import { WebVaultWriter } from "./web-vault-writer";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 describe("WebVaultWriter", () => {
   it("finds an entity by exact discoverySource match", async () => {
@@ -22,7 +24,7 @@ describe("WebVaultWriter", () => {
     await expect(writer.findBySourceRef("scabard:id:999")).resolves.toBeNull();
   });
 
-  it("maps tags to both tags and labels when creating entities", async () => {
+  it("maps labels separately from tags when creating entities", async () => {
     const createEntity = vi.fn().mockResolvedValue("hero");
     const writer = new WebVaultWriter({
       entities: {},
@@ -35,7 +37,10 @@ describe("WebVaultWriter", () => {
       type: "character",
       title: "Hero",
       content: "Lore",
-      tags: ["important", "npc"],
+      tags: [],
+      labels: ["important", "npc"],
+      image: "https://cdn.example.com/hero.png",
+      thumbnail: "https://cdn.example.com/hero-thumb.png",
       discoverySource: "scabard:id:1",
     });
 
@@ -43,8 +48,10 @@ describe("WebVaultWriter", () => {
     expect(createEntity).toHaveBeenCalledWith("character", "Hero", {
       content: "Lore",
       lore: undefined,
-      tags: ["important", "npc"],
+      tags: [],
       labels: ["important", "npc"],
+      image: "https://cdn.example.com/hero.png",
+      thumbnail: "https://cdn.example.com/hero-thumb.png",
       metadata: undefined,
       discoverySource: "scabard:id:1",
       parent: undefined,
@@ -79,14 +86,18 @@ describe("WebVaultWriter", () => {
         type: "character",
         title: "Hero",
         content: "Lore",
-        tags: ["important"],
+        tags: [],
+        labels: ["important"],
+        image: "https://cdn.example.com/hero.png",
+        thumbnail: "https://cdn.example.com/hero-thumb.png",
         discoverySource: "scabard:id:1",
       },
       {
         type: "location",
         title: "Moon Harbor",
         content: "Harbor note",
-        tags: ["port"],
+        tags: [],
+        labels: ["port"],
         discoverySource: "scabard:id:2",
       },
     ]);
@@ -98,8 +109,10 @@ describe("WebVaultWriter", () => {
         initialData: {
           content: "Lore",
           lore: undefined,
-          tags: ["important"],
+          tags: [],
           labels: ["important"],
+          image: "https://cdn.example.com/hero.png",
+          thumbnail: "https://cdn.example.com/hero-thumb.png",
           metadata: undefined,
           discoverySource: "scabard:id:1",
           parent: undefined,
@@ -112,8 +125,10 @@ describe("WebVaultWriter", () => {
         initialData: {
           content: "Harbor note",
           lore: undefined,
-          tags: ["port"],
+          tags: [],
           labels: ["port"],
+          image: undefined,
+          thumbnail: undefined,
           metadata: undefined,
           discoverySource: "scabard:id:2",
           parent: undefined,
@@ -124,7 +139,7 @@ describe("WebVaultWriter", () => {
     expect(result).toEqual([{ id: "hero" }, { id: "harbor" }]);
   });
 
-  it("maps patch tags to labels on update", async () => {
+  it("updates labels separately from tags", async () => {
     const updateEntity = vi.fn().mockResolvedValue(true);
     const writer = new WebVaultWriter({
       entities: {},
@@ -135,7 +150,8 @@ describe("WebVaultWriter", () => {
 
     await writer.updateEntity("hero", {
       title: "Updated Hero",
-      tags: ["story"],
+      labels: ["story"],
+      image: "https://cdn.example.com/updated.png",
     });
 
     expect(updateEntity).toHaveBeenCalledWith("hero", {
@@ -143,11 +159,12 @@ describe("WebVaultWriter", () => {
       title: "Updated Hero",
       content: undefined,
       lore: undefined,
-      tags: ["story"],
+      tags: undefined,
       labels: ["story"],
+      image: "https://cdn.example.com/updated.png",
+      thumbnail: undefined,
       metadata: undefined,
       parent: undefined,
-      connections: [],
     });
   });
 
@@ -164,10 +181,15 @@ describe("WebVaultWriter", () => {
     ).rejects.toThrow("Entity missing not found");
   });
 
-  it("appends one-directional connections through the vault API", async () => {
+  it("appends one-directional connections through addConnection", async () => {
     const addConnection = vi.fn().mockResolvedValue(true);
     const writer = new WebVaultWriter({
-      entities: {},
+      entities: {
+        hero: {
+          id: "hero",
+          connections: [{ target: "inn", type: "visited", strength: 1 }],
+        },
+      },
       createEntity: vi.fn(),
       updateEntity: vi.fn(),
       addConnection,
@@ -186,6 +208,36 @@ describe("WebVaultWriter", () => {
       "Located In",
       1,
     );
+  });
+
+  it("does not duplicate an existing imported connection", async () => {
+    const addConnection = vi.fn().mockResolvedValue(true);
+    const writer = new WebVaultWriter({
+      entities: {
+        hero: {
+          id: "hero",
+          connections: [
+            {
+              target: "town",
+              type: "located_in",
+              label: "Located In",
+              strength: 1,
+            },
+          ],
+        },
+      },
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection,
+    });
+
+    await writer.appendConnection("hero", {
+      target: "town",
+      type: "located_in",
+      label: "Located In",
+    });
+
+    expect(addConnection).not.toHaveBeenCalled();
   });
 
   it("reports asset persistence as unsupported", async () => {
@@ -262,13 +314,15 @@ describe("WebVaultWriter integration with ImportEngine", () => {
           sourceId: "hero-1",
           title: "Existing Hero",
           content: "Updated content",
-          tags: ["story"],
+          tags: [],
+          labels: ["story"],
         },
         {
           sourceId: "town-1",
           title: "Moon Harbor",
           content: "Harbor note",
-          tags: ["port"],
+          tags: [],
+          labels: ["port"],
         },
       ],
       relationshipDrafts: [
@@ -300,5 +354,80 @@ describe("WebVaultWriter integration with ImportEngine", () => {
         strength: 1,
       },
     ]);
+  });
+
+  it("imports the real london-calling-campaign Scabard JSON and sets up all connections correctly in the store", async () => {
+    const jsonPath = resolve(
+      __dirname,
+      "../../../../../../packages/importer/tests/cc/fixtures/london-calling-campaign.json",
+    );
+    const rawData = readFileSync(jsonPath, "utf-8");
+    const pkg = parseScabardExport(rawData);
+
+    const store = {
+      entities: {} as Record<string, any>,
+      createEntity: vi
+        .fn()
+        .mockImplementation(async (_type, title, initial) => {
+          const id = title
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "");
+          store.entities[id] = {
+            id,
+            title,
+            ...initial,
+            connections: initial?.connections ?? [],
+          };
+          return id;
+        }),
+      updateEntity: vi.fn().mockImplementation(async (id, updates) => {
+        const existing = store.entities[id];
+        if (!existing) return false;
+        store.entities[id] = { ...existing, ...updates };
+        return true;
+      }),
+      addConnection: vi
+        .fn()
+        .mockImplementation(async (sourceId, targetId, type, label) => {
+          const source = store.entities[sourceId];
+          if (!source) return false;
+          source.connections = [
+            ...(source.connections ?? []),
+            { target: targetId, type, label, strength: 1 },
+          ];
+          return true;
+        }),
+    };
+
+    const engine = new ImportEngine({
+      writer: new WebVaultWriter(store as any),
+    });
+    const session = await engine.prepare(pkg);
+    const report = await engine.commit(session);
+
+    // Verify stats
+    expect(report.failures.length).toBe(0);
+    expect(report.entitiesCreated).toBe(pkg.entityDrafts.length);
+    expect(report.relationshipsCreated).toBe(7); // 7 valid connections
+
+    // Verify Benjamin Bowman's connections
+    const benjamin = store.entities["benjamin-bowman"];
+    expect(benjamin).toBeDefined();
+    expect(benjamin.connections.length).toBe(2);
+
+    expect(benjamin.connections[0]).toEqual({
+      target: "the-coterie",
+      type: "member_of",
+      label: "Member Of",
+      strength: 1,
+    });
+
+    expect(benjamin.connections[1]).toEqual({
+      target: "1---chapter-one-the-ghost-town",
+      type: "participant_of",
+      label: "Participant Of",
+      strength: 1,
+    });
   });
 });

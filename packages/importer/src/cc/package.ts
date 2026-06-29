@@ -18,6 +18,9 @@ export const EntityDraftSchema = z
     content: z.string().default(""),
     lore: z.string().optional(),
     tags: z.array(z.string()).default([]),
+    labels: z.array(z.string()).optional(),
+    image: z.string().optional(),
+    thumbnail: z.string().optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
     parentRef: z.string().optional(),
   })
