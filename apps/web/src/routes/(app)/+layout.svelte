@@ -66,6 +66,7 @@
     null;
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
+  let checkedVaultThemePromptIds = $state<string[]>([]);
 
   // Derived
   const isPopup = $derived(
@@ -274,7 +275,11 @@
 
   // Automatic Tour/Demo Trigger
   $effect(() => {
-    if (vault.isInitialized && !onboardingStore.isLandingPageVisible) {
+    if (
+      vault.isInitialized &&
+      !onboardingStore.isLandingPageVisible &&
+      !modalUIStore.showVaultSwitcher
+    ) {
       if (
         !helpStore.hasSeen("initial-onboarding") &&
         !page.url.searchParams.has("demo")
@@ -329,6 +334,53 @@
         return () => clearTimeout(timeout);
       }
     }
+  });
+
+  // Theme selection should feel like an onboarding milestone, not a vault
+  // navigation side effect. Ask only after the user has content and no guide or
+  // modal is competing for attention.
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    const entityCount = vault.allEntities.length;
+    const hasCompletedInitialGuide = helpStore.hasSeen("initial-onboarding");
+
+    if (
+      !browser ||
+      !vault.isInitialized ||
+      !activeVaultId ||
+      entityCount === 0 ||
+      checkedVaultThemePromptIds.includes(activeVaultId) ||
+      sessionModeStore.isDemoMode ||
+      sessionModeStore.isGuestMode ||
+      onboardingStore.isLandingPageVisible ||
+      !onboardingStore.dismissedWorldPage ||
+      onboardingStore.showChangelog ||
+      !hasCompletedInitialGuide ||
+      helpStore.activeTour ||
+      modalUIStore.isAnyModalOpen
+    ) {
+      return;
+    }
+
+    checkedVaultThemePromptIds = [...checkedVaultThemePromptIds, activeVaultId];
+
+    void themeStore.hasSavedThemeForVault(activeVaultId).then((hasTheme) => {
+      if (
+        !hasTheme &&
+        vault.activeVaultId === activeVaultId &&
+        vault.allEntities.length > 0 &&
+        !sessionModeStore.isDemoMode &&
+        !sessionModeStore.isGuestMode &&
+        !onboardingStore.isLandingPageVisible &&
+        onboardingStore.dismissedWorldPage &&
+        !onboardingStore.showChangelog &&
+        helpStore.hasSeen("initial-onboarding") &&
+        !helpStore.activeTour &&
+        !modalUIStore.isAnyModalOpen
+      ) {
+        modalUIStore.openVaultThemePrompt(activeVaultId);
+      }
+    });
   });
 
   let lastRestoredVaultId = $state<string | null>(null);

@@ -5,32 +5,28 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultSwitcherModal from "./VaultSwitcherModal.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 
-const {
-  createVaultMock,
-  hasSavedThemeForVaultMock,
-  setThemeMock,
-  vaultRegistryMock,
-} = vi.hoisted(() => ({
-  createVaultMock: vi.fn(async () => "vault-1"),
-  hasSavedThemeForVaultMock: vi.fn(async () => true),
-  setThemeMock: vi.fn(async () => undefined),
-  vaultRegistryMock: {
-    availableVaults: [] as Array<{
-      id: string;
-      name: string;
-      lastOpenedAt: number;
-      entityCount: number;
-    }>,
-    activeVaultId: null as string | null,
-    renameVault: vi.fn(async () => undefined),
-    deleteVault: vi.fn(async () => undefined),
-  },
-}));
+const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
+  () => ({
+    createVaultMock: vi.fn(async () => "vault-1"),
+    importFromFolderMock: vi.fn(async () => true),
+    vaultRegistryMock: {
+      availableVaults: [] as Array<{
+        id: string;
+        name: string;
+        lastOpenedAt: number;
+        entityCount: number;
+      }>,
+      activeVaultId: null as string | null,
+      renameVault: vi.fn(async () => undefined),
+      deleteVault: vi.fn(async () => undefined),
+    },
+  }),
+);
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     createVault: createVaultMock,
-    importFromFolder: vi.fn(async () => true),
+    importFromFolder: importFromFolderMock,
     switchVault: vi.fn(async () => undefined),
     loadFromFolder: vi.fn(async () => undefined),
     saveToFolder: vi.fn(async () => undefined),
@@ -43,15 +39,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 
 vi.mock("$lib/stores/vault-registry.svelte", () => ({
   vaultRegistry: vaultRegistryMock,
-}));
-
-vi.mock("$lib/stores/theme.svelte", () => ({
-  themeStore: {
-    currentThemeId: "workspace",
-    hasSavedThemeForVault: hasSavedThemeForVaultMock,
-    setTheme: setThemeMock,
-    previewTheme: vi.fn(),
-  },
 }));
 
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
@@ -72,7 +59,6 @@ describe("VaultSwitcherModal", () => {
     vi.clearAllMocks();
     vaultRegistry.availableVaults = [];
     vaultRegistry.activeVaultId = null;
-    hasSavedThemeForVaultMock.mockResolvedValue(true);
     if (!Element.prototype.animate) {
       Element.prototype.animate = vi.fn(
         () =>
@@ -84,20 +70,21 @@ describe("VaultSwitcherModal", () => {
       );
     }
     document.body.innerHTML = "";
-    delete (window as Window & { showDirectoryPicker?: unknown })
-      .showDirectoryPicker;
+    delete (window as any).showDirectoryPicker;
   });
 
   const renderModal = () => {
     const target = document.createElement("div");
     document.body.appendChild(target);
+    const onClose = vi.fn();
 
-    return render(VaultSwitcherModal, {
+    render(VaultSwitcherModal, {
       target,
       props: {
-        onClose: vi.fn(),
+        onClose,
       },
     });
+    return { onClose };
   };
 
   it("keeps the new vault flow in the original selector form", async () => {
@@ -113,8 +100,8 @@ describe("VaultSwitcherModal", () => {
     expect(screen.queryByText("World Theme")).toBeNull();
   });
 
-  it("opens separate theme selection after creating a vault", async () => {
-    renderModal();
+  it("closes after creating a vault without prompting for theme", async () => {
+    const { onClose } = renderModal();
 
     await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
     await fireEvent.input(screen.getByLabelText("New Vault Name"), {
@@ -123,43 +110,13 @@ describe("VaultSwitcherModal", () => {
     await fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
 
     expect(createVaultMock).toHaveBeenCalledWith("My Vault");
-    expect(setThemeMock).not.toHaveBeenCalled();
-
-    expect(screen.getByTestId("vault-theme-modal")).toBeTruthy();
-    expect(
-      screen
-        .getByRole("button", { name: /workspace/i })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
-
-    await fireEvent.click(
-      screen.getByRole("button", { name: /ancient parchment/i }),
-    );
-    await fireEvent.click(screen.getByRole("button", { name: /use theme/i }));
-
-    expect(setThemeMock).toHaveBeenCalledWith("fantasy");
+    expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
+    expect(onClose).toHaveBeenCalled();
   });
 
-  it("applies the default Workspace theme from the separate selector", async () => {
-    renderModal();
-
-    await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
-    await fireEvent.input(screen.getByLabelText("New Vault Name"), {
-      target: { value: "Default Vault" },
-    });
-    await fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
-
-    expect(createVaultMock).toHaveBeenCalledWith("Default Vault");
-    await fireEvent.click(screen.getByRole("button", { name: /use theme/i }));
-
-    expect(setThemeMock).toHaveBeenCalledWith("workspace");
-  });
-
-  it("opens separate theme selection after importing a new vault without a saved theme", async () => {
-    (window as Window & { showDirectoryPicker?: () => Promise<unknown> })
-      .showDirectoryPicker = vi.fn(async () => ({}));
-    hasSavedThemeForVaultMock.mockResolvedValue(false);
-    renderModal();
+  it("closes after importing a new vault without prompting for theme", async () => {
+    (window as any).showDirectoryPicker = vi.fn(async () => ({}));
+    const { onClose } = renderModal();
 
     await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
     await fireEvent.input(screen.getByLabelText("New Vault Name"), {
@@ -167,36 +124,26 @@ describe("VaultSwitcherModal", () => {
     });
     await fireEvent.click(screen.getByRole("button", { name: /import/i }));
 
-    await waitFor(() =>
-      expect(screen.getByTestId("vault-theme-modal")).toBeTruthy(),
-    );
-
     expect(createVaultMock).toHaveBeenCalledWith("Imported Vault");
-    expect(hasSavedThemeForVaultMock).toHaveBeenCalledWith("vault-1");
-    expect(setThemeMock).not.toHaveBeenCalled();
+    expect(importFromFolderMock).toHaveBeenCalled();
+    expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
-  it("prompts for theme selection when the active vault has no saved theme", async () => {
+  it("does not prompt for theme selection when opened for an old vault", async () => {
     vaultRegistry.availableVaults = [
       {
         id: "old-vault",
         name: "Old Vault",
         lastOpenedAt: Date.now(),
+        createdAt: Date.now(),
         entityCount: 0,
       },
     ];
     vaultRegistry.activeVaultId = "old-vault";
-    hasSavedThemeForVaultMock.mockResolvedValue(false);
 
     renderModal();
 
-    await waitFor(() =>
-      expect(screen.getByTestId("vault-theme-modal")).toBeTruthy(),
-    );
-
-    await fireEvent.click(screen.getByRole("button", { name: /use theme/i }));
-
-    expect(hasSavedThemeForVaultMock).toHaveBeenCalledWith("old-vault");
-    expect(setThemeMock).toHaveBeenCalledWith("workspace");
+    expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
   });
 });
