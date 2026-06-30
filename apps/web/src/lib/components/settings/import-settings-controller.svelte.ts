@@ -340,8 +340,21 @@ export class ImportSettingsController {
 
       try {
         const chronicaPackage = parseChronicaExports(chronicaDocuments);
-        this.ccSession = await this.createEngine().prepare(chronicaPackage);
+        this.ccSession = await wrapWithAbort(
+          this.createEngine().prepare(chronicaPackage),
+          signal,
+        );
       } catch (error) {
+        if (
+          signal.aborted ||
+          (error instanceof Error && error.message === "Import aborted")
+        ) {
+          this.step = "upload";
+          this.ccSession = null;
+          this.ccReport = null;
+          this.importMode = null;
+          return;
+        }
         this.rejectedFiles.push({
           name: chronicaDocuments.map((doc) => doc.fileName).join(", "),
           reason:
@@ -388,7 +401,7 @@ export class ImportSettingsController {
 
       try {
         this.statusMessage = `Parsing ${file.name}...`;
-        const result = await parser.parse(file);
+        const result = await wrapWithAbort(parser.parse(file), signal);
 
         let parsedJson: unknown = null;
         try {
@@ -419,8 +432,21 @@ export class ImportSettingsController {
           this.statusMessage = "Preparing Scabard import review...";
           try {
             const scabardPackage = parseScabardExport(result.text);
-            this.ccSession = await this.createEngine().prepare(scabardPackage);
+            this.ccSession = await wrapWithAbort(
+              this.createEngine().prepare(scabardPackage),
+              signal,
+            );
           } catch (error) {
+            if (
+              signal.aborted ||
+              (error instanceof Error && error.message === "Import aborted")
+            ) {
+              this.step = "upload";
+              this.ccSession = null;
+              this.ccReport = null;
+              this.importMode = null;
+              return;
+            }
             this.rejectedFiles.push({
               name: file.name,
               reason:
@@ -508,7 +534,13 @@ export class ImportSettingsController {
           },
         });
       } catch (err: any) {
-        if (err.message === "Analysis Aborted") return;
+        if (
+          err.message === "Analysis Aborted" ||
+          err.message === "Import aborted" ||
+          signal.aborted
+        ) {
+          return;
+        }
         try {
           await clearRegistryEntry(hash);
         } catch {
@@ -717,18 +749,21 @@ export class ImportSettingsController {
 
     this.deps.vault.suspendSaving();
     try {
-      this.ccReport = await this.createEngine().commit(
-        this.ccSession,
-        (stage, current, total) => {
-          this.importProgress = { current, total };
-          if (stage === "entity") {
-            this.statusMessage = `Importing entities (${current}/${total})...`;
-          } else if (stage === "connection") {
-            this.statusMessage = `Importing connections (${current}/${total})...`;
-          } else if (stage === "asset") {
-            this.statusMessage = `Importing assets (${current}/${total})...`;
-          }
-        },
+      this.ccReport = await wrapWithAbort(
+        this.createEngine().commit(
+          this.ccSession,
+          (stage, current, total) => {
+            this.importProgress = { current, total };
+            if (stage === "entity") {
+              this.statusMessage = `Importing entities (${current}/${total})...`;
+            } else if (stage === "connection") {
+              this.statusMessage = `Importing connections (${current}/${total})...`;
+            } else if (stage === "asset") {
+              this.statusMessage = `Importing assets (${current}/${total})...`;
+            }
+          },
+          signal,
+        ),
         signal,
       );
       if (signal.aborted) {
@@ -766,4 +801,30 @@ export class ImportSettingsController {
     this.statusMessage = "";
     this.importProgress = null;
   };
+}
+
+function wrapWithAbort<T>(
+  promise: Promise<T>,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(new Error("Import aborted"));
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      signal.removeEventListener("abort", onAbort);
+      reject(new Error("Import aborted"));
+    };
+    signal.addEventListener("abort", onAbort);
+
+    promise
+      .then((val) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(val);
+      })
+      .catch((err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      });
+  });
 }
