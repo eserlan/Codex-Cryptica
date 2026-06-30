@@ -13,6 +13,12 @@
 - Public listing is opt-in, reversible, and never enabled automatically when a guest snapshot is published or updated.
 - All metadata exposed in a public listing must be safe for the public guest view and must use "labels" terminology for classification.
 
+## Clarifications
+
+### Session 2026-06-30
+
+- Q: Should public directory listings use a saved owner-approved metadata record, or automatically mirror world/profile fields after listing is enabled? → A: Listing metadata is a saved owner-approved public record; later world/profile changes do not affect the directory until the owner updates the listing.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - List a Shared World Publicly (Priority: P1)
@@ -101,7 +107,7 @@ As a world owner, I want public listings to expose only safe discovery metadata 
 - Listing metadata contains empty title, missing description, or no labels: the owner must receive a clear prompt to complete required public metadata before listing.
 - A cover image is removed, made private, or fails to load: the directory must use a safe fallback and must not expose private asset paths.
 - Owner display name is not configured: the listing must either omit owner attribution or show only an explicitly approved public display name.
-- A listed world is updated: the listing must not automatically expand its public metadata beyond the owner's approved listing fields.
+- A listed world is updated, renamed, relabeled, or the owner's profile display name changes: the directory must continue showing the saved owner-approved listing metadata until the owner explicitly updates the listing.
 - A visitor opens a listed world after it has been delisted: the directory must stop linking to it, while direct guest links follow the underlying guest snapshot rules from `135-guest-vault-r2`.
 
 ## Requirements _(mandatory)_
@@ -126,14 +132,15 @@ As a world owner, I want public listings to expose only safe discovery metadata 
 - **FR-016**: The system MUST store and display only owner-approved public owner attribution; if no public owner display name is approved, owner attribution MUST be omitted.
 - **FR-017**: The system MUST allow an optional public cover image only when the owner has selected or approved an image that is safe for guest/public viewing.
 - **FR-018**: Public listing metadata MUST use "labels" language for classification and MUST NOT introduce user-facing "tags" terminology.
-- **FR-019**: The feature MUST define public listing as separate from search-engine indexing; search-engine indexing MAY be controlled by a later feature.
-- **FR-020**: Moderation, reporting, featured listings, comments, ratings, and social networking behavior are out of scope for the first version.
+- **FR-019**: The system MUST persist listing metadata as a saved owner-approved public record; later changes to the editable world, guest snapshot metadata, or owner profile MUST NOT alter the directory listing until the owner explicitly updates and approves the listing metadata.
+- **FR-020**: The feature MUST define public listing as separate from search-engine indexing; search-engine indexing MAY be controlled by a later feature.
+- **FR-021**: Moderation, reporting, featured listings, comments, ratings, and social networking behavior are out of scope for the first version.
 
 ### Key Entities _(include if feature involves data)_
 
 - **Published Guest Snapshot**: The existing read-only guest artifact defined by `135-guest-vault-r2`; a public listing can point to it but does not replace it.
-- **Public Listing**: A discoverable record for a world that contains only approved public metadata and a destination to the read-only guest view.
-- **Listing Metadata**: The public title, short description, genre/theme labels, optional cover image, optional owner display name, visible entity count, and updated date shown in directory browsing and search.
+- **Public Listing**: A discoverable saved record for a world that contains only owner-approved public metadata and a destination to the read-only guest view.
+- **Listing Metadata**: The saved owner-approved public title, short description, genre/theme labels, optional cover image, optional owner display name, visible entity count, and updated date shown in directory browsing and search.
 - **Listing Preview**: The owner-facing representation of the exact public listing card and destination behavior before listing is enabled or updated.
 - **Directory Result**: A public search/browse item shown to visitors; it must be derived only from Public Listing metadata.
 
