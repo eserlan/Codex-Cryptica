@@ -147,14 +147,16 @@
 
 - [ ] T042 [P] [US4] Add failing Worker tests for DELETE `/api/published/{publishId}/listing`, guest snapshot preservation, and directory disappearance within cache bounds in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
 - [ ] T043 [P] [US4] Add failing Worker tests that unpublishing a guest snapshot deletes `directory/listings/{publishId}.json` in `apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
-- [ ] T044 [P] [US4] Add failing owner UI tests for delist confirmation and guest link preservation copy in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
+- [ ] T044 [P] [US4] Add failing Worker tests that stale listing records are hidden or deleted when the underlying snapshot bundle is unavailable during listing fetch or directory browse in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [ ] T045 [P] [US4] Add failing owner UI tests for delist confirmation and guest link preservation copy in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T045 [US4] Implement DELETE `/api/published/{publishId}/listing` without deleting the guest snapshot in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T046 [US4] Delete any matching public listing when a snapshot is unpublished in `apps/workers/oracle-proxy/src/publish.ts`
-- [ ] T047 [US4] Implement disablePublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T048 [US4] Add delist action, confirmation copy, and post-delisting state in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [ ] T046 [US4] Implement DELETE `/api/published/{publishId}/listing` without deleting the guest snapshot in `apps/workers/oracle-proxy/src/directory.ts`
+- [ ] T047 [US4] Delete any matching public listing when a snapshot is unpublished in `apps/workers/oracle-proxy/src/publish.ts`
+- [ ] T048 [US4] Hide or delete stale listing records when the underlying snapshot bundle is unavailable during listing fetch or directory browse in `apps/workers/oracle-proxy/src/directory.ts`
+- [ ] T049 [US4] Implement disablePublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [ ] T050 [US4] Add delist action, confirmation copy, and post-delisting state in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
 
 **Checkpoint**: User Story 4 is functional and independently testable.
 
@@ -164,14 +166,17 @@
 
 **Purpose**: Final validation, documentation, and cleanup across all stories.
 
-- [ ] T049 [P] Add user-facing help content explaining "share by link" versus "list publicly" in `apps/web/src/lib/config/help-content.ts`
-- [ ] T050 [P] Add public directory manual verification notes to `specs/139-public-world-directory/quickstart.md`
-- [ ] T051 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
-- [ ] T052 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
-- [ ] T053 Run focused schema tests with `bun test packages/schema/src/publishing.test.ts`
-- [ ] T054 Run focused Worker tests with `bun test apps/workers/oracle-proxy/src/__tests__/directory.test.ts apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
-- [ ] T055 Run focused web service and route tests with `bun test apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts apps/web/src/lib/components/settings/PublicListingSettings.test.ts apps/web/src/routes/(marketing)/worlds/worlds.route.test.ts`
-- [ ] T056 Run full validation with `bun run lint` and `bun run test`
+- [ ] T051 [P] Add user-facing help content explaining "share by link" versus "list publicly" in `apps/web/src/lib/config/help-content.ts`
+- [ ] T052 [P] Add public directory manual verification notes to `specs/139-public-world-directory/quickstart.md`
+- [ ] T053 Add Worker performance fixture coverage for browse/search over 1,000 listing records returning within the planned 500ms target in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [ ] T054 Add client performance coverage for listing draft preview creation within the planned 200ms target in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
+- [ ] T055 Add manual copy validation checklist for distinguishing "share by link" from "list publicly" in `specs/139-public-world-directory/quickstart.md`
+- [ ] T056 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [ ] T057 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
+- [ ] T058 Run focused schema tests with `bun test packages/schema/src/publishing.test.ts`
+- [ ] T059 Run focused Worker tests with `bun test apps/workers/oracle-proxy/src/__tests__/directory.test.ts apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
+- [ ] T060 Run focused web service and route tests with `bun test apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts apps/web/src/lib/components/settings/PublicListingSettings.test.ts apps/web/src/routes/(marketing)/worlds/worlds.route.test.ts`
+- [ ] T061 Run full validation with `bun run lint` and `bun run test`
 
 ---
 
@@ -212,7 +217,7 @@
 - Story test tasks marked [P] can run in parallel inside each story.
 - US2 and US5 can run in parallel after Phase 2 if file ownership is coordinated.
 - US3 route UI work can run in parallel with US4 owner delist tests after US1 endpoint behavior exists.
-- Polish tasks T049-T052 can run in parallel.
+- Polish tasks T051-T057 can run in parallel where they touch different files.
 
 ---
 

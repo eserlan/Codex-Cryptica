@@ -172,39 +172,67 @@ components:
         - description
         - labels
     PublicListing:
-      allOf:
-        - $ref: "#/components/schemas/ListingDraft"
-        - type: object
-          additionalProperties: false
-          properties:
-            schemaVersion:
-              type: integer
-              enum:
-                - 1
-            publishId:
-              type: string
-            guestUrl:
-              type: string
-            visibleEntityCount:
-              type: integer
-              minimum: 0
-            snapshotPublishedAt:
-              type: string
-              format: date-time
-            listingCreatedAt:
-              type: string
-              format: date-time
-            listingUpdatedAt:
-              type: string
-              format: date-time
-          required:
-            - schemaVersion
-            - publishId
-            - guestUrl
-            - visibleEntityCount
-            - snapshotPublishedAt
-            - listingCreatedAt
-            - listingUpdatedAt
+      type: object
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        publishId:
+          type: string
+        guestUrl:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 280
+        labels:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+        coverImageAssetId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        coverImageAlt:
+          type: string
+          maxLength: 120
+        ownerDisplayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        visibleEntityCount:
+          type: integer
+          minimum: 0
+        snapshotPublishedAt:
+          type: string
+          format: date-time
+        listingCreatedAt:
+          type: string
+          format: date-time
+        listingUpdatedAt:
+          type: string
+          format: date-time
+      required:
+        - schemaVersion
+        - publishId
+        - guestUrl
+        - title
+        - description
+        - labels
+        - visibleEntityCount
+        - snapshotPublishedAt
+        - listingCreatedAt
+        - listingUpdatedAt
     DirectoryResult:
       type: object
       additionalProperties: false
