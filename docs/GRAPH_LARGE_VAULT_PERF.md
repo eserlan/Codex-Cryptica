@@ -5,12 +5,14 @@ branch `fix/1576-large-vault-performance`.
 
 ## Strategy so far
 
-A **performance mode** auto-engages at `>700 nodes` or `>1800 edges`
-(`graph.isLargeGraph`) and globally _cheapens_ rendering — `haystack` edges,
-no labels/images, `hideEdgesOnViewport`, `motionBlur`, capped DPR, and a skipped
-per-node weight recompute. It makes each element cheap rather than rendering
-fewer elements. Solid foundation; the biggest structural costs (culling, layout
-solve, reactivity thrash) are still open.
+Large vaults (`>700 nodes` or `>1800 edges`, `graph.isLargeGraph`) now **render
+fewer elements** — a focus view culls to the focal node's zoom-driven N-hop
+neighborhood by default, with a "Show full graph" opt-out that falls back to the
+cheap styling (`haystack` edges, no labels/images, `hideEdgesOnViewport`,
+`motionBlur`, capped DPR, skipped weight recompute). Large fresh solves
+seed-then-refine so the import isn't an invisible clump. Search/parse indexing is
+already off the main thread. Remaining open item: the reactivity-thrash deep fix
+(#5), deferred pending need.
 
 ## Tasks
 
@@ -141,9 +143,21 @@ Ranked by impact ÷ effort. Check off as we land each one.
     edit-resync timing assertion (#5), a perf-on-vs-off comparison, and a
     dedicated LOD-crossing measurement.
 
-- [ ] **7. (Issue #3, separate) Confirm search/indexing is off-main-thread**
-  - **Why:** FlexSearch/IndexedDB indexing blocking the main thread during load
-    is the third issue ask and is unaddressed on this branch.
+- [x] **7. (Issue area #3) Confirm search/indexing is off-main-thread** ✅ (already handled — no work needed)
+  - **FlexSearch indexing:** runs in a Web Worker via Comlink (`search.worker.ts`
+    - `SearchService` → `Comlink.wrap`), no main-thread fallback. Cold boot indexes
+      metadata first, then defers the full content sweep 3 s and runs it in the
+      background with `requestIdleCallback`/`scheduler.postTask` yields between
+      100-item batches; warm boot restores the serialized index from IndexedDB (no
+      re-index). Main-thread prep (`mapToSearchEntry`) is trivial imperative loops.
+  - **Markdown → HTML:** off-thread in `parser.worker.ts` (marked via Comlink).
+  - **Frontmatter / YAML parse** (`markdown.ts:parseMarkdown`): main-thread but
+    only on cold import (cache-checked first in `repository.svelte.ts`; warm loads
+    skip it), chunked in 40s interleaved with async file reads + bulk IDB writes,
+    then cached. Cooperative + one-time.
+  - **Verdict:** no main-thread blocking on navigation / warm loads. The only
+    residual is cold-import YAML parsing; moving it to a worker is possible but
+    low ROI (one-time, already chunked/interleaved). Left as-is.
 
 ## Baseline (post #1/#2, 2026-06-30)
 
