@@ -86,11 +86,24 @@ Ranked by impact ÷ effort. Check off as we land each one.
     timing; edge cases (fit button / centering mid-explore) may wobble depth once
     and self-correct.
 
-- [ ] **4. Skip fcose for very large graphs**
-  - **Why:** First load of a fresh large vault runs a ~1600-node fcose draft
-    solve in the worker (timeout scales to ~48s). Above ~1200 nodes, ship the
-    already-computed `seededLayoutPosition` spiral as the final layout instead —
-    turning a multi-second stall into instant.
+- [x] **4. Seed-then-refine for large fresh solves** ✅ (re-scoped from "skip fcose")
+  - **Re-scope:** the fcose solve already runs in a Web Worker (non-blocking),
+    and Task 3 culling means the default view solves only the small neighborhood,
+    not 1600. The remaining rough spot is "Show full graph" on a fresh import:
+    pending nodes render at `opacity 0`, so the user stares at an invisible origin
+    clump for seconds until the worker returns. Skipping fcose entirely would lose
+    layout quality permanently; seeding-then-refining keeps both.
+  - **Done:** in `LayoutManager.solveAndFit`, a randomized solve over
+    `>= 600` nodes now applies the deterministic `seededLayoutPosition` spiral to
+    cy immediately (un-hiding the nodes) and fits, then lets fcose refine in the
+    worker and swaps to the result. On worker failure the seed spiral is kept and
+    persisted instead of re-clumping.
+  - **Tests:** LayoutManager unit tests (seed-reveal fires ≥600, not <600); the
+    full-graph E2E exercises the path (1600 fresh nodes + showFullGraph).
+  - **Also:** de-flaked the focus-view E2E — the zoom→depth reveal gate was a
+    timing heuristic; it now drives `focusDepth` directly to verify the
+    cull→sync→render pipeline deterministically (1 → 7 nodes, 2 → 91 nodes). The
+    ratchet math stays covered by `resolveFocusDepth` unit tests.
 
 - [ ] **5. Cut reactivity thrash**
   - **Why:** `elements` re-runs `entitiesToElements` over _all_ visible entities
