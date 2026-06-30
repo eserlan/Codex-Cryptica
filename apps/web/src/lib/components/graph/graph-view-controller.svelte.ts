@@ -7,10 +7,15 @@ import {
   GraphImageManager,
   setupGraphEvents,
   syncGraphElements,
+  applyLargeGraphRenderHints,
   type LayoutRequest,
 } from "graph-engine";
 import { isTemporalMetadataEqual } from "$lib/utils/comparison";
-import type { graph as graphStore } from "$lib/stores/graph.svelte";
+import {
+  MIN_FOCUS_DEPTH,
+  MAX_FOCUS_DEPTH,
+  type graph as graphStore,
+} from "$lib/stores/graph.svelte";
 import type { vault as vaultStore } from "$lib/stores/vault.svelte";
 import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
 import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
@@ -25,6 +30,31 @@ import {
 import type { LocalEntity } from "$lib/stores/vault/types";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
+
+/** Each `FOCUS_ZOOM_STEP_FACTOR`× zoom in/out reveals/hides one more hop. */
+export const FOCUS_ZOOM_STEP_FACTOR = 1.8;
+
+/**
+ * Pure ratchet that maps a zoom change into a focus-view depth change, relative
+ * to the zoom at the last depth change (`zoomMark`). Zooming in past the step
+ * factor reveals one more hop; zooming out hides one. Returns the (possibly
+ * unchanged) depth and the mark to anchor the next step from. Relative rather
+ * than absolute so it composes with whatever zoom an auto-fit lands on.
+ */
+export function resolveFocusDepth(
+  currentDepth: number,
+  zoom: number,
+  zoomMark: number,
+  bounds: { min: number; max: number; stepFactor: number },
+): { depth: number; mark: number } {
+  if (zoom >= zoomMark * bounds.stepFactor && currentDepth < bounds.max) {
+    return { depth: currentDepth + 1, mark: zoom };
+  }
+  if (zoom <= zoomMark / bounds.stepFactor && currentDepth > bounds.min) {
+    return { depth: currentDepth - 1, mark: zoom };
+  }
+  return { depth: currentDepth, mark: zoomMark };
+}
 
 /**
  * Pure viewport-policy resolver — no class state, fully unit-testable.
@@ -81,6 +111,19 @@ export class GraphViewController {
 
   private nodeSelectTimer: number | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
+
+  // Zoom-driven focus depth: the zoom at the last depth change (ratchet anchor),
+  // a debounce timer so we only act on settled zoom, and a one-shot flag set by
+  // programmatic fits so their zoom re-anchors the ratchet instead of changing
+  // depth. lastSyncedFocusDepth lets syncElements detect depth-driven element
+  // churn and preserve the viewport for it.
+  private focusZoomMark = 0;
+  private focusZoomTimer: number | null = null;
+  private focusRebaselineTimer: number | null = null;
+  private suppressFocusZoom = false;
+  private lastSyncedFocusDepth = MIN_FOCUS_DEPTH;
+  private readonly FOCUS_ZOOM_SETTLE_MS = 150;
+  private readonly FOCUS_REBASELINE_MS = 300;
 
   private resizeTimer: number | null = null;
   private lastOrientation: "landscape" | "portrait" | null = null;
@@ -233,6 +276,8 @@ export class GraphViewController {
         },
       });
 
+      instance.on("zoom", this.handleFocusZoom);
+
       this.deps.debugStore.log(
         "[GraphViewController] Init successful, cy initialized",
       );
@@ -284,6 +329,14 @@ export class GraphViewController {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
     }
+    if (this.focusZoomTimer) {
+      clearTimeout(this.focusZoomTimer);
+      this.focusZoomTimer = null;
+    }
+    if (this.focusRebaselineTimer) {
+      clearTimeout(this.focusRebaselineTimer);
+      this.focusRebaselineTimer = null;
+    }
     if (this.slashGuardTimer) {
       clearTimeout(this.slashGuardTimer);
       this.slashGuardTimer = null;
@@ -328,14 +381,25 @@ export class GraphViewController {
     if (!this.layoutManager) return;
 
     const isInitial = req.isInitial ?? false;
-    const viewport = resolveViewport(
-      isInitial,
-      req.reason,
-      req.reseed ?? false,
-      req.hasNewNodes ?? false,
-      req.hasRemovedNodes ?? false,
-      this.deps.graph.stableLayout,
-    );
+    // A caller may pin the camera policy (focus-view reveals pass "preserve" so
+    // a zoom-driven node change doesn't refit and undo the zoom that caused it);
+    // otherwise fall back to the standard policy resolver.
+    const viewport =
+      req.viewport ??
+      resolveViewport(
+        isInitial,
+        req.reason,
+        req.reseed ?? false,
+        req.hasNewNodes ?? false,
+        req.hasRemovedNodes ?? false,
+        this.deps.graph.stableLayout,
+      );
+
+    // A fit moves the camera programmatically — mute the focus-zoom ratchet for
+    // its duration and re-anchor the mark to where the fit lands (in
+    // onLayoutStop), so the fit isn't misread as a user-driven reveal.
+    const isFit = viewport === "fit";
+    if (isFit) this.suppressFocusZoom = true;
 
     await this.layoutManager.apply(
       { ...req, viewport },
@@ -361,6 +425,22 @@ export class GraphViewController {
           this.isLayoutRunning = false;
           if (isInitial) {
             this.loadPhase = "ready";
+          }
+          // Re-enable the ratchet and re-anchor it to the *settled* zoom. A
+          // re-cull can chain fits (cluster → spread) and the slash guard can
+          // re-fit later, so capture the mark on a dedicated timer (which a fast
+          // user zoom can't clear) rather than trusting this stop's transient zoom.
+          if (isFit) {
+            this.suppressFocusZoom = false;
+            if (this.focusRebaselineTimer)
+              clearTimeout(this.focusRebaselineTimer);
+            this.focusRebaselineTimer = window.setTimeout(() => {
+              this.focusRebaselineTimer = null;
+              if (this.cy && !this.cy.destroyed()) {
+                const z = this.cy.zoom();
+                if (z > 0) this.focusZoomMark = z;
+              }
+            }, this.FOCUS_REBASELINE_MS);
           }
         },
         onPositionsUpdated: (updates, meta) => {
@@ -426,6 +506,13 @@ export class GraphViewController {
   // Sync Logic
   syncElements = () => {
     if (this.cy && this.deps.graph.elements) {
+      // When the element set changed because zoom revealed/hid a focus-view hop
+      // (not a real entity edit), keep the user's camera — the depth change was
+      // driven by their zoom, so refitting would fight it.
+      const focusDepthChanged =
+        this.deps.graph.focusDepth !== this.lastSyncedFocusDepth;
+      this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
+
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
         vaultStatus: this.deps.vault.status,
@@ -434,13 +521,78 @@ export class GraphViewController {
         activeLabels: this.deps.graph.activeLabels,
         labelFilterMode: this.deps.graph.labelFilterMode,
         activeCategories: this.deps.graph.activeCategories,
+        skipRenderedWeightSync:
+          this.deps.graph.perfStylingActive &&
+          !this.deps.graph.timelineMode &&
+          this.deps.graph.activeLabels.size === 0 &&
+          this.deps.graph.activeCategories.size === 0,
         onFirstElements: () => {
           this.loadPhase = "elements";
         },
         onLayoutUpdate: (req) => {
+          if (focusDepthChanged) req.viewport = "preserve";
           this.applyCurrentLayout(req);
         },
       });
+    }
+  };
+
+  /**
+   * Debounced zoom handler driving the focus-view depth. Cytoscape fires "zoom"
+   * continuously (and for programmatic fits), so we wait for the zoom to settle
+   * before deciding, and skip while the graph isn't in focus view.
+   */
+  private handleFocusZoom = () => this.scheduleFocusSettle();
+
+  private scheduleFocusSettle = () => {
+    if (this.focusZoomTimer) clearTimeout(this.focusZoomTimer);
+    this.focusZoomTimer = window.setTimeout(
+      this.settleFocusZoom,
+      this.FOCUS_ZOOM_SETTLE_MS,
+    );
+  };
+
+  private settleFocusZoom = () => {
+    this.focusZoomTimer = null;
+    const cy = this.cy;
+    if (!cy || cy.destroyed() || !this.deps.graph.focusViewActive) return;
+    // Ignore zoom while a programmatic fit is in flight.
+    if (this.suppressFocusZoom) return;
+
+    const zoom = cy.zoom();
+    // First observation just anchors the ratchet (fits re-anchor it separately
+    // via the dedicated rebaseline timer in onLayoutStop).
+    if (this.focusZoomMark === 0) {
+      this.focusZoomMark = zoom;
+      return;
+    }
+
+    const { depth, mark } = resolveFocusDepth(
+      this.deps.graph.focusDepth,
+      zoom,
+      this.focusZoomMark,
+      {
+        min: MIN_FOCUS_DEPTH,
+        max: MAX_FOCUS_DEPTH,
+        stepFactor: FOCUS_ZOOM_STEP_FACTOR,
+      },
+    );
+    this.focusZoomMark = mark;
+    if (depth !== this.deps.graph.focusDepth) {
+      this.deps.graph.focusDepth = depth;
+    }
+  };
+
+  /**
+   * Re-applies the renderer-level large-graph hints (hideEdgesOnViewport,
+   * motionBlur) whenever the graph crosses the perf-mode threshold. cy is
+   * constructed while the vault is still empty, so these can't be set correctly
+   * at init time — they have to be patched onto the live renderer once entities
+   * have streamed in and `isLargeGraph` settles.
+   */
+  syncRenderHints = () => {
+    if (this.cy) {
+      applyLargeGraphRenderHints(this.cy, this.deps.graph.isLargeGraph);
     }
   };
 
@@ -448,7 +600,8 @@ export class GraphViewController {
     if (this.cy && this.deps.graph.elements && this.imageManager) {
       untrack(() => {
         this.imageManager!.sync({
-          showImages: this.deps.graph.showImages,
+          showImages:
+            this.deps.graph.showImages && !this.deps.graph.perfStylingActive,
           resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
           releaseImageUrl: (path: string) =>
             this.deps.vault.releaseImageUrl(path),

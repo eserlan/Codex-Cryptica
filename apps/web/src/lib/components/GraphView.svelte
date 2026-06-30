@@ -112,6 +112,7 @@
       graph.showImages,
       graph.timelineMode,
       graph.showLabels,
+      graph.perfStylingActive,
     ),
   );
 
@@ -412,8 +413,18 @@
   $effect(() => {
     void graph.elements;
     void graph.showImages;
+    void graph.perfStylingActive;
     void controller.cy;
     untrack(() => controller.syncImages());
+  });
+
+  // Large-graph render hints. cy is built while the vault is still empty, so
+  // the renderer-level perf flags (hideEdgesOnViewport, motionBlur) can't be
+  // set at init — re-apply them on the live renderer once isLargeGraph settles.
+  $effect(() => {
+    void graph.isLargeGraph;
+    void controller.cy;
+    untrack(() => controller.syncRenderHints());
   });
 
   let selectedEntity = $derived(
@@ -533,7 +544,7 @@
         </div>
         <div class="mt-3 flex items-center justify-between">
           <div class="flex gap-1">
-            {#each COACH_MARKS as _, i}
+            {#each COACH_MARKS as _, i (`coach-mark-${i}`)}
               <div
                 class="h-1.5 w-1.5 rounded-full transition-colors {i ===
                 coachStep
