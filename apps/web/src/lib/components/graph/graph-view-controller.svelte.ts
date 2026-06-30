@@ -31,13 +31,13 @@ import type { LocalEntity } from "$lib/stores/vault/types";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
-/** Each `FOCUS_ZOOM_STEP_FACTOR`× zoom in/out reveals/hides one more hop. */
+/** Each `FOCUS_ZOOM_STEP_FACTOR`x zoom in/out changes one focus detail level. */
 export const FOCUS_ZOOM_STEP_FACTOR = 1.8;
 
 /**
  * Pure ratchet that maps a zoom change into a focus-view depth change, relative
  * to the zoom at the last depth change (`zoomMark`). Zooming in past the step
- * factor reveals one more hop; zooming out hides one. Returns the (possibly
+ * factor reveals more detail; zooming out hides detail. Returns the (possibly
  * unchanged) depth and the mark to anchor the next step from. Relative rather
  * than absolute so it composes with whatever zoom an auto-fit lands on.
  */
@@ -506,7 +506,7 @@ export class GraphViewController {
   // Sync Logic
   syncElements = () => {
     if (this.cy && this.deps.graph.elements) {
-      // When the element set changed because zoom revealed/hid a focus-view hop
+      // When the element set changed because zoom changed the focus detail level
       // (not a real entity edit), keep the user's camera — the depth change was
       // driven by their zoom, so refitting would fight it.
       const focusDepthChanged =

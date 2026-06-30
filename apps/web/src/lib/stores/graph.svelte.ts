@@ -12,9 +12,13 @@ import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
-/** Focus-view neighborhood depth bounds (hops from the focal node). */
+// Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
+// literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
+// nodes, so the default (level 1) lands around 150 — enough for a real overview,
+// not just the focal + its handful of direct links — and zooming in doubles it.
 export const MIN_FOCUS_DEPTH = 1;
 export const MAX_FOCUS_DEPTH = 6;
+export const FOCUS_BASE_COUNT = 150;
 
 export class GraphStore {
   // Dependencies
@@ -51,13 +55,13 @@ export class GraphStore {
   activeCategories = $state(new Set<string>());
 
   // ── Large-vault focus view ──────────────────────────────────────────────
-  // For large vaults we cull the graph to the focus node's N-hop neighborhood
-  // by default (huge render win). The user can opt out per session with
-  // "Show full graph", which renders everything with the cheap perf styling.
+  // For large vaults we cull the graph to a target-sized focus set by default
+  // (huge render win). The user can opt out per session with "Show full graph",
+  // which renders everything with the cheap perf styling.
   showFullGraph = $state(false);
-  // How many hops out from the focal node the focus view renders. Driven by
-  // zoom (zoom in → deeper) by the controller; starts shallow on the
-  // zoomed-out overview. See MIN/MAX_FOCUS_DEPTH.
+  // How much detail the focus view renders. Driven by zoom (zoom in -> more
+  // detail) by the controller; starts with a bounded overview. See
+  // MIN/MAX_FOCUS_DEPTH.
   focusDepth = $state(MIN_FOCUS_DEPTH);
 
   // Vault scale, measured from the raw entity/connection counts — deliberately
@@ -73,15 +77,17 @@ export class GraphStore {
     return { nodeCount: count, edgeCount };
   });
 
-  isLargeGraph = $derived.by(() =>
-    isLargeGraphSize(
+  get isLargeGraph() {
+    return isLargeGraphSize(
       this.fullGraphSize.nodeCount,
       this.fullGraphSize.edgeCount,
-    ),
-  );
+    );
+  }
 
-  /** True when the graph is being culled to the focus node's neighborhood. */
-  focusViewActive = $derived.by(() => this.isLargeGraph && !this.showFullGraph);
+  /** True when the graph is being culled to a target-sized focus set. */
+  get focusViewActive() {
+    return this.isLargeGraph && !this.showFullGraph;
+  }
 
   elements = $derived.by(() => {
     const allEntities = this.vault.allEntities;
@@ -105,17 +111,18 @@ export class GraphStore {
       }
     }
 
-    // Focus-view culling: render only the focal node's N-hop neighborhood.
+    // Focus-view culling: render a target-sized set around the focal node.
     // Built from `renderIds` via the entities record (O(rendered)) rather than
     // an O(N) Map build + O(N) filter, so a content edit in a large vault
     // doesn't re-walk all 1600 entities to produce the same small set.
     if (this.focusViewActive && visibleEntities.length > 0) {
       const focal = this.resolveFocalId(visibleEntities, validIds);
       if (focal) {
-        const renderIds = this.computeNeighborhoodIds(
+        const renderIds = this.computeFocusRenderIds(
           focal,
           this.focusDepth,
           validIds,
+          visibleEntities,
         );
         if (renderIds.size !== validIds.size) {
           const byId = this.vault.entities;
@@ -180,9 +187,9 @@ export class GraphStore {
   // recompute) keys off the *rendered* element count, not the vault size — so a
   // focus view of ~40 nodes keeps full detail while "Show full graph" on a big
   // vault still gets the cheap styling.
-  perfStylingActive = $derived.by(() =>
-    isLargeGraphSize(this.stats.nodeCount, this.stats.edgeCount),
-  );
+  get perfStylingActive() {
+    return isLargeGraphSize(this.stats.nodeCount, this.stats.edgeCount);
+  }
 
   /**
    * Picks the focus node for culling: the selected entity when it's visible,
@@ -216,16 +223,31 @@ export class GraphStore {
     return bestId;
   }
 
+  private getFocusTargetCount(depth: number, visibleCount: number): number {
+    const finiteDepth = Number.isFinite(depth) ? depth : MIN_FOCUS_DEPTH;
+    const level = Math.min(
+      MAX_FOCUS_DEPTH,
+      Math.max(MIN_FOCUS_DEPTH, Math.trunc(finiteDepth)),
+    );
+    return Math.min(
+      visibleCount,
+      FOCUS_BASE_COUNT * 2 ** (level - MIN_FOCUS_DEPTH),
+    );
+  }
+
   /**
-   * Breadth-first collection of every visible node within `depth` undirected
-   * hops of `focalId` (following both outbound connections and inbound ones).
-   * Only touches the focal neighborhood, not the whole graph.
+   * Breadth-first collection around `focalId`, capped by the detail level's
+   * target count. If the connected focus neighborhood is too sparse, fill the
+   * remaining slots with visible high-degree nodes so large vaults do not open
+   * on a nearly empty canvas.
    */
-  private computeNeighborhoodIds(
+  private computeFocusRenderIds(
     focalId: string,
     depth: number,
     validIds: Set<string>,
+    visibleEntities: Entity[],
   ): Set<string> {
+    const targetCount = this.getFocusTargetCount(depth, validIds.size);
     const result = new Set<string>([focalId]);
     let frontier: string[] = [focalId];
     const inbound = this.vault.inboundConnections ?? {};
@@ -240,6 +262,7 @@ export class GraphStore {
             const target = connections[j].target;
             if (validIds.has(target) && !result.has(target)) {
               result.add(target);
+              if (result.size >= targetCount) return result;
               next.push(target);
             }
           }
@@ -250,6 +273,7 @@ export class GraphStore {
             const source = ins[j].sourceId;
             if (validIds.has(source) && !result.has(source)) {
               result.add(source);
+              if (result.size >= targetCount) return result;
               next.push(source);
             }
           }
@@ -257,7 +281,37 @@ export class GraphStore {
       }
       frontier = next;
     }
+    this.fillFocusRenderIds(result, visibleEntities, validIds, targetCount);
     return result;
+  }
+
+  private fillFocusRenderIds(
+    result: Set<string>,
+    visibleEntities: Entity[],
+    validIds: Set<string>,
+    targetCount: number,
+  ) {
+    if (result.size >= targetCount) return;
+
+    const inbound = this.vault.inboundConnections ?? {};
+    const candidates: { id: string; degree: number; index: number }[] = [];
+    for (let i = 0; i < visibleEntities.length; i++) {
+      const entity = visibleEntities[i];
+      if (result.has(entity.id)) continue;
+      let degree = inbound[entity.id]?.length ?? 0;
+      const connections = entity.connections;
+      if (connections) {
+        for (let j = 0; j < connections.length; j++) {
+          if (validIds.has(connections[j].target)) degree++;
+        }
+      }
+      candidates.push({ id: entity.id, degree, index: i });
+    }
+
+    candidates.sort((a, b) => b.degree - a.degree || a.index - b.index);
+    for (let i = 0; i < candidates.length && result.size < targetCount; i++) {
+      result.add(candidates[i].id);
+    }
   }
 
   /**

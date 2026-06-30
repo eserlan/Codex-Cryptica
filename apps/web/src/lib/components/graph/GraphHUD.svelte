@@ -28,7 +28,7 @@
   const isLargeGraph = $derived(graph.isLargeGraph);
   const focusViewActive = $derived(graph.focusViewActive);
   const focusViewMessage = $derived(
-    `Focus view: showing ${graph.stats.nodeCount} of ${graph.fullGraphSize.nodeCount} entities (${graph.focusDepth} hops from focus).`,
+    `Focus view: showing ${graph.stats.nodeCount} of ${graph.fullGraphSize.nodeCount} entities (detail level ${graph.focusDepth}).`,
   );
   const fullGraphMessage = $derived(
     `Full graph performance mode: ${graph.fullGraphSize.nodeCount} entities and ${graph.fullGraphSize.edgeCount} connections.`,

@@ -461,13 +461,13 @@ describe("GraphViewController", () => {
 describe("resolveFocusDepth", () => {
   const bounds = { min: 1, max: 6, stepFactor: FOCUS_ZOOM_STEP_FACTOR };
 
-  it("reveals a hop when zoomed in past the step factor", () => {
+  it("reveals more detail when zoomed in past the step factor", () => {
     const result = resolveFocusDepth(2, 1 * FOCUS_ZOOM_STEP_FACTOR, 1, bounds);
     expect(result.depth).toBe(3);
     expect(result.mark).toBe(FOCUS_ZOOM_STEP_FACTOR);
   });
 
-  it("hides a hop when zoomed out past the step factor", () => {
+  it("hides detail when zoomed out past the step factor", () => {
     const result = resolveFocusDepth(3, 1 / FOCUS_ZOOM_STEP_FACTOR, 1, bounds);
     expect(result.depth).toBe(2);
     expect(result.mark).toBe(1 / FOCUS_ZOOM_STEP_FACTOR);

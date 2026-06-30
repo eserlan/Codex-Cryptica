@@ -110,7 +110,7 @@ describe("GraphHUD", () => {
 
     expect(
       screen.getByText(
-        "Focus view: showing 38 of 1600 entities (2 hops from focus).",
+        "Focus view: showing 38 of 1600 entities (detail level 2).",
       ),
     ).toBeTruthy();
     expect(
