@@ -6,3 +6,4 @@ export * from "./parsers/json";
 export * from "./oracle/analyzer";
 export * from "./persistence";
 export * from "./utils";
+export * from "./cc";
