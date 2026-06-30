@@ -18,6 +18,46 @@ export interface GraphOptions {
   headless?: boolean;
 }
 
+export const LARGE_GRAPH_NODE_THRESHOLD = 700;
+export const LARGE_GRAPH_EDGE_THRESHOLD = 1800;
+
+/** Single source of truth for the large-graph perf-mode threshold. */
+export const isLargeGraphSize = (nodeCount: number, edgeCount: number) =>
+  nodeCount > LARGE_GRAPH_NODE_THRESHOLD ||
+  edgeCount > LARGE_GRAPH_EDGE_THRESHOLD;
+
+/**
+ * Re-applies the large-graph viewport render hints to a *live* cy instance.
+ *
+ * `hideEdgesOnViewport` and `motionBlur` are renderer-level flags that
+ * cytoscape only copies into the renderer once, at construction. On the normal
+ * async-load path the graph is still empty when `initGraph` runs (the vault's
+ * active id is set before its entities stream in), so those flags init to
+ * `false` and never turn on as the graph grows large. The per-frame render path
+ * reads the renderer properties directly, so patching them here makes the
+ * optimisations actually engage without recreating the instance.
+ *
+ * No-op for headless graphs (no canvas renderer to tune). Returns whether the
+ * hints were applied, for testability.
+ */
+export const applyLargeGraphRenderHints = (
+  cy: Core,
+  isLarge: boolean,
+): boolean => {
+  const withRenderer = cy as unknown as {
+    renderer?: () => Record<string, unknown> | null | undefined;
+    container?: () => unknown;
+  };
+  // Headless graphs use a null renderer that never paints — nothing to tune.
+  if (withRenderer.container?.() == null) return false;
+  const renderer = withRenderer.renderer?.();
+  if (!renderer) return false;
+  renderer.hideEdgesOnViewport = isLarge;
+  renderer.motionBlurEnabled = isLarge;
+  renderer.motionBlur = isLarge;
+  return true;
+};
+
 // Cache the imported modules so we don't re-register plugins
 let corePromise: Promise<any> | null = null;
 
@@ -47,6 +87,10 @@ export const initGraph = async (options: GraphOptions) => {
   const nodeCount = (options.elements || []).filter(
     (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),
   ).length;
+  const edgeCount = (options.elements || []).filter(
+    (el) => el.group === "edges" || (!el.group && el.data?.source),
+  ).length;
+  const isLargeGraph = isLargeGraphSize(nodeCount, edgeCount);
 
   return (cytoscape as unknown as (opt: any) => Core)({
     container: options.container,
@@ -77,7 +121,10 @@ export const initGraph = async (options: GraphOptions) => {
     },
     // Rendering Optimizations
     hideLabelsOnViewport: true,
+    hideEdgesOnViewport: isLargeGraph,
     textureOnViewport: true,
+    motionBlur: isLargeGraph,
+    motionBlurOpacity: 0.08,
     // Cap DPR at 1.5 — on 2× retina "auto" rasterises at 4× pixel area,
     // which dominates GPU cost for large graphs. 1.5 is imperceptible to
     // users while halving rasterisation work on HiDPI displays.

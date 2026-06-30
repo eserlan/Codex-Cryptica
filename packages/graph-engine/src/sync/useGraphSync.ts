@@ -16,6 +16,7 @@ export interface SyncOptions {
   activeLabels?: Set<string>;
   labelFilterMode?: "AND" | "OR";
   activeCategories?: Set<string>;
+  skipRenderedWeightSync?: boolean;
   onFirstElements?: () => void;
   onLayoutUpdate?: (req: LayoutRequest) => void;
 }
@@ -342,7 +343,9 @@ function syncDataAndFilters(
       applyFilterClasses(node, el, ctx);
     });
 
-    syncRenderedWeights(elementMap, elements);
+    if (!options.skipRenderedWeightSync) {
+      syncRenderedWeights(elementMap, elements);
+    }
   });
 }
 
