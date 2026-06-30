@@ -20,6 +20,12 @@ import {
   handleDeleteVault,
   handleDeleteAsset,
 } from "./publish";
+import {
+  handleDeletePublicListing,
+  handleGetPublicListing,
+  handleListPublicListings,
+  handlePutPublicListing,
+} from "./directory";
 
 interface Env {
   GEMINI_API_KEY: string;
@@ -60,6 +66,17 @@ export default {
 
     const url = new URL(request.url);
     const pathname = url.pathname;
+
+    if (pathname === "/api/directory/listings") {
+      if (request.method === "GET") {
+        return handleListPublicListings(request, env);
+      }
+
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: getCorsHeaders(request.headers, env),
+      });
+    }
 
     // Route R2 snapshot publishing endpoints
     if (
@@ -106,7 +123,18 @@ export default {
       }
 
       if (parts.length === 5) {
-        // /api/published/:publishId/bundle or manifest
+        // /api/published/:publishId/bundle, manifest, or listing
+        if (parts[4] === "listing") {
+          if (request.method === "GET") {
+            return handleGetPublicListing(request, env, parts[3]);
+          }
+          if (request.method === "PUT") {
+            return handlePutPublicListing(request, env, parts[3]);
+          }
+          if (request.method === "DELETE") {
+            return handleDeletePublicListing(request, env, parts[3]);
+          }
+        }
         if (request.method === "GET") {
           if (parts[4] === "bundle") {
             return handleGetBundle(request, env, parts[3]);

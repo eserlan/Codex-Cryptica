@@ -21,6 +21,12 @@
 - Q: How should the unpublish action be confirmed by the GM? → A: Option A: Warning Confirmation Modal: Show a warning modal explaining that players will lose access before executing unpublish.
 - Q: How should the guest session behave when a user navigates away from the initial guest URL to view entities or maps? → A: Option A: Persistent Session State: The guest vault and `isGuestMode` flag remain active in memory while navigating within the app. The session is explicitly terminated when navigating back to the root `/guest` landing page.
 
+### Scope Boundary: Sharing vs. Public Listing
+
+Published guest snapshots are **unlisted by default**. Publishing a read-only guest snapshot creates a link-access world that can be shared with a private group, but it does not make the world discoverable in any public gallery, directory, or search experience.
+
+Public discovery is a separate opt-in consent level covered by [`specs/139-public-world-directory/spec.md`](../139-public-world-directory/spec.md). That future listing feature may point to a guest snapshot created by this feature, but it must not be enabled automatically by publishing, updating, copying, or visiting a guest snapshot link.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Publish Guest Snapshot (Priority: P1)
@@ -142,6 +148,7 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
 - **FR-023**: The unpublish action MUST trigger a confirmation modal warning the host that the snapshot will be permanently deleted from the cloud and players will lose access before sending the delete request to the server.
 - **FR-024**: The system MUST persist the active guest session (`isGuestMode` and guest vault data) in memory across navigations to other app routes (e.g., entity detail pages) so the guest can browse seamlessly.
 - **FR-025**: The system MUST terminate the guest session, clear the in-memory guest vault data, and restore the local host vault state and theme when the user navigates back to the root `/guest` landing page.
+- **FR-026**: Published guest snapshots MUST remain unlisted by default. The system MUST NOT add a snapshot to any public directory, gallery, or public search surface unless a separate public-listing consent flow is explicitly completed.
 
 ### Key Entities _(include if feature involves data)_
 

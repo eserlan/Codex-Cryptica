@@ -195,6 +195,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.",
     icon: "icon-[lucide--download-cloud]",
   },
+  "public-world-directory": {
+    id: "public-world-directory",
+    title: "Public World Directory",
+    content:
+      "Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link.",
+    icon: "icon-[lucide--globe]",
+  },
   "total-privacy": {
     id: "total-privacy",
     title: "Total Privacy",
