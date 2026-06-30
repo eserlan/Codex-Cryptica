@@ -85,6 +85,7 @@ describe("GraphStore", () => {
 
     // Reset mocks
     (vault as any).allEntities = [];
+    (vault as any).entities = {};
     (vault as any).isGuest = false;
     (vault as any).activeVaultId = "vault-1";
     (vault as any).selectedEntityId = null;
@@ -133,6 +134,9 @@ describe("GraphStore", () => {
             : [],
     })) as any[];
     (vault as any).allEntities = mockEntities;
+    (vault as any).entities = Object.fromEntries(
+      mockEntities.map((e) => [e.id, e]),
+    );
     (vault as any).selectedEntityId = "node-0";
     (GraphTransformer.entitiesToElements as any).mockImplementation(
       (entities: any[]) =>
@@ -169,6 +173,9 @@ describe("GraphStore", () => {
           : [],
     })) as any[];
     (vault as any).allEntities = mockEntities;
+    (vault as any).entities = Object.fromEntries(
+      mockEntities.map((e) => [e.id, e]),
+    );
     (vault as any).selectedEntityId = null;
     (GraphTransformer.entitiesToElements as any).mockImplementation(
       (entities: any[]) =>

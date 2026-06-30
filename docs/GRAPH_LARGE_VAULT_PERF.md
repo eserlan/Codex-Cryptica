@@ -105,12 +105,31 @@ Ranked by impact ÷ effort. Check off as we land each one.
     cull→sync→render pipeline deterministically (1 → 7 nodes, 2 → 91 nodes). The
     ratchet math stays covered by `resolveFocusDepth` unit tests.
 
-- [ ] **5. Cut reactivity thrash**
-  - **Why:** `elements` re-runs `entitiesToElements` over _all_ visible entities
-    on _any_ `vault.allEntities` change, so editing one entity in a 1600-vault
-    rebuilds the whole array, re-derives `stats`/`isLargeGraph`, and re-diffs
-    everything in `syncGraphElements`. This is the real-world editing pain and is
-    uncovered by the pan-only perf test.
+- [~] **5. Cut reactivity thrash** (measured; quick win done, deep fix deferred)
+  - **Why:** `elements` re-runs over _all_ visible entities on _any_
+    `vault.allEntities` change, so editing one entity in a 1600-vault re-walks
+    everything, re-derives `stats`/`fullGraphSize`, and re-diffs in
+    `syncGraphElements`. Real-world editing pain, uncovered by the pan-only spec.
+  - **Measured (content-only edit, 40 iters, 1600-vault):**
+    focus view (7 rendered) **~8.6 ms/edit**; full graph (1600 rendered)
+    **~76–108 ms/edit**. The full-graph cost is the `entitiesToElements` transform
+    of 1600 nodes + 9000 edges (opt-in path). The focus cost is the O(N) reactive
+    work that runs regardless of culling.
+  - **Quick win done:** the focus cull branch built an O(N) `byId` Map + an O(N)
+    `filter` to extract ~7 entities; replaced with O(rendered) lookups via the
+    `vault.entities` record. Fewer allocations / less GC on sustained typing —
+    but it did **not** move the per-edit number, because the dominant cost is the
+    O(N) reactive-proxy scan of `allEntities` (the visibility pass + `fullGraphSize`
+    edge count), which re-runs on every edit even when nothing graph-relevant
+    changed (`isEntityVisible` itself is a trivial early-return in non-shared mode).
+  - **Deep fix (deferred, needs buy-in):** stop re-deriving the graph on
+    content-only edits. Either (a) mutate entity fields in place instead of
+    replacing `allEntities[idx]`, so Svelte's field-level tracking skips the graph
+    deriveds (changes the core vault mutation path — high blast radius), or (b) a
+    `graphStructureVersion` counter bumped only on graph-relevant changes (must
+    classify every edit — title/labels/type/coords/image/connections/add/remove —
+    correctly, or the graph goes stale). Both are invasive and risky enough to
+    warrant their own tested change, not a drive-by.
 
 - [~] **6. Strengthen the perf test** (partially done)
   - **Why:** `maxViewportFrameMs < 500` is <2fps — it only catches catastrophe,

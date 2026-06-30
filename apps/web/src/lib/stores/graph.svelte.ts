@@ -106,33 +106,30 @@ export class GraphStore {
     }
 
     // Focus-view culling: render only the focal node's N-hop neighborhood.
-    let renderEntities = visibleEntities;
-    let renderIds = validIds;
+    // Built from `renderIds` via the entities record (O(rendered)) rather than
+    // an O(N) Map build + O(N) filter, so a content edit in a large vault
+    // doesn't re-walk all 1600 entities to produce the same small set.
     if (this.focusViewActive && visibleEntities.length > 0) {
-      const byId = new Map<string, Entity>();
-      for (let i = 0; i < visibleEntities.length; i++) {
-        byId.set(visibleEntities[i].id, visibleEntities[i]);
-      }
       const focal = this.resolveFocalId(visibleEntities, validIds);
       if (focal) {
-        renderIds = this.computeNeighborhoodIds(
+        const renderIds = this.computeNeighborhoodIds(
           focal,
           this.focusDepth,
-          byId,
           validIds,
         );
         if (renderIds.size !== validIds.size) {
-          renderEntities = visibleEntities.filter((e) => renderIds.has(e.id));
+          const byId = this.vault.entities;
+          const renderEntities: Entity[] = [];
+          for (const id of renderIds) {
+            const entity = byId[id];
+            if (entity) renderEntities.push(entity);
+          }
+          return GraphTransformer.entitiesToElements(renderEntities, renderIds);
         }
       }
     }
 
-    const entityElements = GraphTransformer.entitiesToElements(
-      renderEntities,
-      renderIds,
-    );
-
-    return entityElements;
+    return GraphTransformer.entitiesToElements(visibleEntities, validIds);
   });
 
   fitRequest = $state(0);
@@ -227,17 +224,17 @@ export class GraphStore {
   private computeNeighborhoodIds(
     focalId: string,
     depth: number,
-    byId: Map<string, Entity>,
     validIds: Set<string>,
   ): Set<string> {
     const result = new Set<string>([focalId]);
     let frontier: string[] = [focalId];
     const inbound = this.vault.inboundConnections ?? {};
+    const entities = this.vault.entities;
 
     for (let d = 0; d < depth && frontier.length > 0; d++) {
       const next: string[] = [];
       for (const id of frontier) {
-        const connections = byId.get(id)?.connections;
+        const connections = entities[id]?.connections;
         if (connections) {
           for (let j = 0; j < connections.length; j++) {
             const target = connections[j].target;
