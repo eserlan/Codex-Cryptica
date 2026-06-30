@@ -444,4 +444,36 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     );
     expect(new Set(keys).size).toBe(keys.length);
   });
+
+  it("ignores clone_of connections entirely", () => {
+    const cloneConn = {
+      from: "Faction A",
+      fromid: 100,
+      relationship: "clone_of",
+      to: "Faction B",
+      toid: 200,
+    };
+    const campaign = {
+      conns: [cloneConn],
+      pages: [
+        {
+          concept: "Group",
+          id: 100,
+          isGoldStar: false,
+          page: { id: 100, name: "Faction A", concept: "Group" },
+          uri: "/campaign/1/group/100",
+        },
+        {
+          concept: "Group",
+          id: 200,
+          isGoldStar: false,
+          page: { id: 200, name: "Faction B", concept: "Group" },
+          uri: "/campaign/1/group/200",
+        },
+      ],
+    };
+
+    const pkg = parseScabardExport(campaign);
+    expect(pkg.relationshipDrafts.length).toBe(0);
+  });
 });

@@ -383,6 +383,7 @@ export function parseScabardExport(
         "PARENT_FOLDER",
         "ATTRIBUTE_OF",
         "ALIGNMENT_OF",
+        "CLONE_OF",
       ].includes(relationshipTypeUpper)
     ) {
       skippedStructuralConnectionCount++;
