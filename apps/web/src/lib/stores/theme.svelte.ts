@@ -319,7 +319,12 @@ export class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || this.sessionModeStore.isDemoMode || this.sessionModeStore.isGuestMode) return;
+    if (
+      !browser ||
+      this.sessionModeStore.isDemoMode ||
+      this.sessionModeStore.isGuestMode
+    )
+      return;
 
     this.previewThemeId = null; // Clear any preview on vault switch
 
@@ -366,6 +371,27 @@ export class ThemeStore {
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
+    }
+  }
+
+  async hasSavedThemeForVault(vaultId: string): Promise<boolean> {
+    if (
+      !browser ||
+      this.sessionModeStore.isDemoMode ||
+      this.sessionModeStore.isGuestMode
+    ) {
+      return true;
+    }
+
+    try {
+      const opfsTheme = await this.storage.loadFromDisk(vaultId);
+      if (opfsTheme && THEMES[opfsTheme as WorldThemeId]) return true;
+
+      const cachedTheme = await this.storage.loadFromCache(vaultId);
+      return Boolean(cachedTheme && THEMES[cachedTheme as WorldThemeId]);
+    } catch (e) {
+      console.warn("[ThemeStore] Failed to check vault-specific theme", e);
+      return true;
     }
   }
 
