@@ -13,6 +13,9 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildNomadClanPrompt,
+  parseNomadClanResponse,
+  generateNomadClanLocal,
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
@@ -44,6 +47,7 @@ import {
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type NomadClanGeneratorOptions,
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
@@ -68,8 +72,13 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-// Faction + vampire + settlement content data now live in the package (#1351).
-export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
+// Faction + vampire + nomad + settlement content data now live in the package (#1351).
+export {
+  factionConfig,
+  themeIdToLabel,
+  vampireConfig,
+  nomadClanConfig,
+} from "generator-engine";
 export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
@@ -217,6 +226,25 @@ export class DefaultGeneratorEngine {
         return parseVampireResponse(text, resolved);
       },
       () => generateVampireLocal(vampireOptions),
+    );
+  }
+
+  /** Nomad clan generation delegates to the generator-engine package (#1570). */
+  async generateNomadClan(
+    options: NomadClanGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...nomadOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildNomadClanPrompt(
+          nomadOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseNomadClanResponse(text, resolved);
+      },
+      () => generateNomadClanLocal(nomadOptions),
     );
   }
 

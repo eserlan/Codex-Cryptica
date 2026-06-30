@@ -12,6 +12,7 @@
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
   import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
   import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
+  import NomadClanFormFields from "$lib/components/seo/NomadClanFormFields.svelte";
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
@@ -27,6 +28,7 @@
     kingdomConfig,
     nationConfig,
     vampireConfig,
+    nomadClanConfig,
     nameGeneratorConfig,
     pantheonConfig,
     shipConfig,
@@ -49,6 +51,7 @@
     "kingdom",
     "nation",
     "vampire-clan",
+    "nomad-clan",
     "names",
     "fantasy-names",
     "dnd-npc",
@@ -96,6 +99,7 @@
     | "kingdom"
     | "nation"
     | "vampire-clan"
+    | "nomad-clan"
     | "names"
     | "fantasy-names"
     | "dnd-npc"
@@ -326,6 +330,44 @@
         "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
       canonicalPath: "/generators/vampire-clan",
     },
+    "nomad-clan": {
+      pageTitle:
+        "Cyberpunk Nomad Clan Generator | Free RPG Road Faction Tool | Codex Cryptica",
+      metaDescription:
+        "Generate cyberpunk nomad clans with convoy culture, road codes, corporate enemies, and table-ready hooks. Create mobile communities for any near-future or post-apocalyptic campaign.",
+      introTitle: "Cyberpunk Nomad Clan Generator",
+      eyebrow: "Nomad Clan Generator",
+      introText:
+        "Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.",
+      canonicalPath: "/generators/nomad-clan",
+      faqs: [
+        {
+          question: "What does the nomad clan generator create?",
+          answer:
+            "It generates a complete cyberpunk nomad clan with a name, role, territory, convoy composition, clan code, internal crisis, rival faction, notable members, and table-ready GM hooks.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Which RPG systems does it work with?",
+          answer:
+            "The generator is system-agnostic. It works for Cyberpunk Red, Starfinder, GURPS, Neon City Overdrive, or any near-future or post-apocalyptic campaign where mobile communities matter.",
+        },
+        {
+          question: "Can I aim the clan at my current campaign?",
+          answer:
+            "Yes. Add optional campaign context — a city, megacorp, rival clan, or active threat — and the generator will fit the clan to your table rather than producing a generic result.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/generators/faction", label: "Faction generator" },
+        { href: "/generators/npc", label: "RPG NPC generator" },
+        { href: "/generators/settlement", label: "Settlement generator" },
+      ],
+    },
     names: {
       pageTitle:
         "RPG Name Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Names | Codex Cryptica",
@@ -531,6 +573,14 @@
     campaignContext: "",
   });
 
+  let nomadClan = $state({
+    role: nomadClanConfig.roles[0],
+    tone: nomadClanConfig.tones[0],
+    territory: nomadClanConfig.territories[0],
+    conflict: nomadClanConfig.conflicts[0],
+    campaignContext: "",
+  });
+
   let names = $state({
     culture: nameGeneratorConfig.cultures[0],
     gender: nameGeneratorConfig.genders[0],
@@ -709,6 +759,10 @@
       activeTheme = "Vampire / Gothic Noir";
       return;
     }
+    if (slug === "nomad-clan") {
+      activeTheme = "Cyberpunk / Corporate";
+      return;
+    }
     if (slug === "pantheon-generator" || slug === "god-generator") {
       activeTheme = pantheon.genre;
       return;
@@ -774,6 +828,8 @@
       return generatorEngine.generateSocialHub({ ...socialHub, useAI });
     } else if (slug === "vampire-clan") {
       return generatorEngine.generateVampireClan({ ...vampireClan, useAI });
+    } else if (slug === "nomad-clan") {
+      return generatorEngine.generateNomadClan({ ...nomadClan, useAI });
     } else if (slug === "names") {
       return generatorEngine.generateNames({
         ...names,
@@ -896,6 +952,17 @@
         "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power — they avoid both with practised care.",
       lore: "",
       labels: ["rpg-faction", "vampire-clan", "imported-draft"],
+      status: "draft",
+    },
+    "nomad-clan": {
+      type: "faction",
+      title: "Dustborn Convoy",
+      summary:
+        "A fuel-scarce smuggler band running corporate contraband along closed highway corridors.",
+      content:
+        "### Who they are\nDustborn Convoy is a tight-knit smuggler band running the sealed highway corridors between Arcology 7 and the outer settlements. They survive on reputation, route knowledge, and a code that outsiders rarely understand until it is enforced.\n\n### How they survive\nCargo runs, corporate contraband, and repair work at waystations. Nothing moves through their territory without them knowing — or taking a cut.",
+      lore: "",
+      labels: ["rpg-faction", "nomad-clan", "imported-draft"],
       status: "draft",
     },
     names: {
@@ -1236,6 +1303,15 @@
         bind:feedingHabit={vampireClan.feedingHabit}
         bind:weakness={vampireClan.weakness}
         bind:campaignContext={vampireClan.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "nomad-clan"}
+      <NomadClanFormFields
+        bind:role={nomadClan.role}
+        bind:tone={nomadClan.tone}
+        bind:territory={nomadClan.territory}
+        bind:conflict={nomadClan.conflict}
+        bind:campaignContext={nomadClan.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "names"}
