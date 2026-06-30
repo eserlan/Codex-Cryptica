@@ -35,6 +35,7 @@ interface PublicListing {
 - `ownerDisplayName` is optional and must be explicitly approved; omit the field when no public owner display name is approved.
 - The record must not contain write tokens, local vault IDs, internal entity IDs, editable URLs, private notes, hidden relationships, generation prompts, or editor-only metadata.
 - `listingUpdatedAt` changes only when the owner explicitly updates listing metadata or listing status.
+- The saved record must be retrievable for later owner review/editing without recomputing it from current world/profile state.
 
 ## Entity: `ListingDraft`
 

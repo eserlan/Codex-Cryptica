@@ -7,7 +7,7 @@
 
 Implement an opt-in public directory for already-published read-only guest vault snapshots. The directory stores a saved owner-approved `PublicListing` record separate from guest snapshot publishing, exposes browse/search/filter over listing metadata only, and links visitors only to the read-only guest view from `135-guest-vault-r2`.
 
-The implementation extends the existing Cloudflare Worker + R2 publish layer from `135-guest-vault-r2`: listing records live under a separate R2 prefix, use the snapshot write token for owner mutations, and are removed when the underlying snapshot is unpublished. Client UI remains a thin Svelte layer over schema validation and service logic.
+The implementation extends the existing Cloudflare Worker + R2 publish layer from `135-guest-vault-r2`: listing records live under a separate R2 prefix, use the snapshot write token for owner mutations, and are removed when the underlying snapshot is unpublished. Client UI remains a thin Svelte layer over schema validation and service logic, including loading a previously saved listing record for later owner review and edits.
 
 ## Technical Context
 
@@ -67,11 +67,11 @@ apps/workers/oracle-proxy/src/
 ├── publish.ts                            # Delete listing when snapshot is unpublished
 ├── directory.ts                          # Listing CRUD, browse/search/filter over R2 records
 └── __tests__/
-    └── directory.test.ts                 # Worker route, auth, privacy, deletion tests
+    └── directory.test.ts                 # Worker route, auth, privacy, fetch, and deletion tests
 
 apps/web/src/lib/services/publishing/
 ├── PublicDirectoryService.ts             # DI fetch client for owner and public listing APIs
-└── PublicDirectoryService.test.ts
+└── PublicDirectoryService.test.ts        # Enable/update/fetch/delist client behavior
 
 apps/web/src/lib/components/settings/
 └── PublicListingSettings.svelte          # Owner preview, enable/update, delist controls

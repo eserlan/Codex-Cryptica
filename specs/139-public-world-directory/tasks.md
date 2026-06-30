@@ -18,12 +18,12 @@
 
 **Purpose**: Prepare shared files and test harnesses for the directory feature.
 
-- [ ] T001 Review existing guest snapshot publishing route behavior in `apps/workers/oracle-proxy/src/publish.ts`
-- [ ] T002 Review existing publishing client service behavior in `apps/web/src/lib/services/publishing/PublishingService.svelte.ts`
-- [ ] T003 [P] Create empty Worker directory module in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T004 [P] Create empty Worker directory test file in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T005 [P] Create empty public directory client service in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T006 [P] Create empty public directory client service test file in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
+- [x] T001 Review existing guest snapshot publishing route behavior in `apps/workers/oracle-proxy/src/publish.ts`
+- [x] T002 Review existing publishing client service behavior in `apps/web/src/lib/services/publishing/PublishingService.svelte.ts`
+- [x] T003 [P] Create empty Worker directory module in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T004 [P] Create empty Worker directory test file in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T005 [P] Create empty public directory client service in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T006 [P] Create empty public directory client service test file in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
 
 ---
 
@@ -33,12 +33,12 @@
 
 **CRITICAL**: No user story implementation should begin until this phase is complete.
 
-- [ ] T007 [P] Add failing public listing schema tests for valid metadata, missing required fields, overlong fields, zero labels, and extra private fields in `packages/schema/src/publishing.test.ts`
-- [ ] T008 Extend `packages/schema/src/publishing.ts` with ListingDraftSchema, PublicListingSchema, DirectoryQuerySchema, DirectoryResultSchema, DirectoryPageSchema, and exported types
-- [ ] T009 [P] Add failing Worker helper tests for listing object key generation, guest URL generation, cache headers, and safe directory result projection in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T010 Implement listing object key generation, guest URL generation, cache headers, and safe directory result projection helpers in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T011 Wire directory route dispatch for `/api/directory/listings` and `/api/published/{publishId}/listing` in `apps/workers/oracle-proxy/src/index.ts`
-- [ ] T012 Add focused route-not-found and method-not-allowed coverage for new directory routes in `apps/workers/oracle-proxy/src/index.test.ts`
+- [x] T007 [P] Add failing public listing schema tests for valid metadata, missing required fields, overlong fields, zero labels, and extra private fields in `packages/schema/src/publishing.test.ts`
+- [x] T008 Extend `packages/schema/src/publishing.ts` with ListingDraftSchema, PublicListingSchema, DirectoryQuerySchema, DirectoryResultSchema, DirectoryPageSchema, and exported types
+- [x] T009 [P] Add failing Worker helper tests for listing object key generation, guest URL generation, cache headers, and safe directory result projection in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T010 Implement listing object key generation, guest URL generation, cache headers, and safe directory result projection helpers in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T011 Wire directory route dispatch for `/api/directory/listings` and `/api/published/{publishId}/listing` in `apps/workers/oracle-proxy/src/index.ts`
+- [x] T012 Add focused route-not-found and method-not-allowed coverage for new directory routes in `apps/workers/oracle-proxy/src/index.test.ts`
 
 **Checkpoint**: Schemas and route shell exist; story work can begin.
 
@@ -52,17 +52,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T013 [P] [US1] Add failing Worker tests for PUT `/api/published/{publishId}/listing` success, missing snapshot 404, and missing or invalid write token 401 in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T014 [P] [US1] Add failing client service tests for enablePublicListing success and failure responses in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
-- [ ] T015 [P] [US1] Add failing owner UI test for enabling a listing from an active guest snapshot in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
+- [x] T013 [P] [US1] Add failing Worker tests for PUT `/api/published/{publishId}/listing` success, missing snapshot 404, and missing or invalid write token 401 in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T014 [P] [US1] Add failing client service tests for enablePublicListing success and failure responses in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
+- [x] T015 [P] [US1] Add failing owner UI test for enabling a listing from an active guest snapshot in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Implement snapshot existence and write-token authorization checks for listing mutations in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T017 [US1] Implement PUT `/api/published/{publishId}/listing` to save owner-approved PublicListing records in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T018 [US1] Implement enablePublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T019 [US1] Implement owner listing controls component with enable action in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
-- [ ] T020 [US1] Integrate PublicListingSettings into the publishing settings surface in `apps/web/src/lib/components/settings/PublishingSettings.svelte`
+- [x] T016 [US1] Implement snapshot existence and write-token authorization checks for listing mutations in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T017 [US1] Implement PUT `/api/published/{publishId}/listing` to save owner-approved PublicListing records in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T018 [US1] Implement enablePublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T019 [US1] Implement owner listing controls component with enable action in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T020 [US1] Integrate PublicListingSettings into the publishing settings surface in `apps/web/src/lib/components/settings/PublishingSettings.svelte`
 
 **Checkpoint**: User Story 1 is functional and independently testable.
 
@@ -76,15 +76,19 @@
 
 ### Tests for User Story 2
 
-- [ ] T021 [P] [US2] Add failing client service tests for building a saved listing draft that does not auto-mirror later world/profile changes in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
-- [ ] T022 [P] [US2] Add failing component tests for preview rendering, required metadata prompts, and confirmation language in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
+- [x] T021A [P] [US2] Add failing Worker tests for GET `/api/published/{publishId}/listing` success and unlisted 404 in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T021 [P] [US2] Add failing client service tests for building a saved listing draft that does not auto-mirror later world/profile changes in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
+- [x] T021B [P] [US2] Add failing client service tests for fetching an existing saved public listing record for owner review and edit state hydration in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
+- [x] T022 [P] [US2] Add failing component tests for preview rendering, required metadata prompts, and confirmation language in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T023 [US2] Implement listing draft creation and validation helpers in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T024 [US2] Add editable title, description, labels, cover image state, owner display name state, and guest destination preview UI in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
-- [ ] T025 [US2] Add clear public-discoverability confirmation copy before save in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
-- [ ] T026 [US2] Ensure the listing draft remains a saved owner-approved record instead of live-mirroring world or profile changes in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T022A [US2] Implement GET `/api/published/{publishId}/listing` to return the saved public listing record or 404 when unlisted in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T023 [US2] Implement listing draft creation and validation helpers in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T023A [US2] Implement getPublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T024 [US2] Add editable title, description, labels, cover image state, owner display name state, and guest destination preview UI in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T025 [US2] Add clear public-discoverability confirmation copy before save in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T026 [US2] Ensure the listing UI hydrates from the saved public listing record when present and keeps the draft as an owner-approved record instead of live-mirroring world or profile changes in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
 
 **Checkpoint**: User Story 2 is functional and independently testable.
 
@@ -98,17 +102,17 @@
 
 ### Tests for User Story 5
 
-- [ ] T027 [P] [US5] Add failing schema tests that reject writeToken, local vault IDs, internal entity IDs, editable URLs, private notes, hidden relationship details, generation prompts, private metadata, and tag terminology in `packages/schema/src/publishing.test.ts`
-- [ ] T028 [P] [US5] Add failing Worker tests proving private fields are stripped or rejected from listing records and directory results in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T029 [P] [US5] Add failing owner UI tests proving private/editor-only values are absent from preview output in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
+- [x] T027 [P] [US5] Add failing schema tests that reject writeToken, local vault IDs, internal entity IDs, editable URLs, private notes, hidden relationship details, generation prompts, private metadata, and tag terminology in `packages/schema/src/publishing.test.ts`
+- [x] T028 [P] [US5] Add failing Worker tests proving private fields are stripped or rejected from listing records and directory results in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T029 [P] [US5] Add failing owner UI tests proving private/editor-only values are absent from preview output in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T030 [US5] Harden PublicListingSchema with strict unknown-key rejection and labels-only classification constraints in `packages/schema/src/publishing.ts`
-- [ ] T031 [US5] Enforce safe-field projection before R2 writes and before directory responses in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T032 [US5] Validate coverImageAssetId against the published snapshot assetManifest before saving listings in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T033 [US5] Remove private/editor-only source values from preview view-model creation in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T034 [US5] Add safe fallback handling for missing, private, or failed cover images in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T030 [US5] Harden PublicListingSchema with strict unknown-key rejection and labels-only classification constraints in `packages/schema/src/publishing.ts`
+- [x] T031 [US5] Enforce safe-field projection before R2 writes and before directory responses in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T032 [US5] Validate coverImageAssetId against the published snapshot assetManifest before saving listings in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T033 [US5] Remove private/editor-only source values from preview view-model creation in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T034 [US5] Add safe fallback handling for missing, private, or failed cover images in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
 
 **Checkpoint**: User Story 5 is functional and independently testable.
 
@@ -122,16 +126,16 @@
 
 ### Tests for User Story 3
 
-- [ ] T035 [P] [US3] Add failing Worker tests for GET `/api/directory/listings` browse, title/description search, labels filter, pagination limit, deterministic ordering, and cache headers in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T036 [P] [US3] Add failing public route tests for `/worlds` browse/search/filter and read-only guest link navigation in `apps/web/src/routes/(marketing)/worlds/worlds.route.test.ts`
+- [x] T035 [P] [US3] Add failing Worker tests for GET `/api/directory/listings` browse, title/description search, labels filter, pagination limit, deterministic ordering, and cache headers in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T036 [P] [US3] Add failing public route tests for `/worlds` browse/search/filter and read-only guest link navigation in `apps/web/src/routes/(marketing)/worlds/worlds.route.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T037 [US3] Implement GET `/api/directory/listings` browse, search, labels filter, pagination, and newest-updated ordering in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T038 [US3] Add listPublicDirectory method with query serialization in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T039 [US3] Implement `/worlds` route loader for directory queries in `apps/web/src/routes/(marketing)/worlds/+page.ts`
-- [ ] T040 [US3] Implement public directory browse/search/filter UI using Svelte 5 runes, Tailwind semantic tokens, and Iconify icons in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
-- [ ] T041 [US3] Ensure directory result links resolve only to read-only guest routes in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
+- [x] T037 [US3] Implement GET `/api/directory/listings` browse, search, labels filter, pagination, and newest-updated ordering in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T038 [US3] Add listPublicDirectory method with query serialization in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T039 [US3] Implement `/worlds` route loader for directory queries in `apps/web/src/routes/(marketing)/worlds/+page.ts`
+- [x] T040 [US3] Implement public directory browse/search/filter UI using Svelte 5 runes, Tailwind semantic tokens, and Iconify icons in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
+- [x] T041 [US3] Ensure directory result links resolve only to read-only guest routes in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
 
 **Checkpoint**: User Story 3 is functional and independently testable.
 
@@ -145,18 +149,18 @@
 
 ### Tests for User Story 4
 
-- [ ] T042 [P] [US4] Add failing Worker tests for DELETE `/api/published/{publishId}/listing`, guest snapshot preservation, and directory disappearance within cache bounds in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T043 [P] [US4] Add failing Worker tests that unpublishing a guest snapshot deletes `directory/listings/{publishId}.json` in `apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
-- [ ] T044 [P] [US4] Add failing Worker tests that stale listing records are hidden or deleted when the underlying snapshot bundle is unavailable during listing fetch or directory browse in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T045 [P] [US4] Add failing owner UI tests for delist confirmation and guest link preservation copy in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
+- [x] T042 [P] [US4] Add failing Worker tests for DELETE `/api/published/{publishId}/listing`, guest snapshot preservation, and directory disappearance within cache bounds in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T043 [P] [US4] Add failing Worker tests that unpublishing a guest snapshot deletes `directory/listings/{publishId}.json` in `apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
+- [x] T044 [P] [US4] Add failing Worker tests that stale listing records are hidden or deleted when the underlying snapshot bundle is unavailable during listing fetch or directory browse in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T045 [P] [US4] Add failing owner UI tests for delist confirmation and guest link preservation copy in `apps/web/src/lib/components/settings/PublicListingSettings.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T046 [US4] Implement DELETE `/api/published/{publishId}/listing` without deleting the guest snapshot in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T047 [US4] Delete any matching public listing when a snapshot is unpublished in `apps/workers/oracle-proxy/src/publish.ts`
-- [ ] T048 [US4] Hide or delete stale listing records when the underlying snapshot bundle is unavailable during listing fetch or directory browse in `apps/workers/oracle-proxy/src/directory.ts`
-- [ ] T049 [US4] Implement disablePublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
-- [ ] T050 [US4] Add delist action, confirmation copy, and post-delisting state in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T046 [US4] Implement DELETE `/api/published/{publishId}/listing` without deleting the guest snapshot in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T047 [US4] Delete any matching public listing when a snapshot is unpublished in `apps/workers/oracle-proxy/src/publish.ts`
+- [x] T048 [US4] Hide or delete stale listing records when the underlying snapshot bundle is unavailable during listing fetch or directory browse in `apps/workers/oracle-proxy/src/directory.ts`
+- [x] T049 [US4] Implement disablePublicListing in `apps/web/src/lib/services/publishing/PublicDirectoryService.ts`
+- [x] T050 [US4] Add delist action, confirmation copy, and post-delisting state in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
 
 **Checkpoint**: User Story 4 is functional and independently testable.
 
@@ -166,17 +170,17 @@
 
 **Purpose**: Final validation, documentation, and cleanup across all stories.
 
-- [ ] T051 [P] Add user-facing help content explaining "share by link" versus "list publicly" in `apps/web/src/lib/config/help-content.ts`
-- [ ] T052 [P] Add public directory manual verification notes to `specs/139-public-world-directory/quickstart.md`
-- [ ] T053 Add Worker performance fixture coverage for browse/search over 1,000 listing records returning within the planned 500ms target in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
-- [ ] T054 Add client performance coverage for listing draft preview creation within the planned 200ms target in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
-- [ ] T055 Add manual copy validation checklist for distinguishing "share by link" from "list publicly" in `specs/139-public-world-directory/quickstart.md`
-- [ ] T056 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
-- [ ] T057 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
-- [ ] T058 Run focused schema tests with `bun test packages/schema/src/publishing.test.ts`
-- [ ] T059 Run focused Worker tests with `bun test apps/workers/oracle-proxy/src/__tests__/directory.test.ts apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
-- [ ] T060 Run focused web service and route tests with `bun test apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts apps/web/src/lib/components/settings/PublicListingSettings.test.ts apps/web/src/routes/(marketing)/worlds/worlds.route.test.ts`
-- [ ] T061 Run full validation with `bun run lint` and `bun run test`
+- [x] T051 [P] Add user-facing help content explaining "share by link" versus "list publicly" in `apps/web/src/lib/config/help-content.ts`
+- [x] T052 [P] Add public directory manual verification notes to `specs/139-public-world-directory/quickstart.md`
+- [x] T053 Add Worker performance fixture coverage for browse/search over 1,000 listing records returning within the planned 500ms target in `apps/workers/oracle-proxy/src/__tests__/directory.test.ts`
+- [x] T054 Add client performance coverage for listing draft preview creation within the planned 200ms target in `apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts`
+- [x] T055 Add manual copy validation checklist for distinguishing "share by link" from "list publicly" in `specs/139-public-world-directory/quickstart.md`
+- [x] T056 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/lib/components/settings/PublicListingSettings.svelte`
+- [x] T057 [P] Verify no user-facing "tags" terminology was introduced in `apps/web/src/routes/(marketing)/worlds/+page.svelte`
+- [x] T058 Run focused schema tests with `bun test packages/schema/src/publishing.test.ts`
+- [x] T059 Run focused Worker tests with `bun test apps/workers/oracle-proxy/src/__tests__/directory.test.ts apps/workers/oracle-proxy/src/__tests__/publish.test.ts`
+- [x] T060 Run focused web service and route tests with `bun test apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts apps/web/src/lib/components/settings/PublicListingSettings.test.ts apps/web/src/routes/(marketing)/worlds/worlds.route.test.ts`
+- [x] T061 Run full validation with `bun run lint` and `bun run test`
 
 ---
 

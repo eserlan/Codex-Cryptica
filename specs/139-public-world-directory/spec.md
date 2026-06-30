@@ -50,6 +50,7 @@ As a world owner, I want to preview exactly how my world will appear in the publ
 1. **Given** a world owner opens the public listing controls, **When** listing is not yet enabled, **Then** the system shows a preview of the listing metadata before any public listing is created.
 2. **Given** the owner edits listing metadata, **When** the preview updates, **Then** the preview reflects the exact public card details that will be shown in the directory.
 3. **Given** the owner confirms listing, **When** the confirmation is shown, **Then** the language clearly states that anyone can find the world in the public directory.
+4. **Given** a world is already publicly listed, **When** the owner reopens listing settings later, **Then** the saved public listing metadata is loaded for review and editing instead of silently mirroring current world or profile fields.
 
 ---
 
@@ -135,6 +136,7 @@ As a world owner, I want public listings to expose only safe discovery metadata 
 - **FR-019**: The system MUST persist listing metadata as a saved owner-approved public record; later changes to the editable world, guest snapshot metadata, or owner profile MUST NOT alter the directory listing until the owner explicitly updates and approves the listing metadata.
 - **FR-020**: The feature MUST define public listing as separate from search-engine indexing; search-engine indexing MAY be controlled by a later feature.
 - **FR-021**: Moderation, reporting, featured listings, comments, ratings, and social networking behavior are out of scope for the first version.
+- **FR-022**: When a world already has a public listing, the system MUST load the saved listing record for owner review and editing, and MUST distinguish that saved record from any newer unpublished world/profile changes.
 
 ### Key Entities _(include if feature involves data)_
 

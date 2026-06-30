@@ -17,12 +17,14 @@
    - blocked listing when the guest snapshot does not exist
    - unauthorized enable/update/delete without the snapshot write token
    - successful enable/update with saved owner-approved metadata
+   - fetching an existing saved listing record for later owner review/editing
    - public browse/search/filter returning only listing metadata
    - delist preserving the guest snapshot but removing directory visibility
    - snapshot unpublish deleting any listing record
 4. Implement `apps/workers/oracle-proxy/src/directory.ts` and route it from `index.ts`.
 5. Add `PublicDirectoryService` with injectable `fetch` and `baseUrl`, then test success and failure paths.
 6. Add owner listing controls to publishing settings:
+   - load any existing saved public listing record
    - preview before listing
    - clear confirmation that anyone can find the world in the public directory
    - enable/update
@@ -56,3 +58,12 @@ bun test packages/schema/src/publishing.test.ts
 bun test apps/workers/oracle-proxy/src/__tests__/directory.test.ts
 bun test apps/web/src/lib/services/publishing/PublicDirectoryService.test.ts
 ```
+
+## Copy Validation Checklist
+
+Ensure the user interface correctly distinguishes "share by link" from "list publicly":
+
+- [ ] Confirm settings page header copy explains: "Sharing by link stays unlisted. Listing publicly makes this world discoverable to anyone browsing the directory."
+- [ ] Confirm confirmation copy explains: "Anyone can find this world in the public directory once you save this listing."
+- [ ] Verify that directory search and cards never refer to "tags", only to "labels".
+- [ ] Confirm preview helper text explicitly refers to the read-only guest route.

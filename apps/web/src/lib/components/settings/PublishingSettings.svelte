@@ -5,6 +5,7 @@
   import PublishPreviewModal from "./PublishPreviewModal.svelte";
   import UnpublishConfirmModal from "./UnpublishConfirmModal.svelte";
   import PublishingDashboard from "./PublishingDashboard.svelte";
+  import PublicListingSettings from "./PublicListingSettings.svelte";
 
   let showPreviewModal = $state(false);
   let showUnpublishModal = $state(false);
@@ -269,6 +270,13 @@
       </button>
     </div>
   {/if}
+
+  <PublicListingSettings
+    publishId={activeRegistry?.publishId}
+    writeToken={activeRegistry?.writeToken}
+    vaultTitle={vault.activeVaultRecord?.name || "Untitled World"}
+    {notificationStore}
+  />
 
   <div class="border-t border-theme-border/50 pt-6 mt-8">
     <PublishingDashboard />
