@@ -445,7 +445,7 @@ describe("Scabard Campaign Export Importer Adapter", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("ignores clone_of connections entirely", () => {
+  it("ignores clone_of and template_of connections entirely", () => {
     const cloneConn = {
       from: "Faction A",
       fromid: 100,
@@ -453,8 +453,15 @@ describe("Scabard Campaign Export Importer Adapter", () => {
       to: "Faction B",
       toid: 200,
     };
+    const templateConn = {
+      from: "Faction A",
+      fromid: 100,
+      relationship: "template_of",
+      to: "Faction B",
+      toid: 200,
+    };
     const campaign = {
-      conns: [cloneConn],
+      conns: [cloneConn, templateConn],
       pages: [
         {
           concept: "Group",

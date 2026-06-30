@@ -384,6 +384,7 @@ export function parseScabardExport(
         "ATTRIBUTE_OF",
         "ALIGNMENT_OF",
         "CLONE_OF",
+        "TEMPLATE_OF",
       ].includes(relationshipTypeUpper)
     ) {
       skippedStructuralConnectionCount++;
