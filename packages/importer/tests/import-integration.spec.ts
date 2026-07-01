@@ -22,6 +22,8 @@ describe("Import Integration", () => {
         id: "test-id",
         suggestedTitle: item.title,
         suggestedType: item.type,
+        chronicle: item.chronicle || "",
+        lore: item.lore || "",
         content:
           item.content ||
           `${item.chronicle || ""}\n\n${item.lore || ""}`.trim(),

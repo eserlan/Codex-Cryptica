@@ -127,7 +127,7 @@ describe("mergeEntities", () => {
       {
         id: "1",
         suggestedTitle: "Eldrin",
-        suggestedType: "NPC",
+        suggestedType: "Character",
         chronicle: "First part.",
         lore: "",
         content: "",
@@ -160,8 +160,11 @@ describe("mergeEntities", () => {
     // Links should be deduplicated by target, favoring those with labels
     expect(merged[0].detectedLinks).toHaveLength(2);
     expect(
-      merged[0].detectedLinks.find((l) => l.target.toLowerCase() === "sword")
-        ?.label,
+      (
+        merged[0].detectedLinks.find(
+          (l) => typeof l === "object" && l.target.toLowerCase() === "sword",
+        ) as any
+      )?.label,
     ).toBe("weapon");
   });
 
@@ -170,7 +173,7 @@ describe("mergeEntities", () => {
       {
         id: "1",
         suggestedTitle: "A",
-        suggestedType: "NPC",
+        suggestedType: "Character",
         chronicle: "",
         lore: "",
         content: "",
@@ -182,7 +185,7 @@ describe("mergeEntities", () => {
       {
         id: "2",
         suggestedTitle: "B",
-        suggestedType: "NPC",
+        suggestedType: "Character",
         chronicle: "",
         lore: "",
         content: "",
@@ -200,8 +203,8 @@ describe("mergeEntities", () => {
 
     // A -> B (with label) should be kept, B -> A (no label) should be removed
     expect(entityA.detectedLinks).toHaveLength(1);
-    expect(entityA.detectedLinks[0].target).toBe("B");
-    expect(entityA.detectedLinks[0].label).toBe("friend of");
+    expect((entityA.detectedLinks[0] as any).target).toBe("B");
+    expect((entityA.detectedLinks[0] as any).label).toBe("friend of");
     expect(entityB.detectedLinks).toHaveLength(0);
   });
 });

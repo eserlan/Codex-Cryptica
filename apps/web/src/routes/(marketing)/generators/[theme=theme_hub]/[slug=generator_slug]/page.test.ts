@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { load, entries } from "./+page";
+import { entries as generatorEntries } from "../../[slug=generator_slug]/+page";
+import { VALID_HUB_THEMES } from "../../../../../params/theme_hub";
 
 describe("Themed Generator Route", () => {
   describe("load", () => {
@@ -29,8 +31,10 @@ describe("Themed Generator Route", () => {
   describe("entries", () => {
     it("returns a cross-product of all themes and slugs", () => {
       const res = (entries as any)();
-      // 11 themes × 17 slugs = 187 entries
-      expect(res).toHaveLength(11 * 17);
+      expect(res).toHaveLength(
+        Array.from(VALID_HUB_THEMES).length *
+          (generatorEntries as any)().length,
+      );
     });
 
     it("includes lancer + npc", () => {

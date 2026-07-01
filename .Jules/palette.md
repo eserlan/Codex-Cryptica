@@ -64,3 +64,8 @@
 **Action:** Add Tailwind focus-visible utilities to ensure accessibility without degrading the mouse user experience.
 
 ## 2024-06-17 - Button Toggle State Accessibility\n\n**Learning:** Found custom toggle buttons (like the App Appearance theme switchers) that changed visual state via classes but didn't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode was active.\n**Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.\n
+
+## 2024-11-20 - Full-Screen Overlay Cursors
+
+**Learning:** When converting full-screen clickable `<div>` backdrops (like modal or menu dismiss overlays) to semantic `<button>` elements to resolve accessibility warnings, the entire screen gets a pointer cursor because it's technically a button, which is confusing UX.
+**Action:** Always add the `cursor-default` utility class to full-screen backdrop buttons to ensure the mouse cursor remains a standard arrow over the non-interactive areas.

@@ -25,6 +25,7 @@
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { openImportWindow } from "$lib/stores/ui/navigation";
   import { fly } from "svelte/transition";
 
   let { selectedId = $bindable(null) } = $props<{
@@ -496,6 +497,8 @@
           onCta={vault.isGuest
             ? undefined
             : () => modalUIStore.requestCreateEntity()}
+          secondaryCta={vault.isGuest ? undefined : "Populate with a pack"}
+          onSecondaryCta={vault.isGuest ? undefined : () => openImportWindow()}
         />
       </div>
     </div>

@@ -48,7 +48,10 @@
     // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map(...)) with an imperative loop.
     // Also replaces entity.connections?.filter(...).length with an imperative loop
     // to prevent intermediate array allocations and reduce GC overhead during reactive updates.
-    const result: Record<string, { inbound: number; outbound: number; total: number }> = {};
+    const result: Record<
+      string,
+      { inbound: number; outbound: number; total: number }
+    > = {};
     const entities = vault.allEntities;
     const len = entities.length;
 

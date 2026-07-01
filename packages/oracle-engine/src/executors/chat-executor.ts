@@ -11,6 +11,7 @@ import { OracleCommandParser } from "../oracle-parser";
 import { buildRelatedEntityContext } from "../revision-context";
 import type { OracleGenerator } from "../oracle-generator";
 import type { DraftingEngine } from "../drafting-engine";
+import type { Clock } from "../runtime";
 
 /**
  * Orchestrates multi-step AI chat generation and proactive extraction.
@@ -24,8 +25,9 @@ export class ChatExecutor
   constructor(
     private generator?: OracleGenerator,
     private draftingEngine?: DraftingEngine,
+    clock?: Clock,
   ) {
-    super();
+    super(clock);
   }
 
   async execute(

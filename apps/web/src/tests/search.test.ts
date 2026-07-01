@@ -217,16 +217,17 @@ describe("SearchService", () => {
     expect(putArg.updatedAt).toEqual(expect.any(Number));
 
     const savedData = putArg.data;
-    if (savedData instanceof Blob) {
+    if (savedData instanceof Blob || savedData?.constructor?.name === "Blob") {
       let text: string;
+      const blobData = savedData as any; // Using 'any' to bypass TS stream/arrayBuffer interface errors for this test environment mock
       if (typeof DecompressionStream !== "undefined") {
         const rawStream =
-          typeof savedData.stream === "function"
-            ? savedData.stream()
+          typeof blobData.stream === "function"
+            ? blobData.stream()
             : new ReadableStream({
                 async start(controller) {
                   try {
-                    const arrayBuffer = await savedData.arrayBuffer();
+                    const arrayBuffer = await blobData.arrayBuffer();
                     controller.enqueue(new Uint8Array(arrayBuffer));
                   } catch (err) {
                     controller.error(err);
@@ -239,11 +240,11 @@ describe("SearchService", () => {
         );
         text = await new Response(stream).text();
       } else {
-        text = await savedData.text();
+        text = await blobData.text();
       }
       expect(JSON.parse(text)).toEqual(expectedData);
     } else {
-      expect(savedData).toEqual(expectedData);
+      expect(savedData.constructor.name).toBe("Blob");
     }
   });
 

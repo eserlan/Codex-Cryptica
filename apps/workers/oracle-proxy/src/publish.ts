@@ -158,7 +158,7 @@ async function getAssetUsage(
 /**
  * Extract token from authorization header
  */
-function getWriteToken(request: Request): string | null {
+export function getWriteToken(request: Request): string | null {
   const auth = request.headers.get("Authorization");
   if (!auth) return null;
   if (auth.startsWith("Bearer ")) {
@@ -170,7 +170,7 @@ function getWriteToken(request: Request): string | null {
 /**
  * Get CORS headers
  */
-function getCorsHeaders(
+export function getCorsHeaders(
   requestHeaders: Headers,
   _env: PublishEnv,
 ): Record<string, string> {
@@ -751,6 +751,8 @@ export async function handleDeleteVault(
         break;
       }
     }
+
+    await env.BUCKET.delete(`directory/listings/${publishId}.json`);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

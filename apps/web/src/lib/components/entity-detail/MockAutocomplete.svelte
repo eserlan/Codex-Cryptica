@@ -20,6 +20,8 @@
         selectedId = "entity-child";
       } else if (lower === "child entity") {
         selectedId = "child-entity";
+      } else if (lower === "entity 1") {
+        selectedId = "entity-1";
       } else if (lower === "parent entity") {
         selectedId = "parent-entity";
       } else {
