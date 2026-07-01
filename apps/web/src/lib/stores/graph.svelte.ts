@@ -62,7 +62,10 @@ export class GraphStore {
     const count = allEntities.length;
     for (let i = 0; i < count; i++) {
       const entity = allEntities[i];
-      if (isEntityVisible(entity, settings)) {
+      if (
+        this.sessionModeStore.isGuestMode ||
+        isEntityVisible(entity, settings)
+      ) {
         visibleEntities.push(entity);
         validIds.add(entity.id);
       }

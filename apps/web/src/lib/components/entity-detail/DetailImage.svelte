@@ -205,7 +205,9 @@
     <div class="px-4 md:px-6">
       <button
         type="button"
+        disabled={!resolvedImageUrl}
         onclick={(e) => {
+          if (!resolvedImageUrl) return;
           const rect = e.currentTarget.getBoundingClientRect();
           modalUIStore.openLightbox(
             resolvedImageUrl,
@@ -219,7 +221,6 @@
             entity.image,
           );
         }}
-        disabled={!resolvedImageUrl}
         class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30 disabled:cursor-wait"
       >
         {#if !isImageLoaded}

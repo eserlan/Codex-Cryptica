@@ -1,3 +1,5 @@
+import type { Clock } from "../runtime";
+import { systemClock } from "../runtime";
 import type {
   OracleExecutionContext,
   OracleIntent,
@@ -11,6 +13,8 @@ import type {
  * Provides shared utilities and enforces architectural patterns.
  */
 export abstract class BaseExecutor {
+  constructor(protected clock: Clock = systemClock) {}
+
   /**
    * Helper to extract and normalize categories from context.
    */
@@ -76,7 +80,7 @@ export abstract class BaseExecutor {
         ...event,
         domain: "oracle",
         metadata: {
-          timestamp: Date.now(),
+          timestamp: this.clock.now(),
           vaultId: context.vaultId,
         },
       });

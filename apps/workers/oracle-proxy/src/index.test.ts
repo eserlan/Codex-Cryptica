@@ -120,6 +120,64 @@ describe("Oracle Proxy Worker CORS", () => {
   });
 });
 
+describe("Oracle Proxy Worker directory routing", () => {
+  const env = { GEMINI_API_KEY: "test-key" };
+
+  it("returns method not allowed for unsupported directory listing methods", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/directory/listings",
+        {
+          method: "POST",
+          headers: {
+            Origin: "https://codex-cryptica.com",
+          },
+        },
+      ),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(405);
+  });
+
+  it("returns method not allowed for unsupported published listing methods", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/published/pub-123/listing",
+        {
+          method: "PATCH",
+          headers: {
+            Origin: "https://codex-cryptica.com",
+          },
+        },
+      ),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(405);
+  });
+
+  it("returns not found for unknown published subroutes", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/published/pub-123/unknown",
+        {
+          method: "GET",
+          headers: {
+            Origin: "https://codex-cryptica.com",
+          },
+        },
+      ),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(405);
+  });
+});
+
 describe("Oracle Proxy Worker image generation", () => {
   beforeEach(() => {
     (globalThis as any).caches = {
@@ -197,9 +255,10 @@ describe("Oracle Proxy Worker image generation", () => {
 
 describe("Oracle Proxy Worker Interactions API", () => {
   const env = { GEMINI_API_KEY: "test-key" };
+  const originalFetch = globalThis.fetch;
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    globalThis.fetch = originalFetch;
   });
 
   const request = (body: Record<string, unknown>) =>
@@ -229,7 +288,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
           { status: 200, headers: { "Content-Type": "application/json" } },
         ),
     );
-    vi.stubGlobal("fetch", fetchMock);
+    globalThis.fetch = fetchMock as typeof fetch;
 
     const response = await worker.fetch(
       request({
@@ -262,7 +321,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
           status: 200,
         }),
     );
-    vi.stubGlobal("fetch", fetchMock);
+    globalThis.fetch = fetchMock as typeof fetch;
 
     await worker.fetch(
       request({ input: "and then?", previous_interaction_id: "v1_abc" }),
@@ -288,7 +347,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
           { status: 404 },
         ),
     );
-    vi.stubGlobal("fetch", fetchMock);
+    globalThis.fetch = fetchMock as typeof fetch;
 
     const response = await worker.fetch(
       request({ input: "continue", previous_interaction_id: "expired" }),

@@ -20,6 +20,7 @@ export {
   adaptMagicItem,
   adaptEvent,
   adaptVampire,
+  adaptNomadClan,
   adaptShip,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
@@ -50,13 +51,19 @@ export {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildNomadClanPrompt,
+  parseNomadClanResponse,
+  generateNomadClanLocal,
   factionConfig,
   themeIdToLabel,
   vampireConfig,
+  nomadClanConfig,
   type FactionGeneratorOptions,
   type FactionPrompt,
   type VampireGeneratorOptions,
   type VampirePrompt,
+  type NomadClanGeneratorOptions,
+  type NomadClanPrompt,
 } from "./public-faction";
 export {
   buildSocialHubPrompt,

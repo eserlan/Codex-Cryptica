@@ -29,6 +29,69 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
+  /**
+   * Guest sessions never populate the shared worker-backed search index
+   * (it's keyed off the host's local IndexedDB entity store), so `search()`
+   * falls back to a lightweight in-memory scan over the guest bundle's own
+   * entities. Visibility filtering still applies to callers downstream.
+   */
+  private async guestSearch(
+    query: string,
+    vault: VaultMinimal,
+    options: { limit?: number } = {},
+  ): Promise<Array<{ id: string; score: number; matchType: string }>> {
+    const terms = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 1);
+    if (terms.length === 0) return [];
+
+    const entities = vault.allEntities || Object.values(vault.entities || {});
+    const results: Array<{ id: string; score: number; matchType: string }> = [];
+
+    for (const entity of entities as any[]) {
+      const title = (entity.title || "").toLowerCase();
+      const aliases = (entity.aliases || []).join(" ").toLowerCase();
+      const content = (entity.content || "").toLowerCase();
+
+      let score = 0;
+      let matchType: "title" | "aliases" | "content" = "content";
+      for (const term of terms) {
+        if (title.includes(term)) {
+          score += 1;
+          matchType = "title";
+        } else if (aliases.includes(term)) {
+          score += 0.7;
+          if (matchType !== "title") matchType = "aliases";
+        } else if (content.includes(term)) {
+          score += 0.3;
+        }
+      }
+
+      if (score > 0) {
+        results.push({
+          id: entity.id,
+          score: Math.min(score / terms.length, 1),
+          matchType,
+        });
+      }
+    }
+
+    results.sort((a, b) => b.score - a.score);
+    return options.limit ? results.slice(0, options.limit) : results;
+  }
+
+  private async search(
+    query: string,
+    vault: VaultMinimal,
+    options: { limit?: number; includeDrafts?: boolean } = {},
+  ) {
+    if (vault.isGuest) {
+      return this.guestSearch(query, vault, options);
+    }
+    return this.searchService.search(query, options);
+  }
+
   private findExplicitSubject(
     query: string,
     vault: VaultMinimal,
@@ -155,8 +218,9 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       styleContext = this.styleCache;
       activeStyleTitle = this.styleTitleCache || undefined;
     } else {
-      const styleResults = await this.searchService.search(
+      const styleResults = await this.search(
         "art style direction visual aesthetic style guide",
+        vault,
         { limit: 3, includeDrafts: true },
       );
       const styleKeywords = [
@@ -208,7 +272,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       internalExclusions.add(activeStyleTitle);
     }
 
-    let results = await this.searchService.search(query, {
+    let results = await this.search(query, vault, {
       limit: 8,
       includeDrafts: true,
     });
@@ -252,7 +316,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         );
 
       if (keywords.length > 0) {
-        results = await this.searchService.search(keywords.join(" "), {
+        results = await this.search(keywords.join(" "), vault, {
           limit: 8,
           includeDrafts: true,
         });

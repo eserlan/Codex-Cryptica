@@ -33,7 +33,8 @@ export function latestTemporalYear(
   entities: Record<string, Entity>,
 ): number | undefined {
   let max: number | undefined;
-  for (const e of Object.values(entities)) {
+  for (const id in entities) {
+    const e = entities[id];
     for (const t of [e.date, e.start_date, e.end_date]) {
       const year = (t as { year?: number } | undefined)?.year;
       if (typeof year === "number" && (max === undefined || year > max)) {
@@ -143,10 +144,16 @@ export function buildVaultContext(
   // event titles, session logs, places, or lore concepts is noise. When no
   // target type is known, fall back to all titles.
   const MAX_TITLES = 50;
-  const namePool = targetEntityType
-    ? Object.values(allEntities).filter((e) => e.type === targetEntityType)
-    : Object.values(allEntities);
-  const existingTitles = namePool.map((e) => e.title).slice(0, MAX_TITLES);
+  // ⚡ Bolt Optimization: Use imperative loop with early exit to avoid intermediate
+  // arrays from Object.values().filter().map().slice()
+  const existingTitles: string[] = [];
+  for (const id in allEntities) {
+    if (existingTitles.length >= MAX_TITLES) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const e = allEntities[id];
+    if (targetEntityType && e.type !== targetEntityType) continue;
+    if (e.title) existingTitles.push(e.title);
+  }
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
@@ -159,10 +166,16 @@ export function buildVaultContext(
         .slice(0, MAX_NEIGHBORS)
         .map((e) => entityToExcerpt(e));
     } else {
-      neighbors = Object.values(allEntities)
-        .filter((e) => e.id !== sourceEntity.id && e.type === sourceEntity.type)
-        .slice(0, MAX_NEIGHBORS)
-        .map((e) => entityToExcerpt(e));
+      // ⚡ Bolt Optimization: Replace inline Object.values().filter().slice().map()
+      // with imperative loop and early exit
+      for (const id in allEntities) {
+        if (neighbors.length >= MAX_NEIGHBORS) break;
+        if (!Object.hasOwn(allEntities, id)) continue;
+        const e = allEntities[id];
+        if (e.id !== sourceEntity.id && e.type === sourceEntity.type) {
+          neighbors.push(entityToExcerpt(e));
+        }
+      }
     }
   }
 
@@ -178,21 +191,45 @@ export function buildVaultContext(
   for (const n of neighbors) seen.add(n.id);
   const ordered: Entity[] = [];
   const consider = (e: Entity | undefined) => {
+    // ⚡ Bolt Optimization: Early exit if we have enough items
+    if (ordered.length >= MAX_WORLD_SAMPLE) return;
     if (e && !seen.has(e.id)) {
       seen.add(e.id);
       ordered.push(e);
     }
   };
+
   for (const id of relevantIds ?? []) consider(allEntities[id]);
-  const samplePool = Object.values(allEntities);
+
+  // ⚡ Bolt Optimization: Iterate over keys rather than Object.values() array allocation
   if (targetEntityType) {
-    for (const e of samplePool) if (e.type === targetEntityType) consider(e);
+    for (const id in allEntities) {
+      if (ordered.length >= MAX_WORLD_SAMPLE) break;
+      if (!Object.hasOwn(allEntities, id)) continue;
+      const e = allEntities[id];
+      if (e.type === targetEntityType) consider(e);
+    }
   }
-  for (const e of samplePool) if (e.type === EVENT_TYPE) consider(e);
-  for (const e of samplePool) if (e.type !== NOTE_TYPE) consider(e);
-  for (const e of samplePool) consider(e); // notes last
+  for (const id in allEntities) {
+    if (ordered.length >= MAX_WORLD_SAMPLE) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const e = allEntities[id];
+    if (e.type === EVENT_TYPE) consider(e);
+  }
+  for (const id in allEntities) {
+    if (ordered.length >= MAX_WORLD_SAMPLE) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const e = allEntities[id];
+    if (e.type !== NOTE_TYPE) consider(e);
+  }
+  for (const id in allEntities) {
+    if (ordered.length >= MAX_WORLD_SAMPLE) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    consider(allEntities[id]); // notes last
+  }
+
   const worldSample = ordered
-    .slice(0, MAX_WORLD_SAMPLE)
+    // ordered is already max bounded by consider logic
     .map((e) => entityToExcerpt(e));
 
   const includedContext: GeneratorVaultContext["includedContext"] = [

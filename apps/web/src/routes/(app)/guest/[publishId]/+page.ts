@@ -10,7 +10,14 @@ export const load: PageLoad = async ({ params, fetch }) => {
   const rawParamId = params.publishId;
   const publishId =
     rawParamId.length >= 36 ? rawParamId.slice(-36) : rawParamId;
-  const baseUrl = "https://oracle-proxy.espen-erlandsen.workers.dev";
+  const baseUrl =
+    (typeof import.meta !== "undefined" &&
+      import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+    (typeof import.meta !== "undefined" &&
+    import.meta.env?.DEV &&
+    !import.meta.env?.VITEST
+      ? "http://localhost:8787"
+      : "https://oracle-proxy.espen-erlandsen.workers.dev");
   const url = `${baseUrl}/api/published/${publishId}/bundle`;
 
   try {

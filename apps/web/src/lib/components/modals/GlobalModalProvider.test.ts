@@ -57,6 +57,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     soundBite: { show: false, entityId: null },
     relatedEntityDialog: { open: false, sourceEntityId: null },
     showVaultSwitcher: false,
+    vaultThemePrompt: { open: false, vaultId: null },
     showShare: false,
     imagePromptReview: { open: false, target: null, prompt: "" },
     revisionDialog: { open: false, entityId: null, instructions: "" },

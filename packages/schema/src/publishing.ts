@@ -13,6 +13,15 @@ export const PUBLISH_LIMITS = {
   maxCanvases: 100,
   maxTitleLength: 200,
   maxAssetIdLength: 128,
+  maxListingTitleLength: 120,
+  maxListingDescriptionLength: 280,
+  maxListingLabels: 8,
+  maxListingLabelLength: 40,
+  maxListingOwnerNameLength: 80,
+  maxListingCoverAltLength: 120,
+  maxDirectorySearchLength: 120,
+  defaultDirectoryPageSize: 24,
+  maxDirectoryPageSize: 48,
 } as const;
 
 export const PublishRegistrySchema = z.object({
@@ -54,6 +63,12 @@ export const GuestBundleSchema = z.object({
   publishedAt: z.string(),
   publisherVersion: z.string(),
   activeTheme: z.record(z.string(), z.any()).optional(),
+  metadata: z
+    .object({
+      description: z.string().optional(),
+      coverImage: z.string().optional(),
+    })
+    .optional(),
   entities: z.array(EntitySchema).max(PUBLISH_LIMITS.maxEntities),
   relationships: z
     .array(GuestRelationshipSchema)
@@ -77,3 +92,163 @@ export const GuestBundleSchema = z.object({
 });
 
 export type GuestBundle = z.infer<typeof GuestBundleSchema>;
+
+const ListingLabelSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(PUBLISH_LIMITS.maxListingLabelLength);
+
+const SafeGuestUrlSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine(
+    (value) => !/(^|\/)(vault|world|editor)\b/i.test(value),
+    "Guest URL must not point to an editable route",
+  );
+
+export const ListingDraftSchema = z
+  .object({
+    publishId: z.string().trim().min(1),
+    title: z.string().trim().min(1).max(PUBLISH_LIMITS.maxListingTitleLength),
+    description: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingDescriptionLength),
+    labels: z
+      .array(ListingLabelSchema)
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingLabels),
+    coverImageAssetId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxAssetIdLength)
+      .optional(),
+    coverImageAlt: z
+      .string()
+      .trim()
+      .max(PUBLISH_LIMITS.maxListingCoverAltLength)
+      .optional(),
+    ownerDisplayName: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingOwnerNameLength)
+      .optional(),
+  })
+  .strict();
+
+export type ListingDraft = z.infer<typeof ListingDraftSchema>;
+
+export const PublicListingSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    publishId: z.string().trim().min(1),
+    guestUrl: SafeGuestUrlSchema,
+    title: z.string().trim().min(1).max(PUBLISH_LIMITS.maxListingTitleLength),
+    description: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingDescriptionLength),
+    labels: z
+      .array(ListingLabelSchema)
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingLabels),
+    coverImageAssetId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxAssetIdLength)
+      .optional(),
+    coverImageAlt: z
+      .string()
+      .trim()
+      .max(PUBLISH_LIMITS.maxListingCoverAltLength)
+      .optional(),
+    ownerDisplayName: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingOwnerNameLength)
+      .optional(),
+    visibleEntityCount: z.number().int().min(0),
+    snapshotPublishedAt: z.string().datetime(),
+    listingCreatedAt: z.string().datetime(),
+    listingUpdatedAt: z.string().datetime(),
+  })
+  .strict()
+  .refine(
+    (value) => !value.labels.some((label) => /^tags?$/i.test(label.trim())),
+    "Labels must use labels terminology",
+  );
+
+export type PublicListing = z.infer<typeof PublicListingSchema>;
+
+export const DirectoryQuerySchema = z
+  .object({
+    q: z
+      .string()
+      .trim()
+      .max(PUBLISH_LIMITS.maxDirectorySearchLength)
+      .optional(),
+    labels: z
+      .array(ListingLabelSchema)
+      .max(PUBLISH_LIMITS.maxListingLabels)
+      .optional(),
+    cursor: z.string().trim().min(1).optional(),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxDirectoryPageSize)
+      .default(PUBLISH_LIMITS.defaultDirectoryPageSize),
+  })
+  .strict();
+
+export type DirectoryQuery = z.infer<typeof DirectoryQuerySchema>;
+
+export const DirectoryResultSchema = z
+  .object({
+    publishId: z.string().trim().min(1),
+    guestUrl: SafeGuestUrlSchema,
+    title: z.string().trim().min(1).max(PUBLISH_LIMITS.maxListingTitleLength),
+    description: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingDescriptionLength),
+    labels: z
+      .array(ListingLabelSchema)
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingLabels),
+    coverImageUrl: z.string().trim().min(1).optional(),
+    coverImageAlt: z
+      .string()
+      .trim()
+      .max(PUBLISH_LIMITS.maxListingCoverAltLength)
+      .optional(),
+    ownerDisplayName: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PUBLISH_LIMITS.maxListingOwnerNameLength)
+      .optional(),
+    visibleEntityCount: z.number().int().min(0),
+    listingUpdatedAt: z.string().datetime(),
+  })
+  .strict();
+
+export type DirectoryResult = z.infer<typeof DirectoryResultSchema>;
+
+export const DirectoryPageSchema = z
+  .object({
+    results: z.array(DirectoryResultSchema),
+    nextCursor: z.string().trim().min(1).optional(),
+  })
+  .strict();
+
+export type DirectoryPage = z.infer<typeof DirectoryPageSchema>;

@@ -112,6 +112,7 @@ export class OracleContextManager {
             loreEntries?: import("@codex/oracle-engine").LoreEntry[];
             conversationId?: string;
             interactionsEnabled?: boolean;
+            guestMode?: boolean;
           },
         ) => {
           const callback = isWorker
@@ -129,6 +130,7 @@ export class OracleContextManager {
             categories ? $state.snapshot(categories) : undefined,
             {
               ...options,
+              guestMode: s.sessionModeStore.isGuestMode,
               requestId: options?.requestId || undefined,
               vaultId: options?.vaultId || s.vault.activeVaultId || undefined,
               existingEntities: options?.existingEntities
@@ -210,9 +212,11 @@ export class OracleContextManager {
       customImageApiKey: s.settings?.customImageApiKey,
       customImageModel: s.settings?.customImageModel,
       isDemoMode: s.sessionModeStore.isDemoMode,
-      automationPolicy: $state.snapshot(
-        s.discoveryPolicyStore.oracleAutomationPolicy,
-      ),
+      // Guests can't accept proposals, and guest vault entities are $state
+      // proxies that fail structured cloning across the worker boundary.
+      automationPolicy: s.sessionModeStore.isGuestMode
+        ? { entityDiscovery: "off", connectionDiscovery: "off" }
+        : $state.snapshot(s.discoveryPolicyStore.oracleAutomationPolicy),
       proposeConnectionsForEntity: wrap(
         async (
           entityId: string,

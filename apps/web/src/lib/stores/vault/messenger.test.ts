@@ -15,6 +15,7 @@ describe("VaultMessenger", () => {
   let capturedChannel: BroadcastChannel | null = null;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
 
     mockUnsubscribe = vi.fn();
@@ -43,6 +44,7 @@ describe("VaultMessenger", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -85,6 +87,7 @@ describe("VaultMessenger", () => {
       data: { type: "RELOAD_VAULT", vaultId: "vault-1" },
     });
 
+    vi.runAllTimers();
     expect(deps.loadFiles).toHaveBeenCalled();
   });
 
@@ -93,6 +96,7 @@ describe("VaultMessenger", () => {
       data: { type: "RELOAD_VAULT", vaultId: "other-vault" },
     });
 
+    vi.runAllTimers();
     expect(deps.loadFiles).not.toHaveBeenCalled();
   });
 
@@ -101,6 +105,7 @@ describe("VaultMessenger", () => {
       data: { type: "SOME_OTHER", vaultId: "vault-1" },
     });
 
+    vi.runAllTimers();
     expect(deps.loadFiles).not.toHaveBeenCalled();
   });
 
@@ -125,6 +130,35 @@ describe("VaultMessenger", () => {
       type: "ENTITY_DELETED",
       vaultId: "vault-1",
       entityId: "some-entity",
+    });
+
+    expect(deps.broadcastCallback).toHaveBeenCalled();
+  });
+
+  it("calls broadcastCallback on ENTITY_UPDATED event", () => {
+    const subscribeMock = vaultEventBus.subscribe as ReturnType<typeof vi.fn>;
+    const listener = subscribeMock.mock.calls[0][0];
+
+    listener({
+      type: "ENTITY_UPDATED",
+      vaultId: "vault-1",
+      entity: { id: "some-entity", type: "note", title: "Updated" } as any,
+      patch: {},
+    });
+
+    expect(deps.broadcastCallback).toHaveBeenCalled();
+  });
+
+  it("calls broadcastCallback on CONNECTION_ADDED event", () => {
+    const subscribeMock = vaultEventBus.subscribe as ReturnType<typeof vi.fn>;
+    const listener = subscribeMock.mock.calls[0][0];
+
+    listener({
+      type: "CONNECTION_ADDED",
+      vaultId: "vault-1",
+      sourceId: "source",
+      targetId: "target",
+      connectionType: "type",
     });
 
     expect(deps.broadcastCallback).toHaveBeenCalled();

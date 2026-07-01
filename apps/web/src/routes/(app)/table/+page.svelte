@@ -14,6 +14,7 @@
     nextSortState,
     type SortKey,
     type SortState,
+    type ConnectionSummary,
   } from "$lib/components/table/entityTableSort";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
@@ -45,16 +46,31 @@
   const connectionCounts = $derived.by(() => {
     const inboundConnections = vault.inboundConnections ?? {};
 
-    return Object.fromEntries(
-      vault.allEntities.map((entity) => {
-        const inbound = inboundConnections[entity.id]?.length ?? 0;
-        const outbound =
-          entity.connections?.filter((connection) => connection.target)
-            .length ?? 0;
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map(...)) with an imperative loop.
+    // Also replaces entity.connections?.filter(...).length with an imperative loop
+    // to prevent intermediate array allocations and reduce GC overhead during reactive updates.
+    const result: Record<string, ConnectionSummary> = {};
+    const entities = vault.allEntities;
+    const len = entities.length;
 
-        return [entity.id, { inbound, outbound, total: inbound + outbound }];
-      }),
-    );
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
+      const inbound = inboundConnections[entity.id]?.length ?? 0;
+
+      let outbound = 0;
+      if (entity.connections) {
+        const connLen = entity.connections.length;
+        for (let j = 0; j < connLen; j++) {
+          if (entity.connections[j].target) {
+            outbound++;
+          }
+        }
+      }
+
+      result[entity.id] = { inbound, outbound, total: inbound + outbound };
+    }
+
+    return result;
   });
 
   const rows = $derived(sortEntities(filtered, sort, connectionCounts));

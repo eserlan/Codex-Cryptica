@@ -63,6 +63,10 @@ export function createEntity(
     ...initialData,
   } as LocalEntity;
 
+  if (!entity.connections) {
+    entity.connections = [];
+  }
+
   if (entity.parent) {
     entity.parent = sanitizeId(entity.parent);
   }
@@ -270,7 +274,7 @@ export function addConnection(
 
   const updatedSource = {
     ...source,
-    connections: [...source.connections, connection],
+    connections: [...(source.connections ?? []), connection],
     updatedAt: Date.now(),
     modifiedAt: Date.now(),
   } as LocalEntity;
@@ -295,7 +299,7 @@ export function updateConnection(
   const source = entities[sourceId];
   if (!source) return { entities, updatedSource: null };
 
-  const connections = source.connections.map((c) => {
+  const connections = (source.connections ?? []).map((c) => {
     if (c.target === targetId && c.type === oldType) {
       return { ...c, type: newType, label: newLabel };
     }
@@ -327,7 +331,7 @@ export function removeConnection(
   const source = entities[sourceId];
   if (!source) return { entities, updatedSource: null };
 
-  const connections = source.connections.filter(
+  const connections = (source.connections ?? []).filter(
     (c) => !(c.target === targetId && c.type === type),
   );
 

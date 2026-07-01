@@ -113,6 +113,8 @@ export interface TextGenerationService {
        * a main-thread module-global flag would never reach it.
        */
       interactionsEnabled?: boolean;
+      /** Guest snapshot view: read-only system prompt, no invention/retcon. */
+      guestMode?: boolean;
     },
   ): Promise<void>;
   generateMergeProposal(

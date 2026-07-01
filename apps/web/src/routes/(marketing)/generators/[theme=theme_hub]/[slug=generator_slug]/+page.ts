@@ -16,6 +16,7 @@ const validSlugs = new Set([
   "kingdom",
   "nation",
   "vampire-clan",
+  "nomad-clan",
   "names",
   "fantasy-names",
   "dnd-npc",

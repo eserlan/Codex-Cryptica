@@ -116,6 +116,14 @@
     icon: "icon-[lucide--moon]",
   };
 
+  const nomadClanCard: GeneratorCard = {
+    slug: "nomad-clan",
+    label: "Nomad Clan Generator",
+    summary:
+      "Build cyberpunk nomad convoys with territory routes, clan codes, corporate enemies, and road-ready hooks.",
+    icon: "icon-[lucide--truck]",
+  };
+
   const fantasyOnlyCards: GeneratorCard[] = [
     {
       slug: "dnd-npc",
@@ -185,6 +193,7 @@
           "District Generator",
           "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
         ),
+        nomadClanCard,
         shipCard,
         socialHubCard,
         nationCard,

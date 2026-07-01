@@ -53,6 +53,9 @@ function loadTurnstile(): Promise<NonNullable<Window["turnstile"]>> {
 /** Runs the invisible publication challenge only after the user confirms publishing. */
 export async function getPublishTurnstileToken(): Promise<string> {
   if (!VITE_TURNSTILE_SITE_KEY) {
+    if (import.meta.env.DEV) {
+      return "dev-turnstile-token";
+    }
     throw new Error("Publishing verification is not configured.");
   }
 
