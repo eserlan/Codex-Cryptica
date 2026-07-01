@@ -14,11 +14,11 @@ import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
 // Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
 // literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
-// nodes, so the default (level 1) lands around 150 — enough for a real overview,
+// nodes, so the default (level 1) lands around 500 — enough for a real overview,
 // not just the focal + its handful of direct links — and zooming in doubles it.
 export const MIN_FOCUS_DEPTH = 1;
 export const MAX_FOCUS_DEPTH = 6;
-export const FOCUS_BASE_COUNT = 150;
+export const FOCUS_BASE_COUNT = 500;
 
 export class GraphStore {
   // Dependencies
