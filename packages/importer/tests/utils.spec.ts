@@ -160,8 +160,11 @@ describe("mergeEntities", () => {
     // Links should be deduplicated by target, favoring those with labels
     expect(merged[0].detectedLinks).toHaveLength(2);
     expect(
-      (merged[0].detectedLinks.find((l) => typeof l === "object" && l.target.toLowerCase() === "sword") as any)
-        ?.label,
+      (
+        merged[0].detectedLinks.find(
+          (l) => typeof l === "object" && l.target.toLowerCase() === "sword",
+        ) as any
+      )?.label,
     ).toBe("weapon");
   });
 

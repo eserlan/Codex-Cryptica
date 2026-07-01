@@ -144,8 +144,14 @@
 **Action:** Always replace `Object.values(vault.entities)` with `vault.allEntities` in Svelte components. For chained array operations (like `.filter().slice()`), use an imperative `for...of` or `for (let i = 0; i < allEntities.length; i++)` loop with `break` limits to avoid redundant array creation and full dataset traversal.
 
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(guestStore.guestRoster) to pre-cached guestStore.allGuests]
+
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2025-06-30 - Replace chained array methods with early-exit imperative loops
+
+**Learning:** In `apps/web/src/lib/services/generators/generator-vault-context.ts`, building context samples via `Object.values(allEntities).filter(...).slice(0, MAX)` forces intermediate array allocations and full `O(N)` traversal of vaults. When vaults contain thousands of items, mapping and filtering the entire dataset just to capture a `MAX_TITLES` size slice severely spikes GC pressure on hot rendering/generation paths.
+**Action:** When deriving subsets of objects by limits (like `MAX_WORLD_SAMPLE` or `MAX_NEIGHBORS`), always replace `Object.values(obj).filter().slice()` with imperative loops (`for (const id in allEntities)`) combined with explicit capacity limits and early returns (e.g., `if (results.length >= MAX) break;`). This guarantees `O(K)` performance bounded to the sample size limit.
 
 ## 2026-06-29 - [Performance Insight: Array allocation in object fromEntries]
 

@@ -237,10 +237,8 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage, resolved } = buildNomadClanPrompt(
-          nomadOptions,
-          getSessionContext(),
-        );
+        const { systemInstruction, userMessage, resolved } =
+          buildNomadClanPrompt(nomadOptions, getSessionContext());
         const text = await this.runModel(systemInstruction, userMessage);
         return parseNomadClanResponse(text, resolved);
       },

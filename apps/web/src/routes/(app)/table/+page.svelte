@@ -46,12 +46,15 @@
     const inboundConnections = vault.inboundConnections ?? {};
 
     // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map()) with an imperative loop
-    const counts: Record<string, { inbound: number; outbound: number; total: number }> = {};
+    const counts: Record<
+      string,
+      { inbound: number; outbound: number; total: number }
+    > = {};
     for (const entity of vault.allEntities) {
       const inbound = inboundConnections[entity.id]?.length ?? 0;
       const outbound =
-        entity.connections?.filter((connection) => connection.target)
-          .length ?? 0;
+        entity.connections?.filter((connection) => connection.target).length ??
+        0;
 
       counts[entity.id] = { inbound, outbound, total: inbound + outbound };
     }

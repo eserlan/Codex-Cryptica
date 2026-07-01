@@ -690,7 +690,11 @@
   {/if}
 
   <DetailProposals {isEditing} />
-  <EntityProposals content={entity.content || ""} {isEditing} entityId={entity.id} />
+  <EntityProposals
+    content={entity.content || ""}
+    {isEditing}
+    entityId={entity.id}
+  />
 </div>
 
 <style>
