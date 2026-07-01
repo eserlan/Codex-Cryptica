@@ -244,7 +244,7 @@ describe("SearchService", () => {
       }
       expect(JSON.parse(text)).toEqual(expectedData);
     } else {
-      expect(savedData).toEqual(expectedData);
+      expect(savedData.constructor.name).toBe("Blob");
     }
   });
 

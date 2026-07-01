@@ -15,6 +15,7 @@ const validSlugs = new Set([
   "kingdom",
   "nation",
   "vampire-clan",
+  "nomad-clan",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -40,6 +41,7 @@ export const load: PageLoad = ({ params }) => {
       | "kingdom"
       | "nation"
       | "vampire-clan"
+      | "nomad-clan"
       | "names"
       | "fantasy-names"
       | "dnd-npc"
@@ -62,6 +64,7 @@ export const entries: EntryGenerator = () => {
     { slug: "kingdom" },
     { slug: "nation" },
     { slug: "vampire-clan" },
+    { slug: "nomad-clan" },
     { slug: "names" },
     { slug: "fantasy-names" },
     { slug: "dnd-npc" },

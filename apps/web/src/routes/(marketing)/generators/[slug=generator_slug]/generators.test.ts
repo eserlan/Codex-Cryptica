@@ -32,6 +32,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "kingdom" },
         { slug: "nation" },
         { slug: "vampire-clan" },
+        { slug: "nomad-clan" },
         { slug: "names" },
         { slug: "fantasy-names" },
         { slug: "dnd-npc" },

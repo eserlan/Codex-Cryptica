@@ -40,9 +40,10 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.27.0",
+      "version": "0.27.5",
       "dependencies": {
         "@codex/canvas-engine": "workspace:*",
+        "@codex/content-packs": "workspace:*",
         "@codex/events": "workspace:*",
         "@codex/importer": "workspace:*",
         "@codex/oracle-engine": "workspace:*",
@@ -150,6 +151,18 @@
       "version": "0.0.0",
       "devDependencies": {
         "@types/node": "^25.9.1",
+        "@vitest/coverage-v8": "^4.1.7",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
+    "packages/content-packs": {
+      "name": "@codex/content-packs",
+      "version": "0.0.0",
+      "dependencies": {
+        "@codex/importer": "workspace:*",
+      },
+      "devDependencies": {
         "@vitest/coverage-v8": "^4.1.7",
         "typescript": "^6.0.3",
         "vitest": "^4.1.7",
@@ -395,6 +408,8 @@
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260611.1", "", { "os": "win32", "cpu": "x64" }, "sha512-S6JkS0kEbcCKs19RGqEPhjCRbP8GBkQwqYLp2fhBJtD/KTlwqLzOJ9E6PQ7gQKgWHtxy1NBG3oXarlNFRNU/dw=="],
 
     "@codex/canvas-engine": ["@codex/canvas-engine@workspace:packages/canvas-engine"],
+
+    "@codex/content-packs": ["@codex/content-packs@workspace:packages/content-packs"],
 
     "@codex/events": ["@codex/events@workspace:packages/events"],
 

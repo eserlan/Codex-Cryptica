@@ -6,13 +6,17 @@ import type {
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type { OracleGenerator } from "../oracle-generator";
+import type { Clock } from "../runtime";
 
 export class VisualizationExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
-  constructor(private generator?: OracleGenerator) {
-    super();
+  constructor(
+    private generator?: OracleGenerator,
+    clock?: Clock,
+  ) {
+    super(clock);
   }
 
   async execute(

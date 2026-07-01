@@ -121,7 +121,10 @@ export const WORKSPACE_DARK: StylingTemplate = {
     edgeStyle: "solid",
     nodeBorderWidth: 1,
     edgeWidth: 1,
-    edgeColor: "#44403c",
+    // Stone-500: readable against the #1c1917 background. #44403c (stone-700)
+    // was barely distinguishable from the background, making connections that
+    // don't use the friendly/enemy/neutral colors effectively invisible.
+    edgeColor: "#78716c",
   },
 };
 
