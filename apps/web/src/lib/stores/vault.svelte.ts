@@ -45,8 +45,10 @@ export class VaultStore {
   // Reactive State
   _isInitialized = $state(false);
   get isInitialized() {
-    if (sessionModeStore.isGuestMode) {
-      return guestVault.isInitialized || this._isInitialized;
+    if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      // Viewing a published snapshot: don't let host-vault init leak through
+      // and trigger app effects before the snapshot has loaded.
+      return guestVault.isInitialized;
     }
     return this._isInitialized;
   }

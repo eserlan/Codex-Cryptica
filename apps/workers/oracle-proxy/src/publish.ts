@@ -56,17 +56,15 @@ async function verifyTurnstile(
   env: PublishEnv,
 ): Promise<boolean> {
   const token = request.headers.get("X-Turnstile-Token");
-  const origin = request.headers.get("Origin") || "";
-  const isLocal =
-    origin.startsWith("http://localhost:") ||
-    origin.startsWith("https://localhost:") ||
-    !origin;
 
-  if (isLocal && token === "dev-turnstile-token") {
-    return true;
+  // Dev-only bypass: the secret is never configured in local wrangler dev
+  // unless explicitly added to .dev.vars. Origin headers are client-controlled
+  // and must not gate this.
+  if (!env.TURNSTILE_SECRET_KEY) {
+    return token === "dev-turnstile-token";
   }
 
-  if (!env.TURNSTILE_SECRET_KEY || !token || token.length > 2_048) return false;
+  if (!token || token.length > 2_048) return false;
 
   const form = new FormData();
   form.set("secret", env.TURNSTILE_SECRET_KEY);

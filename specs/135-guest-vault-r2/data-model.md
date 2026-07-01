@@ -182,7 +182,3 @@ Note: `activeTheme`, `metadata`, `maps`, and `canvases` are optional — see `pa
 - **Object customMetadata**:
   - `mimeType`: `<mime-type-string>`
   - `filename`: `<original-filename>`
-
-```
-
-```

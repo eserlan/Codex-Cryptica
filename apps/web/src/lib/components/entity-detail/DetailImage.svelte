@@ -205,6 +205,7 @@
     <div class="px-4 md:px-6">
       <button
         type="button"
+        disabled={!resolvedImageUrl}
         onclick={(e) => {
           if (!resolvedImageUrl) return;
           const rect = e.currentTarget.getBoundingClientRect();

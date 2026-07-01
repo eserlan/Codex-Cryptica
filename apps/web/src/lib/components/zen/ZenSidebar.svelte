@@ -365,6 +365,7 @@
     {:else if entity?.image}
       <button
         type="button"
+        disabled={!resolvedImageUrl}
         onclick={(e) => {
           if (!resolvedImageUrl) return;
           const rect = e.currentTarget.getBoundingClientRect();

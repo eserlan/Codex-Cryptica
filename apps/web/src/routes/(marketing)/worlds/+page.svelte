@@ -48,11 +48,15 @@
 
   function renderInlineMarkdown(text: string): string {
     if (!text) return "";
-    const html = marked.parseInline(text) as string;
-    if (browser) {
-      return DOMPurify.sanitize(html);
+    if (!browser) {
+      // DOMPurify needs a DOM; never SSR unsanitized directory content.
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     }
-    return html;
+    const html = marked.parseInline(text) as string;
+    return DOMPurify.sanitize(html);
   }
 </script>
 
@@ -151,6 +155,8 @@
               ? 'bg-theme-bg text-theme-primary shadow-sm border border-theme-border/50'
               : 'border border-transparent'}"
             title="Grid view"
+            aria-label="Grid view"
+            aria-pressed={viewMode === "grid"}
             type="button"
           >
             <span class="icon-[lucide--grid] h-4 w-4"></span>
@@ -162,6 +168,8 @@
               ? 'bg-theme-bg text-theme-primary shadow-sm border border-theme-border/50'
               : 'border border-transparent'}"
             title="List view"
+            aria-label="List view"
+            aria-pressed={viewMode === "list"}
             type="button"
           >
             <span class="icon-[lucide--list] h-4 w-4"></span>
