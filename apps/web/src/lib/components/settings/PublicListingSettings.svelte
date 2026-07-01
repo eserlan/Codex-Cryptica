@@ -4,6 +4,7 @@
     PublicDirectoryService,
     publicDirectoryService,
   } from "$lib/services/publishing/PublicDirectoryService";
+  import { worldStore } from "$lib/stores/world.svelte";
 
   interface NotificationLike {
     notify: (message: string, kind?: "success" | "error" | "info") => void;
@@ -78,6 +79,9 @@
           publishId,
           vaultTitle,
           existingListing: listing,
+          defaultDescription: worldStore.metadata?.description || undefined,
+          defaultCoverImageAssetId:
+            worldStore.metadata?.coverImage || undefined,
         }),
       );
       hydratedPublishId = publishId;

@@ -19,7 +19,14 @@ export class PublicDirectoryService {
 
   private get baseUrl() {
     return (
-      this.deps.baseUrl ?? "https://oracle-proxy.espen-erlandsen.workers.dev"
+      this.deps.baseUrl ??
+      ((typeof import.meta !== "undefined" &&
+        import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev"))
     );
   }
 
@@ -38,6 +45,8 @@ export class PublicDirectoryService {
     publishId: string;
     vaultTitle: string;
     existingListing?: PublicListing | null;
+    defaultDescription?: string;
+    defaultCoverImageAssetId?: string;
   }): ListingDraft {
     if (input.existingListing) {
       const {
@@ -63,10 +72,10 @@ export class PublicDirectoryService {
     return {
       publishId: input.publishId,
       title: input.vaultTitle.trim() || "Untitled World",
-      description: "",
+      description: input.defaultDescription ?? "",
       labels: [],
-      coverImageAssetId: undefined,
-      coverImageAlt: undefined,
+      coverImageAssetId: input.defaultCoverImageAssetId || undefined,
+      coverImageAlt: input.defaultCoverImageAssetId ? "Cover image" : undefined,
       ownerDisplayName: undefined,
     };
   }

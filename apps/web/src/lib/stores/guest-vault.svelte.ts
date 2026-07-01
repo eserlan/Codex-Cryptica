@@ -95,7 +95,14 @@ export class GuestVaultStore {
         a.assetId === cleanPath,
     );
     if (asset) {
-      const baseUrl = "https://oracle-proxy.espen-erlandsen.workers.dev";
+      const baseUrl =
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev");
       return `${baseUrl}/api/published/${this.publishId}/assets/${asset.assetId}`;
     }
     return "";

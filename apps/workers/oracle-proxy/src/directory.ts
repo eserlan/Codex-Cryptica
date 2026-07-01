@@ -69,7 +69,10 @@ async function readPublishedBundle(env: DirectoryEnv, publishId: string) {
   const bundleResponse = await env.BUCKET?.get(bundleKey);
   if (!bundleResponse) return null;
 
-  const text = new TextDecoder().decode(bundleResponse.body);
+  const text =
+    typeof bundleResponse.text === "function"
+      ? await bundleResponse.text()
+      : new TextDecoder().decode(bundleResponse.body);
   const raw = JSON.parse(text);
   const parsed = GuestBundleSchema.safeParse(raw);
   if (!parsed.success) return null;
@@ -131,7 +134,10 @@ async function authorizeListingMutation(
 async function loadListing(env: DirectoryEnv, publishId: string) {
   const listingObject = await env.BUCKET?.get(getListingObjectKey(publishId));
   if (!listingObject) return null;
-  const text = new TextDecoder().decode(listingObject.body);
+  const text =
+    typeof listingObject.text === "function"
+      ? await listingObject.text()
+      : new TextDecoder().decode(listingObject.body);
   const raw = JSON.parse(text);
   const parsed = PublicListingSchema.safeParse(raw);
   if (!parsed.success) return null;

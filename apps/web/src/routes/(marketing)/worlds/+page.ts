@@ -4,7 +4,14 @@ export const prerender = false;
 export const ssr = true;
 
 const DIRECTORY_BASE_URL =
-  "https://oracle-proxy.espen-erlandsen.workers.dev/api/directory/listings";
+  ((typeof import.meta !== "undefined" &&
+    import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+    (typeof import.meta !== "undefined" &&
+    import.meta.env?.DEV &&
+    !import.meta.env?.VITEST
+      ? "http://localhost:8787"
+      : "https://oracle-proxy.espen-erlandsen.workers.dev")) +
+  "/api/directory/listings";
 
 export const load: PageLoad = async ({ fetch, url }) => {
   const params = new URLSearchParams();

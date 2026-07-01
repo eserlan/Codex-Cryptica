@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
 import { load } from "./+page";
@@ -73,5 +73,41 @@ describe("/worlds route", () => {
       (screen.getByRole("searchbox", { name: /search/i }) as HTMLInputElement)
         .value,
     ).toBe("");
+  });
+
+  it("allows switching between grid and list views", async () => {
+    const { getByTestId, queryByTestId, getByRole } = render(Page, {
+      props: {
+        data: {
+          query: { q: "", labels: [] },
+          error: "",
+          page: {
+            results: [
+              {
+                publishId: "pub-123",
+                guestUrl: "/guest/pub-123",
+                title: "Nomad Roads",
+                description: "Clan politics on the fringe.",
+                labels: ["cyberpunk"],
+                visibleEntityCount: 12,
+                listingUpdatedAt: "2026-06-30T12:00:00.000Z",
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    // Defaults to grid view (card exists, list row doesn't)
+    expect(getByTestId("world-directory-card")).toBeTruthy();
+    expect(queryByTestId("world-directory-list-row")).toBeNull();
+
+    // Click list view button
+    const listBtn = getByRole("button", { name: /list view/i });
+    await fireEvent.click(listBtn);
+
+    // Switched to list view (list row exists, card doesn't)
+    expect(getByTestId("world-directory-list-row")).toBeTruthy();
+    expect(queryByTestId("world-directory-card")).toBeNull();
   });
 });

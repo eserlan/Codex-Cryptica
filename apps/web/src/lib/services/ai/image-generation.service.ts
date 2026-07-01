@@ -135,8 +135,15 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           console.log(
             `[ImageGenerationService] Generating image via proxy using Cloudflare Workers AI: ${modelName}`,
           );
-          const proxyUrl =
-            "https://oracle-proxy.espen-erlandsen.workers.dev/v1/images/generations";
+          const baseUrl =
+            (typeof import.meta !== "undefined" &&
+              import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+            (typeof import.meta !== "undefined" &&
+            import.meta.env?.DEV &&
+            !import.meta.env?.VITEST
+              ? "http://localhost:8787"
+              : "https://oracle-proxy.espen-erlandsen.workers.dev");
+          const proxyUrl = `${baseUrl}/v1/images/generations`;
           const response = await this.fetcher(proxyUrl, {
             method: "POST",
             headers: {
