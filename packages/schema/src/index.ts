@@ -12,3 +12,4 @@ export * from "./art-direction";
 export * from "./migrations";
 export * from "./publishing";
 
+export * from "./theme-templates";
