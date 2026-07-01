@@ -169,6 +169,11 @@
     gap: 1rem;
     pointer-events: none;
     opacity: 0.6;
+    /* .editor is a flex item, so its z-index: 10 creates a stacking context
+       that would otherwise paint above this absolutely-positioned sibling,
+       letting the transparent contenteditable swallow clicks meant for the
+       "Browse Files" button underneath it. Must outrank that. */
+    z-index: 20;
   }
 
   /* Hide placeholder when editor has focus or content */

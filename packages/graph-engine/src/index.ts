@@ -45,7 +45,14 @@ export const applyLargeGraphRenderHints = (
   isLarge: boolean,
 ): boolean => {
   const withRenderer = cy as unknown as {
-    renderer?: () => Record<string, unknown> | null | undefined;
+    renderer?: () =>
+      | {
+          hideEdgesOnViewport?: boolean;
+          motionBlurEnabled?: boolean;
+          motionBlur?: boolean;
+        }
+      | null
+      | undefined;
     container?: () => unknown;
   };
   // Headless graphs use a null renderer that never paints — nothing to tune.

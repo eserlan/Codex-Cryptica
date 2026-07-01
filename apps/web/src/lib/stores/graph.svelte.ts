@@ -253,7 +253,13 @@ export class GraphStore {
     const inbound = this.vault.inboundConnections ?? {};
     const entities = this.vault.entities;
 
-    for (let d = 0; d < depth && frontier.length > 0; d++) {
+    // BFS outward until either the target render count is reached or the
+    // reachable neighborhood is exhausted. `depth` is a detail *level*
+    // (see getFocusTargetCount), not a hop count, so it must not cap the
+    // traversal here — doing so stopped sparse neighborhoods short and
+    // jumped straight to high-degree filler nodes instead of continuing
+    // outward to the closest reachable ones.
+    while (frontier.length > 0) {
       const next: string[] = [];
       for (const id of frontier) {
         const connections = entities[id]?.connections;
