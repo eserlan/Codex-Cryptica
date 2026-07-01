@@ -149,6 +149,7 @@ export function buildVaultContext(
   const existingTitles: string[] = [];
   for (const id in allEntities) {
     if (existingTitles.length >= MAX_TITLES) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
     const e = allEntities[id];
     if (targetEntityType && e.type !== targetEntityType) continue;
     if (e.title) existingTitles.push(e.title);
@@ -169,6 +170,7 @@ export function buildVaultContext(
       // with imperative loop and early exit
       for (const id in allEntities) {
         if (neighbors.length >= MAX_NEIGHBORS) break;
+        if (!Object.hasOwn(allEntities, id)) continue;
         const e = allEntities[id];
         if (e.id !== sourceEntity.id && e.type === sourceEntity.type) {
           neighbors.push(entityToExcerpt(e));
@@ -202,19 +204,29 @@ export function buildVaultContext(
   // ⚡ Bolt Optimization: Iterate over keys rather than Object.values() array allocation
   if (targetEntityType) {
     for (const id in allEntities) {
+      if (ordered.length >= MAX_WORLD_SAMPLE) break;
+      if (!Object.hasOwn(allEntities, id)) continue;
       const e = allEntities[id];
       if (e.type === targetEntityType) consider(e);
     }
   }
   for (const id in allEntities) {
+    if (ordered.length >= MAX_WORLD_SAMPLE) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
     const e = allEntities[id];
     if (e.type === EVENT_TYPE) consider(e);
   }
   for (const id in allEntities) {
+    if (ordered.length >= MAX_WORLD_SAMPLE) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
     const e = allEntities[id];
     if (e.type !== NOTE_TYPE) consider(e);
   }
-  for (const id in allEntities) consider(allEntities[id]); // notes last
+  for (const id in allEntities) {
+    if (ordered.length >= MAX_WORLD_SAMPLE) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    consider(allEntities[id]); // notes last
+  }
 
   const worldSample = ordered
     // ordered is already max bounded by consider logic
