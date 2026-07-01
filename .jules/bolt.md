@@ -148,12 +148,6 @@
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
 
-## 2025-02-12 - Imperative object reduction in reactive derived blocks
-
-**Learning:** When generating a record of computed properties from a large array (like `vault.allEntities`) within a Svelte `$derived` block, using `Object.fromEntries(array.map(...))` creates significant intermediate garbage. For large data sets (like computing connection counts for every entity in a table), this can cause micro-stutters during reactivity evaluation.
-
-**Action:** Replace `Object.fromEntries(array.map(...))` and chained inner loops like `.filter(...).length` with a single, flat, imperative `for` loop that populates a plain record object directly. This avoids unnecessary intermediate closures, tuples, and arrays.
-
 ## 2025-06-30 - Replace chained array methods with early-exit imperative loops
 
 **Learning:** In `apps/web/src/lib/services/generators/generator-vault-context.ts`, building context samples via `Object.values(allEntities).filter(...).slice(0, MAX)` forces intermediate array allocations and full `O(N)` traversal of vaults. When vaults contain thousands of items, mapping and filtering the entire dataset just to capture a `MAX_TITLES` size slice severely spikes GC pressure on hot rendering/generation paths.

@@ -14,6 +14,7 @@
     nextSortState,
     type SortKey,
     type SortState,
+    type ConnectionSummary,
   } from "$lib/components/table/entityTableSort";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
@@ -48,10 +49,7 @@
     // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map(...)) with an imperative loop.
     // Also replaces entity.connections?.filter(...).length with an imperative loop
     // to prevent intermediate array allocations and reduce GC overhead during reactive updates.
-    const result: Record<
-      string,
-      { inbound: number; outbound: number; total: number }
-    > = {};
+    const result: Record<string, ConnectionSummary> = {};
     const entities = vault.allEntities;
     const len = entities.length;
 
