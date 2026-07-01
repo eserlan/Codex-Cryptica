@@ -2,21 +2,28 @@
   import WorldThemePicker from "$lib/components/settings/WorldThemePicker.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
   import { fade, scale } from "svelte/transition";
   import { DEFAULT_THEME, type WorldThemeId } from "schema";
 
   let selectedThemeId = $state<WorldThemeId>(DEFAULT_THEME.id);
   let isLoading = $state(false);
+  const promptVaultId = $derived(modalUIStore.vaultThemePrompt.vaultId);
 
-  const close = () => {
+  const dismiss = () => {
+    if (promptVaultId) {
+      vaultThemePromptStore.markDismissed(promptVaultId);
+    }
     modalUIStore.closeVaultThemePrompt();
   };
 
   const applyTheme = async () => {
+    if (!promptVaultId) return;
     isLoading = true;
     try {
       await themeStore.setTheme(selectedThemeId);
-      close();
+      vaultThemePromptStore.markApplied(promptVaultId);
+      modalUIStore.closeVaultThemePrompt();
     } catch (e) {
       console.error(e);
     } finally {
@@ -25,7 +32,7 @@
   };
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && close()} />
+<svelte:window onkeydown={(e) => e.key === "Escape" && dismiss()} />
 
 <div
   class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
@@ -33,12 +40,12 @@
   role="button"
   tabindex="0"
   onclick={(e) => {
-    if (e.target === e.currentTarget) close();
+    if (e.target === e.currentTarget) dismiss();
   }}
   onkeydown={(e) => {
     if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
-      close();
+      dismiss();
     }
   }}
 >
@@ -61,11 +68,11 @@
           CHOOSE VAULT THEME
         </h2>
         <p class="mt-1 text-xs text-theme-muted">
-          Pick a tone now that your vault has its first lore.
+          Pick a world theme now, or change it anytime in Settings.
         </p>
       </div>
       <button
-        onclick={close}
+        onclick={dismiss}
         class="text-theme-muted hover:text-theme-text"
         title="Close Theme Selector"
         aria-label="Close Theme Selector"
@@ -90,7 +97,7 @@
       <button
         type="button"
         class="px-4 py-2 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
-        onclick={close}
+        onclick={dismiss}
         disabled={isLoading}
       >
         LATER
