@@ -362,17 +362,22 @@ export class EntityStore {
           this.incrementalUpdate(oldEnt, newEnt);
         } else {
           // Cold content or timestamp update path (e.g. keystroke inside editor).
-          // Update in place to run with O(N) lookup, bypassing expensive index rebuilds.
+          // Replace the array identity so derived graph elements resync for
+          // connection-only updates without rebuilding all secondary indexes.
           const idx = this.allEntities.findIndex((e) => e.id === id);
           if (idx !== -1) {
-            this.allEntities[idx] = newEnt;
+            const nextAllEntities = [...this.allEntities];
+            nextAllEntities[idx] = newEnt;
+            this.allEntities = nextAllEntities;
           }
           if (newEnt.status !== "draft") {
             const activeIdx = this.allActiveEntities.findIndex(
               (e) => e.id === id,
             );
             if (activeIdx !== -1) {
-              this.allActiveEntities[activeIdx] = newEnt;
+              const nextActiveEntities = [...this.allActiveEntities];
+              nextActiveEntities[activeIdx] = newEnt;
+              this.allActiveEntities = nextActiveEntities;
             }
           }
         }
@@ -633,6 +638,14 @@ export class EntityStore {
 
   async flushPendingSaves(timeoutMs?: number): Promise<void> {
     return this.persistence.flushPendingSaves(timeoutMs);
+  }
+
+  suspendSaving() {
+    this.persistence.suspendSaving();
+  }
+
+  resumeSaving() {
+    this.persistence.resumeSaving();
   }
 
   // --- Loader Delegation ---

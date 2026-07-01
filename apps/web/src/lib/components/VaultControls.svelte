@@ -351,11 +351,13 @@
           </button>
 
           {#if showNoVaultMenu}
-            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-            <div
-              class="fixed inset-0 z-[80]"
+            <button
+              type="button"
+              class="fixed inset-0 z-[80] w-full h-full cursor-default"
+              aria-label="Close menu"
+              tabindex="-1"
               onclick={() => (showNoVaultMenu = false)}
-            ></div>
+            ></button>
             <div
               class="absolute right-0 mt-2 w-56 z-[81] rounded-lg border border-chrome-border bg-chrome-surface shadow-xl py-1 text-left {isVertical
                 ? 'left-0 right-auto'

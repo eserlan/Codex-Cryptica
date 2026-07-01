@@ -85,6 +85,14 @@ export class ModalUIStore {
     sourceEntityId: null,
   });
 
+  vaultThemePrompt = $state<{
+    open: boolean;
+    vaultId: string | null;
+  }>({
+    open: false,
+    vaultId: null,
+  });
+
   showVaultSwitcher = $state(false);
   vaultSwitcherIntent = $state<"create" | "open" | null>(null);
   showShare = $state(false);
@@ -172,6 +180,14 @@ export class ModalUIStore {
 
   closeRelatedEntityDialog() {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
+  }
+
+  openVaultThemePrompt(vaultId: string) {
+    this.vaultThemePrompt = { open: true, vaultId };
+  }
+
+  closeVaultThemePrompt() {
+    this.vaultThemePrompt = { open: false, vaultId: null };
   }
 
   // In-app RPG generator workflow (see specs/131-in-app-rpg-generators).
@@ -353,6 +369,7 @@ export class ModalUIStore {
       this.mergeDialog.open ||
       this.bulkLabelDialog.open ||
       this.relatedEntityDialog.open ||
+      this.vaultThemePrompt.open ||
       this.showVaultSwitcher ||
       this.showShare ||
       this.imagePromptReview.open ||
@@ -368,6 +385,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v9__";
+const KEY = "__codex_modal_ui_store__v10__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

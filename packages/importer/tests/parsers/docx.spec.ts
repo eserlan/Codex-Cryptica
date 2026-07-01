@@ -32,7 +32,7 @@ describe("DocxParser", () => {
     });
 
     let capturedHandler: any;
-    (mammoth.images.inline as any).mockImplementation((handler: any) => {
+    (mammoth.images as any).inline.mockImplementation((handler: any) => {
       capturedHandler = handler;
       return "mock-inline-handler";
     });

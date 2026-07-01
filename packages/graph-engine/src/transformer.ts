@@ -502,7 +502,11 @@ export const getGraphStyle = (
         "curve-style": "bezier",
         "target-arrow-shape": "triangle",
         "arrow-scale": 0.6,
-        opacity: 0.35,
+        // Edges need to stay legible against dark backgrounds. At 0.35 the
+        // default (non-friendly/enemy/neutral) edge color washes out to
+        // invisible — semantic connection types like member_of/participant_of
+        // hit this default path, so keep base opacity high enough to read.
+        opacity: 0.6,
         label: "data(label)",
         "text-rotation": "autorotate",
         "font-size": 8,

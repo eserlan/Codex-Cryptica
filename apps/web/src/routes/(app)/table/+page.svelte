@@ -45,16 +45,20 @@
   const connectionCounts = $derived.by(() => {
     const inboundConnections = vault.inboundConnections ?? {};
 
-    return Object.fromEntries(
-      vault.allEntities.map((entity) => {
-        const inbound = inboundConnections[entity.id]?.length ?? 0;
-        const outbound =
-          entity.connections?.filter((connection) => connection.target)
-            .length ?? 0;
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map()) with an imperative loop
+    const counts: Record<
+      string,
+      { inbound: number; outbound: number; total: number }
+    > = {};
+    for (const entity of vault.allEntities) {
+      const inbound = inboundConnections[entity.id]?.length ?? 0;
+      const outbound =
+        entity.connections?.filter((connection) => connection.target).length ??
+        0;
 
-        return [entity.id, { inbound, outbound, total: inbound + outbound }];
-      }),
-    );
+      counts[entity.id] = { inbound, outbound, total: inbound + outbound };
+    }
+    return counts;
   });
 
   const rows = $derived(sortEntities(filtered, sort, connectionCounts));

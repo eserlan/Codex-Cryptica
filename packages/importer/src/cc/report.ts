@@ -1,0 +1,61 @@
+import type { ImportWarning } from "./package";
+
+export interface UnresolvedReference {
+  fromRef: string;
+  toRef: string;
+  type: string;
+  reason: string;
+}
+
+export interface AssetSkipped {
+  id: string;
+  reason: string;
+}
+
+export interface TypeFallback {
+  sourceRef: string;
+  sourceType: string | undefined;
+}
+
+export interface CommitFailure {
+  ref: string;
+  stage: "entity" | "connection" | "asset";
+  message: string;
+}
+
+export interface ImportReport {
+  sourceSystem: string;
+  sourceLabel: string;
+  committedAt: number;
+  entitiesCreated: number;
+  entitiesUpdated: number;
+  itemsSkipped: number;
+  relationshipsCreated: number;
+  unresolvedReferences: UnresolvedReference[];
+  assetsImported: number;
+  assetsSkipped: AssetSkipped[];
+  typeFallbacks: TypeFallback[];
+  warnings: ImportWarning[];
+  failures: CommitFailure[];
+}
+
+export function createEmptyReport(
+  sourceSystem: string,
+  sourceLabel: string,
+): ImportReport {
+  return {
+    sourceSystem,
+    sourceLabel,
+    committedAt: Date.now(),
+    entitiesCreated: 0,
+    entitiesUpdated: 0,
+    itemsSkipped: 0,
+    relationshipsCreated: 0,
+    unresolvedReferences: [],
+    assetsImported: 0,
+    assetsSkipped: [],
+    typeFallbacks: [],
+    warnings: [],
+    failures: [],
+  };
+}

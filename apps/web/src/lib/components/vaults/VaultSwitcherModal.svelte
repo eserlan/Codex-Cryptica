@@ -19,6 +19,7 @@
       modalUIStore.vaultSwitcherIntent = null;
     }
   });
+
   let newVaultName = $state("");
   let editingId = $state<string | null>(null);
   let editName = $state("");
@@ -118,7 +119,7 @@
       const handle = await window.showDirectoryPicker({ mode: "read" });
 
       // 2. Create the vault
-      const _id = await vault.createVault(newVaultName);
+      await vault.createVault(newVaultName);
 
       // 3. Trigger import into that vault using the handle we already got
       // Note: vault.switchVault is called inside createVault,
@@ -165,6 +166,10 @@
 
   const focusNode = (node: HTMLElement) => {
     node.focus();
+  };
+
+  const openCreate = () => {
+    showCreate = true;
   };
 </script>
 
@@ -305,7 +310,7 @@
                   type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => vault.loadFromFolder()}
-                  title="Load from Folder — pulls changes from your linked folder into the archive."
+                  title="Load from Folder - pulls changes from your linked folder into the archive."
                   aria-label="Load from Folder"
                   disabled={isLoading || !!editingId}
                 >
@@ -318,9 +323,9 @@
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                   onclick={() => vault.saveToFolder()}
                   title={!vault.hasFolderHandle
-                    ? "No folder linked — select a local folder to enable saving."
+                    ? "No folder linked - select a local folder to enable saving."
                     : vault.isDirty
-                      ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                      ? "Save to folder - writes all changes from the internal archive to your linked folder."
                       : "Up to date with local folder."}
                   aria-label="Save to Folder"
                   aria-busy={vault.status === "saving"}
@@ -405,7 +410,7 @@
             </div>
           {/if}
 
-          <div class="flex justify-end gap-3 mt-8">
+          <div class="flex justify-end gap-3">
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
@@ -414,45 +419,43 @@
             >
               CANCEL
             </button>
-            <div class="flex gap-2">
-              <button
-                type="submit"
-                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                disabled={isLoading || !newVaultName.trim()}
-                aria-busy={isLoading}
-              >
-                {#if isLoading}
-                  <span
-                    class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-                    aria-hidden="true"
-                  ></span>
-                  CREATING...
-                {:else}
-                  CREATE
-                {/if}
-              </button>
-              <button
-                type="button"
-                class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                onclick={handleImport}
-                disabled={isLoading || !newVaultName.trim()}
-              >
-                {#if isLoading && vault.status === "loading"}
-                  <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
-                  ></span>
-                  IMPORTING...
-                {:else}
-                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
-                  IMPORT
-                {/if}
-              </button>
-            </div>
+            <button
+              type="submit"
+              class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={isLoading || !newVaultName.trim()}
+              aria-busy={isLoading}
+            >
+              {#if isLoading}
+                <span
+                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                  aria-hidden="true"
+                ></span>
+                CREATING...
+              {:else}
+                CREATE
+              {/if}
+            </button>
+            <button
+              type="button"
+              class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onclick={handleImport}
+              disabled={isLoading || !newVaultName.trim()}
+            >
+              {#if isLoading && vault.status === "loading"}
+                <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                ></span>
+                IMPORTING...
+              {:else}
+                <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                IMPORT
+              {/if}
+            </button>
           </div>
         </form>
       {:else}
         <button
           class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={() => (showCreate = true)}
+          onclick={openCreate}
         >
           <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
         </button>

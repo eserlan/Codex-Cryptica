@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { BaseExecutor } from "./base-executor";
 import type { OracleExecutionContext, OracleIntent } from "../types";
+import type { Clock } from "../runtime";
 
 class TestExecutor extends BaseExecutor {
+  constructor(clock?: Clock) {
+    super(clock);
+  }
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -64,7 +69,8 @@ describe("BaseExecutor", () => {
   });
 
   it("should emit events via eventBus with domain and metadata", async () => {
-    const executor = new TestExecutor();
+    const mockClock = { now: () => 12345 };
+    const executor = new TestExecutor(mockClock);
     const emit = vi.fn();
     const context = { eventBus: { emit }, vaultId: "v1" } as any;
     const event = { type: "TEST_EVENT" };
@@ -74,10 +80,10 @@ describe("BaseExecutor", () => {
       expect.objectContaining({
         type: "TEST_EVENT",
         domain: "oracle",
-        metadata: expect.objectContaining({
+        metadata: {
           vaultId: "v1",
-          timestamp: expect.any(Number),
-        }),
+          timestamp: 12345,
+        },
       }),
     );
   });
