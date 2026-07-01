@@ -255,9 +255,18 @@ export async function handlePutPublicListing(
       ...body,
       publishId,
     });
-  } catch {
+  } catch (err: any) {
+    console.error(
+      "[directory] Zod or parse error in handlePutPublicListing:",
+      err,
+    );
     return new Response(
-      JSON.stringify({ error: { message: "Invalid listing metadata" } }),
+      JSON.stringify({
+        error: {
+          message: "Invalid listing metadata",
+          details: err?.message || String(err),
+        },
+      }),
       {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
@@ -276,12 +285,30 @@ export async function handlePutPublicListing(
     );
   }
 
-  if (
-    draft.coverImageAssetId &&
-    !bundle.assetManifest.some(
-      (asset) => asset.assetId === draft.coverImageAssetId,
-    )
-  ) {
+  const matchingAsset = draft.coverImageAssetId
+    ? bundle.assetManifest.find(
+        (asset) =>
+          asset.assetId === draft.coverImageAssetId ||
+          asset.filename === draft.coverImageAssetId,
+      )
+    : undefined;
+
+  let isValidCover = !!matchingAsset;
+  if (draft.coverImageAssetId && !isValidCover) {
+    const assetKey = `published/${publishId}/assets/${draft.coverImageAssetId}`;
+    const headResult = await env.BUCKET.head(assetKey);
+    if (headResult) {
+      isValidCover = true;
+    }
+  }
+
+  if (draft.coverImageAssetId && !isValidCover) {
+    console.error(
+      "[directory] Cover image validation failed for coverImageAssetId:",
+      draft.coverImageAssetId,
+      "matchingAsset:",
+      matchingAsset,
+    );
     return new Response(
       JSON.stringify({
         error: { message: "Cover image must come from the published snapshot" },
@@ -291,6 +318,10 @@ export async function handlePutPublicListing(
         headers: { ...cors, "Content-Type": "application/json" },
       },
     );
+  }
+
+  if (matchingAsset) {
+    draft.coverImageAssetId = matchingAsset.assetId;
   }
 
   const existing = await loadListing(env, publishId);

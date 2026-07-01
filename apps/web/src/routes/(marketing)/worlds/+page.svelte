@@ -1,5 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { marked } from "marked";
+  import DOMPurify from "dompurify";
+  import { browser } from "$app/environment";
 
   interface DirectoryResult {
     publishId: string;
@@ -41,6 +44,15 @@
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("cc_directory_view_mode", mode);
     }
+  }
+
+  function renderInlineMarkdown(text: string): string {
+    if (!text) return "";
+    const html = marked.parseInline(text) as string;
+    if (browser) {
+      return DOMPurify.sanitize(html);
+    }
+    return html;
   }
 </script>
 
@@ -192,7 +204,7 @@
                   {result.title}
                 </h2>
                 <p class="text-sm leading-relaxed text-theme-text/70">
-                  {result.description}
+                  {@html renderInlineMarkdown(result.description)}
                 </p>
               </div>
 
@@ -244,7 +256,9 @@
                 {/if}
               </div>
               <p class="truncate text-sm text-theme-text/70">
-                {result.description || "No description provided."}
+                {@html renderInlineMarkdown(
+                  result.description || "No description provided.",
+                )}
               </p>
             </div>
 

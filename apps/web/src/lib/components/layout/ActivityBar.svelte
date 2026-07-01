@@ -70,22 +70,25 @@
         title: "Entity Explorer",
         action: () => layoutUIStore.toggleSidebarTool("explorer"),
       },
-      {
-        id: "oracle",
-        icon: "icon-[lucide--sparkles]",
-        label: "Oracle",
-        title:
-          "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
-        action: () => layoutUIStore.toggleSidebarTool("oracle"),
-      },
-      {
-        id: "quicknote",
-        icon: "icon-[lucide--zap]",
-        label: "Notes",
-        title: "QuickNote Scratchpad",
-        action: () => quickNoteStore.toggle(),
-      },
     ];
+
+    list.push({
+      id: "oracle",
+      icon: "icon-[lucide--sparkles]",
+      label: "Oracle",
+      title: vault.isGuest
+        ? "Lore Oracle — ask about the world lore you can see. AI is an assistive layer, never required."
+        : "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
+      action: () => layoutUIStore.toggleSidebarTool("oracle"),
+    });
+
+    list.push({
+      id: "quicknote",
+      icon: "icon-[lucide--zap]",
+      label: "Notes",
+      title: "QuickNote Scratchpad",
+      action: () => quickNoteStore.toggle(),
+    });
 
     if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
       list.push({

@@ -1,6 +1,7 @@
 import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
+import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
   fetch?: typeof fetch;
@@ -283,6 +284,12 @@ export class PublishingService {
         maps,
         canvases,
         assetManifest,
+        metadata: worldStore.metadata
+          ? {
+              description: worldStore.metadata.description,
+              coverImage: worldStore.metadata.coverImage,
+            }
+          : undefined,
       });
 
       this.statusMessage = "Uploading snapshot bundle...";

@@ -366,6 +366,7 @@
       <button
         type="button"
         onclick={(e) => {
+          if (!resolvedImageUrl) return;
           const rect = e.currentTarget.getBoundingClientRect();
           onShowLightbox({
             x: rect.left,
@@ -374,7 +375,6 @@
             height: rect.height,
           });
         }}
-        disabled={!resolvedImageUrl}
         class="w-full aspect-square rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none disabled:cursor-wait"
         aria-label="View full size image"
       >

@@ -11,6 +11,7 @@ export class GuestVaultStore {
   canvases = $state<any[]>([]);
   assetManifest = $state<any[]>([]);
   activeTheme = $state<any>({});
+  metadata = $state<any>(null);
 
   entitiesMap = $derived.by(() => {
     const map: Record<string, Entity> = Object.create(null);
@@ -52,6 +53,7 @@ export class GuestVaultStore {
     this.canvases = bundle.canvases || [];
     this.assetManifest = bundle.assetManifest || [];
     this.activeTheme = bundle.activeTheme || {};
+    this.metadata = bundle.metadata || null;
     this.isInitialized = true;
 
     try {
@@ -94,18 +96,30 @@ export class GuestVaultStore {
         a.filename === path ||
         a.assetId === cleanPath,
     );
-    if (asset) {
-      const baseUrl =
-        (typeof import.meta !== "undefined" &&
-          import.meta.env?.VITE_ORACLE_PROXY_URL) ||
-        (typeof import.meta !== "undefined" &&
-        import.meta.env?.DEV &&
-        !import.meta.env?.VITEST
-          ? "http://localhost:8787"
-          : "https://oracle-proxy.espen-erlandsen.workers.dev");
-      return `${baseUrl}/api/published/${this.publishId}/assets/${asset.assetId}`;
+
+    const isCoverImage =
+      this.metadata?.coverImage &&
+      (this.metadata.coverImage === path ||
+        this.metadata.coverImage.trim().replace(/^(\.\/|\/)/, "") ===
+          cleanPath);
+
+    if (!asset && !isCoverImage) {
+      return "";
     }
-    return "";
+
+    const assetId = asset
+      ? asset.assetId
+      : cleanPath.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+    const baseUrl =
+      (typeof import.meta !== "undefined" &&
+        import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+      (typeof import.meta !== "undefined" &&
+      import.meta.env?.DEV &&
+      !import.meta.env?.VITEST
+        ? "http://localhost:8787"
+        : "https://oracle-proxy.espen-erlandsen.workers.dev");
+    return `${baseUrl}/api/published/${this.publishId}/assets/${assetId}`;
   }
 
   clear() {
@@ -119,6 +133,7 @@ export class GuestVaultStore {
     this.canvases = [];
     this.assetManifest = [];
     this.activeTheme = {};
+    this.metadata = null;
     this.searchIndex = null;
     this.searchQuery = "";
   }

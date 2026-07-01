@@ -655,7 +655,17 @@ export async function handleGetAsset(
   }
 
   const assetKey = `published/${publishId}/assets/${assetId}`;
-  const obj = await env.BUCKET.get(assetKey);
+  let obj = await env.BUCKET.get(assetKey);
+
+  if (!obj) {
+    const fallbackId = assetId.includes(".")
+      ? assetId.replace(/\./g, "_")
+      : assetId;
+    if (fallbackId !== assetId) {
+      const fallbackKey = `published/${publishId}/assets/${fallbackId}`;
+      obj = await env.BUCKET.get(fallbackKey);
+    }
+  }
 
   if (!obj) {
     return new Response(
