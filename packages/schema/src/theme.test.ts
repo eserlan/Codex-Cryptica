@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  StylingTemplateSchema,
+} from "./theme";
+import {
   THEMES,
   DEFAULT_THEME,
   WORKSPACE_DARK,
@@ -15,8 +18,7 @@ import {
   LANCER_LIGHT,
   WESTERN_DARK,
   SPACE_OPERA_RESISTANCE_DARK,
-  StylingTemplateSchema,
-} from "./theme";
+} from "./theme-templates";
 
 describe("Theme Schema & Definitions", () => {
   it("defines the workspace and workspace_dark themes", () => {
