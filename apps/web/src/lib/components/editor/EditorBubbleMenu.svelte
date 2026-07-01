@@ -35,28 +35,34 @@
   data-testid="bubble-menu"
 >
   <button
+    type="button"
     onclick={() => editor?.chain().focus().toggleBold().run()}
     class="menu-btn {isBold ? 'active' : ''}"
+    title="Bold (Cmd+B)"
     aria-label="Bold"
     aria-pressed={isBold}
   >
-    <span class="icon-[lucide--bold] w-4 h-4"></span>
+    <span class="icon-[lucide--bold] w-4 h-4" aria-hidden="true"></span>
   </button>
   <button
+    type="button"
     onclick={() => editor?.chain().focus().toggleItalic().run()}
     class="menu-btn {isItalic ? 'active' : ''}"
+    title="Italic (Cmd+I)"
     aria-label="Italic"
     aria-pressed={isItalic}
   >
-    <span class="icon-[lucide--italic] w-4 h-4"></span>
+    <span class="icon-[lucide--italic] w-4 h-4" aria-hidden="true"></span>
   </button>
   <button
+    type="button"
     onclick={setLink}
     class="menu-btn {isLink ? 'active' : ''}"
+    title="Link"
     aria-label="Link"
     aria-pressed={isLink}
   >
-    <span class="icon-[lucide--link] w-4 h-4"></span>
+    <span class="icon-[lucide--link] w-4 h-4" aria-hidden="true"></span>
   </button>
 </div>
 
