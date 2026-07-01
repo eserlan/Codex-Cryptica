@@ -44,13 +44,14 @@ export async function getRegistry(
 
   if (!record) {
     isNew = true;
+    const now = clock.now();
     record = {
       hash,
       fileName,
       totalChunks,
       completedIndices: [],
-      createdAt: clock.now(),
-      lastUsedAt: clock.now(),
+      createdAt: now,
+      lastUsedAt: now,
     };
   } else {
     record.lastUsedAt = clock.now();
