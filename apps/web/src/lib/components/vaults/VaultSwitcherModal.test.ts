@@ -13,6 +13,7 @@ const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
       availableVaults: [] as Array<{
         id: string;
         name: string;
+        createdAt?: number;
         lastOpenedAt: number;
         entityCount: number;
       }>,

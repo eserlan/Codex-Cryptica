@@ -52,6 +52,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
   import { worldStore } from "$lib/stores/world.svelte";
 
   let { children } = $props();
@@ -66,7 +67,7 @@
     null;
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
-  let checkedVaultThemePromptIds = $state<string[]>([]);
+  let isDocumentVisible = $state(true);
 
   // Derived
   const isPopup = $derived(
@@ -115,6 +116,7 @@
   onDestroy(() => {
     crossTabBroadcaster?.destroy();
     crossTabBroadcaster = null;
+    vaultThemePromptStore.stopTracking();
   });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
@@ -159,6 +161,7 @@
 
   onMount(() => {
     (async () => {
+      isDocumentVisible = !document.hidden;
       helpStore.init();
       await themeStore.init();
       void initGDriveSync();
@@ -200,6 +203,45 @@
         void featureGlobals.oracle?.init();
       }
     })();
+  });
+
+  const shouldConsiderVaultThemePrompt = (
+    activeVaultId: string,
+    hasCompletedInitialGuide: boolean,
+  ) =>
+    browser &&
+    vault.isInitialized &&
+    isDocumentVisible &&
+    !!activeVaultId &&
+    !sessionModeStore.isDemoMode &&
+    !sessionModeStore.isGuestMode &&
+    !onboardingStore.isLandingPageVisible &&
+    onboardingStore.dismissedWorldPage &&
+    !onboardingStore.showChangelog &&
+    hasCompletedInitialGuide &&
+    !helpStore.activeTour &&
+    !modalUIStore.isAnyModalOpen;
+
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+
+    if (
+      !browser ||
+      !vault.isInitialized ||
+      !activeVaultId ||
+      sessionModeStore.isDemoMode ||
+      sessionModeStore.isGuestMode
+    ) {
+      vaultThemePromptStore.stopTracking();
+      return;
+    }
+
+    if (!isDocumentVisible) {
+      vaultThemePromptStore.pauseTracking();
+      return;
+    }
+
+    vaultThemePromptStore.startTracking(activeVaultId);
   });
 
   async function loadFeatureWindowGlobals() {
@@ -336,47 +378,36 @@
     }
   });
 
-  // Theme selection should feel like an onboarding milestone, not a vault
-  // navigation side effect. Ask only after the user has content and no guide or
-  // modal is competing for attention.
+  // Theme discovery should happen after the user has some real time in the
+  // vault, not immediately after creation or a single first edit.
   $effect(() => {
     const activeVaultId = vault.activeVaultId;
     const entityCount = vault.allEntities.length;
     const hasCompletedInitialGuide = helpStore.hasSeen("initial-onboarding");
 
     if (
-      !browser ||
-      !vault.isInitialized ||
       !activeVaultId ||
-      entityCount === 0 ||
-      checkedVaultThemePromptIds.includes(activeVaultId) ||
-      sessionModeStore.isDemoMode ||
-      sessionModeStore.isGuestMode ||
-      onboardingStore.isLandingPageVisible ||
-      !onboardingStore.dismissedWorldPage ||
-      onboardingStore.showChangelog ||
-      !hasCompletedInitialGuide ||
-      helpStore.activeTour ||
-      modalUIStore.isAnyModalOpen
+      !shouldConsiderVaultThemePrompt(
+        activeVaultId,
+        hasCompletedInitialGuide,
+      ) ||
+      !vaultThemePromptStore.shouldAutoPrompt(activeVaultId, entityCount)
     ) {
       return;
     }
-
-    checkedVaultThemePromptIds = [...checkedVaultThemePromptIds, activeVaultId];
 
     void themeStore.hasSavedThemeForVault(activeVaultId).then((hasTheme) => {
       if (
         !hasTheme &&
         vault.activeVaultId === activeVaultId &&
-        vault.allEntities.length > 0 &&
-        !sessionModeStore.isDemoMode &&
-        !sessionModeStore.isGuestMode &&
-        !onboardingStore.isLandingPageVisible &&
-        onboardingStore.dismissedWorldPage &&
-        !onboardingStore.showChangelog &&
-        helpStore.hasSeen("initial-onboarding") &&
-        !helpStore.activeTour &&
-        !modalUIStore.isAnyModalOpen
+        shouldConsiderVaultThemePrompt(
+          activeVaultId,
+          helpStore.hasSeen("initial-onboarding"),
+        ) &&
+        vaultThemePromptStore.shouldAutoPrompt(
+          activeVaultId,
+          vault.allEntities.length,
+        )
       ) {
         modalUIStore.openVaultThemePrompt(activeVaultId);
       }
@@ -500,6 +531,9 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+<svelte:document
+  onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
+/>
 <NavigationShortcuts />
 
 <div

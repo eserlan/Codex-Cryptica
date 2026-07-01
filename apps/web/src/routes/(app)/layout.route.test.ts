@@ -175,6 +175,14 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     lightbox: { show: false },
   },
 }));
+vi.mock("$lib/stores/ui/vault-theme-prompt.svelte", () => ({
+  vaultThemePromptStore: {
+    startTracking: vi.fn(),
+    pauseTracking: vi.fn(),
+    stopTracking: vi.fn(),
+    shouldAutoPrompt: vi.fn(() => false),
+  },
+}));
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     confirmationDialog: { open: false },
@@ -213,6 +221,7 @@ import { helpStore } from "$lib/stores/help.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
+import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 
 describe("+layout.svelte", () => {
@@ -254,6 +263,8 @@ describe("+layout.svelte", () => {
     vi.mocked(modalUIStore.openVaultThemePrompt).mockClear();
     vi.mocked(themeStore.hasSavedThemeForVault).mockClear();
     vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(true);
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockClear();
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(false);
   });
 
   it("keeps route content mounted beneath the app shell", () => {
@@ -359,8 +370,9 @@ describe("+layout.svelte", () => {
     expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 
-  it("prompts for vault theme after onboarding and first content when no saved theme exists", async () => {
+  it("prompts for vault theme after onboarding and meaningful vault engagement when no saved theme exists", async () => {
     (vault as any).allEntities = [{ id: "entity-1", title: "First Entity" }];
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(true);
     vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(false);
 
     render(LayoutTestHost);
@@ -368,6 +380,18 @@ describe("+layout.svelte", () => {
     await waitFor(() =>
       expect(modalUIStore.openVaultThemePrompt).toHaveBeenCalledWith("v1"),
     );
+  });
+
+  it("does not prompt when the delayed engagement threshold has not been reached", async () => {
+    (vault as any).allEntities = [{ id: "entity-1", title: "First Entity" }];
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(false);
+    vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(false);
+
+    render(LayoutTestHost);
+    await tick();
+
+    expect(themeStore.hasSavedThemeForVault).not.toHaveBeenCalled();
+    expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 
   it("does not interrupt active guide or modal with the vault theme prompt", async () => {
