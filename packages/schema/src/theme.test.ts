@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  StylingTemplateSchema,
-} from "./theme";
+import { StylingTemplateSchema } from "./theme";
 import {
   THEMES,
   DEFAULT_THEME,
