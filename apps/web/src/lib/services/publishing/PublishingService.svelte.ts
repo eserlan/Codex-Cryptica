@@ -1,6 +1,7 @@
 import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
+import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
   fetch?: typeof fetch;
@@ -243,7 +244,14 @@ export class PublishingService {
 
       const fetcher = this.deps.fetch || fetch;
       const baseUrl =
-        this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
+        this.deps.baseUrl ||
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev");
       let previousManifest: Array<{ assetId: string; hash?: string }> = [];
 
       if (isUpdate && publishId) {
@@ -276,6 +284,12 @@ export class PublishingService {
         maps,
         canvases,
         assetManifest,
+        metadata: worldStore.metadata
+          ? {
+              description: worldStore.metadata.description,
+              coverImage: worldStore.metadata.coverImage,
+            }
+          : undefined,
       });
 
       this.statusMessage = "Uploading snapshot bundle...";
@@ -461,7 +475,14 @@ export class PublishingService {
     try {
       const fetcher = this.deps.fetch || fetch;
       const baseUrl =
-        this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
+        this.deps.baseUrl ||
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev");
       const deleteUrl = `${baseUrl}/api/published/${existing.publishId}`;
 
       const response = await fetcher(deleteUrl, {

@@ -118,6 +118,8 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
 - **Dangling Relationships**: If public Entity A links to private Entity B, exporting Entity A must not break the UI. The exporter MUST sanitize the inline markdown link to Entity B by replacing both the link text and its wrapper with a `[Redacted]` placeholder. The guest viewer must gracefully handle or omit references to excluded entities.
 - **Orphan/Unpublished URL access**: When a guest requests an invalid or expired URL, the app must show a clean error page rather than a blank screen or a JavaScript crash, and automatically remove the dead link from the guest's local history.
 - **Orphaned Assets in R2**: If a user updates their campaign, assets that are no longer referenced MUST be cleaned up automatically to avoid accumulating dangling files and leaks of recently restricted material.
+- **Guest-Side Reactive State Leakage**: Global UI singletons shared between host and guest sessions (e.g. lightbox/modal state) MUST NOT be reset or overwritten as a side effect of unrelated guest-only components mounting; each component may only close state it opened itself.
+- **Guest Oracle Chat Without a Local Search Index**: A guest (including an anonymous visitor from the public directory) asking the Oracle assistant a question must still receive relevant, fog-of-war-filtered context, even though no host is present and no local IndexedDB-backed search index exists for the guest session.
 
 ## Requirements _(mandatory)_
 
@@ -149,6 +151,12 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
 - **FR-024**: The system MUST persist the active guest session (`isGuestMode` and guest vault data) in memory across navigations to other app routes (e.g., entity detail pages) so the guest can browse seamlessly.
 - **FR-025**: The system MUST terminate the guest session, clear the in-memory guest vault data, and restore the local host vault state and theme when the user navigates back to the root `/guest` landing page.
 - **FR-026**: Published guest snapshots MUST remain unlisted by default. The system MUST NOT add a snapshot to any public directory, gallery, or public search surface unless a separate public-listing consent flow is explicitly completed.
+- **FR-027**: The snapshot bundle MUST include the world's front-page metadata (short description and cover image) so the guest front page renders the same briefing and cover image the host sees, without granting guests any edit or regenerate controls over that content.
+- **FR-028**: The guest viewer MUST hide all owner-only front-page controls, including cover image upload/change/generate, briefing edit/generate, and AI-authored "Proposed Entities" suggestions.
+- **FR-029**: Entity portrait images (and thumbnails) MUST be resolvable and clickable to an enlarged lightbox view in guest mode, from the graph, entity detail sidebar, zen mode, and front page entity cards, using the same asset resolution path as the host view.
+- **FR-030**: Bolded/auto-detected entity name mentions within entity content MUST remain clickable navigation links in guest mode, matching host behavior, by building the title/alias lookup index from the guest bundle's entities rather than the host's local entity store.
+- **FR-031**: The general-purpose Lore Oracle AI assistant MUST be available to guests, including anonymous visitors arriving via a public directory listing (`139-public-world-directory`), so they can ask free-form questions about the world lore they are privy to. Guest Oracle chat MUST retrieve context from the guest bundle's own entities via an in-memory search fallback rather than the host's local IndexedDB-backed search worker/index, since that index is never populated in guest sessions. Fog-of-war visibility filtering MUST still apply to guest Oracle context exactly as it does for host-initiated guest-mode queries.
+- **FR-032**: All content-mutating Oracle actions (entity creation, revision, merge, connection proposals) MUST remain blocked for guest sessions at the execution layer (not just hidden in the UI), so that exposing the Oracle chat panel to guests cannot be used to bypass the read-only guarantee.
 
 ### Key Entities _(include if feature involves data)_
 

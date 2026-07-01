@@ -658,7 +658,7 @@ function handleCorsPreflight(request: Request, env: Env): Response {
   const headers = new Headers();
   const allowedHeaders =
     "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename";
-  const allowedMethods = "GET, POST, DELETE, OPTIONS";
+  const allowedMethods = "GET, POST, PUT, DELETE, OPTIONS";
 
   // Set CORS headers
   const origin = request.headers.get("Origin") || "";

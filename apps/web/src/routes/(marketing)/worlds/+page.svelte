@@ -1,5 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { marked } from "marked";
+  import DOMPurify from "dompurify";
+  import { browser } from "$app/environment";
 
   interface DirectoryResult {
     publishId: string;
@@ -24,6 +27,37 @@
 
   let { data }: Props = $props();
   let labelsText = $derived(data.query.labels.join(", "));
+
+  let viewMode = $state<"grid" | "list">("grid");
+
+  $effect(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("cc_directory_view_mode");
+      if (saved === "grid" || saved === "list") {
+        viewMode = saved;
+      }
+    }
+  });
+
+  function setViewMode(mode: "grid" | "list") {
+    viewMode = mode;
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("cc_directory_view_mode", mode);
+    }
+  }
+
+  function renderInlineMarkdown(text: string): string {
+    if (!text) return "";
+    if (!browser) {
+      // DOMPurify needs a DOM; never SSR unsanitized directory content.
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+    const html = marked.parseInline(text) as string;
+    return DOMPurify.sanitize(html);
+  }
 </script>
 
 <svelte:head>
@@ -100,13 +134,57 @@
       <p class="text-sm text-red-400">{data.error}</p>
     {/if}
 
+    {#if data.page.results.length > 0}
+      <div
+        class="flex items-center justify-between border-b border-theme-border pb-4"
+      >
+        <p
+          class="text-xs font-header uppercase tracking-wider text-theme-text/60"
+        >
+          Found {data.page.results.length} world{data.page.results.length === 1
+            ? ""
+            : "s"}
+        </p>
+        <div
+          class="flex items-center gap-1 rounded bg-theme-surface/60 p-1 border border-theme-border"
+        >
+          <button
+            onclick={() => setViewMode("grid")}
+            class="rounded px-2.5 py-1.5 transition text-theme-text/75 hover:text-theme-text hover:bg-theme-surface flex items-center justify-center {viewMode ===
+            'grid'
+              ? 'bg-theme-bg text-theme-primary shadow-sm border border-theme-border/50'
+              : 'border border-transparent'}"
+            title="Grid view"
+            aria-label="Grid view"
+            aria-pressed={viewMode === "grid"}
+            type="button"
+          >
+            <span class="icon-[lucide--grid] h-4 w-4"></span>
+          </button>
+          <button
+            onclick={() => setViewMode("list")}
+            class="rounded px-2.5 py-1.5 transition text-theme-text/75 hover:text-theme-text hover:bg-theme-surface flex items-center justify-center {viewMode ===
+            'list'
+              ? 'bg-theme-bg text-theme-primary shadow-sm border border-theme-border/50'
+              : 'border border-transparent'}"
+            title="List view"
+            aria-label="List view"
+            aria-pressed={viewMode === "list"}
+            type="button"
+          >
+            <span class="icon-[lucide--list] h-4 w-4"></span>
+          </button>
+        </div>
+      </div>
+    {/if}
+
     {#if data.page.results.length === 0}
       <div
         class="rounded border border-theme-border bg-theme-surface/40 px-6 py-10 text-center text-sm text-theme-text/70"
       >
         No public worlds match this search yet.
       </div>
-    {:else}
+    {:else if viewMode === "grid"}
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {#each data.page.results as result (result.publishId)}
           <a
@@ -134,7 +212,7 @@
                   {result.title}
                 </h2>
                 <p class="text-sm leading-relaxed text-theme-text/70">
-                  {result.description}
+                  {@html renderInlineMarkdown(result.description)}
                 </p>
               </div>
 
@@ -157,6 +235,55 @@
                 </span>
                 <span>{result.visibleEntityCount} entries</span>
               </div>
+            </div>
+          </a>
+        {/each}
+      </div>
+    {:else}
+      <div class="flex flex-col gap-3">
+        {#each data.page.results as result (result.publishId)}
+          <a
+            href={resolve(result.guestUrl as any)}
+            class="flex items-center justify-between gap-4 rounded border border-theme-border bg-theme-surface/40 p-4 transition hover:border-theme-primary/50"
+            data-testid="world-directory-list-row"
+          >
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 class="text-base font-header font-bold text-theme-text">
+                  {result.title}
+                </h2>
+                {#if result.labels.length}
+                  <div class="flex flex-wrap gap-1.5">
+                    {#each result.labels as label (label)}
+                      <span
+                        class="rounded border border-theme-primary/20 bg-theme-primary/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-theme-primary"
+                        >{label}</span
+                      >
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+              <p class="truncate text-sm text-theme-text/70">
+                {@html renderInlineMarkdown(
+                  result.description || "No description provided.",
+                )}
+              </p>
+            </div>
+
+            <div
+              class="flex flex-shrink-0 items-center gap-6 text-xs text-theme-text/60"
+            >
+              <span class="hidden sm:inline">
+                {result.ownerDisplayName || "Guest-safe world"}
+              </span>
+              <span
+                class="bg-theme-surface px-2.5 py-1 rounded border border-theme-border"
+              >
+                {result.visibleEntityCount} entries
+              </span>
+              <span
+                class="icon-[lucide--chevron-right] h-4 w-4 text-theme-text/40"
+              ></span>
             </div>
           </a>
         {/each}

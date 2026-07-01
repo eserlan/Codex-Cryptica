@@ -25,8 +25,17 @@ export class DefaultAIClientManager {
     null;
 
   // Proxy configuration
-  private static readonly PROXY_URL =
-    "https://oracle-proxy.espen-erlandsen.workers.dev";
+  private static get PROXY_URL() {
+    return (
+      (typeof import.meta !== "undefined" &&
+        import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+      (typeof import.meta !== "undefined" &&
+      import.meta.env?.DEV &&
+      !import.meta.env?.VITEST
+        ? "http://localhost:8787"
+        : "https://oracle-proxy.espen-erlandsen.workers.dev")
+    );
+  }
 
   // Injected so tests can supply a fake without stubbing the global `fetch`.
   // Default wraps the global lazily (resolved at call time, not construction).

@@ -1,9 +1,26 @@
 <script lang="ts">
-  import type { ListingDraft, PublicListing } from "schema";
+  import {
+    type ListingDraft,
+    type PublicListing,
+    PUBLISH_LIMITS,
+  } from "schema";
+
+  function truncate(text: string, max: number): string {
+    if (text.length <= max) return text;
+    const cut = text.slice(0, max);
+    const lastSpace = cut.lastIndexOf(" ");
+    if (lastSpace > max * 0.8) {
+      return cut.slice(0, lastSpace) + "...";
+    }
+    return cut.slice(0, max - 3) + "...";
+  }
   import {
     PublicDirectoryService,
     publicDirectoryService,
   } from "$lib/services/publishing/PublicDirectoryService";
+  import { worldStore } from "$lib/stores/world.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   interface NotificationLike {
     notify: (message: string, kind?: "success" | "error" | "info") => void;
@@ -71,6 +88,14 @@
     loadError = "";
 
     try {
+      if (
+        vault.activeVaultId &&
+        (!worldStore.metadata ||
+          worldStore.activeVaultId !== vault.activeVaultId)
+      ) {
+        await worldStore.load(vault.activeVaultId);
+      }
+
       const listing = await service.getPublicListing(publishId);
       existingListing = listing;
       hydrateDraft(
@@ -78,6 +103,17 @@
           publishId,
           vaultTitle,
           existingListing: listing,
+          defaultDescription: worldStore.metadata?.description
+            ? truncate(
+                worldStore.metadata.description,
+                PUBLISH_LIMITS.maxListingDescriptionLength,
+              )
+            : undefined,
+          defaultCoverImageAssetId:
+            worldStore.metadata?.coverImage || undefined,
+          defaultLabels: themeStore.activeTheme?.name
+            ? [themeStore.activeTheme.name.toLowerCase()]
+            : undefined,
         }),
       );
       hydratedPublishId = publishId;
@@ -110,13 +146,43 @@
 
     isSaving = true;
     try {
+      let resolvedCoverId = coverImageAssetId.trim();
+      if (resolvedCoverId) {
+        try {
+          const cleanPath = resolvedCoverId;
+          const trueAssetId = cleanPath.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+          const objectUrl = await vault.resolveImageUrl(cleanPath);
+          if (objectUrl) {
+            const blobRes = await fetch(objectUrl);
+            if (blobRes.ok) {
+              const blob = await blobRes.blob();
+              await service.uploadAsset(
+                publishId,
+                trueAssetId,
+                blob.type || "image/webp",
+                cleanPath.split("/").pop() || trueAssetId,
+                blob,
+                writeToken,
+              );
+              resolvedCoverId = trueAssetId;
+            }
+          }
+        } catch (err) {
+          console.warn(
+            "[PublicListingSettings] Failed to auto-publish cover image asset:",
+            err,
+          );
+        }
+      }
+
       const listing = await service.enablePublicListing(
         publishId,
         {
           title: title.trim(),
           description: description.trim(),
           labels,
-          coverImageAssetId: coverImageAssetId.trim() || undefined,
+          coverImageAssetId: resolvedCoverId || undefined,
           coverImageAlt: coverImageAlt.trim() || undefined,
           ownerDisplayName: ownerDisplayName.trim() || undefined,
         },

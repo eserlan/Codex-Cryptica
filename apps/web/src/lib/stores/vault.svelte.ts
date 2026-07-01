@@ -43,7 +43,18 @@ import { guestVault } from "./guest-vault.svelte";
 
 export class VaultStore {
   // Reactive State
-  isInitialized = $state(false);
+  _isInitialized = $state(false);
+  get isInitialized() {
+    if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      // Viewing a published snapshot: don't let host-vault init leak through
+      // and trigger app effects before the snapshot has loaded.
+      return guestVault.isInitialized;
+    }
+    return this._isInitialized;
+  }
+  set isInitialized(v: boolean) {
+    this._isInitialized = v;
+  }
   selectedEntityId = $state<string | null>(null);
   demoVaultName = $state<string | null>(null);
   migrationRequired = $state(false);
@@ -78,6 +89,43 @@ export class VaultStore {
     return this.entityStore.allEntities;
   }
   get titleAndAliasIndex() {
+    if (sessionModeStore.isGuestMode) {
+      const result: Array<{
+        lowercaseText: string;
+        entityId: string;
+        actualTitle: string;
+        isAlias: boolean;
+        visibility?: string;
+        labels?: string[];
+        status: string;
+      }> = [];
+      for (const entity of guestVault.entities) {
+        result.push({
+          lowercaseText: entity.title.toLowerCase(),
+          entityId: entity.id,
+          actualTitle: entity.title,
+          isAlias: false,
+          visibility: entity.visibility,
+          labels: entity.labels,
+          status: entity.status || "active",
+        });
+        for (const alias of entity.aliases || []) {
+          if (!alias) continue;
+          result.push({
+            lowercaseText: alias.toLowerCase(),
+            entityId: entity.id,
+            actualTitle: entity.title,
+            isAlias: true,
+            visibility: entity.visibility,
+            labels: entity.labels,
+            status: entity.status || "active",
+          });
+        }
+      }
+      return result.sort(
+        (a, b) => b.lowercaseText.length - a.lowercaseText.length,
+      );
+    }
     return this.entityStore.titleAndAliasIndex;
   }
   get allTitlesString() {
@@ -206,6 +254,9 @@ export class VaultStore {
     return canvasRegistry.canvases;
   }
   get activeVaultId() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.publishId;
+    }
     return vaultRegistry.activeVaultId;
   }
   get activeVaultRecord() {

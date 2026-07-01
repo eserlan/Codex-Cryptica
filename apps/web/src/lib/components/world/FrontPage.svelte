@@ -19,6 +19,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -34,15 +35,34 @@
 
   const activeVaultId = $derived(vault.activeVaultId);
   const themeTokens = $derived(themeStore.activeTheme.tokens);
-  const metadata = $derived(worldStore.metadata);
+  const metadata = $derived(
+    sessionModeStore.isGuestMode ? guestVault.metadata : worldStore.metadata,
+  );
   const briefingSource = $derived(
-    worldStore.metadata?.description?.trim() ||
-      worldStore.frontPageEntity?.chronicle?.trim() ||
-      worldStore.frontPageEntity?.content?.trim() ||
-      "",
+    metadata?.description?.trim() ||
+      (sessionModeStore.isGuestMode
+        ? ""
+        : worldStore.frontPageEntity?.chronicle?.trim() ||
+          worldStore.frontPageEntity?.content?.trim() ||
+          ""),
   );
   let recentLimit = $state(DEFAULT_RECENT_LIMIT);
-  const recentActivity = $derived(worldStore.recentActivity);
+  const recentActivity = $derived(
+    sessionModeStore.isGuestMode
+      ? guestVault.entities.map((e) => ({
+          id: e.id,
+          title: e.title,
+          path: "",
+          tags: e.tags,
+          labels: e.labels,
+          image: e.image,
+          thumbnail: e.thumbnail,
+          excerpt: e.content,
+          type: e.type,
+          lastModified: e.updatedAt ? new Date(e.updatedAt).getTime() : 0,
+        }))
+      : worldStore.recentActivity,
+  );
   const displayedRecentActivity = $derived(
     partitionAndSortRecentActivity(recentActivity, recentLimit),
   );
@@ -53,9 +73,11 @@
   const hasBriefing = $derived(
     !!(
       draftDescription.trim() ||
-      worldStore.metadata?.description?.trim() ||
-      worldStore.frontPageEntity?.chronicle?.trim() ||
-      worldStore.frontPageEntity?.content?.trim()
+      metadata?.description?.trim() ||
+      (sessionModeStore.isGuestMode
+        ? false
+        : worldStore.frontPageEntity?.chronicle?.trim() ||
+          worldStore.frontPageEntity?.content?.trim())
     ),
   );
 
@@ -377,15 +399,17 @@
 
         {#if coverImage}
           <div
-            class="flex items-center gap-2 max-xl:absolute max-xl:right-0 max-xl:top-0"
+            class="flex items-center gap-2 max-xl:absolute max-xl:right-0 max-xl:top-0 xl:ml-auto"
           >
-            <button
-              class="inline-flex h-9 items-center rounded-full border border-theme-primary/45 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60 disabled:opacity-50"
-              onclick={openCoverEditor}
-              disabled={worldStore.isSaving}
-            >
-              Change Image
-            </button>
+            {#if !sessionModeStore.isGuestMode}
+              <button
+                class="inline-flex h-9 items-center rounded-full border border-theme-primary/45 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60 disabled:opacity-50"
+                onclick={openCoverEditor}
+                disabled={worldStore.isSaving}
+              >
+                Change Image
+              </button>
+            {/if}
             <button
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={openCoverLightbox}
@@ -406,7 +430,9 @@
             {/if}
           </div>
         {:else if onClose}
-          <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
+          <div
+            class="flex justify-end xl:absolute xl:right-0 xl:top-0 xl:ml-auto"
+          >
             <button
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={onClose}
@@ -480,7 +506,7 @@
               {/if}
             </div>
           </div>
-        {:else if showCoverEditor || !coverImage}
+        {:else if !sessionModeStore.isGuestMode && (showCoverEditor || !coverImage)}
           <FrontPageHero
             {coverImageUrl}
             {coverImage}
@@ -519,6 +545,7 @@
           {hasBriefing}
           isSaving={worldStore.isSaving}
           isRevising={isRevisingBriefing}
+          isReadOnly={sessionModeStore.isGuestMode}
           onSave={handleSaveDescription}
           onCancel={cancelEditingBriefing}
           onGenerate={handleGenerateBriefing}

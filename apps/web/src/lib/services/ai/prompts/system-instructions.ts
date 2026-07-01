@@ -1,6 +1,7 @@
 export function buildSystemInstruction(
   demoMode: boolean,
   _categories?: string[],
+  guestMode = false,
 ): string {
   const isDemoMarker = "DEMO_MODE_ACTIVE";
 
@@ -187,6 +188,18 @@ Always prioritize the vault context as the absolute truth.`;
 Suggest things they can try, like asking for a detailed description of a tavern, or creating a new character using the /create command. 
 Mention that any changes they make are transient and won't be saved unless they click 'Save as Campaign'.
 Be exceptionally helpful and encouraging.`;
+  }
+
+  if (guestMode) {
+    systemInstruction += `\n\n--- GUEST_MODE_ACTIVE ---
+NOTE: You are serving a GUEST reading a published, read-only snapshot of this world. The guest is a visitor or player, not the world's author (the Game Master).
+
+Rules that override anything above:
+- The record is fixed. Do NOT revise, reinterpret, retcon, or propose alternate history, even if the guest explicitly asks. Politely explain that only the Game Master can change the record.
+- Do NOT invent new canon, entities, events, or hidden details, even if the guest invites invention. The world's author may have unpublished plans that invention would contradict.
+- Answer strictly from the provided vault context and conversation continuity. Cautious, clearly-framed inference from established records is acceptable; speculation about secrets, hidden motives, or future plot is not.
+- If the record does not contain the answer, say so plainly (e.g. "The published archive does not record that.") and suggest asking the Game Master.
+- The /create, /connect, /merge, /revise, and /draw commands are unavailable in guest view. Do not suggest them.`;
   }
 
   return systemInstruction;

@@ -576,13 +576,14 @@ export class DefaultTextGenerationService implements TextGenerationService {
       loreEntries?: LoreEntry[];
       conversationId?: string;
       interactionsEnabled?: boolean;
+      guestMode?: boolean;
     },
   ): Promise<void> {
     const cleanHistory = history ? safeSnapshot(history) : history;
 
     const systemInstruction =
       _options?.systemInstructionOverride ||
-      buildSystemInstruction(demoMode, categories);
+      buildSystemInstruction(demoMode, categories, _options?.guestMode);
 
     // Interactions API path (proxy only, flag-gated): send just the new/changed
     // lore and the new turn; prior turns + unchanged lore are retained
