@@ -64,16 +64,17 @@ describe("Persistence", () => {
 
     it("prunes registry to maintain size limit (LRU)", async () => {
       // Add 11 unique entries
-      // We inject an explicit 'now' function to ensure distinct timestamps for LRU
       const baseTime = Date.now();
       let offset = 0;
-      const explicitNow = () => baseTime + offset++;
+      const fakeClock = {
+        now: () => baseTime + offset++,
+      };
 
       for (let i = 0; i < 11; i++) {
-        await getRegistry(`hash-${i}`, `file-${i}.txt`, 1, explicitNow);
+        await getRegistry(`hash-${i}`, `file-${i}.txt`, 1, fakeClock);
       }
 
-      const record0 = await getRegistry("hash-0", "file-0.txt", 1, explicitNow);
+      const record0 = await getRegistry("hash-0", "file-0.txt", 1, fakeClock);
       // If pruned, it should be a fresh record with empty indices
       expect(record0.completedIndices).toEqual([]);
     });

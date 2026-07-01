@@ -1009,5 +1009,4 @@ export const SPACE_OPERA_RESISTANCE_DARK: StylingTemplate = {
 
 export const DEFAULT_THEME = THEMES.workspace;
 
-
 export type WorldThemeId = keyof typeof THEMES;

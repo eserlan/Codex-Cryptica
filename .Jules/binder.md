@@ -23,6 +23,11 @@
 **Learning:** `oracle-engine` uses a pattern of injecting `systemClock` and `systemIdGenerator` from `./runtime.ts` into constructors to allow faking time and randomness in tests.
 **Action:** When working in `oracle-engine`, ensure `Date.now()` and `crypto.randomUUID()` calls are replaced with injected dependencies from `./runtime.ts` using this pattern.
 
+## 2026-07-01 - Vitest vi.spyOn causes issues with timers
+
+**Learning:** `vi.spyOn(Date, "now")` and `vi.useRealTimers()` in Vitest tests can cause cross-module test pollution, crash the test runner, or throw ReferenceErrors (e.g., `vi.useRealTimers is not a function`).
+**Action:** For pure functions or standard exported functions relying on time, inject an explicit `Clock` interface (`{ now(): number }`) rather than mocking the global environment in Vitest.
+
 ## 2025-06-28 - [Inject time dependencies to improve test isolation]
 
 **Learning:** Global monkey-patching of ambient runtime dependencies like `Date.now()` with `vi.spyOn(Date, "now")` can cause unexpected test suite crashes in some Vitest/Bun configurations, particularly when tests pollute each other across module boundaries or fail due to mismatched testing environments.

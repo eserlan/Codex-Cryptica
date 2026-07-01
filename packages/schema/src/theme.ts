@@ -98,6 +98,5 @@ export const DEFAULT_JARGON: JargonMap = {
   graph_loading: "Initializing...",
 };
 
-
 export type AppAppearanceId = "neutral-light" | "neutral-dark" | "system";
 export type ResolvedAppAppearanceId = "neutral-light" | "neutral-dark";
