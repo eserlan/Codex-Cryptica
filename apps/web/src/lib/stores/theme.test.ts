@@ -114,6 +114,24 @@ describe("ThemeStore", () => {
       expect(store.worldThemeId).toBe("horror");
     });
 
+    it("should report no saved vault theme when disk and cache are missing", async () => {
+      expect(await store.hasSavedThemeForVault("v1")).toBe(false);
+    });
+
+    it("should report a saved vault theme from disk", async () => {
+      mockStorage.loadFromDisk = vi.fn().mockResolvedValue("scifi");
+
+      expect(await store.hasSavedThemeForVault("v1")).toBe(true);
+      expect(mockStorage.loadFromCache).not.toHaveBeenCalled();
+    });
+
+    it("should report a saved vault theme from cache when disk is missing", async () => {
+      mockStorage.loadFromDisk = vi.fn().mockResolvedValue(null);
+      mockStorage.loadFromCache = vi.fn().mockResolvedValue("horror");
+
+      expect(await store.hasSavedThemeForVault("v1")).toBe(true);
+    });
+
     it("should save to cache and disk on setTheme", async () => {
       await store.setTheme("cyberpunk");
       expect(store.worldThemeId).toBe("cyberpunk");

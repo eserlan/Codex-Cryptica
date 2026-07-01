@@ -1104,6 +1104,245 @@ ${conflict}
 }
 
 // ---------------------------------------------------------------------------
+// Nomad Clan (Cyberpunk) public API
+// ---------------------------------------------------------------------------
+
+export const nomadClanConfig = {
+  roles: [
+    "Family Convoy",
+    "Smuggler Band",
+    "Tech Scavengers",
+    "Wasteland Traders",
+    "Mercenary Riders",
+    "Ex-Corporate Refugees",
+    "Courier Network",
+    "Raider-Adjacent",
+    "Spiritual Road Cult",
+  ],
+  tones: [
+    "Grounded, gritty survival",
+    "Neon-punk, chrome and dust",
+    "Weird and desperate",
+    "Hopeful, tight-knit community",
+    "Violent, road-law rules",
+  ],
+  territories: [
+    "Highway corridors and fuel stops",
+    "Badlands and desert routes",
+    "Arcology outskirts and perimeter roads",
+    "Flooded lowland transit zones",
+    "Orbital scrapyards and drop-points",
+    "Ruined suburbs and ring-roads",
+    "Borderland checkpoints and no-man's-land",
+  ],
+  conflicts: [
+    "Rival clan encroaching on their primary route",
+    "Corporate pressure to surrender a cargo or a person",
+    "Fuel scarcity forcing dangerous detours",
+    "Internal succession fracturing clan loyalty",
+    "Lost cargo that someone will kill to recover",
+    "Cursed or experimental tech hidden in the convoy",
+    "Law enforcement crackdown closing key corridors",
+    "Betrayal by a former ally who sold their route",
+  ],
+  hooks: [
+    "The clan needs an outsider to carry something across a checkpoint their faces are known at.",
+    "A clan member has gone missing at a waystation known for disappearances.",
+    "The clan's lead mechanic has decoded something hidden in recovered corporate salvage.",
+    "A dying rider names the party as witnesses to a debt the clan will honour — or dispute.",
+    "The clan offers a safe convoy route in exchange for dealing with what is blocking it.",
+    "A corporate fixer is paying for intel on the clan's schedule — and they know it.",
+  ],
+  goals: [
+    "Secure the fuel depot before a rival clan claims squatter's rights.",
+    "Recover a clan member sold to a corporate labour farm.",
+    "Establish a new safe corridor after their primary route was compromised.",
+    "Prove the clan's code was broken by an insider and find the traitor.",
+    "Acquire a vehicle capable of reaching the next settlement before the season closes.",
+    "Negotiate a truce with a rival clan before the corporate pressure destroys them both.",
+  ],
+};
+
+export type NomadClanGeneratorOptions = {
+  role?: string;
+  tone?: string;
+  territory?: string;
+  conflict?: string;
+  campaignContext?: string;
+};
+
+interface ResolvedNomadClan {
+  role: string;
+  tone: string;
+  territory: string;
+  conflict: string;
+  campaignContext?: string;
+  name: string;
+}
+
+function generateNomadName(rng: Rng = defaultRng): string {
+  const prefixes = [
+    "Dustborn",
+    "Ironroad",
+    "Ashtrack",
+    "Gritline",
+    "Burnpath",
+    "Scorchway",
+    "Cinder",
+    "Driftwall",
+    "Gridlock",
+    "Razorway",
+  ];
+  const suffixes = [
+    "Collective",
+    "Convoy",
+    "Pack",
+    "Riders",
+    "Run",
+    "Circuit",
+    "Syndicate",
+    "Compact",
+    "Brotherhood",
+    "Crew",
+  ];
+  return `${pickFrom(prefixes, rng)} ${pickFrom(suffixes, rng)}`;
+}
+
+function resolveNomadClan(
+  options: NomadClanGeneratorOptions,
+  rng: Rng,
+): ResolvedNomadClan {
+  return {
+    role: options.role || pickFrom(nomadClanConfig.roles, rng),
+    tone: options.tone || pickFrom(nomadClanConfig.tones, rng),
+    territory: options.territory || pickFrom(nomadClanConfig.territories, rng),
+    conflict: options.conflict || pickFrom(nomadClanConfig.conflicts, rng),
+    campaignContext: options.campaignContext?.trim() || undefined,
+    name: generateNomadName(rng),
+  };
+}
+
+export interface NomadClanPrompt {
+  systemInstruction: string;
+  userMessage: string;
+  resolved: ResolvedNomadClan;
+}
+
+export function buildNomadClanPrompt(
+  options: NomadClanGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): NomadClanPrompt {
+  const resolved = resolveNomadClan(options, rng);
+  const { name, role, tone, territory, conflict, campaignContext } = resolved;
+  const varianceSeed = Math.floor(rng() * 99991) + 10;
+
+  const systemInstruction = `You are an expert RPG campaign writer specialising in cyberpunk worldbuilding — nomadic road communities, convoy culture, corporate enemies, and survival on the margins. You generate detailed, original nomad clan drafts in JSON format.
+
+OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
+{
+  "title": "Clan name (a short, punchy road-culture name — avoid generic fantasy naming)",
+  "summary": "One sentence: what this clan is and what makes them memorable as a faction.",
+  "content": "Markdown. Use exactly these four section headers in order: '### Who they are', '### How they survive', '### What threatens them', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### Clan Profile\\n- **📍 Territory**: their primary routes and stopping points\\n- **Fleet**: convoy composition and vehicle types\\n- **Code**: one-line clan law or initiation rite\\n- **Secret**: hidden truth about the clan\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable Members\\n- **👤 Name**: one-line description (2-3 members)\\n### Current Crisis\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry summary",
+  "labels": ["2-5 lowercase tags, plus 'rpg-faction', 'nomad-clan', 'imported-draft'"]
+}
+
+QUALITY RULES:
+- Every generation must feel like a distinct clan — avoid repeating names, vehicle types, or crisis types from prior outputs.
+- Tone should match: ${tone}.
+- ${NAME_BAN_PROMPT}
+${sessionContext}
+- Before finalising, silently check: does the clan feel road-worn and specific? Are the NPCs distinct? Does the crisis create immediate play pressure? Rewrite if not.`;
+
+  const userMessage = `Generate a cyberpunk nomad clan. Variation seed: ${varianceSeed}.
+- Clan Name: ${name}
+- Role: ${role}
+- Tone: ${tone}
+- Territory: ${territory}
+- Current Conflict: ${conflict}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}`;
+
+  return { systemInstruction, userMessage, resolved };
+}
+
+export function parseNomadClanResponse(
+  text: string,
+  resolved: ResolvedNomadClan,
+): PublicGeneratorOutput {
+  const cleanText = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  const data = JSON.parse(cleanText);
+  return {
+    type: "faction",
+    title: data.title || resolved.name,
+    summary: data.summary || "",
+    content: data.content || "",
+    lore: data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-faction", "nomad-clan", "imported-draft"],
+    status: "active",
+  };
+}
+
+export function generateNomadClanLocal(
+  options: NomadClanGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const { role, tone, territory, conflict, campaignContext, name } =
+    resolveNomadClan(options, rng);
+  const goal = pickFrom(nomadClanConfig.goals, rng);
+  const hook = pickFrom(nomadClanConfig.hooks, rng);
+  const rival = generateNomadName(rng);
+  const leader = generateName(rng);
+  const mechanic = generateName(rng);
+  const scout = generateName(rng);
+
+  const content = `### Who they are
+${name} is a ${role.toLowerCase()} operating across ${territory.toLowerCase()}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${campaignContext ? ` In ${campaignContext}, they are a known presence: respected by those who need them, watched by those who profit from stability.` : ""}
+
+### How they survive
+${goal} Their economy runs on what the roads provide — cargo runs, repairs, protection contracts, and trade at waystation markets. Nothing is wasted; everything has a price.
+
+### What threatens them
+${conflict} This is the crisis that cannot be deferred. The clan must resolve it before it costs them a route, a vehicle, or a member.
+
+### How to use them at the table
+${name} works best as a faction the party keeps running into — on the road, at fuel stops, in waystation bars. They are reliable in a way most factions are not, but their code has limits and their patience for outsiders who cause problems is short.`;
+
+  const lore = `### Clan Profile
+- **📍 Territory**: ${territory}
+- **Fleet**: Mixed convoy — a lead rig, two cargo haulers, and two scout bikes. Plus whatever they have salvaged this season.
+- **Code**: ${tone.split(",")[0]} — don't burn bridges you might need to cross again.
+- **Secret**: ${conflict}
+- **Immediate Hook**: ${hook}
+
+### Notable Members
+- **👤 ${leader}**: Convoy lead who makes the calls and takes the blame when they go wrong.
+- **👤 ${mechanic}**: Head mechanic whose hands keep the fleet running; knows every vehicle's secrets.
+- **👤 ${scout}**: Point rider who has memorised three hundred kilometres of road and is running out of safe routes.
+
+### Current Crisis
+${conflict} The clan is managing it — for now — but every day without a resolution narrows their options.
+
+### Rival Faction
+- **👥 ${rival}**: Competing for the same routes, safe stops, or cargo contracts. The rivalry is old enough to have its own code of conduct — and new enough that someone recently broke it.`;
+
+  return {
+    type: "faction",
+    title: name,
+    summary: `A ${role.toLowerCase()} convoy operating across ${territory.toLowerCase()}.`,
+    content,
+    lore,
+    labels: ["rpg-faction", "nomad-clan", "imported-draft"],
+    status: "active",
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Vampire Clan public API
 // ---------------------------------------------------------------------------
 
