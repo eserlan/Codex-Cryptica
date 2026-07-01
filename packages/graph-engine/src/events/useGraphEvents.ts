@@ -39,9 +39,17 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
 
   let lastLod: "low" | "medium" | "high" | null = null;
 
-  cy.on("pan zoom", () => {
-    if (handlers.onViewportChange) {
+  const applyViewportPerformance = (notifyViewportChange: boolean) => {
+    if (notifyViewportChange && handlers.onViewportChange) {
       handlers.onViewportChange(null);
+    }
+
+    if (
+      typeof cy.zoom !== "function" ||
+      typeof cy.batch !== "function" ||
+      typeof cy.elements !== "function"
+    ) {
+      return;
     }
 
     // ⚡ LOD (Level of Detail) & Wheel Sensitivity Optimization
@@ -71,7 +79,10 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
       });
       lastLod = currentLod;
     }
-  });
+  };
+
+  cy.on("pan zoom", () => applyViewportPerformance(true));
+  applyViewportPerformance(false);
 
   cy.on("tap", "node", (evt: any) => {
     handlers.onNodeTap?.(evt.target.id(), evt.target);

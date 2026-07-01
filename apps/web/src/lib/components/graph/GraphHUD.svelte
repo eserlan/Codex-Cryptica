@@ -25,6 +25,14 @@
       graph.activeLabels.size > 0 ||
       graph.timelineMode,
   );
+  const isLargeGraph = $derived(graph.isLargeGraph);
+  const focusViewActive = $derived(graph.focusViewActive);
+  const focusViewMessage = $derived(
+    `Focus view: showing ${graph.stats.nodeCount} of ${graph.fullGraphSize.nodeCount} entities (detail level ${graph.focusDepth}).`,
+  );
+  const fullGraphMessage = $derived(
+    `Full graph performance mode: ${graph.fullGraphSize.nodeCount} entities and ${graph.fullGraphSize.edgeCount} connections.`,
+  );
 
   function addFilteredToCanvas() {
     if (!cy) return;
@@ -174,11 +182,11 @@
   {/if}
 
   <div
-    class="absolute bottom-0 left-0 flex flex-col items-start gap-2 md:gap-3"
+    class="absolute bottom-14 left-0 flex flex-col items-start gap-2 md:bottom-16 md:gap-3"
   >
     {#if graph.timelineMode}
       <div
-        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>
@@ -193,7 +201,7 @@
 
     {#if isLayoutRunning}
       <div
-        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--cpu] w-3 h-3 animate-spin"></span>
@@ -204,9 +212,37 @@
       </div>
     {/if}
 
+    {#if isLargeGraph}
+      <div
+        class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(26rem,calc(100vw-2rem))] items-start gap-2 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase pointer-events-auto"
+        transition:fade
+      >
+        <span
+          class="mt-0.5 h-3 w-3 shrink-0 {focusViewActive
+            ? 'icon-[lucide--focus]'
+            : 'icon-[lucide--gauge]'}"
+        ></span>
+        <span>
+          {focusViewActive ? focusViewMessage : fullGraphMessage}
+          <span class="block text-theme-muted">
+            {focusViewActive
+              ? "Large vault — zoom in to reveal more, out for the overview."
+              : "Labels, images, and edge detail are simplified for speed."}
+          </span>
+          <button
+            type="button"
+            class="mt-1 underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
+            onclick={() => graph.toggleFullGraph()}
+          >
+            {focusViewActive ? "Show full graph" : "Back to focus view"}
+          </button>
+        </span>
+      </div>
+    {/if}
+
     {#if connectionModeStore.isConnecting}
       <div
-        class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-xs font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-xs font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--link] w-3.5 h-3.5 animate-pulse"></span>

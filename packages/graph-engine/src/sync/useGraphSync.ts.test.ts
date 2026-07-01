@@ -472,6 +472,24 @@ describe("syncGraphElements", () => {
     expect(node2.data).toHaveBeenCalledWith("weight", 0);
     expect(node3.data).toHaveBeenCalledWith("weight", 0);
   });
+
+  it("should skip rendered weight recalculation when requested", () => {
+    const mockNode = createMockNode("node1", ["keep"]);
+    mockCy.elements.mockReturnValue([mockNode]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        { group: "nodes", data: { id: "node1", labels: ["keep"] } },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      skipRenderedWeightSync: true,
+    });
+
+    expect(mockNode.connectedEdges).not.toHaveBeenCalled();
+    expect(mockNode.removeClass).toHaveBeenCalledWith("filtered-out");
+  });
 });
 
 describe("resolveLayoutTrigger", () => {

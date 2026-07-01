@@ -8,8 +8,13 @@ export const getGraphStyles = (
   showImages: boolean,
   timelineMode: boolean,
   showLabels: boolean,
+  performanceMode = false,
 ) => {
-  const baseStyle = getBaseStyle(theme, categories, showImages);
+  const baseStyle = getBaseStyle(
+    theme,
+    categories,
+    showImages && !performanceMode,
+  );
 
   const chatIndicatorStyles = [
     {
@@ -70,7 +75,7 @@ export const getGraphStyles = (
   ];
 
   const labelOverrides =
-    timelineMode || !showLabels
+    performanceMode || timelineMode || !showLabels
       ? [
           {
             selector: "node",
@@ -102,7 +107,56 @@ export const getGraphStyles = (
         "curve-style": "straight",
       },
     },
+    {
+      selector: "edge.lod-medium",
+      style: {
+        label: "",
+      },
+    },
   ];
+
+  const performanceStyles = performanceMode
+    ? [
+        {
+          selector: "node",
+          style: {
+            label: "",
+            "background-image": "none",
+            "background-opacity": 0.72,
+            "overlay-opacity": 0,
+            "underlay-opacity": 0,
+            "transition-duration": 0,
+            "text-opacity": 0,
+          },
+        },
+        {
+          selector: "node[isImportant]",
+          style: {
+            "underlay-opacity": 0,
+            "text-border-width": 0,
+          },
+        },
+        {
+          selector: "edge",
+          style: {
+            label: "",
+            "curve-style": "haystack",
+            "haystack-radius": 0.5,
+            "target-arrow-shape": "none",
+            "text-opacity": 0,
+            "transition-duration": 0,
+            opacity: 0.22,
+          },
+        },
+        {
+          selector: "node:selected, .neighborhood",
+          style: {
+            label: "data(label)",
+            "text-opacity": 1,
+          },
+        },
+      ]
+    : [];
 
   return [
     ...baseStyle,
@@ -110,5 +164,6 @@ export const getGraphStyles = (
     ...filteringStyles,
     ...labelOverrides,
     ...lodStyles,
+    ...performanceStyles,
   ];
 };
