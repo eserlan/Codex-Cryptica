@@ -9,6 +9,7 @@
   import { entitySnippet } from "./entityTableSnippet";
   import {
     getEntityCreatedAt,
+    getEntityLabels,
     getEntityModifiedAt,
     type ConnectionSummary,
   } from "./entityTableSort";
@@ -19,12 +20,16 @@
     selected = false,
     onToggleSelect,
     connectionSummary,
+    onFilterType,
+    onFilterLabel,
   }: {
     entity: Entity;
     vaultId: string;
     selected?: boolean;
     onToggleSelect?: (id: string) => void;
     connectionSummary: ConnectionSummary;
+    onFilterType?: (type: string) => void;
+    onFilterLabel?: (label: string) => void;
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
@@ -36,16 +41,9 @@
       : `${base}/vault/${vaultId}/entity/${entity.id}`,
   );
   const snippet = $derived(entitySnippet(entity));
-  const chips = $derived(
-    (entity.labels?.length ? entity.labels : (entity.tags ?? [])).slice(0, 3),
-  );
+  const chips = $derived(getEntityLabels(entity).slice(0, 3));
   const extraChips = $derived(
-    Math.max(
-      0,
-      (entity.labels?.length
-        ? entity.labels.length
-        : (entity.tags?.length ?? 0)) - chips.length,
-    ),
+    Math.max(0, getEntityLabels(entity).length - chips.length),
   );
   const createdAt = $derived(getEntityCreatedAt(entity));
   const modifiedAt = $derived(getEntityModifiedAt(entity));
@@ -74,6 +72,7 @@
   function handleRowClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (target.closest("a")) return; // let the title link handle it
+    if (target.closest("button")) return; // let filter chips handle it
     if (target.closest("[data-row-select]")) return; // let the checkbox toggle
     openEntity();
   }
@@ -120,7 +119,24 @@
 
   <!-- Type -->
   <td class="px-3 py-2 align-top whitespace-nowrap">
-    {#if cat}
+    {#if onFilterType}
+      <button
+        type="button"
+        onclick={() => onFilterType(entity.type)}
+        title="Filter by {cat?.label ?? entity.type}"
+        data-testid="entity-table-row-type-filter"
+        class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium cursor-pointer hover:bg-theme-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {cat
+          ? ''
+          : 'border-theme-border text-theme-muted'}"
+        style={cat ? `border-color: ${cat.color}55; color: ${cat.color};` : ""}
+      >
+        {#if cat}
+          <span class="{getIconClass(cat.icon)} h-3.5 w-3.5" aria-hidden="true"
+          ></span>
+        {/if}
+        {cat?.label ?? entity.type}
+      </button>
+    {:else if cat}
       <span
         class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium"
         style="border-color: {cat.color}55; color: {cat.color};"
@@ -156,22 +172,33 @@
     {/if}
   </td>
 
-  <!-- Tags / labels -->
+  <!-- Labels -->
   <td class="px-3 py-2 align-top">
     {#if chips.length}
       <span class="flex flex-wrap gap-1">
         {#each chips as chip (chip)}
-          <span
-            class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] text-theme-muted"
-            >{chip}</span
-          >
+          {#if onFilterLabel}
+            <button
+              type="button"
+              onclick={() => onFilterLabel(chip)}
+              title="Filter by {chip}"
+              data-testid="entity-table-row-label-filter"
+              class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] text-theme-muted cursor-pointer hover:text-theme-text hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+              >{chip}</button
+            >
+          {:else}
+            <span
+              class="rounded bg-theme-surface px-1.5 py-0.5 text-[10px] text-theme-muted"
+              >{chip}</span
+            >
+          {/if}
         {/each}
         {#if extraChips > 0}
           <span class="text-[10px] text-theme-muted/60">+{extraChips}</span>
         {/if}
       </span>
     {:else}
-      <span class="text-theme-muted/50" aria-label="No tags">—</span>
+      <span class="text-theme-muted/50" aria-label="No labels">—</span>
     {/if}
   </td>
 
