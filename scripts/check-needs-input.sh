@@ -12,6 +12,9 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATE_DIR="$REPO_DIR/.claude/state"
 STATE_FILE="$STATE_DIR/resume-review-last-seen.json"
 LOG_FILE="${RESUME_REVIEW_LOG:-$HOME/.claude/logs/resume-review-cron.log}"
+# cron's minimal PATH doesn't include ~/.local/bin (or nvm/volta/etc shims),
+# so the claude binary must be referenced by absolute path here.
+CLAUDE_BIN="${CLAUDE_BIN:-$HOME/.local/bin/claude}"
 
 mkdir -p "$STATE_DIR" "$(dirname "$LOG_FILE")"
 [ -f "$STATE_FILE" ] || echo '{}' > "$STATE_FILE"
@@ -52,5 +55,5 @@ done
 
 if [ "$any_new" = true ]; then
   echo "$(date -u +%FT%TZ) check-needs-input: escalating to resume-review" >> "$LOG_FILE"
-  claude -p "/resume-review" --dangerously-skip-permissions >> "$LOG_FILE" 2>&1
+  "$CLAUDE_BIN" -p "/resume-review" --dangerously-skip-permissions >> "$LOG_FILE" 2>&1
 fi
