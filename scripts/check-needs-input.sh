@@ -27,6 +27,9 @@ prs_json=$(gh pr list --label needs-input --state open --json number,comments 2>
 }
 
 pr_numbers=$(echo "$prs_json" | jq -r '.[].number')
+pr_count=$(echo "$pr_numbers" | grep -c . || true)
+
+echo "$(date -u +%FT%TZ) check-needs-input: heartbeat, $pr_count needs-input PR(s) checked" >> "$LOG_FILE"
 
 if [ -z "$pr_numbers" ]; then
   exit 0
