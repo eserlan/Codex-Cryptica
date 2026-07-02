@@ -6,6 +6,7 @@ import { debugStore } from "./debug.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { guestVault } from "./guest-vault.svelte";
 
 export class SearchStore {
   query = $state("");
@@ -150,10 +151,12 @@ export class SearchStore {
       }
 
       debugStore.log(`[SearchStore] Searching for: "${query}"`);
-      const results = await this.searchService.search(query, {
-        limit: 20,
-        includeDrafts: true,
-      });
+      const results = this.vault.isGuest
+        ? guestVault.search(query, 20)
+        : await this.searchService.search(query, {
+            limit: 20,
+            includeDrafts: true,
+          });
       debugStore.log(`[SearchStore] Found ${results.length} raw results.`);
 
       // Filter results based on visibility settings

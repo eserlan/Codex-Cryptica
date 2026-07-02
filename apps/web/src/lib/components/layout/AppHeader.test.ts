@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+/** @vitest-environment jsdom */
+
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
@@ -34,6 +36,7 @@ vi.mock("./app-header-actions", () => ({
 describe("AppHeader", () => {
   beforeEach(() => {
     sessionModeStore.isStaging = false;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("renders a staging banner when the staging flag is enabled", () => {
@@ -52,5 +55,21 @@ describe("AppHeader", () => {
     render(AppHeader);
 
     expect(screen.queryByTestId("staging-banner")).toBeNull();
+  });
+
+  it("shows search controls outside guest mode", () => {
+    render(AppHeader);
+
+    expect(screen.getByTestId("search-input")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
+  });
+
+  it("hides search controls in guest mode", () => {
+    sessionModeStore.isGuestMode = true;
+
+    render(AppHeader);
+
+    expect(screen.getByTestId("search-input")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
   });
 });

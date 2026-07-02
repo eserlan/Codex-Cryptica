@@ -14,6 +14,7 @@
   } from "./search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
@@ -107,6 +108,7 @@
   }
 
   const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
+  const isTablePage = $derived(page.url.pathname.startsWith("/table"));
   const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
   const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
   let overlayClass = $derived(
@@ -247,6 +249,9 @@
 
     dispatchSearchEntityFocus(selectedEntityId, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = selectedEntityId;
+    if (isTablePage) {
+      modalUIStore.openZenMode(selectedEntityId);
+    }
     searchStore.close();
   };
 

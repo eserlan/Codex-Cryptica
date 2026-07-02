@@ -1,4 +1,4 @@
-import type { Entity, GuestRelationship, Map } from "schema";
+import type { Entity, GuestRelationship, Map, SearchResult } from "schema";
 
 export class GuestVaultStore {
   isInitialized = $state(false);
@@ -21,26 +21,109 @@ export class GuestVaultStore {
     return map;
   });
 
-  private searchIndex: any = null;
   searchQuery = $state("");
+
+  private getEntityPath(entity: Entity): string {
+    if (Array.isArray(entity._path)) return entity._path.join("/");
+    if (typeof entity._path === "string" && entity._path.trim()) {
+      return entity._path;
+    }
+    return entity.id;
+  }
+
+  private getExcerpt(entity: Entity, query: string): string | undefined {
+    const queryLower = query.trim().toLowerCase();
+    const sources = [entity.content ?? "", entity.lore ?? ""].filter(Boolean);
+
+    for (const source of sources) {
+      const sourceLower = source.toLowerCase();
+      const matchIndex = queryLower ? sourceLower.indexOf(queryLower) : -1;
+      if (matchIndex >= 0) {
+        const start = Math.max(0, matchIndex - 30);
+        const end = Math.min(source.length, matchIndex + query.length + 70);
+        return source.slice(start, end).trim();
+      }
+    }
+
+    const fallback = sources.find((source) => source.trim().length > 0);
+    return fallback ? fallback.slice(0, 100).trim() : undefined;
+  }
+
+  search(query: string, limit = 20): SearchResult[] {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return [];
+
+    const terms = trimmedQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    const shouldSearchLongText = trimmedQuery.length > 1;
+    const results: SearchResult[] = [];
+
+    for (const entity of this.entities) {
+      const title = (entity.title ?? "").toLowerCase();
+      const aliases = (entity.aliases ?? []).join(" ").toLowerCase();
+      const labels = (entity.labels ?? []).join(" ").toLowerCase();
+      const entityPath = this.getEntityPath(entity);
+      const path = entityPath.toLowerCase();
+      const content = shouldSearchLongText
+        ? (entity.content ?? "").toLowerCase()
+        : "";
+      const lore = shouldSearchLongText
+        ? (entity.lore ?? "").toLowerCase()
+        : "";
+
+      let score = 0;
+      let matchType: SearchResult["matchType"] | null = null;
+
+      for (const term of terms) {
+        if (title.startsWith(term)) {
+          score += 6;
+          matchType = "title";
+          continue;
+        }
+        if (title.includes(term)) {
+          score += 4;
+          matchType ??= "title";
+          continue;
+        }
+        if (aliases.includes(term) || labels.includes(term)) {
+          score += 3;
+          matchType ??= "aliases";
+          continue;
+        }
+        if (path.includes(term)) {
+          score += 2;
+          matchType ??= "content";
+          continue;
+        }
+        if (content.includes(term) || lore.includes(term)) {
+          score += 1;
+          matchType ??= "content";
+        }
+      }
+
+      if (score === 0 || !matchType) continue;
+
+      results.push({
+        id: entity.id,
+        title: entity.title ?? entity.id,
+        type: entity.type,
+        path: entityPath,
+        excerpt: this.getExcerpt(entity, trimmedQuery),
+        score,
+        matchType,
+        status: entity.status || "active",
+      });
+    }
+
+    return results.sort((a, b) => b.score - a.score).slice(0, limit);
+  }
 
   searchResults = $derived.by(() => {
     if (!this.searchQuery) {
       return this.entities;
     }
-    if (!this.searchIndex) return [];
-    try {
-      const results = this.searchIndex.search(this.searchQuery);
-      const matchedIds = new Set<string>();
-      results.forEach((r: any) => {
-        const ids = r.result || [];
-        ids.forEach((id: any) => matchedIds.add(id.toString()));
-      });
-      return this.entities.filter((e) => matchedIds.has(e.id));
-    } catch (err) {
-      console.error("[GuestVaultStore] Search failed:", err);
-      return [];
-    }
+    return this.search(this.searchQuery).map(
+      (result) => this.entitiesMap[result.id],
+    );
   });
 
   async loadBundle(bundle: any) {
@@ -55,32 +138,6 @@ export class GuestVaultStore {
     this.activeTheme = bundle.activeTheme || {};
     this.metadata = bundle.metadata || null;
     this.isInitialized = true;
-
-    try {
-      const FlexSearch = (await import("flexsearch")).default;
-      this.searchIndex = new FlexSearch.Document({
-        document: {
-          id: "id",
-          index: ["title", "content", "lore", "keywords"],
-          store: true,
-        },
-      });
-
-      for (const entity of this.entities) {
-        this.searchIndex.add({
-          id: entity.id,
-          title: entity.title,
-          content: entity.content || "",
-          lore: entity.lore || "",
-          keywords:
-            (entity.labels || []).join(" ") +
-            " " +
-            (entity.aliases || []).join(" "),
-        });
-      }
-    } catch (err) {
-      console.error("[GuestVaultStore] Failed to build search index:", err);
-    }
   }
 
   resolveImageUrl(path: string): string {
@@ -134,7 +191,6 @@ export class GuestVaultStore {
     this.assetManifest = [];
     this.activeTheme = {};
     this.metadata = null;
-    this.searchIndex = null;
     this.searchQuery = "";
   }
 }
