@@ -18,6 +18,8 @@
     someSelected = false,
     onToggleRow,
     onToggleAll,
+    onFilterType,
+    onFilterLabel,
   }: {
     entities: Entity[];
     vaultId: string;
@@ -29,6 +31,8 @@
     someSelected?: boolean;
     onToggleRow?: (id: string) => void;
     onToggleAll?: () => void;
+    onFilterType?: (type: string) => void;
+    onFilterLabel?: (label: string) => void;
   } = $props();
 
   // <input indeterminate> can't be set via attribute — bind the element.
@@ -49,7 +53,7 @@
     { key: "type", label: "Type", class: "min-w-[8rem]" },
     { key: "connections", label: "Connections", class: "min-w-[9rem]" },
     { key: null, label: "Summary", class: "min-w-[16rem]" },
-    { key: null, label: "Tags", class: "min-w-[8rem]" },
+    { key: "labels", label: "Labels", class: "min-w-[8rem]" },
     { key: "created", label: "Created", class: "min-w-[7rem]" },
     { key: "modified", label: "Modified", class: "min-w-[7rem]" },
   ];
@@ -116,6 +120,8 @@
         <EntityTableRow
           {entity}
           {vaultId}
+          {onFilterType}
+          {onFilterLabel}
           selected={selectedIds.has(entity.id)}
           onToggleSelect={onToggleRow}
           connectionSummary={connectionCounts[entity.id] ?? {

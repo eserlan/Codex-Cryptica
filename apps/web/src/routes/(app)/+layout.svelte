@@ -324,7 +324,10 @@
     ) {
       if (
         !helpStore.hasSeen("initial-onboarding") &&
-        !page.url.searchParams.has("demo")
+        !page.url.searchParams.has("demo") &&
+        // Guests are visitors, not new users — never auto-start the GM
+        // onboarding tour (or demo) in a shared world.
+        !sessionModeStore.isGuestMode
       ) {
         if (
           vault.allEntities.length === 0 &&
