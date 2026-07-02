@@ -2,6 +2,8 @@
   import { base } from "$app/paths";
   import { goto } from "$app/navigation";
   import type { Entity } from "schema";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { entitySnippet } from "./entityTableSnippet";
@@ -26,7 +28,13 @@
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
-  const href = $derived(`${base}/vault/${vaultId}/entity/${entity.id}`);
+  // In guest mode the entity popout route can't resolve the snapshot, so the
+  // title link falls back to the guest page (clicks are intercepted anyway).
+  const href = $derived(
+    sessionModeStore.isGuestMode
+      ? `${base}/guest/${vaultId}`
+      : `${base}/vault/${vaultId}/entity/${entity.id}`,
+  );
   const snippet = $derived(entitySnippet(entity));
   const chips = $derived(
     (entity.labels?.length ? entity.labels : (entity.tags ?? [])).slice(0, 3),
@@ -51,13 +59,30 @@
     });
   }
 
+  // Guest snapshots have no vault route to navigate to; open the detail
+  // sidebar in place instead.
+  function openEntity() {
+    if (sessionModeStore.isGuestMode) {
+      vault.selectedEntityId = entity.id;
+      return;
+    }
+    void goto(href);
+  }
+
   // Whole-row navigation as a convenience; the title cell hosts the real link
   // so keyboard users get a focusable target.
   function handleRowClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (target.closest("a")) return; // let the title link handle it
     if (target.closest("[data-row-select]")) return; // let the checkbox toggle
-    void goto(href);
+    openEntity();
+  }
+
+  function handleTitleClick(event: MouseEvent) {
+    if (sessionModeStore.isGuestMode) {
+      event.preventDefault();
+      openEntity();
+    }
   }
 </script>
 
@@ -85,6 +110,7 @@
   <td class="px-3 py-2 align-top">
     <a
       {href}
+      onclick={handleTitleClick}
       class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded"
       data-testid="entity-table-row-link"
     >
