@@ -15,6 +15,10 @@ LOG_FILE="${RESUME_REVIEW_LOG:-$HOME/.claude/logs/resume-review-cron.log}"
 # cron's minimal PATH doesn't include ~/.local/bin (or nvm/volta/etc shims),
 # so the claude binary must be referenced by absolute path here.
 CLAUDE_BIN="${CLAUDE_BIN:-$HOME/.local/bin/claude}"
+# Only a comment from this login counts as "a reply" — otherwise a bot (e.g.
+# the deploy-preview notifier) commenting on every push to a needs-input PR
+# would look identical to a genuine reply and trigger a wasted escalation.
+HUMAN_LOGIN="${HUMAN_LOGIN:-eserlan}"
 
 mkdir -p "$STATE_DIR" "$(dirname "$LOG_FILE")"
 [ -f "$STATE_FILE" ] || echo '{}' > "$STATE_FILE"
@@ -24,10 +28,13 @@ unset GITHUB_TOKEN || true
 
 cd "$REPO_DIR"
 
-prs_json=$(gh pr list --label needs-input --state open --json number,comments 2>&1) || {
-  echo "$(date -u +%FT%TZ) check-needs-input: gh pr list failed: $prs_json" >> "$LOG_FILE"
+gh_err_file="$(mktemp)"
+if ! prs_json=$(gh pr list --label needs-input --state open --json number,comments 2>"$gh_err_file"); then
+  echo "$(date -u +%FT%TZ) check-needs-input: gh pr list failed: $(cat "$gh_err_file")" >> "$LOG_FILE"
+  rm -f "$gh_err_file"
   exit 0
-}
+fi
+rm -f "$gh_err_file"
 
 pr_numbers=$(echo "$prs_json" | jq -r '.[].number')
 pr_count=$(echo "$pr_numbers" | grep -c . || true)
@@ -41,7 +48,8 @@ fi
 any_new=false
 
 for pr in $pr_numbers; do
-  latest_id=$(echo "$prs_json" | jq -r --argjson pr "$pr" '.[] | select(.number == $pr) | .comments | last | .id // empty')
+  latest_id=$(echo "$prs_json" | jq -r --argjson pr "$pr" --arg login "$HUMAN_LOGIN" \
+    '.[] | select(.number == $pr) | .comments | map(select(.author.login == $login)) | last | .id // empty')
   [ -z "$latest_id" ] && continue
 
   last_seen=$(jq -r --arg pr "$pr" '.[$pr] // empty' "$STATE_FILE")
