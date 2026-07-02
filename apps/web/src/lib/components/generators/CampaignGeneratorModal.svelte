@@ -312,6 +312,20 @@
           ? "Review Draft"
           : "Error",
   );
+
+  const useContextualTheme = $derived(workflow.launchMode === "contextual");
+  const contextualThemeVars = $derived(
+    useContextualTheme
+      ? [
+          "--color-chrome-bg: var(--color-theme-bg)",
+          "--color-chrome-surface: var(--color-theme-surface)",
+          "--color-chrome-border: var(--color-theme-border)",
+          "--color-chrome-text: var(--color-theme-text)",
+          "--color-chrome-muted: var(--color-theme-muted)",
+          "--color-chrome-accent: var(--color-theme-primary)",
+        ].join("; ")
+      : undefined,
+  );
 </script>
 
 <svelte:window {onkeydown} />
@@ -338,6 +352,8 @@
     tabindex="-1"
     use:focusTrap
     class="relative w-full max-w-lg md:max-w-2xl flex flex-col overflow-hidden rounded-xl border border-chrome-border bg-chrome-surface shadow-2xl"
+    style={contextualThemeVars}
+    data-themed={useContextualTheme ? "theme" : "chrome"}
     transition:scale={{ duration: 180, start: 0.96 }}
     onclick={(e) => e.stopPropagation()}
   >
