@@ -63,10 +63,12 @@ namespace_id = "1351"
   limit = 5
   period = 60
 
+# Writes require a valid writeToken, so this mainly bounds runaway clients.
+# Image-heavy vaults can exceed 100 asset uploads on first publish.
 [[ratelimits]]
 name = "PUBLISH_WRITE_RATE_LIMITER"
 namespace_id = "1352"
 
   [ratelimits.simple]
-  limit = 60
+  limit = 300
   period = 60

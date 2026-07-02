@@ -141,6 +141,13 @@
           <span class="icon-[lucide--eye] h-3.5 w-3.5"></span>
           READ-ONLY GUEST
         </span>
+        <a
+          href="{base}/worlds"
+          class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
+        >
+          <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+          Explore Worlds
+        </a>
         <button
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all"
           onclick={() => {
@@ -155,6 +162,14 @@
         <DriveStatus />
         <P2PStatus />
         <VaultControls />
+        <a
+          href="{base}/worlds"
+          class="w-8 h-8 flex items-center justify-center border border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent transition-all"
+          title="Explore public worlds"
+          aria-label="Explore public worlds"
+        >
+          <span class="w-5 h-5 icon-[lucide--compass]"></span>
+        </a>
         <button
           class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
             ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'

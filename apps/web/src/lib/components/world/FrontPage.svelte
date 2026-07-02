@@ -20,6 +20,7 @@
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { base } from "$app/paths";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -552,6 +553,18 @@
           onEdit={startEditingBriefing}
           onDraftChange={handleDraftDescriptionChange}
         />
+
+        {#if sessionModeStore.isGuestMode}
+          <div class="flex justify-center pt-2">
+            <a
+              href="{base}/worlds"
+              class="inline-flex items-center gap-2 text-xs font-medium text-theme-muted hover:text-theme-primary transition-colors"
+            >
+              <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+              Made with Codex Cryptica &middot; Explore more public worlds
+            </a>
+          </div>
+        {/if}
       </div>
     </div>
   {/if}

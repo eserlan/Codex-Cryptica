@@ -1,7 +1,7 @@
 ---
 id: publishing
-title: Publishing Guest Snapshots
-tags: [publishing, guest, share, cloud, r2]
+title: Sharing and Publishing Worlds
+tags: [publishing, guest, share, cloud, r2, worlds, directory, discovery]
 rank: 18
 ---
 
@@ -26,7 +26,7 @@ To publish your campaign:
 1. Click the **Settings** cog in the bottom-right or top-right, and select the **Publishing** tab.
 2. Under **Player-Safe Snapshot Hosting**, click **Publish Guest Snapshot**.
 3. A **Publish Preview** modal will appear showing the numeric count of included vs. excluded elements (NPCs, maps, secrets, drafts, etc.).
-4. Click **Publish Snapshot** to confirm. 
+4. Click **Publish Snapshot** to confirm.
 5. Once the upload finishes in the background, you will receive a shareable link that you can copy and send to your players.
 
 ## Updating a Publication
@@ -45,3 +45,28 @@ If you wish to retract your campaign and remove it from the cloud:
 2. Under your live snapshot details, click **Unpublish & Delete**.
 3. A warning modal will verify that you want to proceed.
 4. Once confirmed, the system deletes the snapshot bundle and all uploaded assets from the cloud, immediately invalidating the guest link.
+
+## The Visibility Ladder
+
+Sharing and discovery are two separate, owner-controlled consent levels — enabling one does not enable the other:
+
+1. **Private** — the default. Only you and vault editors can access the world.
+2. **Shared Link** — after you publish a snapshot (above), anyone with the guest link can view a read-only copy. The link is not discoverable anywhere; you must send it yourself.
+3. **Public Listing** — an additional, separate opt-in that lists your published world in [**Explore Worlds**](/worlds), Codex Cryptica's public directory, so anyone can browse and find it without a link.
+
+## Listing a World in Explore Worlds
+
+Public listing requires an active Shared Link (you must publish a snapshot first):
+
+1. Open **Settings** -> **Publishing**.
+2. Fill in the **Public Listing** section: a title, short description, at least one label (required), and an optional cover image for the directory entry.
+3. Click **List Publicly**. Your world now appears in [Explore Worlds](/worlds).
+4. Use **View in Explore Worlds** to see your live directory listing at any time.
+
+### What becomes visible
+
+A public listing shows what you entered in the listing form (title, description, labels, cover image), a visible-entry count derived from your Shared Link snapshot, and a link to that same redacted, player-safe snapshot described above — it never exposes anything beyond what's already in your Shared Link snapshot.
+
+### Delisting
+
+Click **Delist World** in the Public Listing section at any time. This removes the world from Explore Worlds immediately; it does not unpublish or delete your Shared Link snapshot — players with the direct link can still access it. To revoke the shared link too, unpublish separately (above).

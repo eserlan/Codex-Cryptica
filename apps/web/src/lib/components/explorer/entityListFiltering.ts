@@ -54,15 +54,18 @@ export function filterEntities(
     const matchesType = filterAllTypes || options.typeFilters.has(e.type);
     if (!matchesType) continue;
 
-    // AND logic for sidebar label pills
+    // AND logic for sidebar label pills. Legacy entities without labels fall
+    // back to tags, matching how label chips are rendered (Constitution XII).
+    const effectiveLabels = e.labels?.length ? e.labels : (e.tags ?? []);
     const matchesLabels =
       activeLabels.length === 0 ||
-      (e.labels && activeLabels.every((f) => e.labels?.includes(f)));
+      activeLabels.every((f) => effectiveLabels.includes(f));
     if (!matchesLabels) continue;
 
-    // Filter by specified label tokens (#label or @label)
-    const matchesLabelTokens = labelTokens.every(
-      (l) => e.labels && e.labels.some((label) => label.toLowerCase() === l),
+    // Filter by specified label tokens (#label or @label). Legacy entities
+    // without labels fall back to tags, matching the sidebar pill logic above.
+    const matchesLabelTokens = labelTokens.every((l) =>
+      effectiveLabels.some((label) => label.toLowerCase() === l),
     );
     if (!matchesLabelTokens) continue;
 

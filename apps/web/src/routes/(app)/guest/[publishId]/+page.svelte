@@ -1,11 +1,14 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
+  import { page } from "$app/state";
+  import { replaceState } from "$app/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     addGuestHistory,
     removeGuestHistory,
@@ -25,6 +28,32 @@
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
     return id ? vault.entities[id] : null;
+  });
+
+  // Keep the ?entity= param in sync with the selection so the address bar
+  // always holds a shareable deep link.
+  // Tracks only the selection — reading page.url untracked keeps the effect
+  // from re-running (and stripping the param) on back/forward navigation.
+  $effect(() => {
+    if (loading) return;
+    const id = selectedEntity?.id ?? null;
+    const url = new URL(untrack(() => page.url));
+    if ((url.searchParams.get("entity") ?? null) === id) return;
+    if (id) url.searchParams.set("entity", id);
+    else url.searchParams.delete("entity");
+    replaceState(url, {});
+  });
+
+  // Inverse direction: back/forward restores ?entity= — apply it to the
+  // selection. The selection→URL effect above no-ops when they already match,
+  // so the two can't loop.
+  $effect(() => {
+    if (loading) return;
+    const paramId = page.url.searchParams.get("entity");
+    const selectedId = untrack(() => vault.selectedEntityId);
+    if ((paramId ?? null) === (selectedId ?? null)) return;
+    vault.selectedEntityId =
+      paramId && vault.entities[paramId] ? paramId : null;
   });
 
   onMount(async () => {
@@ -55,6 +84,15 @@
 
         // 4. Record to Guest History
         addGuestHistory(data.publishId, data.bundle.vaultTitle);
+
+        // 5. Deep link: /guest/{publishId}?entity={id} opens that entity in
+        // the full-screen zen view (sidebar selected underneath, so closing
+        // zen leaves the entity in context).
+        const linkedEntityId = page.url.searchParams.get("entity");
+        if (linkedEntityId && vault.entities[linkedEntityId]) {
+          vault.selectedEntityId = linkedEntityId;
+          modalUIStore.openZenMode(linkedEntityId);
+        }
 
         loading = false;
       } catch (err: any) {
@@ -132,6 +170,13 @@
           >
             <span class="icon-[lucide--arrow-left] mr-2 h-4 w-4"></span>
             Back to Shared Worlds
+          </a>
+          <a
+            href="{base}/worlds"
+            class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all text-theme-muted hover:text-theme-primary"
+          >
+            <span class="icon-[lucide--compass] mr-2 h-4 w-4"></span>
+            Explore Worlds
           </a>
         </div>
       </div>

@@ -100,6 +100,52 @@ describe("entityListFiltering pure functions", () => {
       expect(result.map((r) => r.id)).toEqual(["e1"]);
     });
 
+    it("matches legacy tags as labels when an entity has no labels", () => {
+      const legacy: Entity = {
+        id: "legacy",
+        title: "Old Timer",
+        type: "npc",
+        labels: [],
+        status: "active",
+        content: "Predates labels.",
+        tags: ["Guard"],
+        aliases: [],
+        connections: [],
+        updatedAt: 0,
+      } as Entity;
+      const result = filterEntities([...mockEntities, legacy], {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(["Guard"]),
+        allowedTypes: null,
+        showDraftsOnly: false,
+      });
+      expect(result.map((r) => r.id).sort()).toEqual(["e1", "e2", "legacy"]);
+    });
+
+    it("matches legacy tags as labels for #label search tokens", () => {
+      const legacy: Entity = {
+        id: "legacy",
+        title: "Old Timer",
+        type: "npc",
+        labels: [],
+        status: "active",
+        content: "Predates labels.",
+        tags: ["Guard"],
+        aliases: [],
+        connections: [],
+        updatedAt: 0,
+      } as Entity;
+      const result = filterEntities([...mockEntities, legacy], {
+        searchQuery: "#Guard",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+      });
+      expect(result.map((r) => r.id)).toContain("legacy");
+    });
+
     it("should extract search tag queries starting with # or @", () => {
       const result = filterEntities(mockEntities, {
         searchQuery: "#Guard",
