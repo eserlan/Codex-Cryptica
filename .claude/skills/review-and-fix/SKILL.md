@@ -35,8 +35,32 @@ existing PR) already exists for the current work.
      net on a branch already tested by hand, not an exhaustive audit. Only use a
      heavier effort level or fan out to subagents if the user explicitly asks for it.
 
-4. **Triage each finding**
-   For every finding produced by the review:
+4. **Ingest other reviewers' feedback**
+   - GitHub exposes review feedback in three separate places `gh` surfaces
+     differently — don't rely on `.comments` alone:
+     - `gh pr view <n> --json comments` — plain top-level PR comments.
+     - `gh pr view <n> --json reviews` — "Review changes" submissions (a body
+       + approve/request-changes/comment state).
+     - `gh api repos/{owner}/{repo}/pulls/<n>/comments` — inline comments
+       anchored to a specific diff line, not exposed via `gh pr view` at all.
+   - Fetch all three and filter out anything posted by this skill's own
+     identity (same `gh` account posts both human replies and agent
+     comments here — only exclude what *this workflow* posted, not the
+     human's own prior comments). What's left is feedback from other
+     reviewers: human co-reviewers or automated bots (e.g. a
+     `copilot-pull-request-reviewer` auto-review).
+   - Fold each substantive point into the same candidate list as `codex-review`'s
+     findings before triage — don't just rubber-stamp a bot's suggestion, verify
+     it's a real, currently-applicable issue first (bot reviewers can be wrong,
+     or the comment may already be stale/resolved by a later commit); skip ones
+     that no longer apply without commenting on them.
+   - This runs once per `review-and-fix` pass against whatever review feedback
+     exists at that point — it doesn't poll for new reviews arriving later,
+     that's what `resume-review`'s own escalation is for.
+
+5. **Triage each finding**
+   For every finding produced by the review (from `codex-review` or from other
+   reviewers per step 4):
    - **Clear-cut defect** (concrete code proposal, no ambiguity about intent —
      e.g. a missing `isCommitting` guard, a `||` that should be `??`, a missing
      `type="button"`): apply the fix directly to the working tree.
@@ -53,20 +77,20 @@ existing PR) already exists for the current work.
         direct link.
      5. Leave that specific finding unfixed and move on to the next.
 
-5. **Verify fixes don't break anything**
+6. **Verify fixes don't break anything**
    - Run the relevant checks for whatever changed (typically from `apps/web`):
      `pnpm run lint`, `pnpm exec vitest run` for touched areas, and
      `node scripts/check-compiled-runes.js` if worker files were touched.
    - If a fix causes a regression, revert just that fix and treat the underlying
      finding as needing your input instead of forcing a broken fix through.
 
-6. **Commit and push**
+7. **Commit and push**
    - If any fixes were applied, commit them with a clear message describing what
      the review pass changed (not a generic "fix review comments").
    - Push to the existing branch. Do not force-push. Do not open or modify PR
      readiness state beyond what's described here.
 
-7. **Announce completion**
+8. **Announce completion**
    - Post a single Discord summary via `scripts/discord-notify.sh`, e.g.:
      - `✅ review-and-fix on PR #<n>: fixed <X> findings, pushed. No open questions.`
      - or, when there are judgment-call findings, include a direct link per
