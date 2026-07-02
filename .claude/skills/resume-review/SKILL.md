@@ -26,21 +26,23 @@ question the review-and-fix pass left on a PR, to pick that item back up.
 3. **Apply the answer**
    - Read your reply as the resolution to the ambiguity the original finding
      raised. Implement the fix accordingly on that branch.
-   - Run the same verification step as `review-and-fix` step 5 (lint/tests for
+   - Run the same verification step as `review-and-fix` step 6 (lint/tests for
      touched areas).
 
 4. **Wrap up**
    - Commit and push the fix.
-   - `gh pr edit <n> --remove-label needs-input`
-   - Post to Discord via `scripts/discord-notify.sh`:
-     `✅ resume-review on PR #<n>: applied your answer, pushed.`
    - If your reply itself raises a new ambiguity, treat it like any other
-     unclear finding in `review-and-fix` step 4: comment, keep/re-add the
-     `needs-input` label, and notify — don't loop indefinitely guessing.
-     `gh pr comment` prints the new comment's URL on success; include it
-     directly in the Discord notification (e.g.
-     `⚠️ resume-review on PR #<n>: your answer raised a new question — https://github.com/<owner>/<repo>/pull/<n>#issuecomment-<id>`)
-     rather than a generic "see PR comments" pointer.
+     unclear finding in `review-and-fix` step 5: comment, keep the
+     `needs-input` label (don't remove it), and notify with a direct link to
+     the new comment — don't loop indefinitely guessing:
+     `⚠️ resume-review on PR #<n>: your answer raised a new question — https://github.com/<owner>/<repo>/pull/<n>#issuecomment-<id>`
+   - Otherwise (your reply fully resolved it): check whether any *other*
+     judgment-call findings are still open on this PR (other unanswered
+     `needs-input` comments from the same `review-and-fix` pass). If none
+     remain: `gh pr edit <n> --remove-label needs-input` and post
+     `✅ resume-review on PR #<n>: applied your answer, pushed. needs-input cleared, ready to merge.`
+     If other items are still unresolved: leave the label on and post
+     `✅ resume-review on PR #<n>: applied your answer, pushed. <Y> other item(s) still need input.`
 
 ## Notes
 

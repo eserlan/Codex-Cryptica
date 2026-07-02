@@ -90,11 +90,23 @@ existing PR) already exists for the current work.
    - Push to the existing branch. Do not force-push. Do not open or modify PR
      readiness state beyond what's described here.
 
-8. **Announce completion**
-   - Post a single Discord summary via `scripts/discord-notify.sh`, e.g.:
-     - `✅ review-and-fix on PR #<n>: fixed <X> findings, pushed. No open questions.`
-     - or, when there are judgment-call findings, include a direct link per
-       item instead of a generic "see PR comments" — Discord auto-embeds bare
+8. **Clear a stale `needs-input` label, if this run resolved everything**
+   - If the PR currently carries the `needs-input` label but this run found
+     **zero** judgment-call findings (either there were none, or a prior
+     `resume-review` already resolved the earlier ones and this pass didn't
+     surface a new one): `gh pr edit <n> --remove-label needs-input`. Don't
+     remove it if this run itself just added a fresh judgment-call finding —
+     only clear a label that's now stale.
+
+9. **Announce completion**
+   - Post a single Discord summary via `scripts/discord-notify.sh`:
+     - **Zero open judgment calls** (including the case where step 8 just
+       cleared a stale label): announce it's ready to merge, not just "no
+       open questions" —
+       `✅ review-and-fix on PR #<n>: fixed <X> findings, pushed. needs-input cleared, ready to merge.`
+       (omit "needs-input cleared" if the label was never present this run).
+     - **Judgment-call findings remain**: include a direct link per item
+       instead of a generic "see PR comments" — Discord auto-embeds bare
        URLs, so a plain link on its own line is enough, no markdown needed:
        ```
        ⚠️ review-and-fix on PR #<n>: fixed <X> findings, pushed. <Y> item(s) need your input:
