@@ -61,22 +61,26 @@ export function parseBlogArticle(
       return null;
     }
 
-    if (
-      (typeof publishedAt !== "string" && !(publishedAt instanceof Date)) ||
-      Number.isNaN(
-        publishedAt instanceof Date
-          ? publishedAt.getTime()
-          : Date.parse(publishedAt),
-      )
-    ) {
+    if (typeof publishedAt !== "string" && !(publishedAt instanceof Date)) {
       console.error(
         `Missing or invalid 'publishedAt' in frontmatter for blog article: ${path}`,
       );
       return null;
     }
 
-    const finalPublishedAt =
-      publishedAt instanceof Date ? publishedAt.toISOString() : publishedAt;
+    // Normalize explicitly instead of relying on the YAML parser having
+    // already coerced this into a Date (js-yaml's implicit timestamp
+    // resolution isn't something to depend on staying consistent across
+    // versions/environments) -- always parse and re-serialize ourselves.
+    const publishedAtDate = new Date(publishedAt as string | Date);
+    if (Number.isNaN(publishedAtDate.getTime())) {
+      console.error(
+        `Missing or invalid 'publishedAt' in frontmatter for blog article: ${path}`,
+      );
+      return null;
+    }
+
+    const finalPublishedAt = publishedAtDate.toISOString();
 
     return {
       id: String(metadata.id),
