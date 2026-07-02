@@ -9,6 +9,7 @@ import type { EntityPersistenceService } from "./entity-persistence";
 import type { EntityContentLoader } from "./entity-content-loader.svelte";
 import type { IVaultServices } from "./service-registry";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { updateLastInternalChange } from "./registry";
 
 export interface MutationDependencies {
   repository: VaultRepository;
@@ -288,9 +289,7 @@ export class EntityMutationService {
           this.entities = entities;
           if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
 
-          import("./registry").then((m) =>
-            m.updateLastInternalChange(activeVaultId),
-          );
+          await updateLastInternalChange(activeVaultId);
 
           modifiedIds.forEach((mId) => {
             const modEntity = this.entities[mId];
