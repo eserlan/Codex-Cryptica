@@ -3,10 +3,10 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [ -f "$SCRIPT_DIR/.env" ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source "$SCRIPT_DIR/.env"
-  set +a
+  # Parse just the one key needed rather than `source`-ing the whole file —
+  # this script can run unattended (cron), so treating .env as executable
+  # shell is unnecessary risk for a single config value.
+  DISCORD_WEBHOOK_URL=$(grep -E '^DISCORD_WEBHOOK_URL=' "$SCRIPT_DIR/.env" | tail -n1 | cut -d '=' -f2- | sed -e 's/^["'"'"']//' -e 's/["'"'"']$//')
 fi
 
 if [ -z "$DISCORD_WEBHOOK_URL" ]; then

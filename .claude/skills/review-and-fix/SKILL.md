@@ -79,8 +79,10 @@ existing PR) already exists for the current work.
 
 6. **Verify fixes don't break anything**
    - Run the relevant checks for whatever changed (typically from `apps/web`):
-     `pnpm run lint`, `pnpm exec vitest run` for touched areas, and
+     `bun run lint`, `bun run vitest run` for touched areas, and
      `node scripts/check-compiled-runes.js` if worker files were touched.
+     This repo uses Bun, not pnpm/npm — `pnpm run lint` fails outright here
+     ("This project is configured to use bun").
    - If a fix causes a regression, revert just that fix and treat the underlying
      finding as needing your input instead of forcing a broken fix through.
 

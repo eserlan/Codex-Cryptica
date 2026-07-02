@@ -46,8 +46,11 @@ question the review-and-fix pass left on a PR, to pick that item back up.
 
 ## Notes
 
-- This is manually triggered (e.g. "resume review on #1588") after you notice
-  the Discord ping and have answered on the PR. There's no automatic polling
-  wired up yet — if the manual back-and-forth becomes annoying, a scheduled
-  routine (via `/schedule` or `CronCreate`) can poll `needs-input` PRs on an
-  interval and invoke this skill automatically.
+- This skill itself is invoked automatically: `scripts/check-needs-input.sh`
+  polls `needs-input` PRs for a new reply every 5 minutes via a local cron job
+  (see `docs/devops/REVIEW_AND_FIX_AGENT.md`) and escalates to
+  `claude -p "/resume-review"` only when it finds one — no manual trigger
+  needed once you've replied. It's local-only (stops if this machine/cron
+  daemon is off), by design — see that doc's "Known gaps" section.
+- You can still invoke it manually (e.g. "resume review on #1588") if you
+  don't want to wait for the next cron tick.
