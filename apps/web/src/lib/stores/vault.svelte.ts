@@ -132,6 +132,11 @@ export class VaultStore {
     return this.entityStore.allEntities.map((e) => e.title).join(", ");
   }
   get status() {
+    if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      // Guest snapshots don't sync; the host syncStore may be stuck in
+      // "loading" from an interrupted bootstrap.
+      return guestVault.isInitialized ? "idle" : "loading";
+    }
     return this.syncStore.status;
   }
   set status(
