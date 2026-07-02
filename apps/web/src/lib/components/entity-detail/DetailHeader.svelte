@@ -18,6 +18,9 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     entity,
@@ -32,6 +35,19 @@
     editAliases: string[];
     onClose: () => void;
   }>();
+
+  let linkCopied = $state(false);
+
+  const handleCopyGuestLink = async () => {
+    if (!guestVault.publishId) return;
+    try {
+      await copyGuestEntityLink(guestVault.publishId, entity.id);
+      linkCopied = true;
+      setTimeout(() => (linkCopied = false), 2000);
+    } catch {
+      notificationStore.notify("Could not copy the link.", "error");
+    }
+  };
 
   const isGraphView = $derived.by(() => {
     const path = page.url.pathname;
@@ -113,6 +129,24 @@
         data-testid="find-in-graph-button"
       >
         <span class="icon-[lucide--target] w-5 h-5"></span>
+      </button>
+    {/if}
+    {#if vault.isGuest && guestVault.publishId}
+      <button
+        type="button"
+        onclick={handleCopyGuestLink}
+        class="transition flex items-center justify-center p-1 {linkCopied
+          ? 'text-theme-primary'
+          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
+        aria-label="Copy link to this entity"
+        title={linkCopied ? "Link copied!" : "Copy link to this entity"}
+        data-testid="copy-guest-link-button"
+      >
+        <span
+          class="{linkCopied
+            ? 'icon-[lucide--check]'
+            : 'icon-[lucide--link]'} w-5 h-5"
+        ></span>
       </button>
     {/if}
     {#if !vault.isGuest || entity.soundBite}

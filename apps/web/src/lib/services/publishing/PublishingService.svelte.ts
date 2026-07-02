@@ -371,7 +371,9 @@ export class PublishingService {
         let retryCount = 0;
         let assetResponse: Response | null = null;
 
-        while (retryCount < 3) {
+        // Enough backoff budget (2+4+8+16+30+30 ≈ 90s) to outlast a full
+        // 60s rate-limit window on large first-time publishes.
+        while (retryCount < 6) {
           assetResponse = await fetcher(assetUrl, {
             method: "POST",
             headers: assetHeaders,
@@ -383,7 +385,7 @@ export class PublishingService {
             const retryAfter = assetResponse.headers.get("Retry-After");
             const delay = retryAfter
               ? parseInt(retryAfter, 10) * 1000
-              : 1000 * Math.pow(2, retryCount);
+              : Math.min(1000 * Math.pow(2, retryCount), 30_000);
             console.warn(
               `[PublishingService] Rate limited (429) uploading ${asset.path}, retrying in ${delay}ms...`,
             );

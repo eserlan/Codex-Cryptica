@@ -15,6 +15,9 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     entity,
@@ -47,6 +50,19 @@
     onRejectDraft?: () => void;
     isDraftActioning?: boolean;
   }>();
+
+  let linkCopied = $state(false);
+
+  const handleCopyGuestLink = async () => {
+    if (!guestVault.publishId || !entity) return;
+    try {
+      await copyGuestEntityLink(guestVault.publishId, entity.id);
+      linkCopied = true;
+      setTimeout(() => (linkCopied = false), 2000);
+    } catch {
+      notificationStore.notify("Could not copy the link.", "error");
+    }
+  };
 
   const isGraphView = $derived.by(() => {
     const path = page.url.pathname;
@@ -229,6 +245,24 @@
             data-testid="zen-guest-chat-button"
           >
             <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+          </button>
+        {/if}
+        {#if vault.isGuest && guestVault.publishId && entity}
+          <button
+            type="button"
+            onclick={handleCopyGuestLink}
+            class="px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
+              ? 'text-theme-primary'
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title={linkCopied ? "Link copied!" : "Copy link to this entity"}
+            aria-label="Copy link to this entity"
+            data-testid="zen-copy-guest-link-button"
+          >
+            <span
+              class="{linkCopied
+                ? 'icon-[lucide--check]'
+                : 'icon-[lucide--link]'} w-4 h-4"
+            ></span>
           </button>
         {/if}
         <button
