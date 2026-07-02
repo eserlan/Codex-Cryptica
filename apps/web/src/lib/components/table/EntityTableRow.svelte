@@ -2,7 +2,7 @@
   import { base } from "$app/paths";
   import { goto } from "$app/navigation";
   import type { Entity } from "schema";
-  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
@@ -59,11 +59,12 @@
     });
   }
 
-  // Guest snapshots have no vault entity route; select the entity and return
-  // to the guest world view, which renders the detail sidebar.
+  // Guest snapshots have no vault entity route; open the zen detail view
+  // in place instead (same view the host route ends up in).
   function openEntity() {
     if (sessionModeStore.isGuestMode) {
-      vault.selectedEntityId = entity.id;
+      modalUIStore.openZenMode(entity.id);
+      return;
     }
     void goto(href);
   }
