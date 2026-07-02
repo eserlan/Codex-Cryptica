@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from "$app/paths";
   import { publishingService } from "$lib/services/publishing/PublishingService.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -83,6 +84,63 @@
           uploads it to Cloudflare R2. This allows your players to browse your
           world asynchronously and offline without exposing your active
           workspace or secrets.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visibility ladder: each level is a separate, owner-controlled consent step -->
+  <div
+    class="bg-theme-bg/30 border border-theme-border/50 rounded-lg divide-y divide-theme-border/40"
+  >
+    <div class="flex items-center gap-3 px-4 py-3">
+      <span
+        class="icon-[lucide--lock] w-4 h-4 shrink-0 {!activeRegistry
+          ? 'text-theme-primary'
+          : 'text-theme-text/40'}"
+      ></span>
+      <div>
+        <span
+          class="text-xs font-bold uppercase tracking-wider {!activeRegistry
+            ? 'text-theme-primary'
+            : 'text-theme-text/60'}">Private</span
+        >
+        <p class="text-xs text-theme-text/50">
+          Only you and vault editors can access this world.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 px-4 py-3">
+      <span
+        class="icon-[lucide--link] w-4 h-4 shrink-0 {activeRegistry
+          ? 'text-theme-primary'
+          : 'text-theme-text/40'}"
+      ></span>
+      <div>
+        <span
+          class="text-xs font-bold uppercase tracking-wider {activeRegistry
+            ? 'text-theme-primary'
+            : 'text-theme-text/60'}">Shared Link</span
+        >
+        <p class="text-xs text-theme-text/50">
+          Anyone with the guest link above can view a read-only snapshot.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 px-4 py-3">
+      <span class="icon-[lucide--compass] w-4 h-4 shrink-0 text-theme-text/40"
+      ></span>
+      <div>
+        <span
+          class="text-xs font-bold uppercase tracking-wider text-theme-text/60"
+          >Public Listing</span
+        >
+        <p class="text-xs text-theme-text/50">
+          Opt-in below to also list this world in <a
+            href="{base}/worlds"
+            class="underline hover:text-theme-primary transition-colors"
+            >Explore Worlds</a
+          > for anyone to discover.
         </p>
       </div>
     </div>
