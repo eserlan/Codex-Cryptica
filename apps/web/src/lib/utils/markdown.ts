@@ -64,9 +64,19 @@ export function parseMarkdown(raw: string): ParseResult {
     try {
       const yamlContent = match[1];
       const parsed = yamlLoad(yamlContent) as any;
-      if (typeof parsed === "object" && parsed !== null) {
-        metadata = parsed;
+      // Frontmatter must parse to a plain mapping. Reject arrays, scalars,
+      // and degenerate mappings (e.g. an implicit `null` key from malformed
+      // ": foo: bar" input) rather than silently accepting garbage metadata.
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed) ||
+        parsed.constructor !== Object ||
+        "null" in parsed
+      ) {
+        throw new Error("Frontmatter did not parse to a plain mapping");
       }
+      metadata = parsed;
     } catch (e) {
       console.error("Failed to parse frontmatter", e);
     }
