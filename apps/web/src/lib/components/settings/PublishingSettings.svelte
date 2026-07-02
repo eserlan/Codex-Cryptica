@@ -123,7 +123,7 @@
             : 'text-theme-text/60'}">Shared Link</span
         >
         <p class="text-xs text-theme-text/50">
-          Anyone with the guest link above can view a read-only snapshot.
+          Anyone with the guest link below can view a read-only snapshot.
         </p>
       </div>
     </div>

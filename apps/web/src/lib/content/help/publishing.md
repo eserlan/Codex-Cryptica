@@ -59,13 +59,13 @@ Sharing and discovery are two separate, owner-controlled consent levels — enab
 Public listing requires an active Shared Link (you must publish a snapshot first):
 
 1. Open **Settings** -> **Publishing**.
-2. Fill in the **Public Listing** section: a title, short description, and optional labels/cover image for the directory entry.
+2. Fill in the **Public Listing** section: a title, short description, at least one label (required), and an optional cover image for the directory entry.
 3. Click **List Publicly**. Your world now appears in [Explore Worlds](/worlds).
 4. Use **View in Explore Worlds** to see your live directory listing at any time.
 
 ### What becomes visible
 
-A public listing shows only what you entered in the listing form (title, description, labels, cover image) plus a link to the same redacted, player-safe guest snapshot described above — it never exposes anything beyond what's already in your Shared Link snapshot.
+A public listing shows what you entered in the listing form (title, description, labels, cover image), a visible-entry count derived from your Shared Link snapshot, and a link to that same redacted, player-safe snapshot described above — it never exposes anything beyond what's already in your Shared Link snapshot.
 
 ### Delisting
 
