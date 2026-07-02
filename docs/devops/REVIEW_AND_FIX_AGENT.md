@@ -9,7 +9,7 @@ The dev process here is agent-orchestrated end to end: issues → branches → P
 Design principle: **automate the mechanical part, escalate the judgment part.**
 
 - Anything the agent is confident about, it fixes directly, no questions asked.
-- Anything ambiguous (multiple valid fixes, depends on intent not yet specified), it does **not** guess — it stops and asks, via a PR comment (durable, actionable) plus a Discord ping (so you notice without polling).
+- Anything ambiguous (multiple valid fixes, depends on intent not yet specified), it does **not** guess — it stops and asks, via a PR comment (durable, actionable) plus a Discord ping with a direct link to that comment (so you notice without polling and don't have to go hunting for which comment needs a reply).
 - Nothing is ever merged or opened as a new PR by this flow. A human stays the gate on anything that ships.
 
 ## The three skills
@@ -97,6 +97,8 @@ When it does find new input, you'll see:
 ```
 
 ...followed by whatever `resume-review`'s own output is, appended to the same log.
+
+**Known gotcha (hit during initial testing, now fixed)**: cron runs with a minimal `PATH` that doesn't include `~/.local/bin` (or nvm/volta/etc shims) — a bare `claude` call fails with `claude: command not found` even though it works fine interactively. The script references the binary via `$HOME/.local/bin/claude` (overridable with `CLAUDE_BIN`) specifically to avoid this. If you move the `claude` install location, update `CLAUDE_BIN` in the crontab entry or the script's default.
 
 ## Secrets
 

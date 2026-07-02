@@ -44,9 +44,13 @@ existing PR) already exists for the current work.
      addressed multiple valid ways, or touches behavior you haven't specified):
      do **not** guess. Instead:
      1. Compose a concise question describing the ambiguity and the options.
-     2. `gh pr comment <n> --body "<question>"` on the PR.
+     2. `gh pr comment <n> --body "<question>"` on the PR — this prints the
+        comment's URL (e.g. `https://github.com/.../pull/<n>#issuecomment-...`)
+        on success; capture it.
      3. `gh pr edit <n> --add-label needs-input`
-     4. Note it in the running summary for the completion notification.
+     4. Note the comment URL in the running summary for the completion
+        notification — don't just note that something needs input, keep the
+        direct link.
      5. Leave that specific finding unfixed and move on to the next.
 
 5. **Verify fixes don't break anything**
@@ -65,7 +69,14 @@ existing PR) already exists for the current work.
 7. **Announce completion**
    - Post a single Discord summary via `scripts/discord-notify.sh`, e.g.:
      - `✅ review-and-fix on PR #<n>: fixed <X> findings, pushed. No open questions.`
-     - or `⚠️ review-and-fix on PR #<n>: fixed <X> findings, pushed. <Y> item(s) need your input — see PR comments. Labeled needs-input.`
+     - or, when there are judgment-call findings, include a direct link per
+       item instead of a generic "see PR comments" — Discord auto-embeds bare
+       URLs, so a plain link on its own line is enough, no markdown needed:
+       ```
+       ⚠️ review-and-fix on PR #<n>: fixed <X> findings, pushed. <Y> item(s) need your input:
+       https://github.com/<owner>/<repo>/pull/<n>#issuecomment-<id1>
+       https://github.com/<owner>/<repo>/pull/<n>#issuecomment-<id2>
+       ```
 
 ## Notes
 

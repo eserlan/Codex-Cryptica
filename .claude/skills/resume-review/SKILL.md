@@ -37,6 +37,10 @@ question the review-and-fix pass left on a PR, to pick that item back up.
    - If your reply itself raises a new ambiguity, treat it like any other
      unclear finding in `review-and-fix` step 4: comment, keep/re-add the
      `needs-input` label, and notify — don't loop indefinitely guessing.
+     `gh pr comment` prints the new comment's URL on success; include it
+     directly in the Discord notification (e.g.
+     `⚠️ resume-review on PR #<n>: your answer raised a new question — https://github.com/<owner>/<repo>/pull/<n>#issuecomment-<id>`)
+     rather than a generic "see PR comments" pointer.
 
 ## Notes
 
