@@ -49,6 +49,15 @@ The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It o
 ### Load from Folder
 Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
 
+### Public World Directory
+Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link.
+
+### Sharing a Link to an Entry
+In a shared world, every entry has a link button (next to the entry title in the side panel and in the full-screen view). It copies a direct link that opens that entry full-screen for anyone you send it to. While browsing a shared world, the address bar also carries the current entry, so copying the address works too.
+
+### Table View Filters
+In table view, click a type badge or a label chip on any row to filter the table down to matching entries; click again (or use Clear) to remove the filter. Active label filters appear next to the type pills above the table. Every column header with an arrow, including Labels, can be clicked to sort.
+
 ### Total Privacy
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
 
