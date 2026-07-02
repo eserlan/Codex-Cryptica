@@ -44,6 +44,18 @@
     replaceState(url, {});
   });
 
+  // Inverse direction: back/forward restores ?entity= — apply it to the
+  // selection. The selection→URL effect above no-ops when they already match,
+  // so the two can't loop.
+  $effect(() => {
+    if (loading) return;
+    const paramId = page.url.searchParams.get("entity");
+    const selectedId = untrack(() => vault.selectedEntityId);
+    if ((paramId ?? null) === (selectedId ?? null)) return;
+    vault.selectedEntityId =
+      paramId && vault.entities[paramId] ? paramId : null;
+  });
+
   onMount(async () => {
     // Always dismiss onboarding landing page in guest mode
     onboardingStore.dismissLandingPage();

@@ -4,8 +4,10 @@
   import type { Entity } from "schema";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
+  import { buildGuestEntityUrl } from "$lib/services/publishing/guest-link";
   import { entitySnippet } from "./entityTableSnippet";
   import {
     getEntityCreatedAt,
@@ -37,7 +39,7 @@
   // title link falls back to the guest page (clicks are intercepted anyway).
   const href = $derived(
     sessionModeStore.isGuestMode
-      ? `${base}/guest/${vaultId}`
+      ? buildGuestEntityUrl(vaultId, entity.id, "")
       : `${base}/vault/${vaultId}/entity/${entity.id}`,
   );
   const snippet = $derived(entitySnippet(entity));
@@ -61,6 +63,9 @@
   // in place instead (same view the host route ends up in).
   function openEntity() {
     if (sessionModeStore.isGuestMode) {
+      // Keep the selection in sync so the guest page's sidebar and ?entity=
+      // deep-link URL reflect what was opened, matching deep-link behavior.
+      vault.selectedEntityId = entity.id;
       modalUIStore.openZenMode(entity.id);
       return;
     }
@@ -78,6 +83,15 @@
   }
 
   function handleTitleClick(event: MouseEvent) {
+    if (
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.button !== 0
+    ) {
+      // Let the browser handle modifier-clicks (open in new tab/window).
+      return;
+    }
     if (sessionModeStore.isGuestMode) {
       event.preventDefault();
       openEntity();

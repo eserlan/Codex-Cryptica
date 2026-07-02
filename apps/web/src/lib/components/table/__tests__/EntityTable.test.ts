@@ -8,6 +8,7 @@ import type { ConnectionSummary, SortKey, SortState } from "../entityTableSort";
 import { goto } from "$app/navigation";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -135,14 +136,14 @@ describe("EntityTable", () => {
       vi.restoreAllMocks();
     });
 
-    it("links titles to the guest page instead of the vault entity route", () => {
+    it("links titles to the guest deep-link URL instead of the vault entity route", () => {
       sessionModeStore.isGuestMode = true;
       render(EntityTable, {
         props: { entities: rows, vaultId: "pub1", sort, onSort: vi.fn() },
       });
 
       const link = screen.getByText("Aldric").closest("a");
-      expect(link?.getAttribute("href")).toBe("/guest/pub1");
+      expect(link?.getAttribute("href")).toBe("/guest/pub1?entity=e1");
     });
 
     it("opens zen mode in place instead of navigating on row and title clicks", async () => {
@@ -159,6 +160,7 @@ describe("EntityTable", () => {
 
       await fireEvent.click(screen.getByText("Brindlewood"));
       expect(openZenMode).toHaveBeenCalledWith("e2");
+      expect(vault.selectedEntityId).toBe("e2");
       expect(goto).not.toHaveBeenCalled();
     });
   });
