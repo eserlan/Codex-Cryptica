@@ -1,7 +1,5 @@
 /** @vitest-environment jsdom */
 
-/** @vitest-environment jsdom */
-
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
@@ -64,7 +62,7 @@ describe("AppHeader", () => {
     expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
   });
 
-  it("hides search controls in guest mode", () => {
+  it("keeps search controls visible in guest mode", () => {
     sessionModeStore.isGuestMode = true;
 
     render(AppHeader);

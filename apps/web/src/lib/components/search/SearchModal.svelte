@@ -7,6 +7,7 @@
   import type { SearchResult } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
   import { page } from "$app/state";
+  import { base } from "$app/paths";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
@@ -107,8 +108,16 @@
     }
   }
 
-  const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
-  const isTablePage = $derived(page.url.pathname.startsWith("/table"));
+  // Match the route segment exactly (not just a prefix) so e.g. `/tablet`
+  // doesn't get mistaken for `/table`, and account for a non-empty
+  // SvelteKit `base` path.
+  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const isCanvasPage = $derived(
+    new RegExp(`^${escapedBase}/canvas(?:/|$)`).test(page.url.pathname),
+  );
+  const isTablePage = $derived(
+    new RegExp(`^${escapedBase}/table(?:/|$)`).test(page.url.pathname),
+  );
   const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
   const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
   let overlayClass = $derived(
