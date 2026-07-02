@@ -59,12 +59,11 @@
     });
   }
 
-  // Guest snapshots have no vault route to navigate to; open the detail
-  // sidebar in place instead.
+  // Guest snapshots have no vault entity route; select the entity and return
+  // to the guest world view, which renders the detail sidebar.
   function openEntity() {
     if (sessionModeStore.isGuestMode) {
       vault.selectedEntityId = entity.id;
-      return;
     }
     void goto(href);
   }
