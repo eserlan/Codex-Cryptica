@@ -184,6 +184,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.vaultThemePrompt.open}
+      {#await loadModal(() => import("$lib/components/vaults/VaultThemePromptModal.svelte"), "VaultThemePromptModal") then VaultThemePromptModal}
+        {#if VaultThemePromptModal}
+          <VaultThemePromptModal />
+        {/if}
+      {/await}
+    {/if}
+
     {#if modalUIStore.showShare}
       {#await loadModal(() => import("$lib/components/ShareModal.svelte"), "ShareModal") then ShareModal}
         {#if ShareModal}

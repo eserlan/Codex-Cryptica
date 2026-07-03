@@ -202,6 +202,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link.",
     icon: "icon-[lucide--globe]",
   },
+  "guest-entity-links": {
+    id: "guest-entity-links",
+    title: "Sharing a Link to an Entry",
+    content:
+      "In a shared world, every entry has a link button (next to the entry title in the side panel and in the full-screen view). It copies a direct link that opens that entry full-screen for anyone you send it to. While browsing a shared world, the address bar also carries the current entry, so copying the address works too.",
+    icon: "icon-[lucide--link]",
+  },
+  "table-view-filters": {
+    id: "table-view-filters",
+    title: "Table View Filters",
+    content:
+      "In table view, click a type badge or a label chip on any row to filter the table down to matching entries; click again (or use Clear) to remove the filter. Active label filters appear next to the type pills above the table. Every column header with an arrow, including Labels, can be clicked to sort.",
+    icon: "icon-[lucide--filter]",
+  },
   "total-privacy": {
     id: "total-privacy",
     title: "Total Privacy",

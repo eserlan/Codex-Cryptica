@@ -22,3 +22,9 @@
 
 **Learning:** Svelte UI component files (like `DetailStatusTab.svelte`, `ZenContent.svelte`, and `ZenSidebar.svelte`) often bloat by inlining presentational UI that manages its own distinct internal state (like creating a new entity connection). This violates the Single Responsibility Principle and causes widespread code duplication.
 **Action:** When you encounter a repeated block of presentational UI that requires its own distinct internal state (e.g. `isConnecting`, `addConnectionError`, form fields) and lifecycle methods (`handleAddConnection`), extract it into a small presentational subcomponent. Let the parent only control whether the component is visible (e.g., `isAddingConnection`).
+
+## 2025-05-24 - Extracting theme presets from the schema definition
+
+**Learning:** When dealing with god files that contain both structural type definitions/Zod schemas and a massive amount of hardcoded reference data (like the 1,112 line `packages/schema/src/theme.ts` which exported 26+ huge static objects), extracting the pure data payload into a dedicated constants file (e.g. `theme-templates.ts`) makes the core schema far easier to read and test, without modifying any upstream runtime logic.
+
+**Action:** Future agents should look for modules in `packages/schema/` or configuration directories where huge static object definitions bloat the file. Split the definitions into `-templates.ts` or `-constants.ts` and use `export * from "./..."` in index files to prevent widespread import refactoring.

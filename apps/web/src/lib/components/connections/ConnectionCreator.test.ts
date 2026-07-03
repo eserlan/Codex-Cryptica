@@ -1,10 +1,5 @@
 /** @vitest-environment jsdom */
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ConnectionCreator from "./ConnectionCreator.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -42,7 +37,9 @@ describe("ConnectionCreator", () => {
     const labelInput = screen.getByLabelText(
       /custom label \(optional\)/i,
     ) as HTMLInputElement;
-    await fireEvent.input(labelInput, { target: { value: "  Trusted Ally  " } });
+    await fireEvent.input(labelInput, {
+      target: { value: "  Trusted Ally  " },
+    });
 
     await fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
 

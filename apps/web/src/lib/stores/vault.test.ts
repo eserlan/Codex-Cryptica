@@ -622,7 +622,7 @@ describe("VaultStore", () => {
       mockRepository.entities = { e1: entity };
       testVault.entityStore.markContentLoaded("e1");
 
-      vi.mocked(mockRepository.saveToDisk).mockRejectedValueOnce(
+      vi.mocked(mockRepository.saveToDisk).mockRejectedValue(
         new Error("Disk Error"),
       );
 

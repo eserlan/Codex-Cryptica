@@ -113,29 +113,33 @@ describe("CampaignGeneratorModal", () => {
     expect(screen.getByRole("button", { name: /generate/i })).toBeTruthy();
   });
 
-  // Style-guide compliance: modal uses chrome token classes, not surface-* or primary-*
-  it("modal card uses chrome-surface background token", () => {
+  it("workspace launch keeps chrome modal styling", () => {
     render(CampaignGeneratorModal);
     const dialog = screen.getByRole("dialog");
+    expect(dialog.getAttribute("data-themed")).toBe("chrome");
     expect(dialog.className).toContain("bg-chrome-surface");
-  });
-
-  it("modal card uses chrome-border token", () => {
-    render(CampaignGeneratorModal);
-    const dialog = screen.getByRole("dialog");
     expect(dialog.className).toContain("border-chrome-border");
-  });
-
-  it("close button uses chrome border and muted text tokens", () => {
-    render(CampaignGeneratorModal);
-    const closeBtn = screen.getByLabelText("Close");
-    expect(closeBtn.className).toContain("border-chrome-border");
-    expect(closeBtn.className).toContain("text-chrome-muted");
-  });
-
-  it("modal heading uses chrome-accent text token", () => {
-    render(CampaignGeneratorModal);
     const heading = screen.getByRole("heading", { name: /generate/i });
     expect(heading.className).toContain("text-chrome-accent");
+  });
+
+  it("contextual launch remaps chrome tokens to the active theme", () => {
+    store._workflow.launchMode = "contextual";
+    store._workflow.sourceEntityId = "entity-99";
+
+    render(CampaignGeneratorModal);
+
+    const dialog = screen.getByRole("dialog");
+    const style = dialog.getAttribute("style") ?? "";
+    expect(dialog.getAttribute("data-themed")).toBe("theme");
+    expect(style).toContain(
+      "--color-chrome-surface: var(--color-theme-surface)",
+    );
+    expect(style).toContain("--color-chrome-border: var(--color-theme-border)");
+    expect(style).toContain(
+      "--color-chrome-accent: var(--color-theme-primary)",
+    );
+    expect(style).toContain("--color-chrome-text: var(--color-theme-text)");
+    expect(style).toContain("--color-chrome-muted: var(--color-theme-muted)");
   });
 });

@@ -7,6 +7,7 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 
   interface NavItem {
     id: string;
@@ -70,22 +71,27 @@
         title: "Entity Explorer",
         action: () => layoutUIStore.toggleSidebarTool("explorer"),
       },
-      {
-        id: "oracle",
-        icon: "icon-[lucide--sparkles]",
-        label: "Oracle",
-        title:
-          "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
-        action: () => layoutUIStore.toggleSidebarTool("oracle"),
-      },
-      {
+    ];
+
+    list.push({
+      id: "oracle",
+      icon: "icon-[lucide--sparkles]",
+      label: "Oracle",
+      title: vault.isGuest
+        ? "Lore Oracle — ask about the world lore you can see. AI is an assistive layer, never required."
+        : "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
+      action: () => layoutUIStore.toggleSidebarTool("oracle"),
+    });
+
+    if (!sessionModeStore.isGuestMode) {
+      list.push({
         id: "quicknote",
         icon: "icon-[lucide--zap]",
         label: "Notes",
         title: "QuickNote Scratchpad",
         action: () => quickNoteStore.toggle(),
-      },
-    ];
+      });
+    }
 
     if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
       list.push({
@@ -94,6 +100,14 @@
         label: "Chat",
         title: "Guest Chat — speak with enabled characters in-character.",
         action: () => {
+          if (sessionModeStore.isGuestMode) {
+            guestChatStore.showChatModal = !guestChatStore.showChatModal;
+            if (guestChatStore.showChatModal) {
+              layoutUIStore.leftSidebarOpen = false;
+            }
+            return;
+          }
+
           if (layoutUIStore.mainViewMode === "guest-chat") {
             layoutUIStore.mainViewMode = "visualization";
           } else {
@@ -157,7 +171,9 @@
   {#each tools as tool}
     {@const active =
       tool.id === "guest-chat"
-        ? layoutUIStore.mainViewMode === "guest-chat"
+        ? sessionModeStore.isGuestMode
+          ? guestChatStore.showChatModal
+          : layoutUIStore.mainViewMode === "guest-chat"
         : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}

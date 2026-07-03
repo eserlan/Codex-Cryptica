@@ -15,6 +15,23 @@ vi.mock("$app/paths", () => ({
   base: "",
 }));
 
+const pageState = vi.hoisted(() => ({
+  url: new URL("http://localhost/guest/published-1"),
+}));
+vi.mock("$app/state", () => ({
+  page: pageState,
+}));
+
+vi.mock("$app/navigation", () => ({
+  replaceState: vi.fn(),
+}));
+
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: {
+    openZenMode: vi.fn(),
+  },
+}));
+
 vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {
     isGuestMode: false,
@@ -116,6 +133,75 @@ describe("/guest/[publishId] page", () => {
     expect(guestVault.clear).not.toHaveBeenCalled();
     expect(themeStore.loadForVault).not.toHaveBeenCalled();
     expect(themeStore.setTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the entity in zen mode from the ?entity= deep link once the bundle loads", async () => {
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    pageState.url = new URL(
+      "http://localhost/guest/published-1?entity=aglarond",
+    );
+    (vault as any).entities = { aglarond: { id: "aglarond" } };
+    (vault as any).selectedEntityId = null;
+
+    const { unmount } = render(RoutePage, {
+      data: {
+        publishId: "published-1",
+        status: 200,
+        error: null,
+        bundle: {
+          publishId: "published-1",
+          vaultTitle: "Shared World",
+          activeTheme: { id: "host-theme" },
+          entities: [],
+          relationships: [],
+          maps: [],
+          canvases: [],
+          assetManifest: [],
+        },
+      } as any,
+    });
+
+    await waitFor(() => {
+      expect(vault.selectedEntityId).toBe("aglarond");
+      expect(modalUIStore.openZenMode).toHaveBeenCalledWith("aglarond");
+    });
+
+    unmount();
+    pageState.url = new URL("http://localhost/guest/published-1");
+    (vault as any).entities = {};
+  });
+
+  it("ignores an unknown ?entity= id in the deep link", async () => {
+    pageState.url = new URL(
+      "http://localhost/guest/published-1?entity=nonexistent",
+    );
+    (vault as any).selectedEntityId = null;
+
+    const { unmount } = render(RoutePage, {
+      data: {
+        publishId: "published-1",
+        status: 200,
+        error: null,
+        bundle: {
+          publishId: "published-1",
+          vaultTitle: "Shared World",
+          activeTheme: { id: "host-theme" },
+          entities: [],
+          relationships: [],
+          maps: [],
+          canvases: [],
+          assetManifest: [],
+        },
+      } as any,
+    });
+
+    await waitFor(() => {
+      expect(guestVault.loadBundle).toHaveBeenCalled();
+    });
+
+    expect(vault.selectedEntityId).toBeNull();
+    unmount();
+    pageState.url = new URL("http://localhost/guest/published-1");
   });
 
   it("keeps the host theme when no local vault is active", async () => {

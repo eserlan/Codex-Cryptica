@@ -4,6 +4,7 @@ import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { updateLastInternalChange } from "./registry";
 
 export interface PersistenceDependencies {
   repository: VaultRepository;
@@ -38,16 +39,36 @@ export interface PersistenceDependencies {
 
 const SAVE_DEBOUNCE_MS = 400;
 
+// Disk-write resilience tuning. A single _persistEntity call retries the OPFS
+// write a few times; if it still fails the save is re-queued a bounded number
+// of times so a transient failure can't silently and permanently drop the write.
+const DISK_WRITE_ATTEMPTS = 3;
+const DISK_RETRY_BASE_MS = 50;
+const DISK_REQUEUE_BASE_MS = 250;
+const MAX_FAILED_SAVE_REQUEUES = 3;
+
 export class EntityPersistenceService {
   private _saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _saveResolvers = new Map<string, Array<() => void>>();
   /** Vault ID captured at scheduleSave time, keyed by entity ID. */
   private _saveVaultIds = new Map<string, string>();
+  /** Bounded retry counter for entities whose disk write keeps failing. */
+  private _failedSaveRetries = new Map<string, number>();
 
   constructor(private deps: PersistenceDependencies) {}
 
   get entities() {
     return this.deps.repository.entities;
+  }
+
+  private _savingSuspended = false;
+
+  suspendSaving() {
+    this._savingSuspended = true;
+  }
+
+  resumeSaving() {
+    this._savingSuspended = false;
   }
 
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
@@ -66,11 +87,18 @@ export class EntityPersistenceService {
 
     // Debounce: cancel any pending timer for this entity and restart it.
     const existing = this._saveTimers.get(id);
-    if (existing) clearTimeout(existing);
+    if (existing) {
+      clearTimeout(existing);
+      this._saveTimers.delete(id);
+    }
 
     // Store the vault ID so flushPendingSaves uses the original context, not
     // whatever vault happens to be active at flush time.
     this._saveVaultIds.set(id, vaultIdAtStart);
+
+    if (this._savingSuspended) {
+      return Promise.resolve();
+    }
 
     return new Promise<void>((resolve) => {
       const resolvers = this._saveResolvers.get(id) ?? [];
@@ -94,9 +122,14 @@ export class EntityPersistenceService {
 
   async flushPendingSaves(timeoutMs?: number): Promise<void> {
     const promises: Promise<void>[] = [];
-    for (const [id, timer] of this._saveTimers) {
-      clearTimeout(timer);
-      this._saveTimers.delete(id);
+    const pendingIds = Array.from(this._saveVaultIds.keys());
+
+    for (const id of pendingIds) {
+      const timer = this._saveTimers.get(id);
+      if (timer) {
+        clearTimeout(timer);
+        this._saveTimers.delete(id);
+      }
       const resolvers = this._saveResolvers.get(id) ?? [];
       this._saveResolvers.delete(id);
       // Use the vault ID captured when the save was scheduled, not the vault
@@ -148,17 +181,20 @@ export class EntityPersistenceService {
         return;
       }
 
-      await this.deps.repository.saveToDisk(
+      // Retry the disk write a few times before giving up. Bulk imports issue
+      // many OPFS writes in quick succession and a transient failure here used
+      // to be swallowed, silently dropping the write (e.g. an entity's freshly
+      // added connections) while the in-memory/cache copy still looked saved.
+      await this._saveToDiskWithRetry(
         vaultHandle,
         vaultIdAtStart,
         latestEntity,
-        this.deps.isGuest(),
       );
 
-      // Update dirty tracking timestamp
-      import("./registry").then((m) =>
-        m.updateLastInternalChange(vaultIdAtStart),
-      );
+      // Disk write succeeded — clear any prior failure bookkeeping for this id.
+      this._failedSaveRetries.delete(id);
+
+      await updateLastInternalChange(vaultIdAtStart);
 
       const path = latestEntity._path || [`${latestEntity.id}.md`];
       await cacheService.set(
@@ -176,6 +212,56 @@ export class EntityPersistenceService {
       );
       this.deps.setStatus("error");
       this.deps.setErrorMessage("Failed to access storage for saving.");
+
+      // Don't silently drop the write: re-queue a bounded number of times so a
+      // transient OPFS failure during a bulk import can't permanently corrupt
+      // the on-disk file (which the cache would otherwise mask).
+      this._requeueFailedSave(id, vaultIdAtStart);
     }
+  }
+
+  private async _saveToDiskWithRetry(
+    vaultHandle: FileSystemDirectoryHandle,
+    vaultIdAtStart: string,
+    entity: LocalEntity,
+  ): Promise<void> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < DISK_WRITE_ATTEMPTS; attempt++) {
+      try {
+        await this.deps.repository.saveToDisk(
+          vaultHandle,
+          vaultIdAtStart,
+          entity,
+          this.deps.isGuest(),
+        );
+        return;
+      } catch (error) {
+        lastError = error;
+        if (attempt < DISK_WRITE_ATTEMPTS - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, DISK_RETRY_BASE_MS * (attempt + 1)),
+          );
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  private _requeueFailedSave(id: string, vaultIdAtStart: string): void {
+    const retries = this._failedSaveRetries.get(id) ?? 0;
+    if (retries >= MAX_FAILED_SAVE_REQUEUES) {
+      this._failedSaveRetries.delete(id);
+      return;
+    }
+    this._failedSaveRetries.set(id, retries + 1);
+    setTimeout(
+      () => {
+        if (this.deps.activeVaultId() !== vaultIdAtStart) return;
+        void this.deps.repository
+          .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+          .catch(() => {});
+      },
+      DISK_REQUEUE_BASE_MS * (retries + 1),
+    );
   }
 }

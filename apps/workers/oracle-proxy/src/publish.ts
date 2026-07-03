@@ -56,7 +56,15 @@ async function verifyTurnstile(
   env: PublishEnv,
 ): Promise<boolean> {
   const token = request.headers.get("X-Turnstile-Token");
-  if (!env.TURNSTILE_SECRET_KEY || !token || token.length > 2_048) return false;
+
+  // Dev-only bypass: the secret is never configured in local wrangler dev
+  // unless explicitly added to .dev.vars. Origin headers are client-controlled
+  // and must not gate this.
+  if (!env.TURNSTILE_SECRET_KEY) {
+    return token === "dev-turnstile-token";
+  }
+
+  if (!token || token.length > 2_048) return false;
 
   const form = new FormData();
   form.set("secret", env.TURNSTILE_SECRET_KEY);
@@ -184,7 +192,7 @@ export function getCorsHeaders(
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers":
       "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   };
 }
 
@@ -645,7 +653,17 @@ export async function handleGetAsset(
   }
 
   const assetKey = `published/${publishId}/assets/${assetId}`;
-  const obj = await env.BUCKET.get(assetKey);
+  let obj = await env.BUCKET.get(assetKey);
+
+  if (!obj) {
+    const fallbackId = assetId.includes(".")
+      ? assetId.replace(/\./g, "_")
+      : assetId;
+    if (fallbackId !== assetId) {
+      const fallbackKey = `published/${publishId}/assets/${fallbackId}`;
+      obj = await env.BUCKET.get(fallbackKey);
+    }
+  }
 
   if (!obj) {
     return new Response(

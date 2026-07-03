@@ -10,6 +10,8 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -23,6 +25,9 @@
 
   const handleBrandClick = () => {
     if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      modalUIStore.closeZenMode();
+      vault.selectedEntityId = null;
+      onboardingStore.restoreWorldPage();
       void goto(`${base}/guest/${guestVault.publishId}`);
       return;
     }
@@ -130,10 +135,19 @@
     <!-- Desktop: Right Controls -->
     <div class="hidden md:flex items-center gap-4 shrink-0">
       {#if sessionModeStore.isGuestMode}
-        <span class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5">
+        <span
+          class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5"
+        >
           <span class="icon-[lucide--eye] h-3.5 w-3.5"></span>
           READ-ONLY GUEST
         </span>
+        <a
+          href="{base}/worlds"
+          class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
+        >
+          <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+          Explore Worlds
+        </a>
         <button
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all"
           onclick={() => {
@@ -148,6 +162,14 @@
         <DriveStatus />
         <P2PStatus />
         <VaultControls />
+        <a
+          href="{base}/worlds"
+          class="w-8 h-8 flex items-center justify-center border border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent transition-all"
+          title="Explore public worlds"
+          aria-label="Explore public worlds"
+        >
+          <span class="w-5 h-5 icon-[lucide--compass]"></span>
+        </a>
         <button
           class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
             ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'

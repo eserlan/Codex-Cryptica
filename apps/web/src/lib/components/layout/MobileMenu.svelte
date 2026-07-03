@@ -216,6 +216,14 @@
           Blog
         </a>
         <a
+          href="{base}/worlds"
+          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
+          onclick={close}
+        >
+          <span class="icon-[lucide--compass] w-4 h-4"></span>
+          Explore Worlds
+        </a>
+        <a
           href="{base}/responsible-ai-worldbuilding"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
           onclick={close}

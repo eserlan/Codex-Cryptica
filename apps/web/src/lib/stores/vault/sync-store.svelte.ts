@@ -69,6 +69,13 @@ export class SyncStore {
 
   private syncAbortController: AbortController | null = null;
   private savedTimer: any = null;
+  /**
+   * The vault whose entities are currently seeded in memory. Used to tell a
+   * same-vault reload (where in-memory may hold fresher writes than the cache,
+   * e.g. mid-import) apart from a vault switch (where in-memory is stale and
+   * must be fully replaced).
+   */
+  private _lastSeededVaultId: string | null = null;
 
   private unsubscribe: (() => void) | null = null;
 
@@ -177,7 +184,16 @@ export class SyncStore {
         vaultId: vaultIdAtStart,
       });
 
-      this.deps.repository.entities = {};
+      // On a same-vault reload, keep the current in-memory entities until the
+      // cache snapshot is ready instead of blanking them. This closes the race
+      // where a concurrent reload (e.g. the cross-tab RELOAD_VAULT broadcast
+      // firing mid-import) would clear the store and reseed from a stale cache,
+      // dropping freshly-written data such as connections. A vault switch still
+      // fully clears, since the old vault's entities must not leak.
+      const isSameVault = vaultIdAtStart === this._lastSeededVaultId;
+      if (!isSameVault) {
+        this.deps.repository.entities = {};
+      }
 
       const isDemo =
         sessionModeStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
@@ -188,11 +204,30 @@ export class SyncStore {
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (cachedMap.size > 0) {
+        // Read the LIVE map at seed time (not a pre-await snapshot): on a
+        // same-vault reload it still holds any writes that landed during the
+        // async preload above.
+        const liveEntities = isSameVault ? this.deps.repository.entities : {};
         const entityMap: Record<string, LocalEntity> = {};
         for (const { entity } of cachedMap.values()) {
-          entityMap[entity.id] = { ...entity };
+          // If the live entity is newer than the cached copy, the cache is
+          // stale (a debounced save hasn't landed yet) — keep the live one so
+          // we never clobber fresher in-memory writes (e.g. import connections).
+          const live = liveEntities[entity.id];
+          if (live && (live.updatedAt ?? 0) > (entity.updatedAt ?? 0)) {
+            entityMap[entity.id] = live;
+          } else {
+            entityMap[entity.id] = { ...entity };
+          }
+        }
+        // Preserve live entities created during this reload that the cache
+        // snapshot hasn't captured yet (e.g. an in-flight import), so the
+        // reseed can't drop brand-new entities either.
+        for (const id in liveEntities) {
+          if (!(id in entityMap)) entityMap[id] = liveEntities[id];
         }
         this.deps.repository.entities = entityMap;
+        this._lastSeededVaultId = vaultIdAtStart;
 
         vaultEventBus.emit({
           type: "CACHE_LOADED",

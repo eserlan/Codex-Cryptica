@@ -5,6 +5,14 @@ const DB_NAME = "CodexImporterRegistry";
 const STORE_NAME = "import_registry";
 const MAX_REGISTRY_SIZE = 10;
 
+export interface Clock {
+  now(): number;
+}
+
+export const systemClock: Clock = {
+  now: () => Date.now(),
+};
+
 async function getDB(): Promise<IDBPDatabase<any>> {
   return openDB(DB_NAME, 1, {
     upgrade(db) {
@@ -25,7 +33,7 @@ export async function getRegistry(
   hash: string,
   fileName: string,
   totalChunks: number,
-  now: () => number = Date.now,
+  clock: Clock = systemClock,
 ): Promise<ImportRegistry> {
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
@@ -36,16 +44,17 @@ export async function getRegistry(
 
   if (!record) {
     isNew = true;
+    const now = clock.now();
     record = {
       hash,
       fileName,
       totalChunks,
       completedIndices: [],
-      createdAt: now(),
-      lastUsedAt: now(),
+      createdAt: now,
+      lastUsedAt: now,
     };
   } else {
-    record.lastUsedAt = now();
+    record.lastUsedAt = clock.now();
     record.totalChunks = totalChunks; // Update if chunking logic changed
   }
 
@@ -66,7 +75,7 @@ export async function getRegistry(
 export async function markChunkComplete(
   hash: string,
   index: number,
-  now: () => number = Date.now,
+  clock: Clock = systemClock,
 ): Promise<void> {
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
@@ -76,7 +85,7 @@ export async function markChunkComplete(
   if (record) {
     if (!record.completedIndices.includes(index)) {
       record.completedIndices.push(index);
-      record.lastUsedAt = now();
+      record.lastUsedAt = clock.now();
       await store.put(record);
     }
   }

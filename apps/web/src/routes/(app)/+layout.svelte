@@ -52,6 +52,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
   import { worldStore } from "$lib/stores/world.svelte";
 
   let { children } = $props();
@@ -66,6 +67,7 @@
     null;
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
+  let isDocumentVisible = $state(true);
 
   // Derived
   const isPopup = $derived(
@@ -114,6 +116,7 @@
   onDestroy(() => {
     crossTabBroadcaster?.destroy();
     crossTabBroadcaster = null;
+    vaultThemePromptStore.stopTracking();
   });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
@@ -158,6 +161,7 @@
 
   onMount(() => {
     (async () => {
+      isDocumentVisible = !document.hidden;
       helpStore.init();
       await themeStore.init();
       void initGDriveSync();
@@ -199,6 +203,45 @@
         void featureGlobals.oracle?.init();
       }
     })();
+  });
+
+  const shouldConsiderVaultThemePrompt = (
+    activeVaultId: string,
+    hasCompletedInitialGuide: boolean,
+  ) =>
+    browser &&
+    vault.isInitialized &&
+    isDocumentVisible &&
+    !!activeVaultId &&
+    !sessionModeStore.isDemoMode &&
+    !sessionModeStore.isGuestMode &&
+    !onboardingStore.isLandingPageVisible &&
+    onboardingStore.dismissedWorldPage &&
+    !onboardingStore.showChangelog &&
+    hasCompletedInitialGuide &&
+    !helpStore.activeTour &&
+    !modalUIStore.isAnyModalOpen;
+
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+
+    if (
+      !browser ||
+      !vault.isInitialized ||
+      !activeVaultId ||
+      sessionModeStore.isDemoMode ||
+      sessionModeStore.isGuestMode
+    ) {
+      vaultThemePromptStore.stopTracking();
+      return;
+    }
+
+    if (!isDocumentVisible) {
+      vaultThemePromptStore.pauseTracking();
+      return;
+    }
+
+    vaultThemePromptStore.startTracking(activeVaultId);
   });
 
   async function loadFeatureWindowGlobals() {
@@ -274,10 +317,17 @@
 
   // Automatic Tour/Demo Trigger
   $effect(() => {
-    if (vault.isInitialized && !onboardingStore.isLandingPageVisible) {
+    if (
+      vault.isInitialized &&
+      !onboardingStore.isLandingPageVisible &&
+      !modalUIStore.showVaultSwitcher
+    ) {
       if (
         !helpStore.hasSeen("initial-onboarding") &&
-        !page.url.searchParams.has("demo")
+        !page.url.searchParams.has("demo") &&
+        // Guests are visitors, not new users — never auto-start the GM
+        // onboarding tour (or demo) in a shared world.
+        !sessionModeStore.isGuestMode
       ) {
         if (
           vault.allEntities.length === 0 &&
@@ -329,6 +379,42 @@
         return () => clearTimeout(timeout);
       }
     }
+  });
+
+  // Theme discovery should happen after the user has some real time in the
+  // vault, not immediately after creation or a single first edit.
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    const entityCount = vault.allEntities.length;
+    const hasCompletedInitialGuide = helpStore.hasSeen("initial-onboarding");
+
+    if (
+      !activeVaultId ||
+      !shouldConsiderVaultThemePrompt(
+        activeVaultId,
+        hasCompletedInitialGuide,
+      ) ||
+      !vaultThemePromptStore.shouldAutoPrompt(activeVaultId, entityCount)
+    ) {
+      return;
+    }
+
+    void themeStore.hasSavedThemeForVault(activeVaultId).then((hasTheme) => {
+      if (
+        !hasTheme &&
+        vault.activeVaultId === activeVaultId &&
+        shouldConsiderVaultThemePrompt(
+          activeVaultId,
+          helpStore.hasSeen("initial-onboarding"),
+        ) &&
+        vaultThemePromptStore.shouldAutoPrompt(
+          activeVaultId,
+          vault.allEntities.length,
+        )
+      ) {
+        modalUIStore.openVaultThemePrompt(activeVaultId);
+      }
+    });
   });
 
   let lastRestoredVaultId = $state<string | null>(null);
@@ -441,6 +527,7 @@
 
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
+    canUseQuickNote: !sessionModeStore.isGuestMode,
     searchStore,
     modalUIStore,
     quickNoteStore,
@@ -448,6 +535,9 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+<svelte:document
+  onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
+/>
 <NavigationShortcuts />
 
 <div
@@ -513,7 +603,7 @@
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
 
-  {#if !isPopup}
+  {#if !isPopup && !sessionModeStore.isGuestMode}
     <QuickNoteScratchpad />
   {/if}
 

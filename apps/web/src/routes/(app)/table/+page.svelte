@@ -14,6 +14,7 @@
     nextSortState,
     type SortKey,
     type SortState,
+    type ConnectionSummary,
   } from "$lib/components/table/entityTableSort";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
@@ -21,6 +22,7 @@
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
+  let labelFilters = $state<Set<string>>(new Set());
   let sort = $state<SortState>({ key: "title", direction: "asc" });
 
   const totalEntities = $derived(vault.allEntities.length);
@@ -36,7 +38,7 @@
     filterEntities(vault.allEntities, {
       searchQuery,
       typeFilters,
-      labelFilters: new Set<string>(),
+      labelFilters,
       allowedTypes: null,
       showDraftsOnly: false,
     }),
@@ -45,17 +47,31 @@
   const connectionCounts = $derived.by(() => {
     const inboundConnections = vault.inboundConnections ?? {};
 
-    // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map()) with an imperative loop
-    const counts: Record<string, { inbound: number; outbound: number; total: number }> = {};
-    for (const entity of vault.allEntities) {
-      const inbound = inboundConnections[entity.id]?.length ?? 0;
-      const outbound =
-        entity.connections?.filter((connection) => connection.target)
-          .length ?? 0;
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map(...)) with an imperative loop.
+    // Also replaces entity.connections?.filter(...).length with an imperative loop
+    // to prevent intermediate array allocations and reduce GC overhead during reactive updates.
+    const result: Record<string, ConnectionSummary> = {};
+    const entities = vault.allEntities;
+    const len = entities.length;
 
-      counts[entity.id] = { inbound, outbound, total: inbound + outbound };
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
+      const inbound = inboundConnections[entity.id]?.length ?? 0;
+
+      let outbound = 0;
+      if (entity.connections) {
+        const connLen = entity.connections.length;
+        for (let j = 0; j < connLen; j++) {
+          if (entity.connections[j].target) {
+            outbound++;
+          }
+        }
+      }
+
+      result[entity.id] = { inbound, outbound, total: inbound + outbound };
     }
-    return counts;
+
+    return result;
   });
 
   const rows = $derived(sortEntities(filtered, sort, connectionCounts));
@@ -69,6 +85,7 @@
   $effect(() => {
     void searchQuery;
     void typeFilters;
+    void labelFilters;
     selectedIds = new Set();
   });
 
@@ -116,13 +133,26 @@
     typeFilters = next;
   }
 
+  function toggleLabel(label: string) {
+    const next = new Set(labelFilters);
+    if (next.has(label)) {
+      next.delete(label);
+    } else {
+      next.add(label);
+    }
+    labelFilters = next;
+  }
+
   function clearFilters() {
     searchQuery = "";
     typeFilters = new Set();
+    labelFilters = new Set();
   }
 
   const hasActiveFilters = $derived(
-    searchQuery.trim().length > 0 || typeFilters.size > 0,
+    searchQuery.trim().length > 0 ||
+      typeFilters.size > 0 ||
+      labelFilters.size > 0,
   );
 </script>
 
@@ -208,6 +238,21 @@
               <span class="text-theme-muted/60">{count}</span>
             </button>
           {/each}
+          {#each [...labelFilters].sort() as label (label)}
+            <button
+              type="button"
+              onclick={() => toggleLabel(label)}
+              aria-pressed="true"
+              title="Remove label filter"
+              data-testid="entity-table-label-filter"
+              class="inline-flex items-center gap-1 rounded-full border border-theme-primary bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+            >
+              <span class="icon-[lucide--tag] h-3 w-3" aria-hidden="true"
+              ></span>
+              {label}
+              <span class="icon-[lucide--x] h-3 w-3" aria-hidden="true"></span>
+            </button>
+          {/each}
           {#if hasActiveFilters}
             <button
               type="button"
@@ -282,6 +327,8 @@
           {someSelected}
           onToggleRow={toggleRow}
           onToggleAll={toggleAll}
+          onFilterType={toggleType}
+          onFilterLabel={toggleLabel}
         />
       {/if}
     </div>

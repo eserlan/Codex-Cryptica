@@ -1,6 +1,8 @@
 import { browser } from "$app/environment";
 
 interface ShortcutContext {
+  canUseSearch?: boolean;
+  canUseQuickNote?: boolean;
   searchStore: {
     isOpen: boolean;
     toggle: () => void;
@@ -39,7 +41,8 @@ export function useGlobalShortcuts(context: ShortcutContext) {
     if (
       (e.key === "k" || e.key === "K") &&
       (e.metaKey || e.ctrlKey) &&
-      !e.shiftKey
+      !e.shiftKey &&
+      context.canUseSearch !== false
     ) {
       e.preventDefault();
       context.searchStore.toggle();
@@ -49,7 +52,8 @@ export function useGlobalShortcuts(context: ShortcutContext) {
     if (
       (e.key === "i" || e.key === "I") &&
       (e.metaKey || e.ctrlKey) &&
-      !e.shiftKey
+      !e.shiftKey &&
+      context.canUseQuickNote !== false
     ) {
       e.preventDefault();
       context.quickNoteStore.toggle();

@@ -63,6 +63,12 @@ export const GuestBundleSchema = z.object({
   publishedAt: z.string(),
   publisherVersion: z.string(),
   activeTheme: z.record(z.string(), z.any()).optional(),
+  metadata: z
+    .object({
+      description: z.string().optional(),
+      coverImage: z.string().optional(),
+    })
+    .optional(),
   entities: z.array(EntitySchema).max(PUBLISH_LIMITS.maxEntities),
   relationships: z
     .array(GuestRelationshipSchema)

@@ -31,7 +31,7 @@
   bind:value={role}
   choices={nomadClanConfig.roles.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom role"
 />
@@ -43,7 +43,7 @@
   bind:value={tone}
   choices={nomadClanConfig.tones.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom tone"
 />
@@ -53,9 +53,12 @@
   name="nomad_territory"
   label="Primary territory"
   bind:value={territory}
-  choices={nomadClanConfig.territories.map((t: string) => ({ value: t, label: t }))}
+  choices={nomadClanConfig.territories.map((t: string) => ({
+    value: t,
+    label: t,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom territory"
 />
@@ -65,15 +68,20 @@
   name="nomad_conflict"
   label="Main conflict"
   bind:value={conflict}
-  choices={nomadClanConfig.conflicts.map((c: string) => ({ value: c, label: c }))}
+  choices={nomadClanConfig.conflicts.map((c: string) => ({
+    value: c,
+    label: c,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom conflict"
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="nomad-campaign-context" class={labelClass}>Add campaign context</label>
+  <label for="nomad-campaign-context" class={labelClass}
+    >Add campaign context</label
+  >
   <textarea
     id="nomad-campaign-context"
     name="campaign_context"
@@ -87,7 +95,8 @@
     id="nomad-campaign-context-help"
     class="text-[10px] text-theme-text/60 leading-relaxed"
   >
-    Add a city, megacorp, rival clan, or active threat to aim the clan at your table.
+    Add a city, megacorp, rival clan, or active threat to aim the clan at your
+    table.
   </p>
 </div>
 
@@ -95,10 +104,22 @@
   <button
     type="button"
     onclick={() => {
-      role = nomadClanConfig.roles[Math.floor(Math.random() * nomadClanConfig.roles.length)];
-      tone = nomadClanConfig.tones[Math.floor(Math.random() * nomadClanConfig.tones.length)];
-      territory = nomadClanConfig.territories[Math.floor(Math.random() * nomadClanConfig.territories.length)];
-      conflict = nomadClanConfig.conflicts[Math.floor(Math.random() * nomadClanConfig.conflicts.length)];
+      role =
+        nomadClanConfig.roles[
+          Math.floor(Math.random() * nomadClanConfig.roles.length)
+        ];
+      tone =
+        nomadClanConfig.tones[
+          Math.floor(Math.random() * nomadClanConfig.tones.length)
+        ];
+      territory =
+        nomadClanConfig.territories[
+          Math.floor(Math.random() * nomadClanConfig.territories.length)
+        ];
+      conflict =
+        nomadClanConfig.conflicts[
+          Math.floor(Math.random() * nomadClanConfig.conflicts.length)
+        ];
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"

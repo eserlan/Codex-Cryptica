@@ -1,7 +1,20 @@
 #!/bin/bash
 # Discord Notification Script for Gemini CLI
 
-WEBHOOK_URL="https://discord.com/api/webhooks/1467279751629639709/UArTaoiq8E1qu-VM7XFPF866izX7mTg1t8VQeZ1JMG3hn1nZ7wy72UVW8CBYMNx88aFv"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -f "$SCRIPT_DIR/.env" ]; then
+  # Parse just the one key needed rather than `source`-ing the whole file —
+  # this script can run unattended (cron), so treating .env as executable
+  # shell is unnecessary risk for a single config value.
+  DISCORD_WEBHOOK_URL=$(grep -E '^DISCORD_WEBHOOK_URL=' "$SCRIPT_DIR/.env" | tail -n1 | cut -d '=' -f2- | sed -e 's/^["'"'"']//' -e 's/["'"'"']$//')
+fi
+
+if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+  echo "DISCORD_WEBHOOK_URL not set (check .env)" >&2
+  exit 1
+fi
+
+WEBHOOK_URL="$DISCORD_WEBHOOK_URL"
 CLI_SESSION_ID="${GEMINI_SESSION_ID:-unknown_session}"
 
 # Read event data from stdin if available

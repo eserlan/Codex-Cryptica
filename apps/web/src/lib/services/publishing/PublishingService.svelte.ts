@@ -1,6 +1,7 @@
 import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
+import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
   fetch?: typeof fetch;
@@ -243,7 +244,14 @@ export class PublishingService {
 
       const fetcher = this.deps.fetch || fetch;
       const baseUrl =
-        this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
+        this.deps.baseUrl ||
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev");
       let previousManifest: Array<{ assetId: string; hash?: string }> = [];
 
       if (isUpdate && publishId) {
@@ -276,6 +284,12 @@ export class PublishingService {
         maps,
         canvases,
         assetManifest,
+        metadata: worldStore.metadata
+          ? {
+              description: worldStore.metadata.description,
+              coverImage: worldStore.metadata.coverImage,
+            }
+          : undefined,
       });
 
       this.statusMessage = "Uploading snapshot bundle...";
@@ -357,7 +371,9 @@ export class PublishingService {
         let retryCount = 0;
         let assetResponse: Response | null = null;
 
-        while (retryCount < 3) {
+        // Enough backoff budget (2+4+8+16+30+30 ≈ 90s) to outlast a full
+        // 60s rate-limit window on large first-time publishes.
+        while (retryCount < 6) {
           assetResponse = await fetcher(assetUrl, {
             method: "POST",
             headers: assetHeaders,
@@ -369,7 +385,7 @@ export class PublishingService {
             const retryAfter = assetResponse.headers.get("Retry-After");
             const delay = retryAfter
               ? parseInt(retryAfter, 10) * 1000
-              : 1000 * Math.pow(2, retryCount);
+              : Math.min(1000 * Math.pow(2, retryCount), 30_000);
             console.warn(
               `[PublishingService] Rate limited (429) uploading ${asset.path}, retrying in ${delay}ms...`,
             );
@@ -461,7 +477,14 @@ export class PublishingService {
     try {
       const fetcher = this.deps.fetch || fetch;
       const baseUrl =
-        this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
+        this.deps.baseUrl ||
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev");
       const deleteUrl = `${baseUrl}/api/published/${existing.publishId}`;
 
       const response = await fetcher(deleteUrl, {

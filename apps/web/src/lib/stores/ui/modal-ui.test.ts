@@ -204,4 +204,27 @@ describe("ModalUIStore", () => {
     });
     expect(store.isAnyModalOpen).toBe(false);
   });
+
+  it("handles vault theme prompt", () => {
+    const store = new ModalUIStore();
+    expect(store.vaultThemePrompt).toEqual({
+      open: false,
+      vaultId: null,
+    });
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openVaultThemePrompt("v1");
+    expect(store.vaultThemePrompt).toEqual({
+      open: true,
+      vaultId: "v1",
+    });
+    expect(store.isAnyModalOpen).toBe(true);
+
+    store.closeVaultThemePrompt();
+    expect(store.vaultThemePrompt).toEqual({
+      open: false,
+      vaultId: null,
+    });
+    expect(store.isAnyModalOpen).toBe(false);
+  });
 });

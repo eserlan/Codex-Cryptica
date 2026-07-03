@@ -27,6 +27,7 @@
     MIN_RIGHT_SIDEBAR_WIDTH,
   } from "$lib/stores/ui/layout-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
 
   let {
     entity: _entity,
@@ -80,6 +81,9 @@
 
   const canGuestEdit = $derived.by(() => {
     if (!vault.isGuest || !entity) return false;
+    // Own-character editing is a P2P live-session feature; published
+    // snapshots are always read-only.
+    if (guestVault.publishId) return false;
     const name = sessionModeStore.guestUsername?.trim().toLowerCase();
     if (!name) return false;
     return (

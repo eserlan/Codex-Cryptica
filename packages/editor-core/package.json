@@ -14,7 +14,7 @@
     "@tiptap/core": "^3.23.6",
     "@tiptap/pm": "^3.23.6",
     "@tiptap/starter-kit": "^3.23.6",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^5.2.1",
     "schema": "workspace:*"
   },
   "devDependencies": {

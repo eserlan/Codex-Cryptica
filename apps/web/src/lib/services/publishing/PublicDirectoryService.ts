@@ -17,9 +17,16 @@ export class PublicDirectoryService {
     return this.deps.fetch ?? fetch;
   }
 
-  private get baseUrl() {
+  get baseUrl() {
     return (
-      this.deps.baseUrl ?? "https://oracle-proxy.espen-erlandsen.workers.dev"
+      this.deps.baseUrl ??
+      ((typeof import.meta !== "undefined" &&
+        import.meta.env?.VITE_ORACLE_PROXY_URL) ||
+        (typeof import.meta !== "undefined" &&
+        import.meta.env?.DEV &&
+        !import.meta.env?.VITEST
+          ? "http://localhost:8787"
+          : "https://oracle-proxy.espen-erlandsen.workers.dev"))
     );
   }
 
@@ -38,6 +45,9 @@ export class PublicDirectoryService {
     publishId: string;
     vaultTitle: string;
     existingListing?: PublicListing | null;
+    defaultDescription?: string;
+    defaultCoverImageAssetId?: string;
+    defaultLabels?: string[];
   }): ListingDraft {
     if (input.existingListing) {
       const {
@@ -63,10 +73,10 @@ export class PublicDirectoryService {
     return {
       publishId: input.publishId,
       title: input.vaultTitle.trim() || "Untitled World",
-      description: "",
-      labels: [],
-      coverImageAssetId: undefined,
-      coverImageAlt: undefined,
+      description: input.defaultDescription ?? "",
+      labels: input.defaultLabels ?? [],
+      coverImageAssetId: input.defaultCoverImageAssetId || undefined,
+      coverImageAlt: input.defaultCoverImageAssetId ? "Cover image" : undefined,
       ownerDisplayName: undefined,
     };
   }
@@ -128,6 +138,29 @@ export class PublicDirectoryService {
       throw new Error("Failed to load public directory");
     }
     return (await response.json()) as DirectoryPage;
+  }
+
+  async uploadAsset(
+    publishId: string,
+    assetId: string,
+    mimeType: string,
+    filename: string,
+    blob: Blob,
+    writeToken: string,
+  ): Promise<void> {
+    const url = `${this.baseUrl}/api/published/${publishId}/assets/${assetId}`;
+    const response = await this.fetcher(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${writeToken}`,
+        "Content-Type": mimeType,
+        "X-Filename": filename,
+      },
+      body: blob,
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to upload asset: ${response.statusText}`);
+    }
   }
 }
 

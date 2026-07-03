@@ -9,6 +9,7 @@ import type { EntityPersistenceService } from "./entity-persistence";
 import type { EntityContentLoader } from "./entity-content-loader.svelte";
 import type { IVaultServices } from "./service-registry";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { updateLastInternalChange } from "./registry";
 
 export interface MutationDependencies {
   repository: VaultRepository;
@@ -288,9 +289,7 @@ export class EntityMutationService {
           this.entities = entities;
           if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
 
-          import("./registry").then((m) =>
-            m.updateLastInternalChange(activeVaultId),
-          );
+          await updateLastInternalChange(activeVaultId);
 
           modifiedIds.forEach((mId) => {
             const modEntity = this.entities[mId];
@@ -353,6 +352,9 @@ export class EntityMutationService {
     label?: string,
     strength: number = 1.0,
   ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
     const { entities, updatedSource } = vaultEntities.addConnection(
       this.entities,
       sourceId,
@@ -371,6 +373,17 @@ export class EntityMutationService {
       if (newConn && this.deps.onConnectionAdded) {
         this.deps.onConnectionAdded(sourceId, targetId, newConn);
       }
+
+      vaultEventBus.emit({
+        type: "CONNECTION_ADDED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        connectionType: type,
+        label,
+        strength,
+      });
+
       return true;
     }
     return false;
@@ -383,6 +396,9 @@ export class EntityMutationService {
     newType: string,
     newLabel?: string,
   ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
     const { entities, updatedSource } = vaultEntities.updateConnection(
       this.entities,
       sourceId,
@@ -401,6 +417,17 @@ export class EntityMutationService {
       if (updatedConn && this.deps.onConnectionUpdated) {
         this.deps.onConnectionUpdated(sourceId, targetId, oldType, updatedConn);
       }
+
+      vaultEventBus.emit({
+        type: "CONNECTION_UPDATED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        oldType,
+        newType,
+        newLabel,
+      });
+
       return true;
     }
     return false;
@@ -411,6 +438,9 @@ export class EntityMutationService {
     targetId: string,
     type: string,
   ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
     const { entities, updatedSource } = vaultEntities.removeConnection(
       this.entities,
       sourceId,
