@@ -34,6 +34,7 @@ vi.mock("./app-header-actions", () => ({
 describe("AppHeader", () => {
   beforeEach(() => {
     sessionModeStore.isStaging = false;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("renders a staging banner when the staging flag is enabled", () => {
@@ -52,5 +53,21 @@ describe("AppHeader", () => {
     render(AppHeader);
 
     expect(screen.queryByTestId("staging-banner")).toBeNull();
+  });
+
+  it("shows search controls outside guest mode", () => {
+    render(AppHeader);
+
+    expect(screen.getByTestId("search-input")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
+  });
+
+  it("keeps search controls visible in guest mode", () => {
+    sessionModeStore.isGuestMode = true;
+
+    render(AppHeader);
+
+    expect(screen.getByTestId("search-input")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
   });
 });

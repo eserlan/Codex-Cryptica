@@ -527,6 +527,7 @@
 
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
+    canUseQuickNote: !sessionModeStore.isGuestMode,
     searchStore,
     modalUIStore,
     quickNoteStore,
@@ -602,7 +603,7 @@
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
 
-  {#if !isPopup}
+  {#if !isPopup && !sessionModeStore.isGuestMode}
     <QuickNoteScratchpad />
   {/if}
 

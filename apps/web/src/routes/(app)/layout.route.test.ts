@@ -4,6 +4,12 @@ import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+const { quickNoteScratchpadMock } = vi.hoisted(() => ({
+  quickNoteScratchpadMock: vi.fn(() => ({
+    $$render: () => "",
+  })),
+}));
+
 vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/state", () => ({
@@ -61,9 +67,7 @@ vi.mock("$lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
   },
 }));
 vi.mock("$lib/components/quicknote/QuickNoteScratchpad.svelte", () => ({
-  default: function QuickNoteScratchpadMock() {
-    return { $$render: () => "" };
-  },
+  default: quickNoteScratchpadMock,
 }));
 vi.mock("$lib/components/layout/EntityExplorerWorkspace.svelte", async () => {
   const mod = await import("./__tests__/EntityExplorerWorkspaceStub.svelte");
@@ -223,6 +227,7 @@ import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("+layout.svelte", () => {
   beforeAll(() => {
@@ -258,6 +263,7 @@ describe("+layout.svelte", () => {
     (onboardingStore as any).isLandingPageVisible = false;
     onboardingStore.dismissedWorldPage = true;
     onboardingStore.showChangelog = false;
+    sessionModeStore.isGuestMode = false;
     (modalUIStore as any).isAnyModalOpen = false;
     modalUIStore.showVaultSwitcher = false;
     vi.mocked(modalUIStore.openVaultThemePrompt).mockClear();
@@ -265,11 +271,26 @@ describe("+layout.svelte", () => {
     vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(true);
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockClear();
     vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(false);
+    quickNoteScratchpadMock.mockClear();
   });
 
   it("keeps route content mounted beneath the app shell", () => {
     render(LayoutTestHost);
     expect(screen.getByTestId("layout-children")).toBeTruthy();
+  });
+
+  it("mounts the QuickNote scratchpad outside guest mode", () => {
+    render(LayoutTestHost);
+
+    expect(quickNoteScratchpadMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not mount the QuickNote scratchpad in guest mode", () => {
+    sessionModeStore.isGuestMode = true;
+
+    render(LayoutTestHost);
+
+    expect(quickNoteScratchpadMock).not.toHaveBeenCalled();
   });
 
   it("shows the Explorer workspace overlay when the desktop workspace is eligible", async () => {

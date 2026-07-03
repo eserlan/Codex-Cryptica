@@ -1,9 +1,15 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
+const {
+  mockSearchStore,
+  mockVault,
+  mockCategories,
+  mockPage,
+  mockModalUIStore,
+} = vi.hoisted(() => ({
   mockSearchStore: {
     isOpen: true,
     query: "",
@@ -33,6 +39,12 @@ const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
     getCategory: vi.fn(() => ({ icon: "lucide:file-text", label: "Note" })),
     getColor: vi.fn(() => "#888888"),
   },
+  mockPage: {
+    url: new URL("http://localhost/"),
+  },
+  mockModalUIStore: {
+    openZenMode: vi.fn(),
+  },
 }));
 
 vi.mock("$lib/stores/search.svelte", () => ({
@@ -56,15 +68,17 @@ vi.mock("$lib/utils/markdown", () => ({
 }));
 
 vi.mock("$app/state", () => ({
-  page: {
-    url: new URL("http://localhost/"),
-  },
+  page: mockPage,
 }));
 
 vi.mock("./search-focus", () => ({
   DEFAULT_SEARCH_ENTITY_ZOOM: 2,
   dispatchSearchEntityFocus: vi.fn(),
   resolveSearchResultEntityId: vi.fn((result) => result.id),
+}));
+
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: mockModalUIStore,
 }));
 
 import SearchModal from "./SearchModal.svelte";
@@ -94,6 +108,8 @@ describe("SearchModal", () => {
     };
     layoutUIStore.leftSidebarOpen = false;
     mockVault.selectedEntityId = null;
+    mockPage.url = new URL("http://localhost/");
+    mockModalUIStore.openZenMode.mockReset();
   });
 
   it("anchors to the main area when the left sidebar is open", () => {
@@ -167,5 +183,31 @@ describe("SearchModal", () => {
     render(SearchModal);
 
     expect(screen.getByRole("button", { name: "Retry indexing" })).toBeTruthy();
+  });
+
+  it("opens zen mode for table selections triggered by Enter", async () => {
+    mockPage.url = new URL("http://localhost/table");
+    mockSearchStore.query = "ald";
+    mockSearchStore.results = [
+      {
+        id: "entity-1",
+        title: "Aldric",
+        path: "characters/aldric",
+        score: 10,
+        matchType: "title",
+        type: "character",
+      },
+    ];
+    mockSearchStore.selectCurrent.mockReturnValue(mockSearchStore.results[0]);
+
+    render(SearchModal);
+
+    await fireEvent.keyDown(screen.getByTestId("search-modal-input"), {
+      key: "Enter",
+    });
+
+    expect(mockVault.selectedEntityId).toBe("entity-1");
+    expect(mockModalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
+    expect(mockSearchStore.close).toHaveBeenCalled();
   });
 });
