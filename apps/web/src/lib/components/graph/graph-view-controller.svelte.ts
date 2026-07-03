@@ -444,6 +444,15 @@ export class GraphViewController {
           }
         },
         onPositionsUpdated: (updates, meta) => {
+          // Never bulk-persist positions from a focus-view (culled) solve. The
+          // rendered set is a partial view of the vault, so its solved layout
+          // isn't a meaningful full-graph layout to save — and persisting it is
+          // catastrophically expensive on large vaults: each coordinate save of
+          // a lazily-loaded entity forces a full content load + disk write, so
+          // a 500-node heal/solve serialized hundreds of store mutations and
+          // wedged the main thread for minutes (#1576). Full-graph mode
+          // ("Show full graph") still persists and heals normally.
+          if (this.deps.graph.focusViewActive) return;
           const notLoading = this.deps.vault.status !== "loading";
           const isReady = this.loadPhase === "ready" && notLoading;
           // Persist the initial layout when it heals a degenerate vault — either

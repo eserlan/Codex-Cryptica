@@ -69,7 +69,19 @@ const formatDate = (date?: TemporalMetadata) => {
 
 const EMPTY_LABELS: string[] = [];
 
-const getTextureVariant = () => Math.floor(Math.random() * 4);
+// Deterministic per entity id. This used to be Math.random(), which meant every
+// elements rebuild produced a different variant for ~75% of nodes — each rebuild
+// then patched hundreds of nodes' data and triggered a full style/render pass
+// (there are `node[textureVariant = N]` selectors), costing >1s per sync on
+// large vaults. A stable hash keeps the visual variety without the churn.
+const getTextureVariant = (id: string) => {
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    hash ^= id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 4;
+};
 
 const hasImportantLabel = (labels?: string[]) => {
   if (!labels) return false;
@@ -187,7 +199,7 @@ export class GraphTransformer {
         end_date: entity.end_date,
         dateLabel,
         labels: entity.labels ?? EMPTY_LABELS,
-        textureVariant: getTextureVariant(),
+        textureVariant: getTextureVariant(entity.id),
       };
       if (hasPast) nodeData.isPast = true;
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;

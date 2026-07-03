@@ -201,7 +201,36 @@ tiers are warm. The remaining one-off LOD recompute on a fresh tier crossing is
 now untested here by design (broad regressions still caught by avg); a dedicated
 LOD-crossing measurement is future Task 6 scope.
 
-## Log
+## Log (newest first)
+
+- **2026-07-03: fixed the real-vault main-thread wedge.** On a real 1602-entity
+  vault the app froze completely (search dead, clicks dead, one core pegged)
+  while the seeded perf E2E stayed green. Diagnosed live via long-task
+  observers + counters injected into the running app. Chain of three:
+  1. **Trigger:** the 500-node focus view makes the slash-recovery guard
+     eligible (`nodes >= 12`; the old depth-2 view was ~7 nodes, so the guard
+     never ran). The vault's saved coordinates read as degenerate → randomized
+     re-solve → `persistPositions` over all 500 rendered nodes.
+  2. **Amplifier (persistence):** saving a coordinates-only patch for a
+     lazily-loaded entity forces a full content load in `_persistEntity`
+     (500 disk reads + parses), each mutating `vault.entities` → reactive
+     `elements` rebuild, serialized over minutes by the save queue.
+  3. **Amplifier (latent, the actual per-cycle cost):** `textureVariant` was
+     `Math.random()` per node per `entitiesToElements` call, so every rebuild
+     patched ~75% of node data and triggered a full cytoscape style/render
+     pass (`node[textureVariant = N]` selectors) — measured at **~1.4 s per
+     sync** at 1624 rendered elements. Store mutation every ~1.5 s × 1.4 s
+     blocking = a permanently wedged main thread.
+
+  **Fixes:** (a) `textureVariant` is now a stable FNV-1a hash of the entity id
+  (regression-tested); (b) focus-view (culled) solves no longer bulk-persist
+  positions — a partial subset's layout isn't a meaningful full-graph layout,
+  and persisting it forced the content-load cascade. Full-graph mode still
+  persists/heals. Verified on the real vault: one ~2.4 s solve task after
+  load, then a quiet main thread; search/list/modals responsive.
+  **Follow-ups worth considering:** coordinate-only saves that don't require
+  content loads; a slash-detector pass over the _full_ vault rather than the
+  culled subset; the still-open reactivity-thrash deep fix (#5).
 
 - **#1 + #2 landed.** Confirmed `hideEdgesOnViewport`/`motionBlur` were inert on
   the real load path (cy built before entities stream in) and fixed via a
