@@ -402,7 +402,7 @@
     return handler(useAI);
   }
 
-  const initialDraft = $derived(slugDrafts[slug]);
+  const initialDraft = $derived(slugDrafts[slug] ?? null);
 </script>
 
 <SEOGeneratorLayout

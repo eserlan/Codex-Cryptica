@@ -8,34 +8,33 @@ Large data/config files (e.g. `packages/generator-engine/src/public-*.ts` genera
 
 ## Executive Summary (July 2026 Reassessment)
 
-The **SoundBiteGenerator Decomposition** refactor remains resolved (`sound-bite-generator.ts` at 169 lines). Two new entrants have surfaced at the top of the ranking since the last pass: `GeneratorPageContent.svelte` (1467 lines, new) and `SEOGeneratorLayout.svelte` (1098 → 1462 lines, further regression) — together they form a tightly coupled SEO-generator UI pair, analogous to the previously-resolved `ZenSidebar`/`ZenContent` split. `TemporalPicker.svelte` grew slightly (856 → 859) and remains a regression risk. `DetailStatusTab.svelte` improved (902 → 715) and `ZenSidebar.svelte` improved (867 → 738), likely from incidental cleanup during other feature work — both downgraded from WATCH accordingly. `import-settings-controller.svelte.ts` (830 lines) is a new entrant combining import parsing, validation, and settings-mutation concerns.
+The **SoundBiteGenerator Decomposition** refactor remains resolved (`sound-bite-generator.ts` at 169 lines). `GeneratorPageContent.svelte` (formerly 1467 lines, new top offender) is now **RESOLVED** at 581 lines — `slugMeta`/`slugDrafts` moved to standalone data files, the three remaining inline slugs (`settlement`, `magic-item`, `ship-generator`) got their own `*FormFields.svelte` components matching the other 11, and hub/theme mapping tables moved to `generator-theme-maps.ts` (see Historical Successes). `SEOGeneratorLayout.svelte` (1098 → 1462 lines) remains the top offender and likely has the same per-slug branching problem on the display/layout side — next up for the same treatment. `TemporalPicker.svelte` grew slightly (856 → 859) and remains a regression risk. `DetailStatusTab.svelte` improved (902 → 715) and `ZenSidebar.svelte` improved (867 → 738), likely from incidental cleanup during other feature work — both downgraded from WATCH accordingly. `import-settings-controller.svelte.ts` (830 lines) is a new entrant combining import parsing, validation, and settings-mutation concerns.
 
 ## Top 10 Largest Files (Excluding Tests, Generated Code & Data/Config Files)
 
 | Rank | File Path                                                                   | Line Count | Type          | Status        |
 | :--- | :-------------------------------------------------------------------------- | :--------- | :------------ | :------------ |
-| 1    | `apps/web/src/lib/components/seo/GeneratorPageContent.svelte`               | 1467       | UI Component  | 🔴 NEW        |
-| 2    | `apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`                 | 1462       | UI Component  | 🔴 REGRESSION |
-| 3    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`            | 894        | Service       | 🟡 WATCH      |
-| 4    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`                | 859        | UI Component  | 🔴 REGRESSION |
-| 5    | `apps/workers/oracle-proxy/src/index.ts`                                    | 856        | Worker Router | 🟡 WATCH      |
+| 1    | `apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`                 | 1462       | UI Component  | 🔴 CRITICAL   |
+| 2    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`            | 894        | Service       | 🟡 WATCH      |
+| 3    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`                | 859        | UI Component  | 🔴 REGRESSION |
+| 4    | `apps/workers/oracle-proxy/src/index.ts`                                    | 856        | Worker Router | 🟡 WATCH      |
+| 5    | `apps/web/src/lib/components/settings/import-settings-controller.svelte.ts` | 830        | Controller    | 🔴 NEW        |
 | 6    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`                      | 825        | Store (State) | 🟡 WATCH      |
-| 7    | `apps/web/src/lib/components/settings/import-settings-controller.svelte.ts` | 830        | Controller    | 🔴 NEW        |
-| 8    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                         | 738        | UI Component  | 🟢 IMPROVED   |
+| 7    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                         | 738        | UI Component  | 🟢 IMPROVED   |
+| 8    | `packages/generator-engine/src/public-social-hub.ts`                        | 731        | Generator     | ⚪ DATA       |
 | 9    | `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte`          | 715        | UI Component  | 🟢 IMPROVED   |
-| 10   | `packages/generator-engine/src/public-social-hub.ts`                        | 731        | Generator     | ⚪ DATA       |
+| 10   | `apps/web/src/lib/components/seo/GeneratorPageContent.svelte`               | 581        | UI Component  | 🟢 RESOLVED   |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. SEO Generator UI Pair (`GeneratorPageContent.svelte`, `SEOGeneratorLayout.svelte`)
+### 1. SEO Generator Layout (`SEOGeneratorLayout.svelte`)
 
-**Analysis:** These two files now top the ranking at 1467 and 1462 lines respectively. `GeneratorPageContent.svelte` imports a form-field component per entity type (NPC, Faction, Quest, Tavern, Social Hub, Kingdom, Nation, Vampire, Nomad Clan, Name, Pantheon, ...) plus wires each generator's config/engine — it is acting as both a router and a giant switch over entity kind. `SEOGeneratorLayout.svelte` mirrors the same per-entity-type branching for the display/layout side. This is the same shape of problem the Zen pair and `MapInteractionManager` refactors already solved.
+**Analysis:** `GeneratorPageContent.svelte` is now RESOLVED (1467 → 581 lines, see Historical Successes). `SEOGeneratorLayout.svelte` remains at 1462 lines and likely mirrors the same per-slug branching problem on the display/layout side that `GeneratorPageContent.svelte` had — the same registry-driven approach (a slug → component/config lookup, following the now-complete `*FormFields.svelte` pattern) should apply here too.
 **Recommended Split:**
 
-- Extract a `GeneratorFormFieldRegistry` (entity-type → form-field component + config) so `GeneratorPageContent.svelte` becomes a thin dispatcher instead of importing/branching on every entity type inline.
-- Mirror the same registry pattern for `SEOGeneratorLayout.svelte`'s per-entity-type layout branches.
+- Audit `SEOGeneratorLayout.svelte` for the same `{#if slug === ...}` branching shape and extract per-slug display sections into focused components, mirroring the `*FormFields.svelte` pattern already established.
 - Consider whether a shared `GeneratorPageController` (Svelte 5 class) can own the cross-cutting state (session context, generation status) that both components currently re-derive.
 
 ### 2. Service-Layer Monoliths (`text-generation.service.svelte.ts`)
@@ -79,7 +78,7 @@ The **SoundBiteGenerator Decomposition** refactor remains resolved (`sound-bite-
 
 ## Next Recommended Refactor Order
 
-1. **`apps/web/src/lib/components/seo/GeneratorPageContent.svelte` + `SEOGeneratorLayout.svelte`**: New top-of-list pair at ~1,465 lines each; same per-entity-type branching problem the Zen pair already solved once — highest-leverage refactor available right now.
+1. **`apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`**: Now the sole top offender at 1462 lines; likely the same per-slug branching problem `GeneratorPageContent.svelte` just had — highest-leverage refactor available right now.
 2. **`apps/web/src/lib/components/timeline/TemporalPicker.svelte`**: Still elevated at 859 lines; address before it grows further.
 3. **`apps/web/src/lib/components/settings/import-settings-controller.svelte.ts`**: New 830-line entrant mixing parsing and mutation concerns.
 4. **`apps/workers/oracle-proxy/src/index.ts`**: Extract shared routing/CORS boilerplate.
@@ -104,3 +103,4 @@ The **SoundBiteGenerator Decomposition** refactor remains resolved (`sound-bite-
 - **`ai.ts`**: Effectively eliminated as a god file.
 - **EntityList.svelte**: **RESOLVED**. Reduced from 510 to 349 lines (despite adding multi-level tree hierarchy, child creation, and drag-and-drop mechanics) by decomposing card rendering into `EntityListItem.svelte` (~253 lines), search/autocomplete logic into `EntityListSearch.svelte` (~189 lines), and filter/label bar UI into `EntityListFilterBar.svelte` (~140 lines) with core filtering logic isolated to pure helper `entityListFiltering.ts` (Spec 120).
 - **`SoundBiteGenerator` (`sound-bite-generator.ts`)**: **RESOLVED**. Reduced from 852 to 169 lines by decomposing prompt builders, voice mapping, JSON parsing, and TTS drivers into 9 focused modules under `packages/oracle-engine` (closes #1303).
+- **`GeneratorPageContent.svelte`**: **RESOLVED**. Reduced from 1467 to 581 lines by extracting `slugMeta`/`slugDrafts` into standalone data files, finishing the `*FormFields.svelte` pattern for the 3 slugs (`settlement`, `magic-item`, `ship-generator`) that were still inlined, and moving hub/theme mapping tables into `generator-theme-maps.ts` (#1601).

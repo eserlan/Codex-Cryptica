@@ -1,6 +1,7 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+import type { ValidSlug } from "./generator-page-meta";
 
-export const slugDrafts: Record<string, GeneratorOutput> = {
+export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   npc: {
     type: "character",
     title: "Zephyrus Gray",
