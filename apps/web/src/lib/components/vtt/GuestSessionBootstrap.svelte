@@ -30,17 +30,23 @@
   let isConnectedToHost = $state(false);
 
   const syncGuestGraphPayload = (graph: any) => {
-    const parsedEntities = Object.entries(graph.entities).map(
-      ([id, entity]: [string, any]) => ({
-        ...entity,
-        id,
-        _path: typeof entity._path === "string" ? [entity._path] : entity._path,
-      }),
-    );
+    // ⚡ Bolt Optimization: Replace multiple intermediate array allocations (Object.entries().map(),
+    // array.map(), Object.fromEntries()) with a single imperative loop to process vault entities.
+    const nextEntities: Record<string, any> = {};
+    const sourceEntities = graph.entities || {};
 
-    vault.repository.entities = Object.fromEntries(
-      parsedEntities.map((e) => [e.id, e]),
-    );
+    for (const id in sourceEntities) {
+      if (Object.hasOwn(sourceEntities, id)) {
+        const entity = sourceEntities[id];
+        nextEntities[id] = {
+          ...entity,
+          id,
+          _path: typeof entity._path === "string" ? [entity._path] : entity._path,
+        };
+      }
+    }
+
+    vault.repository.entities = nextEntities;
 
     if (graph.defaultVisibility) {
       vault.defaultVisibility = graph.defaultVisibility;
