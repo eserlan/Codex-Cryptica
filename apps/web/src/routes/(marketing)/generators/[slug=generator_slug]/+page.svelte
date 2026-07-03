@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
-  import type { ValidSlug } from "$lib/components/seo/GeneratorPageContent.svelte";
+  import type { ValidSlug } from "$lib/components/seo/generator-page-meta";
 
   let { data } = $props();
 </script>
