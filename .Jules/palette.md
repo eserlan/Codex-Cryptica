@@ -74,3 +74,8 @@
 
 **Learning:** When converting full-screen clickable `<div>` backdrops (like modal or menu dismiss overlays) to semantic `<button>` elements to resolve accessibility warnings, the entire screen gets a pointer cursor because it's technically a button, which is confusing UX.
 **Action:** Always add the `cursor-default` utility class to full-screen backdrop buttons to ensure the mouse cursor remains a standard arrow over the non-interactive areas.
+
+## 2024-11-20 - Icon-only Button Accessibility in SessionHubWidget
+
+**Learning:** Found multiple icon-only buttons (like zap, pin, and trash) in `SessionHubWidget.svelte` that lacked `aria-label` attributes and had their inner `span` icons visible to screen readers. This makes them opaque or confusing for assistive technology users.
+**Action:** Added `aria-label` to these icon-only `<button>` elements matching their visual `title` tooltips, and added `aria-hidden="true"` to the inner decorative icon `<span class="icon-[...]">` elements.
