@@ -66,30 +66,30 @@
       aria-describedby="revision-modal-help"
       tabindex="-1"
       use:focusTrap
-      class="relative w-full max-w-lg flex flex-col overflow-hidden rounded-xl border border-chrome-border bg-chrome-surface shadow-2xl text-left font-sans"
+      class="relative w-full max-w-lg flex flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl text-left font-sans"
       transition:scale={{ duration: 180, start: 0.96 }}
       onclick={(event) => event.stopPropagation()}
     >
       <form class="flex flex-col" onsubmit={handleSubmit}>
         <!-- Header -->
         <div
-          class="flex items-start justify-between border-b border-chrome-border px-5 py-4"
+          class="flex items-start justify-between border-b border-theme-border px-5 py-4"
         >
           <div>
             <h2
               id="revision-modal-title"
-              class="text-sm font-bold uppercase tracking-wider text-chrome-accent"
+              class="text-sm font-bold uppercase tracking-wider text-theme-primary"
             >
               Revise Description
             </h2>
-            <p id="revision-modal-help" class="mt-1 text-xs text-chrome-muted">
+            <p id="revision-modal-help" class="mt-1 text-xs text-theme-muted">
               Optional guidance for {entity.title}
             </p>
           </div>
           <button
             type="button"
             onclick={handleCancel}
-            class="flex h-8 w-8 items-center justify-center rounded border border-chrome-border text-chrome-muted transition hover:border-chrome-accent hover:text-chrome-accent"
+            class="flex h-8 w-8 items-center justify-center rounded border border-theme-border text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
             aria-label="Close"
           >
             <span class="icon-[lucide--x] h-4 w-4"></span>
@@ -100,7 +100,7 @@
         <div class="px-5 py-4">
           <label
             for="revision-instructions"
-            class="mb-2 block text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            class="mb-2 block text-[10px] font-bold uppercase tracking-wider text-theme-muted"
           >
             AI Instructions / Corrections (Highest Priority)
           </label>
@@ -110,11 +110,11 @@
             bind:value={instructions}
             placeholder="e.g. Focus on their secret alliance with the Rebellion, mention they are missing..."
             rows="5"
-            class="w-full resize-none rounded border border-chrome-border bg-chrome-bg/50 p-3 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent"
+            class="w-full resize-none rounded border border-theme-border bg-theme-bg/50 p-3 text-sm leading-relaxed text-theme-text outline-none transition focus:border-theme-primary focus:ring-1 focus:ring-theme-primary"
           ></textarea>
-          <p class="mt-2 text-[10px] text-chrome-muted">
+          <p class="mt-2 text-[10px] text-theme-muted">
             Press <kbd
-              class="px-1 py-0.5 border border-chrome-border rounded bg-chrome-bg/30 font-mono"
+              class="px-1 py-0.5 border border-theme-border rounded bg-theme-bg/30 font-mono"
               >Ctrl + Enter</kbd
             > to revise.
           </p>
@@ -122,18 +122,18 @@
 
         <!-- Footer -->
         <div
-          class="flex justify-end gap-2 border-t border-chrome-border bg-chrome-surface px-5 py-3"
+          class="flex justify-end gap-2 border-t border-theme-border bg-theme-surface px-5 py-3"
         >
           <button
             type="button"
             onclick={handleCancel}
-            class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors"
+            class="px-4 py-2 border border-theme-border rounded-lg text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text hover:border-theme-primary transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="px-5 py-2 bg-chrome-accent text-chrome-surface font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all active:scale-95"
+            class="px-5 py-2 bg-theme-primary text-theme-bg font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all active:scale-95"
           >
             Revise
           </button>
