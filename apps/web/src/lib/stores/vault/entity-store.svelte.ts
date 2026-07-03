@@ -224,7 +224,7 @@ export class EntityStore {
 
     this.allEntities = all;
     this.allActiveEntities = all.filter((e) => e.status !== "draft");
-    this.graphEntities = all;
+    this.graphEntities = [...all];
     this.bumpGraphStructureVersion();
 
     const parentMap: Record<string, string[]> = {};

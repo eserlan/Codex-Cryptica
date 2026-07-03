@@ -182,7 +182,8 @@ export class EntityPersistenceService {
     if (!latestEntity) return;
 
     let restoredCachedContent = false;
-    if (!this.deps.isContentLoaded(id) && options.preserveCachedContent) {
+    let hydratedContent = this.deps.isContentLoaded(id);
+    if (!hydratedContent && options.preserveCachedContent) {
       const cachedContent = await cacheService.getEntityContent(
         vaultIdAtStart,
         id,
@@ -197,9 +198,10 @@ export class EntityPersistenceService {
       }
     }
 
-    if (!this.deps.isContentLoaded(id) && !restoredCachedContent) {
+    if (!hydratedContent && !restoredCachedContent) {
       await this.deps.loadContent(id);
       latestEntity = this.entities[id] || latestEntity;
+      hydratedContent = true;
     }
 
     this.deps.setStatus("saving");
@@ -233,7 +235,7 @@ export class EntityPersistenceService {
         latestEntity,
       );
 
-      if (!options.preserveCachedContent) {
+      if (hydratedContent) {
         this.deps.markContentLoaded(latestEntity.id);
       }
       this.deps.setStatus("idle");

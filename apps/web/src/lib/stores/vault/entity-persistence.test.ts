@@ -212,4 +212,45 @@ describe("EntityPersistenceService coordinate-only saves", () => {
       false,
     );
   });
+
+  it("marks content loaded when preserveCachedContent falls back to hydration", async () => {
+    const saveToDisk = vi.fn(async () => {});
+    const loadContent = vi.fn(async () => {
+      entities.hero.content = "Loaded chronicle";
+      entities.hero.lore = "Loaded lore";
+    });
+    const markContentLoaded = vi.fn();
+    cacheGetEntityContent.mockResolvedValue(null);
+    const entities = {
+      hero: {
+        id: "hero",
+        title: "Hero",
+        connections: [],
+        metadata: { coordinates: { x: 10, y: 20 } },
+        _path: ["hero.md"],
+      } as any,
+    };
+    const { svc } = makeService(saveToDisk, entities, {
+      isContentLoaded: () => false,
+      loadContent,
+      markContentLoaded,
+    });
+
+    await svc.scheduleSave(entities.hero as any, {
+      preserveCachedContent: true,
+    });
+    await svc.flushPendingSaves();
+
+    expect(loadContent).toHaveBeenCalledWith("hero");
+    expect(markContentLoaded).toHaveBeenCalledWith("hero");
+    expect(saveToDisk).toHaveBeenCalledWith(
+      expect.anything(),
+      "v1",
+      expect.objectContaining({
+        content: "Loaded chronicle",
+        lore: "Loaded lore",
+      }),
+      false,
+    );
+  });
 });

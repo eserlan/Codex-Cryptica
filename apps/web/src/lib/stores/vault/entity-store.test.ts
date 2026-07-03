@@ -352,6 +352,37 @@ describe("EntityStore", () => {
     );
   });
 
+  it("keeps graphEntities independent from allEntities after rebuilds", () => {
+    const rebuiltAllEntities = store.allEntities;
+    const rebuiltGraphEntities = store.graphEntities;
+
+    expect(rebuiltGraphEntities).not.toBe(rebuiltAllEntities);
+
+    const newEntity = {
+      id: "villain",
+      title: "Villain",
+      content: "",
+      lore: "",
+      type: "character",
+      status: "active",
+      labels: [],
+      aliases: [],
+      connections: [],
+    } as unknown as LocalEntity;
+
+    store.handleEntitiesUpdate(repository.entities, {
+      ...repository.entities,
+      villain: newEntity,
+    });
+
+    expect(
+      store.allEntities.filter((entity) => entity.id === "villain"),
+    ).toHaveLength(1);
+    expect(
+      store.graphEntities.filter((entity) => entity.id === "villain"),
+    ).toHaveLength(1);
+  });
+
   it("advances graph structure for graph-relevant updates", () => {
     const initialMap = { ...repository.entities };
     const heroUpdated = {
