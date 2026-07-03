@@ -155,6 +155,15 @@
     overflow-y: auto;
   }
 
+  /* Pasted rich text (Word/Google Docs) carries inline color/background
+     styles on individual elements that override the theme and can render
+     unreadable in dark mode. Force every pasted element back to the theme's
+     text color and a transparent background. */
+  .editor :global(*) {
+    color: inherit !important;
+    background-color: transparent !important;
+  }
+
   .dropzone-container:not(.standalone) .editor {
     max-height: 400px;
   }

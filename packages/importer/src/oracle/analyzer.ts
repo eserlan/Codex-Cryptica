@@ -81,7 +81,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
       allEntities.push(...result.entities);
 
       if (options?.onChunkProcessed) {
-        options.onChunkProcessed(i, result);
+        await options.onChunkProcessed(i, result);
       }
     }
 
@@ -115,8 +115,9 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
         const response = await result.response;
         const rawText = response.text();
 
-        // Robust JSON extraction
-        const jsonMatch = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        // Robust JSON extraction (also accepts a genuinely empty array)
+        const jsonMatch =
+          rawText.match(/\[\s*\{[\s\S]*\}\s*\]/) ?? rawText.match(/\[\s*\]/);
         if (!jsonMatch) {
           throw new Error("No valid JSON array found in Oracle response");
         }
@@ -206,7 +207,9 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     }
 
     console.error("Oracle Analysis failed with all available models.");
-    return { entities: [] };
+    throw new Error(
+      "Oracle analysis failed: no model produced a usable response.",
+    );
   }
 
   private slugify(text: string): string {

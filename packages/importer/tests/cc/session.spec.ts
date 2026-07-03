@@ -85,3 +85,39 @@ describe("setItemDecision", () => {
     expect(other.decision).toBe("include");
   });
 });
+
+describe("setItemType", () => {
+  it("overrides resolvedType and clears typeFallback", async () => {
+    const { setItemType } = await import("../../src/cc/session");
+    const engine = makeEngine();
+    const pkg: CCImportPackage = {
+      ...kankaMinimal,
+      entityDrafts: [
+        {
+          sourceId: "99",
+          sourceType: "Deity",
+          title: "Athena",
+          content: "",
+          tags: [],
+        },
+      ],
+    };
+    const session = await engine.prepare(pkg);
+    expect(session.items[0].typeFallback).toBe(true);
+
+    const updated = setItemType(session, "99", "character");
+    expect(updated.items[0].resolvedType).toBe("character");
+    expect(updated.items[0].typeFallback).toBe(false);
+  });
+
+  it("leaves other items unchanged", async () => {
+    const { setItemType } = await import("../../src/cc/session");
+    const engine = makeEngine();
+    const session = await engine.prepare(kankaMinimal);
+    const updated = setItemType(session, "12345", "item");
+    const sara = updated.items.find((i) => i.draft.sourceId === "12345")!;
+    expect(sara.resolvedType).toBe("item");
+    const other = updated.items.find((i) => i.draft.sourceId === "678")!;
+    expect(other.resolvedType).toBe("location");
+  });
+});
