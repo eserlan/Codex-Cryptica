@@ -11,8 +11,8 @@ neighborhood by default, with a "Show full graph" opt-out that falls back to the
 cheap styling (`haystack` edges, no labels/images, `hideEdgesOnViewport`,
 `motionBlur`, capped DPR, skipped weight recompute). Large fresh solves
 seed-then-refine so the import isn't an invisible clump. Search/parse indexing is
-already off the main thread. Remaining open item: the reactivity-thrash deep fix
-(#5), deferred pending need.
+already off the main thread. The first reactivity-thrash deep fix (#5) now keeps
+content-only edits from re-deriving graph elements.
 
 ## Tasks
 
@@ -124,14 +124,17 @@ Ranked by impact ÷ effort. Check off as we land each one.
     O(N) reactive-proxy scan of `allEntities` (the visibility pass + `fullGraphSize`
     edge count), which re-runs on every edit even when nothing graph-relevant
     changed (`isEntityVisible` itself is a trivial early-return in non-shared mode).
-  - **Deep fix (deferred, needs buy-in):** stop re-deriving the graph on
-    content-only edits. Either (a) mutate entity fields in place instead of
-    replacing `allEntities[idx]`, so Svelte's field-level tracking skips the graph
-    deriveds (changes the core vault mutation path — high blast radius), or (b) a
-    `graphStructureVersion` counter bumped only on graph-relevant changes (must
-    classify every edit — title/labels/type/coords/image/connections/add/remove —
-    correctly, or the graph goes stale). Both are invasive and risky enough to
-    warrant their own tested change, not a drive-by.
+  - **Deep fix (landed as first slice):** `EntityStore` now maintains a dedicated
+    `graphEntities` slice plus `graphStructureVersion`. Content-only edits still
+    refresh `allEntities` for editor/detail/search consumers, but do **not** bump
+    `graphStructureVersion` or replace `graphEntities`, so `GraphStore.elements`
+    does not re-transform the vault just because prose changed. Graph-relevant
+    changes (title/type/status/visibility/parent/images/labels/tags/aliases/
+    connections/temporal metadata/coordinates/guest chat flag/add/remove) still
+    update the graph slice. Covered by store regression tests.
+  - **Remaining risk:** the graph-relevance classifier must stay aligned with
+    `GraphTransformer` as new graph-facing fields are added. A perf E2E edit
+    timing assertion is still worth adding under Task 6.
 
 - [~] **6. Strengthen the perf test** (partially done)
   - **Why:** `maxViewportFrameMs < 500` is <2fps — it only catches catastrophe,
@@ -228,9 +231,14 @@ LOD-crossing measurement is future Task 6 scope.
   and persisting it forced the content-load cascade. Full-graph mode still
   persists/heals. Verified on the real vault: one ~2.4 s solve task after
   load, then a quiet main thread; search/list/modals responsive.
-  **Follow-ups worth considering:** coordinate-only saves that don't require
-  content loads; a slash-detector pass over the _full_ vault rather than the
-  culled subset; the still-open reactivity-thrash deep fix (#5).
+  **Follow-ups worth considering:** ~~coordinate-only saves that don't require
+  content loads~~ (landed: `batchUpdate` now marks pure
+  `metadata.coordinates` patches so persistence restores body/lore from the
+  Dexie content row instead of hydrating the reactive entity store);
+  ~~slash-detector pass over the _full_ vault rather than the culled subset~~
+  (landed: post-load slash recovery is now gated by the full vault's saved
+  coordinate collinearity, so culled focus subsets do not falsely trigger a
+  recovery solve); remaining perf-test hardening is tracked under #6.
 
 - **#1 + #2 landed.** Confirmed `hideEdgesOnViewport`/`motionBlur` were inert on
   the real load path (cy built before entities stream in) and fixed via a

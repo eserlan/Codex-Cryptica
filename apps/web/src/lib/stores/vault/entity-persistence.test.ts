@@ -13,14 +13,34 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: { isDemoMode: false, isGuestMode: false },
 }));
 const cacheSet = vi.fn(async () => {});
+const cacheGetEntityContent = vi.fn<
+  (
+    vaultId: string,
+    entityId: string,
+  ) => Promise<{
+    content: string;
+    lore: string;
+  } | null>
+>(async () => null);
 vi.mock("../../services/cache.svelte", () => ({
-  cacheService: { set: (...a: any[]) => (cacheSet as any)(...a) },
+  cacheService: {
+    set: (...a: any[]) => (cacheSet as any)(...a),
+    getEntityContent: (...a: any[]) => (cacheGetEntityContent as any)(...a),
+  },
 }));
 vi.mock("./registry", () => ({ updateLastInternalChange: vi.fn() }));
 
 import { EntityPersistenceService } from "./entity-persistence";
 
-function makeService(saveToDisk: any, entities: Record<string, any>) {
+function makeService(
+  saveToDisk: any,
+  entities: Record<string, any>,
+  options: {
+    isContentLoaded?: (id: string) => boolean;
+    loadContent?: (id: string) => Promise<void>;
+    markContentLoaded?: (id: string) => void;
+  } = {},
+) {
   const repository: any = {
     entities,
     saveToDisk,
@@ -36,9 +56,9 @@ function makeService(saveToDisk: any, entities: Record<string, any>) {
     status: () => "idle",
     setErrorMessage: () => {},
     onEntityUpdate: undefined,
-    isContentLoaded: () => true,
-    loadContent: async () => {},
-    markContentLoaded: () => {},
+    isContentLoaded: options.isContentLoaded ?? (() => true),
+    loadContent: options.loadContent ?? (async () => {}),
+    markContentLoaded: options.markContentLoaded ?? (() => {}),
   } as any);
   return { svc, repository };
 }
@@ -46,6 +66,8 @@ function makeService(saveToDisk: any, entities: Record<string, any>) {
 describe("EntityPersistenceService disk-write resilience", () => {
   beforeEach(() => {
     cacheSet.mockClear();
+    cacheGetEntityContent.mockClear();
+    cacheGetEntityContent.mockResolvedValue(null);
   });
 
   it("retries a transiently failing disk write and still persists", async () => {
@@ -87,5 +109,65 @@ describe("EntityPersistenceService disk-write resilience", () => {
     // Crucially: the cache is NOT told the entity saved, so it can't mask the
     // on-disk loss the way it did before.
     expect(cacheSet).not.toHaveBeenCalled();
+  });
+});
+
+describe("EntityPersistenceService coordinate-only saves", () => {
+  beforeEach(() => {
+    cacheSet.mockClear();
+    cacheGetEntityContent.mockClear();
+    cacheGetEntityContent.mockResolvedValue(null);
+  });
+
+  it("restores cached content without hydrating the reactive store", async () => {
+    const saveToDisk = vi.fn(async () => {});
+    const loadContent = vi.fn(async () => {
+      throw new Error("content loader should not run");
+    });
+    const markContentLoaded = vi.fn();
+    cacheGetEntityContent.mockResolvedValue({
+      content: "Existing chronicle",
+      lore: "Existing lore",
+    });
+    const entities = {
+      hero: {
+        id: "hero",
+        title: "Hero",
+        connections: [],
+        metadata: { coordinates: { x: 10, y: 20 } },
+        _path: ["hero.md"],
+      },
+    };
+    const { svc } = makeService(saveToDisk, entities, {
+      isContentLoaded: () => false,
+      loadContent,
+      markContentLoaded,
+    });
+
+    await svc.scheduleSave(entities.hero as any, {
+      preserveCachedContent: true,
+    });
+    await svc.flushPendingSaves();
+
+    expect(cacheGetEntityContent).toHaveBeenCalledWith("v1", "hero");
+    expect(loadContent).not.toHaveBeenCalled();
+    expect(markContentLoaded).not.toHaveBeenCalled();
+    expect(saveToDisk).toHaveBeenCalledWith(
+      expect.anything(),
+      "v1",
+      expect.objectContaining({
+        content: "Existing chronicle",
+        lore: "Existing lore",
+      }),
+      false,
+    );
+    expect(cacheSet).toHaveBeenCalledWith(
+      "v1:hero.md",
+      expect.any(Number),
+      expect.objectContaining({
+        content: "Existing chronicle",
+        lore: "Existing lore",
+      }),
+    );
   });
 });

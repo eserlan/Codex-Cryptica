@@ -6,7 +6,11 @@ import {
   FOCUS_ZOOM_STEP_FACTOR,
   type LoadPhase,
 } from "./graph-view-controller.svelte";
-import { syncGraphElements, applyLargeGraphRenderHints } from "graph-engine";
+import {
+  syncGraphElements,
+  applyLargeGraphRenderHints,
+  isLayoutCollinear,
+} from "graph-engine";
 
 // Mock graph-engine
 vi.mock("graph-engine", () => {
@@ -369,6 +373,72 @@ describe("GraphViewController", () => {
       controller.reconcileLoadState();
 
       expect(controller.loadPhase).toBe<LoadPhase>("ready");
+    });
+
+    it("does not run slash recovery for a collinear rendered subset when full saved coords are healthy", async () => {
+      vi.useFakeTimers();
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      const applySpy = vi.spyOn(controller, "applyCurrentLayout");
+      const renderedNodes = {
+        length: 20,
+        map: vi.fn(() => [
+          { x: 0, y: 0 },
+          { x: 1, y: 1 },
+          { x: 2, y: 2 },
+        ]),
+      };
+      (controller.cy as any).nodes = vi.fn().mockReturnValue(renderedNodes);
+      vi.mocked(isLayoutCollinear).mockReturnValue(false);
+
+      deps.vault.status = "idle";
+      deps.vault.allEntities = [
+        { id: "a", metadata: { coordinates: { x: 0, y: 0 } } },
+        { id: "b", metadata: { coordinates: { x: 10, y: 40 } } },
+        { id: "c", metadata: { coordinates: { x: 80, y: 20 } } },
+      ];
+      controller.loadPhase = "elements";
+
+      controller.reconcileLoadState();
+      applySpy.mockClear();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(applySpy).not.toHaveBeenCalledWith(
+        expect.objectContaining({ reason: "Slash Recovery" }),
+      );
+      expect(renderedNodes.map).not.toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it("runs slash recovery when the full vault saved coords are degenerate", async () => {
+      vi.useFakeTimers();
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      const applySpy = vi.spyOn(controller, "applyCurrentLayout");
+      (controller.cy as any).nodes = vi
+        .fn()
+        .mockReturnValue({ length: 20, map: vi.fn(() => []) });
+      vi.mocked(isLayoutCollinear).mockReturnValue(true);
+
+      deps.vault.status = "idle";
+      deps.vault.allEntities = [
+        { id: "a", metadata: { coordinates: { x: 0, y: 0 } } },
+        { id: "b", metadata: { coordinates: { x: 1, y: 1 } } },
+        { id: "c", metadata: { coordinates: { x: 2, y: 2 } } },
+      ];
+      controller.loadPhase = "elements";
+
+      controller.reconcileLoadState();
+      applySpy.mockClear();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(applySpy).toHaveBeenCalledWith({
+        reason: "Slash Recovery",
+        isInitial: true,
+        isForced: true,
+        reseed: true,
+      });
+      vi.useRealTimers();
     });
   });
 

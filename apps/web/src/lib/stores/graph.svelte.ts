@@ -68,7 +68,7 @@ export class GraphStore {
   // independent of `elements` so focus-view culling can't feed back into the
   // "is this a large vault?" decision and create a reactive cycle.
   fullGraphSize = $derived.by(() => {
-    const entities = this.vault.allEntities;
+    const entities = this.graphSourceEntities;
     let edgeCount = 0;
     const count = entities.length;
     for (let i = 0; i < count; i++) {
@@ -90,7 +90,9 @@ export class GraphStore {
   }
 
   elements = $derived.by(() => {
-    const allEntities = this.vault.allEntities;
+    const graphVersion = this.graphStructureVersion;
+    void graphVersion;
+    const allEntities = this.graphSourceEntities;
     const settings = {
       sharedMode: this.sessionModeStore.sharedMode,
       defaultVisibility: this.vault.defaultVisibility,
@@ -224,6 +226,15 @@ export class GraphStore {
       }
     }
     return bestId;
+  }
+
+  private get graphSourceEntities(): Entity[] {
+    return ((this.vault as any).graphEntities ??
+      this.vault.allEntities) as Entity[];
+  }
+
+  private get graphStructureVersion(): number {
+    return (this.vault as any).graphStructureVersion ?? 0;
   }
 
   private getFocusTargetCount(depth: number, visibleCount: number): number {

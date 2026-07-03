@@ -88,6 +88,18 @@ export class VaultStore {
     }
     return this.entityStore.allEntities;
   }
+  get graphEntities() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.entities;
+    }
+    return this.entityStore.graphEntities;
+  }
+  get graphStructureVersion() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.entities.length;
+    }
+    return this.entityStore.graphStructureVersion;
+  }
   get titleAndAliasIndex() {
     if (sessionModeStore.isGuestMode) {
       const result: Array<{
@@ -141,12 +153,7 @@ export class VaultStore {
   }
   set status(
     value:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
     this.syncStore.setStatus(value);
   }

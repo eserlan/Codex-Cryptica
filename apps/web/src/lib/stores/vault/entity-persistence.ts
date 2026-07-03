@@ -15,26 +15,24 @@ export interface PersistenceDependencies {
   ) => Promise<FileSystemDirectoryHandle | undefined>;
   setStatus: (
     status:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) => void;
   status?: () =>
-    | "idle"
-    | "loading"
-    | "saving"
-    | "saved"
-    | "needs-permission"
-    | "error";
+    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
   // loader delegation
   isContentLoaded: (id: string) => boolean;
   loadContent: (id: string) => Promise<void>;
   markContentLoaded: (id: string) => void;
+}
+
+export interface ScheduleSaveOptions {
+  /**
+   * Allows persistence to serialize an unloaded entity with content restored
+   * from the cache table instead of hydrating the reactive entity store.
+   */
+  preserveCachedContent?: boolean;
 }
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -71,7 +69,10 @@ export class EntityPersistenceService {
     this._savingSuspended = false;
   }
 
-  scheduleSave(entity: LocalEntity | Entity): Promise<void> {
+  scheduleSave(
+    entity: LocalEntity | Entity,
+    options: ScheduleSaveOptions = {},
+  ): Promise<void> {
     if (this.deps.onEntityUpdate)
       this.deps.onEntityUpdate(entity as LocalEntity);
 
@@ -112,7 +113,9 @@ export class EntityPersistenceService {
           this._saveResolvers.delete(id);
           this._saveVaultIds.delete(id);
           this.deps.repository
-            .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+            .enqueueSave(id, () =>
+              this._persistEntity(id, vaultIdAtStart, options),
+            )
             .catch(() => {})
             .finally(() => resolvers.forEach((r) => r()));
         }, SAVE_DEBOUNCE_MS),
@@ -156,6 +159,7 @@ export class EntityPersistenceService {
   private async _persistEntity(
     id: string,
     vaultIdAtStart: string,
+    options: ScheduleSaveOptions = {},
   ): Promise<void> {
     if (this.deps.activeVaultId() !== vaultIdAtStart) {
       debugStore.log(
@@ -167,7 +171,23 @@ export class EntityPersistenceService {
     let latestEntity = this.entities[id];
     if (!latestEntity) return;
 
-    if (!this.deps.isContentLoaded(id)) {
+    let restoredCachedContent = false;
+    if (!this.deps.isContentLoaded(id) && options.preserveCachedContent) {
+      const cachedContent = await cacheService.getEntityContent(
+        vaultIdAtStart,
+        id,
+      );
+      if (cachedContent) {
+        restoredCachedContent = true;
+        latestEntity = {
+          ...latestEntity,
+          content: cachedContent.content,
+          lore: cachedContent.lore,
+        };
+      }
+    }
+
+    if (!this.deps.isContentLoaded(id) && !restoredCachedContent) {
       await this.deps.loadContent(id);
       latestEntity = this.entities[id] || latestEntity;
     }
@@ -203,7 +223,9 @@ export class EntityPersistenceService {
         latestEntity,
       );
 
-      this.deps.markContentLoaded(latestEntity.id);
+      if (!options.preserveCachedContent) {
+        this.deps.markContentLoaded(latestEntity.id);
+      }
       this.deps.setStatus("idle");
     } catch (error) {
       debugStore.error(
