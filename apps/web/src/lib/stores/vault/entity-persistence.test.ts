@@ -170,4 +170,46 @@ describe("EntityPersistenceService coordinate-only saves", () => {
       }),
     );
   });
+
+  it("preserves cached content when coordinate-only saves are flushed before debounce", async () => {
+    const saveToDisk = vi.fn(async () => {});
+    const loadContent = vi.fn(async () => {
+      throw new Error("content loader should not run");
+    });
+    cacheGetEntityContent.mockResolvedValue({
+      content: "Cached chronicle",
+      lore: "Cached lore",
+    });
+    const entities = {
+      hero: {
+        id: "hero",
+        title: "Hero",
+        connections: [],
+        metadata: { coordinates: { x: 10, y: 20 } },
+        _path: ["hero.md"],
+      },
+    };
+    const { svc } = makeService(saveToDisk, entities, {
+      isContentLoaded: () => false,
+      loadContent,
+    });
+
+    const pendingSave = svc.scheduleSave(entities.hero as any, {
+      preserveCachedContent: true,
+    });
+    await svc.flushPendingSaves();
+    await pendingSave;
+
+    expect(cacheGetEntityContent).toHaveBeenCalledWith("v1", "hero");
+    expect(loadContent).not.toHaveBeenCalled();
+    expect(saveToDisk).toHaveBeenCalledWith(
+      expect.anything(),
+      "v1",
+      expect.objectContaining({
+        content: "Cached chronicle",
+        lore: "Cached lore",
+      }),
+      false,
+    );
+  });
 });

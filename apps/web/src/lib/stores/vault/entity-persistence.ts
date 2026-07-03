@@ -50,6 +50,8 @@ export class EntityPersistenceService {
   private _saveResolvers = new Map<string, Array<() => void>>();
   /** Vault ID captured at scheduleSave time, keyed by entity ID. */
   private _saveVaultIds = new Map<string, string>();
+  /** Save options captured across debounced writes, keyed by entity ID. */
+  private _saveOptions = new Map<string, ScheduleSaveOptions>();
   /** Bounded retry counter for entities whose disk write keeps failing. */
   private _failedSaveRetries = new Map<string, number>();
 
@@ -96,6 +98,10 @@ export class EntityPersistenceService {
     // Store the vault ID so flushPendingSaves uses the original context, not
     // whatever vault happens to be active at flush time.
     this._saveVaultIds.set(id, vaultIdAtStart);
+    this._saveOptions.set(
+      id,
+      mergeScheduleSaveOptions(this._saveOptions.get(id), options),
+    );
 
     if (this._savingSuspended) {
       return Promise.resolve();
@@ -112,9 +118,11 @@ export class EntityPersistenceService {
           this._saveTimers.delete(id);
           this._saveResolvers.delete(id);
           this._saveVaultIds.delete(id);
+          const saveOptions = this._saveOptions.get(id) ?? {};
+          this._saveOptions.delete(id);
           this.deps.repository
             .enqueueSave(id, () =>
-              this._persistEntity(id, vaultIdAtStart, options),
+              this._persistEntity(id, vaultIdAtStart, saveOptions),
             )
             .catch(() => {})
             .finally(() => resolvers.forEach((r) => r()));
@@ -140,9 +148,11 @@ export class EntityPersistenceService {
       // rapid vault switches.
       const vaultId = this._saveVaultIds.get(id);
       this._saveVaultIds.delete(id);
+      const saveOptions = this._saveOptions.get(id) ?? {};
+      this._saveOptions.delete(id);
       if (vaultId) {
         const p = this.deps.repository
-          .enqueueSave(id, () => this._persistEntity(id, vaultId))
+          .enqueueSave(id, () => this._persistEntity(id, vaultId, saveOptions))
           .catch(() => {})
           .finally(() => {
             resolvers.forEach((r) => r());
@@ -238,7 +248,7 @@ export class EntityPersistenceService {
       // Don't silently drop the write: re-queue a bounded number of times so a
       // transient OPFS failure during a bulk import can't permanently corrupt
       // the on-disk file (which the cache would otherwise mask).
-      this._requeueFailedSave(id, vaultIdAtStart);
+      this._requeueFailedSave(id, vaultIdAtStart, options);
     }
   }
 
@@ -269,7 +279,11 @@ export class EntityPersistenceService {
     throw lastError;
   }
 
-  private _requeueFailedSave(id: string, vaultIdAtStart: string): void {
+  private _requeueFailedSave(
+    id: string,
+    vaultIdAtStart: string,
+    options: ScheduleSaveOptions,
+  ): void {
     const retries = this._failedSaveRetries.get(id) ?? 0;
     if (retries >= MAX_FAILED_SAVE_REQUEUES) {
       this._failedSaveRetries.delete(id);
@@ -280,10 +294,23 @@ export class EntityPersistenceService {
       () => {
         if (this.deps.activeVaultId() !== vaultIdAtStart) return;
         void this.deps.repository
-          .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+          .enqueueSave(id, () =>
+            this._persistEntity(id, vaultIdAtStart, options),
+          )
           .catch(() => {});
       },
       DISK_REQUEUE_BASE_MS * (retries + 1),
     );
   }
+}
+
+function mergeScheduleSaveOptions(
+  previous: ScheduleSaveOptions | undefined,
+  next: ScheduleSaveOptions,
+): ScheduleSaveOptions {
+  return {
+    preserveCachedContent:
+      (previous?.preserveCachedContent ?? true) &&
+      next.preserveCachedContent === true,
+  };
 }
