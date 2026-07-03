@@ -4,6 +4,7 @@ import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { updateLastInternalChange } from "./registry";
 
 export interface PersistenceDependencies {
   repository: VaultRepository;
@@ -193,10 +194,7 @@ export class EntityPersistenceService {
       // Disk write succeeded — clear any prior failure bookkeeping for this id.
       this._failedSaveRetries.delete(id);
 
-      // Update dirty tracking timestamp
-      import("./registry").then((m) =>
-        m.updateLastInternalChange(vaultIdAtStart),
-      );
+      await updateLastInternalChange(vaultIdAtStart);
 
       const path = latestEntity._path || [`${latestEntity.id}.md`];
       await cacheService.set(

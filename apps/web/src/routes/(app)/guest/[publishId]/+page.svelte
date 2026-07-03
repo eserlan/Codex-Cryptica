@@ -171,6 +171,13 @@
             <span class="icon-[lucide--arrow-left] mr-2 h-4 w-4"></span>
             Back to Shared Worlds
           </a>
+          <a
+            href="{base}/worlds"
+            class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all text-theme-muted hover:text-theme-primary"
+          >
+            <span class="icon-[lucide--compass] mr-2 h-4 w-4"></span>
+            Explore Worlds
+          </a>
         </div>
       </div>
     </div>

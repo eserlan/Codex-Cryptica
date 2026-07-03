@@ -54,6 +54,13 @@ vi.mock("./vault.svelte", () => ({
     defaultVisibility: "public",
     entities: {},
     activeVaultId: "vault-1",
+    isGuest: false,
+  },
+}));
+
+vi.mock("./guest-vault.svelte", () => ({
+  guestVault: {
+    search: vi.fn().mockReturnValue([]),
   },
 }));
 
@@ -67,6 +74,7 @@ vi.mock("./debug.svelte", () => ({
 
 import { SearchStore } from "./search.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "./guest-vault.svelte";
 
 describe("SearchStore", () => {
   let store: SearchStore;
@@ -81,6 +89,9 @@ describe("SearchStore", () => {
     mockVault = vault;
     sessionModeStore.sharedMode = false;
     mockSearchService = searchService;
+    mockVault.isGuest = false;
+    vi.mocked(guestVault.search).mockReset();
+    vi.mocked(guestVault.search).mockReturnValue([]);
 
     store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
   });
@@ -300,6 +311,64 @@ describe("SearchStore", () => {
       expect(store.results).toHaveLength(1);
       expect(store.results[0].id).toBe("visible-1");
       expect(store.isLoading).toBe(false);
+    });
+
+    it("uses the guest snapshot search fallback in guest mode", async () => {
+      mockVault.isGuest = true;
+      vi.mocked(guestVault.search).mockReturnValue([
+        {
+          id: "guest-1",
+          title: "Guest Result",
+          path: "guest-1.md",
+          score: 1,
+          matchType: "title",
+        },
+      ] as any);
+      mockVault.entities = {
+        "guest-1": { id: "guest-1", visibility: "public" },
+      };
+
+      await store.setQuery("guest");
+
+      expect(guestVault.search).toHaveBeenCalledWith("guest", 20);
+      expect(mockSearchService.search).not.toHaveBeenCalled();
+      expect(store.results).toEqual([
+        {
+          id: "guest-1",
+          title: "Guest Result",
+          path: "guest-1.md",
+          score: 1,
+          matchType: "title",
+        },
+      ]);
+    });
+
+    it("still filters guest fallback results by visibility", async () => {
+      mockVault.isGuest = true;
+      vi.mocked(guestVault.search).mockReturnValue([
+        { id: "visible-1", path: "visible-1.md", score: 1, matchType: "title" },
+        {
+          id: "hidden-1",
+          path: "hidden-1.md",
+          score: 0.6,
+          matchType: "content",
+        },
+      ] as any);
+      mockVault.entities = {
+        "visible-1": { id: "visible-1", visibility: "public" },
+        "hidden-1": { id: "hidden-1", visibility: "private" },
+      };
+
+      const { isEntityVisible } = await import("schema");
+      vi.mocked(isEntityVisible).mockImplementation(
+        (entity: any) => entity.visibility === "public",
+      );
+
+      await store.setQuery("guest");
+
+      expect(store.results).toEqual([
+        { id: "visible-1", path: "visible-1.md", score: 1, matchType: "title" },
+      ]);
     });
 
     it("keeps visibility filtering while search results are partial", async () => {
