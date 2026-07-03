@@ -69,3 +69,22 @@ export function setMatchDecision(
     ),
   };
 }
+
+/**
+ * Lets the user manually override a detected/fallback type before commit.
+ * Clears typeFallback since the type is no longer a guess.
+ */
+export function setItemType(
+  session: CCImportSession,
+  draftRef: string,
+  resolvedType: string,
+): CCImportSession {
+  return {
+    ...session,
+    items: session.items.map((item) =>
+      item.draft.sourceId === draftRef || item.draft.sourcePath === draftRef
+        ? { ...item, resolvedType, typeFallback: false }
+        : item,
+    ),
+  };
+}

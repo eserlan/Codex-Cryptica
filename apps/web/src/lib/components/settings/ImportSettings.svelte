@@ -1,6 +1,5 @@
 <script lang="ts">
   import { slide, fade } from "svelte/transition";
-  import ReviewList from "$lib/features/importer/ReviewList.svelte";
   import CCImportReview from "$lib/features/importer/CCImportReview.svelte";
   import CCImportReport from "$lib/features/importer/CCImportReport.svelte";
   import ImportProgress from "../import/ImportProgress.svelte";
@@ -164,10 +163,10 @@
         </div>
       {/if}
 
-      {#if controller.importMode === "cc" && controller.ccSession}
+      {#if controller.ccSession}
         <section
           class="mb-4 rounded border border-theme-primary/30 bg-theme-primary/10 p-3"
-          aria-label="Deterministic import ready"
+          aria-label="Import ready"
         >
           <div class="flex items-start gap-2">
             <span
@@ -177,9 +176,13 @@
               <p
                 class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
               >
-                {controller.ccSession.sourceSystem === "scabard"
-                  ? "Scabard import ready"
-                  : "Chronica import ready"}
+                {#if controller.ccSession.sourceSystem === "scabard"}
+                  Scabard import ready
+                {:else if controller.ccSession.sourceSystem === "chronica"}
+                  Chronica import ready
+                {:else}
+                  Oracle import ready
+                {/if}
               </p>
               <p class="mt-1 text-xs leading-snug text-theme-muted">
                 Review the detected records, matches, and links before writing
@@ -192,15 +195,9 @@
           session={controller.ccSession}
           onItemDecisionChange={controller.handleCCItemDecisionChange}
           onMatchDecisionChange={controller.handleCCMatchDecisionChange}
+          onItemTypeChange={controller.handleCCItemTypeChange}
           onCommit={controller.handleCCCommit}
           onCancel={controller.handleCCReportDone}
-          {isStandalone}
-        />
-      {:else}
-        <ReviewList
-          entities={controller.discoveredEntities}
-          onSave={controller.handleOracleSave}
-          onCancel={() => (controller.step = "upload")}
           {isStandalone}
         />
       {/if}
@@ -209,23 +206,6 @@
         report={controller.ccReport}
         onDone={controller.handleCCReportDone}
       />
-    {:else if controller.step === "complete"}
-      <div
-        class="flex flex-col items-center gap-2 py-8 text-theme-primary"
-        transition:fade
-      >
-        <div
-          class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
-        >
-          <span class="icon-[lucide--check-circle] w-8 h-8"></span>
-        </div>
-        <p class="text-base font-bold uppercase font-header tracking-widest">
-          Import Successful
-        </p>
-        <p class="text-[11px] text-theme-muted uppercase font-mono">
-          Archive updated with {controller.discoveredEntities.length} records
-        </p>
-      </div>
     {/if}
   </div>
 </div>
