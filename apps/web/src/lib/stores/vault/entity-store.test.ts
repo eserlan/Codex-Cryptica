@@ -331,6 +331,79 @@ describe("EntityStore", () => {
     ).toEqual([{ target: "place", type: "ref", strength: 1 }]);
   });
 
+  it("does not advance graph structure for content-only updates", () => {
+    const initialMap = { ...repository.entities };
+    const heroUpdated = {
+      ...initialMap.hero,
+      content: "Only prose changed",
+      updatedAt: Date.now(),
+      modifiedAt: Date.now(),
+    } as unknown as LocalEntity;
+    const newMap = { ...initialMap, hero: heroUpdated };
+    const previousGraphEntities = store.graphEntities;
+    const previousVersion = store.graphStructureVersion;
+
+    store.handleEntitiesUpdate(initialMap, newMap);
+
+    expect(store.graphEntities).toBe(previousGraphEntities);
+    expect(store.graphStructureVersion).toBe(previousVersion);
+    expect(store.allEntities.find((entity) => entity.id === "hero")).toEqual(
+      heroUpdated,
+    );
+  });
+
+  it("keeps graphEntities independent from allEntities after rebuilds", () => {
+    const rebuiltAllEntities = store.allEntities;
+    const rebuiltGraphEntities = store.graphEntities;
+
+    expect(rebuiltGraphEntities).not.toBe(rebuiltAllEntities);
+
+    const newEntity = {
+      id: "villain",
+      title: "Villain",
+      content: "",
+      lore: "",
+      type: "character",
+      status: "active",
+      labels: [],
+      aliases: [],
+      connections: [],
+    } as unknown as LocalEntity;
+
+    store.handleEntitiesUpdate(repository.entities, {
+      ...repository.entities,
+      villain: newEntity,
+    });
+
+    expect(
+      store.allEntities.filter((entity) => entity.id === "villain"),
+    ).toHaveLength(1);
+    expect(
+      store.graphEntities.filter((entity) => entity.id === "villain"),
+    ).toHaveLength(1);
+  });
+
+  it("advances graph structure for graph-relevant updates", () => {
+    const initialMap = { ...repository.entities };
+    const heroUpdated = {
+      ...initialMap.hero,
+      metadata: { coordinates: { x: 10, y: 20 } },
+      updatedAt: Date.now(),
+      modifiedAt: Date.now(),
+    } as unknown as LocalEntity;
+    const newMap = { ...initialMap, hero: heroUpdated };
+    const previousGraphEntities = store.graphEntities;
+    const previousVersion = store.graphStructureVersion;
+
+    store.handleEntitiesUpdate(initialMap, newMap);
+
+    expect(store.graphEntities).not.toBe(previousGraphEntities);
+    expect(store.graphStructureVersion).toBe(previousVersion + 1);
+    expect(store.graphEntities.find((entity) => entity.id === "hero")).toEqual(
+      heroUpdated,
+    );
+  });
+
   it("handles label operations", async () => {
     const updatedHero = { ...repository.entities.hero, labels: ["heroic"] };
     vi.mocked(vaultEntities.addLabel).mockReturnValue({

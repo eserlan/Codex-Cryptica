@@ -721,11 +721,13 @@ export class GraphViewController {
       });
     }
 
-    // Once the vault is idle with content, (re)arm the slash guard. Debounced
-    // via clearTimeout so it fires only after positions have stopped churning.
+    // Once the vault is idle with content, (re)arm the slash guard only when
+    // the full vault's saved coordinates are actually degenerate. Checking the
+    // rendered focus subset can produce false positives in large culled views.
     if (
       status === "idle" &&
       !this.slashRecoveryDone &&
+      this.savedCoordsDegenerate &&
       this.cy &&
       this.cy.nodes().length > 0
     ) {
@@ -755,15 +757,11 @@ export class GraphViewController {
   private recoverFromSlashIfNeeded = () => {
     if (this.slashRecoveryDone || !this.cy || this.cy.destroyed()) return;
     if (this.deps.vault.status === "loading") return;
-    const nodes = this.cy.nodes();
-    if (nodes.length < 12) return;
-
-    const positions = nodes.map((n) => n.position());
-    if (!isLayoutCollinear(positions)) return;
+    if (!this.savedCoordsDegenerate) return;
 
     this.slashRecoveryDone = true;
     this.deps.debugStore.log(
-      "[GraphView] Degenerate slash layout detected after load — re-solving.",
+      "[GraphView] Degenerate saved-coordinate slash detected after load — re-solving.",
     );
     this.applyCurrentLayout({
       reason: "Slash Recovery",
