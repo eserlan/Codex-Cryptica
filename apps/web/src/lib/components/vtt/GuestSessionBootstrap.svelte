@@ -30,10 +30,20 @@
   let isConnectedToHost = $state(false);
 
   const syncGuestGraphPayload = (graph: any) => {
+    if (!graph.entities || typeof graph.entities !== "object") {
+      console.error(
+        "[Guest Mode] Received malformed GRAPH_SYNC payload: missing entities.",
+        graph,
+      );
+      vault.status = "error";
+      vault.errorMessage = "Received an invalid campaign sync from host.";
+      return;
+    }
+
     // ⚡ Bolt Optimization: Replace multiple intermediate array allocations (Object.entries().map(),
     // array.map(), Object.fromEntries()) with a single imperative loop to process vault entities.
     const nextEntities: Record<string, any> = {};
-    const sourceEntities = graph.entities || {};
+    const sourceEntities = graph.entities;
 
     for (const id in sourceEntities) {
       if (Object.hasOwn(sourceEntities, id)) {
@@ -41,7 +51,8 @@
         nextEntities[id] = {
           ...entity,
           id,
-          _path: typeof entity._path === "string" ? [entity._path] : entity._path,
+          _path:
+            typeof entity._path === "string" ? [entity._path] : entity._path,
         };
       }
     }
