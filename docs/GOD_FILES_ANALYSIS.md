@@ -1,51 +1,71 @@
 # God File Analysis Report: Codex-Cryptica
 
-_(Last updated: June 10, 2026)_
+_(Last updated: July 4, 2026)_
 
 This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
 
-## Executive Summary (June 2026 Reassessment)
+Large data/config files (e.g. `packages/generator-engine/src/public-*.ts` generator tables, `apps/web/src/lib/config/seo-pages.ts`, `packages/schema/src/theme-templates.ts`, `EntityTemplateConstants.ts`) are excluded from this ranking — they are single-responsibility data definitions whose size comes from content volume, not coupling, so decomposition would add indirection without reducing complexity.
 
-The **SoundBiteGenerator Decomposition** refactor has resolved `sound-bite-generator.ts` (852 → 169 lines) by extracting prompt builders, response parsing, voice mapping, and TTS backends into 9 focused modules under `packages/oracle-engine` (closes #1303).
+## Executive Summary (July 2026 Reassessment)
 
-Additionally, `MapInteractionManager` (626 → 407 lines) was previously resolved by extracting focused interaction concerns. The largest remaining pressure points are `SEOGeneratorLayout.svelte` (1098 lines), `DetailStatusTab.svelte` (902 lines), the Svelte components `ZenSidebar.svelte` (867 lines) and `TemporalPicker.svelte` (856 lines), and the core services and managers like `text-generation.service.svelte.ts` and `entity-store.svelte.ts`.
+The **SoundBiteGenerator Decomposition** refactor remains resolved (`sound-bite-generator.ts` at 169 lines). `GeneratorPageContent.svelte` (formerly 1467 lines, new top offender) is now **RESOLVED** at 581 lines — `slugMeta`/`slugDrafts` moved to standalone data files, the three remaining inline slugs (`settlement`, `magic-item`, `ship-generator`) got their own `*FormFields.svelte` components matching the other 11, and hub/theme mapping tables moved to `generator-theme-maps.ts` (see Historical Successes). `SEOGeneratorLayout.svelte` (1098 → 1462 lines) remains the top offender and likely has the same per-slug branching problem on the display/layout side — next up for the same treatment. `TemporalPicker.svelte` grew slightly (856 → 859) and remains a regression risk. `DetailStatusTab.svelte` improved (902 → 715) and `ZenSidebar.svelte` improved (867 → 738), likely from incidental cleanup during other feature work — both downgraded from WATCH accordingly. `import-settings-controller.svelte.ts` (830 lines) is a new entrant combining import parsing, validation, and settings-mutation concerns.
 
-## Top 10 Largest Files (Excluding Tests & Generated Code)
+## Top 10 Largest Files (Excluding Tests, Generated Code & Data/Config Files)
 
-| Rank | File Path                                                          | Line Count | Type          | Status        |
-| :--- | :----------------------------------------------------------------- | :--------- | :------------ | :------------ |
-| 1    | `apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`        | 1098       | UI Component  | 🔴 CRITICAL   |
-| 2    | `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte` | 902        | UI Component  | 🟡 WATCH      |
-| 3    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                | 867        | UI Component  | 🟡 WATCH      |
-| 4    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`       | 856        | UI Component  | 🔴 REGRESSION |
-| 5    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`   | 836        | Service       | 🟡 WATCH      |
-| 6    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`             | 812        | Store (State) | 🟡 WATCH      |
-| 7    | `packages/map-engine/src/renderer.ts`                              | 728        | Engine Core   | 🟡 WATCH      |
-| 8    | `packages/graph-engine/src/transformer.ts`                         | 674        | Engine Core   | 🟡 WATCH      |
-| 9    | `apps/web/src/lib/components/zen/ZenContent.svelte`                | 674        | UI Component  | 🟡 WATCH      |
-| 10   | `packages/graph-engine/src/LayoutManager.ts`                       | 637        | Engine Core   | 🟡 WATCH      |
+| Rank | File Path                                                                   | Line Count | Type          | Status        |
+| :--- | :-------------------------------------------------------------------------- | :--------- | :------------ | :------------ |
+| 1    | `apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`                 | 1462       | UI Component  | 🔴 CRITICAL   |
+| 2    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`            | 894        | Service       | 🟡 WATCH      |
+| 3    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`                | 859        | UI Component  | 🔴 REGRESSION |
+| 4    | `apps/workers/oracle-proxy/src/index.ts`                                    | 856        | Worker Router | 🟡 WATCH      |
+| 5    | `apps/web/src/lib/components/settings/import-settings-controller.svelte.ts` | 830        | Controller    | 🔴 NEW        |
+| 6    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`                      | 825        | Store (State) | 🟡 WATCH      |
+| 7    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                         | 738        | UI Component  | 🟢 IMPROVED   |
+| 8    | `packages/generator-engine/src/public-social-hub.ts`                        | 731        | Generator     | ⚪ DATA       |
+| 9    | `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte`          | 715        | UI Component  | 🟢 IMPROVED   |
+| 10   | `apps/web/src/lib/components/seo/GeneratorPageContent.svelte`               | 581        | UI Component  | 🟢 RESOLVED   |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. Service-Layer Monoliths (`text-generation.service.svelte.ts`)
+### 1. SEO Generator Layout (`SEOGeneratorLayout.svelte`)
 
-**Analysis:** `text-generation.service.svelte.ts` at 836 lines sits at the AI request boundary and may benefit from per-model adapters.
+**Analysis:** `GeneratorPageContent.svelte` is now RESOLVED (1467 → 581 lines, see Historical Successes). `SEOGeneratorLayout.svelte` remains at 1462 lines and likely mirrors the same per-slug branching problem on the display/layout side that `GeneratorPageContent.svelte` had — the same registry-driven approach (a slug → component/config lookup, following the now-complete `*FormFields.svelte` pattern) should apply here too.
+**Recommended Split:**
+
+- Audit `SEOGeneratorLayout.svelte` for the same `{#if slug === ...}` branching shape and extract per-slug display sections into focused components, mirroring the `*FormFields.svelte` pattern already established.
+- Consider whether a shared `GeneratorPageController` (Svelte 5 class) can own the cross-cutting state (session context, generation status) that both components currently re-derive.
+
+### 2. Service-Layer Monoliths (`text-generation.service.svelte.ts`)
+
+**Analysis:** `text-generation.service.svelte.ts` at 894 lines sits at the AI request boundary and may benefit from per-model adapters.
 **Recommended Split:**
 
 - For `text-generation.service.svelte.ts`, extract per-model request builders and response adapters to keep the service itself as a thin dispatcher.
 
-### 2. UI Component Regression (`TemporalPicker.svelte`, `ZenSidebar.svelte`, `ZenContent.svelte`, `DetailStatusTab.svelte`)
+### 3. UI Component Regression (`TemporalPicker.svelte`)
 
-**Analysis:** `TemporalPicker.svelte` jumped from 594 to 782 lines — a notable regression. The Zen pair (`ZenSidebar` + `ZenContent`) together account for ~1,300 lines of tightly related UI. `DetailStatusTab.svelte` at 607 lines suggests mixed display/edit/validation logic.
+**Analysis:** `TemporalPicker.svelte` remains elevated at 859 lines (previously flagged as a regression from 594). `ZenSidebar.svelte` (738) and `DetailStatusTab.svelte` (715) have both improved since the last pass and no longer need urgent attention.
 **Recommended Split:**
 
 - For `TemporalPicker.svelte`, break out picker views (year, month, day) and date parsing/formatting into sub-components or pure helpers.
-- For the Zen pair, audit whether each has a single clear responsibility; extract shared logic into a `ZenController` if needed.
-- For `DetailStatusTab.svelte`, extract field-level editors and validation into focused sub-components.
 
-### 3. Engine and Manager Cores (`renderer.ts`, `LayoutManager.ts`, `map.svelte.ts`, `vtt-token-manager.svelte.ts`)
+### 4. New Entrant: `import-settings-controller.svelte.ts`
+
+**Analysis:** At 830 lines, this controller appears to combine import-file parsing, schema validation, and settings-store mutation in one place.
+**Recommended Split:**
+
+- Separate the parsing/validation layer (pure, testable) from the settings-mutation/apply layer (stateful), following the pattern used for `host-service.svelte.ts` and `guest-service.ts`.
+
+### 5. Worker Router (`oracle-proxy/src/index.ts`)
+
+**Analysis:** At 856 lines, this Cloudflare Worker entry point routes requests across Gemini proxying, vault publishing, asset upload/delete, and public-listing handlers. `publish.ts` (864 lines) already carries much of the publish-specific logic, so `index.ts`'s size is mostly routing/CORS/auth boilerplate repeated per handler.
+**Recommended Split:**
+
+- Extract a small router/middleware helper (CORS + auth check) shared across handlers so `index.ts` reduces to route registration.
+
+### 6. Engine and Manager Cores (`renderer.ts`, `LayoutManager.ts`, `map.svelte.ts`, `vtt-token-manager.svelte.ts`)
 
 **Analysis:** These files are inherently complex but their size poses a long-term maintenance risk. The map-interaction refactor showed that natural seams do exist even in engine-adjacent code.
 **Recommended Split:**
@@ -58,8 +78,10 @@ Additionally, `MapInteractionManager` (626 → 407 lines) was previously resolve
 
 ## Next Recommended Refactor Order
 
-1. **`apps/web/src/lib/components/timeline/TemporalPicker.svelte`**: Regression from 594 → 856 lines warrants attention before it grows further.
-2. **`packages/map-engine/src/renderer.ts` / `packages/graph-engine/src/LayoutManager.ts`**: Reduce engine-core breadth before more UI layers depend on them.
+1. **`apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`**: Now the sole top offender at 1462 lines; likely the same per-slug branching problem `GeneratorPageContent.svelte` just had — highest-leverage refactor available right now.
+2. **`apps/web/src/lib/components/timeline/TemporalPicker.svelte`**: Still elevated at 859 lines; address before it grows further.
+3. **`apps/web/src/lib/components/settings/import-settings-controller.svelte.ts`**: New 830-line entrant mixing parsing and mutation concerns.
+4. **`apps/workers/oracle-proxy/src/index.ts`**: Extract shared routing/CORS boilerplate.
 
 ---
 
@@ -81,3 +103,4 @@ Additionally, `MapInteractionManager` (626 → 407 lines) was previously resolve
 - **`ai.ts`**: Effectively eliminated as a god file.
 - **EntityList.svelte**: **RESOLVED**. Reduced from 510 to 349 lines (despite adding multi-level tree hierarchy, child creation, and drag-and-drop mechanics) by decomposing card rendering into `EntityListItem.svelte` (~253 lines), search/autocomplete logic into `EntityListSearch.svelte` (~189 lines), and filter/label bar UI into `EntityListFilterBar.svelte` (~140 lines) with core filtering logic isolated to pure helper `entityListFiltering.ts` (Spec 120).
 - **`SoundBiteGenerator` (`sound-bite-generator.ts`)**: **RESOLVED**. Reduced from 852 to 169 lines by decomposing prompt builders, voice mapping, JSON parsing, and TTS drivers into 9 focused modules under `packages/oracle-engine` (closes #1303).
+- **`GeneratorPageContent.svelte`**: **RESOLVED**. Reduced from 1467 to 581 lines by extracting `slugMeta`/`slugDrafts` into standalone data files, finishing the `*FormFields.svelte` pattern for the 3 slugs (`settlement`, `magic-item`, `ship-generator`) that were still inlined, and moving hub/theme mapping tables into `generator-theme-maps.ts` (#1601).
