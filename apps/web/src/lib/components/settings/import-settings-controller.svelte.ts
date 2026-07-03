@@ -231,6 +231,9 @@ export class ImportSettingsController {
     this.importMode = "oracle";
     this.step = "processing";
     this.statusMessage = `Preparing ${pack.name} for review...`;
+    this.rejectedFiles = [];
+    this.ccReport = null;
+    this.discoveredEntities = [];
 
     try {
       this.ccSession = await this.buildOracleSession(
@@ -686,12 +689,15 @@ export class ImportSettingsController {
               ? error.message
               : "Could not prepare a review for the detected entities.",
         });
-        this.step = "review";
+        // No ccSession means CCImportReview won't render, and there's no
+        // fallback UI on the review step anymore — go back to upload, which
+        // already displays rejectedFiles via ImportSourcePicker.
+        this.step = "upload";
       }
       return;
     }
 
-    this.step = this.rejectedFiles.length > 0 ? "review" : "upload";
+    this.step = "upload";
   };
 
   handleRestart = async () => {

@@ -115,9 +115,14 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
         const response = await result.response;
         const rawText = response.text();
 
-        // Robust JSON extraction (also accepts a genuinely empty array)
+        // Robust JSON extraction. Also accepts a genuinely empty array, but
+        // only when the *entire* trimmed response is "[]" — an unanchored
+        // match could find "[]" inside explanatory prose surrounding real
+        // entities and wrongly treat the response as empty.
+        const trimmed = rawText.trim();
         const jsonMatch =
-          rawText.match(/\[\s*\{[\s\S]*\}\s*\]/) ?? rawText.match(/\[\s*\]/);
+          rawText.match(/\[\s*\{[\s\S]*\}\s*\]/) ??
+          (/^\[\s*\]$/.test(trimmed) ? [trimmed] : null);
         if (!jsonMatch) {
           throw new Error("No valid JSON array found in Oracle response");
         }

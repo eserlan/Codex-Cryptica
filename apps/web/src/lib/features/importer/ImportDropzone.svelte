@@ -157,9 +157,10 @@
 
   /* Pasted rich text (Word/Google Docs) carries inline color/background
      styles on individual elements that override the theme and can render
-     unreadable in dark mode. Force every pasted element back to the theme's
-     text color and a transparent background. */
-  .editor :global(*) {
+     unreadable in dark mode. Scoped to [style] so only elements the paste
+     itself styled are overridden — default element styling (e.g. link
+     colors on markup we render ourselves) is left alone. */
+  .editor :global([style]) {
     color: inherit !important;
     background-color: transparent !important;
   }

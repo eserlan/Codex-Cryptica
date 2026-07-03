@@ -19,9 +19,18 @@ export function discoveredEntitiesToPackage(
   entities: DiscoveredEntity[],
   sourceLabel: string,
 ): CCImportPackage {
+  // Titles shared by more than one entity are ambiguous — skip relationship
+  // resolution for them rather than silently linking to whichever entity
+  // happened to be seen last.
   const titleToSourceId = new Map<string, string>();
+  const ambiguousTitles = new Set<string>();
   for (const entity of entities) {
-    titleToSourceId.set(entity.suggestedTitle.toLowerCase().trim(), entity.id);
+    const key = entity.suggestedTitle.toLowerCase().trim();
+    if (titleToSourceId.has(key)) {
+      ambiguousTitles.add(key);
+    } else {
+      titleToSourceId.set(key, entity.id);
+    }
   }
 
   const entityDrafts: EntityDraft[] = entities.map((entity) => {
@@ -53,7 +62,10 @@ export function discoveredEntitiesToPackage(
       const label = typeof link === "string" ? undefined : link.label;
       if (!target) continue;
 
-      const targetId = titleToSourceId.get(target.toLowerCase().trim());
+      const targetKey = target.toLowerCase().trim();
+      if (ambiguousTitles.has(targetKey)) continue;
+
+      const targetId = titleToSourceId.get(targetKey);
       if (!targetId || targetId === entity.id) continue;
 
       relationshipDrafts.push({

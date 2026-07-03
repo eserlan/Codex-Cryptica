@@ -84,6 +84,23 @@ describe("discoveredEntitiesToPackage", () => {
     expect(pkg.relationshipDrafts).toEqual([]);
   });
 
+  it("skips relationship resolution for titles shared by more than one entity", () => {
+    const narrator = makeEntity({
+      id: "narrator-1",
+      suggestedTitle: "Narrator",
+      detectedLinks: [{ target: "Sarah" }],
+    });
+    const sarahOne = makeEntity({ id: "sarah-1", suggestedTitle: "Sarah" });
+    const sarahTwo = makeEntity({ id: "sarah-2", suggestedTitle: "sarah " }); // same key after normalization
+
+    const pkg = discoveredEntitiesToPackage(
+      [narrator, sarahOne, sarahTwo],
+      "Oracle Analysis",
+    );
+
+    expect(pkg.relationshipDrafts).toEqual([]);
+  });
+
   it("accepts plain string detectedLinks", () => {
     const hero = makeEntity({
       id: "hero-1",

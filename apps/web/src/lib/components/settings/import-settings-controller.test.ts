@@ -163,7 +163,11 @@ describe("import-settings-controller helpers", () => {
 
     await controller.handleFiles([file]);
 
-    expect(controller.step).toBe("review");
+    // No ccSession is produced, so the review step (which only renders
+    // CCImportReview) would be a dead end — upload still shows rejectedFiles
+    // via ImportSourcePicker, so that's where the user should land.
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
     expect(controller.rejectedFiles).toHaveLength(1);
     expect(controller.rejectedFiles[0].name).toBe("notes.txt");
     expect(controller.rejectedFiles[0].reason).toMatch(/no model produced/i);
