@@ -1,4 +1,5 @@
 import { debugStore } from "../debug.svelte";
+import { retryWithBackoff } from "../../utils/retry";
 import { cacheService } from "../../services/cache.svelte";
 import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
@@ -259,26 +260,19 @@ export class EntityPersistenceService {
     vaultIdAtStart: string,
     entity: LocalEntity,
   ): Promise<void> {
-    let lastError: unknown;
-    for (let attempt = 0; attempt < DISK_WRITE_ATTEMPTS; attempt++) {
-      try {
-        await this.deps.repository.saveToDisk(
+    await retryWithBackoff(
+      () =>
+        this.deps.repository.saveToDisk(
           vaultHandle,
           vaultIdAtStart,
           entity,
           this.deps.isGuest(),
-        );
-        return;
-      } catch (error) {
-        lastError = error;
-        if (attempt < DISK_WRITE_ATTEMPTS - 1) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, DISK_RETRY_BASE_MS * (attempt + 1)),
-          );
-        }
-      }
-    }
-    throw lastError;
+        ),
+      {
+        attempts: DISK_WRITE_ATTEMPTS,
+        delayMs: (attempt) => DISK_RETRY_BASE_MS * (attempt + 1),
+      },
+    );
   }
 
   private _requeueFailedSave(

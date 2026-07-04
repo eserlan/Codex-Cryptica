@@ -1,6 +1,7 @@
 import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
+import { retryWithBackoff } from "$lib/utils/retry";
 import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
@@ -368,36 +369,36 @@ export class PublishingService {
           "X-Filename": asset.path.split("/").pop() || asset.assetId,
         };
 
-        let retryCount = 0;
-        let assetResponse: Response | null = null;
-
         // Enough backoff budget (2+4+8+16+30+30 ≈ 90s) to outlast a full
         // 60s rate-limit window on large first-time publishes.
-        while (retryCount < 6) {
-          assetResponse = await fetcher(assetUrl, {
-            method: "POST",
-            headers: assetHeaders,
-            body: asset.blob,
-          });
+        const assetResponse = await retryWithBackoff(
+          () =>
+            fetcher(assetUrl, {
+              method: "POST",
+              headers: assetHeaders,
+              body: asset.blob,
+            }),
+          {
+            attempts: 6,
+            retryOnError: false,
+            shouldRetry: (response) => response.status === 429,
+            delayMs: (attempt, response) => {
+              const retryAfter = response?.headers.get("Retry-After");
+              return retryAfter
+                ? parseInt(retryAfter, 10) * 1000
+                : Math.min(1000 * Math.pow(2, attempt + 1), 30_000);
+            },
+            onRetry: (_attempt, delay) => {
+              console.warn(
+                `[PublishingService] Rate limited (429) uploading ${asset.path}, retrying in ${delay}ms...`,
+              );
+            },
+          },
+        );
 
-          if (assetResponse.status === 429) {
-            retryCount++;
-            const retryAfter = assetResponse.headers.get("Retry-After");
-            const delay = retryAfter
-              ? parseInt(retryAfter, 10) * 1000
-              : Math.min(1000 * Math.pow(2, retryCount), 30_000);
-            console.warn(
-              `[PublishingService] Rate limited (429) uploading ${asset.path}, retrying in ${delay}ms...`,
-            );
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
-          break;
-        }
-
-        if (!assetResponse || !assetResponse.ok) {
+        if (!assetResponse.ok) {
           throw new Error(
-            `Failed to upload asset ${asset.path}: ${assetResponse?.statusText || "Unknown error"}`,
+            `Failed to upload asset ${asset.path}: ${assetResponse.statusText || "Unknown error"}`,
           );
         }
         assetUploadIndex++;

@@ -1,5 +1,6 @@
 import { type IGDriveAuthService } from "@codex/sync-engine";
 import { browser } from "$app/environment";
+import { waitUntil } from "$lib/utils/retry";
 
 /**
  * Manages Google Drive authentication using Google Identity Services (GIS).
@@ -48,16 +49,12 @@ export class GDriveAuthService implements IGDriveAuthService {
 
     const promise = (async () => {
       // Wait for google library to load if needed (max 5s)
-      let retryCount = 0;
-      while (
-        (typeof google === "undefined" || !google.accounts?.oauth2) &&
-        retryCount < 50
-      ) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        retryCount++;
-      }
+      const loaded = await waitUntil(
+        () => typeof google !== "undefined" && !!google.accounts?.oauth2,
+        { intervalMs: 100, timeoutMs: 5000 },
+      );
 
-      if (typeof google === "undefined" || !google.accounts?.oauth2) {
+      if (!loaded) {
         throw new Error(
           "Google Identity Services library failed to load. Please check your internet connection.",
         );
