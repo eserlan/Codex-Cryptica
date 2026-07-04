@@ -27,7 +27,7 @@ No code logic (features, bug fixes, or improvements) shall be committed without 
 
 Leverage established open-source libraries (e.g., `mammoth`, `pdfjs`, `cytoscape`) rather than writing custom solutions for solved problems. Do not over-engineer for future "potential" needs; focus on the current feature set.
 
-Before writing new logic, check whether the same logic already exists elsewhere in the codebase (the same package, a sibling package, or a shared `utils`). If it does, import and reuse it instead of reimplementing it. If a change would leave the same non-trivial logic duplicated in three or more places, extract it into a shared helper as part of that change rather than copy-pasting another instance.
+Before writing new logic, check whether the same logic already exists elsewhere in the codebase (the same package, a sibling package, or a shared `utils`). If it does, import and reuse it instead of reimplementing it. If a change would leave the same non-trivial logic duplicated in three or more places, extract it into a shared helper as part of that change rather than copy-pasting another instance. Place the extracted helper per Principle I: into the appropriate `packages/` workspace package if the logic isn't app-specific, or into a shared `utils` module within `apps/web` if it is.
 
 ### IV. AI-First Extraction
 
