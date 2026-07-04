@@ -1,17 +1,13 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 -> 1.2.1
-- Modified principles: VI. Clean Implementation (validation commands now use Bun)
+- Version change: 1.2.1 -> 1.3.0
+- Modified principles: III. Simplicity & YAGNI (added a DRY/duplication-check rule)
 - Added sections: None
 - Removed sections: None
 - Templates requiring updates:
-  - ✅ Verified .specify/templates/plan-template.md; no package-manager command reference.
-  - ✅ Verified .specify/templates/spec-template.md; no package-manager command reference.
-  - ✅ Verified .specify/templates/tasks-template.md; no package-manager command reference.
-  - ✅ Verified canonical .gemini/commands and mirrored .codex/commands; no
-    package-manager command reference requires synchronization.
-  - ✅ Verified AGENTS.md and README.md; README already uses Bun and AGENTS.md has
-    no conflicting validation command.
+  - ✅ Verified .specify/templates/plan-template.md; no conflicting guidance.
+  - ✅ Verified .specify/templates/spec-template.md; no conflicting guidance.
+  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance.
 - Follow-up TODOs: None
 -->
 
@@ -30,6 +26,8 @@ No code logic (features, bug fixes, or improvements) shall be committed without 
 ### III. Simplicity & YAGNI
 
 Leverage established open-source libraries (e.g., `mammoth`, `pdfjs`, `cytoscape`) rather than writing custom solutions for solved problems. Do not over-engineer for future "potential" needs; focus on the current feature set.
+
+Before writing new logic, check whether the same logic already exists elsewhere in the codebase (the same package, a sibling package, or a shared `utils`). If it does, import and reuse it instead of reimplementing it. If a change would leave the same non-trivial logic duplicated in three or more places, extract it into a shared helper as part of that change rather than copy-pasting another instance.
 
 ### IV. AI-First Extraction
 
@@ -84,4 +82,4 @@ To prevent user confusion and maintain conceptual clarity, the project converges
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.2.1 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-06-22
+**Version**: 1.3.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-07-04
