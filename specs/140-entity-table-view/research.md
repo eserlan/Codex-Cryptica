@@ -49,3 +49,14 @@
 - **Decision**: The table exposes only "Add / remove labels", delegating to `modalUIStore.openBulkLabelDialog(selectedIds)` rendered by `GlobalModalProvider`.
 - **Rationale**: The dialog already existed for the list view; reusing it keeps one label-editing flow (constitution III) and keeps the table read-heavy as the epic intended.
 - **Alternatives considered**: Inline label editor in the toolbar (rejected: duplicates dialog logic, crowds the table chrome).
+
+## Decision 9: Selection model refinement (US4 & US5 updates for #1627)
+
+- **Decision**: Modify left-click row behavior to toggle selection, and map navigation to double-clicks (`ondblclick`). Capture `lastSelectedId` reactive anchor to compute Shift-click ranges.
+- **Rationale**: Solves accidental navigations during bulk multi-selection operations. Range and toggle shortcuts (Shift/Ctrl modifiers) match standard spreadsheet/desktop UX.
+
+## Decision 10: Fixed absolute coordinates for custom Context Menu (US6 updates for #1627)
+
+- **Decision**: Implement a custom floating `TableContextMenu` positioned using `fixed` layout driven by clientX/Y coordinates. Bind events on `oncontextmenu` on table rows, updating target selection dynamically.
+- **Rationale**: Avoids clipping boundaries inside horizontal scroll containers (`overflow-x-auto`). Intercepting right-clicks enables desktop-like management workflows. Click-outside overlays are cleared using global mouse listener triggers.
+- **Alternatives considered**: Standard relative dropdowns (rejected: clip boundaries inside table columns).
