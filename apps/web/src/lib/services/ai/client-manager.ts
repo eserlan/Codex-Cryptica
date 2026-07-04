@@ -3,6 +3,7 @@ import type {
   GenerativeModel,
   GenerativeContentBlob,
 } from "@google/generative-ai";
+import { safeSnapshot } from "./text-generation-context";
 
 /**
  * Thrown when a `previous_interaction_id` is no longer valid (retention window
@@ -191,7 +192,7 @@ export class DefaultAIClientManager {
 
         // 1. Deep clone request data so any reactive proxies are removed
         // before the payload is normalized and serialized.
-        const raw = cloneRequestPayload(request);
+        const raw = safeSnapshot(request);
 
         // 2. Normalize to standard Google "Contents" array
         let contents: any[];
@@ -322,30 +323,3 @@ export class DefaultAIClientManager {
 }
 
 export const aiClientManager = new DefaultAIClientManager();
-
-function cloneRequestPayload<T>(request: T): T {
-  if (typeof request !== "object" || request === null) {
-    return request;
-  }
-
-  try {
-    if (typeof structuredClone === "function") {
-      return structuredClone(request);
-    }
-  } catch (error) {
-    console.warn(
-      "[OracleProxy] structuredClone failed, falling back to JSON clone:",
-      error,
-    );
-  }
-
-  try {
-    return JSON.parse(JSON.stringify(request));
-  } catch (error) {
-    console.warn(
-      "[OracleProxy] JSON clone failed, using original request object:",
-      error,
-    );
-    return request;
-  }
-}
