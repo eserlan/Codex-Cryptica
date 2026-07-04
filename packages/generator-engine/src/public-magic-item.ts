@@ -10,13 +10,7 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
+import { type Rng, defaultRng, pickFrom } from "./random-utils";
 
 const FALLBACK_THEME = "Classic Fantasy";
 

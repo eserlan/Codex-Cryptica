@@ -11,26 +11,12 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function getRandomItems<T>(
-  arr: readonly T[],
-  count: number,
-  rng: Rng = defaultRng,
-): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, count);
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  pickRandomItems as getRandomItems,
+} from "./random-utils";
 
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
   return record[genre] ?? record["Fantasy"];

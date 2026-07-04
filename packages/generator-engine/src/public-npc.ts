@@ -12,42 +12,13 @@
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-
-/** Random source in [0,1) — injectable for deterministic tests. */
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function getRandomItems<T>(
-  arr: readonly T[],
-  count: number,
-  rng: Rng = defaultRng,
-): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, count);
-}
-
-function generateName(rng: Rng = defaultRng): string {
-  const prefixes = [
-    "Ael",
-    "Bran",
-    "Cael",
-    "Dax",
-    "Kael",
-    "Morg",
-    "Thor",
-    "Vael",
-  ];
-  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
-  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  pickRandomItems as getRandomItems,
+  generatePlaceholderName as generateName,
+} from "./random-utils";
 
 // ---------------------------------------------------------------------------
 // Banned names (ported from seo/generators/banned-names.ts)
