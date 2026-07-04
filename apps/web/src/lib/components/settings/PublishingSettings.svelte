@@ -27,6 +27,7 @@
 
   async function handleUnpublish() {
     if (!activeVaultId || !activeRegistry) return;
+    const vaultId = activeVaultId;
     const vaultTitle = vault.activeVaultRecord?.name || "this campaign";
     const confirmed = await notificationStore.confirm({
       title: "Unpublish Snapshot",
@@ -38,7 +39,7 @@
     if (!confirmed) return;
 
     try {
-      await publishingService.unpublish(activeVaultId);
+      await publishingService.unpublish(vaultId);
     } catch (err: any) {
       console.error("[PublishingSettings] Unpublish failed:", err);
     }
