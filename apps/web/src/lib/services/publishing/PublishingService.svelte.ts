@@ -369,7 +369,7 @@ export class PublishingService {
           "X-Filename": asset.path.split("/").pop() || asset.assetId,
         };
 
-        // Enough backoff budget (2+4+8+16+30+30 ≈ 90s) to outlast a full
+        // Enough backoff budget (2+4+8+16+30 = 60s) to outlast a full
         // 60s rate-limit window on large first-time publishes.
         const assetResponse = await retryWithBackoff(
           () =>

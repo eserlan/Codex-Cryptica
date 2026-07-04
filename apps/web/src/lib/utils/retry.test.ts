@@ -60,6 +60,14 @@ describe("retryWithBackoff", () => {
     ).rejects.toThrow("network down");
     expect(fn).toHaveBeenCalledTimes(1);
   });
+
+  it("rejects non-positive attempts instead of throwing undefined", async () => {
+    const fn = vi.fn().mockResolvedValue("ok");
+    await expect(
+      retryWithBackoff(fn, { attempts: 0, delayMs: () => 10 }),
+    ).rejects.toThrow(RangeError);
+    expect(fn).not.toHaveBeenCalled();
+  });
 });
 
 describe("waitUntil", () => {
@@ -84,6 +92,18 @@ describe("waitUntil", () => {
   it("resolves false when the timeout elapses first", async () => {
     const promise = waitUntil(() => false, {
       intervalMs: 100,
+      timeoutMs: 500,
+    });
+    await vi.runAllTimersAsync();
+    expect(await promise).toBe(false);
+  });
+
+  it("caps the sleep so a large interval cannot overshoot the deadline", async () => {
+    let ready = false;
+    // Flips true after the deadline — a full 10s interval sleep would see it.
+    setTimeout(() => (ready = true), 600);
+    const promise = waitUntil(() => ready, {
+      intervalMs: 10_000,
       timeoutMs: 500,
     });
     await vi.runAllTimersAsync();

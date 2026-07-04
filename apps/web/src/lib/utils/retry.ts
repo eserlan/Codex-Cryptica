@@ -25,6 +25,11 @@ export async function retryWithBackoff<T>(
     retryOnError = true,
     onRetry,
   } = options;
+  if (!Number.isInteger(attempts) || attempts <= 0) {
+    throw new RangeError(
+      `attempts must be a positive integer, got ${attempts}`,
+    );
+  }
   let lastError: unknown;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
@@ -60,8 +65,13 @@ export async function waitUntil(
 ): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (!predicate()) {
-    if (Date.now() >= deadline) return false;
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return false;
+    // Cap the sleep to the remaining budget so a large interval can't
+    // overshoot the deadline and report a late success.
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(intervalMs, remaining)),
+    );
   }
   return true;
 }
