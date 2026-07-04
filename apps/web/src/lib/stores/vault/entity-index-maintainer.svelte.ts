@@ -1,5 +1,8 @@
 import type { LocalEntity } from "./types";
-import { isGraphRelevantEntityChange } from "./entity-equality";
+import {
+  isGraphRelevantEntityChange,
+  stringArrayEqual,
+} from "./entity-equality";
 
 export interface TitleAndAliasIndexEntry {
   lowercaseText: string;
@@ -137,10 +140,11 @@ export class EntityIndexMaintainer {
       } else if (oldEnt !== newEnt) {
         // Compare only index-relevant fields to detect if a heavy re-indexing is required.
         const titleChanged = oldEnt.title !== newEnt.title;
-        const aliasesChanged =
-          JSON.stringify(oldEnt.aliases) !== JSON.stringify(newEnt.aliases);
-        const labelsChanged =
-          JSON.stringify(oldEnt.labels) !== JSON.stringify(newEnt.labels);
+        const aliasesChanged = !stringArrayEqual(
+          oldEnt.aliases,
+          newEnt.aliases,
+        );
+        const labelsChanged = !stringArrayEqual(oldEnt.labels, newEnt.labels);
         const parentChanged = oldEnt.parent !== newEnt.parent;
         const statusChanged = oldEnt.status !== newEnt.status;
         const visibilityChanged = oldEnt.visibility !== newEnt.visibility;
