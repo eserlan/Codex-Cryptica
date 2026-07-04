@@ -1,10 +1,10 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import ModalShell from "$lib/components/ui/ModalShell.svelte";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
@@ -173,37 +173,16 @@
   };
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
-
-<div
-  class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-  transition:fade
-  role="button"
-  tabindex="0"
-  onclick={(e) => {
-    if (e.target === e.currentTarget) onClose();
-  }}
-  onkeydown={(e) => {
-    if (
-      e.target === e.currentTarget &&
-      (e.key === "Enter" ||
-        e.key === " " ||
-        e.key === "Spacebar" ||
-        e.key === "Escape")
-    ) {
-      e.preventDefault();
-      onClose();
-    }
-  }}
+<ModalShell
+  open={true}
+  onClose={() => onClose()}
+  labelledBy="vault-selector-title"
+  backdropClass="bg-black/50 backdrop-blur-sm"
+  zIndexClass="z-[90]"
+  class="bg-theme-surface border border-theme-border rounded-lg max-h-[80vh] flex flex-col"
+  maxWidthClass="max-w-lg"
 >
-  <div
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="vault-selector-title"
-    class="bg-theme-surface border border-theme-border rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
-    transition:scale
-    data-testid="vault-switcher-modal"
-  >
+  <div data-testid="vault-switcher-modal" class="contents">
     <div
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg"
     >
@@ -476,4 +455,4 @@
       {/if}
     </div>
   </div>
-</div>
+</ModalShell>

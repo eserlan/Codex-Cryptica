@@ -9,28 +9,48 @@ const FOCUSABLE =
 export function focusTrap(node: HTMLElement) {
   const triggerEl = document.activeElement as HTMLElement | null;
 
+  // Walks the ancestor chain checking computed display/visibility rather than
+  // offsetParent: offsetParent is null both for display:none ancestors AND for
+  // position:fixed/sticky elements (a false negative for genuinely-visible
+  // content), and is always null under jsdom (no layout engine), which made
+  // this check unreliable in unit tests. Computed style resolution works
+  // consistently in both real browsers and jsdom.
+  const isVisible = (el: HTMLElement): boolean => {
+    let current: HTMLElement | null = el;
+    while (current) {
+      const style = window.getComputedStyle(current);
+      if (style.display === "none" || style.visibility === "hidden") {
+        return false;
+      }
+      current = current.parentElement;
+    }
+    return true;
+  };
+
   const focusable = () =>
     [...node.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => {
       if (el.closest("[inert]")) return false;
-      // offsetParent is null for display:none but also for position:fixed — use
-      // getComputedStyle for the latter so fixed-position children aren't skipped.
-      if (el.offsetParent === null) {
-        const style = window.getComputedStyle(el);
-        if (style.position !== "fixed" && style.position !== "sticky")
-          return false;
-      }
-      return true;
+      return isVisible(el);
     });
 
-  // Auto-focus first focusable element
-  const first = focusable()[0];
-  if (first) {
-    // Defer one tick so transitions don't fight focus
-    requestAnimationFrame(() => first.focus());
-  } else {
-    node.tabIndex = -1;
-    requestAnimationFrame(() => node.focus());
-  }
+  // Defer one tick so transitions don't fight focus, and so content rendered
+  // into `node` via a cross-component snippet/slot (which may not be in the
+  // DOM yet at action-mount time) has a chance to attach first. Skip if a
+  // consumer already moved focus somewhere inside `node` in the meantime
+  // (e.g. a form field it wants focused instead of the first focusable
+  // element) rather than clobbering it.
+  requestAnimationFrame(() => {
+    if (document.activeElement && node.contains(document.activeElement)) {
+      return;
+    }
+    const first = focusable()[0];
+    if (first) {
+      first.focus();
+    } else {
+      node.tabIndex = -1;
+      node.focus();
+    }
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key !== "Tab") return;
