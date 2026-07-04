@@ -16,6 +16,7 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
@@ -552,12 +553,7 @@ export function parseQuestResponse(
   text: string,
   resolved: ResolvedQuest,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "event",
     title: data.title || resolved.questName,

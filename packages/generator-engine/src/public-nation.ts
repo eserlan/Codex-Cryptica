@@ -16,6 +16,7 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 const REALM_ROOTS = [
   "Ashenveil",
@@ -309,11 +310,7 @@ ${sessionContext}`;
 }
 
 export function parseNationResponse(text: string): PublicGeneratorOutput {
-  const cleanText = text
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
 
   return {
     type: "faction",

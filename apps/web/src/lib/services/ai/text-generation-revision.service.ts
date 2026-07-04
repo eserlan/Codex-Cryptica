@@ -15,7 +15,10 @@ import {
   buildEntityRevisionUserPrompt,
 } from "./prompts/entity-revision";
 import { resolveTemplateSync } from "../EntityTemplateConstants";
-import { safeSnapshot } from "./text-generation-context";
+import {
+  safeSnapshot,
+  extractJsonFromModelResponse,
+} from "./text-generation-context";
 
 /** Revises an existing entity's content/lore from an incoming chronicle update (the "recon pipeline"). */
 export class TextGenerationRevisionService {
@@ -134,16 +137,16 @@ export class TextGenerationRevisionService {
         });
       }
 
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      const parsed = extractJsonFromModelResponse<
+        Partial<{
+          content: string;
+          lore: string;
+          categoryId: string;
+        }>
+      >(text);
+      if (parsed === undefined) {
         throw new Error("Missing JSON payload");
       }
-
-      const parsed = JSON.parse(jsonMatch[0]) as Partial<{
-        content: string;
-        lore: string;
-        categoryId: string;
-      }>;
       if (import.meta.env.DEV) {
         console.log("[ReconPipeline] Parsed JSON metadata:", {
           contentLength: parsed.content?.length ?? 0,

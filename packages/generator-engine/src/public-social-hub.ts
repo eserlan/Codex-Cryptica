@@ -16,6 +16,7 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
+import { parseFencedJson, asString } from "./llm-response-utils";
 
 const VENUE_ADJECTIVES = [
   "Sullen",
@@ -493,16 +494,11 @@ ${sessionContext}
 }
 
 function parseJson(text: string): Record<string, unknown> {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  return JSON.parse(cleanText) as Record<string, unknown>;
+  return parseFencedJson<Record<string, unknown>>(text);
 }
 
 function stringField(data: Record<string, unknown>, key: string): string {
-  return typeof data[key] === "string" ? data[key] : "";
+  return asString(data[key]);
 }
 
 export function parseSocialHubResponse(text: string): PublicGeneratorOutput {

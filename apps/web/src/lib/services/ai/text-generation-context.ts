@@ -25,3 +25,17 @@ export function getConsolidatedContext(
   if (entity.content?.trim()) parts.push(entity.content.trim());
   return parts.join("\n\n");
 }
+
+/**
+ * Extracts and parses the first JSON object embedded in a model response
+ * (which may include leading/trailing prose around the JSON payload).
+ * Returns undefined if no JSON object is found; throws if the matched text
+ * isn't valid JSON.
+ */
+export function extractJsonFromModelResponse<T = any>(
+  text: string,
+): T | undefined {
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return undefined;
+  return JSON.parse(jsonMatch[0]) as T;
+}

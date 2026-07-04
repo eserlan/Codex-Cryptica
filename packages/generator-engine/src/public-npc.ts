@@ -19,6 +19,7 @@ import {
   pickRandomItems as getRandomItems,
   generatePlaceholderName as generateName,
 } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 // ---------------------------------------------------------------------------
 // Banned names (ported from seo/generators/banned-names.ts)
@@ -1204,12 +1205,7 @@ export function parseNpcResponse(
   options: NpcGeneratorOptions,
   resolved: ResolvedNpc,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   const { race, role, name, moralityAnchor, alignment } = resolved;
 
   return {
