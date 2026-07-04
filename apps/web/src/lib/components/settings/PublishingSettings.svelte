@@ -4,12 +4,10 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import PublishPreviewModal from "./PublishPreviewModal.svelte";
-  import UnpublishConfirmModal from "./UnpublishConfirmModal.svelte";
   import PublishingDashboard from "./PublishingDashboard.svelte";
   import PublicListingSettings from "./PublicListingSettings.svelte";
 
   let showPreviewModal = $state(false);
-  let showUnpublishModal = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
   const activeRegistry = $derived(
@@ -27,13 +25,18 @@
     }
   }
 
-  function handleUnpublish() {
+  async function handleUnpublish() {
     if (!activeVaultId || !activeRegistry) return;
-    showUnpublishModal = true;
-  }
+    const vaultTitle = vault.activeVaultRecord?.name || "this campaign";
+    const confirmed = await notificationStore.confirm({
+      title: "Unpublish Snapshot",
+      message: `Are you sure you want to unpublish ${vaultTitle}? This action will permanently delete the snapshot JSON bundle and all associated asset files (images, maps) from the Cloudflare R2 bucket. Players and guests using the shared link will immediately receive a 404 snapshot error.`,
+      confirmLabel: "Unpublish & Delete",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+    if (!confirmed) return;
 
-  async function handleConfirmUnpublish() {
-    if (!activeVaultId) return;
     try {
       await publishingService.unpublish(activeVaultId);
     } catch (err: any) {
@@ -346,13 +349,5 @@
     bind:show={showPreviewModal}
     vaultId={activeVaultId}
     onConfirm={handleConfirmPublish}
-  />
-{/if}
-
-{#if showUnpublishModal && activeVaultId}
-  <UnpublishConfirmModal
-    bind:show={showUnpublishModal}
-    vaultTitle={vault.activeVaultRecord?.name || "this campaign"}
-    onConfirm={handleConfirmUnpublish}
   />
 {/if}
