@@ -1,6 +1,6 @@
 import { type Rng, pickFrom } from "./random-utils";
 
-export const REALM_ROOTS = [
+const REALM_ROOTS = [
   "Ashenveil",
   "Stonemark",
   "Duskwall",
@@ -33,7 +33,7 @@ export const REALM_ROOTS = [
   "Caldreth",
 ];
 
-export const CAPITAL_WORDS = [
+const CAPITAL_WORDS = [
   "Veth",
   "Dorn",
   "Rath",
