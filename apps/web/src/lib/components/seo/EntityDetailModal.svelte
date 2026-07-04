@@ -13,7 +13,13 @@
     entity: SessionEntity | null;
     onClose: () => void;
   } = $props();
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (entity && e.key === "Escape") onClose();
+  }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if entity}
   <div
@@ -21,6 +27,9 @@
     transition:fade={{ duration: 150 }}
   >
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="entity-detail-modal-title"
       class="bg-theme-surface border border-theme-border max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-xl flex flex-col text-left overflow-hidden animate-in fade-in zoom-in-95 duration-200"
     >
       <div
@@ -31,7 +40,10 @@
             class="text-[10px] uppercase tracking-wider text-theme-primary px-2 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20"
             >{entity.type}</span
           >
-          <h3 class="font-header font-bold text-xl text-theme-text">
+          <h3
+            id="entity-detail-modal-title"
+            class="font-header font-bold text-xl text-theme-text"
+          >
             {entity.title}
           </h3>
         </div>

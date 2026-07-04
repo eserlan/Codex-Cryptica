@@ -10,7 +10,13 @@
     onConfirm: () => void;
     onCancel: () => void;
   } = $props();
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (open && e.key === "Escape") onCancel();
+  }
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if open}
   <div
@@ -18,6 +24,9 @@
     transition:fade={{ duration: 150 }}
   >
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="save-to-codex-modal-title"
       class="bg-theme-surface border border-theme-border max-w-md w-full p-6 rounded-2xl shadow-xl flex flex-col gap-4 text-center animate-in fade-in zoom-in-95 duration-200"
     >
       <div
@@ -27,14 +36,16 @@
       </div>
 
       <h3
+        id="save-to-codex-modal-title"
         class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary"
       >
         Saved to your local Codex vault.
       </h3>
 
       <p class="text-sm text-theme-text/70 leading-relaxed">
-        Open Codex to link this faction to NPCs, locations, maps, and campaign
-        notes. Your vault lives in the browser — no account, no sync, no cloud.
+        Open Codex to link this draft to other NPCs, locations, maps, and
+        campaign notes. Your vault lives in the browser — no account, no sync,
+        no cloud.
       </p>
 
       <div class="flex flex-col gap-2 mt-4">
