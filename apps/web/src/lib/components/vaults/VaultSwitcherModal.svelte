@@ -175,7 +175,7 @@
 
 <ModalShell
   open={true}
-  onClose={() => onClose()}
+  {onClose}
   labelledBy="vault-selector-title"
   backdropClass="bg-black/50 backdrop-blur-sm"
   zIndexClass="z-[90]"

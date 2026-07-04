@@ -36,11 +36,11 @@
   } = $props();
 
   const handleKeydown = (e: KeyboardEvent) => {
-    if (open && e.key === "Escape") onClose();
+    if (e.key === "Escape") onClose();
   };
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window onkeydown={open ? handleKeydown : undefined} />
 
 {#if open}
   <div

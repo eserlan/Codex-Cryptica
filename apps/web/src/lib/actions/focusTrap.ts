@@ -8,6 +8,7 @@ const FOCUSABLE =
  */
 export function focusTrap(node: HTMLElement) {
   const triggerEl = document.activeElement as HTMLElement | null;
+  let destroyed = false;
 
   // Walks the ancestor chain checking computed display/visibility rather than
   // offsetParent: offsetParent is null both for display:none ancestors AND for
@@ -40,6 +41,7 @@ export function focusTrap(node: HTMLElement) {
   // (e.g. a form field it wants focused instead of the first focusable
   // element) rather than clobbering it.
   requestAnimationFrame(() => {
+    if (destroyed || !node.isConnected) return;
     if (document.activeElement && node.contains(document.activeElement)) {
       return;
     }
@@ -82,6 +84,7 @@ export function focusTrap(node: HTMLElement) {
 
   return {
     destroy() {
+      destroyed = true;
       node.removeEventListener("keydown", handleKeydown);
       triggerEl?.focus();
     },
