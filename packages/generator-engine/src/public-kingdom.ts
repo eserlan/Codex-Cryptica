@@ -16,6 +16,7 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 const REALM_ROOTS = [
   "Ashenveil",
@@ -231,12 +232,7 @@ ${sessionContext}`;
 }
 
 export function parseKingdomResponse(text: string): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText) as Record<string, unknown>;
+  const data = parseFencedJson<Record<string, unknown>>(text);
   return {
     type: "faction",
     title: typeof data.title === "string" ? data.title : "The Unnamed Realm",

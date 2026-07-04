@@ -14,6 +14,7 @@ import { isAIEnabled } from "./capability-guard";
 import {
   safeSnapshot,
   getConsolidatedContext,
+  extractJsonFromModelResponse,
 } from "./text-generation-context";
 
 /** Generates new entity content: merge proposals, plot hooks, structured drafts, and related entities. */
@@ -45,12 +46,11 @@ export class TextGenerationCreationService {
     try {
       const result = await model.generateContent(prompt);
       const text = result.response.text();
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      } else {
-        return { body: text };
-      }
+      const parsed = extractJsonFromModelResponse<{
+        body: string;
+        lore?: string;
+      }>(text);
+      return parsed ?? { body: text };
     } catch (err: any) {
       console.error("[TextGenerationService] Merge generation failed:", err);
       throw new Error(`Merge failed: ${err.message}`, { cause: err });
@@ -233,12 +233,10 @@ export class TextGenerationCreationService {
     try {
       const result = await model.generateContent(prompt);
       const text = result.response.text();
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      const parsed = extractJsonFromModelResponse(text);
+      if (parsed === undefined) {
         throw new Error("Missing JSON payload from AI response");
       }
-
-      const parsed = JSON.parse(jsonMatch[0]);
 
       const name =
         String(parsed.name || "").trim() || `New Related ${targetType}`;

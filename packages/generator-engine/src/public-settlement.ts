@@ -17,6 +17,7 @@ import {
   pickFrom,
   pickRandomItems as getRandomItems,
 } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
   return record[genre] ?? record["Fantasy"];
@@ -1272,12 +1273,7 @@ export function parseSettlementResponse(
   text: string,
   resolved: ResolvedSettlement,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "location",
     title: data.title || resolved.name,

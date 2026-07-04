@@ -16,6 +16,7 @@ import {
   pickFrom,
   generatePlaceholderName as generateName,
 } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 // ---------------------------------------------------------------------------
 // Config (ported verbatim from seo faction.ts)
@@ -972,12 +973,7 @@ export function parseFactionResponse(
   text: string,
   resolved: ResolvedFaction,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "faction",
     title: data.title || resolved.name,
@@ -1253,12 +1249,7 @@ export function parseNomadClanResponse(
   text: string,
   resolved: ResolvedNomadClan,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "faction",
     title: data.title || resolved.name,
@@ -1438,12 +1429,7 @@ export function parseVampireResponse(
   text: string,
   resolved: ResolvedVampire,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "faction",
     title: data.title || resolved.name,

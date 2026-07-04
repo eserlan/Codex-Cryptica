@@ -11,6 +11,7 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 const FALLBACK_THEME = "Classic Fantasy";
 
@@ -398,12 +399,7 @@ export function parseMagicItemResponse(
   text: string,
   resolved: ResolvedMagicItem,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "item",
     title: data.title || resolved.name,
