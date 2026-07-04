@@ -1,6 +1,7 @@
 import { getDB, type VaultRecord } from "../../utils/idb";
 import { createVaultDir, deleteVaultDir, getVaultDir } from "../../utils/opfs";
 import { sanitizeId } from "../../utils/markdown";
+import { debounce } from "../../utils/debounce";
 import type { PublishRegistry } from "schema";
 
 export { getVaultDir, createVaultDir };
@@ -92,17 +93,12 @@ export async function updateLastOpened(id: string): Promise<void> {
   }
 }
 
-let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
-async function triggerRefresh() {
-  if (refreshTimeout) clearTimeout(refreshTimeout);
-  refreshTimeout = setTimeout(async () => {
-    const { vaultRegistry } = await import("../vault-registry.svelte");
-    if (vaultRegistry) {
-      await vaultRegistry.refreshVaults();
-    }
-    refreshTimeout = null;
-  }, 100);
-}
+const triggerRefresh = debounce(async () => {
+  const { vaultRegistry } = await import("../vault-registry.svelte");
+  if (vaultRegistry) {
+    await vaultRegistry.refreshVaults();
+  }
+}, 100);
 
 export async function updateLastInternalChange(id: string): Promise<void> {
   const db = await getDB();
@@ -128,12 +124,16 @@ export async function updateLastSavedToFolder(id: string): Promise<void> {
   }
 }
 
-export async function getPublishRegistry(vaultId: string): Promise<PublishRegistry | undefined> {
+export async function getPublishRegistry(
+  vaultId: string,
+): Promise<PublishRegistry | undefined> {
   const db = await getDB();
   return await db.get("publish_registry", vaultId);
 }
 
-export async function savePublishRegistry(registry: PublishRegistry): Promise<void> {
+export async function savePublishRegistry(
+  registry: PublishRegistry,
+): Promise<void> {
   const db = await getDB();
   await db.put("publish_registry", registry);
 }
