@@ -6,6 +6,7 @@
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   const close = () => modalUIStore.closeReadMode();
 
@@ -149,7 +150,9 @@
     }}
     role="dialog"
     aria-modal="true"
+    aria-labelledby="read-mode-title"
     tabindex="-1"
+    use:focusTrap
     onkeydown={(e) => e.key === "Escape" && close()}
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -176,6 +179,7 @@
               >
             </div>
             <h2
+              id="read-mode-title"
               class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
               {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
@@ -183,7 +187,9 @@
                 >{/if}
             </h2>
           {:else}
-            <h2 class="text-2xl text-red-500 font-mono">Entity Not Found</h2>
+            <h2 id="read-mode-title" class="text-2xl text-red-500 font-mono">
+              Entity Not Found
+            </h2>
           {/if}
         </div>
 
