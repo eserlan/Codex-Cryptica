@@ -2,6 +2,7 @@
   import { fade, scale } from "svelte/transition";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
+  import DecorativeGlowFrame from "$lib/components/ui/DecorativeGlowFrame.svelte";
 
   const dialog = $derived(notificationStore.confirmationDialog);
 
@@ -48,13 +49,7 @@
       transition:scale={{ duration: 250, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
     >
-      <!-- Decorative Background Glow -->
-      <div
-        class="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-theme-primary/10 blur-[80px]"
-      ></div>
-      <div
-        class="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-theme-primary/5 blur-[80px]"
-      ></div>
+      <DecorativeGlowFrame />
 
       <!-- Header -->
       <div class="relative px-6 pt-8 pb-4 text-center">
@@ -102,14 +97,6 @@
           {dialog.cancelLabel || "Cancel"}
         </button>
       </div>
-
-      <!-- Decorative Corners -->
-      <div
-        class="pointer-events-none absolute top-0 left-0 h-8 w-8 border-t-2 border-l-2 border-theme-primary/40 rounded-tl-[2rem]"
-      ></div>
-      <div
-        class="pointer-events-none absolute bottom-0 right-0 h-8 w-8 border-b-2 border-r-2 border-theme-primary/40 rounded-br-[2rem]"
-      ></div>
     </div>
   </div>
 {/if}
