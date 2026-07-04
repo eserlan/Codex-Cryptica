@@ -27,10 +27,12 @@ export function getConsolidatedContext(
 }
 
 /**
- * Extracts and parses the first JSON object embedded in a model response
- * (which may include leading/trailing prose around the JSON payload).
- * Returns undefined if no JSON object is found; throws if the matched text
- * isn't valid JSON.
+ * Extracts and parses a JSON object embedded in a model response (which may
+ * include leading/trailing prose around the JSON payload). Uses a greedy
+ * match from the first `{` to the last `}`, so it assumes the response
+ * contains at most one JSON object with no stray braces in the surrounding
+ * prose. Returns undefined if no `{...}` span is found; throws if the
+ * matched text isn't valid JSON.
  */
 export function extractJsonFromModelResponse<T = any>(
   text: string,
