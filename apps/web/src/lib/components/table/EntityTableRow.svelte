@@ -24,14 +24,19 @@
     connectionSummary,
     onFilterType,
     onFilterLabel,
+    onContextMenu,
   }: {
     entity: Entity;
     vaultId: string;
     selected?: boolean;
-    onToggleSelect?: (id: string) => void;
+    onToggleSelect?: (
+      id: string,
+      options?: { shift?: boolean; ctrl?: boolean },
+    ) => void;
     connectionSummary: ConnectionSummary;
     onFilterType?: (type: string) => void;
     onFilterLabel?: (label: string) => void;
+    onContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
@@ -72,14 +77,16 @@
     void goto(href);
   }
 
-  // Whole-row navigation as a convenience; the title cell hosts the real link
-  // so keyboard users get a focusable target.
+  // Whole-row selection toggle
   function handleRowClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (target.closest("a")) return; // let the title link handle it
     if (target.closest("button")) return; // let filter chips handle it
     if (target.closest("[data-row-select]")) return; // let the checkbox toggle
-    openEntity();
+    onToggleSelect?.(entity.id, {
+      shift: event.shiftKey,
+      ctrl: event.ctrlKey || event.metaKey,
+    });
   }
 
   function handleTitleClick(event: MouseEvent) {
@@ -97,6 +104,11 @@
       openEntity();
     }
   }
+
+  function handleContextMenu(event: MouseEvent) {
+    event.preventDefault();
+    onContextMenu?.(entity.id, event.clientX, event.clientY);
+  }
 </script>
 
 <tr
@@ -106,6 +118,8 @@
   data-testid="entity-table-row"
   data-selected={selected}
   onclick={handleRowClick}
+  ondblclick={openEntity}
+  oncontextmenu={handleContextMenu}
 >
   <!-- Select -->
   <td class="px-3 py-2 align-top" data-row-select>
