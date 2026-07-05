@@ -32,24 +32,28 @@ describe("LanguageFormFields", () => {
     expect(screen.getByText("Compound Words")).toBeTruthy();
   });
 
-  it("disables the genre select and shows the note when genreLocked", async () => {
+  it("keeps the genre editable but skips it on Surprise Me when preserveGenreOnSurprise", async () => {
+    const onSurprise = vi.fn();
     render(LanguageFormFields, {
       props: {
-        genre: "Classic Fantasy",
+        genre: "Sci-Fi",
         tone: "Lyrical & Vowel-rich",
         role: "Common Speech",
         structure: "Compound Words",
         campaignContext: "",
-        genreLocked: true,
-        genreLockedNote: "Genre is set by the Fantasy Hub you arrived from.",
+        preserveGenreOnSurprise: true,
+        onSurprise,
       },
     });
 
     const select = screen.getByLabelText("Genre") as HTMLSelectElement;
-    expect(select.disabled).toBe(true);
-    expect(
-      screen.getByText("Genre is set by the Fantasy Hub you arrived from."),
-    ).toBeTruthy();
+    expect(select.disabled).toBe(false);
+
+    await fireEvent.click(screen.getByText("Surprise Me"));
+    expect(onSurprise).toHaveBeenCalled();
+    // The mocked pickFrom returns the first option, so an unpreserved genre
+    // would have been reset to "Classic Fantasy".
+    expect(select.value).toBe("Sci-Fi");
   });
 
   it("randomizes fields and calls onSurprise when Surprise Me is clicked", async () => {

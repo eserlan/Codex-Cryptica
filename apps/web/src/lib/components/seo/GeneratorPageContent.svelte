@@ -604,10 +604,7 @@
         bind:role={language.role}
         bind:structure={language.structure}
         bind:campaignContext={language.campaignContext}
-        genreLocked={Boolean(urlHubTheme)}
-        genreLockedNote={urlHubTheme
-          ? `Genre is set by the ${HUB_LABELS[urlHubTheme] ?? "theme"} you arrived from.`
-          : undefined}
+        preserveGenreOnSurprise={Boolean(urlHubTheme)}
         onSurprise={trigger}
       />
     {/if}
