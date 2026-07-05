@@ -56,6 +56,7 @@
 
   <!-- Manage Labels -->
   <button
+    type="button"
     role="menuitem"
     disabled={isGuest}
     data-testid="context-menu-add-label"
@@ -72,6 +73,7 @@
   <!-- Change Type Submenu -->
   <div class="relative group/submenu">
     <button
+      type="button"
       role="menuitem"
       disabled={isGuest}
       data-testid="context-menu-change-type"
@@ -92,6 +94,7 @@
       >
         {#each categories.list as cat}
           <button
+            type="button"
             role="menuitem"
             class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-2 transition-colors"
             onclick={() => {
@@ -99,7 +102,10 @@
               onClose();
             }}
           >
-            <span class="icon-[lucide--circle] w-2 h-2" style:color={cat.color}
+            <span
+              class="icon-[lucide--circle] w-2 h-2"
+              style:color={cat.color}
+              aria-hidden="true"
             ></span>
             {cat.label}
           </button>
@@ -112,6 +118,7 @@
 
   <!-- Delete Action -->
   <button
+    type="button"
     role="menuitem"
     disabled={isGuest}
     data-testid="context-menu-delete"

@@ -86,6 +86,7 @@
     y: number;
     targetIds: string[];
   } | null>(null);
+  let isCommitting = $state(false);
 
   // Selection respects the current filtered set: clear it whenever the filters
   // change so we never act on rows the user can no longer see. (Sorting keeps
@@ -188,6 +189,7 @@
   }
 
   async function handleChangeType(type: string) {
+    if (isCommitting) return;
     if (!contextMenu || contextMenu.targetIds.length === 0) return;
     const targetIds = contextMenu.targetIds;
 
@@ -202,6 +204,7 @@
     });
 
     if (confirmed) {
+      isCommitting = true;
       try {
         for (const id of targetIds) {
           await vault.updateEntity(id, { type });
@@ -209,11 +212,14 @@
       } catch (err: any) {
         console.error("Failed to change type", err);
         notificationStore.notify(`Error: ${err.message}`, "error");
+      } finally {
+        isCommitting = false;
       }
     }
   }
 
   async function handleDeleteSelected() {
+    if (isCommitting) return;
     if (!contextMenu || contextMenu.targetIds.length === 0) return;
     const targetIds = contextMenu.targetIds;
 
@@ -231,6 +237,7 @@
     });
 
     if (confirmed) {
+      isCommitting = true;
       try {
         for (const id of targetIds) {
           await vault.deleteEntity(id);
@@ -239,6 +246,8 @@
       } catch (err: any) {
         console.error("Failed to delete", err);
         notificationStore.notify(`Error: ${err.message}`, "error");
+      } finally {
+        isCommitting = false;
       }
     }
   }
