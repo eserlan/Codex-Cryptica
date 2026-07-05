@@ -5,6 +5,15 @@
 **Status**: Draft  
 **Input**: User description: "Add language generator"
 
+## Clarifications
+
+### Session 2026-07-05
+
+- **Q**: How should the saved Language entities be structured and identified in the vault so that other generators can locate and reuse them as naming context?  
+  **A**: Identify saved Language entities by looking for notes containing `kind: language` in their frontmatter, or belonging to a category with the ID or label "language".
+- **Q**: For the offline/local procedural fallback (when AI is disabled or offline), how detailed should the pseudo-language generator's ruleset and output structure be?  
+  **A**: Lightweight Syllable combiner: Use pre-defined, genre/inspiration-based consonant-vowel lists to assemble names, words, and simple phrase lists.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Generate a campaign-ready fictional language profile (Priority: P1)
@@ -90,10 +99,11 @@ Navigating to `/generators/language-generator` displays the public form layout a
   - `title`: The name of the generated language.
   - `summary`: A short, descriptive tagline.
   - `lore`: Complete markdown profile structured with standard headings: "Pronunciation & Phonology", "Naming Conventions", "Example Names", "Common Vocabulary & Word Bank", and "Sample Phrases".
-  - `labels`: List of tags.
-- **FR-005**: The system MUST provide a procedural local generator fallback that constructs a consistent pseudo-language structure using customizable consonant/vowel syllable tables and grammatical patterns if AI is disabled or offline.
+  - `labels`: List of labels.
+- **FR-005**: The system MUST provide a procedural local generator fallback that constructs a consistent pseudo-language structure using pre-defined, genre/inspiration-based consonant-vowel syllable lists to assemble names, words, and simple phrase lists if AI is disabled or offline.
 - **FR-006**: The system MUST expose the new generator on the public route `/generators/language-generator` and `/tools/language-generator` to match the existing public generator structures.
 - **FR-007**: The system MUST export `languageConfig` and utility adapters from the `@codex/generator-engine` workspace package.
+- **FR-008**: The system MUST detect saved Language entities in the vault by identifying notes containing `kind: language` in frontmatter or entities belonging to a category with the ID or label 'language'.
 
 ### Key Entities _(include if feature involves data)_
 
