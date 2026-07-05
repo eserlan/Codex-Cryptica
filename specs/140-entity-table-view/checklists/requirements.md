@@ -31,5 +31,5 @@
 
 ## Notes
 
-- Retroactive spec: behavior was derived from the shipped implementation (PRs #1512, #1520, #1521, #1588) rather than from a pre-implementation description, so no clarification questions were required.
-- Out-of-scope section explicitly fences off issue #1627 (selection model / context menu) and other future epic #1508 slices, which should extend this spec when implemented.
+- Spec has been expanded to cover the design and integration of the selection model improvements, double-click navigation, and custom right-click context menu actions (as proposed in issue #1627).
+- Terminology has been verified to ensure we strictly use "Labels" instead of "Tags" per Constitution Principle XII.

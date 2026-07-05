@@ -50,13 +50,25 @@ vault.allEntities
 
 ## View State (transient, component-local, never persisted)
 
-| State          | Type                                           | Transitions                                                                                                                     |
-| -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `searchQuery`  | `string`                                       | User input; any change clears selection                                                                                         |
-| `typeFilters`  | `Set<string>`                                  | Toggled via pills or row type badges; change clears selection                                                                   |
-| `labelFilters` | `Set<string>`                                  | Toggled via chips (active ones shown as removable pills); change clears selection                                               |
-| `sort`         | `{ key: SortKey; direction: "asc" \| "desc" }` | Header click: same key toggles direction, new key resets to asc. Default `title/asc`. Preserves selection                       |
-| `selectedIds`  | `Set<string>`                                  | Row checkbox toggles one; header checkbox selects all filtered rows or clears; "Clear selection"; auto-cleared on filter change |
+| State            | Type                                           | Transitions                                                                                                                     |
+| ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `searchQuery`    | `string`                                       | User input; any change clears selection                                                                                         |
+| `typeFilters`    | `Set<string>`                                  | Toggled via pills or row type badges; change clears selection                                                                   |
+| `labelFilters`   | `Set<string>`                                  | Toggled via chips (active ones shown as removable pills); change clears selection                                               |
+| `sort`           | `{ key: SortKey; direction: "asc" \| "desc" }` | Header click: same key toggles direction, new key resets to asc. Default `title/asc`. Preserves selection                       |
+| `selectedIds`    | `Set<string>`                                  | Row checkbox toggles one; header checkbox selects all filtered rows or clears; "Clear selection"; auto-cleared on filter change |
+| `lastSelectedId` | `string \| null`                               | Stores the ID of the last row clicked without range modifiers, used as the anchor for Shift+Click range selections              |
+| `contextMenu`    | `ContextMenuState \| null`                     | Position and targets of active custom floating menu (null when closed)                                                          |
+
+### ContextMenuState
+
+```typescript
+interface ContextMenuState {
+  x: number; // Viewport screen coordinate x
+  y: number; // Viewport screen coordinate y
+  targetIds: string[]; // Entity IDs targeting the right-click action (single or multi selection)
+}
+```
 
 ### SortKey
 

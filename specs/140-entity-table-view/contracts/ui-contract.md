@@ -1,6 +1,6 @@
 # UI Contract: Entity Table / List View
 
-> Retroactive. Routes, component props, and stable test hooks the rest of the app (and the test suites) rely on.
+> Retroactive & Expanded. Routes, component props, and stable test hooks the rest of the app (and the test suites) rely on.
 
 ## Route
 
@@ -28,6 +28,9 @@ Navigation entry points: ActivityBar, MobileMenu, SearchModal ("table" view targ
   onToggleAll?: () => void;
   onFilterType?: (type: string) => void;
   onFilterLabel?: (label: string) => void;
+  onRowContextMenu?: (id: string, x: number, y: number) => void; // For right-click triggers
+  onRowDblClick?: (id: string) => void;                          // For double-click navigations
+  onToggleRange?: (startId: string, endId: string) => void;      // For Shift-click range selections
 }
 ```
 
@@ -40,19 +43,38 @@ Stateless renderer; all state owned by the route page. Sortable headers expose `
   entity: Entity;
   vaultId: string;
   selected?: boolean;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, options?: { shift?: boolean; ctrl?: boolean }) => void;
   connectionSummary: ConnectionSummary;
   onFilterType?: (type: string) => void;
   onFilterLabel?: (label: string) => void;
+  onContextMenu?: (id: string, x: number, y: number) => void;
+  onDblClick?: (id: string) => void;
 }
 ```
 
 Behavioral contract:
 
-- Title `<a href>` → `/vault/:vaultId/entity/:entityId` (host) or guest entity URL (guest).
-- Modifier-clicks (ctrl/cmd/shift/middle) on the title are NOT intercepted.
-- Row-background click opens the entity; clicks inside `a`, `button`, or `[data-row-select]` do not.
-- Guest mode: opening sets `vault.selectedEntityId` and calls `modalUIStore.openZenMode(id)` instead of navigating.
+- Double-click row OR single-click title `<a href>` → `/vault/:vaultId/entity/:entityId` (host) or guest entity URL (guest).
+- Single-left-click on checkbox or row background (with no modifier keys) → toggles selection state.
+- Ctrl/Cmd-click on row → toggles selection state.
+- Shift-click on row → triggers range selection using the last clicked row anchor.
+- Right-click on row → prevents default browser context menu, triggers `onContextMenu` callback.
+- Guest mode: opening/double-clicking sets `vault.selectedEntityId` and calls `modalUIStore.openZenMode(id)` instead of navigating.
+
+### `TableContextMenu.svelte` (NEW)
+
+```ts
+{
+  x: number;
+  y: number;
+  selectedIds: string[];
+  onAddLabel: () => void;
+  onRemoveLabel: () => void;
+  onChangeType: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+}
+```
 
 ### Pure modules
 
@@ -73,6 +95,7 @@ entitySnippet(e, maxLength = 140) → string                   // markdown-strip
 
 - `modalUIStore.openBulkLabelDialog(ids: string[])` — bulk label add/remove (rendered by `GlobalModalProvider`)
 - `modalUIStore.openZenMode(id)` — guest-mode entity open
+- `notificationStore.confirm(...)` — confirm dialog for deletion operations
 - `filterEntities` / `countEntityTypes` from `explorer/entityListFiltering` — shared filter semantics
 
 ## Test Hooks (`data-testid`)
@@ -97,3 +120,8 @@ entitySnippet(e, maxLength = 140) → string                   // markdown-strip
 | `entity-table-selection-count`   | "N selected"                                      |
 | `entity-table-bulk-label`        | Bulk label button                                 |
 | `entity-table-selection-clear`   | Clear selection                                   |
+| `entity-table-context-menu`      | Custom floating context menu container            |
+| `context-menu-add-label`         | Context menu item: Add label                      |
+| `context-menu-remove-label`      | Context menu item: Remove label                   |
+| `context-menu-change-type`       | Context menu item: Change type                    |
+| `context-menu-delete`            | Context menu item: Delete entity                  |

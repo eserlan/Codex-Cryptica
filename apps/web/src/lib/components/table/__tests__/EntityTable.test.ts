@@ -155,9 +155,11 @@ describe("EntityTable", () => {
         props: { entities: rows, vaultId: "pub1", sort, onSort: vi.fn() },
       });
 
-      await fireEvent.click(screen.getAllByTestId("entity-table-row")[0]);
+      // Double-click row background opens Zen Mode
+      await fireEvent.dblClick(screen.getAllByTestId("entity-table-row")[0]);
       expect(openZenMode).toHaveBeenCalledWith("e1");
 
+      // Clicking title link opens Zen Mode
       await fireEvent.click(screen.getByText("Brindlewood"));
       expect(openZenMode).toHaveBeenCalledWith("e2");
       expect(vault.selectedEntityId).toBe("e2");
@@ -268,5 +270,41 @@ describe("EntityTable", () => {
       "entity-table-select-all",
     ) as HTMLInputElement;
     expect(selectAll.indeterminate).toBe(true);
+  });
+
+  it("triggers onToggleRow when row background is clicked, forwarding modifiers", async () => {
+    const onToggleRow = vi.fn();
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        onToggleRow,
+      },
+    });
+
+    const renderedRows = screen.getAllByTestId("entity-table-row");
+
+    // Normal click
+    await fireEvent.click(renderedRows[0]);
+    expect(onToggleRow).toHaveBeenCalledWith("e1", {
+      shift: false,
+      ctrl: false,
+    });
+
+    // Shift click
+    await fireEvent.click(renderedRows[1], { shiftKey: true });
+    expect(onToggleRow).toHaveBeenCalledWith("e2", {
+      shift: true,
+      ctrl: false,
+    });
+
+    // Ctrl click
+    await fireEvent.click(renderedRows[0], { ctrlKey: true });
+    expect(onToggleRow).toHaveBeenCalledWith("e1", {
+      shift: false,
+      ctrl: true,
+    });
   });
 });

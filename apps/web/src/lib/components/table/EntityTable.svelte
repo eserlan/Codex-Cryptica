@@ -20,6 +20,7 @@
     onToggleAll,
     onFilterType,
     onFilterLabel,
+    onRowContextMenu,
   }: {
     entities: Entity[];
     vaultId: string;
@@ -29,10 +30,14 @@
     selectedIds?: Set<string>;
     allSelected?: boolean;
     someSelected?: boolean;
-    onToggleRow?: (id: string) => void;
+    onToggleRow?: (
+      id: string,
+      options?: { shift?: boolean; ctrl?: boolean },
+    ) => void;
     onToggleAll?: () => void;
     onFilterType?: (type: string) => void;
     onFilterLabel?: (label: string) => void;
+    onRowContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
 
   // <input indeterminate> can't be set via attribute — bind the element.
@@ -124,6 +129,7 @@
           {onFilterLabel}
           selected={selectedIds.has(entity.id)}
           onToggleSelect={onToggleRow}
+          onContextMenu={onRowContextMenu}
           connectionSummary={connectionCounts[entity.id] ?? {
             inbound: 0,
             outbound: 0,
