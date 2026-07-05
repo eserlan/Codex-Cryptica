@@ -1,6 +1,8 @@
 export interface SessionEntity {
   id: string;
   type: string;
+  /** Vault entity sub-kind (e.g. "language" on notes), carried through saves. */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;

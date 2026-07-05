@@ -21,6 +21,11 @@ import type {
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
   type: string;
+  /**
+   * Vault entity sub-kind (e.g. "language" on notes) so drafts saved through
+   * the marketing funnel stay detectable by kind-based vault scans (FR-008).
+   */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;
@@ -46,6 +51,7 @@ function firstNonBlank(...values: Array<string | undefined>): string {
 function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
   return {
     type: draft.entityType,
+    kind: draft.sourceGeneratorId === "language" ? "language" : undefined,
     title: draft.title,
     summary: draft.summary,
     // Prefer the rich body; fall back to lore, then the one-line summary, so the

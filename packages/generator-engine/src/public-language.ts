@@ -122,7 +122,8 @@ export function parseLanguageResponse(response: string): PublicGeneratorOutput {
       "## Pronunciation & Phonology\n\nUnknown sounds.",
   );
   return {
-    type: "language",
+    type: "note",
+    kind: "language",
     title: String(parsed.title || "Unnamed Language"),
     summary: String(parsed.summary || "A newly generated fictional language."),
     lore: String(parsed.lore || ""),
@@ -130,7 +131,7 @@ export function parseLanguageResponse(response: string): PublicGeneratorOutput {
     labels: Array.isArray(parsed.labels)
       ? parsed.labels.map(String)
       : ["language"],
-    status: "draft",
+    status: "active",
   };
 }
 
@@ -259,7 +260,8 @@ ${vocabTable}
 - Lean on the ${req.tone.toLowerCase()} sound profile when voicing speakers.`;
 
   return {
-    type: "language",
+    type: "note",
+    kind: "language",
     title: languageName,
     summary: `A ${req.tone} ${req.role} spoken in the ${req.genre} setting.`,
     lore,
@@ -269,6 +271,6 @@ ${vocabTable}
       req.genre.toLowerCase().replace(/[^a-z0-9]/g, "-"),
       "conlang",
     ],
-    status: "draft",
+    status: "active",
   };
 }

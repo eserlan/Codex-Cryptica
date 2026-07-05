@@ -17,6 +17,8 @@ const MAX_EXCERPT_CHARS = 300;
  * user's instruction.
  */
 const MAX_SOURCE_CHARS = 1500;
+/** Cap on language profiles included as naming grounding in prompts. */
+const MAX_LANGUAGES = 5;
 /** Vault category id for events (included as grounding for any new entity). */
 const EVENT_TYPE = "event";
 /** Vault category id for notes (lowest-priority grounding). */
@@ -244,6 +246,7 @@ export function buildVaultContext(
   }
 
   for (const id in allEntities) {
+    if (languages.length >= MAX_LANGUAGES) break;
     if (!Object.hasOwn(allEntities, id)) continue;
     const e = allEntities[id];
     if (e.kind === "language" || languageCategoryIds.has(e.type)) {

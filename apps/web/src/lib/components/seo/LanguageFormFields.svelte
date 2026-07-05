@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { languageConfig, pickFrom } from "generator-engine";
+  import { languageConfig, pickFrom } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
