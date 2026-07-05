@@ -32,6 +32,26 @@ describe("LanguageFormFields", () => {
     expect(screen.getByText("Compound Words")).toBeTruthy();
   });
 
+  it("disables the genre select and shows the note when genreLocked", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+        genreLocked: true,
+        genreLockedNote: "Genre is set by the Fantasy Hub you arrived from.",
+      },
+    });
+
+    const select = screen.getByLabelText("Genre") as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(
+      screen.getByText("Genre is set by the Fantasy Hub you arrived from."),
+    ).toBeTruthy();
+  });
+
   it("randomizes fields and calls onSurprise when Surprise Me is clicked", async () => {
     const onSurprise = vi.fn();
     render(LanguageFormFields, {

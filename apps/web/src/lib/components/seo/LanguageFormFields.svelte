@@ -8,6 +8,8 @@
     role = $bindable(""),
     structure = $bindable(""),
     campaignContext = $bindable(""),
+    genreLocked = false,
+    genreLockedNote = undefined,
     onSurprise = undefined,
   }: {
     genre: string;
@@ -15,6 +17,9 @@
     role: string;
     structure: string;
     campaignContext: string;
+    /** Freeze the genre select (e.g. when arriving from a theme hub). */
+    genreLocked?: boolean;
+    genreLockedNote?: string;
     onSurprise?: () => void;
   } = $props();
 
@@ -24,16 +29,24 @@
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
-<SelectWithCustomOption
-  id="language-genre-select"
-  label="Genre"
-  bind:value={genre}
-  choices={languageConfig.genres.map((g: string) => ({ value: g, label: g }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom genre"
-/>
+<div class="flex flex-col gap-1.5">
+  <SelectWithCustomOption
+    id="language-genre-select"
+    label="Genre"
+    bind:value={genre}
+    choices={languageConfig.genres.map((g: string) => ({ value: g, label: g }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom genre"
+    disabled={genreLocked}
+  />
+  {#if genreLocked && genreLockedNote}
+    <p class="text-[10px] text-theme-text/60 leading-relaxed">
+      {genreLockedNote}
+    </p>
+  {/if}
+</div>
 
 <SelectWithCustomOption
   id="language-tone-select"
@@ -97,7 +110,7 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
-      genre = pickFrom(languageConfig.genres);
+      if (!genreLocked) genre = pickFrom(languageConfig.genres);
       tone = pickFrom(languageConfig.tones);
       role = pickFrom(languageConfig.roles);
       structure = pickFrom(languageConfig.structures);

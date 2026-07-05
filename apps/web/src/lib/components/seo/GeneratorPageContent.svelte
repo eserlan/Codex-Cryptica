@@ -353,6 +353,15 @@
       activeTheme = "Sci-Fi / Space Opera";
       return;
     }
+    if (slug === "language-generator") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre) {
+        // Language genres follow the theme labels (Classic Fantasy,
+        // Cyberpunk / Corporate, …); unmapped hubs pass the raw genre through
+        // as a custom value, which the select and prompt both accept.
+        language.genre = SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? hubGenre;
+      }
+    }
     // For quest/npc/faction on flat URL: read localStorage.
     // On themed URL: urlHubTheme already seeded activeTheme above — skip.
     if (!urlHubTheme) {
@@ -595,6 +604,10 @@
         bind:role={language.role}
         bind:structure={language.structure}
         bind:campaignContext={language.campaignContext}
+        genreLocked={Boolean(urlHubTheme)}
+        genreLockedNote={urlHubTheme
+          ? `Genre is set by the ${HUB_LABELS[urlHubTheme] ?? "theme"} you arrived from.`
+          : undefined}
         onSurprise={trigger}
       />
     {/if}
