@@ -101,7 +101,7 @@ Navigating to `/generators/language-generator` displays the public form layout a
   - `lore`: Complete markdown profile structured with standard headings: "Pronunciation & Phonology", "Naming Conventions", "Example Names", "Common Vocabulary & Word Bank", and "Sample Phrases".
   - `labels`: List of labels.
 - **FR-005**: The system MUST provide a procedural local generator fallback that constructs a consistent pseudo-language structure using pre-defined, genre/inspiration-based consonant-vowel syllable lists to assemble names, words, and simple phrase lists if AI is disabled or offline.
-- **FR-006**: The system MUST expose the new generator on the public route `/generators/language-generator` and `/tools/language-generator` to match the existing public generator structures.
+- **FR-006**: The system MUST expose the new generator on the public route `/generators/language-generator`, linked from the `/tools` hub and the theme generator hubs, matching the route structure of the newer public generators (settlement, kingdom, nation, ship). No standalone `/tools/language-generator` route is required.
 - **FR-007**: The system MUST export `languageConfig` and utility adapters from the `@codex/generator-engine` workspace package.
 - **FR-008**: The system MUST detect saved Language entities in the vault by identifying notes containing `kind: language` in frontmatter or entities belonging to a category with the ID or label 'language'.
 

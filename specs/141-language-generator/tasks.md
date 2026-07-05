@@ -91,7 +91,7 @@
 
 ## Phase 6: User Story 4 - Public Marketing Tool Page (Priority: P2)
 
-**Goal**: Create a web page at `/generators/language-generator` (and alias `/tools/language-generator`) showcasing the public generator.
+**Goal**: Create a web page at `/generators/language-generator` showcasing the public generator, linked from the `/tools` hub and theme generator hubs.
 
 **Independent Test**: Load the marketing tool page, fill parameters, run using the guest AI proxy, and verify preview output.
 
