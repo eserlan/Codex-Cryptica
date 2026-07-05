@@ -22,6 +22,7 @@ export {
   adaptVampire,
   adaptNomadClan,
   adaptShip,
+  adaptLanguage,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
@@ -136,6 +137,14 @@ export {
   type ShipPrompt,
 } from "./public-ship";
 export {
+  buildLanguagePrompt,
+  parseLanguageResponse,
+  generateLanguageLocal,
+  languageConfig,
+  type LanguageGeneratorOptions,
+  type LanguagePrompt,
+} from "./public-language";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
@@ -151,3 +160,4 @@ export {
   type GeneratorAcceptedEntity,
 } from "./generator-session";
 export * from "./session-hub-helpers";
+export { pickFrom, pickRandomItems } from "./random-utils";

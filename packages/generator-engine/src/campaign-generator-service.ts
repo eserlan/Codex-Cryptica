@@ -95,6 +95,7 @@ export interface GeneratorVaultGateway {
       content?: string;
       lore?: string;
       labels?: string[];
+      kind?: string;
     },
   ): Promise<string>;
   /** Creates a relationship from source to target. */
@@ -299,6 +300,7 @@ export class CampaignGeneratorService {
         content: draft.summary,
         lore: draft.lore,
         labels: draft.labels,
+        kind: draft.sourceGeneratorId === "language" ? "language" : undefined,
         ...(request.start_date ? { start_date: request.start_date } : {}),
       },
     );

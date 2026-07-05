@@ -19,6 +19,7 @@ const validSlugs = new Set([
   "pantheon-generator",
   "god-generator",
   "ship-generator",
+  "language-generator",
   "random",
 ]);
 

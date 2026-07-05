@@ -22,6 +22,7 @@ const validSlugs = new Set([
   "pantheon-generator",
   "god-generator",
   "ship-generator",
+  "language-generator",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -47,7 +48,8 @@ export const load: PageLoad = ({ params }) => {
       | "dnd-npc"
       | "pantheon-generator"
       | "god-generator"
-      | "ship-generator",
+      | "ship-generator"
+      | "language-generator",
   };
 };
 
@@ -71,5 +73,6 @@ export const entries: EntryGenerator = () => {
     { slug: "pantheon-generator" },
     { slug: "god-generator" },
     { slug: "ship-generator" },
+    { slug: "language-generator" },
   ];
 };

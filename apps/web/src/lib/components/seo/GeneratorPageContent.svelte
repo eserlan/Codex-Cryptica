@@ -18,6 +18,7 @@
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
   import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
+  import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -34,6 +35,7 @@
     nameGeneratorConfig,
     pantheonConfig,
     shipConfig,
+    languageConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -234,6 +236,14 @@
     campaignContext: "",
   });
 
+  let language = $state({
+    genre: languageConfig.genres[0],
+    tone: languageConfig.tones[0],
+    role: languageConfig.roles[0],
+    structure: languageConfig.structures[0],
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -394,6 +404,8 @@
       generatorEngine.generatePantheon({ ...pantheon, useAI }),
     "ship-generator": (useAI) =>
       generatorEngine.generateShip({ ...ship, useAI }),
+    "language-generator": (useAI) =>
+      generatorEngine.generateLanguage({ ...language, useAI }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -574,6 +586,15 @@
         bind:condition={ship.condition}
         bind:tone={ship.tone}
         bind:campaignContext={ship.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "language-generator"}
+      <LanguageFormFields
+        bind:genre={language.genre}
+        bind:tone={language.tone}
+        bind:role={language.role}
+        bind:structure={language.structure}
+        bind:campaignContext={language.campaignContext}
         onSurprise={trigger}
       />
     {/if}

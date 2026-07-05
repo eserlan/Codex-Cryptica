@@ -232,6 +232,25 @@ export function buildVaultContext(
     // ordered is already max bounded by consider logic
     .map((e) => entityToExcerpt(e));
 
+  const languages: VaultContextEntityExcerpt[] = [];
+  const languageCategoryIds = new Set<string>();
+  for (const c of categoryLabels) {
+    if (
+      c.label.toLowerCase() === "language" ||
+      c.id.toLowerCase() === "language"
+    ) {
+      languageCategoryIds.add(c.id);
+    }
+  }
+
+  for (const id in allEntities) {
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const e = allEntities[id];
+    if (e.kind === "language" || languageCategoryIds.has(e.type)) {
+      languages.push(entityToExcerpt(e));
+    }
+  }
+
   const includedContext: GeneratorVaultContext["includedContext"] = [
     "categories",
   ];
@@ -241,6 +260,7 @@ export function buildVaultContext(
   if (worldSample.length) includedContext.push("world");
   if (existingTitles.length) includedContext.push("titles");
   if (labelSuggestions.length) includedContext.push("labels");
+  if (languages.length) includedContext.push("languages");
 
   return {
     themeId,
@@ -259,5 +279,6 @@ export function buildVaultContext(
     applyTemplate,
     templateOutline,
     includedContext,
+    languages,
   };
 }

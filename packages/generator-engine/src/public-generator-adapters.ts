@@ -12,6 +12,7 @@ import { generateShipLocal } from "./public-ship";
 import type { ShipGeneratorOptions } from "./public-ship";
 import { generateNomadClanLocal } from "./public-faction";
 import type { NomadClanGeneratorOptions } from "./public-faction";
+import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
   GeneratorRunRequest,
@@ -141,4 +142,18 @@ export function adaptShip(
   options: ShipGeneratorOptions = {},
 ): PublicGeneratorOutput {
   return generateShipLocal(options);
+}
+
+/** Generate a Language using the package's local generator. */
+export function adaptLanguage(
+  options: LanguageGeneratorOptions = {
+    genre: "Classic Fantasy",
+    tone: "Lyrical & Vowel-rich",
+    role: "Common Speech",
+    structure: "Compound Words",
+  },
+): PublicGeneratorOutput {
+  const gen = getGenerator("language");
+  const req = baseReq("language", options as any);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
 }

@@ -6,6 +6,7 @@ import {
   adaptMagicItem,
   adaptEvent,
   adaptVampire,
+  adaptLanguage,
 } from "./public-generator-adapters";
 
 describe("public generator adapters (T052)", () => {
@@ -63,6 +64,13 @@ describe("public generator adapters (T052)", () => {
     expect(() => adaptVampire({}, "vampire-gothic-noir")).not.toThrow();
   });
 
+  it("adaptLanguage returns PublicGeneratorOutput shape", () => {
+    const result = adaptLanguage();
+    expect(result.type).toBe("note");
+    expect(result.title.length).toBeGreaterThan(0);
+    expect(result.lore.length).toBeGreaterThan(0);
+  });
+
   it("content carries the rich body, never the empty string, for every adapter", () => {
     for (const adapt of [
       adaptNPC,
@@ -71,6 +79,7 @@ describe("public generator adapters (T052)", () => {
       adaptMagicItem,
       adaptEvent,
       adaptVampire,
+      adaptLanguage,
     ]) {
       const result = adapt();
       // content falls back to lore (then summary) and must never be blank

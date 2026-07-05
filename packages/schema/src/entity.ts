@@ -174,6 +174,7 @@ export const EntitySchema = z.object({
   soundBite: SoundBiteSchema.optional(),
   guestChatConfig: GuestChatConfigSchema.optional(),
   visibility: z.enum(["visible", "hidden"]).optional(),
+  kind: z.string().optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

@@ -43,6 +43,9 @@ import {
   buildShipPrompt,
   parseShipResponse,
   generateShipLocal,
+  buildLanguagePrompt,
+  parseLanguageResponse,
+  generateLanguageLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -57,7 +60,9 @@ import {
   type PantheonGeneratorOptions,
   type NamesGeneratorOptions,
   type ShipGeneratorOptions,
+  type LanguageGeneratorOptions,
   type PublicGeneratorOutput,
+  languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 
@@ -89,6 +94,7 @@ export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "generator-engine";
 export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
+export { languageConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -421,6 +427,31 @@ export class DefaultGeneratorEngine {
         return parseShipResponse(text, resolved);
       },
       () => generateShipLocal(shipOptions),
+    );
+  }
+
+  async generateLanguage(
+    options: Partial<LanguageGeneratorOptions> & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rest } = options;
+    const langOptions = {
+      genre: rest.genre || languageConfig.genres[0],
+      tone: rest.tone || languageConfig.tones[0],
+      role: rest.role || languageConfig.roles[0],
+      structure: rest.structure || languageConfig.structures[0],
+      context: rest.context || "",
+    };
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = buildLanguagePrompt(
+          langOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseLanguageResponse(text);
+      },
+      () => generateLanguageLocal(langOptions),
     );
   }
 }

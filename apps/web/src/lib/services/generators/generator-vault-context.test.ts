@@ -330,4 +330,34 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(sampleIds).not.toContain("n1");
     expect(sampleIds).toContain("o1");
   });
+
+  it("extracts languages from the vault by kind frontmatter and by Category ID or Label", () => {
+    const lang1 = entity({
+      id: "l1",
+      title: "Elvish",
+      type: "note",
+      kind: "language",
+    });
+    const lang2 = entity({
+      id: "l2",
+      title: "Dwarvish",
+      type: "custom-cat-id",
+    });
+    const other = entity({ id: "o1", title: "Commoner", type: "character" });
+
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: [
+        ...categories,
+        { id: "custom-cat-id", label: "Language" },
+      ],
+      allEntities: { l1: lang1, l2: lang2, o1: other },
+    });
+
+    const langIds = ctx.languages?.map((e) => e.id) ?? [];
+    expect(langIds).toContain("l1");
+    expect(langIds).toContain("l2");
+    expect(langIds).not.toContain("o1");
+    expect(ctx.includedContext).toContain("languages");
+  });
 });
