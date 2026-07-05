@@ -210,7 +210,7 @@ describe("RevisionService", () => {
     expect(vault.deleteEntity).toHaveBeenCalledWith("generated");
   });
 
-  it("respects injected dependencies for time", () => {
+  it("respects injected dependencies for time", async () => {
     const mockClock = { now: () => 1234567890 };
     const localizedService = new RevisionService(mockClock);
 
@@ -237,6 +237,20 @@ describe("RevisionService", () => {
 
     expect(localizedService.pendingDraft).toEqual(
       expect.objectContaining({
+        timestamp: 1234567890,
+      }),
+    );
+
+    vi.mocked(oracle.reviseEntity).mockResolvedValue({
+      content: "Revised content.",
+      lore: "Revised lore.",
+    });
+
+    const result = await localizedService.revise("target");
+    expect(result).toBe(true);
+    expect(localizedService.pendingDraft).toEqual(
+      expect.objectContaining({
+        entityId: "target",
         timestamp: 1234567890,
       }),
     );
