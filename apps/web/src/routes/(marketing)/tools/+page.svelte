@@ -149,6 +149,13 @@
               icon: "icon-[lucide--globe]",
             },
             {
+              href: "/generators/language-generator",
+              label: "Fictional Language Generator",
+              summary:
+                "Generate a conlang profile with pronunciation guidelines, naming rules, example names, and a starter vocabulary glossary.",
+              icon: "icon-[lucide--languages]",
+            },
+            {
               href: "/generators/random",
               label: "Surprise Me",
               summary:

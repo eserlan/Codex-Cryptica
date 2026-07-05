@@ -224,6 +224,7 @@
 
         currentEntityId = sessionHubStore.addEntity({
           type: generatedData.type,
+          kind: generatedData.kind,
           title: generatedData.title,
           summary: generatedData.summary,
           content,
@@ -277,6 +278,7 @@
 
         return {
           type: e.type,
+          kind: e.kind,
           title: e.title,
           content: e.content,
           lore: e.lore,
@@ -305,6 +307,7 @@
         : documentLayout.content;
       const payload = {
         type: generatedData.type,
+        kind: generatedData.kind,
         title: generatedData.title,
         content,
         lore: documentLayout.lore,

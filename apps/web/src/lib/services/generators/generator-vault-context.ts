@@ -17,6 +17,8 @@ const MAX_EXCERPT_CHARS = 300;
  * user's instruction.
  */
 const MAX_SOURCE_CHARS = 1500;
+/** Cap on language profiles included as naming grounding in prompts. */
+const MAX_LANGUAGES = 5;
 /** Vault category id for events (included as grounding for any new entity). */
 const EVENT_TYPE = "event";
 /** Vault category id for notes (lowest-priority grounding). */
@@ -232,6 +234,29 @@ export function buildVaultContext(
     // ordered is already max bounded by consider logic
     .map((e) => entityToExcerpt(e));
 
+  const languages: VaultContextEntityExcerpt[] = [];
+  const languageCategoryIds = new Set<string>();
+  for (const c of categoryLabels) {
+    if (
+      c.label.toLowerCase() === "language" ||
+      c.id.toLowerCase() === "language"
+    ) {
+      languageCategoryIds.add(c.id);
+    }
+  }
+
+  for (const id in allEntities) {
+    if (languages.length >= MAX_LANGUAGES) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const e = allEntities[id];
+    if (e.kind === "language" || languageCategoryIds.has(e.type)) {
+      // Languages ground naming conventions across every other generator, so
+      // carry the generous excerpt — the 300-char clamp would cut the naming
+      // rules and glossary that make the grounding useful.
+      languages.push(entityToExcerpt(e, undefined, true));
+    }
+  }
+
   const includedContext: GeneratorVaultContext["includedContext"] = [
     "categories",
   ];
@@ -241,6 +266,7 @@ export function buildVaultContext(
   if (worldSample.length) includedContext.push("world");
   if (existingTitles.length) includedContext.push("titles");
   if (labelSuggestions.length) includedContext.push("labels");
+  if (languages.length) includedContext.push("languages");
 
   return {
     themeId,
@@ -259,5 +285,6 @@ export function buildVaultContext(
     applyTemplate,
     templateOutline,
     includedContext,
+    languages,
   };
 }

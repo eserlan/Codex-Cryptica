@@ -16,7 +16,8 @@ export type ValidSlug =
   | "dnd-npc"
   | "pantheon-generator"
   | "god-generator"
-  | "ship-generator";
+  | "ship-generator"
+  | "language-generator";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -335,6 +336,34 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/settlement", label: "Settlement Generator" },
       { href: "/generators/npc", label: "NPC Generator" },
+    ],
+  },
+  "language-generator": {
+    pageTitle:
+      "RPG Fictional Language Generator | Worldbuilding Conlang Tool | Codex Cryptica",
+    metaDescription:
+      "Generate custom fictional language profiles for your tabletop worldbuilding campaign — pronunciations, naming rules, example names, and a vocabulary glossary. No login required.",
+    introTitle: "RPG Fictional Language Generator",
+    eyebrow: "Language Generator",
+    introText:
+      "Create a campaign-ready language profile for your world, culture, or species. Fantasy, sci-fi, cosmic horror, and more. Design naming conventions, syllables, and a starter dictionary.",
+    canonicalPath: "/generators/language-generator",
+    faqs: [
+      {
+        question: "What does the fictional language generator create?",
+        answer:
+          "It generates a complete fictional language profile — including pronunciation guidelines, naming structures, example names, and a starter vocabulary glossary. Perfect for building consistent naming conventions for your world's peoples and places.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy language notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/names", label: "RPG Name Generator" },
+      { href: "/generators/npc", label: "NPC Generator" },
+      { href: "/generators/settlement", label: "Settlement Generator" },
     ],
   },
 };

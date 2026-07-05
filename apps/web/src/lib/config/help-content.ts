@@ -475,6 +475,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
     icon: "icon-[lucide--wifi-off]",
   },
+  "language-generator": {
+    id: "language-generator",
+    title: "Fictional Languages",
+    content:
+      "Design custom language profiles (conlangs) detailing pronunciation guidelines, naming structures, example names, and glossary dictionaries. Other generators like NPC and Settlement will automatically respect these profiles to keep naming styles culturally and linguistically consistent.",
+    icon: "icon-[lucide--languages]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

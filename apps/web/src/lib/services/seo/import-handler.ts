@@ -13,6 +13,8 @@ export const ImportDraftSchema = z.object({
     "faction",
     "note",
   ]),
+  /** Vault entity sub-kind (e.g. "language" on notes), used by vault scans. */
+  kind: z.string().optional(),
   title: z.string().min(1),
   content: z.string().default(""),
   lore: z.string().optional(),
@@ -120,6 +122,7 @@ export class SeoImportService {
               lore: draft.lore || "",
               labels: draft.labels,
               status: draft.status,
+              ...(draft.kind ? { kind: draft.kind } : {}),
             },
           );
 

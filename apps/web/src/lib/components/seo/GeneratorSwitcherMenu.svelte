@@ -40,6 +40,10 @@
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
         { label: "Settlement Generator", path: "/generators/settlement" },
+        {
+          label: "Language Profile Generator",
+          path: "/generators/language-generator",
+        },
         { label: "Kingdom Generator", path: "/generators/kingdom" },
         { label: "Nation Generator", path: "/generators/nation" },
         { label: "Pantheon Generator", path: "/generators/pantheon-generator" },

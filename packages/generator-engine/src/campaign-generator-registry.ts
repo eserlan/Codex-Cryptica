@@ -8,6 +8,11 @@ import {
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 import { generateShipLocal } from "./public-ship";
+import {
+  buildLanguagePrompt,
+  generateLanguageLocal,
+  languageConfig,
+} from "./public-language";
 
 /**
  * Generator id -> default vault category id.
@@ -22,6 +27,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "magic-item": "item",
   event: "event",
   ship: "location",
+  language: "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -141,6 +147,16 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
       );
     }
   }
+  if (ctx.languages && ctx.languages.length) {
+    lines.push("\nFictional Languages in this world:");
+    for (const lang of ctx.languages) {
+      // Prefer lore: saved language entities keep the naming rules and
+      // glossary there, while content holds only the one-line summary.
+      lines.push(
+        `- ${lang.title}: ${lang.loreExcerpt || lang.contentExcerpt || ""}`,
+      );
+    }
+  }
   return lines.join("\n");
 }
 
@@ -219,9 +235,13 @@ function namingBlock(request: GeneratorRunRequest): string {
   const ctx = request.vaultContext;
   const hasExamples =
     !!ctx?.sourceEntity || !!ctx?.neighbors.length || !!ctx?.worldSample.length;
-  const basis = hasExamples
+  let basis = hasExamples
     ? "Infer the naming style from the example entities and source context above"
     : "Use a consistent naming style appropriate to the world theme";
+  if (ctx?.languages && ctx.languages.length) {
+    basis +=
+      " and pay strict attention to the fictional languages, naming structures, example names, and glossary definitions provided under Fictional Languages";
+  }
   return `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`;
 }
 
@@ -276,6 +296,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   "magic-item": `{"title":"The Ledger of Brine","summary":"A waterlogged tome that records debts no one remembers owing.","lore":"## History\\nKept by a drowned customs house, its pages re-ink themselves each tide.\\n## Power\\nName a debtor and the book reveals what they truly owe — and to whom.\\n## Cost\\nEach reading adds the reader's own name to a growing column at the back.","labels":["Cursed Tome","Uncommon"],"connections":[{"targetTitle":"Greywick Landing","relationship":"located in"}]}`,
   event: `{"title":"The Long Low Tide","summary":"The season the sea withdrew a mile and would not return.","lore":"## Summary\\nFor forty days the bay emptied, stranding ships and exposing what the water had hidden.\\n## Causes\\nNo one agrees — a broken pact, a sleeping leviathan, a curse called in.\\n## Consequences\\nSalvage made paupers rich and drowned the old harbour law in disputes.\\n## Hook\\nThe tide is beginning to recede again, and the old salvagers are sharpening their hooks.","labels":["Disaster","Maritime"],"connections":[{"targetTitle":"Greywick Landing","relationship":"struck"}]}`,
   ship: `{"title":"CSV Meridian","summary":"A worn freighter that earns its living asking no questions — and keeping no honest records.","lore":"## Who Controls It\\nIndependent in name; in practice, whoever can pay the docking fees this month.\\n## Complication\\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts.\\n## Secret\\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\\n## Hook\\nThe Meridian is the only vessel in port that will run this route — but the crew wants something in return.","labels":["Freighter","Sci-Fi","Independent"],"connections":[{"targetTitle":"Harbour Authority","relationship":"flagged by"}]}`,
+  language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","content":"## Pronunciation & Phonology\\nLow-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n\\n## Cultural Role & Usage\\nSpoken in the deep galleries where torchlight is rationed; surface-folk who use it mark themselves as tunnel-kin.\\n\\n## Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n\\n## Common Vocabulary & Word Bank\\n| Word | Pronunciation | English Meaning |\\n| --- | --- | --- |\\n| Vur | VOOR | Iron |\\n| Lith | LITH | Stone |\\n\\n## Sample Phrases\\n- *\\"Vur-Lith-Garon\\"* — (VOOR-lith-GAH-ron) — \\"Solid as iron\\"","lore":"### At a Glance\\n- **Genre / Setting**: Classic Fantasy\\n- **Tone**: Harsh & Consonant-heavy\\n- **Role**: Common Speech\\n- **Name Structure**: Compound Words\\n\\n### Example Names\\n- **Garon-Vur** — Iron Seeker (person)\\n- **Kael-Lith** — Stone Speaker (person)\\n\\n### At the Table\\n- Greet with a short falling whistle before speaking; skipping it reads as a threat.","labels":["dialect","underdark","conlang"],"connections":[]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -346,6 +367,26 @@ Generate a campaign ship — a traversable vehicle that functions as location, f
 ${OUTPUT_SCHEMA}
 ${exemplarBlock("ship")}${groundingNote(request)}
 ${loreGuidance(request, "the ship's role and condition, its owner and current mission, its dominant complication, its secret, its key zones, and at least two adventure hooks")}`;
+}
+
+function languagePrompt(request: GeneratorRunRequest): string {
+  const result = buildLanguagePrompt({
+    genre: optionString(request, "genre", "Classic Fantasy"),
+    tone: optionString(request, "tone", "Lyrical & Vowel-rich"),
+    role: optionString(request, "role", "Common Speech"),
+    structure: optionString(request, "structure", "Compound Words"),
+    context:
+      instructionsBlock(request) +
+      "\n" +
+      vaultContextBlock(request) +
+      "\n" +
+      optionsBlock(request),
+    bannedNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  });
+  return result.userMessage;
 }
 
 // ---------------------------------------------------------------------------
@@ -520,6 +561,23 @@ function generateShip(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
+function generateLanguage(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateLanguageLocal({
+    genre: optionString(request, "genre", "Classic Fantasy"),
+    tone: optionString(request, "tone", "Lyrical & Vowel-rich"),
+    role: optionString(request, "role", "Common Speech"),
+    structure: optionString(request, "structure", "Compound Words"),
+    context: optionString(request, "context", ""),
+  });
+  return {
+    title: result.title,
+    summary: result.summary || "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   npc: {
     id: "npc",
@@ -680,6 +738,57 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateShip,
     mapOutputToDraft: mapOutputToDraft("ship"),
     buildPrompt: shipPrompt,
+  },
+  language: {
+    id: "language",
+    label: "Language",
+    description:
+      "Generate a fictional language profile for your world, culture, or species.",
+    entityType: GENERATOR_ENTITY_TYPE.language,
+    defaultInstruction:
+      "A campaign-ready language profile detailing pronunciation guidelines, naming conventions, example names, and a basic vocabulary glossary.",
+    icon: "lucide:message-square",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: languageConfig.genres.map((g) => ({ value: g, label: g })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: languageConfig.tones.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "role",
+        label: "Role",
+        control: "select",
+        choices: languageConfig.roles.map((r) => ({ value: r, label: r })),
+      },
+      {
+        id: "structure",
+        label: "Name Structure",
+        control: "select",
+        choices: languageConfig.structures.map((s) => ({ value: s, label: s })),
+      },
+    ],
+    defaults: {
+      genre: "Classic Fantasy",
+      tone: "Lyrical & Vowel-rich",
+      role: "Common Speech",
+      structure: "Compound Words",
+    },
+    generate: generateLanguage,
+    // The language prompt splits the profile into narrative `content` and a
+    // compact GM-reference `lore`; the vault entity body (draft.lore) needs
+    // both, so merge them back together here.
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("language")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+    }),
+    buildPrompt: languagePrompt,
   },
 };
 

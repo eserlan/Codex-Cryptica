@@ -443,6 +443,11 @@ export interface GeneratorOutput {
     | "event"
     | "faction"
     | "note";
+  /**
+   * Vault entity sub-kind (e.g. "language" on notes) so drafts saved through
+   * the marketing funnel stay detectable by kind-based vault scans.
+   */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;
