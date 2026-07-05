@@ -8,6 +8,7 @@ import { type RevisionDraft } from "@codex/oracle-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 import type { LocalEntity } from "$lib/stores/vault/types";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export type RevisionRequest = {
   entityId: string;
@@ -22,6 +23,8 @@ export class RevisionService {
   pendingDraft = $state<RevisionDraft | null>(null);
   isRevising = $state(false);
   error = $state<string | null>(null);
+
+  constructor(private clock: Clock = systemClock) {}
 
   async revise(
     requestOrEntityId: RevisionRequest | string,
@@ -89,7 +92,7 @@ export class RevisionService {
       source: "revise",
       chronicle: revised.content ?? entity?.content ?? "",
       lore: revised.lore ?? entity?.lore ?? "",
-      timestamp: Date.now(),
+      timestamp: this.clock.now(),
     };
   }
 
@@ -111,7 +114,7 @@ export class RevisionService {
         sourceIds,
         finalContent,
       },
-      timestamp: Date.now(),
+      timestamp: this.clock.now(),
     };
     vault.selectedEntityId = finalContent.targetId;
   }
