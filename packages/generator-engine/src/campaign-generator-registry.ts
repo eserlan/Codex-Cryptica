@@ -150,8 +150,10 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
   if (ctx.languages && ctx.languages.length) {
     lines.push("\nFictional Languages in this world:");
     for (const lang of ctx.languages) {
+      // Prefer lore: saved language entities keep the naming rules and
+      // glossary there, while content holds only the one-line summary.
       lines.push(
-        `- ${lang.title}: ${lang.contentExcerpt || lang.loreExcerpt || ""}`,
+        `- ${lang.title}: ${lang.loreExcerpt || lang.contentExcerpt || ""}`,
       );
     }
   }
@@ -294,7 +296,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   "magic-item": `{"title":"The Ledger of Brine","summary":"A waterlogged tome that records debts no one remembers owing.","lore":"## History\\nKept by a drowned customs house, its pages re-ink themselves each tide.\\n## Power\\nName a debtor and the book reveals what they truly owe — and to whom.\\n## Cost\\nEach reading adds the reader's own name to a growing column at the back.","labels":["Cursed Tome","Uncommon"],"connections":[{"targetTitle":"Greywick Landing","relationship":"located in"}]}`,
   event: `{"title":"The Long Low Tide","summary":"The season the sea withdrew a mile and would not return.","lore":"## Summary\\nFor forty days the bay emptied, stranding ships and exposing what the water had hidden.\\n## Causes\\nNo one agrees — a broken pact, a sleeping leviathan, a curse called in.\\n## Consequences\\nSalvage made paupers rich and drowned the old harbour law in disputes.\\n## Hook\\nThe tide is beginning to recede again, and the old salvagers are sharpening their hooks.","labels":["Disaster","Maritime"],"connections":[{"targetTitle":"Greywick Landing","relationship":"struck"}]}`,
   ship: `{"title":"CSV Meridian","summary":"A worn freighter that earns its living asking no questions — and keeping no honest records.","lore":"## Who Controls It\\nIndependent in name; in practice, whoever can pay the docking fees this month.\\n## Complication\\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts.\\n## Secret\\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\\n## Hook\\nThe Meridian is the only vessel in port that will run this route — but the crew wants something in return.","labels":["Freighter","Sci-Fi","Independent"],"connections":[{"targetTitle":"Harbour Authority","relationship":"flagged by"}]}`,
-  language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","lore":"# Pronunciation & Phonology\\nCharacterized by low-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n# Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n# Example Names\\n- **Garon-Vur** (meaning: Iron Seeker)\\n- **Kael-Lith** (meaning: Stone Speaker)\\n# Common Vocabulary & Word Bank\\n| Word | English Meaning |\\n| --- | --- |\\n| Vur | Iron |\\n| Lith | Stone |\\n# Sample Phrases\\n- *\\"Vur-Lith-Garon\\"\\* (meaning: \\"Solid as iron\\")","labels":["dialect","underdark","conlang"],"connections":[]}`,
+  language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","content":"## Pronunciation & Phonology\\nLow-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n\\n## Cultural Role & Usage\\nSpoken in the deep galleries where torchlight is rationed; surface-folk who use it mark themselves as tunnel-kin.\\n\\n## Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n\\n## Common Vocabulary & Word Bank\\n| Word | Pronunciation | English Meaning |\\n| --- | --- | --- |\\n| Vur | VOOR | Iron |\\n| Lith | LITH | Stone |\\n\\n## Sample Phrases\\n- *\\"Vur-Lith-Garon\\"* — (VOOR-lith-GAH-ron) — \\"Solid as iron\\"","lore":"### At a Glance\\n- **Genre / Setting**: Classic Fantasy\\n- **Tone**: Harsh & Consonant-heavy\\n- **Role**: Common Speech\\n- **Name Structure**: Compound Words\\n\\n### Example Names\\n- **Garon-Vur** — Iron Seeker (person)\\n- **Kael-Lith** — Stone Speaker (person)\\n\\n### At the Table\\n- Greet with a short falling whistle before speaking; skipping it reads as a threat.","labels":["dialect","underdark","conlang"],"connections":[]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -571,6 +573,7 @@ function generateLanguage(request: GeneratorRunRequest): GeneratorOutput {
     title: result.title,
     summary: result.summary || "",
     lore: result.lore,
+    content: result.content,
     labels: result.labels,
   };
 }
@@ -778,7 +781,13 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       structure: "Compound Words",
     },
     generate: generateLanguage,
-    mapOutputToDraft: mapOutputToDraft("language"),
+    // The language prompt splits the profile into narrative `content` and a
+    // compact GM-reference `lore`; the vault entity body (draft.lore) needs
+    // both, so merge them back together here.
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("language")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+    }),
     buildPrompt: languagePrompt,
   },
 };

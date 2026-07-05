@@ -247,7 +247,10 @@ export function buildVaultContext(
     if (!Object.hasOwn(allEntities, id)) continue;
     const e = allEntities[id];
     if (e.kind === "language" || languageCategoryIds.has(e.type)) {
-      languages.push(entityToExcerpt(e));
+      // Languages ground naming conventions across every other generator, so
+      // carry the generous excerpt — the 300-char clamp would cut the naming
+      // rules and glossary that make the grounding useful.
+      languages.push(entityToExcerpt(e, undefined, true));
     }
   }
 

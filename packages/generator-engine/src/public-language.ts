@@ -74,41 +74,38 @@ export function buildLanguagePrompt(
     bannedNames: options.bannedNames || [],
   };
 
-  const systemInstruction = `You are a creative fantasy/sci-fi language designer (conlanger). Generate a structured fictional language profile based on the specifications.`;
   const banned =
     resolved.bannedNames && resolved.bannedNames.length > 0
       ? `\nDo NOT use any of these names or direct derivatives: ${resolved.bannedNames.join(", ")}`
       : "";
   const session = sessionContext ? `\nSession Context: ${sessionContext}` : "";
 
-  const userMessage = `Generate a structured fictional language profile based on the following preferences:
-- Genre/Setting: ${resolved.genre}
-- Tone/Style: ${resolved.tone}
+  const userMessage = `Generate a campaign-ready fictional language profile for a tabletop RPG. The profile should answer these four questions through its output:
+1. What does it sound like? (phonology, dominant sounds, rhythm)
+2. Who speaks it, and when? (culture, register, how its role shapes usage)
+3. How are names and words built? (morphology, naming rules)
+4. What can a GM use at the table right away? (example names, glossary, phrases)
+
+Parameters:
+- Genre / Setting: ${resolved.genre}
+- Tone / Style: ${resolved.tone}
 - Language Role: ${resolved.role}
 - Name Structure Style: ${resolved.structure}
 - Custom Context: ${resolved.context || "None"}${banned}${session}
 
-Return a single JSON object. Do not include markdown code fences (like \`\`\`json ... \`\`\`). The JSON must match this schema:
+Return a valid JSON object matching this structure exactly:
 {
-  "title": "string — a unique and evocative name for the generated language",
-  "summary": "string — a one-sentence high-level description of who speaks the language and what it sounds like",
-  "lore": "string — markdown-formatted conlang details. Use EXACTLY these section headers in the markdown:
-# Pronunciation & Phonology
-Describe the sounds of the language.
-
-# Naming Conventions
-Explain rules for constructing character and location names.
-
-# Example Names
-Give 4-5 example names (with meaning/gender).
-
-# Common Vocabulary & Word Bank
-List 10-15 key words with English translations in a markdown table.
-
-# Sample Phrases
-Provide 3-5 example phrases with phonetic pronunciation and translations.",
+  "title": "string — a unique, evocative name for the language itself",
+  "summary": "string — one sentence: who speaks it and what it sounds like",
+  "content": "Narrative prose (markdown). Include these sections:\\n## Pronunciation & Phonology\\n[The sound profile — dominant consonants and vowels, rhythm, what it evokes when heard]\\n\\n## Cultural Role & Usage\\n[Who speaks it, in which situations, and how its role (${resolved.role}) shapes register, taboos, or prestige]\\n\\n## Naming Conventions\\n[Rules for constructing character and place names, following the ${resolved.structure} style]\\n\\n## Common Vocabulary & Word Bank\\n[A markdown table of 10-15 key words: | Word | Pronunciation | English Meaning |]\\n\\n## Sample Phrases\\n[3-5 phrases, each with phonetic pronunciation and translation]",
+  "lore": "Compact GM reference (markdown). Use EXACTLY this structure:\\n### At a Glance\\n- **Genre / Setting**: ${resolved.genre}\\n- **Tone**: ${resolved.tone}\\n- **Role**: ${resolved.role}\\n- **Name Structure**: ${resolved.structure}\\n\\n### Example Names\\n- **[Name]** — [meaning, and whether it suits a person, place, or lineage] (4-5 names)\\n\\n### At the Table\\n- [2-3 one-line tips for evoking the language in play — a greeting or curse to drop into dialogue, an accent note, a verbal tic]",
   "labels": ["string — short thematic tags, e.g. language, conlang"]
-}`;
+}
+
+Internal consistency is essential: every example name, vocabulary word, and sample phrase must follow the phonology and naming rules defined in the content. Sample phrases should be decomposable using words from the glossary where possible.
+Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+
+  const systemInstruction = `You are an expert conlang designer for tabletop RPGs. You create fictional language profiles that are internally consistent — every example name, word, and phrase follows the phonology and structure rules you define. Match the genre, tone, and cultural role precisely.`;
 
   return {
     systemInstruction,
@@ -119,15 +116,17 @@ Provide 3-5 example phrases with phonetic pronunciation and translations.",
 
 export function parseLanguageResponse(response: string): PublicGeneratorOutput {
   const parsed = parseFencedJson(response);
-  const lore = String(
-    parsed.lore || "# Pronunciation & Phonology\n\nUnknown sounds.",
+  const content = String(
+    parsed.content ||
+      parsed.lore ||
+      "## Pronunciation & Phonology\n\nUnknown sounds.",
   );
   return {
     type: "language",
     title: String(parsed.title || "Unnamed Language"),
     summary: String(parsed.summary || "A newly generated fictional language."),
-    lore,
-    content: lore,
+    lore: String(parsed.lore || ""),
+    content,
     labels: Array.isArray(parsed.labels)
       ? parsed.labels.map(String)
       : ["language"],
@@ -222,35 +221,49 @@ export function generateLanguageLocal(
 
   const phrase1 = `${capitalize(vocabulary[0].word)} ${vocabulary[4].word}`;
   const phrase2 = `${capitalize(vocabulary[9].word)} ${vocabulary[6].word}`;
+  const greeting = `${capitalize(vocabulary[0].word)} ${vocabulary[5].word}`;
 
-  const lore = `# Pronunciation & Phonology
+  const content = `## Pronunciation & Phonology
 This language is characterized by its **${req.tone}** sound profile. It favors sounds like:
 - Consonants: ${syllables.consonants.slice(0, 6).join(", ")}
 - Vowels: ${syllables.vowels.slice(0, 4).join(", ")}
 
-# Naming Conventions
+## Cultural Role & Usage
+${languageName} serves as a **${req.role}** in this ${req.genre} setting. Its register and social weight follow from that role — who may speak it, and in which company, says as much as the words themselves.
+
+## Naming Conventions
 Names are structured according to the **${req.structure}** convention. Common compound sounds are often integrated to denote status.
 
-# Example Names
-- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** (meaning: Defender)
-- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** (meaning: Moon Walker)
-- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** (meaning: Fire Seeker)
-
-# Common Vocabulary & Word Bank
+## Common Vocabulary & Word Bank
 | Word | English Meaning |
 | --- | --- |
 ${vocabTable}
 
-# Sample Phrases
+## Sample Phrases
 - *"${phrase1}"* — (Pronounced: *${phrase1}*) — Meaning: "A friend in shadows."
 - *"${phrase2}"* — (Pronounced: *${phrase2}*) — Meaning: "The leader of the city."`;
+
+  const lore = `### At a Glance
+- **Genre / Setting**: ${req.genre}
+- **Tone**: ${req.tone}
+- **Role**: ${req.role}
+- **Name Structure**: ${req.structure}
+
+### Example Names
+- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** — Defender (person)
+- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** — Moon Walker (person)
+- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** — Fire Seeker (person or lineage)
+
+### At the Table
+- Greet with *"${greeting}"* — literally "friend of light."
+- Lean on the ${req.tone.toLowerCase()} sound profile when voicing speakers.`;
 
   return {
     type: "language",
     title: languageName,
     summary: `A ${req.tone} ${req.role} spoken in the ${req.genre} setting.`,
     lore,
-    content: lore,
+    content,
     labels: [
       "language",
       req.genre.toLowerCase().replace(/[^a-z0-9]/g, "-"),

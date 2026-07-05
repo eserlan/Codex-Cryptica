@@ -431,7 +431,10 @@ export class DefaultGeneratorEngine {
   }
 
   async generateLanguage(
-    options: Partial<LanguageGeneratorOptions> & { useAI?: boolean } = {},
+    options: Partial<LanguageGeneratorOptions> & {
+      useAI?: boolean;
+      campaignContext?: string;
+    } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...rest } = options;
     const langOptions = {
@@ -439,7 +442,7 @@ export class DefaultGeneratorEngine {
       tone: rest.tone || languageConfig.tones[0],
       role: rest.role || languageConfig.roles[0],
       structure: rest.structure || languageConfig.structures[0],
-      context: rest.context || "",
+      context: rest.context || rest.campaignContext || "",
     };
     return this.runWithAIFallback(
       useAI,

@@ -234,6 +234,8 @@ export class CampaignGeneratorService {
               title: parsed.title,
               summary: parsed.summary,
               lore: parsed.lore,
+              content:
+                typeof parsed.content === "string" ? parsed.content : undefined,
               labels: Array.isArray(parsed.labels) ? parsed.labels : [],
               connections: parseConnections(parsed.connections),
             };

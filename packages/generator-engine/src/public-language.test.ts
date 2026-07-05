@@ -23,22 +23,48 @@ test("buildLanguagePrompt includes key inputs", () => {
   expect(prompt.userMessage).toContain("Thran, Khar");
 });
 
-test("parseLanguageResponse parses json content", () => {
+test("buildLanguagePrompt requests separate content and lore", () => {
+  const prompt = buildLanguagePrompt({});
+
+  expect(prompt.userMessage).toContain('"content"');
+  expect(prompt.userMessage).toContain('"lore"');
+  expect(prompt.userMessage).toContain("## Pronunciation & Phonology");
+  expect(prompt.userMessage).toContain("### At a Glance");
+  expect(prompt.userMessage).toContain("### Example Names");
+});
+
+test("parseLanguageResponse parses content and lore separately", () => {
   const jsonStr = JSON.stringify({
     title: "Elvish",
     summary: "A flowing tongue.",
-    lore: "# Pronunciation & Phonology\nFlowing sounds.\n\n# Naming Conventions\nElegant suffixes.",
+    content:
+      "## Pronunciation & Phonology\nFlowing sounds.\n\n## Naming Conventions\nElegant suffixes.",
+    lore: "### At a Glance\n- **Tone**: Lyrical",
     labels: ["language", "elvish"],
   });
 
   const parsed = parseLanguageResponse(jsonStr);
   expect(parsed.title).toBe("Elvish");
   expect(parsed.summary).toBe("A flowing tongue.");
-  expect(parsed.lore).toContain("# Pronunciation & Phonology");
+  expect(parsed.content).toContain("## Pronunciation & Phonology");
+  expect(parsed.lore).toContain("### At a Glance");
+  expect(parsed.content).not.toBe(parsed.lore);
   expect(parsed.labels).toContain("elvish");
 });
 
-test("generateLanguageLocal returns a structured profile with fallback", () => {
+test("parseLanguageResponse falls back to lore when content is missing", () => {
+  const jsonStr = JSON.stringify({
+    title: "Elvish",
+    summary: "A flowing tongue.",
+    lore: "## Pronunciation & Phonology\nFlowing sounds.",
+    labels: ["language"],
+  });
+
+  const parsed = parseLanguageResponse(jsonStr);
+  expect(parsed.content).toContain("## Pronunciation & Phonology");
+});
+
+test("generateLanguageLocal splits narrative content from GM reference lore", () => {
   const generated = generateLanguageLocal({
     genre: "Classic Fantasy",
     tone: "Harsh & Consonant-heavy",
@@ -48,10 +74,14 @@ test("generateLanguageLocal returns a structured profile with fallback", () => {
 
   expect(generated.title).toBeTruthy();
   expect(generated.summary).toContain("spoken");
-  expect(generated.lore).toContain("# Pronunciation & Phonology");
-  expect(generated.lore).toContain("# Naming Conventions");
-  expect(generated.lore).toContain("# Example Names");
-  expect(generated.lore).toContain("# Common Vocabulary & Word Bank");
-  expect(generated.lore).toContain("# Sample Phrases");
+  expect(generated.content).toContain("## Pronunciation & Phonology");
+  expect(generated.content).toContain("## Cultural Role & Usage");
+  expect(generated.content).toContain("## Naming Conventions");
+  expect(generated.content).toContain("## Common Vocabulary & Word Bank");
+  expect(generated.content).toContain("## Sample Phrases");
+  expect(generated.lore).toContain("### At a Glance");
+  expect(generated.lore).toContain("### Example Names");
+  expect(generated.lore).toContain("### At the Table");
+  expect(generated.content).not.toBe(generated.lore);
   expect(generated.labels).toContain("language");
 });
