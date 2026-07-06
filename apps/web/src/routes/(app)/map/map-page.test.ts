@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const controllerState = vi.hoisted(() => ({
   activeMap: { id: "map-1" },
@@ -98,10 +98,12 @@ vi.mock("$lib/components/ShareModal.svelte", async () => ({
     .default,
 }));
 
+const mapStoreMock = vi.hoisted(() => ({
+  activeMap: { id: "map-1" } as { id: string } | null,
+}));
+
 vi.mock("$lib/stores/map.svelte", () => ({
-  mapStore: {
-    activeMap: { id: "map-1" },
-  },
+  mapStore: mapStoreMock,
 }));
 
 vi.mock("$lib/stores/map-session.svelte", () => ({
@@ -120,10 +122,15 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
 }));
 
+const sessionModeStoreMock = vi.hoisted(() => ({ isGuestMode: false }));
+const guestVaultMock = vi.hoisted(() => ({ publishId: null as string | null }));
+
 vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
-  sessionModeStore: {
-    isGuestMode: false,
-  },
+  sessionModeStore: sessionModeStoreMock,
+}));
+
+vi.mock("$lib/stores/guest-vault.svelte", () => ({
+  guestVault: guestVaultMock,
 }));
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
@@ -141,9 +148,37 @@ vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
 import MapPage from "./+page.svelte";
 
 describe("map/+page", () => {
+  beforeEach(() => {
+    mapStoreMock.activeMap = { id: "map-1" };
+    sessionModeStoreMock.isGuestMode = false;
+    guestVaultMock.publishId = null;
+  });
+
   it("does not mount ShareModal locally even if a controller-local share flag exists", () => {
     render(MapPage);
 
     expect(screen.queryByTestId("modal-stub")).toBeNull();
+  });
+
+  it("shows a 'no maps published' message for a published-vault reader with no maps", () => {
+    mapStoreMock.activeMap = null;
+    sessionModeStoreMock.isGuestMode = true;
+    guestVaultMock.publishId = "pub-1";
+
+    render(MapPage);
+
+    expect(screen.getByText("No maps published")).not.toBeNull();
+    expect(screen.queryByText("Waiting for host")).toBeNull();
+  });
+
+  it("shows a 'waiting for host' message for a live VTT guest with no shared map", () => {
+    mapStoreMock.activeMap = null;
+    sessionModeStoreMock.isGuestMode = true;
+    guestVaultMock.publishId = null;
+
+    render(MapPage);
+
+    expect(screen.getByText("Waiting for host")).not.toBeNull();
+    expect(screen.queryByText("No maps published")).toBeNull();
   });
 });
