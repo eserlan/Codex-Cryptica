@@ -4,6 +4,7 @@ import {
   parseLanguageResponse,
   generateLanguageLocal,
 } from "./public-language";
+import { NAME_BAN_PROMPT } from "./public-npc";
 
 test("buildLanguagePrompt includes key inputs", () => {
   const prompt = buildLanguagePrompt({
@@ -21,6 +22,12 @@ test("buildLanguagePrompt includes key inputs", () => {
   expect(prompt.userMessage).toContain("Compound Words");
   expect(prompt.userMessage).toContain("spoken by mountain dwarves");
   expect(prompt.userMessage).toContain("Thran, Khar");
+});
+
+test("buildLanguagePrompt includes the shared name-ban prompt", () => {
+  const prompt = buildLanguagePrompt({});
+
+  expect(prompt.userMessage).toContain(NAME_BAN_PROMPT);
 });
 
 test("buildLanguagePrompt requests separate content and lore", () => {
