@@ -24,11 +24,16 @@ const vaultMock = vi.hoisted(() => ({
       isWorldMap: false,
     },
   },
+  allMaps: [{ id: "map-1", name: "World", isWorldMap: false }],
   deleteMap: vi.fn(),
 }));
 
 const sessionModeStoreMock = vi.hoisted(() => ({
   isGuestMode: false,
+}));
+
+const guestVaultMock = vi.hoisted(() => ({
+  publishId: null as string | null,
 }));
 
 vi.mock("$lib/components/vtt/GuestInfoOverlay.svelte", () => ({
@@ -62,12 +67,18 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 
+vi.mock("$lib/stores/guest-vault.svelte", () => ({
+  guestVault: guestVaultMock,
+}));
+
 import MapHUD from "./MapHUD.svelte";
 
 describe("MapHUD", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionModeStoreMock.isGuestMode = false;
+    guestVaultMock.publishId = null;
+    vaultMock.allMaps = [{ id: "map-1", name: "World", isWorldMap: false }];
     mapStoreMock.activeMap = {
       id: "map-1",
       name: "World",
@@ -91,8 +102,9 @@ describe("MapHUD", () => {
     expect(onShowUpload).toHaveBeenCalled();
   });
 
-  it("renders only the active map name for guests", () => {
+  it("renders only the active map name for a live VTT guest", () => {
     sessionModeStoreMock.isGuestMode = true;
+    guestVaultMock.publishId = null;
 
     render(MapHUD, {
       props: {
@@ -103,5 +115,29 @@ describe("MapHUD", () => {
 
     expect(screen.getByText("World")).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Add Map" })).toBeNull();
+    expect(screen.queryByLabelText("Select Map")).toBeNull();
+  });
+
+  it("lets a published-vault reader switch between all published maps", async () => {
+    sessionModeStoreMock.isGuestMode = true;
+    guestVaultMock.publishId = "pub-1";
+    vaultMock.allMaps = [
+      { id: "map-1", name: "World", isWorldMap: true },
+      { id: "map-2", name: "Dungeon", isWorldMap: false },
+    ];
+
+    render(MapHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+        onShowUpload: vi.fn(),
+      },
+    });
+
+    const select = screen.getByLabelText("Select Map") as HTMLSelectElement;
+    expect(select).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Add Map" })).toBeNull();
+
+    await fireEvent.change(select, { target: { value: "map-2" } });
+    expect(mapStoreMock.selectMap).toHaveBeenCalledWith("map-2");
   });
 });

@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "$lib/stores/guest-vault.svelte";
 
 const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
@@ -34,11 +35,43 @@ describe("MapStore settings persistence", () => {
     vaultMock.activeVaultId = "vault-a";
     vaultMock.maps = {};
     sessionModeStore.sharedMode = false;
+    sessionModeStore.isGuestMode = false;
+    guestVault.publishId = null;
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    sessionModeStore.isGuestMode = false;
+    guestVault.publishId = null;
+  });
+
+  it("falls back to the first map for a published-vault reader with no world map", async () => {
+    vaultMock.maps = {
+      "map-a": makeMap("map-a"),
+      "map-b": makeMap("map-b"),
+    };
+    sessionModeStore.isGuestMode = true;
+    guestVault.publishId = "pub-1";
+
+    const store = new MapStore();
+
+    await waitFor(() => {
+      expect(store.activeMapId).toBe("map-a");
+    });
+  });
+
+  it("does not auto-select a map for a live VTT guest without a publishId", async () => {
+    vaultMock.maps = {
+      "map-a": makeMap("map-a"),
+    };
+    sessionModeStore.isGuestMode = true;
+    guestVault.publishId = null;
+
+    const store = new MapStore();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(store.activeMapId).toBeNull();
   });
 
   it("persists map settings for the active map", async () => {
