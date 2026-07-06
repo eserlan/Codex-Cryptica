@@ -29,6 +29,42 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+  const helpClass = "text-[10px] text-theme-text/60 leading-relaxed -mt-1";
+
+  // Jargon-y select values get a one-line, live-updating example so users
+  // don't have to guess what e.g. "Suffix-heavy" sounds like in practice.
+  // Custom (user-typed) values intentionally have no entry here.
+  const TONE_HELP: Record<string, string> = {
+    "Harsh & Consonant-heavy":
+      "Clustered consonants, few soft vowels — e.g. Krathdur, Voxgrim.",
+    "Lyrical & Vowel-rich":
+      "Flowing, vowel-forward and musical — e.g. Aeliana, Ioreth.",
+    "Ancient & Formal": "Weighty and archaic-sounding — e.g. Phaeros, Thalor.",
+    "Clipped & Technical": "Short, precise syllables — e.g. Tek-9, Din-4, Bok.",
+    "Shadowy & Whispered": "Soft, hushed sounds — e.g. Shael, Fhess, Lhurin.",
+  };
+
+  const ROLE_HELP: Record<string, string> = {
+    "Common Speech": "Everyday language spoken by most people in this world.",
+    "Sacred / Ritual Tongue":
+      "Used only in ceremonies, prayer, or by clergy — not everyday speech.",
+    "Imperial Standard":
+      "The official language of a ruling power, spoken across its territory.",
+    "Thieves' Cant":
+      "A coded slang used by outlaws, spies, or a criminal underworld.",
+    "Dead Language":
+      "No longer spoken day-to-day — survives in old texts, names, or lore.",
+  };
+
+  const STRUCTURE_HELP: Record<string, string> = {
+    "Compound Words":
+      "Two whole words fused together — e.g. Ironhold, Stormcaller.",
+    "Suffix-heavy":
+      "A root plus a meaningful ending — e.g. Thal → Thalien, Thalwen.",
+    "Prefix-heavy":
+      "A meaningful lead-in plus a root — e.g. Kor-Vash, Kor-Dun.",
+    "Short & Monosyllabic": "Clipped, single-syllable names — e.g. Vex, Dru.",
+  };
 </script>
 
 <SelectWithCustomOption
@@ -52,6 +88,9 @@
   inputClass={selectClass}
   customPlaceholder="Enter custom sounds (e.g. guttural)"
 />
+{#if TONE_HELP[tone]}
+  <p class={helpClass}>{TONE_HELP[tone]}</p>
+{/if}
 
 <SelectWithCustomOption
   id="language-role-select"
@@ -63,6 +102,9 @@
   inputClass={selectClass}
   customPlaceholder="Enter custom role"
 />
+{#if ROLE_HELP[role]}
+  <p class={helpClass}>{ROLE_HELP[role]}</p>
+{/if}
 
 <SelectWithCustomOption
   id="language-structure-select"
@@ -77,6 +119,9 @@
   inputClass={selectClass}
   customPlaceholder="Enter custom structure"
 />
+{#if STRUCTURE_HELP[structure]}
+  <p class={helpClass}>{STRUCTURE_HELP[structure]}</p>
+{/if}
 
 <div class="flex flex-col gap-1.5">
   <label for="language-context" class={labelClass}

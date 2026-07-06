@@ -72,4 +72,36 @@ describe("LanguageFormFields", () => {
     await fireEvent.click(screen.getByText("Surprise Me"));
     expect(onSurprise).toHaveBeenCalled();
   });
+
+  it("shows a live-updating example for known tone/role/structure values", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    expect(screen.getByText(/Aeliana, Ioreth/)).toBeTruthy();
+    expect(
+      screen.getByText(/Everyday language spoken by most people/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Ironhold, Stormcaller/)).toBeTruthy();
+  });
+
+  it("shows no example line for an unmapped (custom) value", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Guttural & Harsh",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    expect(screen.queryByText(/Aeliana, Ioreth/)).toBeNull();
+  });
 });
