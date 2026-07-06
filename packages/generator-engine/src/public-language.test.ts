@@ -24,6 +24,15 @@ test("buildLanguagePrompt includes key inputs", () => {
   expect(prompt.userMessage).toContain("Thran, Khar");
 });
 
+test("buildLanguagePrompt includes genre-specific creative direction", () => {
+  const prompt = buildLanguagePrompt({ genre: "Cyberpunk / Corporate" });
+
+  expect(prompt.userMessage).toContain("corporate acronyms");
+  expect(prompt.userMessage).toContain(
+    "at least one term that could only belong to a Cyberpunk / Corporate setting",
+  );
+});
+
 test("buildLanguagePrompt includes the shared name-ban prompt", () => {
   const prompt = buildLanguagePrompt({});
 
@@ -91,4 +100,22 @@ test("generateLanguageLocal splits narrative content from GM reference lore", ()
   expect(generated.lore).toContain("### At the Table");
   expect(generated.content).not.toBe(generated.lore);
   expect(generated.labels).toContain("language");
+});
+
+test("generateLanguageLocal includes a genre-specific vocabulary concept", () => {
+  const cyberpunk = generateLanguageLocal({
+    genre: "Cyberpunk / Corporate",
+    tone: "Clipped & Technical",
+    role: "Common Speech",
+    structure: "Compound Words",
+  });
+  expect(cyberpunk.content).toContain("network");
+
+  const fantasy = generateLanguageLocal({
+    genre: "Classic Fantasy",
+    tone: "Harsh & Consonant-heavy",
+    role: "Common Speech",
+    structure: "Compound Words",
+  });
+  expect(fantasy.content).toContain("sword-oath");
 });

@@ -38,6 +38,23 @@ export const languageConfig = {
   ],
 };
 
+// Creative direction per genre so the LLM leans on setting-specific
+// vocabulary/loanword flavor instead of only the word "genre" itself.
+const GENRE_HINTS: Record<string, string> = {
+  "Classic Fantasy":
+    "Draw on archaic, myth-inspired roots — the language should feel handed down through bloodlines and old magic.",
+  "Cyberpunk / Corporate":
+    "Blend clipped tech jargon, corporate acronyms, and brand-name loanwords into the vocabulary and naming conventions.",
+  "Vampire / Gothic Noir":
+    "Favor old-world, aristocratic, and ecclesiastical roots — words should sound centuries-old and faintly ominous.",
+  "Sci-Fi / Space Opera":
+    "Invent alien-feeling phonemes and terms for ships, factions, or star systems rather than earthbound roots.",
+  "Modern Conspiracy":
+    "Mix plain modern-day words with coded slang or acronyms meant to obscure meaning from outsiders.",
+  "Post-Apocalyptic":
+    "Show visible decay of a prior language — corrupted, simplified, or merged fragments of real-world roots.",
+};
+
 export interface LanguageGeneratorOptions {
   genre: string;
   tone: string;
@@ -80,6 +97,8 @@ export function buildLanguagePrompt(
       ? `\nDo NOT use any of these names or direct derivatives: ${resolved.bannedNames.join(", ")}`
       : "";
   const session = sessionContext ? `\nSession Context: ${sessionContext}` : "";
+  const genreHint = GENRE_HINTS[resolved.genre];
+  const genreDirection = genreHint ? `\n- Genre Direction: ${genreHint}` : "";
 
   const userMessage = `Generate a campaign-ready fictional language profile for a tabletop RPG. The profile should answer these four questions through its output:
 1. What does it sound like? (phonology, dominant sounds, rhythm)
@@ -92,7 +111,7 @@ Parameters:
 - Tone / Style: ${resolved.tone}
 - Language Role: ${resolved.role}
 - Name Structure Style: ${resolved.structure}
-- Custom Context: ${resolved.context || "None"}${banned}${session}
+- Custom Context: ${resolved.context || "None"}${genreDirection}${banned}${session}
 
 Return a valid JSON object matching this structure exactly:
 {
@@ -104,10 +123,11 @@ Return a valid JSON object matching this structure exactly:
 }
 
 Internal consistency is essential: every example name, vocabulary word, and sample phrase must follow the phonology and naming rules defined in the content. Sample phrases should be decomposable using words from the glossary where possible.
+The word bank must include at least one term that could only belong to a ${resolved.genre} setting — not a generic fantasy word repurposed with a new sound.
 ${NAME_BAN_PROMPT}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
-  const systemInstruction = `You are an expert conlang designer for tabletop RPGs. You create fictional language profiles that are internally consistent — every example name, word, and phrase follows the phonology and structure rules you define. Match the genre, tone, and cultural role precisely.`;
+  const systemInstruction = `You are an expert conlang designer for tabletop RPGs. You create fictional language profiles that are internally consistent — every example name, word, and phrase follows the phonology and structure rules you define. Match the tone and cultural role precisely, and let the genre shape vocabulary and loanwords, not just the setting description.`;
 
   return {
     systemInstruction,
@@ -175,6 +195,18 @@ const DEFAULT_SYLLABLES = {
   patterns: ["CVC", "CV"],
 };
 
+// A single setting-specific concept per genre, added to the local fallback's
+// word bank so offline generation isn't just tone-flavored — the genre
+// contributes at least one word an LLM would otherwise supply.
+const GENRE_CONCEPT: Record<string, string> = {
+  "Classic Fantasy": "sword-oath",
+  "Cyberpunk / Corporate": "network",
+  "Vampire / Gothic Noir": "bloodline",
+  "Sci-Fi / Space Opera": "starship",
+  "Modern Conspiracy": "secret",
+  "Post-Apocalyptic": "ruin",
+};
+
 function generateWord(
   syllableData: typeof DEFAULT_SYLLABLES,
   rng: Rng,
@@ -204,6 +236,8 @@ export function generateLanguageLocal(
   const name2 = generateWord(syllables, rng);
   const languageName = capitalize(name1 + name2);
 
+  const genreConcept = GENRE_CONCEPT[req.genre] || "wanderer";
+
   // Generate small word bank
   const vocabulary = [
     { key: "friend", word: generateWord(syllables, rng) },
@@ -214,7 +248,7 @@ export function generateLanguageLocal(
     { key: "light", word: generateWord(syllables, rng) },
     { key: "city", word: generateWord(syllables, rng) },
     { key: "journey", word: generateWord(syllables, rng) },
-    { key: "gold", word: generateWord(syllables, rng) },
+    { key: genreConcept, word: generateWord(syllables, rng) },
     { key: "leader", word: generateWord(syllables, rng) },
   ];
 
@@ -232,7 +266,7 @@ This language is characterized by its **${req.tone}** sound profile. It favors s
 - Vowels: ${syllables.vowels.slice(0, 4).join(", ")}
 
 ## Cultural Role & Usage
-${languageName} serves as a **${req.role}** in this ${req.genre} setting. Its register and social weight follow from that role — who may speak it, and in which company, says as much as the words themselves.
+${languageName} serves as a **${req.role}** in this ${req.genre} setting. Its register and social weight follow from that role — who may speak it, and in which company, says as much as the words themselves. Even its word for "${genreConcept}" carries the weight of that setting.
 
 ## Naming Conventions
 Names are structured according to the **${req.structure}** convention. Common compound sounds are often integrated to denote status.
