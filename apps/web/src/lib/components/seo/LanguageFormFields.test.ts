@@ -91,6 +91,29 @@ describe("LanguageFormFields", () => {
     expect(screen.getByText(/Ironhold, Stormcaller/)).toBeTruthy();
   });
 
+  it("keeps helper copy attached to the relevant fields and uses readable text sizing", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    const toneSelect = screen.getByLabelText("Tone & Sounds");
+    const toneHelp = screen.getByText(/Aeliana, Ioreth/);
+    const contextHelp = screen.getByText(/Describe who speaks this language/);
+
+    expect(toneSelect.getAttribute("aria-describedby")).toBe(
+      "language-tone-help",
+    );
+    expect(toneHelp.id).toBe("language-tone-help");
+    expect(toneHelp.className).toContain("text-sm");
+    expect(contextHelp.className).toContain("text-sm");
+  });
+
   it("shows no example line for an unmapped (custom) value", async () => {
     render(LanguageFormFields, {
       props: {

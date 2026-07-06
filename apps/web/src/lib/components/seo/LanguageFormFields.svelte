@@ -26,10 +26,11 @@
   } = $props();
 
   const selectClass =
-    "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
+    "w-full min-h-12 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
-  const helpClass = "text-[10px] text-theme-text/60 leading-relaxed -mt-1";
+  const helpClass =
+    "text-sm text-theme-text/70 leading-6 md:text-[13px] md:leading-relaxed -mt-0.5 text-wrap-pretty";
 
   // Jargon-y select values get a one-line, live-updating example so users
   // don't have to guess what e.g. "Suffix-heavy" sounds like in practice.
@@ -86,10 +87,11 @@
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
+  describedBy={TONE_HELP[tone] ? "language-tone-help" : undefined}
   customPlaceholder="Enter custom sounds (e.g. guttural)"
 />
 {#if TONE_HELP[tone]}
-  <p class={helpClass}>{TONE_HELP[tone]}</p>
+  <p id="language-tone-help" class={helpClass}>{TONE_HELP[tone]}</p>
 {/if}
 
 <SelectWithCustomOption
@@ -100,10 +102,11 @@
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
+  describedBy={ROLE_HELP[role] ? "language-role-help" : undefined}
   customPlaceholder="Enter custom role"
 />
 {#if ROLE_HELP[role]}
-  <p class={helpClass}>{ROLE_HELP[role]}</p>
+  <p id="language-role-help" class={helpClass}>{ROLE_HELP[role]}</p>
 {/if}
 
 <SelectWithCustomOption
@@ -117,10 +120,15 @@
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
+  describedBy={STRUCTURE_HELP[structure]
+    ? "language-structure-help"
+    : undefined}
   customPlaceholder="Enter custom structure"
 />
 {#if STRUCTURE_HELP[structure]}
-  <p class={helpClass}>{STRUCTURE_HELP[structure]}</p>
+  <p id="language-structure-help" class={helpClass}>
+    {STRUCTURE_HELP[structure]}
+  </p>
 {/if}
 
 <div class="flex flex-col gap-1.5">
@@ -133,11 +141,11 @@
     maxlength="240"
     rows="4"
     aria-describedby="language-context-help"
-    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm leading-6 text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
   <p
     id="language-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-sm text-theme-text/70 leading-6 md:text-[13px] md:leading-relaxed text-wrap-pretty"
   >
     Describe who speaks this language or the region/culture it originates from.
   </p>
