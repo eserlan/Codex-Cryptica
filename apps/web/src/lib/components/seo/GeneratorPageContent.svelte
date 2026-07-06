@@ -278,10 +278,9 @@
         SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
     else if (slug === "pantheon-generator" || slug === "god-generator")
       activeTheme = pantheon.genre;
-    // Language genres already use the theme labels (Classic Fantasy, …); a
-    // raw hub genre passed through from an unmapped hub is remapped first.
-    else if (slug === "language-generator")
-      activeTheme = SOCIAL_HUB_GENRE_TO_THEME[language.genre] ?? language.genre;
+    // Language genre is a fixed select using the theme labels directly
+    // (Classic Fantasy, …), so it maps straight to activeTheme.
+    else if (slug === "language-generator") activeTheme = language.genre;
   });
 
   onMount(() => {
@@ -361,9 +360,13 @@
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) {
         // Language genres follow the theme labels (Classic Fantasy,
-        // Cyberpunk / Corporate, …); unmapped hubs pass the raw genre through
-        // as a custom value, which the select and prompt both accept.
-        language.genre = SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? hubGenre;
+        // Cyberpunk / Corporate, …); the genre select only offers a fixed
+        // list, so hubs without a matching language genre (e.g. Western,
+        // Steampunk) are left on the default rather than an unselectable value.
+        const mapped = SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? hubGenre;
+        if ((languageConfig.genres as string[]).includes(mapped)) {
+          language.genre = mapped;
+        }
       }
     }
     // For quest/npc/faction on flat URL: read localStorage.

@@ -68,16 +68,14 @@
   };
 </script>
 
-<SelectWithCustomOption
-  id="language-genre-select"
-  label="Genre"
-  bind:value={genre}
-  choices={languageConfig.genres.map((g: string) => ({ value: g, label: g }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom genre"
-/>
+<div class="flex flex-col gap-1.5">
+  <label for="language-genre-select" class={labelClass}>Genre</label>
+  <select id="language-genre-select" bind:value={genre} class={selectClass}>
+    {#each languageConfig.genres as g (g)}
+      <option value={g}>{g}</option>
+    {/each}
+  </select>
+</div>
 
 <SelectWithCustomOption
   id="language-tone-select"

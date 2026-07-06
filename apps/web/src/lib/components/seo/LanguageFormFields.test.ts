@@ -32,7 +32,7 @@ describe("LanguageFormFields", () => {
     expect(screen.getByText("Compound Words")).toBeTruthy();
   });
 
-  it("keeps the genre editable but skips it on Surprise Me when preserveGenreOnSurprise", async () => {
+  it("keeps the genre select enabled but skips it on Surprise Me when preserveGenreOnSurprise", async () => {
     const onSurprise = vi.fn();
     render(LanguageFormFields, {
       props: {
