@@ -21,6 +21,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "pantheon-generator",
   "god-generator",
   "ship-generator",
+  "language-generator",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {

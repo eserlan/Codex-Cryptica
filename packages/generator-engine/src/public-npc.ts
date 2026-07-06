@@ -26,6 +26,7 @@ import { parseFencedJson } from "./llm-response-utils";
 // ---------------------------------------------------------------------------
 
 export const BANNED_NAMES = [
+  "Aethel",
   "Vane",
   "Elara",
   "Valerius",
