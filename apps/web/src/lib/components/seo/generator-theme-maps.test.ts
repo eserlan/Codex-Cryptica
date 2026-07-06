@@ -21,6 +21,7 @@ describe("shouldSyncGeneratorTheme", () => {
   it("is true for slugs that participate in theme syncing", () => {
     expect(shouldSyncGeneratorTheme("faction")).toBe(true);
     expect(shouldSyncGeneratorTheme("ship-generator")).toBe(true);
+    expect(shouldSyncGeneratorTheme("language-generator")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {

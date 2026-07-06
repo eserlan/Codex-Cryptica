@@ -278,6 +278,10 @@
         SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
     else if (slug === "pantheon-generator" || slug === "god-generator")
       activeTheme = pantheon.genre;
+    // Language genres already use the theme labels (Classic Fantasy, …); a
+    // raw hub genre passed through from an unmapped hub is remapped first.
+    else if (slug === "language-generator")
+      activeTheme = SOCIAL_HUB_GENRE_TO_THEME[language.genre] ?? language.genre;
   });
 
   onMount(() => {

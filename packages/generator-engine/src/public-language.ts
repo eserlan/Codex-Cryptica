@@ -5,6 +5,7 @@
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
+import { NAME_BAN_PROMPT } from "./public-npc";
 
 export const languageConfig = {
   genres: [
@@ -103,6 +104,7 @@ Return a valid JSON object matching this structure exactly:
 }
 
 Internal consistency is essential: every example name, vocabulary word, and sample phrase must follow the phonology and naming rules defined in the content. Sample phrases should be decomposable using words from the glossary where possible.
+${NAME_BAN_PROMPT}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   const systemInstruction = `You are an expert conlang designer for tabletop RPGs. You create fictional language profiles that are internally consistent — every example name, word, and phrase follows the phonology and structure rules you define. Match the genre, tone, and cultural role precisely.`;
