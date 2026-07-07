@@ -22,20 +22,10 @@ export interface EntityStoreDependencies {
   invalidateUrlCache?: (path: string) => void;
   setStatus: (
     status:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) => void;
   status: () =>
-    | "idle"
-    | "loading"
-    | "saving"
-    | "saved"
-    | "needs-permission"
-    | "error";
+    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
   setErrorMessage: (msg: string | null) => void;
   // callbacks
   onEntityUpdate?: (entity: LocalEntity) => void;

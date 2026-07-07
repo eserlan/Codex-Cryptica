@@ -11,7 +11,7 @@ import { OracleCommandParser } from "../oracle-parser";
 import { buildRelatedEntityContext } from "../revision-context";
 import type { OracleGenerator } from "../oracle-generator";
 import type { DraftingEngine } from "../drafting-engine";
-import type { Clock } from "../runtime";
+import type { Clock, IdGenerator } from "../runtime";
 
 /**
  * Orchestrates multi-step AI chat generation and proactive extraction.
@@ -26,8 +26,9 @@ export class ChatExecutor
     private generator?: OracleGenerator,
     private draftingEngine?: DraftingEngine,
     clock?: Clock,
+    idGenerator?: IdGenerator,
   ) {
-    super(clock);
+    super(clock, idGenerator);
   }
 
   async execute(
@@ -37,7 +38,7 @@ export class ChatExecutor
   ): Promise<void> {
     if (this.isExecuting) {
       await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         role: "system",
         content:
           "The Oracle is already processing a request. Please wait for the current action to complete.",
@@ -60,12 +61,12 @@ export class ChatExecutor
 
         if (typeof navigator !== "undefined" && !navigator.onLine) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "user",
             content: query,
           });
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content:
               "The Oracle is currently offline. Conversational expansion and AI generation are suspended.",
@@ -77,7 +78,7 @@ export class ChatExecutor
           return;
         }
 
-        const userMsgId = crypto.randomUUID();
+        const userMsgId = this.idGenerator.uuid();
         await context.chatHistory.addMessage({
           id: userMsgId,
           role: "user",
@@ -86,7 +87,7 @@ export class ChatExecutor
 
         if (!isAIIntent) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content:
               "AI features are disabled. Only utility slash commands are supported. Type /help for a list of available commands.",
@@ -103,7 +104,7 @@ export class ChatExecutor
           OracleCommandParser.detectCreationIntent(query);
 
         const assistantMsg: ChatMessage = {
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: "",
           type: isImageRequest ? "image" : "text",
@@ -451,7 +452,7 @@ export class ChatExecutor
         } catch (err: any) {
           const error = err.message || "Error generating response.";
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content: error,
           });

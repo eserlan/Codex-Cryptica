@@ -128,12 +128,16 @@ export async function updateLastSavedToFolder(id: string): Promise<void> {
   }
 }
 
-export async function getPublishRegistry(vaultId: string): Promise<PublishRegistry | undefined> {
+export async function getPublishRegistry(
+  vaultId: string,
+): Promise<PublishRegistry | undefined> {
   const db = await getDB();
   return await db.get("publish_registry", vaultId);
 }
 
-export async function savePublishRegistry(registry: PublishRegistry): Promise<void> {
+export async function savePublishRegistry(
+  registry: PublishRegistry,
+): Promise<void> {
   const db = await getDB();
   await db.put("publish_registry", registry);
 }

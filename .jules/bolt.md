@@ -157,6 +157,8 @@
 
 **Learning:** When generating lookup objects from an array of items (like connection counts per entity) in a `$derived` block, using `Object.fromEntries(vault.allEntities.map(...))` creates two intermediate arrays: one for the mapped tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure during frequent reactive updates.
 **Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop that constructs a new `Record` natively to reduce garbage collection pressure.
+
 ## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
 **Learning:** In VTT applications, `graph.entities` payloads can be exceptionally large (containing thousands of items). Chaining methods like `Object.entries().map().map()` followed by `Object.fromEntries()` allocates multiple large, short-lived arrays. These intermediate allocations place immense pressure on the garbage collector during data sync/initialization, leading to jank and latency spikes. Replacing these chains with a single imperative loop (`for...in`) directly building the target dictionary avoids these array allocations entirely.
 **Action:** When transforming large data collections (especially dictionaries like `entities`), actively look for `Object.keys/values/entries` combined with `.map()` or `.filter()`, and refactor them into a single imperative loop.

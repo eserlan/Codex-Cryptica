@@ -46,11 +46,7 @@ type MarkdownFrontmatterValidator =
 
 export type ImportMode = "oracle" | "cc" | null;
 export type ImportStep =
-  | "upload"
-  | "processing"
-  | "review"
-  | "complete"
-  | "report";
+  "upload" | "processing" | "review" | "complete" | "report";
 
 export function mapThemeToGenre(themeId: string): string {
   const rawId = (themeId || "").toLowerCase();

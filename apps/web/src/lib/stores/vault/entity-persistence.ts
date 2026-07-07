@@ -15,20 +15,10 @@ export interface PersistenceDependencies {
   ) => Promise<FileSystemDirectoryHandle | undefined>;
   setStatus: (
     status:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) => void;
   status?: () =>
-    | "idle"
-    | "loading"
-    | "saving"
-    | "saved"
-    | "needs-permission"
-    | "error";
+    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
   // loader delegation

@@ -1,11 +1,5 @@
 export type EntityType =
-  | "character"
-  | "creature"
-  | "location"
-  | "item"
-  | "event"
-  | "faction"
-  | "note";
+  "character" | "creature" | "location" | "item" | "event" | "faction" | "note";
 
 export interface ParsedEntity {
   type: EntityType;

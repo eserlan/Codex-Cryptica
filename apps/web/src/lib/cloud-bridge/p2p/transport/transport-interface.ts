@@ -1,11 +1,7 @@
 import type { P2PMessage } from "../p2p-protocol";
 
 export type TransportEventType =
-  | "connection"
-  | "data"
-  | "error"
-  | "close"
-  | "disconnected";
+  "connection" | "data" | "error" | "close" | "disconnected";
 
 export interface P2PConnection {
   peer: string;

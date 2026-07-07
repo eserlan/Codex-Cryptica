@@ -4,6 +4,7 @@
 **Input**: Feature specification from `specs/135-guest-vault-r2/spec.md`
 
 ## Summary
+
 Implement a secure, opt-in publishing flow that lets vault hosts export a sanitized, player-safe read-only snapshot of their local campaign lore to Cloudflare R2 via the Cloudflare Worker proxy, keeping their active authoring database local-first and player secrets safe. Support background service uploads, orphan asset cleanup, host dashboard controls, and guest history navigation.
 
 ## Technical Context
@@ -19,13 +20,13 @@ Implement a secure, opt-in publishing flow that lets vault hosts export a saniti
 
 ## Constitution Check
 
-| Principle | Status | Direct Application in Design |
-|---|---|---|
-| **I. Library-First** | Passed | Sanitization and guest bundle compilation logic will be placed in a new class inside `packages/vault-engine/src/services/GuestExporter.ts` rather than bloating the Svelte UI. |
-| **II. TDD** | Passed | We will write comprehensive unit tests for `GuestExporter` verifying that GM-only entities, private notes, and dangling relationships are properly excluded. We will also mock R2 responses and test the Worker's route handlers. |
-| **V. Privacy** | Passed | 100% client-side filtration: secrets are physically deleted from the export object in the user's browser before the network request is initiated. |
-| **VIII. DI** | Passed | The client-side publishing service `PublishingService` will use constructor-based dependency injection to allow mocking fetch and IndexedDB registry stores during unit tests. |
-| **XII. Labels over Tags** | Passed | Exporter schema explicitly groups, manages, and outputs metadata as `labels` to prevent user-facing confusion. |
+| Principle                 | Status | Direct Application in Design                                                                                                                                                                                                      |
+| ------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **I. Library-First**      | Passed | Sanitization and guest bundle compilation logic will be placed in a new class inside `packages/vault-engine/src/services/GuestExporter.ts` rather than bloating the Svelte UI.                                                    |
+| **II. TDD**               | Passed | We will write comprehensive unit tests for `GuestExporter` verifying that GM-only entities, private notes, and dangling relationships are properly excluded. We will also mock R2 responses and test the Worker's route handlers. |
+| **V. Privacy**            | Passed | 100% client-side filtration: secrets are physically deleted from the export object in the user's browser before the network request is initiated.                                                                                 |
+| **VIII. DI**              | Passed | The client-side publishing service `PublishingService` will use constructor-based dependency injection to allow mocking fetch and IndexedDB registry stores during unit tests.                                                    |
+| **XII. Labels over Tags** | Passed | Exporter schema explicitly groups, manages, and outputs metadata as `labels` to prevent user-facing confusion.                                                                                                                    |
 
 ## Project Structure
 
@@ -74,5 +75,5 @@ packages/vault-engine/src/
     └── GuestExporter.test.ts                # Tests exclusion and sanitation rules
 ```
 
-**Structure Decision**: 
+**Structure Decision**:
 We extend `apps/workers/oracle-proxy` with an R2 binding to serve as our unified serverless backend. Client-side compilation is isolated inside `packages/vault-engine` to maintain the **Library-First** principle, while UI elements are integrated cleanly into SvelteKit routes. Background tasks use async Web Worker or asynchronous loop queues on the client to allow closing the window or using the app during upload.
