@@ -186,14 +186,16 @@ export class ImportSettingsController {
   };
 
   getPackImportStatus = (pack: CreaturePack) => {
-    const existingSlugs = new Set(
-      Object.values(this.deps.vault.entities).map((e) =>
+    const existingSlugs = new Set<string>();
+    // ⚡ Bolt Optimization: Use imperative loop over vault.allEntities instead of Object.values().map()
+    for (const e of this.deps.vault.allEntities) {
+      existingSlugs.add(
         e.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, ""),
-      ),
-    );
+      );
+    }
     let importedCount = 0;
     for (const entry of pack.entries) {
       const slug = entry.title
@@ -213,15 +215,17 @@ export class ImportSettingsController {
   };
 
   handlePackSelect = (pack: CreaturePack) => {
-    const knownTitleToId = new Map(
-      Object.entries(this.deps.vault.entities).map(([id, e]) => [
+    const knownTitleToId = new Map<string, string>();
+    // ⚡ Bolt Optimization: Use imperative loop over vault.allEntities instead of Object.entries().map()
+    for (const e of this.deps.vault.allEntities) {
+      knownTitleToId.set(
         e.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, ""),
-        id,
-      ]),
-    );
+        e.id,
+      );
+    }
     this.discoveredEntities = packToDiscoveredEntities(pack, knownTitleToId);
     this.importMode = "oracle";
     this.step = "review";

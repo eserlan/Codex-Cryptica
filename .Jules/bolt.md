@@ -1,0 +1,3 @@
+## 2026-07-08 - [Avoid Chained Map Operations on Reactive Svelte Stores]
+ **Learning:** Svelte 5 stores often compute intermediate arrays during property access. Relying on patterns like `Object.values(store.entities).map()` or `Object.entries(store.entities).map()` frequently inside reactive contexts leads to excessive intermediate array instantiations and prototype iteration overhead, heavily burdening the garbage collector.
+ **Action:** Prefer maintaining an array-formatted getter (e.g. `store.allEntities`) and querying it using imperative `for...of` loops rather than chained array prototypes for data extraction.

@@ -45,6 +45,7 @@ describe("import-settings-controller helpers", () => {
       } as any,
       vault: {
         entities: {},
+        get allEntities() { return []; },
         createEntity: async () => "",
         updateEntity: async () => true,
         batchCreateEntities: async () => {},
