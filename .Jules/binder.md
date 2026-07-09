@@ -37,3 +37,13 @@
 
 **Learning:** When injecting time dependencies (or any dependencies) into the constructor of an abstract base class (`BaseExecutor`), all concrete subclasses (e.g. `PlotExecutor`, `ChatExecutor`, `ReviseExecutor`) must be updated to also accept that dependency (often as an optional parameter) and pass it to `super(clock)`. Otherwise, the dependency cannot actually be injected when instantiating the concrete classes, defeating the purpose of the test seam.
 **Action:** When modifying a base class constructor to inject dependencies, search for all occurrences of `extends BaseClass` and update their constructors accordingly.
+
+## 2024-07-04 - Default dependencies referencing undefined globals in tests
+
+**Learning:** When using Dependency Injection to inject a global dependency like `Date.now()`, importing the fallback object (`systemClock`) from another module might fail if that module (`$lib/utils/runtime-deps.ts`) does not exist or isn't accessible in tests, causing the entire build or test suite to fail.
+**Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
+
+## 2026-07-09 - Inject idGenerator into oracle engine executors
+
+**Learning:** When adding a new dependency (`IdGenerator`) to an abstract base class (`BaseExecutor`), we must remember to update _all_ subclasses that have their own constructors (e.g. `GuestChatExecutor`, `CreateExecutor`, etc.) to pass it through to `super()`. A quick test pass might not catch this if the subclasses don't define custom constructors, but some do.
+**Action:** Injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it through. Replaced `crypto.randomUUID()` calls with `this.idGenerator.uuid()`.

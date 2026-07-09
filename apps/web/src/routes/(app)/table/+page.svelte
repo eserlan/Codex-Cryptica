@@ -356,7 +356,7 @@
 
       {#if typeCounts.size > 0}
         <div class="flex flex-wrap items-center gap-1.5">
-          {#each [...typeCounts.entries()].sort( (a, b) => a[0].localeCompare(b[0]) ) as [type, count] (type)}
+          {#each [...typeCounts.entries()].sort( (a, b) => a[0].localeCompare(b[0]), ) as [type, count] (type)}
             {@const cat = categories.getCategory(type)}
             {@const active = typeFilters.has(type)}
             <button

@@ -79,3 +79,8 @@
 
 **Learning:** Found multiple icon-only buttons (like zap, pin, and trash) in `SessionHubWidget.svelte` that lacked `aria-label` attributes and had their inner `span` icons visible to screen readers. This makes them opaque or confusing for assistive technology users.
 **Action:** Added `aria-label` to these icon-only `<button>` elements matching their visual `title` tooltips, and added `aria-hidden="true"` to the inner decorative icon `<span class="icon-[...]">` elements.
+
+## 2026-07-09 - Add aria-hidden to decorative icons
+
+**Learning:** Icon-only buttons with `aria-label` should also have `aria-hidden="true"` applied to the inner icon spans (e.g. `<span class="icon-[...]" aria-hidden="true">`) to prevent screen readers from reading confusing redundant class names and ensure they only announce the parent's `aria-label`.
+**Action:** Always add `aria-hidden="true"` to icon spans within `aria-label` buttons during UI creation or accessibility passes.
