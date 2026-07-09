@@ -43,7 +43,9 @@ const worldService = new WorldServiceImplementation({
         targetModel,
         {
           provider: oracle.settings.imageProvider as
-            "gemini" | "cloudflare" | "custom",
+            | "gemini"
+            | "cloudflare"
+            | "custom",
           baseUrl: oracle.settings.customImageBaseUrl,
           cloudflareAccountId: oracle.settings.cloudflareAccountId,
         },

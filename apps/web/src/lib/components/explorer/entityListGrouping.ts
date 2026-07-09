@@ -16,7 +16,8 @@ export type CategoryGroupedEntities = {
 };
 
 export type ExplorerGroupedEntities =
-  LabelGroupedEntities | CategoryGroupedEntities;
+  | LabelGroupedEntities
+  | CategoryGroupedEntities;
 
 export function groupEntitiesForExplorer(
   entities: Entity[],

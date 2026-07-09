@@ -6,7 +6,12 @@ export type ArtDirectionSource =
   | "global-default";
 
 export type DrawSurface =
-  "command" | "entity" | "zen" | "graph" | "cover" | "chat";
+  | "command"
+  | "entity"
+  | "zen"
+  | "graph"
+  | "cover"
+  | "chat";
 
 export interface DrawRequestContext {
   subject: string;

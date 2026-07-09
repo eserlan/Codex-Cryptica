@@ -16,14 +16,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: {
-    activeVaultId: "v1",
-    selectedEntityId: null,
-    entities: { existing: { title: "Existing", aliases: ["Known Alias"] } },
-    createEntity: mocks.createEntity,
-    deleteEntity: mocks.deleteEntity,
-    addConnection: mocks.addConnection,
-  },
+  vault: { activeVaultId: "v1", selectedEntityId: null, entities: { existing: { title: "Existing", aliases: ["Known Alias"] } }, createEntity: mocks.createEntity, deleteEntity: mocks.deleteEntity, addConnection: mocks.addConnection },
 }));
 vi.mock("$lib/stores/proposer.svelte", () => ({
   proposerStore: {
@@ -38,13 +31,9 @@ vi.mock("$lib/stores/proposer.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { requestCreateEntity: mocks.requestCreateEntity },
 }));
-vi.mock("$lib/services/search.svelte", () => ({
-  searchService: { search: mocks.search },
-}));
+vi.mock("$lib/services/search.svelte", () => ({ searchService: { search: mocks.search } }));
 vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: { apiKey: undefined } }));
-vi.mock("$lib/services/RevisionService.svelte", () => ({
-  revisionService: { revise: mocks.revise, pendingDraft: mocks.pendingDraft },
-}));
+vi.mock("$lib/services/RevisionService.svelte", () => ({ revisionService: { revise: mocks.revise, pendingDraft: mocks.pendingDraft } }));
 
 describe("EntityProposals", () => {
   beforeEach(() => {
@@ -64,9 +53,7 @@ describe("EntityProposals", () => {
       screen.getByRole("button", { name: "Create proposed entity New Person" }),
     );
 
-    expect(mocks.createEntity).toHaveBeenCalledWith("note", "New Person", {
-      content: "",
-    });
+    expect(mocks.createEntity).toHaveBeenCalledWith("note", "New Person", { content: "" });
     expect(mocks.revise).toHaveBeenCalledOnce();
   });
 

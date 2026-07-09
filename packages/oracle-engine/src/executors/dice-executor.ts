@@ -17,6 +17,7 @@ export class DiceExecutor
     super(clock, idGenerator);
   }
 
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,

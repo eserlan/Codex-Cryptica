@@ -14,14 +14,14 @@ The existing `Entity` type in `packages/schema` will be updated:
 
 Used by the `DraftingEngine` to track identified entities _before_ they are even saved as drafts in the vault.
 
-| Field | Type | Description |
+| Field            | Type       | Description                                                    |
 | ---------------- | ---------- | -------------------------------------------------------------- | -------------------------------------------- |
-| id | string | Stable ID based on normalized name (for merging across turns). |
-| title | string | Identified entity name. |
-| type | EntityType | identified type (character, location, etc.). |
-| description | string | The extracted text block. |
-| sourceMessageIds | string[] | List of message IDs contributing to this draft. |
-| state | 'new' | 'update' | Whether it matches an existing vault entity. |
+| id               | string     | Stable ID based on normalized name (for merging across turns). |
+| title            | string     | Identified entity name.                                        |
+| type             | EntityType | identified type (character, location, etc.).                   |
+| description      | string     | The extracted text block.                                      |
+| sourceMessageIds | string[]   | List of message IDs contributing to this draft.                |
+| state            | 'new'      | 'update'                                                       | Whether it matches an existing vault entity. |
 
 ## DiscoveryProposal
 

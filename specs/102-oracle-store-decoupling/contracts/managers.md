@@ -10,7 +10,9 @@ Managers must accept the parent `OracleStore` (facade) and an optional dependenc
 export class OracleUiManager {
   constructor(
     private store: OracleStore,
-    deps: { /* optional mocks */ } = {},
+    deps: {
+      /* optional mocks */
+    } = {},
   ) {}
 }
 ```

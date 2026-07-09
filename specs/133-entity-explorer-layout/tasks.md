@@ -23,8 +23,8 @@ implemented before story work because every story relies on it.
 
 **Purpose**: Establish the focused test fixtures and implementation boundaries.
 
-- [x] T001 [P] Add a reusable injectable `matchMedia` fixture for 1280px viewport transitions in `apps/web/src/lib/stores/ui/layout-ui.test.ts`.
-- [x] T002 [P] Add Explorer and workspace component test files with the existing vault, modal, and embedded-reader stubs in `apps/web/src/lib/components/explorer/EntityExplorer.test.ts` and `apps/web/src/lib/components/layout/EntityExplorerWorkspace.test.ts`.
+- [X] T001 [P] Add a reusable injectable `matchMedia` fixture for 1280px viewport transitions in `apps/web/src/lib/stores/ui/layout-ui.test.ts`.
+- [X] T002 [P] Add Explorer and workspace component test files with the existing vault, modal, and embedded-reader stubs in `apps/web/src/lib/components/explorer/EntityExplorer.test.ts` and `apps/web/src/lib/components/layout/EntityExplorerWorkspace.test.ts`.
 
 ---
 
@@ -35,8 +35,8 @@ that gates every desktop workspace behavior.
 
 **Critical**: Complete this phase before implementing any user story.
 
-- [x] T003 Add failing eligibility tests for 1280px media-query changes, Explorer-open state, and active-tool changes in `apps/web/src/lib/stores/ui/layout-ui.test.ts`.
-- [x] T004 Implement constructor-injected 1280px viewport watching and the derived `isEntityExplorerWorkspace` eligibility predicate without changing persisted keys in `apps/web/src/lib/stores/ui/layout-ui.svelte.ts`.
+- [X] T003 Add failing eligibility tests for 1280px media-query changes, Explorer-open state, and active-tool changes in `apps/web/src/lib/stores/ui/layout-ui.test.ts`.
+- [X] T004 Implement constructor-injected 1280px viewport watching and the derived `isEntityExplorerWorkspace` eligibility predicate without changing persisted keys in `apps/web/src/lib/stores/ui/layout-ui.svelte.ts`.
 
 **Checkpoint**: `LayoutUIStore` reports workspace eligibility only for an open, active
 Explorer at `xl` width or wider.
@@ -54,14 +54,14 @@ right workspace column without opening the full-screen modal.
 
 ### Tests for User Story 1
 
-- [x] T005 [P] [US1] Add failing desktop-selection tests proving Entity Explorer calls the focused-entity flow instead of `modalUIStore.openZenMode` when workspace-eligible in `apps/web/src/lib/components/explorer/EntityExplorer.test.ts`.
-- [x] T006 [P] [US1] Add failing workspace tests for the initial accessible empty state and focused `EmbeddedEntityView` rendering in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.test.ts`.
+- [X] T005 [P] [US1] Add failing desktop-selection tests proving Entity Explorer calls the focused-entity flow instead of `modalUIStore.openZenMode` when workspace-eligible in `apps/web/src/lib/components/explorer/EntityExplorer.test.ts`.
+- [X] T006 [P] [US1] Add failing workspace tests for the initial accessible empty state and focused `EmbeddedEntityView` rendering in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.test.ts`.
 
 ### Implementation for User Story 1
 
-- [x] T007 [US1] Route Entity Explorer list selection and its Zen action through the existing `focusEntity` flow only when `layoutUIStore.isEntityExplorerWorkspace` is true; retain the existing modal path otherwise in `apps/web/src/lib/components/explorer/EntityExplorer.svelte`.
-- [x] T008 [US1] Create the bounded non-modal reader and empty-state wrapper that reuses `EmbeddedEntityView` in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.svelte`.
-- [x] T009 [US1] Host `EntityExplorerWorkspace` above still-mounted route children, using `focusedEntityId`, `min-w-0`, and bounded overflow in `apps/web/src/routes/(app)/+layout.svelte`.
+- [X] T007 [US1] Route Entity Explorer list selection and its Zen action through the existing `focusEntity` flow only when `layoutUIStore.isEntityExplorerWorkspace` is true; retain the existing modal path otherwise in `apps/web/src/lib/components/explorer/EntityExplorer.svelte`.
+- [X] T008 [US1] Create the bounded non-modal reader and empty-state wrapper that reuses `EmbeddedEntityView` in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.svelte`.
+- [X] T009 [US1] Host `EntityExplorerWorkspace` above still-mounted route children, using `focusedEntityId`, `min-w-0`, and bounded overflow in `apps/web/src/routes/(app)/+layout.svelte`.
 
 **Checkpoint**: User Story 1 is complete when wide-screen Explorer selection swaps
 the right reader/editor without a modal or route remount.
@@ -79,9 +79,9 @@ and confirm the overlay appears or disappears once without clipping.
 
 ### Tests for User Story 2
 
-- [x] T010 [US2] Add below-threshold and resize-transition regression cases to `apps/web/src/lib/stores/ui/layout-ui.test.ts` for workspace eligibility changes at 1280px.
-- [x] T011 [US2] Add ineligible-selection regression cases proving Entity Explorer retains `modalUIStore.openZenMode` below 1280px and when another tool is active in `apps/web/src/lib/components/explorer/EntityExplorer.test.ts`.
-- [x] T012 [US2] Add app-shell workspace visibility regression cases for closed Explorer and active Oracle state in `apps/web/src/routes/(app)/layout.route.test.ts`.
+- [X] T010 [US2] Add below-threshold and resize-transition regression cases to `apps/web/src/lib/stores/ui/layout-ui.test.ts` for workspace eligibility changes at 1280px.
+- [X] T011 [US2] Add ineligible-selection regression cases proving Entity Explorer retains `modalUIStore.openZenMode` below 1280px and when another tool is active in `apps/web/src/lib/components/explorer/EntityExplorer.test.ts`.
+- [X] T012 [US2] Add app-shell workspace visibility regression cases for closed Explorer and active Oracle state in `apps/web/src/routes/(app)/layout.route.test.ts`.
 
 **Checkpoint**: User Story 2 is complete when the split layout has no effect below
 the threshold or for non-Explorer sidebars.
@@ -99,12 +99,12 @@ Oracle and confirm the workspace overlay disappears.
 
 ### Tests for User Story 3
 
-- [x] T013 [US3] Add a close-flow test that verifies the embedded reader returns to the workspace empty state without opening the modal or closing the Explorer in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.test.ts`.
-- [x] T014 [US3] Add integration coverage for the embedded-reader close flow and threshold-crossing single-transition behavior in `apps/web/src/routes/(app)/layout.route.test.ts`.
+- [X] T013 [US3] Add a close-flow test that verifies the embedded reader returns to the workspace empty state without opening the modal or closing the Explorer in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.test.ts`.
+- [X] T014 [US3] Add integration coverage for the embedded-reader close flow and threshold-crossing single-transition behavior in `apps/web/src/routes/(app)/layout.route.test.ts`.
 
 ### Implementation for User Story 3
 
-- [x] T015 [US3] Preserve the existing `EmbeddedEntityView` close flow while ensuring the app-shell eligibility condition removes the workspace overlay when Explorer closes or another sidebar tool activates in `apps/web/src/routes/(app)/+layout.svelte`.
+- [X] T015 [US3] Preserve the existing `EmbeddedEntityView` close flow while ensuring the app-shell eligibility condition removes the workspace overlay when Explorer closes or another sidebar tool activates in `apps/web/src/routes/(app)/+layout.svelte`.
 
 **Checkpoint**: All three user stories work without a new pin preference, route, or
 Zen Mode implementation.
@@ -115,8 +115,8 @@ Zen Mode implementation.
 
 **Purpose**: Finish documentation, accessibility, and full verification.
 
-- [x] T016 [P] Update the Entity Explorer article with the 1280px side-by-side workspace, empty state, and smaller-screen Zen Mode behavior in `apps/web/src/lib/config/help-content.ts`.
-- [x] T017 Verify Iconify-only icons, semantic Tailwind tokens, non-modal Zen accessibility, independent pane scrolling, and no page-level horizontal overflow in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.svelte` and `apps/web/src/routes/(app)/+layout.svelte`.
+- [X] T016 [P] Update the Entity Explorer article with the 1280px side-by-side workspace, empty state, and smaller-screen Zen Mode behavior in `apps/web/src/lib/config/help-content.ts`.
+- [X] T017 Verify Iconify-only icons, semantic Tailwind tokens, non-modal Zen accessibility, independent pane scrolling, and no page-level horizontal overflow in `apps/web/src/lib/components/layout/EntityExplorerWorkspace.svelte` and `apps/web/src/routes/(app)/+layout.svelte`.
 - [ ] T018 Run focused tests, `bun run --filter web lint:types`, `bun run --filter web lint`, and `bun run --filter web test`, recording results against `specs/133-entity-explorer-layout/quickstart.md`.
 - [ ] T019 Complete the manual 1280px/1279px, persisted Explorer, entity-switching, close-state, Oracle-switching, and scrolling checks in `specs/133-entity-explorer-layout/quickstart.md`.
 

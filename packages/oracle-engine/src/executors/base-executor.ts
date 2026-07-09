@@ -13,10 +13,7 @@ import type {
  * Provides shared utilities and enforces architectural patterns.
  */
 export abstract class BaseExecutor {
-  constructor(
-    protected clock: Clock = systemClock,
-    protected idGenerator: IdGenerator = systemIdGenerator,
-  ) {}
+  constructor(protected clock: Clock = systemClock, protected idGenerator: IdGenerator = systemIdGenerator) {}
 
   /**
    * Helper to extract and normalize categories from context.

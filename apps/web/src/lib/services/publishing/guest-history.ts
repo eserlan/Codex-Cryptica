@@ -20,11 +20,7 @@ export function getGuestHistory(): GuestHistory[] {
         lastAccessed: String(entry.lastAccessed || new Date().toISOString()),
       }))
       .filter((entry) => entry.publishId)
-      .sort(
-        (a, b) =>
-          new Date(b.lastAccessed).getTime() -
-          new Date(a.lastAccessed).getTime(),
-      );
+      .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
   } catch (e) {
     console.warn("Failed to parse guest history", e);
     return [];
@@ -54,10 +50,7 @@ export function addGuestHistory(publishId: string, vaultTitle: string): void {
 
   // Keep it sorted and cap to 10 entries to prevent localStorage bloat
   const updated = history
-    .sort(
-      (a, b) =>
-        new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime(),
-    )
+    .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime())
     .slice(0, 10);
 
   try {

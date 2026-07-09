@@ -173,7 +173,8 @@ export class WorldServiceImplementation {
 
   async getMetadata(vaultId: string): Promise<WorldMetadata> {
     const record = (await this.db.vaultMetadata.get(vaultId)) as
-      VaultMetadataRecord | undefined;
+      | VaultMetadataRecord
+      | undefined;
 
     return {
       id: vaultId,
@@ -189,7 +190,8 @@ export class WorldServiceImplementation {
     metadata: Partial<WorldMetadata>,
   ): Promise<void> {
     const existing = (await this.db.vaultMetadata.get(vaultId)) as
-      VaultMetadataRecord | undefined;
+      | VaultMetadataRecord
+      | undefined;
 
     const next: VaultMetadataRecord = {
       id: vaultId,

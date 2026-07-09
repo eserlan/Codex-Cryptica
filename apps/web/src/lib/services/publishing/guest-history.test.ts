@@ -41,9 +41,7 @@ describe("GuestHistory Service", () => {
     expect(history).toHaveLength(1);
     expect(history[0].vaultTitle).toBe("Updated Title");
     expect(history[0].lastAccessed).not.toBe(firstTime);
-    expect(history[0].lastAccessed).toBe(
-      new Date("2026-06-22T22:02:00Z").toISOString(),
-    );
+    expect(history[0].lastAccessed).toBe(new Date("2026-06-22T22:02:00Z").toISOString());
   });
 
   it("should sort entries by lastAccessed descending", () => {
@@ -72,7 +70,7 @@ describe("GuestHistory Service", () => {
     const history = getGuestHistory();
     expect(history).toHaveLength(10);
     // The oldest entries (pub-1, pub-2) should be evicted because they have the oldest timestamps
-    const ids = history.map((h) => h.publishId);
+    const ids = history.map(h => h.publishId);
     expect(ids).not.toContain("pub-1");
     expect(ids).not.toContain("pub-2");
     expect(ids).toContain("pub-12");

@@ -12,7 +12,11 @@ export class DriveError extends Error {
   constructor(
     public readonly statusCode: number,
     public readonly domain:
-      "auth" | "permission" | "not_found" | "server" | "network",
+      | "auth"
+      | "permission"
+      | "not_found"
+      | "server"
+      | "network",
     message: string,
   ) {
     super(message);

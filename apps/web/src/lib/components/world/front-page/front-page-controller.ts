@@ -52,7 +52,9 @@ export interface FrontPageControllerDeps {
       | null
       | undefined;
     frontPageEntity:
-      { id?: string; chronicle?: string; content?: string } | null | undefined;
+      | { id?: string; chronicle?: string; content?: string }
+      | null
+      | undefined;
     error: string | null;
     isLoading: boolean;
     isSaving: boolean;

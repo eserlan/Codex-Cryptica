@@ -44,6 +44,5 @@
 **Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
 
 ## 2026-07-07 - Inject idGenerator into oracle engine executors
-
-**Learning:** When adding a new dependency (`IdGenerator`) to an abstract base class (`BaseExecutor`), we must remember to update _all_ subclasses that have their own constructors (e.g. `GuestChatExecutor`, `CreateExecutor`, etc. if they define one) to pass it through to `super()`. A quick test pass might not catch this if the subclasses don't define custom constructors, but some do.
-**Action:** We injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it. We replaced `crypto.randomUUID()` with `this.idGenerator.uuid()`.
+ **Learning:** When adding a new dependency (`IdGenerator`) to an abstract base class (`BaseExecutor`), we must remember to update *all* subclasses that have their own constructors (e.g. `GuestChatExecutor`, `CreateExecutor`, etc. if they define one) to pass it through to `super()`. A quick test pass might not catch this if the subclasses don't define custom constructors, but some do.
+ **Action:** We injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it. We replaced `crypto.randomUUID()` with `this.idGenerator.uuid()`.

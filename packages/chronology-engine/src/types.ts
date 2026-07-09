@@ -154,7 +154,9 @@ export interface AgendaSection {
  * Which tier of the FR-012 priority chain resolved the calendar's current date.
  */
 export type CalendarCurrentDateSourceKind =
-  "entity" | "vaultSetting" | "realWorld";
+  | "entity"
+  | "vaultSetting"
+  | "realWorld";
 
 /**
  * Resolved output of the FR-012 priority chain.

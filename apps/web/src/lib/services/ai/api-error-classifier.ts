@@ -1,5 +1,9 @@
 export type ApiErrorType =
-  "offline" | "rate-limit" | "quota" | "safety" | "unknown";
+  | "offline"
+  | "rate-limit"
+  | "quota"
+  | "safety"
+  | "unknown";
 
 export interface ClassifiedError {
   type: ApiErrorType;

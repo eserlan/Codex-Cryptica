@@ -5,27 +5,27 @@ from existing layout state and reuses the existing focused-entity identifier.
 
 ## LayoutUIStore Viewport State
 
-| Field                       | Type                               | Persistence            | Description                                                          | Validation                                         |
-| --------------------------- | ---------------------------------- | ---------------------- | -------------------------------------------------------------------- | -------------------------------------------------- |
-| `isWideViewport`            | `boolean`                          | None                   | Whether `matchMedia("(min-width: 1280px)")` matches.                 | Updated from the injected viewport media query.    |
-| `leftSidebarOpen`           | `boolean`                          | Existing local storage | Whether a left sidebar is open.                                      | Existing behavior unchanged.                       |
-| `activeSidebarTool`         | `"oracle" \| "explorer" \| "none"` | Existing local storage | The currently active left sidebar tool.                              | Existing behavior unchanged.                       |
-| `isEntityExplorerWorkspace` | `boolean` derived                  | None                   | Whether the desktop Explorer workspace should overlay the main pane. | True only if wide, open, and tool is `"explorer"`. |
+| Field | Type | Persistence | Description | Validation |
+| --- | --- | --- | --- | --- |
+| `isWideViewport` | `boolean` | None | Whether `matchMedia("(min-width: 1280px)")` matches. | Updated from the injected viewport media query. |
+| `leftSidebarOpen` | `boolean` | Existing local storage | Whether a left sidebar is open. | Existing behavior unchanged. |
+| `activeSidebarTool` | `"oracle" \| "explorer" \| "none"` | Existing local storage | The currently active left sidebar tool. | Existing behavior unchanged. |
+| `isEntityExplorerWorkspace` | `boolean` derived | None | Whether the desktop Explorer workspace should overlay the main pane. | True only if wide, open, and tool is `"explorer"`. |
 
 ## Focused Entity State
 
-| Field             | Type                                         | Persistence | Description                                              | Validation                                                 |
-| ----------------- | -------------------------------------------- | ----------- | -------------------------------------------------------- | ---------------------------------------------------------- |
-| `focusedEntityId` | `string \| null`                             | None        | Existing identifier consumed by the embedded Zen reader. | Must refer to an entity in the active vault when non-null. |
-| `mainViewMode`    | `"visualization" \| "focus" \| "guest-chat"` | None        | Existing main-content presentation state.                | Existing `focusEntity` transitions remain authoritative.   |
+| Field | Type | Persistence | Description | Validation |
+| --- | --- | --- | --- | --- |
+| `focusedEntityId` | `string \| null` | None | Existing identifier consumed by the embedded Zen reader. | Must refer to an entity in the active vault when non-null. |
+| `mainViewMode` | `"visualization" \| "focus" \| "guest-chat"` | None | Existing main-content presentation state. | Existing `focusEntity` transitions remain authoritative. |
 
 ## Workspace Presentation
 
-| State    | Eligibility                                                    | Main Pane                                                       | Explorer Selection                                  |
-| -------- | -------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------- |
-| Inactive | Viewport < 1280px, Explorer closed, or another tool active     | Existing route content                                          | Existing full-screen Zen Mode modal                 |
-| Ready    | Viewport >= 1280px and Explorer open/active, no focused entity | Stable "Select an entity" empty state above the preserved route | Enters focused state                                |
-| Focused  | Ready state plus a focused entity                              | `EmbeddedEntityView` using existing `ZenView`                   | Switches the embedded reader to the selected entity |
+| State | Eligibility | Main Pane | Explorer Selection |
+| --- | --- | --- | --- |
+| Inactive | Viewport < 1280px, Explorer closed, or another tool active | Existing route content | Existing full-screen Zen Mode modal |
+| Ready | Viewport >= 1280px and Explorer open/active, no focused entity | Stable "Select an entity" empty state above the preserved route | Enters focused state |
+| Focused | Ready state plus a focused entity | `EmbeddedEntityView` using existing `ZenView` | Switches the embedded reader to the selected entity |
 
 ## State Transitions
 

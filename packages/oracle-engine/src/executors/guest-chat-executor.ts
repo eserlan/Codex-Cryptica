@@ -270,6 +270,7 @@ export class GuestChatExecutor
     super(clock, idGenerator);
   }
 
+
   private isExecuting = false;
 
   async execute(

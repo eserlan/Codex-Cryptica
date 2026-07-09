@@ -77,22 +77,22 @@ These free web generators will allow GMs to generate complete campaign elements 
 | NPC Generator | \---\> | Faction Generator | \---\> | Location Generator| \---\> | Quest Generator |  
 | "Barek Steeleye" | | "The Iron Guild" | | "Barek's Tavern" | | "Deliver the Lore"|  
 \+-------------------+ \+-------------------+ \+-------------------+ \+-------------------+  
-| | | |
-\+--------------------------+--------------------------+--------------------------+
-|
-v (Interactive Web Graph)
-\+----------------------------------+
-| Temp Web Campaign Hub |
-| \- NPC belongs to Faction |
-| \- Tavern is NPC's location |
-| \- NPC offers the Quest |
-\+----------------------------------+
-|
-v (One-Click Local Export)
-\+----------------------------------+
-| Standardized JSON/Markdown |
-| Unpacks into Local Vault |
-\+----------------------------------+
+ | | | |
+ \+--------------------------+--------------------------+--------------------------+
+ |
+ v (Interactive Web Graph)
+ \+----------------------------------+
+ | Temp Web Campaign Hub |
+ | \- NPC belongs to Faction |
+ | \- Tavern is NPC's location |
+ | \- NPC offers the Quest |
+ \+----------------------------------+
+ |
+ v (One-Click Local Export)
+ \+----------------------------------+
+ | Standardized JSON/Markdown |
+ | Unpacks into Local Vault |
+ \+----------------------------------+
 
 When a GM searches for an NPC generator, they will land on a Codex Cryptica web page that allows them to customize the generated character’s name, alignment, appearance, secrets, and equipment.25 The interface will let them link this NPC to a generated faction, a nested tavern location, a specific rumor, and an active quest.27 This process builds a relational network of campaign elements 25:
 

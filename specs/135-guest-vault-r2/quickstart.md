@@ -18,10 +18,8 @@ This guide explains how to run, test, and verify the Cloudflare R2 guest snapsho
 ## Local Development Setup
 
 ### 1. Launch local Cloudflare Worker & R2 Bucket
-
 Run the oracle-proxy worker locally. We need to define local wrangler configuration for R2 binding.
 Under `apps/workers/oracle-proxy/wrangler.toml`, add:
-
 ```toml
 [[r2_buckets]]
 binding = "BUCKET"
@@ -30,22 +28,17 @@ preview_bucket_name = "codex-cryptica-statics-local"
 ```
 
 Start the dev server:
-
 ```bash
 cd apps/workers/oracle-proxy
 bun run wrangler dev
 ```
-
 This runs the local API gateway at `http://localhost:8787`.
 
 ### 2. Start the web application
-
 From the repository root, start the Vite development server for SvelteKit:
-
 ```bash
 bun run dev
 ```
-
 This opens the app at `http://localhost:5173`.
 
 ---
@@ -53,15 +46,12 @@ This opens the app at `http://localhost:5173`.
 ## Running Verification Tests
 
 ### 1. Unit Tests
-
 Run unit tests for both client-side components and packages:
-
 ```bash
 bun run test
 ```
 
 ### 2. Manual Verification Flow
-
 1. Open the local Codex app.
 2. Select a vault/campaign with mixed visibility settings (e.g. some player-visible, some GM-only).
 3. Open Vault Settings -> click **"Publish Guest Snapshot"**.

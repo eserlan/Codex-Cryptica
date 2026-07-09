@@ -63,8 +63,7 @@ describe("renderGeneratorMarkdown", () => {
   });
 
   it("escapes raw HTML before rendering generator output", () => {
-    const input =
-      '- **Tone**: <img src="x" onerror="alert(1)"><script>alert(1)</script>';
+    const input = '- **Tone**: <img src="x" onerror="alert(1)"><script>alert(1)</script>';
     const result = renderGeneratorMarkdown(input, "default");
     const container = document.createElement("div");
     container.innerHTML = result;

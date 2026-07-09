@@ -8,8 +8,7 @@ describe("GuestExporter", () => {
     type: "note",
     title: "Public Note",
     status: "active",
-    content:
-      "This is a public node with a link to [Secret Node](entity-2) and [Public Node 2](entity-3) and [Google](https://google.com).",
+    content: "This is a public node with a link to [Secret Node](entity-2) and [Public Node 2](entity-3) and [Google](https://google.com).",
     lore: "Top secret GM only note",
     artDirection: "GM visual description",
     connections: [
@@ -64,7 +63,7 @@ describe("GuestExporter", () => {
     expect(bundle.activeTheme).toEqual({ primaryColor: "#ff0000" });
     expect(bundle.publishedAt).toBeDefined();
 
-    const ids = bundle.entities.map((e) => e.id);
+    const ids = bundle.entities.map(e => e.id);
     expect(ids).toContain("entity-1");
     expect(ids).toContain("entity-3");
     expect(ids).not.toContain("entity-2"); // Hidden
@@ -74,7 +73,7 @@ describe("GuestExporter", () => {
   it("should physically delete GM secrets on included entities", () => {
     const bundle = GuestExporter.export(defaultOptions);
 
-    const exportedE1 = bundle.entities.find((e) => e.id === "entity-1")!;
+    const exportedE1 = bundle.entities.find(e => e.id === "entity-1")!;
     expect(exportedE1.lore).toBeUndefined();
     expect(exportedE1.artDirection).toBeUndefined();
     expect((exportedE1 as any)._path).toBeUndefined();
@@ -83,7 +82,7 @@ describe("GuestExporter", () => {
   it("should redact links to private/excluded entities but preserve public and external links", () => {
     const bundle = GuestExporter.export(defaultOptions);
 
-    const exportedE1 = bundle.entities.find((e) => e.id === "entity-1")!;
+    const exportedE1 = bundle.entities.find(e => e.id === "entity-1")!;
     expect(exportedE1.content).toContain("[Redacted]"); // entity-2 link is redacted
     expect(exportedE1.content).toContain("entity-3"); // entity-3 link is preserved
     expect(exportedE1.content).toContain("https://google.com"); // google link is preserved
@@ -151,17 +150,17 @@ describe("GuestExporter", () => {
     expect(bundle.maps).toHaveLength(1);
     expect(bundle.maps[0].id).toBe("map-public");
     expect(bundle.maps[0].pins).toHaveLength(2);
-    expect(bundle.maps[0].pins.map((p) => p.id)).toContain("pin-1");
-    expect(bundle.maps[0].pins.map((p) => p.id)).toContain("pin-3");
-    expect(bundle.maps[0].pins.map((p) => p.id)).not.toContain("pin-2");
+    expect(bundle.maps[0].pins.map(p => p.id)).toContain("pin-1");
+    expect(bundle.maps[0].pins.map(p => p.id)).toContain("pin-3");
+    expect(bundle.maps[0].pins.map(p => p.id)).not.toContain("pin-2");
 
     // Verify canvases
     expect(bundle.canvases).toHaveLength(1);
     expect(bundle.canvases[0].id).toBe("canvas-public");
     expect(bundle.canvases[0].nodes).toHaveLength(2);
-    expect(bundle.canvases[0].nodes.map((n) => n.id)).toContain("node-1");
-    expect(bundle.canvases[0].nodes.map((n) => n.id)).toContain("node-3");
-    expect(bundle.canvases[0].nodes.map((n) => n.id)).not.toContain("node-2");
+    expect(bundle.canvases[0].nodes.map(n => n.id)).toContain("node-1");
+    expect(bundle.canvases[0].nodes.map(n => n.id)).toContain("node-3");
+    expect(bundle.canvases[0].nodes.map(n => n.id)).not.toContain("node-2");
 
     expect(bundle.canvases[0].edges).toHaveLength(1);
     expect(bundle.canvases[0].edges[0].id).toBe("edge-1-3");

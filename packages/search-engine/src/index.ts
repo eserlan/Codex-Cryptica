@@ -259,7 +259,10 @@ export class SearchEngine {
     // Process results from all fields
     for (const fieldResult of results) {
       const field = fieldResult.field as
-        "title" | "aliases" | "content" | "keywords";
+        | "title"
+        | "aliases"
+        | "content"
+        | "keywords";
       const isTitle = field === "title";
       const isAliases = field === "aliases";
       const isKeywords = field === "keywords";

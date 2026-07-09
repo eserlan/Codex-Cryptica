@@ -2,7 +2,12 @@ import type { Entity } from "schema";
 
 /** Columns the Entity Table can be sorted by. */
 export type SortKey =
-  "title" | "type" | "connections" | "labels" | "created" | "modified";
+  | "title"
+  | "type"
+  | "connections"
+  | "labels"
+  | "created"
+  | "modified";
 export type SortDirection = "asc" | "desc";
 
 export interface SortState {

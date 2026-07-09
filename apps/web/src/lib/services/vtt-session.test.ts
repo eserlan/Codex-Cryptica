@@ -22,10 +22,12 @@ describe("vtt-session", () => {
     const mockIdGenerator = { uuid: () => "mock-uuid" };
     const mockClock = { now: () => 1234567890 };
 
-    const session = createEncounterSession("map-1", undefined, undefined, {
-      idGenerator: mockIdGenerator,
-      clock: mockClock,
-    });
+    const session = createEncounterSession(
+      "map-1",
+      undefined,
+      undefined,
+      { idGenerator: mockIdGenerator, clock: mockClock }
+    );
 
     expect(session.id).toBe("mock-uuid");
     expect(session.name).toBe("Encounter mock-uui");
@@ -33,7 +35,11 @@ describe("vtt-session", () => {
   });
 
   it("creates, sanitizes, and summarizes encounters", () => {
-    const session = createEncounterSession("map-1", "enc-1", "Goblin Ambush");
+    const session = createEncounterSession(
+      "map-1",
+      "enc-1",
+      "Goblin Ambush",
+    );
     session.tokens = {
       token: {
         id: "token",

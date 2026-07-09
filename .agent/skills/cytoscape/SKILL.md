@@ -26,7 +26,9 @@ Manage Cytoscape lifecycle and reactivity using Svelte 5 `$effect` and `onMount`
     cy = cytoscape({
       container,
       elements,
-      style: [/* styles */],
+      style: [
+        /* styles */
+      ],
       layout: { name: "cose" },
     });
   });

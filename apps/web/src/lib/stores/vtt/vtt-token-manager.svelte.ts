@@ -30,7 +30,8 @@ function normalizeTokenVisibility(
 
 export function normalizeToken(
   token:
-    Token | (Omit<Token, "visibleTo"> & { visibleTo?: LegacyTokenVisibility }),
+    | Token
+    | (Omit<Token, "visibleTo"> & { visibleTo?: LegacyTokenVisibility }),
 ): Token {
   return {
     ...token,

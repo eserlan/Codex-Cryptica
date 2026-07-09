@@ -25,7 +25,10 @@ export interface TimelineEntry {
 }
 
 export type TimelineViewMode =
-  "calendar" | "agenda" | "vertical" | "horizontal";
+  | "calendar"
+  | "agenda"
+  | "vertical"
+  | "horizontal";
 
 interface TimelineStoreDependencies {
   vault: Pick<
@@ -321,14 +324,15 @@ export class TimelineStore {
       })),
   );
 
-  calendarMonthView = $derived.by((): CalendarMonthViewModel =>
-    buildCalendarMonth(
-      this.filteredCalendarEntries,
-      this.activeYear,
-      this.activeMonth,
-      this.deps.calendarStore.config,
-      this.maxVisiblePerDay,
-    ),
+  calendarMonthView = $derived.by(
+    (): CalendarMonthViewModel =>
+      buildCalendarMonth(
+        this.filteredCalendarEntries,
+        this.activeYear,
+        this.activeMonth,
+        this.deps.calendarStore.config,
+        this.maxVisiblePerDay,
+      ),
   );
 
   agendaSections = $derived.by((): AgendaSection[] =>
@@ -364,7 +368,8 @@ export class TimelineStore {
         exactDate,
         dateKind: exactDate ? "exact" : primaryDate ? "approximate" : "missing",
         createdAt: (e as Record<string, unknown>).createdAt as
-          string | undefined,
+          | string
+          | undefined,
       };
     });
 

@@ -29,7 +29,11 @@ describe("Custom option forms", () => {
 
   it("quest fields keep a typed custom value", async () => {
     render(QuestFormFields);
-    await expectCustomValuePersists("Tone", "Tone (Own option)", "Quiet dread");
+    await expectCustomValuePersists(
+      "Tone",
+      "Tone (Own option)",
+      "Quiet dread",
+    );
   });
 
   it("kingdom fields keep a typed custom value", async () => {

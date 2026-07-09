@@ -84,7 +84,7 @@ Files:
       `RelatedEntityContext` interface in this file, or import schema's).
 - [x] **T103** ENGINE/DELTA — add `relatedToLoreEntries(related[])` →
       `{ id, snippet: formatted "<title> (<type>) [<relation>]: <summary>" block,
-  hash: entityContentHash(summary) }`. Pure; worker-safe.
+    hash: entityContentHash(summary) }`. Pure; worker-safe.
 - [x] **T104** ENGINE-TEST — `buildRelatedEntityContext` output includes `id`;
       `relatedToLoreEntries` produces stable hashes that change with summary.
 
@@ -109,7 +109,7 @@ Files:
 
 - [x] **T301** SVC — add `reviseViaInteraction(...)`: get per-entity session,
       partition related `LoreEntry`s, `sendInteraction({model, input,
-  systemInstruction, previousInteractionId})`, on `InteractionExpiredError`
+    systemInstruction, previousInteractionId})`, on `InteractionExpiredError`
       reset + replay full related context once, then `commit` + parse JSON.
 - [x] **T302** SVC — in `reviseEntityUpdate`, branch into `reviseViaInteraction`
       when `interactionsEnabled && !apiKey && entity.id` present; else current path.

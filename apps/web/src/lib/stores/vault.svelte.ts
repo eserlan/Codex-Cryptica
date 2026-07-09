@@ -141,7 +141,12 @@ export class VaultStore {
   }
   set status(
     value:
-      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
   ) {
     this.syncStore.setStatus(value);
   }

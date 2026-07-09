@@ -102,7 +102,8 @@ export class RevisionService {
     messageId?: string,
   ) {
     const entity = vault.entities[finalContent.targetId] as
-      LocalEntity | undefined;
+      | LocalEntity
+      | undefined;
     this.pendingDraft = {
       entityId: finalContent.targetId,
       messageId,
@@ -146,7 +147,8 @@ export class RevisionService {
       }
       if (acceptedDraft.generatorSessionCommit) {
         const entity = vault.entities[acceptedDraft.entityId] as
-          LocalEntity | undefined;
+          | LocalEntity
+          | undefined;
         generatorSessionManager.commitAcceptedEntity({
           id: acceptedDraft.entityId,
           title: entity?.title ?? acceptedDraft.entityId,

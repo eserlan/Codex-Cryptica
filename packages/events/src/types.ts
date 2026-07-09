@@ -70,7 +70,8 @@ export type AppEventForDomain<Domain extends AppEventDomain> = Extract<
 >;
 
 export type DomainWildcard<Domain extends AppEventDomain = AppEventDomain> =
-  `${Uppercase<Domain>}:*` | `${Lowercase<Domain>}:*`;
+  | `${Uppercase<Domain>}:*`
+  | `${Lowercase<Domain>}:*`;
 
 export type EventWildcard = "*" | DomainWildcard;
 

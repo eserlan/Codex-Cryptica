@@ -7,7 +7,12 @@
  */
 
 export type GeneratorId =
-  "npc" | "faction" | "settlement" | "magic-item" | "event" | "ship";
+  | "npc"
+  | "faction"
+  | "settlement"
+  | "magic-item"
+  | "event"
+  | "ship";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",

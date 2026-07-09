@@ -18,20 +18,17 @@ The web app uses a staged promotion model on Cloudflare Pages:
 ### `deploy.yml`
 
 Purpose:
-
 - Runs type-checking, linting, tests, and the web build.
 - Deploys preview environments for pull requests.
 - Deploys the staging environment on pushes to `staging`.
 - Uploads the `staging-dist` artifact used for production promotion.
 
 Triggers:
-
 - `pull_request` targeting `main` or `staging`
 - `push` to `staging`
 - `workflow_dispatch`
 
 Notes:
-
 - PR previews comment back on the PR with preview, bundle report, and coverage links.
 - Docs-only changes are ignored by this workflow.
 - The staging deploy publishes to the Cloudflare Pages `staging` branch.
@@ -39,37 +36,30 @@ Notes:
 ### `promote-to-prod.yml`
 
 Purpose:
-
 - Promotes a previously successful staging artifact to production without rebuilding from a different commit.
 
 Trigger:
-
 - Manual `workflow_dispatch`
 
 Behavior:
-
 - Uses the latest successful `Deploy to Cloudflare Pages` run on `staging`, unless a specific staging run ID is supplied.
 - Downloads the `staging-dist` artifact from that run.
 - Deploys that exact artifact to the Cloudflare Pages `main` branch.
 - Sends a production deployment notification after success.
 
 Why this exists:
-
 - Production receives the same built output that already passed staging.
 - The promotion step avoids drift between staging validation and production deployment.
 
 ### `merge-staging-to-main.yml`
 
 Purpose:
-
 - Reconciles Git history after production promotion.
 
 Trigger:
-
 - Automatic `workflow_run` after `Promote Staging to Production` completes successfully
 
 Behavior:
-
 - Merges `origin/staging` into `main`
 - Bumps the web app version and service worker cache on `main`
 - Pushes the bump commit
@@ -77,21 +67,17 @@ Behavior:
 - Sends a Discord notification
 
 Important detail:
-
 - This workflow updates `main` after production promotion. Production deployment itself is still done from the promoted staging artifact, not from a fresh `main` build.
 
 ### `release.yml`
 
 Purpose:
-
 - Creates a GitHub release for major or minor web version bumps.
 
 Trigger:
-
 - Manual `workflow_dispatch`
 
 Behavior:
-
 - Checks whether the current version bump is a major/minor release
 - Builds the app
 - Creates a portable zip artifact
@@ -99,28 +85,23 @@ Behavior:
 - Sends a release notification
 
 In practice:
-
 - This is typically triggered by automation after the post-promotion version bump.
 
 ### `auto-bump-web-version.yml`
 
 Purpose:
-
 - Bumps the web version after a PR merged directly into `main`.
 
 Trigger:
-
 - `pull_request_target` closed on `main`, when the PR was merged
 
 Behavior:
-
 - Bumps versioned web files
 - Commits and pushes the bump
 - Triggers `deploy.yml` on `main`
 - Triggers `release.yml` on `main`
 
 Important detail:
-
 - `deploy.yml` does not auto-run on pushes to `main`, but this workflow can dispatch it manually when needed.
 
 ## Branch Flow

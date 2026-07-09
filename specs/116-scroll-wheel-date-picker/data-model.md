@@ -42,15 +42,15 @@ A named saved date position outside the standard month/day hierarchy.
 
 Persisted temporal metadata for entity date fields.
 
-| Field | Type | Description | Validation |
+| Field              | Type     | Description                                    | Validation                                        |
 | ------------------ | -------- | ---------------------------------------------- | ------------------------------------------------- | --------- | ------------------------------------------ | -------- |
-| `precision` | `"year"  | "unit"                                         | "day"                                             | "anchor"` | Explicit date precision chosen by the user | Required |
-| `year` | `number` | Campaign year | Required for all precision levels |
-| `unitId` | `string` | Stable ID for the selected month/unit option | Required for `unit` and `day` precision |
-| `day` | `number` | Day number within the selected unit | Required for `day` precision; within active range |
-| `anchorId` | `string` | Stable intercalary anchor ID | Required for `anchor` precision |
-| `label` | `string` | Optional legacy/display label | Optional |
-| `calendarRevision` | `number` | Calendar revision used when the date was saved | Required for new saves |
+| `precision`        | `"year"  | "unit"                                         | "day"                                             | "anchor"` | Explicit date precision chosen by the user | Required |
+| `year`             | `number` | Campaign year                                  | Required for all precision levels                 |
+| `unitId`           | `string` | Stable ID for the selected month/unit option   | Required for `unit` and `day` precision           |
+| `day`              | `number` | Day number within the selected unit            | Required for `day` precision; within active range |
+| `anchorId`         | `string` | Stable intercalary anchor ID                   | Required for `anchor` precision                   |
+| `label`            | `string` | Optional legacy/display label                  | Optional                                          |
+| `calendarRevision` | `number` | Calendar revision used when the date was saved | Required for new saves                            |
 
 ### CalendarSnapshot
 
@@ -65,12 +65,12 @@ The calendar rules captured when a picker session opens.
 
 Temporary picker state for a saved date that no longer validates under the active calendar.
 
-| Field | Type | Description | Validation |
+| Field                  | Type            | Description                               | Validation                   |
 | ---------------------- | --------------- | ----------------------------------------- | ---------------------------- | ----------------- | -------------------- | -------- |
-| `originalSelection` | `DateSelection` | The saved date before repair | Required |
-| `suggestedSelection` | `DateSelection` | Nearest valid replacement | Required before confirm |
-| `reason` | `"missing-unit" | "missing-anchor"                          | "day-overflow"               | "stale-revision"` | Why repair is needed | Required |
-| `requiresConfirmation` | `boolean` | Whether user confirmation is still needed | Must be true until confirmed |
+| `originalSelection`    | `DateSelection` | The saved date before repair              | Required                     |
+| `suggestedSelection`   | `DateSelection` | Nearest valid replacement                 | Required before confirm      |
+| `reason`               | `"missing-unit" | "missing-anchor"                          | "day-overflow"               | "stale-revision"` | Why repair is needed | Required |
+| `requiresConfirmation` | `boolean`       | Whether user confirmation is still needed | Must be true until confirmed |
 
 ### WheelColumnState
 
