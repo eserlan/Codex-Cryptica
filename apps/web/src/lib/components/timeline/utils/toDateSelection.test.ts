@@ -1,11 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { toDateSelection } from "./toDateSelection";
-import type { CalendarConfig } from "chronology-engine";
+import type { WorldCalendar } from "chronology-engine";
 
 describe("toDateSelection", () => {
-  const mockConfig: CalendarConfig = {
+  const mockConfig: WorldCalendar = {
     revision: 2,
     presentYear: 2024,
+    useGregorian: false,
+    daysPerWeek: 7,
     months: [
       { id: "m1", name: "Month 1", days: 30 },
       { id: "m2", name: "Month 2", days: 30 },

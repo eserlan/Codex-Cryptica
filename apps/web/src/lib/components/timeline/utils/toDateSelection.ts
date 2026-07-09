@@ -1,11 +1,11 @@
 import type { TemporalMetadata } from "schema";
-import type { DateSelection, CalendarConfig } from "chronology-engine";
+import type { DateSelection, WorldCalendar } from "chronology-engine";
 import { calendarEngine } from "chronology-engine";
 
 export function toDateSelection(
   val: TemporalMetadata | DateSelection | undefined,
   refVal: TemporalMetadata | DateSelection | undefined,
-  config: CalendarConfig
+  config: WorldCalendar
 ): DateSelection {
   const months = calendarEngine.getMonths(config);
   const revision = config.revision || 1;
