@@ -249,4 +249,42 @@ describe("import-settings-controller helpers", () => {
       expect(item.resolvedType).toBe("creature");
     }
   });
+
+  it("counts a creature pack entry as imported when its slug matches an existing vault entity", () => {
+    const pack = getPack("fantasy-bestiary")!;
+    const importedEntry = pack.entries[0];
+    const deps = baseDeps({
+      vault: {
+        entities: {},
+        allEntities: [{ id: "existing-1", title: importedEntry.title } as any],
+      } as any,
+    });
+    const controller = new ImportSettingsController(deps);
+
+    const status = controller.getPackImportStatus(pack);
+
+    expect(status.importedCount).toBe(1);
+    expect(status.total).toBe(pack.entries.length);
+    expect(status.isFullyImported).toBe(pack.entries.length === 1);
+    expect(status.isPartiallyImported).toBe(pack.entries.length > 1);
+  });
+
+  it("matches creature pack entries to existing vault entities by title slug when selecting a pack", async () => {
+    const pack = getPack("fantasy-bestiary")!;
+    const importedEntry = pack.entries[0];
+    const deps = baseDeps({
+      vault: {
+        entities: {},
+        allEntities: [{ id: "existing-1", title: importedEntry.title } as any],
+      } as any,
+    });
+    const controller = new ImportSettingsController(deps);
+
+    await controller.handlePackSelect(pack);
+
+    const matched = controller.ccSession?.items.find(
+      (item) => item.draft.title === importedEntry.title,
+    );
+    expect(matched?.match?.entityId).toBe("existing-1");
+  });
 });
