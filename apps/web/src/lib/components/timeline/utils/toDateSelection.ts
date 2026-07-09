@@ -5,7 +5,7 @@ import { calendarEngine } from "chronology-engine";
 export function toDateSelection(
   val: TemporalMetadata | DateSelection | undefined,
   refVal: TemporalMetadata | DateSelection | undefined,
-  config: WorldCalendar
+  config: WorldCalendar,
 ): DateSelection {
   const months = calendarEngine.getMonths(config);
   const revision = config.revision || 1;
@@ -16,9 +16,7 @@ export function toDateSelection(
     if (refVal && "year" in refVal && refVal.year !== undefined) {
       return {
         precision:
-          "precision" in refVal && refVal.precision
-            ? (refVal.precision as any)
-            : "year",
+          "precision" in refVal && refVal.precision ? refVal.precision : "year",
         year: refVal.year,
         calendarRevision: revision,
         label: val?.label || undefined,
@@ -33,14 +31,17 @@ export function toDateSelection(
   }
 
   if ("precision" in val && val.precision) {
-    return { ...val } as DateSelection;
+    return {
+      ...val,
+      calendarRevision: val.calendarRevision ?? revision,
+    };
   }
 
   let precision: "year" | "unit" | "day" = "year";
   let unitId: string | undefined = undefined;
   let day: number | undefined = undefined;
 
-  const month = val && "month" in val ? (val as any).month : undefined;
+  const month = "month" in val ? val.month : undefined;
   if (month !== undefined) {
     precision = val.day !== undefined ? "day" : "unit";
     const mIndex = month - 1;

@@ -7,7 +7,7 @@
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick, untrack } from "svelte";
   import { scale, slide } from "svelte/transition";
-import { toDateSelection } from "./utils/toDateSelection";
+  import { toDateSelection } from "./utils/toDateSelection";
 
   let {
     value = $bindable(),

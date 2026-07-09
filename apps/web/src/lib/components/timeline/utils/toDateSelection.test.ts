@@ -27,8 +27,8 @@ describe("toDateSelection", () => {
   it("should use refVal if val is undefined", () => {
     const result = toDateSelection(
       undefined,
-      { year: 1000, precision: "year" },
-      mockConfig
+      { year: 1000, precision: "year", calendarRevision: 2 },
+      mockConfig,
     );
     expect(result).toEqual({
       precision: "year",
@@ -40,15 +40,37 @@ describe("toDateSelection", () => {
 
   it("should return val if it has a precision", () => {
     const result = toDateSelection(
-      { year: 2000, precision: "day", day: 1, unitId: "m1" },
+      {
+        year: 2000,
+        precision: "day",
+        day: 1,
+        unitId: "m1",
+        calendarRevision: 2,
+      },
       undefined,
-      mockConfig
+      mockConfig,
     );
     expect(result).toEqual({
       year: 2000,
       precision: "day",
       day: 1,
       unitId: "m1",
+      calendarRevision: 2,
+    });
+  });
+
+  it("should normalize missing calendarRevision in input selection", () => {
+    const result = toDateSelection(
+      { year: 2000, precision: "day", day: 1, unitId: "m1" } as any,
+      undefined,
+      mockConfig,
+    );
+    expect(result).toEqual({
+      year: 2000,
+      precision: "day",
+      day: 1,
+      unitId: "m1",
+      calendarRevision: 2,
     });
   });
 
@@ -56,7 +78,7 @@ describe("toDateSelection", () => {
     const result = toDateSelection(
       { year: 2000, month: 2, day: 15, label: "Test" },
       undefined,
-      mockConfig
+      mockConfig,
     );
     expect(result).toEqual({
       precision: "day",
