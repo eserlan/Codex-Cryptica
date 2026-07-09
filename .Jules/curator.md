@@ -33,3 +33,8 @@
 
 **Learning:** Svelte routing components (`+page.svelte`) can easily become bloated with large, complex inline SVG graphics or mock data panels that are purely presentational and only used once.
 **Action:** Extract these isolated UI blocks into dedicated components within feature-specific directories (e.g., `lib/components/welcome/`) to drastically reduce the footprint of the routing files and improve scanability, even if the component is only used in one place.
+
+## 2025-07-07 - Extracting configuration constants from massive files
+
+**Learning:** When dealing with god files that contain both logic/interfaces and a massive amount of hardcoded configuration/reference data (like the 1,100+ line `settlementConfig` in `public-settlement.ts`), extracting the pure data payload into a dedicated constants file (e.g. `public-settlement-constants.ts`) makes the core file far easier to read and scan, without modifying any upstream runtime logic.
+**Action:** Future agents should look for modules where huge static object definitions bloat the file. Split the definitions into `-constants.ts` and use `import` then `export` in the original file to prevent widespread import refactoring and maintain the public API.
