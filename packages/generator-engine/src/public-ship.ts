@@ -12,26 +12,13 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function getRandomItems<T>(
-  arr: readonly T[],
-  count: number,
-  rng: Rng = defaultRng,
-): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, count);
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  pickRandomItems as getRandomItems,
+} from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
   return record[genre] ?? record["Sci-Fi"] ?? Object.values(record)[0];
@@ -955,12 +942,7 @@ export function parseShipResponse(
   text: string,
   resolved: ResolvedShip,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "location",
     title: data.title || resolved.name,

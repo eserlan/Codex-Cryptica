@@ -11,6 +11,7 @@
   let dragging = $state(false);
   let content = $state("");
   let editorRef: HTMLDivElement;
+  let fileInputRef: HTMLInputElement;
 
   const handleDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -96,17 +97,14 @@
         <line x1="12" y1="3" x2="12" y2="15"></line>
       </svg>
       <p>Drag files here or paste content</p>
-      <button
-        class="upload-btn"
-        onclick={() => document.getElementById("file-input")?.click()}
-      >
+      <button class="upload-btn" onclick={() => fileInputRef?.click()}>
         Browse Files
       </button>
     </div>
   {/if}
 
   <input
-    id="file-input"
+    bind:this={fileInputRef}
     type="file"
     multiple
     accept=".pdf,.docx,.txt,.md,.json"
@@ -155,6 +153,16 @@
     overflow-y: auto;
   }
 
+  /* Pasted rich text (Word/Google Docs) carries inline color/background
+     styles on individual elements that override the theme and can render
+     unreadable in dark mode. Scoped to [style] so only elements the paste
+     itself styled are overridden — default element styling (e.g. link
+     colors on markup we render ourselves) is left alone. */
+  .editor :global([style]) {
+    color: inherit !important;
+    background-color: transparent !important;
+  }
+
   .dropzone-container:not(.standalone) .editor {
     max-height: 400px;
   }
@@ -171,6 +179,11 @@
     gap: 1rem;
     pointer-events: none;
     opacity: 0.6;
+    /* .editor is a flex item, so its z-index: 10 creates a stacking context
+       that would otherwise paint above this absolutely-positioned sibling,
+       letting the transparent contenteditable swallow clicks meant for the
+       "Browse Files" button underneath it. Must outrank that. */
+    z-index: 20;
   }
 
   /* Hide placeholder when editor has focus or content */

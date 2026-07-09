@@ -78,6 +78,7 @@ describe("CCImportReview", () => {
       session: baseSession,
       onItemDecisionChange: vi.fn(),
       onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
       onCommit: vi.fn(),
       onCancel: vi.fn(),
     });
@@ -88,7 +89,7 @@ describe("CCImportReview", () => {
     expect(screen.getByText("Valeria")).toBeTruthy();
     expect(screen.getByText("Moon Harbor")).toBeTruthy();
     expect(screen.getByText("1 relationship found.")).toBeTruthy();
-    expect(screen.getByText("Type fallback")).toBeTruthy();
+    expect(screen.getByText(/Type fallback/)).toBeTruthy();
     expect(screen.getByText("No bytes provided")).toBeTruthy();
   });
 
@@ -99,6 +100,7 @@ describe("CCImportReview", () => {
       session: baseSession,
       onItemDecisionChange,
       onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
       onCommit: vi.fn(),
       onCancel: vi.fn(),
     });
@@ -115,6 +117,7 @@ describe("CCImportReview", () => {
       session: baseSession,
       onItemDecisionChange: vi.fn(),
       onMatchDecisionChange,
+      onItemTypeChange: vi.fn(),
       onCommit: vi.fn(),
       onCancel: vi.fn(),
     });
@@ -122,6 +125,24 @@ describe("CCImportReview", () => {
     await fireEvent.click(screen.getByRole("button", { name: "update" }));
 
     expect(onMatchDecisionChange).toHaveBeenCalledWith("hero-1", "update");
+  });
+
+  it("emits a type change when the user picks a different category", async () => {
+    const onItemTypeChange = vi.fn();
+
+    render(CCImportReview, {
+      session: baseSession,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange,
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    const select = screen.getByLabelText("Type for Valeria");
+    await fireEvent.change(select, { target: { value: "character" } });
+
+    expect(onItemTypeChange).toHaveBeenCalledWith("hero-1", "character");
   });
 
   it("disables commit when nothing actionable remains", () => {
@@ -142,6 +163,7 @@ describe("CCImportReview", () => {
       session,
       onItemDecisionChange: vi.fn(),
       onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
       onCommit: vi.fn(),
       onCancel: vi.fn(),
     });

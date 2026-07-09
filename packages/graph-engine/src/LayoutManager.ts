@@ -60,6 +60,10 @@ const ORIENTATION_THRESHOLD = 1.2;
 const BASE_LAYOUT_WORKER_TIMEOUT_MS = 15000;
 const FIT_ANIMATION_TIMEOUT_MS = 1200;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+// Above this node count a fresh (randomized) solve reveals the deterministic
+// seed spiral immediately and lets fcose refine it in the worker, so a large
+// import shows a spread graph instead of an invisible origin clump for seconds.
+const SEED_FIRST_NODE_COUNT = 600;
 
 interface SerializedLayoutNode {
   data: { id: string; _w: number; _h: number; [key: string]: unknown };
@@ -631,6 +635,26 @@ export class LayoutManager {
       fit: false,
     };
 
+    // Seed-then-refine: for a large randomized solve, reveal the deterministic
+    // spiral on cy now (pending nodes render at opacity 0, so otherwise the user
+    // stares at an invisible origin clump while the worker runs). fcose then
+    // refines it in the background and we swap to the result when it lands.
+    const seedFirst =
+      shouldRandomize && cyNodes.length >= SEED_FIRST_NODE_COUNT;
+    if (seedFirst) {
+      this.cy.batch(() => {
+        for (let i = 0; i < nodes.length; i++) {
+          const node = this.cy.$id(nodes[i].data.id);
+          if (node.length) {
+            node.position(nodes[i].position);
+            node.removeData("isPendingLayout");
+            node.removeClass("pending-layout");
+          }
+        }
+      });
+      this.cy.fit(this.cy.elements(), 20);
+    }
+
     // Scale timeout: draft quality (500+ nodes) can take 20-30s on slow machines
     const workerTimeout = Math.min(
       60000,
@@ -645,6 +669,12 @@ export class LayoutManager {
     );
 
     if (!positions || this.cy.destroyed()) {
+      // Worker failed/timed out. If we already revealed the seed spiral, keep it
+      // and persist so a reload doesn't re-clump (better than the invisible
+      // origin pile the old path left behind).
+      if (seedFirst && !this.cy.destroyed()) {
+        this.persistPositions(this.cy.nodes(), options, healed);
+      }
       options.onLayoutStop?.();
       return;
     }

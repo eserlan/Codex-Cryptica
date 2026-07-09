@@ -2,8 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { tick } from "svelte";
 import {
   GraphViewController,
+  resolveFocusDepth,
+  FOCUS_ZOOM_STEP_FACTOR,
   type LoadPhase,
 } from "./graph-view-controller.svelte";
+import {
+  syncGraphElements,
+  applyLargeGraphRenderHints,
+  isLayoutCollinear,
+} from "graph-engine";
 
 // Mock graph-engine
 vi.mock("graph-engine", () => {
@@ -81,6 +88,7 @@ vi.mock("graph-engine", () => {
     GraphImageManager: vi.fn().mockImplementation(MockGraphImageManager),
     setupGraphEvents: vi.fn().mockReturnValue(vi.fn()),
     syncGraphElements: vi.fn(),
+    applyLargeGraphRenderHints: vi.fn(),
     isLayoutCollinear: vi.fn().mockReturnValue(false),
   };
 });
@@ -101,6 +109,11 @@ describe("GraphViewController", () => {
         stableLayout: true,
         stats: { nodeCount: 0 },
         showImages: true,
+        isLargeGraph: false,
+        perfStylingActive: false,
+        activeLabels: new Set(),
+        activeCategories: new Set(),
+        labelFilterMode: "OR",
       },
       vault: {
         isGuest: false,
@@ -191,6 +204,69 @@ describe("GraphViewController", () => {
       reason: "Load Finalized",
       isInitial: true,
       isForced: true,
+    });
+  });
+
+  describe("element sync", () => {
+    beforeEach(async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      vi.mocked(syncGraphElements).mockClear();
+    });
+
+    it("skips rendered weight sync for unfiltered perf-styled graphs", () => {
+      deps.graph.perfStylingActive = true;
+      deps.graph.elements = [{ group: "nodes", data: { id: "node-1" } }];
+
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ skipRenderedWeightSync: true }),
+      );
+    });
+
+    it("keeps rendered weight sync when filters are active", () => {
+      deps.graph.perfStylingActive = true;
+      deps.graph.activeLabels = new Set(["important"]);
+      deps.graph.elements = [{ group: "nodes", data: { id: "node-1" } }];
+
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ skipRenderedWeightSync: false }),
+      );
+    });
+  });
+
+  describe("render hints", () => {
+    beforeEach(async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      vi.mocked(applyLargeGraphRenderHints).mockClear();
+    });
+
+    it("re-applies large-graph render hints to the live cy instance", () => {
+      deps.graph.isLargeGraph = true;
+
+      controller.syncRenderHints();
+
+      expect(applyLargeGraphRenderHints).toHaveBeenCalledWith(
+        controller.cy,
+        true,
+      );
+    });
+
+    it("clears render hints when the graph is no longer large", () => {
+      deps.graph.isLargeGraph = false;
+
+      controller.syncRenderHints();
+
+      expect(applyLargeGraphRenderHints).toHaveBeenCalledWith(
+        controller.cy,
+        false,
+      );
     });
   });
 
@@ -298,6 +374,72 @@ describe("GraphViewController", () => {
 
       expect(controller.loadPhase).toBe<LoadPhase>("ready");
     });
+
+    it("does not run slash recovery for a collinear rendered subset when full saved coords are healthy", async () => {
+      vi.useFakeTimers();
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      const applySpy = vi.spyOn(controller, "applyCurrentLayout");
+      const renderedNodes = {
+        length: 20,
+        map: vi.fn(() => [
+          { x: 0, y: 0 },
+          { x: 1, y: 1 },
+          { x: 2, y: 2 },
+        ]),
+      };
+      (controller.cy as any).nodes = vi.fn().mockReturnValue(renderedNodes);
+      vi.mocked(isLayoutCollinear).mockReturnValue(false);
+
+      deps.vault.status = "idle";
+      deps.vault.allEntities = [
+        { id: "a", metadata: { coordinates: { x: 0, y: 0 } } },
+        { id: "b", metadata: { coordinates: { x: 10, y: 40 } } },
+        { id: "c", metadata: { coordinates: { x: 80, y: 20 } } },
+      ];
+      controller.loadPhase = "elements";
+
+      controller.reconcileLoadState();
+      applySpy.mockClear();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(applySpy).not.toHaveBeenCalledWith(
+        expect.objectContaining({ reason: "Slash Recovery" }),
+      );
+      expect(renderedNodes.map).not.toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it("runs slash recovery when the full vault saved coords are degenerate", async () => {
+      vi.useFakeTimers();
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      const applySpy = vi.spyOn(controller, "applyCurrentLayout");
+      (controller.cy as any).nodes = vi
+        .fn()
+        .mockReturnValue({ length: 20, map: vi.fn(() => []) });
+      vi.mocked(isLayoutCollinear).mockReturnValue(true);
+
+      deps.vault.status = "idle";
+      deps.vault.allEntities = [
+        { id: "a", metadata: { coordinates: { x: 0, y: 0 } } },
+        { id: "b", metadata: { coordinates: { x: 1, y: 1 } } },
+        { id: "c", metadata: { coordinates: { x: 2, y: 2 } } },
+      ];
+      controller.loadPhase = "elements";
+
+      controller.reconcileLoadState();
+      applySpy.mockClear();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(applySpy).toHaveBeenCalledWith({
+        reason: "Slash Recovery",
+        isInitial: true,
+        isForced: true,
+        reseed: true,
+      });
+      vi.useRealTimers();
+    });
   });
 
   describe("viewport policy", () => {
@@ -383,5 +525,39 @@ describe("GraphViewController", () => {
       });
       expect(lastPolicy()).toBe("fit");
     });
+  });
+});
+
+describe("resolveFocusDepth", () => {
+  const bounds = { min: 1, max: 6, stepFactor: FOCUS_ZOOM_STEP_FACTOR };
+
+  it("reveals more detail when zoomed in past the step factor", () => {
+    const result = resolveFocusDepth(2, 1 * FOCUS_ZOOM_STEP_FACTOR, 1, bounds);
+    expect(result.depth).toBe(3);
+    expect(result.mark).toBe(FOCUS_ZOOM_STEP_FACTOR);
+  });
+
+  it("hides detail when zoomed out past the step factor", () => {
+    const result = resolveFocusDepth(3, 1 / FOCUS_ZOOM_STEP_FACTOR, 1, bounds);
+    expect(result.depth).toBe(2);
+    expect(result.mark).toBe(1 / FOCUS_ZOOM_STEP_FACTOR);
+  });
+
+  it("holds depth and mark within the step factor", () => {
+    const result = resolveFocusDepth(2, 1.2, 1, bounds);
+    expect(result.depth).toBe(2);
+    expect(result.mark).toBe(1);
+  });
+
+  it("clamps at the max depth", () => {
+    const result = resolveFocusDepth(6, 100, 1, bounds);
+    expect(result.depth).toBe(6);
+    expect(result.mark).toBe(1);
+  });
+
+  it("clamps at the min depth", () => {
+    const result = resolveFocusDepth(1, 0.001, 1, bounds);
+    expect(result.depth).toBe(1);
+    expect(result.mark).toBe(1);
   });
 });

@@ -1,4 +1,5 @@
 import { debugStore } from "../debug.svelte";
+import { retryWithBackoff } from "../../utils/retry";
 import { cacheService } from "../../services/cache.svelte";
 import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
@@ -37,6 +38,14 @@ export interface PersistenceDependencies {
   markContentLoaded: (id: string) => void;
 }
 
+export interface ScheduleSaveOptions {
+  /**
+   * Allows persistence to serialize an unloaded entity with content restored
+   * from the cache table instead of hydrating the reactive entity store.
+   */
+  preserveCachedContent?: boolean;
+}
+
 const SAVE_DEBOUNCE_MS = 400;
 
 // Disk-write resilience tuning. A single _persistEntity call retries the OPFS
@@ -52,6 +61,8 @@ export class EntityPersistenceService {
   private _saveResolvers = new Map<string, Array<() => void>>();
   /** Vault ID captured at scheduleSave time, keyed by entity ID. */
   private _saveVaultIds = new Map<string, string>();
+  /** Save options captured across debounced writes, keyed by entity ID. */
+  private _saveOptions = new Map<string, ScheduleSaveOptions>();
   /** Bounded retry counter for entities whose disk write keeps failing. */
   private _failedSaveRetries = new Map<string, number>();
 
@@ -71,7 +82,10 @@ export class EntityPersistenceService {
     this._savingSuspended = false;
   }
 
-  scheduleSave(entity: LocalEntity | Entity): Promise<void> {
+  scheduleSave(
+    entity: LocalEntity | Entity,
+    options: ScheduleSaveOptions = {},
+  ): Promise<void> {
     if (this.deps.onEntityUpdate)
       this.deps.onEntityUpdate(entity as LocalEntity);
 
@@ -95,6 +109,10 @@ export class EntityPersistenceService {
     // Store the vault ID so flushPendingSaves uses the original context, not
     // whatever vault happens to be active at flush time.
     this._saveVaultIds.set(id, vaultIdAtStart);
+    this._saveOptions.set(
+      id,
+      mergeScheduleSaveOptions(this._saveOptions.get(id), options),
+    );
 
     if (this._savingSuspended) {
       return Promise.resolve();
@@ -111,8 +129,12 @@ export class EntityPersistenceService {
           this._saveTimers.delete(id);
           this._saveResolvers.delete(id);
           this._saveVaultIds.delete(id);
+          const saveOptions = this._saveOptions.get(id) ?? {};
+          this._saveOptions.delete(id);
           this.deps.repository
-            .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+            .enqueueSave(id, () =>
+              this._persistEntity(id, vaultIdAtStart, saveOptions),
+            )
             .catch(() => {})
             .finally(() => resolvers.forEach((r) => r()));
         }, SAVE_DEBOUNCE_MS),
@@ -137,9 +159,11 @@ export class EntityPersistenceService {
       // rapid vault switches.
       const vaultId = this._saveVaultIds.get(id);
       this._saveVaultIds.delete(id);
+      const saveOptions = this._saveOptions.get(id) ?? {};
+      this._saveOptions.delete(id);
       if (vaultId) {
         const p = this.deps.repository
-          .enqueueSave(id, () => this._persistEntity(id, vaultId))
+          .enqueueSave(id, () => this._persistEntity(id, vaultId, saveOptions))
           .catch(() => {})
           .finally(() => {
             resolvers.forEach((r) => r());
@@ -156,6 +180,7 @@ export class EntityPersistenceService {
   private async _persistEntity(
     id: string,
     vaultIdAtStart: string,
+    options: ScheduleSaveOptions = {},
   ): Promise<void> {
     if (this.deps.activeVaultId() !== vaultIdAtStart) {
       debugStore.log(
@@ -167,9 +192,27 @@ export class EntityPersistenceService {
     let latestEntity = this.entities[id];
     if (!latestEntity) return;
 
-    if (!this.deps.isContentLoaded(id)) {
+    let restoredCachedContent = false;
+    let hydratedContent = this.deps.isContentLoaded(id);
+    if (!hydratedContent && options.preserveCachedContent) {
+      const cachedContent = await cacheService.getEntityContent(
+        vaultIdAtStart,
+        id,
+      );
+      if (cachedContent) {
+        restoredCachedContent = true;
+        latestEntity = {
+          ...latestEntity,
+          content: cachedContent.content,
+          lore: cachedContent.lore,
+        };
+      }
+    }
+
+    if (!hydratedContent && !restoredCachedContent) {
       await this.deps.loadContent(id);
       latestEntity = this.entities[id] || latestEntity;
+      hydratedContent = true;
     }
 
     this.deps.setStatus("saving");
@@ -203,7 +246,9 @@ export class EntityPersistenceService {
         latestEntity,
       );
 
-      this.deps.markContentLoaded(latestEntity.id);
+      if (hydratedContent) {
+        this.deps.markContentLoaded(latestEntity.id);
+      }
       this.deps.setStatus("idle");
     } catch (error) {
       debugStore.error(
@@ -216,7 +261,7 @@ export class EntityPersistenceService {
       // Don't silently drop the write: re-queue a bounded number of times so a
       // transient OPFS failure during a bulk import can't permanently corrupt
       // the on-disk file (which the cache would otherwise mask).
-      this._requeueFailedSave(id, vaultIdAtStart);
+      this._requeueFailedSave(id, vaultIdAtStart, options);
     }
   }
 
@@ -225,29 +270,26 @@ export class EntityPersistenceService {
     vaultIdAtStart: string,
     entity: LocalEntity,
   ): Promise<void> {
-    let lastError: unknown;
-    for (let attempt = 0; attempt < DISK_WRITE_ATTEMPTS; attempt++) {
-      try {
-        await this.deps.repository.saveToDisk(
+    await retryWithBackoff(
+      () =>
+        this.deps.repository.saveToDisk(
           vaultHandle,
           vaultIdAtStart,
           entity,
           this.deps.isGuest(),
-        );
-        return;
-      } catch (error) {
-        lastError = error;
-        if (attempt < DISK_WRITE_ATTEMPTS - 1) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, DISK_RETRY_BASE_MS * (attempt + 1)),
-          );
-        }
-      }
-    }
-    throw lastError;
+        ),
+      {
+        attempts: DISK_WRITE_ATTEMPTS,
+        delayMs: (attempt) => DISK_RETRY_BASE_MS * (attempt + 1),
+      },
+    );
   }
 
-  private _requeueFailedSave(id: string, vaultIdAtStart: string): void {
+  private _requeueFailedSave(
+    id: string,
+    vaultIdAtStart: string,
+    options: ScheduleSaveOptions,
+  ): void {
     const retries = this._failedSaveRetries.get(id) ?? 0;
     if (retries >= MAX_FAILED_SAVE_REQUEUES) {
       this._failedSaveRetries.delete(id);
@@ -258,10 +300,23 @@ export class EntityPersistenceService {
       () => {
         if (this.deps.activeVaultId() !== vaultIdAtStart) return;
         void this.deps.repository
-          .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+          .enqueueSave(id, () =>
+            this._persistEntity(id, vaultIdAtStart, options),
+          )
           .catch(() => {});
       },
       DISK_REQUEUE_BASE_MS * (retries + 1),
     );
   }
+}
+
+function mergeScheduleSaveOptions(
+  previous: ScheduleSaveOptions | undefined,
+  next: ScheduleSaveOptions,
+): ScheduleSaveOptions {
+  return {
+    preserveCachedContent:
+      (previous?.preserveCachedContent ?? true) &&
+      next.preserveCachedContent === true,
+  };
 }

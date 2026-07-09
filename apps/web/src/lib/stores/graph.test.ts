@@ -33,6 +33,8 @@ vi.mock("./vault.svelte", () => ({
     isGuest: false,
     defaultVisibility: "private",
     entities: {},
+    inboundConnections: {},
+    selectedEntityId: null,
   },
 }));
 
@@ -41,6 +43,8 @@ vi.mock("graph-engine", () => ({
   GraphTransformer: {
     entitiesToElements: vi.fn().mockReturnValue([]),
   },
+  isLargeGraphSize: (nodeCount: number, edgeCount: number) =>
+    nodeCount > 700 || edgeCount > 1800,
 }));
 
 vi.mock("schema", async (importOriginal) => {
@@ -51,7 +55,7 @@ vi.mock("schema", async (importOriginal) => {
   };
 });
 
-import { graph } from "./graph.svelte";
+import { FOCUS_BASE_COUNT, graph, GraphStore } from "./graph.svelte";
 import { vault } from "./vault.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible } from "schema";
@@ -62,6 +66,9 @@ describe("GraphStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (isEntityVisible as any).mockReturnValue(true);
+    // Reset the transform impl each test (clearAllMocks keeps implementations).
+    (GraphTransformer.entitiesToElements as any).mockReset();
+    (GraphTransformer.entitiesToElements as any).mockReturnValue([]);
     // Reset graph state
     graph.showLabels = true;
     graph.showImages = true;
@@ -78,8 +85,11 @@ describe("GraphStore", () => {
 
     // Reset mocks
     (vault as any).allEntities = [];
+    (vault as any).entities = {};
     (vault as any).isGuest = false;
     (vault as any).activeVaultId = "vault-1";
+    (vault as any).selectedEntityId = null;
+    (vault as any).inboundConnections = {};
     graph.viewPresets = [];
     sessionModeStore.sharedMode = false;
     explorerUIStore.labelFilters = new Set();
@@ -104,8 +114,124 @@ describe("GraphStore", () => {
     ];
     (GraphTransformer.entitiesToElements as any).mockReturnValue(mockElements);
 
-    expect(graph.elements).toEqual(mockElements);
+    const store = new GraphStore();
+
+    expect(store.elements).toEqual(mockElements);
     expect(graph.stats).toEqual({ nodeCount: 1, edgeCount: 1 });
+  });
+
+  it("culls large vaults to a target-sized focus view by default", () => {
+    const mockEntities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      title: `Node ${index}`,
+      // Sparse local neighborhood: without target filling this would render
+      // only the focal node and three direct neighbors.
+      connections:
+        index === 0
+          ? [{ target: "node-1" }, { target: "node-2" }, { target: "node-3" }]
+          : [],
+    })) as any[];
+    (vault as any).allEntities = mockEntities;
+    (vault as any).entities = Object.fromEntries(
+      mockEntities.map((e) => [e.id, e]),
+    );
+    (vault as any).selectedEntityId = "node-0";
+    (GraphTransformer.entitiesToElements as any).mockImplementation(
+      (entities: any[]) =>
+        entities.map((e) => ({ group: "nodes", data: { id: e.id } })),
+    );
+
+    const store = new GraphStore();
+
+    expect(store.isLargeGraph).toBe(true);
+    expect(store.focusViewActive).toBe(true);
+    expect(store.focusDepth).toBe(1);
+
+    const renderedIds = new Set(store.elements.map((el: any) => el.data.id));
+    expect(renderedIds.size).toBe(FOCUS_BASE_COUNT);
+    expect(renderedIds.has("node-0")).toBe(true);
+    expect(renderedIds.has("node-1")).toBe(true);
+    expect(renderedIds.has("node-2")).toBe(true);
+    expect(renderedIds.has("node-3")).toBe(true);
+  });
+
+  it("caps the focus view at the visible entity count", () => {
+    const visibleCount = FOCUS_BASE_COUNT - 70;
+    const mockEntities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      title: `Node ${index}`,
+      connections: index === 0 ? [{ target: "node-1" }] : [],
+    })) as any[];
+    (vault as any).allEntities = mockEntities;
+    (vault as any).entities = Object.fromEntries(
+      mockEntities.map((e) => [e.id, e]),
+    );
+    (vault as any).selectedEntityId = "node-0";
+    (isEntityVisible as any).mockImplementation((entity: any) => {
+      const index = Number(entity.id.replace("node-", ""));
+      return index < visibleCount;
+    });
+    (GraphTransformer.entitiesToElements as any).mockImplementation(
+      (entities: any[]) =>
+        entities.map((e) => ({ group: "nodes", data: { id: e.id } })),
+    );
+
+    const store = new GraphStore();
+
+    expect(store.isLargeGraph).toBe(true);
+    expect(store.focusViewActive).toBe(true);
+    const renderedIds = new Set(store.elements.map((el: any) => el.data.id));
+    expect(renderedIds.size).toBe(visibleCount);
+    expect(renderedIds.has(`node-${visibleCount}`)).toBe(false);
+  });
+
+  it("falls back to the highest-degree hub when nothing is selected", () => {
+    const mockEntities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      title: `Node ${index}`,
+      // node-5 is the hub: connected to four others.
+      connections:
+        index === 5
+          ? [
+              { target: "node-6" },
+              { target: "node-7" },
+              { target: "node-8" },
+              { target: "node-9" },
+            ]
+          : [],
+    })) as any[];
+    (vault as any).allEntities = mockEntities;
+    (vault as any).entities = Object.fromEntries(
+      mockEntities.map((e) => [e.id, e]),
+    );
+    (vault as any).selectedEntityId = null;
+    (GraphTransformer.entitiesToElements as any).mockImplementation(
+      (entities: any[]) =>
+        entities.map((e) => ({ group: "nodes", data: { id: e.id } })),
+    );
+
+    const store = new GraphStore();
+    expect(store.focusViewActive).toBe(true);
+
+    const renderedIds = new Set(store.elements.map((el: any) => el.data.id));
+    expect(renderedIds.size).toBe(FOCUS_BASE_COUNT);
+    expect(renderedIds.has("node-5")).toBe(true);
+    expect(renderedIds.has("node-6")).toBe(true);
+    expect(renderedIds.has("node-7")).toBe(true);
+    expect(renderedIds.has("node-8")).toBe(true);
+    expect(renderedIds.has("node-9")).toBe(true);
+  });
+
+  it("toggleFullGraph flips the showFullGraph flag", () => {
+    const store = new GraphStore();
+    expect(store.showFullGraph).toBe(false);
+    store.toggleFullGraph();
+    expect(store.showFullGraph).toBe(true);
+    store.toggleFullGraph();
+    expect(store.showFullGraph).toBe(false);
   });
 
   it("should toggle stableLayout and persist it", async () => {

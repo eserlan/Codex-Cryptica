@@ -3,6 +3,7 @@
   import { vault } from "../../stores/vault.svelte";
   import { fade, scale } from "svelte/transition";
   import type { Entity } from "schema";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let { onSelect, onCancel } = $props<{
     onSelect: (entityId: string) => void;
@@ -105,9 +106,11 @@
             </div>
           </button>
         {:else}
-          <div class="text-center py-8 text-theme-muted text-xs italic">
-            No entities found matching "{query}"
-          </div>
+          <EmptyState
+            icon="icon-[lucide--search-x]"
+            headline="No entities found"
+            body={`Nothing matches "${query}"`}
+          />
         {/each}
       </div>
     </div>

@@ -1,0 +1,130 @@
+/** @vitest-environment jsdom */
+
+import { render, screen, fireEvent } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
+import LanguageFormFields from "./LanguageFormFields.svelte";
+
+vi.mock("$lib/services/seo/generator-engine", () => ({
+  languageConfig: {
+    genres: ["Classic Fantasy", "Sci-Fi"],
+    tones: ["Lyrical & Vowel-rich", "Guttural & Harsh"],
+    roles: ["Common Speech", "Sacred / Ritual"],
+    structures: ["Compound Words", "Agglutinative / Appending"],
+  },
+  pickFrom: <T>(arr: readonly T[]) => arr[0],
+}));
+
+describe("LanguageFormFields", () => {
+  it("renders with initial dropdown options", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    expect(screen.getByText("Classic Fantasy")).toBeTruthy();
+    expect(screen.getByText("Lyrical & Vowel-rich")).toBeTruthy();
+    expect(screen.getByText("Common Speech")).toBeTruthy();
+    expect(screen.getByText("Compound Words")).toBeTruthy();
+  });
+
+  it("keeps the genre select enabled but skips it on Surprise Me when preserveGenreOnSurprise", async () => {
+    const onSurprise = vi.fn();
+    render(LanguageFormFields, {
+      props: {
+        genre: "Sci-Fi",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+        preserveGenreOnSurprise: true,
+        onSurprise,
+      },
+    });
+
+    const select = screen.getByLabelText("Genre") as HTMLSelectElement;
+    expect(select.disabled).toBe(false);
+
+    await fireEvent.click(screen.getByText("Surprise Me"));
+    expect(onSurprise).toHaveBeenCalled();
+    // The mocked pickFrom returns the first option, so an unpreserved genre
+    // would have been reset to "Classic Fantasy".
+    expect(select.value).toBe("Sci-Fi");
+  });
+
+  it("randomizes fields and calls onSurprise when Surprise Me is clicked", async () => {
+    const onSurprise = vi.fn();
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+        onSurprise,
+      },
+    });
+
+    await fireEvent.click(screen.getByText("Surprise Me"));
+    expect(onSurprise).toHaveBeenCalled();
+  });
+
+  it("shows a live-updating example for known tone/role/structure values", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    expect(screen.getByText(/Aeliana, Ioreth/)).toBeTruthy();
+    expect(
+      screen.getByText(/Everyday language spoken by most people/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Ironhold, Stormcaller/)).toBeTruthy();
+  });
+
+  it("keeps helper copy attached to the relevant fields and uses readable text sizing", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    const toneSelect = screen.getByLabelText("Tone & Sounds");
+    const toneHelp = screen.getByText(/Aeliana, Ioreth/);
+    const contextHelp = screen.getByText(/Describe who speaks this language/);
+
+    expect(toneSelect.getAttribute("aria-describedby")).toBe(
+      "language-tone-help",
+    );
+    expect(toneHelp.id).toBe("language-tone-help");
+    expect(toneHelp.className).toContain("text-sm");
+    expect(contextHelp.className).toContain("text-sm");
+  });
+
+  it("shows no example line for an unmapped (custom) value", async () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Guttural & Harsh",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    expect(screen.queryByText(/Aeliana, Ioreth/)).toBeNull();
+  });
+});

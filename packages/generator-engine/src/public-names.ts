@@ -4,13 +4,8 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
+import { type Rng, defaultRng, pickFrom } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 export const nameGeneratorConfig = {
   cultures: [
@@ -458,11 +453,7 @@ export function parseNamesResponse(
   text: string,
   resolved: ResolvedNames,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: resolved.entityType,
     title: resolved.title,

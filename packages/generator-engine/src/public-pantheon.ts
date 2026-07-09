@@ -10,32 +10,22 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  generatePlaceholderName as generateName,
+} from "./random-utils";
+import {
+  parseFencedJson,
+  asString as str,
+  asRecord as rec,
+  asArray as arr,
+} from "./llm-response-utils";
 
 export type PantheonMode = "single" | "pantheon";
 export type PantheonSize = "small" | "medium" | "large";
 export type PantheonWidth = "balanced" | "focused" | "wide";
-export type Rng = () => number;
-
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function generateName(rng: Rng = defaultRng): string {
-  const prefixes = [
-    "Ael",
-    "Bran",
-    "Cael",
-    "Dax",
-    "Kael",
-    "Morg",
-    "Thor",
-    "Vael",
-  ];
-  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
-  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
-}
 
 export const pantheonConfig = {
   genres: [
@@ -640,27 +630,6 @@ Return only the JSON object.`,
   };
 }
 
-function cleanJson(text: string): string {
-  return text
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-}
-
-function str(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function rec(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function arr(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
 function formatPantheonContent(data: Record<string, unknown>): {
   content: string;
   lore: string;
@@ -746,7 +715,7 @@ export function parsePantheonResponse(
   text: string,
   resolved: Pick<ResolvedPantheon, "mode" | "generatedDeityName">,
 ): PublicGeneratorOutput {
-  const data = rec(JSON.parse(cleanJson(text)));
+  const data = rec(parseFencedJson(text));
   const isSingle = resolved.mode === "single";
   const shaped =
     isSingle || (data.content && data.lore)

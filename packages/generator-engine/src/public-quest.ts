@@ -10,28 +10,13 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function generateName(rng: Rng = defaultRng): string {
-  const prefixes = [
-    "Ael",
-    "Bran",
-    "Cael",
-    "Dax",
-    "Kael",
-    "Morg",
-    "Thor",
-    "Vael",
-  ];
-  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
-  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  generatePlaceholderName as generateName,
+} from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
@@ -568,12 +553,7 @@ export function parseQuestResponse(
   text: string,
   resolved: ResolvedQuest,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "event",
     title: data.title || resolved.questName,

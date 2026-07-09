@@ -4,6 +4,7 @@ import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "./guest-vault.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
@@ -140,12 +141,19 @@ export class MapStore {
           const hasLoadedMaps = Object.keys(maps).length > 0;
           const isInvalid =
             hasLoadedMaps && this.activeMapId ? !maps[this.activeMapId] : false;
-          if (
-            (!this.activeMapId || isInvalid) &&
-            !pendingMapId &&
-            this.worldMap
-          ) {
-            this.selectMap(this.worldMap.id);
+          if ((!this.activeMapId || isInvalid) && !pendingMapId) {
+            if (this.worldMap) {
+              this.selectMap(this.worldMap.id);
+            } else if (
+              hasLoadedMaps &&
+              sessionModeStore.isGuestMode &&
+              guestVault.publishId
+            ) {
+              // Published-vault readers browse on their own — there's no
+              // live host to pick a map for them, so fall back to the first
+              // published map rather than leaving the view empty.
+              this.selectMap(Object.keys(maps)[0]);
+            }
           }
         });
       });
