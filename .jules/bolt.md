@@ -160,3 +160,8 @@
 ## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
 **Learning:** In VTT applications, `graph.entities` payloads can be exceptionally large (containing thousands of items). Chaining methods like `Object.entries().map().map()` followed by `Object.fromEntries()` allocates multiple large, short-lived arrays. These intermediate allocations place immense pressure on the garbage collector during data sync/initialization, leading to jank and latency spikes. Replacing these chains with a single imperative loop (`for...in`) directly building the target dictionary avoids these array allocations entirely.
 **Action:** When transforming large data collections (especially dictionaries like `entities`), actively look for `Object.keys/values/entries` combined with `.map()` or `.filter()`, and refactor them into a single imperative loop.
+
+## 2026-06-25 - [Performance Insight: Refactoring Object.values(vault.entities) to pre-cached vault.allEntities for stats calculation]
+
+**Learning:** When calculating stats like `getPackImportStatus` or `extractLoreEntities`, invoking `Object.values(this.deps.vault.entities)` in component methods triggers an `O(N)` object keys iteration and creates a new intermediate array on every evaluation. When `vault.entities` is large, this leads to significant redundant memory allocations and garbage collection pauses.
+**Action:** Always replace `Object.values(this.deps.vault.entities)` with `this.deps.vault.allEntities` in Svelte component methods. For operations that map or loop over the values, use an imperative `for...of` or `for (let i = 0; i < allEntities.length; i++)` loop to avoid redundant array creation and full dataset traversal.

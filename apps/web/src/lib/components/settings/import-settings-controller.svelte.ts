@@ -46,11 +46,7 @@ type MarkdownFrontmatterValidator =
 
 export type ImportMode = "oracle" | "cc" | null;
 export type ImportStep =
-  | "upload"
-  | "processing"
-  | "review"
-  | "complete"
-  | "report";
+  "upload" | "processing" | "review" | "complete" | "report";
 
 export function mapThemeToGenre(themeId: string): string {
   const rawId = (themeId || "").toLowerCase();
@@ -186,14 +182,16 @@ export class ImportSettingsController {
   };
 
   getPackImportStatus = (pack: CreaturePack) => {
-    const existingSlugs = new Set(
-      Object.values(this.deps.vault.entities).map((e) =>
-        e.title
+    const existingSlugs = new Set<string>();
+    const allEntities = this.deps.vault.allEntities;
+    for (let i = 0; i < allEntities.length; i++) {
+      existingSlugs.add(
+        allEntities[i].title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, ""),
-      ),
-    );
+      );
+    }
     let importedCount = 0;
     for (const entry of pack.entries) {
       const slug = entry.title
@@ -491,9 +489,11 @@ export class ImportSettingsController {
         });
 
         const knownEntities: Record<string, string> = {};
-        Object.values(this.deps.vault.entities).forEach((e) => {
+        const allEntities = this.deps.vault.allEntities;
+        for (let i = 0; i < allEntities.length; i++) {
+          const e = allEntities[i];
           knownEntities[e.title] = e.id;
-        });
+        }
 
         const chunks = splitTextIntoChunks(result.text);
         this.totalChunks = chunks.length;
