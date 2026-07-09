@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { BaseExecutor } from "./base-executor";
 import type { OracleExecutionContext, OracleIntent } from "../types";
-import type { Clock } from "../runtime";
+import type { Clock, IdGenerator } from "../runtime";
 
 class TestExecutor extends BaseExecutor {
-  constructor(clock?: Clock) {
-    super(clock);
+  constructor(clock?: Clock, idGenerator?: IdGenerator) {
+    super(clock, idGenerator);
   }
 
   async execute(

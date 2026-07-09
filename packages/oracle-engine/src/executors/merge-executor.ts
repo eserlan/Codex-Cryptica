@@ -10,6 +10,13 @@ export class MergeExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
+  constructor(
+    clock?: import("../runtime").Clock,
+    idGenerator?: import("../runtime").IdGenerator,
+  ) {
+    super(clock, idGenerator);
+  }
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -38,7 +45,7 @@ export class MergeExecutor
       } catch (err: any) {
         const error = err.message || "Merge failed";
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: `❌ ${error}`,
         });
@@ -96,7 +103,7 @@ export class MergeExecutor
       ]);
 
       await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         role: "assistant",
         content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
       });
