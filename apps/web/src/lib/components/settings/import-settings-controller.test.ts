@@ -21,6 +21,7 @@ function baseDeps(
     } as any,
     vault: {
       entities: {},
+      allEntities: [],
       createEntity: async () => "",
       updateEntity: async () => true,
       batchCreateEntities: async () => {},
@@ -82,6 +83,7 @@ describe("import-settings-controller helpers", () => {
       } as any,
       vault: {
         entities: {},
+        allEntities: [],
         createEntity: async () => "",
         updateEntity: async () => true,
         batchCreateEntities: async () => {},
@@ -130,6 +132,7 @@ describe("import-settings-controller helpers", () => {
       } as any,
       vault: {
         entities: {},
+        allEntities: [],
         createEntity: async () => "",
         updateEntity: async () => true,
         batchCreateEntities: async () => {},
