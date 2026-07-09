@@ -6,7 +6,7 @@ import type {
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type { OracleGenerator } from "../oracle-generator";
-import type { Clock } from "../runtime";
+import type { Clock, IdGenerator } from "../runtime";
 
 export class VisualizationExecutor
   extends BaseExecutor
@@ -15,8 +15,9 @@ export class VisualizationExecutor
   constructor(
     private generator?: OracleGenerator,
     clock?: Clock,
+    idGenerator?: IdGenerator,
   ) {
-    super(clock);
+    super(clock, idGenerator);
   }
 
   async execute(
@@ -48,7 +49,7 @@ export class VisualizationExecutor
       } catch (err: any) {
         const error = err.message || "Visualization failed";
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: `❌ ${error}`,
         });
@@ -76,7 +77,7 @@ export class VisualizationExecutor
       if (context.isDemoMode) {
         const imageUrl = URL.createObjectURL(blob);
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: "",
           type: "image",
@@ -98,7 +99,7 @@ export class VisualizationExecutor
       if (err.message && err.message.startsWith("MISSING_KEY_PROMPT|")) {
         const prompt = err.message.split("MISSING_KEY_PROMPT|")[1];
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
         });
@@ -149,7 +150,7 @@ export class VisualizationExecutor
       if (context.isDemoMode) {
         const imageUrl = URL.createObjectURL(blob);
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: "",
           type: "image",
@@ -170,7 +171,7 @@ export class VisualizationExecutor
     } catch (err: any) {
       if (err.message && err.message.startsWith("MISSING_KEY_PROMPT|")) {
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
         });
@@ -213,7 +214,7 @@ export class VisualizationExecutor
       if (err.message && err.message.startsWith("MISSING_KEY_PROMPT|")) {
         const prompt = err.message.split("MISSING_KEY_PROMPT|")[1];
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
         });
@@ -282,7 +283,7 @@ export class VisualizationExecutor
     } catch (err: any) {
       if (err.message && err.message.startsWith("MISSING_KEY_PROMPT|")) {
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
         });

@@ -42,3 +42,8 @@
 
 **Learning:** When using Dependency Injection to inject a global dependency like `Date.now()`, importing the fallback object (`systemClock`) from another module might fail if that module (`$lib/utils/runtime-deps.ts`) does not exist or isn't accessible in tests, causing the entire build or test suite to fail.
 **Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
+
+## 2026-07-09 - Inject idGenerator into oracle engine executors
+
+**Learning:** When adding a new dependency (`IdGenerator`) to an abstract base class (`BaseExecutor`), we must remember to update _all_ subclasses that have their own constructors (e.g. `GuestChatExecutor`, `CreateExecutor`, etc.) to pass it through to `super()`. A quick test pass might not catch this if the subclasses don't define custom constructors, but some do.
+**Action:** Injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it through. Replaced `crypto.randomUUID()` calls with `this.idGenerator.uuid()`.
