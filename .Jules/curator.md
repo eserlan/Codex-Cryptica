@@ -28,6 +28,7 @@
 **Learning:** When dealing with god files that contain both structural type definitions/Zod schemas and a massive amount of hardcoded reference data (like the 1,112 line `packages/schema/src/theme.ts` which exported 26+ huge static objects), extracting the pure data payload into a dedicated constants file (e.g. `theme-templates.ts`) makes the core schema far easier to read and test, without modifying any upstream runtime logic.
 
 **Action:** Future agents should look for modules in `packages/schema/` or configuration directories where huge static object definitions bloat the file. Split the definitions into `-templates.ts` or `-constants.ts` and use `export * from "./..."` in index files to prevent widespread import refactoring.
+
 ## 2024-10-24 - Extracting pure presentational logic from page components
 
 **Learning:** Svelte routing components (`+page.svelte`) can easily become bloated with large, complex inline SVG graphics or mock data panels that are purely presentational and only used once.

@@ -37,7 +37,7 @@ vi.mock("$lib/services/generators/generator-session-manager", () => ({
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { nodeMergeService } from "$lib/services/node-merge.service.svelte";
-import { revisionService } from "./RevisionService.svelte";
+import { revisionService, RevisionService } from "./RevisionService.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 
@@ -208,5 +208,51 @@ describe("RevisionService", () => {
     expect(generatorSessionManager.commitAcceptedEntity).not.toHaveBeenCalled();
     expect(generatorSessionManager.reset).toHaveBeenCalledTimes(1);
     expect(vault.deleteEntity).toHaveBeenCalledWith("generated");
+  });
+
+  it("respects injected dependencies for time", async () => {
+    const mockClock = { now: () => 1234567890 };
+    const localizedService = new RevisionService(mockClock);
+
+    (vault.entities as any).target = {
+      id: "target",
+      title: "Target",
+      lore: "existing lore",
+    };
+    const proposal = {
+      targetId: "target",
+      suggestedFrontmatter: {
+        title: "Merged Target",
+        lore: "merged lore",
+      },
+      suggestedBody: "merged chronicle",
+      outgoingConnections: [],
+    };
+
+    localizedService.proposeMergeDraft(
+      proposal as any,
+      ["target", "source"],
+      "message-1",
+    );
+
+    expect(localizedService.pendingDraft).toEqual(
+      expect.objectContaining({
+        timestamp: 1234567890,
+      }),
+    );
+
+    vi.mocked(oracle.reviseEntity).mockResolvedValue({
+      content: "Revised content.",
+      lore: "Revised lore.",
+    });
+
+    const result = await localizedService.revise("target");
+    expect(result).toBe(true);
+    expect(localizedService.pendingDraft).toEqual(
+      expect.objectContaining({
+        entityId: "target",
+        timestamp: 1234567890,
+      }),
+    );
   });
 });
