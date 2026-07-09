@@ -152,7 +152,7 @@
           class="p-2 rounded-lg hover:bg-theme-bg text-theme-muted hover:text-theme-text transition-colors"
           aria-label="Close modal"
         >
-          <span class="icon-[lucide--x] w-5 h-5"></span>
+          <span class="icon-[lucide--x] w-5 h-5" aria-hidden="true"></span>
         </button>
       </div>
 
@@ -207,14 +207,14 @@
               class="p-2 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
               title="Confirm Creation"
             >
-              <span class="icon-[lucide--check] w-4 h-4"></span>
+              <span class="icon-[lucide--check] w-4 h-4" aria-hidden="true"></span>
             </button>
             <button
               onclick={() => (isCreating = false)}
               class="p-2 text-theme-muted hover:text-theme-text"
               title="Cancel"
             >
-              <span class="icon-[lucide--x] w-4 h-4"></span>
+              <span class="icon-[lucide--x] w-4 h-4" aria-hidden="true"></span>
             </button>
           </div>
         {/if}
@@ -298,7 +298,7 @@
                     onclick={() => canvas.id && confirmRename(canvas.id)}
                     class="p-1.5 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
                   >
-                    <span class="icon-[lucide--check] w-3 h-3"></span>
+                    <span class="icon-[lucide--check] w-3 h-3" aria-hidden="true"></span>
                   </button>
                 </div>
               {:else}
@@ -334,7 +334,7 @@
                   title="Rename Workspace"
                   aria-label={`Rename ${canvas.name || "Canvas"}`}
                 >
-                  <span class="icon-[lucide--edit-2] w-4 h-4"></span>
+                  <span class="icon-[lucide--edit-2] w-4 h-4" aria-hidden="true"></span>
                 </button>
                 <button
                   onclick={(e) => canvas.id && deleteCanvas(canvas.id, e)}
@@ -342,7 +342,7 @@
                   title="Delete Workspace"
                   aria-label={`Delete ${canvas.name || "Canvas"}`}
                 >
-                  <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+                  <span class="icon-[lucide--trash-2] w-4 h-4" aria-hidden="true"></span>
                 </button>
               {/if}
             </div>
