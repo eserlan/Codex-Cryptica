@@ -23,6 +23,10 @@ class TestExecutor extends BaseExecutor {
   public testEmit(context: OracleExecutionContext, event: any) {
     return this.emit(context, event);
   }
+
+  public testGenerateId() {
+    return this.idGenerator.uuid();
+  }
 }
 
 describe("BaseExecutor", () => {
@@ -85,6 +89,21 @@ describe("BaseExecutor", () => {
           timestamp: 12345,
         },
       }),
+    );
+  });
+
+  it("should use the injected idGenerator instead of the system default", () => {
+    const mockIdGenerator: IdGenerator = { uuid: () => "fixed-id-123" };
+    const executor = new TestExecutor(undefined, mockIdGenerator);
+
+    expect(executor.testGenerateId()).toBe("fixed-id-123");
+  });
+
+  it("falls back to the system idGenerator when none is injected", () => {
+    const executor = new TestExecutor();
+
+    expect(executor.testGenerateId()).toMatch(
+      /^[0-9a-f-]{36}$|^[0-9a-f]{32}$/i,
     );
   });
 });
