@@ -150,7 +150,8 @@ describe("ProposerService", () => {
 
   it("should dismiss proposal and add to history", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    const mockTime = 1500000000000;
+    service = new ProposerService(dbName, 1, undefined, () => mockTime);
     const proposal = {
       id: `${vaultId}:source1:target4`,
       vaultId,
@@ -173,6 +174,7 @@ describe("ProposerService", () => {
     const history = await service.getHistory(vaultId, "source1");
     expect(history).toHaveLength(1);
     expect(history[0].status).toBe("rejected");
+    expect(history[0].timestamp).toBe(mockTime);
   });
 
   it("should verify an accepted proposal", async () => {
