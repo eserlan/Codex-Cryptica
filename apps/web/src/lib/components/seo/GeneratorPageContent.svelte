@@ -19,6 +19,7 @@
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
   import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
   import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
+  import ScreamsheetFormFields from "$lib/components/seo/ScreamsheetFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -36,6 +37,7 @@
     pantheonConfig,
     shipConfig,
     languageConfig,
+    screamsheetConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -244,6 +246,25 @@
     campaignContext: "",
   });
 
+  const _screamsheetInitialGenre =
+    initialHubGenre && screamsheetConfig.genres.includes(initialHubGenre)
+      ? initialHubGenre
+      : screamsheetConfig.genres[0];
+
+  let screamsheet = $state({
+    genre: _screamsheetInitialGenre,
+    publicationType: (screamsheetConfig.publicationTypesByGenre[
+      _screamsheetInitialGenre
+    ] ?? screamsheetConfig.publicationTypesByGenre["Fantasy"])[0],
+    tone: screamsheetConfig.tones[1],
+    bias: screamsheetConfig.biases[0],
+    censorLevel: screamsheetConfig.censorLevels[0],
+    hookDensity: screamsheetConfig.hookDensities[1],
+    placeName: "",
+    headlineEvent: "",
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -281,6 +302,9 @@
     // Language genre is a fixed select using the theme labels directly
     // (Classic Fantasy, …), so it maps straight to activeTheme.
     else if (slug === "language-generator") activeTheme = language.genre;
+    else if (slug === "screamsheet-generator")
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[screamsheet.genre] ?? "Classic Fantasy";
   });
 
   onMount(() => {
@@ -356,6 +380,18 @@
       activeTheme = "Sci-Fi / Space Opera";
       return;
     }
+    if (slug === "screamsheet-generator") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre && screamsheetConfig.genres.includes(hubGenre)) {
+        screamsheet.genre = hubGenre;
+        screamsheet.publicationType = (screamsheetConfig
+          .publicationTypesByGenre[hubGenre] ??
+          screamsheetConfig.publicationTypesByGenre["Fantasy"])[0];
+      }
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[screamsheet.genre] ?? "Classic Fantasy";
+      return;
+    }
     if (slug === "language-generator") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) {
@@ -422,6 +458,8 @@
       generatorEngine.generateShip({ ...ship, useAI }),
     "language-generator": (useAI) =>
       generatorEngine.generateLanguage({ ...language, useAI }),
+    "screamsheet-generator": (useAI) =>
+      generatorEngine.generateScreamsheet({ ...screamsheet, useAI }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -612,6 +650,19 @@
         bind:structure={language.structure}
         bind:campaignContext={language.campaignContext}
         preserveGenreOnSurprise={Boolean(urlHubTheme)}
+        onSurprise={trigger}
+      />
+    {:else if slug === "screamsheet-generator"}
+      <ScreamsheetFormFields
+        bind:genre={screamsheet.genre}
+        bind:publicationType={screamsheet.publicationType}
+        bind:tone={screamsheet.tone}
+        bind:bias={screamsheet.bias}
+        bind:censorLevel={screamsheet.censorLevel}
+        bind:hookDensity={screamsheet.hookDensity}
+        bind:placeName={screamsheet.placeName}
+        bind:headlineEvent={screamsheet.headlineEvent}
+        bind:campaignContext={screamsheet.campaignContext}
         onSurprise={trigger}
       />
     {/if}

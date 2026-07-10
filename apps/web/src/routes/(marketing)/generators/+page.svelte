@@ -136,6 +136,13 @@
           icon: "icon-[lucide--globe]",
         },
         {
+          href: "/generators/screamsheet-generator",
+          label: "Screamsheet Generator",
+          summary:
+            "Generate an in-world news sheet for any genre — headlines, rumours, classifieds, propaganda, and GM-only hooks.",
+          icon: "icon-[lucide--newspaper]",
+        },
+        {
           href: "/generators/language-generator",
           label: "Fictional Language Generator",
           summary:

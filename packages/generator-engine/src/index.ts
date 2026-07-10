@@ -145,6 +145,14 @@ export {
   type LanguagePrompt,
 } from "./public-language";
 export {
+  buildScreamsheetPrompt,
+  parseScreamsheetResponse,
+  generateScreamsheetLocal,
+  screamsheetConfig,
+  type ScreamsheetGeneratorOptions,
+  type ScreamsheetPrompt,
+} from "./public-screamsheet";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,

@@ -57,6 +57,10 @@
         { label: "Magic Item Generator", path: "/generators/magic-item" },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
+        {
+          label: "Screamsheet Generator",
+          path: "/generators/screamsheet-generator",
+        },
       ],
     },
   ];

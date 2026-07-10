@@ -17,7 +17,8 @@ export type ValidSlug =
   | "pantheon-generator"
   | "god-generator"
   | "ship-generator"
-  | "language-generator";
+  | "language-generator"
+  | "screamsheet-generator";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -364,6 +365,44 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/names", label: "RPG Name Generator" },
       { href: "/generators/npc", label: "NPC Generator" },
       { href: "/generators/settlement", label: "Settlement Generator" },
+    ],
+  },
+  "screamsheet-generator": {
+    pageTitle:
+      "Screamsheet Generator | In-World RPG News Sheet & Player Handout | Codex Cryptica",
+    metaDescription:
+      "Generate an in-world news sheet for any RPG genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds, wasteland bulletins. Headlines, rumours, classifieds, adverts, and GM-only adventure hooks. No login required.",
+    introTitle: "Screamsheet Generator",
+    eyebrow: "Screamsheet Generator",
+    introText:
+      "Create an in-world news sheet as a printable player handout — a lead headline, short articles, street rumours, classifieds, and propaganda, shaped by who owns the press. The GM version holds the truth behind the stories and the adventure hooks.",
+    canonicalPath: "/generators/screamsheet-generator",
+    faqs: [
+      {
+        question: "What does the screamsheet generator create?",
+        answer:
+          "It generates a complete in-world publication issue — masthead and tagline, a lead headline story, 2-4 secondary articles, rumours, classified ads, public notices, and an advert or piece of propaganda — plus a GM-only section with the truth behind the stories and adventure hooks.",
+      },
+      {
+        question: "Is it only for cyberpunk games?",
+        answer:
+          "No. The screamsheet format is inspired by cyberpunk street news, but the generator works for any genre: fantasy town-crier broadsheets, station newsfeeds, wasteland bunker bulletins, frontier telegraphs, occult tabloids, and more.",
+      },
+      {
+        question: "Can I hand the output to my players?",
+        answer:
+          "Yes. The handout body is player-safe by design — GM-only material (the truth behind the stories and the adventure hooks) is kept in a separate GM section, so you can copy the handout without leaking secrets.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy news sheets on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/settlement", label: "Settlement Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
     ],
   },
 };
