@@ -269,6 +269,18 @@ describe("import-settings-controller helpers", () => {
     expect(status.isPartiallyImported).toBe(pack.entries.length > 1);
   });
 
+  it("reports no imported entries when the vault has no matching entities", () => {
+    const pack = getPack("fantasy-bestiary")!;
+    const controller = new ImportSettingsController(baseDeps());
+
+    expect(controller.getPackImportStatus(pack)).toEqual({
+      importedCount: 0,
+      total: pack.entries.length,
+      isFullyImported: false,
+      isPartiallyImported: false,
+    });
+  });
+
   it("matches creature pack entries to existing vault entities by title slug when selecting a pack", async () => {
     const pack = getPack("fantasy-bestiary")!;
     const importedEntry = pack.entries[0];

@@ -59,6 +59,7 @@ export default defineConfig({
         __dirname,
         "../../packages/generator-engine/src",
       ),
+      "map-engine": resolve(__dirname, "../../packages/map-engine/src"),
     },
     dedupe: ["svelte"],
   },
@@ -180,6 +181,7 @@ export default defineConfig({
   ssr: {
     noExternal: [
       "graph-engine",
+      "map-engine",
       "editor-core",
       "schema",
       "chronology-engine",
@@ -211,6 +213,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       "graph-engine",
+      "map-engine",
       "editor-core",
       "schema",
       "chronology-engine",
