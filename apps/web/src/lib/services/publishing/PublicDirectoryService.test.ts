@@ -61,6 +61,8 @@ describe("PublicDirectoryService", () => {
         title: "Night Market",
         description: "Find smugglers and rumors.",
         labels: ["cyberpunk"],
+        rightsAcknowledged: true,
+        fanContent: false,
       },
       "write-token-123",
     );
@@ -94,12 +96,68 @@ describe("PublicDirectoryService", () => {
         snapshotPublishedAt: "2026-06-30T12:00:00.000Z",
         listingCreatedAt: "2026-06-30T12:00:00.000Z",
         listingUpdatedAt: "2026-06-30T12:00:00.000Z",
+        rightsAcknowledgedAt: "2026-06-30T12:00:00.000Z",
+        fanContent: true,
       },
     });
 
     expect(draft.title).toBe("Saved Public Name");
     expect(draft.description).toBe("Saved public description");
     expect(draft.labels).toEqual(["cyberpunk"]);
+    expect(draft.rightsAcknowledged).toBe(true);
+    expect(draft.fanContent).toBe(true);
+  });
+
+  it("loads and saves a notice sidecar with acknowledgement gating and fan content toggle", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        return new Response(
+          JSON.stringify({
+            schemaVersion: 1,
+            publishId: "pub-123",
+            fanContent: true,
+            fanContentDisclaimer: "Fan content.",
+            rightsAcknowledgedAt: "2026-07-10T12:00:00.000Z",
+            updatedAt: "2026-07-10T12:00:00.000Z",
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          schemaVersion: 1,
+          publishId: "pub-123",
+          fanContent: false,
+          updatedAt: "2026-06-30T12:00:00.000Z",
+        }),
+      );
+    });
+    const service = new PublicDirectoryService({
+      fetch: fetchMock as unknown as typeof fetch,
+      baseUrl: "https://mock-proxy.local",
+    });
+
+    const notice = await service.getNotice("pub-123");
+    expect(notice?.fanContent).toBe(false);
+
+    const saved = await service.saveNotice(
+      "pub-123",
+      {
+        fanContent: true,
+        fanContentDisclaimer: "Fan content.",
+        rightsAcknowledged: true,
+      },
+      "write-token-123",
+    );
+    expect(saved.fanContent).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://mock-proxy.local/api/published/pub-123/notice",
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          Authorization: "Bearer write-token-123",
+        }),
+      }),
+    );
   });
 
   it("returns null when no public listing exists yet", async () => {

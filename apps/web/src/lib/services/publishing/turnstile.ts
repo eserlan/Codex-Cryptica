@@ -98,3 +98,52 @@ export async function getPublishTurnstileToken(): Promise<string> {
     turnstile.execute(widgetId);
   });
 }
+
+/** Runs the invisible publication challenge only when submitting a copyright report. */
+export async function getCopyrightReportTurnstileToken(): Promise<string> {
+  if (!VITE_TURNSTILE_SITE_KEY) {
+    if (import.meta.env.DEV) {
+      return "dev-turnstile-token";
+    }
+    throw new Error("Verification is not configured.");
+  }
+
+  const turnstile = await loadTurnstile();
+  const container = document.createElement("div");
+  container.setAttribute("aria-hidden", "true");
+  document.body.appendChild(container);
+
+  return new Promise((resolve, reject) => {
+    let widgetId = "";
+    const cleanup = () => {
+      if (widgetId) turnstile.remove(widgetId);
+      container.remove();
+    };
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Verification timed out. Please try reporting again."));
+    }, 30_000);
+
+    widgetId = turnstile.render(container, {
+      sitekey: VITE_TURNSTILE_SITE_KEY,
+      execution: "execute",
+      action: "copyright_report",
+      callback: (token: string) => {
+        window.clearTimeout(timeout);
+        cleanup();
+        resolve(token);
+      },
+      "error-callback": () => {
+        window.clearTimeout(timeout);
+        cleanup();
+        reject(new Error("Verification failed. Please try reporting again."));
+      },
+      "expired-callback": () => {
+        window.clearTimeout(timeout);
+        cleanup();
+        reject(new Error("Verification expired. Please try reporting again."));
+      },
+    });
+    turnstile.execute(widgetId);
+  });
+}

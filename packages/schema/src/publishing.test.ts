@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  CopyrightReportSchema,
   DirectoryPageSchema,
   DirectoryQuerySchema,
   DirectoryResultSchema,
   ListingDraftSchema,
   PUBLISH_LIMITS,
   PublicListingSchema,
+  PublishedNoticeSchema,
+  SuspensionMarkerSchema,
 } from "./publishing";
 
 describe("publishing directory schemas", () => {
@@ -17,6 +20,7 @@ describe("publishing directory schemas", () => {
     coverImageAssetId: "cover.webp",
     coverImageAlt: "A neon skyline at dusk",
     ownerDisplayName: "Eserlan",
+    rightsAcknowledged: true as const,
   };
 
   const validListing = {
@@ -36,7 +40,10 @@ describe("publishing directory schemas", () => {
   };
 
   it("accepts valid public listing metadata", () => {
-    expect(ListingDraftSchema.parse(validDraft)).toEqual(validDraft);
+    expect(ListingDraftSchema.parse(validDraft)).toEqual({
+      ...validDraft,
+      fanContent: false,
+    });
     expect(PublicListingSchema.parse(validListing)).toEqual(validListing);
     expect(
       DirectoryResultSchema.parse({
@@ -119,5 +126,103 @@ describe("publishing directory schemas", () => {
         guestUrl: "/vault/publish-123",
       }).success,
     ).toBe(false);
+  });
+
+  describe("copyright notice schemas", () => {
+    it("enforces rightsAcknowledged literal(true) on ListingDraftSchema", () => {
+      expect(
+        ListingDraftSchema.safeParse({
+          ...validDraft,
+          rightsAcknowledged: undefined,
+        }).success,
+      ).toBe(false);
+
+      expect(
+        ListingDraftSchema.safeParse({
+          ...validDraft,
+          rightsAcknowledged: false,
+        }).success,
+      ).toBe(false);
+
+      expect(
+        ListingDraftSchema.safeParse({
+          ...validDraft,
+          rightsAcknowledged: true,
+          fanContent: true,
+          fanContentDisclaimer: "Unofficial fan content referencing setting X.",
+        }).success,
+      ).toBe(true);
+    });
+
+    it("accepts optional rightsAcknowledgedAt and fanContent on PublicListingSchema", () => {
+      const extendedListing = {
+        ...validListing,
+        rightsAcknowledgedAt: "2026-07-10T12:00:00.000Z",
+        fanContent: true,
+      };
+      expect(PublicListingSchema.parse(extendedListing)).toEqual(
+        extendedListing,
+      );
+    });
+
+    it("validates PublishedNoticeSchema correctly", () => {
+      const validNotice = {
+        schemaVersion: 1 as const,
+        publishId: "publish-123",
+        fanContent: true,
+        fanContentDisclaimer: "Custom disclaimer text.",
+        rightsAcknowledgedAt: "2026-07-10T12:00:00.000Z",
+        updatedAt: "2026-07-10T12:00:00.000Z",
+      };
+      expect(PublishedNoticeSchema.parse(validNotice)).toEqual(validNotice);
+
+      expect(
+        PublishedNoticeSchema.safeParse({
+          ...validNotice,
+          fanContentDisclaimer: "x".repeat(501),
+        }).success,
+      ).toBe(false);
+    });
+
+    it("validates CopyrightReportSchema correctly", () => {
+      const validReport = {
+        schemaVersion: 1 as const,
+        reportId: "report-uuid",
+        vaultUrl: "https://codexcryptica.com/guest/publish-123",
+        publishId: "publish-123",
+        rightsHolder: "Wizards of the Coast",
+        material: "Map on page 4",
+        reporterContact: "reporter@example.com",
+        details: "Detailed explanation",
+        receivedAt: "2026-07-10T12:00:00.000Z",
+        vaultState: "listed" as const,
+      };
+      expect(CopyrightReportSchema.parse(validReport)).toEqual(validReport);
+
+      expect(
+        CopyrightReportSchema.safeParse({
+          ...validReport,
+          reporterContact: "ab",
+        }).success,
+      ).toBe(false);
+    });
+
+    it("validates SuspensionMarkerSchema correctly", () => {
+      const validMarker = {
+        schemaVersion: 1 as const,
+        publishId: "publish-123",
+        mode: "disable" as const,
+        reason: "copyright claim under review",
+        createdAt: "2026-07-10T12:00:00.000Z",
+      };
+      expect(SuspensionMarkerSchema.parse(validMarker)).toEqual(validMarker);
+
+      expect(
+        SuspensionMarkerSchema.safeParse({
+          ...validMarker,
+          mode: "invalid-mode",
+        }).success,
+      ).toBe(false);
+    });
   });
 });

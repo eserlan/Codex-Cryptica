@@ -49,6 +49,10 @@
   let coverImageAssetId = $state("");
   let coverImageAlt = $state("");
   let ownerDisplayName = $state("");
+  let rightsAcknowledged = $state(false);
+  let fanContent = $state(false);
+  let fanContentDisclaimer = $state("");
+  let isSuspended = $state(false);
   let saveAttempted = $state(false);
   let isSaving = $state(false);
   let isLoading = $state(false);
@@ -67,7 +71,8 @@
       !!writeToken &&
       title.trim().length > 0 &&
       description.trim().length > 0 &&
-      labels.length > 0,
+      labels.length > 0 &&
+      rightsAcknowledged,
   );
   const guestDestination = $derived(
     publishId ? `/guest/${publishId}` : "/guest/[publishId]",
@@ -80,6 +85,8 @@
     coverImageAssetId = draft.coverImageAssetId ?? "";
     coverImageAlt = draft.coverImageAlt ?? "";
     ownerDisplayName = draft.ownerDisplayName ?? "";
+    rightsAcknowledged = draft.rightsAcknowledged ?? false;
+    fanContent = draft.fanContent ?? false;
   }
 
   async function loadListing() {
@@ -117,6 +124,20 @@
             : undefined,
         }),
       );
+      try {
+        const notice = await service.getNotice(publishId);
+        if (notice) {
+          fanContent = notice.fanContent ?? false;
+          fanContentDisclaimer = notice.fanContentDisclaimer ?? "";
+          if (notice.suspended === true) {
+            isSuspended = true;
+          } else {
+            isSuspended = false;
+          }
+        }
+      } catch {
+        // notice sidecar might not exist yet for old snapshots
+      }
       hydratedPublishId = publishId;
     } catch (error: any) {
       loadError = error?.message || "Failed to load saved listing.";
@@ -133,6 +154,10 @@
       coverImageAssetId = "";
       coverImageAlt = "";
       ownerDisplayName = "";
+      rightsAcknowledged = false;
+      fanContent = false;
+      fanContentDisclaimer = "";
+      isSuspended = false;
       existingListing = null;
       hydratedPublishId = "";
       return;
@@ -186,9 +211,29 @@
           coverImageAssetId: resolvedCoverId || undefined,
           coverImageAlt: coverImageAlt.trim() || undefined,
           ownerDisplayName: ownerDisplayName.trim() || undefined,
+          rightsAcknowledged: rightsAcknowledged as true,
+          fanContent,
         },
         writeToken,
       );
+      try {
+        await service.saveNotice(
+          publishId,
+          {
+            fanContent,
+            fanContentDisclaimer: fanContent
+              ? fanContentDisclaimer.trim() || undefined
+              : undefined,
+            rightsAcknowledged,
+          },
+          writeToken,
+        );
+      } catch (noticeErr) {
+        console.warn(
+          "[PublicListingSettings] Failed to update notice sidecar:",
+          noticeErr,
+        );
+      }
       existingListing = listing;
       hydratedPublishId = publishId;
       notificationStore?.notify("Public listing saved.", "success");
@@ -244,6 +289,27 @@
       </div>
     </div>
   </div>
+
+  {#if isSuspended}
+    <div
+      class="border border-red-500/50 bg-red-950/40 text-red-200 rounded-md p-4 space-y-1 flex items-start gap-3 text-sm"
+      data-testid="public-listing-suspended-banner"
+    >
+      <span
+        class="icon-[lucide--alert-triangle] h-5 w-5 text-red-400 shrink-0 mt-0.5"
+        aria-hidden="true"
+      ></span>
+      <div>
+        <p class="font-bold">
+          This world is currently suspended or under review.
+        </p>
+        <p class="text-xs text-red-200/80">
+          It is delisted from the public directory and/or restricted pending
+          moderation review.
+        </p>
+      </div>
+    </div>
+  {/if}
 
   {#if !publishId || !writeToken}
     <p class="text-sm text-theme-text/70" data-testid="public-listing-blocked">
@@ -335,12 +401,78 @@
           data-testid="public-listing-cover-alt"
         />
       </label>
+
+      <div
+        class="md:col-span-2 rounded border border-theme-border/60 bg-theme-bg/30 p-4 space-y-4"
+      >
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            bind:checked={rightsAcknowledged}
+            class="mt-0.5 rounded border-theme-border text-theme-primary focus:ring-theme-primary"
+            data-testid="public-listing-rights-acknowledgement"
+          />
+          <div class="space-y-1 text-sm">
+            <span class="font-bold text-theme-text"
+              >I acknowledge my publishing rights and responsibilities</span
+            >
+            <p class="text-xs text-theme-text/70">
+              I confirm that I own original rights to this content or have
+              explicit permission to publish it, and that it contains no
+              copyrighted material I am not authorized to distribute.
+            </p>
+          </div>
+        </label>
+
+        <label
+          class="flex items-start gap-3 cursor-pointer border-t border-theme-border/40 pt-3"
+        >
+          <input
+            type="checkbox"
+            bind:checked={fanContent}
+            class="mt-0.5 rounded border-theme-border text-theme-primary focus:ring-theme-primary"
+            data-testid="public-listing-fan-content"
+          />
+          <div class="space-y-1 text-sm">
+            <span class="font-bold text-theme-text"
+              >This world contains fan content or third-party IP</span
+            >
+            <p class="text-xs text-theme-text/70">
+              Check this if your world uses third-party game rules, lore, or
+              characters under a community content agreement or fan policy.
+            </p>
+          </div>
+        </label>
+
+        {#if fanContent}
+          <label class="block space-y-1 pl-7 pt-1">
+            <span
+              class="text-xs uppercase tracking-wider font-header text-theme-text/60"
+            >
+              Fan content disclaimer / attribution (optional)
+            </span>
+            <textarea
+              bind:value={fanContentDisclaimer}
+              maxlength="500"
+              rows="3"
+              placeholder="e.g. Unofficial Fan Content permitted under Wizards of the Coast Fan Content Policy..."
+              class="w-full rounded border border-theme-border bg-theme-bg/50 px-3 py-2 text-sm text-theme-text"
+              data-testid="public-listing-fan-disclaimer"
+            ></textarea>
+          </label>
+        {/if}
+      </div>
     </div>
 
     {#if saveAttempted && !canSave}
       <p class="text-sm text-red-400" data-testid="public-listing-validation">
-        Add a public title, description, and at least one label before listing
-        this world publicly.
+        {#if !rightsAcknowledged}
+          You must acknowledge your publishing rights before listing this world
+          publicly.
+        {:else}
+          Add a public title, description, and at least one label before listing
+          this world publicly.
+        {/if}
       </p>
     {/if}
 
