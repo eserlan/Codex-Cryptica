@@ -18,7 +18,9 @@
     "test:e2e:clear": "rm -f .e2e-success.json",
     "lint": "eslint .",
     "lint:types": "svelte-check --tsconfig ./tsconfig.json",
+    "lint:types:fast": "svelte-check --tsconfig ./tsconfig.json --tsgo-experimental-api",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:fast": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --tsgo-experimental-api",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "dependencies": {
@@ -90,6 +92,7 @@
     "@types/google.accounts": "^0.0.18",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.1.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "@vitest/coverage-v8": "^4.1.7",
     "critters": "^0.0.25",
     "fake-indexeddb": "^6.2.5",
@@ -97,7 +100,7 @@
     "rollup-plugin-visualizer": "^7.0.1",
     "start-server-and-test": "^3.0.5",
     "svelte": "^5.55.9",
-    "svelte-check": "^4.4.8",
+    "svelte-check": "^4.7.2",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
