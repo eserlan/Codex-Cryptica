@@ -22,6 +22,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "god-generator",
   "ship-generator",
   "language-generator",
+  "news-sheet-generator",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -76,6 +77,8 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   Western: "Western / Frontier",
   Steampunk: "Steampunk",
   Lancer: "Lancer",
+  "Space Opera Resistance": "Space Opera Resistance",
+  "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
 };
 
 // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids

@@ -19,6 +19,7 @@
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
   import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
   import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
+  import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -36,6 +37,7 @@
     pantheonConfig,
     shipConfig,
     languageConfig,
+    newsSheetConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -244,6 +246,25 @@
     campaignContext: "",
   });
 
+  const _newsSheetInitialGenre =
+    initialHubGenre && newsSheetConfig.genres.includes(initialHubGenre)
+      ? initialHubGenre
+      : newsSheetConfig.genres[0];
+
+  let newsSheet = $state({
+    genre: _newsSheetInitialGenre,
+    publicationType: (newsSheetConfig.publicationTypesByGenre[
+      _newsSheetInitialGenre
+    ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0],
+    tone: newsSheetConfig.tones[1],
+    bias: newsSheetConfig.biases[0],
+    censorLevel: newsSheetConfig.censorLevels[0],
+    hookDensity: newsSheetConfig.hookDensities[1],
+    placeName: "",
+    headlineEvent: "",
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -281,6 +302,9 @@
     // Language genre is a fixed select using the theme labels directly
     // (Classic Fantasy, …), so it maps straight to activeTheme.
     else if (slug === "language-generator") activeTheme = language.genre;
+    else if (slug === "news-sheet-generator")
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
   });
 
   onMount(() => {
@@ -356,6 +380,18 @@
       activeTheme = "Sci-Fi / Space Opera";
       return;
     }
+    if (slug === "news-sheet-generator") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
+        newsSheet.genre = hubGenre;
+        newsSheet.publicationType = (newsSheetConfig.publicationTypesByGenre[
+          hubGenre
+        ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0];
+      }
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+      return;
+    }
     if (slug === "language-generator") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) {
@@ -422,6 +458,8 @@
       generatorEngine.generateShip({ ...ship, useAI }),
     "language-generator": (useAI) =>
       generatorEngine.generateLanguage({ ...language, useAI }),
+    "news-sheet-generator": (useAI) =>
+      generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -612,6 +650,19 @@
         bind:structure={language.structure}
         bind:campaignContext={language.campaignContext}
         preserveGenreOnSurprise={Boolean(urlHubTheme)}
+        onSurprise={trigger}
+      />
+    {:else if slug === "news-sheet-generator"}
+      <NewsSheetFormFields
+        bind:genre={newsSheet.genre}
+        bind:publicationType={newsSheet.publicationType}
+        bind:tone={newsSheet.tone}
+        bind:bias={newsSheet.bias}
+        bind:censorLevel={newsSheet.censorLevel}
+        bind:hookDensity={newsSheet.hookDensity}
+        bind:placeName={newsSheet.placeName}
+        bind:headlineEvent={newsSheet.headlineEvent}
+        bind:campaignContext={newsSheet.campaignContext}
         onSurprise={trigger}
       />
     {/if}

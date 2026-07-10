@@ -170,4 +170,15 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["rpg-ship", "rpg-location", "ship-generator", "imported-draft"],
     status: "draft",
   },
+  "news-sheet-generator": {
+    type: "note",
+    title: "The Gutter Signal — Issue 47",
+    summary:
+      "A pirate-press street screamsheet whose lead story about a district blackout carefully avoids naming the corporation that caused it.",
+    content:
+      "# The Gutter Signal\n*Read it before they deny it — Issue No. 47*\n\n## BLACKOUT HITS THE STACKS — GRID AUTHORITY BLAMES 'MAINTENANCE'\nFour blocks went dark at 0300 and stayed dark until the private towers came back online first. The Grid Authority calls it scheduled maintenance. Nobody in the Stacks was told about a schedule.\n\n### Notices & Classifieds\n- LOST: one courier bag, contents personal. Generous reward, no questions asked.\n\n### Word on the Street\n- Someone has been buying up debts around the old quarter — quietly, and at full price",
+    lore: "",
+    labels: ["rpg-handout", "news-sheet-generator", "imported-draft"],
+    status: "draft",
+  },
 };

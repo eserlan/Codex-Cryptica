@@ -13,7 +13,8 @@ export type GeneratorId =
   | "magic-item"
   | "event"
   | "ship"
-  | "language";
+  | "language"
+  | "news-sheet";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -23,6 +24,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "event",
   "ship",
   "language",
+  "news-sheet",
 ] as const;
 
 /** A user-configurable field for a generator. */

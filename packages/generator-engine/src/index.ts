@@ -145,6 +145,14 @@ export {
   type LanguagePrompt,
 } from "./public-language";
 export {
+  buildNewsSheetPrompt,
+  parseNewsSheetResponse,
+  generateNewsSheetLocal,
+  newsSheetConfig,
+  type NewsSheetGeneratorOptions,
+  type NewsSheetPrompt,
+} from "./public-news-sheet";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,

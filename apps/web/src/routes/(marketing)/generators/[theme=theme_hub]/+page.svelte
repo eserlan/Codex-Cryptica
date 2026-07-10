@@ -92,6 +92,15 @@
     icon: "icon-[lucide--rocket]",
   };
 
+  // One generator, many mastheads: each hub links to the news sheet
+  // generator under the name that genre actually uses for the format.
+  const newsSheetCard = (label: string, summary: string): GeneratorCard => ({
+    slug: "news-sheet-generator",
+    label,
+    summary,
+    icon: "icon-[lucide--newspaper]",
+  });
+
   const languageCard: GeneratorCard = {
     slug: "language-generator",
     label: "Language Generator",
@@ -183,6 +192,10 @@
         shipCard,
         nationCard,
         ...fantasyOnlyCards,
+        newsSheetCard(
+          "Broadsheet Generator",
+          "Generate a town-crier broadsheet — headlines, guild notices, market rumours, and classifieds, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -206,6 +219,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Screamsheet Generator",
+          "Generate a street screamsheet — corporate spin, gang violence, fixer rumours, and product ads, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -228,6 +245,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Newsfeed Generator",
+          "Generate a station newsfeed — pirate alerts, megacorp claims, distress notices, and trade rumours, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -249,6 +270,10 @@
         ),
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Wasteland Bulletin Generator",
+          "Generate a bunker bulletin — trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -270,6 +295,10 @@
         ),
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Tabloid Generator",
+          "Generate a local tabloid — cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -292,6 +321,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Comms Digest Generator",
+          "Generate an outpost comms digest — Union bulletins, contractor notices, pilot rumours, and frontier alerts, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -314,6 +347,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Penny Broadsheet Generator",
+          "Generate a penny broadsheet — guild scandals, patent disputes, sky-dock notices, and agitator rumours, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -336,6 +373,10 @@
         ),
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Occult Tabloid Generator",
+          "Generate an occult tabloid — supernatural cover-ups, disappearances, ominous notices, and weird classifieds, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -358,6 +399,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Frontier Newspaper Generator",
+          "Generate a frontier weekly — telegraph dispatches, outlaw sightings, wanted notices, and saloon rumours, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -380,6 +425,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Underground Broadcast Generator",
+          "Generate a resistance broadcast — imperial propaganda, smuggler notices, sector alerts, and rebel rumours, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
@@ -402,6 +451,10 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Station Newsfeed Generator",
+          "Generate a station promenade daily — survey reports, diplomatic notices, academy news, and dockside rumours, with GM-only hooks.",
+        ),
         languageCard,
         surpriseMeCard,
       ],
