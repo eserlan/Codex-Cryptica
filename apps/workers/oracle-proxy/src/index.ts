@@ -26,6 +26,8 @@ import {
   handleListPublicListings,
   handlePutPublicListing,
 } from "./directory";
+import { handleGetPublishedNotice, handlePutPublishedNotice } from "./notice";
+import { handleCopyrightReport } from "./reports";
 
 interface Env {
   GEMINI_API_KEY: string;
@@ -78,6 +80,23 @@ export default {
       });
     }
 
+    if (pathname === "/api/reports/copyright") {
+      const origin = request.headers.get("Origin") || "";
+      if (origin && !isOriginAllowed(origin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+      if (request.method === "POST") {
+        return handleCopyrightReport(request, env);
+      }
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: getCorsHeaders(request.headers, env),
+      });
+    }
+
     // Route R2 snapshot publishing endpoints
     if (
       pathname === "/api/publish-vault" ||
@@ -123,7 +142,15 @@ export default {
       }
 
       if (parts.length === 5) {
-        // /api/published/:publishId/bundle, manifest, or listing
+        // /api/published/:publishId/bundle, manifest, listing, or notice
+        if (parts[4] === "notice") {
+          if (request.method === "GET") {
+            return handleGetPublishedNotice(request, env, parts[3]);
+          }
+          if (request.method === "PUT") {
+            return handlePutPublishedNotice(request, env, parts[3]);
+          }
+        }
         if (parts[4] === "listing") {
           if (request.method === "GET") {
             return handleGetPublicListing(request, env, parts[3]);

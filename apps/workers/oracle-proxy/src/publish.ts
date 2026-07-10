@@ -2,6 +2,8 @@ import {
   GuestBundleSchema,
   PUBLISH_LIMITS,
 } from "../../../../packages/schema/src/publishing";
+import { verifyTurnstile as verifyTurnstileShared } from "./turnstile";
+import { readSuspensionMarker } from "./suspension";
 
 interface PublishEnv {
   BUCKET?: any; // R2Bucket
@@ -19,15 +21,17 @@ const ALLOWED_ASSET_TYPES = new Set([
 
 class PayloadTooLargeError extends Error {}
 
-async function readTextWithLimit(
+async function readBytesWithLimit(
   request: Request,
   maxBytes: number,
-): Promise<string> {
+): Promise<Uint8Array | null> {
   const declaredLength = Number(request.headers.get("Content-Length"));
   if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-    throw new PayloadTooLargeError();
+    throw new PayloadTooLargeError(
+      `Payload exceeded size limit (${maxBytes} bytes)`,
+    );
   }
-  if (!request.body) return "";
+  if (!request.body) return new Uint8Array(0);
 
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -38,7 +42,9 @@ async function readTextWithLimit(
     totalBytes += value.byteLength;
     if (totalBytes > maxBytes) {
       await reader.cancel();
-      throw new PayloadTooLargeError();
+      throw new PayloadTooLargeError(
+        `Payload exceeded size limit (${maxBytes} bytes)`,
+      );
     }
     chunks.push(value);
   }
@@ -48,6 +54,19 @@ async function readTextWithLimit(
     body.set(chunk, offset);
     offset += chunk.byteLength;
   }
+  return body;
+}
+
+async function readTextWithLimit(
+  request: Request,
+  maxBytes: number,
+): Promise<string> {
+  const body = await readBytesWithLimit(request, maxBytes);
+  if (!body) {
+    throw new PayloadTooLargeError(
+      `Payload exceeded size limit (${maxBytes} bytes)`,
+    );
+  }
   return new TextDecoder().decode(body);
 }
 
@@ -55,53 +74,10 @@ async function verifyTurnstile(
   request: Request,
   env: PublishEnv,
 ): Promise<boolean> {
-  const token = request.headers.get("X-Turnstile-Token");
-
-  // Dev-only bypass: the secret is never configured in local wrangler dev
-  // unless explicitly added to .dev.vars. Origin headers are client-controlled
-  // and must not gate this.
-  if (!env.TURNSTILE_SECRET_KEY) {
-    return token === "dev-turnstile-token";
-  }
-
-  if (!token || token.length > 2_048) return false;
-
-  const form = new FormData();
-  form.set("secret", env.TURNSTILE_SECRET_KEY);
-  form.set("response", token);
-  form.set("remoteip", request.headers.get("CF-Connecting-IP") || "");
-
-  try {
-    const response = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        body: form,
-      },
-    );
-    if (!response.ok) return false;
-    const result = (await response.json()) as {
-      success?: boolean;
-      hostname?: string;
-      action?: string;
-    };
-    return (
-      result.success === true &&
-      result.action === "publish_snapshot" &&
-      isCodexHostname(result.hostname)
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isCodexHostname(hostname: string | undefined): boolean {
-  return (
-    hostname === "codexcryptica.com" ||
-    hostname === "codex-cryptica.com" ||
-    hostname === "staging.codexcryptica.com" ||
-    hostname === "staging.codex-cryptica.com" ||
-    hostname?.endsWith(".codex-cryptica.pages.dev") === true
+  return verifyTurnstileShared(
+    request,
+    env.TURNSTILE_SECRET_KEY,
+    "publish_snapshot",
   );
 }
 
@@ -411,6 +387,19 @@ export async function handleGetBundle(
     });
   }
 
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension && suspension.mode === "disable") {
+    return new Response(
+      JSON.stringify({
+        error: { message: "This world is temporarily unavailable." },
+      }),
+      {
+        status: 451,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
+  }
+
   const key = `published/${publishId}/bundle.json`;
   const obj = await env.BUCKET.get(key);
 
@@ -451,6 +440,19 @@ export async function handleGetManifest(
       status: 500,
       headers: cors,
     });
+  }
+
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension && suspension.mode === "disable") {
+    return new Response(
+      JSON.stringify({
+        error: { message: "This world is temporarily unavailable." },
+      }),
+      {
+        status: 451,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const key = `published/${publishId}/bundle.json`;
@@ -650,6 +652,19 @@ export async function handleGetAsset(
       status: 500,
       headers: cors,
     });
+  }
+
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension && suspension.mode === "disable") {
+    return new Response(
+      JSON.stringify({
+        error: { message: "This world is temporarily unavailable." },
+      }),
+      {
+        status: 451,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const assetKey = `published/${publishId}/assets/${assetId}`;

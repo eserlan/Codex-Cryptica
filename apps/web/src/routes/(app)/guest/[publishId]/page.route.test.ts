@@ -271,4 +271,55 @@ describe("/guest/[publishId] page", () => {
 
     unmount();
   });
+
+  it("renders FanContentDisclaimer when notice.fanContent is true", async () => {
+    const { getByTestId, unmount } = render(RoutePage, {
+      data: {
+        publishId: "published-4",
+        status: 200,
+        error: null,
+        bundle: {
+          publishId: "published-4",
+          vaultTitle: "Shared World",
+          activeTheme: { id: "host-theme" },
+          entities: [],
+          relationships: [],
+          maps: [],
+          canvases: [],
+          assetManifest: [],
+        },
+        notice: {
+          fanContent: true,
+          fanContentDisclaimer: "unofficial fan creation",
+        },
+      } as any,
+    });
+
+    await waitFor(() => {
+      const disclaimer = getByTestId("fan-content-disclaimer");
+      expect(disclaimer).toBeTruthy();
+      expect(disclaimer.textContent).toContain("unofficial fan creation");
+    });
+
+    unmount();
+  });
+
+  it("displays neutral unavailability message when status is 451", async () => {
+    const { getByText, unmount } = render(RoutePage, {
+      data: {
+        publishId: "published-451",
+        status: 451,
+        error: "This world is temporarily unavailable.",
+        bundle: null,
+        notice: null,
+      } as any,
+    });
+
+    await waitFor(() => {
+      expect(getByText("World Unavailable")).toBeTruthy();
+      expect(getByText("This world is temporarily unavailable.")).toBeTruthy();
+    });
+
+    unmount();
+  });
 });

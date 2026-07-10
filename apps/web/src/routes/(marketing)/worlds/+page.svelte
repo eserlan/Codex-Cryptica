@@ -3,6 +3,8 @@
   import { marked } from "marked";
   import DOMPurify from "dompurify";
   import { browser } from "$app/environment";
+  import WorldsProvenanceNotice from "$lib/components/publishing/WorldsProvenanceNotice.svelte";
+  import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
 
   interface DirectoryResult {
     publishId: string;
@@ -29,6 +31,7 @@
   let labelsText = $derived(data.query.labels.join(", "));
 
   let viewMode = $state<"grid" | "list">("grid");
+  let showReportModal = $state(false);
 
   $effect(() => {
     if (typeof localStorage !== "undefined") {
@@ -289,5 +292,11 @@
         {/each}
       </div>
     {/if}
+
+    <WorldsProvenanceNotice onReport={() => (showReportModal = true)} />
+    <CopyrightReportModal
+      open={showReportModal}
+      onClose={() => (showReportModal = false)}
+    />
   </div>
 </div>

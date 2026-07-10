@@ -18,11 +18,14 @@
   import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
   import EmbeddedEntityView from "$lib/components/entity/EmbeddedEntityView.svelte";
   import FrontPage from "$lib/components/world/FrontPage.svelte";
+  import FanContentDisclaimer from "$lib/components/publishing/FanContentDisclaimer.svelte";
+  import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
 
   let { data } = $props();
 
   let loading = $state(true);
   let errorMsg = $state<string | null>(null);
+  let showReportModal = $state(false);
 
   // Get selected entity in guest mode
   let selectedEntity = $derived.by(() => {
@@ -158,7 +161,7 @@
 
         <div class="space-y-2">
           <h2 class="text-xl font-bold tracking-tight text-theme-primary">
-            Snapshot Unavailable
+            {data.status === 451 ? "World Unavailable" : "Snapshot Unavailable"}
           </h2>
           <p class="text-sm text-theme-muted">{errorMsg}</p>
         </div>
@@ -205,16 +208,78 @@
     {#if !onboardingStore.dismissedWorldPage && !selectedEntity && guestVault.entities.length > 0}
       <div
         data-testid="front-page-overlay"
-        class="absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm"
+        class="absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm flex flex-col"
         style:background-image="var(--bg-texture-overlay)"
         role="presentation"
       >
-        <FrontPage
-          onClose={() => {
-            onboardingStore.dismissedWorldPage = true;
-          }}
-        />
+        <div class="flex-1">
+          <FrontPage
+            onClose={() => {
+              onboardingStore.dismissedWorldPage = true;
+            }}
+          />
+        </div>
+        {#if data.notice?.fanContent}
+          <div class="max-w-4xl mx-auto w-full pt-4 pb-8 px-4 space-y-4">
+            <FanContentDisclaimer
+              fanContent={data.notice?.fanContent}
+              customDisclaimer={data.notice?.fanContentDisclaimer}
+            />
+            <div class="flex justify-end">
+              <button
+                type="button"
+                onclick={() => (showReportModal = true)}
+                class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text/60 hover:text-theme-primary transition-colors"
+              >
+                <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+                <span>Report copyright concern</span>
+              </button>
+            </div>
+          </div>
+        {:else}
+          <div class="max-w-4xl mx-auto w-full pt-4 pb-8 px-4 flex justify-end">
+            <button
+              type="button"
+              onclick={() => (showReportModal = true)}
+              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text/60 hover:text-theme-primary transition-colors"
+            >
+              <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+              <span>Report copyright concern</span>
+            </button>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div
+        class="absolute bottom-4 left-4 right-4 z-30 pointer-events-none flex flex-col items-end gap-2"
+      >
+        {#if data.notice?.fanContent}
+          <div class="pointer-events-auto max-w-xl w-full mx-auto shadow-xl">
+            <FanContentDisclaimer
+              fanContent={data.notice?.fanContent}
+              customDisclaimer={data.notice?.fanContentDisclaimer}
+            />
+          </div>
+        {/if}
+        <div class="pointer-events-auto">
+          <button
+            type="button"
+            onclick={() => (showReportModal = true)}
+            class="inline-flex items-center gap-1.5 rounded border border-theme-border/60 bg-theme-surface/90 px-3 py-1.5 text-xs font-bold text-theme-text/70 shadow hover:border-theme-primary/50 hover:text-theme-primary transition-colors backdrop-blur-sm"
+          >
+            <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+            <span>Report copyright concern</span>
+          </button>
+        </div>
       </div>
     {/if}
   {/if}
+
+  <CopyrightReportModal
+    open={showReportModal}
+    vaultUrl={typeof window !== "undefined"
+      ? window.location.href
+      : `https://codexcryptica.com/guest/${guestVault.publishId}`}
+    onClose={() => (showReportModal = false)}
+  />
 </div>
