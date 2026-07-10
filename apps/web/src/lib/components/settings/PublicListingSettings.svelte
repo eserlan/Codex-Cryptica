@@ -83,6 +83,7 @@
     description = draft.description;
     labelsText = draft.labels.join(", ");
     coverImageAssetId = draft.coverImageAssetId ?? "";
+    coverImageAlt = draft.coverImageAlt ?? "";
     ownerDisplayName = draft.ownerDisplayName ?? "";
     rightsAcknowledged = draft.rightsAcknowledged ?? false;
     fanContent = draft.fanContent ?? false;
@@ -128,9 +129,6 @@
         if (notice) {
           fanContent = notice.fanContent ?? false;
           fanContentDisclaimer = notice.fanContentDisclaimer ?? "";
-          if (notice.rightsAcknowledgedAt) {
-            rightsAcknowledged = true;
-          }
           if (notice.suspended === true) {
             isSuspended = true;
           } else {
@@ -154,6 +152,7 @@
       description = "";
       labelsText = "";
       coverImageAssetId = "";
+      coverImageAlt = "";
       ownerDisplayName = "";
       rightsAcknowledged = false;
       fanContent = false;

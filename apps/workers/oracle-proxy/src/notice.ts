@@ -94,9 +94,15 @@ export async function handleGetPublishedNotice(
 
   const existing = await readNoticeSidecar(env, publishId);
   if (existing) {
+    // Public projection: rightsAcknowledgedAt is author-facing audit data and
+    // must not be exposed on this unauthenticated endpoint.
     return new Response(
       JSON.stringify({
-        ...existing,
+        schemaVersion: existing.schemaVersion,
+        publishId: existing.publishId,
+        fanContent: existing.fanContent,
+        fanContentDisclaimer: existing.fanContentDisclaimer,
+        updatedAt: existing.updatedAt,
         suspended: isSuspended ? true : undefined,
       }),
       {

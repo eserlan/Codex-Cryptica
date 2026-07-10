@@ -33,14 +33,18 @@ describe("WorldsProvenanceNotice", () => {
     expect(onReport).toHaveBeenCalledTimes(1);
   });
 
-  it("links to the publishing guidelines / Terms of Use", () => {
+  it("only links to the Terms of Use once a destination exists (FR-017)", () => {
     render(WorldsProvenanceNotice, { onReport: vi.fn() });
 
-    const termsLink = screen.getByRole("link", {
+    const termsLink = screen.queryByRole("link", {
       name: PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_LABEL,
     });
-    expect(termsLink.getAttribute("href")).toBe(
-      PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_URL,
-    );
+    if (PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_URL) {
+      expect(termsLink?.getAttribute("href")).toBe(
+        PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_URL,
+      );
+    } else {
+      expect(termsLink).toBeNull();
+    }
   });
 });

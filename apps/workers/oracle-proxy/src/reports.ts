@@ -30,6 +30,13 @@ export async function handleCopyrightReport(
 ): Promise<Response> {
   const headers = getHeaders(request.headers, env);
 
+  if (!env.BUCKET) {
+    return new Response(
+      JSON.stringify({ error: { message: "Storage is not configured" } }),
+      { status: 500, headers },
+    );
+  }
+
   // Check rate limit if limiter exists in env
   const limiter =
     env.PUBLISH_CREATE_RATE_LIMITER || env.PUBLISH_WRITE_RATE_LIMITER;
@@ -123,7 +130,7 @@ export async function handleCopyrightReport(
 
   // Determine vaultState
   let vaultState: "listed" | "published-unlisted" | "not-found" = "not-found";
-  if (publishId && env.BUCKET) {
+  if (publishId) {
     const listing = await env.BUCKET.head(
       `directory/listings/${publishId}.json`,
     ).catch(() => null);
@@ -174,19 +181,17 @@ export async function handleCopyrightReport(
     );
   }
 
-  if (env.BUCKET) {
-    await env.BUCKET.put(
-      `moderation/reports/${reportId}.json`,
-      JSON.stringify(parsed.data),
-      {
-        customMetadata: {
-          reportId,
-          publishId: publishId || "unknown",
-          receivedAt,
-        },
+  await env.BUCKET.put(
+    `moderation/reports/${reportId}.json`,
+    JSON.stringify(parsed.data),
+    {
+      customMetadata: {
+        reportId,
+        publishId: publishId || "unknown",
+        receivedAt,
       },
-    );
-  }
+    },
+  );
 
   return new Response(
     JSON.stringify({

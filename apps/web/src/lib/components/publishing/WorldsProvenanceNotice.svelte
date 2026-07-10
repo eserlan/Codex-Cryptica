@@ -28,15 +28,17 @@
       <p class="leading-relaxed text-theme-text/60">
         {PUBLIC_WORLDS_NOTICE.AUTHOR_RESPONSIBILITY_TEXT}
       </p>
-      <div class="pt-1">
-        <a
-          href={PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_URL}
-          class="inline-flex items-center gap-1 font-bold text-theme-primary hover:underline"
-        >
-          <span>{PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_LABEL}</span>
-          <span class="icon-[lucide--external-link] h-3 w-3"></span>
-        </a>
-      </div>
+      {#if PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_URL}
+        <div class="pt-1">
+          <a
+            href={PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_URL}
+            class="inline-flex items-center gap-1 font-bold text-theme-primary hover:underline"
+          >
+            <span>{PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_LABEL}</span>
+            <span class="icon-[lucide--external-link] h-3 w-3"></span>
+          </a>
+        </div>
+      {/if}
     </div>
 
     <div class="flex flex-col items-start gap-2 sm:items-end">

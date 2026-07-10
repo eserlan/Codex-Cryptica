@@ -48,8 +48,10 @@ export const PUBLIC_WORLDS_NOTICE = {
 
   /**
    * URL to Terms of Use / publishing guidelines (FR-017).
+   * Empty until the page exists — notices must render without broken links,
+   * and the link appears once a destination is set here.
    */
-  TERMS_OF_USE_URL: "/terms",
+  TERMS_OF_USE_URL: "",
   TERMS_OF_USE_LABEL: "Publishing Guidelines & Terms of Use",
 
   /**

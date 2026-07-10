@@ -120,7 +120,9 @@ export class PublicDirectoryService {
       coverImageAssetId: input.defaultCoverImageAssetId || undefined,
       coverImageAlt: input.defaultCoverImageAssetId ? "Cover image" : undefined,
       ownerDisplayName: undefined,
-      rightsAcknowledged: true as const,
+      // New drafts must require an explicit acknowledgement from the author;
+      // the checkbox starts unchecked and gates saving.
+      rightsAcknowledged: undefined as any,
       fanContent: false,
     };
   }

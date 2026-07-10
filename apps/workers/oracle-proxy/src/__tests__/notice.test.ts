@@ -212,7 +212,10 @@ describe("notice routes and sidecar integration", () => {
     );
     expect(getRes.status).toBe(200);
     const getBody = await getRes.json();
-    expect(getBody).toEqual(putBody);
+    // Public GET omits author-facing audit data
+    const { rightsAcknowledgedAt: _omitted, ...publicView } = putBody;
+    expect(getBody).toEqual(publicView);
+    expect(getBody.rightsAcknowledgedAt).toBeUndefined();
   });
 
   it("syncs notice sidecar when PUT /listing is invoked", async () => {
