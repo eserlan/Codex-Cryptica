@@ -13,10 +13,7 @@ import {
   generateLanguageLocal,
   languageConfig,
 } from "./public-language";
-import {
-  generateScreamsheetLocal,
-  screamsheetConfig,
-} from "./public-screamsheet";
+import { generateNewsSheetLocal, newsSheetConfig } from "./public-news-sheet";
 
 /**
  * Generator id -> default vault category id.
@@ -32,7 +29,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   event: "event",
   ship: "location",
   language: "note",
-  screamsheet: "note",
+  "news-sheet": "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -301,7 +298,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   "magic-item": `{"title":"The Ledger of Brine","summary":"A waterlogged tome that records debts no one remembers owing.","lore":"## History\\nKept by a drowned customs house, its pages re-ink themselves each tide.\\n## Power\\nName a debtor and the book reveals what they truly owe — and to whom.\\n## Cost\\nEach reading adds the reader's own name to a growing column at the back.","labels":["Cursed Tome","Uncommon"],"connections":[{"targetTitle":"Greywick Landing","relationship":"located in"}]}`,
   event: `{"title":"The Long Low Tide","summary":"The season the sea withdrew a mile and would not return.","lore":"## Summary\\nFor forty days the bay emptied, stranding ships and exposing what the water had hidden.\\n## Causes\\nNo one agrees — a broken pact, a sleeping leviathan, a curse called in.\\n## Consequences\\nSalvage made paupers rich and drowned the old harbour law in disputes.\\n## Hook\\nThe tide is beginning to recede again, and the old salvagers are sharpening their hooks.","labels":["Disaster","Maritime"],"connections":[{"targetTitle":"Greywick Landing","relationship":"struck"}]}`,
   ship: `{"title":"CSV Meridian","summary":"A worn freighter that earns its living asking no questions — and keeping no honest records.","lore":"## Who Controls It\\nIndependent in name; in practice, whoever can pay the docking fees this month.\\n## Complication\\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts.\\n## Secret\\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\\n## Hook\\nThe Meridian is the only vessel in port that will run this route — but the crew wants something in return.","labels":["Freighter","Sci-Fi","Independent"],"connections":[{"targetTitle":"Harbour Authority","relationship":"flagged by"}]}`,
-  screamsheet: `{"title":"The Harbourside Ledger — Issue 214","summary":"A dockside broadsheet whose lead story about a warehouse fire carefully avoids naming the warehouse's owner.","lore":"# The Harbourside Ledger\\n*All the truth the tide brings in — Issue No. 214*\\n\\n## FIRE ON THE SALT ROW: 'AN ACCIDENT', SAYS EVERYONE PAID TO SAY SO\\nThe grain warehouse on Salt Row burned through the night despite standing ten paces from the harbour. The watch calls it a lantern mishap. The night-loaders who fled the district before dawn were unavailable for comment.\\n\\n### Concord Announces Relief Levy\\nThe Salt Concord will fund rebuilding through a temporary levy on dock traffic. The levy has no announced end date.\\n\\n### Notices & Classifieds\\n- LOST: one ledger, water-stained, of sentimental value only. Generous reward. No questions.\\n- WANTED: strong backs for night work, discretion assumed.\\n\\n### Word on the Street\\n- The warehouse was empty when it burned — emptied two nights earlier, say the rats.\\n\\n## GM Notes\\n**The truth**: the fire concealed the theft of the grain reserve; the 'lost ledger' classified was placed by the clerk who falsified the inventory.\\n**Hooks**: the clerk will pay the party to recover the ledger before the Concord's auditors do; a night-loader who saw the carts is hiding in the Drowned Market.","labels":["broadsheet","harbour","handout"],"connections":[{"targetTitle":"The Salt Concord","relationship":"covers for"},{"targetTitle":"Greywick Landing","relationship":"published in"}]}`,
+  "news-sheet": `{"title":"The Harbourside Ledger — Issue 214","summary":"A dockside broadsheet whose lead story about a warehouse fire carefully avoids naming the warehouse's owner.","lore":"# The Harbourside Ledger\\n*All the truth the tide brings in — Issue No. 214*\\n\\n## FIRE ON THE SALT ROW: 'AN ACCIDENT', SAYS EVERYONE PAID TO SAY SO\\nThe grain warehouse on Salt Row burned through the night despite standing ten paces from the harbour. The watch calls it a lantern mishap. The night-loaders who fled the district before dawn were unavailable for comment.\\n\\n### Concord Announces Relief Levy\\nThe Salt Concord will fund rebuilding through a temporary levy on dock traffic. The levy has no announced end date.\\n\\n### Notices & Classifieds\\n- LOST: one ledger, water-stained, of sentimental value only. Generous reward. No questions.\\n- WANTED: strong backs for night work, discretion assumed.\\n\\n### Word on the Street\\n- The warehouse was empty when it burned — emptied two nights earlier, say the rats.\\n\\n## GM Notes\\n**The truth**: the fire concealed the theft of the grain reserve; the 'lost ledger' classified was placed by the clerk who falsified the inventory.\\n**Hooks**: the clerk will pay the party to recover the ledger before the Concord's auditors do; a night-loader who saw the carts is hiding in the Drowned Market.","labels":["broadsheet","harbour","handout"],"connections":[{"targetTitle":"The Salt Concord","relationship":"covers for"},{"targetTitle":"Greywick Landing","relationship":"published in"}]}`,
   language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","content":"## Pronunciation & Phonology\\nLow-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n\\n## Cultural Role & Usage\\nSpoken in the deep galleries where torchlight is rationed; surface-folk who use it mark themselves as tunnel-kin.\\n\\n## Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n\\n## Common Vocabulary & Word Bank\\n| Word | Pronunciation | English Meaning |\\n| --- | --- | --- |\\n| Vur | VOOR | Iron |\\n| Lith | LITH | Stone |\\n\\n## Sample Phrases\\n- *\\"Vur-Lith-Garon\\"* — (VOOR-lith-GAH-ron) — \\"Solid as iron\\"","lore":"### At a Glance\\n- **Genre / Setting**: Classic Fantasy\\n- **Tone**: Harsh & Consonant-heavy\\n- **Role**: Common Speech\\n- **Name Structure**: Compound Words\\n\\n### Example Names\\n- **Garon-Vur** — Iron Seeker (person)\\n- **Kael-Lith** — Stone Speaker (person)\\n\\n### At the Table\\n- Greet with a short falling whistle before speaking; skipping it reads as a threat.","labels":["dialect","underdark","conlang"],"connections":[]}`,
 };
 
@@ -375,12 +372,12 @@ ${exemplarBlock("ship")}${groundingNote(request)}
 ${loreGuidance(request, "the ship's role and condition, its owner and current mission, its dominant complication, its secret, its key zones, and at least two adventure hooks")}`;
 }
 
-function screamsheetPrompt(request: GeneratorRunRequest): string {
+function newsSheetPrompt(request: GeneratorRunRequest): string {
   return `${contextChain(request)}
 
-Generate an in-world news sheet ("screamsheet") — a printable player handout of in-world headlines, short articles, rumours, classifieds, notices, and adverts, written in an in-world editorial voice and grounded in the world context. Return ONLY a JSON object matching this schema:
+Generate an in-world news sheet — a printable player handout of in-world headlines, short articles, rumours, classifieds, notices, and adverts, written in an in-world editorial voice and grounded in the world context. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("screamsheet")}${groundingNote(request)}
+${exemplarBlock("news-sheet")}${groundingNote(request)}
 The "title" is the publication name plus issue number or in-world date. Everything before the GM Notes section must be player-safe: report events the way the publication's owner and censor would allow, not the way they actually happened.
 ${loreGuidance(request, "a masthead line with publication name, tagline, and issue metadata; a lead headline story (3-5 sentences); 2-4 short secondary articles; a 'Notices & Classifieds' bullet list; a 'Word on the Street' rumour list; one advert or piece of propaganda; and a final '## GM Notes' section with the truth behind the stories and 1-4 adventure hooks")}`;
 }
@@ -577,8 +574,8 @@ function generateShip(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
-function generateScreamsheet(request: GeneratorRunRequest): GeneratorOutput {
-  const result = generateScreamsheetLocal({
+function generateNewsSheet(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateNewsSheetLocal({
     genre: optionString(request, "genre", "Fantasy"),
     tone: optionString(request, "tone", ""),
     bias: optionString(request, "bias", ""),
@@ -824,12 +821,12 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     }),
     buildPrompt: languagePrompt,
   },
-  screamsheet: {
-    id: "screamsheet",
-    label: "Screamsheet",
+  "news-sheet": {
+    id: "news-sheet",
+    label: "News Sheet",
     description:
-      "Generate an in-world news sheet — headlines, rumours, adverts, and hooks as a player handout.",
-    entityType: GENERATOR_ENTITY_TYPE.screamsheet,
+      "Generate an in-world news sheet (a cyberpunk-style screamsheet, fantasy broadsheet, or station newsfeed) — headlines, rumours, adverts, and hooks as a player handout.",
+    entityType: GENERATOR_ENTITY_TYPE["news-sheet"],
     defaultInstruction:
       "An in-world news sheet whose stories, rumours, and classifieds report recent events in the world's own voice — shaped by who owns the press — with a GM-only section holding the truth and the hooks.",
     icon: "lucide:newspaper",
@@ -838,25 +835,25 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         id: "genre",
         label: "Genre",
         control: "select",
-        choices: screamsheetConfig.genres.map((g) => ({ value: g, label: g })),
+        choices: newsSheetConfig.genres.map((g) => ({ value: g, label: g })),
       },
       {
         id: "tone",
         label: "Editorial Tone",
         control: "select",
-        choices: screamsheetConfig.tones.map((t) => ({ value: t, label: t })),
+        choices: newsSheetConfig.tones.map((t) => ({ value: t, label: t })),
       },
       {
         id: "bias",
         label: "Ownership / Bias",
         control: "select",
-        choices: screamsheetConfig.biases.map((b) => ({ value: b, label: b })),
+        choices: newsSheetConfig.biases.map((b) => ({ value: b, label: b })),
       },
       {
         id: "hookDensity",
         label: "Hook Density",
         control: "select",
-        choices: screamsheetConfig.hookDensities.map((h) => ({
+        choices: newsSheetConfig.hookDensities.map((h) => ({
           value: h,
           label: h,
         })),
@@ -882,15 +879,15 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       placeName: "",
       headlineEvent: "",
     },
-    generate: generateScreamsheet,
+    generate: generateNewsSheet,
     // The local generator splits the issue into a player-safe handout
     // (`content`) and GM notes (`lore`); the vault entity body needs both, so
     // merge them — mirroring the language generator above.
     mapOutputToDraft: (output, request) => ({
-      ...mapOutputToDraft("screamsheet")(output, request),
+      ...mapOutputToDraft("news-sheet")(output, request),
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
     }),
-    buildPrompt: screamsheetPrompt,
+    buildPrompt: newsSheetPrompt,
   },
 };
 

@@ -40,7 +40,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "god-generator" },
         { slug: "ship-generator" },
         { slug: "language-generator" },
-        { slug: "screamsheet-generator" },
+        { slug: "news-sheet-generator" },
       ]);
     });
   });

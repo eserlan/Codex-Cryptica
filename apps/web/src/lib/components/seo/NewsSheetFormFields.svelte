@@ -1,19 +1,19 @@
 <script lang="ts">
   import {
-    screamsheetConfig,
+    newsSheetConfig,
     pickFrom,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
-    genre = $bindable(screamsheetConfig.genres[0]),
+    genre = $bindable(newsSheetConfig.genres[0]),
     publicationType = $bindable(
-      screamsheetConfig.publicationTypesByGenre[screamsheetConfig.genres[0]][0],
+      newsSheetConfig.publicationTypesByGenre[newsSheetConfig.genres[0]][0],
     ),
-    tone = $bindable(screamsheetConfig.tones[1]),
-    bias = $bindable(screamsheetConfig.biases[0]),
-    censorLevel = $bindable(screamsheetConfig.censorLevels[0]),
-    hookDensity = $bindable(screamsheetConfig.hookDensities[1]),
+    tone = $bindable(newsSheetConfig.tones[1]),
+    bias = $bindable(newsSheetConfig.biases[0]),
+    censorLevel = $bindable(newsSheetConfig.censorLevels[0]),
+    hookDensity = $bindable(newsSheetConfig.hookDensities[1]),
     placeName = $bindable(""),
     headlineEvent = $bindable(""),
     campaignContext = $bindable(""),
@@ -39,11 +39,11 @@
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
 
   let publicationTypes = $derived(
-    screamsheetConfig.publicationTypesByGenre[genre] ??
-      screamsheetConfig.publicationTypesByGenre["Fantasy"],
+    newsSheetConfig.publicationTypesByGenre[genre] ??
+      newsSheetConfig.publicationTypesByGenre["Fantasy"],
   );
   const builtInPublicationTypes = Object.values(
-    screamsheetConfig.publicationTypesByGenre,
+    newsSheetConfig.publicationTypesByGenre,
   ).flat();
 
   $effect(() => {
@@ -57,10 +57,10 @@
 </script>
 
 <SelectWithCustomOption
-  id="screamsheet-genre-select"
+  id="news-sheet-genre-select"
   label="Genre / Setting"
   bind:value={genre}
-  choices={screamsheetConfig.genres.map((g: string) => ({
+  choices={newsSheetConfig.genres.map((g: string) => ({
     value: g,
     label: g,
   }))}
@@ -71,7 +71,7 @@
 />
 
 <SelectWithCustomOption
-  id="screamsheet-publication-select"
+  id="news-sheet-publication-select"
   label="Publication type"
   bind:value={publicationType}
   choices={publicationTypes.map((t: string) => ({ value: t, label: t }))}
@@ -82,10 +82,10 @@
 />
 
 <SelectWithCustomOption
-  id="screamsheet-tone-select"
+  id="news-sheet-tone-select"
   label="Editorial tone"
   bind:value={tone}
-  choices={screamsheetConfig.tones.map((t: string) => ({
+  choices={newsSheetConfig.tones.map((t: string) => ({
     value: t,
     label: t,
   }))}
@@ -96,10 +96,10 @@
 />
 
 <SelectWithCustomOption
-  id="screamsheet-bias-select"
+  id="news-sheet-bias-select"
   label="Ownership / bias"
   bind:value={bias}
-  choices={screamsheetConfig.biases.map((b: string) => ({
+  choices={newsSheetConfig.biases.map((b: string) => ({
     value: b,
     label: b,
   }))}
@@ -110,10 +110,10 @@
 />
 
 <SelectWithCustomOption
-  id="screamsheet-censor-select"
+  id="news-sheet-censor-select"
   label="Censor level"
   bind:value={censorLevel}
-  choices={screamsheetConfig.censorLevels.map((c: string) => ({
+  choices={newsSheetConfig.censorLevels.map((c: string) => ({
     value: c,
     label: c,
   }))}
@@ -124,10 +124,10 @@
 />
 
 <SelectWithCustomOption
-  id="screamsheet-hooks-select"
+  id="news-sheet-hooks-select"
   label="Hook density"
   bind:value={hookDensity}
-  choices={screamsheetConfig.hookDensities.map((h: string) => ({
+  choices={newsSheetConfig.hookDensities.map((h: string) => ({
     value: h,
     label: h,
   }))}
@@ -138,11 +138,11 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="screamsheet-place" class={labelClass}
+  <label for="news-sheet-place" class={labelClass}
     >Settlement, region, or publication name (optional)</label
   >
   <input
-    id="screamsheet-place"
+    id="news-sheet-place"
     type="text"
     bind:value={placeName}
     maxlength="80"
@@ -152,11 +152,11 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="screamsheet-headline" class={labelClass}
+  <label for="news-sheet-headline" class={labelClass}
     >Current crisis or headline event (optional)</label
   >
   <input
-    id="screamsheet-headline"
+    id="news-sheet-headline"
     type="text"
     bind:value={headlineEvent}
     maxlength="160"
@@ -166,19 +166,19 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="screamsheet-context" class={labelClass}
+  <label for="news-sheet-context" class={labelClass}
     >Campaign context (optional)</label
   >
   <textarea
-    id="screamsheet-context"
+    id="news-sheet-context"
     bind:value={campaignContext}
     maxlength="240"
     rows="4"
-    aria-describedby="screamsheet-context-help"
+    aria-describedby="news-sheet-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
   <p
-    id="screamsheet-context-help"
+    id="news-sheet-context-help"
     class="text-[10px] text-theme-text/60 leading-relaxed"
   >
     Add factions, recent events, NPCs, or tensions and the sheet will report on
@@ -191,13 +191,13 @@
     type="button"
     onclick={() => {
       const currentPublicationTypes =
-        screamsheetConfig.publicationTypesByGenre[genre] ??
-        screamsheetConfig.publicationTypesByGenre["Fantasy"];
+        newsSheetConfig.publicationTypesByGenre[genre] ??
+        newsSheetConfig.publicationTypesByGenre["Fantasy"];
       publicationType = pickFrom(currentPublicationTypes);
-      tone = pickFrom(screamsheetConfig.tones);
-      bias = pickFrom(screamsheetConfig.biases);
-      censorLevel = pickFrom(screamsheetConfig.censorLevels);
-      hookDensity = pickFrom(screamsheetConfig.hookDensities);
+      tone = pickFrom(newsSheetConfig.tones);
+      bias = pickFrom(newsSheetConfig.biases);
+      censorLevel = pickFrom(newsSheetConfig.censorLevels);
+      hookDensity = pickFrom(newsSheetConfig.hookDensities);
       if (onSurprise) {
         onSurprise();
       }

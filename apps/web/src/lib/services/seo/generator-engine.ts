@@ -46,9 +46,9 @@ import {
   buildLanguagePrompt,
   parseLanguageResponse,
   generateLanguageLocal,
-  buildScreamsheetPrompt,
-  parseScreamsheetResponse,
-  generateScreamsheetLocal,
+  buildNewsSheetPrompt,
+  parseNewsSheetResponse,
+  generateNewsSheetLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -64,7 +64,7 @@ import {
   type NamesGeneratorOptions,
   type ShipGeneratorOptions,
   type LanguageGeneratorOptions,
-  type ScreamsheetGeneratorOptions,
+  type NewsSheetGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -99,7 +99,7 @@ export { pantheonConfig } from "generator-engine";
 export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
 export { languageConfig } from "generator-engine";
-export { screamsheetConfig } from "generator-engine";
+export { newsSheetConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -463,22 +463,22 @@ export class DefaultGeneratorEngine {
     );
   }
 
-  /** Screamsheet generation delegates to the generator-engine package (#1639). */
-  async generateScreamsheet(
-    options: ScreamsheetGeneratorOptions & { useAI?: boolean } = {},
+  /** News Sheet generation delegates to the generator-engine package (#1639). */
+  async generateNewsSheet(
+    options: NewsSheetGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...sheetOptions } = options;
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildScreamsheetPrompt(
+        const { systemInstruction, userMessage } = buildNewsSheetPrompt(
           sheetOptions,
           getSessionContext(),
         );
         const text = await this.runModel(systemInstruction, userMessage);
-        return parseScreamsheetResponse(text);
+        return parseNewsSheetResponse(text);
       },
-      () => generateScreamsheetLocal(sheetOptions),
+      () => generateNewsSheetLocal(sheetOptions),
     );
   }
 }

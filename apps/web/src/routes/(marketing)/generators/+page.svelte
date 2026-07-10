@@ -136,10 +136,10 @@
           icon: "icon-[lucide--globe]",
         },
         {
-          href: "/generators/screamsheet-generator",
-          label: "Screamsheet Generator",
+          href: "/generators/news-sheet-generator",
+          label: "News Sheet Generator",
           summary:
-            "Generate an in-world news sheet for any genre — headlines, rumours, classifieds, propaganda, and GM-only hooks.",
+            "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, propaganda, and GM-only hooks.",
           icon: "icon-[lucide--newspaper]",
         },
         {

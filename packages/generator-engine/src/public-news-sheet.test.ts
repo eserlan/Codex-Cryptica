@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildScreamsheetPrompt,
-  generateScreamsheetLocal,
-  parseScreamsheetResponse,
-  screamsheetConfig,
-} from "./public-screamsheet";
+  buildNewsSheetPrompt,
+  generateNewsSheetLocal,
+  parseNewsSheetResponse,
+  newsSheetConfig,
+} from "./public-news-sheet";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
 function seededRng(seed = 1): () => number {
@@ -15,19 +15,19 @@ function seededRng(seed = 1): () => number {
   };
 }
 
-describe("screamsheetConfig", () => {
+describe("newsSheetConfig", () => {
   it("provides publication types for every genre", () => {
-    for (const genre of screamsheetConfig.genres) {
+    for (const genre of newsSheetConfig.genres) {
       expect(
-        screamsheetConfig.publicationTypesByGenre[genre]?.length,
+        newsSheetConfig.publicationTypesByGenre[genre]?.length,
       ).toBeGreaterThan(0);
     }
   });
 });
 
-describe("generateScreamsheetLocal", () => {
+describe("generateNewsSheetLocal", () => {
   it("returns the note handout structure with player and GM halves", () => {
-    const out = generateScreamsheetLocal({}, seededRng(5));
+    const out = generateNewsSheetLocal({}, seededRng(5));
     expect(out.type).toBe("note");
     expect(out.content).toContain("### Notices & Classifieds");
     expect(out.content).toContain("### Word on the Street");
@@ -35,18 +35,18 @@ describe("generateScreamsheetLocal", () => {
     expect(out.lore).toContain("### Editorial Slant");
     expect(out.lore).toContain("### Adventure Hooks");
     expect(out.lore).toContain("### Entity Seeds");
-    expect(out.labels).toContain("screamsheet-generator");
+    expect(out.labels).toContain("news-sheet-generator");
     expect(out.labels).toContain("rpg-handout");
   });
 
   it("keeps GM-only material out of the player handout", () => {
-    const out = generateScreamsheetLocal({}, seededRng(11));
+    const out = generateNewsSheetLocal({}, seededRng(11));
     expect(out.content).not.toContain("Adventure Hooks");
     expect(out.content).not.toContain("The Truth Behind the Stories");
   });
 
   it("honours explicit options, place name, and headline event", () => {
-    const out = generateScreamsheetLocal(
+    const out = generateNewsSheetLocal(
       {
         genre: "Cyberpunk",
         publicationType: "Street screamsheet",
@@ -71,11 +71,11 @@ describe("generateScreamsheetLocal", () => {
   });
 
   it("scales hook count with hook density", () => {
-    const light = generateScreamsheetLocal(
+    const light = generateNewsSheetLocal(
       { hookDensity: "Light (1 hook)" },
       seededRng(3),
     );
-    const dense = generateScreamsheetLocal(
+    const dense = generateNewsSheetLocal(
       { hookDensity: "Dense (4+ hooks)" },
       seededRng(3),
     );
@@ -90,15 +90,15 @@ describe("generateScreamsheetLocal", () => {
   });
 
   it("is deterministic for a fixed seed", () => {
-    expect(generateScreamsheetLocal({}, seededRng(9))).toEqual(
-      generateScreamsheetLocal({}, seededRng(9)),
+    expect(generateNewsSheetLocal({}, seededRng(9))).toEqual(
+      generateNewsSheetLocal({}, seededRng(9)),
     );
   });
 });
 
-describe("buildScreamsheetPrompt", () => {
+describe("buildNewsSheetPrompt", () => {
   it("includes resolved options, name ban, and session context", () => {
-    const { systemInstruction, userMessage, resolved } = buildScreamsheetPrompt(
+    const { systemInstruction, userMessage, resolved } = buildNewsSheetPrompt(
       {
         genre: "Western",
         tone: "Sober & factual",
@@ -114,22 +114,22 @@ describe("buildScreamsheetPrompt", () => {
     expect(userMessage).toContain("Editorial Tone: Sober & factual");
     expect(userMessage).toContain("the railroad survey crew never came back");
     expect(resolved.genre).toBe("Western");
-    expect(screamsheetConfig.publicationTypesByGenre["Western"]).toContain(
+    expect(newsSheetConfig.publicationTypesByGenre["Western"]).toContain(
       resolved.publicationType,
     );
   });
 
   it("omits optional lines when not provided", () => {
-    const { userMessage } = buildScreamsheetPrompt({}, "", seededRng(6));
+    const { userMessage } = buildNewsSheetPrompt({}, "", seededRng(6));
     expect(userMessage).not.toContain("Campaign Context:");
     expect(userMessage).not.toContain("Current Crisis");
     expect(userMessage).not.toContain("Settlement / Region");
   });
 });
 
-describe("parseScreamsheetResponse", () => {
+describe("parseNewsSheetResponse", () => {
   it("parses a fenced JSON response", () => {
-    const out = parseScreamsheetResponse(
+    const out = parseNewsSheetResponse(
       '```json\n{"title":"The Gutter Signal","summary":"s","content":"# c","lore":"### Editorial Slant","labels":["cyberpunk","rpg-handout"]}\n```',
     );
     expect(out.type).toBe("note");
@@ -140,8 +140,8 @@ describe("parseScreamsheetResponse", () => {
   });
 
   it("falls back to default title and labels", () => {
-    const out = parseScreamsheetResponse('{"summary":"s"}');
+    const out = parseNewsSheetResponse('{"summary":"s"}');
     expect(out.title).toBe("The Unnamed Bulletin");
-    expect(out.labels).toContain("screamsheet-generator");
+    expect(out.labels).toContain("news-sheet-generator");
   });
 });

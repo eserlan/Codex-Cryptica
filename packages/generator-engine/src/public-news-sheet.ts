@@ -1,12 +1,12 @@
 /**
- * Public Screamsheet generator (#1639) — a genre-flexible in-world news/rumour
- * handout generator, inspired by the cyberpunk "screamsheet" format but usable
+ * Public News Sheet generator (#1639) — a genre-flexible in-world news/rumour
+ * handout generator, inspired by the cyberpunk "news-sheet" format but usable
  * across fantasy broadsheets, station newsfeeds, wasteland bulletins, and more.
  *
  * Framework-free per the unification plan (#1351): no AI client, no
  * sessionStorage. The web page builds prompts here, runs them through
- * aiClientManager, parses with parseScreamsheetResponse, and falls back to
- * generateScreamsheetLocal on failure. Session context is injected as a string.
+ * aiClientManager, parses with parseNewsSheetResponse, and falls back to
+ * generateNewsSheetLocal on failure. Session context is injected as a string.
  *
  * Output contract: `content` is the player-safe handout (masthead, lead story,
  * shorter articles, rumours, notices, adverts). `lore` is the GM version —
@@ -25,7 +25,7 @@ import {
 } from "./random-utils";
 import { parseFencedJson, asString } from "./llm-response-utils";
 
-export const screamsheetConfig = {
+export const newsSheetConfig = {
   genres: [
     "Fantasy",
     "Dark Fantasy",
@@ -158,7 +158,7 @@ export const screamsheetConfig = {
   hookDensities: ["Light (1 hook)", "Standard (2-3 hooks)", "Dense (4+ hooks)"],
 };
 
-export interface ScreamsheetGeneratorOptions {
+export interface NewsSheetGeneratorOptions {
   genre?: string;
   publicationType?: string;
   tone?: string;
@@ -172,7 +172,7 @@ export interface ScreamsheetGeneratorOptions {
   campaignContext?: string;
 }
 
-export interface ResolvedScreamsheet {
+export interface ResolvedNewsSheet {
   genre: string;
   publicationType: string;
   tone: string;
@@ -185,27 +185,27 @@ export interface ResolvedScreamsheet {
   varianceSeed: number;
 }
 
-export interface ScreamsheetPrompt {
+export interface NewsSheetPrompt {
   systemInstruction: string;
   userMessage: string;
-  resolved: ResolvedScreamsheet;
+  resolved: ResolvedNewsSheet;
 }
 
-function resolveScreamsheet(
-  options: ScreamsheetGeneratorOptions,
+function resolveNewsSheet(
+  options: NewsSheetGeneratorOptions,
   rng: Rng,
-): ResolvedScreamsheet {
-  const genre = options.genre || pickFrom(screamsheetConfig.genres, rng);
+): ResolvedNewsSheet {
+  const genre = options.genre || pickFrom(newsSheetConfig.genres, rng);
   const publicationTypes =
-    screamsheetConfig.publicationTypesByGenre[genre] ??
-    screamsheetConfig.publicationTypesByGenre["Fantasy"];
+    newsSheetConfig.publicationTypesByGenre[genre] ??
+    newsSheetConfig.publicationTypesByGenre["Fantasy"];
   return {
     genre,
     publicationType: options.publicationType || pickFrom(publicationTypes, rng),
-    tone: options.tone || screamsheetConfig.tones[1],
-    bias: options.bias || screamsheetConfig.biases[0],
-    censorLevel: options.censorLevel || screamsheetConfig.censorLevels[0],
-    hookDensity: options.hookDensity || screamsheetConfig.hookDensities[1],
+    tone: options.tone || newsSheetConfig.tones[1],
+    bias: options.bias || newsSheetConfig.biases[0],
+    censorLevel: options.censorLevel || newsSheetConfig.censorLevels[0],
+    hookDensity: options.hookDensity || newsSheetConfig.hookDensities[1],
     placeName: options.placeName?.trim() || undefined,
     headlineEvent: options.headlineEvent?.trim() || undefined,
     campaignContext: options.campaignContext?.trim() || undefined,
@@ -213,13 +213,13 @@ function resolveScreamsheet(
   };
 }
 
-export function buildScreamsheetPrompt(
-  options: ScreamsheetGeneratorOptions = {},
+export function buildNewsSheetPrompt(
+  options: NewsSheetGeneratorOptions = {},
   sessionContext = "",
   rng: Rng = defaultRng,
-): ScreamsheetPrompt {
-  const resolved = resolveScreamsheet(options, rng);
-  const systemInstruction = `You are an expert RPG campaign writer and in-world journalist. You generate immediately usable in-world news sheets ("screamsheets") for tabletop GMs in JSON format. You write in the register of the specified genre and editorial tone — a corporate cyberpunk newsfeed sounds nothing like a fantasy town crier's broadsheet, and a propaganda organ sounds nothing like a pirate press zine.
+): NewsSheetPrompt {
+  const resolved = resolveNewsSheet(options, rng);
+  const systemInstruction = `You are an expert RPG campaign writer and in-world journalist. You generate immediately usable in-world news sheets (known as "screamsheets" in cyberpunk settings only) for tabletop GMs in JSON format. You write in the register of the specified genre and editorial tone — a corporate cyberpunk newsfeed sounds nothing like a fantasy town crier's broadsheet, and a propaganda organ sounds nothing like a pirate press zine.
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
@@ -227,7 +227,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
   "summary": "One sentence: what this publication is, who runs it, and the issue's biggest story.",
   "content": "Markdown. This is the PLAYER-SAFE handout — never reveal GM secrets, the truth behind stories, or adventure-hook framing here. Use exactly this structure:\\n# <publication name>\\n*<tagline> — <issue number or in-world date>*\\n\\n## <LEAD HEADLINE IN THE PUBLICATION'S VOICE>\\nLead story: 3-5 sentences in the publication's voice, shaped by its bias and censor level.\\n\\n### <Second headline>\\n2-3 sentences.\\n\\n### <Third headline>\\n2-3 sentences.\\n\\n(2-4 secondary stories total)\\n\\n### Notices & Classifieds\\n- 3-5 short in-world classified ads, public notices, or personal messages\\n\\n### Word on the Street\\n- 2-4 rumours reported as hearsay\\n\\n### A Message from Our Sponsors\\nOne short in-world advert or piece of propaganda, in the sponsor's voice.",
   "lore": "Markdown. This is the GM VERSION. Use EXACTLY this structure:\\n### Editorial Slant\\n- **Publication**: name and type\\n- **Ownership / Bias**: who really controls it and what they spin\\n- **Censorship**: what was cut, softened, or invented this issue\\n### The Truth Behind the Stories\\n- **<headline>**: what actually happened, one entry per story that hides something\\n### Adventure Hooks\\n- hook (match the requested hook density; each hook ties to a story, rumour, or classified above and names who is involved and what the party can do)\\n### Entity Seeds\\n- 3-4 Codex entity suggestions arising from this issue (e.g. '**Character**: the missing dockhand')",
-  "labels": ["2-4 lowercase genre-appropriate tags, plus 'rpg-handout', 'screamsheet-generator', 'imported-draft'"]
+  "labels": ["2-4 lowercase genre-appropriate tags, plus 'rpg-handout', 'news-sheet-generator', 'imported-draft'"]
 }
 
 QUALITY RULES:
@@ -250,7 +250,7 @@ ${sessionContext}`;
   return { systemInstruction, userMessage, resolved };
 }
 
-export function parseScreamsheetResponse(text: string): PublicGeneratorOutput {
+export function parseNewsSheetResponse(text: string): PublicGeneratorOutput {
   const data = parseFencedJson<Record<string, unknown>>(text);
   return {
     type: "note",
@@ -262,7 +262,7 @@ export function parseScreamsheetResponse(text: string): PublicGeneratorOutput {
       ? data.labels.filter(
           (label): label is string => typeof label === "string",
         )
-      : ["rpg-handout", "screamsheet-generator", "imported-draft"],
+      : ["rpg-handout", "news-sheet-generator", "imported-draft"],
     status: "active",
   };
 }
@@ -405,11 +405,11 @@ function hookCount(hookDensity: string): number {
   return 2;
 }
 
-export function generateScreamsheetLocal(
-  options: ScreamsheetGeneratorOptions = {},
+export function generateNewsSheetLocal(
+  options: NewsSheetGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const resolved = resolveScreamsheet(options, rng);
+  const resolved = resolveNewsSheet(options, rng);
   const publicationName =
     resolved.placeName ||
     `The ${pickFrom(PUBLICATION_ADJECTIVES, rng)} ${pickFrom(publicationNouns(resolved.genre), rng)}`;
@@ -476,7 +476,7 @@ ${hooks.map((h) => `- ${h}`).join("\n")}
     summary,
     content,
     lore,
-    labels: ["rpg-handout", "screamsheet-generator", "imported-draft"],
+    labels: ["rpg-handout", "news-sheet-generator", "imported-draft"],
     status: "active",
   };
 }

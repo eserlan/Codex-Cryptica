@@ -482,9 +482,9 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Design custom language profiles (conlangs) detailing pronunciation guidelines, naming structures, example names, and glossary dictionaries. Other generators like NPC and Settlement will automatically respect these profiles to keep naming styles culturally and linguistically consistent.",
     icon: "icon-[lucide--languages]",
   },
-  "screamsheet-generator": {
-    id: "screamsheet-generator",
-    title: "Screamsheets (In-World News)",
+  "news-sheet-generator": {
+    id: "news-sheet-generator",
+    title: "News Sheets (In-World News)",
     content:
       "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
     icon: "icon-[lucide--newspaper]",

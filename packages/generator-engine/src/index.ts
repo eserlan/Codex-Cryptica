@@ -145,13 +145,13 @@ export {
   type LanguagePrompt,
 } from "./public-language";
 export {
-  buildScreamsheetPrompt,
-  parseScreamsheetResponse,
-  generateScreamsheetLocal,
-  screamsheetConfig,
-  type ScreamsheetGeneratorOptions,
-  type ScreamsheetPrompt,
-} from "./public-screamsheet";
+  buildNewsSheetPrompt,
+  parseNewsSheetResponse,
+  generateNewsSheetLocal,
+  newsSheetConfig,
+  type NewsSheetGeneratorOptions,
+  type NewsSheetPrompt,
+} from "./public-news-sheet";
 export {
   CampaignGeneratorService,
   campaignGeneratorService,

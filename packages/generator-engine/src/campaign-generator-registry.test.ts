@@ -44,7 +44,7 @@ describe("registry lookup", () => {
       "event",
       "ship",
       "language",
-      "screamsheet",
+      "news-sheet",
     ]);
   });
 
@@ -457,7 +457,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       event: "event",
       ship: "location",
       language: "note",
-      screamsheet: "note",
+      "news-sheet": "note",
     });
   });
 

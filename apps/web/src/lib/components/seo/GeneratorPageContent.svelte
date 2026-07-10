@@ -19,7 +19,7 @@
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
   import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
   import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
-  import ScreamsheetFormFields from "$lib/components/seo/ScreamsheetFormFields.svelte";
+  import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -37,7 +37,7 @@
     pantheonConfig,
     shipConfig,
     languageConfig,
-    screamsheetConfig,
+    newsSheetConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -246,20 +246,20 @@
     campaignContext: "",
   });
 
-  const _screamsheetInitialGenre =
-    initialHubGenre && screamsheetConfig.genres.includes(initialHubGenre)
+  const _newsSheetInitialGenre =
+    initialHubGenre && newsSheetConfig.genres.includes(initialHubGenre)
       ? initialHubGenre
-      : screamsheetConfig.genres[0];
+      : newsSheetConfig.genres[0];
 
-  let screamsheet = $state({
-    genre: _screamsheetInitialGenre,
-    publicationType: (screamsheetConfig.publicationTypesByGenre[
-      _screamsheetInitialGenre
-    ] ?? screamsheetConfig.publicationTypesByGenre["Fantasy"])[0],
-    tone: screamsheetConfig.tones[1],
-    bias: screamsheetConfig.biases[0],
-    censorLevel: screamsheetConfig.censorLevels[0],
-    hookDensity: screamsheetConfig.hookDensities[1],
+  let newsSheet = $state({
+    genre: _newsSheetInitialGenre,
+    publicationType: (newsSheetConfig.publicationTypesByGenre[
+      _newsSheetInitialGenre
+    ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0],
+    tone: newsSheetConfig.tones[1],
+    bias: newsSheetConfig.biases[0],
+    censorLevel: newsSheetConfig.censorLevels[0],
+    hookDensity: newsSheetConfig.hookDensities[1],
     placeName: "",
     headlineEvent: "",
     campaignContext: "",
@@ -302,9 +302,9 @@
     // Language genre is a fixed select using the theme labels directly
     // (Classic Fantasy, …), so it maps straight to activeTheme.
     else if (slug === "language-generator") activeTheme = language.genre;
-    else if (slug === "screamsheet-generator")
+    else if (slug === "news-sheet-generator")
       activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[screamsheet.genre] ?? "Classic Fantasy";
+        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
   });
 
   onMount(() => {
@@ -380,16 +380,16 @@
       activeTheme = "Sci-Fi / Space Opera";
       return;
     }
-    if (slug === "screamsheet-generator") {
+    if (slug === "news-sheet-generator") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
-      if (hubGenre && screamsheetConfig.genres.includes(hubGenre)) {
-        screamsheet.genre = hubGenre;
-        screamsheet.publicationType = (screamsheetConfig
-          .publicationTypesByGenre[hubGenre] ??
-          screamsheetConfig.publicationTypesByGenre["Fantasy"])[0];
+      if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
+        newsSheet.genre = hubGenre;
+        newsSheet.publicationType = (newsSheetConfig.publicationTypesByGenre[
+          hubGenre
+        ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0];
       }
       activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[screamsheet.genre] ?? "Classic Fantasy";
+        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
       return;
     }
     if (slug === "language-generator") {
@@ -458,8 +458,8 @@
       generatorEngine.generateShip({ ...ship, useAI }),
     "language-generator": (useAI) =>
       generatorEngine.generateLanguage({ ...language, useAI }),
-    "screamsheet-generator": (useAI) =>
-      generatorEngine.generateScreamsheet({ ...screamsheet, useAI }),
+    "news-sheet-generator": (useAI) =>
+      generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -652,17 +652,17 @@
         preserveGenreOnSurprise={Boolean(urlHubTheme)}
         onSurprise={trigger}
       />
-    {:else if slug === "screamsheet-generator"}
-      <ScreamsheetFormFields
-        bind:genre={screamsheet.genre}
-        bind:publicationType={screamsheet.publicationType}
-        bind:tone={screamsheet.tone}
-        bind:bias={screamsheet.bias}
-        bind:censorLevel={screamsheet.censorLevel}
-        bind:hookDensity={screamsheet.hookDensity}
-        bind:placeName={screamsheet.placeName}
-        bind:headlineEvent={screamsheet.headlineEvent}
-        bind:campaignContext={screamsheet.campaignContext}
+    {:else if slug === "news-sheet-generator"}
+      <NewsSheetFormFields
+        bind:genre={newsSheet.genre}
+        bind:publicationType={newsSheet.publicationType}
+        bind:tone={newsSheet.tone}
+        bind:bias={newsSheet.bias}
+        bind:censorLevel={newsSheet.censorLevel}
+        bind:hookDensity={newsSheet.hookDensity}
+        bind:placeName={newsSheet.placeName}
+        bind:headlineEvent={newsSheet.headlineEvent}
+        bind:campaignContext={newsSheet.campaignContext}
         onSurprise={trigger}
       />
     {/if}

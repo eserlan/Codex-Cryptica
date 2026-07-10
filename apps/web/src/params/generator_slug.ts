@@ -20,7 +20,7 @@ const validSlugs = new Set([
   "god-generator",
   "ship-generator",
   "language-generator",
-  "screamsheet-generator",
+  "news-sheet-generator",
   "random",
 ]);
 

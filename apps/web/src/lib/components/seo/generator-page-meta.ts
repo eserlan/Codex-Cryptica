@@ -18,7 +18,7 @@ export type ValidSlug =
   | "god-generator"
   | "ship-generator"
   | "language-generator"
-  | "screamsheet-generator";
+  | "news-sheet-generator";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -367,19 +367,19 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/settlement", label: "Settlement Generator" },
     ],
   },
-  "screamsheet-generator": {
+  "news-sheet-generator": {
     pageTitle:
-      "Screamsheet Generator | In-World RPG News Sheet & Player Handout | Codex Cryptica",
+      "News Sheet Generator | In-World RPG News & Cyberpunk Screamsheets | Codex Cryptica",
     metaDescription:
       "Generate an in-world news sheet for any RPG genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds, wasteland bulletins. Headlines, rumours, classifieds, adverts, and GM-only adventure hooks. No login required.",
-    introTitle: "Screamsheet Generator",
-    eyebrow: "Screamsheet Generator",
+    introTitle: "News Sheet Generator",
+    eyebrow: "News Sheet Generator",
     introText:
-      "Create an in-world news sheet as a printable player handout — a lead headline, short articles, street rumours, classifieds, and propaganda, shaped by who owns the press. The GM version holds the truth behind the stories and the adventure hooks.",
-    canonicalPath: "/generators/screamsheet-generator",
+      "Create an in-world news sheet as a printable player handout — a lead headline, short articles, street rumours, classifieds, and propaganda, shaped by who owns the press. Cyberpunk players know it as a screamsheet; it works just as well as a fantasy broadsheet or a station newsfeed. The GM version holds the truth behind the stories and the adventure hooks.",
+    canonicalPath: "/generators/news-sheet-generator",
     faqs: [
       {
-        question: "What does the screamsheet generator create?",
+        question: "What does the news sheet generator create?",
         answer:
           "It generates a complete in-world publication issue — masthead and tagline, a lead headline story, 2-4 secondary articles, rumours, classified ads, public notices, and an advert or piece of propaganda — plus a GM-only section with the truth behind the stories and adventure hooks.",
       },
