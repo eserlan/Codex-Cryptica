@@ -861,8 +861,27 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           label: h,
         })),
       },
+      {
+        id: "placeName",
+        label: "Settlement or Publication Name",
+        description: "Anchor the sheet to a place or name the publication.",
+        control: "text",
+      },
+      {
+        id: "headlineEvent",
+        label: "Headline Event",
+        description: "A current crisis or event the lead story should cover.",
+        control: "text",
+      },
     ],
-    defaults: { genre: "", tone: "", bias: "", hookDensity: "" },
+    defaults: {
+      genre: "",
+      tone: "",
+      bias: "",
+      hookDensity: "",
+      placeName: "",
+      headlineEvent: "",
+    },
     generate: generateScreamsheet,
     // The local generator splits the issue into a player-safe handout
     // (`content`) and GM notes (`lore`); the vault entity body needs both, so

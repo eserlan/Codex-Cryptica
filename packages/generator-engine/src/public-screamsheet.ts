@@ -295,6 +295,23 @@ const PUBLICATION_NOUNS_BY_GENRE: Record<string, string[]> = {
   Western: ["Clarion", "Telegraph", "Sentinel", "Star", "Dust"],
   Steampunk: ["Gazette", "Cog", "Whistle", "Manifold", "Pressure"],
   Fantasy: ["Herald", "Crier", "Quill", "Bellman", "Proclamation"],
+  "Dark Fantasy": ["Knell", "Shroud", "Lament", "Reliquary", "Omen"],
+  Pirate: ["Broadside", "Tide", "Gull", "Anchor", "Lantern"],
+  Lancer: ["Manifest", "Relay", "Printout", "Frequency", "Circuit"],
+  "Space Opera Resistance": [
+    "Transmission",
+    "Signal",
+    "Frequency",
+    "Dispatch",
+    "Cell",
+  ],
+  "Optimistic Exploration Sci-Fi": [
+    "Horizon",
+    "Survey",
+    "Beacon",
+    "Chronicle",
+    "Starlog",
+  ],
 };
 
 function publicationNouns(genre: string): string[] {
