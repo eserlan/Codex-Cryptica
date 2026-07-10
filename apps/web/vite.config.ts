@@ -108,6 +108,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     pool: "forks",
+    silent: true,
     setupFiles: ["tests/setup.ts"],
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],
