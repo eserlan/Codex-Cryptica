@@ -4,6 +4,7 @@ import {
   DEFAULT_CUSTOM_IMAGE_MODEL,
   DEFAULT_CUSTOM_IMAGE_BASE_URL,
 } from "./image-defaults";
+import { systemClock, type Clock } from "./runtime";
 
 /**
  * Minimal interface for app settings persistence.
@@ -65,13 +66,15 @@ export class OracleSettingsService {
 
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
+  private clock: Clock;
 
   /**
    * Creates a new OracleSettingsService instance.
    *
    * @param db - Optional EntityDb instance for persistence (can be provided later via init)
    */
-  constructor(db?: AppSettingsStore) {
+  constructor(db?: AppSettingsStore, clock: Clock = systemClock) {
+    this.clock = clock;
     if (db) {
       this.db = db;
     }
@@ -166,7 +169,7 @@ export class OracleSettingsService {
       await this.db.appSettings.put({
         key: "ai_tier",
         value: tier,
-        updatedAt: Date.now(),
+        updatedAt: this.clock.now(),
       });
     }
     this.tier = tier;
@@ -190,43 +193,43 @@ export class OracleSettingsService {
         await this.db.appSettings.put({
           key: "image_provider",
           value: settings.provider,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
       if (settings.baseUrl !== undefined)
         await this.db.appSettings.put({
           key: "custom_image_base_url",
           value: settings.baseUrl,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
       if (settings.apiKey !== undefined)
         await this.db.appSettings.put({
           key: "custom_image_api_key",
           value: settings.apiKey,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
       if (settings.model !== undefined)
         await this.db.appSettings.put({
           key: "custom_image_model",
           value: settings.model,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
       if (settings.cloudflareAccountId !== undefined)
         await this.db.appSettings.put({
           key: "cloudflare_account_id",
           value: settings.cloudflareAccountId,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
       if (settings.cloudflareApiToken !== undefined)
         await this.db.appSettings.put({
           key: "cloudflare_api_token",
           value: settings.cloudflareApiToken,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
       if (settings.cloudflareModel !== undefined)
         await this.db.appSettings.put({
           key: "cloudflare_model",
           value: settings.cloudflareModel,
-          updatedAt: Date.now(),
+          updatedAt: this.clock.now(),
         });
     }
     if (settings.provider !== undefined) this.imageProvider = settings.provider;
@@ -254,7 +257,7 @@ export class OracleSettingsService {
       await this.db.appSettings.put({
         key: "ai_api_key",
         value: key,
-        updatedAt: Date.now(),
+        updatedAt: this.clock.now(),
       });
     }
     this.apiKey = key;
