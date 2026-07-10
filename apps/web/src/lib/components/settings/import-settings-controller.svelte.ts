@@ -137,12 +137,7 @@ export class ImportSettingsController {
   existingEntitySlugs = $derived.by(() => {
     const slugs = new Set<string>();
     for (const entity of this.deps.vault.allEntities) {
-      slugs.add(
-        entity.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, ""),
-      );
+      slugs.add(this.toTitleSlug(entity.title));
     }
     return slugs;
   });
@@ -183,6 +178,13 @@ export class ImportSettingsController {
 
   constructor(private deps: ImportSettingsControllerDeps = defaultDeps) {}
 
+  private toTitleSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
   syncModalImportState = () => {
     this.deps.modalUIStore.isImporting =
       this.step === "processing" ||
@@ -204,10 +206,7 @@ export class ImportSettingsController {
   getPackImportStatus = (pack: CreaturePack) => {
     let importedCount = 0;
     for (const entry of pack.entries) {
-      const slug = entry.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
+      const slug = this.toTitleSlug(entry.title);
       if (this.existingEntitySlugs.has(slug)) importedCount++;
     }
     return {
@@ -223,13 +222,7 @@ export class ImportSettingsController {
   handlePackSelect = async (pack: CreaturePack) => {
     const knownTitleToId = new Map<string, string>();
     for (const e of this.deps.vault.allEntities) {
-      knownTitleToId.set(
-        e.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, ""),
-        e.id,
-      );
+      knownTitleToId.set(this.toTitleSlug(e.title), e.id);
     }
     const entities = packToDiscoveredEntities(pack, knownTitleToId);
 
