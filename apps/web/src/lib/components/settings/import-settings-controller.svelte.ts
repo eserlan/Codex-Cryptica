@@ -134,6 +134,18 @@ export class ImportSettingsController {
       (p) => !p.parentPackId && (p.genre || "fantasy") === this.targetGenre,
     ),
   );
+  existingEntitySlugs = $derived.by(() => {
+    const slugs = new Set<string>();
+    for (const entity of this.deps.vault.allEntities) {
+      slugs.add(
+        entity.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, ""),
+      );
+    }
+    return slugs;
+  });
 
   private markdownFrontmatterValidator: MarkdownFrontmatterValidator | null =
     null;
@@ -190,22 +202,13 @@ export class ImportSettingsController {
   };
 
   getPackImportStatus = (pack: CreaturePack) => {
-    const existingSlugs = new Set<string>();
-    for (const e of this.deps.vault.allEntities) {
-      existingSlugs.add(
-        e.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, ""),
-      );
-    }
     let importedCount = 0;
     for (const entry of pack.entries) {
       const slug = entry.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
-      if (existingSlugs.has(slug)) importedCount++;
+      if (this.existingEntitySlugs.has(slug)) importedCount++;
     }
     return {
       importedCount,
