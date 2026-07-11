@@ -1,5 +1,7 @@
 <script lang="ts">
   import { shipConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { mapShipGenreToThemeId } from "./generator-theme-maps";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -40,6 +42,8 @@
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre"
   onvaluechange={(g) => {
+    const themeId = mapShipGenreToThemeId(g);
+    if (themeId) void themeStore.setTheme(themeId);
     role = (shipConfig.rolesByGenre[g] ?? shipConfig.rolesByGenre["Sci-Fi"])[0];
     scale = (shipConfig.scalesByGenre?.[g] ?? shipConfig.scales)[0];
   }}

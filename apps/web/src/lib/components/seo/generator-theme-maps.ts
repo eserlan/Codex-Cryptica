@@ -127,3 +127,22 @@ export function mapHubGenreToShipGenre(hubGenre: string): string {
   if (hubGenre === "Horror") return "Dark Fantasy";
   return "Sci-Fi";
 }
+
+export function mapShipGenreToThemeId(genre: string): string | null {
+  const themeByGenre: Record<string, string> = {
+    "Sci-Fi": "scifi",
+    "Space Opera": "starwars",
+    Cyberpunk: "cyberpunk",
+    "Optimistic Exploration Sci-Fi": "startrek",
+    "Space Opera Resistance": "starwars",
+    Lancer: "lancer",
+    "Post-Apocalyptic": "apocalyptic",
+    Fantasy: "fantasy",
+    "Pirate / Age of Sail": "pirate",
+    Steampunk: "steampunk",
+    "Dark Fantasy": "horror",
+    "Western (River & Rail)": "western",
+  };
+
+  return themeByGenre[genre] ?? null;
+}
