@@ -112,6 +112,8 @@ describe("Theme Schema & Definitions", () => {
   it("assigns the correct SVG textures to the target themes", () => {
     const expectedTextures: Record<string, string> = {
       workspace: "workspace_grain.svg",
+      pirate: "nautical_chart.svg",
+      pirate_dark: "harbour_night.svg",
       workspace_dark: "workspace_grain.svg",
       scifi: "scifi_grid.svg",
       // scifi_light ("Starship Bridge", #1456) intentionally has no texture —
@@ -133,6 +135,8 @@ describe("Theme Schema & Definitions", () => {
     const themesMap: Record<string, any> = {
       workspace: THEMES.workspace,
       workspace_dark: WORKSPACE_DARK,
+      pirate: THEMES.pirate,
+      pirate_dark: PIRATE_DARK,
       scifi: THEMES.scifi,
       modern: THEMES.modern,
       modern_dark: MODERN_DARK,
