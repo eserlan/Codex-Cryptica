@@ -51,6 +51,7 @@ describe("generateShipLocal", () => {
     expect(result.content).toContain("## Captain, Officers & Crew");
     expect(result.content).toContain("### Officer Roster");
     expect(result.lore).toContain("**Captain / Commander**:");
+    expect(result.lore).toContain("**Captain Brief**:");
     expect(result.lore).toContain("**Named Officers**:");
     expect(result.lore).toContain("**Officer Briefs**:");
     expect(result.lore).toContain("**Crew Culture**:");
@@ -144,6 +145,7 @@ describe("buildShipPrompt", () => {
     );
 
     expect(result.userMessage).toContain("- Captain / Commander:");
+    expect(result.userMessage).toContain("- Captain Brief:");
     expect(result.userMessage).toContain("- Named Officers:");
     expect(result.userMessage).toContain("- Officer Briefs:");
     expect(result.userMessage).toContain("- Crew Culture:");

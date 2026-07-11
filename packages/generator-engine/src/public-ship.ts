@@ -517,6 +517,28 @@ export const shipConfig = {
     ],
   } as Record<string, string[]>,
 
+  captainDetailsByGenre: {
+    "Sci-Fi": [
+      "owns the mission clock and makes hard calls early, but has never told the crew what happened on their last command",
+      "protects the crew from corporate directives by quietly rewriting the reports",
+      "delegates brilliantly until the ship faces a choice they cannot explain to anyone else",
+      "keeps every promise made at the airlock and considers that a better code than regulations",
+    ],
+    Fantasy: [
+      "commands by keeping everyone fed, paid, and alive, though the oldest debt aboard is theirs",
+      "knows the sea is listening and refuses to say what it asked for in exchange for safe passage",
+      "rules through fair shares and a steady hand, but has already chosen which officer would replace them",
+      "wears authority lightly and keeps a second identity sealed inside the chart chest",
+    ],
+    "Pirate / Age of Sail": [
+      "wins loyalty by making the same promises to the crew that they make to a prize: fair shares, clear terms, no surprises",
+      "knows exactly when to let the quartermaster speak and when to take the blame personally",
+      "built their reputation on never abandoning a hand, which makes the current mission dangerously expensive",
+      "keeps the crew free by staying one step ahead of the navy, the creditors, and a former lover in every port",
+      "commands with charm until the guns speak, then becomes frighteningly calm and precise",
+    ],
+  } as Record<string, string[]>,
+
   crewProfilesByGenre: {
     "Sci-Fi": [
       "a cross-trained watch rotation where every specialist can cover two stations in an emergency",
@@ -917,6 +939,7 @@ interface ResolvedShip {
   affiliation: string;
   crewType: string;
   captain: string;
+  captainDetail: string;
   officerNames: string[];
   officerDetails: string[];
   crewProfile: string;
@@ -955,6 +978,10 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
   const crewType = pickFrom(forGenre(shipConfig.crewTypesByGenre, genre), rng);
   const captain = pickFrom(
     forGenre(shipConfig.captainNamesByGenre, genre),
+    rng,
+  );
+  const captainDetail = pickFrom(
+    forGenre(shipConfig.captainDetailsByGenre, genre),
     rng,
   );
   const officerNames = getRandomItems(
@@ -997,6 +1024,7 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     affiliation,
     crewType,
     captain,
+    captainDetail,
     officerNames,
     officerDetails,
     crewProfile,
@@ -1054,6 +1082,7 @@ export function buildShipPrompt(
     affiliation,
     crewType,
     captain,
+    captainDetail,
     officerNames,
     officerDetails,
     crewProfile,
@@ -1062,12 +1091,12 @@ export function buildShipPrompt(
     zones,
   } = resolved;
 
-  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Named Officers: ${officerNames.join(", ")}\n- Officer Briefs: ${officerDetails.join(" | ")}\n- Crew Culture: ${crewProfile}`;
+  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Captain Brief: ${captainDetail}\n- Named Officers: ${officerNames.join(", ")}\n- Officer Briefs: ${officerDetails.join(" | ")}\n- Crew Culture: ${crewProfile}`;
 
   const officerRosterPrompt = officerNames
     .map((name, index) => `- **${name}** — ${officerDetails[index]}`)
     .join("\\n");
-  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n\\n#### Officer Roster\\n${officerRosterPrompt}\\n\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
+  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n- **Captain Brief**: ${captainDetail}\\n\\n#### Officer Roster\\n${officerRosterPrompt}\\n\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
 
   const userMessage = `Generate a campaign-ready ship for a tabletop RPG session. The ship should answer these four questions through its output:
 1. What is this ship? (role, scale, condition, visual identity)
@@ -1198,6 +1227,7 @@ export function generateShipLocal(
     affiliation,
     crewType,
     captain,
+    captainDetail,
     officerNames,
     officerDetails,
     crewProfile,
@@ -1215,7 +1245,7 @@ export function generateShipLocal(
   const officerRoster = officerNames
     .map((officer, index) => `- **${officer}** — ${officerDetails[index]}`)
     .join("\n");
-  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}.
+  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}. ${captainDetail}
 
 ### Officer Roster
 ${officerRoster}
@@ -1249,6 +1279,7 @@ ${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${commandSect
 - **Crew Complement**: ${crewType}
 - **Tone**: ${tone}
 - **Captain / Commander**: ${captain}
+- **Captain Brief**: ${captainDetail}
 - **Named Officers**: ${officerNames.join(", ")}
 - **Officer Briefs**: ${officerDetails.join(" | ")}
 - **Crew Culture**: ${crewProfile}
