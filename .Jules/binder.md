@@ -42,3 +42,6 @@
 
 **Learning:** When using Dependency Injection to inject a global dependency like `Date.now()`, importing the fallback object (`systemClock`) from another module might fail if that module (`$lib/utils/runtime-deps.ts`) does not exist or isn't accessible in tests, causing the entire build or test suite to fail.
 **Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
+## 2024-03-24 - Injecting Clock into QuickNoteService
+**Learning:** Found a common pattern where global `Date.now()` is hard-coded into service methods for entity creation, making timestamp logic difficult to test deterministically. The repository has a standard `runtime-deps` module exposing a `Clock` interface and `systemClock` default that should be used for this.
+**Action:** When refactoring services that generate timestamps, always check for `../utils/runtime-deps` and use constructor injection for the `Clock`, allowing tests to safely use a mock clock without touching global scope.
