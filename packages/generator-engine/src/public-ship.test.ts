@@ -48,8 +48,9 @@ describe("generateShipLocal", () => {
       seededRng(11),
     );
 
-    expect(result.content).toContain("## Captain & Crew");
-    expect(result.lore).toContain("**Captain**:");
+    expect(result.content).toContain("## Captain, Officers & Crew");
+    expect(result.lore).toContain("**Captain / Commander**:");
+    expect(result.lore).toContain("**Officers**:");
     expect(result.lore).toContain("**Crew Culture**:");
   });
 
@@ -123,9 +124,20 @@ describe("buildShipPrompt", () => {
       seededRng(3),
     );
 
-    expect(result.userMessage).toContain("- Captain:");
+    expect(result.userMessage).toContain("- Captain / Commander:");
+    expect(result.userMessage).toContain("- Officers:");
     expect(result.userMessage).toContain("- Crew Culture:");
-    expect(result.userMessage).toContain("### Captain & Crew");
+    expect(result.userMessage).toContain("### Captain, Officers & Crew");
+  });
+
+  it("includes command structure for non-Pirate ships", () => {
+    const result = generateShipLocal(
+      { genre: "Sci-Fi" },
+      seededRng(8),
+    );
+
+    expect(result.content).toContain("## Captain, Officers & Crew");
+    expect(result.lore).toContain("**Officers**:");
   });
 });
 

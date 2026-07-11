@@ -456,6 +456,20 @@ export const shipConfig = {
   } as Record<string, string[]>,
 
   captainNamesByGenre: {
+    "Sci-Fi": [
+      "Commander Imani Voss",
+      "Captain Ren Calder",
+      "Commander Sera Kade",
+      "Captain Orin Vale",
+      "Commander Talia Quill",
+    ],
+    Fantasy: [
+      "Captain Elian Marrow",
+      "Admiral Carys Thorn",
+      "Captain Maelin Hart",
+      "Commander Ysra Fen",
+      "Captain Oren Saltmere",
+    ],
     "Pirate / Age of Sail": [
       "Captain Mara Saltglass",
       "Captain Jory Blackwake",
@@ -469,6 +483,15 @@ export const shipConfig = {
   } as Record<string, string[]>,
 
   crewProfilesByGenre: {
+    "Sci-Fi": [
+      "a cross-trained watch rotation where every specialist can cover two stations in an emergency",
+      "career spacers held together by hazard pay, shared survival, and a captain who never wastes a life",
+      "a mixed-origin crew whose different protocols create friction whenever the mission changes course",
+    ],
+    Fantasy: [
+      "deckhands, navigators, and hired blades who have made the vessel a home between uncertain ports",
+      "a practical company of sailors whose loyalty is earned through fair shares and reliable leadership",
+    ],
     "Pirate / Age of Sail": [
       "shares are governed by written articles, and every hand gets a voice before a vote",
       "a mixed harbour crew bound by debt, mutual protection, and a promise to split prize fairly",
@@ -476,6 +499,23 @@ export const shipConfig = {
       "specialists recruited from rival ports, each carrying a different grudge against the navy",
       "a tight family of free sailors whose loyalty is to one another before it is to the captain",
       "hard-bitten privateers quietly debating whether the crown's commission is worth the next battle",
+    ],
+  } as Record<string, string[]>,
+
+  officerProfilesByGenre: {
+    "Sci-Fi": [
+      "the first officer keeps the schedule, the chief engineer keeps the ship alive, and the navigator keeps a private risk ledger",
+      "a veteran first officer, an overstretched chief engineer, and a security chief who answers to the crew before command",
+      "officers are promoted from the deck, so every order carries the memory of the person who had to carry it out",
+    ],
+    Fantasy: [
+      "a first mate, ship's mage, and master navigator each believe they should be the one advising the captain",
+      "the boatswain runs the deck, the navigator reads omens as well as charts, and the purser knows where every coin went",
+    ],
+    "Pirate / Age of Sail": [
+      "the quartermaster guards the articles, the sailing master commands the deck, and the surgeon keeps a private list of debts",
+      "a quartermaster with the crew's trust, a gunner who wants one last prize, and a sailing master who knows the reefs too well",
+      "the first mate handles discipline, the navigator handles the charts, and the quartermaster decides whether the next share is fair",
     ],
   } as Record<string, string[]>,
 
@@ -804,8 +844,9 @@ interface ResolvedShip {
   toneShort: string;
   affiliation: string;
   crewType: string;
-  captain?: string;
-  crewProfile?: string;
+  captain: string;
+  officerProfile: string;
+  crewProfile: string;
   complication: string;
   secret: string;
   zones: string[];
@@ -838,14 +879,18 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     rng,
   );
   const crewType = pickFrom(forGenre(shipConfig.crewTypesByGenre, genre), rng);
-  const captain =
-    genre === "Pirate / Age of Sail"
-      ? pickFrom(shipConfig.captainNamesByGenre[genre], rng)
-      : undefined;
-  const crewProfile =
-    genre === "Pirate / Age of Sail"
-      ? pickFrom(shipConfig.crewProfilesByGenre[genre], rng)
-      : undefined;
+  const captain = pickFrom(
+    forGenre(shipConfig.captainNamesByGenre, genre),
+    rng,
+  );
+  const officerProfile = pickFrom(
+    forGenre(shipConfig.officerProfilesByGenre, genre),
+    rng,
+  );
+  const crewProfile = pickFrom(
+    forGenre(shipConfig.crewProfilesByGenre, genre),
+    rng,
+  );
   const complication = pickFrom(
     forGenre(shipConfig.complicationsByGenre, genre),
     rng,
@@ -872,6 +917,7 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     affiliation,
     crewType,
     captain,
+    officerProfile,
     crewProfile,
     complication,
     secret,
@@ -927,23 +973,20 @@ export function buildShipPrompt(
     affiliation,
     crewType,
     captain,
+    officerProfile,
     crewProfile,
     complication,
     secret,
     zones,
   } = resolved;
 
-  const piratePromptDetails = captain
-    ? `\n- Captain: ${captain}\n- Crew Culture: ${crewProfile}`
-    : "";
+  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Officers: ${officerProfile}\n- Crew Culture: ${crewProfile}`;
 
-  const pirateLoreSection = captain
-    ? `\\n\\n### Captain & Crew\\n- **Captain**: ${captain}\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`
-    : "";
+  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n- **Officers**: ${officerProfile}\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
 
   const userMessage = `Generate a campaign-ready ship for a tabletop RPG session. The ship should answer these four questions through its output:
 1. What is this ship? (role, scale, condition, visual identity)
-2. Who runs it and why? (owner, affiliation, crew, current mission)
+2. Who runs it and why? (captain/commander, officers, crew culture, owner, affiliation, current mission)
 3. What is wrong with it? (complication and secret)
 4. How does it become an adventure? (hooks the players can pull on)
 
@@ -958,13 +1001,13 @@ Parameters:
 - Crew Type: ${crewType}
 - Dominant Complication: ${complication}
 - Secret: ${secret}
-- Key Zones: ${zones.join(", ")}${piratePromptDetails}
+- Key Zones: ${zones.join(", ")}${commandPromptDetails}
 
 Return a valid JSON object matching this structure exactly:
 {
   "title": "A single string for the ship name",
   "content": "Prose description (markdown). Include these sections:\\n## Core Concept\\n[What makes this ship distinct — 2–3 sentences on its role, character, and current state]\\n\\n## First Look\\n[What visitors notice when approaching or boarding — sensory, atmospheric, genre-appropriate]\\n\\n## History\\n[How the ship came to be in its current state — 2–3 sentences]",
-  "lore": "Structured GM reference (markdown). Use EXACTLY this structure:\\n### Ship Profile\\n- **Class**: [role and scale]\\n- **Condition**: [condition]\\n- **Owner / Affiliation**: [affiliation]\\n- **Current Mission**: [what the ship is doing right now — one concrete sentence]\\n- **Crew Complement**: [size and type]\\n- **Tone**: [tone]${pirateLoreSection}\\n\\n### Key Zones\\n- **🚀 ${zones[0]}**: [one-line purpose or detail]\\n- **🚀 ${zones[1] ?? zones[0]}**: [one-line purpose or detail]\\n- **🚀 ${zones[2] ?? zones[0]}**: [one-line purpose or detail]\\n\\n### Complication\\n[2–3 sentences on the dominant problem — name real people, systems, or factions involved]\\n\\n### Secret\\n[What the ship hides — 1–2 sentences that a player could discover through investigation]\\n\\n### Adventure Hooks\\n- [Hook tied to the complication]\\n- [Hook tied to the secret]\\n- [Hook tied to the ship's role or affiliation]",
+  "lore": "Structured GM reference (markdown). Use EXACTLY this structure:\\n### Ship Profile\\n- **Class**: [role and scale]\\n- **Condition**: [condition]\\n- **Owner / Affiliation**: [affiliation]\\n- **Current Mission**: [what the ship is doing right now — one concrete sentence]\\n- **Crew Complement**: [size and type]\\n- **Tone**: [tone]${commandLoreSection}\\n\\n### Key Zones\\n- **🚀 ${zones[0]}**: [one-line purpose or detail]\\n- **🚀 ${zones[1] ?? zones[0]}**: [one-line purpose or detail]\\n- **🚀 ${zones[2] ?? zones[0]}**: [one-line purpose or detail]\\n\\n### Complication\\n[2–3 sentences on the dominant problem — name real people, systems, or factions involved]\\n\\n### Secret\\n[What the ship hides — 1–2 sentences that a player could discover through investigation]\\n\\n### Adventure Hooks\\n- [Hook tied to the complication]\\n- [Hook tied to the secret]\\n- [Hook tied to the ship's role or affiliation]",
   "labels": ["rpg-ship", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
@@ -1070,6 +1113,7 @@ export function generateShipLocal(
     affiliation,
     crewType,
     captain,
+    officerProfile,
     crewProfile,
     complication,
     secret,
@@ -1082,9 +1126,7 @@ export function generateShipLocal(
 
   const conceptIdx = Math.floor(rng() * CORE_CONCEPT_VARIANTS.length);
   const historyIdx = Math.floor(rng() * HISTORY_VARIANTS.length);
-  const pirateSection = captain
-    ? `\n\n## Captain & Crew\n**${captain}** commands a ${crewType.toLowerCase()} whose culture is defined by ${crewProfile}. The crew's loyalty is practical rather than ornamental: it survives as long as the articles, shares, and next horizon remain worth defending.`
-    : "";
+  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}. The officer corps is defined by ${officerProfile}. The crew's culture is defined by ${crewProfile}. Their loyalty is practical rather than ornamental: it survives as long as the chain of command, shared purpose, and next horizon remain worth defending.`;
 
   const content = `## Core Concept
 ${CORE_CONCEPT_VARIANTS[conceptIdx](name, role, scale, condition, tone, complication)}
@@ -1093,7 +1135,7 @@ ${CORE_CONCEPT_VARIANTS[conceptIdx](name, role, scale, condition, tone, complica
 ${firstImpression}
 
 ## History
-${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${pirateSection}`;
+${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${commandSection}`;
 
   const zoneLines = zones
     .map(
@@ -1112,7 +1154,9 @@ ${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${pirateSecti
 - **Current Mission**: Undisclosed — crew answers questions selectively.
 - **Crew Complement**: ${crewType}
 - **Tone**: ${tone}
-${captain ? `- **Captain**: ${captain}\n- **Crew Culture**: ${crewProfile}` : ""}
+- **Captain / Commander**: ${captain}
+- **Officers**: ${officerProfile}
+- **Crew Culture**: ${crewProfile}
 
 ### Key Zones
 ${zoneLines}
