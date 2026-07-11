@@ -24,7 +24,8 @@
 
   const existingTitles = $derived.by(() => {
     const names = new Set<string>();
-    for (const entity of Object.values(vault.entities)) {
+    const allEntities = vault.allEntities || [];
+    for (const entity of allEntities) {
       names.add(entity.title);
       for (const alias of entity.aliases ?? []) names.add(alias);
     }

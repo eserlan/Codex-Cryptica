@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: { activeVaultId: "v1", selectedEntityId: null, entities: { existing: { title: "Existing", aliases: ["Known Alias"] } }, createEntity: mocks.createEntity, deleteEntity: mocks.deleteEntity, addConnection: mocks.addConnection },
+  vault: { activeVaultId: "v1", selectedEntityId: null, entities: { existing: { title: "Existing", aliases: ["Known Alias"] } }, allEntities: [{ title: "Existing", aliases: ["Known Alias"] }], createEntity: mocks.createEntity, deleteEntity: mocks.deleteEntity, addConnection: mocks.addConnection },
 }));
 vi.mock("$lib/stores/proposer.svelte", () => ({
   proposerStore: {
