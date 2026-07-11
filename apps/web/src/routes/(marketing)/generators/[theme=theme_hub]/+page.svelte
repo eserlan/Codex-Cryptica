@@ -92,6 +92,14 @@
     icon: "icon-[lucide--rocket]",
   };
 
+  const pirateShipCard: GeneratorCard = {
+    slug: "ship-generator",
+    label: "Pirate Ship Generator",
+    summary:
+      "Create a pirate vessel with a captain, crew culture, shipboard tension, prize-worthy complications, and secrets hidden below deck.",
+    icon: "icon-[lucide--ship-wheel]",
+  };
+
   // One generator, many mastheads: each hub links to the news sheet
   // generator under the name that genre actually uses for the format.
   const newsSheetCard = (label: string, summary: string): GeneratorCard => ({
@@ -215,7 +223,7 @@
           "Port Generator",
           "Build harbours, island settlements, and hidden coves with factions, trade routes, notable locations, and hooks.",
         ),
-        shipCard,
+        pirateShipCard,
         socialHubCard,
         nationCard,
         newsSheetCard(
