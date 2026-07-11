@@ -42,6 +42,17 @@ describe("generateShipLocal", () => {
     expect(result.content).toBeTruthy();
   });
 
+  it("gives Pirate ships a captain and crew culture", () => {
+    const result = generateShipLocal(
+      { genre: "Pirate / Age of Sail" },
+      seededRng(11),
+    );
+
+    expect(result.content).toContain("## Captain & Crew");
+    expect(result.lore).toContain("**Captain**:");
+    expect(result.lore).toContain("**Crew Culture**:");
+  });
+
   it("generates non-empty content sections", () => {
     const result = generateShipLocal({}, seededRng(99));
     expect(result.content).toContain("## Core Concept");
@@ -103,6 +114,18 @@ describe("buildShipPrompt", () => {
     );
     expect(result.userMessage).toContain("Cyberpunk");
     expect(result.userMessage).toContain("Ghost Ship");
+  });
+
+  it("asks for Pirate captain and crew details", () => {
+    const result = buildShipPrompt(
+      { genre: "Pirate / Age of Sail" },
+      "",
+      seededRng(3),
+    );
+
+    expect(result.userMessage).toContain("- Captain:");
+    expect(result.userMessage).toContain("- Crew Culture:");
+    expect(result.userMessage).toContain("### Captain & Crew");
   });
 });
 
