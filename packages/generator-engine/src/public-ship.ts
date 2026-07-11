@@ -581,6 +581,33 @@ export const shipConfig = {
     ],
   } as Record<string, string[]>,
 
+  officerDetailsByGenre: {
+    "Sci-Fi": [
+      "keeps a private casualty forecast and refuses to let command call it pessimism",
+      "can repair the drive from memory but hides how often they have already done so",
+      "treats every navigation solution as a moral choice and keeps one route secret",
+      "runs security like a quiet investigation, including the captain in the suspect list",
+      "has become the crew's unofficial confessor and knows who is planning to leave",
+      "is brilliant, exhausted, and one bad order away from taking command themselves",
+    ],
+    Fantasy: [
+      "keeps a charm for every dead sailor and refuses to explain where the newest one came from",
+      "can read a coastline by smell but has never admitted why this route frightens them",
+      "uses practical magic sparingly and keeps a more dangerous spell sealed below deck",
+      "knows exactly which crew members are underpaid and has started correcting the purser's books",
+      "is the only officer who can calm the ship's oldest superstition—and may be feeding it",
+      "smiles through every crisis because they have already survived the version no one knows about",
+    ],
+    "Pirate / Age of Sail": [
+      "keeps the articles folded inside their coat and can turn a grumble into a formal vote",
+      "knows every reef between here and the next free port but owes a favour to someone on each shore",
+      "maintains the guns like beloved hunting dogs and has chosen which one will fire first in a mutiny",
+      "patches bodies and reputations with equal skill, for a price they never name aloud",
+      "can read a crew's mood from the way boots strike the deck and is quietly counting sides",
+      "claims to hate the navy, but still salutes when an old signal flag rises on the horizon",
+    ],
+  } as Record<string, string[]>,
+
   complicationsByGenre: {
     "Sci-Fi": [
       "The cargo manifest does not match what is actually in the hold",
@@ -909,6 +936,7 @@ interface ResolvedShip {
   captain: string;
   officerProfile: string;
   officerNames: string[];
+  officerDetails: string[];
   crewProfile: string;
   complication: string;
   secret: string;
@@ -956,6 +984,11 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     3,
     rng,
   );
+  const officerDetails = getRandomItems(
+    forGenre(shipConfig.officerDetailsByGenre, genre),
+    3,
+    rng,
+  );
   const crewProfile = pickFrom(
     forGenre(shipConfig.crewProfilesByGenre, genre),
     rng,
@@ -988,6 +1021,7 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     captain,
     officerProfile,
     officerNames,
+    officerDetails,
     crewProfile,
     complication,
     secret,
@@ -1045,19 +1079,23 @@ export function buildShipPrompt(
     captain,
     officerProfile,
     officerNames,
+    officerDetails,
     crewProfile,
     complication,
     secret,
     zones,
   } = resolved;
 
-  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Named Officers: ${officerNames.join(", ")}\n- Officer Structure: ${officerProfile}\n- Crew Culture: ${crewProfile}`;
+  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Named Officers: ${officerNames.join(", ")}\n- Officer Briefs: ${officerDetails.join(" | ")}\n- Officer Structure: ${officerProfile}\n- Crew Culture: ${crewProfile}`;
 
-  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n- **Named Officers**: ${officerNames.join(", ")}\\n- **Officer Structure**: ${officerProfile}\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
+  const officerRosterPrompt = officerNames
+    .map((name, index) => `- **${name}** — ${officerDetails[index]}`)
+    .join("\\n");
+  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n\\n#### Officer Roster\\n${officerRosterPrompt}\\n\\n- **Officer Structure**: ${officerProfile}\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
 
   const userMessage = `Generate a campaign-ready ship for a tabletop RPG session. The ship should answer these four questions through its output:
 1. What is this ship? (role, scale, condition, visual identity)
-2. Who runs it and why? (captain/commander, officers, crew culture, owner, affiliation, current mission)
+2. Who runs it and why? (captain/commander, vivid officer roster, crew culture, owner, affiliation, current mission)
 3. What is wrong with it? (complication and secret)
 4. How does it become an adventure? (hooks the players can pull on)
 
@@ -1186,6 +1224,7 @@ export function generateShipLocal(
     captain,
     officerProfile,
     officerNames,
+    officerDetails,
     crewProfile,
     complication,
     secret,
@@ -1198,7 +1237,15 @@ export function generateShipLocal(
 
   const conceptIdx = Math.floor(rng() * CORE_CONCEPT_VARIANTS.length);
   const historyIdx = Math.floor(rng() * HISTORY_VARIANTS.length);
-  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}. Named officers include **${officerNames.join("**, **")}**. The officer corps is defined by ${officerProfile}. The crew's culture is defined by ${crewProfile}. Their loyalty is practical rather than ornamental: it survives as long as the chain of command, shared purpose, and next horizon remain worth defending.`;
+  const officerRoster = officerNames
+    .map((officer, index) => `- **${officer}** — ${officerDetails[index]}`)
+    .join("\n");
+  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}.
+
+### Officer Roster
+${officerRoster}
+
+The officer corps is defined by ${officerProfile}. The crew's culture is defined by ${crewProfile}. Their loyalty is practical rather than ornamental: it survives as long as the chain of command, shared purpose, and next horizon remain worth defending.`;
 
   const content = `## Core Concept
 ${CORE_CONCEPT_VARIANTS[conceptIdx](name, role, scale, condition, tone, complication)}
@@ -1228,6 +1275,7 @@ ${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${commandSect
 - **Tone**: ${tone}
 - **Captain / Commander**: ${captain}
 - **Named Officers**: ${officerNames.join(", ")}
+- **Officer Briefs**: ${officerDetails.join(" | ")}
 - **Officer Structure**: ${officerProfile}
 - **Crew Culture**: ${crewProfile}
 
