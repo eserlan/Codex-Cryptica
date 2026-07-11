@@ -22,7 +22,8 @@ describe("QuickNoteService", () => {
       vaultId: "vault-1",
       content: "This is a fleeting pirate idea",
       status: "active",
-    });
+      createdAt: undefined,
+    } as any);
 
     expect(id).toBeDefined();
     expect(typeof id).toBe("number");
