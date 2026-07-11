@@ -76,6 +76,23 @@ describe("generateShipLocal", () => {
     }
   });
 
+  it("keeps historical vessel scales grounded by genre", () => {
+    const pirate = generateShipLocal(
+      { genre: "Pirate / Age of Sail" },
+      seededRng(123),
+    );
+    const sciFi = generateShipLocal({ genre: "Sci-Fi" }, seededRng(123));
+
+    expect(pirate.lore).not.toContain("10,000+");
+    expect(sciFi.lore).toBeTruthy();
+    expect(shipConfig.scalesByGenre["Sci-Fi"]).toContain(
+      "Station-class vessel (10,000+ inhabitants)",
+    );
+    expect(shipConfig.scalesByGenre["Pirate / Age of Sail"]).not.toContain(
+      "Station-class vessel (10,000+ inhabitants)",
+    );
+  });
+
   it("produces different results for different seeds", () => {
     const a = generateShipLocal({}, seededRng(1));
     const b = generateShipLocal({}, seededRng(500));

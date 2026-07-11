@@ -164,6 +164,41 @@ export const shipConfig = {
     "Station-class vessel (10,000+ inhabitants)",
   ],
 
+  scalesByGenre: {
+    "Sci-Fi": [
+      "Shuttle / Single-pilot craft",
+      "Small crew ship (5–20 crew)",
+      "Frigate / Corvette (50–200 crew)",
+      "Capital ship (500–2,000 crew)",
+      "Megaship / Carrier (5,000+ crew)",
+      "Station-class vessel (10,000+ inhabitants)",
+    ],
+    Fantasy: [
+      "River craft / Small boat (2–12 crew)",
+      "Coastal vessel (12–40 crew)",
+      "Merchant ship (40–120 crew)",
+      "War galley / Large sailing ship (120–300 crew)",
+    ],
+    "Pirate / Age of Sail": [
+      "Longboat / Small cutter (8–20 crew)",
+      "Sloop / Lugger (20–60 crew)",
+      "Brig / Schooner (60–140 crew)",
+      "Frigate / Galleon (140–300 crew)",
+    ],
+    Steampunk: [
+      "Small river or air vessel (5–20 crew)",
+      "Merchant or patrol vessel (20–80 crew)",
+      "Frigate / Airship (80–250 crew)",
+      "Capital dreadnought (250–800 crew)",
+    ],
+    "Western (River & Rail)": [
+      "Skiff / Small boat (2–8 crew)",
+      "Ferry or cargo flatboat (8–30 crew)",
+      "Riverboat (30–100 crew)",
+      "Federal gunboat (100–250 crew)",
+    ],
+  } as Record<string, string[]>,
+
   conditions: [
     "Pristine — fresh from the shipyard",
     "Well-maintained — cared for and reliable",
@@ -899,7 +934,8 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
   const genre = options.genre || "Sci-Fi";
   const role =
     options.role || pickFrom(forGenre(shipConfig.rolesByGenre, genre), rng);
-  const scale = options.scale || pickFrom(shipConfig.scales, rng);
+  const scale =
+    options.scale || pickFrom(forGenre(shipConfig.scalesByGenre, genre), rng);
   const condition = options.condition || pickFrom(shipConfig.conditions, rng);
   const tone = options.tone || pickFrom(shipConfig.tones, rng);
   const affiliation = pickFrom(
