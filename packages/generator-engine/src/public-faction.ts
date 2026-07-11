@@ -55,7 +55,7 @@ export const factionConfig = {
     Pirate: [
       "Pirate Crew",
       "Privateer Fleet",
-      "Smuggler Syndicate",
+      "Pirate Smuggling Ring",
       "Merchant Guild",
       "Port Authority",
       "Sea Cult",
@@ -559,6 +559,11 @@ function factionBase(type: string, rng: Rng = defaultRng): string {
       "A floating camp that moves between safe harbours",
       "A hidden dockyard protected by shared articles",
     ],
+    "Pirate Smuggling Ring": [
+      "A chain of chandlers, warehouses, and discreet coves connected by coded manifests",
+      "A portside network that moves people and cargo around customs patrols",
+      "A rotating set of safe houses whose owners only know one link in the route",
+    ],
     "Merchant Guild": [
       "A bonded counting house whose ledgers are sealed by city charter",
       "A licensed exchange hall at the centre of the trade district",
@@ -741,6 +746,11 @@ function factionResource(type: string, rng: Rng = defaultRng): string {
       "A crew-owned vessel, shared articles, and trusted anchorages along the coast",
       "Prize cargo, tide charts, and intelligence traded by dockworkers and sailors",
       "A reputation that can open a free port or trigger a naval manhunt",
+    ],
+    "Pirate Smuggling Ring": [
+      "Forged cargo manifests, hidden berths, and trusted contacts inside customs offices",
+      "Access to routes that bypass blockades and move people without exposing their identities",
+      "A debt ledger binding captains, dockworkers, and merchants to mutual silence",
     ],
     "Merchant Guild": [
       "Exclusive trade licences, bonded debts, and letters of introduction that open every city gate",

@@ -21,6 +21,7 @@ describe("Pirate generator support", () => {
     expect(npcThemeConfig.roles.Pirate).toContain("Quartermaster");
     expect(factionConfig.typesByTheme.Pirate).toContain("Pirate Crew");
     expect(questConfig.threatsByTheme.Pirate).toContain("Ghost Ship");
+    expect(questConfig.tonesByTheme.Pirate).toContain("Swashbuckling");
     expect(socialHubConfig.venueTypesByGenre.Pirate).toContain(
       "Dockside Tavern",
     );
@@ -49,6 +50,7 @@ describe("Pirate generator support", () => {
     expect(npc.lore).toContain("captain");
     expect(faction.lore).toContain("Theme / Genre**: Pirate");
     expect(quest.content).toContain("pirate conventions");
+    expect(quest.content).toContain("hidden cove");
     expect(socialHub.lore).toContain("Theme / Genre**: Pirate");
     expect(nation.lore).toContain("Pirate");
     expect(settlement.lore).toContain("Pirate");

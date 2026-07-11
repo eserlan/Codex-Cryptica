@@ -526,15 +526,43 @@ export interface ResolvedQuest {
 }
 
 function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
+  const genre = options.genre || pickFrom(questConfig.genres, rng);
+  const pirate = genre === "Pirate";
   return {
-    genre: options.genre || pickFrom(questConfig.genres, rng),
-    tone: options.tone || pickFrom(questConfig.tones, rng),
-    scope: options.scope || pickFrom(questConfig.scopes, rng),
+    genre,
+    tone:
+      options.tone ||
+      pickFrom(
+        pirate ? questConfig.tonesByTheme.Pirate : questConfig.tones,
+        rng,
+      ),
+    scope:
+      options.scope ||
+      pickFrom(
+        pirate ? questConfig.scopesByTheme.Pirate : questConfig.scopes,
+        rng,
+      ),
     locationType:
-      options.locationType || pickFrom(questConfig.locationTypes, rng),
-    threat: options.threat || pickFrom(questConfig.threats, rng),
+      options.locationType ||
+      pickFrom(
+        pirate
+          ? questConfig.locationTypesByTheme.Pirate
+          : questConfig.locationTypes,
+        rng,
+      ),
+    threat:
+      options.threat ||
+      pickFrom(
+        pirate ? questConfig.threatsByTheme.Pirate : questConfig.threats,
+        rng,
+      ),
     twist: options.twist || pickFrom(questConfig.twists, rng),
-    reward: options.reward || pickFrom(questConfig.rewards, rng),
+    reward:
+      options.reward ||
+      pickFrom(
+        pirate ? questConfig.rewardsByTheme.Pirate : questConfig.rewards,
+        rng,
+      ),
     campaignContext: options.campaignContext?.trim() || undefined,
     questName: `${generateName(rng)}'s ${pickFrom(["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"], rng)}`,
   };
