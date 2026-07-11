@@ -984,16 +984,24 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     forGenre(shipConfig.captainDetailsByGenre, genre),
     rng,
   );
-  const officerNames = getRandomItems(
-    forGenre(shipConfig.officerNamesByGenre, genre),
+  const officerNamePool = forGenre(
+    shipConfig.officerNamesByGenre,
+    genre,
+  );
+  const officerDetailPool = forGenre(
+    shipConfig.officerDetailsByGenre,
+    genre,
+  );
+  const selectedOfficers = getRandomItems(
+    officerNamePool.map((name, index) => ({
+      name,
+      detail: officerDetailPool[index] ?? officerDetailPool[0],
+    })),
     3,
     rng,
   );
-  const officerDetails = getRandomItems(
-    forGenre(shipConfig.officerDetailsByGenre, genre),
-    3,
-    rng,
-  );
+  const officerNames = selectedOfficers.map((officer) => officer.name);
+  const officerDetails = selectedOfficers.map((officer) => officer.detail);
   const crewProfile = pickFrom(
     forGenre(shipConfig.crewProfilesByGenre, genre),
     rng,

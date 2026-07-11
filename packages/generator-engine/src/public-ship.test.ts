@@ -162,6 +162,20 @@ describe("buildShipPrompt", () => {
     expect(result.content).toContain("### Officer Roster");
     expect(result.lore).toContain("**Named Officers**:");
   });
+
+  it("keeps each selected officer paired with its responsibility brief", () => {
+    const result = buildShipPrompt(
+      { genre: "Pirate / Age of Sail" },
+      "",
+      seededRng(17),
+    );
+
+    expect(result.resolved.officerNames).toHaveLength(3);
+    expect(result.resolved.officerDetails).toHaveLength(3);
+    for (const detail of result.resolved.officerDetails) {
+      expect(result.userMessage).toContain(detail);
+    }
+  });
 });
 
 describe("parseShipResponse", () => {
