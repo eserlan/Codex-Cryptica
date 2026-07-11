@@ -594,6 +594,7 @@ ${trouble}. ${pickFrom(hubTroubleClosers, rng)}
 ${pickFrom(hubHowToUseVariants, rng)}`;
 
   const lore = `### At a Glance
+- **Theme / Genre**: ${resolved.genre}
 - **Type**: ${resolved.venueType}
 - **Atmosphere**: ${resolved.atmosphere}
 - **Owner / Operator**: ${ownerName} — competent, guarded, and owed favours by the wrong people

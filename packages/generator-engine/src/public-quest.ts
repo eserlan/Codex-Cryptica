@@ -36,6 +36,7 @@ export const themeToQuestGenre: Record<string, string> = {
 export const questConfig = {
   genres: [
     "Classic Fantasy",
+    "Pirate",
     "Dark Fantasy",
     "Political Intrigue",
     "Horror",
@@ -48,6 +49,7 @@ export const questConfig = {
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
     "Classic Fantasy": ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
+    Pirate: ["Swashbuckling", "Gritty", "Mysterious", "Heroic", "Ominous"],
     "Cyberpunk / Corporate": [
       "Noir",
       "Paranoid",
@@ -105,6 +107,13 @@ export const questConfig = {
       "Local (village / district)",
       "Regional (kingdom / region)",
       "World-threatening",
+    ],
+    Pirate: [
+      "Single ship or port",
+      "Island chain",
+      "Regional sea",
+      "Open-ocean route",
+      "Naval theatre",
     ],
     "Cyberpunk / Corporate": [
       "Local (block / district)",
@@ -165,6 +174,14 @@ export const questConfig = {
       "Coastal / Maritime",
       "Feywild Crossing",
       "Dwarven Stronghold",
+    ],
+    Pirate: [
+      "Dockside Port",
+      "Hidden Cove",
+      "Derelict Ship",
+      "Island Ruin",
+      "Naval Fort",
+      "Storm-Wracked Sea",
     ],
     "Cyberpunk / Corporate": [
       "Corporate Tower",
@@ -263,6 +280,14 @@ export const questConfig = {
       "Ancient Curse",
       "Undead Rising",
       "Dragon's Influence",
+    ],
+    Pirate: [
+      "Rival Pirate Crew",
+      "Naval Blockade",
+      "Ghost Ship",
+      "Sea Monster",
+      "Mutiny",
+      "Cursed Treasure",
     ],
     "Cyberpunk / Corporate": [
       "Rogue AI",
@@ -385,6 +410,14 @@ export const questConfig = {
       "A magic item from the site",
       "Valuable information from the client",
       "Respect from a previously hostile faction",
+    ],
+    Pirate: [
+      "A share of recovered treasure and a safe harbour",
+      "A ship's articles granting the crew a voice in its course",
+      "A naval pardon or privateering charter",
+      "A chart to an unclaimed island passage",
+      "The loyalty of a rescued crew",
+      "A relic recovered from a wreck beneath forbidden waters",
     ],
     "Cyberpunk / Corporate": [
       "Cred plus a fixer's contact",
@@ -573,8 +606,32 @@ export function generateQuestLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveQuest(options, rng);
-  const hook = pickFrom(questConfig.hooks, rng);
-  const complication = pickFrom(questConfig.complications, rng);
+  const pirateHooks = [
+    "A fragmented treasure chart has surfaced in a neutral port, but each piece is held by a different crew.",
+    "A blockade has trapped a convoy of families and medicine ships behind a reef passage that only opens at low tide.",
+    "A ghost vessel has returned without its crew, carrying a log that names the next ship it will claim.",
+    "A captain was arrested under a false name, and the party must reach the prison island before the fleet sails.",
+    "A mutiny is brewing aboard a ship whose articles protect both the crew and the captain who broke them.",
+    "A sea-monster hunt is actually a rescue mission for sailors stranded on an island that appears only in storms.",
+  ];
+  const pirateComplications = [
+    "The chart is genuine, but following it violates a truce that keeps three ports from going to war.",
+    "The naval officer offering the contract has quietly voided the crew's pardon.",
+    "The rescued cargo belongs to a harbour community that cannot survive without it.",
+    "A rival crew knows the party's route because one of the allies is trying to buy their own freedom.",
+    "The apparent curse is tied to a real historical atrocity that the port's rulers want buried.",
+    "The safest harbour is controlled by someone the party just betrayed at sea.",
+  ];
+  const hook = pickFrom(
+    resolved.genre === "Pirate" ? pirateHooks : questConfig.hooks,
+    rng,
+  );
+  const complication = pickFrom(
+    resolved.genre === "Pirate"
+      ? pirateComplications
+      : questConfig.complications,
+    rng,
+  );
   const npcName = generateName(rng);
   const locationName = `The ${generateName(rng)} ${resolved.locationType}`;
 

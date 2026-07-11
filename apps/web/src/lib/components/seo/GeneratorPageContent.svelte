@@ -377,7 +377,9 @@
         ship.role = (shipConfig.rolesByGenre[mapped] ??
           shipConfig.rolesByGenre["Sci-Fi"])[0];
       }
-      activeTheme = "Sci-Fi / Space Opera";
+      activeTheme =
+        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
+        "Sci-Fi / Space Opera";
       return;
     }
     if (slug === "news-sheet-generator") {

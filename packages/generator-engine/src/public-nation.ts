@@ -337,6 +337,7 @@ ${pickFrom(societyDescriptions, rng)}
 ${pickFrom(nationHowToUse, rng)(stateName)}`;
 
   const lore = `### At a Glance
+- **Theme / Genre**: ${resolved.genre}
 - **Type**: ${resolved.polityType}
 - **Leader / Authority**: ${leaderName} — in control, for now
 - **Centre of Power**: ${capitalName}

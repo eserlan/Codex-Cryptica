@@ -25,6 +25,7 @@ import { parseFencedJson } from "./llm-response-utils";
 export const factionConfig = {
   themes: [
     "Classic Fantasy",
+    "Pirate",
     "Cyberpunk / Corporate",
     "Vampire / Gothic Noir",
     "Sci-Fi / Space Opera",
@@ -50,6 +51,16 @@ export const factionConfig = {
       "Thieves' Guild",
       "Noble House",
       "Knightly Order",
+    ],
+    Pirate: [
+      "Pirate Crew",
+      "Privateer Fleet",
+      "Smuggler Syndicate",
+      "Merchant Guild",
+      "Port Authority",
+      "Sea Cult",
+      "Salvager Guild",
+      "Mutineer Enclave",
     ],
     "Cyberpunk / Corporate": [
       "Secret Society",
@@ -179,6 +190,14 @@ export const factionConfig = {
       "Hidden stronghold",
       "Kingdom-wide network",
     ],
+    Pirate: [
+      "Single ship or port",
+      "Island chain",
+      "Trade route",
+      "Coastal region",
+      "Privateer theatre",
+      "Open-sea confederacy",
+    ],
     "Cyberpunk / Corporate": [
       "Single arcology block",
       "City megaplex",
@@ -268,6 +287,14 @@ export const factionConfig = {
       "Protect a hidden sanctuary from outside discovery.",
       "Break an old treaty that limits their expansion.",
       "Expose a rival faction's crimes without revealing their own.",
+    ],
+    Pirate: [
+      "Claim a hidden harbour before a naval patrol discovers it.",
+      "Recover a fragmented chart to a lost prize and decide who deserves it.",
+      "Break a blockade without abandoning the vessels trapped behind it.",
+      "Unite rival crews against a privateer fleet that has voided its charter.",
+      "Control the only safe passage through a storm-wracked strait.",
+      "Expose a port authority selling crew manifests to press gangs.",
     ],
     "Cyberpunk / Corporate": [
       "Seize majority stake in a rival megacorp before the hostile takeover closes.",
@@ -480,6 +507,8 @@ export const vampireConfig = {
 const FACTION_THEME_VOICE: Record<string, string> = {
   "Classic Fantasy":
     "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+  Pirate:
+    "system-neutral pirate adventure — crews, privateers, merchant companies, port authorities, island communities, sea cults, and contested trade routes",
   "Cyberpunk / Corporate":
     "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
   "Vampire / Gothic Noir":
@@ -525,6 +554,11 @@ const FACTION_NPC_NAMING_STYLES = [
 
 function factionBase(type: string, rng: Rng = defaultRng): string {
   const map: Record<string, string[]> = {
+    "Pirate Crew": [
+      "A crew-owned ship anchored in a neutral cove",
+      "A floating camp that moves between safe harbours",
+      "A hidden dockyard protected by shared articles",
+    ],
     "Merchant Guild": [
       "A bonded counting house whose ledgers are sealed by city charter",
       "A licensed exchange hall at the centre of the trade district",
@@ -703,6 +737,11 @@ function factionBase(type: string, rng: Rng = defaultRng): string {
 
 function factionResource(type: string, rng: Rng = defaultRng): string {
   const map: Record<string, string[]> = {
+    "Pirate Crew": [
+      "A crew-owned vessel, shared articles, and trusted anchorages along the coast",
+      "Prize cargo, tide charts, and intelligence traded by dockworkers and sailors",
+      "A reputation that can open a free port or trigger a naval manhunt",
+    ],
     "Merchant Guild": [
       "Exclusive trade licences, bonded debts, and letters of introduction that open every city gate",
       "Commodity price information days before it reaches the open market",
@@ -1058,6 +1097,7 @@ ${conflict} ${pickFrom(factionDangerClosers, rng)}
 ${pickFrom(factionHowToUse, rng)(name)}`;
 
   const lore = `### At the Table
+- **Theme / Genre**: ${theme}
 - **📍 Base**: ${factionBase(factionType, rng)}
 - **Resource**: ${factionResource(factionType, rng)}
 - **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members

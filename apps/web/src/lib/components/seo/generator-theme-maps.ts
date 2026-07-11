@@ -112,6 +112,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
 // Maps a resolved hub genre to the nearest ship-generator genre (the ship
 // generator's genre list doesn't line up 1:1 with the hub genre labels).
 export function mapHubGenreToShipGenre(hubGenre: string): string {
+  if (hubGenre === "Pirate") return "Pirate / Age of Sail";
   if (hubGenre === "Cyberpunk") return "Cyberpunk";
   if (hubGenre === "Post-Apocalyptic") return "Post-Apocalyptic";
   if (hubGenre === "Lancer") return "Lancer";

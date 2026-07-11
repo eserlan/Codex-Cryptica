@@ -33,6 +33,7 @@ describe("mapHubGenreToShipGenre", () => {
   it("passes through genres the ship generator supports directly", () => {
     expect(mapHubGenreToShipGenre("Cyberpunk")).toBe("Cyberpunk");
     expect(mapHubGenreToShipGenre("Fantasy")).toBe("Fantasy");
+    expect(mapHubGenreToShipGenre("Pirate")).toBe("Pirate / Age of Sail");
   });
 
   it("remaps genres the ship generator names differently", () => {
