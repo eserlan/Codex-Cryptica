@@ -25,6 +25,7 @@ export interface RandomIdeaCategory {
 // shared genre vocabulary instead, so map theme -> genre for those.
 export const themeToHubGenre: Record<string, string> = {
   "Classic Fantasy": "Fantasy",
+  Pirate: "Pirate",
   "Cyberpunk / Corporate": "Cyberpunk",
   "Vampire / Gothic Noir": "Horror",
   "Sci-Fi / Space Opera": "Sci-Fi",
