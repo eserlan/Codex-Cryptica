@@ -78,6 +78,7 @@ describe("GeneratorSwitcherMenu", () => {
     await fireEvent.click(screen.getByRole("button"));
 
     expect(screen.queryByText("Nomad Clan Generator")).toBeNull();
+    expect(screen.getByText("Ship Generator")).toBeTruthy();
   });
 
   it("shows horror-only generators when the world theme is horror", async () => {

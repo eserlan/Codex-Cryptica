@@ -43,6 +43,7 @@
       items: [
         { label: "Faction Generator", path: "/generators/faction" },
         { label: "Settlement Generator", path: "/generators/settlement" },
+        { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",
           path: "/generators/language-generator",
