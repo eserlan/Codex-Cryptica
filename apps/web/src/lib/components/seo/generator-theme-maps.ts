@@ -127,3 +127,24 @@ export function mapHubGenreToShipGenre(hubGenre: string): string {
   if (hubGenre === "Horror") return "Dark Fantasy";
   return "Sci-Fi";
 }
+
+// Maps the ship generator's more specific genre labels to the shared theme
+// labels used by SEOGeneratorLayout and the visual theme store.
+export function mapShipGenreToTheme(genre: string): string | null {
+  const themeByGenre: Record<string, string> = {
+    "Sci-Fi": "Sci-Fi / Space Opera",
+    "Space Opera": "Sci-Fi / Space Opera",
+    Cyberpunk: "Cyberpunk / Corporate",
+    "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
+    "Space Opera Resistance": "Space Opera Resistance",
+    Lancer: "Lancer",
+    "Post-Apocalyptic": "Post-Apocalyptic",
+    Fantasy: "Classic Fantasy",
+    "Pirate / Age of Sail": "Pirate",
+    Steampunk: "Steampunk",
+    "Dark Fantasy": "Vampire / Gothic Noir",
+    "Western (River & Rail)": "Western / Frontier",
+  };
+
+  return themeByGenre[genre] ?? null;
+}

@@ -39,6 +39,27 @@ describe("ShipFormFields", () => {
     expect(screen.getByText("Merchant Galleon")).toBeTruthy();
   });
 
+  it("notifies the page when the ship genre changes", async () => {
+    const onGenreChange = vi.fn();
+    render(ShipFormFields, {
+      props: {
+        genre: "Sci-Fi",
+        role: "Freighter",
+        scale: "Small crew ship",
+        condition: "Pristine",
+        tone: "Military",
+        campaignContext: "",
+        onGenreChange,
+      },
+    });
+
+    await fireEvent.change(screen.getByLabelText("Genre"), {
+      target: { value: "Fantasy" },
+    });
+
+    expect(onGenreChange).toHaveBeenCalledWith("Fantasy");
+  });
+
   it("randomizes fields and calls onSurprise when Surprise Me is clicked", async () => {
     const onSurprise = vi.fn();
     render(ShipFormFields, {

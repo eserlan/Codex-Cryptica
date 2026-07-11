@@ -10,6 +10,7 @@
     tone = $bindable(""),
     campaignContext = $bindable(""),
     onSurprise = undefined,
+    onGenreChange = undefined,
   }: {
     genre: string;
     role: string;
@@ -18,6 +19,7 @@
     tone: string;
     campaignContext: string;
     onSurprise?: () => void;
+    onGenreChange?: (genre: string) => void;
   } = $props();
 
   const selectClass =
@@ -40,6 +42,7 @@
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre"
   onvaluechange={(g) => {
+    onGenreChange?.(g);
     role = (shipConfig.rolesByGenre[g] ?? shipConfig.rolesByGenre["Sci-Fi"])[0];
     scale = (shipConfig.scalesByGenre?.[g] ?? shipConfig.scales)[0];
   }}

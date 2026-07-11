@@ -51,6 +51,7 @@
     SLUGS_USING_STORED_THEME,
     SOCIAL_HUB_GENRE_TO_THEME,
     mapHubGenreToShipGenre,
+    mapShipGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -642,6 +643,10 @@
         bind:condition={ship.condition}
         bind:tone={ship.tone}
         bind:campaignContext={ship.campaignContext}
+        onGenreChange={(genre) => {
+          const mappedTheme = mapShipGenreToTheme(genre);
+          if (mappedTheme) activeTheme = mappedTheme;
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "language-generator"}
