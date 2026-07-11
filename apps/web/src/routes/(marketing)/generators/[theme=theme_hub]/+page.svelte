@@ -200,6 +200,32 @@
         surpriseMeCard,
       ],
     },
+    pirate: {
+      label: "Pirate",
+      localStorageId: "pirate",
+      eyebrow: "Charts, Storms & Free Companies",
+      intro:
+        "Build mature nautical adventures across charted waters, storm-dark harbours, privateer courts, and strange seas. Generate crews, factions, settlements, ships, and the rumours that travel fastest by lantern light.",
+      metaTitle:
+        "Pirate RPG Generators — Crews, Ships, Factions & More | Codex Cryptica",
+      metaDescription:
+        "Free pirate RPG generators for tabletop GMs. Create crews, ships, factions, settlements, quest hooks, and names for nautical campaigns. No login required.",
+      cards: [
+        ...sharedCards(
+          "Port Generator",
+          "Build harbours, island settlements, and hidden coves with factions, trade routes, notable locations, and hooks.",
+        ),
+        shipCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Broadside Generator",
+          "Generate a shipboard broadside — harbour notices, prize claims, naval reports, and dockside rumours, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
     cyberpunk: {
       label: "Cyberpunk",
       localStorageId: "cyberpunk",

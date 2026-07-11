@@ -20,6 +20,7 @@ import { parseFencedJson } from "./llm-response-utils";
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
+  Pirate: "Pirate",
   "Cyberpunk / Corporate": "Cyberpunk",
   "Vampire / Gothic Noir": "Dark Fantasy",
   "Sci-Fi / Space Opera": "Sci-Fi",

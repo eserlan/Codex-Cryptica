@@ -169,6 +169,13 @@
       icon: "icon-[lucide--wand-sparkles]",
     },
     {
+      href: "/generators/pirate",
+      label: "Pirate Hub",
+      summary:
+        "Weathered charts, storm-dark harbours, free companies, and strange-sea adventures.",
+      icon: "icon-[lucide--ship-wheel]",
+    },
+    {
       href: "/generators/cyberpunk",
       label: "Cyberpunk Hub",
       summary:

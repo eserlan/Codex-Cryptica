@@ -5,6 +5,7 @@ import {
   DEFAULT_THEME,
   WORKSPACE_DARK,
   FANTASY_DARK,
+  PIRATE_DARK,
   MODERN_DARK,
   SCIFI_LIGHT,
   CYBERPUNK_LIGHT,
@@ -49,11 +50,21 @@ describe("Theme Schema & Definitions", () => {
     expect(fantasy.graph.edgeWidth).toBeLessThanOrEqual(2); // Reduced from 3
   });
 
-  it("defines light and dark counterparts for all 11 world themes", () => {
+  it("defines the Pirate light and dark themes with nautical contrast tokens", () => {
+    expect(THEMES.pirate.id).toBe("pirate");
+    expect(PIRATE_DARK.id).toBe("pirate_dark");
+    expect(THEMES.pirate.tokens.primary).toBe("#164e63");
+    expect(PIRATE_DARK.tokens.accent).toBe("#d0a456");
+    expect(() => StylingTemplateSchema.parse(THEMES.pirate)).not.toThrow();
+    expect(() => StylingTemplateSchema.parse(PIRATE_DARK)).not.toThrow();
+  });
+
+  it("defines light and dark counterparts for all 12 world themes", () => {
     const counterparts: Record<string, { light: any; dark: any }> = {
       workspace: { light: THEMES.workspace, dark: WORKSPACE_DARK },
       scifi: { light: SCIFI_LIGHT, dark: THEMES.scifi },
       fantasy: { light: THEMES.fantasy, dark: FANTASY_DARK },
+      pirate: { light: THEMES.pirate, dark: PIRATE_DARK },
       modern: { light: THEMES.modern, dark: MODERN_DARK },
       cyberpunk: { light: CYBERPUNK_LIGHT, dark: THEMES.cyberpunk },
       apocalyptic: { light: APOCALYPTIC_LIGHT, dark: THEMES.apocalyptic },
@@ -72,6 +83,7 @@ describe("Theme Schema & Definitions", () => {
       const expectedLightId =
         key === "workspace" ||
         key === "fantasy" ||
+        key === "pirate" ||
         key === "modern" ||
         key === "western"
           ? key
@@ -79,6 +91,7 @@ describe("Theme Schema & Definitions", () => {
       const expectedDarkId =
         key === "workspace" ||
         key === "fantasy" ||
+        key === "pirate" ||
         key === "modern" ||
         key === "western"
           ? `${key}_dark`
