@@ -15,6 +15,7 @@ export const languageConfig = {
     "Sci-Fi / Space Opera",
     "Modern Conspiracy",
     "Post-Apocalyptic",
+    "Pirate",
   ],
   tones: [
     "Harsh & Consonant-heavy",
@@ -53,6 +54,8 @@ const GENRE_HINTS: Record<string, string> = {
     "Mix plain modern-day words with coded slang or acronyms meant to obscure meaning from outsiders.",
   "Post-Apocalyptic":
     "Show visible decay of a prior language — corrupted, simplified, or merged fragments of real-world roots.",
+  Pirate:
+    "Build the language around shipboard life and free-port culture: clipped deck commands, tide and weather metaphors, crew oaths, trade slang, and layered loanwords from many ports. Avoid generic 'pirate speak' caricature and make it feel like a living contact language.",
 };
 
 export interface LanguageGeneratorOptions {
@@ -205,6 +208,7 @@ const GENRE_CONCEPT: Record<string, string> = {
   "Sci-Fi / Space Opera": "starship",
   "Modern Conspiracy": "secret",
   "Post-Apocalyptic": "ruin",
+  Pirate: "crew-oath",
 };
 
 function generateWord(
