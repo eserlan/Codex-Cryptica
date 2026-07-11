@@ -50,7 +50,7 @@ describe("generateShipLocal", () => {
 
     expect(result.content).toContain("## Captain, Officers & Crew");
     expect(result.lore).toContain("**Captain / Commander**:");
-    expect(result.lore).toContain("**Officers**:");
+    expect(result.lore).toContain("**Named Officers**:");
     expect(result.lore).toContain("**Crew Culture**:");
   });
 
@@ -125,7 +125,7 @@ describe("buildShipPrompt", () => {
     );
 
     expect(result.userMessage).toContain("- Captain / Commander:");
-    expect(result.userMessage).toContain("- Officers:");
+    expect(result.userMessage).toContain("- Named Officers:");
     expect(result.userMessage).toContain("- Crew Culture:");
     expect(result.userMessage).toContain("### Captain, Officers & Crew");
   });
@@ -137,7 +137,7 @@ describe("buildShipPrompt", () => {
     );
 
     expect(result.content).toContain("## Captain, Officers & Crew");
-    expect(result.lore).toContain("**Officers**:");
+    expect(result.lore).toContain("**Named Officers**:");
   });
 });
 

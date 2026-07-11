@@ -519,6 +519,33 @@ export const shipConfig = {
     ],
   } as Record<string, string[]>,
 
+  officerNamesByGenre: {
+    "Sci-Fi": [
+      "First Officer Nia Kest",
+      "Chief Engineer Bram Osei",
+      "Navigator Ilya Quill",
+      "Security Chief Ren Adebayo",
+      "Medic Tova Chen",
+      "Operations Lead Mara Venn",
+    ],
+    Fantasy: [
+      "First Mate Nessa Harrow",
+      "Master Navigator Corin Hale",
+      "Ship's Mage Aveline Rook",
+      "Boatswain Daro Flint",
+      "Purser Mira Bell",
+      "Surgeon Pell Orrow",
+    ],
+    "Pirate / Age of Sail": [
+      "Quartermaster Sela Crowfoot",
+      "Sailing Master Bram Tidewell",
+      "Gunner Inez Brasshook",
+      "Surgeon Odo Marrow",
+      "Boatswain Kessa Redwake",
+      "Navigator Jory Saltglass",
+    ],
+  } as Record<string, string[]>,
+
   complicationsByGenre: {
     "Sci-Fi": [
       "The cargo manifest does not match what is actually in the hold",
@@ -846,6 +873,7 @@ interface ResolvedShip {
   crewType: string;
   captain: string;
   officerProfile: string;
+  officerNames: string[];
   crewProfile: string;
   complication: string;
   secret: string;
@@ -887,6 +915,11 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     forGenre(shipConfig.officerProfilesByGenre, genre),
     rng,
   );
+  const officerNames = getRandomItems(
+    forGenre(shipConfig.officerNamesByGenre, genre),
+    3,
+    rng,
+  );
   const crewProfile = pickFrom(
     forGenre(shipConfig.crewProfilesByGenre, genre),
     rng,
@@ -918,6 +951,7 @@ function resolveShip(options: ShipGeneratorOptions, rng: Rng): ResolvedShip {
     crewType,
     captain,
     officerProfile,
+    officerNames,
     crewProfile,
     complication,
     secret,
@@ -974,15 +1008,16 @@ export function buildShipPrompt(
     crewType,
     captain,
     officerProfile,
+    officerNames,
     crewProfile,
     complication,
     secret,
     zones,
   } = resolved;
 
-  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Officers: ${officerProfile}\n- Crew Culture: ${crewProfile}`;
+  const commandPromptDetails = `\n- Captain / Commander: ${captain}\n- Named Officers: ${officerNames.join(", ")}\n- Officer Structure: ${officerProfile}\n- Crew Culture: ${crewProfile}`;
 
-  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n- **Officers**: ${officerProfile}\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
+  const commandLoreSection = `\\n\\n### Captain, Officers & Crew\\n- **Captain / Commander**: ${captain}\\n- **Named Officers**: ${officerNames.join(", ")}\\n- **Officer Structure**: ${officerProfile}\\n- **Crew Culture**: ${crewProfile}\\n- **Shipboard Tension**: [what could split this crew apart]`;
 
   const userMessage = `Generate a campaign-ready ship for a tabletop RPG session. The ship should answer these four questions through its output:
 1. What is this ship? (role, scale, condition, visual identity)
@@ -1114,6 +1149,7 @@ export function generateShipLocal(
     crewType,
     captain,
     officerProfile,
+    officerNames,
     crewProfile,
     complication,
     secret,
@@ -1126,7 +1162,7 @@ export function generateShipLocal(
 
   const conceptIdx = Math.floor(rng() * CORE_CONCEPT_VARIANTS.length);
   const historyIdx = Math.floor(rng() * HISTORY_VARIANTS.length);
-  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}. The officer corps is defined by ${officerProfile}. The crew's culture is defined by ${crewProfile}. Their loyalty is practical rather than ornamental: it survives as long as the chain of command, shared purpose, and next horizon remain worth defending.`;
+  const commandSection = `\n\n## Captain, Officers & Crew\n**${captain}** commands a ${crewType.toLowerCase()}. Named officers include **${officerNames.join("**, **")}**. The officer corps is defined by ${officerProfile}. The crew's culture is defined by ${crewProfile}. Their loyalty is practical rather than ornamental: it survives as long as the chain of command, shared purpose, and next horizon remain worth defending.`;
 
   const content = `## Core Concept
 ${CORE_CONCEPT_VARIANTS[conceptIdx](name, role, scale, condition, tone, complication)}
@@ -1155,7 +1191,8 @@ ${HISTORY_VARIANTS[historyIdx](name, role, affiliation, condition)}${commandSect
 - **Crew Complement**: ${crewType}
 - **Tone**: ${tone}
 - **Captain / Commander**: ${captain}
-- **Officers**: ${officerProfile}
+- **Named Officers**: ${officerNames.join(", ")}
+- **Officer Structure**: ${officerProfile}
 - **Crew Culture**: ${crewProfile}
 
 ### Key Zones
