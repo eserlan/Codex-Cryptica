@@ -4,6 +4,7 @@ import {
   DEFAULT_JARGON,
   WORKSPACE_DARK,
   FANTASY_DARK,
+  PIRATE_DARK,
   MODERN_DARK,
   SCIFI_LIGHT,
   CYBERPUNK_LIGHT,
@@ -78,6 +79,8 @@ export class ThemeStore {
           return WORKSPACE_DARK;
         case "fantasy":
           return FANTASY_DARK;
+        case "pirate":
+          return PIRATE_DARK;
         case "modern":
           return MODERN_DARK;
         case "western":
@@ -93,6 +96,8 @@ export class ThemeStore {
           return THEMES.workspace;
         case "fantasy":
           return THEMES.fantasy;
+        case "pirate":
+          return THEMES.pirate;
         case "modern":
           return THEMES.modern;
         case "scifi":

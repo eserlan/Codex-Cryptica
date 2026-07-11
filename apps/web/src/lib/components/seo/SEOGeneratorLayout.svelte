@@ -109,6 +109,7 @@
 
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
+    Pirate: "pirate",
     "Cyberpunk / Corporate": "cyberpunk",
     "Vampire / Gothic Noir": "horror",
     "Sci-Fi / Space Opera": "scifi",

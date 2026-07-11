@@ -31,6 +31,7 @@ export function shouldSyncGeneratorTheme(s: string) {
 
 export const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   fantasy: "Fantasy",
+  pirate: "Pirate",
   cyberpunk: "Cyberpunk",
   "sci-fi": "Sci-Fi",
   "post-apocalyptic": "Post-Apocalyptic",
@@ -54,6 +55,7 @@ export function resolveHubGeneratorGenre(theme: string | null): string | null {
 
 export const HUB_LABELS: Record<string, string> = {
   fantasy: "Fantasy Hub",
+  pirate: "Pirate Hub",
   cyberpunk: "Cyberpunk Hub",
   "sci-fi": "Sci-Fi Hub",
   "post-apocalyptic": "Post-Apocalyptic Hub",
@@ -68,7 +70,7 @@ export const HUB_LABELS: Record<string, string> = {
 export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
   Fantasy: "Classic Fantasy",
   "Dark Fantasy": "Vampire / Gothic Noir",
-  Pirate: "Classic Fantasy",
+  Pirate: "Pirate",
   Cyberpunk: "Cyberpunk / Corporate",
   "Sci-Fi": "Sci-Fi / Space Opera",
   Modern: "Modern Conspiracy",
@@ -85,6 +87,7 @@ export const SOCIAL_HUB_GENRE_TO_THEME: Record<string, string> = {
 // in several cases, e.g. "sci-fi" → "scifi", "vampire" → "horror").
 export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
   fantasy: "fantasy",
+  pirate: "pirate",
   cyberpunk: "cyberpunk",
   "sci-fi": "scifi",
   "post-apocalyptic": "apocalyptic",

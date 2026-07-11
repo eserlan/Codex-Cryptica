@@ -387,6 +387,8 @@ export const factionConfig = {
 export const themeIdToLabel: Record<string, string> = {
   fantasy: "Classic Fantasy",
   fantasy_dark: "Classic Fantasy",
+  pirate: "Pirate",
+  pirate_dark: "Pirate",
   cyberpunk: "Cyberpunk / Corporate",
   cyberpunk_light: "Cyberpunk / Corporate",
   horror: "Vampire / Gothic Noir",
