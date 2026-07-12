@@ -186,14 +186,17 @@ export class ImportSettingsController {
   };
 
   getPackImportStatus = (pack: CreaturePack) => {
-    const existingSlugs = new Set(
-      Object.values(this.deps.vault.entities).map((e) =>
+    // ⚡ Bolt Optimization: Replace inline Object.values(vault.entities).map() with
+    // an imperative loop over vault.allEntities to avoid intermediate array allocations
+    const existingSlugs = new Set<string>();
+    for (const e of this.deps.vault.allEntities) {
+      existingSlugs.add(
         e.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)/g, ""),
-      ),
-    );
+      );
+    }
     let importedCount = 0;
     for (const entry of pack.entries) {
       const slug = entry.title
@@ -491,9 +494,11 @@ export class ImportSettingsController {
         });
 
         const knownEntities: Record<string, string> = {};
-        Object.values(this.deps.vault.entities).forEach((e) => {
+        // ⚡ Bolt Optimization: Iterate directly over pre-cached vault.allEntities array
+        // to avoid Object.values array allocation on every text import
+        for (const e of this.deps.vault.allEntities) {
           knownEntities[e.title] = e.id;
-        });
+        }
 
         const chunks = splitTextIntoChunks(result.text);
         this.totalChunks = chunks.length;
