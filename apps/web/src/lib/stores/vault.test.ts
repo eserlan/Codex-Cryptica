@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
@@ -249,6 +249,20 @@ describe("VaultStore", () => {
     testVault = new VaultStore(mockRepository);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function scheduleSaveWithoutWaitingForDebounce(
+    entity: Parameters<typeof testVault.scheduleSave>[0],
+    elapsedMs = 400,
+  ) {
+    vi.useFakeTimers();
+    const scheduledSave = testVault.scheduleSave(entity);
+    await vi.advanceTimersByTimeAsync(elapsedMs);
+    await scheduledSave;
+  }
+
   describe("Tiered Loading and Reactivity", () => {
     it("should prioritize Cache for Chronicle, then OPFS for Lore/Chronicle", async () => {
       const entityId = "test-hero";
@@ -414,6 +428,7 @@ describe("VaultStore", () => {
     });
 
     it("should abort loading if vault changes during async operations", async () => {
+      vi.useFakeTimers();
       // Mock a slow preload
       vi.mocked(cacheService.preloadVault).mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -425,6 +440,7 @@ describe("VaultStore", () => {
       // Simulate rapid switch before preload finishes
       vi.mocked(vaultRegistry).activeVaultId = "new-vault" as any;
 
+      await vi.advanceTimersByTimeAsync(50);
       await loadPromise;
 
       // Should have aborted and NOT called repository.loadFiles for the old vault
@@ -533,7 +549,7 @@ describe("VaultStore", () => {
       mockRepository.entities = { [entity.id]: entity };
       testVault.entityStore.markContentLoaded(entity.id);
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity);
 
       expect(mockRepository.saveToDisk).toHaveBeenCalled();
       expect(cacheService.set).toHaveBeenCalled();
@@ -576,7 +592,7 @@ describe("VaultStore", () => {
         search: searchService,
       } as any);
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity);
       expect(mockRepository.saveToDisk).toHaveBeenCalled();
     });
 
@@ -611,7 +627,7 @@ describe("VaultStore", () => {
       const readFileSpy = (await import("../utils/opfs")).readFileAsText;
       vi.mocked(readFileSpy).mockResolvedValue("---\nlore: L\n---\nC");
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity);
 
       expect(testVault.entities["s1"].content).toBe("C");
       expect(testVault.entityStore.isContentLoaded("s1")).toBe(true);
@@ -626,7 +642,7 @@ describe("VaultStore", () => {
         new Error("Disk Error"),
       );
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity, 550);
       expect(testVault.status).toBe("error");
       expect(testVault.errorMessage).toContain("access storage");
     });

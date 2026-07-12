@@ -11,6 +11,7 @@
     "prepare": "svelte-kit sync || echo ''",
     "test": "vitest run",
     "test:unit": "vitest run",
+    "test:profile": "vitest run --reporter=verbose --silent=true",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "E2E_SMART=true playwright test --reporter=list,./tests/success-tracker-reporter.ts",
     "test:e2e:all": "playwright test --reporter=list,./tests/success-tracker-reporter.ts",
