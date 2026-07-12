@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { DriveRestClient } from "./gdrive-sync";
+import { DriveRestClient } from "../src/gdrive-sync";
 
 const ok = (body: unknown) => ({
   ok: true,

@@ -16,7 +16,7 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
-  import { initGDriveSync } from "$lib/services/gdrive-sync";
+  import { initGDriveSync } from "@codex/gdrive-sync";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";

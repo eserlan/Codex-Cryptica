@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  configureGDriveSync,
+  joinSharedVault,
+  gdriveAuthService,
+} from "../src";
 
-const getTokenWithScope = vi.fn();
-const runSync = vi.fn();
+const { runSync } = vi.hoisted(() => ({ runSync: vi.fn() }));
 const createVault = vi.fn();
 const getActiveVaultHandle = vi.fn();
 const getSpecificVaultHandle = vi.fn();
@@ -12,21 +16,9 @@ const listVaults = vi.fn();
 const emit = vi.fn();
 const getDB = vi.fn();
 
-vi.mock("../lib/services/gdrive-auth", () => ({
-  gdriveAuthService: {
-    getAccessToken: vi.fn(),
-    getTokenWithScope,
-    signOut: vi.fn(),
-  },
-}));
-
 vi.mock("comlink", () => ({
   proxy: (value: unknown) => value,
-  wrap: () => ({ runSync }),
-}));
-
-vi.mock("@codex/events", () => ({
-  appEventBus: { emit },
+  wrap: () => ({ runSync: (...args: unknown[]) => runSync(...args) }),
 }));
 
 vi.mock("@codex/sync-engine", () => ({
@@ -48,27 +40,13 @@ vi.mock("@codex/sync-engine", () => ({
   }),
 }));
 
-vi.mock("../lib/utils/idb", () => ({ getDB }));
-
-vi.mock("../lib/stores/vault.svelte", () => ({
-  vault: {
-    activeVaultId: "new-vault-id",
-    activeVaultRecord: { name: "New Vault" },
-    createVault,
-    getActiveVaultHandle,
-    getSpecificVaultHandle,
-  },
-}));
-
-vi.mock("../lib/stores/vault/registry", () => ({
-  listVaults,
-}));
-
 describe("gdrive-sync shared vault joins", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    getTokenWithScope.mockResolvedValue("drive-file-token");
+    vi.spyOn(gdriveAuthService, "getTokenWithScope").mockResolvedValue(
+      "drive-file-token",
+    );
     getDB.mockResolvedValue({});
     listVaults.mockResolvedValue([]);
     createVault.mockResolvedValue("new-vault-id");
@@ -77,8 +55,23 @@ describe("gdrive-sync shared vault joins", () => {
     });
     getActiveVaultHandle.mockResolvedValue({ kind: "directory" });
     getSpecificVaultHandle.mockResolvedValue({ kind: "directory" });
-    runSync.mockResolvedValue(undefined);
 
+    configureGDriveSync({
+      getDB,
+      appEventBus: { emit },
+      vault: {
+        activeVaultId: "new-vault-id",
+        activeVaultRecord: { name: "New Vault" },
+        createVault,
+        switchVault: vi.fn(),
+        getActiveVaultHandle,
+        getSpecificVaultHandle,
+      },
+      listVaults,
+    });
+
+    // The package creates a worker lazily; this endpoint only needs to exist
+    // because Comlink's real implementation is replaced above.
     vi.stubGlobal(
       "Worker",
       vi.fn().mockImplementation(function () {
@@ -90,7 +83,6 @@ describe("gdrive-sync shared vault joins", () => {
   });
 
   it("should join shared vaults with the broader drive scope", async () => {
-    const { joinSharedVault } = await import("../lib/services/gdrive-sync");
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValue({
       ok: true,
@@ -103,7 +95,7 @@ describe("gdrive-sync shared vault joins", () => {
 
     await joinSharedVault("shared-folder-id-1234567890");
 
-    expect(getTokenWithScope).toHaveBeenCalledWith(
+    expect(gdriveAuthService.getTokenWithScope).toHaveBeenCalledWith(
       "https://www.googleapis.com/auth/drive",
     );
     expect(fetchMock).toHaveBeenCalledWith(
@@ -120,13 +112,11 @@ describe("gdrive-sync shared vault joins", () => {
   });
 
   it("should reject invalid shared vault links before requesting auth", async () => {
-    const { joinSharedVault } = await import("../lib/services/gdrive-sync");
-
     await expect(joinSharedVault("not a drive folder")).rejects.toThrow(
       "Could not extract a folder ID from that link.",
     );
 
-    expect(getTokenWithScope).not.toHaveBeenCalled();
+    expect(gdriveAuthService.getTokenWithScope).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
   });
 });

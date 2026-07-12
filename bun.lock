@@ -46,6 +46,7 @@
         "@codex/canvas-engine": "workspace:*",
         "@codex/content-packs": "workspace:*",
         "@codex/events": "workspace:*",
+        "@codex/gdrive-sync": "workspace:*",
         "@codex/importer": "workspace:*",
         "@codex/oracle-engine": "workspace:*",
         "@codex/proposer": "workspace:*",
@@ -225,6 +226,24 @@
         "@vitest/coverage-v8": "^4.1.7",
         "eslint": "^10.6.0",
         "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
+    "packages/gdrive-sync": {
+      "name": "@codex/gdrive-sync",
+      "version": "0.0.0",
+      "dependencies": {
+        "@codex/events": "workspace:*",
+        "@codex/sync-engine": "workspace:*",
+        "comlink": "^4.4.2",
+        "idb": "^8.0.3",
+        "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/google.accounts": "^0.0.18",
+        "@vitest/coverage-v8": "^4.1.7",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.14",
         "vitest": "^4.1.7",
       },
     },
@@ -457,6 +476,8 @@
     "@codex/content-packs": ["@codex/content-packs@workspace:packages/content-packs"],
 
     "@codex/events": ["@codex/events@workspace:packages/events"],
+
+    "@codex/gdrive-sync": ["@codex/gdrive-sync@workspace:packages/gdrive-sync"],
 
     "@codex/importer": ["@codex/importer@workspace:packages/importer"],
 

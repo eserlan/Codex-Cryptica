@@ -1,15 +1,42 @@
 import { wrap, proxy } from "comlink";
-import { appEventBus } from "@codex/events";
 import {
   CloudSyncMetadataService,
   GDriveBackend,
   SyncRegistry,
 } from "@codex/sync-engine";
 import { gdriveAuthService } from "./gdrive-auth";
-import { getDB } from "../utils/idb";
-import { vault } from "../stores/vault.svelte";
-import { listVaults } from "../stores/vault/registry";
-import type { GDriveSyncWorker } from "../workers/gdrive-sync.worker";
+import type { GDriveSyncWorker } from "./gdrive-sync.worker";
+
+export interface GDriveSyncConfig {
+  getDB: () => Promise<any>;
+  appEventBus: { emit: (event: any) => void };
+  vault: {
+    activeVaultId: string | null;
+    activeVaultRecord: { name: string } | null;
+    createVault: (name: string) => Promise<string | null>;
+    switchVault: (vaultId: string) => Promise<void>;
+    getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | null>;
+    getSpecificVaultHandle: (
+      vaultId: string,
+    ) => Promise<FileSystemDirectoryHandle | null>;
+  };
+  listVaults: () => Promise<Array<{ id: string; name: string }>>;
+}
+
+let config: GDriveSyncConfig | null = null;
+
+export function configureGDriveSync(c: GDriveSyncConfig) {
+  config = c;
+}
+
+function getConfig(): GDriveSyncConfig {
+  if (!config) {
+    throw new Error(
+      "GDriveSync service has not been configured. Call configureGDriveSync first.",
+    );
+  }
+  return config;
+}
 
 let workerInstance: any = null;
 let isSyncing = false;
@@ -17,7 +44,7 @@ let isSyncing = false;
 function getWorker() {
   if (!workerInstance) {
     const worker = new Worker(
-      new URL("../workers/gdrive-sync.worker.ts", import.meta.url),
+      new URL("./gdrive-sync.worker.ts", import.meta.url),
       { type: "module" },
     );
     workerInstance = wrap<GDriveSyncWorker>(worker);
@@ -141,7 +168,8 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
   const token = await gdriveAuthService.getAccessToken();
   if (!token) throw new Error("Authentication failed");
 
-  const db = await getDB();
+  const cfg = getConfig();
+  const db = await cfg.getDB();
   const registry = new SyncRegistry(db);
   const metadataService = new CloudSyncMetadataService(registry);
   const driveBackend = new GDriveBackend(gdriveAuthService, vaultId);
@@ -149,7 +177,7 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
   let finalFolderId = folderId;
 
   if (!finalFolderId) {
-    const vaultName = vault.activeVaultRecord?.name || "Unnamed Vault";
+    const vaultName = cfg.vault.activeVaultRecord?.name || "Unnamed Vault";
     const rootFolderId = await driveRest.findOrCreateFolder(
       token,
       ROOT_FOLDER_NAME,
@@ -172,7 +200,7 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
     lastSyncToken: null,
   });
 
-  appEventBus.emit({
+  cfg.appEventBus.emit({
     type: "SYNC:DRIVE_CONNECTED",
     domain: "sync",
     payload: { vaultId, folderId: finalFolderId! },
@@ -184,13 +212,14 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
  * Disconnects a vault from Google Drive.
  */
 export async function disconnectVaultFromDrive(vaultId: string) {
-  const db = await getDB();
+  const cfg = getConfig();
+  const db = await cfg.getDB();
   const registry = new SyncRegistry(db);
   const metadataService = new CloudSyncMetadataService(registry);
 
   await metadataService.clearMetadata(vaultId);
 
-  appEventBus.emit({
+  cfg.appEventBus.emit({
     type: "SYNC:DRIVE_DISCONNECTED",
     domain: "sync",
     payload: { vaultId },
@@ -205,7 +234,8 @@ async function runWorkerSync(vaultId: string, direction: "push" | "pull") {
   if (isSyncing || (typeof navigator !== "undefined" && !navigator.onLine))
     return;
 
-  const db = await getDB();
+  const cfg = getConfig();
+  const db = await cfg.getDB();
   const ms = new CloudSyncMetadataService(new SyncRegistry(db));
   const metadata = await ms.getMetadata(vaultId);
 
@@ -214,9 +244,9 @@ async function runWorkerSync(vaultId: string, direction: "push" | "pull") {
   }
 
   const opfsHandle =
-    vault.activeVaultId === vaultId
-      ? await vault.getActiveVaultHandle()
-      : await vault.getSpecificVaultHandle(vaultId);
+    cfg.vault.activeVaultId === vaultId
+      ? await cfg.vault.getActiveVaultHandle()
+      : await cfg.vault.getSpecificVaultHandle(vaultId);
 
   if (!opfsHandle) {
     throw new Error("Failed to resolve vault storage handle");
@@ -232,7 +262,7 @@ async function runWorkerSync(vaultId: string, direction: "push" | "pull") {
     });
 
     const eventBusProxy = proxy({
-      emit: (event: any) => appEventBus.emit(event),
+      emit: (event: any) => cfg.appEventBus.emit(event),
     });
 
     await worker.runSync(
@@ -311,12 +341,13 @@ export async function importVaultFromDrive(
   driveFolderId: string,
   folderName: string,
 ) {
-  const db = await getDB();
+  const cfg = getConfig();
+  const db = await cfg.getDB();
   const registry = new SyncRegistry(db);
   const metadataService = new CloudSyncMetadataService(registry);
 
   // Check if any local vault is already connected to this Drive folder
-  const localVaults = await listVaults();
+  const localVaults = await cfg.listVaults();
   let targetVaultId: string | null = null;
 
   const vaultMetas = await Promise.all(
@@ -332,7 +363,7 @@ export async function importVaultFromDrive(
 
   if (!targetVaultId) {
     // Create a new local vault and switch to it
-    const newId = await vault.createVault(folderName);
+    const newId = await cfg.vault.createVault(folderName);
     if (!newId) throw new Error("Failed to create local vault");
     targetVaultId = newId;
 
@@ -343,15 +374,15 @@ export async function importVaultFromDrive(
       lastSyncToken: null,
     });
 
-    appEventBus.emit({
+    cfg.appEventBus.emit({
       type: "SYNC:DRIVE_CONNECTED",
       domain: "sync",
       payload: { vaultId: newId, folderId: driveFolderId },
       metadata: { timestamp: Date.now(), vaultId: newId },
     });
-  } else if (vault.activeVaultId !== targetVaultId) {
+  } else if (cfg.vault.activeVaultId !== targetVaultId) {
     // Switch to the existing matching vault so the user is taken to it
-    await vault.switchVault(targetVaultId);
+    await cfg.vault.switchVault(targetVaultId);
   }
 
   // Pull — DiffAlgorithm only downloads files newer than local (via registry)
