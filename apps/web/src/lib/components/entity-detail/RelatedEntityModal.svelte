@@ -5,7 +5,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+  import { textGenerationService } from "@codex/ai-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import type { ConnectedEntityPromptContext } from "schema";

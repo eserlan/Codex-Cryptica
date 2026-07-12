@@ -1,20 +1,20 @@
-import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
+import { getAISearchService, type AISearchService } from "./config";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
   private cachedVaultId: string | null = null;
-  private _searchService: any;
+  private _searchService?: AISearchService;
 
-  constructor(searchService?: any) {
+  constructor(searchService?: AISearchService) {
     this._searchService = searchService;
   }
 
   private get searchService() {
-    return this._searchService || defaultSearchService;
+    return this._searchService || getAISearchService();
   }
 
   getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {

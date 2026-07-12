@@ -87,7 +87,7 @@ vi.mock("../services/search.svelte", () => ({
   },
 }));
 
-vi.mock("../services/ai", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     clearStyleCache: vi.fn(),
     retrieveContext: vi.fn(),

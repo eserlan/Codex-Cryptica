@@ -25,7 +25,7 @@
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
-  import { interactionSessions } from "$lib/services/ai/interaction-session";
+  import { interactionSessions } from "@codex/ai-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { searchService } from "$lib/services/search.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";

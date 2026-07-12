@@ -6,7 +6,7 @@ vi.mock("../../lib/services/search.svelte", () => ({
   },
 }));
 
-import { DefaultTextGenerationService } from "../../lib/services/ai/text-generation.service.svelte";
+import { DefaultTextGenerationService } from "@codex/ai-engine";
 
 describe("TextGenerationService", () => {
   let mockModel: any;

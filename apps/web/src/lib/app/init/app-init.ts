@@ -5,6 +5,9 @@ import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { configureAIEngine } from "@codex/ai-engine";
+import { searchService } from "../../services/search.svelte";
+import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 
 /**
  * Core system bootstrapping.
@@ -16,6 +19,10 @@ export function bootSystem(stores: {
   sessionModeStore: any;
 }): boolean {
   debugStore.log("System booting: Initializing core stores...");
+  configureAIEngine({
+    searchService,
+    templateResolver: resolveTemplateSync,
+  });
   stores.categories.init();
 
   // Initialize staging state
@@ -418,7 +425,7 @@ export function setupWindowGlobals(context: {
   }
 
   // Lazy-load dynamic AI services if not already present
-  import("../../services/ai")
+  import("@codex/ai-engine")
     .then((m) => {
       if (m) {
         (window as any).textGeneration = m.textGenerationService;

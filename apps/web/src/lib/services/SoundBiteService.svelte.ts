@@ -32,7 +32,7 @@ import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
-import { aiClientManager } from "$lib/services/ai/client-manager";
+import { aiClientManager } from "@codex/ai-engine";
 import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
 import * as Comlink from "comlink";
 import type { TextGenerationService } from "schema";

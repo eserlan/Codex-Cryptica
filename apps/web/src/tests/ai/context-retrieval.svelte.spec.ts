@@ -6,7 +6,7 @@ vi.mock("../../lib/services/search.svelte", () => ({
   },
 }));
 
-import { DefaultContextRetrievalService } from "../../lib/services/ai/context-retrieval.service";
+import { DefaultContextRetrievalService } from "@codex/ai-engine";
 
 describe("ContextRetrievalService", () => {
   let mockVault: any;

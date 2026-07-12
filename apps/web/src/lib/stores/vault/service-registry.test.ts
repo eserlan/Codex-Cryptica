@@ -19,7 +19,7 @@ vi.mock("../../services/search.svelte", () => ({
   searchService: mocks.searchService,
 }));
 
-vi.mock("../../services/ai", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     clearStyleCache: mocks.clearStyleCache,
   },
@@ -73,7 +73,7 @@ describe("ServiceRegistry graceful degradation", () => {
     vi.doMock("../../services/search.svelte", () => {
       throw new Error("chunk load error");
     });
-    vi.doMock("../../services/ai", () => {
+    vi.doMock("@codex/ai-engine", () => {
       throw new Error("chunk load error");
     });
 

@@ -1,7 +1,7 @@
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { importQueue } from "$lib/stores/import-queue.svelte";
-import { aiClientManager } from "$lib/services/ai/client-manager";
+import { aiClientManager } from "@codex/ai-engine";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";

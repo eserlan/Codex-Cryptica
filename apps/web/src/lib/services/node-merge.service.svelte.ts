@@ -7,7 +7,7 @@ import {
   concatenateBody,
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
 import { vault } from "../stores/vault.svelte";
-import { textGenerationService } from "./ai/text-generation.service.svelte";
+import { textGenerationService } from "@codex/ai-engine";
 import { TIER_MODES } from "schema";
 import type { LocalEntity } from "../stores/vault/types";
 

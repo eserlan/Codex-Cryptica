@@ -19,7 +19,7 @@ export class ServiceRegistry {
 
     try {
       const { searchService } = await import("../../services/search.svelte");
-      const aiModule = await import("../../services/ai");
+      const aiModule = await import("@codex/ai-engine");
 
       this._services = {
         search: searchService,
