@@ -152,12 +152,28 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache validation artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            .eslintcache
+            apps/*/.eslintcache
+            packages/*/.eslintcache
+            apps/web/.svelte-kit
+            apps/web/node_modules/.vite
+            packages/vault-engine/node_modules/.vite
+          key: ${{ runner.os }}-validation-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-validation-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-validation-${{ github.ref_name }}-
+            ${{ runner.os }}-validation-
+
       - name: Lint
         env:
           WORKSPACES: ${{ needs.select-validation.outputs.lint }}
         run: |
           for workspace in $WORKSPACES; do
-            bun run --filter "$workspace" lint
+            bun run --filter "$workspace" lint -- --cache --cache-location .eslintcache
           done
 
       - name: Test
@@ -211,6 +227,18 @@ jobs:
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
+
+      - name: Cache build artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            apps/web/.svelte-kit
+            apps/web/node_modules/.vite
+          key: ${{ runner.os }}-build-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-build-${{ github.ref_name }}-
+            ${{ runner.os }}-build-
 
       - name: Build Application
         env:
