@@ -399,12 +399,14 @@ jobs:
           path: dist/
 
       - name: Download coverage reports
+        if: needs.test.result == 'success'
         uses: actions/download-artifact@v8
         with:
           name: coverage
           path: coverage-download/
 
       - name: Copy web coverage into preview
+        if: needs.test.result == 'success'
         run: |
           if [ -d "coverage-download/apps/web/coverage" ]; then
             cp -r coverage-download/apps/web/coverage dist/coverage
