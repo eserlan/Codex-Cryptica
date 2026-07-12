@@ -2,7 +2,7 @@
 
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import type { Snippet } from "svelte";
+import { tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 
@@ -179,8 +179,14 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         },
       });
 
-      // Let mount effects run
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await vi.waitFor(() => {
+        expect(mockGenerate).toHaveBeenCalled();
+        expect(
+          [...document.querySelectorAll('script[type="application/ld+json"]')]
+            .map((script) => JSON.parse(script.innerHTML))
+            .some((schema) => schema["@type"] === "Person"),
+        ).toBe(true);
+      });
 
       const scripts = document.querySelectorAll(
         'script[type="application/ld+json"]',
@@ -291,8 +297,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         },
       });
 
-      // Let onMount sync isOnline from navigator.onLine.
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await tick();
       mockGenerate.mockClear();
 
       const button = container.querySelector(
@@ -315,7 +320,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         },
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await tick();
       mockGenerate.mockClear();
 
       const button = container.querySelector(
