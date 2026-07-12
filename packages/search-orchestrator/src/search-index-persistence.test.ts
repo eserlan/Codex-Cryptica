@@ -187,12 +187,9 @@ describe("SearchIndexPersistence", () => {
     it("should fall back to raw JSON object if compression fails", async () => {
       // Mock global CompressionStream to throw
       const originalCS = globalThis.CompressionStream;
-      vi.stubGlobal(
-        "CompressionStream",
-        vi.fn().mockImplementation(() => {
-          throw new Error("Simulated stream error");
-        }),
-      );
+      globalThis.CompressionStream = vi.fn().mockImplementation(() => {
+        throw new Error("Simulated stream error");
+      }) as any;
 
       const mockIndexData = { keyCount: 5, segments: { a: 1, b: 2 } };
       mockApi.exportIndex.mockResolvedValue(mockIndexData);
@@ -207,7 +204,7 @@ describe("SearchIndexPersistence", () => {
         expect.any(Error),
       );
 
-      vi.stubGlobal("CompressionStream", originalCS);
+      globalThis.CompressionStream = originalCS;
     });
   });
 

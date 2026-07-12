@@ -5,8 +5,12 @@ import type {
 } from "@codex/search-engine";
 import type * as Comlink from "comlink";
 import Dexie from "dexie";
-import { entityDb } from "../utils/entity-db";
-import { debugStore } from "../stores/debug.svelte";
+
+type DebugLogger = {
+  log: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+};
 import type {
   SearchProgressCoordinator,
   TimerApi,
@@ -34,8 +38,8 @@ type PipelineApi = Pick<
 >;
 
 export interface SearchIndexPipelineDeps {
-  db?: typeof entityDb;
-  debug?: typeof debugStore;
+  db?: any;
+  debug?: DebugLogger;
   timers?: TimerApi;
   coordinator: SearchProgressCoordinator;
   getApi: () => Promise<Comlink.Remote<PipelineApi> | PipelineApi>;
@@ -44,8 +48,8 @@ export interface SearchIndexPipelineDeps {
 }
 
 export class SearchIndexPipeline {
-  private db: typeof entityDb;
-  private debug: typeof debugStore;
+  private db: any;
+  private debug: DebugLogger;
   private timers: TimerApi;
   private coordinator: SearchProgressCoordinator;
   private getApi: () => Promise<Comlink.Remote<PipelineApi> | PipelineApi>;
@@ -55,8 +59,8 @@ export class SearchIndexPipeline {
   needsFullContentSweep = false;
 
   constructor(deps: SearchIndexPipelineDeps) {
-    this.db = deps.db ?? entityDb;
-    this.debug = deps.debug ?? debugStore;
+    this.db = deps.db ?? (globalThis as any).__entityDb__;
+    this.debug = deps.debug ?? (globalThis as any).__debugStore__ ?? console;
     this.timers = deps.timers ?? globalThis;
     this.coordinator = deps.coordinator;
     this.getApi = deps.getApi;

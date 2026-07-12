@@ -49,6 +49,7 @@
         "@codex/oracle-engine": "workspace:*",
         "@codex/proposer": "workspace:*",
         "@codex/search-engine": "workspace:*",
+        "@codex/search-orchestrator": "workspace:*",
         "@codex/sync-engine": "workspace:*",
         "@codex/vault-engine": "workspace:*",
         "@floating-ui/dom": "^1.7.6",
@@ -326,6 +327,22 @@
         "vitest": "^4.1.7",
       },
     },
+    "packages/search-orchestrator": {
+      "name": "@codex/search-orchestrator",
+      "version": "0.0.0",
+      "dependencies": {
+        "@codex/events": "workspace:*",
+        "@codex/search-engine": "workspace:*",
+        "@codex/vault-engine": "workspace:*",
+      },
+      "devDependencies": {
+        "eslint": "^10.6.0",
+        "typescript": "^6.0.3",
+      },
+      "peerDependencies": {
+        "svelte": "^5.0.0",
+      },
+    },
     "packages/sync-engine": {
       "name": "@codex/sync-engine",
       "version": "0.0.0",
@@ -421,6 +438,8 @@
     "@codex/proposer": ["@codex/proposer@workspace:packages/proposer"],
 
     "@codex/search-engine": ["@codex/search-engine@workspace:packages/search-engine"],
+
+    "@codex/search-orchestrator": ["@codex/search-orchestrator@workspace:packages/search-orchestrator"],
 
     "@codex/sync-engine": ["@codex/sync-engine@workspace:packages/sync-engine"],
 

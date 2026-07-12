@@ -13,7 +13,7 @@ vi.hoisted(() => {
   (global as any).$state.raw = (v: any) => v;
 });
 
-vi.mock("$lib/services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
     getIndexProgress: vi.fn(() => ({
@@ -84,7 +84,7 @@ describe("SearchStore", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     const { vault } = await import("./vault.svelte");
-    const { searchService } = await import("$lib/services/search.svelte");
+    const { searchService } = await import("@codex/search-orchestrator");
 
     mockVault = vault;
     sessionModeStore.sharedMode = false;

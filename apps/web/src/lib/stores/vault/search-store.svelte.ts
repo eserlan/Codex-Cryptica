@@ -3,7 +3,7 @@ import type { LocalEntity } from "./types";
 import {
   buildSearchAliases,
   buildSearchKeywords,
-} from "../../services/search-entry-fields";
+} from "@codex/search-orchestrator";
 
 export class SearchStore {
   constructor(private _serviceRegistry: ServiceRegistry) {

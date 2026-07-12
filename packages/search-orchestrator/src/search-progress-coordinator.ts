@@ -1,5 +1,9 @@
 import type { SearchIndexProgress } from "@codex/search-engine";
-import { debugStore } from "../stores/debug.svelte";
+export type DebugLogger = {
+  log: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+};
 
 export type TimerApi = Pick<
   typeof globalThis,
@@ -21,7 +25,7 @@ const READY_PROGRESS: SearchIndexProgress = {
 };
 
 export interface SearchProgressCoordinatorDeps {
-  debug?: typeof debugStore;
+  debug?: DebugLogger;
   timers?: TimerApi;
   windowRef?: Window;
   onScheduledSave: (vaultId: string) => Promise<void>;
@@ -41,13 +45,13 @@ export class SearchProgressCoordinator {
     (progress: SearchIndexProgress) => void
   >();
 
-  private debug: typeof debugStore;
+  private debug: DebugLogger;
   private timers: TimerApi;
   private windowRef: Window | undefined;
   private onScheduledSave: (vaultId: string) => Promise<void>;
 
   constructor(deps: SearchProgressCoordinatorDeps) {
-    this.debug = deps.debug ?? debugStore;
+    this.debug = deps.debug ?? (globalThis as any).__debugStore__ ?? console;
     this.timers = deps.timers ?? globalThis;
     this.windowRef = deps.windowRef;
     this.onScheduledSave = deps.onScheduledSave;

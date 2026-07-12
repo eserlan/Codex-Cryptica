@@ -1,7 +1,11 @@
 import type { SearchEngine } from "@codex/search-engine";
 import type * as Comlink from "comlink";
-import { entityDb } from "../utils/entity-db";
-import { debugStore } from "../stores/debug.svelte";
+
+type DebugLogger = {
+  log: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+};
 import type { SearchProgressCoordinator } from "./search-progress-coordinator";
 
 type PersistenceApi = Pick<SearchEngine, "exportIndex" | "importIndex">;
@@ -59,23 +63,23 @@ function validateSegmentedIndexData(data: any): string | null {
 }
 
 export interface SearchIndexPersistenceDeps {
-  db?: typeof entityDb;
-  debug?: typeof debugStore;
+  db?: any;
+  debug?: DebugLogger;
   coordinator: SearchProgressCoordinator;
   getApi: () => Promise<Comlink.Remote<PersistenceApi> | PersistenceApi>;
 }
 
 export class SearchIndexPersistence {
-  private db: typeof entityDb;
-  private debug: typeof debugStore;
+  private db: any;
+  private debug: DebugLogger;
   private coordinator: SearchProgressCoordinator;
   private getApi: () => Promise<
     Comlink.Remote<PersistenceApi> | PersistenceApi
   >;
 
   constructor(deps: SearchIndexPersistenceDeps) {
-    this.db = deps.db ?? entityDb;
-    this.debug = deps.debug ?? debugStore;
+    this.db = deps.db ?? (globalThis as any).__entityDb__;
+    this.debug = deps.debug ?? (globalThis as any).__debugStore__ ?? console;
     this.coordinator = deps.coordinator;
     this.getApi = deps.getApi;
   }

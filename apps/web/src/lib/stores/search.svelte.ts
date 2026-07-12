@@ -1,8 +1,16 @@
 import type { SearchResult } from "schema";
 import type { SearchIndexProgress } from "@codex/search-engine";
 import { isEntityVisible } from "schema";
-import { searchService as defaultSearchService } from "$lib/services/search.svelte";
+import { searchService as defaultSearchService } from "@codex/search-orchestrator";
 import { debugStore } from "./debug.svelte";
+import { entityDb } from "../utils/entity-db";
+import { appEventBus } from "@codex/events";
+if (typeof globalThis !== "undefined") {
+  (globalThis as any).__entityDb__ = entityDb;
+  (globalThis as any).__debugStore__ = debugStore;
+  (globalThis as any).__appEventBus__ = appEventBus;
+}
+
 import { vault as defaultVault } from "./vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";

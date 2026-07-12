@@ -69,7 +69,7 @@ vi.mock("$lib/stores/debug.svelte", () => ({
 }));
 
 // Import after mock
-import { SearchService } from "$lib/services/search.svelte";
+import { SearchService } from "@codex/search-orchestrator";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 
@@ -87,8 +87,13 @@ function persistence(s: SearchService) {
 describe("SearchService", () => {
   let service: SearchService;
 
-  beforeEach(() => {
-    service = new SearchService();
+  beforeEach(async () => {
+    const { entityDb } = await import("$lib/utils/entity-db");
+    service = new SearchService({
+      db: entityDb,
+      debug: debugStore,
+      eventBus: vaultEventBus,
+    });
   });
 
   afterEach(() => {

@@ -1,10 +1,14 @@
 import type { SearchResult, SearchOptions } from "schema";
 import * as Comlink from "comlink";
 import type { SearchEngine, SearchIndexProgress } from "@codex/search-engine";
-import { debugStore } from "../stores/debug.svelte";
-import { entityDb } from "../utils/entity-db";
+type DebugLogger = {
+  log: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+};
+
 import { appEventBus } from "@codex/events";
-import { quickNoteStore } from "../stores/quicknote.svelte";
+
 import {
   SearchProgressCoordinator,
   type TimerApi,
@@ -30,9 +34,9 @@ type SearchApi = Pick<
 export interface SearchServiceDependencies {
   workerFactory?: () => Worker | Promise<Worker>;
   api?: Comlink.Remote<SearchApi> | SearchApi;
-  db?: typeof entityDb;
-  eventBus?: typeof appEventBus;
-  debug?: typeof debugStore;
+  db?: any;
+  eventBus?: any;
+  debug?: DebugLogger;
   timers?: TimerApi;
   windowRef?: Window;
   documentRef?: Document;
@@ -45,7 +49,7 @@ export class SearchService {
   private isInitialized = false;
 
   private workerFactory: () => Worker | Promise<Worker>;
-  private debug: typeof debugStore;
+  private debug: DebugLogger;
   private windowRef: Window | undefined;
   private coordinator: SearchProgressCoordinator;
   private pipeline: SearchIndexPipeline;
@@ -55,9 +59,12 @@ export class SearchService {
     this.workerFactory =
       dependencies.workerFactory ??
       (() =>
-        import("../workers/search.worker?worker").then((m) => new m.default()));
+        import("../../../apps/web/src/lib/workers/search.worker?worker").then(
+          (m) => new m.default(),
+        ));
     this.api = dependencies.api ?? null;
-    this.debug = dependencies.debug ?? debugStore;
+    this.debug =
+      dependencies.debug ?? (globalThis as any).__debugStore__ ?? console;
     const timers = dependencies.timers ?? globalThis;
     this.windowRef =
       dependencies.windowRef ??
@@ -75,14 +82,14 @@ export class SearchService {
     });
 
     this.persistence = new SearchIndexPersistence({
-      db: dependencies.db,
+      db: dependencies.db ?? (globalThis as any).__entityDb__,
       debug: this.debug,
       coordinator: this.coordinator,
       getApi: () => this.ensureWorker(),
     });
 
     this.pipeline = new SearchIndexPipeline({
-      db: dependencies.db,
+      db: dependencies.db ?? (globalThis as any).__entityDb__,
       debug: this.debug,
       timers,
       coordinator: this.coordinator,
@@ -92,7 +99,10 @@ export class SearchService {
     });
 
     new SearchIndexLifecycle({
-      eventBus: dependencies.eventBus ?? appEventBus,
+      eventBus:
+        dependencies.eventBus ??
+        (globalThis as any).__appEventBus__ ??
+        appEventBus,
       coordinator: this.coordinator,
       windowRef: this.windowRef,
       documentRef,
@@ -235,12 +245,12 @@ export class SearchService {
       results = rawResult as SearchResult[];
     }
 
-    const quickNotes = quickNoteStore.activeNotes;
+    const quickNotes = (globalThis as any).__quickNoteStore__?.activeNotes;
     if (quickNotes?.length > 0) {
       const q = query.toLowerCase();
       const noteResults: SearchResult[] = quickNotes
-        .filter((n) => n.content.toLowerCase().includes(q))
-        .map((note) => {
+        .filter((n: any) => n.content.toLowerCase().includes(q))
+        .map((note: any) => {
           const first = note.content.trim().split("\n")[0] || "Untitled Note";
           return {
             id: `quicknote-${note.id}`,

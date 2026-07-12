@@ -1,4 +1,4 @@
-import { searchService as defaultSearchService } from "../search.svelte";
+import { searchService as defaultSearchService } from "@codex/search-orchestrator";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
