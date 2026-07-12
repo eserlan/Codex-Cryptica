@@ -3,7 +3,7 @@ import {
   type DiscoveryProposal,
 } from "@codex/oracle-engine";
 import type { Entity } from "schema";
-import { interactionSessions } from "../../services/ai/interaction-session";
+import { interactionSessions } from "@codex/ai-engine";
 import type {
   EntityRevisionRequest,
   EntityRevisionResult,

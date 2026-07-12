@@ -6,7 +6,7 @@ import {
   aiClientManager,
   InteractionExpiredError,
   type DefaultAIClientManager,
-} from "$lib/services/ai/client-manager";
+} from "@codex/ai-engine";
 
 const GENERATOR_MODEL = "gemini-3.1-flash-lite";
 const GENERATOR_GENERATION_CONFIG = {

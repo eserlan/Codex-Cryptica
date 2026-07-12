@@ -1,3 +1,12 @@
+vi.mock("@codex/ai-engine", () => ({
+  textGenerationService: {
+    generateStructuredEntity: vi.fn(),
+  },
+  contextRetrievalService: {
+    retrieveContext: vi.fn().mockResolvedValue({ content: "mocked context" }),
+  },
+}));
+
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // Mock Svelte 5 effects and derived stubs for test environment before importing the store
@@ -7,19 +16,6 @@ if (!(globalThis as any).$derived) {
   (globalThis as any).$derived = (v: any) => v;
 }
 (globalThis as any).$derived.by = (fn: any) => fn();
-
-// Mock dependencies of quicknote.svelte.ts
-vi.mock("../services/ai/text-generation.service.svelte", () => ({
-  textGenerationService: {
-    generateStructuredEntity: vi.fn(),
-  },
-}));
-
-vi.mock("../services/ai/context-retrieval.service", () => ({
-  contextRetrievalService: {
-    retrieveContext: vi.fn().mockResolvedValue({ content: "mocked context" }),
-  },
-}));
 
 vi.mock("./oracle.svelte", () => ({
   oracle: {
@@ -35,9 +31,10 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
+// Mock dependencies of quicknote.svelte.ts
 import { QuickNoteStore } from "./quicknote.svelte";
 import type { QuickNoteRecord } from "../services/QuickNoteService";
-import { textGenerationService } from "../services/ai/text-generation.service.svelte";
+import { textGenerationService } from "@codex/ai-engine";
 import { vault } from "./vault.svelte";
 
 describe("QuickNoteStore (Svelte 5 Runes)", () => {
@@ -70,12 +67,7 @@ describe("QuickNoteStore (Svelte 5 Runes)", () => {
       archiveNote: vi.fn().mockResolvedValue(undefined),
       elevateNote: vi.fn().mockResolvedValue(undefined),
     };
-
-    mockVaultRegistry = {
-      activeVaultId: "vault-1",
-    };
-
-    // Instantiate store with our dependencies
+    mockVaultRegistry = { activeVaultId: "vault-1" };
     store = new QuickNoteStore(mockService, mockVaultRegistry);
   });
 

@@ -8,8 +8,8 @@ import {
 import { entityDb } from "$lib/utils/entity-db";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
-import { imageGenerationService } from "$lib/services/ai/image-generation.service";
-import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+import { imageGenerationService } from "@codex/ai-engine";
+import { textGenerationService } from "@codex/ai-engine";
 import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 
 const WORLD_IMAGE_MODEL = "gemini-2.5-flash-image";
@@ -43,9 +43,7 @@ const worldService = new WorldServiceImplementation({
         targetModel,
         {
           provider: oracle.settings.imageProvider as
-            | "gemini"
-            | "cloudflare"
-            | "custom",
+            "gemini" | "cloudflare" | "custom",
           baseUrl: oracle.settings.customImageBaseUrl,
           cloudflareAccountId: oracle.settings.cloudflareAccountId,
         },

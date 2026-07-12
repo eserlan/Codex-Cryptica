@@ -1,7 +1,7 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
-import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
-import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service.svelte";
-import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
+import { contextRetrievalService as defaultContextRetrieval } from "@codex/ai-engine";
+import { textGenerationService as defaultTextGeneration } from "@codex/ai-engine";
+import { imageGenerationService as defaultImageGeneration } from "@codex/ai-engine";
 import { searchService as defaultSearchService } from "@codex/search-orchestrator";
 import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";

@@ -5,7 +5,7 @@ import {
   buildVisualPromptGenerationPrompt,
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
-import { GEMINI_API_BASE_URL } from "../../config/oracle-constants";
+import { GEMINI_API_BASE_URL } from "./config";
 import { classifyApiError } from "./api-error-classifier";
 
 export class DefaultImageGenerationService implements ImageGenerationService {

@@ -14,7 +14,7 @@ import {
   buildEntityRevisionPromptCore,
   buildEntityRevisionUserPrompt,
 } from "./prompts/entity-revision";
-import { resolveTemplateSync } from "../EntityTemplateConstants";
+import { resolveAITemplate } from "./config";
 import {
   safeSnapshot,
   extractJsonFromModelResponse,
@@ -86,7 +86,7 @@ export class TextGenerationRevisionService {
       : cleanEntity;
 
     const loreTemplate = sanitizedEntity?.type
-      ? resolveTemplateSync(sanitizedEntity.type, options?.themeId) || undefined
+      ? resolveAITemplate(sanitizedEntity.type, options?.themeId) || undefined
       : undefined;
     const promptCore = buildEntityRevisionPromptCore(
       sanitizedEntity,
