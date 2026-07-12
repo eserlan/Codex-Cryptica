@@ -1,41 +1,21 @@
-import type { Point } from "schema";
+import type {
+  ChatMessagePayload,
+  EncounterSession,
+  LegacyTokenVisibility,
+  SessionMode,
+  Token,
+} from "map-engine";
 
-export type SessionMode = "exploration" | "combat";
-export type TokenVisibility = "all" | "gm-only";
-export type LegacyTokenVisibility = TokenVisibility | "owner-only";
-
-export interface PingState {
-  x: number;
-  y: number;
-  peerId: string;
-  color: string;
-  timestamp: number;
-}
-
-export interface Token {
-  id: string;
-  entityId: string | null;
-  name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-  zIndex: number;
-  ownerPeerId: string | null;
-  ownerGuestName: string | null;
-  visibleTo: TokenVisibility;
-  color: string;
-  imageUrl: string | null;
-  statusEffects: string[];
-}
-
-export interface MeasurementState {
-  active: boolean;
-  start: Point | null;
-  end: Point | null;
-  locked?: boolean;
-}
+export type {
+  ChatMessagePayload,
+  EncounterSession,
+  LegacyTokenVisibility,
+  MeasurementState,
+  PingState,
+  SessionMode,
+  Token,
+  TokenVisibility,
+} from "map-engine";
 
 export interface SharedTokenImageState {
   title: string;
@@ -52,28 +32,6 @@ export interface InitiativeEntry {
   tokenId: string;
   initiativeValue: number;
   hasActed: boolean;
-}
-
-export interface EncounterSession {
-  id: string;
-  name: string;
-  mapId: string;
-  mode: SessionMode;
-  tokens: Record<string, Token>;
-  initiativeOrder: string[];
-  initiativeValues: Record<string, number>;
-  round: number;
-  turnIndex: number;
-  selection: string | null;
-  sessionFogMask: string | null;
-  lastPing: PingState | null;
-  measurement: MeasurementState;
-  createdAt: number;
-  savedAt: number | null;
-  chatMessages: ChatMessagePayload[];
-  gridSize?: number;
-  gridUnit?: string;
-  gridDistance?: number;
 }
 
 export interface EncounterSnapshotSummary {
@@ -284,25 +242,6 @@ export interface SetGridSettingsPayload {
   gridSize?: number;
   gridUnit?: string;
   gridDistance?: number;
-}
-
-export interface ChatMessagePayload {
-  type: "CHAT_MESSAGE";
-  sender: string;
-  senderId: string;
-  content: string;
-  timestamp: number;
-  roll?: {
-    formula: string;
-    total: number;
-    parts: Array<{
-      type: "dice" | "modifier";
-      value: number;
-      sides?: number;
-      rolls?: number[];
-      dropped?: number[];
-    }>;
-  };
 }
 
 export interface ChatClearPayload {

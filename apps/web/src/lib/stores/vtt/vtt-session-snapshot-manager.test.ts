@@ -58,6 +58,21 @@ describe("VTTSessionSnapshotManager", () => {
     expect(harness.state.lastPing).toBeNull();
   });
 
+  it("repairs negative turns without mutating the saved snapshot", () => {
+    const harness = createSnapshotManagerHarness();
+    const manager = new VTTSessionSnapshotManager(harness.deps);
+    const snapshot = createFullEncounterSessionFixture();
+    snapshot.turnIndex = -3;
+    snapshot.selection = "missing-token";
+
+    manager.applySnapshot(snapshot);
+
+    expect(harness.state.turnIndex).toBe(0);
+    expect(harness.state.selection).toBeNull();
+    expect(snapshot.turnIndex).toBe(-3);
+    expect(snapshot.selection).toBe("missing-token");
+  });
+
   it("emits a canonical session snapshot when applied non-silently", () => {
     const harness = createSnapshotManagerHarness();
     const manager = new VTTSessionSnapshotManager(harness.deps);
