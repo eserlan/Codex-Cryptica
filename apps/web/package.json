@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@codex/ai-engine": "workspace:*",
+    "@codex/audio-engine": "workspace:*",
     "@codex/canvas-engine": "workspace:*",
     "@codex/content-packs": "workspace:*",
     "@codex/events": "workspace:*",

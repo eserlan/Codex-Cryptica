@@ -2,7 +2,7 @@
   import type { Entity, VaultEntitySummary } from "schema";
   import type { SoundBiteVoiceMode } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
-  import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
+  import { soundBiteService } from "@codex/audio-engine";
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
   import { onMount } from "svelte";
 
