@@ -25,8 +25,6 @@ describe("deploy workflow critical path", () => {
       "needs: [select-validation, type-check, lint, test, build]",
     );
     expect(workflow).toContain("needs: [build, lint, test, type-check]");
-    expect(workflow).toContain(
-      "cp -r coverage-download/apps/web/coverage dist/coverage",
-    );
+    expect(workflow).toContain("cp -r apps/web/coverage dist/coverage");
   });
 });
