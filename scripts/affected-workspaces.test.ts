@@ -54,4 +54,13 @@ describe("selectAffectedWorkspaces", () => {
     expect(result.workspaces).toHaveLength(4);
     expect(result.full).toBe(true);
   });
+
+  test("does not select workspaces for documentation-only changes", () => {
+    const result = selectAffectedWorkspaces(workspaces, [
+      "README.md",
+      "docs/TESTING.md",
+    ]);
+    expect(result.workspaces).toEqual([]);
+    expect(result.full).toBe(false);
+  });
 });

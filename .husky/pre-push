@@ -31,7 +31,7 @@ if [ "$blog_only" = "true" ]; then
 	exit 0
 fi
 
-base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^)"
+base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
 affected="$(bun scripts/affected-workspaces.mjs --base "$base" --head HEAD | sed -n 's/^Affected workspaces: //p' | tr ',' ' ')"
 
 if [ -z "$affected" ] || [ "$affected" = "none" ]; then

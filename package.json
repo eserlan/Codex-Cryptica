@@ -22,7 +22,7 @@
     "test:affected": "bun run --filter '*' test -- --changed",
     "test:coverage": "bun run --filter '*' test:coverage",
     "validate:full": "bun run lint:types && bun run lint && bun run test:coverage && bun run build",
-    "validate:affected": "bun scripts/affected-workspaces.mjs",
+    "validate:affected": "bun scripts/affected-workspaces.mjs --run",
     "test:e2e": "bun run --filter web test:e2e",
     "test:e2e:all": "bun run --filter web test:e2e:all",
     "test:e2e:failed": "bun run --filter web test:e2e:failed",

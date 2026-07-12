@@ -12,6 +12,10 @@ const FULL_VALIDATION_FILES = new Set([
   "tsconfig.json",
 ]);
 
+function isDocumentationPath(file) {
+  return file.startsWith("docs/") || file.endsWith(".md");
+}
+
 export async function loadWorkspaces(root = process.cwd()) {
   const workspaces = [];
   for (const workspaceRoot of WORKSPACE_ROOTS) {
@@ -53,7 +57,7 @@ export function selectAffectedWorkspaces(
           file.startsWith(".github/") ||
           file.startsWith("scripts/") ||
           (!WORKSPACE_ROOTS.some((root) => file.startsWith(`${root}/`)) &&
-            !file.startsWith("docs/")),
+            !isDocumentationPath(file)),
       );
 
   if (fullReason) {
@@ -112,6 +116,7 @@ async function main() {
   const base = option("--base");
   const head = option("--head") ?? "HEAD";
   const forceFull = process.argv.includes("--full");
+  const runValidation = process.argv.includes("--run");
   if (!base && !forceFull) throw new Error("Pass --base <git-ref> or --full");
 
   const changedFiles = forceFull
@@ -154,6 +159,18 @@ async function main() {
 
   console.log(`Affected workspaces: ${names.join(", ") || "none"}`);
   for (const name of names) console.log(`- ${name}: ${result.reasons[name]}`);
+
+  if (runValidation) {
+    for (const workspace of result.workspaces) {
+      for (const script of ["lint", "test"]) {
+        if (!workspace.scripts[script]) continue;
+        console.log(`Running ${script} for ${workspace.name}`);
+        execFileSync("bun", ["run", "--filter", workspace.name, script], {
+          stdio: "inherit",
+        });
+      }
+    }
+  }
 }
 
 if (import.meta.main)

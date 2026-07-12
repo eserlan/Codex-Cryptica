@@ -18,6 +18,10 @@ on:
         description: Run every workspace check
         type: boolean
         default: true
+      base_ref:
+        description: Base ref for an affected-only manual run
+        type: string
+        default: staging
 
 concurrency:
   group: "cloudflare-pages-${{ github.ref }}"
@@ -54,13 +58,15 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          BEFORE_SHA: ${{ github.event.before }}
+          BASE_REF: ${{ inputs.base_ref }}
           FORCE_FULL: ${{ inputs.full_validation }}
         run: |
-          if [ "$EVENT_NAME" != "pull_request" ] || [ "$FORCE_FULL" = "true" ]; then
+          if [ "$EVENT_NAME" = "push" ] || [ "$FORCE_FULL" = "true" ]; then
             bun scripts/affected-workspaces.mjs --full | tee selection.txt
-          else
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
             bun scripts/affected-workspaces.mjs --base "$BASE_SHA" --head HEAD | tee selection.txt
+          else
+            bun scripts/affected-workspaces.mjs --base "origin/$BASE_REF" --head HEAD | tee selection.txt
           fi
           {
             echo "## Validation scope"

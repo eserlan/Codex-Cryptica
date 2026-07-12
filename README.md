@@ -71,7 +71,7 @@ bun run test:coverage
 bun run test:e2e
 ```
 
-Use `bun run validate:affected -- --base origin/staging` for dependency-aware local validation.
+Use `bun run validate:affected -- --base origin/staging` to lint and test affected workspaces locally.
 Use `bun run validate:full` before releases or whenever a complete workspace check is needed.
 
 Coverage reports are generated in the `coverage/` directory of each package and the `apps/web/` directory. An HTML report is also available for visual inspection.
