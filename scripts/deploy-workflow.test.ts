@@ -15,16 +15,16 @@ describe("deploy workflow critical path", () => {
 
   test("does not serialize the build behind validation jobs", () => {
     expect(workflow).not.toContain(
-      "needs: [select-validation, type-check, lint-test]",
+      "needs: [select-validation, type-check, lint, test]",
     );
   });
 
   test("keeps coverage and all required jobs behind the validation gate", () => {
     expect(workflow).toContain('bun run --filter "$workspace" test:coverage');
     expect(workflow).toContain(
-      "needs: [select-validation, type-check, lint-test, build]",
+      "needs: [select-validation, type-check, lint, test, build]",
     );
-    expect(workflow).toContain("needs: [build, lint-test, type-check]");
+    expect(workflow).toContain("needs: [build, lint, test, type-check]");
     expect(workflow).toContain(
       "cp -r coverage-download/apps/web/coverage dist/coverage",
     );
