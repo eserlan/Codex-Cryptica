@@ -281,11 +281,12 @@ jobs:
     steps:
       - name: Require successful validation
         env:
+          SELECT_VALIDATION_RESULT: ${{ needs.select-validation.result }}
           TYPE_CHECK_RESULT: ${{ needs.type-check.result }}
           LINT_TEST_RESULT: ${{ needs.lint-test.result }}
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
-          for result in "$TYPE_CHECK_RESULT" "$LINT_TEST_RESULT" "$BUILD_RESULT"; do
+          for result in "$SELECT_VALIDATION_RESULT" "$TYPE_CHECK_RESULT" "$LINT_TEST_RESULT" "$BUILD_RESULT"; do
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
               echo "::error::Required validation job finished with: $result"
               exit 1
@@ -297,8 +298,9 @@ jobs:
       always() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') &&
       needs.build.result == 'success' &&
-      needs.lint-test.result == 'success'
-    needs: [build, lint-test]
+      needs.lint-test.result == 'success' &&
+      (needs.type-check.result == 'success' || needs.type-check.result == 'skipped')
+    needs: [build, lint-test, type-check]
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
