@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
@@ -65,9 +65,14 @@ function makeService(
 
 describe("EntityPersistenceService disk-write resilience", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     cacheSet.mockClear();
     cacheGetEntityContent.mockClear();
     cacheGetEntityContent.mockResolvedValue(null);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("retries a transiently failing disk write and still persists", async () => {
@@ -85,8 +90,10 @@ describe("EntityPersistenceService disk-write resilience", () => {
     };
     const { svc } = makeService(saveToDisk, entities);
 
-    await svc.scheduleSave(entities.hero as any);
-    await svc.flushPendingSaves();
+    const scheduledSave = svc.scheduleSave(entities.hero as any);
+    const flush = svc.flushPendingSaves();
+    await vi.advanceTimersByTimeAsync(50);
+    await Promise.all([scheduledSave, flush]);
 
     // First attempt threw, retry succeeded — and the cache write only happens
     // after a successful disk write (no silent divergence).
@@ -101,8 +108,10 @@ describe("EntityPersistenceService disk-write resilience", () => {
     const entities = { hero: { id: "hero", title: "Hero", connections: [] } };
     const { svc } = makeService(saveToDisk, entities);
 
-    await svc.scheduleSave(entities.hero as any);
-    await svc.flushPendingSaves();
+    const scheduledSave = svc.scheduleSave(entities.hero as any);
+    const flush = svc.flushPendingSaves();
+    await vi.advanceTimersByTimeAsync(150);
+    await Promise.all([scheduledSave, flush]);
 
     // 3 attempts within the single _persistEntity call, all failed.
     expect(saveToDisk).toHaveBeenCalledTimes(3);

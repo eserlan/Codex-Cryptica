@@ -1,21 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GraphImageManager } from "./ImageManager";
 
-async function waitFor(assertion: () => void, options = { timeout: 1000 }) {
-  const start = Date.now();
-  while (true) {
-    try {
-      assertion();
-      return;
-    } catch (e) {
-      if (Date.now() - start > options.timeout) {
-        throw e;
-      }
-      await new Promise((r) => setTimeout(r, 10));
-    }
-  }
-}
-
 describe("GraphImageManager", () => {
   let mockCy: any;
   let mockNode: any;
@@ -43,6 +28,10 @@ describe("GraphImageManager", () => {
   it("should update style after applying images", async () => {
     const manager = new GraphImageManager(mockCy);
     const resolveImageUrl = vi.fn().mockResolvedValue("blob:url");
+    let notifyBatchApplied: () => void;
+    const batchApplied = new Promise<void>((resolve) => {
+      notifyBatchApplied = resolve;
+    });
 
     // Setup node data
     mockNode.data.mockImplementation((key: string) => {
@@ -54,13 +43,12 @@ describe("GraphImageManager", () => {
     manager.sync({
       showImages: true,
       resolveImageUrl,
+      onBatchApplied: notifyBatchApplied,
     });
 
-    // Wait for the async processing in ImageManager
-    await waitFor(() => {
-      expect(mockStyle.update).toHaveBeenCalled();
-    });
+    await batchApplied;
 
+    expect(mockStyle.update).toHaveBeenCalled();
     expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url");
   });
 
@@ -68,6 +56,10 @@ describe("GraphImageManager", () => {
     const manager = new GraphImageManager(mockCy);
     const resolveImageUrl = vi.fn().mockResolvedValue("blob:url1");
     const releaseImageUrl = vi.fn();
+    let notifyFirstBatch: () => void;
+    const firstBatchApplied = new Promise<void>((resolve) => {
+      notifyFirstBatch = resolve;
+    });
 
     // 1st Sync
     mockNode.data.mockImplementation((key: string) => {
@@ -76,9 +68,14 @@ describe("GraphImageManager", () => {
       return null;
     });
 
-    manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
+    manager.sync({
+      showImages: true,
+      resolveImageUrl,
+      releaseImageUrl,
+      onBatchApplied: notifyFirstBatch,
+    });
 
-    await waitFor(() => expect(mockStyle.update).toHaveBeenCalled());
+    await firstBatchApplied;
 
     // Setup node for being "resolved" for the clear step
     mockNode.data.mockImplementation((key: string) => {
@@ -93,17 +90,26 @@ describe("GraphImageManager", () => {
 
     // 2nd Sync - should call resolveImageUrl again because cache was cleared
     resolveImageUrl.mockResolvedValue("blob:url2");
+    let notifySecondBatch: () => void;
+    const secondBatchApplied = new Promise<void>((resolve) => {
+      notifySecondBatch = resolve;
+    });
     mockNode.data.mockImplementation((key: string) => {
       if (key === "image") return "path/to/image.png";
       if (key === "resolvedImage") return null;
       return null;
     });
 
-    manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
-
-    await waitFor(() => {
-      expect(resolveImageUrl).toHaveBeenCalledTimes(2);
-      expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
+    manager.sync({
+      showImages: true,
+      resolveImageUrl,
+      releaseImageUrl,
+      onBatchApplied: notifySecondBatch,
     });
+
+    await secondBatchApplied;
+
+    expect(resolveImageUrl).toHaveBeenCalledTimes(2);
+    expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
   });
 });

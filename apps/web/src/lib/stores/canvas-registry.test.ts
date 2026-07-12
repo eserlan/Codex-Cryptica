@@ -215,7 +215,7 @@ describe("CanvasRegistryStore", () => {
       const canvasId = canvasRegistry.allCanvases[0].id!;
       const before = canvasRegistry.allCanvases[0].lastModified || 0;
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.spyOn(Date, "now").mockReturnValue(before + 1);
       await canvasRegistry.addEntities(canvasId, ["entity-1"]);
 
       const after = canvasRegistry.allCanvases[0].lastModified || 0;

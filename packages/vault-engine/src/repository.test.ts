@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 import { VaultRepository } from "./repository.svelte";
 import type { IFileIOAdapter } from "./repository.svelte";
 
@@ -17,6 +17,10 @@ describe("VaultRepository", () => {
     } as any;
 
     repository = new VaultRepository(mockAdapter);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("should initialize empty entities", () => {
@@ -99,6 +103,7 @@ describe("VaultRepository", () => {
   });
 
   it("should queue scheduled saves", async () => {
+    vi.useFakeTimers();
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockEntity = { id: "e1", title: "Test" } as any;
     const onStatusChange = vi.fn();
@@ -119,6 +124,7 @@ describe("VaultRepository", () => {
     expect(onStatusChange).toHaveBeenCalledWith("saving");
     expect(repository.pendingSaveCount).toBe(1);
 
+    await vi.advanceTimersByTimeAsync(10);
     await savePromise;
 
     expect(onStatusChange).toHaveBeenCalledWith("idle");

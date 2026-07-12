@@ -1,8 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 // Triggering new CI run to verify coverage
 import { SequentialTaskQueue, KeyedTaskQueue } from "./queue";
 
 describe("SequentialTaskQueue", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("should execute tasks sequentially", async () => {
     const queue = new SequentialTaskQueue();
     const results: number[] = [];
@@ -23,6 +31,7 @@ describe("SequentialTaskQueue", () => {
 
     expect(queue.pendingCount).toBe(2);
 
+    await vi.advanceTimersByTimeAsync(50);
     await Promise.all([p1, p2]);
 
     expect(results).toEqual([1, 2]);
@@ -52,6 +61,14 @@ describe("SequentialTaskQueue", () => {
 });
 
 describe("KeyedTaskQueue", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("should manage separate queues per key", async () => {
     const queue = new KeyedTaskQueue();
     const results: Record<string, number[]> = { a: [], b: [] };
@@ -68,6 +85,7 @@ describe("KeyedTaskQueue", () => {
     const p1 = queue.enqueue("a", taskA);
     const p2 = queue.enqueue("b", taskB);
 
+    await vi.advanceTimersByTimeAsync(20);
     await Promise.all([p1, p2]);
 
     // b should finish first because it's a different queue and didn't wait
@@ -97,7 +115,9 @@ describe("KeyedTaskQueue", () => {
       finished++;
     });
 
-    await queue.waitForAll();
+    const completed = queue.waitForAll();
+    await vi.advanceTimersByTimeAsync(20);
+    await completed;
     expect(finished).toBe(2);
   });
 });
