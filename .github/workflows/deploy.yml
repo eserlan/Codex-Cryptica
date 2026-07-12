@@ -118,10 +118,10 @@ jobs:
             bun run --filter "$workspace" lint:types
           done
 
-  lint-test:
-    name: Lint and Test
+  lint:
+    name: Lint
     needs: select-validation
-    if: needs.select-validation.outputs.affected != ''
+    if: needs.select-validation.outputs.lint != ''
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -152,21 +152,18 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Cache validation artifacts
+      - name: Cache lint artifacts
         uses: actions/cache@v6
         with:
           path: |
             .eslintcache
             apps/*/.eslintcache
             packages/*/.eslintcache
-            apps/web/.svelte-kit
-            apps/web/node_modules/.vite
-            packages/vault-engine/node_modules/.vite
-          key: ${{ runner.os }}-validation-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          key: ${{ runner.os }}-lint-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-validation-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
-            ${{ runner.os }}-validation-${{ github.ref_name }}-
-            ${{ runner.os }}-validation-
+            ${{ runner.os }}-lint-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-lint-${{ github.ref_name }}-
+            ${{ runner.os }}-lint-
 
       - name: Lint
         env:
@@ -175,6 +172,53 @@ jobs:
           for workspace in $WORKSPACES; do
             bun run --filter "$workspace" lint -- --cache --cache-location .eslintcache
           done
+
+  test:
+    name: Test
+    needs: select-validation
+    if: needs.select-validation.outputs.test_coverage != ''
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Cache test artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            apps/web/.svelte-kit
+            apps/web/node_modules/.vite
+            packages/vault-engine/node_modules/.vite
+          key: ${{ runner.os }}-test-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-test-${{ github.ref_name }}-
+            ${{ runner.os }}-test-
 
       - name: Test
         env:
@@ -304,17 +348,18 @@ jobs:
   validation-gate:
     name: Validation Gate
     if: always()
-    needs: [select-validation, type-check, lint-test, build]
+    needs: [select-validation, type-check, lint, test, build]
     runs-on: ubuntu-latest
     steps:
       - name: Require successful validation
         env:
           SELECT_VALIDATION_RESULT: ${{ needs.select-validation.result }}
           TYPE_CHECK_RESULT: ${{ needs.type-check.result }}
-          LINT_TEST_RESULT: ${{ needs.lint-test.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_RESULT: ${{ needs.test.result }}
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
-          for result in "$SELECT_VALIDATION_RESULT" "$TYPE_CHECK_RESULT" "$LINT_TEST_RESULT" "$BUILD_RESULT"; do
+          for result in "$SELECT_VALIDATION_RESULT" "$TYPE_CHECK_RESULT" "$LINT_RESULT" "$TEST_RESULT" "$BUILD_RESULT"; do
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
               echo "::error::Required validation job finished with: $result"
               exit 1
@@ -326,9 +371,10 @@ jobs:
       always() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') &&
       needs.build.result == 'success' &&
-      needs.lint-test.result == 'success' &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
       (needs.type-check.result == 'success' || needs.type-check.result == 'skipped')
-    needs: [build, lint-test, type-check]
+    needs: [build, lint, test, type-check]
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
