@@ -28,6 +28,7 @@ describe("GraphImageManager", () => {
   it("should update style after applying images", async () => {
     const manager = new GraphImageManager(mockCy);
     const resolveImageUrl = vi.fn().mockResolvedValue("blob:url");
+    const releaseImageUrl = vi.fn();
     let notifyBatchApplied: () => void;
     const batchApplied = new Promise<void>((resolve) => {
       notifyBatchApplied = resolve;
@@ -43,6 +44,7 @@ describe("GraphImageManager", () => {
     manager.sync({
       showImages: true,
       resolveImageUrl,
+      releaseImageUrl,
       onBatchApplied: notifyBatchApplied,
     });
 

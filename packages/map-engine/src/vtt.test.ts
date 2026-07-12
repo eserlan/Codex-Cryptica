@@ -50,7 +50,20 @@ describe("VTT domain normalization", () => {
       measurement: { active: true, start: { x: 1, y: 2 }, end: { x: 3, y: 4 } },
       createdAt: 1,
       savedAt: null,
-      chatMessages: [],
+      chatMessages: [
+        {
+          type: "CHAT_MESSAGE" as const,
+          sender: "Guide",
+          senderId: "host",
+          content: "Roll",
+          timestamp: 1,
+          roll: {
+            formula: "1d20",
+            total: 17,
+            parts: [{ type: "dice" as const, value: 17, rolls: [17] }],
+          },
+        },
+      ],
     };
 
     const normalized = normalizeEncounterSession(session);
@@ -59,5 +72,12 @@ describe("VTT domain normalization", () => {
     expect(normalized.turnIndex).toBe(0);
     expect(normalized.tokens["token-1"]).not.toBe(session.tokens["token-1"]);
     expect(normalized.measurement.start).not.toBe(session.measurement.start);
+    expect(normalized.chatMessages).not.toBe(session.chatMessages);
+    expect(normalized.chatMessages[0].roll?.parts).not.toBe(
+      session.chatMessages[0].roll?.parts,
+    );
+    expect(normalized.chatMessages[0].roll?.parts[0].rolls).not.toBe(
+      session.chatMessages[0].roll?.parts[0].rolls,
+    );
   });
 });

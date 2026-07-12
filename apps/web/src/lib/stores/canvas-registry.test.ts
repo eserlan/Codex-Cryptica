@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { canvasRegistry } from "./canvas-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import * as vaultIO from "./vault/io";
@@ -42,6 +42,10 @@ describe("CanvasRegistryStore", () => {
       enqueue: vi.fn((id, cb) => cb()),
     } as any);
     notificationStore.confirm = vi.fn().mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("should create a new canvas with proper metadata and slug", async () => {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
-// Triggering new CI run to verify coverage
 import { SequentialTaskQueue, KeyedTaskQueue } from "./queue";
 
 describe("SequentialTaskQueue", () => {
