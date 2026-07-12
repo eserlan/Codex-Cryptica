@@ -17,6 +17,7 @@ import type {
   Entity,
   VaultEntitySummary,
   VoiceProfile,
+  TextGenerationService,
 } from "schema";
 import {
   SoundBiteGenerationError,
@@ -28,18 +29,61 @@ import {
   buildGeminiVoiceName,
   type TTSService,
 } from "@codex/oracle-engine";
-import { vault } from "$lib/stores/vault.svelte";
-import { oracle } from "$lib/stores/oracle.svelte";
-import { debugStore } from "$lib/stores/debug.svelte";
-import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
-import { aiClientManager } from "$lib/services/ai/client-manager";
-import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
 import * as Comlink from "comlink";
-import type { TextGenerationService } from "schema";
+
+export interface AudioEngineDependencies {
+  vault: {
+    getActiveVaultHandle: () => Promise<any>;
+    updateEntity: (id: string, data: any) => Promise<unknown>;
+  };
+  oracle: {
+    effectiveApiKey?: string | null;
+    modelName?: string | null;
+    textGeneration: any;
+    contextRetrieval: any;
+  };
+  debugStore: {
+    log: (msg: string, ...args: any[]) => void;
+    warn: (msg: string, ...args: any[]) => void;
+    error: (msg: string, ...args: any[]) => void;
+  };
+  oracleBridge: {
+    isReady: boolean;
+  };
+  aiClientManager: {
+    getModel: (apiKey: string, modelName: string, config?: any) => Promise<any>;
+  };
+  writeOpfsFile: (
+    path: string[],
+    blob: Blob,
+    handle: any,
+    name: string,
+  ) => Promise<void>;
+  deleteOpfsEntry: (
+    handle: any,
+    segments: string[],
+    name: string,
+  ) => Promise<void>;
+}
+
+let deps: AudioEngineDependencies;
+
+export function initAudioEngine(audioDeps: AudioEngineDependencies) {
+  deps = audioDeps;
+}
+
+function getDeps(): AudioEngineDependencies {
+  if (!deps) {
+    throw new Error(
+      "[AudioEngine] Not initialized. Call initAudioEngine() first.",
+    );
+  }
+  return deps;
+}
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
-class SoundBiteServiceClass {
+export class SoundBiteService {
   isRevising = $state(false);
   result = $state<SoundBiteResult | null>(null);
   error = $state<string | null>(null);
@@ -68,18 +112,19 @@ class SoundBiteServiceClass {
     this.error = null;
 
     try {
-      const apiKey = oracle.effectiveApiKey ?? "";
-      const modelName = oracle.modelName ?? "gemini-flash-lite-latest";
+      const apiKey = getDeps().oracle.effectiveApiKey ?? "";
+      const modelName =
+        getDeps().oracle.modelName ?? "gemini-flash-lite-latest";
 
-      debugStore.log(
-        `[SoundBiteService] generate start — entity="${entity.title}" voiceMode=${voiceMode} model=${modelName} hasApiKey=${!!apiKey} textGeneration=${oracle.textGeneration ? "present" : "MISSING"} contextRetrieval=${oracle.contextRetrieval ? "present" : "MISSING"}`,
+      getDeps().debugStore.log(
+        `[SoundBiteService] generate start — entity="${entity.title}" voiceMode=${voiceMode} model=${modelName} hasApiKey=${!!apiKey} textGeneration=${getDeps().oracle.textGeneration ? "present" : "MISSING"} contextRetrieval=${getDeps().oracle.contextRetrieval ? "present" : "MISSING"}`,
       );
 
       const generator = getSoundBiteGenerator(
         buildTextGenerationForSoundBite(),
-        oracle.contextRetrieval,
+        getDeps().oracle.contextRetrieval,
         new SoundBiteTTSService(),
-        debugStore,
+        getDeps().debugStore,
       );
 
       // Reuse the saved voice profile for TTS only when the voice mode matches
@@ -92,7 +137,7 @@ class SoundBiteServiceClass {
           ? (this.savedSoundBite?.voiceProfile as VoiceProfile | undefined)
           : undefined;
 
-      debugStore.log(
+      getDeps().debugStore.log(
         `[SoundBiteService] voice profile reuse: savedMode=${savedMode ?? "none"} currentMode=${voiceMode} → ${savedProfile ? `reusing (${savedProfile.gender} ${savedProfile.ageRange})` : "letting LLM decide"}`,
       );
 
@@ -103,12 +148,12 @@ class SoundBiteServiceClass {
         voiceProfile: savedProfile,
       });
 
-      debugStore.log(
+      getDeps().debugStore.log(
         `[SoundBiteService] generate success — transcript length: ${result.transcript.length}`,
       );
       this.result = result;
     } catch (err) {
-      debugStore.error("[SoundBiteService] generate error", err);
+      getDeps().debugStore.error("[SoundBiteService] generate error", err);
       if (err instanceof SoundBiteContentPolicyError) {
         this.error =
           "Couldn't generate a sound bite for this entity. Try enriching its lore.";
@@ -136,9 +181,9 @@ class SoundBiteServiceClass {
     this.error = null;
 
     try {
-      const apiKey = oracle.effectiveApiKey ?? "";
+      const apiKey = getDeps().oracle.effectiveApiKey ?? "";
 
-      debugStore.log(
+      getDeps().debugStore.log(
         `[SoundBiteService] synthesizeCustomText start — entity="${entity.title}" text="${text.slice(0, 50)}..." voiceMode=${voiceMode}`,
       );
 
@@ -178,9 +223,14 @@ class SoundBiteServiceClass {
         voiceProfile: profile,
       };
 
-      debugStore.log(`[SoundBiteService] synthesizeCustomText success`);
+      getDeps().debugStore.log(
+        `[SoundBiteService] synthesizeCustomText success`,
+      );
     } catch (err: any) {
-      debugStore.error("[SoundBiteService] synthesizeCustomText error", err);
+      getDeps().debugStore.error(
+        "[SoundBiteService] synthesizeCustomText error",
+        err,
+      );
       this.error = err.message ?? "Failed to synthesize custom text.";
     } finally {
       this.isRevising = false;
@@ -202,21 +252,21 @@ class SoundBiteServiceClass {
 
     if (this.result.audioBlob) {
       try {
-        const vaultHandle = await vault.getActiveVaultHandle();
+        const vaultHandle = await getDeps().vault.getActiveVaultHandle();
         if (!vaultHandle) throw new Error("No active vault handle");
         const filename = `${entity.id}_soundbite.wav`;
-        await writeOpfsFile(
+        await getDeps().writeOpfsFile(
           ["audio", filename],
           this.result.audioBlob,
           vaultHandle,
           vaultHandle.name,
         );
         audioFile = `audio/${filename}`;
-        debugStore.log(
+        getDeps().debugStore.log(
           `[SoundBiteService] audio saved to vault — ${audioFile}`,
         );
       } catch (err) {
-        debugStore.warn(
+        getDeps().debugStore.warn(
           "[SoundBiteService] could not save audio file, falling back to base64",
           err,
         );
@@ -235,7 +285,7 @@ class SoundBiteServiceClass {
       generatedAt: Date.now(),
     };
 
-    await vault.updateEntity(entity.id, { soundBite });
+    await getDeps().vault.updateEntity(entity.id, { soundBite });
     this.savedSoundBite = soundBite;
   }
 
@@ -244,25 +294,25 @@ class SoundBiteServiceClass {
     const filename = entity.soundBite?.audioFile;
     if (filename) {
       try {
-        const vaultHandle = await vault.getActiveVaultHandle();
+        const vaultHandle = await getDeps().vault.getActiveVaultHandle();
         if (vaultHandle) {
           const segments = filename.split("/");
-          await deleteOpfsEntry(vaultHandle, segments, vaultHandle.name).catch(
-            () => {},
-          );
-          debugStore.log(
+          await getDeps()
+            .deleteOpfsEntry(vaultHandle, segments, vaultHandle.name)
+            .catch(() => {});
+          getDeps().debugStore.log(
             `[SoundBiteService] deleted OPFS audio file: ${filename}`,
           );
         }
       } catch (err) {
-        debugStore.warn(
+        getDeps().debugStore.warn(
           "[SoundBiteService] failed to delete OPFS audio file",
           err,
         );
       }
     }
 
-    await vault.updateEntity(entity.id, { soundBite: undefined });
+    await getDeps().vault.updateEntity(entity.id, { soundBite: undefined });
     this.savedSoundBite = null;
     this.result = null;
   }
@@ -284,8 +334,8 @@ class SoundBiteServiceClass {
  * Comlink when the oracle bridge (worker) is active.
  */
 function buildTextGenerationForSoundBite(): TextGenerationService {
-  const tg = oracle.textGeneration;
-  if (!oracleBridge.isReady) return tg;
+  const tg = getDeps().oracle.textGeneration;
+  if (!getDeps().oracleBridge.isReady) return tg;
 
   return {
     ...(tg as any),
@@ -311,6 +361,27 @@ function buildTextGenerationForSoundBite(): TextGenerationService {
 }
 
 /**
+ * Cascade: ProxiedGemini first, then WebSpeech as last-resort fallback.
+ */
+class SoundBiteTTSService implements TTSService {
+  private readonly gemini = new ProxiedGeminiTTSService();
+  private readonly webSpeech = new WebSpeechTTSService();
+
+  async synthesize(
+    text: string,
+    voiceProfile: VoiceProfile,
+    apiKey: string,
+  ): Promise<Blob | null> {
+    const blob = await this.gemini.synthesize(text, voiceProfile, apiKey);
+    if (blob) return blob;
+    getDeps().debugStore.log(
+      "[SoundBiteTTS] Gemini returned null — falling back to WebSpeech",
+    );
+    return this.webSpeech.synthesize(text, voiceProfile, apiKey);
+  }
+}
+
+/**
  * TTS service that routes through aiClientManager.
  *
  * When apiKey is empty, aiClientManager.getModel() returns a proxy-backed model
@@ -325,16 +396,18 @@ class ProxiedGeminiTTSService implements TTSService {
   ): Promise<Blob | null> {
     try {
       const voiceName = buildGeminiVoiceName(voiceProfile);
-      debugStore.log(`[ProxiedGeminiTTS] synthesize — voice=${voiceName}`);
+      getDeps().debugStore.log(
+        `[ProxiedGeminiTTS] synthesize — voice=${voiceName}`,
+      );
 
       const styleInstruction = buildVoiceStyleInstruction(voiceProfile);
       if (styleInstruction) {
-        debugStore.log(
+        getDeps().debugStore.log(
           `[ProxiedGeminiTTS] style instruction: "${styleInstruction}" (computed but ignored for gemini-2.5-flash-preview-tts due to Google 500 bug)`,
         );
       }
 
-      const model = await aiClientManager.getModel(
+      const model = await getDeps().aiClientManager.getModel(
         apiKey,
         "gemini-2.5-flash-preview-tts",
         undefined, // bypass systemInstruction for TTS to prevent Google 500 error
@@ -370,7 +443,7 @@ class ProxiedGeminiTTSService implements TTSService {
         "audio/pcm";
 
       if (!audioData) {
-        debugStore.warn(
+        getDeps().debugStore.warn(
           `[ProxiedGeminiTTS] No audio data in response — candidates: ${JSON.stringify(candidates).slice(0, 200)}`,
         );
         return null;
@@ -380,7 +453,7 @@ class ProxiedGeminiTTSService implements TTSService {
         mimeType.match(/rate=(\d+)/i)?.[1] ?? "24000",
         10,
       );
-      debugStore.log(
+      getDeps().debugStore.log(
         `[ProxiedGeminiTTS] Got audio data (${audioData.length} base64 chars, mime=${mimeType}, rate=${sampleRate})`,
       );
       const binary = atob(audioData);
@@ -389,30 +462,9 @@ class ProxiedGeminiTTSService implements TTSService {
 
       return pcmBytesToWav(bytes, sampleRate);
     } catch (err) {
-      debugStore.error("[ProxiedGeminiTTS] synthesize failed", err);
+      getDeps().debugStore.error("[ProxiedGeminiTTS] synthesize failed", err);
       return null;
     }
-  }
-}
-
-/**
- * Cascade: ProxiedGemini first, then WebSpeech as last-resort fallback.
- */
-class SoundBiteTTSService implements TTSService {
-  private readonly gemini = new ProxiedGeminiTTSService();
-  private readonly webSpeech = new WebSpeechTTSService();
-
-  async synthesize(
-    text: string,
-    voiceProfile: VoiceProfile,
-    apiKey: string,
-  ): Promise<Blob | null> {
-    const blob = await this.gemini.synthesize(text, voiceProfile, apiKey);
-    if (blob) return blob;
-    debugStore.log(
-      "[SoundBiteTTS] Gemini returned null — falling back to WebSpeech",
-    );
-    return this.webSpeech.synthesize(text, voiceProfile, apiKey);
   }
 }
 
@@ -430,4 +482,5 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 // ─── Singleton export ─────────────────────────────────────────────────────────
 
-export const soundBiteService = new SoundBiteServiceClass();
+export const soundBiteService = new SoundBiteService();
+export default soundBiteService;
