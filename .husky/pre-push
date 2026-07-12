@@ -32,13 +32,4 @@ if [ "$blog_only" = "true" ]; then
 fi
 
 base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
-affected="$(bun scripts/affected-workspaces.mjs --base "$base" --head HEAD | sed -n 's/^Affected workspaces: //p' | tr ',' ' ')"
-
-if [ -z "$affected" ] || [ "$affected" = "none" ]; then
-	exit 0
-fi
-
-for workspace in $affected; do
-	bun run --filter "$workspace" lint --if-present
-	bun run --filter "$workspace" test --if-present
-done
+bun scripts/affected-workspaces.mjs --base "$base" --head HEAD --run
