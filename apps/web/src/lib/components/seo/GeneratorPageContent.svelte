@@ -51,6 +51,7 @@
     SLUGS_USING_STORED_THEME,
     SOCIAL_HUB_GENRE_TO_THEME,
     mapHubGenreToShipGenre,
+    mapShipGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -377,7 +378,9 @@
         ship.role = (shipConfig.rolesByGenre[mapped] ??
           shipConfig.rolesByGenre["Sci-Fi"])[0];
       }
-      activeTheme = "Sci-Fi / Space Opera";
+      activeTheme =
+        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
+        "Sci-Fi / Space Opera";
       return;
     }
     if (slug === "news-sheet-generator") {
@@ -640,6 +643,10 @@
         bind:condition={ship.condition}
         bind:tone={ship.tone}
         bind:campaignContext={ship.campaignContext}
+        onGenreChange={(genre) => {
+          const mappedTheme = mapShipGenreToTheme(genre);
+          if (mappedTheme) activeTheme = mappedTheme;
+        }}
         onSurprise={trigger}
       />
     {:else if slug === "language-generator"}

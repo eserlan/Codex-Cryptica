@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,
+  mapShipGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
 } from "./generator-theme-maps";
@@ -33,6 +34,7 @@ describe("mapHubGenreToShipGenre", () => {
   it("passes through genres the ship generator supports directly", () => {
     expect(mapHubGenreToShipGenre("Cyberpunk")).toBe("Cyberpunk");
     expect(mapHubGenreToShipGenre("Fantasy")).toBe("Fantasy");
+    expect(mapHubGenreToShipGenre("Pirate")).toBe("Pirate / Age of Sail");
   });
 
   it("remaps genres the ship generator names differently", () => {
@@ -42,5 +44,17 @@ describe("mapHubGenreToShipGenre", () => {
 
   it("falls back to Sci-Fi for an unrecognized genre", () => {
     expect(mapHubGenreToShipGenre("Not A Genre")).toBe("Sci-Fi");
+  });
+});
+
+describe("mapShipGenreToTheme", () => {
+  it("maps ship selector genres to layout theme labels", () => {
+    expect(mapShipGenreToTheme("Pirate / Age of Sail")).toBe("Pirate");
+    expect(mapShipGenreToTheme("Cyberpunk")).toBe("Cyberpunk / Corporate");
+    expect(mapShipGenreToTheme("Fantasy")).toBe("Classic Fantasy");
+  });
+
+  it("leaves custom ship genres unchanged", () => {
+    expect(mapShipGenreToTheme("Custom Private Vessel")).toBeNull();
   });
 });

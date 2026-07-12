@@ -1,6 +1,7 @@
 export const settlementConfig = {
   genres: [
     "Fantasy",
+    "Pirate",
     "Dark Fantasy",
     "Cyberpunk",
     "Sci-Fi",
@@ -29,6 +30,28 @@ export const settlementConfig = {
       {
         name: "City",
         range: "5,000–20,000 inhabitants",
+        pointsOfInterestCount: 4,
+      },
+    ],
+    Pirate: [
+      {
+        name: "Hidden Cove",
+        range: "20–100 residents",
+        pointsOfInterestCount: 1,
+      },
+      {
+        name: "Free Port",
+        range: "100–1,000 residents",
+        pointsOfInterestCount: 2,
+      },
+      {
+        name: "Harbour Town",
+        range: "1,000–8,000 residents",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Island Capital",
+        range: "8,000+ residents",
         pointsOfInterestCount: 4,
       },
     ],
@@ -224,6 +247,14 @@ export const settlementConfig = {
       "Underground cavern",
       "Marshland",
     ],
+    Pirate: [
+      "Sheltered island cove",
+      "Storm-exposed harbour",
+      "Coral atoll",
+      "Mangrove coast",
+      "Volcanic island",
+      "Reef passage",
+    ],
     "Dark Fantasy": [
       "Blighted forest",
       "Corrupted river valley",
@@ -316,6 +347,14 @@ export const settlementConfig = {
       "Border checkpoint",
       "Pilgrimage town",
       "Academic city",
+    ],
+    Pirate: [
+      "Free-trade harbour",
+      "Pirate haven",
+      "Ship repair and provisioning",
+      "Smuggling exchange",
+      "Naval resupply station",
+      "Fishing and salvage community",
     ],
     "Dark Fantasy": [
       "Cursed stronghold",
@@ -413,6 +452,13 @@ export const settlementConfig = {
       "Decadent and corrupt",
       "Frontier and rough",
     ],
+    Pirate: [
+      "Salt-worn and defiant",
+      "Rowdy but watchful",
+      "Storm-dark and superstitious",
+      "Prosperous and lawless",
+      "Heroic and free-spirited",
+    ],
     "Dark Fantasy": [
       "Oppressive and doomed",
       "Grimdark and hopeless",
@@ -494,6 +540,14 @@ export const settlementConfig = {
       "Famine or drought",
       "Trade route cut off",
       "Ancient curse awakening",
+    ],
+    Pirate: [
+      "Naval blockade tightening",
+      "Rival crews contesting the harbour",
+      "A mutiny spreading through anchored ships",
+      "A cursed wreck washing ashore",
+      "Trade monopoly strangling local families",
+      "Storm season arriving before repairs are finished",
     ],
     "Dark Fantasy": [
       "Spreading corruption",
@@ -591,6 +645,13 @@ export const settlementConfig = {
       "Arcane council",
       "Tribal elders",
     ],
+    Pirate: [
+      "An elected harbour council",
+      "A pirate captain under shared articles",
+      "A merchant syndicate",
+      "A naval governor",
+      "A loose coalition of ship crews",
+    ],
     "Dark Fantasy": [
       "Warlord",
       "Dark sorcerer",
@@ -682,6 +743,14 @@ export const settlementConfig = {
       "Alchemist's Greenhouse",
       "Market Bazaar",
       "Ruined Watchtower",
+    ],
+    Pirate: [
+      "A tide-clock tower with a hidden signal room",
+      "A ropewalk and shipwright's yard",
+      "A neutral tavern where crews negotiate shares",
+      "A wreck market selling recovered cargo",
+      "A sea cave used as a prison and safe berth",
+      "A lighthouse whose keeper records every passing flag",
     ],
     "Dark Fantasy": [
       "The Charnel House",
@@ -789,6 +858,14 @@ export const settlementConfig = {
       "The Gilded Merchants",
       "The Arcane Assembly",
     ],
+    Pirate: [
+      "A crew-bound pirate council",
+      "A privateer office with disputed letters of marque",
+      "A merchant family controlling the warehouses",
+      "A dockworkers' mutual-aid society",
+      "A sea cult guarding an offshore shrine",
+      "A naval intelligence cell embedded in the port",
+    ],
     "Dark Fantasy": [
       "The Iron Legion",
       "The Carrion Cult",
@@ -873,6 +950,7 @@ export const settlementConfig = {
       "Greywarden",
       "Deepwell",
     ],
+    Pirate: ["Salt", "Free", "Tide", "Blackwater", "Storm", "Lantern"],
     "Dark Fantasy": [
       "Grimfall",
       "Ashmore",
@@ -975,6 +1053,7 @@ export const settlementConfig = {
       " Falls",
       " Ridge",
     ],
+    Pirate: ["haven", "reach", "quay", "cove", "watch", "port"],
     "Dark Fantasy": [
       " Rot",
       " Fen",

@@ -33,6 +33,16 @@ test("buildLanguagePrompt includes genre-specific creative direction", () => {
   );
 });
 
+test("buildLanguagePrompt gives Pirate languages a cultural direction", () => {
+  const prompt = buildLanguagePrompt({ genre: "Pirate" });
+
+  expect(prompt.userMessage).toContain("free-port culture");
+  expect(prompt.userMessage).toContain("crew oaths");
+  expect(prompt.userMessage).toContain(
+    "at least one term that could only belong to a Pirate setting",
+  );
+});
+
 test("buildLanguagePrompt includes the shared name-ban prompt", () => {
   const prompt = buildLanguagePrompt({});
 
@@ -118,4 +128,12 @@ test("generateLanguageLocal includes a genre-specific vocabulary concept", () =>
     structure: "Compound Words",
   });
   expect(fantasy.content).toContain("sword-oath");
+
+  const pirate = generateLanguageLocal({
+    genre: "Pirate",
+    tone: "Clipped & Technical",
+    role: "Common Speech",
+    structure: "Compound Words",
+  });
+  expect(pirate.content).toContain("crew-oath");
 });

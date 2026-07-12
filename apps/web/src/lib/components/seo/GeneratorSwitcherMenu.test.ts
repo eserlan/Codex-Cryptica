@@ -66,6 +66,21 @@ describe("GeneratorSwitcherMenu", () => {
     ).toBeTruthy();
   });
 
+  it("hides the nomad clan generator in Pirate mode", async () => {
+    themeStore.worldThemeId = "pirate";
+    render(GeneratorSwitcherMenu, {
+      props: {
+        canonicalPath: "/generators/ship-generator",
+        eyebrow: "Pirate Ship Generator",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.queryByText("Nomad Clan Generator")).toBeNull();
+    expect(screen.getByText("Ship Generator")).toBeTruthy();
+  });
+
   it("shows horror-only generators when the world theme is horror", async () => {
     themeStore.worldThemeId = "horror";
     render(GeneratorSwitcherMenu, {

@@ -10,6 +10,7 @@
     tone = $bindable(""),
     campaignContext = $bindable(""),
     onSurprise = undefined,
+    onGenreChange = undefined,
   }: {
     genre: string;
     role: string;
@@ -18,12 +19,17 @@
     tone: string;
     campaignContext: string;
     onSurprise?: () => void;
+    onGenreChange?: (genre: string) => void;
   } = $props();
 
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+
+  const availableScales = $derived(
+    shipConfig.scalesByGenre?.[genre] ?? shipConfig.scales,
+  );
 </script>
 
 <SelectWithCustomOption
@@ -36,7 +42,9 @@
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre"
   onvaluechange={(g) => {
+    onGenreChange?.(g);
     role = (shipConfig.rolesByGenre[g] ?? shipConfig.rolesByGenre["Sci-Fi"])[0];
+    scale = (shipConfig.scalesByGenre?.[g] ?? shipConfig.scales)[0];
   }}
 />
 
@@ -60,7 +68,7 @@
   id="ship-scale-select"
   label="Scale"
   bind:value={scale}
-  choices={shipConfig.scales.map((s: string) => ({ value: s, label: s }))}
+  choices={availableScales.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
@@ -122,7 +130,7 @@
       const roles =
         shipConfig.rolesByGenre[genre] ?? shipConfig.rolesByGenre["Sci-Fi"];
       role = pickFrom(roles);
-      scale = pickFrom(shipConfig.scales);
+      scale = pickFrom(availableScales);
       condition = pickFrom(shipConfig.conditions);
       tone = pickFrom(shipConfig.tones);
       onSurprise?.();

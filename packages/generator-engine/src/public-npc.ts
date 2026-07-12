@@ -119,6 +119,14 @@ export const npcConfig = {
       "Is deeply in debt to a dangerous local crime lord who wants them dead.",
       "Knows the secret passcode to the royal vault under the capital.",
     ],
+    Pirate: [
+      "Has hidden the true location of a wreck from the crew that rescued them.",
+      "Carries a pardon that names them as the informant who betrayed their former captain.",
+      "Recognises a cursed mark on the ship's chart and is pretending not to.",
+      "Was press-ganged into service and is quietly planning a rescue for the remaining captives.",
+      "Stole a navigation instrument from a naval observatory and knows who will kill to recover it.",
+      "Has been paying a port official to erase the names of people fleeing an abusive captain.",
+    ],
     "Cyberpunk / Corporate": [
       "Has a black-market neural implant that records every conversation they have.",
       "Is running a double identity — one registered citizen, one ghost in the Net.",
@@ -209,6 +217,14 @@ export const npcConfig = {
       "To exact revenge on the corrupt noble who exiled them.",
       "To locate a legendary magical spellbook hidden in a nearby ruin.",
     ],
+    Pirate: [
+      "To win enough coin and reputation to buy a crew's freedom from a predatory contract.",
+      "To recover a lost vessel whose log contains proof of a naval crime.",
+      "To find a sibling taken by a press gang before the next fleet departs.",
+      "To chart an island that appears only during a particular season of storms.",
+      "To earn a pardon without surrendering the people who sheltered them.",
+      "To settle a blood debt while keeping a fragile crew from splitting apart.",
+    ],
     "Cyberpunk / Corporate": [
       "To earn enough cred to afford neural surgery and get out of the Sprawl for good.",
       "To recover damning footage of a megacorp exec before it gets wiped.",
@@ -298,6 +314,14 @@ export const npcConfig = {
       "The Argent Loom, an artisan guild that hides coded messages in its work.",
       "The Chapel of Last Mercy, a temple faction that knows too many confessions.",
       "The Blackwater Compact, smugglers moving relics beneath legitimate trade.",
+    ],
+    Pirate: [
+      "The Saltwake Articles, a crew-bound confederacy that protects sailors from abusive captains.",
+      "The Lantern Exchange, port brokers who trade in cargo, rumours, and safe berths.",
+      "The Bluewater Office, privateers whose letters of marque conceal a second agenda.",
+      "The Free Quay League, island communities resisting naval monopolies through mutual aid.",
+      "The Drowned Compass, salvagers who recover wrecks no sane crew will approach.",
+      "The Black Pennant Circle, rival captains negotiating a truce that nobody trusts.",
     ],
     "Cyberpunk / Corporate": [
       "Vantablack Solutions, a corporate deniability firm that specialises in clean disappearances.",
@@ -408,6 +432,13 @@ export const npcThemeConfig = {
       "Gnome",
       "Dragonborn",
     ],
+    Pirate: [
+      "Coastal Human",
+      "Island Native",
+      "Sea-Touched Human",
+      "Ship-Born Wanderer",
+      "Cursed Survivor",
+    ],
     "Cyberpunk / Corporate": [
       "Human",
       "Street-Modified Human",
@@ -492,6 +523,18 @@ export const npcThemeConfig = {
       "Noble",
       "Scholar",
       "Guard",
+    ],
+    Pirate: [
+      "Captain",
+      "Quartermaster",
+      "Boatswain",
+      "Navigator",
+      "Gunner",
+      "Surgeon",
+      "Privateer",
+      "Smuggler",
+      "Shipwright",
+      "Treasure Hunter",
     ],
     "Cyberpunk / Corporate": [
       "Netrunner",
@@ -627,6 +670,44 @@ export const npcThemeConfig = {
         label: "Power at All Costs",
         aiPromptDirective:
           "This character is entirely self-serving, ambitious, and ruthless. Their behavior can range from highly charismatic manipulation to terrifying authority, always prioritizing personal leverage.",
+      },
+    ],
+    Pirate: [
+      {
+        id: "crew_loyalist",
+        label: "Crew Loyalist",
+        aiPromptDirective:
+          "Write this NPC as fiercely loyal to their crew and its shared articles. They value mutual aid, practical trust, and earned authority over titles or distant law.",
+      },
+      {
+        id: "freebooter_pragmatist",
+        label: "Freebooter Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as practical and opportunistic without caricature. They weigh wind, supplies, debts, and escape routes before ideals, while respecting competence.",
+      },
+      {
+        id: "privateer_honour",
+        label: "Privateer's Honour",
+        aiPromptDirective:
+          "Give this NPC a formal maritime code shaped by letters of marque, sworn contracts, and the treatment of surrendered crews. They are disciplined rather than cartoonishly lawful.",
+      },
+      {
+        id: "superstitious_sailor",
+        label: "Superstitious Sailor",
+        aiPromptDirective:
+          "Write this NPC as attentive to tides, omens, weather, and the dead without making superstition their only trait. Their caution should sometimes reveal real experience.",
+      },
+      {
+        id: "mutiny_survivor",
+        label: "Mutiny Survivor",
+        aiPromptDirective:
+          "Write this NPC with guarded trauma and conflicted ideas about authority. They notice abusive power quickly and may resist both tyrants and reckless rebels.",
+      },
+      {
+        id: "harbour_community_guardian",
+        label: "Harbour Guardian",
+        aiPromptDirective:
+          "Write this NPC as protective of dockworkers, families, and displaced sailors. They understand maritime crime but draw a clear line between survival and exploitation.",
       },
     ],
     "Cyberpunk / Corporate": [
@@ -1015,6 +1096,8 @@ export const npcThemeConfig = {
 const NPC_THEME_VOICE: Record<string, string> = {
   "Classic Fantasy":
     "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+  Pirate:
+    "system-neutral pirate adventure — captains, crews, ports, naval powers, island communities, maritime superstition, and dangerous voyages",
   "Cyberpunk / Corporate":
     "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
   "Vampire / Gothic Noir":
@@ -1340,6 +1423,7 @@ ${usefulIntro}
 ${howIntro} ${howCloser}`;
 
   const lore = `### At a Glance
+- **Theme / Genre**: ${theme}
 - **Ancestry**: ${race}
 - **Role**: ${role}
 - **Moral Stance**: ${moralityLabel}
