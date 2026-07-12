@@ -180,12 +180,8 @@ jobs:
 
   build:
     name: Build
-    needs: [select-validation, type-check, lint-test]
-    if: |
-      always() &&
-      needs.select-validation.outputs.web == 'true' &&
-      needs.type-check.result == 'success' &&
-      needs.lint-test.result == 'success'
+    needs: select-validation
+    if: needs.select-validation.outputs.web == 'true'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -226,20 +222,6 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_TURNSTILE_SITE_KEY: "0x4AAAAAADpp_w2_FPAdSQzQ"
         run: bun run --filter web build
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v8
-        with:
-          name: coverage
-          path: coverage-download/
-
-      - name: Copy coverage into build output
-        run: |
-          if [ -d "coverage-download/apps/web/coverage" ]; then
-            cp -r coverage-download/apps/web/coverage apps/web/build/coverage
-          else
-            echo "::warning::Web coverage directory not found — skipping"
-          fi
 
       - name: Copy bundle report into build output
         run: |
@@ -291,9 +273,34 @@ jobs:
             echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  validation-gate:
+    name: Validation Gate
+    if: always()
+    needs: [select-validation, type-check, lint-test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful validation
+        env:
+          SELECT_VALIDATION_RESULT: ${{ needs.select-validation.result }}
+          TYPE_CHECK_RESULT: ${{ needs.type-check.result }}
+          LINT_TEST_RESULT: ${{ needs.lint-test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          for result in "$SELECT_VALIDATION_RESULT" "$TYPE_CHECK_RESULT" "$LINT_TEST_RESULT" "$BUILD_RESULT"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              echo "::error::Required validation job finished with: $result"
+              exit 1
+            fi
+          done
+
   deploy:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
-    needs: build
+    if: |
+      always() &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') &&
+      needs.build.result == 'success' &&
+      needs.lint-test.result == 'success' &&
+      (needs.type-check.result == 'success' || needs.type-check.result == 'skipped')
+    needs: [build, lint-test, type-check]
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -316,6 +323,18 @@ jobs:
         with:
           name: dist
           path: dist/
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+          path: coverage-download/
+
+      - name: Copy web coverage into preview
+        run: |
+          if [ -d "coverage-download/apps/web/coverage" ]; then
+            cp -r coverage-download/apps/web/coverage dist/coverage
+          fi
 
       - name: Deploy Staging to Cloudflare Pages
         if: github.ref_name == 'staging' && github.event_name == 'push'
