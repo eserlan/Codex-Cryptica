@@ -1,6 +1,21 @@
 import { type IGDriveAuthService } from "@codex/sync-engine";
-import { browser } from "$app/environment";
-import { waitUntil } from "$lib/utils/retry";
+
+async function waitUntil(
+  predicate: () => boolean,
+  { intervalMs = 100, timeoutMs }: { intervalMs?: number; timeoutMs: number },
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return false;
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(intervalMs, remaining)),
+    );
+  }
+  return true;
+}
+
+const browser = typeof window !== "undefined";
 
 /**
  * Manages Google Drive authentication using Google Identity Services (GIS).

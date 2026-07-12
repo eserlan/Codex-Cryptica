@@ -26,6 +26,7 @@
     "@codex/canvas-engine": "workspace:*",
     "@codex/content-packs": "workspace:*",
     "@codex/events": "workspace:*",
+    "@codex/gdrive-sync": "workspace:*",
     "@codex/importer": "workspace:*",
     "@codex/oracle-engine": "workspace:*",
     "@codex/proposer": "workspace:*",
