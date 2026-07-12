@@ -19,6 +19,12 @@ import { buildSearchAliases, buildSearchKeywords } from "./search-entry-fields";
 
 const INDEX_BATCH_SIZE = 100;
 
+function snapshotValue<T>(value: T): T {
+  const state = (globalThis as any).$state;
+  if (typeof state?.snapshot === "function") return state.snapshot(value);
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 // Fields that FlexSearch indexes via mapToSearchEntry — exported so
 // SearchIndexLifecycle can use the same set for BATCH_UPDATED filtering.
 // Keep adjacent to mapToSearchEntry so they stay in sync.
@@ -59,7 +65,7 @@ export class SearchIndexPipeline {
   needsFullContentSweep = false;
 
   constructor(deps: SearchIndexPipelineDeps) {
-    this.db = deps.db ?? (globalThis as any).__entityDb__;
+    this.db = deps.db;
     this.debug = deps.debug ?? (globalThis as any).__debugStore__ ?? console;
     this.timers = deps.timers ?? globalThis;
     this.coordinator = deps.coordinator;
@@ -70,7 +76,7 @@ export class SearchIndexPipeline {
 
   async index(entry: SearchEntry): Promise<void> {
     const api = await this.getApi();
-    const cleanEntry = $state.snapshot(entry);
+    const cleanEntry = snapshotValue(entry);
     this.indexQueue = this.indexQueue
       .then(() => api.add(cleanEntry))
       .catch((err) => this.debug.warn("Index error", err));
@@ -108,7 +114,7 @@ export class SearchIndexPipeline {
         for (let j = i; j < end; j++) {
           chunkEntries.push(this.mapToSearchEntry(entities[j]));
         }
-        const cleanChunkEntries = $state.snapshot(chunkEntries);
+        const cleanChunkEntries = snapshotValue(chunkEntries);
 
         if (context) {
           if (!this.coordinator.isActiveRun(context.vaultId, context.runId))
@@ -237,9 +243,8 @@ export class SearchIndexPipeline {
     let totalCount: number | null;
 
     try {
-      const contentQuery = this.db.entityContent
-        .where("vaultId")
-        .equals(vaultId);
+      const db = this.getDb();
+      const contentQuery = db.entityContent.where("vaultId").equals(vaultId);
       totalCount =
         typeof contentQuery.count === "function"
           ? await contentQuery.count()
@@ -253,7 +258,7 @@ export class SearchIndexPipeline {
         message: "Search is indexing note content.",
       });
 
-      const metadatas = await this.db.graphEntities
+      const metadatas = await db.graphEntities
         .where("vaultId")
         .equals(vaultId)
         .toArray();
@@ -269,7 +274,7 @@ export class SearchIndexPipeline {
           return;
         }
 
-        const records = await this.db.entityContent
+        const records = await db.entityContent
           .where("[vaultId+entityId]")
           .between([vaultId, lastSeenId], [vaultId, Dexie.maxKey], false, true)
           .limit(INDEX_BATCH_SIZE)
@@ -336,8 +341,8 @@ export class SearchIndexPipeline {
     const entities =
       this.coordinator.pendingRetryEntities.length > 0
         ? this.coordinator.pendingRetryEntities
-        : await this.db.graphEntities
-            .where("vaultId")
+        : await this.getDb()
+            .graphEntities.where("vaultId")
             .equals(vaultId)
             .toArray();
     await this.rebuildFromEntities(vaultId, entities, "retry", {
@@ -364,6 +369,16 @@ export class SearchIndexPipeline {
       keywords,
       updatedAt: Date.now(),
     };
+  }
+
+  private getDb(): any {
+    const db = this.db ?? (globalThis as any).__entityDb__;
+    if (!db) {
+      throw new Error(
+        "[SearchIndexPipeline] Entity database is not configured",
+      );
+    }
+    return db;
   }
 
   private delay(ms: number): Promise<void> {

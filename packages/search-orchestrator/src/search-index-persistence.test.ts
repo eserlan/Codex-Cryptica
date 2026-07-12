@@ -191,20 +191,22 @@ describe("SearchIndexPersistence", () => {
         throw new Error("Simulated stream error");
       }) as any;
 
-      const mockIndexData = { keyCount: 5, segments: { a: 1, b: 2 } };
-      mockApi.exportIndex.mockResolvedValue(mockIndexData);
+      try {
+        const mockIndexData = { keyCount: 5, segments: { a: 1, b: 2 } };
+        mockApi.exportIndex.mockResolvedValue(mockIndexData);
 
-      await persistence.saveIndex("vault-1");
+        await persistence.saveIndex("vault-1");
 
-      expect(mockDb.searchIndex.put).toHaveBeenCalledTimes(1);
-      const putArg = mockDb.searchIndex.put.mock.calls[0][0];
-      expect(putArg.data).toEqual(mockIndexData);
-      expect(mockDebug.warn).toHaveBeenCalledWith(
-        expect.stringContaining("Compression failed"),
-        expect.any(Error),
-      );
-
-      globalThis.CompressionStream = originalCS;
+        expect(mockDb.searchIndex.put).toHaveBeenCalledTimes(1);
+        const putArg = mockDb.searchIndex.put.mock.calls[0][0];
+        expect(putArg.data).toEqual(mockIndexData);
+        expect(mockDebug.warn).toHaveBeenCalledWith(
+          expect.stringContaining("Compression failed"),
+          expect.any(Error),
+        );
+      } finally {
+        globalThis.CompressionStream = originalCS;
+      }
     });
   });
 

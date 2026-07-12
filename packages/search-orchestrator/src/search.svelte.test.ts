@@ -3,7 +3,7 @@ import { AppEventBus } from "@codex/events";
 import { VAULT_EVENTS } from "@codex/vault-engine";
 import { SearchService } from "./search.svelte";
 
-export function createStaleGuard(getActiveId: () => string | null) {
+function createStaleGuard(getActiveId: () => string | null) {
   const startId = getActiveId();
   return (signal?: AbortSignal): boolean =>
     getActiveId() !== startId || (signal?.aborted ?? false);

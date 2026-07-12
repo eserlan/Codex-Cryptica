@@ -58,10 +58,15 @@ export class SearchService {
   constructor(dependencies: SearchServiceDependencies = {}) {
     this.workerFactory =
       dependencies.workerFactory ??
-      (() =>
-        import("../../../apps/web/src/lib/workers/search.worker?worker").then(
-          (m) => new m.default(),
-        ));
+      (() => {
+        const factory = (globalThis as any).__searchWorkerFactory__;
+        if (typeof factory !== "function") {
+          throw new Error(
+            "[SearchService] Search worker factory is not configured",
+          );
+        }
+        return factory();
+      });
     this.api = dependencies.api ?? null;
     this.debug =
       dependencies.debug ?? (globalThis as any).__debugStore__ ?? console;
@@ -82,14 +87,14 @@ export class SearchService {
     });
 
     this.persistence = new SearchIndexPersistence({
-      db: dependencies.db ?? (globalThis as any).__entityDb__,
+      db: dependencies.db,
       debug: this.debug,
       coordinator: this.coordinator,
       getApi: () => this.ensureWorker(),
     });
 
     this.pipeline = new SearchIndexPipeline({
-      db: dependencies.db ?? (globalThis as any).__entityDb__,
+      db: dependencies.db,
       debug: this.debug,
       timers,
       coordinator: this.coordinator,

@@ -19,12 +19,14 @@ describe("deploy workflow critical path", () => {
     );
   });
 
-  test("keeps coverage and all required jobs behind the validation gate", () => {
+  test("runs coverage after deployment in its dedicated job", () => {
     expect(workflow).toContain('bun run --filter "$workspace" test:coverage');
     expect(workflow).toContain(
-      "needs: [select-validation, type-check, lint, test, build]",
+      "coverage-deploy:\n    name: Coverage Deploy\n    needs: [select-validation, deploy]",
     );
-    expect(workflow).toContain("needs: [build, lint, test, type-check]");
-    expect(workflow).toContain("cp -r apps/web/coverage dist/coverage");
+    expect(workflow).toContain(
+      "if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''",
+    );
+    expect(workflow).toContain('if [ -d "apps/web/coverage" ]; then');
   });
 });

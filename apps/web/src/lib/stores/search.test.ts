@@ -72,6 +72,10 @@ vi.mock("./debug.svelte", () => ({
   },
 }));
 
+vi.mock("./quicknote.svelte", () => ({
+  quickNoteStore: { activeNotes: [] },
+}));
+
 import { SearchStore } from "./search.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
@@ -98,6 +102,11 @@ describe("SearchStore", () => {
 
   afterEach(() => {
     store?.destroy();
+  });
+
+  it("wires the quick-note store for browser search results", () => {
+    expect((globalThis as any).__quickNoteStore__).toBeDefined();
+    expect((globalThis as any).__quickNoteStore__.activeNotes).toEqual([]);
   });
 
   it("loads valid recents from localStorage", () => {
