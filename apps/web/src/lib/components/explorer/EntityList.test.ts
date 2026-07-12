@@ -246,9 +246,8 @@ describe("EntityList", () => {
     await fireEvent.focus(input);
     await fireEvent.input(input, { target: { value: "#Qu" } });
 
-    // Wait for Svelte 5 to process state updates and render the autocomplete dropdown
+    // Flush Svelte's pending state updates and render the autocomplete dropdown.
     await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Find the autocomplete option for "Quest" (which displays as "#Quest")
     const buttons = screen.getAllByRole("button");
@@ -259,9 +258,8 @@ describe("EntityList", () => {
 
     await fireEvent.click(questOption!);
 
-    // Wait for Svelte reactive effect synchronization
+    // Flush Svelte's pending reactive updates.
     await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Verify label is auto-applied to active filters
     expect(explorerUIStore.labelFilters.has("Quest")).toBe(true);
