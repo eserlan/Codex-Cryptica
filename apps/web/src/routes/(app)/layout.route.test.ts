@@ -125,6 +125,7 @@ vi.mock("$lib/services/demo", () => ({
 }));
 vi.mock("@codex/gdrive-sync", () => ({
   initGDriveSync: vi.fn(),
+  configureGDriveSync: vi.fn(),
 }));
 vi.mock("$lib/config/help-content", () => ({
   HELP_ARTICLES: [],

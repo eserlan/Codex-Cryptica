@@ -16,7 +16,8 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
-  import { initGDriveSync } from "@codex/gdrive-sync";
+  import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
+  import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";
@@ -164,6 +165,27 @@
       isDocumentVisible = !document.hidden;
       helpStore.init();
       await themeStore.init();
+      configureGDriveSync({
+        getDB,
+        dbName: DB_NAME,
+        dbVersion: DB_VERSION,
+        appEventBus,
+        vault: {
+          get activeVaultId() {
+            return vault.activeVaultId;
+          },
+          get activeVaultRecord() {
+            return vault.activeVaultRecord ?? null;
+          },
+          createVault: (name) => vault.createVault(name),
+          switchVault: (id) => vault.switchVault(id),
+          getActiveVaultHandle: async () =>
+            (await vault.getActiveVaultHandle()) ?? null,
+          getSpecificVaultHandle: async (id) =>
+            (await vault.getSpecificVaultHandle(id)) ?? null,
+        },
+        listVaults: () => vaultRegistry.listVaults(),
+      });
       void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant
