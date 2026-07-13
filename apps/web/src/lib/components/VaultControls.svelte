@@ -428,6 +428,7 @@
             class={showForm
               ? "icon-[heroicons--x-mark] w-3 h-3"
               : "icon-[heroicons--plus] w-3 h-3"}
+            aria-hidden="true"
           ></span>
           {showForm
             ? "CANCEL"
@@ -516,6 +517,7 @@
                   class={vault.isDirty || !vault.hasFolderHandle
                     ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
                     : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
+                  aria-hidden="true"
                 ></span>
                 {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
               {/if}
