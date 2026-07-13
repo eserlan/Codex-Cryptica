@@ -37,19 +37,21 @@ vi.mock("@google/generative-ai", () => {
   };
 });
 
+const mockNow = () => 1234567890;
+
 describe("ProposerService", () => {
   let service: ProposerService;
   const vaultId = "test-vault";
 
   it("should be defined", () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     expect(service).toBeDefined();
   });
 
   it("should analyze entity and return proposals", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -84,7 +86,7 @@ describe("ProposerService", () => {
     useMockModel(generateContent);
 
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -99,7 +101,7 @@ describe("ProposerService", () => {
 
   it("should save and retrieve proposals", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposal = {
       id: `${vaultId}:source1:target2`,
       vaultId,
@@ -110,7 +112,7 @@ describe("ProposerService", () => {
       reason: "reason",
       confidence: 0.8,
       status: "pending" as const,
-      timestamp: Date.now(),
+      timestamp: mockNow(),
     };
 
     await service.saveProposals([proposal]);
@@ -122,7 +124,7 @@ describe("ProposerService", () => {
 
   it("should apply proposal", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposal = {
       id: `${vaultId}:source1:target3`,
       vaultId,
@@ -133,7 +135,7 @@ describe("ProposerService", () => {
       reason: "reason",
       confidence: 0.8,
       status: "pending" as const,
-      timestamp: Date.now(),
+      timestamp: mockNow(),
     };
 
     await service.saveProposals([proposal]);
@@ -146,11 +148,14 @@ describe("ProposerService", () => {
 
     const pendingAfter = await service.getProposals(vaultId, "source1");
     expect(pendingAfter).toHaveLength(0);
+    const db = await service["getDB"]();
+    const updatedProposal = await db.get("proposals", proposal.id);
+    expect(updatedProposal.timestamp).toBe(1234567890);
   });
 
   it("should dismiss proposal and add to history", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposal = {
       id: `${vaultId}:source1:target4`,
       vaultId,
@@ -161,7 +166,7 @@ describe("ProposerService", () => {
       reason: "reason",
       confidence: 0.8,
       status: "pending" as const,
-      timestamp: Date.now(),
+      timestamp: mockNow(),
     };
 
     await service.saveProposals([proposal]);
@@ -177,7 +182,7 @@ describe("ProposerService", () => {
 
   it("should verify an accepted proposal", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposal = {
       id: `${vaultId}:source:target`,
       vaultId,
@@ -204,7 +209,7 @@ describe("ProposerService", () => {
 
   it("should throw error when verifying a non-existent proposal", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     await expect(service.verifyProposal("none")).rejects.toThrow(
       "Proposal none not found",
     );
@@ -212,7 +217,7 @@ describe("ProposerService", () => {
 
   it("should throw error when verifying a pending proposal", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposal = {
       id: `${vaultId}:source:target`,
       vaultId,
@@ -236,7 +241,7 @@ describe("ProposerService", () => {
 
   it("should do nothing when verifying an already verified proposal", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const proposal = {
       id: `${vaultId}:source:target`,
       vaultId,
@@ -261,7 +266,7 @@ describe("ProposerService", () => {
 
   it("should clear all proposals for a vault", async () => {
     const dbName = `test-db-${crypto.randomUUID()}`;
-    service = new ProposerService(dbName, 1);
+    service = new ProposerService(dbName, 1, undefined, mockNow);
     const p1 = {
       id: "v1:s:t",
       vaultId: "v1",
@@ -480,7 +485,7 @@ describe("ProposerService", () => {
       const dbName = `test-db-blocked-${crypto.randomUUID()}`;
 
       // 1. Open first connection at v7
-      const service1 = new ProposerService(dbName, 7);
+      const service1 = new ProposerService(dbName, 7, undefined, mockNow);
       const db1 = await service1["getDB"]();
       expect(db1.version).toBe(7);
 
@@ -523,7 +528,7 @@ describe("ProposerService", () => {
       dbV7.close();
 
       // 2. Open using ProposerService at v8 to trigger upgrade migration
-      const serviceV8 = new ProposerService(dbName, 8);
+      const serviceV8 = new ProposerService(dbName, 8, undefined, mockNow);
       const dbV8 = await serviceV8["getDB"]();
 
       expect(dbV8.version).toBe(8);
@@ -557,7 +562,7 @@ describe("ProposerService", () => {
 
     it("should support concurrent reads and index accessibility", async () => {
       const dbName = `test-db-concurrent-${crypto.randomUUID()}`;
-      const serviceInstance = new ProposerService(dbName, 8);
+      const serviceInstance = new ProposerService(dbName, 8, undefined, mockNow);
       const db = await serviceInstance["getDB"]();
 
       // Populate database

@@ -42,3 +42,7 @@
 
 **Learning:** When using Dependency Injection to inject a global dependency like `Date.now()`, importing the fallback object (`systemClock`) from another module might fail if that module (`$lib/utils/runtime-deps.ts`) does not exist or isn't accessible in tests, causing the entire build or test suite to fail.
 **Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
+## 2024-05-19 - Injecting time dependency to ProposerService
+
+**Learning:** `packages/proposer/src/service.ts` heavily used `Date.now()` directly in service methods (`analyzeEntity`, `applyProposal`, etc), making deterministic testing impossible or overly reliant on approximate timestamps.
+**Action:** Inject an optional `now: () => number = Date.now` parameter into the constructor of stateful services to ensure testability without sacrificing production simplicity.
