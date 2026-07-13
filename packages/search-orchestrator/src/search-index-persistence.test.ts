@@ -39,18 +39,30 @@ describe("SearchIndexPersistence", () => {
   let mockApi: any;
   let persistence: SearchIndexPersistence;
 
+  let stubbedCompressionStream = false;
+  let stubbedDecompressionStream = false;
+
   beforeAll(() => {
-    // Stub CompressionStream and DecompressionStream if missing
+    // Stub CompressionStream and DecompressionStream if missing. Restored
+    // manually in afterAll below rather than via vi.unstubAllGlobals(),
+    // which this package's `bun test` runner doesn't implement.
     if (typeof globalThis.CompressionStream === "undefined") {
       vi.stubGlobal("CompressionStream", MockCompressionStream);
+      stubbedCompressionStream = true;
     }
     if (typeof globalThis.DecompressionStream === "undefined") {
       vi.stubGlobal("DecompressionStream", MockDecompressionStream);
+      stubbedDecompressionStream = true;
     }
   });
 
   afterAll(() => {
-    vi.unstubAllGlobals();
+    if (stubbedCompressionStream) {
+      delete (globalThis as any).CompressionStream;
+    }
+    if (stubbedDecompressionStream) {
+      delete (globalThis as any).DecompressionStream;
+    }
   });
 
   beforeEach(() => {

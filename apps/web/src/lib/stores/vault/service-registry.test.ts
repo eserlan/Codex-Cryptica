@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => {
   return { searchService, clearStyleCache, expandQuery };
 });
 
-vi.mock("../../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: mocks.searchService,
 }));
 
@@ -70,7 +70,7 @@ describe("ServiceRegistry graceful degradation", () => {
     vi.resetModules();
 
     // Poison the mocked modules so the dynamic import throws
-    vi.doMock("../../services/search.svelte", () => {
+    vi.doMock("@codex/search-orchestrator", () => {
       throw new Error("chunk load error");
     });
     vi.doMock("../../services/ai", () => {
