@@ -229,20 +229,8 @@
             ? 'icon-[lucide--focus]'
             : 'icon-[lucide--gauge]'}"
         ></span>
-        <span>
-          {focusViewActive ? focusViewMessage : fullGraphMessage}
-          <span class="block text-theme-muted">
-            {focusViewActive
-              ? "Large vault — zoom in to reveal more, out for the overview."
-              : "Labels, images, and edge detail are simplified for speed."}
-          </span>
-          <button
-            type="button"
-            class="mt-1 underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
-            onclick={() => graph.toggleFullGraph()}
-          >
-            {focusViewActive ? "Show full graph" : "Back to focus view"}
-          </button>
+        <span class="flex flex-col items-start">
+          {@render focusDetail()}
         </span>
       </div>
     {/if}
@@ -280,7 +268,9 @@
         type="button"
         onclick={() => (isFocusInfoExpanded = !isFocusInfoExpanded)}
         aria-expanded={isFocusInfoExpanded}
-        aria-label="Focus view detail"
+        aria-label={isFocusInfoExpanded
+          ? "Hide focus view detail"
+          : "Show focus view detail"}
         class="flex items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95 {isFocusInfoExpanded
           ? 'border-theme-primary'
           : 'border-theme-border'}"
@@ -298,21 +288,26 @@
           class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(20rem,calc(100vw-2rem))] flex-col gap-1 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase"
           transition:fade
         >
-          <span>{focusViewActive ? focusViewMessage : fullGraphMessage}</span>
-          <span class="text-theme-muted">
-            {focusViewActive
-              ? "Large vault — zoom in to reveal more, out for the overview."
-              : "Labels, images, and edge detail are simplified for speed."}
-          </span>
-          <button
-            type="button"
-            class="mt-0.5 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
-            onclick={() => graph.toggleFullGraph()}
-          >
-            {focusViewActive ? "Show full graph" : "Back to focus view"}
-          </button>
+          {@render focusDetail()}
         </div>
       {/if}
     </div>
   {/if}
 </div>
+
+<!-- Shared focus-view detail: message, hint, and full-graph toggle (desktop alert + mobile popover). -->
+{#snippet focusDetail()}
+  <span>{focusViewActive ? focusViewMessage : fullGraphMessage}</span>
+  <span class="block text-theme-muted">
+    {focusViewActive
+      ? "Large vault — zoom in to reveal more, out for the overview."
+      : "Labels, images, and edge detail are simplified for speed."}
+  </span>
+  <button
+    type="button"
+    class="mt-1 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
+    onclick={() => graph.toggleFullGraph()}
+  >
+    {focusViewActive ? "Show full graph" : "Back to focus view"}
+  </button>
+{/snippet}
