@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GDriveAuthService } from "../lib/services/gdrive-auth";
+import { GDriveAuthService } from "../src/gdrive-auth";
 
 describe("GDriveAuthService", () => {
   let service: GDriveAuthService;

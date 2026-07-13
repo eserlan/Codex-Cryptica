@@ -9,7 +9,7 @@
     listDriveVaults,
     importVaultFromDrive,
     joinSharedVault,
-  } from "$lib/services/gdrive-sync";
+  } from "@codex/gdrive-sync";
   import { onMount } from "svelte";
   import { getDB } from "$lib/utils/idb";
   import { SyncRegistry, CloudSyncMetadataService } from "@codex/sync-engine";

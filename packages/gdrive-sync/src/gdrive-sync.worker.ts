@@ -8,7 +8,7 @@ import {
   OpfsBackend,
   SyncRegistry,
 } from "@codex/sync-engine";
-import { getDB } from "../utils/idb";
+import { openDB } from "idb";
 
 export interface WorkerAuthProxy {
   getAccessToken(): Promise<string | null>;
@@ -27,6 +27,8 @@ export class GDriveSyncWorker {
     opfsHandle: FileSystemDirectoryHandle,
     authProxy: WorkerAuthProxy,
     eventBusProxy: WorkerEventBusProxy,
+    dbName: string,
+    dbVersion: number,
   ) {
     console.log(
       `[GDriveSyncWorker] Starting ${direction} for vault: ${vaultId}`,
@@ -40,7 +42,7 @@ export class GDriveSyncWorker {
     });
 
     try {
-      const db = await getDB();
+      const db = await openDB(dbName, dbVersion);
       const registry = new SyncRegistry(db);
       const syncService = new SyncService(registry);
       const metadataService = new CloudSyncMetadataService(registry);
@@ -65,12 +67,8 @@ export class GDriveSyncWorker {
       );
 
       if (result.error) {
-        eventBusProxy.emit({
-          type: "SYNC:DRIVE_SYNC_FAILED",
-          domain: "sync",
-          payload: { vaultId, error: result.error },
-          metadata: { timestamp: Date.now(), vaultId },
-        });
+        // Let the outer catch below emit SYNC:DRIVE_SYNC_FAILED once —
+        // emitting here too would fire it twice for the same failure.
         throw new Error(result.error);
       } else {
         await metadataService.updateLastSync(vaultId);
