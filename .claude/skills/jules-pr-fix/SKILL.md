@@ -23,8 +23,20 @@ of proportion to what the title describes.
 1. **Confirm the symptom, don't assume it**
    - `gh pr view <n> --json title,body,commits,files,headRefName,baseRefName`
    - Read the PR title/body to know what the *intended* change actually is.
-   - If the commit/file count roughly matches the described change, this isn't the
-     bug this skill fixes — stop and handle it as a normal PR.
+
+1a. **Always target `staging`, never `main`**
+   - Jules sometimes opens PRs against `main` directly. `main` only ever receives
+     work via the automated staging→main promotion pipeline (`🚀 promote:` commits)
+     — a PR merging straight into `main` bypasses that pipeline and desyncs the two
+     branches, which then causes exactly this skill's symptom for every *future*
+     PR that diffs against a `main` that's drifted from `staging`.
+   - If `baseRefName` isn't `staging`, retarget it first: `gh pr edit <n> --base staging`.
+     Retargeting itself may flip `mergeStateStatus` to `CONFLICTING` and inflate the
+     file list — that's not a new problem, it's the same drift this skill fixes,
+     now visible because you're diffing against the right branch. Proceed to step 2.
+   - If the commit/file count against `staging` roughly matches the described
+     change, this isn't the bug this skill fixes — stop and handle it as a normal
+     PR (but leave the base retargeted to `staging`).
 
 2. **Fetch the branch into an isolated worktree** (never touch the current working
    tree or checkout over it — use `git worktree add`, e.g. under the scratchpad dir)
@@ -50,6 +62,27 @@ of proportion to what the title describes.
    - `git cherry-pick <genuine-commit-sha(s)>` in order.
    - Diff the result against `origin/<baseRefName>` and confirm it matches only what
      the PR description says should change — nothing more.
+   - Cherry-pick conflicts here usually mean the file was reformatted (e.g.
+     prettier) or *changed again* on `base` since the branch's parent commit —
+     not necessarily that the genuine work is gone. Read the conflict before
+     resolving: if `HEAD` (current base) already contains the exact same logical
+     change the PR is trying to make, this isn't a rebuild anymore — see step 4a.
+
+4a. **Check for full duplication before rebuilding**
+   - If `HEAD`'s side of a conflict already implements what the PR describes (not
+     just a superset — the *same* change, possibly done independently by another
+     PR/bot run), the branch isn't drifted, it's obsolete. There is nothing to
+     cherry-pick.
+   - Confirm with `git log --oneline origin/<base> -- <file>` to find the PR that
+     already shipped it, then abort the rebuild (`git cherry-pick --abort`) and go
+     straight to closing the original as a duplicate (skip step 5 entirely) —
+     comment linking the PR that beat it there, no replacement PR needed.
+   - This is common when the PR was originally opened against `main` (step 1a):
+     `staging` often already has a *better* version of the same optimization that
+     hasn't been promoted to `main` yet, making the whole PR redundant, not just
+     drifted. Read the base's current implementation of the touched function
+     before assuming the cherry-pick target is wrong — it may be the PR that's
+     obsolete.
 
 5. **Decide push strategy — always ask the user first**
    - Force-pushing over a bot-authored branch to update the existing PR in place is
@@ -72,3 +105,12 @@ of proportion to what the title describes.
 - The same drift pattern applies to other bot-branch families with long numeric
   suffixes (`bolt/...`, `curator/...`, `palette-...`, `jules-binder-...`) — this
   skill isn't Jules-specific in mechanism, just named for the most common offender.
+- This repo's `.husky/pre-push` runs the full affected-workspace test suite via
+  `bun scripts/affected-workspaces.mjs`, which can run well past a 2-minute
+  default command timeout on a multi-package change. Push the rebuilt branch with
+  `run_in_background: true` and a longer timeout from the start rather than
+  waiting for a timeout to force a retry.
+- Not every bloated-looking Jules PR is drift — it can also be a straight
+  duplicate of work already merged by someone/something else in the meantime.
+  Rebuilding produces an empty or conflicting cherry-pick in that case; don't
+  force it, just close as a duplicate (step 4a).
