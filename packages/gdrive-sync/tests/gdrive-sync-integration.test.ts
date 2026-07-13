@@ -58,6 +58,8 @@ describe("gdrive-sync shared vault joins", () => {
 
     configureGDriveSync({
       getDB,
+      dbName: "TestDB",
+      dbVersion: 1,
       appEventBus: { emit },
       vault: {
         activeVaultId: "new-vault-id",
@@ -118,5 +120,41 @@ describe("gdrive-sync shared vault joins", () => {
 
     expect(gdriveAuthService.getTokenWithScope).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("should reject with a friendly message when the folder is not shared (404/403)", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue({ ok: false, status: 404 } as Response);
+
+    await expect(
+      joinSharedVault("shared-folder-id-1234567890"),
+    ).rejects.toThrow(
+      "Folder not found or not shared with you. Ask the vault owner to share the folder.",
+    );
+  });
+
+  it("should reject with a generic message on other Drive API failures", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue({ ok: false, status: 500 } as Response);
+
+    await expect(
+      joinSharedVault("shared-folder-id-1234567890"),
+    ).rejects.toThrow("Failed to access the shared Drive folder.");
+  });
+
+  it("should reject if the shared folder has been deleted", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "shared-folder-id-1234567890",
+        name: "Shared Campaign",
+        trashed: true,
+      }),
+    } as Response);
+
+    await expect(
+      joinSharedVault("shared-folder-id-1234567890"),
+    ).rejects.toThrow("That folder has been deleted.");
   });
 });
