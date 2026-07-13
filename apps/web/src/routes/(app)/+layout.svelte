@@ -59,7 +59,7 @@
   import { debugStore } from "$lib/stores/debug.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
-  import { aiClientManager } from "$lib/services/ai/client-manager";
+  import { aiClientManager } from "@codex/ai-engine";
   import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
 
   let { children } = $props();

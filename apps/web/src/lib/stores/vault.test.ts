@@ -214,9 +214,16 @@ describe("VaultStore", () => {
     sessionModeStore.isDemoMode = false;
     sessionModeStore.activeDemoTheme = null;
 
-    // Ensure window is defined with dispatchEvent
+    // Ensure window is defined with dispatchEvent. Also needs
+    // addEventListener/removeEventListener: OracleStore's constructor
+    // registers a "vault-switched" listener, and it used to construct lazily
+    // enough (via an incidental eager import chain) to dodge this stub's
+    // gaps — that import was removed by the audio-engine extraction, so the
+    // real construction timing now depends on this stub being complete.
     vi.stubGlobal("window", {
       dispatchEvent: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     });
     vi.stubGlobal(
       "CustomEvent",

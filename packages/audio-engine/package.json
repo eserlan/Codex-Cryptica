@@ -10,7 +10,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
-    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@vitest/coverage-v8": "^4.1.7",
     "svelte": "^5.55.9",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",
