@@ -9,7 +9,7 @@ vi.hoisted(() => {
   (global as any).$effect = (v: any) => v;
 });
 
-import { DefaultImageGenerationService } from "../../lib/services/ai/image-generation.service";
+import { DefaultImageGenerationService } from "@codex/ai-engine";
 import { discoveryPolicyStore } from "../../lib/stores/ui/discovery-policy.svelte";
 
 describe("ImageGenerationService", () => {

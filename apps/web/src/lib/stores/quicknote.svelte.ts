@@ -4,8 +4,8 @@ import {
   type QuickNoteRecord,
 } from "../services/QuickNoteService";
 import { vaultRegistry as defaultVaultRegistry } from "./vault-registry.svelte";
-import { textGenerationService } from "../services/ai/text-generation.service.svelte";
-import { contextRetrievalService } from "../services/ai/context-retrieval.service";
+import { textGenerationService } from "@codex/ai-engine";
+import { contextRetrievalService } from "@codex/ai-engine";
 import { vaultEventBus } from "./vault/events.svelte";
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";

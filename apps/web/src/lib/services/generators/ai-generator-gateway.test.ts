@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { InteractionExpiredError } from "$lib/services/ai/client-manager";
+import { InteractionExpiredError } from "@codex/ai-engine";
 import {
   ProxyAIGeneratorGateway,
   extractJsonObject,

@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
-import { aiClientManager } from "../services/ai/client-manager";
-import { DefaultTextGenerationService } from "../services/ai/text-generation.service.svelte";
+import { aiClientManager } from "@codex/ai-engine";
+import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
 import type {
   OracleWorkerEvent,

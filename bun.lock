@@ -42,6 +42,7 @@
       "name": "web",
       "version": "0.27.10",
       "dependencies": {
+        "@codex/ai-engine": "workspace:*",
         "@codex/canvas-engine": "workspace:*",
         "@codex/content-packs": "workspace:*",
         "@codex/events": "workspace:*",
@@ -120,6 +121,27 @@
         "svelte": "^5.55.9",
         "svelte-check": "^4.4.8",
         "tailwindcss": "^4.3.0",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.14",
+        "vitest": "^4.1.7",
+      },
+    },
+    "packages/ai-engine": {
+      "name": "@codex/ai-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "@codex/oracle-engine": "workspace:*",
+        "@google/generative-ai": "^0.24.1",
+        "compromise": "^14.15.0",
+        "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^7.1.2",
+        "@testing-library/svelte": "^5.3.1",
+        "@types/node": "^26.1.0",
+        "@vitest/coverage-v8": "^4.1.7",
+        "jsdom": "^29.1.1",
+        "svelte": "^5.55.9",
         "typescript": "^6.0.3",
         "vite": "^8.0.14",
         "vitest": "^4.1.7",
@@ -427,6 +449,8 @@
     "@cloudflare/workerd-linux-arm64": ["@cloudflare/workerd-linux-arm64@1.20260611.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-GEp4XbuIKjlF8pakqXcUDJfKiJosD/Q7S83J0d+r+z9XIlYGfF3ntm08e2aiF5TFTwp3fnG4yMoPUAKNhNJpvQ=="],
 
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260611.1", "", { "os": "win32", "cpu": "x64" }, "sha512-S6JkS0kEbcCKs19RGqEPhjCRbP8GBkQwqYLp2fhBJtD/KTlwqLzOJ9E6PQ7gQKgWHtxy1NBG3oXarlNFRNU/dw=="],
+
+    "@codex/ai-engine": ["@codex/ai-engine@workspace:packages/ai-engine"],
 
     "@codex/canvas-engine": ["@codex/canvas-engine@workspace:packages/canvas-engine"],
 

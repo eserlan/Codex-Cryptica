@@ -1,5 +1,5 @@
-import { aiClientManager } from "$lib/services/ai/client-manager";
-import { classifyApiError } from "$lib/services/ai/api-error-classifier";
+import { aiClientManager } from "@codex/ai-engine";
+import { classifyApiError } from "@codex/ai-engine";
 import {
   buildNpcPrompt,
   parseNpcResponse,

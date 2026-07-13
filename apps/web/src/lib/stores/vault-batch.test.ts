@@ -14,7 +14,7 @@ vi.hoisted(() => {
 });
 
 // Mock Services
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -22,7 +22,7 @@ vi.mock("../services/search.svelte", () => ({
   },
 }));
 
-vi.mock("../services/ai", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     clearStyleCache: vi.fn(),
     retrieveContext: vi.fn(),

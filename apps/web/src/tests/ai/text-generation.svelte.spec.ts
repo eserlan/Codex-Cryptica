@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../lib/services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
   },
 }));
 
-import { DefaultTextGenerationService } from "../../lib/services/ai/text-generation.service.svelte";
+import { DefaultTextGenerationService } from "@codex/ai-engine";
 
 describe("TextGenerationService", () => {
   let mockModel: any;

@@ -127,7 +127,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/ai/context-retrieval.service", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     retrieveContext: mocks.retrieveContext,
     getConsolidatedContext: vi.fn((entity: any) =>

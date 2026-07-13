@@ -1,10 +1,25 @@
+vi.mock("@codex/ai-engine", () => ({
+  textGenerationService: {
+    generateRelatedEntity: vi.fn().mockResolvedValue({
+      name: "Generated Name",
+      type: "character",
+      summary: "Generated summary.",
+      description: "Generated description.",
+      labels: ["generated-label"],
+      plotHook: "Generated plot hook",
+      relationshipBack: "rival",
+    }),
+  },
+  isAIEnabled: vi.fn().mockReturnValue(true),
+}));
+
 /** @vitest-environment jsdom */
 
 import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RelatedEntityModal from "./RelatedEntityModal.svelte";
 import { vault } from "$lib/stores/vault.svelte";
-import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+import { textGenerationService } from "@codex/ai-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 const mockDiscoveryPolicyStore = vi.hoisted(() => ({
@@ -70,28 +85,10 @@ vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: mockDiscoveryPolicyStore,
 }));
 
-vi.mock("$lib/services/ai/text-generation.service.svelte", () => ({
-  textGenerationService: {
-    generateRelatedEntity: vi.fn().mockResolvedValue({
-      name: "Generated Name",
-      type: "character",
-      summary: "Generated summary.",
-      description: "Generated description.",
-      labels: ["generated-label"],
-      plotHook: "Generated plot hook",
-      relationshipBack: "rival",
-    }),
-  },
-}));
-
 vi.mock("$lib/services/EntityTemplateService.svelte", () => ({
   entityTemplateService: {
     resolveTemplate: vi.fn().mockResolvedValue("Resolved template outline"),
   },
-}));
-
-vi.mock("$lib/services/ai/capability-guard", () => ({
-  isAIEnabled: vi.fn().mockReturnValue(true),
 }));
 
 describe("RelatedEntityModal", () => {
@@ -101,8 +98,6 @@ describe("RelatedEntityModal", () => {
     mockOracle.effectiveApiKey = "test-api-key";
     mockOracle.settingsManager.apiKey = "test-api-key";
     (vault as any).isGuest = false;
-
-    // Polyfill Element.prototype.animate for jsdom / Svelte transitions
     if (typeof window !== "undefined") {
       Element.prototype.animate = vi.fn().mockReturnValue({
         finished: Promise.resolve(),
