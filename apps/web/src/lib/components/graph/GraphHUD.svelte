@@ -33,6 +33,11 @@
   const fullGraphMessage = $derived(
     `Full graph performance mode: ${graph.fullGraphSize.nodeCount} entities and ${graph.fullGraphSize.edgeCount} connections.`,
   );
+  const focusCountLabel = $derived(
+    focusViewActive
+      ? `${graph.stats.nodeCount}/${graph.fullGraphSize.nodeCount}`
+      : `${graph.fullGraphSize.nodeCount}`,
+  );
 
   function addFilteredToCanvas() {
     if (!cy) return;
@@ -66,6 +71,7 @@
   }
 
   let isFiltersExpanded = $state(false);
+  let isFocusInfoExpanded = $state(false);
 </script>
 
 <div class="absolute inset-4 md:inset-6 z-20 pointer-events-none">
@@ -213,8 +219,9 @@
     {/if}
 
     {#if isLargeGraph}
+      <!-- Desktop: full inline alert. Mobile uses the compact top-right chip below. -->
       <div
-        class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(26rem,calc(100vw-2rem))] items-start gap-2 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase pointer-events-auto"
+        class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 hidden max-w-[min(26rem,calc(100vw-2rem))] items-start gap-2 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase pointer-events-auto md:flex"
         transition:fade
       >
         <span
@@ -263,4 +270,49 @@
       </div>
     {/if}
   </div>
+
+  {#if isLargeGraph}
+    <!-- Mobile: compact focus chip pinned top-right, tap to reveal detail. -->
+    <div
+      class="absolute right-0 top-0 flex flex-col items-end gap-1 md:hidden pointer-events-auto"
+    >
+      <button
+        type="button"
+        onclick={() => (isFocusInfoExpanded = !isFocusInfoExpanded)}
+        aria-expanded={isFocusInfoExpanded}
+        aria-label="Focus view detail"
+        class="flex items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95 {isFocusInfoExpanded
+          ? 'border-theme-primary'
+          : 'border-theme-border'}"
+      >
+        <span
+          class="h-3.5 w-3.5 shrink-0 {focusViewActive
+            ? 'icon-[lucide--focus]'
+            : 'icon-[lucide--gauge]'}"
+        ></span>
+        <span>{focusCountLabel}</span>
+      </button>
+
+      {#if isFocusInfoExpanded}
+        <div
+          class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(20rem,calc(100vw-2rem))] flex-col gap-1 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase"
+          transition:fade
+        >
+          <span>{focusViewActive ? focusViewMessage : fullGraphMessage}</span>
+          <span class="text-theme-muted">
+            {focusViewActive
+              ? "Large vault — zoom in to reveal more, out for the overview."
+              : "Labels, images, and edge detail are simplified for speed."}
+          </span>
+          <button
+            type="button"
+            class="mt-0.5 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
+            onclick={() => graph.toggleFullGraph()}
+          >
+            {focusViewActive ? "Show full graph" : "Back to focus view"}
+          </button>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>
