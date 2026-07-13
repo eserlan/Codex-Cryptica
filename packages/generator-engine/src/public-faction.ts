@@ -19,7 +19,7 @@ import {
 import { parseFencedJson } from "./llm-response-utils";
 
 // ---------------------------------------------------------------------------
-// Config (ported verbatim from seo faction.ts)
+// Config (ported verbatim from seo faction.ts; extracted to public-faction-constants.ts)
 // ---------------------------------------------------------------------------
 import {
   factionConfig,
