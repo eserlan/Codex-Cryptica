@@ -494,7 +494,7 @@ jobs:
             bun run --filter "$workspace" test:coverage
           done
 
-      - name: Copy web coverage into preview
+      - name: Copy web coverage into deploy artifact
         run: |
           if [ -d "apps/web/coverage" ]; then
             cp -r apps/web/coverage dist/coverage

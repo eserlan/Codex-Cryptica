@@ -19,12 +19,23 @@ describe("deploy workflow critical path", () => {
     );
   });
 
-  test("keeps coverage and all required jobs behind the validation gate", () => {
-    expect(workflow).toContain('bun run --filter "$workspace" test:coverage');
+  test("keeps all required jobs behind the validation gate", () => {
     expect(workflow).toContain(
       "needs: [select-validation, type-check, lint, test, build]",
     );
     expect(workflow).toContain("needs: [build, lint, test, type-check]");
-    expect(workflow).toContain("cp -r apps/web/coverage dist/coverage");
+  });
+
+  test("does not run coverage instrumentation on the pre-deploy critical path", () => {
+    const preDeploy = workflow.slice(0, workflow.indexOf("\n  coverage-deploy:"));
+    expect(preDeploy).not.toContain("test:coverage");
+  });
+
+  test("runs coverage in a dedicated post-deploy job gated on deploy success", () => {
+    const coverageJob = workflow.slice(workflow.indexOf("\n  coverage-deploy:"));
+    expect(coverageJob).toContain("needs: [select-validation, deploy]");
+    expect(coverageJob).toContain("needs.deploy.result == 'success'");
+    expect(coverageJob).toContain('bun run --filter "$workspace" test:coverage');
+    expect(coverageJob).toContain("cp -r apps/web/coverage dist/coverage");
   });
 });
