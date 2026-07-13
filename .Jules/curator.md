@@ -43,3 +43,7 @@
 
 **Learning:** When dealing with god files that contain both logic/interfaces and a massive amount of hardcoded configuration/reference data (like the 1,100+ line `settlementConfig` in `public-settlement.ts`), extracting the pure data payload into a dedicated constants file (e.g. `public-settlement-constants.ts`) makes the core file far easier to read and scan, without modifying any upstream runtime logic.
 **Action:** Future agents should look for modules where huge static object definitions bloat the file. Split the definitions into `-constants.ts` and use `import` then `export` in the original file to prevent widespread import refactoring and maintain the public API.
+## 2024-05-24 - Extract configuration blobs from generator engine files
+
+**Learning:** Large modules that are composed of both functional logic (like prompt generators and local fallbacks) and huge static data objects (like lists of naming conventions, text descriptions for every genre, etc) make it hard to navigate. By extracting the pure static data into `<module>-constants.ts`, the original file shrinks significantly, is much easier to read, and the behavior remains identical since imports/exports can be structured to present the exact same API.
+**Action:** When working on large files in `@codex/generator-engine` or similar packages that combine functions with huge data arrays/objects, prefer extracting the data objects to a sibling `-constants.ts` file, and keep the main file focused on logic. Ensure to keep exports aligned.
