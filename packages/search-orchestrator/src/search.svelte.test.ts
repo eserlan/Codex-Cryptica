@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppEventBus } from "@codex/events";
 import { VAULT_EVENTS } from "@codex/vault-engine";
 import { SearchService } from "./search.svelte";
-import { createStaleGuard } from "../stores/vault/utils";
+
+function createStaleGuard(getActiveId: () => string | null) {
+  const startId = getActiveId();
+  return (signal?: AbortSignal): boolean =>
+    getActiveId() !== startId || (signal?.aborted ?? false);
+}
 
 // ---------------------------------------------------------------------------
 // Minimal mock API — stands in for the Comlink-wrapped SearchEngine worker.

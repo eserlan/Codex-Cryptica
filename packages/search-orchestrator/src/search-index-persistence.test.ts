@@ -39,18 +39,30 @@ describe("SearchIndexPersistence", () => {
   let mockApi: any;
   let persistence: SearchIndexPersistence;
 
+  let stubbedCompressionStream = false;
+  let stubbedDecompressionStream = false;
+
   beforeAll(() => {
-    // Stub CompressionStream and DecompressionStream if missing
+    // Stub CompressionStream and DecompressionStream if missing. Restored
+    // manually in afterAll below rather than via vi.unstubAllGlobals(),
+    // which this package's `bun test` runner doesn't implement.
     if (typeof globalThis.CompressionStream === "undefined") {
       vi.stubGlobal("CompressionStream", MockCompressionStream);
+      stubbedCompressionStream = true;
     }
     if (typeof globalThis.DecompressionStream === "undefined") {
       vi.stubGlobal("DecompressionStream", MockDecompressionStream);
+      stubbedDecompressionStream = true;
     }
   });
 
   afterAll(() => {
-    vi.unstubAllGlobals();
+    if (stubbedCompressionStream) {
+      delete (globalThis as any).CompressionStream;
+    }
+    if (stubbedDecompressionStream) {
+      delete (globalThis as any).DecompressionStream;
+    }
   });
 
   beforeEach(() => {
@@ -187,27 +199,26 @@ describe("SearchIndexPersistence", () => {
     it("should fall back to raw JSON object if compression fails", async () => {
       // Mock global CompressionStream to throw
       const originalCS = globalThis.CompressionStream;
-      vi.stubGlobal(
-        "CompressionStream",
-        vi.fn().mockImplementation(() => {
-          throw new Error("Simulated stream error");
-        }),
-      );
+      globalThis.CompressionStream = vi.fn().mockImplementation(() => {
+        throw new Error("Simulated stream error");
+      }) as any;
 
-      const mockIndexData = { keyCount: 5, segments: { a: 1, b: 2 } };
-      mockApi.exportIndex.mockResolvedValue(mockIndexData);
+      try {
+        const mockIndexData = { keyCount: 5, segments: { a: 1, b: 2 } };
+        mockApi.exportIndex.mockResolvedValue(mockIndexData);
 
-      await persistence.saveIndex("vault-1");
+        await persistence.saveIndex("vault-1");
 
-      expect(mockDb.searchIndex.put).toHaveBeenCalledTimes(1);
-      const putArg = mockDb.searchIndex.put.mock.calls[0][0];
-      expect(putArg.data).toEqual(mockIndexData);
-      expect(mockDebug.warn).toHaveBeenCalledWith(
-        expect.stringContaining("Compression failed"),
-        expect.any(Error),
-      );
-
-      vi.stubGlobal("CompressionStream", originalCS);
+        expect(mockDb.searchIndex.put).toHaveBeenCalledTimes(1);
+        const putArg = mockDb.searchIndex.put.mock.calls[0][0];
+        expect(putArg.data).toEqual(mockIndexData);
+        expect(mockDebug.warn).toHaveBeenCalledWith(
+          expect.stringContaining("Compression failed"),
+          expect.any(Error),
+        );
+      } finally {
+        globalThis.CompressionStream = originalCS;
+      }
     });
   });
 

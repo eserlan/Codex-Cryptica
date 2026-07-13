@@ -27,7 +27,7 @@
   import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
   import { interactionSessions } from "$lib/services/ai/interaction-session";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
-  import { searchService } from "$lib/services/search.svelte";
+  import { searchService } from "@codex/search-orchestrator";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";

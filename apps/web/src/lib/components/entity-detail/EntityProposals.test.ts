@@ -39,7 +39,7 @@ vi.mock("$lib/stores/proposer.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { requestCreateEntity: mocks.requestCreateEntity },
 }));
-vi.mock("$lib/services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: { search: mocks.search },
 }));
 vi.mock("$lib/stores/oracle.svelte", () => ({ oracle: { apiKey: undefined } }));

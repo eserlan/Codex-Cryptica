@@ -79,7 +79,7 @@ vi.mock("./vault/migration", () => ({
   migrateStructure: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -580,7 +580,7 @@ describe("VaultStore", () => {
     });
 
     it("should handle search index errors in scheduleSave", async () => {
-      const { searchService } = await import("../services/search.svelte");
+      const { searchService } = await import("@codex/search-orchestrator");
       vi.mocked(searchService.index).mockRejectedValueOnce(
         new Error("Search Error"),
       );
