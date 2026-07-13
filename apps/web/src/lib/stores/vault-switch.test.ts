@@ -71,7 +71,7 @@ vi.mock("./canvas-registry.svelte", () => ({
 }));
 
 // Mock Services
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: mockSearchService,
 }));
 

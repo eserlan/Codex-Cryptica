@@ -6,7 +6,7 @@ import { IS_STAGING } from "../../config";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
-import { searchService } from "../../services/search.svelte";
+import { searchService } from "@codex/search-orchestrator";
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 
 /**

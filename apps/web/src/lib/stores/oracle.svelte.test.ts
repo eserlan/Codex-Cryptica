@@ -113,13 +113,22 @@ vi.mock("@codex/ai-engine", () => ({
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     distillVisualPrompt: vi.fn().mockResolvedValue("visual prompt"),
   },
+  interactionSessions: {
+    enabled: true,
+    setEnabled: vi.fn(),
+    getSession: vi.fn().mockReturnValue({
+      previousInteractionId: null,
+      tracker: { computeDelta: vi.fn(), reset: vi.fn() },
+    }),
+    resetSession: vi.fn(),
+  },
   TIER_MODES: {
     lite: "gemini-3.1-flash-lite",
     advanced: "gemini-3-flash-preview",
   },
 }));
 
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([{ id: "e1", title: "Entity 1" }]),
   },
