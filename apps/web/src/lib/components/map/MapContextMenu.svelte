@@ -30,7 +30,7 @@
   class="fixed z-[1000] bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[140px]"
   style="left: {x}px; top: {y}px;"
   transition:fade={{ duration: 100 }}
-  role="menu"
+  role="menu" tabindex="-1"
   aria-label="Map context menu"
   onmousedown={(e) => e.stopPropagation()}
 >
@@ -232,7 +232,7 @@
         {#if showResizeSubmenu}
           <div
             class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[100px]"
-            role="menu"
+            role="menu" tabindex="-1"
             aria-label="Resize options"
           >
             {#each [1, 2, 3, 4] as scale (scale)}
@@ -317,7 +317,7 @@
         {#if showStatusSubmenu}
           <div
             class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[160px]"
-            role="menu"
+            role="menu" tabindex="-1"
             aria-label="Status options"
           >
             {#each TOKEN_STATUS_EFFECTS as effect (effect.id)}

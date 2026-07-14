@@ -1,7 +1,8 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { solutions, comparisons } from "../apps/web/src/lib/config/seo-pages.ts";
+import { solutions } from "../apps/web/src/lib/config/seo-pages.ts";
+import { comparisons } from "../apps/web/src/lib/config/seo-comparisons.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");

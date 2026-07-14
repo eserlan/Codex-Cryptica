@@ -124,7 +124,7 @@
     entryHandlers;
   onDestroy(() => entryHandlers.dispose());
 
-  // Per-cell click counters for reliable double-click detection on <section>
+  // Per-cell click counters for reliable double-click detection on <button type="button">
   // elements (native ondblclick is unreliable on non-interactive elements).
   const cellTimers = new Map<string, ReturnType<typeof setTimeout>>();
   onDestroy(() => cellTimers.forEach(clearTimeout));
@@ -169,7 +169,7 @@
       {#each week.days as day (`${day.date.year}-${day.date.month}-${day.date.day}`)}
         {@const key = dayKey(day.date.year, day.date.month, day.date.day ?? 0)}
         {@const isDropTarget = dragOverDay === key && !!onDropEntity}
-        <section
+        <button type="button"
           class={[
             "relative flex min-h-16 flex-col gap-1 border p-1 align-top rounded-none sm:rounded-2xl sm:min-h-32 sm:gap-2 sm:p-3 transition-all duration-150",
             isDropTarget
@@ -292,7 +292,7 @@
               />
             {/if}
           </div>
-        </section>
+        </button>
       {/each}
     {/each}
   </div>
