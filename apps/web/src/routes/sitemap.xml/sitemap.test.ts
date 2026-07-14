@@ -17,14 +17,17 @@ vi.mock("$lib/config/seo-pages", () => ({
   solutions: {
     "test-sol": { slug: "test-sol" },
   },
-  comparisons: {
-    "test-comp": { slug: "test-comp" },
-  },
   featuresConfig: {
     "test-feat": { slug: "test-feat" },
   },
   importsConfig: {
     "test-import": { slug: "test-import" },
+  },
+}));
+
+vi.mock("$lib/config/seo-comparisons", () => ({
+  comparisons: {
+    "test-comp": { slug: "test-comp" },
   },
 }));
 

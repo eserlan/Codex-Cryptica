@@ -1,9 +1,9 @@
 import {
   solutions,
-  comparisons,
   featuresConfig,
   importsConfig,
 } from "$lib/config/seo-pages";
+import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
 
