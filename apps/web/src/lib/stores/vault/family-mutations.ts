@@ -65,9 +65,39 @@ export async function addFamilyLink(
     return { ok: false, error: CYCLE_ERROR };
   }
 
-  await deps.addConnection(sourceId, targetId, type);
-  await deps.addConnection(targetId, sourceId, inverseFamilyType(type));
+  const inverse = inverseFamilyType(type);
+
+  // Idempotent: only write the side(s) that are missing, so repeated calls
+  // don't create duplicate connections.
+  let wroteForward = false;
+  if (!hasConnection(source, targetId, type)) {
+    const ok = await deps.addConnection(sourceId, targetId, type);
+    if (ok === false) {
+      return { ok: false, error: "Could not add family link." };
+    }
+    wroteForward = true;
+  }
+  if (!hasConnection(target, sourceId, inverse)) {
+    const ok = await deps.addConnection(targetId, sourceId, inverse);
+    if (ok === false) {
+      // Roll back the forward write so we never leave a one-sided link (FR-011).
+      if (wroteForward) {
+        await deps.removeConnection(sourceId, targetId, type);
+      }
+      return { ok: false, error: "Could not add family link." };
+    }
+  }
   return { ok: true };
+}
+
+function hasConnection(
+  entity: Entity | undefined,
+  targetId: string,
+  type: string,
+): boolean {
+  return !!entity?.connections?.some(
+    (c) => c.target === targetId && c.type === type,
+  );
 }
 
 /** Remove a family link from both entities. */

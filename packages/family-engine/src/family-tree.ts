@@ -26,13 +26,24 @@ export interface FamilyTree {
 
 const CHARACTER_TYPE = "character";
 
+// Auto-applied system labels that describe the entity's state rather than its
+// role (e.g. "past" is added automatically when a finite end_date exists).
+// These must never surface as a character's role/title on a family card.
+const AUTO_LABELS = new Set(["past"]);
+
 function isCharacter(entity: Entity | undefined): entity is Entity {
   return !!entity && entity.type === CHARACTER_TYPE;
 }
 
 function temporalYear(t: TemporalMetadata | undefined): number | undefined {
   // Both temporal shapes (DateSelection and legacy) carry a numeric `year`.
-  return t ? (t as { year: number }).year : undefined;
+  // Only treat a finite year as present (mirrors the app's end_date checks).
+  const year = t ? (t as { year: number }).year : undefined;
+  return typeof year === "number" && Number.isFinite(year) ? year : undefined;
+}
+
+function pickRole(entity: Entity): string | undefined {
+  return (entity.labels ?? []).find((label) => !AUTO_LABELS.has(label));
 }
 
 function formatLifespan(entity: Entity): string | undefined {
@@ -89,10 +100,10 @@ function toMember(
   return {
     entityId: entity.id,
     name: entity.title,
-    role: entity.labels?.[0],
+    role: pickRole(entity),
     portraitUrl: entity.image ?? entity.thumbnail,
     lifespan: formatLifespan(entity),
-    deceased: !!entity.end_date,
+    deceased: temporalYear(entity.end_date) !== undefined,
     relation,
     generation,
   };

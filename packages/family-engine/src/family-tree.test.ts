@@ -129,6 +129,24 @@ describe("buildFamilyTree", () => {
     expect(living.lifespan).toBe("b. 1200");
   });
 
+  it("uses a real label as role and ignores the auto 'past' label", () => {
+    const entities = map(
+      char("knight", [], { labels: ["past", "Knight of the Vale"] } as never),
+    );
+    expect(buildFamilyTree("knight", entities).focus.role).toBe(
+      "Knight of the Vale",
+    );
+  });
+
+  it("does not mark deceased for a non-finite end_date year", () => {
+    const entities = map(
+      char("x", [], { end_date: { year: Number.NaN } as never }),
+    );
+    const focus = buildFamilyTree("x", entities).focus;
+    expect(focus.deceased).toBe(false);
+    expect(focus.lifespan).toBeUndefined();
+  });
+
   it("does not mutate the input entities", () => {
     const entities = map(
       char("parent", [{ target: "child", type: "parent_of" }]),

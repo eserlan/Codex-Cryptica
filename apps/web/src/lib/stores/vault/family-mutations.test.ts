@@ -107,6 +107,43 @@ describe("addFamilyLink", () => {
     const res = await addFamilyLink("a", "a", "spouse_of", fakeVault(entities));
     expect(res.ok).toBe(false);
   });
+
+  it("is idempotent — repeated calls do not duplicate connections", async () => {
+    const entities = { a: char("a"), b: char("b") };
+    const deps = fakeVault(entities);
+    await addFamilyLink("a", "b", "parent_of", deps);
+    await addFamilyLink("a", "b", "parent_of", deps);
+    expect(entities.a.connections).toHaveLength(1);
+    expect(entities.b.connections).toHaveLength(1);
+  });
+
+  it("rolls back the forward write if the inverse write fails", async () => {
+    const entities: Record<string, Entity> = { a: char("a"), b: char("b") };
+    const deps: FamilyMutationVault = {
+      entities,
+      // Succeed writing on `a`, fail writing the inverse on `b`.
+      addConnection: (s, t, type) => {
+        if (s === "b") return false;
+        (entities[s].connections as Conn[]).push({
+          target: t,
+          type,
+          strength: 1,
+        });
+        return true;
+      },
+      removeConnection: (s, t, type) => {
+        entities[s].connections = (entities[s].connections as Conn[]).filter(
+          (c) => !(c.target === t && c.type === type),
+        );
+      },
+    };
+
+    const res = await addFamilyLink("a", "b", "parent_of", deps);
+    expect(res.ok).toBe(false);
+    // Forward write was rolled back — no one-sided link left behind.
+    expect(entities.a.connections).toHaveLength(0);
+    expect(entities.b.connections).toHaveLength(0);
+  });
 });
 
 describe("removeFamilyLink", () => {

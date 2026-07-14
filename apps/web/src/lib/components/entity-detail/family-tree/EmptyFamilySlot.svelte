@@ -40,10 +40,7 @@
   }
 
   async function link(id: string) {
-    busy = true;
-    error = null;
     const res = await vault.addFamilyLink(focusId, id, RELATION_TYPE[relation]);
-    busy = false;
     if (res.ok) {
       reset();
     } else {
@@ -56,7 +53,15 @@
       error = "Pick a character to connect.";
       return;
     }
-    await link(targetId);
+    busy = true;
+    error = null;
+    try {
+      await link(targetId);
+    } catch {
+      error = "Could not add family link.";
+    } finally {
+      busy = false;
+    }
   }
 
   async function createNew() {
@@ -67,8 +72,14 @@
     }
     busy = true;
     error = null;
-    const newId = await vault.createEntity("character", title);
-    await link(newId);
+    try {
+      const newId = await vault.createEntity("character", title);
+      await link(newId);
+    } catch {
+      error = "Could not create character.";
+    } finally {
+      busy = false;
+    }
   }
 </script>
 
