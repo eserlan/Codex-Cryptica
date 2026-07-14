@@ -47,6 +47,7 @@
         "@codex/canvas-engine": "workspace:*",
         "@codex/content-packs": "workspace:*",
         "@codex/events": "workspace:*",
+        "@codex/family-engine": "workspace:*",
         "@codex/gdrive-sync": "workspace:*",
         "@codex/importer": "workspace:*",
         "@codex/oracle-engine": "workspace:*",
@@ -243,6 +244,18 @@
       "devDependencies": {
         "@vitest/coverage-v8": "^4.1.7",
         "eslint": "^10.6.0",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
+    "packages/family-engine": {
+      "name": "@codex/family-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
         "typescript": "^6.0.3",
         "vitest": "^4.1.7",
       },
@@ -496,6 +509,8 @@
     "@codex/content-packs": ["@codex/content-packs@workspace:packages/content-packs"],
 
     "@codex/events": ["@codex/events@workspace:packages/events"],
+
+    "@codex/family-engine": ["@codex/family-engine@workspace:packages/family-engine"],
 
     "@codex/gdrive-sync": ["@codex/gdrive-sync@workspace:packages/gdrive-sync"],
 

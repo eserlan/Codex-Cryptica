@@ -10,6 +10,11 @@ export const ConnectionTypeSchema = z.enum([
   "owns",
   "part_of",
   "secret_advisor",
+  // Family relationship types (Family Tree view). parent_of <-> child_of are
+  // inverses; spouse_of is symmetric (its own inverse).
+  "parent_of",
+  "child_of",
+  "spouse_of",
 ]);
 
 export const ConnectionSchema = z.object({

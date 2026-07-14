@@ -146,6 +146,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
     icon: "icon-[lucide--brain]",
   },
+  "family-tree": {
+    id: "family-tree",
+    title: "Family Tree",
+    content:
+      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. The tree is built from your normal connections, so nothing is stored twice.",
+    icon: "icon-[lucide--network]",
+  },
   "visual-graph": {
     id: "visual-graph",
     title: "Visual Graph",

@@ -16,6 +16,11 @@ import { EntityStore } from "./vault/entity-store.svelte";
 import { EntityContentLoader } from "./vault/entity-content-loader.svelte";
 import { EntityPersistenceService } from "./vault/entity-persistence";
 import { EntityMutationService } from "./vault/entity-mutations";
+import {
+  addFamilyLink as addFamilyLinkMutation,
+  removeFamilyLink as removeFamilyLinkMutation,
+} from "./vault/family-mutations";
+import type { FamilyConnectionType } from "@codex/family-engine";
 import { SyncStore } from "./vault/sync-store.svelte";
 import { AssetStore } from "./vault/asset-store.svelte";
 import { ServiceRegistry } from "./vault/service-registry";
@@ -153,12 +158,7 @@ export class VaultStore {
   }
   set status(
     value:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
     this.syncStore.setStatus(value);
   }
@@ -564,6 +564,14 @@ export class VaultStore {
   }
   removeConnection(sId: string, tId: string, type: string) {
     return this.entityStore.removeConnection(sId, tId, type);
+  }
+  /** Add a family link, writing both sides and blocking circular ancestry. */
+  addFamilyLink(sId: string, tId: string, type: FamilyConnectionType) {
+    return addFamilyLinkMutation(sId, tId, type, this);
+  }
+  /** Remove a family link from both entities. */
+  removeFamilyLink(sId: string, tId: string, type: FamilyConnectionType) {
+    return removeFamilyLinkMutation(sId, tId, type, this);
   }
   updateConnection(
     sId: string,

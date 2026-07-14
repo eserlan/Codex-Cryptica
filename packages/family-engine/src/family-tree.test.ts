@@ -1,0 +1,141 @@
+import { describe, it, expect } from "vitest";
+import type { Entity } from "schema";
+import { buildFamilyTree } from "./family-tree";
+
+type Conn = { target: string; type: string };
+
+function char(
+  id: string,
+  connections: Conn[] = [],
+  extra: Partial<Entity> = {},
+): Entity {
+  return {
+    id,
+    type: "character",
+    title: id.toUpperCase(),
+    connections: connections.map((c) => ({ ...c, strength: 1 })),
+    ...extra,
+  } as unknown as Entity;
+}
+
+function map(...entities: Entity[]): Record<string, Entity> {
+  return Object.fromEntries(entities.map((e) => [e.id, e]));
+}
+
+const ids = (members: { entityId: string }[]) =>
+  members.map((m) => m.entityId).sort();
+
+describe("buildFamilyTree", () => {
+  it("places parents, children and partners in the right buckets", () => {
+    const entities = map(
+      char("focus", [
+        { target: "mom", type: "child_of" },
+        { target: "kid", type: "parent_of" },
+        { target: "spouse", type: "spouse_of" },
+      ]),
+      char("mom"),
+      char("kid"),
+      char("spouse"),
+    );
+    const tree = buildFamilyTree("focus", entities);
+    expect(ids(tree.parents)).toEqual(["mom"]);
+    expect(ids(tree.children)).toEqual(["kid"]);
+    expect(ids(tree.partners)).toEqual(["spouse"]);
+    expect(tree.parents[0].generation).toBe(-1);
+    expect(tree.children[0].generation).toBe(1);
+  });
+
+  it("reads a family link from either direction", () => {
+    // Only the parent records `parent_of`; the child records nothing.
+    const entities = map(
+      char("parent", [{ target: "child", type: "parent_of" }]),
+      char("child"),
+    );
+    expect(ids(buildFamilyTree("child", entities).parents)).toEqual(["parent"]);
+    expect(ids(buildFamilyTree("parent", entities).children)).toEqual([
+      "child",
+    ]);
+  });
+
+  it("infers siblings from a shared parent", () => {
+    const entities = map(
+      char("parent", [
+        { target: "a", type: "parent_of" },
+        { target: "b", type: "parent_of" },
+      ]),
+      char("a"),
+      char("b"),
+    );
+    const tree = buildFamilyTree("a", entities);
+    expect(ids(tree.siblings)).toEqual(["b"]);
+    expect(tree.siblings[0].generation).toBe(0);
+  });
+
+  it("returns multiple partners (edge case)", () => {
+    const entities = map(
+      char("focus", [
+        { target: "p1", type: "spouse_of" },
+        { target: "p2", type: "spouse_of" },
+      ]),
+      char("p1"),
+      char("p2"),
+    );
+    expect(ids(buildFamilyTree("focus", entities).partners)).toEqual([
+      "p1",
+      "p2",
+    ]);
+  });
+
+  it("skips dangling and non-character targets (edge case)", () => {
+    const entities = map(
+      char("focus", [
+        { target: "ghost", type: "parent_of" }, // not in map
+        { target: "place", type: "parent_of" }, // not a character
+      ]),
+      {
+        id: "place",
+        type: "location",
+        title: "Place",
+        connections: [],
+      } as unknown as Entity,
+    );
+    expect(buildFamilyTree("focus", entities).children).toEqual([]);
+  });
+
+  it("tolerates a missing intermediate generation (edge case)", () => {
+    // grandparent -> (missing parent) ; grandchild recorded directly on gp.
+    const entities = map(
+      char("grandparent", [{ target: "grandchild", type: "parent_of" }]),
+      char("grandchild"),
+    );
+    const tree = buildFamilyTree("grandparent", entities);
+    expect(ids(tree.children)).toEqual(["grandchild"]);
+    expect(tree.parents).toEqual([]);
+  });
+
+  it("derives lifespan and deceased status", () => {
+    const entities = map(
+      char("dead", [], {
+        start_date: { year: 1000 } as never,
+        end_date: { year: 1050 } as never,
+      }),
+      char("living", [], { start_date: { year: 1200 } as never }),
+    );
+    const dead = buildFamilyTree("dead", entities).focus;
+    expect(dead.deceased).toBe(true);
+    expect(dead.lifespan).toBe("1000–1050");
+    const living = buildFamilyTree("living", entities).focus;
+    expect(living.deceased).toBe(false);
+    expect(living.lifespan).toBe("b. 1200");
+  });
+
+  it("does not mutate the input entities", () => {
+    const entities = map(
+      char("parent", [{ target: "child", type: "parent_of" }]),
+      char("child"),
+    );
+    const snapshot = JSON.stringify(entities);
+    buildFamilyTree("child", entities);
+    expect(JSON.stringify(entities)).toBe(snapshot);
+  });
+});
