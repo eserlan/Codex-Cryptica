@@ -25,14 +25,14 @@ Reuses the existing `FamilyMember` shape (built by the existing `toMember()`), e
 
 ### `Lineage` (result of `buildLineage`)
 
-| Field                           | Type                                                          | Notes                                                                                     |
-| ------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `focusId`                       | `string`                                                      |                                                                                           |
-| `members`                       | `Map<string, LineageMember>`                                  | Each person exactly once (visited-set)                                                    |
-| `edges`                         | `LineageEdge[]`                                               |                                                                                           |
-| `generations`                   | `Map<number, string[]>`                                       | Row index → member ids, deterministic order                                               |
-| `siblingBranches`               | `Map<string, string[]>`                                       | Branch root id → member ids inside that collapsible branch                                |
-| `truncatedUp` / `truncatedDown` | `{ atGeneration: number; hiddenGenerations: number } \| null` | Set when a depth cap cut recorded members (drives "M more generations" expanders, FR-010) |
+| Field                           | Type                                                          | Notes                                                                                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `focusId`                       | `string`                                                      |                                                                                                                                                                                                                                          |
+| `members`                       | `Map<string, LineageMember>`                                  | Each person exactly once (visited-set)                                                                                                                                                                                                   |
+| `edges`                         | `LineageEdge[]`                                               |                                                                                                                                                                                                                                          |
+| `generations`                   | `Map<number, string[]>`                                       | Row index → member ids, deterministic order                                                                                                                                                                                              |
+| `siblingBranches`               | `Map<string, { hiddenCount: number; memberIds: string[] }>`   | Branch root id → always-computed count of recorded descendants inside the branch (size-only, cycle-safe walk — computed even while collapsed, so indicators can show it) plus the member ids, populated only when the branch is expanded |
+| `truncatedUp` / `truncatedDown` | `{ atGeneration: number; hiddenGenerations: number } \| null` | Set when a depth cap cut recorded members (drives "M more generations" expanders, FR-010)                                                                                                                                                |
 
 ### `BuildLineageOptions`
 
@@ -66,7 +66,7 @@ Reuses the existing `FamilyMember` shape (built by the existing `toMember()`), e
 - Only `character`-type entities participate (reuses `isCharacter` guard); dangling connection targets skipped — same rules as `buildFamilyTree`.
 - Traversal MUST visit each entityId at most once across both directions (FR-011); repeated reaches become `secondary` edges.
 - Partners are placed, never traversed (FR-004).
-- Sibling-branch members are absent from `members` while their branch is collapsed **except** the branch root itself, which always materialises (it is the collapse indicator's anchor and expansion target).
+- Sibling-branch members are absent from `members` while their branch is collapsed **except** the branch root itself, which always materialises (it is the collapse indicator's anchor and expansion target). The branch's `hiddenCount` is still computed for collapsed branches via a size-only, visited-set-guarded walk — counting never materialises members and never loops on cyclic data.
 - `generations` ordering is deterministic: within a row, family units sorted by parent position, then members by name — guarantees stable layout (FR-010).
 
 ## State transitions

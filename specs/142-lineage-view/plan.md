@@ -12,7 +12,7 @@ Technical approach: a new pure traversal function `buildLineage()` plus a pure d
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x (repo pinned to 6.0.3 tooling for tsgo; source targets the workspace's standard TS), Svelte 5 (runes)
+**Language/Version**: TypeScript 6.0.3 (repo-pinned, tsgo via `lint:types:fast`), Svelte 5 (runes)
 **Primary Dependencies**: `@codex/family-engine` (extended), `schema` (Entity types), existing `FamilyMemberCard.svelte`; map's pure `getZoomViewportUpdate` from `apps/web/src/lib/components/map/map-view-helpers.ts` for wheel-zoom math. No new external dependencies.
 **Storage**: None — lineage is derived at view time from entity connections (FR-012). Collapse/expand and mode state are transient component state.
 **Testing**: `bun test` (vitest workspace) — unit tests in `packages/family-engine`, component tests alongside the Svelte files as in 1702; `bun run lint` + `bun run test` gate (Constitution VI.3).
