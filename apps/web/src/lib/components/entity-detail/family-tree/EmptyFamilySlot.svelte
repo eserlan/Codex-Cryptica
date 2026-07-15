@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FamilyConnectionType } from "@codex/family-engine";
+  import { buildFamilyTree } from "@codex/family-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
 
@@ -37,6 +38,13 @@
   // Only siblings carry a brother/sister term (blank = generic "Sibling").
   let siblingTerm = $state<"" | "Brother" | "Sister">("");
 
+  // After adding a parent, offer to also link that parent's existing spouse
+  // (if any) as a parent — but only as a suggestion the user confirms.
+  // Marriage doesn't imply co-parentage (remarriage, step-parents, unrelated
+  // partners are all common), so we never link it automatically.
+  let spouseSuggestions = $state<{ id: string; name: string }[]>([]);
+  let addedParentName = $state("");
+
   function reset() {
     open = false;
     targetName = "";
@@ -44,6 +52,21 @@
     error = null;
     busy = false;
     siblingTerm = "";
+    spouseSuggestions = [];
+    addedParentName = "";
+  }
+
+  function findUnlinkedSpousesOfParent(
+    parentId: string,
+  ): { id: string; name: string }[] {
+    const focusTree = buildFamilyTree(focusId, vault.entities);
+    const existingParentIds = new Set(focusTree.parents.map((p) => p.entityId));
+    const parentTree = buildFamilyTree(parentId, vault.entities);
+    return parentTree.partners
+      .filter(
+        (p) => p.entityId !== focusId && !existingParentIds.has(p.entityId),
+      )
+      .map((p) => ({ id: p.entityId, name: p.name }));
   }
 
   async function link(id: string) {
@@ -55,11 +78,22 @@
       RELATION_TYPE[relation],
       term,
     );
-    if (res.ok) {
-      reset();
-    } else {
+    if (!res.ok) {
       error = res.error ?? "Could not add family link.";
+      return;
     }
+    if (relation === "parent") {
+      const suggestions = findUnlinkedSpousesOfParent(id);
+      if (suggestions.length > 0) {
+        addedParentName = vault.entities[id]?.title ?? targetName;
+        spouseSuggestions = suggestions;
+        targetName = "";
+        targetId = null;
+        error = null;
+        return;
+      }
+    }
+    reset();
   }
 
   async function connectExisting() {
@@ -95,6 +129,24 @@
       busy = false;
     }
   }
+
+  async function addSuggestedSpouse(spouseId: string) {
+    busy = true;
+    error = null;
+    try {
+      const res = await vault.addFamilyLink(focusId, spouseId, "child_of");
+      if (res.ok) {
+        spouseSuggestions = spouseSuggestions.filter((s) => s.id !== spouseId);
+        if (spouseSuggestions.length === 0) reset();
+      } else {
+        error = res.error ?? "Could not add family link.";
+      }
+    } catch {
+      error = "Could not add family link.";
+    } finally {
+      busy = false;
+    }
+  }
 </script>
 
 <div class="inline-flex flex-col items-start gap-1">
@@ -108,6 +160,43 @@
       <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>
       {label}
     </button>
+  {:else if spouseSuggestions.length > 0}
+    <div
+      data-testid="spouse-suggestions"
+      class="flex w-56 flex-col gap-2 rounded border border-theme-border bg-theme-surface p-2"
+    >
+      <p class="text-[10px] text-theme-muted">
+        {addedParentName} is partnered with
+        {spouseSuggestions.map((s) => s.name).join(", ")} — add as a parent too?
+      </p>
+      {#each spouseSuggestions as spouse (spouse.id)}
+        <div class="flex items-center justify-between gap-2">
+          <span class="truncate text-xs text-theme-text">{spouse.name}</span>
+          <button
+            type="button"
+            data-testid="add-suggestion-{spouse.id}"
+            disabled={busy}
+            class="shrink-0 rounded bg-theme-primary/20 px-2 py-1 text-[10px] font-bold text-theme-primary disabled:opacity-50"
+            onclick={() => addSuggestedSpouse(spouse.id)}
+          >
+            Add
+          </button>
+        </div>
+      {/each}
+      {#if error}
+        <p data-testid="family-slot-error" class="text-[10px] text-red-400">
+          {error}
+        </p>
+      {/if}
+      <button
+        type="button"
+        data-testid="dismiss-spouse-suggestions"
+        class="self-start rounded px-2 py-1 text-[10px] text-theme-muted hover:text-theme-text"
+        onclick={reset}
+      >
+        No thanks
+      </button>
+    </div>
   {:else}
     <div
       class="flex w-56 flex-col gap-2 rounded border border-theme-border bg-theme-surface p-2"

@@ -20,7 +20,7 @@ The focused character sits in the middle. Around them you'll see:
 - **Children** below
 - **Siblings** on the same row — worked out automatically from shared parents, and you can also add them directly (handy when the parents aren't recorded)
 
-Each person appears as a card with their portrait, name, role, lifespan, and whether they are living or deceased.
+Each person appears as a card with their portrait, name, lifespan, and whether they are living or deceased. The card also shows how they relate to the focused character — a specific term like "Mother" or "Brother" when one was set, otherwise the general category (Parent, Partner, Sibling, Child). Tag a character with a **Male** or **Female** label and their card shows a small gender icon.
 
 ## Building a family
 
@@ -32,6 +32,8 @@ Use the buttons beneath the tree — **Add parent**, **Add partner**, **Add sibl
 When adding a sibling you can mark them as a **Brother**, **Sister**, or leave it as a generic sibling — the term shows on their card. Siblings can be added even when you haven't recorded any parents.
 
 When you add a parent, the matching "child" link is added to the other character automatically, so both sides always agree. Family links are only allowed between characters, and the app blocks anything that would make a character their own ancestor.
+
+If the parent you just added already has a partner on file, you'll be asked whether to add that partner as a parent too — it's never done automatically, since being partnered doesn't always mean being a co-parent (remarriage, step-parents, and unrelated partners all happen). Add the ones that apply, or dismiss the suggestion.
 
 ## Navigating
 

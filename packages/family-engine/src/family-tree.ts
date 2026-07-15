@@ -19,6 +19,8 @@ export interface FamilyMember {
    * label. Undefined when no label was recorded (e.g. inferred siblings).
    */
   relationLabel?: string;
+  /** Derived from a "Male"/"Female" entity Label, if present. Undefined when unknown. */
+  gender?: "male" | "female";
 }
 
 export interface FamilyTree {
@@ -42,8 +44,25 @@ const CHARACTER_TYPE = "character";
 // These must never surface as a character's role/title on a family card.
 const AUTO_LABELS = new Set(["past"]);
 
+// Gender is read from the same Labels mechanism used elsewhere in the app
+// (Constitution XII: Labels over Tags) rather than a dedicated schema field,
+// so tagging a character "Male"/"Female" is all that's needed. Excluded from
+// `role` so it never doubles as a title.
+const GENDER_LABELS = new Map<string, "male" | "female">([
+  ["male", "male"],
+  ["female", "female"],
+]);
+
 function isCharacter(entity: Entity | undefined): entity is Entity {
   return !!entity && entity.type === CHARACTER_TYPE;
+}
+
+function pickGender(entity: Entity): "male" | "female" | undefined {
+  for (const label of entity.labels ?? []) {
+    const gender = GENDER_LABELS.get(label.trim().toLowerCase());
+    if (gender) return gender;
+  }
+  return undefined;
 }
 
 function temporalYear(t: TemporalMetadata | undefined): number | undefined {
@@ -54,7 +73,10 @@ function temporalYear(t: TemporalMetadata | undefined): number | undefined {
 }
 
 function pickRole(entity: Entity): string | undefined {
-  return (entity.labels ?? []).find((label) => !AUTO_LABELS.has(label));
+  return (entity.labels ?? []).find(
+    (label) =>
+      !AUTO_LABELS.has(label) && !GENDER_LABELS.has(label.trim().toLowerCase()),
+  );
 }
 
 function formatLifespan(entity: Entity): string | undefined {
@@ -130,6 +152,7 @@ function toMember(
     relation,
     generation,
     relationLabel,
+    gender: pickGender(entity),
   };
 }
 
