@@ -166,7 +166,7 @@
       class="flex w-56 flex-col gap-2 rounded border border-theme-border bg-theme-surface p-2"
     >
       <p class="text-[10px] text-theme-muted">
-        {addedParentName} is married to
+        {addedParentName} is partnered with
         {spouseSuggestions.map((s) => s.name).join(", ")} — add as a parent too?
       </p>
       {#each spouseSuggestions as spouse (spouse.id)}
