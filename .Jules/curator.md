@@ -52,3 +52,8 @@
 **Learning:** When marketing or configuration files like `seo-pages.ts` grow large because they combine disparate content (solutions, features, comparisons), extracting distinct record objects (like `comparisons`) into sibling files following the same naming convention significantly reduces file size and improves navigation without needing architectural changes.
 
 **Action:** Favor grouping large static content records by their domain (e.g., `seo-comparisons.ts`) rather than dumping all page metadata into one god file.
+## 2026-07-15 - Extracted SEO Marketing configurations
+
+**Learning:** When marketing configuration files grow huge by combining disparate static content (like solutions, comparisons, features, and imports in `seo-pages.ts`), extracting distinct record objects into sibling files (`seo-comparisons.ts`, `seo-features.ts`, `seo-imports.ts`) drastically reduces file size and improves navigation without breaking any upstream imports (thanks to re-exporting them in the root file).
+
+**Action:** When finding massive static configurations, extract distinct structural sections into sibling files, then export them all from the primary index to keep public APIs stable.
