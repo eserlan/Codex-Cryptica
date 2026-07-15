@@ -79,6 +79,7 @@ FamilyTree {
 - **FR-013 (no cycles — hard block)**: `wouldCreateCycle(entities, childId, proposedParentId)` returns true if `proposedParentId` is `childId` itself or any descendant of `childId`; the mutation is rejected before any write, with an explanatory error.
 - **FR-014 (characters only)**: family mutations reject targets whose category is not `character`.
 - **Reconciliation**: if legacy/imported data has a one-sided family link, the tree renderer still derives correctly by reading either direction; editing that link normalises both sides.
+- **Sibling auto-sync**: whenever a `parent_of`/`child_of` link is added, family mutations also persist a `sibling_of` connection (both sides, unlabelled) between the newly linked child and any of that parent's other existing children, if one isn't already recorded — sharing a parent unambiguously makes two characters siblings, unlike a parent's spouse (which is only ever _suggested_, never auto-linked, since marriage doesn't imply co-parentage). Idempotent and best-effort: never duplicates an existing link, never overwrites an existing label, and a failure here does not fail the parent/child link that triggered it.
 
 ## 5. Affected persisted schema summary
 

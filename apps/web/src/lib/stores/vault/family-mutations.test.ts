@@ -176,6 +176,101 @@ describe("addFamilyLink", () => {
   });
 });
 
+describe("addFamilyLink sibling auto-sync", () => {
+  it("auto-links a new child as a sibling of the parent's existing children", async () => {
+    const entities = {
+      p: char("p", [{ target: "a", type: "parent_of", strength: 1 }]),
+      a: char("a", [{ target: "p", type: "child_of", strength: 1 }]),
+      b: char("b"),
+    };
+
+    await addFamilyLink("p", "b", "parent_of", undefined, fakeVault(entities));
+
+    expect(entities.a.connections).toContainEqual({
+      target: "b",
+      type: "sibling_of",
+      strength: 1,
+    });
+    expect(entities.b.connections).toContainEqual({
+      target: "a",
+      type: "sibling_of",
+      strength: 1,
+    });
+  });
+
+  it("works from the child_of direction too (e.g. 'Add parent' in the UI)", async () => {
+    const entities = {
+      p: char("p", [{ target: "a", type: "parent_of", strength: 1 }]),
+      a: char("a", [{ target: "p", type: "child_of", strength: 1 }]),
+      b: char("b"),
+    };
+
+    // "focus is child_of parent" — b is the source, p is the target.
+    await addFamilyLink("b", "p", "child_of", undefined, fakeVault(entities));
+
+    expect(entities.a.connections).toContainEqual({
+      target: "b",
+      type: "sibling_of",
+      strength: 1,
+    });
+    expect(entities.b.connections).toContainEqual({
+      target: "a",
+      type: "sibling_of",
+      strength: 1,
+    });
+  });
+
+  it("does not duplicate an existing sibling_of link or touch its label", async () => {
+    const entities = {
+      p: char("p", [{ target: "a", type: "parent_of", strength: 1 }]),
+      a: char("a", [
+        { target: "p", type: "child_of", strength: 1 },
+        { target: "b", type: "sibling_of", strength: 1, label: "Brother" },
+      ]),
+      b: char("b", [{ target: "a", type: "sibling_of", strength: 1 }]),
+    };
+
+    await addFamilyLink("p", "b", "parent_of", undefined, fakeVault(entities));
+
+    const aToB = entities.a.connections.filter(
+      (c) => c.type === "sibling_of" && c.target === "b",
+    );
+    const bToA = entities.b.connections.filter(
+      (c) => c.type === "sibling_of" && c.target === "a",
+    );
+    expect(aToB).toEqual([
+      { target: "b", type: "sibling_of", strength: 1, label: "Brother" },
+    ]);
+    expect(bToA).toHaveLength(1);
+  });
+
+  it("does not create sibling links across unrelated parents", async () => {
+    const entities = {
+      p1: char("p1", [{ target: "a", type: "parent_of", strength: 1 }]),
+      a: char("a", [{ target: "p1", type: "child_of", strength: 1 }]),
+      p2: char("p2"),
+      c: char("c"),
+    };
+
+    await addFamilyLink("p2", "c", "parent_of", undefined, fakeVault(entities));
+
+    expect(
+      entities.a.connections.some((conn) => conn.type === "sibling_of"),
+    ).toBe(false);
+    expect(
+      entities.c.connections.some((conn) => conn.type === "sibling_of"),
+    ).toBe(false);
+  });
+
+  it("does not run for non-parent/child link types (e.g. spouse_of)", async () => {
+    const entities = { a: char("a"), b: char("b") };
+    await addFamilyLink("a", "b", "spouse_of", undefined, fakeVault(entities));
+    expect(entities.a.connections.some((c) => c.type === "sibling_of")).toBe(
+      false,
+    );
+  });
+});
+
 describe("removeFamilyLink", () => {
   it("removes both sides", async () => {
     const entities = {

@@ -1,6 +1,7 @@
 import type { Entity } from "schema";
 import {
   type FamilyConnectionType,
+  buildFamilyTree,
   inverseFamilyType,
   wouldCreateCycle,
 } from "@codex/family-engine";
@@ -98,7 +99,41 @@ export async function addFamilyLink(
       return { ok: false, error: "Could not add family link." };
     }
   }
+
+  // Unlike a parent's spouse (which does NOT imply co-parentage — remarriage,
+  // step-parents etc.), sharing a parent unambiguously makes two characters
+  // siblings. Persist that as a real sibling_of connection so it appears
+  // everywhere (graph, connections list), not just inferred in the Family
+  // Tree view. Best-effort: failures here don't fail the link that triggered it.
+  if (type === "parent_of" || type === "child_of") {
+    const parentId = type === "parent_of" ? sourceId : targetId;
+    const childId = type === "parent_of" ? targetId : sourceId;
+    await syncSiblingLinks(deps, parentId, childId);
+  }
+
   return { ok: true };
+}
+
+async function syncSiblingLinks(
+  deps: FamilyMutationVault,
+  parentId: string,
+  childId: string,
+): Promise<void> {
+  const otherChildIds = buildFamilyTree(parentId, deps.entities)
+    .children.map((c) => c.entityId)
+    .filter((id) => id !== childId);
+
+  for (const otherChildId of otherChildIds) {
+    const child = deps.entities[childId];
+    const otherChild = deps.entities[otherChildId];
+    if (!child || !otherChild) continue;
+    if (!hasConnection(child, otherChildId, "sibling_of")) {
+      await deps.addConnection(childId, otherChildId, "sibling_of");
+    }
+    if (!hasConnection(otherChild, childId, "sibling_of")) {
+      await deps.addConnection(otherChildId, childId, "sibling_of");
+    }
+  }
 }
 
 function hasConnection(
