@@ -59,8 +59,8 @@
       {#if genderLabel}
         <span
           class="{member.gender === 'male'
-            ? 'icon-[lucide--mars] text-sky-400'
-            : 'icon-[lucide--venus] text-rose-400'} h-3 w-3 shrink-0"
+            ? 'icon-[lucide--mars] text-theme-muted'
+            : 'icon-[lucide--venus] text-theme-muted'} h-3 w-3 shrink-0"
           aria-hidden="true"
         ></span>
         <span class="sr-only">{genderLabel}</span>
