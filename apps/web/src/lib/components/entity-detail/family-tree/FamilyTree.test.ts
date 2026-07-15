@@ -41,6 +41,36 @@ describe("FamilyTree.svelte", () => {
     expect(screen.getAllByTestId("family-member-card").length).toBe(5);
   });
 
+  it("draws spouse and sibling connectors, and a bar for multiple children", () => {
+    const tree: FamilyTreeData = {
+      focusId: "focus",
+      focus: member("focus", "focus", 0),
+      parents: [],
+      partners: [member("spouse", "partner", 0)],
+      children: [member("kid1", "child", 1), member("kid2", "child", 1)],
+      siblings: [member("sib", "sibling", 0)],
+    };
+    render(FamilyTree, { tree });
+    expect(screen.getByTestId("spouse-link")).toBeTruthy();
+    expect(screen.getByTestId("sibling-link")).toBeTruthy();
+    // A joining bar appears only when there is more than one child.
+    expect(screen.getByTestId("children-bar")).toBeTruthy();
+  });
+
+  it("omits the children bar for a single child", () => {
+    const tree: FamilyTreeData = {
+      focusId: "focus",
+      focus: member("focus", "focus", 0),
+      parents: [],
+      partners: [],
+      children: [member("kid", "child", 1)],
+      siblings: [],
+    };
+    render(FamilyTree, { tree });
+    expect(screen.queryByTestId("children-bar")).toBeNull();
+    expect(screen.queryByTestId("spouse-link")).toBeNull();
+  });
+
   it("renders multiple partners on the focus row (edge case)", () => {
     const tree: FamilyTreeData = {
       focusId: "focus",
