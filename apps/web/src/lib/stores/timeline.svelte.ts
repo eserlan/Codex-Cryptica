@@ -315,7 +315,7 @@ export class TimelineStore {
   filteredEntries = $derived.by(() => {
     // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
     // to avoid intermediate array allocation when computing filteredEntries.
-    const results = [];
+    const results: TimelineEntry[] = [];
     for (const entry of this.filteredCalendarEntries) {
       if (entry.date !== null) {
         results.push({
