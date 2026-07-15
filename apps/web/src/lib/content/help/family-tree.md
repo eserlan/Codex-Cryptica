@@ -33,6 +33,8 @@ When adding a sibling you can mark them as a **Brother**, **Sister**, or leave i
 
 When you add a parent, the matching "child" link is added to the other character automatically, so both sides always agree. Family links are only allowed between characters, and the app blocks anything that would make a character their own ancestor.
 
+If the parent you just added already has a partner on file, you'll be asked whether to add that partner as a parent too — it's never done automatically, since being partnered doesn't always mean being a co-parent (remarriage, step-parents, and unrelated partners all happen). Add the ones that apply, or dismiss the suggestion.
+
 ## Navigating
 
 - **Click a relative's card** to re-centre the tree on them and explore outward.
