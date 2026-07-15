@@ -269,6 +269,51 @@ describe("addFamilyLink sibling auto-sync", () => {
       false,
     );
   });
+
+  it("does not fail the parent/child link if the sibling sync write throws", async () => {
+    const entities: Record<string, Entity> = {
+      p: char("p", [{ target: "a", type: "parent_of", strength: 1 }]),
+      a: char("a", [{ target: "p", type: "child_of", strength: 1 }]),
+      b: char("b"),
+    };
+    const deps: FamilyMutationVault = {
+      entities,
+      addConnection: (s, t, type) => {
+        if (type === "sibling_of") {
+          throw new Error("boom");
+        }
+        (entities[s].connections as Conn[]).push({
+          target: t,
+          type,
+          strength: 1,
+        });
+        return true;
+      },
+      removeConnection: () => {},
+    };
+
+    const res = await addFamilyLink("p", "b", "parent_of", undefined, deps);
+
+    // The primary parent/child link still succeeds despite the sync throwing.
+    expect(res.ok).toBe(true);
+    expect(entities.p.connections).toContainEqual({
+      target: "b",
+      type: "parent_of",
+      strength: 1,
+    });
+    expect(entities.b.connections).toContainEqual({
+      target: "p",
+      type: "child_of",
+      strength: 1,
+    });
+    // No sibling link was left half-written.
+    expect(entities.a.connections.some((c) => c.type === "sibling_of")).toBe(
+      false,
+    );
+    expect(entities.b.connections.some((c) => c.type === "sibling_of")).toBe(
+      false,
+    );
+  });
 });
 
 describe("removeFamilyLink", () => {

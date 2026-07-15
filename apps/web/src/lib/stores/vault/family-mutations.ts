@@ -108,7 +108,13 @@ export async function addFamilyLink(
   if (type === "parent_of" || type === "child_of") {
     const parentId = type === "parent_of" ? sourceId : targetId;
     const childId = type === "parent_of" ? targetId : sourceId;
-    await syncSiblingLinks(deps, parentId, childId);
+    // Best-effort: swallow errors so a failure here can never reject
+    // addFamilyLink after the primary parent/child link already succeeded.
+    try {
+      await syncSiblingLinks(deps, parentId, childId);
+    } catch {
+      // Ignored — see comment above.
+    }
   }
 
   return { ok: true };
@@ -124,14 +130,20 @@ async function syncSiblingLinks(
     .filter((id) => id !== childId);
 
   for (const otherChildId of otherChildIds) {
-    const child = deps.entities[childId];
-    const otherChild = deps.entities[otherChildId];
-    if (!child || !otherChild) continue;
-    if (!hasConnection(child, otherChildId, "sibling_of")) {
-      await deps.addConnection(childId, otherChildId, "sibling_of");
-    }
-    if (!hasConnection(otherChild, childId, "sibling_of")) {
-      await deps.addConnection(otherChildId, childId, "sibling_of");
+    // Best-effort per sibling too: one failing write shouldn't stop the rest
+    // from being attempted.
+    try {
+      const child = deps.entities[childId];
+      const otherChild = deps.entities[otherChildId];
+      if (!child || !otherChild) continue;
+      if (!hasConnection(child, otherChildId, "sibling_of")) {
+        await deps.addConnection(childId, otherChildId, "sibling_of");
+      }
+      if (!hasConnection(otherChild, childId, "sibling_of")) {
+        await deps.addConnection(otherChildId, childId, "sibling_of");
+      }
+    } catch {
+      // Ignored — see comment on the call site above.
     }
   }
 }
