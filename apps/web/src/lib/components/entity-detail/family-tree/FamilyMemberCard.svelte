@@ -50,12 +50,6 @@
   {/if}
   <div class="min-w-0">
     <div class="flex items-center gap-1">
-      <span
-        class="truncate text-xs font-bold text-theme-text"
-        title={member.name}
-      >
-        {member.name}
-      </span>
       {#if genderLabel}
         <span
           class="{member.gender === 'male'
@@ -65,6 +59,12 @@
         ></span>
         <span class="sr-only">{genderLabel}</span>
       {/if}
+      <span
+        class="min-w-0 flex-1 truncate text-xs font-bold text-theme-text"
+        title={member.name}
+      >
+        {member.name}
+      </span>
     </div>
     {#if categoryText}
       <div

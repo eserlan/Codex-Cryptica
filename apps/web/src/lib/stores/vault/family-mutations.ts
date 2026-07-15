@@ -1,6 +1,7 @@
 import type { Entity } from "schema";
 import {
   type FamilyConnectionType,
+  buildFamilyTree,
   inverseFamilyType,
   wouldCreateCycle,
 } from "@codex/family-engine";
@@ -98,7 +99,53 @@ export async function addFamilyLink(
       return { ok: false, error: "Could not add family link." };
     }
   }
+
+  // Unlike a parent's spouse (which does NOT imply co-parentage — remarriage,
+  // step-parents etc.), sharing a parent unambiguously makes two characters
+  // siblings. Persist that as a real sibling_of connection so it appears
+  // everywhere (graph, connections list), not just inferred in the Family
+  // Tree view. Best-effort: failures here don't fail the link that triggered it.
+  if (type === "parent_of" || type === "child_of") {
+    const parentId = type === "parent_of" ? sourceId : targetId;
+    const childId = type === "parent_of" ? targetId : sourceId;
+    // Best-effort: swallow errors so a failure here can never reject
+    // addFamilyLink after the primary parent/child link already succeeded.
+    try {
+      await syncSiblingLinks(deps, parentId, childId);
+    } catch {
+      // Ignored — see comment above.
+    }
+  }
+
   return { ok: true };
+}
+
+async function syncSiblingLinks(
+  deps: FamilyMutationVault,
+  parentId: string,
+  childId: string,
+): Promise<void> {
+  const otherChildIds = buildFamilyTree(parentId, deps.entities)
+    .children.map((c) => c.entityId)
+    .filter((id) => id !== childId);
+
+  for (const otherChildId of otherChildIds) {
+    // Best-effort per sibling too: one failing write shouldn't stop the rest
+    // from being attempted.
+    try {
+      const child = deps.entities[childId];
+      const otherChild = deps.entities[otherChildId];
+      if (!child || !otherChild) continue;
+      if (!hasConnection(child, otherChildId, "sibling_of")) {
+        await deps.addConnection(childId, otherChildId, "sibling_of");
+      }
+      if (!hasConnection(otherChild, childId, "sibling_of")) {
+        await deps.addConnection(otherChildId, childId, "sibling_of");
+      }
+    } catch {
+      // Ignored — see comment on the call site above.
+    }
+  }
 }
 
 function hasConnection(
