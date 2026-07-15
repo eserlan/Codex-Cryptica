@@ -84,7 +84,9 @@ jobs:
           # only. Back-merge them into staging every promotion so the branches
           # never drift (which is what makes the next promotion re-conflict).
           git fetch origin main staging
-          git switch staging
+          # The runner checked out `main`, so there's no local `staging` branch;
+          # (re)create it from the remote before merging.
+          git switch -C staging origin/staging
           if git merge origin/main --no-ff \
               -m "⏪ sync: back-merge main into staging after promotion"; then
             git push origin staging
@@ -96,11 +98,13 @@ jobs:
             BR="auto/back-merge-main-$(date +%Y%m%d-%H%M%S)"
             git switch -c "$BR" origin/main
             git push origin "$BR"
-            gh pr create --base staging --head "$BR" \
+            if gh pr create --base staging --head "$BR" \
               --title "⏪ Back-merge main into staging (post-promotion sync)" \
-              --body $'Automated back-merge to keep `staging` in sync with `main` after promotion.\n\n**Merge this with a MERGE COMMIT, not squash** — a squash would flatten the merge and reintroduce branch drift.' \
-              || true
-            echo "::warning::main->staging back-merge conflicted; opened a sync PR for manual resolution."
+              --body $'Automated back-merge to keep `staging` in sync with `main` after promotion.\n\n**Merge this with a MERGE COMMIT, not squash** — a squash would flatten the merge and reintroduce branch drift.'; then
+              echo "::warning::main->staging back-merge conflicted; opened sync PR from ${BR} for manual resolution."
+            else
+              echo "::error::main->staging back-merge conflicted AND opening a sync PR failed; branch ${BR} was pushed — resolve manually."
+            fi
           fi
 
       - name: Trigger release workflow
