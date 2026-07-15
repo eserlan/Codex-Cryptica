@@ -47,3 +47,8 @@
 
 **Learning:** Large modules that are composed of both functional logic (like prompt generators and local fallbacks) and huge static data objects (like lists of naming conventions, text descriptions for every genre, etc) make it hard to navigate. By extracting the pure static data into `<module>-constants.ts`, the original file shrinks significantly, is much easier to read, and the behavior remains identical since imports/exports can be structured to present the exact same API.
 **Action:** When working on large files in `@codex/generator-engine` or similar packages that combine functions with huge data arrays/objects, prefer extracting the data objects to a sibling `-constants.ts` file, and keep the main file focused on logic. Ensure to keep exports aligned.
+## 2025-07-15 - Extracted SEO Marketing configurations
+
+**Learning:** When marketing configuration files grow huge by combining disparate static content (like solutions, comparisons, features, and imports in `seo-pages.ts`), extracting distinct record objects into sibling files (`seo-comparisons.ts`, `seo-features.ts`, `seo-imports.ts`) drastically reduces file size and improves navigation without breaking any upstream imports (thanks to re-exporting them in the root file).
+
+**Action:** When finding massive static configurations, extract distinct structural sections into sibling files, then export them all from the primary index to keep public APIs stable.
