@@ -14,6 +14,25 @@
   }>();
 
   const selectable = $derived(!!onSelect && !isFocus);
+
+  // Generic term for the relation category, used when no specific
+  // relationLabel (e.g. "Mother", "Brother") was recorded on the link.
+  const RELATION_CATEGORY: Record<string, string> = {
+    parent: "Parent",
+    child: "Child",
+    partner: "Partner",
+    sibling: "Sibling",
+  };
+  const categoryText = $derived(
+    member.relationLabel || RELATION_CATEGORY[member.relation],
+  );
+  const genderLabel = $derived(
+    member.gender === "male"
+      ? "Male"
+      : member.gender === "female"
+        ? "Female"
+        : undefined,
+  );
 </script>
 
 {#snippet body()}
@@ -30,17 +49,29 @@
     ></span>
   {/if}
   <div class="min-w-0">
-    <div class="truncate text-xs font-bold text-theme-text" title={member.name}>
-      {member.name}
+    <div class="flex items-center gap-1">
+      <span
+        class="truncate text-xs font-bold text-theme-text"
+        title={member.name}
+      >
+        {member.name}
+      </span>
+      {#if genderLabel}
+        <span
+          class="{member.gender === 'male'
+            ? 'icon-[lucide--mars] text-sky-400'
+            : 'icon-[lucide--venus] text-rose-400'} h-3 w-3 shrink-0"
+          aria-hidden="true"
+        ></span>
+        <span class="sr-only">{genderLabel}</span>
+      {/if}
     </div>
-    {#if member.relationLabel}
+    {#if categoryText}
       <div
         class="truncate text-[10px] font-bold uppercase tracking-wide text-theme-primary/80"
       >
-        {member.relationLabel}
+        {categoryText}
       </div>
-    {:else if member.role}
-      <div class="truncate text-[10px] text-theme-muted">{member.role}</div>
     {/if}
     <div class="flex items-center gap-1 text-[10px] text-theme-muted">
       {#if member.lifespan}
