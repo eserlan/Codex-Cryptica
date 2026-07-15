@@ -41,8 +41,16 @@
   let dialogEl = $state<HTMLDialogElement>();
   let isFullscreen = $state(false);
   function openFullscreen() {
-    isFullscreen = true;
-    dialogEl?.showModal?.();
+    // Only enter full screen if the dialog can actually open — otherwise we'd
+    // hide the in-panel tree with no way to exit (the exit control lives inside
+    // the dialog). Covers jsdom / browsers without <dialog>.showModal.
+    if (typeof dialogEl?.showModal !== "function") return;
+    try {
+      dialogEl.showModal();
+      isFullscreen = true;
+    } catch {
+      isFullscreen = false;
+    }
   }
   function closeFullscreen() {
     dialogEl?.close?.();
@@ -153,15 +161,14 @@
 {/snippet}
 
 <div class="flex flex-col gap-3">
-  <div class="flex justify-end">
-    {@render toolbar(false)}
-  </div>
-
   {#if isFullscreen}
     <p class="py-6 text-center text-xs text-theme-muted">
       Family tree is open in full screen.
     </p>
   {:else}
+    <div class="flex justify-end">
+      {@render toolbar(false)}
+    </div>
     {@render treeBody()}
   {/if}
 </div>
