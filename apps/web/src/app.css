@@ -2,6 +2,7 @@
 @source "./**/*.{svelte,ts,html}";
 @source "../../packages/*/src/**/*.{svelte,ts}";
 @plugin "@iconify/tailwind4";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --breakpoint-xs: 475px;
