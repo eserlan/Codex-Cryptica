@@ -14,6 +14,7 @@
 - Q: Should Lineage mode support editing family relationships in this first version? → A: View-only — cards offer open-entity and re-centre only; all relationship editing stays in the bounded Family tab.
 - Q: When a dynasty exceeds the size safeguard, what should the initial render do? → A: Depth cap + expanders — initially render up to N generations above and below the focus, with a clear "more generations" indicator that expands further on demand.
 - Q: What should the opt-in mode be called in the UI? → A: "Lineage" — the canonical term throughout this spec is "Lineage mode" (formerly referred to as "Full lineage" / "Dynasty" in issue #1716).
+- Q: What if the user wants to see the full lineage despite the depth cap? → A: A single "Expand all" control shows the entire recorded lineage in one action; the depth cap only governs the initial render, it is never a hard limit.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -48,6 +49,7 @@ A user viewing a dynasty of a hundred-plus members needs to move around the char
 2. **Given** any member in the chart with descendants, at any depth, **When** the user collapses that member's branch, **Then** the branch's descendants hide, a visible indicator shows that (and roughly how much) content is collapsed, and expanding restores it.
 3. **Given** any member card in the chart, **When** the user chooses to re-centre on that member, **Then** the lineage is recomputed around them as the new focus.
 4. **Given** any member card in the chart, **When** the user opens that member, **Then** they reach the underlying character entity, consistent with how cards behave in the existing Family Tree.
+5. **Given** an oversized dynasty rendered with the initial depth cap and collapsed sibling branches, **When** the user chooses "Expand all", **Then** the entire recorded lineage becomes visible in that single action and the app stays responsive while it renders.
 
 ---
 
@@ -100,6 +102,7 @@ A game master at the table pulls up the dynasty on their phone mid-session to an
 - **FR-008**: The user MUST be able to collapse and re-expand any member's descendant branch at any depth, with a clear indicator on collapsed branches showing that members are hidden. Collapse state applies to the current viewing session; it need not persist.
 - **FR-009**: The user MUST be able to re-centre the lineage on any member, making them the new focus.
 - **FR-010**: The system MUST remain responsive for large dynasties via an initial generation-depth cap: when the lineage exceeds the cap, only up to N generations above and below the focus render initially, and a clear "more generations available" indicator at the cut lets the user expand further on demand. The lineage MUST never render everything unconditionally for oversized trees, and expanding past the cap MUST NOT lose already-rendered state.
+- **FR-010a**: The user MUST be able to reveal the entire recorded lineage in a single action (an "Expand all" control) that expands past the depth cap and opens all collapsed sibling branches. The depth cap and collapsed-by-default branches govern the initial render only; they are never a hard limit on what can be shown. While a very large expand-all renders, the system MUST stay responsive (e.g. show progress) rather than freezing.
 - **FR-011**: Lineage traversal MUST tolerate imperfect data: it MUST terminate on cyclic ancestry (visiting each member at most once) and MUST handle members reachable by multiple paths without rendering misleading duplicates.
 
 **Data**
@@ -137,3 +140,4 @@ A game master at the table pulls up the dynasty on their phone mid-session to an
 - **SC-006**: The default Family tab behaves identically before and after this feature ships (its existing acceptance tests still pass unchanged), confirming the mode is strictly additive.
 - **SC-007**: Deleting every lineage-mode artefact (leaving the recorded relationships untouched) loses no genealogy data — 100% of the lineage is reconstructable from standard entity relationships, confirming no parallel data store exists.
 - **SC-008**: Lineage traversal on a dataset containing a deliberate ancestry cycle completes and renders (no hang, no crash) in 100% of attempts.
+- **SC-009**: From the initial capped render of an oversized dynasty, a single action reveals the complete recorded lineage (every generation and every sibling branch), and the app remains interactive while it renders.
