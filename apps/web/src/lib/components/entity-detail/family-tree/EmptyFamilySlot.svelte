@@ -133,13 +133,18 @@
   async function addSuggestedSpouse(spouseId: string) {
     busy = true;
     error = null;
-    const res = await vault.addFamilyLink(focusId, spouseId, "child_of");
-    busy = false;
-    if (res.ok) {
-      spouseSuggestions = spouseSuggestions.filter((s) => s.id !== spouseId);
-      if (spouseSuggestions.length === 0) reset();
-    } else {
-      error = res.error ?? "Could not add family link.";
+    try {
+      const res = await vault.addFamilyLink(focusId, spouseId, "child_of");
+      if (res.ok) {
+        spouseSuggestions = spouseSuggestions.filter((s) => s.id !== spouseId);
+        if (spouseSuggestions.length === 0) reset();
+      } else {
+        error = res.error ?? "Could not add family link.";
+      }
+    } catch {
+      error = "Could not add family link.";
+    } finally {
+      busy = false;
     }
   }
 </script>
