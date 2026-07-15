@@ -15,6 +15,7 @@ export interface FamilyMutationVault {
     sId: string,
     tId: string,
     type: string,
+    label?: string,
   ): Promise<boolean> | boolean;
   removeConnection(sId: string, tId: string, type: string): unknown;
 }
@@ -31,11 +32,16 @@ const CYCLE_ERROR = "That would make a character their own ancestor.";
  * entity) so relationship data is consistent from either side. Rejects
  * self-links, non-character targets (FR-014), and circular ancestry (FR-013)
  * before writing anything.
+ *
+ * `targetLabel` (e.g. "Brother", "Sister", "Mother") describes the TARGET and
+ * is written on the target's inverse connection so it surfaces on the target's
+ * card when viewing the source's tree.
  */
 export async function addFamilyLink(
   sourceId: string,
   targetId: string,
   type: FamilyConnectionType,
+  targetLabel?: string,
   deps: FamilyMutationVault = vault,
 ): Promise<FamilyMutationResult> {
   if (sourceId === targetId) {
@@ -78,7 +84,12 @@ export async function addFamilyLink(
     wroteForward = true;
   }
   if (!hasConnection(target, sourceId, inverse)) {
-    const ok = await deps.addConnection(targetId, sourceId, inverse);
+    const ok = await deps.addConnection(
+      targetId,
+      sourceId,
+      inverse,
+      targetLabel,
+    );
     if (ok === false) {
       // Roll back the forward write so we never leave a one-sided link (FR-011).
       if (wroteForward) {

@@ -566,8 +566,13 @@ export class VaultStore {
     return this.entityStore.removeConnection(sId, tId, type);
   }
   /** Add a family link, writing both sides and blocking circular ancestry. */
-  addFamilyLink(sId: string, tId: string, type: FamilyConnectionType) {
-    return addFamilyLinkMutation(sId, tId, type, this);
+  addFamilyLink(
+    sId: string,
+    tId: string,
+    type: FamilyConnectionType,
+    targetLabel?: string,
+  ) {
+    return addFamilyLinkMutation(sId, tId, type, targetLabel, this);
   }
   /** Remove a family link from both entities. */
   removeFamilyLink(sId: string, tId: string, type: FamilyConnectionType) {

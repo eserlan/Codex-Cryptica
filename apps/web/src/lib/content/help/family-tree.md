@@ -18,16 +18,18 @@ The focused character sits in the middle. Around them you'll see:
 - **Parents** above
 - **Partner or partners** beside them
 - **Children** below
-- **Siblings** on the same row, worked out automatically from shared parents
+- **Siblings** on the same row — worked out automatically from shared parents, and you can also add them directly (handy when the parents aren't recorded)
 
 Each person appears as a card with their portrait, name, role, lifespan, and whether they are living or deceased.
 
 ## Building a family
 
-Use the buttons beneath the tree — **Add parent**, **Add partner**, **Add child** — to grow the family. For each one you can:
+Use the buttons beneath the tree — **Add parent**, **Add partner**, **Add sibling**, **Add child** — to grow the family. For each one you can:
 
 - **Connect** an existing character from your world, or
 - **Create** a brand-new character and link them in one step.
+
+When adding a sibling you can mark them as a **Brother**, **Sister**, or leave it as a generic sibling — the term shows on their card. Siblings can be added even when you haven't recorded any parents.
 
 When you add a parent, the matching "child" link is added to the other character automatically, so both sides always agree. Family links are only allowed between characters, and the app blocks anything that would make a character their own ancestor.
 

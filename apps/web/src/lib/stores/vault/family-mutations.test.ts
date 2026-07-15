@@ -11,7 +11,12 @@ import {
   type FamilyMutationVault,
 } from "./family-mutations";
 
-type Conn = { target: string; type: string; strength: number };
+type Conn = {
+  target: string;
+  type: string;
+  strength: number;
+  label?: string;
+};
 
 function char(id: string, connections: Conn[] = []): Entity {
   return { id, type: "character", title: id, connections } as unknown as Entity;
@@ -20,12 +25,10 @@ function char(id: string, connections: Conn[] = []): Entity {
 function fakeVault(entities: Record<string, Entity>): FamilyMutationVault {
   return {
     entities,
-    addConnection: (s, t, type) => {
-      (entities[s].connections as Conn[]).push({
-        target: t,
-        type,
-        strength: 1,
-      });
+    addConnection: (s, t, type, label) => {
+      const conn: Conn = { target: t, type, strength: 1 };
+      if (label !== undefined) conn.label = label;
+      (entities[s].connections as Conn[]).push(conn);
       return true;
     },
     removeConnection: (s, t, type) => {
@@ -41,7 +44,7 @@ describe("addFamilyLink", () => {
     const entities = { a: char("a"), b: char("b") };
     const deps = fakeVault(entities);
 
-    const res = await addFamilyLink("a", "b", "parent_of", deps);
+    const res = await addFamilyLink("a", "b", "parent_of", undefined, deps);
     expect(res.ok).toBe(true);
 
     expect(entities.a.connections).toContainEqual({
@@ -58,7 +61,7 @@ describe("addFamilyLink", () => {
 
   it("stores family links as plain Connection records (no separate store)", async () => {
     const entities = { a: char("a"), b: char("b") };
-    await addFamilyLink("a", "b", "spouse_of", fakeVault(entities));
+    await addFamilyLink("a", "b", "spouse_of", undefined, fakeVault(entities));
     const conn = entities.a.connections[0] as Conn;
     // A plain connection object living in the entity's connections[] array.
     expect(Object.keys(conn).sort()).toEqual(["strength", "target", "type"]);
@@ -76,10 +79,30 @@ describe("addFamilyLink", () => {
     };
     const before = JSON.stringify(entities);
 
-    const res = await addFamilyLink("b", "a", "parent_of", fakeVault(entities));
+    const res = await addFamilyLink(
+      "b",
+      "a",
+      "parent_of",
+      undefined,
+      fakeVault(entities),
+    );
     expect(res.ok).toBe(false);
     expect(res.error).toMatch(/ancestor/i);
     expect(JSON.stringify(entities)).toBe(before);
+  });
+
+  it("writes the target label on the target's inverse side (brother/sister)", async () => {
+    const entities = { a: char("a"), b: char("b") };
+    await addFamilyLink("a", "b", "sibling_of", "Brother", fakeVault(entities));
+    // The label describes b, so it lives on b's link back to a.
+    expect(entities.b.connections).toContainEqual({
+      target: "a",
+      type: "sibling_of",
+      strength: 1,
+      label: "Brother",
+    });
+    // a's own link to b carries no (source-describing) label.
+    expect(entities.a.connections[0]).not.toHaveProperty("label");
   });
 
   it("rejects non-character targets", async () => {
@@ -96,6 +119,7 @@ describe("addFamilyLink", () => {
       "a",
       "place",
       "parent_of",
+      undefined,
       fakeVault(entities),
     );
     expect(res.ok).toBe(false);
@@ -104,15 +128,21 @@ describe("addFamilyLink", () => {
 
   it("rejects self-links", async () => {
     const entities = { a: char("a") };
-    const res = await addFamilyLink("a", "a", "spouse_of", fakeVault(entities));
+    const res = await addFamilyLink(
+      "a",
+      "a",
+      "spouse_of",
+      undefined,
+      fakeVault(entities),
+    );
     expect(res.ok).toBe(false);
   });
 
   it("is idempotent — repeated calls do not duplicate connections", async () => {
     const entities = { a: char("a"), b: char("b") };
     const deps = fakeVault(entities);
-    await addFamilyLink("a", "b", "parent_of", deps);
-    await addFamilyLink("a", "b", "parent_of", deps);
+    await addFamilyLink("a", "b", "parent_of", undefined, deps);
+    await addFamilyLink("a", "b", "parent_of", undefined, deps);
     expect(entities.a.connections).toHaveLength(1);
     expect(entities.b.connections).toHaveLength(1);
   });
@@ -138,7 +168,7 @@ describe("addFamilyLink", () => {
       },
     };
 
-    const res = await addFamilyLink("a", "b", "parent_of", deps);
+    const res = await addFamilyLink("a", "b", "parent_of", undefined, deps);
     expect(res.ok).toBe(false);
     // Forward write was rolled back — no one-sided link left behind.
     expect(entities.a.connections).toHaveLength(0);

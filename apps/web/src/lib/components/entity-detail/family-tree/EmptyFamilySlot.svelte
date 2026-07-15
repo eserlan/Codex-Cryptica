@@ -5,24 +5,28 @@
 
   let { focusId, relation } = $props<{
     focusId: string;
-    relation: "parent" | "child" | "partner";
+    relation: "parent" | "child" | "partner" | "sibling";
   }>();
 
   // Link type from the focus character's perspective:
-  // add a parent  -> focus child_of  target
-  // add a child   -> focus parent_of target
-  // add a partner -> focus spouse_of target
+  // add a parent  -> focus child_of   target
+  // add a child   -> focus parent_of  target
+  // add a partner -> focus spouse_of  target
+  // add a sibling -> focus sibling_of target
   const RELATION_TYPE: Record<typeof relation, FamilyConnectionType> = {
     parent: "child_of",
     child: "parent_of",
     partner: "spouse_of",
+    sibling: "sibling_of",
   };
   const label = $derived(
     relation === "parent"
       ? "Add parent"
       : relation === "child"
         ? "Add child"
-        : "Add partner",
+        : relation === "partner"
+          ? "Add partner"
+          : "Add sibling",
   );
 
   let open = $state(false);
@@ -30,6 +34,8 @@
   let targetId = $state<string | null>(null);
   let error = $state<string | null>(null);
   let busy = $state(false);
+  // Only siblings carry a brother/sister term (blank = generic "Sibling").
+  let siblingTerm = $state<"" | "Brother" | "Sister">("");
 
   function reset() {
     open = false;
@@ -37,10 +43,18 @@
     targetId = null;
     error = null;
     busy = false;
+    siblingTerm = "";
   }
 
   async function link(id: string) {
-    const res = await vault.addFamilyLink(focusId, id, RELATION_TYPE[relation]);
+    const term =
+      relation === "sibling" && siblingTerm ? siblingTerm : undefined;
+    const res = await vault.addFamilyLink(
+      focusId,
+      id,
+      RELATION_TYPE[relation],
+      term,
+    );
     if (res.ok) {
       reset();
     } else {
@@ -104,6 +118,18 @@
         placeholder="Search characters…"
         ariaLabel="Search character to add as {relation}"
       />
+      {#if relation === "sibling"}
+        <select
+          bind:value={siblingTerm}
+          data-testid="sibling-term"
+          aria-label="Sibling relationship"
+          class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-[10px] text-theme-text focus:border-theme-primary focus:outline-none"
+        >
+          <option value="">Sibling</option>
+          <option value="Brother">Brother</option>
+          <option value="Sister">Sister</option>
+        </select>
+      {/if}
       {#if error}
         <p data-testid="family-slot-error" class="text-[10px] text-red-400">
           {error}

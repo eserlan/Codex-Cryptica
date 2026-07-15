@@ -51,8 +51,8 @@
     >
       <FamilyMemberCard member={tree.focus} isFocus />
       <p class="max-w-xs text-xs text-theme-muted">
-        No family recorded yet. Add parents, a partner, or children to build
-        {tree.focus.name}'s family tree.
+        No family recorded yet. Add parents, a partner, siblings, or children to
+        build {tree.focus.name}'s family tree.
       </p>
     </div>
   {/if}
@@ -62,6 +62,7 @@
   >
     <EmptyFamilySlot {focusId} relation="parent" />
     <EmptyFamilySlot {focusId} relation="partner" />
+    <EmptyFamilySlot {focusId} relation="sibling" />
     <EmptyFamilySlot {focusId} relation="child" />
   </div>
 </div>

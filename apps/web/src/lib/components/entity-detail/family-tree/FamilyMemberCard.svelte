@@ -33,7 +33,13 @@
     <div class="truncate text-xs font-bold text-theme-text" title={member.name}>
       {member.name}
     </div>
-    {#if member.role}
+    {#if member.relationLabel}
+      <div
+        class="truncate text-[10px] font-bold uppercase tracking-wide text-theme-primary/80"
+      >
+        {member.relationLabel}
+      </div>
+    {:else if member.role}
       <div class="truncate text-[10px] text-theme-muted">{member.role}</div>
     {/if}
     <div class="flex items-center gap-1 text-[10px] text-theme-muted">

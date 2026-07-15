@@ -6,11 +6,12 @@ No new persisted entity is introduced. Family relationships are stored inside ea
 
 `packages/schema/src/connection.ts` — extend `ConnectionTypeSchema`:
 
-| New type    | Meaning (source → target)          | Inverse type | Symmetric |
-| ----------- | ---------------------------------- | ------------ | --------- |
-| `parent_of` | source is parent of target         | `child_of`   | no        |
-| `child_of`  | source is child of target          | `parent_of`  | no        |
-| `spouse_of` | source is spouse/partner of target | `spouse_of`  | yes       |
+| New type     | Meaning (source → target)                                   | Inverse type | Symmetric |
+| ------------ | ----------------------------------------------------------- | ------------ | --------- |
+| `parent_of`  | source is parent of target                                  | `child_of`   | no        |
+| `child_of`   | source is child of target                                   | `parent_of`  | no        |
+| `spouse_of`  | source is spouse/partner of target                          | `spouse_of`  | yes       |
+| `sibling_of` | source is sibling of target (optional Brother/Sister label) | `sibling_of` | yes       |
 
 - Additive to the existing enum; existing connections and custom string types are unaffected.
 - A family link is represented by **two** stored `Connection` records (one on each entity) that are inverses of each other. Invariant maintained by `addFamilyLink` / `removeFamilyLink`.
@@ -41,6 +42,7 @@ FamilyMember {
   lifespan?: string     // formatted Born/Died via existing temporal helper
   deceased: boolean     // true if a death/end date (deceased Label) is present
   relation: "focus" | "parent" | "child" | "partner" | "sibling"
+  relationLabel?: string        // e.g. "Brother"/"Sister"/"Mother" from the link
   generation: number    // relative to focus: parents -1, focus 0, children +1, etc.
 }
 ```
@@ -54,7 +56,7 @@ FamilyTree {
   parents: FamilyMember[]
   partners: FamilyMember[]
   children: FamilyMember[]
-  siblings: FamilyMember[]      // inferred from shared parent_of parents
+  siblings: FamilyMember[]      // explicit sibling_of + inferred (shared parents)
   // For deeper navigation, ancestors/descendants are reachable by re-centring
 }
 ```
@@ -64,7 +66,8 @@ FamilyTree {
 - **Parents of X**: entities that have a `parent_of` link targeting X (or X has a `child_of` link targeting them). Both representations are reconciled; with the two-sided invariant they agree.
 - **Children of X**: inverse of parents.
 - **Partners of X**: entities linked to X via `spouse_of` (symmetric).
-- **Siblings of X** (inferred): entities (≠ X) that share at least one parent with X. Not stored.
+- **Siblings of X**: the union of explicit `sibling_of` links to X (which may carry a Brother/Sister label) and entities (≠ X) that share at least one parent with X (inferred). De-duplicated; explicit labels win. A member that is already a parent/child/partner of X is not also listed as a sibling.
+- **relationLabel**: read from the connection that describes the other person (the other entity's link back to X), e.g. a parent's `parent_of` labelled "Father" or a sibling's `sibling_of` labelled "Sister".
 - **Generation**: focus = 0; each `parent_of` step upward = −1; each `child_of` step downward = +1.
 - **Living/deceased**: `deceased = true` when the entity carries a death/end date (deceased Label); otherwise living.
 
@@ -77,8 +80,8 @@ FamilyTree {
 
 ## 5. Affected persisted schema summary
 
-| File                                | Change                                                             |
-| ----------------------------------- | ------------------------------------------------------------------ |
-| `packages/schema/src/connection.ts` | Add `parent_of`, `child_of`, `spouse_of` to `ConnectionTypeSchema` |
+| File                                | Change                                                                           |
+| ----------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/schema/src/connection.ts` | Add `parent_of`, `child_of`, `spouse_of`, `sibling_of` to `ConnectionTypeSchema` |
 
 No migration required (additive enum; no existing rows change).

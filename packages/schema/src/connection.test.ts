@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { ConnectionSchema, ConnectionTypeSchema } from "./connection";
 
 describe("ConnectionTypeSchema family types", () => {
-  it.each(["parent_of", "child_of", "spouse_of"])(
+  it.each(["parent_of", "child_of", "spouse_of", "sibling_of"])(
     "accepts family relationship type %s",
     (type) => {
       expect(ConnectionTypeSchema.parse(type)).toBe(type);

@@ -4,20 +4,26 @@
  * future kinds (adoption, guardianship, half-siblings, former partners, etc.)
  * extend it without restructuring callers (spec FR-017).
  */
-export type FamilyConnectionType = "parent_of" | "child_of" | "spouse_of";
+export type FamilyConnectionType =
+  "parent_of" | "child_of" | "spouse_of" | "sibling_of";
 
 export const FAMILY_CONNECTION_TYPES: readonly FamilyConnectionType[] = [
   "parent_of",
   "child_of",
   "spouse_of",
+  "sibling_of",
 ];
 
-/** parent_of <-> child_of; spouse_of is symmetric (its own inverse). */
+/**
+ * parent_of <-> child_of; spouse_of and sibling_of are symmetric (their own
+ * inverse).
+ */
 const INVERSE_FAMILY_TYPE: Record<FamilyConnectionType, FamilyConnectionType> =
   {
     parent_of: "child_of",
     child_of: "parent_of",
     spouse_of: "spouse_of",
+    sibling_of: "sibling_of",
   };
 
 /** True when a connection type string is one of the family relationship types. */

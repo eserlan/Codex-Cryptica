@@ -15,6 +15,7 @@
 - Q: Where should the Family Tree live in the UI? → A: A tab/panel embedded in the character's entity-detail view.
 - Q: How should obvious contradictions like circular ancestry be handled? → A: Hard-prevent (block the save when a character would become their own ancestor).
 - Q: Which surfaces show the Family tab? → A: Both the standard entity-detail panel and the immersive/zen view for a character render the same Family tab/panel (character-only in both).
+- Q: How are siblings handled when parents are unknown or not modelled? → A: Support explicit sibling links (a symmetric `sibling_of` type) in addition to shared-parent inference; a sibling can be labelled "Brother"/"Sister". This makes siblings recordable with no known parents.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -74,7 +75,8 @@ A user exploring a sprawling dynasty needs to keep the tree readable. They click
 ### Edge Cases
 
 - **Circular ancestry**: A user tries to set a descendant as an ancestor (A is parent of B, then B set as parent of A). The system must hard-prevent this by blocking the save and explaining why.
-- **Half-siblings / step-relations**: Two children share only one parent, or a partner's children are not the character's own. Initial version infers siblings only from shared parents; unshared-parent children are not shown as full siblings.
+- **Siblings with unknown parents**: Two characters are siblings but no (or no shared) parent is modelled. Handled by an explicit sibling link (optionally labelled Brother/Sister), so the bond is recordable without inventing a parent.
+- **Half-siblings / step-relations**: Two children share only one parent, or a partner's children are not the character's own. Siblings come from shared parents (inferred) plus explicit sibling links; nuanced half/step distinctions remain a follow-up.
 - **Multiple partners**: A character has more than one spouse/partner (e.g. widowed and remarried). The tree must represent more than one partner without breaking layout.
 - **Non-character entities in a family slot**: A user attempts to link a location or item as a parent. The system should restrict family slots to character entities.
 - **Missing generations**: A grandchild exists but the intermediate parent is unknown. The tree shows the gap gracefully rather than collapsing the generations.
@@ -92,7 +94,7 @@ A user exploring a sprawling dynasty needs to keep the tree readable. They click
 - **FR-001**: The system MUST provide the Family Tree as a tab/panel within a character's entity-detail view, opened in the context of that character. The same Family tab/panel MUST also be available in the immersive/zen reading view for a character, so the two surfaces stay consistent.
 - **FR-002**: The system MUST render parent, child, and spouse/partner relationships as an automatically laid-out, navigable tree centred on a focused character.
 - **FR-003**: The system MUST display each person in the tree as a compact card showing portrait (or placeholder), name, title/role, lifespan, and living/deceased status.
-- **FR-004**: The system MUST infer sibling relationships from shared parents rather than requiring explicit sibling links.
+- **FR-004**: The system MUST infer sibling relationships from shared parents, AND MUST also support explicit sibling links so siblings can be recorded when their parents are unknown, absent, or intentionally not modelled. Explicit and inferred siblings are merged and de-duplicated. An explicit sibling link MAY carry a "Brother"/"Sister" term (shown on the sibling's card); inferred siblings have no term.
 - **FR-005**: The system MUST allow the user to open or focus the underlying character entity from any card in the tree.
 - **FR-006**: The system MUST allow the user to re-centre the tree on any selected character.
 - **FR-007**: The system MUST allow the user to collapse and re-expand distant or large branches, with a clear indicator that a collapsed branch can be expanded.
@@ -110,7 +112,7 @@ A user exploring a sprawling dynasty needs to keep the tree readable. They click
 **Data model**
 
 - **FR-015**: Family links MUST be represented using standard entity relationships as the single source of truth; the Family Tree MUST be a visualisation of those relationships, not a parallel genealogy data store.
-- **FR-016**: Family links MUST use dedicated family relationship types (distinct, first-class connection kinds such as parent_of / spouse_of) rather than relying on free-text labels, so the tree can be derived unambiguously. The initial supported kinds MUST be parent/child and spouse/partner.
+- **FR-016**: Family links MUST use dedicated family relationship types (distinct, first-class connection kinds such as parent_of / spouse_of / sibling_of) rather than relying on free-text labels for structure, so the tree can be derived unambiguously. The initial supported kinds MUST be parent/child, spouse/partner, and sibling. The brother/sister wording is an optional display label on a sibling link, not a separate type.
 - **FR-017**: The relationship representation MUST be designed to allow later addition of kinds such as adoption, guardianship, half-siblings, former partners, disputed parentage, and secret relationships without restructuring existing data.
 
 ### Key Entities

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { Entity } from "schema";
 import { buildFamilyTree } from "./family-tree";
 
-type Conn = { target: string; type: string };
+type Conn = { target: string; type: string; label?: string };
 
 function char(
   id: string,
@@ -69,6 +69,35 @@ describe("buildFamilyTree", () => {
     const tree = buildFamilyTree("a", entities);
     expect(ids(tree.siblings)).toEqual(["b"]);
     expect(tree.siblings[0].generation).toBe(0);
+  });
+
+  it("supports explicit sibling_of links when parents are unknown", () => {
+    // No parents anywhere; the sibling bond is stated directly, labelled.
+    const entities = map(
+      char("focus", [{ target: "bro", type: "sibling_of" }]),
+      char("bro", [{ target: "focus", type: "sibling_of", label: "Brother" }]),
+    );
+    const tree = buildFamilyTree("focus", entities);
+    expect(ids(tree.siblings)).toEqual(["bro"]);
+    expect(tree.siblings[0].relationLabel).toBe("Brother");
+  });
+
+  it("merges explicit and shared-parent siblings without duplicates", () => {
+    const entities = map(
+      char("parent", [
+        { target: "focus", type: "parent_of" },
+        { target: "shared", type: "parent_of" },
+      ]),
+      char("focus", [{ target: "explicit", type: "sibling_of" }]),
+      char("shared"),
+      char("explicit", [
+        { target: "focus", type: "sibling_of", label: "Sister" },
+      ]),
+    );
+    const tree = buildFamilyTree("focus", entities);
+    expect(ids(tree.siblings)).toEqual(["explicit", "shared"]);
+    const explicit = tree.siblings.find((s) => s.entityId === "explicit");
+    expect(explicit?.relationLabel).toBe("Sister");
   });
 
   it("returns multiple partners (edge case)", () => {

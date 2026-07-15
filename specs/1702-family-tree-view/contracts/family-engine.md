@@ -7,7 +7,8 @@ Pure, dependency-free (except `schema` types) genealogy logic. All functions are
 ```ts
 import type { Entity } from "schema";
 
-export type FamilyConnectionType = "parent_of" | "child_of" | "spouse_of";
+export type FamilyConnectionType =
+  "parent_of" | "child_of" | "spouse_of" | "sibling_of";
 
 export type FamilyRelation =
   "focus" | "parent" | "child" | "partner" | "sibling";
@@ -65,7 +66,8 @@ export function buildFamilyTree(
 **Contract**:
 
 - Returns `parents`, `children`, `partners`, and `siblings` for `focusId`.
-- **Siblings** are inferred: any entity (≠ focus) sharing ≥1 parent with focus; never duplicated into another bucket.
+- **Siblings** combine explicit `sibling_of` links (which work with no known parents and may carry a Brother/Sister label) with those inferred from a shared parent; de-duplicated, explicit labels win, and never duplicated into another bucket.
+- **`relationLabel`** on a member is the term describing that member relative to the focus (e.g. "Brother"), read from the member's own link back to the focus; undefined when unlabelled (e.g. inferred siblings).
 - Reads family links from **either** direction (`parent_of` on A→B or `child_of` on B→A) and yields the same result.
 - Skips links whose target entity is absent from `entities` (dangling links do not throw).
 - Only entities of category `character` appear as members.

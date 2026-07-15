@@ -13,6 +13,12 @@ export interface FamilyMember {
   deceased: boolean;
   relation: FamilyRelation;
   generation: number;
+  /**
+   * Optional human relationship term describing THIS member relative to the
+   * focus (e.g. "Mother", "Brother", "Sister"), taken from the connection
+   * label. Undefined when no label was recorded (e.g. inferred siblings).
+   */
+  relationLabel?: string;
 }
 
 export interface FamilyTree {
@@ -22,6 +28,11 @@ export interface FamilyTree {
   partners: FamilyMember[];
   children: FamilyMember[];
   siblings: FamilyMember[];
+}
+
+interface Related {
+  id: string;
+  label?: string;
 }
 
 const CHARACTER_TYPE = "character";
@@ -60,20 +71,30 @@ function formatLifespan(entity: Entity): string | undefined {
  * a direct connection of `type` on `id`, or a connection of the inverse type
  * on another entity pointing at `id`. Only existing character entities are
  * returned (dangling/non-character targets are skipped).
+ *
+ * The captured `label` describes the OTHER person relative to `id` and is read
+ * from that other entity's connection back to `id` (e.g. the parent's
+ * `parent_of` link labelled "Father", or a sibling's `sibling_of` link
+ * labelled "Brother"). A label on `id`'s own outbound link describes `id`, so
+ * it is not used for the other member's term.
  */
-function relatedIds(
+function relatedMembers(
   entities: Record<string, Entity>,
   id: string,
   type: FamilyConnectionType,
-): string[] {
-  const found = new Set<string>();
+): Related[] {
+  const labels = new Map<string, string | undefined>();
   const inverse = inverseFamilyType(type);
 
   const self = entities[id];
   if (self) {
     for (const c of self.connections ?? []) {
-      if (c.type === type && isCharacter(entities[c.target])) {
-        found.add(c.target);
+      if (
+        c.type === type &&
+        c.target !== id &&
+        isCharacter(entities[c.target])
+      ) {
+        if (!labels.has(c.target)) labels.set(c.target, undefined);
       }
     }
   }
@@ -82,20 +103,22 @@ function relatedIds(
     if (otherId === id || !isCharacter(other)) continue;
     for (const c of other.connections ?? []) {
       if (c.type === inverse && c.target === id) {
-        found.add(otherId);
+        // The other entity's own link describes the other entity.
+        if (c.label) labels.set(otherId, c.label);
+        else if (!labels.has(otherId)) labels.set(otherId, undefined);
         break;
       }
     }
   }
 
-  found.delete(id);
-  return [...found];
+  return [...labels].map(([relatedId, label]) => ({ id: relatedId, label }));
 }
 
 function toMember(
   entity: Entity,
   relation: FamilyRelation,
   generation: number,
+  relationLabel?: string,
 ): FamilyMember {
   return {
     entityId: entity.id,
@@ -106,20 +129,21 @@ function toMember(
     deceased: temporalYear(entity.end_date) !== undefined,
     relation,
     generation,
+    relationLabel,
   };
 }
 
 function membersFor(
   entities: Record<string, Entity>,
-  ids: Iterable<string>,
+  related: Related[],
   relation: FamilyRelation,
   generation: number,
 ): FamilyMember[] {
   const members: FamilyMember[] = [];
-  for (const id of ids) {
+  for (const { id, label } of related) {
     const entity = entities[id];
     if (isCharacter(entity)) {
-      members.push(toMember(entity, relation, generation));
+      members.push(toMember(entity, relation, generation, label));
     }
   }
   return members;
@@ -127,7 +151,9 @@ function membersFor(
 
 /**
  * Build the derived family tree centred on `focusId` from an entity map.
- * Pure: does not mutate `entities`. Siblings are inferred from shared parents.
+ * Pure: does not mutate `entities`. Siblings combine explicit `sibling_of`
+ * links (which can carry a "Brother"/"Sister" label and work even when parents
+ * are unknown) with siblings inferred from shared parents.
  */
 export function buildFamilyTree(
   focusId: string,
@@ -144,28 +170,39 @@ export function buildFamilyTree(
         generation: 0,
       };
 
-  const parentIds = relatedIds(entities, focusId, "child_of");
-  const childIds = relatedIds(entities, focusId, "parent_of");
-  const partnerIds = relatedIds(entities, focusId, "spouse_of");
+  const parents = relatedMembers(entities, focusId, "child_of");
+  const children = relatedMembers(entities, focusId, "parent_of");
+  const partners = relatedMembers(entities, focusId, "spouse_of");
 
-  // Siblings: entities (≠ focus) sharing at least one parent with the focus.
-  const siblingIds = new Set<string>();
-  for (const parentId of parentIds) {
-    for (const childId of relatedIds(entities, parentId, "parent_of")) {
-      if (childId !== focusId) siblingIds.add(childId);
+  // Siblings: explicit sibling_of links (with any Brother/Sister label) merged
+  // with those inferred from a shared parent. Explicit labels win.
+  const siblings = new Map<string, string | undefined>();
+  for (const { id, label } of relatedMembers(entities, focusId, "sibling_of")) {
+    siblings.set(id, label);
+  }
+  for (const parent of parents) {
+    for (const child of relatedMembers(entities, parent.id, "parent_of")) {
+      if (child.id !== focusId && !siblings.has(child.id)) {
+        siblings.set(child.id, child.label);
+      }
     }
   }
   // A sibling must not also be a parent/child/partner of the focus.
-  for (const id of [...parentIds, ...childIds, ...partnerIds]) {
-    siblingIds.delete(id);
+  for (const { id } of [...parents, ...children, ...partners]) {
+    siblings.delete(id);
   }
 
   return {
     focusId,
     focus,
-    parents: membersFor(entities, parentIds, "parent", -1),
-    partners: membersFor(entities, partnerIds, "partner", 0),
-    children: membersFor(entities, childIds, "child", 1),
-    siblings: membersFor(entities, siblingIds, "sibling", 0),
+    parents: membersFor(entities, parents, "parent", -1),
+    partners: membersFor(entities, partners, "partner", 0),
+    children: membersFor(entities, children, "child", 1),
+    siblings: membersFor(
+      entities,
+      [...siblings].map(([id, label]) => ({ id, label })),
+      "sibling",
+      0,
+    ),
   };
 }

@@ -25,7 +25,7 @@ vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
 
 import EmptyFamilySlot from "./EmptyFamilySlot.svelte";
 
-async function openSlot(relation: "parent" | "child" | "partner") {
+async function openSlot(relation: "parent" | "child" | "partner" | "sibling") {
   render(EmptyFamilySlot, { focusId: "focus", relation });
   await fireEvent.click(screen.getByTestId(`add-${relation}`));
 }
@@ -44,12 +44,13 @@ describe("EmptyFamilySlot", () => {
     });
     await fireEvent.click(screen.getByTestId("connect-existing"));
 
-    // "Add parent" => focus is child_of the parent.
+    // "Add parent" => focus is child_of the parent (no sibling term).
     await waitFor(() =>
       expect(addFamilyLink).toHaveBeenCalledWith(
         "focus",
         "parent-entity",
         "child_of",
+        undefined,
       ),
     );
   });
@@ -65,7 +66,32 @@ describe("EmptyFamilySlot", () => {
       expect(createEntity).toHaveBeenCalledWith("character", "Brand New Heir"),
     );
     // "Add child" => focus is parent_of the new character.
-    expect(addFamilyLink).toHaveBeenCalledWith("focus", "new-id", "parent_of");
+    expect(addFamilyLink).toHaveBeenCalledWith(
+      "focus",
+      "new-id",
+      "parent_of",
+      undefined,
+    );
+  });
+
+  it("adds a sibling with the chosen brother/sister term", async () => {
+    await openSlot("sibling");
+    await fireEvent.input(screen.getByTestId("mock-autocomplete"), {
+      target: { value: "parent entity" },
+    });
+    await fireEvent.change(screen.getByTestId("sibling-term"), {
+      target: { value: "Brother" },
+    });
+    await fireEvent.click(screen.getByTestId("connect-existing"));
+
+    await waitFor(() =>
+      expect(addFamilyLink).toHaveBeenCalledWith(
+        "focus",
+        "parent-entity",
+        "sibling_of",
+        "Brother",
+      ),
+    );
   });
 
   it("surfaces a blocked-cycle error and does not close", async () => {
