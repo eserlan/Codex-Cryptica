@@ -1,26 +1,31 @@
 /** @vitest-environment jsdom */
-import { render, screen, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
-import { vi } from "vitest";
+import { render, screen, fireEvent, within } from "@testing-library/svelte";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Entity } from "schema";
 
-const { hero } = vi.hoisted(() => ({
-  hero: {
+const { hero, parent, vaultMock } = vi.hoisted(() => {
+  const hero = {
     id: "hero",
     type: "character",
     title: "Hero",
-    connections: [],
-  } as unknown as Entity,
-}));
-
-vi.mock("$lib/stores/vault.svelte", () => ({
-  vault: {
-    entities: { hero },
-    selectedEntityId: null,
+    connections: [{ target: "parent", type: "child_of", strength: 1 }],
+  } as unknown as Entity;
+  const parent = {
+    id: "parent",
+    type: "character",
+    title: "Parent Entity",
+    connections: [{ target: "hero", type: "parent_of", strength: 1 }],
+  } as unknown as Entity;
+  const vaultMock = {
+    entities: { hero, parent },
+    selectedEntityId: null as string | null,
     addFamilyLink: vi.fn(),
     createEntity: vi.fn(),
-  },
-}));
+  };
+  return { hero, parent, vaultMock };
+});
+
+vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
 
 // EmptyFamilySlot pulls in the search-worker-backed Autocomplete; stub it.
 vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
@@ -29,6 +34,37 @@ vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
 });
 
 import DetailFamilyTab from "./DetailFamilyTab.svelte";
+
+describe("DetailFamilyTab navigation", () => {
+  beforeEach(() => {
+    vaultMock.selectedEntityId = null;
+  });
+
+  it("opening a relative calls the provided onNavigate callback", async () => {
+    const onNavigate = vi.fn();
+    render(DetailFamilyTab, { entity: hero, onNavigate });
+
+    // Both the parent's card and the focus card itself render an "open"
+    // control — scope to the parents row to open the relative, not the focus.
+    const parentsRow = screen.getByTestId("family-generation-parents");
+    await fireEvent.click(within(parentsRow).getByTestId("family-card-open"));
+
+    expect(onNavigate).toHaveBeenCalledWith(parent.id);
+    // A custom onNavigate means the default vault.selectedEntityId path is
+    // NOT used — this is what makes "open" work correctly inside zen mode,
+    // which navigates via its own callback instead.
+    expect(vaultMock.selectedEntityId).toBeNull();
+  });
+
+  it("defaults to setting vault.selectedEntityId when no onNavigate is given", async () => {
+    render(DetailFamilyTab, { entity: hero });
+
+    const parentsRow = screen.getByTestId("family-generation-parents");
+    await fireEvent.click(within(parentsRow).getByTestId("family-card-open"));
+
+    expect(vaultMock.selectedEntityId).toBe(parent.id);
+  });
+});
 
 describe("DetailFamilyTab zoom + full screen controls", () => {
   it("zooms out and in, updating the percentage, and resets", async () => {

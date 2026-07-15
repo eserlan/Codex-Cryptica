@@ -515,7 +515,7 @@
           <div
             class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
           >
-            <DetailFamilyTab {entity} />
+            <DetailFamilyTab {entity} onNavigate={navigateTo} />
           </div>
         </div>
       {:else if activeTab === "timeline"}
