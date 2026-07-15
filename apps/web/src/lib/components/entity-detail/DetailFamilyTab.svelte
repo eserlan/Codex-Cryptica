@@ -7,7 +7,12 @@
   import FamilyMemberCard from "./family-tree/FamilyMemberCard.svelte";
   import EmptyFamilySlot from "./family-tree/EmptyFamilySlot.svelte";
 
-  let { entity } = $props<{ entity: Entity }>();
+  let {
+    entity,
+    onNavigate = (id: string) => {
+      vault.selectedEntityId = id;
+    },
+  } = $props<{ entity: Entity; onNavigate?: (id: string) => void }>();
 
   // Focus can be re-centred on any relative (US3); defaults to this entity and
   // resets whenever the panel switches to a different entity.
@@ -133,7 +138,7 @@
         <FamilyTree
           {tree}
           onSelect={(id) => (focusId = id)}
-          onOpen={(id) => (vault.selectedEntityId = id)}
+          onOpen={(id) => onNavigate(id)}
         />
       {:else}
         <div
