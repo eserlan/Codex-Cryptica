@@ -162,5 +162,7 @@
 
 ## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
 
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
 **Learning:** In VTT applications, `graph.entities` payloads can be exceptionally large (containing thousands of items). Chaining methods like `Object.entries().map().map()` followed by `Object.fromEntries()` allocates multiple large, short-lived arrays. These intermediate allocations place immense pressure on the garbage collector during data sync/initialization, leading to jank and latency spikes. Replacing these chains with a single imperative loop (`for...in`) directly building the target dictionary avoids these array allocations entirely.
 **Action:** When transforming large data collections (especially dictionaries like `entities`), actively look for `Object.keys/values/entries` combined with `.map()` or `.filter()`, and refactor them into a single imperative loop.
