@@ -42,6 +42,21 @@ describe("generateShipLocal", () => {
     expect(result.content).toBeTruthy();
   });
 
+  it("gives Pirate ships a captain and crew culture", () => {
+    const result = generateShipLocal(
+      { genre: "Pirate / Age of Sail" },
+      seededRng(11),
+    );
+
+    expect(result.content).toContain("## Captain, Officers & Crew");
+    expect(result.content).toContain("### Officer Roster");
+    expect(result.lore).toContain("**Captain / Commander**:");
+    expect(result.lore).toContain("**Captain Brief**:");
+    expect(result.lore).toContain("**Named Officers**:");
+    expect(result.lore).toContain("**Officer Briefs**:");
+    expect(result.lore).toContain("**Crew Culture**:");
+  });
+
   it("generates non-empty content sections", () => {
     const result = generateShipLocal({}, seededRng(99));
     expect(result.content).toContain("## Core Concept");
@@ -62,6 +77,23 @@ describe("generateShipLocal", () => {
     for (const genre of shipConfig.genres) {
       expect(() => generateShipLocal({ genre }, seededRng(123))).not.toThrow();
     }
+  });
+
+  it("keeps historical vessel scales grounded by genre", () => {
+    const pirate = generateShipLocal(
+      { genre: "Pirate / Age of Sail" },
+      seededRng(123),
+    );
+    const sciFi = generateShipLocal({ genre: "Sci-Fi" }, seededRng(123));
+
+    expect(pirate.lore).not.toContain("10,000+");
+    expect(sciFi.lore).toBeTruthy();
+    expect(shipConfig.scalesByGenre["Sci-Fi"]).toContain(
+      "Station-class vessel (10,000+ inhabitants)",
+    );
+    expect(shipConfig.scalesByGenre["Pirate / Age of Sail"]).not.toContain(
+      "Station-class vessel (10,000+ inhabitants)",
+    );
   });
 
   it("produces different results for different seeds", () => {
@@ -103,6 +135,46 @@ describe("buildShipPrompt", () => {
     );
     expect(result.userMessage).toContain("Cyberpunk");
     expect(result.userMessage).toContain("Ghost Ship");
+  });
+
+  it("asks for Pirate captain and crew details", () => {
+    const result = buildShipPrompt(
+      { genre: "Pirate / Age of Sail" },
+      "",
+      seededRng(3),
+    );
+
+    expect(result.userMessage).toContain("- Captain / Commander:");
+    expect(result.userMessage).toContain("- Captain Brief:");
+    expect(result.userMessage).toContain("- Named Officers:");
+    expect(result.userMessage).toContain("- Officer Briefs:");
+    expect(result.userMessage).toContain("- Crew Culture:");
+    expect(result.userMessage).toContain("### Captain, Officers & Crew");
+  });
+
+  it("includes command structure for non-Pirate ships", () => {
+    const result = generateShipLocal(
+      { genre: "Sci-Fi" },
+      seededRng(8),
+    );
+
+    expect(result.content).toContain("## Captain, Officers & Crew");
+    expect(result.content).toContain("### Officer Roster");
+    expect(result.lore).toContain("**Named Officers**:");
+  });
+
+  it("keeps each selected officer paired with its responsibility brief", () => {
+    const result = buildShipPrompt(
+      { genre: "Pirate / Age of Sail" },
+      "",
+      seededRng(17),
+    );
+
+    expect(result.resolved.officerNames).toHaveLength(3);
+    expect(result.resolved.officerDetails).toHaveLength(3);
+    for (const detail of result.resolved.officerDetails) {
+      expect(result.userMessage).toContain(detail);
+    }
   });
 });
 

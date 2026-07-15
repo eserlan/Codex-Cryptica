@@ -141,7 +141,7 @@
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(vault.entities) to pre-cached vault.allEntities]
 
 **Learning:** Invoking `Object.values(vault.entities)` in component `$derived` blocks or hot functions triggers an `O(N)` object keys iteration and creates a new intermediate array on every evaluation. When `vault.entities` is large, this leads to significant redundant memory allocations and garbage collection pauses. While some components started caching arrays natively via the Store (`vault.allEntities`), many continued allocating `Object.values` inline. Also, chaining `.filter().slice().map()` or just `.filter()` onto those inline values causes even more intermediate allocations.
-**Action:** Always replace `Object.values(vault.entities)` with `vault.allEntities` in Svelte components. For chained array operations (like `.filter().slice()`), use an imperative `for...of` or `for (let i = 0; i < allEntities.length; i++)` loop with `break` limits to avoid redundant array creation and full dataset traversal.
+**Action:** Prefer `vault.allEntities` when a component needs entity values, especially when the store exposes it as cached derived state. For hot paths that repeatedly inspect the same entities, cache derived indexes such as slug sets and reuse them across calls. When a fresh traversal is required, use an imperative loop to avoid intermediate arrays; this still performs the necessary O(N) pass, but avoids repeated `Object.values()` allocations and redundant work.
 
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(guestStore.guestRoster) to pre-cached guestStore.allGuests]
 
@@ -157,6 +157,12 @@
 
 **Learning:** When generating lookup objects from an array of items (like connection counts per entity) in a `$derived` block, using `Object.fromEntries(vault.allEntities.map(...))` creates two intermediate arrays: one for the mapped tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure during frequent reactive updates.
 **Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop that constructs a new `Record` natively to reduce garbage collection pressure.
+
 ## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
 **Learning:** In VTT applications, `graph.entities` payloads can be exceptionally large (containing thousands of items). Chaining methods like `Object.entries().map().map()` followed by `Object.fromEntries()` allocates multiple large, short-lived arrays. These intermediate allocations place immense pressure on the garbage collector during data sync/initialization, leading to jank and latency spikes. Replacing these chains with a single imperative loop (`for...in`) directly building the target dictionary avoids these array allocations entirely.
 **Action:** When transforming large data collections (especially dictionaries like `entities`), actively look for `Object.keys/values/entries` combined with `.map()` or `.filter()`, and refactor them into a single imperative loop.

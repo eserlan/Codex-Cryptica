@@ -1,1 +1,1 @@
-export * from "./ai/index";
+export * from "@codex/ai-engine";

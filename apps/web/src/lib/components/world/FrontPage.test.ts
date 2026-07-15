@@ -127,7 +127,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/ai/context-retrieval.service", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     retrieveContext: mocks.retrieveContext,
     getConsolidatedContext: vi.fn((entity: any) =>
@@ -925,15 +925,8 @@ describe("FrontPage", () => {
 
     resolveGenerate?.("New briefing text.");
 
-    // Wait for the promise chain to settle and Svelte to re-render
-    await vi.waitFor(
-      async () => {
-        await new Promise((r) => setTimeout(r, 50));
-        expect(
-          screen.queryByTestId("briefing-generating-indicator"),
-        ).toBeNull();
-      },
-      { timeout: 3000 },
+    await vi.waitFor(() =>
+      expect(screen.queryByTestId("briefing-generating-indicator")).toBeNull(),
     );
     expect(
       screen.getByTestId("briefing-preview").getAttribute("aria-busy"),

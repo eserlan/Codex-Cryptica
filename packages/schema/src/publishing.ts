@@ -138,6 +138,9 @@ export const ListingDraftSchema = z
       .min(1)
       .max(PUBLISH_LIMITS.maxListingOwnerNameLength)
       .optional(),
+    rightsAcknowledged: z.literal(true),
+    fanContent: z.boolean().optional().default(false),
+    fanContentDisclaimer: z.string().trim().max(500).optional(),
   })
   .strict();
 
@@ -179,6 +182,8 @@ export const PublicListingSchema = z
     snapshotPublishedAt: z.string().datetime(),
     listingCreatedAt: z.string().datetime(),
     listingUpdatedAt: z.string().datetime(),
+    rightsAcknowledgedAt: z.string().datetime().optional(),
+    fanContent: z.boolean().optional(),
   })
   .strict()
   .refine(
@@ -252,3 +257,46 @@ export const DirectoryPageSchema = z
   .strict();
 
 export type DirectoryPage = z.infer<typeof DirectoryPageSchema>;
+
+export const PublishedNoticeSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    publishId: z.string().trim().min(1),
+    fanContent: z.boolean().default(false),
+    fanContentDisclaimer: z.string().trim().max(500).optional(),
+    rightsAcknowledgedAt: z.string().datetime().optional(),
+    updatedAt: z.string().datetime(),
+    suspended: z.boolean().optional(),
+  })
+  .strict();
+
+export type PublishedNotice = z.infer<typeof PublishedNoticeSchema>;
+
+export const CopyrightReportSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    reportId: z.string().min(1),
+    vaultUrl: z.string().trim().min(1).max(500),
+    publishId: z.string().trim().min(1).optional(),
+    rightsHolder: z.string().trim().max(300).optional(),
+    material: z.string().trim().max(2000).optional(),
+    reporterContact: z.string().trim().min(3).max(300),
+    details: z.string().trim().max(5000).optional(),
+    receivedAt: z.string().datetime(),
+    vaultState: z.enum(["listed", "published-unlisted", "not-found"]),
+  })
+  .strict();
+
+export type CopyrightReport = z.infer<typeof CopyrightReportSchema>;
+
+export const SuspensionMarkerSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    publishId: z.string().trim().min(1),
+    mode: z.enum(["delist", "disable"]),
+    reason: z.string().optional(),
+    createdAt: z.string().datetime(),
+  })
+  .strict();
+
+export type SuspensionMarker = z.infer<typeof SuspensionMarkerSchema>;

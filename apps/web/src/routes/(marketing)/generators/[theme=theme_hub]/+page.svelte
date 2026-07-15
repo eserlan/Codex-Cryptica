@@ -92,6 +92,31 @@
     icon: "icon-[lucide--rocket]",
   };
 
+  const pirateShipCard: GeneratorCard = {
+    slug: "ship-generator",
+    label: "Pirate Ship Generator",
+    summary:
+      "Create a pirate vessel with a captain, crew culture, shipboard tension, prize-worthy complications, and secrets hidden below deck.",
+    icon: "icon-[lucide--ship-wheel]",
+  };
+
+  // One generator, many mastheads: each hub links to the news sheet
+  // generator under the name that genre actually uses for the format.
+  const newsSheetCard = (label: string, summary: string): GeneratorCard => ({
+    slug: "news-sheet-generator",
+    label,
+    summary,
+    icon: "icon-[lucide--newspaper]",
+  });
+
+  const languageCard: GeneratorCard = {
+    slug: "language-generator",
+    label: "Language Generator",
+    summary:
+      "Design a fictional language profile — pronunciation, naming rules, example names, and a starter glossary tuned to your genre.",
+    icon: "icon-[lucide--languages]",
+  };
+
   const tavernCard: GeneratorCard = {
     slug: "tavern",
     label: "Tavern Generator",
@@ -175,6 +200,37 @@
         shipCard,
         nationCard,
         ...fantasyOnlyCards,
+        newsSheetCard(
+          "Broadsheet Generator",
+          "Generate a town-crier broadsheet — headlines, guild notices, market rumours, and classifieds, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
+    pirate: {
+      label: "Pirate",
+      localStorageId: "pirate",
+      eyebrow: "Charts, Storms & Free Companies",
+      intro:
+        "Build mature nautical adventures across charted waters, storm-dark harbours, privateer courts, and strange seas. Generate crews, factions, settlements, ships, and the rumours that travel fastest by lantern light.",
+      metaTitle:
+        "Pirate RPG Generators — Crews, Ships, Factions & More | Codex Cryptica",
+      metaDescription:
+        "Free pirate RPG generators for tabletop GMs. Create crews, ships, factions, settlements, quest hooks, and names for nautical campaigns. No login required.",
+      cards: [
+        ...sharedCards(
+          "Port Generator",
+          "Build harbours, island settlements, and hidden coves with factions, trade routes, notable locations, and hooks.",
+        ),
+        pirateShipCard,
+        socialHubCard,
+        nationCard,
+        newsSheetCard(
+          "Broadside Generator",
+          "Generate a shipboard broadside — harbour notices, prize claims, naval reports, and dockside rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -197,6 +253,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Screamsheet Generator",
+          "Generate a street screamsheet — corporate spin, gang violence, fixer rumours, and product ads, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -218,6 +279,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Newsfeed Generator",
+          "Generate a station newsfeed — pirate alerts, megacorp claims, distress notices, and trade rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -238,6 +304,11 @@
         ),
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Wasteland Bulletin Generator",
+          "Generate a bunker bulletin — trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -258,6 +329,11 @@
         ),
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Tabloid Generator",
+          "Generate a local tabloid — cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -279,6 +355,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Comms Digest Generator",
+          "Generate an outpost comms digest — Union bulletins, contractor notices, pilot rumours, and frontier alerts, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -300,6 +381,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Penny Broadsheet Generator",
+          "Generate a penny broadsheet — guild scandals, patent disputes, sky-dock notices, and agitator rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -321,6 +407,11 @@
         ),
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Occult Tabloid Generator",
+          "Generate an occult tabloid — supernatural cover-ups, disappearances, ominous notices, and weird classifieds, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -342,6 +433,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Frontier Newspaper Generator",
+          "Generate a frontier weekly — telegraph dispatches, outlaw sightings, wanted notices, and saloon rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -363,6 +459,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Underground Broadcast Generator",
+          "Generate a resistance broadcast — imperial propaganda, smuggler notices, sector alerts, and rebel rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },
@@ -384,6 +485,11 @@
         shipCard,
         socialHubCard,
         nationCard,
+        newsSheetCard(
+          "Station Newsfeed Generator",
+          "Generate a station promenade daily — survey reports, diplomatic notices, academy news, and dockside rumours, with GM-only hooks.",
+        ),
+        languageCard,
         surpriseMeCard,
       ],
     },

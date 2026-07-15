@@ -3,7 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { searchService } from "$lib/services/search.svelte";
+  import { searchService } from "@codex/search-orchestrator";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { ProposerService } from "@codex/proposer";
@@ -24,7 +24,7 @@
 
   const existingTitles = $derived.by(() => {
     const names = new Set<string>();
-    for (const entity of Object.values(vault.entities)) {
+    for (const entity of vault.allEntities) {
       names.add(entity.title);
       for (const alias of entity.aliases ?? []) names.add(alias);
     }

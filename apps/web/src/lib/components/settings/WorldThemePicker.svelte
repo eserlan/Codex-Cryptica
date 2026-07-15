@@ -104,7 +104,7 @@
           </div>
         {/if}
 
-        {#if theme.tokens.texture}
+        {#if "texture" in theme.tokens && theme.tokens.texture}
           <div
             class="pointer-events-none absolute inset-0 opacity-5 mix-blend-overlay"
             style:background-image={`url('/themes/${theme.tokens.texture}')`}

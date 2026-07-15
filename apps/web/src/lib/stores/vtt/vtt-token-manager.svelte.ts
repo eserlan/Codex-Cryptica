@@ -5,9 +5,9 @@ import type {
   TokenCreationInput,
   TokenStateUpdateInput,
   VTTMessage,
-  LegacyTokenVisibility,
 } from "../../../types/vtt";
 import type { Point } from "schema";
+import { normalizeToken, normalizeTokenVisibility } from "map-engine";
 import {
   snapToGrid,
   clampPointToBounds,
@@ -22,23 +22,7 @@ function roundTokenCoordinate(value: number) {
   return Math.round(value * factor) / factor;
 }
 
-function normalizeTokenVisibility(
-  visibility: LegacyTokenVisibility | undefined | null,
-): Token["visibleTo"] {
-  return visibility === "gm-only" ? "gm-only" : "all";
-}
-
-export function normalizeToken(
-  token:
-    | Token
-    | (Omit<Token, "visibleTo"> & { visibleTo?: LegacyTokenVisibility }),
-): Token {
-  return {
-    ...token,
-    ownerGuestName: token.ownerGuestName ?? null,
-    visibleTo: normalizeTokenVisibility(token.visibleTo),
-  };
-}
+export { normalizeToken } from "map-engine";
 
 export interface VTTTokenManagerDependencies {
   emit: (message: VTTMessage) => void;

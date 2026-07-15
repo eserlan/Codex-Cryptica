@@ -10,31 +10,17 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function generateName(rng: Rng = defaultRng): string {
-  const prefixes = [
-    "Ael",
-    "Bran",
-    "Cael",
-    "Dax",
-    "Kael",
-    "Morg",
-    "Thor",
-    "Vael",
-  ];
-  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
-  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  generatePlaceholderName as generateName,
+} from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
+  Pirate: "Pirate",
   "Cyberpunk / Corporate": "Cyberpunk",
   "Vampire / Gothic Noir": "Dark Fantasy",
   "Sci-Fi / Space Opera": "Sci-Fi",
@@ -50,6 +36,7 @@ export const themeToQuestGenre: Record<string, string> = {
 export const questConfig = {
   genres: [
     "Classic Fantasy",
+    "Pirate",
     "Dark Fantasy",
     "Political Intrigue",
     "Horror",
@@ -62,6 +49,7 @@ export const questConfig = {
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
     "Classic Fantasy": ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
+    Pirate: ["Swashbuckling", "Gritty", "Mysterious", "Heroic", "Ominous"],
     "Cyberpunk / Corporate": [
       "Noir",
       "Paranoid",
@@ -119,6 +107,13 @@ export const questConfig = {
       "Local (village / district)",
       "Regional (kingdom / region)",
       "World-threatening",
+    ],
+    Pirate: [
+      "Single ship or port",
+      "Island chain",
+      "Regional sea",
+      "Open-ocean route",
+      "Naval theatre",
     ],
     "Cyberpunk / Corporate": [
       "Local (block / district)",
@@ -179,6 +174,14 @@ export const questConfig = {
       "Coastal / Maritime",
       "Feywild Crossing",
       "Dwarven Stronghold",
+    ],
+    Pirate: [
+      "Dockside Port",
+      "Hidden Cove",
+      "Derelict Ship",
+      "Island Ruin",
+      "Naval Fort",
+      "Storm-Wracked Sea",
     ],
     "Cyberpunk / Corporate": [
       "Corporate Tower",
@@ -277,6 +280,14 @@ export const questConfig = {
       "Ancient Curse",
       "Undead Rising",
       "Dragon's Influence",
+    ],
+    Pirate: [
+      "Rival Pirate Crew",
+      "Naval Blockade",
+      "Ghost Ship",
+      "Sea Monster",
+      "Mutiny",
+      "Cursed Treasure",
     ],
     "Cyberpunk / Corporate": [
       "Rogue AI",
@@ -400,6 +411,14 @@ export const questConfig = {
       "Valuable information from the client",
       "Respect from a previously hostile faction",
     ],
+    Pirate: [
+      "A share of recovered treasure and a safe harbour",
+      "A ship's articles granting the crew a voice in its course",
+      "A naval pardon or privateering charter",
+      "A chart to an unclaimed island passage",
+      "The loyalty of a rescued crew",
+      "A relic recovered from a wreck beneath forbidden waters",
+    ],
     "Cyberpunk / Corporate": [
       "Cred plus a fixer's contact",
       "Access codes to a restricted network",
@@ -507,15 +526,43 @@ export interface ResolvedQuest {
 }
 
 function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
+  const genre = options.genre || pickFrom(questConfig.genres, rng);
+  const pirate = genre === "Pirate";
   return {
-    genre: options.genre || pickFrom(questConfig.genres, rng),
-    tone: options.tone || pickFrom(questConfig.tones, rng),
-    scope: options.scope || pickFrom(questConfig.scopes, rng),
+    genre,
+    tone:
+      options.tone ||
+      pickFrom(
+        pirate ? questConfig.tonesByTheme.Pirate : questConfig.tones,
+        rng,
+      ),
+    scope:
+      options.scope ||
+      pickFrom(
+        pirate ? questConfig.scopesByTheme.Pirate : questConfig.scopes,
+        rng,
+      ),
     locationType:
-      options.locationType || pickFrom(questConfig.locationTypes, rng),
-    threat: options.threat || pickFrom(questConfig.threats, rng),
+      options.locationType ||
+      pickFrom(
+        pirate
+          ? questConfig.locationTypesByTheme.Pirate
+          : questConfig.locationTypes,
+        rng,
+      ),
+    threat:
+      options.threat ||
+      pickFrom(
+        pirate ? questConfig.threatsByTheme.Pirate : questConfig.threats,
+        rng,
+      ),
     twist: options.twist || pickFrom(questConfig.twists, rng),
-    reward: options.reward || pickFrom(questConfig.rewards, rng),
+    reward:
+      options.reward ||
+      pickFrom(
+        pirate ? questConfig.rewardsByTheme.Pirate : questConfig.rewards,
+        rng,
+      ),
     campaignContext: options.campaignContext?.trim() || undefined,
     questName: `${generateName(rng)}'s ${pickFrom(["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"], rng)}`,
   };
@@ -568,12 +615,7 @@ export function parseQuestResponse(
   text: string,
   resolved: ResolvedQuest,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "event",
     title: data.title || resolved.questName,
@@ -592,8 +634,32 @@ export function generateQuestLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveQuest(options, rng);
-  const hook = pickFrom(questConfig.hooks, rng);
-  const complication = pickFrom(questConfig.complications, rng);
+  const pirateHooks = [
+    "A fragmented treasure chart has surfaced in a neutral port, but each piece is held by a different crew.",
+    "A blockade has trapped a convoy of families and medicine ships behind a reef passage that only opens at low tide.",
+    "A ghost vessel has returned without its crew, carrying a log that names the next ship it will claim.",
+    "A captain was arrested under a false name, and the party must reach the prison island before the fleet sails.",
+    "A mutiny is brewing aboard a ship whose articles protect both the crew and the captain who broke them.",
+    "A sea-monster hunt is actually a rescue mission for sailors stranded on an island that appears only in storms.",
+  ];
+  const pirateComplications = [
+    "The chart is genuine, but following it violates a truce that keeps three ports from going to war.",
+    "The naval officer offering the contract has quietly voided the crew's pardon.",
+    "The rescued cargo belongs to a harbour community that cannot survive without it.",
+    "A rival crew knows the party's route because one of the allies is trying to buy their own freedom.",
+    "The apparent curse is tied to a real historical atrocity that the port's rulers want buried.",
+    "The safest harbour is controlled by someone the party just betrayed at sea.",
+  ];
+  const hook = pickFrom(
+    resolved.genre === "Pirate" ? pirateHooks : questConfig.hooks,
+    rng,
+  );
+  const complication = pickFrom(
+    resolved.genre === "Pirate"
+      ? pirateComplications
+      : questConfig.complications,
+    rng,
+  );
   const npcName = generateName(rng);
   const locationName = `The ${generateName(rng)} ${resolved.locationType}`;
 

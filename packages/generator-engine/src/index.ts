@@ -22,6 +22,7 @@ export {
   adaptVampire,
   adaptNomadClan,
   adaptShip,
+  adaptLanguage,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
@@ -135,6 +136,22 @@ export {
   type ShipGeneratorOptions,
   type ShipPrompt,
 } from "./public-ship";
+export {
+  buildLanguagePrompt,
+  parseLanguageResponse,
+  generateLanguageLocal,
+  languageConfig,
+  type LanguageGeneratorOptions,
+  type LanguagePrompt,
+} from "./public-language";
+export {
+  buildNewsSheetPrompt,
+  parseNewsSheetResponse,
+  generateNewsSheetLocal,
+  newsSheetConfig,
+  type NewsSheetGeneratorOptions,
+  type NewsSheetPrompt,
+} from "./public-news-sheet";
 export {
   CampaignGeneratorService,
   campaignGeneratorService,

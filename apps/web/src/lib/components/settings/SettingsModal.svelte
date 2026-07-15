@@ -13,6 +13,7 @@
   import { base } from "$app/paths";
   import { VERSION, CODENAME } from "$lib/config";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
@@ -60,43 +61,10 @@
     modalUIStore.closeSettings();
   };
 
-  let previousActiveElement: HTMLElement | null = null;
-  let modalElement: HTMLElement | undefined = $state();
-
-  $effect(() => {
-    if (modalUIStore.showSettings) {
-      previousActiveElement = document.activeElement as HTMLElement;
-      // Focus the first tab button after a short delay to allow for transition
-      setTimeout(() => {
-        const firstTab = modalElement?.querySelector(
-          '[role="tab"]',
-        ) as HTMLElement;
-        firstTab?.focus();
-      }, 100);
-    } else if (previousActiveElement) {
-      previousActiveElement.focus();
-      previousActiveElement = null;
-    }
-  });
-
+  // Focus management (initial focus, Tab cycling, restore-on-close) is
+  // handled by the shared focusTrap action on the dialog element.
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") close();
-    if (e.key === "Tab") {
-      if (!modalElement) return;
-      const focusables = modalElement.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      const first = focusables[0] as HTMLElement;
-      const last = focusables[focusables.length - 1] as HTMLElement;
-
-      if (e.shiftKey && document.activeElement === first) {
-        last.focus();
-        e.preventDefault();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        first.focus();
-        e.preventDefault();
-      }
-    }
   };
 </script>
 
@@ -113,7 +81,7 @@
   ></button>
 
   <div
-    bind:this={modalElement}
+    use:focusTrap
     class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-chrome-bg border border-chrome-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body"
     role="dialog"
     aria-modal="true"

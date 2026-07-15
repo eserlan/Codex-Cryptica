@@ -70,7 +70,7 @@
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
         aria-label="Toggle menu"
       >
-        <span class="icon-[lucide--menu] w-6 h-6"></span>
+        <span class="icon-[lucide--menu] w-6 h-6" aria-hidden="true"></span>
       </button>
 
       <!-- Die Roller Toggle -->
@@ -83,6 +83,7 @@
       >
         <span
           class="icon-[lucide--dices] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
+          aria-hidden="true"
         ></span>
       </button>
 
@@ -128,7 +129,7 @@
         onclick={() => searchStore.open()}
         aria-label="Search"
       >
-        <span class="icon-[heroicons--magnifying-glass] w-6 h-6"></span>
+        <span class="icon-[heroicons--magnifying-glass] w-6 h-6" aria-hidden="true"></span>
       </button>
     </div>
 
@@ -168,7 +169,7 @@
           title="Explore public worlds"
           aria-label="Explore public worlds"
         >
-          <span class="w-5 h-5 icon-[lucide--compass]"></span>
+          <span class="w-5 h-5 icon-[lucide--compass]" aria-hidden="true"></span>
         </a>
         <button
           class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
@@ -179,7 +180,7 @@
           aria-label="Open Application Settings"
           data-testid="settings-button"
         >
-          <span class="w-5 h-5 icon-[lucide--settings]"></span>
+          <span class="w-5 h-5 icon-[lucide--settings]" aria-hidden="true"></span>
         </button>
       {/if}
     </div>

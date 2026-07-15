@@ -146,6 +146,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
     icon: "icon-[lucide--brain]",
   },
+  "family-tree": {
+    id: "family-tree",
+    title: "Family Tree",
+    content:
+      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. The tree is built from your normal connections, so nothing is stored twice.",
+    icon: "icon-[lucide--network]",
+  },
   "visual-graph": {
     id: "visual-graph",
     title: "Visual Graph",
@@ -199,7 +206,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "public-world-directory",
     title: "Public World Directory",
     content:
-      "Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link.",
+      "Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link. All listed worlds display a provenance and copyright notice confirming they are user-created and independently published without rights-holder endorsement. Authors must confirm they have the legal right to publish their content, and visitors may report potential copyright concerns for moderation review.",
     icon: "icon-[lucide--globe]",
   },
   "guest-entity-links": {
@@ -474,6 +481,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
     icon: "icon-[lucide--wifi-off]",
+  },
+  "language-generator": {
+    id: "language-generator",
+    title: "Fictional Languages",
+    content:
+      "Design custom language profiles (conlangs) detailing pronunciation guidelines, naming structures, example names, and glossary dictionaries. Other generators like NPC and Settlement will automatically respect these profiles to keep naming styles culturally and linguistically consistent.",
+    icon: "icon-[lucide--languages]",
+  },
+  "news-sheet-generator": {
+    id: "news-sheet-generator",
+    title: "News Sheets (In-World News)",
+    content:
+      "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
+    icon: "icon-[lucide--newspaper]",
   },
 };
 

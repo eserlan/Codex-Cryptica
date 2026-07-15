@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { OracleRevisionManager } from "../revision-manager.svelte";
-import { interactionSessions } from "../../../services/ai/interaction-session";
+import { interactionSessions } from "@codex/ai-engine";
 import type { IOracleStore } from "../types";
 
 describe("OracleRevisionManager", () => {

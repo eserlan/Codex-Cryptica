@@ -266,7 +266,8 @@
         ? 'rounded-r-xl'
         : ''}"
     >
-      <span class="icon-[lucide--book-open] h-3.5 w-3.5" aria-hidden="true"></span>
+      <span class="icon-[lucide--book-open] h-3.5 w-3.5" aria-hidden="true"
+      ></span>
     </button>
   {/if}
   {#if onApproveDraft && onRejectDraft && entity.status === "draft"}
@@ -294,7 +295,8 @@
       aria-label="Reject {entity.title}"
       class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-red-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
     >
-      <span class="icon-[lucide--trash-2] h-3.5 w-3.5" aria-hidden="true"></span>
+      <span class="icon-[lucide--trash-2] h-3.5 w-3.5" aria-hidden="true"
+      ></span>
     </button>
   {/if}
 </div>

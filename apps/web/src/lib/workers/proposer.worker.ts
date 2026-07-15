@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { aiClientManager } from "../services/ai/client-manager";
+import { aiClientManager } from "@codex/ai-engine";
 import type { Proposal } from "@codex/proposer";
 
 function normalizeTargetId(value: string): string {

@@ -174,6 +174,21 @@ describe("saveDraft", () => {
     );
   });
 
+  it("adds kind: 'language' to initialData when saving a language draft", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    const result = await svc.saveDraft({
+      draft: draft({ sourceGeneratorId: "language", entityType: "note" }),
+      createRelationship: false,
+    });
+    expect(result.entityId).toBe("entity-1");
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "note",
+      "Kaeldar",
+      expect.objectContaining({ kind: "language" }),
+    );
+  });
+
   it("creates a relationship only after entity creation when requested", async () => {
     const vault = gateway();
     const svc = new CampaignGeneratorService({ vault });

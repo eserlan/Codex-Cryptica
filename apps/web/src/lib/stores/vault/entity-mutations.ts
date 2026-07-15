@@ -229,7 +229,11 @@ export class EntityMutationService {
         this.deps.invalidateUrlCache(patch.image);
       }
 
-      savePromises.push(this.deps.persistence.scheduleSave(merged));
+      savePromises.push(
+        this.deps.persistence.scheduleSave(merged, {
+          preserveCachedContent: isCoordinateOnlyPatch(patch),
+        }),
+      );
     }
 
     if (hasChanges) {
@@ -595,4 +599,25 @@ export class EntityMutationService {
       entities: created,
     });
   }
+}
+
+function isCoordinateOnlyPatch(patch: Partial<LocalEntity>): boolean {
+  const keys = Object.keys(patch);
+  if (keys.length !== 1 || !("metadata" in patch)) return false;
+
+  const metadata = patch.metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return false;
+  }
+
+  const metadataKeys = Object.keys(metadata);
+  if (metadataKeys.length !== 1 || !("coordinates" in metadata)) return false;
+
+  const coordinates = (metadata as any).coordinates;
+  return (
+    coordinates != null &&
+    typeof coordinates === "object" &&
+    Number.isFinite(coordinates.x) &&
+    Number.isFinite(coordinates.y)
+  );
 }

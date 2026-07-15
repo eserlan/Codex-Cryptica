@@ -3,6 +3,7 @@ import type {
   DirectoryQuery,
   ListingDraft,
   PublicListing,
+  PublishedNotice,
 } from "schema";
 
 export interface PublicDirectoryServiceDeps {
@@ -41,6 +42,43 @@ export class PublicDirectoryService {
     return (await response.json()) as PublicListing;
   }
 
+  async getNotice(publishId: string): Promise<PublishedNotice | null> {
+    const response = await this.fetcher(
+      `${this.baseUrl}/api/published/${publishId}/notice`,
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error("Failed to load published notice");
+    }
+    return (await response.json()) as PublishedNotice;
+  }
+
+  async saveNotice(
+    publishId: string,
+    payload: {
+      fanContent?: boolean;
+      fanContentDisclaimer?: string;
+      rightsAcknowledged: boolean;
+    },
+    writeToken: string,
+  ): Promise<PublishedNotice> {
+    const response = await this.fetcher(
+      `${this.baseUrl}/api/published/${publishId}/notice`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${writeToken}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+    if (!response.ok) {
+      throw new Error("Failed to save published notice");
+    }
+    return (await response.json()) as PublishedNotice;
+  }
+
   createListingDraft(input: {
     publishId: string;
     vaultTitle: string;
@@ -58,6 +96,8 @@ export class PublicDirectoryService {
         coverImageAssetId,
         coverImageAlt,
         ownerDisplayName,
+        rightsAcknowledgedAt,
+        fanContent,
       } = input.existingListing;
       return {
         publishId,
@@ -67,6 +107,8 @@ export class PublicDirectoryService {
         coverImageAssetId,
         coverImageAlt,
         ownerDisplayName,
+        rightsAcknowledged: (rightsAcknowledgedAt ? true : undefined) as any,
+        fanContent: fanContent ?? false,
       };
     }
 
@@ -78,6 +120,10 @@ export class PublicDirectoryService {
       coverImageAssetId: input.defaultCoverImageAssetId || undefined,
       coverImageAlt: input.defaultCoverImageAssetId ? "Cover image" : undefined,
       ownerDisplayName: undefined,
+      // New drafts must require an explicit acknowledgement from the author;
+      // the checkbox starts unchecked and gates saving.
+      rightsAcknowledged: undefined as any,
+      fanContent: false,
     };
   }
 

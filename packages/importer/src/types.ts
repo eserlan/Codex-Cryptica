@@ -102,7 +102,10 @@ export interface AnalysisOptions {
   signal?: AbortSignal;
   onProgress?: (current: number, total: number) => void;
   onChunkActive?: (index: number) => void;
-  onChunkProcessed?: (index: number, result: AnalysisResult) => void;
+  onChunkProcessed?: (
+    index: number,
+    result: AnalysisResult,
+  ) => void | Promise<void>;
 }
 
 export interface AnalysisResult {

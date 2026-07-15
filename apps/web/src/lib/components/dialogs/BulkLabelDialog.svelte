@@ -5,6 +5,7 @@
   import { fade, fly } from "svelte/transition";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let {
     isOpen = false,
@@ -349,14 +350,11 @@
             aria-labelledby="remove-label-tab"
           >
             {#if anyLabels.length === 0}
-              <div class="text-center py-8">
-                <p class="text-sm text-theme-muted italic">
-                  No labels found on the selected {themeStore.resolveJargon(
-                    "entity",
-                    entityIds.length,
-                  )}.
-                </p>
-              </div>
+              <EmptyState
+                icon="icon-[lucide--tags]"
+                headline="No labels found"
+                body={`No labels on the selected ${themeStore.resolveJargon("entity", entityIds.length)}.`}
+              />
             {:else}
               <div class="space-y-4">
                 <p class="text-xs md:text-sm text-theme-muted">

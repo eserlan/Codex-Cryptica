@@ -1,5 +1,5 @@
-import type { Clock } from "../runtime";
-import { systemClock } from "../runtime";
+import type { Clock, IdGenerator } from "../runtime";
+import { systemClock, systemIdGenerator } from "../runtime";
 import type {
   OracleExecutionContext,
   OracleIntent,
@@ -13,7 +13,10 @@ import type {
  * Provides shared utilities and enforces architectural patterns.
  */
 export abstract class BaseExecutor {
-  constructor(protected clock: Clock = systemClock) {}
+  constructor(
+    protected clock: Clock = systemClock,
+    protected idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   /**
    * Helper to extract and normalize categories from context.

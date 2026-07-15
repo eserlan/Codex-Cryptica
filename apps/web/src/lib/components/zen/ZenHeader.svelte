@@ -14,7 +14,7 @@
   import { base } from "$app/paths";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
+  import { soundBiteService } from "@codex/audio-engine";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";

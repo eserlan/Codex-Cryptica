@@ -25,10 +25,12 @@ describe("entity detail tab ids", () => {
     expect(getNextEntityDetailTab("status", "ArrowRight")).toBe("lore");
     expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("chats");
-    expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("timeline");
+    expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("family");
+    expect(getNextEntityDetailTab("family", "ArrowRight")).toBe("timeline");
     expect(getNextEntityDetailTab("timeline", "ArrowRight")).toBe("status");
     expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("timeline");
-    expect(getNextEntityDetailTab("timeline", "ArrowLeft")).toBe("chats");
+    expect(getNextEntityDetailTab("timeline", "ArrowLeft")).toBe("family");
+    expect(getNextEntityDetailTab("family", "ArrowLeft")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowLeft")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");
     expect(getNextEntityDetailTab("status", "End")).toBe("timeline");
@@ -45,7 +47,7 @@ describe("entity detail tab ids", () => {
     );
     expect(
       getNextEntityDetailTabInList(visibleTabs, "chats", "ArrowRight"),
-    ).toBe("timeline");
+    ).toBe("family");
     expect(
       getNextEntityDetailTabInList(visibleTabs, "timeline", "ArrowRight"),
     ).toBe("status");

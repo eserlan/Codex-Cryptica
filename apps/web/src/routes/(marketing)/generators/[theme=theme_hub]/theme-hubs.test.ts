@@ -5,6 +5,7 @@ describe("Generator Theme Hub Route", () => {
   describe("load", () => {
     it.each([
       "fantasy",
+      "pirate",
       "cyberpunk",
       "sci-fi",
       "post-apocalyptic",
@@ -32,10 +33,11 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 11 theme slugs", () => {
+    it("should return all 12 theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([
         { theme: "fantasy" },
+        { theme: "pirate" },
         { theme: "cyberpunk" },
         { theme: "sci-fi" },
         { theme: "post-apocalyptic" },

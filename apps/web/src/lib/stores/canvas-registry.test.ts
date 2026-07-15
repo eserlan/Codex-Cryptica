@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { canvasRegistry } from "./canvas-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import * as vaultIO from "./vault/io";
@@ -42,6 +42,10 @@ describe("CanvasRegistryStore", () => {
       enqueue: vi.fn((id, cb) => cb()),
     } as any);
     notificationStore.confirm = vi.fn().mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("should create a new canvas with proper metadata and slug", async () => {
@@ -215,7 +219,7 @@ describe("CanvasRegistryStore", () => {
       const canvasId = canvasRegistry.allCanvases[0].id!;
       const before = canvasRegistry.allCanvases[0].lastModified || 0;
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      vi.spyOn(Date, "now").mockReturnValue(before + 1);
       await canvasRegistry.addEntities(canvasId, ["entity-1"]);
 
       const after = canvasRegistry.allCanvases[0].lastModified || 0;

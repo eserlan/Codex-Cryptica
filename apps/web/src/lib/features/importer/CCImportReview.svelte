@@ -4,11 +4,13 @@
     MatchDecision,
     ItemDecision,
   } from "@codex/importer";
+  import { categories } from "$lib/stores/categories.svelte";
 
   interface Props {
     session: CCImportSession;
     onItemDecisionChange: (draftRef: string, decision: ItemDecision) => void;
     onMatchDecisionChange: (draftRef: string, decision: MatchDecision) => void;
+    onItemTypeChange: (draftRef: string, type: string) => void;
     onCommit: () => void;
     onCancel: () => void;
     isStandalone?: boolean;
@@ -18,6 +20,7 @@
     session,
     onItemDecisionChange,
     onMatchDecisionChange,
+    onItemTypeChange,
     onCommit,
     onCancel,
     isStandalone = false,
@@ -139,11 +142,9 @@
               <span class="min-w-0">
                 <span
                   class="block text-sm font-semibold text-theme-text truncate"
+                  title={item.sourceRef}
                 >
                   {item.draft.title}
-                </span>
-                <span class="block mt-1 text-[11px] text-theme-muted break-all">
-                  {item.sourceRef}
                 </span>
                 {#if item.typeFallback}
                   <span
@@ -151,7 +152,7 @@
                   >
                     <span class="icon-[lucide--triangle-alert] h-3.5 w-3.5"
                     ></span>
-                    Type fallback
+                    Type fallback — check the type
                   </span>
                 {/if}
                 {#if itemWarningCount(item) > 0}
@@ -171,11 +172,25 @@
           </div>
 
           <div class="min-w-0 flex items-start">
-            <span
-              class="inline-flex items-center px-2 py-1 border border-theme-border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider text-theme-text rounded"
+            <select
+              class={[
+                "px-2 py-1 border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider rounded",
+                item.typeFallback
+                  ? "border-amber-500 text-amber-500"
+                  : "border-theme-border text-theme-text",
+              ]}
+              value={item.resolvedType}
+              onchange={(event) =>
+                onItemTypeChange(draftRefFor(item), event.currentTarget.value)}
+              aria-label={`Type for ${item.draft.title}`}
             >
-              {item.resolvedType}
-            </span>
+              {#if !categories.list.some((c) => c.id === item.resolvedType)}
+                <option value={item.resolvedType}>{item.resolvedType}</option>
+              {/if}
+              {#each categories.list as category (category.id)}
+                <option value={category.id}>{category.label}</option>
+              {/each}
+            </select>
           </div>
 
           <div class="min-w-0 flex items-start">

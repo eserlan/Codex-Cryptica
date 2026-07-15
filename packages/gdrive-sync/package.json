@@ -1,0 +1,27 @@
+{
+  "name": "@codex/gdrive-sync",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@codex/events": "workspace:*",
+    "@codex/sync-engine": "workspace:*",
+    "comlink": "^4.4.2",
+    "idb": "^8.0.3",
+    "schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/google.accounts": "^0.0.18",
+    "@vitest/coverage-v8": "^4.1.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
+  }
+}

@@ -39,6 +39,8 @@ describe("Generators SvelteKit Route", () => {
         { slug: "pantheon-generator" },
         { slug: "god-generator" },
         { slug: "ship-generator" },
+        { slug: "language-generator" },
+        { slug: "news-sheet-generator" },
       ]);
     });
   });

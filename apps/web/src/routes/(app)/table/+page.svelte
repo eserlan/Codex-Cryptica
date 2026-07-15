@@ -2,12 +2,14 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import {
     filterEntities,
     countEntityTypes,
   } from "$lib/components/explorer/entityListFiltering";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
+  import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import {
     sortEntities,
@@ -78,6 +80,13 @@
 
   // ─── Row selection + bulk actions ───────────────────────────────────────
   let selectedIds = $state<Set<string>>(new Set());
+  let lastSelectedId = $state<string | null>(null);
+  let contextMenu = $state<{
+    x: number;
+    y: number;
+    targetIds: string[];
+  } | null>(null);
+  let isCommitting = $state(false);
 
   // Selection respects the current filtered set: clear it whenever the filters
   // change so we never act on rows the user can no longer see. (Sorting keeps
@@ -87,6 +96,8 @@
     void typeFilters;
     void labelFilters;
     selectedIds = new Set();
+    lastSelectedId = null;
+    contextMenu = null;
   });
 
   const selectedVisible = $derived(rows.filter((e) => selectedIds.has(e.id)));
@@ -95,23 +106,150 @@
   );
   const someSelected = $derived(selectedVisible.length > 0 && !allSelected);
 
-  function toggleRow(id: string) {
+  function toggleRow(
+    id: string,
+    options?: { shift?: boolean; ctrl?: boolean },
+  ) {
     const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
+    const isSelected = next.has(id);
+
+    if (options?.shift && lastSelectedId && lastSelectedId !== id) {
+      const currentIndex = rows.findIndex((e) => e.id === id);
+      const anchorIndex = rows.findIndex((e) => e.id === lastSelectedId);
+
+      if (currentIndex !== -1 && anchorIndex !== -1) {
+        const start = Math.min(currentIndex, anchorIndex);
+        const end = Math.max(currentIndex, anchorIndex);
+        const shouldSelect = selectedIds.has(lastSelectedId);
+
+        for (let i = start; i <= end; i++) {
+          const rowId = rows[i].id;
+          if (shouldSelect) {
+            next.add(rowId);
+          } else {
+            next.delete(rowId);
+          }
+        }
+      }
+    } else {
+      if (isSelected) {
+        next.delete(id);
+        if (lastSelectedId === id) lastSelectedId = null;
+      } else {
+        next.add(id);
+        lastSelectedId = id;
+      }
+    }
     selectedIds = next;
   }
 
   function toggleAll() {
     if (allSelected) {
       selectedIds = new Set();
+      lastSelectedId = null;
     } else {
       selectedIds = new Set(rows.map((e) => e.id));
+      lastSelectedId = rows.length > 0 ? rows[0].id : null;
     }
   }
 
   function clearSelection() {
     selectedIds = new Set();
+    lastSelectedId = null;
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      if (contextMenu) {
+        contextMenu = null;
+      } else {
+        clearSelection();
+      }
+    }
+  }
+
+  function handleRowContextMenu(id: string, x: number, y: number) {
+    const next = new Set(selectedIds);
+    if (!next.has(id)) {
+      next.clear();
+      next.add(id);
+      lastSelectedId = id;
+      selectedIds = next;
+    }
+    contextMenu = {
+      x,
+      y,
+      targetIds: Array.from(selectedIds),
+    };
+  }
+
+  function handleManageLabels() {
+    if (!contextMenu) return;
+    modalUIStore.openBulkLabelDialog(contextMenu.targetIds);
+  }
+
+  async function handleChangeType(type: string) {
+    if (isCommitting) return;
+    if (!contextMenu || contextMenu.targetIds.length === 0) return;
+    const targetIds = contextMenu.targetIds;
+
+    const confirmed = await notificationStore.confirm({
+      title: "Change Entity Type",
+      message: `Are you sure you want to change the type of ${
+        targetIds.length > 1 ? `${targetIds.length} entities` : "this entity"
+      } to "${type}"? This may result in some type-specific metadata layout updates.`,
+      confirmLabel: "Change type",
+      cancelLabel: "Cancel",
+      isDangerous: false,
+    });
+
+    if (confirmed) {
+      isCommitting = true;
+      try {
+        for (const id of targetIds) {
+          await vault.updateEntity(id, { type });
+        }
+      } catch (err: any) {
+        console.error("Failed to change type", err);
+        notificationStore.notify(`Error: ${err.message}`, "error");
+      } finally {
+        isCommitting = false;
+      }
+    }
+  }
+
+  async function handleDeleteSelected() {
+    if (isCommitting) return;
+    if (!contextMenu || contextMenu.targetIds.length === 0) return;
+    const targetIds = contextMenu.targetIds;
+
+    const confirmed = await notificationStore.confirm({
+      title:
+        targetIds.length > 1 ? "Delete Selected Entities" : "Delete Entity",
+      message: `Are you sure you want to permanently delete ${
+        targetIds.length > 1
+          ? `these ${targetIds.length} entities`
+          : "this entity"
+      }? This action cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+
+    if (confirmed) {
+      isCommitting = true;
+      try {
+        for (const id of targetIds) {
+          await vault.deleteEntity(id);
+        }
+        clearSelection();
+      } catch (err: any) {
+        console.error("Failed to delete", err);
+        notificationStore.notify(`Error: ${err.message}`, "error");
+      } finally {
+        isCommitting = false;
+      }
+    }
   }
 
   function openBulkLabels() {
@@ -159,6 +297,8 @@
 <svelte:head>
   <title>Entity Table</title>
 </svelte:head>
+
+<svelte:window onkeydown={handleKeyDown} />
 
 <div
   class="flex h-full flex-col gap-4 bg-theme-bg p-4 md:p-6"
@@ -329,8 +469,23 @@
           onToggleAll={toggleAll}
           onFilterType={toggleType}
           onFilterLabel={toggleLabel}
+          onRowContextMenu={handleRowContextMenu}
         />
       {/if}
     </div>
   {/if}
 </div>
+
+{#if contextMenu}
+  <TableContextMenu
+    x={contextMenu.x}
+    y={contextMenu.y}
+    selectedIds={contextMenu.targetIds}
+    onManageLabels={handleManageLabels}
+    onChangeType={handleChangeType}
+    onDelete={handleDeleteSelected}
+    onClose={() => {
+      contextMenu = null;
+    }}
+  />
+{/if}

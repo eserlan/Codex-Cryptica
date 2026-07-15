@@ -657,8 +657,10 @@
                           aria-label="Edit connection"
                           title="Edit connection"
                         >
-                          <span class="icon-[lucide--pencil] w-3.5 h-3.5"
-                           aria-hidden="true"></span>
+                          <span
+                            class="icon-[lucide--pencil] w-3.5 h-3.5"
+                            aria-hidden="true"
+                          ></span>
                         </button>
                       {/if}
                       {#if conn.isChild}
@@ -673,7 +675,10 @@
                           aria-label="Establish custom connection"
                           title="Establish custom connection"
                         >
-                          <span class="icon-[lucide--plus] w-3.5 h-3.5" aria-hidden="true"></span>
+                          <span
+                            class="icon-[lucide--plus] w-3.5 h-3.5"
+                            aria-hidden="true"
+                          ></span>
                         </button>
                       {/if}
                       <button
@@ -701,7 +706,10 @@
                         aria-label="Delete connection"
                         title="Delete connection"
                       >
-                          <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
+                        <span
+                          class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                          aria-hidden="true"
+                        ></span>
                       </button>
                     </div>
                   {/if}

@@ -7,6 +7,7 @@
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick, untrack } from "svelte";
   import { scale, slide } from "svelte/transition";
+  import { toDateSelection } from "./utils/toDateSelection";
 
   let {
     value = $bindable(),
@@ -21,74 +22,12 @@
   } = $props();
 
   let pickerElement = $state<HTMLElement>();
+
   let x = $state(0);
   let y = $state(0);
 
-  // Conversion from legacy TemporalMetadata to activeSelection DateSelection
-  function toDateSelection(
-    val: TemporalMetadata | DateSelection | undefined,
-    refVal: TemporalMetadata | DateSelection | undefined,
-  ): DateSelection {
-    const config = calendarStore.config;
-    const months = calendarEngine.getMonths(config);
-    const revision = config.revision || 1;
-
-    const hasValidYear = val && "year" in val && val.year !== undefined;
-
-    if (!val || !hasValidYear) {
-      if (refVal && "year" in refVal && refVal.year !== undefined) {
-        return {
-          precision:
-            "precision" in refVal && refVal.precision
-              ? (refVal.precision as any)
-              : "year",
-          year: refVal.year,
-          calendarRevision: revision,
-          label: val?.label || undefined,
-        };
-      }
-      return {
-        precision: "year",
-        year: config.presentYear || 0,
-        calendarRevision: revision,
-        label: val?.label || undefined,
-      };
-    }
-
-    if ("precision" in val && val.precision) {
-      return { ...val } as DateSelection;
-    }
-
-    let precision: "year" | "unit" | "day" = "year";
-    let unitId: string | undefined = undefined;
-    let day: number | undefined = undefined;
-
-    const month = val && "month" in val ? (val as any).month : undefined;
-    if (month !== undefined) {
-      precision = val.day !== undefined ? "day" : "unit";
-      const mIndex = month - 1;
-      if (mIndex >= 0 && mIndex < months.length) {
-        unitId = months[mIndex].id;
-      } else {
-        unitId = months[0]?.id;
-      }
-      if (val.day !== undefined) {
-        day = val.day;
-      }
-    }
-
-    return {
-      precision,
-      year: val.year,
-      unitId,
-      day,
-      calendarRevision: revision,
-      label: val.label,
-    };
-  }
-
   let activeSelection = $state<DateSelection>(
-    untrack(() => toDateSelection(value, referenceValue)),
+    untrack(() => toDateSelection(value, referenceValue, calendarStore.config)),
   );
 
   let directDateInput = $state("");

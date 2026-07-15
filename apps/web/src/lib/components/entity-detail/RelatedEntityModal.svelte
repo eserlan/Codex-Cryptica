@@ -5,10 +5,11 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+  import { textGenerationService } from "@codex/ai-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import type { ConnectedEntityPromptContext } from "schema";
+  import DecorativeGlowFrame from "$lib/components/ui/DecorativeGlowFrame.svelte";
 
   let {
     isOpen,
@@ -309,21 +310,7 @@
       transition:scale={{ duration: 250, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
     >
-      <!-- Decorative Background Glow -->
-      <div
-        class="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-theme-primary/10 blur-[80px]"
-      ></div>
-      <div
-        class="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-theme-primary/5 blur-[80px]"
-      ></div>
-
-      <!-- Corner Accents -->
-      <div
-        class="pointer-events-none absolute top-0 left-0 h-8 w-8 border-t-2 border-l-2 border-theme-primary/40 rounded-tl-[2rem]"
-      ></div>
-      <div
-        class="pointer-events-none absolute bottom-0 right-0 h-8 w-8 border-b-2 border-r-2 border-theme-primary/40 rounded-br-[2rem]"
-      ></div>
+      <DecorativeGlowFrame />
 
       <!-- HEADER -->
       <div class="relative px-8 pt-8 pb-4 border-b border-theme-border/40">

@@ -8,3 +8,4 @@ export * from "./report";
 export * from "./engine";
 export * from "./scabard";
 export * from "./chronica";
+export * from "./oracle-discovery";

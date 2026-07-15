@@ -13,6 +13,15 @@ on:
     paths-ignore:
       - "docs/**"
   workflow_dispatch:
+    inputs:
+      full_validation:
+        description: Run every workspace check
+        type: boolean
+        default: true
+      base_ref:
+        description: Base ref for an affected-only manual run
+        type: string
+        default: staging
 
 concurrency:
   group: "cloudflare-pages-${{ github.ref }}"
@@ -24,8 +33,53 @@ permissions:
   pull-requests: write
 
 jobs:
+  select-validation:
+    name: Select Validation Scope
+    runs-on: ubuntu-latest
+    outputs:
+      affected: ${{ steps.select.outputs.affected }}
+      lint: ${{ steps.select.outputs.lint }}
+      test_coverage: ${{ steps.select.outputs.test_coverage }}
+      lint_types: ${{ steps.select.outputs.lint_types }}
+      web: ${{ steps.select.outputs.web }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Select affected workspaces
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ inputs.base_ref }}
+          FORCE_FULL: ${{ inputs.full_validation }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ] || [ "$FORCE_FULL" = "true" ]; then
+            bun scripts/affected-workspaces.mjs --full | tee selection.txt
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
+            bun scripts/affected-workspaces.mjs --base "$BASE_SHA" --head HEAD | tee selection.txt
+          else
+            bun scripts/affected-workspaces.mjs --base "origin/$BASE_REF" --head HEAD | tee selection.txt
+          fi
+          {
+            echo "## Validation scope"
+            echo
+            echo '```text'
+            cat selection.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   type-check:
     name: Type Check
+    needs: select-validation
+    if: needs.select-validation.outputs.lint_types != ''
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -57,10 +111,17 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Type Check
-        run: bun run lint:types
+        env:
+          WORKSPACES: ${{ needs.select-validation.outputs.lint_types }}
+        run: |
+          for workspace in $WORKSPACES; do
+            bun run --filter "$workspace" lint:types
+          done
 
-  lint-test:
-    name: Lint and Test
+  lint:
+    name: Lint
+    needs: select-validation
+    if: needs.select-validation.outputs.lint != ''
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -91,25 +152,86 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache lint artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            .eslintcache
+            apps/*/.eslintcache
+            packages/*/.eslintcache
+          key: ${{ runner.os }}-lint-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-lint-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-lint-${{ github.ref_name }}-
+            ${{ runner.os }}-lint-
+
       - name: Lint
-        run: bun run lint
+        env:
+          WORKSPACES: ${{ needs.select-validation.outputs.lint }}
+        run: |
+          for workspace in $WORKSPACES; do
+            bun run --filter "$workspace" lint -- --cache --cache-location .eslintcache
+          done
+
+  test:
+    name: Test
+    needs: select-validation
+    if: needs.select-validation.outputs.test_coverage != ''
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Cache test artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            apps/web/.svelte-kit
+            apps/web/node_modules/.vite
+            packages/vault-engine/node_modules/.vite
+          key: ${{ runner.os }}-test-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-test-${{ github.ref_name }}-
+            ${{ runner.os }}-test-
 
       - name: Test
-        run: bun run test:coverage
-
-      - name: Upload Coverage Reports
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: coverage
-          path: |
-            apps/*/coverage/
-            packages/*/coverage/
-          retention-days: 7
+        env:
+          WORKSPACES: ${{ needs.select-validation.outputs.test_coverage }}
+        run: |
+          for workspace in $WORKSPACES; do
+            bun run --filter "$workspace" test
+          done
 
   build:
     name: Build
-    needs: [type-check, lint-test]
+    needs: select-validation
+    if: needs.select-validation.outputs.web == 'true'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -139,6 +261,18 @@ jobs:
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
+
+      - name: Cache build artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            apps/web/.svelte-kit
+            apps/web/node_modules/.vite
+          key: ${{ runner.os }}-build-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-
+            ${{ runner.os }}-build-${{ github.ref_name }}-
+            ${{ runner.os }}-build-
 
       - name: Build Application
         env:
@@ -149,21 +283,7 @@ jobs:
           VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_TURNSTILE_SITE_KEY: "0x4AAAAAADpp_w2_FPAdSQzQ"
-        run: bun run build
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v8
-        with:
-          name: coverage
-          path: coverage-download/
-
-      - name: Copy coverage into build output
-        run: |
-          if [ -d "coverage-download/apps/web/coverage" ]; then
-            cp -r coverage-download/apps/web/coverage apps/web/build/coverage
-          else
-            echo "::warning::Web coverage directory not found — skipping"
-          fi
+        run: bun run --filter web build
 
       - name: Copy bundle report into build output
         run: |
@@ -215,9 +335,36 @@ jobs:
             echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  validation-gate:
+    name: Validation Gate
+    if: always()
+    needs: [select-validation, type-check, lint, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful validation
+        env:
+          SELECT_VALIDATION_RESULT: ${{ needs.select-validation.result }}
+          TYPE_CHECK_RESULT: ${{ needs.type-check.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          for result in "$SELECT_VALIDATION_RESULT" "$TYPE_CHECK_RESULT" "$LINT_RESULT" "$TEST_RESULT" "$BUILD_RESULT"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              echo "::error::Required validation job finished with: $result"
+              exit 1
+            fi
+          done
+
   deploy:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
-    needs: build
+    if: |
+      always() &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') &&
+      needs.build.result == 'success' &&
+      (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped') &&
+      (needs.type-check.result == 'success' || needs.type-check.result == 'skipped')
+    needs: [build, lint, test, type-check]
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -240,6 +387,8 @@ jobs:
         with:
           name: dist
           path: dist/
+
+
 
       - name: Deploy Staging to Cloudflare Pages
         if: github.ref_name == 'staging' && github.event_name == 'push'
@@ -291,3 +440,88 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"
+
+  coverage-deploy:
+    name: Coverage Deploy
+    needs: [select-validation, deploy]
+    if: |
+      always() &&
+      needs.deploy.result == 'success' &&
+      needs.select-validation.outputs.test_coverage != ''
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Download Build
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Run Coverage Tests
+        env:
+          WORKSPACES: ${{ needs.select-validation.outputs.test_coverage }}
+        run: |
+          for workspace in $WORKSPACES; do
+            bun run --filter "$workspace" test:coverage
+          done
+
+      - name: Copy web coverage into preview
+        run: |
+          if [ -d "apps/web/coverage" ]; then
+            cp -r apps/web/coverage dist/coverage
+          fi
+
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage
+          path: |
+            apps/*/coverage/
+            packages/*/coverage/
+          retention-days: 7
+
+      - name: Update Staging Deployment with Coverage
+        if: github.ref_name == 'staging' && github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=staging
+
+      - name: Update Preview Deployment with Coverage
+        if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}

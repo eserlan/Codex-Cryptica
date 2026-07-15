@@ -171,7 +171,8 @@
               aria-label="Quick edit chronicle"
               type="button"
             >
-              <span class="icon-[lucide--edit-2] w-3 h-3" aria-hidden="true"></span>
+              <span class="icon-[lucide--edit-2] w-3 h-3" aria-hidden="true"
+              ></span>
             </button>
           {/if}
         </div>
@@ -219,7 +220,8 @@
                   aria-label="Cancel"
                   type="button"
                 >
-                  <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"></span>
+                  <span class="icon-[lucide--x] w-3 h-3" aria-hidden="true"
+                  ></span>
                 </button>
                 <button
                   class="p-1.5 rounded-full bg-theme-primary border border-theme-primary text-theme-surface hover:brightness-110 hover:scale-105 backdrop-blur-sm shadow-sm transition-all"
@@ -229,7 +231,8 @@
                   aria-label="Save"
                   type="button"
                 >
-                  <span class="icon-[lucide--check] w-3 h-3" aria-hidden="true"></span>
+                  <span class="icon-[lucide--check] w-3 h-3" aria-hidden="true"
+                  ></span>
                 </button>
               </div>
             </div>

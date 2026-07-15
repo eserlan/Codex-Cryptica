@@ -47,6 +47,26 @@ describe("generateNamesLocal", () => {
     expect(first.content).toContain("Dwarven");
     expect(first.labels).toContain("name-generator");
   });
+
+  it("supports Pirate culture and style alternatives", () => {
+    const pirateStyles = nameGeneratorConfig.culturesByTheme.Pirate;
+
+    expect(pirateStyles).toHaveLength(10);
+    expect(pirateStyles).toContain("Sailor's Nickname");
+    expect(pirateStyles).toContain("Free-Port Mixed");
+
+    for (const style of pirateStyles) {
+      expect(nameGeneratorConfig.culturePrefixes[style]).toHaveLength(12);
+      expect(nameGeneratorConfig.cultureSuffixes[style]).toHaveLength(12);
+    }
+
+    const output = generateNamesLocal(
+      { theme: "Pirate", culture: "Dockside Trade Name", count: "3" },
+      seededRng(12),
+    );
+    expect(output.content).toContain("Dockside Trade Name");
+    expect(output.content).toContain("Anchor");
+  });
 });
 
 describe("buildNamesPrompt", () => {
@@ -69,6 +89,7 @@ describe("buildNamesPrompt", () => {
   it("keeps the public config data", () => {
     expect(nameGeneratorConfig.cultures).toContain("Dwarven");
     expect(nameGeneratorConfig.nameTypes).toContain("Faction");
+    expect(nameGeneratorConfig.cultures).toContain("Privateer Alias");
   });
 });
 

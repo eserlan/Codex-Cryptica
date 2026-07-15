@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { BaseExecutor } from "./base-executor";
 import type { OracleExecutionContext, OracleIntent } from "../types";
-import type { Clock } from "../runtime";
+import type { Clock, IdGenerator } from "../runtime";
 
 class TestExecutor extends BaseExecutor {
-  constructor(clock?: Clock) {
-    super(clock);
+  constructor(clock?: Clock, idGenerator?: IdGenerator) {
+    super(clock, idGenerator);
   }
 
   async execute(
@@ -22,6 +22,10 @@ class TestExecutor extends BaseExecutor {
 
   public testEmit(context: OracleExecutionContext, event: any) {
     return this.emit(context, event);
+  }
+
+  public testGenerateId() {
+    return this.idGenerator.uuid();
   }
 }
 
@@ -85,6 +89,21 @@ describe("BaseExecutor", () => {
           timestamp: 12345,
         },
       }),
+    );
+  });
+
+  it("should use the injected idGenerator instead of the system default", () => {
+    const mockIdGenerator: IdGenerator = { uuid: () => "fixed-id-123" };
+    const executor = new TestExecutor(undefined, mockIdGenerator);
+
+    expect(executor.testGenerateId()).toBe("fixed-id-123");
+  });
+
+  it("falls back to the system idGenerator when none is injected", () => {
+    const executor = new TestExecutor();
+
+    expect(executor.testGenerateId()).toMatch(
+      /^[0-9a-f-]{36}$|^[0-9a-f]{32}$/i,
     );
   });
 });

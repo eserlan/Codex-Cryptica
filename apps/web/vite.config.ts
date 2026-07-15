@@ -59,6 +59,7 @@ export default defineConfig({
         __dirname,
         "../../packages/generator-engine/src",
       ),
+      "map-engine": resolve(__dirname, "../../packages/map-engine/src"),
     },
     dedupe: ["svelte"],
   },
@@ -107,17 +108,18 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     pool: "forks",
+    silent: true,
     setupFiles: ["tests/setup.ts"],
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],
       ["src/lib/config/**", "node"],
       ["src/lib/seo/**", "node"],
       ["src/lib/content/**", "node"],
-      ["src/lib/services/ai/prompts/**", "node"],
-      ["src/lib/services/ai/capability-guard*", "node"],
-      ["src/lib/services/ai/client-manager*", "node"],
-      ["src/lib/services/ai/image-generation*", "node"],
-      ["src/lib/services/ai/text-generation*", "node"],
+      ["../../packages/ai-engine/src/prompts/**", "node"],
+      ["../../packages/ai-engine/src/capability-guard*", "node"],
+      ["../../packages/ai-engine/src/client-manager*", "node"],
+      ["../../packages/ai-engine/src/image-generation*", "node"],
+      ["../../packages/ai-engine/src/text-generation*", "node"],
       ["src/lib/services/node-merge*", "node"],
       ["src/lib/services/vtt-session*", "node"],
       ["src/lib/services/cache*", "node"],
@@ -180,6 +182,7 @@ export default defineConfig({
   ssr: {
     noExternal: [
       "graph-engine",
+      "map-engine",
       "editor-core",
       "schema",
       "chronology-engine",
@@ -211,6 +214,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       "graph-engine",
+      "map-engine",
       "editor-core",
       "schema",
       "chronology-engine",

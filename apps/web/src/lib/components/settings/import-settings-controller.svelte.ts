@@ -1,13 +1,12 @@
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { importQueue } from "$lib/stores/import-queue.svelte";
-import { aiClientManager } from "$lib/services/ai/client-manager";
+import { aiClientManager } from "@codex/ai-engine";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
-import { sanitizeId } from "$lib/utils/markdown";
 import { listPacks, packToDiscoveredEntities } from "@codex/content-packs";
 import type { CreaturePack } from "@codex/content-packs";
 import {
@@ -27,9 +26,11 @@ import {
   parseScabardExport,
   detectChronicaExport,
   parseChronicaExports,
+  discoveredEntitiesToPackage,
   ImportEngine,
   setItemDecision,
   setMatchDecision,
+  setItemType,
 } from "@codex/importer";
 import type {
   ChronicaExportDocument,
@@ -45,12 +46,7 @@ type MarkdownFrontmatterValidator =
   typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
 
 export type ImportMode = "oracle" | "cc" | null;
-export type ImportStep =
-  | "upload"
-  | "processing"
-  | "review"
-  | "complete"
-  | "report";
+export type ImportStep = "upload" | "processing" | "review" | "report";
 
 export function mapThemeToGenre(themeId: string): string {
   const rawId = (themeId || "").toLowerCase();
@@ -138,6 +134,13 @@ export class ImportSettingsController {
       (p) => !p.parentPackId && (p.genre || "fantasy") === this.targetGenre,
     ),
   );
+  existingEntitySlugs = $derived.by(() => {
+    const slugs = new Set<string>();
+    for (const entity of this.deps.vault.allEntities) {
+      slugs.add(this.toTitleSlug(entity.title));
+    }
+    return slugs;
+  });
 
   private markdownFrontmatterValidator: MarkdownFrontmatterValidator | null =
     null;
@@ -150,22 +153,37 @@ export class ImportSettingsController {
   private readonly ccMappingRules: MappingRuleSet = {
     rules: [
       { when: { sourceType: "Character" }, thenType: "character" },
+      { when: { sourceType: "Creature" }, thenType: "creature" },
       { when: { sourceType: "Location" }, thenType: "location" },
       { when: { sourceType: "Faction" }, thenType: "faction" },
       { when: { sourceType: "Item" }, thenType: "item" },
       { when: { sourceType: "Event" }, thenType: "event" },
       { when: { sourceType: "Note" }, thenType: "note" },
+      // Oracle's own extraction prompt uses "Lore" for background/worldbuilding
+      // concepts that aren't a concrete entity — map it to "note" explicitly so
+      // it doesn't show as a type fallback (that's the correct type, not a guess).
+      { when: { sourceType: "Lore" }, thenType: "note" },
       { when: { sourceType: "character" }, thenType: "character" },
+      { when: { sourceType: "creature" }, thenType: "creature" },
       { when: { sourceType: "place" }, thenType: "location" },
+      { when: { sourceType: "location" }, thenType: "location" },
       { when: { sourceType: "faction" }, thenType: "faction" },
       { when: { sourceType: "item" }, thenType: "item" },
       { when: { sourceType: "event" }, thenType: "event" },
       { when: { sourceType: "note" }, thenType: "note" },
+      { when: { sourceType: "lore" }, thenType: "note" },
     ],
     defaultType: "note",
   };
 
   constructor(private deps: ImportSettingsControllerDeps = defaultDeps) {}
+
+  private toTitleSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
 
   syncModalImportState = () => {
     this.deps.modalUIStore.isImporting =
@@ -186,21 +204,10 @@ export class ImportSettingsController {
   };
 
   getPackImportStatus = (pack: CreaturePack) => {
-    const existingSlugs = new Set(
-      Object.values(this.deps.vault.entities).map((e) =>
-        e.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, ""),
-      ),
-    );
     let importedCount = 0;
     for (const entry of pack.entries) {
-      const slug = entry.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-      if (existingSlugs.has(slug)) importedCount++;
+      const slug = this.toTitleSlug(entry.title);
+      if (this.existingEntitySlugs.has(slug)) importedCount++;
     }
     return {
       importedCount,
@@ -212,19 +219,37 @@ export class ImportSettingsController {
     };
   };
 
-  handlePackSelect = (pack: CreaturePack) => {
-    const knownTitleToId = new Map(
-      Object.entries(this.deps.vault.entities).map(([id, e]) => [
-        e.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, ""),
-        id,
-      ]),
-    );
-    this.discoveredEntities = packToDiscoveredEntities(pack, knownTitleToId);
+  handlePackSelect = async (pack: CreaturePack) => {
+    const knownTitleToId = new Map<string, string>();
+    for (const e of this.deps.vault.allEntities) {
+      knownTitleToId.set(this.toTitleSlug(e.title), e.id);
+    }
+    const entities = packToDiscoveredEntities(pack, knownTitleToId);
+
     this.importMode = "oracle";
-    this.step = "review";
+    this.step = "processing";
+    this.statusMessage = `Preparing ${pack.name} for review...`;
+    this.rejectedFiles = [];
+    this.ccReport = null;
+    this.discoveredEntities = [];
+
+    try {
+      this.ccSession = await this.buildOracleSession(
+        entities,
+        pack.name,
+        this.deps.connectionModeStore.abortSignal,
+      );
+      this.step = "review";
+    } catch (error) {
+      this.rejectedFiles.push({
+        name: pack.name,
+        reason:
+          error instanceof Error
+            ? error.message
+            : "Could not prepare this pack for review.",
+      });
+      this.step = "upload";
+    }
   };
 
   private getMarkdownFrontmatterValidator = async () => {
@@ -240,6 +265,74 @@ export class ImportSettingsController {
       { writer: createWebVaultWriter(this.deps.vault) },
       { mappingRules: this.ccMappingRules },
     );
+
+  /**
+   * Converts AI-discovered entities (Oracle analysis, creature packs) into a
+   * CCImportPackage and runs it through the same generic engine as Scabard/
+   * Chronica, so they share one preview/decision/commit/report pipeline.
+   * Local blob images are resolved to real vault paths first since the
+   * converter itself stays a pure, side-effect-free function.
+   */
+  private buildOracleSession = async (
+    entities: DiscoveredEntity[],
+    sourceLabel: string,
+    signal: AbortSignal,
+  ): Promise<CCImportSession> => {
+    const resolvedEntities = await Promise.all(
+      entities.map(async (entity) => {
+        const imgRef = entity.frontmatter?.image;
+        if (!imgRef || !this.extractedAssets.has(imgRef)) return entity;
+
+        const asset = this.extractedAssets.get(imgRef);
+        try {
+          const saved = await this.deps.vault.saveImageToVault(
+            asset.blob,
+            entity.id,
+            asset.originalName,
+          );
+          return {
+            ...entity,
+            frontmatter: {
+              ...entity.frontmatter,
+              image: saved.image,
+              thumbnail: saved.thumbnail,
+              width: entity.frontmatter.width ?? asset.width,
+              height: entity.frontmatter.height ?? asset.height,
+            },
+          };
+        } catch {
+          return entity;
+        }
+      }),
+    );
+
+    const pkg = discoveredEntitiesToPackage(resolvedEntities, sourceLabel);
+    const session = await wrapWithAbort(
+      this.createEngine().prepare(pkg),
+      signal,
+    );
+
+    const matchedById = new Map(
+      resolvedEntities
+        .filter((e) => e.matchedEntityId)
+        .map((e) => [e.id, e.matchedEntityId as string]),
+    );
+
+    return {
+      ...session,
+      items: session.items.map((item) => {
+        const matchedEntityId = item.draft.sourceId
+          ? matchedById.get(item.draft.sourceId)
+          : undefined;
+        if (!matchedEntityId) return item;
+        return {
+          ...item,
+          match: { entityId: matchedEntityId },
+          matchDecision: "update" as const,
+        };
+      }),
+    };
+  };
 
   handleFiles = async (files: File[]) => {
     this.step = "processing";
@@ -421,7 +514,7 @@ export class ImportSettingsController {
         if (!scabard && lockedMode === "cc") {
           this.rejectedFiles.push({
             name: file.name,
-            reason: "Scabard imports cannot be mixed with Oracle imports",
+            reason: "Deterministic imports cannot be mixed with Oracle imports",
           });
           continue;
         }
@@ -460,14 +553,6 @@ export class ImportSettingsController {
 
         this.importMode = "oracle";
         lockedMode = "oracle";
-
-        if (!this.deps.oracle.isEnabled) {
-          this.rejectedFiles.push({
-            name: file.name,
-            reason: "This file needs Oracle. Scabard JSON works without AI.",
-          });
-          continue;
-        }
 
         analyzer ??= new OracleAnalyzer((modelName: string) =>
           this.deps.aiClientManager.getModel(apiKey, modelName),
@@ -546,6 +631,16 @@ export class ImportSettingsController {
         } catch {
           // Keep the original error path silent during cleanup.
         }
+
+        // Surface the failure instead of silently producing no import at all
+        // (previously Oracle errors were swallowed with zero feedback).
+        this.rejectedFiles.push({
+          name: file.name,
+          reason:
+            err instanceof Error
+              ? err.message
+              : "Oracle could not analyze this file.",
+        });
       }
     }
 
@@ -561,15 +656,46 @@ export class ImportSettingsController {
     if (this.importMode === "cc") {
       this.step = this.ccSession ? "review" : "upload";
       if (!this.ccSession && this.rejectedFiles.length === 0) {
-        this.statusMessage = "No Scabard package was prepared.";
+        this.statusMessage = "No import package was prepared.";
       }
       return;
     }
 
-    this.step =
-      this.discoveredEntities.length > 0 || this.rejectedFiles.length > 0
-        ? "review"
-        : "upload";
+    if (this.discoveredEntities.length > 0) {
+      this.statusMessage = "Preparing review...";
+      try {
+        this.ccSession = await this.buildOracleSession(
+          this.discoveredEntities,
+          "Oracle Analysis",
+          signal,
+        );
+        this.step = "review";
+      } catch (error) {
+        if (
+          signal.aborted ||
+          (error instanceof Error && error.message === "Import aborted")
+        ) {
+          this.step = "upload";
+          this.ccSession = null;
+          this.importMode = null;
+          return;
+        }
+        this.rejectedFiles.push({
+          name: "Oracle results",
+          reason:
+            error instanceof Error
+              ? error.message
+              : "Could not prepare a review for the detected entities.",
+        });
+        // No ccSession means CCImportReview won't render, and there's no
+        // fallback UI on the review step anymore — go back to upload, which
+        // already displays rejectedFiles via ImportSourcePicker.
+        this.step = "upload";
+      }
+      return;
+    }
+
+    this.step = "upload";
   };
 
   handleRestart = async () => {
@@ -585,148 +711,6 @@ export class ImportSettingsController {
     this.rejectedFiles = [];
   };
 
-  handleOracleSave = async (toSave: DiscoveredEntity[]) => {
-    this.step = "processing";
-    this.importMode = "oracle";
-    this.statusMessage = `Finalizing ${toSave.length} entities...`;
-
-    const signal = this.deps.connectionModeStore.abortSignal;
-    const mapType = (type: string) => {
-      const t = type.toLowerCase();
-      if (t === "character") return "character";
-      if (t === "creature") return "creature";
-      if (["location", "item", "event", "faction", "note"].includes(t)) {
-        return t;
-      }
-      return "note";
-    };
-
-    const batchData: any[] = [];
-
-    this.deps.vault.suspendSaving();
-    try {
-      for (const entity of toSave) {
-        if (signal.aborted) break;
-
-        const title = entity.suggestedTitle;
-        const entityId = sanitizeId(title) || "untitled";
-        const type = mapType(entity.suggestedType) as any;
-        const existingId =
-          entity.matchedEntityId ||
-          (this.deps.vault.entities[entityId] ? entityId : null);
-
-        if (existingId && this.deps.vault.entities[existingId]) {
-          const existing = this.deps.vault.entities[existingId];
-          this.statusMessage = `Updating connections for existing entity: ${existing.title}...`;
-          const newConnections = (entity.detectedLinks || [])
-            .map((link) => {
-              const targetName = typeof link === "string" ? link : link.target;
-              const label =
-                typeof link === "string" ? link : link.label || link.target;
-              return {
-                target: sanitizeId(targetName) || "untitled",
-                label,
-                type: "related_to",
-                strength: 1,
-              };
-            })
-            .filter(
-              (newConn) =>
-                !existing.connections.some(
-                  (c) =>
-                    c.target === newConn.target && c.label === newConn.label,
-                ),
-            );
-
-          if (newConnections.length > 0) {
-            await this.deps.vault.updateEntity(existing.id, {
-              connections: [...existing.connections, ...newConnections],
-            });
-          }
-          continue;
-        }
-
-        const imgRef = entity.frontmatter.image;
-        let width = entity.frontmatter.width;
-        let height = entity.frontmatter.height;
-        let imagePath = entity.frontmatter.image;
-        let thumbnailPath = entity.frontmatter.thumbnail;
-
-        if (imgRef && this.extractedAssets.has(imgRef)) {
-          const asset = this.extractedAssets.get(imgRef);
-          width = width || asset.width;
-          height = height || asset.height;
-          try {
-            const savedAssets = await this.deps.vault.saveImageToVault(
-              asset.blob,
-              entityId,
-              asset.originalName,
-            );
-            imagePath = savedAssets.image;
-            thumbnailPath = savedAssets.thumbnail;
-          } catch {
-            // Keep importing even if a single asset fails.
-          }
-        }
-
-        batchData.push({
-          type,
-          title,
-          initialData: {
-            content: entity.chronicle || entity.content,
-            lore: entity.lore,
-            labels: entity.frontmatter.labels || [],
-            metadata: {
-              width: typeof width === "number" ? width : undefined,
-              height: typeof height === "number" ? height : undefined,
-            },
-            image: imagePath,
-            thumbnail: thumbnailPath,
-            connections: (entity.detectedLinks || []).map((link) => {
-              const targetName = typeof link === "string" ? link : link.target;
-              const label =
-                typeof link === "string" ? link : link.label || link.target;
-              return {
-                target: sanitizeId(targetName) || "untitled",
-                label,
-                type: "related_to",
-                strength: 1,
-              };
-            }),
-          },
-        });
-      }
-
-      if (signal.aborted) {
-        this.step = "review";
-        return;
-      }
-
-      if (batchData.length > 0) {
-        await this.deps.vault.batchCreateEntities(batchData);
-      }
-
-      this.statusMessage = "Finalizing and saving to vault...";
-      await this.deps.vault.flushPendingSaves();
-      this.step = "complete";
-    } catch (err) {
-      console.error("Batch import failed:", err);
-      this.deps.notificationStore.notify(
-        "Import failed — entities could not be saved. Check the console for details.",
-        "error",
-      );
-      this.step = "review";
-      return;
-    } finally {
-      this.deps.vault.resumeSaving();
-    }
-
-    setTimeout(() => {
-      this.step = "upload";
-      this.discoveredEntities = [];
-    }, 3000);
-  };
-
   handleCCItemDecisionChange = (draftRef: string, decision: ItemDecision) => {
     if (!this.ccSession) return;
     this.ccSession = setItemDecision(this.ccSession, draftRef, decision);
@@ -735,6 +719,11 @@ export class ImportSettingsController {
   handleCCMatchDecisionChange = (draftRef: string, decision: MatchDecision) => {
     if (!this.ccSession) return;
     this.ccSession = setMatchDecision(this.ccSession, draftRef, decision);
+  };
+
+  handleCCItemTypeChange = (draftRef: string, type: string) => {
+    if (!this.ccSession) return;
+    this.ccSession = setItemType(this.ccSession, draftRef, type);
   };
 
   handleCCCommit = async () => {
@@ -795,6 +784,7 @@ export class ImportSettingsController {
   handleCCReportDone = () => {
     this.step = "upload";
     this.importMode = null;
+    this.discoveredEntities = [];
     this.ccSession = null;
     this.ccReport = null;
     this.rejectedFiles = [];

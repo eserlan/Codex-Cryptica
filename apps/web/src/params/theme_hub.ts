@@ -2,6 +2,7 @@ import type { ParamMatcher } from "@sveltejs/kit";
 
 export const VALID_HUB_THEMES = new Set([
   "fantasy",
+  "pirate",
   "cyberpunk",
   "sci-fi",
   "post-apocalyptic",

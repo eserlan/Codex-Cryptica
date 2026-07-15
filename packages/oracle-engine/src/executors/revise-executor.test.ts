@@ -91,6 +91,16 @@ describe("ReviseExecutor", () => {
   });
 
   it("should prevent concurrent execution", async () => {
+    let startRevision: () => void;
+    const revisionStarted = new Promise<void>((resolve) => {
+      startRevision = resolve;
+    });
+    let completeRevision: (value: { content: string; lore: string }) => void;
+    const revision = new Promise<{ content: string; lore: string }>(
+      (resolve) => {
+        completeRevision = resolve;
+      },
+    );
     const executor = new ReviseExecutor();
     const addMessage = vi.fn();
 
@@ -99,11 +109,10 @@ describe("ReviseExecutor", () => {
       chatHistory: { addMessage, messages: [] },
       modelName: "model",
       textGeneration: {
-        reviseEntityUpdate: vi
-          .fn()
-          .mockImplementation(
-            () => new Promise((resolve) => setTimeout(resolve, 50)),
-          ),
+        reviseEntityUpdate: vi.fn().mockImplementation(() => {
+          startRevision();
+          return revision;
+        }),
       },
       categories: [],
       eventBus: { emit: vi.fn() },
@@ -112,7 +121,9 @@ describe("ReviseExecutor", () => {
     const p1 = executor.execute({ type: "revise", entityId: "e1" }, context);
     const p2 = executor.execute({ type: "revise", entityId: "e1" }, context);
 
-    await Promise.all([p1, p2]);
+    await Promise.all([p2, revisionStarted]);
+    completeRevision({ content: "revised", lore: "updated" });
+    await p1;
 
     // Second call should have added a system message about already processing
     expect(addMessage).toHaveBeenCalledWith(

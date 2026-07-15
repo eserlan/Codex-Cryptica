@@ -15,6 +15,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import type { Entity } from "schema";
@@ -27,6 +28,12 @@
     sessionModeStore,
     layoutUIStore,
   } satisfies MapPageControllerDependencies);
+
+  // A published-vault reader browses maps on their own (no host), unlike a
+  // live VTT guest who only sees whatever map the host is currently sharing.
+  const isPublishedVaultReader = $derived(
+    sessionModeStore.isGuestMode && !!guestVault.publishId,
+  );
 
   function handleEntitySelect(entity: Entity) {
     modalUIStore.openZenMode(entity.id);
@@ -69,6 +76,27 @@
     </MapView>
 
     <VTTGridColorMenu />
+  {:else if isPublishedVaultReader}
+    <div
+      class="flex-1 flex flex-col items-center justify-center p-8 text-center"
+    >
+      <div
+        class="w-24 h-24 mb-8 rounded-full bg-theme-primary/10 flex items-center justify-center"
+      >
+        <span
+          class="icon-[lucide--map] text-theme-primary w-12 h-12"
+          aria-hidden="true"
+        ></span>
+      </div>
+      <h2
+        class="text-3xl font-bold text-theme-text mb-4 font-header uppercase tracking-tight"
+      >
+        No maps published
+      </h2>
+      <p class="text-theme-muted max-w-md font-body font-light leading-relaxed">
+        This world hasn't published any maps yet.
+      </p>
+    </div>
   {:else if sessionModeStore.isGuestMode}
     <div
       class="flex-1 flex flex-col items-center justify-center p-8 text-center"

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { OracleStore } from "./oracle.svelte";
 import { vault as mockVault } from "./vault.svelte";
-import { textGenerationService, contextRetrievalService } from "../services/ai";
+import {
+  textGenerationService,
+  contextRetrievalService,
+} from "@codex/ai-engine";
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -83,7 +86,7 @@ vi.mock("./proposer.svelte", () => ({
   },
 }));
 
-vi.mock("../services/ai", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     getConsolidatedContext: vi.fn().mockReturnValue("mock context"),
     retrieveContext: vi.fn().mockResolvedValue({
@@ -110,13 +113,22 @@ vi.mock("../services/ai", () => ({
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     distillVisualPrompt: vi.fn().mockResolvedValue("visual prompt"),
   },
+  interactionSessions: {
+    enabled: true,
+    setEnabled: vi.fn(),
+    getSession: vi.fn().mockReturnValue({
+      previousInteractionId: null,
+      tracker: { computeDelta: vi.fn(), reset: vi.fn() },
+    }),
+    resetSession: vi.fn(),
+  },
   TIER_MODES: {
     lite: "gemini-3.1-flash-lite",
     advanced: "gemini-3-flash-preview",
   },
 }));
 
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([{ id: "e1", title: "Entity 1" }]),
   },

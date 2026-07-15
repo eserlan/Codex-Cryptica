@@ -53,11 +53,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/139-public-world-directory/plan.md).
+shell commands, and other important information, read the [current plan](./specs/1702-family-tree-view/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + `schema` workspace types, existing `map-engine`, Svelte 5 (1661-extract-vtt-domain)
+- No storage changes; browser persistence remains in `apps/web` (1661-extract-vtt-domain)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing Cloudflare Worker runtime/wrangler, Cloudflare R2, Svelte 5, Tailwind 4 semantic tokens, Iconify utility classes, existing `schema` and `@codex/vault-engine` packages (139-public-world-directory)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for public listing records; existing R2 guest snapshot bundle/assets from `135-guest-vault-r2`; browser IndexedDB for local publish registry (139-public-world-directory)

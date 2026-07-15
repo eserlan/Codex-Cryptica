@@ -42,3 +42,16 @@
 
 **Learning:** When using Dependency Injection to inject a global dependency like `Date.now()`, importing the fallback object (`systemClock`) from another module might fail if that module (`$lib/utils/runtime-deps.ts`) does not exist or isn't accessible in tests, causing the entire build or test suite to fail.
 **Action:** Always ensure the module containing default dependencies is present, correctly exported, and successfully imported by the file being modified.
+
+## 2026-07-09 - Inject idGenerator into oracle engine executors
+
+**Learning:** When adding a new dependency (`IdGenerator`) to an abstract base class (`BaseExecutor`), we must remember to update _all_ subclasses that have their own constructors (e.g. `GuestChatExecutor`, `CreateExecutor`, etc.) to pass it through to `super()`. A quick test pass might not catch this if the subclasses don't define custom constructors, but some do.
+**Action:** Injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it through. Replaced `crypto.randomUUID()` calls with `this.idGenerator.uuid()`.
+
+## 2024-07-10 - Replace hardcoded Date.now() with injected Clock
+ **Learning:** Replacing hardcoded `Date.now()` calls within service methods with an injected `clock.now()` allows injecting a mock clock for exact validation in tests. By defaulting the injected parameter to a `systemClock` defined in `./runtime.ts`, we maintain standard production behavior safely.
+ **Action:** Prioritize passing ambient dependencies like `Clock` (and `IdGenerator`) into class constructors using a default production parameter (e.g. `clock: Clock = systemClock`). This seamlessly adds test seams while avoiding broad global mocking strategies (like `vi.useFakeTimers()`) which often lead to side effects in complex suites.
+
+## 2024-03-24 - Injecting Clock into QuickNoteService
+**Learning:** Found a common pattern where global `Date.now()` is hard-coded into service methods for entity creation, making timestamp logic difficult to test deterministically. The repository has a standard `runtime-deps` module exposing a `Clock` interface and `systemClock` default that should be used for this.
+**Action:** When refactoring services that generate timestamps, always check for `../utils/runtime-deps` and use constructor injection for the `Clock`, allowing tests to safely use a mock clock without touching global scope.

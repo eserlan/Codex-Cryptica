@@ -94,8 +94,11 @@
               title={entity.reuseEnabled
                 ? "Context reuse enabled"
                 : "Context reuse disabled"}
+              aria-label="Toggle context reuse"
+              aria-pressed={entity.reuseEnabled}
             >
-              <span class="icon-[lucide--zap] w-3.5 h-3.5"></span>
+              <span class="icon-[lucide--zap] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
             </button>
             <button
               type="button"
@@ -107,16 +110,23 @@
                 ? 'text-theme-primary bg-theme-primary/10 hover:bg-theme-primary/20'
                 : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
               title={entity.pinned ? "Pinned in context" : "Not pinned"}
+              aria-label="Pin in context"
+              aria-pressed={entity.pinned}
             >
-              <span class="icon-[lucide--pin] w-3.5 h-3.5"></span>
+              <span class="icon-[lucide--pin] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
             </button>
             <button
               type="button"
               onclick={() => sessionHubStore.removeEntity(entity.id)}
               class="p-1.5 rounded flex items-center justify-center text-theme-muted hover:text-rose-400 hover:bg-rose-400/10 transition-colors"
               title="Remove draft"
+              aria-label="Remove draft"
             >
-              <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+              <span
+                class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
             </button>
           </div>
         </li>

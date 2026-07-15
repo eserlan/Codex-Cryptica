@@ -18,8 +18,8 @@ export class ServiceRegistry {
     if (this._services) return this._services;
 
     try {
-      const { searchService } = await import("../../services/search.svelte");
-      const aiModule = await import("../../services/ai");
+      const { searchService } = await import("@codex/search-orchestrator");
+      const aiModule = await import("@codex/ai-engine");
 
       this._services = {
         search: searchService,

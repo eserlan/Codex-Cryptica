@@ -28,3 +28,22 @@
 **Learning:** When dealing with god files that contain both structural type definitions/Zod schemas and a massive amount of hardcoded reference data (like the 1,112 line `packages/schema/src/theme.ts` which exported 26+ huge static objects), extracting the pure data payload into a dedicated constants file (e.g. `theme-templates.ts`) makes the core schema far easier to read and test, without modifying any upstream runtime logic.
 
 **Action:** Future agents should look for modules in `packages/schema/` or configuration directories where huge static object definitions bloat the file. Split the definitions into `-templates.ts` or `-constants.ts` and use `export * from "./..."` in index files to prevent widespread import refactoring.
+
+## 2024-10-24 - Extracting pure presentational logic from page components
+
+**Learning:** Svelte routing components (`+page.svelte`) can easily become bloated with large, complex inline SVG graphics or mock data panels that are purely presentational and only used once.
+**Action:** Extract these isolated UI blocks into dedicated components within feature-specific directories (e.g., `lib/components/welcome/`) to drastically reduce the footprint of the routing files and improve scanability, even if the component is only used in one place.
+
+## 2025-02-24 - Extracting DateSelection Logic from TemporalPicker.svelte
+
+**Learning:** Svelte files containing pure logic (like converting raw date values to `DateSelection`) mixed with state and UI (`TemporalPicker.svelte`) can be made cleaner and testable by extracting the pure mapping logic into a separate `-utils` file (e.g., `utils/toDateSelection.ts`). This function only requires a config object to remove dependencies from Svelte's global stores.
+
+**Action:** Look for Svelte components containing complex data structure conversions or data normalizations. Extract these pure helper functions into sibling `utils/` or `-helpers` files, passing down only the required plain dependencies (like config objects) rather than relying on reactive closure scope. Add Vitest coverage for the extracted logic.
+## 2025-07-07 - Extracting configuration constants from massive files
+
+**Learning:** When dealing with god files that contain both logic/interfaces and a massive amount of hardcoded configuration/reference data (like the 1,100+ line `settlementConfig` in `public-settlement.ts`), extracting the pure data payload into a dedicated constants file (e.g. `public-settlement-constants.ts`) makes the core file far easier to read and scan, without modifying any upstream runtime logic.
+**Action:** Future agents should look for modules where huge static object definitions bloat the file. Split the definitions into `-constants.ts` and use `import` then `export` in the original file to prevent widespread import refactoring and maintain the public API.
+## 2024-05-24 - Extract configuration blobs from generator engine files
+
+**Learning:** Large modules that are composed of both functional logic (like prompt generators and local fallbacks) and huge static data objects (like lists of naming conventions, text descriptions for every genre, etc) make it hard to navigate. By extracting the pure static data into `<module>-constants.ts`, the original file shrinks significantly, is much easier to read, and the behavior remains identical since imports/exports can be structured to present the exact same API.
+**Action:** When working on large files in `@codex/generator-engine` or similar packages that combine functions with huge data arrays/objects, prefer extracting the data objects to a sibling `-constants.ts` file, and keep the main file focused on logic. Ensure to keep exports aligned.

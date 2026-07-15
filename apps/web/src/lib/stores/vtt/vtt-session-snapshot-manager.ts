@@ -7,8 +7,7 @@ import type {
   Token,
   VTTMessage,
 } from "../../../types/vtt";
-import { cloneMeasurement } from "$lib/utils/vtt-helpers";
-import { normalizeToken } from "./vtt-token-manager.svelte";
+import { cloneMeasurement, normalizeEncounterSession } from "map-engine";
 
 export interface VTTSessionSnapshotManagerDependencies {
   getSessionId: () => string | null;
@@ -97,62 +96,46 @@ export class VTTSessionSnapshotManager {
   }
 
   applySnapshot(snapshot: EncounterSession, silent = true) {
+    const normalized = normalizeEncounterSession(snapshot);
     this.deps.clearPendingSessionSnapshotBroadcast();
     this.deps.clearPendingTokenMoves();
     this.deps.clearPings();
-    this.deps.setSessionId(snapshot.id);
-    this.deps.setMapId(snapshot.mapId);
-    this.deps.setMode(snapshot.mode);
-    this.deps.setEncounterName(snapshot.name ?? this.deps.getEncounterName());
-
-    const tokens: Record<string, Token> = {};
-    if (snapshot.tokens) {
-      for (const id of Object.keys(snapshot.tokens)) {
-        tokens[id] = normalizeToken(snapshot.tokens[id] as Token);
-      }
-    }
-
-    const selection =
-      snapshot.selection && tokens[snapshot.selection]
-        ? snapshot.selection
-        : null;
+    this.deps.setSessionId(normalized.id);
+    this.deps.setMapId(normalized.mapId);
+    this.deps.setMode(normalized.mode);
+    this.deps.setEncounterName(normalized.name ?? this.deps.getEncounterName());
     this.deps.setTokenSnapshotData(
-      tokens,
-      selection,
-      new Set(selection ? [selection] : []),
+      normalized.tokens,
+      normalized.selection,
+      new Set(normalized.selection ? [normalized.selection] : []),
     );
 
     this.deps.setInitiativeSnapshotData(
-      snapshot.initiativeOrder,
-      snapshot.initiativeValues,
-      snapshot.round,
-      Math.min(
-        snapshot.turnIndex,
-        Math.max(0, snapshot.initiativeOrder.length - 1),
-      ),
+      normalized.initiativeOrder,
+      normalized.initiativeValues,
+      normalized.round,
+      normalized.turnIndex,
     );
-    this.deps.setSessionFogMask(snapshot.sessionFogMask);
+    this.deps.setSessionFogMask(normalized.sessionFogMask);
     this.deps.setMeasurementSnapshotData(
-      snapshot.measurement,
-      snapshot.lastPing ?? null,
+      normalized.measurement,
+      normalized.lastPing ?? null,
     );
-    this.deps.setCreatedAt(snapshot.createdAt);
-    this.deps.setSavedAt(snapshot.savedAt);
-    this.deps.setChatMessages(
-      snapshot.chatMessages ? [...snapshot.chatMessages] : [],
-    );
+    this.deps.setCreatedAt(normalized.createdAt);
+    this.deps.setSavedAt(normalized.savedAt);
+    this.deps.setChatMessages(normalized.chatMessages);
 
     if (
-      snapshot.gridSize !== undefined &&
-      snapshot.mapId === this.deps.getActiveMapId()
+      normalized.gridSize !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
     ) {
-      this.deps.setGridSize(snapshot.gridSize);
+      this.deps.setGridSize(normalized.gridSize);
     }
-    if (snapshot.gridUnit !== undefined) {
-      this.deps.setGridUnit(snapshot.gridUnit);
+    if (normalized.gridUnit !== undefined) {
+      this.deps.setGridUnit(normalized.gridUnit);
     }
-    if (snapshot.gridDistance !== undefined) {
-      this.deps.setGridDistance(snapshot.gridDistance);
+    if (normalized.gridDistance !== undefined) {
+      this.deps.setGridDistance(normalized.gridDistance);
     }
 
     if (!silent) {

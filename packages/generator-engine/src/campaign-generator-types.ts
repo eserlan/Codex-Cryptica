@@ -12,7 +12,9 @@ export type GeneratorId =
   | "settlement"
   | "magic-item"
   | "event"
-  | "ship";
+  | "ship"
+  | "language"
+  | "news-sheet";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -21,6 +23,8 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "magic-item",
   "event",
   "ship",
+  "language",
+  "news-sheet",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -82,7 +86,8 @@ export type IncludedContextCategory =
   | "neighbors"
   | "world"
   | "titles"
-  | "labels";
+  | "labels"
+  | "languages";
 
 export type TemplateSource = "none" | "system" | "vault-custom";
 
@@ -109,6 +114,7 @@ export interface GeneratorVaultContext {
   bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
+  languages?: VaultContextEntityExcerpt[];
 }
 
 export type LaunchMode = "workspace" | "contextual";

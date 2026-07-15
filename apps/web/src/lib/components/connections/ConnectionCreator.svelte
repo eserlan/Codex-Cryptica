@@ -88,7 +88,7 @@
       class="text-theme-muted hover:text-theme-text"
       aria-label="Cancel adding connection"
     >
-      <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+      <span class="icon-[lucide--x] w-3.5 h-3.5" aria-hidden="true"></span>
     </button>
   </div>
 

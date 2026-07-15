@@ -40,4 +40,22 @@ describe("Generator Theme Hub Page", () => {
       screen.getByRole("link", { name: /nomad clan generator/i }),
     ).toBeTruthy();
   });
+
+  it("shows the Pirate ship generator on the Pirate hub", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "pirate",
+        },
+      },
+    });
+
+    const link = screen.getByRole("link", {
+      name: /pirate ship generator/i,
+    });
+    expect(link).toBeTruthy();
+    expect(link.getAttribute("href")).toBe(
+      "/generators/pirate/ship-generator",
+    );
+  });
 });

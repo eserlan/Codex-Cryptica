@@ -12,6 +12,7 @@ import { generateShipLocal } from "./public-ship";
 import type { ShipGeneratorOptions } from "./public-ship";
 import { generateNomadClanLocal } from "./public-faction";
 import type { NomadClanGeneratorOptions } from "./public-faction";
+import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
   GeneratorRunRequest,
@@ -20,6 +21,11 @@ import type {
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
   type: string;
+  /**
+   * Vault entity sub-kind (e.g. "language" on notes) so drafts saved through
+   * the marketing funnel stay detectable by kind-based vault scans (FR-008).
+   */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;
@@ -45,6 +51,7 @@ function firstNonBlank(...values: Array<string | undefined>): string {
 function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
   return {
     type: draft.entityType,
+    kind: draft.sourceGeneratorId === "language" ? "language" : undefined,
     title: draft.title,
     summary: draft.summary,
     // Prefer the rich body; fall back to lore, then the one-line summary, so the
@@ -141,4 +148,18 @@ export function adaptShip(
   options: ShipGeneratorOptions = {},
 ): PublicGeneratorOutput {
   return generateShipLocal(options);
+}
+
+/** Generate a Language using the package's local generator. */
+export function adaptLanguage(
+  options: LanguageGeneratorOptions = {
+    genre: "Classic Fantasy",
+    tone: "Lyrical & Vowel-rich",
+    role: "Common Speech",
+    structure: "Compound Words",
+  },
+): PublicGeneratorOutput {
+  const gen = getGenerator("language");
+  const req = baseReq("language", options as any);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
 }

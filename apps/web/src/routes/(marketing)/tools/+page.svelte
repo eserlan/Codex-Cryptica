@@ -149,6 +149,20 @@
               icon: "icon-[lucide--globe]",
             },
             {
+              href: "/generators/news-sheet-generator",
+              label: "News Sheet Generator",
+              summary:
+                "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, and GM-only hooks.",
+              icon: "icon-[lucide--newspaper]",
+            },
+            {
+              href: "/generators/language-generator",
+              label: "Fictional Language Generator",
+              summary:
+                "Generate a conlang profile with pronunciation guidelines, naming rules, example names, and a starter vocabulary glossary.",
+              icon: "icon-[lucide--languages]",
+            },
+            {
               href: "/generators/random",
               label: "Surprise Me",
               summary:

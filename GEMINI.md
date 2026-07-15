@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-06-25
+Auto-generated from all feature plans. Last updated: 2026-07-05
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (141-language-generator)
+- OPFS (Vault notes) & IndexedDB (via vault stores) (141-language-generator)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility (135-guest-vault-r2)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for hosted files, IndexedDB (`PublishRegistry`) for local host settings (135-guest-vault-r2)
@@ -213,8 +216,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 141-language-generator: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
+
 - 137-standalone-generator-session-hub: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, Tailwind 4, `@codex/events`, `generator-engine`
-- 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
 - 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
 
 <!-- MANUAL ADDITIONS START -->

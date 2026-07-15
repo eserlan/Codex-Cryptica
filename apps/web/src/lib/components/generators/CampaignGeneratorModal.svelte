@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { fade, scale } from "svelte/transition";
-  import { focusTrap } from "$lib/actions/focusTrap";
+  import ModalShell from "$lib/components/ui/ModalShell.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -26,9 +25,9 @@
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
-  import { interactionSessions } from "$lib/services/ai/interaction-session";
+  import { interactionSessions } from "@codex/ai-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
-  import { searchService } from "$lib/services/search.svelte";
+  import { searchService } from "@codex/search-orchestrator";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";
@@ -87,10 +86,6 @@
     stage = "configure";
     draft = null;
     errorMsg = null;
-  }
-
-  function onkeydown(e: KeyboardEvent) {
-    if (e.key === "Escape") close();
   }
 
   async function onGenerate(
@@ -328,124 +323,104 @@
   );
 </script>
 
-<svelte:window {onkeydown} />
-
-<!-- Backdrop -->
-<div
-  class="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-  transition:fade={{ duration: 150 }}
+<ModalShell
+  open={true}
+  onClose={() => close()}
+  labelledBy="generator-modal-title"
+  backdropClass="bg-black/80 backdrop-blur-sm"
+  zIndexClass="z-[210]"
+  class="flex flex-col rounded-xl border border-chrome-border bg-chrome-surface"
+  maxWidthClass="max-w-lg md:max-w-2xl"
+  closeAriaLabel="Close generator"
+  fadeDuration={150}
+  scaleDuration={180}
+  scaleStart={0.96}
+  style={contextualThemeVars}
+  data-themed={useContextualTheme ? "theme" : "chrome"}
 >
-  <button
-    type="button"
-    class="absolute inset-0 h-full w-full cursor-default focus:outline-none"
-    aria-label="Close generator"
-    onclick={() => close()}
-  ></button>
-
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <!-- Modal card -->
+  <!-- Header -->
   <div
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="generator-modal-title"
-    tabindex="-1"
-    use:focusTrap
-    class="relative w-full max-w-lg md:max-w-2xl flex flex-col overflow-hidden rounded-xl border border-chrome-border bg-chrome-surface shadow-2xl"
-    style={contextualThemeVars}
-    data-themed={useContextualTheme ? "theme" : "chrome"}
-    transition:scale={{ duration: 180, start: 0.96 }}
-    onclick={(e) => e.stopPropagation()}
+    class="flex items-start justify-between border-b border-chrome-border px-5 py-4"
   >
-    <!-- Header -->
-    <div
-      class="flex items-start justify-between border-b border-chrome-border px-5 py-4"
-    >
-      <div>
-        <h2
-          id="generator-modal-title"
-          class="text-sm font-bold uppercase tracking-wider text-chrome-accent"
-        >
-          {title}
-        </h2>
-        {#if workflow.launchMode === "contextual" && workflow.sourceEntityId}
-          <p
-            class="mt-1 text-xs text-chrome-muted"
-            data-testid="contextual-hint"
-          >
-            Generating related content for
-            <span class="text-chrome-text">{workflow.sourceEntityId}</span>
-          </p>
-        {:else}
-          <p class="mt-1 text-xs text-chrome-muted">
-            Campaign content generator
-          </p>
-        {/if}
-      </div>
-      <button
-        type="button"
-        onclick={() => close()}
-        class="flex h-8 w-8 items-center justify-center rounded border border-chrome-border text-chrome-muted transition hover:border-chrome-accent hover:text-chrome-accent"
-        aria-label="Close"
+    <div>
+      <h2
+        id="generator-modal-title"
+        class="text-sm font-bold uppercase tracking-wider text-chrome-accent"
       >
-        <span class="icon-[lucide--x] h-4 w-4"></span>
-      </button>
+        {title}
+      </h2>
+      {#if workflow.launchMode === "contextual" && workflow.sourceEntityId}
+        <p class="mt-1 text-xs text-chrome-muted" data-testid="contextual-hint">
+          Generating related content for
+          <span class="text-chrome-text">{workflow.sourceEntityId}</span>
+        </p>
+      {:else}
+        <p class="mt-1 text-xs text-chrome-muted">Campaign content generator</p>
+      {/if}
     </div>
+    <button
+      type="button"
+      onclick={() => close()}
+      class="flex h-8 w-8 items-center justify-center rounded border border-chrome-border text-chrome-muted transition hover:border-chrome-accent hover:text-chrome-accent"
+      aria-label="Close"
+    >
+      <span class="icon-[lucide--x] h-4 w-4"></span>
+    </button>
+  </div>
 
-    <!-- Body -->
-    <div class="px-5 py-4 overflow-y-auto max-h-[70vh] md:max-h-[85vh]">
-      {#if stage === "configure"}
-        <GeneratorConfigForm
-          bind:generatorId
-          onsubmit={onGenerate}
-          aiPolicy={svc.aiPolicy}
-          categoryLabels={categories.list.map((c) => ({
-            id: c.id,
-            label: c.label,
-          }))}
-        />
-      {:else if stage === "generating"}
-        <div class="flex items-center gap-3 py-6 text-sm text-chrome-muted">
-          <span
-            class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
-          ></span>
-          Generating your content…
-        </div>
-      {:else if (stage === "review" || stage === "saving") && draft}
-        {#if errorMsg}
-          <p
-            class="mb-3 rounded border border-red-800/40 bg-red-950/30 px-3 py-2 text-xs text-red-400"
-          >
-            {errorMsg}
-          </p>
-        {/if}
-        <GeneratorDraftReview
-          bind:draft
-          categories={categories.list}
-          saving={stage === "saving"}
-          showRelationshipToggle={workflow.launchMode === "contextual" &&
-            !!workflow.sourceEntityId}
-          onsave={onSave}
-          onback={() => {
+  <!-- Body -->
+  <div class="px-5 py-4 overflow-y-auto max-h-[70vh] md:max-h-[85vh]">
+    {#if stage === "configure"}
+      <GeneratorConfigForm
+        bind:generatorId
+        onsubmit={onGenerate}
+        aiPolicy={svc.aiPolicy}
+        categoryLabels={categories.list.map((c) => ({
+          id: c.id,
+          label: c.label,
+        }))}
+      />
+    {:else if stage === "generating"}
+      <div class="flex items-center gap-3 py-6 text-sm text-chrome-muted">
+        <span
+          class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
+        ></span>
+        Generating your content…
+      </div>
+    {:else if (stage === "review" || stage === "saving") && draft}
+      {#if errorMsg}
+        <p
+          class="mb-3 rounded border border-red-800/40 bg-red-950/30 px-3 py-2 text-xs text-red-400"
+        >
+          {errorMsg}
+        </p>
+      {/if}
+      <GeneratorDraftReview
+        bind:draft
+        categories={categories.list}
+        saving={stage === "saving"}
+        showRelationshipToggle={workflow.launchMode === "contextual" &&
+          !!workflow.sourceEntityId}
+        onsave={onSave}
+        onback={() => {
+          stage = "configure";
+          errorMsg = null;
+        }}
+      />
+    {:else if stage === "error"}
+      <div class="py-4">
+        <p class="mb-4 text-sm text-red-400">{errorMsg}</p>
+        <button
+          type="button"
+          class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors"
+          onclick={() => {
             stage = "configure";
             errorMsg = null;
           }}
-        />
-      {:else if stage === "error"}
-        <div class="py-4">
-          <p class="mb-4 text-sm text-red-400">{errorMsg}</p>
-          <button
-            type="button"
-            class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors"
-            onclick={() => {
-              stage = "configure";
-              errorMsg = null;
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      {/if}
-    </div>
+        >
+          Try again
+        </button>
+      </div>
+    {/if}
   </div>
-</div>
+</ModalShell>

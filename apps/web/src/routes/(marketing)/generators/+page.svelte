@@ -136,6 +136,20 @@
           icon: "icon-[lucide--globe]",
         },
         {
+          href: "/generators/news-sheet-generator",
+          label: "News Sheet Generator",
+          summary:
+            "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, propaganda, and GM-only hooks.",
+          icon: "icon-[lucide--newspaper]",
+        },
+        {
+          href: "/generators/language-generator",
+          label: "Fictional Language Generator",
+          summary:
+            "Generate a conlang profile with pronunciation, naming rules, example names, and a starter glossary.",
+          icon: "icon-[lucide--languages]",
+        },
+        {
           href: "/generators/random",
           label: "Surprise Me",
           summary:
@@ -153,6 +167,13 @@
       summary:
         "All fantasy generators in one place — NPCs, factions, kingdoms, magic items, pantheons, and more.",
       icon: "icon-[lucide--wand-sparkles]",
+    },
+    {
+      href: "/generators/pirate",
+      label: "Pirate Hub",
+      summary:
+        "Weathered charts, storm-dark harbours, free companies, and strange-sea adventures.",
+      icon: "icon-[lucide--ship-wheel]",
     },
     {
       href: "/generators/cyberpunk",

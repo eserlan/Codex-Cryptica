@@ -10,6 +10,8 @@ import {
   type PublicListing,
 } from "../../../../packages/schema/src/publishing";
 import { getCorsHeaders, getWriteToken } from "./publish";
+import { upsertNoticeSidecar } from "./notice";
+import { readSuspensionMarker } from "./suspension";
 
 interface DirectoryEnv {
   BUCKET?: any; // R2Bucket
@@ -79,7 +81,7 @@ async function readPublishedBundle(env: DirectoryEnv, publishId: string) {
   return parsed.data;
 }
 
-async function authorizeListingMutation(
+export async function authorizeListingMutation(
   request: Request,
   env: DirectoryEnv,
   publishId: string,
@@ -164,6 +166,8 @@ function buildListing(
     snapshotPublishedAt: bundle.publishedAt,
     listingCreatedAt: existing?.listingCreatedAt ?? now,
     listingUpdatedAt: now,
+    rightsAcknowledgedAt: existing?.rightsAcknowledgedAt ?? now,
+    fanContent: draft.fanContent ?? false,
   });
 }
 
@@ -195,6 +199,17 @@ export async function handleGetPublicListing(
       status: 500,
       headers: cors,
     });
+  }
+
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension) {
+    return new Response(
+      JSON.stringify({ error: { message: "Listing not found" } }),
+      {
+        status: 404,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const listing = await loadListing(env, publishId);
@@ -340,6 +355,13 @@ export async function handlePutPublicListing(
     },
   );
 
+  await upsertNoticeSidecar(env, publishId, {
+    fanContent: draft.fanContent ?? false,
+    fanContentDisclaimer: draft.fanContentDisclaimer,
+    rightsAcknowledgedAt: listing.rightsAcknowledgedAt,
+    updatedAt: listing.listingUpdatedAt,
+  });
+
   return new Response(JSON.stringify(listing), {
     status: 200,
     headers: {
@@ -404,6 +426,8 @@ export async function handleListPublicListings(
     const publishId = object.key
       .slice(DIRECTORY_PREFIX.length)
       .replace(/\.json$/, "");
+    const suspension = await readSuspensionMarker(env, publishId);
+    if (suspension) return null;
     const listing = await loadListing(env, publishId);
     if (!listing) return null;
 

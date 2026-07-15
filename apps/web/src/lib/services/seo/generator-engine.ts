@@ -1,5 +1,5 @@
-import { aiClientManager } from "$lib/services/ai/client-manager";
-import { classifyApiError } from "$lib/services/ai/api-error-classifier";
+import { aiClientManager } from "@codex/ai-engine";
+import { classifyApiError } from "@codex/ai-engine";
 import {
   buildNpcPrompt,
   parseNpcResponse,
@@ -43,6 +43,12 @@ import {
   buildShipPrompt,
   parseShipResponse,
   generateShipLocal,
+  buildLanguagePrompt,
+  parseLanguageResponse,
+  generateLanguageLocal,
+  buildNewsSheetPrompt,
+  parseNewsSheetResponse,
+  generateNewsSheetLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -57,7 +63,10 @@ import {
   type PantheonGeneratorOptions,
   type NamesGeneratorOptions,
   type ShipGeneratorOptions,
+  type LanguageGeneratorOptions,
+  type NewsSheetGeneratorOptions,
   type PublicGeneratorOutput,
+  languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 
@@ -89,6 +98,8 @@ export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "generator-engine";
 export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
+export { languageConfig } from "generator-engine";
+export { newsSheetConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -421,6 +432,53 @@ export class DefaultGeneratorEngine {
         return parseShipResponse(text, resolved);
       },
       () => generateShipLocal(shipOptions),
+    );
+  }
+
+  async generateLanguage(
+    options: Partial<LanguageGeneratorOptions> & {
+      useAI?: boolean;
+      campaignContext?: string;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rest } = options;
+    const langOptions = {
+      genre: rest.genre || languageConfig.genres[0],
+      tone: rest.tone || languageConfig.tones[0],
+      role: rest.role || languageConfig.roles[0],
+      structure: rest.structure || languageConfig.structures[0],
+      context: rest.context || rest.campaignContext || "",
+    };
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = buildLanguagePrompt(
+          langOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseLanguageResponse(text);
+      },
+      () => generateLanguageLocal(langOptions),
+    );
+  }
+
+  /** News Sheet generation delegates to the generator-engine package (#1639). */
+  async generateNewsSheet(
+    options: NewsSheetGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...sheetOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = buildNewsSheetPrompt(
+          sheetOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseNewsSheetResponse(text);
+      },
+      () => generateNewsSheetLocal(sheetOptions),
     );
   }
 }

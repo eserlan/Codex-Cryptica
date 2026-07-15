@@ -43,6 +43,8 @@ describe("registry lookup", () => {
       "magic-item",
       "event",
       "ship",
+      "language",
+      "news-sheet",
     ]);
   });
 
@@ -292,6 +294,33 @@ describe("buildPrompt cultural naming", () => {
       "Infer the naming style from the example entities",
     );
   });
+
+  it("points to fictional languages when language context is present", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+          languages: [
+            {
+              id: "l1",
+              title: "Elvish",
+              type: "note",
+              contentExcerpt: "Glossary: stars = elen",
+            },
+          ],
+        },
+      }),
+    );
+    expect(prompt).toContain("Fictional Languages in this world:");
+    expect(prompt).toContain("Elvish");
+    expect(prompt).toContain("pay strict attention to the fictional languages");
+  });
 });
 
 describe("buildPrompt campaign date", () => {
@@ -427,6 +456,8 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "magic-item": "item",
       event: "event",
       ship: "location",
+      language: "note",
+      "news-sheet": "note",
     });
   });
 

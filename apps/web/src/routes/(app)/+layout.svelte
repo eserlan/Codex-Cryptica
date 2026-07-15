@@ -16,7 +16,8 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
-  import { initGDriveSync } from "$lib/services/gdrive-sync";
+  import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
+  import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";
@@ -54,6 +55,12 @@
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
   import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
   import { worldStore } from "$lib/stores/world.svelte";
+  import { initAudioEngine } from "@codex/audio-engine";
+  import { debugStore } from "$lib/stores/debug.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+  import { aiClientManager } from "@codex/ai-engine";
+  import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
 
   let { children } = $props();
 
@@ -160,10 +167,41 @@
   });
 
   onMount(() => {
+    initAudioEngine({
+      vault,
+      oracle,
+      debugStore,
+      oracleBridge,
+      aiClientManager,
+      writeOpfsFile,
+      deleteOpfsEntry,
+    });
+
     (async () => {
       isDocumentVisible = !document.hidden;
       helpStore.init();
       await themeStore.init();
+      configureGDriveSync({
+        getDB,
+        dbName: DB_NAME,
+        dbVersion: DB_VERSION,
+        appEventBus,
+        vault: {
+          get activeVaultId() {
+            return vault.activeVaultId;
+          },
+          get activeVaultRecord() {
+            return vault.activeVaultRecord ?? null;
+          },
+          createVault: (name) => vault.createVault(name),
+          switchVault: (id) => vault.switchVault(id),
+          getActiveVaultHandle: async () =>
+            (await vault.getActiveVaultHandle()) ?? null,
+          getSpecificVaultHandle: async (id) =>
+            (await vault.getSpecificVaultHandle(id)) ?? null,
+        },
+        listVaults: () => vaultRegistry.listVaults(),
+      });
       void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant

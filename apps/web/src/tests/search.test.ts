@@ -52,13 +52,6 @@ vi.mock("comlink", () => {
   };
 });
 
-// Mock the worker import
-vi.mock("../lib/workers/search.worker?worker", () => {
-  return {
-    default: MockWorker,
-  };
-});
-
 // Mock debugStore
 vi.mock("$lib/stores/debug.svelte", () => ({
   debugStore: {
@@ -69,7 +62,8 @@ vi.mock("$lib/stores/debug.svelte", () => ({
 }));
 
 // Import after mock
-import { SearchService } from "$lib/services/search.svelte";
+import { SearchService } from "@codex/search-orchestrator";
+import { appEventBus } from "@codex/events";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 
@@ -87,8 +81,14 @@ function persistence(s: SearchService) {
 describe("SearchService", () => {
   let service: SearchService;
 
-  beforeEach(() => {
-    service = new SearchService();
+  beforeEach(async () => {
+    const { entityDb } = await import("$lib/utils/entity-db");
+    service = new SearchService({
+      db: entityDb,
+      debug: debugStore,
+      eventBus: appEventBus,
+      workerFactory: () => new MockWorker() as unknown as Worker,
+    });
   });
 
   afterEach(() => {
@@ -276,7 +276,13 @@ describe("SearchService", () => {
   describe("Vault Events", () => {
     beforeEach(async () => {
       vaultEventBus.reset(false);
-      service = new SearchService();
+      const { entityDb } = await import("$lib/utils/entity-db");
+      service = new SearchService({
+        db: entityDb,
+        debug: debugStore,
+        eventBus: appEventBus,
+        workerFactory: () => new MockWorker() as unknown as Worker,
+      });
       await (service as any).ensureWorker();
 
       vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "v1" });

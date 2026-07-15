@@ -4,6 +4,7 @@ import {
   DEFAULT_JARGON,
   WORKSPACE_DARK,
   FANTASY_DARK,
+  PIRATE_DARK,
   MODERN_DARK,
   SCIFI_LIGHT,
   CYBERPUNK_LIGHT,
@@ -35,6 +36,7 @@ import {
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 import { guestVault } from "./guest-vault.svelte";
+import { vaultRegistry } from "./vault-registry.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 const APPEARANCE_KEY = "codex-cryptica-app-appearance";
@@ -78,6 +80,8 @@ export class ThemeStore {
           return WORKSPACE_DARK;
         case "fantasy":
           return FANTASY_DARK;
+        case "pirate":
+          return PIRATE_DARK;
         case "modern":
           return MODERN_DARK;
         case "western":
@@ -93,6 +97,8 @@ export class ThemeStore {
           return THEMES.workspace;
         case "fantasy":
           return THEMES.fantasy;
+        case "pirate":
+          return THEMES.pirate;
         case "modern":
           return THEMES.modern;
         case "scifi":
@@ -225,8 +231,17 @@ export class ThemeStore {
   ) {
     this.sessionModeStore = sessionStore;
     this.storage = storage;
+    // Read the active vault id from the lightweight vault registry rather than
+    // dynamically importing the full vault store. vault.svelte pulls in the
+    // heavy search-orchestrator `.svelte.ts` chain (via vault → lifecycle /
+    // search-store); a floating `import("./vault.svelte")` here could resolve
+    // after a test's environment was torn down, causing Vitest
+    // EnvironmentTeardownError (issue #1704). In non-guest mode (the only path
+    // that reaches getVault) `vault.activeVaultId` is exactly
+    // `vaultRegistry.activeVaultId`, so this is behaviourally equivalent while
+    // avoiding the theme↔vault circular import.
     this.getVault =
-      getVault || (() => import("./vault.svelte").then((m) => m.vault));
+      getVault || (() => ({ activeVaultId: vaultRegistry.activeVaultId }));
 
     // Media query listener for prefers-color-scheme
     if (

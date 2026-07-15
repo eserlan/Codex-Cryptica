@@ -15,22 +15,39 @@ test.describe("Add to Canvas - Context Menu", () => {
 
     // Navigate to graph view
     await page.goto("/");
+    await waitForCytoscape(page);
+  });
 
-    // Wait for app to load
-    await page.waitForSelector('[data-testid="graph-canvas"]', {
+  async function waitForCytoscape(page: any) {
+    await page.waitForFunction(() => Boolean((window as any).cy), {
       timeout: 15000,
     });
+  }
 
-    // Extra wait for cytoscape to initialize nodes
-    await page.waitForTimeout(5000);
-  });
+  async function waitForEntityNodes(page: any, titles: string[]) {
+    await page.waitForFunction(
+      (expectedTitles: string[]) => {
+        const cy = (window as any).cy;
+        const vault = (window as any).vault;
+        if (!cy || !vault?.entities) return false;
+
+        return expectedTitles.every((title: string) => {
+          const entity = Object.values(vault.entities).find(
+            (entry: any) => entry.title === title,
+          ) as any;
+          return entity && cy.$id(entity.id).length > 0;
+        });
+      },
+      titles,
+      { timeout: 15000 },
+    );
+  }
 
   async function createEntity(page: any, title: string) {
     await page.click('[data-testid="new-entity-button"]');
     await page.fill('[data-testid="new-entity-title-input"]', title);
     await page.keyboard.press("Enter");
-    // Wait for node to appear in graph
-    await page.waitForTimeout(2000);
+    await waitForEntityNodes(page, [title]);
   }
 
   async function selectEntitiesByTitle(page: any, titles: string[]) {
@@ -60,7 +77,9 @@ test.describe("Add to Canvas - Context Menu", () => {
   }
 
   async function openContextMenu(page: any, titles: string[] = []) {
+    await waitForCytoscape(page);
     if (titles.length > 0) {
+      await waitForEntityNodes(page, titles);
       await selectEntitiesByTitle(page, titles);
     }
 
@@ -101,8 +120,7 @@ test.describe("Add to Canvas - Context Menu", () => {
       node.emit("cxttap", { renderedPosition: node.renderedPosition() });
     }, targetId);
 
-    await page.waitForTimeout(2000);
-    await page.waitForSelector('[role="menu"]', { timeout: 15000 });
+    await expect(page.getByRole("menu")).toBeVisible({ timeout: 15000 });
   }
 
   test("T011 - Add single entity to existing canvas via context menu", async ({
@@ -116,8 +134,7 @@ test.describe("Add to Canvas - Context Menu", () => {
 
     // Go back to graph
     await page.goto("/");
-    await page.waitForSelector('[data-testid="graph-canvas"]');
-    await page.waitForTimeout(3000);
+    await waitForEntityNodes(page, ["Test Entity"]);
 
     // Right-click to open context menu
     await openContextMenu(page, ["Test Entity"]);
@@ -159,8 +176,11 @@ test.describe("Add to Canvas - Context Menu", () => {
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
     await page.goto("/");
-    await page.waitForSelector('[data-testid="graph-canvas"]');
-    await page.waitForTimeout(3000);
+    await waitForEntityNodes(page, [
+      "Multi Entity 1",
+      "Multi Entity 2",
+      "Multi Entity 3",
+    ]);
 
     await selectEntitiesByTitle(page, [
       "Multi Entity 1",
@@ -252,8 +272,7 @@ test.describe("Add to Canvas - Context Menu", () => {
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
     await page.goto("/");
-    await page.waitForSelector('[data-testid="graph-canvas"]');
-    await page.waitForTimeout(3000);
+    await waitForEntityNodes(page, ["Duplicate Test Node"]);
 
     // Add entity to canvas first time
     await openContextMenu(page, ["Duplicate Test Node"]);

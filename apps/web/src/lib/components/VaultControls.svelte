@@ -212,7 +212,7 @@
         aria-describedby="save-as-campaign-desc-text"
         title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
       >
-        <span class="icon-[lucide--save] w-3 h-3"></span>
+        <span class="icon-[lucide--save] w-3 h-3" aria-hidden="true"></span>
         SAVE AS {themeStore.jargon.vault.toUpperCase()}
       </button>
       <div class="sr-only" id="save-as-campaign-desc-text">
@@ -226,7 +226,7 @@
         onclick={() => demoService.exitDemo()}
         aria-label="Exit Demo"
       >
-        <span class="icon-[lucide--log-out] w-3 h-3"></span>
+        <span class="icon-[lucide--log-out] w-3 h-3" aria-hidden="true"></span>
         EXIT DEMO
       </button>
     {/if}
@@ -236,7 +236,7 @@
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
         title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
-        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
+        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5" aria-hidden="true"></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
       </div>
     {/if}
@@ -255,6 +255,7 @@
       >
         <span
           class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
+          aria-hidden="true"
         ></span>
         <span
           class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans min-w-0"
@@ -263,6 +264,7 @@
         </span>
         <span
           class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
+          aria-hidden="true"
         ></span>
       </button>
     {/if}
@@ -347,6 +349,7 @@
               class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showNoVaultMenu
                 ? 'rotate-180'
                 : ''}"
+              aria-hidden="true"
             ></span>
           </button>
 
@@ -398,7 +401,7 @@
           data-testid="exit-guest-mode-button"
           aria-label="Exit Guest Mode"
         >
-          <span class="icon-[lucide--log-out] w-3 h-3"></span>
+          <span class="icon-[lucide--log-out] w-3 h-3" aria-hidden="true"></span>
           EXIT GUEST MODE
         </button>
       {:else}
@@ -425,6 +428,7 @@
             class={showForm
               ? "icon-[heroicons--x-mark] w-3 h-3"
               : "icon-[heroicons--plus] w-3 h-3"}
+            aria-hidden="true"
           ></span>
           {showForm
             ? "CANCEL"
@@ -441,7 +445,7 @@
             title="Import markdown notes or JSON data into your archive."
             aria-label="Import Data"
           >
-            <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"></span>
             IMPORT
           </button>
         </div>
@@ -513,6 +517,7 @@
                   class={vault.isDirty || !vault.hasFolderHandle
                     ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
                     : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
+                  aria-hidden="true"
                 ></span>
                 {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
               {/if}
@@ -528,7 +533,7 @@
               : "Generate campaign content"}
             data-testid="open-generator-button"
           >
-            <span class="icon-[lucide--wand-2] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--wand-2] w-3.5 h-3.5" aria-hidden="true"></span>
             {#if isVertical}<span class="font-bold tracking-widest"
                 >GENERATE</span
               >{/if}
@@ -542,7 +547,7 @@
               ? "SHARE - Share Campaign"
               : "Share Campaign"}
           >
-            <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--share-2] w-3.5 h-3.5" aria-hidden="true"></span>
             {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
               >{/if}
           </button>

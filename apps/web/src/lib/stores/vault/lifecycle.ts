@@ -1,6 +1,6 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
-import { buildSearchKeywords } from "../../services/search-entry-fields";
+import { buildSearchKeywords } from "@codex/search-orchestrator";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
