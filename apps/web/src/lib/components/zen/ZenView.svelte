@@ -8,6 +8,7 @@
   import ZenContent from "./ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
+  import DetailFamilyTab from "$lib/components/entity-detail/DetailFamilyTab.svelte";
   import DetailTimelineTab from "$lib/components/entity-detail/DetailTimelineTab.svelte";
   import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
@@ -57,6 +58,7 @@
   let tabOverview = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
   let tabChats = $state<HTMLButtonElement>();
+  let tabFamily = $state<HTMLButtonElement>();
   let tabTimeline = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
@@ -170,12 +172,15 @@
   };
 
   const visibleZenTabs = $derived.by(() => {
-    const list: ("overview" | "map" | "chats" | "timeline")[] = ["overview"];
+    const list: ("overview" | "map" | "chats" | "family" | "timeline")[] = [
+      "overview",
+    ];
     if (!vault.isGuest) {
       list.push("map");
     }
     if (entity?.type === "character") {
       list.push("chats");
+      list.push("family");
     }
     list.push("timeline");
     return list;
@@ -196,6 +201,7 @@
       if (nextTab === "overview") tabOverview?.focus();
       else if (nextTab === "map") tabMap?.focus();
       else if (nextTab === "chats") tabChats?.focus();
+      else if (nextTab === "family") tabFamily?.focus();
       else if (nextTab === "timeline") tabTimeline?.focus();
     }
   };
@@ -397,6 +403,24 @@
           CHATS
         </button>
       {/if}
+      {#if visibleZenTabs.includes("family")}
+        <button
+          bind:this={tabFamily}
+          role="tab"
+          id="tab-family"
+          aria-selected={activeTab === "family"}
+          aria-controls="panel-family"
+          tabindex={activeTab === "family" ? 0 : -1}
+          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          'family'
+            ? 'text-theme-primary border-theme-primary'
+            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          onclick={() => (modalUIStore.zenModeActiveTab = "family")}
+          onkeydown={handleTabKeydown}
+        >
+          FAMILY
+        </button>
+      {/if}
 
       <button
         bind:this={tabTimeline}
@@ -478,6 +502,20 @@
             class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailChatsTab {entity} />
+          </div>
+        </div>
+      {:else if activeTab === "family" && entity?.type === "character"}
+        <div
+          role="tabpanel"
+          id="panel-family"
+          aria-labelledby="tab-family"
+          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <div
+            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+          >
+            <DetailFamilyTab {entity} />
           </div>
         </div>
       {:else if activeTab === "timeline"}

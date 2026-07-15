@@ -60,6 +60,10 @@ describe("ModalUIStore", () => {
     expect(store.showZenMode).toBe(false);
     expect(store.zenModeEntityId).toBeNull();
 
+    // Zen mode supports the Family tab too.
+    store.openZenMode("789", "family");
+    expect(store.zenModeActiveTab).toBe("family");
+
     store.openReadMode("456");
     expect(store.showZenMode).toBe(true);
     expect(store.zenModeEntityId).toBe("456");

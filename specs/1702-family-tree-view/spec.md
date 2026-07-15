@@ -14,6 +14,7 @@
 - Q: Should the reciprocal family link be physically written to the other entity, or derived at read time? → A: Write both sides (adding a parent also writes the child link on the other entity).
 - Q: Where should the Family Tree live in the UI? → A: A tab/panel embedded in the character's entity-detail view.
 - Q: How should obvious contradictions like circular ancestry be handled? → A: Hard-prevent (block the save when a character would become their own ancestor).
+- Q: Which surfaces show the Family tab? → A: Both the standard entity-detail panel and the immersive/zen view for a character render the same Family tab/panel (character-only in both).
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -88,7 +89,7 @@ A user exploring a sprawling dynasty needs to keep the tree readable. They click
 
 **Viewing & layout**
 
-- **FR-001**: The system MUST provide the Family Tree as a tab/panel within a character's entity-detail view, opened in the context of that character.
+- **FR-001**: The system MUST provide the Family Tree as a tab/panel within a character's entity-detail view, opened in the context of that character. The same Family tab/panel MUST also be available in the immersive/zen reading view for a character, so the two surfaces stay consistent.
 - **FR-002**: The system MUST render parent, child, and spouse/partner relationships as an automatically laid-out, navigable tree centred on a focused character.
 - **FR-003**: The system MUST display each person in the tree as a compact card showing portrait (or placeholder), name, title/role, lifespan, and living/deceased status.
 - **FR-004**: The system MUST infer sibling relationships from shared parents rather than requiring explicit sibling links.
@@ -121,7 +122,7 @@ A user exploring a sprawling dynasty needs to keep the tree readable. They click
 ## Assumptions
 
 - Family relationships are layered onto the existing directional connection model by adding dedicated family relationship types (parent/child, spouse/partner) as first-class connection kinds; no separate genealogy schema and no reliance on free-text labels.
-- The Family Tree is surfaced as a tab/panel within the character's entity-detail view (not a separate top-level mode or modal).
+- The Family Tree is surfaced as a tab/panel within the character's entity-detail view, and the same tab/panel is also present in the immersive/zen reading view (not a separate top-level mode or modal). Both surfaces reuse the same underlying Family panel.
 - Reciprocal family links are written to both entities so relationship data is self-consistent when read from either side; siblings are computed at view time from shared parents and are not stored.
 - Only entities in the "character" category participate in family relationships in this iteration.
 - A character with no recorded death date is treated as living for status display.
