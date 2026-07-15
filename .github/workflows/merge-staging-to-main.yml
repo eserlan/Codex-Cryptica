@@ -76,6 +76,33 @@ jobs:
           git commit -m "chore(web): auto-bump version after staging promotion"
           git push origin main
 
+      - name: Back-merge main into staging (keep branches in sync)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The promotion merge commit and the auto version-bump land on main
+          # only. Back-merge them into staging every promotion so the branches
+          # never drift (which is what makes the next promotion re-conflict).
+          git fetch origin main staging
+          git switch staging
+          if git merge origin/main --no-ff \
+              -m "⏪ sync: back-merge main into staging after promotion"; then
+            git push origin staging
+            echo "Back-merged main into staging."
+          else
+            # Rare: staging advanced concurrently and conflicts. Don't fail the
+            # promotion — open a PR for manual resolution instead.
+            git merge --abort
+            BR="auto/back-merge-main-$(date +%Y%m%d-%H%M%S)"
+            git switch -c "$BR" origin/main
+            git push origin "$BR"
+            gh pr create --base staging --head "$BR" \
+              --title "⏪ Back-merge main into staging (post-promotion sync)" \
+              --body $'Automated back-merge to keep `staging` in sync with `main` after promotion.\n\n**Merge this with a MERGE COMMIT, not squash** — a squash would flatten the merge and reintroduce branch drift.' \
+              || true
+            echo "::warning::main->staging back-merge conflicted; opened a sync PR for manual resolution."
+          fi
+
       - name: Trigger release workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
