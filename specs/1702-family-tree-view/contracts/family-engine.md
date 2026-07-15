@@ -22,6 +22,8 @@ export interface FamilyMember {
   deceased: boolean;
   relation: FamilyRelation;
   generation: number;
+  relationLabel?: string; // e.g. "Mother"/"Brother", from the connection label
+  gender?: "male" | "female"; // derived from a "Male"/"Female" entity Label
 }
 
 export interface FamilyTree {
@@ -68,6 +70,7 @@ export function buildFamilyTree(
 - Returns `parents`, `children`, `partners`, and `siblings` for `focusId`.
 - **Siblings** combine explicit `sibling_of` links (which work with no known parents and may carry a Brother/Sister label) with those inferred from a shared parent; de-duplicated, explicit labels win, and never duplicated into another bucket.
 - **`relationLabel`** on a member is the term describing that member relative to the focus (e.g. "Brother"), read from the member's own link back to the focus; undefined when unlabelled (e.g. inferred siblings).
+- **`gender`** is derived from a case-insensitive "Male"/"Female" entity Label (Constitution XII: Labels over Tags, not a dedicated schema field); undefined when neither label is present. Excluded from `role`'s fallback label pick so it never doubles as a title.
 - Reads family links from **either** direction (`parent_of` on A→B or `child_of` on B→A) and yields the same result.
 - Skips links whose target entity is absent from `entities` (dangling links do not throw).
 - Only entities of category `character` appear as members.

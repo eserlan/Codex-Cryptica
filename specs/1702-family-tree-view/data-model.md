@@ -43,6 +43,7 @@ FamilyMember {
   deceased: boolean     // true if a death/end date (deceased Label) is present
   relation: "focus" | "parent" | "child" | "partner" | "sibling"
   relationLabel?: string        // e.g. "Brother"/"Sister"/"Mother" from the link
+  gender?: "male" | "female"    // derived from a "Male"/"Female" entity Label
   generation: number    // relative to focus: parents -1, focus 0, children +1, etc.
 }
 ```
@@ -68,6 +69,7 @@ FamilyTree {
 - **Partners of X**: entities linked to X via `spouse_of` (symmetric).
 - **Siblings of X**: the union of explicit `sibling_of` links to X (which may carry a Brother/Sister label) and entities (≠ X) that share at least one parent with X (inferred). De-duplicated; explicit labels win. A member that is already a parent/child/partner of X is not also listed as a sibling.
 - **relationLabel**: read from the connection that describes the other person (the other entity's link back to X), e.g. a parent's `parent_of` labelled "Father" or a sibling's `sibling_of` labelled "Sister".
+- **gender**: derived from a case-insensitive "Male"/"Female" entity Label, if present (no dedicated schema field, consistent with Constitution XII: Labels over Tags); excluded from the `role` fallback so it never doubles as a title.
 - **Generation**: focus = 0; each `parent_of` step upward = −1; each `child_of` step downward = +1.
 - **Living/deceased**: `deceased = true` when the entity carries a death/end date (deceased Label); otherwise living.
 

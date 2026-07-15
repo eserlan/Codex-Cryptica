@@ -167,6 +167,26 @@ describe("buildFamilyTree", () => {
     );
   });
 
+  it("derives gender from a Male/Female label, case-insensitively", () => {
+    const entities = map(
+      char("a", [], { labels: ["Male"] } as never),
+      char("b", [], { labels: ["female"] } as never),
+      char("c", [], { labels: ["Knight"] } as never),
+    );
+    expect(buildFamilyTree("a", entities).focus.gender).toBe("male");
+    expect(buildFamilyTree("b", entities).focus.gender).toBe("female");
+    expect(buildFamilyTree("c", entities).focus.gender).toBeUndefined();
+  });
+
+  it("excludes the gender label from the role fallback", () => {
+    const entities = map(
+      char("a", [], { labels: ["Male", "Blacksmith"] } as never),
+    );
+    const focus = buildFamilyTree("a", entities).focus;
+    expect(focus.role).toBe("Blacksmith");
+    expect(focus.gender).toBe("male");
+  });
+
   it("does not mark deceased for a non-finite end_date year", () => {
     const entities = map(
       char("x", [], { end_date: { year: Number.NaN } as never }),
