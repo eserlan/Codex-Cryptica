@@ -84,3 +84,8 @@
 
 **Learning:** Icon-only buttons with `aria-label` should also have `aria-hidden="true"` applied to the inner icon spans (e.g. `<span class="icon-[...]" aria-hidden="true">`) to prevent screen readers from reading confusing redundant class names and ensure they only announce the parent's `aria-label`.
 **Action:** Always add `aria-hidden="true"` to icon spans within `aria-label` buttons during UI creation or accessibility passes.
+
+## 2026-07-09 - ARIA hidden on Icon Buttons
+
+**Learning:** Found that custom icon-only buttons often had `aria-label` attributes on the button element but were missing `aria-hidden="true"` on the inner icon element, causing screen readers to potentially announce the icon element redundantly or confusingly.
+**Action:** When creating buttons with an `aria-label` or visible text, explicitly add `aria-hidden="true"` to any inner decorative icon elements (e.g., `<span class="icon-[...]">`) to prevent screen readers from announcing redundant or confusing elements.
