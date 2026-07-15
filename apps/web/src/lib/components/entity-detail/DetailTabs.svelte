@@ -54,7 +54,7 @@
         ? entityDetailTabs.filter((tab) => tab !== "lore")
         : [...entityDetailTabs];
     if (entity.type !== "character") {
-      tabs = tabs.filter((tab) => tab !== "chats");
+      tabs = tabs.filter((tab) => tab !== "chats" && tab !== "family");
     }
     return tabs;
   });
@@ -267,6 +267,32 @@
           ? "var(--theme-focus-bg)"
           : undefined}
         onclick={() => (activeTab = "chats")}>CHATS</button
+      >
+    {/if}
+
+    {#if visibleTabs.includes("family")}
+      <button
+        id={tabIds.family}
+        type="button"
+        role="tab"
+        aria-selected={activeTab === "family"}
+        aria-controls={panelIds.family}
+        tabindex={activeTab === "family" ? 0 : -1}
+        data-testid="tab-family"
+        class={activeTab === "family"
+          ? isFantasyTheme
+            ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+            : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+          : isFantasyTheme
+            ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+            : "hover:text-theme-text transition"}
+        style:border-color={activeTab === "family" && isFantasyTheme
+          ? "var(--theme-focus-border)"
+          : undefined}
+        style:background-color={activeTab === "family" && isFantasyTheme
+          ? "var(--theme-focus-bg)"
+          : undefined}
+        onclick={() => (activeTab = "family")}>FAMILY</button
       >
     {/if}
 
