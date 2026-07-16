@@ -16,6 +16,7 @@
 - Q: Where should an imported entity's optional CIF summary be stored? → A: In the entity's player-facing short-description field, with the Markdown body going to the long-form lore field — a direct two-field mapping, no prepending, no loss.
 - Q: When re-importing an updated export, how should records deleted in the source world be reconciled? → A: Additive only — updates change fields and add links, nothing is ever removed; removal reconciliation (including detection/reporting of source-side deletions) is deferred to a later phase. Confirms FR-016 as written.
 - Q: Which category should be the fixed fallback for unknown entity kinds? → A: "note" — the neutral catch-all category; no misleading semantics, easy to find and re-categorize after import.
+- Q: What happens on a follow-up import when a new record references a previously imported (existing) entity? → A: "Skip" on a matched record means "don't modify it", not "it doesn't exist": parent and relationship references resolve to the existing vault entity. Links are omitted only when the skipped record has no vault counterpart. Relationships that already exist in the vault (same resolved endpoints, kind, and label) are not created again.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -71,6 +72,7 @@ A month later, the same worldbuilder exports a newer version of their world from
 3. **Given** an entity offered as an update, **When** the user inspects it in review, **Then** they can see which fields the update would change before deciding.
 4. **Given** the user accepts updates, **When** the import completes, **Then** relationships and edits created inside Codex Cryptica since the first import still exist — an update adds and changes, it does not silently remove.
 5. **Given** two consecutive imports of the identical package with "skip existing" chosen the second time, **When** the second import completes, **Then** the vault's entity count is unchanged.
+6. **Given** a newer export containing a new entity with a relationship to (or a parent under) a previously imported entity the user skips this time, **When** the import completes, **Then** the new entity is linked to the _existing_ vault entity — the link is not dropped — and a relationship that already exists in the vault from the earlier import is not duplicated.
 
 ---
 
@@ -80,7 +82,7 @@ A month later, the same worldbuilder exports a newer version of their world from
 - **Huge package**: a text-only package with thousands of entities must not freeze the app; parsing and validation stay responsive, and a package exceeding the configured manifest size limit is rejected up front with a clear message rather than crashing the tab.
 - **Hierarchy cycle**: entity A's parent is B and B's parent is A (schema-valid, semantically broken). Cross-record validation rejects the package, naming the cycle members.
 - **Duplicate relationship records** (same endpoints, kind, and label): imported once, with the duplicate noted in the report.
-- **Relationship or parent pointing at an entity the user chose to skip** in review: the dependent link is omitted with a per-record report entry — never a broken reference in the vault.
+- **Relationship or parent pointing at a skipped record**: if the skipped record matched an existing vault entity, the link resolves to that existing entity; if it has no vault counterpart (declined create), the dependent link is omitted with a per-record report entry — never a broken reference in the vault either way.
 - **Optional fields absent everywhere** (no summaries, no aliases, no labels, no dates): package imports cleanly; absence is not a warning.
 - **Fictional dates with partial precision** (year-only, month-only): preserved to the extent the vault can represent them; anything unrepresentable is reported as a fidelity warning, never dropped silently.
 - **Duplicate aliases or labels within one entity**: de-duplicated quietly (not an error).
@@ -104,7 +106,7 @@ A month later, the same worldbuilder exports a newer version of their world from
 
 - **FR-006**: A valid package MUST enter the existing review workflow, where every entity is listed with its title, mapped category, and a per-record decision of create, update, or skip; the world's own metadata (title, description, labels) is displayed for confirmation but is not itself persisted as an entity.
 - **FR-007**: Commit MUST create or update all accepted entities before creating any relationship, and MUST resolve hierarchy and relationship references to the actual resulting entities — never to package keys and never to titles.
-- **FR-008**: When a record the user skipped (or one that failed) is the target of another record's parent or relationship reference, the dependent link MUST be omitted and reported per record; the vault MUST never contain a reference to an entity that does not exist, even after cancellation or failure mid-commit.
+- **FR-008**: Parent and relationship references MUST resolve to the record's vault counterpart whenever one exists — including a record the user skipped because it already matched an existing entity ("skip" means "don't modify", not "doesn't exist"). Only when a referenced record has no vault counterpart (the user declined to create it, or it failed) is the dependent link omitted, with a per-record report entry. The vault MUST never contain a reference to an entity that does not exist, even after cancellation or failure mid-commit.
 - **FR-009**: The user MUST be able to cancel at review with zero vault mutations.
 
 **Content fidelity**
@@ -112,7 +114,7 @@ A month later, the same worldbuilder exports a newer version of their world from
 - **FR-010**: For each imported entity the system MUST preserve: title; kind (mapped to a category); Markdown body stored as the entity's long-form prose; optional plain-text summary stored in the entity's player-facing short-description field (never silently discarded, never merged into the body); labels; aliases; parent hierarchy; and optional dates to the extent the vault can represent them, with any unrepresentable precision reported as a fidelity warning.
 - **FR-011**: An entity kind with no built-in category mapping MUST NOT block import or drop the entity: it is assigned the fixed fallback category "note" (clearly indicated in review) and reported as an unmapped kind. Per-kind category selection is not part of this phase; users re-categorize in the app after import.
 - **FR-012**: Unknown producer extensions MUST never invalidate an otherwise valid package; they are safely ignored for import purposes and each is named in the report as not understood.
-- **FR-013**: Directed relationships MUST import as a single link from source to target preserving the relationship kind as the link's type and the optional label as explanatory text; undirected relationships MUST read correctly from both endpoints; records identical in endpoints, kind, and label MUST import once.
+- **FR-013**: Directed relationships MUST import as a single link from source to target preserving the relationship kind as the link's type and the optional label as explanatory text; undirected relationships MUST read correctly from both endpoints; records identical in endpoints, kind, and label MUST import once — and a relationship whose resolved equivalent already exists in the vault (e.g. from a previous import) MUST NOT be created again, with the report noting it as already present.
 
 **Identity & repeat imports**
 
