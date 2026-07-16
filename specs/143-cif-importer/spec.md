@@ -7,6 +7,16 @@
 **Design references**: `docs/CODEX_INTERCHANGE_FORMAT.md` (public CIF contract), `docs/CIF_IMPORTER_IMPLEMENTATION_OUTSET.md` (pre-specification outset), `schemas/cif/1.0/manifest.schema.json` (structural contract) — the outset's open decisions #1–#3, #6, #8 are resolved as documented Assumptions below; #4, #5, #7 are deferred with Phase 2.
 **Input**: User description: "Codex Interchange Format (CIF) mechanical importer, Phase 1: text-only core. Allow a validated .cif.json package to enter the existing review-and-merge import workflow, entirely client-side with no network request. Validate structural and cross-record integrity before any vault mutation — invalid packages never reach the review UI. Normalize valid CIF entities, hierarchy, labels, Markdown content, and relationships into the existing review flow. Derive stable source references so repeat imports match reliably (never by title). Report unmapped kinds and unknown extensions without silently dropping valid core data. Phase 2 (ZIP packages with binary assets) is explicitly out of scope."
 
+## Clarifications
+
+### Session 2026-07-16
+
+- Q: When a package contains entity kinds with no built-in category mapping, how should the target category be decided? → A: Fixed fallback category — all unknown kinds map to one fixed category with a warning; users re-categorize inside the app afterwards. No per-kind mapping UI in this phase.
+- Q: When a package's source has no stable worldKey, how should stable identity matching behave? → A: Fallback + warning — identity falls back to producing-system + entity key; review warns that two different worlds from the same key-less tool could collide in one vault. Confirms the existing assumption.
+- Q: Where should an imported entity's optional CIF summary be stored? → A: In the entity's player-facing short-description field, with the Markdown body going to the long-form lore field — a direct two-field mapping, no prepending, no loss.
+- Q: When re-importing an updated export, how should records deleted in the source world be reconciled? → A: Additive only — updates change fields and add links, nothing is ever removed; removal reconciliation (including detection/reporting of source-side deletions) is deferred to a later phase. Confirms FR-016 as written.
+- Q: Which category should be the fixed fallback for unknown entity kinds? → A: "note" — the neutral catch-all category; no misleading semantics, easy to find and re-categorize after import.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Import a world from another tool (Priority: P1)
@@ -99,8 +109,8 @@ A month later, the same worldbuilder exports a newer version of their world from
 
 **Content fidelity**
 
-- **FR-010**: For each imported entity the system MUST preserve: title; kind (mapped to a category); Markdown body as the entity's prose; optional plain-text summary, preserved visibly on the entity (never silently discarded); labels; aliases; parent hierarchy; and optional dates to the extent the vault can represent them, with any unrepresentable precision reported as a fidelity warning.
-- **FR-011**: An entity kind with no built-in category mapping MUST NOT block import or drop the entity: it is assigned a clearly indicated fallback category and reported as an unmapped kind.
+- **FR-010**: For each imported entity the system MUST preserve: title; kind (mapped to a category); Markdown body stored as the entity's long-form prose; optional plain-text summary stored in the entity's player-facing short-description field (never silently discarded, never merged into the body); labels; aliases; parent hierarchy; and optional dates to the extent the vault can represent them, with any unrepresentable precision reported as a fidelity warning.
+- **FR-011**: An entity kind with no built-in category mapping MUST NOT block import or drop the entity: it is assigned the fixed fallback category "note" (clearly indicated in review) and reported as an unmapped kind. Per-kind category selection is not part of this phase; users re-categorize in the app after import.
 - **FR-012**: Unknown producer extensions MUST never invalidate an otherwise valid package; they are safely ignored for import purposes and each is named in the report as not understood.
 - **FR-013**: Directed relationships MUST import as a single link from source to target preserving the relationship kind as the link's type and the optional label as explanatory text; undirected relationships MUST read correctly from both endpoints; records identical in endpoints, kind, and label MUST import once.
 
@@ -129,8 +139,8 @@ A month later, the same worldbuilder exports a newer version of their world from
 
 Resolutions of the outset document's open decisions for Phase 1 (each revisitable via `/speckit-clarify`):
 
-- **Stable identity derivation** (outset decision #1): identity combines the producing system, the source world key, and the entity's package key, encoded so that component boundaries can never be forged by crafted key contents (injectivity per FR-014). When the package lacks a world key, matching falls back to system + entity key with a review warning about potential cross-world collisions. The exact encoding/escaping is a planning-phase decision; the spec requires only injectivity and rename-safety.
-- **Summary storage** (outset decision #2): the optional `summary` is stored in the entity's existing short-description/player-facing field, distinct from the Markdown body. If a future planning decision finds no such field fits, the fallback is prepending it to the body under a clear heading — visible preservation is the requirement, placement is not.
+- **Stable identity derivation** (outset decision #1; fallback clarified 2026-07-16): identity combines the producing system, the source world key, and the entity's package key, encoded so that component boundaries can never be forged by crafted key contents (injectivity per FR-014). When the package lacks a world key, matching falls back to system + entity key with a review warning about potential cross-world collisions. The exact encoding/escaping is a planning-phase decision; the spec requires only injectivity and rename-safety.
+- **Summary storage** (outset decision #2; clarified 2026-07-16): the optional `summary` is stored in the entity's player-facing short-description field and the Markdown body in the long-form lore field — a direct two-field mapping, settled (no prepend fallback needed).
 - **Parent resolution** (outset decision #3): parent keys resolve to the actual created/updated entity at commit time; a child whose parent was skipped imports without a parent plus a report entry.
 - **Update reconciliation** (outset decision #6): Phase 1 updates are additive/corrective only (FR-016); reconciling _removals_ from the source world (delete-on-update) is explicitly deferred.
 - **Modules and fidelity** (outset decision #8): calendars, maps, and category definitions are follow-up modules, not CIF 1.0 core; core `dates` import best-effort with warnings (FR-010); extensions are preserved-in-report only.
