@@ -150,8 +150,15 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "family-tree",
     title: "Family Tree",
     content:
-      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. The tree is built from your normal connections, so nothing is stored twice.",
+      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.",
     icon: "icon-[lucide--network]",
+  },
+  "lineage-controls": {
+    id: "lineage-controls",
+    title: "Explore the lineage",
+    content:
+      "Drag to pan, scroll or pinch to zoom, and use ⊞ to expand a branch. Choose Show all generations to reveal the whole recorded lineage.",
+    icon: "icon-[lucide--git-branch]",
   },
   "visual-graph": {
     id: "visual-graph",

@@ -150,3 +150,62 @@ describe("DetailFamilyTab zoom + full screen controls", () => {
     }
   });
 });
+
+describe("DetailFamilyTab Lineage mode toggle", () => {
+  function enterFullscreen() {
+    const proto = HTMLDialogElement.prototype;
+    proto.showModal = vi.fn();
+    proto.close = vi.fn(function (this: HTMLDialogElement) {
+      this.dispatchEvent(new Event("close"));
+    });
+    render(DetailFamilyTab, { entity: hero });
+    fireEvent.click(screen.getByTestId("family-fullscreen"));
+  }
+
+  it("is not offered in the bounded (non-fullscreen) panel", () => {
+    render(DetailFamilyTab, { entity: hero });
+    expect(screen.queryByTestId("family-mode-toggle")).toBeNull();
+  });
+
+  it("offers a Family/Lineage toggle only in full screen, defaulting to Family", () => {
+    enterFullscreen();
+    expect(screen.getByTestId("family-mode-toggle")).toBeTruthy();
+    expect(
+      screen.getByTestId("family-mode-family").getAttribute("aria-pressed"),
+    ).toBe("true");
+  });
+
+  it("switches to Lineage mode and hides the zoom controls and empty-slot row", async () => {
+    enterFullscreen();
+    await fireEvent.click(screen.getByTestId("family-mode-lineage"));
+
+    expect(screen.getByTestId("lineage-canvas")).toBeTruthy();
+    expect(screen.queryByTestId("family-zoom-in")).toBeNull();
+    expect(screen.queryByTestId("empty-family-slot")).toBeNull();
+  });
+
+  it("keeps the reset-focus control available after re-centering in Lineage mode", async () => {
+    enterFullscreen();
+    await fireEvent.click(screen.getByTestId("family-mode-lineage"));
+    await fireEvent.click(
+      screen
+        .getByTestId("lineage-card-parent")
+        .querySelector('[data-testid="family-card-select"]') as HTMLElement,
+    );
+
+    expect(screen.getByTestId("family-recenter-reset")).toBeTruthy();
+  });
+
+  it("resets to Family mode each time full screen is (re-)entered", async () => {
+    enterFullscreen();
+    await fireEvent.click(screen.getByTestId("family-mode-lineage"));
+    expect(screen.getByTestId("lineage-canvas")).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId("family-exit-fullscreen"));
+    await fireEvent.click(screen.getByTestId("family-fullscreen"));
+    expect(
+      screen.getByTestId("family-mode-family").getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.queryByTestId("lineage-canvas")).toBeNull();
+  });
+});
