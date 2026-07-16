@@ -16,29 +16,47 @@ export async function precacheBuild(options: {
   skipWaiting: () => Promise<unknown>;
   warn: (message: string, error: unknown) => void;
 }): Promise<void> {
-  const cache = await options.cacheStorage.open(options.cacheName);
+  try {
+    const cache = await options.cacheStorage.open(options.cacheName);
 
-  for (const asset of options.assets) {
-    try {
-      await cache.add(asset);
-    } catch (error) {
-      options.warn(`[SW] Failed to cache asset: ${asset}`, error);
+    for (const asset of options.assets) {
+      try {
+        await cache.add(asset);
+      } catch (error) {
+        options.warn(`[SW] Failed to cache asset: ${asset}`, error);
+      }
     }
+  } catch (error) {
+    options.warn(`[SW] Failed to open cache: ${options.cacheName}`, error);
+  } finally {
+    await options.skipWaiting();
   }
-
-  await options.skipWaiting();
 }
 
 export async function activateBuild(options: {
   cacheName: string;
   cacheStorage: ActivationStorage;
   claimClients: () => Promise<unknown>;
+  warn: (message: string, error: unknown) => void;
 }): Promise<void> {
-  for (const cacheName of await options.cacheStorage.keys()) {
-    if (cacheName !== options.cacheName) {
-      await options.cacheStorage.delete(cacheName);
+  try {
+    let cacheNames: string[] = [];
+    try {
+      cacheNames = await options.cacheStorage.keys();
+    } catch (error) {
+      options.warn("[SW] Failed to enumerate caches", error);
     }
-  }
 
-  await options.claimClients();
+    for (const cacheName of cacheNames) {
+      if (cacheName === options.cacheName) continue;
+
+      try {
+        await options.cacheStorage.delete(cacheName);
+      } catch (error) {
+        options.warn(`[SW] Failed to delete cache: ${cacheName}`, error);
+      }
+    }
+  } finally {
+    await options.claimClients();
+  }
 }

@@ -473,8 +473,18 @@ export function registerServiceWorker(deps?: {
 
   let isRegistered = false;
   let isRefreshing = false;
+  let hadController = !!nav.serviceWorker.controller;
 
   nav.serviceWorker.addEventListener?.("controllerchange", () => {
+    const hasController = !!nav.serviceWorker.controller;
+    if (!hadController) {
+      hadController = hasController;
+      return;
+    }
+    if (!hasController) {
+      hadController = false;
+      return;
+    }
     if (isRefreshing) return;
     isRefreshing = true;
     win.location.reload();

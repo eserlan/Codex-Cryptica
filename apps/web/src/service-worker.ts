@@ -37,6 +37,7 @@ sw.addEventListener("activate", (event) => {
       cacheName: CACHE,
       cacheStorage: caches,
       claimClients: () => sw.clients.claim(),
+      warn: (message, error) => console.warn(message, error),
     }),
   );
 });
