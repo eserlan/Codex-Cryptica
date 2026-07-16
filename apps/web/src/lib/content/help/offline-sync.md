@@ -21,6 +21,12 @@ By default, all your campaign data is stored in the **Origin Private File System
 
 You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
 
+> **Browser support:** local folder saving relies on the File System Access API.
+>
+> - **Chrome, Edge:** supported out of the box.
+> - **Brave:** ships this feature disabled by default. If "Save to Folder" doesn't work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
+> - **Firefox, Safari:** don't support this feature yet. Your vault still saves automatically to the browser's local storage (OPFS) — you just can't mirror it to a folder on disk until you switch to a Chromium-based browser.
+
 1.  **External Backups:** Keep a real-time copy of your world in a folder you control.
 2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
 3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.

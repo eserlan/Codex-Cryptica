@@ -1,5 +1,83 @@
 import { debugStore } from "$lib/stores/debug.svelte";
 
+export function isFileSystemAccessSupported(): boolean {
+  return typeof window !== "undefined" && "showDirectoryPicker" in window;
+}
+
+export type FileSystemAccessBrowser =
+  "brave" | "firefox" | "safari" | "chromium" | "unknown";
+
+/**
+ * Brave doesn't identify itself in the User-Agent string (by design, to
+ * reduce fingerprinting), but it exposes a `navigator.brave` object no other
+ * browser has — that's the only reliable way to detect it client-side.
+ */
+export function detectFileSystemAccessBrowser(): FileSystemAccessBrowser {
+  if (typeof navigator === "undefined") return "unknown";
+  if ("brave" in navigator && (navigator as any).brave?.isBrave) {
+    return "brave";
+  }
+  const ua = navigator.userAgent;
+  if (/Firefox\//.test(ua)) return "firefox";
+  if (/Chrome|Chromium|CriOS|Edg\/|OPR\//.test(ua)) return "chromium";
+  if (/Safari\//.test(ua)) return "safari";
+  return "unknown";
+}
+
+export function getFileSystemAccessUnsupportedMessage(
+  browser: FileSystemAccessBrowser = detectFileSystemAccessBrowser(),
+): string {
+  switch (browser) {
+    case "brave":
+      return (
+        "Brave disables local folder saving by default. Open a new tab, go to " +
+        "brave://flags/#file-system-access-api, set it to Enabled, and relaunch Brave."
+      );
+    case "firefox":
+      return (
+        "Firefox doesn't yet support saving to a local folder — your work is still " +
+        "saved safely in the browser. For local folder sync, use Chrome, Edge, or Brave " +
+        "(with the file-system-access-api flag enabled)."
+      );
+    case "safari":
+      return (
+        "Safari doesn't yet support saving to a local folder — your work is still " +
+        "saved safely in the browser. For local folder sync, use Chrome, Edge, or Brave " +
+        "(with the file-system-access-api flag enabled)."
+      );
+    default:
+      return (
+        "Your browser doesn't support saving to a local folder, or the feature is " +
+        "disabled. Try Chrome, Edge, or Brave (with the file-system-access-api flag enabled)."
+      );
+  }
+}
+
+/**
+ * Wraps window.showDirectoryPicker with a feature check so unsupported
+ * browsers (e.g. Brave with the file-system-access-api flag disabled) throw
+ * an actionable NotSupportedError instead of a raw "not a function" TypeError.
+ */
+export async function pickDirectory(options?: {
+  id?: string;
+  mode?: "read" | "readwrite";
+  startIn?:
+    | FileSystemHandle
+    | "desktop"
+    | "documents"
+    | "downloads"
+    | "music"
+    | "pictures"
+    | "videos";
+}): Promise<FileSystemDirectoryHandle> {
+  if (!isFileSystemAccessSupported()) {
+    const err = new Error(getFileSystemAccessUnsupportedMessage());
+    err.name = "NotSupportedError";
+    throw err;
+  }
+  return window.showDirectoryPicker(options);
+}
+
 export async function getFileHandle(
   dirHandle: FileSystemDirectoryHandle,
   name: string,
