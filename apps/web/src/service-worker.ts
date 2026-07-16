@@ -4,6 +4,10 @@
 /// <reference lib="webworker" />
 
 import { build, files, version } from "$service-worker";
+import {
+  activateBuild,
+  precacheBuild,
+} from "$lib/service-worker/lifecycle";
 
 const CACHE_VERSION = "425";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
@@ -16,29 +20,25 @@ const ASSETS = [
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 sw.addEventListener("install", (event) => {
-  async function addFilesToCache() {
-    const cache = await caches.open(CACHE);
-    // Be resilient: add assets individually so one failure doesn't block everything
-    for (const asset of ASSETS) {
-      try {
-        await cache.add(asset);
-      } catch (err) {
-        console.warn(`[SW] Failed to cache asset: ${asset}`, err);
-      }
-    }
-  }
-
-  event.waitUntil(addFilesToCache());
+  event.waitUntil(
+    precacheBuild({
+      cacheName: CACHE,
+      assets: ASSETS,
+      cacheStorage: caches,
+      skipWaiting: () => sw.skipWaiting(),
+      warn: (message, error) => console.warn(message, error),
+    }),
+  );
 });
 
 sw.addEventListener("activate", (event) => {
-  async function deleteOldCaches() {
-    for (const key of await caches.keys()) {
-      if (key !== CACHE) await caches.delete(key);
-    }
-  }
-
-  event.waitUntil(deleteOldCaches());
+  event.waitUntil(
+    activateBuild({
+      cacheName: CACHE,
+      cacheStorage: caches,
+      claimClients: () => sw.clients.claim(),
+    }),
+  );
 });
 
 sw.addEventListener("fetch", (event) => {

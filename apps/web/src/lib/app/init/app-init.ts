@@ -472,6 +472,13 @@ export function registerServiceWorker(deps?: {
   }
 
   let isRegistered = false;
+  let isRefreshing = false;
+
+  nav.serviceWorker.addEventListener?.("controllerchange", () => {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    win.location.reload();
+  });
 
   const cleanup = () => {
     win.removeEventListener("load", tryRegister);

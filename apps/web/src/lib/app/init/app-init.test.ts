@@ -318,6 +318,47 @@ describe("app-init", () => {
       expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
     });
 
+    it("should reload once when a new worker takes control", () => {
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      const serviceWorkerListeners = new Map<string, EventListener>();
+      const reloadSpy = vi.fn();
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        location: { reload: reloadSpy },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            register: registerSpy,
+            addEventListener: vi.fn(
+              (event: string, handler: EventListener) => {
+                serviceWorkerListeners.set(event, handler);
+              },
+            ),
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      const controllerChange = serviceWorkerListeners.get("controllerchange");
+      expect(controllerChange).toBeDefined();
+
+      controllerChange?.(new Event("controllerchange"));
+      controllerChange?.(new Event("controllerchange"));
+
+      expect(reloadSpy).toHaveBeenCalledOnce();
+    });
+
     it("should defer registration until the document becomes active", () => {
       const registerSpy = vi.fn().mockResolvedValue(undefined);
       const docListeners = new Map<string, EventListener>();
