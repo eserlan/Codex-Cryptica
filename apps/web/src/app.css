@@ -552,26 +552,6 @@
     color: var(--theme-action-text);
   }
 
-  /* Global prose and code styling */
-  .prose {
-    --tw-prose-body: var(--color-text-primary);
-    --tw-prose-headings: var(--color-text-primary);
-    --tw-prose-lead: var(--color-text-muted);
-    --tw-prose-links: var(--color-accent-primary);
-    --tw-prose-bold: var(--color-text-primary);
-    --tw-prose-counters: var(--color-text-muted);
-    --tw-prose-bullets: var(--color-accent-dim);
-    --tw-prose-hr: var(--color-border-primary);
-    --tw-prose-quotes: var(--color-text-muted);
-    --tw-prose-quote-borders: var(--color-accent-dim);
-    --tw-prose-captions: var(--color-text-dim);
-    --tw-prose-code: var(--color-text-primary);
-    --tw-prose-pre-code: var(--color-text-primary);
-    --tw-prose-pre-bg: var(--color-bg-surface);
-    --tw-prose-th-borders: var(--color-border-primary);
-    --tw-prose-td-borders: var(--color-border-primary);
-  }
-
   code {
     background-color: color-mix(
       in srgb,
@@ -613,4 +593,34 @@
   .pt-safe {
     padding-top: calc(env(safe-area-inset-top, 0px));
   }
+}
+
+/*
+ * Typography emits its default prose tokens in Tailwind's utilities layer.
+ * Keep these unlayered and after Tailwind so every Markdown surface uses the
+ * active world-theme tokens instead of Typography's fixed gray palette.
+ */
+.prose {
+  --tw-prose-body: var(--color-text-primary);
+  --tw-prose-headings: var(--color-text-primary);
+  --tw-prose-lead: var(--color-text-muted);
+  --tw-prose-links: var(--color-accent-primary);
+  --tw-prose-bold: var(--color-text-primary);
+  --tw-prose-counters: var(--color-text-muted);
+  --tw-prose-bullets: var(--color-accent-dim);
+  --tw-prose-hr: var(--color-border-primary);
+  --tw-prose-quotes: var(--color-text-muted);
+  --tw-prose-quote-borders: var(--color-accent-dim);
+  --tw-prose-captions: var(--color-text-dim);
+  --tw-prose-kbd: var(--color-text-primary);
+  --tw-prose-kbd-shadows: color-mix(
+    in srgb,
+    var(--color-text-primary),
+    transparent 88%
+  );
+  --tw-prose-code: var(--color-text-primary);
+  --tw-prose-pre-code: var(--color-text-primary);
+  --tw-prose-pre-bg: var(--color-bg-surface);
+  --tw-prose-th-borders: var(--color-border-primary);
+  --tw-prose-td-borders: var(--color-border-primary);
 }
