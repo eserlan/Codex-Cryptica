@@ -8,20 +8,34 @@ import {
 } from "./fs";
 
 describe("pickDirectory", () => {
+  const hadShowDirectoryPicker = "showDirectoryPicker" in window;
   const originalShowDirectoryPicker = (window as any).showDirectoryPicker;
 
   afterEach(() => {
-    (window as any).showDirectoryPicker = originalShowDirectoryPicker;
+    // Restore exactly: recreate the property only if it originally existed,
+    // otherwise delete it so a leftover `undefined` doesn't leak into other
+    // tests' `"showDirectoryPicker" in window` / typeof checks.
+    if (hadShowDirectoryPicker) {
+      (window as any).showDirectoryPicker = originalShowDirectoryPicker;
+    } else {
+      delete (window as any).showDirectoryPicker;
+    }
   });
 
   it("delegates to window.showDirectoryPicker when supported", async () => {
     const handle = { kind: "directory", name: "root" };
     (window as any).showDirectoryPicker = vi.fn().mockResolvedValue(handle);
 
+    expect(isFileSystemAccessSupported()).toBe(true);
     const result = await pickDirectory({ mode: "read" });
 
     expect(result).toBe(handle);
     expect(window.showDirectoryPicker).toHaveBeenCalledWith({ mode: "read" });
+  });
+
+  it("treats a non-callable showDirectoryPicker as unsupported", () => {
+    (window as any).showDirectoryPicker = undefined;
+    expect(isFileSystemAccessSupported()).toBe(false);
   });
 
   it("throws an actionable NotSupportedError when unsupported", async () => {

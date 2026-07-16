@@ -151,7 +151,29 @@ export async function parseVaultArchive(
     const relative = name.slice(VAULT_PREFIX.length);
     // Zip directory entries end in "/" and have no content; skip them.
     if (relative.length === 0 || name.endsWith("/")) continue;
-    files.push({ path: relative.split("/"), bytes: content });
+
+    // Don't trust archive-supplied paths. Empty segments (e.g. "vault//x") or
+    // "."/".." would either throw deep in the OPFS write or, worse, escape the
+    // vault directory. Reject the whole import if any path looks unsafe.
+    const segments = relative.split("/");
+    if (segments.some((s) => s === "" || s === "." || s === "..")) {
+      throw new Error(
+        `The backup contains an unsafe file path ("${name}") and can't be imported.`,
+      );
+    }
+    files.push({ path: segments, bytes: content });
+  }
+
+  // Integrity check: a well-formed archive's manifest count matches the files
+  // we actually extracted. A mismatch means truncation or tampering.
+  if (
+    typeof manifest.fileCount === "number" &&
+    files.length !== manifest.fileCount
+  ) {
+    throw new Error(
+      `The backup is incomplete or corrupted (manifest lists ${manifest.fileCount} ` +
+        `file${manifest.fileCount === 1 ? "" : "s"}, found ${files.length}).`,
+    );
   }
 
   return {

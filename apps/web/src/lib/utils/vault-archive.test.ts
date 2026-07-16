@@ -149,4 +149,40 @@ describe("vault-archive", () => {
     expect(archive.files).toHaveLength(1);
     expect(archive.files[0].path).toEqual(["notes.md"]);
   });
+
+  it("rejects an archive with an unsafe (path-traversal) entry", async () => {
+    const zipped = zipSync({
+      "codex-archive.json": strToU8(
+        JSON.stringify({
+          format: "codex-vault-archive",
+          version: 1,
+          vaultName: "Evil",
+          exportedAt: new Date().toISOString(),
+          fileCount: 1,
+        }),
+      ),
+      "vault/../escape.md": strToU8("pwned"),
+    });
+    await expect(parseVaultArchive(new Blob([zipped]))).rejects.toThrow(
+      /unsafe file path/i,
+    );
+  });
+
+  it("rejects an archive whose manifest count disagrees with its files", async () => {
+    const zipped = zipSync({
+      "codex-archive.json": strToU8(
+        JSON.stringify({
+          format: "codex-vault-archive",
+          version: 1,
+          vaultName: "Truncated",
+          exportedAt: new Date().toISOString(),
+          fileCount: 5,
+        }),
+      ),
+      "vault/only-one.md": strToU8("lonely"),
+    });
+    await expect(parseVaultArchive(new Blob([zipped]))).rejects.toThrow(
+      /incomplete or corrupted/i,
+    );
+  });
 });

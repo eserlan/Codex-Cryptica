@@ -1,7 +1,11 @@
 import { debugStore } from "$lib/stores/debug.svelte";
 
 export function isFileSystemAccessSupported(): boolean {
-  return typeof window !== "undefined" && "showDirectoryPicker" in window;
+  return (
+    typeof window !== "undefined" &&
+    typeof (window as { showDirectoryPicker?: unknown }).showDirectoryPicker ===
+      "function"
+  );
 }
 
 export type FileSystemAccessBrowser =
