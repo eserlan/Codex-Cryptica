@@ -14,29 +14,30 @@ squashed counterparts on `staging` — GitHub can't dedupe them, so the PR diff 
 dozens of unrelated files and commits that are already on `staging` in substance.
 
 Symptom: a Jules PR (title prefixed 🎨 Palette / ⚡ Bolt / 🧵 Binder / etc., or a
-`gh pr view` body ending in "*PR created automatically by Jules for task
-[...](https://jules.google.com/task/...)*") whose file/commit count looks way out
+`gh pr view` body ending in "_PR created automatically by Jules for task
+[...](https://jules.google.com/task/...)_") whose file/commit count looks way out
 of proportion to what the title describes.
 
 ## Workflow
 
 1. **Confirm the symptom, don't assume it**
    - `gh pr view <n> --json title,body,commits,files,headRefName,baseRefName`
-   - Read the PR title/body to know what the *intended* change actually is.
+   - Read the PR title/body to know what the _intended_ change actually is.
 
 1a. **Always target `staging`, never `main`**
-   - Jules sometimes opens PRs against `main` directly. `main` only ever receives
-     work via the automated staging→main promotion pipeline (`🚀 promote:` commits)
-     — a PR merging straight into `main` bypasses that pipeline and desyncs the two
-     branches, which then causes exactly this skill's symptom for every *future*
-     PR that diffs against a `main` that's drifted from `staging`.
-   - If `baseRefName` isn't `staging`, retarget it first: `gh pr edit <n> --base staging`.
-     Retargeting itself may flip `mergeStateStatus` to `CONFLICTING` and inflate the
-     file list — that's not a new problem, it's the same drift this skill fixes,
-     now visible because you're diffing against the right branch. Proceed to step 2.
-   - If the commit/file count against `staging` roughly matches the described
-     change, this isn't the bug this skill fixes — stop and handle it as a normal
-     PR (but leave the base retargeted to `staging`).
+
+- Jules sometimes opens PRs against `main` directly. `main` only ever receives
+  work via the automated staging→main promotion pipeline (`🚀 promote:` commits)
+  — a PR merging straight into `main` bypasses that pipeline and desyncs the two
+  branches, which then causes exactly this skill's symptom for every _future_
+  PR that diffs against a `main` that's drifted from `staging`.
+- If `baseRefName` isn't `staging`, retarget it first: `gh pr edit <n> --base staging`.
+  Retargeting itself may flip `mergeStateStatus` to `CONFLICTING` and inflate the
+  file list — that's not a new problem, it's the same drift this skill fixes,
+  now visible because you're diffing against the right branch. Proceed to step 2.
+- If the commit/file count against `staging` roughly matches the described
+  change, this isn't the bug this skill fixes — stop and handle it as a normal
+  PR (but leave the base retargeted to `staging`).
 
 2. **Fetch the branch into an isolated worktree** (never touch the current working
    tree or checkout over it — use `git worktree add`, e.g. under the scratchpad dir)
@@ -63,26 +64,27 @@ of proportion to what the title describes.
    - Diff the result against `origin/<baseRefName>` and confirm it matches only what
      the PR description says should change — nothing more.
    - Cherry-pick conflicts here usually mean the file was reformatted (e.g.
-     prettier) or *changed again* on `base` since the branch's parent commit —
+     prettier) or _changed again_ on `base` since the branch's parent commit —
      not necessarily that the genuine work is gone. Read the conflict before
      resolving: if `HEAD` (current base) already contains the exact same logical
      change the PR is trying to make, this isn't a rebuild anymore — see step 4a.
 
 4a. **Check for full duplication before rebuilding**
-   - If `HEAD`'s side of a conflict already implements what the PR describes (not
-     just a superset — the *same* change, possibly done independently by another
-     PR/bot run), the branch isn't drifted, it's obsolete. There is nothing to
-     cherry-pick.
-   - Confirm with `git log --oneline origin/<base> -- <file>` to find the PR that
-     already shipped it, then abort the rebuild (`git cherry-pick --abort`) and go
-     straight to closing the original as a duplicate (skip step 5 entirely) —
-     comment linking the PR that beat it there, no replacement PR needed.
-   - This is common when the PR was originally opened against `main` (step 1a):
-     `staging` often already has a *better* version of the same optimization that
-     hasn't been promoted to `main` yet, making the whole PR redundant, not just
-     drifted. Read the base's current implementation of the touched function
-     before assuming the cherry-pick target is wrong — it may be the PR that's
-     obsolete.
+
+- If `HEAD`'s side of a conflict already implements what the PR describes (not
+  just a superset — the _same_ change, possibly done independently by another
+  PR/bot run), the branch isn't drifted, it's obsolete. There is nothing to
+  cherry-pick.
+- Confirm with `git log --oneline origin/<base> -- <file>` to find the PR that
+  already shipped it, then abort the rebuild (`git cherry-pick --abort`) and go
+  straight to closing the original as a duplicate (skip step 5 entirely) —
+  comment linking the PR that beat it there, no replacement PR needed.
+- This is common when the PR was originally opened against `main` (step 1a):
+  `staging` often already has a _better_ version of the same optimization that
+  hasn't been promoted to `main` yet, making the whole PR redundant, not just
+  drifted. Read the base's current implementation of the touched function
+  before assuming the cherry-pick target is wrong — it may be the PR that's
+  obsolete.
 
 5. **Decide push strategy — always ask the user first**
    - Force-pushing over a bot-authored branch to update the existing PR in place is

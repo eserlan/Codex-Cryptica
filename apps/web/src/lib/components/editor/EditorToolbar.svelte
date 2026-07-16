@@ -117,7 +117,7 @@
   >
     <!-- Basic Formatting -->
     <div class="flex gap-0.5">
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleBold().run()}
         class="toolbar-btn {activeStates.isBold ? 'active' : ''}"
         title="Bold (Cmd+B)"
@@ -126,7 +126,7 @@
       >
         <span class="icon-[lucide--bold] w-4 h-4" aria-hidden="true"></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleItalic().run()}
         class="toolbar-btn {activeStates.isItalic ? 'active' : ''}"
         title="Italic (Cmd+I)"
@@ -135,7 +135,7 @@
       >
         <span class="icon-[lucide--italic] w-4 h-4" aria-hidden="true"></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleStrike().run()}
         class="toolbar-btn {activeStates.isStrike ? 'active' : ''}"
         title="Strike"
@@ -145,7 +145,7 @@
         <span class="icon-[lucide--strikethrough] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleCode().run()}
         class="toolbar-btn {activeStates.isCode ? 'active' : ''}"
         title="Code (Cmd+E)"
@@ -160,7 +160,7 @@
 
     <!-- Headings -->
     <div class="flex gap-0.5">
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         class="toolbar-btn {activeStates.isH1 ? 'active' : ''}"
         title="Heading 1"
@@ -170,7 +170,7 @@
         <span class="icon-[lucide--heading-1] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         class="toolbar-btn {activeStates.isH2 ? 'active' : ''}"
         title="Heading 2"
@@ -180,7 +180,7 @@
         <span class="icon-[lucide--heading-2] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         class="toolbar-btn {activeStates.isH3 ? 'active' : ''}"
         title="Heading 3"
@@ -196,7 +196,7 @@
 
     <!-- Lists & Structure -->
     <div class="flex gap-0.5">
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleBulletList().run()}
         class="toolbar-btn {activeStates.isBulletList ? 'active' : ''}"
         title="Bullet List"
@@ -205,7 +205,7 @@
       >
         <span class="icon-[lucide--list] w-4 h-4" aria-hidden="true"></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleOrderedList().run()}
         class="toolbar-btn {activeStates.isOrderedList ? 'active' : ''}"
         title="Ordered List"
@@ -215,7 +215,7 @@
         <span class="icon-[lucide--list-ordered] w-4 h-4" aria-hidden="true"
         ></span>
       </button>
-      <button
+      <button type="button"
         onclick={() => editor.chain().focus().toggleBlockquote().run()}
         class="toolbar-btn {activeStates.isBlockquote ? 'active' : ''}"
         title="Blockquote"
@@ -230,7 +230,7 @@
 
     <!-- Insertions -->
     <div class="flex gap-0.5">
-      <button
+      <button type="button"
         onclick={setLink}
         class="toolbar-btn {activeStates.isLink ? 'active' : ''}"
         title="Link"
@@ -247,7 +247,7 @@
     <div class="flex gap-1">
       {#if isZenMode}
         <ZenModeRevisionAction />
-        <button
+        <button type="button"
           onclick={toggleZenMode}
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase font-header tracking-widest bg-theme-accent/10 rounded"
           title="Close Zen Mode"
@@ -259,7 +259,7 @@
         <div class="w-px bg-theme-border/50 mx-1"></div>
       {/if}
 
-      <button
+      <button type="button"
         onclick={toggleZenMode}
         class="toolbar-btn {isZenMode ? 'active' : ''}"
         title={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}

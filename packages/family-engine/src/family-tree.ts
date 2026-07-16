@@ -53,7 +53,7 @@ const GENDER_LABELS = new Map<string, "male" | "female">([
   ["female", "female"],
 ]);
 
-function isCharacter(entity: Entity | undefined): entity is Entity {
+export function isCharacter(entity: Entity | undefined): entity is Entity {
   return !!entity && entity.type === CHARACTER_TYPE;
 }
 
@@ -100,7 +100,7 @@ function formatLifespan(entity: Entity): string | undefined {
  * labelled "Brother"). A label on `id`'s own outbound link describes `id`, so
  * it is not used for the other member's term.
  */
-function relatedMembers(
+export function relatedMembers(
   entities: Record<string, Entity>,
   id: string,
   type: FamilyConnectionType,
@@ -136,7 +136,7 @@ function relatedMembers(
   return [...labels].map(([relatedId, label]) => ({ id: relatedId, label }));
 }
 
-function toMember(
+export function toMember(
   entity: Entity,
   relation: FamilyRelation,
   generation: number,

@@ -2,10 +2,8 @@
   import { base } from "$app/paths";
   const cleanBase = base === "/" ? "" : base;
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import type {
-    SEOPageData,
-    SEOComparisonPageData,
-  } from "$lib/config/seo-pages";
+  import type { SEOPageData } from "$lib/config/seo-pages";
+  import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
 
   let {
     data,
