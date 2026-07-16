@@ -173,3 +173,98 @@ describe("CCImportReview", () => {
     ).toHaveProperty("disabled", true);
   });
 });
+
+describe("CCImportReview — matched-item field diff (T021/FR-015)", () => {
+  it("renders a current-vs-package diff only for changed fields, from PreviewItem.existing", () => {
+    const session: CCImportSession = {
+      ...baseSession,
+      items: [
+        {
+          draft: {
+            sourceId: "hero-1",
+            title: "Valeria the Bold",
+            content: "New summary",
+            tags: [],
+          },
+          resolvedType: "character",
+          typeFallback: false,
+          sourceRef: "cif:entity:tool:world:hero-1",
+          match: { entityId: "existing-1" },
+          decision: "include",
+          matchDecision: "update",
+          existing: {
+            title: "Valeria",
+            content: "Old summary",
+            type: "character",
+          },
+        },
+      ],
+      relationships: [],
+      assets: [],
+      warnings: [],
+    };
+
+    render(CCImportReview, {
+      session,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(
+      document.querySelector(
+        '[data-testid="cif-review-diff-cif:entity:tool:world:hero-1"]',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Valeria")).toBeTruthy();
+    expect(screen.getByText("Old summary")).toBeTruthy();
+    expect(screen.getByText("New summary")).toBeTruthy();
+  });
+
+  it("renders no diff block for a matched item with no field changes", () => {
+    const session: CCImportSession = {
+      ...baseSession,
+      items: [
+        {
+          draft: {
+            sourceId: "hero-1",
+            title: "Valeria",
+            content: "Same",
+            tags: [],
+          },
+          resolvedType: "character",
+          typeFallback: false,
+          sourceRef: "cif:entity:tool:world:hero-1",
+          match: { entityId: "existing-1" },
+          decision: "include",
+          matchDecision: "skip",
+          existing: {
+            title: "Valeria",
+            content: "Same",
+            type: "character",
+          },
+        },
+      ],
+      relationships: [],
+      assets: [],
+      warnings: [],
+    };
+
+    render(CCImportReview, {
+      session,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(
+      document.querySelector(
+        '[data-testid="cif-review-diff-cif:entity:tool:world:hero-1"]',
+      ),
+    ).toBeNull();
+  });
+});

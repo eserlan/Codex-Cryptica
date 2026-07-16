@@ -100,6 +100,7 @@
       class="rounded border border-red-500/20 bg-red-500/10 p-3"
       role="status"
       aria-live="polite"
+      data-testid="cif-import-error"
     >
       <div class="flex items-center gap-2">
         <span class="icon-[lucide--alert-triangle] h-4 w-4 text-red-400"></span>

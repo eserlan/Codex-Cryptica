@@ -53,7 +53,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/142-lineage-view/plan.md).
+shell commands, and other important information, read the [current plan](./specs/143-cif-importer/plan.md).
 
 <!-- SPECKIT END -->
 

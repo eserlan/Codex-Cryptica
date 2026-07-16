@@ -23,6 +23,12 @@ export interface CommitFailure {
   message: string;
 }
 
+export interface DuplicateSkipped {
+  fromRef: string;
+  toRef: string;
+  type: string;
+}
+
 export interface ImportReport {
   sourceSystem: string;
   sourceLabel: string;
@@ -35,6 +41,7 @@ export interface ImportReport {
   assetsImported: number;
   assetsSkipped: AssetSkipped[];
   typeFallbacks: TypeFallback[];
+  duplicatesSkipped: DuplicateSkipped[];
   warnings: ImportWarning[];
   failures: CommitFailure[];
 }
@@ -55,6 +62,7 @@ export function createEmptyReport(
     assetsImported: 0,
     assetsSkipped: [],
     typeFallbacks: [],
+    duplicatesSkipped: [],
     warnings: [],
     failures: [],
   };

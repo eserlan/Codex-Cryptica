@@ -431,3 +431,237 @@ describe("WebVaultWriter integration with ImportEngine", () => {
     });
   });
 });
+
+describe("WebVaultWriter — dates and aliases (T008)", () => {
+  it("maps startDate/endDate to legacy temporal metadata and passes aliases through on create", async () => {
+    const createEntity = vi.fn().mockResolvedValue("hero");
+    const writer = new WebVaultWriter({
+      entities: {},
+      createEntity,
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await writer.createEntity({
+      type: "character",
+      title: "Hero",
+      content: "Lore",
+      tags: [],
+      aliases: ["The Wanderer"],
+      startDate: { year: 1142 },
+      endDate: { year: 1150, month: 3, day: 18 },
+      discoverySource: "cif:entity:tool:world:hero",
+    });
+
+    expect(createEntity).toHaveBeenCalledWith(
+      "character",
+      "Hero",
+      expect.objectContaining({
+        aliases: ["The Wanderer"],
+        start_date: { year: 1142, month: undefined, day: undefined },
+        end_date: { year: 1150, month: 3, day: 18 },
+      }),
+    );
+  });
+
+  it("omits temporal metadata when no dates are provided", async () => {
+    const createEntity = vi.fn().mockResolvedValue("hero");
+    const writer = new WebVaultWriter({
+      entities: {},
+      createEntity,
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await writer.createEntity({
+      type: "character",
+      title: "Hero",
+      content: "Lore",
+      tags: [],
+      discoverySource: "cif:entity:tool:world:hero",
+    });
+
+    const call = createEntity.mock.calls[0][2];
+    expect(call.start_date).toBeUndefined();
+    expect(call.end_date).toBeUndefined();
+    expect(call.aliases).toBeUndefined();
+  });
+
+  it("maps dates and aliases on update", async () => {
+    const updateEntity = vi.fn().mockResolvedValue(true);
+    const writer = new WebVaultWriter({
+      entities: { hero: { id: "hero" } },
+      createEntity: vi.fn(),
+      updateEntity,
+      addConnection: vi.fn(),
+    });
+
+    await writer.updateEntity("hero", {
+      aliases: ["The Wanderer"],
+      startDate: { year: 1142 },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "hero",
+      expect.objectContaining({
+        aliases: ["The Wanderer"],
+        start_date: { year: 1142, month: undefined, day: undefined },
+      }),
+    );
+  });
+});
+
+describe("WebVaultWriter — getEntityFields (T018)", () => {
+  it("returns current comparable fields for an existing entity", async () => {
+    const writer = new WebVaultWriter({
+      entities: {
+        hero: {
+          id: "hero",
+          title: "Hero",
+          content: "Short desc",
+          lore: "Long lore",
+          labels: ["pirate"],
+          aliases: ["The Wanderer"],
+          type: "character",
+          parent: "parent-id",
+          start_date: { year: 1142, month: 7, day: 18 },
+        },
+      },
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await expect(writer.getEntityFields("hero")).resolves.toEqual({
+      title: "Hero",
+      content: "Short desc",
+      lore: "Long lore",
+      labels: ["pirate"],
+      aliases: ["The Wanderer"],
+      type: "character",
+      parent: "parent-id",
+      startDate: { year: 1142, month: 7, day: 18 },
+      endDate: undefined,
+    });
+  });
+
+  it("returns null for a missing entity", async () => {
+    const writer = new WebVaultWriter({
+      entities: {},
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await expect(writer.getEntityFields("missing")).resolves.toBeNull();
+  });
+});
+
+describe("WebVaultWriter — titleFallback option (T018/FR-014)", () => {
+  it("titleFallback:false makes findBySourceRef exact-match only, even for a renamed vault entity", async () => {
+    const writer = new WebVaultWriter(
+      {
+        entities: {
+          hero: { id: "hero", discoverySource: "cif:entity:tool:world:hero" },
+        },
+        createEntity: vi.fn(),
+        updateEntity: vi.fn(),
+        addConnection: vi.fn(),
+      },
+      { titleFallback: false },
+    );
+    writer.associateDrafts?.([
+      { sourceRef: "cif:entity:tool:world:hero", title: "Renamed Hero" },
+    ]);
+
+    // Exact sourceRef match still works (the entity's title changed in the
+    // vault since the original import, but discoverySource didn't).
+    await expect(
+      writer.findBySourceRef("cif:entity:tool:world:hero"),
+    ).resolves.toEqual({ id: "hero" });
+
+    // No fallback: a sourceRef this vault has never seen must not match
+    // anything by title, even if some other entity happens to share a title.
+    await expect(
+      writer.findBySourceRef("cif:entity:tool:world:someone-else"),
+    ).resolves.toBeNull();
+  });
+
+  it("titleFallback:false does not match a same-titled but different entity by title alone", async () => {
+    const writer = new WebVaultWriter(
+      {
+        entities: {
+          "existing-hero": { id: "existing-hero", title: "Hero" },
+        },
+        createEntity: vi.fn(),
+        updateEntity: vi.fn(),
+        addConnection: vi.fn(),
+      },
+      { titleFallback: false },
+    );
+    // A brand-new draft that merely shares a title with an unrelated entity —
+    // with title fallback disabled this must never match "existing-hero".
+    writer.associateDrafts?.([
+      { sourceRef: "cif:entity:tool:world:new-hero", title: "Hero" },
+    ]);
+
+    await expect(
+      writer.findBySourceRef("cif:entity:tool:world:new-hero"),
+    ).resolves.toBeNull();
+  });
+
+  it("default titleFallback:true preserves legacy title-matching behavior", async () => {
+    const writer = new WebVaultWriter({
+      entities: {
+        hero: { id: "hero", title: "Hero" },
+      },
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+    writer.associateDrafts?.([{ sourceRef: "scabard:id:123", title: "Hero" }]);
+
+    await expect(writer.findBySourceRef("scabard:id:123")).resolves.toEqual({
+      id: "hero",
+    });
+  });
+});
+
+describe("WebVaultWriter — appendConnection return value (T018/FR-013)", () => {
+  it("returns {created:true} for a newly appended connection", async () => {
+    const addConnection = vi.fn().mockResolvedValue(true);
+    const writer = new WebVaultWriter({
+      entities: { hero: { id: "hero", connections: [] } },
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection,
+    });
+
+    await expect(
+      writer.appendConnection("hero", { target: "town", type: "located_in" }),
+    ).resolves.toEqual({ created: true });
+  });
+
+  it("returns {created:false} idempotently for an already-present connection", async () => {
+    const addConnection = vi.fn().mockResolvedValue(true);
+    const writer = new WebVaultWriter({
+      entities: {
+        hero: {
+          id: "hero",
+          connections: [{ target: "town", type: "located_in", strength: 1 }],
+        },
+      },
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection,
+    });
+
+    await expect(
+      writer.appendConnection("hero", { target: "town", type: "located_in" }),
+    ).resolves.toEqual({ created: false });
+    await expect(
+      writer.appendConnection("hero", { target: "town", type: "located_in" }),
+    ).resolves.toEqual({ created: false });
+    expect(addConnection).not.toHaveBeenCalled();
+  });
+});

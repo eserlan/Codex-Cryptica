@@ -7,3 +7,4 @@ export * from "./oracle/analyzer";
 export * from "./persistence";
 export * from "./utils";
 export * from "./cc";
+export * from "./cif";

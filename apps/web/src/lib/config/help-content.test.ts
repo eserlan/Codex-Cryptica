@@ -21,4 +21,13 @@ describe("help-content feature hints", () => {
   it("HINT_KEYS includes IN_APP_GENERATORS key", () => {
     expect(HINT_KEYS.IN_APP_GENERATORS).toBe("in-app-generators-hint-seen");
   });
+
+  // T023 (143-cif-importer): CIF import help entry
+  it("FEATURE_HINTS includes a cif-importer entry mentioning offline import and family links", () => {
+    expect(FEATURE_HINTS["cif-importer"]).toBeDefined();
+    expect(FEATURE_HINTS["cif-importer"].id).toBe("cif-importer");
+    expect(FEATURE_HINTS["cif-importer"].title).toBeTruthy();
+    expect(FEATURE_HINTS["cif-importer"].content).toContain("offline");
+    expect(FEATURE_HINTS["cif-importer"].content).toContain("family");
+  });
 });
