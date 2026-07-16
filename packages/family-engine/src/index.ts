@@ -17,6 +17,8 @@ export {
 
 export { wouldCreateCycle } from "./cycle-detection";
 
+export { resolveFamilyAlias, type FamilyAliasMatch } from "./family-aliases";
+
 export {
   buildLineage,
   type Lineage,

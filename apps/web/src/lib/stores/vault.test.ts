@@ -677,6 +677,119 @@ describe("VaultStore", () => {
       expect(removeSpy).toHaveBeenCalledWith("s", "t", "friend");
     });
 
+    it("redirects a family-alias label between two characters to a real family link", async () => {
+      testVault.entityStore.entities = {
+        alice: {
+          id: "alice",
+          type: "character",
+          title: "Alice",
+          connections: [],
+        } as any,
+        bob: {
+          id: "bob",
+          type: "character",
+          title: "Bob",
+          connections: [],
+        } as any,
+      };
+      const familyLinkSpy = vi
+        .spyOn(testVault, "addFamilyLink")
+        .mockResolvedValue({ ok: true });
+      const updateSpy = vi
+        .spyOn(testVault, "updateConnection")
+        .mockResolvedValue(true);
+      const rawAddSpy = vi
+        .spyOn(testVault.entityStore, "addConnection")
+        .mockResolvedValue(true);
+
+      const result = await testVault.addConnection(
+        "alice",
+        "bob",
+        "related_to",
+        "Mother of",
+      );
+
+      expect(result).toBe(true);
+      expect(familyLinkSpy).toHaveBeenCalledWith("alice", "bob", "parent_of");
+      expect(updateSpy).toHaveBeenCalledWith(
+        "alice",
+        "bob",
+        "parent_of",
+        "parent_of",
+        "Mother",
+      );
+      expect(rawAddSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not redirect a non-alias label, even between two characters", async () => {
+      testVault.entityStore.entities = {
+        alice: {
+          id: "alice",
+          type: "character",
+          title: "Alice",
+          connections: [],
+        } as any,
+        bob: {
+          id: "bob",
+          type: "character",
+          title: "Bob",
+          connections: [],
+        } as any,
+      };
+      const familyLinkSpy = vi.spyOn(testVault, "addFamilyLink");
+      const rawAddSpy = vi
+        .spyOn(testVault.entityStore, "addConnection")
+        .mockResolvedValue(true);
+
+      await testVault.addConnection("alice", "bob", "related_to", "rival");
+
+      expect(familyLinkSpy).not.toHaveBeenCalled();
+      expect(rawAddSpy).toHaveBeenCalledWith(
+        "alice",
+        "bob",
+        "related_to",
+        "rival",
+        undefined,
+      );
+    });
+
+    it("does not redirect a family-alias label when either side is not a character", async () => {
+      testVault.entityStore.entities = {
+        alice: {
+          id: "alice",
+          type: "character",
+          title: "Alice",
+          connections: [],
+        } as any,
+        castle: {
+          id: "castle",
+          type: "location",
+          title: "Castle",
+          connections: [],
+        } as any,
+      };
+      const familyLinkSpy = vi.spyOn(testVault, "addFamilyLink");
+      const rawAddSpy = vi
+        .spyOn(testVault.entityStore, "addConnection")
+        .mockResolvedValue(true);
+
+      await testVault.addConnection(
+        "alice",
+        "castle",
+        "related_to",
+        "Mother of",
+      );
+
+      expect(familyLinkSpy).not.toHaveBeenCalled();
+      expect(rawAddSpy).toHaveBeenCalledWith(
+        "alice",
+        "castle",
+        "related_to",
+        "Mother of",
+        undefined,
+      );
+    });
+
     it("should update connections", async () => {
       const updateSpy = vi
         .spyOn(testVault.entityStore, "updateConnection")
