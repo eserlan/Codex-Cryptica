@@ -7,6 +7,7 @@
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
   import DriveSettings from "./DriveSettings.svelte";
+  import VaultBackupSettings from "./VaultBackupSettings.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -180,6 +181,11 @@
   {#if !sessionModeStore.isDemoMode}
     <div>
       <DriveSettings />
+    </div>
+
+    <!-- Portable Backup (works in every browser) -->
+    <div>
+      <VaultBackupSettings />
     </div>
   {/if}
 

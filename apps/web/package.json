@@ -62,6 +62,7 @@
     "dice-engine": "workspace:*",
     "dompurify": "^3.4.2",
     "editor-core": "workspace:*",
+    "fflate": "^0.8.3",
     "flexsearch": "^0.8.212",
     "generator-engine": "workspace:*",
     "graph-engine": "workspace:*",

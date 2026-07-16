@@ -35,20 +35,22 @@ export function getFileSystemAccessUnsupportedMessage(
       );
     case "firefox":
       return (
-        "Firefox doesn't yet support saving to a local folder — your work is still " +
-        "saved safely in the browser. For local folder sync, use Chrome, Edge, or Brave " +
-        "(with the file-system-access-api flag enabled)."
+        "Your vault is fully saved in this browser — Firefox just doesn't support " +
+        "mirroring it to a folder on disk. To back it up, use Export Backup in " +
+        "Settings (works everywhere), or switch to Chrome or Edge for live folder sync."
       );
     case "safari":
       return (
-        "Safari doesn't yet support saving to a local folder — your work is still " +
-        "saved safely in the browser. For local folder sync, use Chrome, Edge, or Brave " +
-        "(with the file-system-access-api flag enabled)."
+        "Your vault is fully saved in this browser — Safari just doesn't support " +
+        "mirroring it to a folder on disk. To back it up, use Export Backup in " +
+        "Settings (works everywhere), or switch to Chrome or Edge for live folder sync."
       );
     default:
       return (
-        "Your browser doesn't support saving to a local folder, or the feature is " +
-        "disabled. Try Chrome, Edge, or Brave (with the file-system-access-api flag enabled)."
+        "Your vault is saved in this browser, but this browser can't mirror it to a " +
+        "folder on disk, or the feature is disabled. Use Export Backup in Settings " +
+        "(works everywhere), or try Chrome, Edge, or Brave (with the " +
+        "file-system-access-api flag enabled)."
       );
   }
 }

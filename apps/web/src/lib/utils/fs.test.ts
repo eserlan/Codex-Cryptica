@@ -56,7 +56,7 @@ describe("detectFileSystemAccessBrowser / getFileSystemAccessUnsupportedMessage"
     );
   });
 
-  it("identifies Firefox from the user agent and explains it's unsupported there", () => {
+  it("identifies Firefox and reassures the vault is saved, pointing at Export Backup", () => {
     delete (navigator as any).brave;
     Object.defineProperty(navigator, "userAgent", {
       value:
@@ -65,9 +65,9 @@ describe("detectFileSystemAccessBrowser / getFileSystemAccessUnsupportedMessage"
     });
 
     expect(detectFileSystemAccessBrowser()).toBe("firefox");
-    expect(getFileSystemAccessUnsupportedMessage("firefox")).toContain(
-      "doesn't yet support",
-    );
+    const msg = getFileSystemAccessUnsupportedMessage("firefox");
+    expect(msg).toContain("fully saved");
+    expect(msg).toContain("Export Backup");
   });
 
   it("identifies Safari from the user agent", () => {
