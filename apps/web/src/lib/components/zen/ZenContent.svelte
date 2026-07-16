@@ -211,7 +211,23 @@
 >
   <div class="max-w-3xl mx-auto space-y-6">
     {#if entity && !editState.isEditing && !vault.isGuest}
-      <div class="flex justify-end">
+      <div class="flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onclick={() => modalUIStore.openRevisionDialog(entity.id)}
+          disabled={revisionService.isRevising}
+          class="text-xs font-bold uppercase tracking-widest bg-theme-surface text-theme-primary border border-theme-primary/50 hover:bg-theme-primary/10 hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Revise Chronicle and Lore with AI"
+          title="Revise Chronicle and Lore with AI"
+        >
+          {#if revisionService.isRevising}
+            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
+            Revising
+          {:else}
+            <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+            AI Revise
+          {/if}
+        </button>
         <button
           type="button"
           onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}

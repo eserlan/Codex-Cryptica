@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ZenContent from "./ZenContent.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { revisionService } from "$lib/services/RevisionService.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -44,6 +45,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
 vi.mock("$lib/services/RevisionService.svelte", () => ({
   revisionService: {
     pendingDraft: null,
+    isRevising: false,
   },
 }));
 
@@ -61,6 +63,7 @@ vi.mock(
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     openGeneratorWorkflowForEntity: vi.fn(),
+    openRevisionDialog: vi.fn(),
   },
 }));
 
@@ -68,6 +71,7 @@ describe("ZenContent Related Entity Generation Trigger", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (vault as any).isGuest = false;
+    (revisionService as any).isRevising = false;
   });
 
   it("renders 'Generate Related' button and triggers dialog when clicked", async () => {
@@ -110,5 +114,55 @@ describe("ZenContent Related Entity Generation Trigger", () => {
 
     expect(screen.queryByText("Generate Related")).toBeNull();
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
+  });
+
+  it("opens the AI revision dialog for the visible entity", async () => {
+    const mockEntity = {
+      id: "entity-1",
+      title: "Zen Source",
+      type: "character",
+      connections: [],
+    };
+
+    render(ZenContent, {
+      entity: mockEntity as any,
+      editState: { isEditing: false } as any,
+      scrollContainer: undefined,
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Revise Chronicle and Lore with AI" }));
+
+    expect(modalUIStore.openRevisionDialog).toHaveBeenCalledWith("entity-1");
+  });
+
+  it("hides AI revision for guest sessions and disables it during a revision", () => {
+    const mockEntity = {
+      id: "entity-1",
+      title: "Zen Source",
+      type: "character",
+      connections: [],
+    };
+
+    (vault as any).isGuest = true;
+    const guestView = render(ZenContent, {
+      entity: mockEntity as any,
+      editState: { isEditing: false } as any,
+      scrollContainer: undefined,
+    });
+    expect(screen.queryByRole("button", { name: "Revise Chronicle and Lore with AI" })).toBeNull();
+    guestView.unmount();
+
+    (vault as any).isGuest = false;
+    (revisionService as any).isRevising = true;
+    render(ZenContent, {
+      entity: mockEntity as any,
+      editState: { isEditing: false } as any,
+      scrollContainer: undefined,
+    });
+    expect(
+      screen.getByRole("button", {
+        name: "Revise Chronicle and Lore with AI",
+      }).disabled,
+    ).toBe(true);
   });
 });
