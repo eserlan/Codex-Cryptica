@@ -53,6 +53,13 @@ describe("HelpStore", () => {
     );
   });
 
+  it("should search articles by a word prefix", () => {
+    helpStore.setSearchQuery("fam");
+    expect(helpStore.searchResults.some((a) => a.id === "family-tree")).toBe(
+      true,
+    );
+  });
+
   it("should search articles by content", () => {
     helpStore.setSearchQuery("sovereignty");
     expect(helpStore.searchResults.some((a) => a.id === "intro")).toBe(true);
