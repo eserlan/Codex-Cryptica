@@ -32,6 +32,7 @@ import {
   setMatchDecision,
   setItemType,
   parseCifFile,
+  validateCifManifest,
   normalizeCifPackage,
   cifSourceRefBuilder,
   CIF_MAPPING_RULES,
@@ -333,6 +334,21 @@ export class ImportSettingsController {
       this.rejectedFiles.push({
         name: file.name,
         reason: parseResult.errors.map((e) => e.message).join(" "),
+      });
+      this.step = "upload";
+      this.importMode = null;
+      return;
+    }
+
+    // Cross-record validation (FR-002/FR-003): a schema-valid manifest can
+    // still be structurally broken (duplicate keys, unresolved references,
+    // hierarchy cycles, unsupported version) — never open a review session
+    // for one of those.
+    const validation = validateCifManifest(parseResult.manifest);
+    if (!validation.ok) {
+      this.rejectedFiles.push({
+        name: file.name,
+        reason: validation.errors.map((e) => e.message).join(" "),
       });
       this.step = "upload";
       this.importMode = null;

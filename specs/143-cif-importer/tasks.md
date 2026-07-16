@@ -64,15 +64,15 @@
 
 ### Tests for User Story 2 (write first, must fail) ⚠️
 
-- [ ] T011 [P] [US2] Failing cross-record validation tests in `packages/importer/src/cif/validate.test.ts`: duplicate entity key, duplicate relationship key, unresolved `parent`/`from`/`to`/`media.assetKey`, self-link, hierarchy cycle (error names all member keys; iterative — a 10,000-deep parent chain must not overflow), unsupported `version` (message names both versions — US2 scenario 2); every error carries `{code, message, recordKey}`; warnings-vs-errors disjointness: unknown kind, unknown extension, non-empty assets, missing worldKey each yield `ok: true` + warning (FR-011/FR-012)
-- [ ] T012 [P] [US2] Failing container-guard tests in `packages/importer/src/cif/parse.test.ts`: file over `maxManifestBytes` (default 20 MB) → `oversized-manifest` without reading/parsing content; `.cif.zip` filename and ZIP magic bytes (`PK\x03\x04`) → `zip-not-supported` with the FR-004 message; empty `entities` array parses fine (friendly empty state, not an error)
+- [x] T011 [P] [US2] Failing cross-record validation tests in `packages/importer/src/cif/validate.test.ts`: duplicate entity key, duplicate relationship key, unresolved `parent`/`from`/`to`/`media.assetKey`, self-link, hierarchy cycle (error names all member keys; iterative — a 10,000-deep parent chain must not overflow), unsupported `version` (message names both versions — US2 scenario 2); every error carries `{code, message, recordKey}`; warnings-vs-errors disjointness: unknown kind, unknown extension, non-empty assets, missing worldKey each yield `ok: true` + warning (FR-011/FR-012)
+- [x] T012 [P] [US2] Failing container-guard tests in `packages/importer/src/cif/parse.test.ts`: file over `maxManifestBytes` (default 20 MB) → `oversized-manifest` without reading/parsing content; `.cif.zip` filename and ZIP magic bytes (`PK\x03\x04`) → `zip-not-supported` with the FR-004 message; empty `entities` array parses fine (friendly empty state, not an error)
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement `packages/importer/src/cif/validate.ts` (key maps, O(records) checks, iterative cycle walk) until T011 passes
-- [ ] T014 [US2] Implement the size guard and ZIP refusal in `packages/importer/src/cif/parse.ts` until T012 passes
-- [ ] T015 [US2] Warning-report completeness in `packages/importer/src/cif/normalize.ts`/`report.ts` + tests: `cif.unmapped-kind` (from the existing `typeFallback` mechanism, fallback category "note"), `cif.unknown-extension` (named per namespace), `cif.assets-not-imported`, `cif.date-precision` — asserting a test-corpus package produces a report entry for every droppable item (SC-005, FR-017)
-- [ ] T016 [US2] Surface blocking errors in the UI: `apps/web/src/lib/components/settings/import-settings-controller.svelte.ts` (+ review/report component) shows `cif-import-error` with record-naming messages and never opens a review session for an invalid package; `.cif.zip` refusal notice; report view renders the `cif.*` warning buckets; component tests for each path (SC-002)
+- [x] T013 [US2] Implement `packages/importer/src/cif/validate.ts` (key maps, O(records) checks, iterative cycle walk) until T011 passes
+- [x] T014 [US2] Implement the size guard and ZIP refusal in `packages/importer/src/cif/parse.ts` until T012 passes
+- [x] T015 [US2] Warning-report completeness in `packages/importer/src/cif/normalize.ts`/`report.ts` + tests: `cif.unmapped-kind` (from the existing `typeFallback` mechanism, fallback category "note"), `cif.unknown-extension` (named per namespace), `cif.assets-not-imported`, `cif.date-precision` — asserting a test-corpus package produces a report entry for every droppable item (SC-005, FR-017)
+- [x] T016 [US2] Surface blocking errors in the UI: `apps/web/src/lib/components/settings/import-settings-controller.svelte.ts` (+ review/report component) shows `cif-import-error` with record-naming messages and never opens a review session for an invalid package; `.cif.zip` refusal notice; report view renders the `cif.*` warning buckets; component tests for each path (SC-002)
 
 **Checkpoint**: All invalid classes blocked pre-review; zero silent data loss; US1 still passes.
 

@@ -223,6 +223,14 @@ describe("normalizeCifPackage — warnings (T005/FR-011/FR-012/FR-004)", () => {
       true,
     );
   });
+
+  it("reports an unknown extension namespace, named, without dropping the entity (T015)", () => {
+    const { pkg, warnings } = normalize(manifestWithUnknownKindAndExtension());
+    expect(pkg.entityDrafts.length).toBe(1);
+    const warning = warnings.find((w) => w.code === "cif.unknown-extension");
+    expect(warning).toBeTruthy();
+    expect(warning?.message).toContain("some-tool");
+  });
 });
 
 describe("cifSourceRefBuilder (T005/T006)", () => {

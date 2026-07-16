@@ -37,4 +37,6 @@ export {
   type NormalizeCifResult,
 } from "./normalize";
 
+export { validateCifManifest, type CifValidationResult } from "./validate";
+
 export { CifWarningCode } from "./report";

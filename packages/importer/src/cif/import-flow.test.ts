@@ -227,6 +227,61 @@ describe("CIF import — cancellation (T010/FR-008/FR-009/SC-007)", () => {
   });
 });
 
+describe("CIF import — warning-report completeness (T015/FR-017)", () => {
+  it("a test-corpus package produces a report entry for every droppable item", async () => {
+    const manifest = CifManifestSchema.parse({
+      format: "codex-world-interchange",
+      version: "1.0",
+      source: { system: "tool" },
+      world: { title: "W" },
+      entities: [
+        {
+          key: "characters/a",
+          kind: "deity",
+          title: "A",
+          content: { format: "markdown", body: "" },
+          extensions: { "some-tool": { customField: "value" } },
+          dates: { start: { value: "not-a-date", precision: "year" } },
+        },
+      ],
+      relationships: [],
+      assets: [
+        {
+          key: "art/a.png",
+          mediaType: "image/png",
+          url: "https://example.invalid/a.png",
+        },
+      ],
+    });
+    const { pkg } = normalizeCifPackage(manifest);
+    const writer = mockWriter();
+    const engine = engineFor(writer);
+    const session = await engine.prepare(pkg);
+    const report = await engine.commit(session);
+
+    // Unmapped kind ("deity") surfaces via the engine's generic
+    // typeFallback mechanism, not a CIF-specific warning code.
+    expect(
+      report.typeFallbacks.some(
+        (f) => f.sourceRef === session.items[0].sourceRef,
+      ),
+    ).toBe(true);
+    expect(
+      report.warnings.some((w) => w.code === "cif.unknown-extension"),
+    ).toBe(true);
+    expect(
+      report.warnings.some((w) => w.code === "cif.assets-not-imported"),
+    ).toBe(true);
+    expect(report.warnings.some((w) => w.code === "cif.date-precision")).toBe(
+      true,
+    );
+    // No worldKey on this package's source, too.
+    expect(report.warnings.some((w) => w.code === "cif.no-world-key")).toBe(
+      true,
+    );
+  });
+});
+
 describe("CIF import — client-side & non-leaking (FR-018)", () => {
   it("no CIF module references network APIs", async () => {
     const fs = await import("node:fs");

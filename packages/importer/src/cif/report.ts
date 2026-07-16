@@ -3,6 +3,7 @@ import type { ImportWarning } from "../cc/package";
 /** CIF-specific warning codes (FR-017: nothing droppable disappears without one of these). */
 export const CifWarningCode = {
   NoWorldKey: "cif.no-world-key",
+  UnmappedKind: "cif.unmapped-kind",
   UnknownExtension: "cif.unknown-extension",
   AssetsNotImported: "cif.assets-not-imported",
   DuplicateRelationship: "cif.duplicate-relationship",
@@ -14,6 +15,17 @@ export function noWorldKeyWarning(system: string): ImportWarning {
   return {
     code: CifWarningCode.NoWorldKey,
     message: `This package's source ("${system}") has no worldKey, so repeat imports from a different world exported by the same tool could be mismatched. Matching falls back to the producing system and entity keys.`,
+  };
+}
+
+export function unmappedKindWarning(
+  entityKey: string,
+  kind: string,
+): ImportWarning {
+  return {
+    code: CifWarningCode.UnmappedKind,
+    message: `"${entityKey}"'s kind ("${kind}") isn't one of this app's built-in categories, so it was imported as "Note". You can recategorize it after import.`,
+    ref: entityKey,
   };
 }
 

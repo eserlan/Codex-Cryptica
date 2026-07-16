@@ -433,3 +433,57 @@ describe("import-settings-controller — CIF detection and flow (T009)", () => {
     expect(createCalled).toBe(false);
   });
 });
+
+describe("import-settings-controller — CIF blocking validation (T016/FR-003)", () => {
+  it("rejects a structurally invalid CIF package (duplicate entity key) before opening review", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [
+        cifManifestText({
+          entities: [
+            {
+              key: "characters/a",
+              kind: "character",
+              title: "A",
+              content: { format: "markdown", body: "Body" },
+            },
+            {
+              key: "characters/a",
+              kind: "character",
+              title: "Duplicate",
+              content: { format: "markdown", body: "Body" },
+            },
+          ],
+          relationships: [],
+        }),
+      ],
+      "world.cif.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles.length).toBe(1);
+    expect(controller.rejectedFiles[0].reason).toContain("characters/a");
+  });
+
+  it("rejects an unsupported CIF version before opening review, naming both versions", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [cifManifestText({ version: "99.0" })],
+      "world.cif.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles[0].reason).toContain("99.0");
+    expect(controller.rejectedFiles[0].reason).toContain("1.0");
+  });
+});
