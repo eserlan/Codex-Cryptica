@@ -261,6 +261,7 @@
           <button
             type="submit"
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
             class="inline-flex items-center gap-2 rounded-md bg-theme-primary px-5 py-2 text-sm font-bold text-theme-base hover:bg-theme-primary/90 transition-colors disabled:opacity-50"
           >
             {#if isSubmitting}
