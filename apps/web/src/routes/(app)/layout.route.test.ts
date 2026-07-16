@@ -262,7 +262,7 @@ describe("+layout.svelte", () => {
     (vault as any).allEntities = [];
     helpStore.activeTour = null;
     helpStore.isInitialized = false;
-    page.url = new URL("http://localhost/");
+    page.url = new URL("http://localhost/") as typeof page.url;
     vi.mocked(helpStore.hasSeen).mockReturnValue(true);
     (onboardingStore as any).isLandingPageVisible = false;
     onboardingStore.dismissedWorldPage = true;
@@ -286,7 +286,9 @@ describe("+layout.svelte", () => {
   it("does not open the in-app Help modal for standalone Help hashes", async () => {
     vi.useFakeTimers();
     helpStore.isInitialized = true;
-    page.url = new URL("http://localhost/help#help/family-tree");
+    page.url = new URL(
+      "http://localhost/help#help/family-tree",
+    ) as typeof page.url;
 
     render(LayoutTestHost);
     await tick();
