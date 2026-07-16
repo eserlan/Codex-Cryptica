@@ -93,11 +93,14 @@ export class WebVaultWriter implements VaultWriter {
         lore: entity.lore,
         tags: entity.tags,
         labels: entity.labels ?? [],
+        aliases: entity.aliases,
         image: entity.image,
         thumbnail: entity.thumbnail,
         metadata: entity.metadata as Entity["metadata"],
         discoverySource: entity.discoverySource,
         parent: entity.parent,
+        start_date: toTemporalMetadata(entity.startDate),
+        end_date: toTemporalMetadata(entity.endDate),
         connections: (entity.connections ?? []) as Entity["connections"],
       },
     );
@@ -138,11 +141,14 @@ export class WebVaultWriter implements VaultWriter {
           lore: entity.lore,
           tags: entity.tags,
           labels: entity.labels ?? [],
+          aliases: entity.aliases,
           image: entity.image,
           thumbnail: entity.thumbnail,
           metadata: entity.metadata as Entity["metadata"],
           discoverySource: entity.discoverySource,
           parent: entity.parent,
+          start_date: toTemporalMetadata(entity.startDate),
+          end_date: toTemporalMetadata(entity.endDate),
           connections: (entity.connections ?? []) as Entity["connections"],
         },
       })),
@@ -191,10 +197,13 @@ export class WebVaultWriter implements VaultWriter {
       lore: patch.lore,
       tags: patch.tags,
       labels: patch.labels,
+      aliases: patch.aliases,
       image: patch.image,
       thumbnail: patch.thumbnail,
       metadata: patch.metadata as Entity["metadata"],
       parent: patch.parent,
+      start_date: toTemporalMetadata(patch.startDate),
+      end_date: toTemporalMetadata(patch.endDate),
     };
     if (patch.connections !== undefined) {
       updates.connections = patch.connections as Entity["connections"];
@@ -251,6 +260,17 @@ export class WebVaultWriter implements VaultWriter {
       "Generic CC asset persistence is not supported by the web vault adapter yet",
     );
   }
+}
+
+function toTemporalMetadata(
+  date: NewEntityInput["startDate"],
+): Entity["start_date"] {
+  if (!date) return undefined;
+  return {
+    year: date.year,
+    month: date.month,
+    day: date.day,
+  } as Entity["start_date"];
 }
 
 function sanitizeEntityId(text: string): string {

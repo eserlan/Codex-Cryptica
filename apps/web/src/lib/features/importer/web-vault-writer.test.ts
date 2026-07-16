@@ -431,3 +431,82 @@ describe("WebVaultWriter integration with ImportEngine", () => {
     });
   });
 });
+
+describe("WebVaultWriter — dates and aliases (T008)", () => {
+  it("maps startDate/endDate to legacy temporal metadata and passes aliases through on create", async () => {
+    const createEntity = vi.fn().mockResolvedValue("hero");
+    const writer = new WebVaultWriter({
+      entities: {},
+      createEntity,
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await writer.createEntity({
+      type: "character",
+      title: "Hero",
+      content: "Lore",
+      tags: [],
+      aliases: ["The Wanderer"],
+      startDate: { year: 1142 },
+      endDate: { year: 1150, month: 3, day: 18 },
+      discoverySource: "cif:entity:tool:world:hero",
+    });
+
+    expect(createEntity).toHaveBeenCalledWith(
+      "character",
+      "Hero",
+      expect.objectContaining({
+        aliases: ["The Wanderer"],
+        start_date: { year: 1142, month: undefined, day: undefined },
+        end_date: { year: 1150, month: 3, day: 18 },
+      }),
+    );
+  });
+
+  it("omits temporal metadata when no dates are provided", async () => {
+    const createEntity = vi.fn().mockResolvedValue("hero");
+    const writer = new WebVaultWriter({
+      entities: {},
+      createEntity,
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await writer.createEntity({
+      type: "character",
+      title: "Hero",
+      content: "Lore",
+      tags: [],
+      discoverySource: "cif:entity:tool:world:hero",
+    });
+
+    const call = createEntity.mock.calls[0][2];
+    expect(call.start_date).toBeUndefined();
+    expect(call.end_date).toBeUndefined();
+    expect(call.aliases).toBeUndefined();
+  });
+
+  it("maps dates and aliases on update", async () => {
+    const updateEntity = vi.fn().mockResolvedValue(true);
+    const writer = new WebVaultWriter({
+      entities: { hero: { id: "hero" } },
+      createEntity: vi.fn(),
+      updateEntity,
+      addConnection: vi.fn(),
+    });
+
+    await writer.updateEntity("hero", {
+      aliases: ["The Wanderer"],
+      startDate: { year: 1142 },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "hero",
+      expect.objectContaining({
+        aliases: ["The Wanderer"],
+        start_date: { year: 1142, month: undefined, day: undefined },
+      }),
+    );
+  });
+});

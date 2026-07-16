@@ -1,4 +1,4 @@
-import type { EntityDraft } from "./package";
+import type { EntityDraft, EntityDraftDate } from "./package";
 
 export interface MappingRule {
   when: { sourceType?: string; pathPrefix?: string };
@@ -56,10 +56,13 @@ export function mapDraftToFields(
   lore?: string;
   tags: string[];
   labels: string[];
+  aliases?: string[];
   image?: string;
   thumbnail?: string;
   metadata?: Record<string, unknown>;
   parent?: string;
+  startDate?: EntityDraftDate;
+  endDate?: EntityDraftDate;
   discoverySource: string;
 } {
   return {
@@ -72,10 +75,13 @@ export function mapDraftToFields(
       draft.labels && draft.labels.length > 0
         ? draft.labels
         : (draft.tags ?? []),
+    aliases: draft.aliases,
     image: draft.image,
     thumbnail: draft.thumbnail,
     metadata: draft.metadata,
     parent: draft.parentRef,
+    startDate: draft.startDate,
+    endDate: draft.endDate,
     discoverySource,
   };
 }

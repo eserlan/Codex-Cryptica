@@ -8,7 +8,7 @@ const randomUUID = () => {
     return v.toString(16);
   });
 };
-import type { CCImportPackage, ImportWarning } from "./package";
+import type { CCImportPackage, ImportWarning, EntityDraft } from "./package";
 import { validatePackage } from "./validate";
 import {
   mapDraftToType,
@@ -32,10 +32,14 @@ import {
 } from "./report";
 import type { VaultWriter, NewEntityInput, AssociatedDraft } from "./ports";
 
+export type SourceRefBuilder = (system: string, draft: EntityDraft) => string;
+
 export interface ImportEngineOptions {
   mappingRules?: MappingRuleSet;
   maxAssetBytes?: number;
   acceptedVersions?: string[];
+  /** Overrides identity derivation (default: buildEntitySourceRef). CIF uses a kind-independent, injective builder. */
+  sourceRefBuilder?: SourceRefBuilder;
 }
 
 export interface ImportEngineDeps {
@@ -52,6 +56,7 @@ export class ImportEngine {
       mappingRules: options.mappingRules ?? DEFAULT_MAPPING_RULES,
       maxAssetBytes: options.maxAssetBytes ?? DEFAULT_MAX_ASSET_BYTES,
       acceptedVersions: options.acceptedVersions ?? DEFAULT_ACCEPTED_VERSIONS,
+      sourceRefBuilder: options.sourceRefBuilder ?? buildEntitySourceRef,
     };
   }
 
@@ -76,7 +81,7 @@ export class ImportEngine {
     ];
 
     const associatedDrafts = pkg.entityDrafts.map((draft) => ({
-      sourceRef: buildEntitySourceRef(pkg.sourceSystem, draft),
+      sourceRef: this.options.sourceRefBuilder(pkg.sourceSystem, draft),
       title: draft.title,
     }));
 
@@ -86,7 +91,10 @@ export class ImportEngine {
     const items: PreviewItem[] = [];
     const existingMatches = await Promise.all(
       pkg.entityDrafts.map((draft) => {
-        const sourceRef = buildEntitySourceRef(pkg.sourceSystem, draft);
+        const sourceRef = this.options.sourceRefBuilder(
+          pkg.sourceSystem,
+          draft,
+        );
         return this.writer.findBySourceRef(sourceRef);
       }),
     );
@@ -98,7 +106,7 @@ export class ImportEngine {
         draft,
         this.options.mappingRules,
       );
-      const sourceRef = buildEntitySourceRef(pkg.sourceSystem, draft);
+      const sourceRef = this.options.sourceRefBuilder(pkg.sourceSystem, draft);
       items.push({
         draft,
         resolvedType,
@@ -192,10 +200,13 @@ export class ImportEngine {
         lore: fields.lore,
         tags: fields.tags,
         labels: fields.labels,
+        aliases: fields.aliases,
         image: fields.image,
         thumbnail: fields.thumbnail,
         metadata: fields.metadata,
         parent: fields.parent,
+        startDate: fields.startDate,
+        endDate: fields.endDate,
         discoverySource: fields.discoverySource,
       };
       const { id } = await this.writer.createEntity(input);
@@ -246,10 +257,13 @@ export class ImportEngine {
               lore: fields.lore,
               tags: fields.tags,
               labels: fields.labels,
+              aliases: fields.aliases,
               image: fields.image,
               thumbnail: fields.thumbnail,
               metadata: fields.metadata,
               parent: fields.parent,
+              startDate: fields.startDate,
+              endDate: fields.endDate,
             };
             await this.writer.updateEntity(item.match.entityId, patch);
             report.entitiesUpdated++;
@@ -281,10 +295,13 @@ export class ImportEngine {
           lore: fields.lore,
           tags: fields.tags,
           labels: fields.labels,
+          aliases: fields.aliases,
           image: fields.image,
           thumbnail: fields.thumbnail,
           metadata: fields.metadata,
           parent: fields.parent,
+          startDate: fields.startDate,
+          endDate: fields.endDate,
           discoverySource: fields.discoverySource,
         },
       });

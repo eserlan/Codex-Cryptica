@@ -3,6 +3,12 @@ export interface AssociatedDraft {
   title: string;
 }
 
+export interface EntityDate {
+  year: number;
+  month?: number;
+  day?: number;
+}
+
 export interface NewEntityInput {
   type: string;
   title: string;
@@ -10,12 +16,15 @@ export interface NewEntityInput {
   lore?: string;
   tags: string[];
   labels?: string[];
+  aliases?: string[];
   image?: string;
   thumbnail?: string;
   connections?: Connection[];
   discoverySource: string;
   metadata?: Record<string, unknown>;
   parent?: string;
+  startDate?: EntityDate;
+  endDate?: EntityDate;
 }
 
 export type EntityPatch = Partial<
@@ -27,11 +36,14 @@ export type EntityPatch = Partial<
     | "lore"
     | "tags"
     | "labels"
+    | "aliases"
     | "image"
     | "thumbnail"
     | "connections"
     | "metadata"
     | "parent"
+    | "startDate"
+    | "endDate"
   >
 >;
 
