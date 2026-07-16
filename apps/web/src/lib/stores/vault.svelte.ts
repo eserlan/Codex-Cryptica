@@ -581,13 +581,28 @@ export class VaultStore {
       ) {
         const result = await this.addFamilyLink(sId, tId, alias.type);
         if (!result.ok) return false;
-        await this.updateConnection(
-          sId,
-          tId,
-          alias.type,
-          alias.type,
-          alias.label,
-        );
+        // Best-effort: the family link itself is already written and
+        // correct at this point, so a failure to attach the display term
+        // (e.g. "Mother") must not report the whole redirect as failed.
+        try {
+          const labelled = await this.updateConnection(
+            sId,
+            tId,
+            alias.type,
+            alias.type,
+            alias.label,
+          );
+          if (labelled === false) {
+            console.warn(
+              `addConnection: family link ${sId}->${tId} (${alias.type}) created, but attaching its display label "${alias.label}" failed.`,
+            );
+          }
+        } catch (err) {
+          console.warn(
+            `addConnection: family link ${sId}->${tId} (${alias.type}) created, but attaching its display label "${alias.label}" threw.`,
+            err,
+          );
+        }
         return true;
       }
     }
