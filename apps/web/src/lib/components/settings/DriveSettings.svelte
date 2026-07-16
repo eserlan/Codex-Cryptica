@@ -307,6 +307,7 @@
       <button
         onclick={handleConnect}
         disabled={isConnecting || !hasClientId}
+        aria-busy={isConnecting}
         class="w-full py-3 px-4 flex items-center justify-center gap-2 bg-theme-primary hover:bg-theme-primary/90 text-white rounded-lg font-medium transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {#if isConnecting}

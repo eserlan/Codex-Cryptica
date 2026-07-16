@@ -89,3 +89,9 @@
 
 **Learning:** Found that custom icon-only buttons often had `aria-label` attributes on the button element but were missing `aria-hidden="true"` on the inner icon element, causing screen readers to potentially announce the icon element redundantly or confusingly.
 **Action:** When creating buttons with an `aria-label` or visible text, explicitly add `aria-hidden="true"` to any inner decorative icon elements (e.g., `<span class="icon-[...]">`) to prevent screen readers from announcing redundant or confusing elements.
+## 2026-07-16 - Add aria-busy to async buttons
+**Learning:** Found multiple buttons with loading states () that correctly disabled interactions but were missing  attributes, making the loading state opaque to screen readers.
+**Action:** Always add  to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
+## 2024-03-24 - Add aria-busy to async buttons
+**Learning:** Found multiple buttons with loading states (animate-spin) that correctly disabled interactions but were missing aria-busy attributes, making the loading state opaque to screen readers.
+**Action:** Always add aria-busy={isLoading} to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
