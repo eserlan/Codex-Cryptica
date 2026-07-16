@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.27.16",
+      "version": "0.27.22",
       "dependencies": {
         "@codex/ai-engine": "workspace:*",
         "@codex/audio-engine": "workspace:*",
@@ -81,6 +81,7 @@
         "dice-engine": "workspace:*",
         "dompurify": "^3.4.2",
         "editor-core": "workspace:*",
+        "fflate": "^0.8.3",
         "flexsearch": "^0.8.212",
         "generator-engine": "workspace:*",
         "graph-engine": "workspace:*",

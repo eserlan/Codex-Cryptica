@@ -125,8 +125,8 @@ describe("VaultSwitcherModal", () => {
     });
     await fireEvent.click(screen.getByRole("button", { name: /import/i }));
 
+    await waitFor(() => expect(importFromFolderMock).toHaveBeenCalled());
     expect(createVaultMock).toHaveBeenCalledWith("Imported Vault");
-    expect(importFromFolderMock).toHaveBeenCalled();
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
