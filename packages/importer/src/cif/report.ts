@@ -69,15 +69,3 @@ export function datePrecisionWarning(
     ref: entityKey,
   };
 }
-
-export function kindChangedWarning(
-  entityKey: string,
-  previousType: string,
-  newKind: string,
-): ImportWarning {
-  return {
-    code: CifWarningCode.KindChanged,
-    message: `"${entityKey}" was previously imported as "${previousType}" and this package now describes it as "${newKind}". The category was left unchanged; update it manually if needed.`,
-    ref: entityKey,
-  };
-}

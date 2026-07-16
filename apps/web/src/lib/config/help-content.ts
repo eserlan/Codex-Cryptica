@@ -188,6 +188,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.",
     icon: "icon-[lucide--folder-sync]",
   },
+  "cif-importer": {
+    id: "cif-importer",
+    title: "Codex Interchange Format (CIF) Import",
+    content:
+      "Drop a .cif.json file exported by another compatible worldbuilding tool to bring its entities, hierarchy, and links into your vault — entirely offline, with nothing sent anywhere. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
+    icon: "icon-[lucide--file-json-2]",
+  },
   "search-indexing": {
     id: "search-indexing",
     title: "Search Indexing",

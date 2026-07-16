@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parseCifFile, DEFAULT_MAX_MANIFEST_BYTES } from "./parse";
 import { validMinimalManifest, nonCifJson } from "./fixtures";
 
@@ -77,6 +79,34 @@ describe("parseCifFile — container guards (T012/FR-004/FR-005)", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.errors[0].code).toBe("zip-not-supported");
+    }
+  });
+
+  it("returns invalid-structure errors naming the field for a schema-violating manifest", async () => {
+    const raw = readFileSync(
+      join(
+        import.meta.dirname,
+        "../../../../schemas/cif/1.0/examples/invalid-missing-entity-title.cif.json",
+      ),
+      "utf-8",
+    );
+    const result = await parseCifFile(fileOf(raw));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors[0].code).toBe("invalid-structure");
+      expect(result.errors[0].message).toContain("title");
+    }
+  });
+
+  it("returns unsupported-version when the version field itself fails schema validation", async () => {
+    const raw = JSON.stringify({
+      ...(validMinimalManifest() as Record<string, unknown>),
+      version: 99,
+    });
+    const result = await parseCifFile(fileOf(raw));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors[0].code).toBe("unsupported-version");
     }
   });
 

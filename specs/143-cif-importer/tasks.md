@@ -102,10 +102,10 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T023 [P] Add a CIF import help entry in `apps/web/src/lib/config/help-content.ts` (Constitution VII; plain language per IX; note that family-alias relationship labels like "mother of" become real family links — research Decision 12)
-- [ ] T024 [P] Performance guard test: the generated ~1,000-entity manifest parses + validates + normalizes in under 5 s in `packages/importer/src/cif/perf.test.ts` (SC-006)
-- [ ] T025 Verify coverage: new `cif/` modules ≥ 70% (Constitution X) via the repo coverage command; add missing unit tests if under
-- [ ] T026 Run full gates `bun run lint && bun run test` from repo root; confirm all pre-existing importer (chronica/scabard) tests pass unmodified; walk quickstart.md acceptance spot-checks (SC-001…SC-007) including the offline run
+- [x] T023 [P] Add a CIF import help entry in `apps/web/src/lib/config/help-content.ts` (Constitution VII; plain language per IX; note that family-alias relationship labels like "mother of" become real family links — research Decision 12)
+- [x] T024 [P] Performance guard test: the generated ~1,000-entity manifest parses + validates + normalizes in under 5 s in `packages/importer/src/cif/perf.test.ts` (SC-006)
+- [x] T025 Verify coverage: new `cif/` modules ≥ 70% (Constitution X) via the repo coverage command; add missing unit tests if under
+- [x] T026 Run full gates `bun run lint && bun run test` from repo root; confirm all pre-existing importer (chronica/scabard) tests pass unmodified; walk quickstart.md acceptance spot-checks (SC-001…SC-007) including the offline run
 
 ---
 
