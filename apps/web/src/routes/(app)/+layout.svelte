@@ -303,9 +303,12 @@
 
   // Help Hash Navigation
   $effect(() => {
-    if (!helpStore.isInitialized) return;
+    if (!helpStore.isInitialized || isPopup) return;
     const articleId = getHelpArticleIdFromHash(page.url.hash);
-    if (articleId && HELP_ARTICLES.some((article) => article.id === articleId)) {
+    if (
+      articleId &&
+      HELP_ARTICLES.some((article) => article.id === articleId)
+    ) {
       setTimeout(() => {
         helpStore.openHelpToArticle(articleId);
       }, 100);

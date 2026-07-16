@@ -219,7 +219,10 @@ export class HelpStore {
 
   selectArticle(id: string): boolean {
     const articleExists = HELP_ARTICLES.some((article) => article.id === id);
-    if (!articleExists) return false;
+    if (!articleExists) {
+      this.clearArticleSelection();
+      return false;
+    }
 
     this.expandedId = id;
     return true;

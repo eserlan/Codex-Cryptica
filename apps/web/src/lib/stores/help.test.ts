@@ -113,6 +113,7 @@ describe("HelpStore", () => {
   });
 
   it("should safely reject an unknown direct Help article", () => {
+    helpStore.selectArticle("intro");
     expect(helpStore.selectArticle("missing-article")).toBe(false);
     expect((helpStore as any).expandedId).toBeNull();
   });
