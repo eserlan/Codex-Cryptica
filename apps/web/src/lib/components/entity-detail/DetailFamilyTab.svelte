@@ -6,6 +6,7 @@
   import FamilyTree from "./family-tree/FamilyTree.svelte";
   import FamilyMemberCard from "./family-tree/FamilyMemberCard.svelte";
   import EmptyFamilySlot from "./family-tree/EmptyFamilySlot.svelte";
+  import LineageView from "./family-tree/LineageView.svelte";
 
   let {
     entity,
@@ -45,6 +46,10 @@
   // --- Full-screen (native <dialog> modal: focus-trap + Esc-to-close free) ---
   let dialogEl = $state<HTMLDialogElement>();
   let isFullscreen = $state(false);
+  // Opt-in Lineage mode (FR-001): only ever surfaced inside full screen; the
+  // bounded panel ignores this and always shows the Family view. Resets to
+  // "family" on every dialog open (no persisted last-used mode).
+  let mode = $state<"family" | "lineage">("family");
   function openFullscreen() {
     // Only enter full screen if the dialog can actually open — otherwise we'd
     // hide the in-panel tree with no way to exit (the exit control lives inside
@@ -53,6 +58,7 @@
     try {
       dialogEl.showModal();
       isFullscreen = true;
+      mode = "family";
     } catch {
       isFullscreen = false;
     }
@@ -64,36 +70,70 @@
 
 {#snippet toolbar(inFullscreen: boolean)}
   <div class="flex items-center gap-1" data-testid="family-toolbar">
-    <button
-      type="button"
-      data-testid="family-zoom-out"
-      class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
-      onclick={zoomOut}
-      disabled={zoom <= MIN_ZOOM}
-      aria-label="Zoom out"
-    >
-      <span class="icon-[lucide--minus] h-3.5 w-3.5" aria-hidden="true"></span>
-    </button>
-    <button
-      type="button"
-      data-testid="family-zoom-reset"
-      class="min-w-[3rem] rounded border border-theme-border px-1 py-0.5 text-center text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-      onclick={resetZoom}
-      aria-label="Reset zoom to 100%"
-      title="Reset zoom"
-    >
-      {zoomPct}%
-    </button>
-    <button
-      type="button"
-      data-testid="family-zoom-in"
-      class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
-      onclick={zoomIn}
-      disabled={zoom >= MAX_ZOOM}
-      aria-label="Zoom in"
-    >
-      <span class="icon-[lucide--plus] h-3.5 w-3.5" aria-hidden="true"></span>
-    </button>
+    {#if inFullscreen}
+      <div
+        class="mr-1 flex overflow-hidden rounded border border-theme-border"
+        data-testid="family-mode-toggle"
+      >
+        <button
+          type="button"
+          data-testid="family-mode-family"
+          aria-pressed={mode === "family"}
+          class="px-2 py-1 text-[10px] font-bold uppercase tracking-wide {mode ===
+          'family'
+            ? 'bg-theme-primary/20 text-theme-primary'
+            : 'text-theme-muted hover:text-theme-primary'}"
+          onclick={() => (mode = "family")}
+        >
+          Family
+        </button>
+        <button
+          type="button"
+          data-testid="family-mode-lineage"
+          aria-pressed={mode === "lineage"}
+          class="px-2 py-1 text-[10px] font-bold uppercase tracking-wide {mode ===
+          'lineage'
+            ? 'bg-theme-primary/20 text-theme-primary'
+            : 'text-theme-muted hover:text-theme-primary'}"
+          onclick={() => (mode = "lineage")}
+        >
+          Lineage
+        </button>
+      </div>
+    {/if}
+    {#if !(inFullscreen && mode === "lineage")}
+      <button
+        type="button"
+        data-testid="family-zoom-out"
+        class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+        onclick={zoomOut}
+        disabled={zoom <= MIN_ZOOM}
+        aria-label="Zoom out"
+      >
+        <span class="icon-[lucide--minus] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
+      </button>
+      <button
+        type="button"
+        data-testid="family-zoom-reset"
+        class="min-w-[3rem] rounded border border-theme-border px-1 py-0.5 text-center text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        onclick={resetZoom}
+        aria-label="Reset zoom to 100%"
+        title="Reset zoom"
+      >
+        {zoomPct}%
+      </button>
+      <button
+        type="button"
+        data-testid="family-zoom-in"
+        class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+        onclick={zoomIn}
+        disabled={zoom >= MAX_ZOOM}
+        aria-label="Zoom in"
+      >
+        <span class="icon-[lucide--plus] h-3.5 w-3.5" aria-hidden="true"></span>
+      </button>
+    {/if}
     {#if inFullscreen}
       <button
         type="button"
@@ -120,49 +160,58 @@
   </div>
 {/snippet}
 
-{#snippet treeBody()}
-  {#if isRecentred}
-    <button
-      type="button"
-      data-testid="family-recenter-reset"
-      class="self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
-      onclick={() => (focusId = entity.id)}
-    >
-      ← Back to {entity.title}
-    </button>
-  {/if}
+{#snippet treeBody(inFullscreen: boolean)}
+  {#if inFullscreen && mode === "lineage"}
+    <LineageView
+      {focusId}
+      entities={vault.entities}
+      onOpen={(id) => onNavigate(id)}
+      onRecenter={(id) => (focusId = id)}
+    />
+  {:else}
+    {#if isRecentred}
+      <button
+        type="button"
+        data-testid="family-recenter-reset"
+        class="self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+        onclick={() => (focusId = entity.id)}
+      >
+        ← Back to {entity.title}
+      </button>
+    {/if}
 
-  <div class="w-full flex-1 overflow-auto">
-    <div style:zoom>
-      {#if hasFamily}
-        <FamilyTree
-          {tree}
-          onSelect={(id) => (focusId = id)}
-          onOpen={(id) => onNavigate(id)}
-        />
-      {:else}
-        <div
-          data-testid="family-empty"
-          class="flex flex-col items-center gap-3 py-4 text-center"
-        >
-          <FamilyMemberCard member={tree.focus} isFocus />
-          <p class="max-w-xs text-xs text-theme-muted">
-            No family recorded yet. Add parents, a partner, siblings, or
-            children to build {tree.focus.name}'s family tree.
-          </p>
-        </div>
-      {/if}
+    <div class="w-full flex-1 overflow-auto">
+      <div style:zoom>
+        {#if hasFamily}
+          <FamilyTree
+            {tree}
+            onSelect={(id) => (focusId = id)}
+            onOpen={(id) => onNavigate(id)}
+          />
+        {:else}
+          <div
+            data-testid="family-empty"
+            class="flex flex-col items-center gap-3 py-4 text-center"
+          >
+            <FamilyMemberCard member={tree.focus} isFocus />
+            <p class="max-w-xs text-xs text-theme-muted">
+              No family recorded yet. Add parents, a partner, siblings, or
+              children to build {tree.focus.name}'s family tree.
+            </p>
+          </div>
+        {/if}
+      </div>
     </div>
-  </div>
 
-  <div
-    class="flex flex-wrap items-start justify-center gap-2 border-t border-theme-border pt-3"
-  >
-    <EmptyFamilySlot {focusId} relation="parent" />
-    <EmptyFamilySlot {focusId} relation="partner" />
-    <EmptyFamilySlot {focusId} relation="sibling" />
-    <EmptyFamilySlot {focusId} relation="child" />
-  </div>
+    <div
+      class="flex flex-wrap items-start justify-center gap-2 border-t border-theme-border pt-3"
+    >
+      <EmptyFamilySlot {focusId} relation="parent" />
+      <EmptyFamilySlot {focusId} relation="partner" />
+      <EmptyFamilySlot {focusId} relation="sibling" />
+      <EmptyFamilySlot {focusId} relation="child" />
+    </div>
+  {/if}
 {/snippet}
 
 <div class="flex flex-col gap-3">
@@ -174,7 +223,7 @@
     <div class="flex justify-end">
       {@render toolbar(false)}
     </div>
-    {@render treeBody()}
+    {@render treeBody(false)}
   {/if}
 </div>
 
@@ -195,7 +244,7 @@
         </span>
         {@render toolbar(true)}
       </div>
-      {@render treeBody()}
+      {@render treeBody(true)}
     </div>
   {/if}
 </dialog>

@@ -3,6 +3,14 @@ import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
 
 // T061: in-app generators feature hint is registered (US5)
 describe("help-content feature hints", () => {
+  it("includes the Lineage controls hint", () => {
+    expect(FEATURE_HINTS["lineage-controls"]).toMatchObject({
+      id: "lineage-controls",
+      title: expect.any(String),
+      content: expect.stringContaining("Drag to pan"),
+    });
+  });
+
   it("FEATURE_HINTS includes in-app-generators entry", () => {
     expect(FEATURE_HINTS["in-app-generators"]).toBeDefined();
     expect(FEATURE_HINTS["in-app-generators"].id).toBe("in-app-generators");
