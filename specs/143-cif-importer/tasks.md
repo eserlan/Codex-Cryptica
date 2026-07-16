@@ -93,8 +93,8 @@
 
 - [x] T019 [US3] Implement the CC-core changes in `packages/importer/src/cc/engine.ts`, `session.ts`, `ports.ts`, `report.ts` until T017 passes
 - [x] T020 [US3] Implement the `WebVaultWriter` changes (`getEntityFields`, `titleFallback` option, `appendConnection` return) in `apps/web/src/lib/features/importer/web-vault-writer.ts` until T018 passes; CIF controller path constructs the writer with `titleFallback: false` and `updatePolicy: "cif"`
-- [ ] T021 [US3] Review diff UI for matched items (`cif-review-diff-{sourceRef}`: current vs. package value per changed field, from `PreviewItem.existing`) plus `import-report-duplicates` rendering, in the existing review/report components; component tests (FR-015)
-- [ ] T022 [US3] Re-import scenario test (library-level, `packages/importer/src/cif/reimport.test.ts`): import fixture v1 → build v2 (one renamed entity, one new entity with a relationship to a v1 entity, changed prose, added label) → re-import with mixed decisions: renamed entity matches (not create), new entity's link resolves to the _existing skipped_ entity (FR-008), identical relationship not duplicated, skip-all second pass is a vault no-op (SC-004; US3 scenarios 1–7)
+- [x] T021 [US3] Review diff UI for matched items (`cif-review-diff-{sourceRef}`: current vs. package value per changed field, from `PreviewItem.existing`) plus `import-report-duplicates` rendering, in the existing review/report components; component tests (FR-015)
+- [x] T022 [US3] Re-import scenario test (library-level, `packages/importer/src/cif/reimport.test.ts`): import fixture v1 → build v2 (one renamed entity, one new entity with a relationship to a v1 entity, changed prose, added label) → re-import with mixed decisions: renamed entity matches (not create), new entity's link resolves to the _existing skipped_ entity (FR-008), identical relationship not duplicated, skip-all second pass is a vault no-op (SC-004; US3 scenarios 1–7)
 
 **Checkpoint**: All three stories independently functional.
 

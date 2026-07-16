@@ -45,6 +45,51 @@
 
   const itemWarningCount = (item: CCImportSession["items"][number]) =>
     session.warnings.filter((warning) => warning.ref === item.sourceRef).length;
+
+  interface FieldDiff {
+    field: string;
+    current: string;
+    incoming: string;
+  }
+
+  /** Current-vs-package field diff for a matched item (FR-015), from PreviewItem.existing. */
+  function fieldDiffs(item: CCImportSession["items"][number]): FieldDiff[] {
+    const existing = item.existing;
+    if (!existing) return [];
+    const draft = item.draft;
+    const diffs: FieldDiff[] = [];
+
+    const compareScalar = (
+      field: string,
+      current?: string,
+      incoming?: string,
+    ) => {
+      const currentValue = current ?? "";
+      const incomingValue = incoming ?? "";
+      if (currentValue !== incomingValue) {
+        diffs.push({ field, current: currentValue, incoming: incomingValue });
+      }
+    };
+    const compareList = (
+      field: string,
+      current?: string[],
+      incoming?: string[],
+    ) => {
+      const currentValue = (current ?? []).join(", ");
+      const incomingValue = (incoming ?? []).join(", ");
+      if (currentValue !== incomingValue) {
+        diffs.push({ field, current: currentValue, incoming: incomingValue });
+      }
+    };
+
+    compareScalar("Title", existing.title, draft.title);
+    compareScalar("Summary", existing.content, draft.content);
+    compareScalar("Lore", existing.lore, draft.lore);
+    compareList("Labels", existing.labels, draft.labels);
+    compareList("Aliases", existing.aliases, draft.aliases);
+
+    return diffs;
+  }
 </script>
 
 <div class={["flex flex-col gap-4 min-h-0", isStandalone && "flex-1"]}>
@@ -123,127 +168,158 @@
     <div class="overflow-y-auto min-h-0">
       {#each session.items as item (item.sourceRef)}
         <div
-          class="grid grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)_minmax(0,0.9fr)_auto] gap-3 px-4 py-3 border-b border-theme-border/70 last:border-b-0"
+          class="border-b border-theme-border/70 last:border-b-0"
+          data-testid={item.match && fieldDiffs(item).length > 0
+            ? `cif-review-diff-${item.sourceRef}`
+            : undefined}
         >
-          <div class="min-w-0">
-            <label class="flex items-start gap-3">
-              <input
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 accent-[var(--color-theme-primary)]"
-                checked={item.decision === "include"}
-                onchange={(event) =>
-                  onItemDecisionChange(
-                    draftRefFor(item),
-                    event.currentTarget.checked ? "include" : "ignore",
-                  )}
-                aria-label={`Include ${item.draft.title}`}
-              />
+          <div
+            class="grid grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)_minmax(0,0.9fr)_auto] gap-3 px-4 py-3"
+          >
+            <div class="min-w-0">
+              <label class="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  class="mt-0.5 h-4 w-4 accent-[var(--color-theme-primary)]"
+                  checked={item.decision === "include"}
+                  onchange={(event) =>
+                    onItemDecisionChange(
+                      draftRefFor(item),
+                      event.currentTarget.checked ? "include" : "ignore",
+                    )}
+                  aria-label={`Include ${item.draft.title}`}
+                />
 
-              <span class="min-w-0">
-                <span
-                  class="block text-sm font-semibold text-theme-text truncate"
-                  title={item.sourceRef}
-                >
-                  {item.draft.title}
+                <span class="min-w-0">
+                  <span
+                    class="block text-sm font-semibold text-theme-text truncate"
+                    title={item.sourceRef}
+                  >
+                    {item.draft.title}
+                  </span>
+                  {#if item.typeFallback}
+                    <span
+                      class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-amber-500"
+                    >
+                      <span class="icon-[lucide--triangle-alert] h-3.5 w-3.5"
+                      ></span>
+                      Type fallback — check the type
+                    </span>
+                  {/if}
+                  {#if itemWarningCount(item) > 0}
+                    <span
+                      class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-red-400"
+                    >
+                      <span class="icon-[lucide--alert-triangle] h-3.5 w-3.5"
+                      ></span>
+                      {itemWarningCount(item)} warning{itemWarningCount(
+                        item,
+                      ) === 1
+                        ? ""
+                        : "s"}
+                    </span>
+                  {/if}
                 </span>
-                {#if item.typeFallback}
-                  <span
-                    class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-amber-500"
-                  >
-                    <span class="icon-[lucide--triangle-alert] h-3.5 w-3.5"
-                    ></span>
-                    Type fallback — check the type
-                  </span>
+              </label>
+            </div>
+
+            <div class="min-w-0 flex items-start">
+              <select
+                class={[
+                  "px-2 py-1 border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider rounded",
+                  item.typeFallback
+                    ? "border-amber-500 text-amber-500"
+                    : "border-theme-border text-theme-text",
+                ]}
+                value={item.resolvedType}
+                onchange={(event) =>
+                  onItemTypeChange(
+                    draftRefFor(item),
+                    event.currentTarget.value,
+                  )}
+                aria-label={`Type for ${item.draft.title}`}
+              >
+                {#if !categories.list.some((c) => c.id === item.resolvedType)}
+                  <option value={item.resolvedType}>{item.resolvedType}</option>
                 {/if}
-                {#if itemWarningCount(item) > 0}
-                  <span
-                    class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-red-400"
-                  >
-                    <span class="icon-[lucide--alert-triangle] h-3.5 w-3.5"
-                    ></span>
-                    {itemWarningCount(item)} warning{itemWarningCount(item) ===
-                    1
-                      ? ""
-                      : "s"}
-                  </span>
-                {/if}
-              </span>
-            </label>
-          </div>
-
-          <div class="min-w-0 flex items-start">
-            <select
-              class={[
-                "px-2 py-1 border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider rounded",
-                item.typeFallback
-                  ? "border-amber-500 text-amber-500"
-                  : "border-theme-border text-theme-text",
-              ]}
-              value={item.resolvedType}
-              onchange={(event) =>
-                onItemTypeChange(draftRefFor(item), event.currentTarget.value)}
-              aria-label={`Type for ${item.draft.title}`}
-            >
-              {#if !categories.list.some((c) => c.id === item.resolvedType)}
-                <option value={item.resolvedType}>{item.resolvedType}</option>
-              {/if}
-              {#each categories.list as category (category.id)}
-                <option value={category.id}>{category.label}</option>
-              {/each}
-            </select>
-          </div>
-
-          <div class="min-w-0 flex items-start">
-            {#if item.match}
-              <span
-                class="inline-flex items-center gap-1 px-2 py-1 border border-theme-primary/30 bg-theme-primary/10 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary rounded"
-              >
-                <span class="icon-[lucide--link-2] h-3.5 w-3.5"></span>
-                Existing
-              </span>
-            {:else}
-              <span
-                class="inline-flex items-center gap-1 px-2 py-1 border border-theme-border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted rounded"
-              >
-                <span class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
-                New
-              </span>
-            {/if}
-          </div>
-
-          <div class="flex items-start justify-end">
-            {#if item.match}
-              <div
-                class="inline-flex rounded border border-theme-border overflow-hidden"
-              >
-                {#each ["skip", "update", "create"] as option (option)}
-                  <button
-                    type="button"
-                    class={[
-                      "px-2.5 py-1 text-[10px] font-bold uppercase font-header tracking-wider border-l first:border-l-0",
-                      (item.matchDecision ?? "skip") === option
-                        ? "bg-theme-primary text-theme-bg border-theme-primary"
-                        : "bg-theme-bg text-theme-text border-theme-border hover:bg-theme-surface",
-                    ]}
-                    onclick={() =>
-                      onMatchDecisionChange(
-                        draftRefFor(item),
-                        option as MatchDecision,
-                      )}
-                    aria-pressed={(item.matchDecision ?? "skip") === option}
-                  >
-                    {option}
-                  </button>
+                {#each categories.list as category (category.id)}
+                  <option value={category.id}>{category.label}</option>
                 {/each}
-              </div>
-            {:else}
-              <span
-                class="text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted pt-1"
-              >
-                Create
-              </span>
-            {/if}
+              </select>
+            </div>
+
+            <div class="min-w-0 flex items-start">
+              {#if item.match}
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-1 border border-theme-primary/30 bg-theme-primary/10 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary rounded"
+                >
+                  <span class="icon-[lucide--link-2] h-3.5 w-3.5"></span>
+                  Existing
+                </span>
+              {:else}
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-1 border border-theme-border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted rounded"
+                >
+                  <span class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
+                  New
+                </span>
+              {/if}
+            </div>
+
+            <div class="flex items-start justify-end">
+              {#if item.match}
+                <div
+                  class="inline-flex rounded border border-theme-border overflow-hidden"
+                >
+                  {#each ["skip", "update", "create"] as option (option)}
+                    <button
+                      type="button"
+                      class={[
+                        "px-2.5 py-1 text-[10px] font-bold uppercase font-header tracking-wider border-l first:border-l-0",
+                        (item.matchDecision ?? "skip") === option
+                          ? "bg-theme-primary text-theme-bg border-theme-primary"
+                          : "bg-theme-bg text-theme-text border-theme-border hover:bg-theme-surface",
+                      ]}
+                      onclick={() =>
+                        onMatchDecisionChange(
+                          draftRefFor(item),
+                          option as MatchDecision,
+                        )}
+                      aria-pressed={(item.matchDecision ?? "skip") === option}
+                    >
+                      {option}
+                    </button>
+                  {/each}
+                </div>
+              {:else}
+                <span
+                  class="text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted pt-1"
+                >
+                  Create
+                </span>
+              {/if}
+            </div>
           </div>
+
+          {#if item.match && fieldDiffs(item).length > 0}
+            <div class="px-4 pb-3 -mt-1 space-y-1.5">
+              {#each fieldDiffs(item) as diff (diff.field)}
+                <div class="text-[11px] leading-tight">
+                  <span
+                    class="font-bold uppercase font-header tracking-wider text-theme-muted"
+                    >{diff.field}:</span
+                  >
+                  <span class="text-red-400/80 line-through break-words"
+                    >{diff.current || "(empty)"}</span
+                  >
+                  <span class="text-theme-muted">→</span>
+                  <span class="text-theme-primary break-words"
+                    >{diff.incoming || "(empty)"}</span
+                  >
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
       {/each}
     </div>
