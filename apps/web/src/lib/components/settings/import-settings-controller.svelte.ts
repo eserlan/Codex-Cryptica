@@ -31,6 +31,11 @@ import {
   setItemDecision,
   setMatchDecision,
   setItemType,
+  parseCifFile,
+  validateCifManifest,
+  normalizeCifPackage,
+  cifSourceRefBuilder,
+  CIF_MAPPING_RULES,
 } from "@codex/importer";
 import type {
   ChronicaExportDocument,
@@ -267,6 +272,142 @@ export class ImportSettingsController {
     );
 
   /**
+   * CIF gets its own engine: a kind-independent, injective sourceRefBuilder
+   * (FR-014 — a producer changing an entity's kind must never break repeat-
+   * import matching) and CIF's own kind→category mapping rules (FR-011).
+   */
+  private createCifEngine = () =>
+    new ImportEngine(
+      {
+        writer: createWebVaultWriter(this.deps.vault, {
+          titleFallback: false,
+        }),
+      },
+      {
+        mappingRules: CIF_MAPPING_RULES,
+        sourceRefBuilder: cifSourceRefBuilder,
+        updatePolicy: "cif",
+      },
+    );
+
+  /**
+   * Filename is the primary signal (`.cif.json`/`.cif.zip`); a `.json` file
+   * that doesn't follow the convention but self-declares the CIF format is
+   * also recognised, so this errs toward routing genuine CIF packages to
+   * their dedicated (safer) validation path rather than the generic parsers.
+   */
+  private async looksLikeCifFile(file: File): Promise<boolean> {
+    if (/\.cif\.(json|zip)$/i.test(file.name)) return true;
+    if (!file.name.toLowerCase().endsWith(".json")) return false;
+    try {
+      const parsed = JSON.parse(await file.text());
+      return (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        (parsed as Record<string, unknown>).format === "codex-world-interchange"
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * CIF is a single self-contained package (FR-001): parse + validate fully
+   * before opening review (FR-003), never mutating the vault on failure or
+   * cancellation (FR-009). Guests never reach the flow (FR-019).
+   */
+  private async handleCifFile(file: File, signal: AbortSignal) {
+    if (this.deps.vault.isGuest) {
+      this.rejectedFiles.push({
+        name: file.name,
+        reason: "Guests cannot import into a vault.",
+      });
+      this.step = "upload";
+      return;
+    }
+
+    this.importMode = "cc";
+    this.statusMessage = "Preparing CIF import review...";
+
+    const parseResult = await parseCifFile({
+      fileName: file.name,
+      size: file.size,
+      text: () => file.text(),
+    });
+
+    if (!parseResult.ok) {
+      this.rejectedFiles.push({
+        name: file.name,
+        reason: parseResult.errors.map((e) => e.message).join(" "),
+      });
+      this.step = "upload";
+      this.importMode = null;
+      return;
+    }
+
+    // Cross-record validation (FR-002/FR-003): a schema-valid manifest can
+    // still be structurally broken (duplicate keys, unresolved references,
+    // hierarchy cycles, unsupported version) — never open a review session
+    // for one of those.
+    const validation = validateCifManifest(parseResult.manifest);
+    if (!validation.ok) {
+      this.rejectedFiles.push({
+        name: file.name,
+        reason: validation.errors.map((e) => e.message).join(" "),
+      });
+      this.step = "upload";
+      this.importMode = null;
+      return;
+    }
+
+    const { pkg } = normalizeCifPackage(parseResult.manifest);
+
+    // validateCifManifest's own warnings (e.g. cif.unmapped-kind, which
+    // normalizeCifPackage doesn't separately compute) must still reach the
+    // review/report — merge in anything not already present, deduped by
+    // code+ref+message so categories both functions independently compute
+    // (no-world-key, unknown-extension, assets-not-imported) don't double up.
+    const seenWarnings = new Set(
+      pkg.warnings.map((w) => `${w.code}:${w.ref ?? ""}:${w.message}`),
+    );
+    for (const warning of validation.warnings) {
+      const key = `${warning.code}:${warning.ref ?? ""}:${warning.message}`;
+      if (!seenWarnings.has(key)) {
+        pkg.warnings.push(warning);
+        seenWarnings.add(key);
+      }
+    }
+
+    try {
+      this.ccSession = await wrapWithAbort(
+        this.createCifEngine().prepare(pkg),
+        signal,
+      );
+    } catch (error) {
+      if (
+        signal.aborted ||
+        (error instanceof Error && error.message === "Import aborted")
+      ) {
+        this.step = "upload";
+        this.ccSession = null;
+        this.ccReport = null;
+        this.importMode = null;
+        return;
+      }
+      this.rejectedFiles.push({
+        name: file.name,
+        reason:
+          error instanceof Error ? error.message : "Invalid CIF import package",
+      });
+    }
+
+    this.step = this.ccSession ? "review" : "upload";
+    if (!this.ccSession && this.rejectedFiles.length === 0) {
+      this.statusMessage = "No CIF package was prepared.";
+    }
+  }
+
+  /**
    * Converts AI-discovered entities (Oracle analysis, creature packs) into a
    * CCImportPackage and runs it through the same generic engine as Scabard/
    * Chronica, so they share one preview/decision/commit/report pipeline.
@@ -350,6 +491,14 @@ export class ImportSettingsController {
     const apiKey = this.deps.oracle.effectiveApiKey || "";
     let analyzer: OracleAnalyzer | null = null;
     let lockedMode: ImportMode = null;
+
+    // CIF: a single self-contained package, detected before chronica/scabard
+    // (FR-001). Guest/read-only sessions never reach the flow (FR-019),
+    // consistent with the rest of this deterministic import surface.
+    if (files.length === 1 && (await this.looksLikeCifFile(files[0]))) {
+      await this.handleCifFile(files[0], signal);
+      return;
+    }
 
     const chronicaDocuments: ChronicaExportDocument[] = [];
     const chronicaMixedRejections: { name: string; reason: string }[] = [];

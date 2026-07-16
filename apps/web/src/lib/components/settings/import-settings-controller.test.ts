@@ -300,3 +300,227 @@ describe("import-settings-controller helpers", () => {
     expect(matched?.match?.entityId).toBe("existing-1");
   });
 });
+
+function cifManifestText(overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    format: "codex-world-interchange",
+    version: "1.0",
+    source: { system: "test-tool", worldKey: "test-world" },
+    world: { title: "Test World" },
+    entities: [
+      {
+        key: "characters/a",
+        kind: "character",
+        title: "A",
+        content: { format: "markdown", body: "Body" },
+      },
+      {
+        key: "characters/b",
+        kind: "character",
+        title: "B",
+        content: { format: "markdown", body: "Body" },
+      },
+    ],
+    relationships: [
+      { from: "characters/a", to: "characters/b", kind: "knows" },
+    ],
+    assets: [],
+    ...overrides,
+  });
+}
+
+describe("import-settings-controller — CIF detection and flow (T009)", () => {
+  it("detects a .cif.json file before chronica/scabard checks and prepares a review session", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File([cifManifestText()], "world.cif.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("review");
+    expect(controller.importMode).toBe("cc");
+    expect(controller.ccSession?.sourceSystem).toBe("cif");
+    expect(controller.ccSession?.items.length).toBe(2);
+    expect(controller.ccSession?.relationships.length).toBe(1);
+  });
+
+  it("detects a plain .json file that self-declares the CIF format", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File([cifManifestText()], "export.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.ccSession?.sourceSystem).toBe("cif");
+  });
+
+  it("rejects a .cif.json file with a plain-language error naming the rule, without opening review", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(["{ not valid json"], "world.cif.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles.length).toBe(1);
+    expect(controller.rejectedFiles[0].name).toBe("world.cif.json");
+  });
+
+  it("declines a .cif.zip file with a not-yet-supported message", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(["PK\x03\x04binarydata"], "world.cif.zip", {
+      type: "application/zip",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles[0].reason).toMatch(/not supported/i);
+  });
+
+  it("is unreachable in guest sessions (FR-019)", async () => {
+    const deps = baseDeps({ vault: { isGuest: true } as any });
+    const controller = new ImportSettingsController(deps);
+    const file = new File([cifManifestText()], "world.cif.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.ccSession).toBeNull();
+    expect(controller.step).toBe("upload");
+    expect(controller.rejectedFiles.length).toBe(1);
+  });
+
+  it("cancel at review discards the session with zero vault mutations (FR-009)", async () => {
+    let createCalled = false;
+    const deps = baseDeps({
+      vault: {
+        entities: {},
+        allEntities: [],
+        createEntity: async () => {
+          createCalled = true;
+          return "new-id";
+        },
+        updateEntity: async () => true,
+        batchCreateEntities: async () => {},
+        addConnection: async () => true,
+        suspendSaving: () => {},
+        resumeSaving: () => {},
+        flushPendingSaves: async () => {},
+        saveImageToVault: async () => ({ image: "", thumbnail: "" }),
+      } as any,
+    });
+    const controller = new ImportSettingsController(deps);
+    const file = new File([cifManifestText()], "world.cif.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+    expect(controller.step).toBe("review");
+
+    // Cancelling means: never calling commit(). No vault mutation method
+    // should have been invoked just from preparing the review.
+    expect(createCalled).toBe(false);
+  });
+});
+
+describe("import-settings-controller — CIF blocking validation (T016/FR-003)", () => {
+  it("rejects a structurally invalid CIF package (duplicate entity key) before opening review", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [
+        cifManifestText({
+          entities: [
+            {
+              key: "characters/a",
+              kind: "character",
+              title: "A",
+              content: { format: "markdown", body: "Body" },
+            },
+            {
+              key: "characters/a",
+              kind: "character",
+              title: "Duplicate",
+              content: { format: "markdown", body: "Body" },
+            },
+          ],
+          relationships: [],
+        }),
+      ],
+      "world.cif.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles.length).toBe(1);
+    expect(controller.rejectedFiles[0].reason).toContain("characters/a");
+  });
+
+  it("rejects an unsupported CIF version before opening review, naming both versions", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [cifManifestText({ version: "99.0" })],
+      "world.cif.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles[0].reason).toContain("99.0");
+    expect(controller.rejectedFiles[0].reason).toContain("1.0");
+  });
+});
+
+describe("import-settings-controller — validateCifManifest warnings surface in review (Copilot PR feedback)", () => {
+  it("threads validateCifManifest's own warnings (e.g. cif.unmapped-kind) into the session instead of dropping them", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [
+        cifManifestText({
+          entities: [
+            {
+              key: "characters/a",
+              // Not one of CIF_MAPPING_RULES' known kinds — validateCifManifest
+              // produces a cif.unmapped-kind warning for this, but normalizeCifPackage
+              // never independently computes that same warning (it relies on the
+              // engine's separate typeFallback mechanism instead).
+              kind: "deity",
+              title: "A",
+              content: { format: "markdown", body: "Body" },
+            },
+          ],
+          relationships: [],
+        }),
+      ],
+      "world.cif.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("review");
+    expect(
+      controller.ccSession?.warnings.some(
+        (w) => w.code === "cif.unmapped-kind",
+      ),
+    ).toBe(true);
+  });
+});

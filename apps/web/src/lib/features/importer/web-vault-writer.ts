@@ -4,6 +4,7 @@ import type {
   AssetInput,
   Connection,
   EntityPatch,
+  ExistingEntityFields,
   NewEntityInput,
   VaultWriter,
 } from "@codex/importer";
@@ -32,12 +33,23 @@ export interface VaultWriterStoreLike {
   ): Promise<boolean>;
 }
 
+export interface WebVaultWriterOptions {
+  /** Default `true` (legacy adapters). `false` (CIF) makes `findBySourceRef` exact-match only — no title-based fallback (FR-014). */
+  titleFallback?: boolean;
+}
+
 export class WebVaultWriter implements VaultWriter {
   private sourceMap: Map<string, string> | null = null;
   private titleMap: Map<string, string> | null = null;
   private sanitizedIdMap: Map<string, string> | null = null;
+  private readonly titleFallback: boolean;
 
-  constructor(private store: VaultWriterStoreLike) {}
+  constructor(
+    private store: VaultWriterStoreLike,
+    options: WebVaultWriterOptions = {},
+  ) {
+    this.titleFallback = options.titleFallback ?? true;
+  }
 
   private initMaps() {
     if (this.sourceMap) return;
@@ -70,6 +82,7 @@ export class WebVaultWriter implements VaultWriter {
     this.initMaps();
     const id = this.sourceMap!.get(sourceRef);
     if (id) return { id };
+    if (!this.titleFallback) return null;
 
     // Fallback: match by title / sanitized ID
     const title = this.draftTitleMap.get(sourceRef);
@@ -93,11 +106,14 @@ export class WebVaultWriter implements VaultWriter {
         lore: entity.lore,
         tags: entity.tags,
         labels: entity.labels ?? [],
+        aliases: entity.aliases,
         image: entity.image,
         thumbnail: entity.thumbnail,
         metadata: entity.metadata as Entity["metadata"],
         discoverySource: entity.discoverySource,
         parent: entity.parent,
+        start_date: toTemporalMetadata(entity.startDate),
+        end_date: toTemporalMetadata(entity.endDate),
         connections: (entity.connections ?? []) as Entity["connections"],
       },
     );
@@ -138,11 +154,14 @@ export class WebVaultWriter implements VaultWriter {
           lore: entity.lore,
           tags: entity.tags,
           labels: entity.labels ?? [],
+          aliases: entity.aliases,
           image: entity.image,
           thumbnail: entity.thumbnail,
           metadata: entity.metadata as Entity["metadata"],
           discoverySource: entity.discoverySource,
           parent: entity.parent,
+          start_date: toTemporalMetadata(entity.startDate),
+          end_date: toTemporalMetadata(entity.endDate),
           connections: (entity.connections ?? []) as Entity["connections"],
         },
       })),
@@ -191,10 +210,13 @@ export class WebVaultWriter implements VaultWriter {
       lore: patch.lore,
       tags: patch.tags,
       labels: patch.labels,
+      aliases: patch.aliases,
       image: patch.image,
       thumbnail: patch.thumbnail,
       metadata: patch.metadata as Entity["metadata"],
       parent: patch.parent,
+      start_date: toTemporalMetadata(patch.startDate),
+      end_date: toTemporalMetadata(patch.endDate),
     };
     if (patch.connections !== undefined) {
       updates.connections = patch.connections as Entity["connections"];
@@ -211,7 +233,10 @@ export class WebVaultWriter implements VaultWriter {
     }
   }
 
-  async appendConnection(id: string, connection: Connection): Promise<void> {
+  async appendConnection(
+    id: string,
+    connection: Connection,
+  ): Promise<{ created: boolean }> {
     const source = this.store.entities[id];
     if (!source) {
       throw new Error(`Entity ${id} not found`);
@@ -231,7 +256,7 @@ export class WebVaultWriter implements VaultWriter {
         existing.label === nextConnection.label,
     );
 
-    if (alreadyExists) return;
+    if (alreadyExists) return { created: false };
 
     const success = await this.store.addConnection(
       id,
@@ -244,6 +269,23 @@ export class WebVaultWriter implements VaultWriter {
     if (!success) {
       throw new Error(`Failed to append connection for entity ${id}`);
     }
+    return { created: true };
+  }
+
+  async getEntityFields(id: string): Promise<ExistingEntityFields | null> {
+    const entity = this.store.entities[id];
+    if (!entity) return null;
+    return {
+      title: entity.title ?? "",
+      content: entity.content ?? "",
+      lore: entity.lore,
+      labels: entity.labels,
+      aliases: entity.aliases,
+      type: (entity.type as string) ?? "",
+      parent: entity.parent,
+      startDate: fromTemporalMetadata(entity.start_date),
+      endDate: fromTemporalMetadata(entity.end_date),
+    };
   }
 
   async saveAsset(_asset: AssetInput): Promise<{ ref: string }> {
@@ -251,6 +293,31 @@ export class WebVaultWriter implements VaultWriter {
       "Generic CC asset persistence is not supported by the web vault adapter yet",
     );
   }
+}
+
+function toTemporalMetadata(
+  date: NewEntityInput["startDate"],
+): Entity["start_date"] {
+  if (!date) return undefined;
+  return {
+    year: date.year,
+    month: date.month,
+    day: date.day,
+  } as Entity["start_date"];
+}
+
+function fromTemporalMetadata(
+  date: Entity["start_date"],
+): ExistingEntityFields["startDate"] {
+  if (!date || typeof (date as { year?: unknown }).year !== "number") {
+    return undefined;
+  }
+  const { year, month, day } = date as {
+    year: number;
+    month?: number;
+    day?: number;
+  };
+  return { year, month, day };
 }
 
 function sanitizeEntityId(text: string): string {
@@ -262,6 +329,9 @@ function sanitizeEntityId(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function createWebVaultWriter(store: VaultWriterStoreLike) {
-  return new WebVaultWriter(store);
+export function createWebVaultWriter(
+  store: VaultWriterStoreLike,
+  options?: WebVaultWriterOptions,
+) {
+  return new WebVaultWriter(store, options);
 }

@@ -9,6 +9,13 @@ export const ImportWarningSchema = z.object({
 });
 export type ImportWarning = z.infer<typeof ImportWarningSchema>;
 
+const EntityDraftDateSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int().optional(),
+  day: z.number().int().optional(),
+});
+export type EntityDraftDate = z.infer<typeof EntityDraftDateSchema>;
+
 export const EntityDraftSchema = z
   .object({
     sourceId: z.string().optional(),
@@ -19,10 +26,13 @@ export const EntityDraftSchema = z
     lore: z.string().optional(),
     tags: z.array(z.string()).default([]),
     labels: z.array(z.string()).optional(),
+    aliases: z.array(z.string()).optional(),
     image: z.string().optional(),
     thumbnail: z.string().optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
     parentRef: z.string().optional(),
+    startDate: EntityDraftDateSchema.optional(),
+    endDate: EntityDraftDateSchema.optional(),
   })
   .refine((d) => d.sourceId !== undefined || d.sourcePath !== undefined, {
     message: "EntityDraft must have either sourceId or sourcePath",

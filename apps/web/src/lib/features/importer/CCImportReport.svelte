@@ -128,9 +128,35 @@
       <span><strong>{report.assetsImported}</strong> assets imported</span>
       <span><strong>{report.assetsSkipped.length}</strong> assets skipped</span>
       <span><strong>{report.typeFallbacks.length}</strong> type fallbacks</span>
+      <span
+        ><strong>{report.duplicatesSkipped.length}</strong> duplicates skipped</span
+      >
       <span><strong>{report.warnings.length}</strong> warnings</span>
     </div>
   </section>
+
+  {#if report.duplicatesSkipped.length > 0}
+    <section
+      class="border border-theme-border bg-theme-surface rounded-lg p-4"
+      data-testid="import-report-duplicates"
+    >
+      <h4
+        class="text-xs font-bold text-theme-primary uppercase font-header tracking-widest"
+      >
+        Links already present
+      </h4>
+      <div class="mt-3 space-y-2">
+        {#each report.duplicatesSkipped as duplicate, i (`${duplicate.fromRef}:${duplicate.toRef}:${duplicate.type}:${i}`)}
+          <div class="text-xs text-theme-text">
+            <div class="font-semibold break-all">
+              {duplicate.fromRef} -> {duplicate.toRef}
+            </div>
+            <div class="text-theme-muted">{duplicate.type}</div>
+          </div>
+        {/each}
+      </div>
+    </section>
+  {/if}
 
   <div class="flex justify-end">
     <button
