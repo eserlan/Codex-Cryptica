@@ -3,9 +3,31 @@
   import { slide } from "svelte/transition";
 
   const draft = $derived(revisionService.pendingDraft);
+  const isRevising = $derived(revisionService.isRevising);
 </script>
 
-{#if draft}
+{#if isRevising}
+  <div
+    transition:slide
+    role="status"
+    aria-live="polite"
+    aria-busy="true"
+    class="flex items-center gap-3 p-3 bg-theme-primary/10 border-y border-theme-primary/30 backdrop-blur-sm sticky bottom-0 z-50 shadow-lg"
+  >
+    <span
+      class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-primary"
+      aria-hidden="true"
+    ></span>
+    <div class="flex flex-col">
+      <span class="text-[10px] font-bold text-theme-primary uppercase tracking-widest">
+        AI Revision in Progress
+      </span>
+      <span class="text-[9px] text-theme-muted uppercase tracking-tight">
+        Creating updated Chronicle & Lore
+      </span>
+    </div>
+  </div>
+{:else if draft}
   <div
     transition:slide
     class="flex items-center justify-between gap-4 p-3 bg-theme-primary/10 border-y border-theme-primary/30 backdrop-blur-sm sticky bottom-0 z-50 shadow-lg"
