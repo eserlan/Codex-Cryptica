@@ -112,6 +112,12 @@ describe("HelpStore", () => {
     expect(modalUIStore.openSettings).toHaveBeenCalledWith("help");
   });
 
+  it("should safely reject an unknown direct Help article", () => {
+    helpStore.selectArticle("intro");
+    expect(helpStore.selectArticle("missing-article")).toBe(false);
+    expect((helpStore as any).expandedId).toBeNull();
+  });
+
   it("should open help window", () => {
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
     helpStore.openHelpWindow();

@@ -128,7 +128,7 @@ vi.mock("@codex/gdrive-sync", () => ({
   configureGDriveSync: vi.fn(),
 }));
 vi.mock("$lib/config/help-content", () => ({
-  HELP_ARTICLES: [],
+  HELP_ARTICLES: [{ id: "family-tree" }],
 }));
 vi.mock("$lib/config", () => ({
   VERSION: "0.0.0",
@@ -229,6 +229,7 @@ import { themeStore } from "$lib/stores/theme.svelte";
 import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { page } from "$app/state";
 
 describe("+layout.svelte", () => {
   beforeAll(() => {
@@ -260,6 +261,8 @@ describe("+layout.svelte", () => {
     (vault as any).activeVaultId = "v1";
     (vault as any).allEntities = [];
     helpStore.activeTour = null;
+    helpStore.isInitialized = false;
+    page.url = new URL("http://localhost/") as typeof page.url;
     vi.mocked(helpStore.hasSeen).mockReturnValue(true);
     (onboardingStore as any).isLandingPageVisible = false;
     onboardingStore.dismissedWorldPage = true;
@@ -278,6 +281,21 @@ describe("+layout.svelte", () => {
   it("keeps route content mounted beneath the app shell", () => {
     render(LayoutTestHost);
     expect(screen.getByTestId("layout-children")).toBeTruthy();
+  });
+
+  it("does not open the in-app Help modal for standalone Help hashes", async () => {
+    vi.useFakeTimers();
+    helpStore.isInitialized = true;
+    page.url = new URL(
+      "http://localhost/help#help/family-tree",
+    ) as typeof page.url;
+
+    render(LayoutTestHost);
+    await tick();
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(helpStore.openHelpToArticle).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it("mounts the QuickNote scratchpad outside guest mode", () => {

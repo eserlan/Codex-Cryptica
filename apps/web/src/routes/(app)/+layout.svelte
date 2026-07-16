@@ -19,6 +19,7 @@
   import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
   import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
+  import { getHelpArticleIdFromHash } from "$lib/components/help/help-direct-link";
   import { VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
@@ -80,6 +81,7 @@
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
       page.url.pathname === `${base}/help` ||
+      page.url.pathname.startsWith(`${base}/help/`) ||
       page.url.pathname === `${base}/import`,
   );
   const anyModalOpen = $derived(
@@ -301,20 +303,15 @@
 
   // Help Hash Navigation
   $effect(() => {
-    if (!helpStore.isInitialized) return;
-    const hash = page.url.hash;
-    if (hash && hash.startsWith("#help/")) {
-      const articleId = hash.replace("#help/", "");
-      if (articleId) {
-        const exists = HELP_ARTICLES.some(
-          (article) => article.id === articleId,
-        );
-        if (exists) {
-          setTimeout(() => {
-            helpStore.openHelpToArticle(articleId);
-          }, 100);
-        }
-      }
+    if (!helpStore.isInitialized || isPopup) return;
+    const articleId = getHelpArticleIdFromHash(page.url.hash);
+    if (
+      articleId &&
+      HELP_ARTICLES.some((article) => article.id === articleId)
+    ) {
+      setTimeout(() => {
+        helpStore.openHelpToArticle(articleId);
+      }, 100);
     }
   });
 
