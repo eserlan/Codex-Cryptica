@@ -159,10 +159,9 @@ describe("ZenContent Related Entity Generation Trigger", () => {
       editState: { isEditing: false } as any,
       scrollContainer: undefined,
     });
-    expect(
-      screen.getByRole("button", {
-        name: "Revise Chronicle and Lore with AI",
-      }).disabled,
-    ).toBe(true);
+    const revisionButton = screen.getByRole("button", {
+      name: "Revise Chronicle and Lore with AI",
+    }) as HTMLButtonElement;
+    expect(revisionButton.disabled).toBe(true);
   });
 });
