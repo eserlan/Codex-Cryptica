@@ -4,6 +4,7 @@ import type {
   AssetDraft,
   ImportWarning,
 } from "./package";
+import type { ExistingEntityFields } from "./ports";
 
 export type ItemDecision = "include" | "ignore";
 export type MatchDecision = "skip" | "create" | "update";
@@ -16,6 +17,8 @@ export interface PreviewItem {
   match: { entityId: string } | null;
   decision: ItemDecision;
   matchDecision?: MatchDecision;
+  /** Current vault fields for a matched entity, when the writer supports `getEntityFields` — powers the review diff (FR-015). */
+  existing?: ExistingEntityFields;
 }
 
 export interface PreviewRelationship {

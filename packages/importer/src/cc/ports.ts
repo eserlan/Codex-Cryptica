@@ -47,6 +47,19 @@ export type EntityPatch = Partial<
   >
 >;
 
+/** Current comparable vault fields for a matched entity — powers the review diff and "cif" update policy's union merges. */
+export interface ExistingEntityFields {
+  title: string;
+  content: string;
+  lore?: string;
+  labels?: string[];
+  aliases?: string[];
+  type: string;
+  parent?: string;
+  startDate?: EntityDate;
+  endDate?: EntityDate;
+}
+
 export interface AssetInput {
   bytes: Blob | Uint8Array;
   originalName: string;
@@ -66,8 +79,13 @@ export interface VaultWriter {
     entities: NewEntityInput[],
   ): Promise<Array<{ id: string }>>;
   updateEntity(id: string, patch: EntityPatch): Promise<void>;
-  /** Appends a single connection to an entity without touching its other connections. */
-  appendConnection(id: string, connection: Connection): Promise<void>;
+  /** Appends a single connection to an entity without touching its other connections. `created: false` means an identical link was already present (FR-013). */
+  appendConnection(
+    id: string,
+    connection: Connection,
+  ): Promise<{ created: boolean }>;
+  /** Current comparable fields for a matched entity, powering the review diff and "cif" update policy's union merges. Optional — writers that don't implement it simply get no snapshot. */
+  getEntityFields?(id: string): Promise<ExistingEntityFields | null>;
   associateDrafts?(drafts: AssociatedDraft[]): void;
   saveAsset(asset: AssetInput): Promise<{ ref: string }>;
 }

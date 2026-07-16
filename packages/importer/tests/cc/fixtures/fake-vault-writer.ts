@@ -42,13 +42,17 @@ export class FakeVaultWriter implements VaultWriter {
     this.entities.set(id, updated);
   }
 
-  async appendConnection(id: string, connection: Connection): Promise<void> {
+  async appendConnection(
+    id: string,
+    connection: Connection,
+  ): Promise<{ created: boolean }> {
     const existing = this.entities.get(id);
     if (!existing) throw new Error(`Entity ${id} not found`);
     this.entities.set(id, {
       ...existing,
       connections: [...(existing.connections ?? []), connection],
     });
+    return { created: true };
   }
 
   async saveAsset(_asset: AssetInput): Promise<{ ref: string }> {

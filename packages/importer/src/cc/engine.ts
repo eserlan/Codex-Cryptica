@@ -34,12 +34,26 @@ import type { VaultWriter, NewEntityInput, AssociatedDraft } from "./ports";
 
 export type SourceRefBuilder = (system: string, draft: EntityDraft) => string;
 
+/**
+ * `"replace-all"` (default) reproduces today's behavior byte-for-byte.
+ * `"cif"` applies FR-015/FR-016 field-class rules: scalars/dates replace,
+ * labels/aliases union with the existing entity, category never changes
+ * (a mismatch is reported as a warning instead), and parent is left to the
+ * later resolution pass exactly as it is for creates.
+ */
+export type UpdatePolicy = "replace-all" | "cif";
+
 export interface ImportEngineOptions {
   mappingRules?: MappingRuleSet;
   maxAssetBytes?: number;
   acceptedVersions?: string[];
   /** Overrides identity derivation (default: buildEntitySourceRef). CIF uses a kind-independent, injective builder. */
   sourceRefBuilder?: SourceRefBuilder;
+  updatePolicy?: UpdatePolicy;
+}
+
+function dedupeStrings(values: string[]): string[] {
+  return [...new Set(values)];
 }
 
 export interface ImportEngineDeps {
@@ -57,6 +71,7 @@ export class ImportEngine {
       maxAssetBytes: options.maxAssetBytes ?? DEFAULT_MAX_ASSET_BYTES,
       acceptedVersions: options.acceptedVersions ?? DEFAULT_ACCEPTED_VERSIONS,
       sourceRefBuilder: options.sourceRefBuilder ?? buildEntitySourceRef,
+      updatePolicy: options.updatePolicy ?? "replace-all",
     };
   }
 
@@ -99,6 +114,14 @@ export class ImportEngine {
       }),
     );
 
+    const existingFields = await Promise.all(
+      existingMatches.map((match) =>
+        match && this.writer.getEntityFields
+          ? this.writer.getEntityFields(match.id)
+          : Promise.resolve(null),
+      ),
+    );
+
     for (let i = 0; i < pkg.entityDrafts.length; i++) {
       const draft = pkg.entityDrafts[i];
       const existing = existingMatches[i];
@@ -115,6 +138,7 @@ export class ImportEngine {
         match: existing ? { entityId: existing.id } : null,
         decision: "include",
         matchDecision: existing ? "skip" : undefined,
+        existing: existingFields[i] ?? undefined,
       });
     }
 
@@ -252,21 +276,24 @@ export class ImportEngine {
               item.resolvedType,
               item.sourceRef,
             );
-            const patch = {
-              type: fields.type,
-              title: fields.title,
-              content: fields.content,
-              lore: fields.lore,
-              tags: fields.tags,
-              labels: fields.labels,
-              aliases: fields.aliases,
-              image: fields.image,
-              thumbnail: fields.thumbnail,
-              metadata: fields.metadata,
-              // parent resolved in the later pass, same as on create (above).
-              startDate: fields.startDate,
-              endDate: fields.endDate,
-            };
+            const patch =
+              this.options.updatePolicy === "cif"
+                ? this._buildCifUpdatePatch(item, fields, report)
+                : {
+                    type: fields.type,
+                    title: fields.title,
+                    content: fields.content,
+                    lore: fields.lore,
+                    tags: fields.tags,
+                    labels: fields.labels,
+                    aliases: fields.aliases,
+                    image: fields.image,
+                    thumbnail: fields.thumbnail,
+                    metadata: fields.metadata,
+                    // parent resolved in the later pass, same as on create (above).
+                    startDate: fields.startDate,
+                    endDate: fields.endDate,
+                  };
             await this.writer.updateEntity(item.match.entityId, patch);
             report.entitiesUpdated++;
             committedIds.set(item.sourceRef, item.match.entityId);
@@ -455,12 +482,20 @@ export class ImportEngine {
 
       try {
         // fromRef and toRef are already vault entity ids (resolved by _resolveRef).
-        await this.writer.appendConnection(fromRef, {
+        const result = await this.writer.appendConnection(fromRef, {
           target: toRef,
           type: rel.draft.type,
           label: rel.draft.label,
         });
-        report.relationshipsCreated++;
+        if (result.created === false) {
+          report.duplicatesSkipped.push({
+            fromRef: rel.draft.fromRef,
+            toRef: rel.draft.toRef,
+            type: rel.draft.type,
+          });
+        } else {
+          report.relationshipsCreated++;
+        }
       } catch (err) {
         failures.push({
           ref: rel.draft.fromRef,
@@ -509,6 +544,41 @@ export class ImportEngine {
 
     report.failures = failures;
     return report;
+  }
+
+  /**
+   * FR-015/FR-016 field-class rules: title/content/lore/dates replace;
+   * labels/aliases union with the existing entity; category is never sent
+   * (a mismatch is reported instead of silently changing it); parent is
+   * left to the later resolution pass, same as on create.
+   */
+  private _buildCifUpdatePatch(
+    item: PreviewItem,
+    fields: ReturnType<typeof mapDraftToFields>,
+    report: ImportReport,
+  ) {
+    const existing = item.existing;
+
+    if (existing && existing.type !== fields.type) {
+      report.warnings.push({
+        code: "cif.kind-changed",
+        message: `"${item.sourceRef}" was previously imported as "${existing.type}" and this package now describes it as "${fields.type}". The category was left unchanged; update it manually if needed.`,
+        ref: item.sourceRef,
+      });
+    }
+
+    return {
+      title: fields.title,
+      content: fields.content,
+      lore: fields.lore,
+      labels: dedupeStrings([...(existing?.labels ?? []), ...fields.labels]),
+      aliases: dedupeStrings([
+        ...(existing?.aliases ?? []),
+        ...(fields.aliases ?? []),
+      ]),
+      startDate: fields.startDate,
+      endDate: fields.endDate,
+    };
   }
 
   private _associatedDraftsFromSession(

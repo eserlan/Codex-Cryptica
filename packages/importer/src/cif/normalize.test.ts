@@ -201,7 +201,7 @@ describe("normalizeCifPackage — identity (T005/FR-014)", () => {
         findBySourceRef: async () => null,
         createEntity: async () => ({ id: "x" }),
         updateEntity: async () => {},
-        appendConnection: async () => {},
+        appendConnection: async () => ({ created: true }),
         saveAsset: async () => ({ ref: "x" }),
       },
     });

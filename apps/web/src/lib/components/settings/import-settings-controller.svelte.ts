@@ -278,10 +278,15 @@ export class ImportSettingsController {
    */
   private createCifEngine = () =>
     new ImportEngine(
-      { writer: createWebVaultWriter(this.deps.vault) },
+      {
+        writer: createWebVaultWriter(this.deps.vault, {
+          titleFallback: false,
+        }),
+      },
       {
         mappingRules: CIF_MAPPING_RULES,
         sourceRefBuilder: cifSourceRefBuilder,
+        updatePolicy: "cif",
       },
     );
 

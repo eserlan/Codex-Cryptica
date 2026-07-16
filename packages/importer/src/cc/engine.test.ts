@@ -12,7 +12,7 @@ function mockWriter(overrides: Partial<VaultWriter> = {}): VaultWriter {
       .fn()
       .mockImplementation(async () => ({ id: `new-id-${nextId++}` })),
     updateEntity: vi.fn().mockResolvedValue(undefined),
-    appendConnection: vi.fn().mockResolvedValue(undefined),
+    appendConnection: vi.fn().mockResolvedValue({ created: true }),
     saveAsset: vi.fn().mockResolvedValue({ ref: "asset-ref" }),
     ...overrides,
   };
@@ -175,6 +175,214 @@ describe("ImportEngine — parent reference resolution (T010 regression)", () =>
       true,
     );
     expect(writer.updateEntity).not.toHaveBeenCalled();
+  });
+});
+
+describe("ImportEngine — getEntityFields / PreviewItem.existing (T017)", () => {
+  it("populates existing from a matched item when the writer supports getEntityFields", async () => {
+    const writer = mockWriter({
+      findBySourceRef: vi.fn().mockResolvedValue({ id: "existing-id" }),
+      getEntityFields: vi.fn().mockResolvedValue({
+        title: "Old Title",
+        content: "Old content",
+        type: "character",
+      }),
+    });
+    const engine = new ImportEngine({ writer });
+    const session = await engine.prepare(pkg());
+    expect(session.items[0].existing).toEqual({
+      title: "Old Title",
+      content: "Old content",
+      type: "character",
+    });
+  });
+
+  it("leaves existing undefined when the writer has no getEntityFields (no crash)", async () => {
+    const writer = mockWriter({
+      findBySourceRef: vi.fn().mockResolvedValue({ id: "existing-id" }),
+    });
+    const engine = new ImportEngine({ writer });
+    const session = await engine.prepare(pkg());
+    expect(session.items[0].existing).toBeUndefined();
+  });
+
+  it("leaves existing undefined for unmatched items even when getEntityFields exists", async () => {
+    const writer = mockWriter({
+      getEntityFields: vi.fn().mockResolvedValue({
+        title: "Should not be called",
+        content: "",
+        type: "character",
+      }),
+    });
+    const engine = new ImportEngine({ writer });
+    const session = await engine.prepare(pkg());
+    expect(session.items[0].existing).toBeUndefined();
+  });
+});
+
+describe("ImportEngine — updatePolicy: 'cif' (T017/FR-015/FR-016)", () => {
+  function pkgForUpdate(
+    draftOverrides: Partial<CCImportPackage["entityDrafts"][0]> = {},
+  ): CCImportPackage {
+    return pkg({
+      entityDrafts: [
+        {
+          sourceId: "a",
+          sourceType: "character",
+          title: "New Title",
+          content: "New content",
+          lore: "New lore",
+          tags: [],
+          labels: ["new-label"],
+          aliases: ["New Alias"],
+          startDate: { year: 1200 },
+          endDate: { year: 1210 },
+          ...draftOverrides,
+        },
+      ],
+    });
+  }
+
+  it("replaces title/content/lore/dates and unions labels/aliases with the existing entity", async () => {
+    const writer = mockWriter({
+      findBySourceRef: vi.fn().mockResolvedValue({ id: "existing-id" }),
+      getEntityFields: vi.fn().mockResolvedValue({
+        title: "Old Title",
+        content: "Old content",
+        lore: "Old lore",
+        labels: ["old-label"],
+        aliases: ["Old Alias"],
+        type: "character",
+      }),
+    });
+    const engine = new ImportEngine({ writer }, { updatePolicy: "cif" });
+    const session = await engine.prepare(pkgForUpdate());
+    const updated = { ...session.items[0], matchDecision: "update" as const };
+    await engine.commit({ ...session, items: [updated] });
+
+    const patch = (writer.updateEntity as ReturnType<typeof vi.fn>).mock
+      .calls[0][1];
+    expect(patch.title).toBe("New Title");
+    expect(patch.content).toBe("New content");
+    expect(patch.lore).toBe("New lore");
+    expect(patch.startDate).toEqual({ year: 1200 });
+    expect(patch.endDate).toEqual({ year: 1210 });
+    expect(patch.labels.sort()).toEqual(["new-label", "old-label"]);
+    expect(patch.aliases.sort()).toEqual(["New Alias", "Old Alias"]);
+  });
+
+  it("never includes type in the patch, warning instead when the mapped kind differs", async () => {
+    const writer = mockWriter({
+      findBySourceRef: vi.fn().mockResolvedValue({ id: "existing-id" }),
+      getEntityFields: vi.fn().mockResolvedValue({
+        title: "Old Title",
+        content: "",
+        type: "location",
+      }),
+    });
+    const engine = new ImportEngine({ writer }, { updatePolicy: "cif" });
+    const session = await engine.prepare(pkgForUpdate());
+    const updated = { ...session.items[0], matchDecision: "update" as const };
+    const report = await engine.commit({ ...session, items: [updated] });
+
+    const patch = (writer.updateEntity as ReturnType<typeof vi.fn>).mock
+      .calls[0][1];
+    expect(patch.type).toBeUndefined();
+    expect(report.warnings.some((w) => w.code === "cif.kind-changed")).toBe(
+      true,
+    );
+  });
+
+  it("includes parent in the patch only via the later resolution pass, never directly from the draft", async () => {
+    const writer = mockWriter({
+      findBySourceRef: vi.fn().mockResolvedValue({ id: "existing-id" }),
+      getEntityFields: vi.fn().mockResolvedValue({
+        title: "Old Title",
+        content: "",
+        type: "character",
+      }),
+    });
+    const engine = new ImportEngine({ writer }, { updatePolicy: "cif" });
+    const session = await engine.prepare(pkgForUpdate());
+    const updated = { ...session.items[0], matchDecision: "update" as const };
+    await engine.commit({ ...session, items: [updated] });
+
+    // The direct update-patch call must never itself carry a `parent` key —
+    // parent resolution is deferred to the shared later pass.
+    const patch = (writer.updateEntity as ReturnType<typeof vi.fn>).mock
+      .calls[0][1];
+    expect(patch.parent).toBeUndefined();
+  });
+
+  it("default 'replace-all' policy is byte-identical to today (chronica regression guard)", async () => {
+    const writer = mockWriter({
+      findBySourceRef: vi.fn().mockResolvedValue({ id: "existing-id" }),
+    });
+    const engine = new ImportEngine(
+      { writer },
+      {
+        mappingRules: {
+          rules: [{ when: { sourceType: "character" }, thenType: "character" }],
+          defaultType: "note",
+        },
+      },
+    );
+    const session = await engine.prepare(pkgForUpdate());
+    const updated = { ...session.items[0], matchDecision: "update" as const };
+    await engine.commit({ ...session, items: [updated] });
+
+    const patch = (writer.updateEntity as ReturnType<typeof vi.fn>).mock
+      .calls[0][1];
+    expect(patch.type).toBe("character");
+    expect(patch.labels).toEqual(["new-label"]);
+    expect(patch.aliases).toEqual(["New Alias"]);
+  });
+});
+
+describe("ImportEngine — duplicatesSkipped (T017/FR-013)", () => {
+  it("counts an appendConnection {created:false} result as a duplicate, not a new relationship", async () => {
+    const writer = mockWriter({
+      appendConnection: vi.fn().mockResolvedValue({ created: false }),
+    });
+    const engine = new ImportEngine({ writer });
+    const session = await engine.prepare(
+      pkg({
+        entityDrafts: [
+          {
+            sourceId: "a",
+            sourceType: "character",
+            title: "A",
+            content: "",
+            tags: [],
+          },
+          {
+            sourceId: "b",
+            sourceType: "character",
+            title: "B",
+            content: "",
+            tags: [],
+          },
+        ],
+        relationshipDrafts: [
+          {
+            fromRef: buildEntitySourceRef("test-system", {
+              sourceId: "a",
+              sourceType: "character",
+            }),
+            toRef: buildEntitySourceRef("test-system", {
+              sourceId: "b",
+              sourceType: "character",
+            }),
+            type: "knows",
+          },
+        ],
+      }),
+    );
+    const report = await engine.commit(session);
+
+    expect(report.relationshipsCreated).toBe(0);
+    expect(report.duplicatesSkipped.length).toBe(1);
+    expect(report.duplicatesSkipped[0].type).toBe("knows");
   });
 });
 

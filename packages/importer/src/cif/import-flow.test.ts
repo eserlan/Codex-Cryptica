@@ -30,7 +30,7 @@ function mockWriter(overrides: Partial<VaultWriter> = {}): VaultWriter {
       .fn()
       .mockImplementation(async () => ({ id: `id-${nextId++}` })),
     updateEntity: vi.fn().mockResolvedValue(undefined),
-    appendConnection: vi.fn().mockResolvedValue(undefined),
+    appendConnection: vi.fn().mockResolvedValue({ created: true }),
     saveAsset: vi.fn().mockResolvedValue({ ref: "asset-ref" }),
     ...overrides,
   };
@@ -63,6 +63,7 @@ describe("CIF import — end to end (T010)", () => {
     (writer.appendConnection as ReturnType<typeof vi.fn>).mockImplementation(
       async () => {
         creationOrder.push("connection");
+        return { created: true };
       },
     );
 
