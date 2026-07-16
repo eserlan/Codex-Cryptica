@@ -1,5 +1,23 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import HelpTab from "$lib/components/help/HelpTab.svelte";
+  import { helpStore } from "$lib/stores/help.svelte";
+  import { getHelpArticleIdFromHash } from "$lib/components/help/help-direct-link";
+
+  const selectArticleFromHash = () => {
+    const articleId = getHelpArticleIdFromHash(window.location.hash);
+    if (articleId) {
+      helpStore.selectArticle(articleId);
+    } else {
+      helpStore.clearArticleSelection();
+    }
+  };
+
+  onMount(() => {
+    selectArticleFromHash();
+    window.addEventListener("hashchange", selectArticleFromHash);
+    return () => window.removeEventListener("hashchange", selectArticleFromHash);
+  });
 </script>
 
 <svelte:head>
