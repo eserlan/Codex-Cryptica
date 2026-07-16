@@ -20,7 +20,11 @@ import {
   addFamilyLink as addFamilyLinkMutation,
   removeFamilyLink as removeFamilyLinkMutation,
 } from "./vault/family-mutations";
-import type { FamilyConnectionType } from "@codex/family-engine";
+import {
+  isFamilyType,
+  resolveFamilyAlias,
+  type FamilyConnectionType,
+} from "@codex/family-engine";
 import { SyncStore } from "./vault/sync-store.svelte";
 import { AssetStore } from "./vault/asset-store.svelte";
 import { ServiceRegistry } from "./vault/service-registry";
@@ -553,13 +557,40 @@ export class VaultStore {
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
   }
-  addConnection(
+  /**
+   * Freeform relationship phrases like "Mother of" are redirected to a real
+   * family link (reciprocal write + cycle check) instead of a one-sided
+   * generic connection, so text typed outside the Family tab (Related Entity
+   * modal, AI-generated connections) still surfaces in Family/Lineage views.
+   * Only applies between two characters and when `type` isn't already a
+   * family type, so it can never re-trigger on the family link it writes.
+   */
+  async addConnection(
     sId: string,
     tId: string,
     type: string,
     label?: string,
     strength?: number,
   ) {
+    if (!isFamilyType(type) && label) {
+      const alias = resolveFamilyAlias(label);
+      if (
+        alias &&
+        this.entities[sId]?.type === "character" &&
+        this.entities[tId]?.type === "character"
+      ) {
+        const result = await this.addFamilyLink(sId, tId, alias.type);
+        if (!result.ok) return false;
+        await this.updateConnection(
+          sId,
+          tId,
+          alias.type,
+          alias.type,
+          alias.label,
+        );
+        return true;
+      }
+    }
     return this.entityStore.addConnection(sId, tId, type, label, strength);
   }
   removeConnection(sId: string, tId: string, type: string) {
