@@ -92,3 +92,7 @@
 ## 2025-07-14 - Add type button to toolbar buttons
 **Learning:** Interactive toolbar components, especially within editors, should explicitly define type="button" to avoid inadvertently submitting surrounding forms.
 **Action:** When adding new toolbar components or buttons to existing toolbars, always include type="button" to ensure correct component behavior regardless of its surrounding context.
+
+## 2026-07-16 - Add aria-busy to async buttons
+**Learning:** Found multiple buttons with loading states (animate-spin) that correctly disabled interactions but were missing aria-busy attributes, making the loading state opaque to screen readers.
+**Action:** Always add aria-busy={isLoading} to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
