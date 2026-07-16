@@ -180,6 +180,8 @@
                   Scabard import ready
                 {:else if controller.ccSession.sourceSystem === "chronica"}
                   Chronica import ready
+                {:else if controller.ccSession.sourceSystem === "cif"}
+                  CIF import ready
                 {:else}
                   Oracle import ready
                 {/if}

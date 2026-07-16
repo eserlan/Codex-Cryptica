@@ -204,7 +204,9 @@ export class ImportEngine {
         image: fields.image,
         thumbnail: fields.thumbnail,
         metadata: fields.metadata,
-        parent: fields.parent,
+        // parent is resolved to a real entity id in a later pass (below),
+        // once every entity this package could create has been committed —
+        // never written here as an unresolved package/source reference.
         startDate: fields.startDate,
         endDate: fields.endDate,
         discoverySource: fields.discoverySource,
@@ -261,7 +263,7 @@ export class ImportEngine {
               image: fields.image,
               thumbnail: fields.thumbnail,
               metadata: fields.metadata,
-              parent: fields.parent,
+              // parent resolved in the later pass, same as on create (above).
               startDate: fields.startDate,
               endDate: fields.endDate,
             };
@@ -299,7 +301,7 @@ export class ImportEngine {
           image: fields.image,
           thumbnail: fields.thumbnail,
           metadata: fields.metadata,
-          parent: fields.parent,
+          // parent resolved in the later pass, same as createSingleEntity.
           startDate: fields.startDate,
           endDate: fields.endDate,
           discoverySource: fields.discoverySource,
@@ -356,6 +358,54 @@ export class ImportEngine {
             onProgress?.("entity", entityProgress, totalEntities);
           }
         }
+      }
+    }
+
+    // Phase 1.5: resolve parent references now that every entity this
+    // package could create has been committed (or matched), regardless of
+    // array order — a child appearing before its parent in the package must
+    // still resolve correctly. Never writes a package/source reference as a
+    // literal parent value (FR-007).
+    for (const item of session.items) {
+      if (signal?.aborted) throw new Error("Import aborted");
+      const parentRef = item.draft.parentRef;
+      if (!parentRef) continue;
+      const committedId = committedIds.get(item.sourceRef);
+      if (!committedId) continue;
+
+      const resolvedParentId = await this._resolveRef(
+        parentRef,
+        committedIds,
+        session,
+      );
+      if (!resolvedParentId) {
+        report.unresolvedReferences.push({
+          fromRef: item.sourceRef,
+          toRef: parentRef,
+          type: "parent",
+          reason: `parent "${parentRef}" could not be resolved`,
+        });
+        continue;
+      }
+      if (resolvedParentId === committedId) {
+        report.unresolvedReferences.push({
+          fromRef: item.sourceRef,
+          toRef: parentRef,
+          type: "parent",
+          reason: "Self-referential parent",
+        });
+        continue;
+      }
+      try {
+        await this.writer.updateEntity(committedId, {
+          parent: resolvedParentId,
+        });
+      } catch (err) {
+        failures.push({
+          ref: item.sourceRef,
+          stage: "entity",
+          message: String(err),
+        });
       }
     }
 

@@ -107,6 +107,77 @@ describe("ImportEngine — sourceRefBuilder option (T007)", () => {
   });
 });
 
+describe("ImportEngine — parent reference resolution (T010 regression)", () => {
+  it("resolves parentRef to the actual created entity id, never a raw source ref", async () => {
+    const writer = mockWriter();
+    const engine = new ImportEngine({ writer });
+    const session = await engine.prepare(
+      pkg({
+        entityDrafts: [
+          {
+            sourceId: "parent",
+            sourceType: "location",
+            title: "Parent",
+            content: "",
+            tags: [],
+          },
+          {
+            sourceId: "child",
+            sourceType: "location",
+            title: "Child",
+            content: "",
+            tags: [],
+            parentRef: buildEntitySourceRef("test-system", {
+              sourceId: "parent",
+              sourceType: "location",
+            }),
+          },
+        ],
+      }),
+    );
+    await engine.commit(session);
+
+    const createCalls = (writer.createEntity as ReturnType<typeof vi.fn>).mock
+      .calls;
+    for (const call of createCalls) {
+      expect(call[0].parent).toBeUndefined();
+    }
+
+    const updateCalls = (writer.updateEntity as ReturnType<typeof vi.fn>).mock
+      .calls;
+    const parentUpdate = updateCalls.find(
+      (call) => call[1].parent !== undefined,
+    );
+    expect(parentUpdate).toBeTruthy();
+    expect(parentUpdate?.[1].parent).not.toContain("test-system");
+  });
+
+  it("reports an unresolvable parent instead of writing a dangling reference", async () => {
+    const writer = mockWriter();
+    const engine = new ImportEngine({ writer });
+    const session = await engine.prepare(
+      pkg({
+        entityDrafts: [
+          {
+            sourceId: "child",
+            sourceType: "location",
+            title: "Child",
+            content: "",
+            tags: [],
+            parentRef: "does-not-exist",
+          },
+        ],
+      }),
+    );
+    const report = await engine.commit(session);
+
+    expect(report.unresolvedReferences.some((r) => r.type === "parent")).toBe(
+      true,
+    );
+    expect(writer.updateEntity).not.toHaveBeenCalled();
+  });
+});
+
 describe("ImportEngine — date and alias draft fields (T007)", () => {
   it("passes startDate, endDate, and aliases through to entity creation", async () => {
     const writer = mockWriter();
