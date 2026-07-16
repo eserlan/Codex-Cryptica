@@ -13,6 +13,7 @@ const config = {
     prerender: {
       entries: [
         "/",
+        "/help",
         "/features",
         "/terms",
         "/privacy",
