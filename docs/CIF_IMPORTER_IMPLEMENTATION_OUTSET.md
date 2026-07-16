@@ -40,7 +40,8 @@ The current importer package already provides useful building blocks:
 
 Two gaps define the initial scope:
 
-1. There is no CIF parser, validator, or adapter yet.
+1. The published JSON Schema defines the CIF 1.0 structure, but there is no
+   CIF parser, cross-record validator, or adapter yet.
 2. The web vault writer explicitly reports generic asset persistence as
    unsupported. CIF assets cannot be advertised until that path is designed
    and implemented.
@@ -91,6 +92,12 @@ packages/importer/src/cif/
 
 This maintains the constitution's library-first rule and allows source-tool
 adapters to produce CIF without importing application code.
+
+The implementation should use
+[`schemas/cif/1.0/manifest.schema.json`](../schemas/cif/1.0/manifest.schema.json)
+as the public structural contract. It must add code-level validation for rules
+that JSON Schema cannot express cleanly: package-local key uniqueness,
+cross-record references, archive file presence, safe paths, and digest checks.
 
 ## Import contract
 
@@ -222,6 +229,8 @@ The implementation is a library feature and must be test-first. At minimum,
 add tests for:
 
 - valid text-only package parsing and CIF-to-staging normalization;
+- the published valid fixture passing JSON Schema validation and the published
+  invalid fixture failing it;
 - invalid manifest shapes, duplicate keys, missing references, and self-links;
 - source-reference stability across two imports;
 - create, update, skip, and cancellation behavior through `ImportEngine`;

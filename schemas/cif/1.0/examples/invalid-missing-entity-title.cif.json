@@ -1,0 +1,18 @@
+{
+  "format": "codex-world-interchange",
+  "version": "1.0",
+  "source": { "system": "example-export-script" },
+  "world": { "title": "The Shattered Coast" },
+  "entities": [
+    {
+      "key": "characters/captain-lyra",
+      "kind": "character",
+      "content": {
+        "format": "markdown",
+        "body": "This fixture must fail schema validation."
+      }
+    }
+  ],
+  "relationships": [],
+  "assets": []
+}
