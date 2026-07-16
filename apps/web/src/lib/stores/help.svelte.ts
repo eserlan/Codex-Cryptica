@@ -217,11 +217,23 @@ export class HelpStore {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
+  selectArticle(id: string): boolean {
+    const articleExists = HELP_ARTICLES.some((article) => article.id === id);
+    if (!articleExists) {
+      this.clearArticleSelection();
+      return false;
+    }
+
+    this.expandedId = id;
+    return true;
+  }
+
+  clearArticleSelection() {
+    this.expandedId = null;
+  }
+
   openHelpToArticle(id: string) {
-    // Find article to verify it exists
-    const article = HELP_ARTICLES.find((a) => a.id === id);
-    if (article) {
-      this.expandedId = id;
+    if (this.selectArticle(id)) {
       this.modalUIStore.openSettings("help");
     }
   }
