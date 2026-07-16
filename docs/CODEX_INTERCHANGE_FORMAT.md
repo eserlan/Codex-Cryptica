@@ -60,6 +60,26 @@ Every manifest has this shape:
 `format` must be exactly `codex-world-interchange`. `version` identifies the
 format version, not the version of the program that generated the file.
 
+## Machine-readable schema
+
+The structural contract for CIF 1.0 is published as a JSON Schema 2020-12
+document:
+
+- [CIF 1.0 manifest schema](../schemas/cif/1.0/manifest.schema.json)
+- [Valid text-only example](../schemas/cif/1.0/examples/valid-text-only.cif.json)
+- [Invalid example: missing an entity title](../schemas/cif/1.0/examples/invalid-missing-entity-title.cif.json)
+
+Tool authors should validate generated manifests against this schema before
+writing a package. The schema validates the JSON shape, required fields,
+Markdown-only content, and inline constraints such as non-empty keys and a
+64-character SHA-256 digest.
+
+Some package rules require validation beyond JSON Schema. An importer must
+also check that entity and asset keys are unique; every parent, relationship,
+and media reference resolves; and ZIP asset files have safe paths, exist in
+the archive, and match their declared digests. These checks are intentionally
+part of the importer's package validation rather than the schema.
+
 ### Source
 
 The `source` object describes where this package came from. It is required so
@@ -299,7 +319,8 @@ unsupported; they must not reject an otherwise valid core package.
 
 Before distributing a package, validate that:
 
-- The manifest is valid UTF-8 JSON and identifies CIF 1.0.
+- The manifest is valid UTF-8 JSON, identifies CIF 1.0, and passes the
+  published JSON Schema.
 - Every entity key and asset key is unique.
 - Every relationship endpoint and parent reference resolves to an entity.
 - Every entity media reference resolves to an asset.
