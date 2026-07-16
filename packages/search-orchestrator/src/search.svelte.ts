@@ -35,10 +35,11 @@ export interface SearchServiceDependencies {
   workerFactory?: () => Worker | Promise<Worker>;
   api?: Comlink.Remote<SearchApi> | SearchApi;
   /**
-   * Comlink `wrap`/`proxy`, injectable so tests can substitute fakes. Real
-   * Comlink is used by default. Injecting these avoids relying on module-level
-   * mocking of "comlink", which doesn't cross the package boundary reliably
-   * (this service lives in its own workspace package).
+   * Comlink `wrap`/`proxy`/`releaseProxy`, injectable so tests can substitute
+   * fakes. Real Comlink is used by default (resolved lazily, only when the
+   * worker is actually initialized/terminated). Injecting these avoids relying
+   * on module-level mocking of "comlink", which doesn't cross the package
+   * boundary reliably (this service lives in its own workspace package).
    */
   wrap?: <T>(endpoint: Worker) => Comlink.Remote<T>;
   proxy?: <T>(value: T) => T;
@@ -58,9 +59,12 @@ export class SearchService {
   private isInitialized = false;
 
   private workerFactory: () => Worker | Promise<Worker>;
-  private comlinkWrap: <T>(endpoint: Worker) => Comlink.Remote<T>;
-  private comlinkProxy: <T>(value: T) => T;
-  private comlinkReleaseProxy: symbol;
+  // Optional comlink overrides. Left undefined in production; real Comlink is
+  // resolved lazily at the use sites so merely constructing a SearchService
+  // never touches the "comlink" module (some tests mock it only partially).
+  private comlinkWrapOverride?: <T>(endpoint: Worker) => Comlink.Remote<T>;
+  private comlinkProxyOverride?: <T>(value: T) => T;
+  private comlinkReleaseProxyOverride?: symbol;
   private debug: DebugLogger;
   private windowRef: Window | undefined;
   private coordinator: SearchProgressCoordinator;
@@ -80,11 +84,9 @@ export class SearchService {
         return factory();
       });
     this.api = dependencies.api ?? null;
-    this.comlinkWrap = dependencies.wrap ?? Comlink.wrap;
-    this.comlinkProxy =
-      dependencies.proxy ?? (Comlink.proxy as <T>(value: T) => T);
-    this.comlinkReleaseProxy =
-      dependencies.releaseProxy ?? Comlink.releaseProxy;
+    this.comlinkWrapOverride = dependencies.wrap;
+    this.comlinkProxyOverride = dependencies.proxy;
+    this.comlinkReleaseProxyOverride = dependencies.releaseProxy;
     this.debug =
       dependencies.debug ?? (globalThis as any).__debugStore__ ?? console;
     const timers = dependencies.timers ?? globalThis;
@@ -196,21 +198,23 @@ export class SearchService {
 
     const workerInstance = await this.workerFactory();
     this.worker = workerInstance;
-    this.api = this.comlinkWrap<SearchApi>(this.worker);
+
+    const wrap = this.comlinkWrapOverride ?? Comlink.wrap;
+    const proxy =
+      this.comlinkProxyOverride ?? (Comlink.proxy as <T>(value: T) => T);
+    this.api = wrap<SearchApi>(this.worker);
 
     await this.api.setLogger(
-      this.comlinkProxy(
-        (level: "info" | "warn" | "error", msg: string, data?: any) => {
-          const message = `[SearchEngine] ${msg}`;
-          if (level === "error") this.debug.error(message, data);
-          else if (level === "warn") this.debug.warn(message, data);
-          else this.debug.log(message, data);
-        },
-      ),
+      proxy((level: "info" | "warn" | "error", msg: string, data?: any) => {
+        const message = `[SearchEngine] ${msg}`;
+        if (level === "error") this.debug.error(message, data);
+        else if (level === "warn") this.debug.warn(message, data);
+        else this.debug.log(message, data);
+      }),
     );
 
     await this.api.setChangeCallback(
-      this.comlinkProxy(() => {
+      proxy(() => {
         this.coordinator.isDirty = true;
         this.coordinator.scheduleAutoSave();
       }),
@@ -237,9 +241,9 @@ export class SearchService {
 
   terminate() {
     if (this.api) {
-      const release = (this.api as Record<symbol, unknown>)[
-        this.comlinkReleaseProxy
-      ];
+      const releaseProxy =
+        this.comlinkReleaseProxyOverride ?? Comlink.releaseProxy;
+      const release = (this.api as Record<symbol, unknown>)[releaseProxy];
       if (typeof release === "function") release();
       this.api = null;
     }

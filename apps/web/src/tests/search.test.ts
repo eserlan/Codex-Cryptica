@@ -45,9 +45,10 @@ vi.stubGlobal("Worker", MockWorker);
 
 // Note: Comlink is NOT module-mocked. SearchService imports comlink from its
 // own workspace package, so a `vi.mock("comlink")` here wouldn't intercept it
-// (#1742). Instead the fake `wrap`/`proxy` are injected via the constructor.
-// `terminate()` only uses `Comlink.releaseProxy`, a `Symbol.for(...)` that is
-// identical between real and fake comlink, so real comlink is fine there.
+// (#1742). Instead the fake `wrap`/`proxy`/`releaseProxy` are injected via the
+// constructor. The injected `releaseProxy` symbol (below) is what terminate()
+// checks, so it doesn't matter that comlink's real releaseProxy is a
+// module-unique Symbol() we can't reach from here.
 
 // Mock debugStore
 vi.mock("$lib/stores/debug.svelte", () => ({
