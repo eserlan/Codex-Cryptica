@@ -141,6 +141,7 @@ export class HelpStore {
 
     const FlexSearch = (await import("flexsearch")).default;
     this.index = new FlexSearch.Document({
+      tokenize: "forward",
       document: {
         id: "id",
         index: SEARCH_FIELDS,
