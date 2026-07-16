@@ -130,6 +130,18 @@ describe("LineageView — static rendering (T010)", () => {
     );
   });
 
+  it("does not expose development-only canvas instrumentation", () => {
+    render(LineageView, {
+      focusId: "focus",
+      entities: fiveGenerationLine(),
+      onOpen: () => {},
+      onRecenter: () => {},
+    });
+    const canvas = screen.getByTestId("lineage-canvas");
+    expect(canvas.hasAttribute("data-debug-expanded-size")).toBe(false);
+    expect(canvas.hasAttribute("data-debug-cards")).toBe(false);
+  });
+
   it("offers no relationship-editing affordances (view-only)", () => {
     const entities = fiveGenerationLine();
     render(LineageView, {

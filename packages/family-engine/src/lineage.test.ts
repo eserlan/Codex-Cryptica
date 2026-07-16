@@ -42,6 +42,36 @@ describe("buildLineage — core traversal (T005)", () => {
     expect(lineage.members.size).toBe(10); // 5 chain + 5 partners
   });
 
+  it("records a secondary partner edge when a partner was materialised earlier", () => {
+    const entities = map(
+      char("focus", [
+        { target: "parentA", type: "child_of" },
+        { target: "parentB", type: "child_of" },
+      ]),
+      char("parentA", [
+        { target: "focus", type: "parent_of" },
+        { target: "grandparent", type: "child_of" },
+      ]),
+      char("parentB", [
+        { target: "focus", type: "parent_of" },
+        { target: "uncle", type: "spouse_of" },
+      ]),
+      char("grandparent", [
+        { target: "parentA", type: "parent_of" },
+        { target: "uncle", type: "parent_of" },
+      ]),
+      char("uncle", [{ target: "grandparent", type: "child_of" }]),
+    );
+    const lineage = buildLineage("focus", entities);
+
+    expect(lineage.edges).toContainEqual({
+      type: "partner",
+      from: "parentB",
+      to: "uncle",
+      secondary: true,
+    });
+  });
+
   it("falls back to a single-member lineage for an unknown focus", () => {
     const lineage = buildLineage("ghost", map(char("someone")));
     expect(lineage.members.size).toBe(1);
@@ -219,5 +249,25 @@ describe("buildLineage — depth caps (T013)", () => {
     expect(lineage.members.has("focusaaaa")).toBe(false); // depth 4, capped
     expect(lineage.truncatedDown?.atGeneration).toBe(4);
     expect(lineage.truncatedDown?.hiddenGenerations).toBe(3); // depths 4..6
+  });
+
+  it("does not report truncation or loop when a capped path only cycles back", () => {
+    const entities = map(
+      char("focus", [{ target: "child", type: "parent_of" }]),
+      char("child", [{ target: "focus", type: "parent_of" }]),
+    );
+    const lineage = buildLineage("focus", entities, { maxDown: 1 });
+
+    expect(lineage.truncatedDown).toBeNull();
+  });
+
+  it("ignores dangling targets when determining depth-cap truncation", () => {
+    const entities = map(
+      char("focus", [{ target: "child", type: "parent_of" }]),
+      char("child", [{ target: "missing", type: "parent_of" }]),
+    );
+    const lineage = buildLineage("focus", entities, { maxDown: 1 });
+
+    expect(lineage.truncatedDown).toBeNull();
   });
 });

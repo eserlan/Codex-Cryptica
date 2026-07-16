@@ -130,10 +130,6 @@
   <div
     data-testid="lineage-canvas"
     aria-busy={busy}
-    data-debug-expanded-size={expandedBranches === "all"
-      ? -1
-      : expandedBranches.size}
-    data-debug-cards={positioned.cards.length}
     class="relative w-full flex-1 overflow-hidden"
   >
     <!--

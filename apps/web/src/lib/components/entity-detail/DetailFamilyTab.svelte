@@ -162,6 +162,16 @@
 
 {#snippet treeBody(inFullscreen: boolean)}
   {#if inFullscreen && mode === "lineage"}
+    {#if isRecentred}
+      <button
+        type="button"
+        data-testid="family-recenter-reset"
+        class="self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+        onclick={() => (focusId = entity.id)}
+      >
+        ← Back to {entity.title}
+      </button>
+    {/if}
     <LineageView
       {focusId}
       entities={vault.entities}

@@ -216,7 +216,10 @@ export function buildLineage(
     branchRootId?: string,
   ) {
     for (const { id, label } of index.related(ofId, "spouse_of")) {
-      if (members.has(id)) continue;
+      if (members.has(id)) {
+        edges.push({ type: "partner", from: ofId, to: id, secondary: true });
+        continue;
+      }
       const added = addMember(
         id,
         "partner",
@@ -371,23 +374,24 @@ export function buildLineage(
     let depth = 0;
     while (frontier.length > 0) {
       if (cap !== undefined && depth >= cap) {
-        const hasMore = frontier.some(
-          (id) => index.related(id, relType).length > 0,
-        );
-        if (!hasMore) return null;
         let hiddenGenerations = 0;
         let probeFrontier = frontier;
+        const probeVisited = new Set(probeFrontier);
         while (probeFrontier.length > 0) {
           const nextProbe: string[] = [];
           for (const id of probeFrontier) {
             for (const { id: nextId } of index.related(id, relType)) {
-              if (isCharacter(entities[nextId])) nextProbe.push(nextId);
+              if (!isCharacter(entities[nextId]) || probeVisited.has(nextId))
+                continue;
+              probeVisited.add(nextId);
+              nextProbe.push(nextId);
             }
           }
           if (nextProbe.length === 0) break;
           hiddenGenerations++;
           probeFrontier = nextProbe;
         }
+        if (hiddenGenerations === 0) return null;
         return {
           atGeneration: step === "up" ? -(depth + 1) : depth + 1,
           hiddenGenerations,

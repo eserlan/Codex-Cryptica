@@ -184,6 +184,18 @@ describe("DetailFamilyTab Lineage mode toggle", () => {
     expect(screen.queryByTestId("empty-family-slot")).toBeNull();
   });
 
+  it("keeps the reset-focus control available after re-centering in Lineage mode", async () => {
+    enterFullscreen();
+    await fireEvent.click(screen.getByTestId("family-mode-lineage"));
+    await fireEvent.click(
+      screen
+        .getByTestId("lineage-card-parent")
+        .querySelector('[data-testid="family-card-select"]') as HTMLElement,
+    );
+
+    expect(screen.getByTestId("family-recenter-reset")).toBeTruthy();
+  });
+
   it("resets to Family mode each time full screen is (re-)entered", async () => {
     enterFullscreen();
     await fireEvent.click(screen.getByTestId("family-mode-lineage"));
