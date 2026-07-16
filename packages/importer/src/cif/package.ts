@@ -107,7 +107,7 @@ export type CifAsset = z.infer<typeof CifAssetSchema>;
 
 export const CifManifestSchema = z.object({
   format: z.literal(CIF_FORMAT),
-  version: z.string(),
+  version: z.enum(SUPPORTED_CIF_VERSIONS),
   source: CifSourceSchema,
   world: CifWorldSchema,
   entities: z.array(CifEntitySchema),

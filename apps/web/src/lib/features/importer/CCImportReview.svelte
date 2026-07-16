@@ -167,9 +167,10 @@
 
     <div class="overflow-y-auto min-h-0">
       {#each session.items as item (item.sourceRef)}
+        {@const diffs = fieldDiffs(item)}
         <div
           class="border-b border-theme-border/70 last:border-b-0"
-          data-testid={item.match && fieldDiffs(item).length > 0
+          data-testid={item.match && diffs.length > 0
             ? `cif-review-diff-${item.sourceRef}`
             : undefined}
         >
@@ -301,9 +302,9 @@
             </div>
           </div>
 
-          {#if item.match && fieldDiffs(item).length > 0}
+          {#if item.match && diffs.length > 0}
             <div class="px-4 pb-3 -mt-1 space-y-1.5">
-              {#each fieldDiffs(item) as diff (diff.field)}
+              {#each diffs as diff (diff.field)}
                 <div class="text-[11px] leading-tight">
                   <span
                     class="font-bold uppercase font-header tracking-wider text-theme-muted"

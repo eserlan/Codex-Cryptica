@@ -362,6 +362,22 @@ export class ImportSettingsController {
 
     const { pkg } = normalizeCifPackage(parseResult.manifest);
 
+    // validateCifManifest's own warnings (e.g. cif.unmapped-kind, which
+    // normalizeCifPackage doesn't separately compute) must still reach the
+    // review/report — merge in anything not already present, deduped by
+    // code+ref+message so categories both functions independently compute
+    // (no-world-key, unknown-extension, assets-not-imported) don't double up.
+    const seenWarnings = new Set(
+      pkg.warnings.map((w) => `${w.code}:${w.ref ?? ""}:${w.message}`),
+    );
+    for (const warning of validation.warnings) {
+      const key = `${warning.code}:${warning.ref ?? ""}:${warning.message}`;
+      if (!seenWarnings.has(key)) {
+        pkg.warnings.push(warning);
+        seenWarnings.add(key);
+      }
+    }
+
     try {
       this.ccSession = await wrapWithAbort(
         this.createCifEngine().prepare(pkg),

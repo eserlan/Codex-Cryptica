@@ -118,6 +118,38 @@ describe("normalizeCifPackage — field mapping (T005)", () => {
     expect(month?.startDate).toEqual({ year: 1142, month: 7, day: undefined });
     expect(day?.startDate).toEqual({ year: 1142, month: 7, day: 18 });
   });
+
+  it("treats a malformed month component as unparseable, not NaN (regression)", () => {
+    const { pkg, warnings } = normalize(
+      validMinimalManifest({
+        entities: [
+          {
+            key: "characters/a",
+            title: "A",
+            dates: { start: { value: "1142-xx", precision: "month" } },
+          },
+        ],
+      }),
+    );
+    expect(pkg.entityDrafts[0].startDate).toBeUndefined();
+    expect(warnings.some((w) => w.code === "cif.date-precision")).toBe(true);
+  });
+
+  it("treats a malformed day component as unparseable, not NaN (regression)", () => {
+    const { pkg, warnings } = normalize(
+      validMinimalManifest({
+        entities: [
+          {
+            key: "characters/a",
+            title: "A",
+            dates: { start: { value: "1142-07-xx", precision: "day" } },
+          },
+        ],
+      }),
+    );
+    expect(pkg.entityDrafts[0].startDate).toBeUndefined();
+    expect(warnings.some((w) => w.code === "cif.date-precision")).toBe(true);
+  });
 });
 
 describe("normalizeCifPackage — relationships (T005/FR-013)", () => {

@@ -11,7 +11,6 @@ import {
   manifestWithSelfLink,
   manifestWithHierarchyCycle,
   manifestWithDeepParentChain,
-  manifestWithUnsupportedVersion,
   manifestWithoutWorldKey,
   manifestWithUnknownKindAndExtension,
   manifestWithNonEmptyAssets,
@@ -105,17 +104,6 @@ describe("validateCifManifest — blocking errors (T011/FR-002/FR-003)", () => {
   it("detects cycles without recursing, even on a 10,000-deep parent chain (no cycle)", () => {
     const result = validate(manifestWithDeepParentChain(10000));
     expect(result.ok).toBe(true);
-  });
-
-  it("rejects an unsupported version, naming both the declared and supported versions", () => {
-    const result = validate(manifestWithUnsupportedVersion("99.0"));
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      const err = result.errors.find((e) => e.code === "unsupported-version");
-      expect(err).toBeTruthy();
-      expect(err?.message).toContain("99.0");
-      expect(err?.message).toContain("1.0");
-    }
   });
 
   it("every error carries a code and message", () => {

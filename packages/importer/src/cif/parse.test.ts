@@ -107,6 +107,21 @@ describe("parseCifFile — container guards (T012/FR-004/FR-005)", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.errors[0].code).toBe("unsupported-version");
+      expect(result.errors[0].message).toContain("99");
+      expect(result.errors[0].message).toContain("1.0");
+    }
+  });
+
+  it("returns unsupported-version naming both the declared and supported version (US2 scenario 2)", async () => {
+    const raw = JSON.stringify(
+      validMinimalManifest({ version: "2.0" }) as Record<string, unknown>,
+    );
+    const result = await parseCifFile(fileOf(raw));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors[0].code).toBe("unsupported-version");
+      expect(result.errors[0].message).toContain("2.0");
+      expect(result.errors[0].message).toContain("1.0");
     }
   });
 

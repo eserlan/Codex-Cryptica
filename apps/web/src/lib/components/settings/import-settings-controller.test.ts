@@ -487,3 +487,40 @@ describe("import-settings-controller — CIF blocking validation (T016/FR-003)",
     expect(controller.rejectedFiles[0].reason).toContain("1.0");
   });
 });
+
+describe("import-settings-controller — validateCifManifest warnings surface in review (Copilot PR feedback)", () => {
+  it("threads validateCifManifest's own warnings (e.g. cif.unmapped-kind) into the session instead of dropping them", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [
+        cifManifestText({
+          entities: [
+            {
+              key: "characters/a",
+              // Not one of CIF_MAPPING_RULES' known kinds — validateCifManifest
+              // produces a cif.unmapped-kind warning for this, but normalizeCifPackage
+              // never independently computes that same warning (it relies on the
+              // engine's separate typeFallback mechanism instead).
+              kind: "deity",
+              title: "A",
+              content: { format: "markdown", body: "Body" },
+            },
+          ],
+          relationships: [],
+        }),
+      ],
+      "world.cif.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("review");
+    expect(
+      controller.ccSession?.warnings.some(
+        (w) => w.code === "cif.unmapped-kind",
+      ),
+    ).toBe(true);
+  });
+});

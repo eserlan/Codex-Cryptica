@@ -1,4 +1,9 @@
-import { CifManifestSchema, CIF_FORMAT, type CifManifest } from "./package";
+import {
+  CifManifestSchema,
+  CIF_FORMAT,
+  SUPPORTED_CIF_VERSIONS,
+  type CifManifest,
+} from "./package";
 import type { CifValidationError } from "./package";
 
 export interface CifFileInput {
@@ -118,12 +123,15 @@ export async function parseCifFile(
       (i) => i.path[0] === "version",
     );
     if (versionIssue) {
+      const declaredVersion = String(
+        (parsed as Record<string, unknown>).version ?? "unknown",
+      );
       return {
         ok: false,
         errors: [
           {
             code: "unsupported-version",
-            message: `This package's CIF version isn't supported by this app.`,
+            message: `This package declares CIF version "${declaredVersion}", but this app only supports version ${SUPPORTED_CIF_VERSIONS.join(", ")}.`,
           },
         ],
       };

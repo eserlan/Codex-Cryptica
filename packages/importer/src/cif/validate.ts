@@ -1,5 +1,4 @@
 import type { CifManifest, CifValidationError } from "./package";
-import { SUPPORTED_CIF_VERSIONS } from "./package";
 import type { ImportWarning } from "../cc/package";
 import { CIF_MAPPING_RULES } from "./normalize";
 import {
@@ -23,6 +22,20 @@ function extensionNamespaces(
   extensions: Record<string, unknown> | undefined,
 ): string[] {
   return extensions ? Object.keys(extensions) : [];
+}
+
+/**
+ * Counts distinct assets involved in this package (declared `assets` plus
+ * any additionally-referenced `media.assetKey`s) — a union, not a sum, so
+ * multiple entities pointing at the same asset don't inflate the count.
+ */
+function countDistinctAssetKeys(manifest: CifManifest): number {
+  const keys = new Set<string>();
+  for (const asset of manifest.assets) keys.add(asset.key);
+  for (const entity of manifest.entities) {
+    for (const media of entity.media ?? []) keys.add(media.assetKey);
+  }
+  return keys.size;
 }
 
 /**
@@ -71,17 +84,11 @@ function findHierarchyCycle(manifest: CifManifest): string[] | null {
 export function validateCifManifest(
   manifest: CifManifest,
 ): CifValidationResult {
+  // Version support is enforced by CifManifestSchema itself (a `CifManifest`
+  // can't exist with an unsupported version) — parseCifFile reports
+  // "unsupported-version" at the schema-validation stage instead.
   const errors: CifValidationError[] = [];
   const warnings: ImportWarning[] = [];
-
-  if (
-    !(SUPPORTED_CIF_VERSIONS as readonly string[]).includes(manifest.version)
-  ) {
-    errors.push({
-      code: "unsupported-version",
-      message: `This package declares CIF version "${manifest.version}", but this app only supports version ${SUPPORTED_CIF_VERSIONS.join(", ")}.`,
-    });
-  }
 
   const entityKeys = new Set<string>();
   for (const entity of manifest.entities) {
@@ -175,11 +182,9 @@ export function validateCifManifest(
     warnings.push(noWorldKeyWarning(manifest.source.system));
   }
 
-  const totalAssetRefs =
-    manifest.assets.length +
-    manifest.entities.reduce((sum, e) => sum + (e.media?.length ?? 0), 0);
-  if (totalAssetRefs > 0) {
-    warnings.push(assetsNotImportedWarning(totalAssetRefs));
+  const distinctAssetKeys = countDistinctAssetKeys(manifest);
+  if (distinctAssetKeys > 0) {
+    warnings.push(assetsNotImportedWarning(distinctAssetKeys));
   }
 
   return { ok: true, warnings };
