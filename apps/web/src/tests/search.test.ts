@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { MockWorker, mockApi } = vi.hoisted(() => {
-  const releaseProxySymbol = Symbol.for("comlink.releaseProxy");
+const { MockWorker, mockApi, releaseProxy } = vi.hoisted(() => {
+  // A stand-in for comlink's releaseProxy symbol, injected into SearchService
+  // so terminate() checks the exact symbol we key the fake api with (avoids the
+  // dual-comlink-copy identity mismatch across the package boundary — #1742).
+  const releaseProxy = Symbol("test.releaseProxy");
   const mockApi = {
     initIndex: vi.fn().mockResolvedValue(true),
     add: vi.fn().mockResolvedValue(true),
@@ -25,7 +28,6 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     setChangeCallback: vi.fn(),
     exportIndex: vi.fn(),
     importIndex: vi.fn(),
-    [releaseProxySymbol]: vi.fn(),
   };
 
   class MockWorker {
@@ -36,21 +38,16 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     removeEventListener() {}
   }
 
-  return { MockWorker, mockApi, releaseProxySymbol };
+  return { MockWorker, mockApi, releaseProxy };
 });
 
 vi.stubGlobal("Worker", MockWorker);
 
-// Mock Comlink
-vi.mock("comlink", () => {
-  return {
-    wrap: vi.fn(() => mockApi),
-    expose: vi.fn(),
-    transfer: vi.fn((obj) => obj),
-    proxy: vi.fn((fn) => fn),
-    releaseProxy: Symbol.for("comlink.releaseProxy"),
-  };
-});
+// Note: Comlink is NOT module-mocked. SearchService imports comlink from its
+// own workspace package, so a `vi.mock("comlink")` here wouldn't intercept it
+// (#1742). Instead the fake `wrap`/`proxy` are injected via the constructor.
+// `terminate()` only uses `Comlink.releaseProxy`, a `Symbol.for(...)` that is
+// identical between real and fake comlink, so real comlink is fine there.
 
 // Mock debugStore
 vi.mock("$lib/stores/debug.svelte", () => ({
@@ -88,6 +85,12 @@ describe("SearchService", () => {
       debug: debugStore,
       eventBus: appEventBus,
       workerFactory: () => new MockWorker() as unknown as Worker,
+      // Inject fake comlink primitives. Mocking the "comlink" module doesn't
+      // reach this service's import across the package boundary, so DI is the
+      // reliable seam (see #1742).
+      wrap: () => mockApi as any,
+      proxy: (fn) => fn,
+      releaseProxy,
     });
   });
 
@@ -282,6 +285,9 @@ describe("SearchService", () => {
         debug: debugStore,
         eventBus: appEventBus,
         workerFactory: () => new MockWorker() as unknown as Worker,
+        wrap: () => mockApi as any,
+        proxy: (fn) => fn,
+        releaseProxy,
       });
       await (service as any).ensureWorker();
 
@@ -504,7 +510,9 @@ describe("SearchService", () => {
     const releaseSpy = vi.fn();
     (service as any).api = {
       ...mockApi,
-      [Symbol.for("comlink.releaseProxy")]: releaseSpy,
+      // Key with the same symbol injected as `releaseProxy`, which is what
+      // terminate() checks — matches production's Comlink.releaseProxy behavior.
+      [releaseProxy]: releaseSpy,
     };
     const terminateSpy = vi.spyOn((service as any).worker, "terminate");
 

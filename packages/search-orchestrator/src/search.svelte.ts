@@ -34,6 +34,15 @@ type SearchApi = Pick<
 export interface SearchServiceDependencies {
   workerFactory?: () => Worker | Promise<Worker>;
   api?: Comlink.Remote<SearchApi> | SearchApi;
+  /**
+   * Comlink `wrap`/`proxy`, injectable so tests can substitute fakes. Real
+   * Comlink is used by default. Injecting these avoids relying on module-level
+   * mocking of "comlink", which doesn't cross the package boundary reliably
+   * (this service lives in its own workspace package).
+   */
+  wrap?: <T>(endpoint: Worker) => Comlink.Remote<T>;
+  proxy?: <T>(value: T) => T;
+  releaseProxy?: symbol;
   db?: any;
   eventBus?: any;
   debug?: DebugLogger;
@@ -49,6 +58,9 @@ export class SearchService {
   private isInitialized = false;
 
   private workerFactory: () => Worker | Promise<Worker>;
+  private comlinkWrap: <T>(endpoint: Worker) => Comlink.Remote<T>;
+  private comlinkProxy: <T>(value: T) => T;
+  private comlinkReleaseProxy: symbol;
   private debug: DebugLogger;
   private windowRef: Window | undefined;
   private coordinator: SearchProgressCoordinator;
@@ -68,6 +80,11 @@ export class SearchService {
         return factory();
       });
     this.api = dependencies.api ?? null;
+    this.comlinkWrap = dependencies.wrap ?? Comlink.wrap;
+    this.comlinkProxy =
+      dependencies.proxy ?? (Comlink.proxy as <T>(value: T) => T);
+    this.comlinkReleaseProxy =
+      dependencies.releaseProxy ?? Comlink.releaseProxy;
     this.debug =
       dependencies.debug ?? (globalThis as any).__debugStore__ ?? console;
     const timers = dependencies.timers ?? globalThis;
@@ -179,10 +196,10 @@ export class SearchService {
 
     const workerInstance = await this.workerFactory();
     this.worker = workerInstance;
-    this.api = Comlink.wrap<SearchApi>(this.worker);
+    this.api = this.comlinkWrap<SearchApi>(this.worker);
 
     await this.api.setLogger(
-      Comlink.proxy(
+      this.comlinkProxy(
         (level: "info" | "warn" | "error", msg: string, data?: any) => {
           const message = `[SearchEngine] ${msg}`;
           if (level === "error") this.debug.error(message, data);
@@ -193,7 +210,7 @@ export class SearchService {
     );
 
     await this.api.setChangeCallback(
-      Comlink.proxy(() => {
+      this.comlinkProxy(() => {
         this.coordinator.isDirty = true;
         this.coordinator.scheduleAutoSave();
       }),
@@ -220,7 +237,10 @@ export class SearchService {
 
   terminate() {
     if (this.api) {
-      if (Comlink.releaseProxy in this.api) this.api[Comlink.releaseProxy]();
+      const release = (this.api as Record<symbol, unknown>)[
+        this.comlinkReleaseProxy
+      ];
+      if (typeof release === "function") release();
       this.api = null;
     }
     this.worker?.terminate();
