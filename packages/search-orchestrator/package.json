@@ -15,8 +15,8 @@
     "svelte": "^5.0.0"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "eslint": "^10.6.0"
+    "typescript": "^7.0.2",
+    "eslint": "^10.7.0"
   },
   "dependencies": {
     "comlink": "^4.4.2",
