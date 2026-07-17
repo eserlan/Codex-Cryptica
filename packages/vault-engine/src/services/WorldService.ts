@@ -101,6 +101,7 @@ export interface WorldServiceDependencies {
       categories?: string[],
     ): Promise<void>;
   } | null;
+  now?: () => number;
 }
 
 const createMissingDb = (): WorldServiceDependencies["db"] => {
@@ -167,6 +168,10 @@ async function fetchFrontpageRecords(
 export class WorldServiceImplementation {
   constructor(private deps: WorldServiceDependencies = {}) {}
 
+  private getNow() {
+    return this.deps.now ? this.deps.now() : Date.now();
+  }
+
   private get db() {
     return this.deps.db ?? createMissingDb()!;
   }
@@ -199,7 +204,7 @@ export class WorldServiceImplementation {
       tagline: metadata.tagline ?? existing?.tagline ?? undefined,
       description: metadata.description ?? existing?.description ?? undefined,
       coverImage: metadata.coverImage ?? existing?.coverImage ?? undefined,
-      lastModified: Date.now(),
+      lastModified: this.getNow(),
     };
 
     await this.db.vaultMetadata.put(next);
@@ -314,7 +319,7 @@ export class WorldServiceImplementation {
       promptBase,
       modelName,
     );
-    const assetName = `world-${vaultId}-${Date.now()}`;
+    const assetName = `world-${vaultId}-${this.getNow()}`;
     const saved = await assetManager.saveImageToVault(
       blob,
       assetName,
