@@ -66,7 +66,7 @@
     // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
     // to prevent intermediate array allocations and reduce GC overhead.
     const nextValues: Record<string, unknown> = {};
-    for (const option of definition.options as { id: string; defaultValue?: unknown }[]) {
+for (const option of definition.options) {
       nextValues[option.id] =
         typeof previousValues[option.id] !== "undefined"
           ? previousValues[option.id]
