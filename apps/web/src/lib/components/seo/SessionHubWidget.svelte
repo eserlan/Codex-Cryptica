@@ -11,6 +11,9 @@
   } = $props();
 
   const entities = $derived(sessionHubStore.entities.slice().reverse()); // Show most recent at top
+  const selectedEntities = $derived(
+    entities.filter((entity) => entity.selectedForSave !== false),
+  );
 </script>
 
 <div
@@ -37,8 +40,8 @@
 
   {#if entities.length === 0}
     <p class="text-[10px] text-theme-muted leading-relaxed">
-      Generate drafts and click "Link to Hub" to build a connected campaign
-      vault before exporting.
+      Generated drafts appear here automatically. Choose which ones to reuse as
+      context or save to Codex.
     </p>
   {:else}
     <ul class="flex flex-col gap-1.5 overflow-y-auto max-h-[500px] pr-1">
@@ -82,6 +85,29 @@
           <div
             class="flex flex-row items-center gap-0.5 shrink-0 px-1 py-1 bg-theme-surface/20 rounded-lg border border-theme-border/20"
           >
+            <button
+              type="button"
+              onclick={() =>
+                sessionHubStore.updateEntity(entity.id, {
+                  selectedForSave: entity.selectedForSave === false,
+                })}
+              class="p-1.5 rounded flex items-center justify-center transition-colors {entity.selectedForSave !==
+              false
+                ? 'text-theme-primary bg-theme-primary/10 hover:bg-theme-primary/20'
+                : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
+              title={entity.selectedForSave !== false
+                ? "Included when saving"
+                : "Excluded when saving"}
+              aria-label="Include {entity.title} when saving"
+              aria-pressed={entity.selectedForSave !== false}
+            >
+              <span
+                class={entity.selectedForSave !== false
+                  ? "icon-[lucide--square-check-big] w-3.5 h-3.5"
+                  : "icon-[lucide--square] w-3.5 h-3.5"}
+                aria-hidden="true"
+              ></span>
+            </button>
             <button
               type="button"
               onclick={() =>
@@ -132,12 +158,22 @@
         </li>
       {/each}
     </ul>
-    <button
-      type="button"
-      onclick={() => onSave?.(entities)}
-      class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-2"
-    >
-      Save Hub to Codex ({entities.length})
-    </button>
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      <button
+        type="button"
+        onclick={() => onSave?.(selectedEntities)}
+        disabled={selectedEntities.length === 0}
+        class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Save selected ({selectedEntities.length})
+      </button>
+      <button
+        type="button"
+        onclick={() => onSave?.(entities)}
+        class="w-full py-2 border border-theme-primary/40 bg-theme-surface/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-colors text-center"
+      >
+        Save all ({entities.length})
+      </button>
+    </div>
   {/if}
 </div>

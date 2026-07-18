@@ -36,6 +36,7 @@ describe("SessionHubStore", () => {
     expect(store.entities[0].id).toBe(id);
     expect(store.entities[0].title).toBe("Elara");
     expect(store.entities[0].createdOrder).toBe(1);
+    expect(store.entities[0].selectedForSave).toBe(true);
     expect(store.nextOrder).toBe(2);
   });
 
@@ -99,6 +100,7 @@ describe("SessionHubStore", () => {
     const newStore = new SessionHubStore();
     expect(newStore.entities).toHaveLength(1);
     expect(newStore.entities[0].title).toBe("Test");
+    expect(newStore.entities[0].selectedForSave).toBe(true);
     expect(newStore.provenance["1"]).toBeDefined();
     expect(newStore.nextOrder).toBe(2);
   });
@@ -119,6 +121,7 @@ describe("SessionHubStore", () => {
     expect(newStore.entities[0].title).toBe("Old Draft");
     expect(newStore.entities[0].id).toBeDefined();
     expect(newStore.entities[0].reuseEnabled).toBe(true);
+    expect(newStore.entities[0].selectedForSave).toBe(true);
     expect(newStore.nextOrder).toBe(2);
   });
 
