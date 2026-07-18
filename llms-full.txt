@@ -28,6 +28,12 @@ The Oracle works in two modes: System Proxy (free, uses shared access) or Custom
 ### Oracle Memory
 The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
 
+### Family Tree
+Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
+
+### Explore the lineage
+Drag to pan, scroll or pinch to zoom, and use ⊞ to expand a branch. Choose Show all generations to reveal the whole recorded lineage.
+
 ### Visual Graph
 Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.
 
@@ -40,6 +46,9 @@ Use the briefing field to edit the world blurb directly. If it is empty, the Gen
 ### Load and Save Folders
 Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
 
+### Codex Interchange Format (CIF) Import
+Drop a .cif.json file exported by another compatible worldbuilding tool to bring its entities, hierarchy, and links into your vault — entirely offline, with nothing sent anywhere. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.
+
 ### Search Indexing
 Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.
 
@@ -50,7 +59,7 @@ The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It o
 Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
 
 ### Public World Directory
-Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link.
+Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link. All listed worlds display a provenance and copyright notice confirming they are user-created and independently published without rights-holder endorsement. Authors must confirm they have the legal right to publish their content, and visitors may report potential copyright concerns for moderation review.
 
 ### Sharing a Link to an Entry
 In a shared world, every entry has a link button (next to the entry title in the side panel and in the full-screen view). It copies a direct link that opens that entry full-screen for anyone you send it to. While browsing a shared world, the address bar also carries the current entry, so copying the address works too.
@@ -168,6 +177,13 @@ Open any entity's detail panel and click the Timeline tab to see a chronological
 
 ### Generators Work Offline
 The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.
+
+### Fictional Languages
+Design custom language profiles (conlangs) detailing pronunciation guidelines, naming structures, example names, and glossary dictionaries. Other generators like NPC and Settlement will automatically respect these profiles to keep naming styles culturally and linguistically consistent.
+
+### News Sheets (In-World News)
+Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.
+
 
 ## Help Documentation
 
@@ -883,6 +899,14 @@ By default, all your campaign data is stored in the **Origin Private File System
 
 You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
 
+> **Browser support:** local folder saving relies on the File System Access API.
+>
+> - **Chrome, Edge:** supported out of the box.
+> - **Brave:** ships this feature disabled by default. If "Save to Folder" doesn't work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
+> - **Firefox, Safari:** don't support this feature yet. Your vault still saves automatically to the browser's local storage (OPFS) — you just can't mirror it to a folder on disk until you switch to a Chromium-based browser.
+>
+> On any browser, you can still back up with **Settings → Portable Backup → Export Backup**, which downloads your whole vault as a single `.codex.zip` file you can re-import anywhere.
+
 1.  **External Backups:** Keep a real-time copy of your world in a folder you control.
 2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
 3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.
@@ -1124,6 +1148,48 @@ The landing page highlights several key "Protocols" that define the application:
 ## Performance & SEO
 
 The landing page is optimised for fast load times and crawlable metadata, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
+
+---
+
+### FAMILY TREE
+
+The Family Tree gives every character a genealogy view built from your existing connections. Open a character's detail panel and click the **Family** tab to see their relatives laid out across generations.
+
+## Reading the tree
+
+The focused character sits in the middle. Around them you'll see:
+
+- **Parents** above
+- **Partner or partners** beside them
+- **Children** below
+- **Siblings** on the same row — worked out automatically from shared parents, and you can also add them directly (handy when the parents aren't recorded)
+
+Each person appears as a card with their portrait, name, lifespan, and whether they are living or deceased. The card also shows how they relate to the focused character — a specific term like "Mother" or "Brother" when one was set, otherwise the general category (Parent, Partner, Sibling, Child). Tag a character with a **Male** or **Female** label and their card shows a small gender icon.
+
+## Building a family
+
+Use the buttons beneath the tree — **Add parent**, **Add partner**, **Add sibling**, **Add child** — to grow the family. For each one you can:
+
+- **Connect** an existing character from your world, or
+- **Create** a brand-new character and link them in one step.
+
+When adding a sibling you can mark them as a **Brother**, **Sister**, or leave it as a generic sibling — the term shows on their card. Siblings can be added even when you haven't recorded any parents.
+
+When you add a parent, the matching "child" link is added to the other character automatically, so both sides always agree. Family links are only allowed between characters, and the app blocks anything that would make a character their own ancestor.
+
+Sharing a parent also links siblings automatically: when a character gets a new parent who already has other children, those children are connected as siblings right away — no extra step needed, and it's never duplicated if the link already exists.
+
+If the parent you just added already has a partner on file, you'll be asked whether to add that partner as a parent too — it's never done automatically, since being partnered doesn't always mean being a co-parent (remarriage, step-parents, and unrelated partners all happen). Add the ones that apply, or dismiss the suggestion.
+
+## Navigating
+
+- **Click a relative's card** to re-centre the tree on them and explore outward.
+- **Collapse** the parents or children branch to keep large trees tidy.
+- Use the **open** icon on a card to jump to that character's full detail panel.
+
+## One source of truth
+
+The Family Tree is just a view of your normal entity connections — it doesn't create a separate family database. Family links you add here also show up in the graph and connection views, and connections you make elsewhere show up here.
 
 ---
 

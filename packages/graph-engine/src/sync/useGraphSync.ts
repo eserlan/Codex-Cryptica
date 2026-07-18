@@ -5,12 +5,7 @@ import type { LayoutRequest } from "../LayoutManager";
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
   vaultStatus:
-    | "loading"
-    | "idle"
-    | "error"
-    | "saving"
-    | "saved"
-    | "needs-permission";
+    "loading" | "idle" | "error" | "saving" | "saved" | "needs-permission";
   initialLoaded: boolean;
   isTemporalMetadataEqual: (a: any, b: any) => boolean;
   activeLabels?: Set<string>;

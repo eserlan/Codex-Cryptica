@@ -340,11 +340,9 @@ describe("app-init", () => {
           serviceWorker: {
             controller: {},
             register: registerSpy,
-            addEventListener: vi.fn(
-              (event: string, handler: EventListener) => {
-                serviceWorkerListeners.set(event, handler);
-              },
-            ),
+            addEventListener: vi.fn((event: string, handler: EventListener) => {
+              serviceWorkerListeners.set(event, handler);
+            }),
           },
         } as any,
         window: mockWindow,

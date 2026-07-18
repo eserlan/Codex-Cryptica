@@ -136,6 +136,7 @@ A user views the calendar on a touch device and swipes left or right to move to 
 2. **Given** a user is viewing the calendar on a touch-enabled device, **When** they swipe right across the calendar grid, **Then** the calendar navigates to the previous month.
 
 ---
+
 ### Edge Cases
 
 - What happens when the vault has no "current date" entity and no vault year setting?

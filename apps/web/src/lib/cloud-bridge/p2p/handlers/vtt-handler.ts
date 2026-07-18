@@ -25,8 +25,7 @@ export class VTTHandler extends BaseHandler {
 
       const entity = message.entityId
         ? (context.vault.entities[message.entityId] as
-            | { image?: string }
-            | undefined)
+            { image?: string } | undefined)
         : null;
       const roster = context.guestStore.guestRoster as Record<
         string,

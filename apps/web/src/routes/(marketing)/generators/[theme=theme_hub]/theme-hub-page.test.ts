@@ -54,8 +54,6 @@ describe("Generator Theme Hub Page", () => {
       name: /pirate ship generator/i,
     });
     expect(link).toBeTruthy();
-    expect(link.getAttribute("href")).toBe(
-      "/generators/pirate/ship-generator",
-    );
+    expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
   });
 });

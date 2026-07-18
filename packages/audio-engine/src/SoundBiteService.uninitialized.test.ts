@@ -15,6 +15,8 @@ describe("SoundBiteService before initAudioEngine()", () => {
         "entity" as any,
         [],
       ),
-    ).rejects.toThrow("[AudioEngine] Not initialized. Call initAudioEngine() first.");
+    ).rejects.toThrow(
+      "[AudioEngine] Not initialized. Call initAudioEngine() first.",
+    );
   });
 });

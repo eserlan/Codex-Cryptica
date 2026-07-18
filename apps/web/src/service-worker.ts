@@ -4,10 +4,7 @@
 /// <reference lib="webworker" />
 
 import { build, files, version } from "$service-worker";
-import {
-  activateBuild,
-  precacheBuild,
-} from "$lib/service-worker/lifecycle";
+import { activateBuild, precacheBuild } from "$lib/service-worker/lifecycle";
 
 const CACHE_VERSION = "429";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;

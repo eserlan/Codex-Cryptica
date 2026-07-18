@@ -153,10 +153,7 @@ describe("buildShipPrompt", () => {
   });
 
   it("includes command structure for non-Pirate ships", () => {
-    const result = generateShipLocal(
-      { genre: "Sci-Fi" },
-      seededRng(8),
-    );
+    const result = generateShipLocal({ genre: "Sci-Fi" }, seededRng(8));
 
     expect(result.content).toContain("## Captain, Officers & Crew");
     expect(result.content).toContain("### Officer Roster");

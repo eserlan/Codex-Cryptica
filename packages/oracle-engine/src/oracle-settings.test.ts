@@ -90,7 +90,9 @@ describe("OracleSettingsService", () => {
 
   describe("setTier", () => {
     it("should save tier to database and broadcast", async () => {
-      const service = new OracleSettingsService(undefined, { now: () => 1234567890 });
+      const service = new OracleSettingsService(undefined, {
+        now: () => 1234567890,
+      });
       await service.init(mockDb as any);
 
       await service.setTier("lite");
@@ -106,7 +108,9 @@ describe("OracleSettingsService", () => {
 
   describe("setKey", () => {
     it("should save api key to database and broadcast", async () => {
-      const service = new OracleSettingsService(undefined, { now: () => 1234567890 });
+      const service = new OracleSettingsService(undefined, {
+        now: () => 1234567890,
+      });
       await service.init(mockDb as any);
 
       await service.setKey("new-key");

@@ -39,19 +39,23 @@
 **Learning:** Svelte files containing pure logic (like converting raw date values to `DateSelection`) mixed with state and UI (`TemporalPicker.svelte`) can be made cleaner and testable by extracting the pure mapping logic into a separate `-utils` file (e.g., `utils/toDateSelection.ts`). This function only requires a config object to remove dependencies from Svelte's global stores.
 
 **Action:** Look for Svelte components containing complex data structure conversions or data normalizations. Extract these pure helper functions into sibling `utils/` or `-helpers` files, passing down only the required plain dependencies (like config objects) rather than relying on reactive closure scope. Add Vitest coverage for the extracted logic.
+
 ## 2025-07-07 - Extracting configuration constants from massive files
 
 **Learning:** When dealing with god files that contain both logic/interfaces and a massive amount of hardcoded configuration/reference data (like the 1,100+ line `settlementConfig` in `public-settlement.ts`), extracting the pure data payload into a dedicated constants file (e.g. `public-settlement-constants.ts`) makes the core file far easier to read and scan, without modifying any upstream runtime logic.
 **Action:** Future agents should look for modules where huge static object definitions bloat the file. Split the definitions into `-constants.ts` and use `import` then `export` in the original file to prevent widespread import refactoring and maintain the public API.
+
 ## 2024-05-24 - Extract configuration blobs from generator engine files
 
 **Learning:** Large modules that are composed of both functional logic (like prompt generators and local fallbacks) and huge static data objects (like lists of naming conventions, text descriptions for every genre, etc) make it hard to navigate. By extracting the pure static data into `<module>-constants.ts`, the original file shrinks significantly, is much easier to read, and the behavior remains identical since imports/exports can be structured to present the exact same API.
 **Action:** When working on large files in `@codex/generator-engine` or similar packages that combine functions with huge data arrays/objects, prefer extracting the data objects to a sibling `-constants.ts` file, and keep the main file focused on logic. Ensure to keep exports aligned.
+
 ## 2026-07-14 - Extract Content Groups from God-Files
 
 **Learning:** When marketing or configuration files like `seo-pages.ts` grow large because they combine disparate content (solutions, features, comparisons), extracting distinct record objects (like `comparisons`) into sibling files following the same naming convention significantly reduces file size and improves navigation without needing architectural changes.
 
 **Action:** Favor grouping large static content records by their domain (e.g., `seo-comparisons.ts`) rather than dumping all page metadata into one god file.
+
 ## 2026-07-15 - Extracted SEO Marketing configurations
 
 **Learning:** When marketing configuration files grow huge by combining disparate static content (like solutions, comparisons, features, and imports in `seo-pages.ts`), extracting distinct record objects into sibling files (`seo-comparisons.ts`, `seo-features.ts`, `seo-imports.ts`) drastically reduces file size and improves navigation without breaking any upstream imports (thanks to re-exporting them in the root file).

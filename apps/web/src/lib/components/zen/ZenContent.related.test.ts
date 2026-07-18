@@ -130,7 +130,9 @@ describe("ZenContent Related Entity Generation Trigger", () => {
       scrollContainer: undefined,
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Revise Chronicle and Lore with AI" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Revise Chronicle and Lore with AI" }),
+    );
 
     expect(modalUIStore.openRevisionDialog).toHaveBeenCalledWith("entity-1");
   });
@@ -149,7 +151,11 @@ describe("ZenContent Related Entity Generation Trigger", () => {
       editState: { isEditing: false } as any,
       scrollContainer: undefined,
     });
-    expect(screen.queryByRole("button", { name: "Revise Chronicle and Lore with AI" })).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: "Revise Chronicle and Lore with AI",
+      }),
+    ).toBeNull();
     guestView.unmount();
 
     (vault as any).isGuest = false;

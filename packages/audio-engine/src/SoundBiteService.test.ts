@@ -124,15 +124,12 @@ describe("SoundBiteService", () => {
         { name: "vault-handle" },
         "vault-handle",
       );
-      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith(
-        "entity-1",
-        {
-          soundBite: expect.objectContaining({
-            transcript: "Hello",
-            audioFile: "audio/entity-1_soundbite.wav",
-          }),
-        },
-      );
+      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
+        soundBite: expect.objectContaining({
+          transcript: "Hello",
+          audioFile: "audio/entity-1_soundbite.wav",
+        }),
+      });
       expect(soundBiteService.savedSoundBite).not.toBeNull();
     });
 
@@ -163,12 +160,9 @@ describe("SoundBiteService", () => {
       await soundBiteService.save({ id: "entity-1" } as any);
 
       expect(dependencies.writeOpfsFile).not.toHaveBeenCalled();
-      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith(
-        "entity-1",
-        {
-          soundBite: expect.objectContaining({ transcript: "Hello" }),
-        },
-      );
+      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
+        soundBite: expect.objectContaining({ transcript: "Hello" }),
+      });
     });
   });
 
@@ -188,10 +182,9 @@ describe("SoundBiteService", () => {
         ["audio", "entity-1_soundbite.wav"],
         "vault-handle",
       );
-      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith(
-        "entity-1",
-        { soundBite: undefined },
-      );
+      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
+        soundBite: undefined,
+      });
       expect(soundBiteService.savedSoundBite).toBeNull();
     });
 
@@ -202,10 +195,9 @@ describe("SoundBiteService", () => {
       } as any);
 
       expect(dependencies.deleteOpfsEntry).not.toHaveBeenCalled();
-      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith(
-        "entity-1",
-        { soundBite: undefined },
-      );
+      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
+        soundBite: undefined,
+      });
     });
 
     it("still clears entity state if the OPFS delete itself throws", async () => {
@@ -219,10 +211,9 @@ describe("SoundBiteService", () => {
       } as any);
 
       expect(dependencies.debugStore.warn).toHaveBeenCalled();
-      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith(
-        "entity-1",
-        { soundBite: undefined },
-      );
+      expect(dependencies.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
+        soundBite: undefined,
+      });
     });
   });
 
