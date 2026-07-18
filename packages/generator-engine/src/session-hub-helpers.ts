@@ -11,6 +11,8 @@ export interface SessionEntity {
   status: "active" | "draft";
   reuseEnabled: boolean;
   pinned: boolean;
+  /** Whether this draft is included by the session hub's selected-save action. */
+  selectedForSave?: boolean;
   createdOrder: number;
 }
 
