@@ -19,11 +19,12 @@
     "eslint": "^10.7.0"
   },
   "dependencies": {
-    "comlink": "^4.4.2",
-    "dexie": "^4.4.2",
     "@codex/events": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",
+    "comlink": "^4.4.2",
+    "dexie": "^4.4.2",
     "schema": "workspace:*"
   }
 }

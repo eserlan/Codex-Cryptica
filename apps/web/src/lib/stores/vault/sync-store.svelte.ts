@@ -8,6 +8,7 @@ import { fileIOAdapter } from "./adapters.svelte";
 import type { VaultRecord } from "../../utils/idb";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
@@ -338,7 +339,10 @@ export class SyncStore {
               type: "SYNC:LOCAL_PULL_COMPLETE",
               domain: "sync",
               payload: { vaultId: vaultIdAtStart },
-              metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+              metadata: {
+                timestamp: systemClock.now(),
+                vaultId: vaultIdAtStart,
+              },
             });
           } catch (err) {
             debugStore.error("[SyncStore] Local sync failed", err);
@@ -474,7 +478,7 @@ export class SyncStore {
           type: "SYNC:LOCAL_PUSH_COMPLETE",
           domain: "sync",
           payload: { vaultId: vaultIdAtStart },
-          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+          metadata: { timestamp: systemClock.now(), vaultId: vaultIdAtStart },
         });
 
         this.setStatus("saved");
@@ -549,7 +553,7 @@ export class SyncStore {
           type: "SYNC:LOCAL_PULL_COMPLETE",
           domain: "sync",
           payload: { vaultId: vaultIdAtStart },
-          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+          metadata: { timestamp: systemClock.now(), vaultId: vaultIdAtStart },
         });
 
         await this.loadFiles();

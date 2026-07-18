@@ -1,4 +1,5 @@
 import { calendarEngine } from "./engine";
+import { type Clock, systemClock } from "./runtime";
 import type {
   AgendaSection,
   CalendarCurrentDateSource,
@@ -242,11 +243,12 @@ export interface CurrentDateEntity {
  * Resolve the calendar's opening "current date" using the FR-012 priority chain:
  *  1. Entity title match — first exact-date entity whose title is in CURRENT_DATE_TITLES
  *  2. Vault current-year setting — open to January of that year (day absent)
- *  3. Real-world date fallback — use new Date()
+ *  3. Real-world date fallback — use the injected clock's current date
  */
 export function resolveCalendarCurrentDate(
   entities: CurrentDateEntity[],
   settings: VaultCalendarSettings,
+  clock: Clock = systemClock,
 ): CalendarCurrentDateSource {
   // Tier 1: entity title match
   const candidates = entities
@@ -286,7 +288,7 @@ export function resolveCalendarCurrentDate(
   }
 
   // Tier 3: real-world date
-  const now = new Date();
+  const now = new Date(clock.now());
   return {
     source: "realWorld",
     date: {

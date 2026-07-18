@@ -31,6 +31,7 @@ vi.mock("../../services/cache.svelte", () => ({
 vi.mock("./registry", () => ({ updateLastInternalChange: vi.fn() }));
 
 import { EntityPersistenceService } from "./entity-persistence";
+import { systemClock } from "../../utils/runtime-deps";
 
 function makeService(
   saveToDisk: any,
@@ -134,6 +135,7 @@ describe("EntityPersistenceService coordinate-only saves", () => {
       throw new Error("content loader should not run");
     });
     const markContentLoaded = vi.fn();
+    const nowSpy = vi.spyOn(systemClock, "now").mockReturnValue(1234567);
     cacheGetEntityContent.mockResolvedValue({
       content: "Existing chronicle",
       lore: "Existing lore",
@@ -172,12 +174,13 @@ describe("EntityPersistenceService coordinate-only saves", () => {
     );
     expect(cacheSet).toHaveBeenCalledWith(
       "v1:hero.md",
-      expect.any(Number),
+      1234567,
       expect.objectContaining({
         content: "Existing chronicle",
         lore: "Existing lore",
       }),
     );
+    nowSpy.mockRestore();
   });
 
   it("preserves cached content when coordinate-only saves are flushed before debounce", async () => {

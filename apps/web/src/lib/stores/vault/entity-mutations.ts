@@ -10,6 +10,7 @@ import type { EntityContentLoader } from "./entity-content-loader.svelte";
 import type { IVaultServices } from "./service-registry";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { updateLastInternalChange } from "./registry";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface MutationDependencies {
   repository: VaultRepository;
@@ -208,8 +209,8 @@ export class EntityMutationService {
               : patch.content
             : current.content,
         lore: patch.lore !== undefined ? patch.lore : current.lore,
-        updatedAt: Date.now(),
-        modifiedAt: Date.now(),
+        updatedAt: systemClock.now(),
+        modifiedAt: systemClock.now(),
       } as LocalEntity;
 
       newEntities[id] = merged;

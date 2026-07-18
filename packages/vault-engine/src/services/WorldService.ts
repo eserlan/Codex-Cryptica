@@ -1,4 +1,5 @@
 import Dexie from "dexie";
+import { type Clock, systemClock } from "../runtime";
 
 interface GraphEntityRecord {
   id: string;
@@ -101,7 +102,7 @@ export interface WorldServiceDependencies {
       categories?: string[],
     ): Promise<void>;
   } | null;
-  now?: () => number;
+  clock?: Clock;
 }
 
 const createMissingDb = (): WorldServiceDependencies["db"] => {
@@ -169,7 +170,7 @@ export class WorldServiceImplementation {
   constructor(private deps: WorldServiceDependencies = {}) {}
 
   private getNow() {
-    return this.deps.now ? this.deps.now() : Date.now();
+    return (this.deps.clock ?? systemClock).now();
   }
 
   private get db() {
@@ -178,8 +179,7 @@ export class WorldServiceImplementation {
 
   async getMetadata(vaultId: string): Promise<WorldMetadata> {
     const record = (await this.db.vaultMetadata.get(vaultId)) as
-      | VaultMetadataRecord
-      | undefined;
+      VaultMetadataRecord | undefined;
 
     return {
       id: vaultId,
@@ -195,8 +195,7 @@ export class WorldServiceImplementation {
     metadata: Partial<WorldMetadata>,
   ): Promise<void> {
     const existing = (await this.db.vaultMetadata.get(vaultId)) as
-      | VaultMetadataRecord
-      | undefined;
+      VaultMetadataRecord | undefined;
 
     const next: VaultMetadataRecord = {
       id: vaultId,

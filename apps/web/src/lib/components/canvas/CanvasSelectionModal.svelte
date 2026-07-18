@@ -7,6 +7,7 @@
   import { tick } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let searchQuery = $state("");
   const activeCanvasId = $derived(page.params.slug);
@@ -325,7 +326,7 @@
                 </div>
                 <div class="text-[10px] text-theme-muted font-mono mt-0.5">
                   Last updated: {new Date(
-                    canvas.lastModified || Date.now(),
+                    canvas.lastModified ?? systemClock.now(),
                   ).toLocaleString()}
                 </div>
               {/if}

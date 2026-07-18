@@ -8,6 +8,7 @@ import { vault as defaultVault } from "$lib/stores/vault.svelte";
 import { revisionService as defaultRevisionService } from "$lib/services/RevisionService.svelte";
 import { sanitizeId } from "$lib/utils/markdown";
 import type { ParsedChatMessage } from "./chat-message.helpers";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 type EntityLike = {
   id: string;
@@ -152,7 +153,7 @@ export class ChatMessageActions {
       source: "oracle-chat",
       chronicle: updates.content ?? entity?.content ?? "",
       lore: updates.lore ?? entity?.lore ?? "",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
 
     // Auto-focus the entity so the user sees the draft overlay
@@ -237,7 +238,7 @@ export class ChatMessageActions {
       source: "oracle-chat",
       chronicle: updates.content ?? entity?.content ?? "",
       lore: updates.lore ?? entity?.lore ?? "",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
 
     this.vault.selectedEntityId = finalTargetId;
@@ -266,7 +267,7 @@ export class ChatMessageActions {
       source: "oracle-chat",
       chronicle: updates.content ?? entity?.content ?? "",
       lore: updates.lore ?? entity?.lore ?? "",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
 
     this.vault.selectedEntityId = finalTargetId;

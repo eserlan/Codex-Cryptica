@@ -1,3 +1,4 @@
+import { systemClock } from "$lib/utils/runtime-deps";
 export interface LogEntry {
   timestamp: number;
   level: "info" | "warn" | "error";
@@ -25,7 +26,7 @@ export class DebugStore {
   }
 
   private addLog(level: LogEntry["level"], message: string, data?: any) {
-    const newLog = { timestamp: Date.now(), level, message, data };
+    const newLog = { timestamp: systemClock.now(), level, message, data };
     this.logs = [newLog, ...this.logs].slice(0, 500);
     if (import.meta.env.DEV) {
       const method =

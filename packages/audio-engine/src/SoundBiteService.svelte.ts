@@ -30,6 +30,7 @@ import {
   type TTSService,
 } from "@codex/oracle-engine";
 import * as Comlink from "comlink";
+import { systemClock } from "./runtime";
 
 export interface AudioEngineDependencies {
   vault: {
@@ -282,7 +283,7 @@ export class SoundBiteService {
       scholarName: this.result.scholarAttribution?.name,
       scholarTitle: this.result.scholarAttribution?.title,
       voiceProfile: this.result.voiceProfile,
-      generatedAt: Date.now(),
+      generatedAt: systemClock.now(),
     };
 
     await getDeps().vault.updateEntity(entity.id, { soundBite });

@@ -117,7 +117,7 @@ describe("WorldServiceImplementation", () => {
       });
     const put = vi.fn().mockResolvedValue(undefined);
     const service = new WorldServiceImplementation({
-      now: () => 1000,
+      clock: { now: () => 1000 },
       db: {
         vaultMetadata: { get, put } as any,
         graphEntities: createGraphEntitiesMock() as any,

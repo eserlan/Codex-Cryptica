@@ -1,6 +1,7 @@
 import type { ChatMessagePayload, VTTMessage } from "../../../types/vtt";
 import { diceEngine, type RollResult } from "dice-engine";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface VTTChatDependencies {
   emit: (message: VTTMessage) => void;
@@ -52,7 +53,7 @@ export class VTTChatManager {
       sender,
       senderId,
       content,
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
       roll,
     };
   }
@@ -100,7 +101,7 @@ export class VTTChatManager {
     this.chatMessages = [];
     this.deps.emit({
       type: "CHAT_CLEAR",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     });
   }
 

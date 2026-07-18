@@ -9,6 +9,7 @@ import {
   SyncRegistry,
 } from "@codex/sync-engine";
 import { openDB } from "idb";
+import { systemClock } from "./runtime";
 
 export interface WorkerAuthProxy {
   getAccessToken(): Promise<string | null>;
@@ -38,7 +39,7 @@ export class GDriveSyncWorker {
       type: "SYNC:DRIVE_SYNC_STARTED",
       domain: "sync",
       payload: { vaultId, direction },
-      metadata: { timestamp: Date.now(), vaultId },
+      metadata: { timestamp: systemClock.now(), vaultId },
     });
 
     try {
@@ -84,7 +85,7 @@ export class GDriveSyncWorker {
               result.created.length + result.updated.length,
             failed: result.failed.length,
           },
-          metadata: { timestamp: Date.now(), vaultId },
+          metadata: { timestamp: systemClock.now(), vaultId },
         });
         return result;
       }
@@ -93,7 +94,7 @@ export class GDriveSyncWorker {
         type: "SYNC:DRIVE_SYNC_FAILED",
         domain: "sync",
         payload: { vaultId, error: error.message },
-        metadata: { timestamp: Date.now(), vaultId },
+        metadata: { timestamp: systemClock.now(), vaultId },
       });
       throw error;
     }

@@ -1,6 +1,7 @@
 import { entityDb, type GraphEntityRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 import { debugStore } from "../stores/debug.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * Parses the composite cache key used by the vault adapter layer.
@@ -185,7 +186,7 @@ export class CacheService {
       const graphRecord = {
         ...graphData,
         updatedAt:
-          typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+          typeof raw.updatedAt === "number" ? raw.updatedAt : systemClock.now(),
         status: raw.status || "active",
         vaultId,
         lastModified,
@@ -255,7 +256,9 @@ export class CacheService {
         const graphRecord = {
           ...graphData,
           updatedAt:
-            typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+            typeof raw.updatedAt === "number"
+              ? raw.updatedAt
+              : systemClock.now(),
           status: raw.status || "active",
           vaultId,
           lastModified,

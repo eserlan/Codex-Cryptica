@@ -1,4 +1,5 @@
 import type { SearchIndexProgress } from "@codex/search-engine";
+import { systemClock } from "./runtime";
 export type DebugLogger = {
   log: (...args: any[]) => void;
   warn: (...args: any[]) => void;
@@ -89,7 +90,7 @@ export class SearchProgressCoordinator {
 
   createRunId(vaultId: string): string {
     this.runCounter += 1;
-    const runId = `${vaultId}:${Date.now()}:${this.runCounter}`;
+    const runId = `${vaultId}:${systemClock.now()}:${this.runCounter}`;
     this._activeRunId = runId;
     return runId;
   }

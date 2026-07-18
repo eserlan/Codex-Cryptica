@@ -18,6 +18,7 @@ import {
   pruneCanvasGraph,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export function createCanvasLogic(getEngine: () => CanvasStore) {
   const svelteFlow = useSvelteFlow();
@@ -104,7 +105,7 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
       currentCanvas: canvas,
       exported: exportData,
       canvasId: currentCanvasId,
-      lastModified: Date.now(),
+      lastModified: systemClock.now(),
     });
 
     await vault.saveCanvas(currentCanvasId, {
