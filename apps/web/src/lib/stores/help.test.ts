@@ -39,13 +39,20 @@ describe("HelpStore", () => {
       mockOnboardingStore,
       mockModalUIStore,
       mockSearchStore,
-      customMockStorage
+      customMockStorage,
     );
 
     // Test that it uses the injected UI store
     store.startTour("initial-onboarding");
     expect(mockOnboardingStore.dismissedLandingPage).toBe(true);
     expect(mockModalUIStore.closeSettings).toHaveBeenCalled();
+
+    // Test that persistence goes through the injected storage, not the global
+    store.dismissHint("injection-check");
+    expect(customMockStorage.setItem).toHaveBeenCalledWith(
+      "codex-cryptica-help-state",
+      expect.stringContaining("injection-check"),
+    );
   });
 
   it("should initialize with all help articles", () => {
