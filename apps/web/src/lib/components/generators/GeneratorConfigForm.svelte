@@ -63,14 +63,16 @@
     lastOptionsGeneratorId = selectedId;
     const definition = getGenerator(selectedId);
     const previousValues = optionValues;
-    optionValues = Object.fromEntries(
-      definition.options.map((option: { id: string; defaultValue?: unknown }) => [
-        option.id,
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+    // to prevent intermediate array allocations and reduce GC overhead.
+    const nextValues: Record<string, unknown> = {};
+    for (const option of definition.options as { id: string; defaultValue?: unknown }[]) {
+      nextValues[option.id] =
         typeof previousValues[option.id] !== "undefined"
           ? previousValues[option.id]
-          : (definition.defaults[option.id] ?? option.defaultValue ?? ""),
-      ]),
-    );
+          : (definition.defaults[option.id] ?? option.defaultValue ?? "");
+    }
+    optionValues = nextValues;
   });
 
   function updateOptionValue(optionId: string, value: unknown) {
