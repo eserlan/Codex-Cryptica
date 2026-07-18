@@ -49,16 +49,13 @@
 **Action:** Injected `idGenerator: IdGenerator = systemIdGenerator` into `BaseExecutor` and updated subclass constructors to pass it through. Replaced `crypto.randomUUID()` calls with `this.idGenerator.uuid()`.
 
 ## 2024-07-10 - Replace hardcoded Date.now() with injected Clock
-
-**Learning:** Replacing hardcoded `Date.now()` calls within service methods with an injected `clock.now()` allows injecting a mock clock for exact validation in tests. By defaulting the injected parameter to a `systemClock` defined in `./runtime.ts`, we maintain standard production behavior safely.
-**Action:** Prioritize passing ambient dependencies like `Clock` (and `IdGenerator`) into class constructors using a default production parameter (e.g. `clock: Clock = systemClock`). This seamlessly adds test seams while avoiding broad global mocking strategies (like `vi.useFakeTimers()`) which often lead to side effects in complex suites.
+ **Learning:** Replacing hardcoded `Date.now()` calls within service methods with an injected `clock.now()` allows injecting a mock clock for exact validation in tests. By defaulting the injected parameter to a `systemClock` defined in `./runtime.ts`, we maintain standard production behavior safely.
+ **Action:** Prioritize passing ambient dependencies like `Clock` (and `IdGenerator`) into class constructors using a default production parameter (e.g. `clock: Clock = systemClock`). This seamlessly adds test seams while avoiding broad global mocking strategies (like `vi.useFakeTimers()`) which often lead to side effects in complex suites.
 
 ## 2024-03-24 - Injecting Clock into QuickNoteService
-
 **Learning:** Found a common pattern where global `Date.now()` is hard-coded into service methods for entity creation, making timestamp logic difficult to test deterministically. The repository has a standard `runtime-deps` module exposing a `Clock` interface and `systemClock` default that should be used for this.
 **Action:** When refactoring services that generate timestamps, always check for `../utils/runtime-deps` and use constructor injection for the `Clock`, allowing tests to safely use a mock clock without touching global scope.
-
-## 2026-07-18 - Injecting storage via runtime-deps
+## 2024-07-24 - Injecting storage via runtime-deps
 
 **Learning:** Svelte stores heavily utilize `localStorage` on initialization (`init()`). Mocking this via `vi.hoisted` and `global.localStorage` is brittle and leaks across Vitest files. The repository already provides a generic `StorageLike` interface and `browserStorage` default in `$lib/utils/runtime-deps`.
 **Action:** When a store needs local persistence, inject `storage: StorageLike = browserStorage` into its constructor. Update its tests to pass a simple spy object (`{ getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() }`) to avoid global mocks.

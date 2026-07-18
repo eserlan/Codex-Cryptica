@@ -39,7 +39,7 @@ describe("HelpStore", () => {
       mockOnboardingStore,
       mockModalUIStore,
       mockSearchStore,
-      customMockStorage,
+      customMockStorage
     );
 
     // Test that it uses the injected UI store
@@ -47,11 +47,11 @@ describe("HelpStore", () => {
     expect(mockOnboardingStore.dismissedLandingPage).toBe(true);
     expect(mockModalUIStore.closeSettings).toHaveBeenCalled();
 
-    // Test that persistence goes through the injected storage, not the global
-    store.dismissHint("injection-check");
+    // Test that it uses the injected storage
+    store.dismissHint("new-hint");
     expect(customMockStorage.setItem).toHaveBeenCalledWith(
       "codex-cryptica-help-state",
-      expect.stringContaining("injection-check"),
+      expect.stringContaining("new-hint")
     );
   });
 
