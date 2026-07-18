@@ -7,13 +7,14 @@
   import { renderMarkdown } from "$lib/utils/markdown";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let { activity } = $props<{ activity: RecentActivity }>();
   let imageUrl = $state("");
   let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
   const relativeTime = $derived.by(() => {
-    const diffMs = Date.now() - activity.lastModified;
+    const diffMs = systemClock.now() - activity.lastModified;
     const diffMinutes = Math.round(diffMs / 60000);
     const diffHours = Math.round(diffMinutes / 60);
     const diffDays = Math.round(diffHours / 24);

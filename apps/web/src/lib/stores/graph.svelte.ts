@@ -11,6 +11,7 @@ import {
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 // Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
 // literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
@@ -471,7 +472,7 @@ export class GraphStore {
   ): Promise<GraphViewPreset | null> {
     const trimmed = name.trim();
     if (!trimmed) return null;
-    const now = Date.now();
+    const now = systemClock.now();
     const preset: GraphViewPreset = {
       id:
         typeof crypto !== "undefined" && crypto.randomUUID
@@ -548,7 +549,7 @@ export class GraphStore {
     const trimmed = name.trim();
     if (!trimmed) return;
     this.viewPresets = this.viewPresets.map((p) =>
-      p.id === id ? { ...p, name: trimmed, updatedAt: Date.now() } : p,
+      p.id === id ? { ...p, name: trimmed, updatedAt: systemClock.now() } : p,
     );
     await this.persistViewPresets();
   }

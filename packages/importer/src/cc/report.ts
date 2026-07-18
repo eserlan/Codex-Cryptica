@@ -1,4 +1,5 @@
 import type { ImportWarning } from "./package";
+import { type Clock, systemClock } from "../persistence";
 
 export interface UnresolvedReference {
   fromRef: string;
@@ -49,11 +50,12 @@ export interface ImportReport {
 export function createEmptyReport(
   sourceSystem: string,
   sourceLabel: string,
+  clock: Clock = systemClock,
 ): ImportReport {
   return {
     sourceSystem,
     sourceLabel,
-    committedAt: Date.now(),
+    committedAt: clock.now(),
     entitiesCreated: 0,
     entitiesUpdated: 0,
     itemsSkipped: 0,

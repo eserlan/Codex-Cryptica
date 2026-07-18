@@ -1,4 +1,5 @@
 import { MigrationStore } from "./store";
+import { type Clock, systemClock } from "../runtime";
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -34,11 +35,11 @@ async function copyDirectoryContents(
   }
 }
 
-function createSnapshotName(targetVersion: number): string {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+function createSnapshotName(targetVersion: number, clock: Clock): string {
+  const timestamp = new Date(clock.now()).toISOString().replace(/[:.]/g, "-");
   const nonce =
     globalThis.crypto?.randomUUID?.() ??
-    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    `${clock.now()}-${Math.random().toString(36).slice(2)}`;
 
   return `v${targetVersion - 1}_before_v${targetVersion}_${timestamp}_${nonce}`;
 }
@@ -46,8 +47,9 @@ function createSnapshotName(targetVersion: number): string {
 async function createMigrationSnapshot(
   opfsRoot: FileSystemDirectoryHandle,
   targetVersion: number,
+  clock: Clock,
 ): Promise<string> {
-  const snapshotName = createSnapshotName(targetVersion);
+  const snapshotName = createSnapshotName(targetVersion, clock);
   const snapshotsDir = await opfsRoot.getDirectoryHandle("snapshots", {
     create: true,
   });
@@ -65,15 +67,20 @@ export async function runMigration(
   store: MigrationStore,
   targetVersion: number,
   migrationTask: () => Promise<void>,
+  clock: Clock = systemClock,
 ): Promise<void> {
   let rollbackSnapshotId: string;
   try {
-    rollbackSnapshotId = await createMigrationSnapshot(opfsRoot, targetVersion);
+    rollbackSnapshotId = await createMigrationSnapshot(
+      opfsRoot,
+      targetVersion,
+      clock,
+    );
   } catch (error) {
     const message = getErrorMessage(error);
     await store.addEntry({
       version: targetVersion,
-      timestamp: Date.now(),
+      timestamp: clock.now(),
       status: "failed",
       error: `Pre-migration snapshot failed. ${message}`,
     });
@@ -90,7 +97,7 @@ export async function runMigration(
 
     await store.addEntry({
       version: targetVersion,
-      timestamp: Date.now(),
+      timestamp: clock.now(),
       status: "success",
       rollbackSnapshotId,
     });
@@ -98,7 +105,7 @@ export async function runMigration(
     const message = getErrorMessage(error);
     await store.addEntry({
       version: targetVersion,
-      timestamp: Date.now(),
+      timestamp: clock.now(),
       status: "failed",
       error: `Migration task failed. ${message}`,
       rollbackSnapshotId,

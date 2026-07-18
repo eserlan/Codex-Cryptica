@@ -3,6 +3,7 @@
   import { browser } from "$app/environment";
   import { fly } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   async function startDemo(theme: string) {
     if (browser) {
@@ -402,7 +403,8 @@
         >
       </div>
       <p>
-        © {new Date().getFullYear()} Codex Cryptica. Your world is your own.
+        © {new Date(systemClock.now()).getFullYear()} Codex Cryptica. Your world is
+        your own.
       </p>
     </footer>
   </div>

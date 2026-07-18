@@ -6,6 +6,7 @@ import {
 } from "@codex/sync-engine";
 import { gdriveAuthService } from "./gdrive-auth";
 import type { GDriveSyncWorker } from "./gdrive-sync.worker";
+import { systemClock } from "./runtime";
 
 export interface GDriveSyncConfig {
   getDB: () => Promise<any>;
@@ -207,7 +208,7 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
     type: "SYNC:DRIVE_CONNECTED",
     domain: "sync",
     payload: { vaultId, folderId: finalFolderId! },
-    metadata: { timestamp: Date.now(), vaultId },
+    metadata: { timestamp: systemClock.now(), vaultId },
   });
 }
 
@@ -226,7 +227,7 @@ export async function disconnectVaultFromDrive(vaultId: string) {
     type: "SYNC:DRIVE_DISCONNECTED",
     domain: "sync",
     payload: { vaultId },
-    metadata: { timestamp: Date.now(), vaultId },
+    metadata: { timestamp: systemClock.now(), vaultId },
   });
 }
 
@@ -383,7 +384,7 @@ export async function importVaultFromDrive(
       type: "SYNC:DRIVE_CONNECTED",
       domain: "sync",
       payload: { vaultId: newId, folderId: driveFolderId },
-      metadata: { timestamp: Date.now(), vaultId: newId },
+      metadata: { timestamp: systemClock.now(), vaultId: newId },
     });
   } else if (cfg.vault.activeVaultId !== targetVaultId) {
     // Switch to the existing matching vault so the user is taken to it

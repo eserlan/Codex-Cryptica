@@ -1,3 +1,4 @@
+import { systemClock } from "$lib/utils/runtime-deps";
 /**
  * Saved graph view presets: named visual states (filters, modes, display
  * toggles, optional camera) scoped per vault. Presets never contain entity
@@ -106,7 +107,7 @@ export function parsePresets(raw: unknown): GraphViewPreset[] {
       ? p.createdAt
       : isFiniteNumber(p.updatedAt)
         ? p.updatedAt
-        : Date.now();
+        : systemClock.now();
     const updatedAt = isFiniteNumber(p.updatedAt) ? p.updatedAt : createdAt;
     presets.push({ id: p.id, name, createdAt, updatedAt, state });
   }

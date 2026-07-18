@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@codex/events": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "@codex/sync-engine": "workspace:*",
     "comlink": "^4.4.2",
     "idb": "^8.0.3",

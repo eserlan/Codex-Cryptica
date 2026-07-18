@@ -1,12 +1,13 @@
 import { type IGDriveAuthService } from "@codex/sync-engine";
+import { type Clock, systemClock } from "./runtime";
 
 async function waitUntil(
   predicate: () => boolean,
   { intervalMs = 100, timeoutMs }: { intervalMs?: number; timeoutMs: number },
 ): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
+  const deadline = systemClock.now() + timeoutMs;
   while (!predicate()) {
-    const remaining = deadline - Date.now();
+    const remaining = deadline - systemClock.now();
     if (remaining <= 0) return false;
     await new Promise((resolve) =>
       setTimeout(resolve, Math.min(intervalMs, remaining)),
@@ -34,7 +35,7 @@ export class GDriveAuthService implements IGDriveAuthService {
   private readonly SCOPES = "https://www.googleapis.com/auth/drive.file";
   private readonly CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  constructor() {
+  constructor(private clock: Clock = systemClock) {
     this.activeScope = this.SCOPES;
 
     if (browser && !this.CLIENT_ID) {
@@ -103,7 +104,7 @@ export class GDriveAuthService implements IGDriveAuthService {
               this.accessToken = response.access_token;
               this.activeScope = scope;
               this.tokenExpiry =
-                Date.now() + Number(response.expires_in) * 1000;
+                this.clock.now() + Number(response.expires_in) * 1000;
               this.resolvers
                 .filter((r) => r.scope === scope)
                 .forEach((r) => r.resolve(response.access_token));
@@ -129,7 +130,7 @@ export class GDriveAuthService implements IGDriveAuthService {
    * Returns a valid access token. Triggers a popup if no token exists.
    */
   async getAccessToken(): Promise<string | null> {
-    if (this.accessToken && Date.now() < this.tokenExpiry - 60000) {
+    if (this.accessToken && this.clock.now() < this.tokenExpiry - 60000) {
       return this.accessToken;
     }
 

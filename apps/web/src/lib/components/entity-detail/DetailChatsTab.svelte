@@ -4,6 +4,7 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let { entity } = $props<{
     entity: Entity;
@@ -102,7 +103,7 @@
     const msg = transcript.messages.find((m) => m.id === messageId);
     if (msg) {
       msg.content = editContent.trim();
-      transcript.lastUpdated = Date.now();
+      transcript.lastUpdated = systemClock.now();
       await vault.saveTranscript(transcript);
       await loadHostTranscripts();
     }
@@ -117,7 +118,7 @@
       transcript.messages = transcript.messages.filter(
         (m) => m.id !== messageId,
       );
-      transcript.lastUpdated = Date.now();
+      transcript.lastUpdated = systemClock.now();
       await vault.saveTranscript(transcript);
       await loadHostTranscripts();
     }

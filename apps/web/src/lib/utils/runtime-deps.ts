@@ -11,23 +11,12 @@ import type { StorageLike } from "$lib/stores/ui/persistence";
 
 export type { StorageLike };
 
-export interface Clock {
-  now(): number;
-}
-
-export interface IdGenerator {
-  uuid(): string;
-}
-
-/** Production clock backed by `Date`. */
-export const systemClock: Clock = {
-  now: () => Date.now(),
-};
-
-/** Production id generator backed by `crypto.randomUUID`, resolved lazily. */
-export const systemIdGenerator: IdGenerator = {
-  uuid: () => globalThis.crypto.randomUUID(),
-};
+export {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "@codex/runtime";
 
 /**
  * Production storage backed by `localStorage`, resolved lazily and SSR-safe:

@@ -9,6 +9,7 @@ import { ProposerService } from "@codex/proposer";
 import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { notificationStore } from "./ui/notification.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 class ProposerStore {
   private service: ProposerService | null = null;
@@ -53,7 +54,7 @@ class ProposerStore {
       reason: "Manually removed by user",
       confidence: 1.0,
       status: "rejected",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     const reverseProposal: Proposal = {
       ...forwardProposal,
@@ -249,7 +250,7 @@ class ProposerStore {
     const verifiedProposal = {
       ...proposal,
       status: "verified" as const,
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     this.allVerifiedProposals = [
       verifiedProposal,
@@ -306,7 +307,7 @@ class ProposerStore {
     const dismissedProposal = {
       ...proposal,
       status: "rejected" as const,
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [
@@ -551,7 +552,7 @@ class ProposerStore {
     const dismissedProposal = {
       ...proposal,
       status: "rejected" as const,
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [

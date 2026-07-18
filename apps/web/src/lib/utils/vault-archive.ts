@@ -7,6 +7,7 @@ import {
   writeOpfsFile,
   VAULTS_DIR,
 } from "./opfs";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * Portable vault backup: bundles an entire OPFS vault into a single `.zip`
@@ -66,13 +67,13 @@ export async function exportVaultToZip(
     format: ARCHIVE_FORMAT,
     version: ARCHIVE_VERSION,
     vaultName,
-    exportedAt: new Date().toISOString(),
+    exportedAt: new Date(systemClock.now()).toISOString(),
     fileCount: files.length,
   };
   zippable[MANIFEST_NAME] = strToU8(JSON.stringify(manifest, null, 2));
 
   const zipped = zipSync(zippable, { level: 6 });
-  const stamp = new Date().toISOString().slice(0, 10);
+  const stamp = new Date(systemClock.now()).toISOString().slice(0, 10);
   triggerDownload(
     zipped,
     `${sanitizeFilename(vaultName)}-${stamp}${VAULT_ARCHIVE_EXTENSION}`,

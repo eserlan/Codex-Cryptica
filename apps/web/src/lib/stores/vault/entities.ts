@@ -2,6 +2,7 @@ import type { Entity, Connection } from "schema";
 import { sanitizeId } from "../../utils/markdown";
 import type { LocalEntity, BatchCreateInput } from "./types";
 import { deleteOpfsEntry } from "../../utils/opfs";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * ENTITY MUTATION GUARDRAIL:
@@ -57,9 +58,9 @@ export function createEntity(
     content: "",
     lore: "",
     metadata: {},
-    updatedAt: Date.now(),
-    createdAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    createdAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
     ...initialData,
   } as LocalEntity;
 
@@ -85,8 +86,8 @@ export function updateEntity(
   let updated = {
     ...entity,
     ...updates,
-    updatedAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
     // createdAt is preserved via the spread above; never overwritten on update.
   } as LocalEntity;
 
@@ -217,8 +218,8 @@ export function addLabel(
   const updated = {
     ...entity,
     labels: [...labels, normalizedLabel],
-    updatedAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -242,8 +243,8 @@ export function removeLabel(
   const updated = {
     ...entity,
     labels: labels.filter((l) => l.toLowerCase() !== normalizedLabel),
-    updatedAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -275,8 +276,8 @@ export function addConnection(
   const updatedSource = {
     ...source,
     connections: [...(source.connections ?? []), connection],
-    updatedAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
   } as LocalEntity;
 
   return {
@@ -309,8 +310,8 @@ export function updateConnection(
   const updatedSource = {
     ...source,
     connections,
-    updatedAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
   } as LocalEntity;
 
   return {
@@ -338,8 +339,8 @@ export function removeConnection(
   const updatedSource = {
     ...source,
     connections,
-    updatedAt: Date.now(),
-    modifiedAt: Date.now(),
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
   } as LocalEntity;
 
   return {
@@ -366,8 +367,8 @@ export function bulkAddLabel(
     newEntities[id] = {
       ...entity,
       labels: [...labels, normalizedLabel],
-      updatedAt: Date.now(),
-      modifiedAt: Date.now(),
+      updatedAt: systemClock.now(),
+      modifiedAt: systemClock.now(),
     } as LocalEntity;
     modifiedIds.push(id);
   }
@@ -393,8 +394,8 @@ export function bulkRemoveLabel(
     newEntities[id] = {
       ...entity,
       labels: labels.filter((l) => l.toLowerCase() !== normalizedLabel),
-      updatedAt: Date.now(),
-      modifiedAt: Date.now(),
+      updatedAt: systemClock.now(),
+      modifiedAt: systemClock.now(),
     } as LocalEntity;
     modifiedIds.push(id);
   }
@@ -415,9 +416,9 @@ export function batchCreateEntities(
     if ("id" in item) {
       entity = {
         ...item,
-        updatedAt: Date.now(),
-        createdAt: (item as Partial<Entity>).createdAt ?? Date.now(),
-        modifiedAt: Date.now(),
+        updatedAt: systemClock.now(),
+        createdAt: (item as Partial<Entity>).createdAt ?? systemClock.now(),
+        modifiedAt: systemClock.now(),
       } as LocalEntity;
     } else {
       entity = createEntity(

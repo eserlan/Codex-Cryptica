@@ -5,13 +5,8 @@ const DB_NAME = "CodexImporterRegistry";
 const STORE_NAME = "import_registry";
 const MAX_REGISTRY_SIZE = 10;
 
-export interface Clock {
-  now(): number;
-}
-
-export const systemClock: Clock = {
-  now: () => Date.now(),
-};
+export { type Clock, systemClock } from "@codex/runtime";
+import { type Clock, systemClock } from "@codex/runtime";
 
 async function getDB(): Promise<IDBPDatabase<any>> {
   return openDB(DB_NAME, 1, {

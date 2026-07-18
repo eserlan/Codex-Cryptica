@@ -33,6 +33,7 @@
     "@codex/importer": "workspace:*",
     "@codex/oracle-engine": "workspace:*",
     "@codex/proposer": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/search-orchestrator": "workspace:*",
     "@codex/sync-engine": "workspace:*",

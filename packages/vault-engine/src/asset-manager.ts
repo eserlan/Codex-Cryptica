@@ -1,3 +1,5 @@
+import { type Clock, systemClock } from "./runtime";
+
 export interface IImageProcessor {
   convertToWebP(blob: Blob, quality?: number): Promise<Blob>;
   generateThumbnail(blob: Blob, size: number): Promise<Blob>;
@@ -28,6 +30,7 @@ export class AssetManager {
     private imageProcessor: IImageProcessor,
     // Injected for tests; default wraps the global `fetch` lazily.
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
+    private clock: Clock = systemClock,
   ) {}
 
   async saveImageToVault(
@@ -38,7 +41,7 @@ export class AssetManager {
   ): Promise<{ image: string; thumbnail: string }> {
     if (!vaultHandle) throw new Error("Vault not open");
 
-    const timestamp = Date.now();
+    const timestamp = this.clock.now();
     const baseName = originalName
       ? originalName.replace(/\.[^/.]+$/, "")
       : `img_${entityId}_${timestamp}`;

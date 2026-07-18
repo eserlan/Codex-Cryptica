@@ -13,6 +13,7 @@
     hasActivePings,
   } from "./map-canvas-scheduler";
   import { PING_DURATION_MS } from "$lib/stores/vtt/vtt-measurement-manager.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   interface EnrichedToken extends Token {
     label: string;
@@ -173,7 +174,7 @@
     if (vttPings.length > 0) {
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        const now = Date.now();
+        const now = systemClock.now();
         for (const ping of vttPings) {
           const elapsed = now - ping.timestamp;
           // Use >= so this matches hasActivePings (elapsed < duration === active).
@@ -295,7 +296,7 @@
     // Self-perpetuating rAF loop while any ping is still animating.
     // Pings animate from a timestamp, so the visual changes even when no
     // input does — without this we'd freeze mid-ping.
-    if (hasActivePings(vttPings, Date.now(), PING_DURATION_MS)) {
+    if (hasActivePings(vttPings, systemClock.now(), PING_DURATION_MS)) {
       scheduler.request();
     }
   }

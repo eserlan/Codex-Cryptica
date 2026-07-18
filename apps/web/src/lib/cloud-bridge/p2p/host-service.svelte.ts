@@ -22,6 +22,7 @@ import {
   PeerJSConnectionManager,
   type ConnectionState,
 } from "./connection-manager.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -99,7 +100,7 @@ export class P2PHostService {
           const ack = {
             type: "handshake_ack",
             senderId: this.transport.id || "",
-            timestamp: Date.now(),
+            timestamp: systemClock.now(),
             payload: null,
           };
           conn.send(ack);
@@ -109,7 +110,7 @@ export class P2PHostService {
           const pong = {
             type: "pong",
             senderId: this.transport.id || "",
-            timestamp: (data as any).timestamp || Date.now(),
+            timestamp: (data as any).timestamp ?? systemClock.now(),
             payload: null,
           };
           conn.send(pong);
