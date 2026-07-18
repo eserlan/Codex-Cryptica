@@ -1,11 +1,7 @@
 import type { P2PMessage } from "../p2p-protocol";
 
 export type TransportEventType =
-  | "connection"
-  | "data"
-  | "error"
-  | "close"
-  | "disconnected";
+  "connection" | "data" | "error" | "close" | "disconnected";
 
 export interface P2PConnection {
   peer: string;
@@ -21,6 +17,12 @@ export interface P2PConnection {
 export interface P2PTransport {
   /** The unique peer ID of the host. */
   id: string | null;
+
+  /**
+   * Underlying realtime peer (e.g. the PeerJS Peer) for media calls.
+   * Undefined/null when the transport has no media-capable peer.
+   */
+  readonly rawPeer?: unknown;
 
   /** List of currently active guest connections. */
   connections: P2PConnection[];
