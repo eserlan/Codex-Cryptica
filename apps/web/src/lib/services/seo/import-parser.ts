@@ -137,25 +137,25 @@ export async function parseJsonExport(
 
 // Helper to recursively fetch files from entries
 export async function traverseEntry(entry: any): Promise<File[]> {
-  return new Promise((resolve) => {
-    if (entry.isFile) {
-      entry.file((file: File) => resolve([file]));
-    } else if (entry.isDirectory) {
-      const reader = entry.createReader();
-      const read = () => {
-        reader.readEntries(async (entries: any[]) => {
-          if (entries.length === 0) {
-            resolve([]);
-          } else {
-            const promises = entries.map((e) => traverseEntry(e));
-            const res = await Promise.all(promises);
-            resolve(res.flat());
-          }
-        });
-      };
-      read();
-    } else {
-      resolve([]);
+  if (entry?.isFile) {
+    return new Promise((resolve) =>
+      entry.file((file: File) => resolve([file])),
+    );
+  }
+  if (entry?.isDirectory) {
+    const reader = entry.createReader();
+    const files: File[] = [];
+    // readEntries yields at most ~100 entries per call; keep reading until an
+    // empty batch signals the directory is exhausted.
+    for (;;) {
+      const batch: any[] = await new Promise((resolve) =>
+        reader.readEntries(resolve),
+      );
+      if (batch.length === 0) break;
+      const nested = await Promise.all(batch.map((e) => traverseEntry(e)));
+      files.push(...nested.flat());
     }
-  });
+    return files;
+  }
+  return [];
 }
