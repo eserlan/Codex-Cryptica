@@ -374,7 +374,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "voice-chat",
     title: "Session Voice Chat",
     content:
-      "Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who else is talking.",
+      "Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who is in the channel.",
     icon: "icon-[lucide--mic]",
   },
   "spatial-canvas": {

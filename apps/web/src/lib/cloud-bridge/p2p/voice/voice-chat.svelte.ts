@@ -137,6 +137,13 @@ export class VoiceChatService {
       return;
     }
 
+    // The user cancelled (or the session tore down) while the permission
+    // prompt was open — don't open the channel after the fact.
+    if (this.state.status !== "requesting-mic" || this.state.role !== "host") {
+      stopTracks(mic);
+      return;
+    }
+
     this.hostAccess = access;
     this.micStream = mic;
     this.mixer = this.createMixer();
@@ -208,6 +215,8 @@ export class VoiceChatService {
     call.answer(mixForGuest);
 
     call.on("stream", (remote) => {
+      // Ignore late events from a call that was replaced or dropped.
+      if (this.hostCalls.get(peerId) !== call) return;
       this.mixer?.attachGuestStream(peerId, remote as MediaStream);
     });
     const cleanup = () => this.dropGuest(peerId, call);
@@ -325,6 +334,13 @@ export class VoiceChatService {
       return;
     }
 
+    // The user cancelled (or the session tore down) while the permission
+    // prompt was open — don't place a call after the fact.
+    if (this.state.status !== "requesting-mic" || this.state.role !== "guest") {
+      stopTracks(mic);
+      return;
+    }
+
     this.micStream = mic;
     this.state.status = "connecting";
 
@@ -344,6 +360,8 @@ export class VoiceChatService {
     }, this.joinTimeoutMs);
 
     call.on("stream", (remote) => {
+      // Ignore late events from a call we already abandoned.
+      if (this.guestCall !== call) return;
       this.clearJoinTimeout();
       this.remoteStream = remote as MediaStream;
       this.state.status = "active";
@@ -419,9 +437,7 @@ export class VoiceChatService {
   }
 
   private stopMic() {
-    for (const track of this.micStream?.getTracks() ?? []) {
-      safely(() => track.stop());
-    }
+    if (this.micStream) stopTracks(this.micStream);
     this.micStream = null;
   }
 
@@ -441,6 +457,12 @@ function micErrorMessage(err: unknown): string {
     return "No microphone was found on this device";
   }
   return (err as Error | null)?.message ?? "Could not access the microphone";
+}
+
+function stopTracks(stream: MediaStream) {
+  for (const track of stream.getTracks()) {
+    safely(() => track.stop());
+  }
 }
 
 function safely(fn: () => void) {

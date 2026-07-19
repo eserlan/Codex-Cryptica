@@ -249,6 +249,47 @@ describe("VoiceChatService", () => {
       });
     });
 
+    it("aborts cleanly when cancelled while the mic prompt is open", async () => {
+      let resolveMic: (stream: MediaStream) => void;
+      service = new VoiceChatService({
+        getMicStream: () =>
+          new Promise<MediaStream>((resolve) => {
+            resolveMic = resolve;
+          }),
+        createMixer: () => mixer as unknown as HostVoiceMixer,
+      });
+
+      const pending = service.startHostVoice(hostAccess);
+      expect(service.state.status).toBe("requesting-mic");
+
+      service.stopHostVoice();
+      resolveMic!(mic.stream);
+      await pending;
+
+      expect(service.state.status).toBe("off");
+      expect(service.state.role).toBeNull();
+      expect(mixer.start).not.toHaveBeenCalled();
+      expect(peer.callHandler).toBeNull();
+      expect(mic.track.stop).toHaveBeenCalled();
+    });
+
+    it("ignores stream events from a replaced guest call", async () => {
+      await service.startHostVoice(hostAccess);
+      const staleCall = new FakeMediaCall("guest-1");
+      peer.callHandler!(staleCall);
+      const freshCall = new FakeMediaCall("guest-1");
+      peer.callHandler!(freshCall);
+      mixer.attachGuestStream.mockClear();
+
+      staleCall.emit("stream", { id: "stale" });
+      expect(mixer.attachGuestStream).not.toHaveBeenCalled();
+
+      freshCall.emit("stream", { id: "fresh" });
+      expect(mixer.attachGuestStream).toHaveBeenCalledWith("guest-1", {
+        id: "fresh",
+      });
+    });
+
     it("rejects incoming calls when the channel is off", () => {
       const call = new FakeMediaCall("guest-1");
       // No startHostVoice — simulate a stray call arriving.
@@ -327,6 +368,38 @@ describe("VoiceChatService", () => {
       expect(service.state.status).toBe("off");
       expect(peer.outgoing[0].closed).toBe(true);
       expect(mic.track.stop).toHaveBeenCalled();
+      expect(service.remoteStream).toBeNull();
+    });
+
+    it("aborts cleanly when cancelled while the mic prompt is open", async () => {
+      let resolveMic: (stream: MediaStream) => void;
+      service = new VoiceChatService({
+        getMicStream: () =>
+          new Promise<MediaStream>((resolve) => {
+            resolveMic = resolve;
+          }),
+      });
+
+      const pending = service.joinVoice(guestAccess);
+      expect(service.state.status).toBe("requesting-mic");
+
+      service.leaveVoice();
+      resolveMic!(mic.stream);
+      await pending;
+
+      expect(service.state.status).toBe("off");
+      expect(peer.outgoing).toHaveLength(0);
+      expect(mic.track.stop).toHaveBeenCalled();
+    });
+
+    it("ignores stream events from an abandoned call", async () => {
+      await service.joinVoice(guestAccess);
+      const staleCall = peer.outgoing[0];
+      service.leaveVoice();
+
+      staleCall.emit("stream", { id: "late" });
+
+      expect(service.state.status).toBe("off");
       expect(service.remoteStream).toBeNull();
     });
 

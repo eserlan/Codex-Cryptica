@@ -50,7 +50,7 @@
 
   const toggleVoice = () => {
     if (isHost) {
-      if (active) voiceChat.stopHostVoice();
+      if (active || busy) voiceChat.stopHostVoice();
       else void voiceChat.startHostVoice(hostAccess);
     } else {
       if (active || busy) voiceChat.leaveVoice();
@@ -64,12 +64,19 @@
 
   const voiceTitle = $derived.by(() => {
     if (vState.status === "error") return vState.error ?? "Voice error";
-    if (busy) return "Connecting voice…";
+    if (busy) return "Connecting voice… (click to cancel)";
     if (active) return isHost ? "End voice for everyone" : "Leave voice";
     if (isHost) return "Start a voice channel for this session";
     return vState.sessionActive
       ? "Join the session voice channel"
       : "The Game Master hasn't started voice yet";
+  });
+
+  const voiceAriaLabel = $derived.by(() => {
+    if (isHost) {
+      return active || busy ? "End voice chat" : "Start voice chat";
+    }
+    return active || busy ? "Leave voice chat" : "Join voice chat";
   });
 </script>
 
@@ -87,10 +94,11 @@
           ? 'text-rose-400'
           : 'text-chrome-muted hover:text-chrome-text'}"
       onclick={toggleVoice}
-      disabled={joinDisabled || busy}
+      disabled={joinDisabled}
       title={voiceTitle}
-      aria-label={active ? "Leave voice chat" : "Join voice chat"}
+      aria-label={voiceAriaLabel}
       aria-pressed={active}
+      aria-busy={busy}
       data-testid="voice-toggle"
     >
       <span
@@ -135,6 +143,7 @@
     {#if active && vState.participants.length > 0}
       <div
         class="pointer-events-none absolute top-full right-0 mt-2 w-52 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-chrome-border bg-chrome-surface/90 backdrop-blur-lg shadow-xl text-left"
+        aria-hidden="true"
       >
         <div
           class="text-xs font-bold text-chrome-text mb-1.5 border-b border-chrome-border pb-1"
@@ -146,7 +155,7 @@
             <li
               class="flex items-center justify-between gap-2 text-[11px] text-chrome-muted"
             >
-              <span class="truncate text-chrome-text"
+              <span class="flex-1 min-w-0 truncate text-chrome-text"
                 >{participant.displayName}{participant.isHost
                   ? " (GM)"
                   : ""}</span
