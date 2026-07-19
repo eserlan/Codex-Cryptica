@@ -595,6 +595,7 @@
                       type="button"
                       onclick={handleGeneratePersonality}
                       disabled={isGeneratingPersonality}
+                      aria-busy={isGeneratingPersonality}
                       class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
                     >
                       <span
