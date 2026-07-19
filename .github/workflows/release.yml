@@ -111,6 +111,10 @@ jobs:
           PREV_TAG="$PREV_TAG" node scripts/generate-release-notes.mjs > release-notes.md
           cat release-notes.md
 
+          if grep -q "Maintenance release" release-notes.md; then
+            echo "::warning::Minor release v${RELEASE_VERSION} has no new in-app changelog entry — releases.json was not updated before promotion (see .claude/skills/write-release-entry)."
+          fi
+
           SUBTITLE=$(cat release-title.txt)
           if [ -n "$SUBTITLE" ]; then
             echo "title=Codex Cryptica v${RELEASE_VERSION} — ${SUBTITLE}" >> $GITHUB_OUTPUT
