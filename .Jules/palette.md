@@ -96,3 +96,6 @@
 ## 2026-07-16 - Add aria-busy to async buttons
 **Learning:** Found multiple buttons with loading states (animate-spin) that correctly disabled interactions but were missing aria-busy attributes, making the loading state opaque to screen readers.
 **Action:** Always add aria-busy={isLoading} to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
+## 2026-07-19 - Add aria-busy to async buttons
+**Learning:** Buttons handling asynchronous actions (like saving or generating) need to correctly communicate their loading state to screen readers, even if they're visually disabled or show a loading spinner.
+**Action:** Always add `aria-busy={isLoading}` to buttons executing async operations to ensure screen readers are aware of the busy state.
