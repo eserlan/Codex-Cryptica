@@ -57,3 +57,8 @@
 **Learning:** When marketing configuration files grow huge by combining disparate static content (like solutions, comparisons, features, and imports in `seo-pages.ts`), extracting distinct record objects into sibling files (`seo-comparisons.ts`, `seo-features.ts`, `seo-imports.ts`) drastically reduces file size and improves navigation without breaking any upstream imports (thanks to re-exporting them in the root file).
 
 **Action:** When finding massive static configurations, extract distinct structural sections into sibling files, then export them all from the primary index to keep public APIs stable.
+
+## 2026-07-19 - Extract Theme Constants from Public Generator
+
+**Learning:** Large feature generator files (like `public-npc.ts`) often bundle extensive configuration, theme options, and prompt constants directly above the logic. This creates massive scrolling distance (1000+ lines) between related functional components.
+**Action:** Always extract static configuration objects, string pools, and constants into a cohesive `-constants.ts` file, leaving behind a focused module that only contains the execution logic, re-exporting the constants to maintain API contracts.
