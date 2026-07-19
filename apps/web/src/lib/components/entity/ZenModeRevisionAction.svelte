@@ -10,6 +10,7 @@
 
 {#if isHost && selectedEntityId}
   <button
+    type="button"
     onclick={() => isHost && modalUIStore.openRevisionDialog(selectedEntityId)}
     disabled={isRevising}
     aria-busy={isRevising}

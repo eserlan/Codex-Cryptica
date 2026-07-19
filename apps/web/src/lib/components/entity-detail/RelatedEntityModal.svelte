@@ -652,6 +652,7 @@
           </button>
           <button
             class="rounded-xl bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
             onclick={handleSave}
             disabled={isSaving}
             aria-busy={isSaving}
