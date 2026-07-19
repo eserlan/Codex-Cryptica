@@ -16,6 +16,7 @@ import type {
   TimerApi,
 } from "./search-progress-coordinator";
 import { buildSearchAliases, buildSearchKeywords } from "./search-entry-fields";
+import { systemClock } from "./runtime";
 
 const INDEX_BATCH_SIZE = 100;
 
@@ -367,7 +368,7 @@ export class SearchIndexPipeline {
       type: entity.type,
       path,
       keywords,
-      updatedAt: Date.now(),
+      updatedAt: systemClock.now(),
     };
   }
 

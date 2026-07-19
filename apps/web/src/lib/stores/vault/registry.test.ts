@@ -8,6 +8,7 @@ import {
   updateLastOpened,
 } from "./registry";
 import { getDB } from "../../utils/idb";
+import { systemClock } from "../../utils/runtime-deps";
 import * as opfs from "../../utils/opfs";
 import { sanitizeId } from "../../utils/markdown";
 
@@ -154,19 +155,21 @@ describe("Vault Registry", () => {
     it("should update timestamp if vault exists", async () => {
       const existing = { id: "v1", lastOpenedAt: 0 };
       mockDB.get.mockResolvedValue(existing);
+      const nowSpy = vi.spyOn(systemClock, "now").mockReturnValue(1234567);
 
-      await updateLastOpened("v1");
+      try {
+        await updateLastOpened("v1");
 
-      expect(mockDB.put).toHaveBeenCalledWith(
-        "vaults",
-        expect.objectContaining({
-          id: "v1",
-          lastOpenedAt: expect.any(Number),
-        }),
-      );
-      expect(
-        vi.mocked(mockDB.put).mock.calls[0][1].lastOpenedAt,
-      ).toBeGreaterThan(0);
+        expect(mockDB.put).toHaveBeenCalledWith(
+          "vaults",
+          expect.objectContaining({
+            id: "v1",
+            lastOpenedAt: 1234567,
+          }),
+        );
+      } finally {
+        nowSpy.mockRestore();
+      }
     });
 
     it("should do nothing if vault does not exist", async () => {

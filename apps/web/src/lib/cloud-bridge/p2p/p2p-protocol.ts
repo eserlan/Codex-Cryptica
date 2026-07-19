@@ -6,6 +6,7 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import { debugStore } from "../../stores/debug.svelte";
+import type { VoiceMessage } from "./voice/voice-types";
 
 const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 
@@ -63,6 +64,7 @@ export type P2PMessage =
     }
   | { type: "GUEST_CHAR_CHAT_CHUNK"; requestId: string; partial: string }
   | { type: "GUEST_CHAR_CHAT_DONE"; requestId: string; error?: string }
+  | VoiceMessage
   | VTTMessage;
 
 export function isValidP2PMessage(

@@ -8,6 +8,7 @@ import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 function resolveGuestCharacterId(
   username: string | null | undefined,
@@ -78,7 +79,7 @@ export class GuestChatStore {
         characterId,
         characterTitle,
         messages: [],
-        lastUpdated: Date.now(),
+        lastUpdated: systemClock.now(),
       };
 
       this.transcripts[characterId] = transcript;
@@ -105,11 +106,11 @@ export class GuestChatStore {
       id: crypto.randomUUID(),
       role: "user",
       content: content.trim(),
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
 
     transcript.messages.push(userMsg);
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
 
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
@@ -134,10 +135,10 @@ export class GuestChatStore {
       id: assistantMsgId,
       role: "assistant",
       content: "",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     transcript.messages.push(assistantMsg);
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
 
     const requestId = crypto.randomUUID();
     this.pendingRequests.set(requestId, { characterId, assistantMsgId });
@@ -175,7 +176,7 @@ export class GuestChatStore {
     );
     if (msg) {
       msg.content = partial;
-      transcript.lastUpdated = Date.now();
+      transcript.lastUpdated = systemClock.now();
     }
   }
 
@@ -195,7 +196,7 @@ export class GuestChatStore {
       if (msg) msg.content = `❌ ${error}`;
     }
 
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
     this.syncTranscript(transcript);
@@ -225,10 +226,10 @@ export class GuestChatStore {
             id: msg.id,
             role: msg.role === "assistant" ? "assistant" : "user",
             content: msg.content || "",
-            timestamp: msg.timestamp || Date.now(),
+            timestamp: msg.timestamp ?? systemClock.now(),
           };
           transcript.messages.push(newMsg);
-          transcript.lastUpdated = Date.now();
+          transcript.lastUpdated = systemClock.now();
           const localDb = await getDB();
           await localDb.put(
             "guest_chat_transcripts",
@@ -241,7 +242,7 @@ export class GuestChatStore {
             if (existing) {
               if (updates.content !== undefined)
                 existing.content = updates.content;
-              transcript.lastUpdated = Date.now();
+              transcript.lastUpdated = systemClock.now();
               if (persist) {
                 const localDb = await getDB();
                 await localDb.put(
@@ -266,9 +267,9 @@ export class GuestChatStore {
             id: m.id,
             role: m.role === "assistant" ? "assistant" : "user",
             content: m.content,
-            timestamp: m.timestamp || Date.now(),
+            timestamp: m.timestamp ?? systemClock.now(),
           }));
-          transcript.lastUpdated = Date.now();
+          transcript.lastUpdated = systemClock.now();
           const localDb = await getDB();
           await localDb.put(
             "guest_chat_transcripts",
@@ -362,7 +363,7 @@ export class GuestChatStore {
     if (!transcript) return;
 
     transcript.messages = [];
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
 
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
@@ -379,7 +380,7 @@ export class GuestChatStore {
     const msg = transcript.messages.find((m) => m.id === messageId);
     if (msg) {
       msg.content = newContent.trim();
-      transcript.lastUpdated = Date.now();
+      transcript.lastUpdated = systemClock.now();
       const db = await getDB();
       await db.put("guest_chat_transcripts", $state.snapshot(transcript));
       this.syncTranscript(transcript);
@@ -390,7 +391,7 @@ export class GuestChatStore {
     const transcript = this.transcripts[characterId];
     if (!transcript) return;
     transcript.messages = transcript.messages.filter((m) => m.id !== messageId);
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
     this.syncTranscript(transcript);

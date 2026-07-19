@@ -1,4 +1,5 @@
 import type { GuestHistory } from "schema";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "guest_history";
 
@@ -12,15 +13,21 @@ export function getGuestHistory(): GuestHistory[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    
+
     return parsed
       .map((entry) => ({
         publishId: String(entry.publishId || ""),
         vaultTitle: String(entry.vaultTitle || "Untitled World"),
-        lastAccessed: String(entry.lastAccessed || new Date().toISOString()),
+        lastAccessed: String(
+          entry.lastAccessed || new Date(systemClock.now()).toISOString(),
+        ),
       }))
       .filter((entry) => entry.publishId)
-      .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.lastAccessed).getTime() -
+          new Date(a.lastAccessed).getTime(),
+      );
   } catch (e) {
     console.warn("Failed to parse guest history", e);
     return [];
@@ -39,7 +46,7 @@ export function addGuestHistory(publishId: string, vaultTitle: string): void {
   const entry: GuestHistory = {
     publishId,
     vaultTitle: vaultTitle || "Untitled World",
-    lastAccessed: new Date().toISOString(),
+    lastAccessed: new Date(systemClock.now()).toISOString(),
   };
 
   if (index !== -1) {
@@ -50,7 +57,10 @@ export function addGuestHistory(publishId: string, vaultTitle: string): void {
 
   // Keep it sorted and cap to 10 entries to prevent localStorage bloat
   const updated = history
-    .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime(),
+    )
     .slice(0, 10);
 
   try {

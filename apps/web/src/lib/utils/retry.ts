@@ -1,3 +1,4 @@
+import { systemClock } from "$lib/utils/runtime-deps";
 /**
  * Retry `fn` until it succeeds or `attempts` are exhausted.
  *
@@ -63,9 +64,9 @@ export async function waitUntil(
   predicate: () => boolean,
   { intervalMs = 100, timeoutMs }: { intervalMs?: number; timeoutMs: number },
 ): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
+  const deadline = systemClock.now() + timeoutMs;
   while (!predicate()) {
-    const remaining = deadline - Date.now();
+    const remaining = deadline - systemClock.now();
     if (remaining <= 0) return false;
     // Cap the sleep to the remaining budget so a large interval can't
     // overshoot the deadline and report a late success.

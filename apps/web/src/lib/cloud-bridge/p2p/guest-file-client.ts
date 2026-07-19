@@ -1,4 +1,5 @@
 import type { P2PClientTransport } from "./transport/client-transport";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 const FILE_REQUEST_TIMEOUT_MS = 15_000;
 
@@ -25,7 +26,7 @@ export class GuestFileClient {
     const requestId =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : `req-${Date.now()}-${Math.random()}`;
+        : `req-${systemClock.now()}-${Math.random()}`;
 
     return new Promise<Blob>((resolve, reject) => {
       let state: RequestState | null = null;

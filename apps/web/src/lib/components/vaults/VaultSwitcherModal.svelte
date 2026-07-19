@@ -5,6 +5,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import { pickDirectory } from "$lib/utils/fs";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
@@ -27,7 +28,7 @@
   const handleLoadFromFolder = async () => {
     isLoading = true;
     try {
-      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      const handle = await pickDirectory({ mode: "readwrite" });
       const success = await vault.importFromFolder(handle);
       if (success) {
         onClose();
@@ -37,6 +38,10 @@
       }
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "NotSupportedError") {
+        notificationStore.notify(e.message, "error", true);
+        return;
+      }
       console.error(e);
     } finally {
       isLoading = false;
@@ -116,7 +121,7 @@
     isLoading = true;
     try {
       // 1. Get handle immediately (must be user triggered)
-      const handle = await window.showDirectoryPicker({ mode: "read" });
+      const handle = await pickDirectory({ mode: "read" });
 
       // 2. Create the vault
       await vault.createVault(newVaultName);
@@ -131,6 +136,11 @@
         onClose();
       }
     } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "NotSupportedError") {
+        notificationStore.notify(e.message, "error", true);
+        return;
+      }
       console.error(e);
       // Errors are primarily handled by vault.errorMessage now
     } finally {
@@ -141,13 +151,17 @@
   const handleImportToVault = async (v: VaultRecord) => {
     isLoading = true;
     try {
-      const handle = await window.showDirectoryPicker({ mode: "read" });
+      const handle = await pickDirectory({ mode: "read" });
       if (v.id !== vaultRegistry.activeVaultId) {
         await vault.switchVault(v.id);
       }
       await vault.importFromFolder(handle);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "NotSupportedError") {
+        notificationStore.notify(e.message, "error", true);
+        return;
+      }
       console.error(e);
     } finally {
       isLoading = false;

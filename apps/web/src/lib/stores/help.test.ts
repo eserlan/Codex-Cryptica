@@ -1,45 +1,58 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Hoist mocks to run before imports
-vi.hoisted(() => {
-  (global as any).localStorage = {
-    getItem: vi.fn().mockReturnValue(null),
-    setItem: vi.fn(),
-    clear: vi.fn(),
-  };
-});
-
 vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
-import { helpStore, HelpStore } from "./help.svelte";
+import { HelpStore } from "./help.svelte";
 import { HELP_ARTICLES } from "$lib/config/help-content";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("HelpStore", () => {
+  let mockStorage: any;
+  let helpStore: HelpStore;
+
   beforeEach(async () => {
-    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    mockStorage = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    helpStore = new HelpStore(undefined, undefined, undefined, mockStorage);
     await helpStore.init();
     helpStore.reset();
   });
 
-  it("should support constructor injection for UI and Search stores", () => {
+  it("should support constructor injection for UI, Search, and Storage stores", () => {
     const mockOnboardingStore = {
       dismissedLandingPage: false,
     } as any;
     const mockModalUIStore = { closeSettings: vi.fn() } as any;
     const mockSearchStore = { open: vi.fn() } as any;
+    const customMockStorage = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    } as any;
+
     const store = new HelpStore(
       mockOnboardingStore,
       mockModalUIStore,
       mockSearchStore,
+      customMockStorage
     );
 
     // Test that it uses the injected UI store
     store.startTour("initial-onboarding");
     expect(mockOnboardingStore.dismissedLandingPage).toBe(true);
     expect(mockModalUIStore.closeSettings).toHaveBeenCalled();
+
+    // Test that it uses the injected storage
+    store.dismissHint("new-hint");
+    expect(customMockStorage.setItem).toHaveBeenCalledWith(
+      "codex-cryptica-help-state",
+      expect.stringContaining("new-hint")
+    );
   });
 
   it("should initialize with all help articles", () => {
@@ -86,17 +99,18 @@ describe("HelpStore", () => {
     expect(helpStore.hasSeen("initial-onboarding")).toBe(true);
   });
 
-  it("should handle persistence and initialization from localStorage", async () => {
+  it("should handle persistence and initialization from injected storage", async () => {
     const savedState = JSON.stringify({
       completedTours: ["test-tour"],
       dismissedHints: ["test-hint"],
       lastSeenVersion: "0.0.1",
     });
-    vi.mocked(localStorage.getItem).mockReturnValue(savedState);
+    mockStorage.getItem.mockReturnValue(savedState);
 
-    await helpStore.init();
-    expect(helpStore.hasSeen("test-tour")).toBe(true);
-    expect(helpStore.isHintDismissed("test-hint")).toBe(true);
+    const store = new HelpStore(undefined, undefined, undefined, mockStorage);
+    await store.init();
+    expect(store.hasSeen("test-tour")).toBe(true);
+    expect(store.isHintDismissed("test-hint")).toBe(true);
   });
 
   it("should handle help center operations", () => {
@@ -140,7 +154,7 @@ describe("HelpStore", () => {
     expect(helpStore.isHintDismissed("hint-1")).toBe(false);
     helpStore.dismissHint("hint-1");
     expect(helpStore.isHintDismissed("hint-1")).toBe(true);
-    expect(localStorage.setItem).toHaveBeenCalled();
+    expect(mockStorage.setItem).toHaveBeenCalled();
   });
 
   it("should force rebuild index", async () => {

@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { aiClientManager } from "@codex/ai-engine";
 import type { Proposal } from "@codex/proposer";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 function normalizeTargetId(value: string): string {
   return value
@@ -142,7 +143,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
       reason: p.reason || "AI detected semantic link",
       confidence: p.confidence,
       status: "pending",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     });
   }
 

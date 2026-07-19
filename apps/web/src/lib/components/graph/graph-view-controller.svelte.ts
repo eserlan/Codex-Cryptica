@@ -28,6 +28,7 @@ import {
   markSearchEntityFocusHandled,
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
@@ -304,7 +305,7 @@ export class GraphViewController {
       this.pendingSearchFocus = {
         entityId: detail.entityId,
         zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
-        timestamp: Date.now(),
+        timestamp: systemClock.now(),
       };
     };
 
@@ -317,7 +318,7 @@ export class GraphViewController {
     if (bufferedSearchFocus) {
       this.pendingSearchFocus = {
         ...bufferedSearchFocus,
-        timestamp: Date.now(),
+        timestamp: systemClock.now(),
       };
     }
   };

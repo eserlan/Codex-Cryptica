@@ -2,6 +2,7 @@ import { BaseHandler, type P2PHandlerContext } from "./base-handler";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
 import { isVTTMessage } from "../p2p-protocol";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export class VTTHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
@@ -25,8 +26,7 @@ export class VTTHandler extends BaseHandler {
 
       const entity = message.entityId
         ? (context.vault.entities[message.entityId] as
-            | { image?: string }
-            | undefined)
+            { image?: string } | undefined)
         : null;
       const roster = context.guestStore.guestRoster as Record<
         string,
@@ -110,7 +110,7 @@ export class VTTHandler extends BaseHandler {
           y: message.y,
           peerId: message.peerId ?? connection.peer,
           color: message.color,
-          timestamp: message.timestamp ?? Date.now(),
+          timestamp: message.timestamp ?? systemClock.now(),
         },
         connection.peer,
       );

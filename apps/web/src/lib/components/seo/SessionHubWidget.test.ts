@@ -30,7 +30,10 @@ describe("SessionHubWidget", () => {
   it("renders empty state when no entities", () => {
     render(SessionHubWidget);
     expect(screen.getByText("Session Hub")).toBeTruthy();
-    expect(screen.getByText(/Generate drafts and click/i)).toBeTruthy();
+    expect(
+      screen.getByText(/Generated drafts appear here automatically/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Link to Hub/i)).toBeNull();
   });
 
   it("renders a list of entities from the store", async () => {
@@ -124,6 +127,64 @@ describe("SessionHubWidget", () => {
     await fireEvent.click(toggleBtn);
 
     expect(sessionHubStore.entities[0].pinned).toBe(true);
+  });
+
+  it("toggles save selection without changing context reuse", async () => {
+    sessionHubStore.addEntity({
+      type: "character",
+      title: "Elara",
+      content: "A hero",
+      labels: [],
+      status: "active",
+      reuseEnabled: true,
+      pinned: false,
+    });
+
+    render(SessionHubWidget);
+
+    const toggleBtn = screen.getByTitle("Included when saving");
+    await fireEvent.click(toggleBtn);
+
+    expect(sessionHubStore.entities[0].selectedForSave).toBe(false);
+    expect(sessionHubStore.entities[0].reuseEnabled).toBe(true);
+    expect(screen.getByTitle("Excluded when saving")).toBeTruthy();
+  });
+
+  it("saves the marked subset or the whole session", async () => {
+    sessionHubStore.addEntity({
+      type: "character",
+      title: "Elara",
+      content: "A hero",
+      labels: [],
+      status: "active",
+      reuseEnabled: true,
+      pinned: false,
+    });
+    const excludedId = sessionHubStore.addEntity({
+      type: "location",
+      title: "Waterdeep",
+      content: "A city",
+      labels: [],
+      status: "active",
+      reuseEnabled: true,
+      pinned: false,
+    });
+    sessionHubStore.updateEntity(excludedId, { selectedForSave: false });
+
+    const onSave = vi.fn();
+    render(SessionHubWidget, { props: { onSave } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Save selected (1)" }),
+    );
+    expect(onSave).toHaveBeenNthCalledWith(
+      1,
+      expect.arrayContaining([expect.objectContaining({ title: "Elara" })]),
+    );
+    expect(onSave.mock.calls[0][0]).toHaveLength(1);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Save all (2)" }));
+    expect(onSave.mock.calls[1][0]).toHaveLength(2);
   });
 
   it("removes entity when trash button is clicked", async () => {

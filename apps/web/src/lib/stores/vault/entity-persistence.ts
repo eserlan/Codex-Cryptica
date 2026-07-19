@@ -6,6 +6,7 @@ import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { updateLastInternalChange } from "./registry";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface PersistenceDependencies {
   repository: VaultRepository;
@@ -16,20 +17,10 @@ export interface PersistenceDependencies {
   ) => Promise<FileSystemDirectoryHandle | undefined>;
   setStatus: (
     status:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) => void;
   status?: () =>
-    | "idle"
-    | "loading"
-    | "saving"
-    | "saved"
-    | "needs-permission"
-    | "error";
+    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
   // loader delegation
@@ -242,7 +233,7 @@ export class EntityPersistenceService {
       const path = latestEntity._path || [`${latestEntity.id}.md`];
       await cacheService.set(
         `${vaultIdAtStart}:${path.join("/")}`,
-        Date.now(),
+        systemClock.now(),
         latestEntity,
       );
 

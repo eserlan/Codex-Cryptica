@@ -5,6 +5,7 @@ import {
   type GuestRelationship,
   type Map,
 } from "schema";
+import { type Clock, systemClock } from "../runtime";
 
 export interface ExporterOptions {
   entities: Entity[];
@@ -31,7 +32,10 @@ export class GuestExporter {
    * Redacts inline links to private/excluded entities.
    * Strips out GM secrets like lore and artDirection.
    */
-  static export(options: ExporterOptions): GuestBundle {
+  static export(
+    options: ExporterOptions,
+    clock: Clock = systemClock,
+  ): GuestBundle {
     const {
       entities,
       defaultVisibility,
@@ -147,7 +151,7 @@ export class GuestExporter {
       schemaVersion: 1,
       publishId,
       vaultTitle,
-      publishedAt: new Date().toISOString(),
+      publishedAt: new Date(clock.now()).toISOString(),
       publisherVersion,
       activeTheme: activeTheme || {},
       metadata,

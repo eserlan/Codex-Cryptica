@@ -1,5 +1,6 @@
 import type { Entity } from "schema";
 import { sanitizeId } from "../../utils/markdown";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface TreeNode {
   entity: Entity;
@@ -74,7 +75,7 @@ export function buildEntityTree(
             content: "",
             lore: "",
             _path: path,
-            updatedAt: Date.now(),
+            updatedAt: systemClock.now(),
             isVirtual: true,
           } as any);
 

@@ -4,6 +4,7 @@ import {
   isNotFoundError,
   deleteOpfsEntry,
 } from "../../utils/opfs";
+import { pickDirectory } from "../../utils/fs";
 import { CanvasSchema } from "@codex/canvas-engine";
 import { debugStore } from "../debug.svelte";
 import { stringifyEntity } from "../../utils/markdown";
@@ -178,8 +179,11 @@ export async function importFromFolder(
     localHandle = handle;
   } else {
     try {
-      localHandle = await window.showDirectoryPicker({ mode: "read" });
-    } catch {
+      localHandle = await pickDirectory({ mode: "read" });
+    } catch (err) {
+      if (err instanceof Error && err.name === "NotSupportedError") {
+        return { success: false, error: err.message };
+      }
       return { success: false }; // User cancelled
     }
   }

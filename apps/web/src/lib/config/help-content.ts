@@ -370,6 +370,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.",
     icon: "icon-[lucide--panel-right]",
   },
+  "voice-chat": {
+    id: "voice-chat",
+    title: "Session Voice Chat",
+    content:
+      "Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who is in the channel.",
+    icon: "icon-[lucide--mic]",
+  },
   "spatial-canvas": {
     id: "spatial-canvas",
     title: "Spatial Canvas",

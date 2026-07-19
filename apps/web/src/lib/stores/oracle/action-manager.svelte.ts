@@ -2,6 +2,7 @@ import { appEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export class OracleActionManager {
   constructor(private store: IOracleStore) {}
@@ -21,7 +22,7 @@ export class OracleActionManager {
           type: ORACLE_EVENTS.UNDO_PERFORMED,
           domain: "oracle",
           payload: { messageId: action.messageId },
-          metadata: { timestamp: Date.now(), sync: true },
+          metadata: { timestamp: systemClock.now(), sync: true },
         });
       }
     });

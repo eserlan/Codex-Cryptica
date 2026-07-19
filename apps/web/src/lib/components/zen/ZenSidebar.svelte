@@ -4,7 +4,6 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
-  import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
@@ -259,7 +258,7 @@
     </div>
   {/if}
 
-  <!-- Labels & Aliases -->
+  <!-- Labels -->
   <div class="mb-4 space-y-4">
     {#if !editState.isEditing}
       <div class="space-y-2">
@@ -313,14 +312,6 @@
             for="zen-labels">Labels</label
           >
           <LabelInput entityId={entity?.id || ""} ariaLabel="Labels" />
-        </div>
-
-        <div class="space-y-1">
-          <label
-            class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
-            for="zen-aliases">Aliases</label
-          >
-          <AliasInput bind:aliases={editState.aliases} />
         </div>
       </div>
     {/if}

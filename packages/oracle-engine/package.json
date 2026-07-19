@@ -13,6 +13,7 @@
   "dependencies": {
     "@codex/events": "workspace:*",
     "@codex/proposer": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "dice-engine": "workspace:*",
     "idb": "^8.0.3",
     "schema": "workspace:*"

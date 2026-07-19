@@ -3,7 +3,11 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { parseWaExport } from "$lib/services/seo/wa-parser";
+  import {
+    parseObsidianFiles,
+    parseJsonExport,
+    traverseEntry,
+  } from "$lib/services/seo/import-parser";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -71,7 +75,7 @@
 
     try {
       if (pageData.slug === "obsidian-vault") {
-        await parseObsidianFiles(list);
+        filesParsed = await parseObsidianFiles(list);
       } else {
         // JSON based imports (World Anvil, Kanka, LegendKeeper)
         const jsonFile = list.find((f) => f.name.endsWith(".json"));
@@ -82,157 +86,11 @@
               " export.",
           );
         }
-        await parseJsonExport(jsonFile, pageData.slug);
+        filesParsed = await parseJsonExport(jsonFile, pageData.slug);
       }
     } catch (err: any) {
       errorMessage = err.message || "Failed to parse files.";
     }
-  }
-
-  // HTML to markdown converter
-  function cleanHtml(html: string): string {
-    if (!html) return "";
-    return html
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/p>/gi, "\n\n")
-      .replace(/<p>/gi, "")
-      .replace(/<strong>(.*?)<\/strong>/gi, "**$1**")
-      .replace(/<em>(.*?)<\/em>/gi, "*$1*")
-      .replace(
-        /<a\s+(?:[^>]*?\s+)?href="([^"]*)"[^>]*>(.*?)<\/a>/gi,
-        "[$2]($1)",
-      )
-      .replace(/<[^>]*>/g, ""); // strip remaining tags
-  }
-
-  // Parses Obsidian vault files (.md)
-  async function parseObsidianFiles(files: File[]) {
-    const mdFiles = files.filter((f) => f.name.endsWith(".md"));
-    if (mdFiles.length === 0) {
-      throw new Error(
-        "No Markdown (.md) files found. Please select or drop markdown files.",
-      );
-    }
-
-    const parsed: typeof filesParsed = [];
-    for (const file of mdFiles) {
-      const text = await file.text();
-      let title = file.name.replace(/\.md$/, "");
-      let content = text;
-      let type = "note";
-      let labels = ["obsidian-import"];
-
-      // Simple Frontmatter Extraction
-      const fmMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-      if (fmMatch) {
-        content = text.slice(fmMatch[0].length).trim();
-        const lines = fmMatch[1].split("\n");
-        for (const line of lines) {
-          const colonIdx = line.indexOf(":");
-          if (colonIdx !== -1) {
-            const key = line.slice(0, colonIdx).trim().toLowerCase();
-            const val = line
-              .slice(colonIdx + 1)
-              .trim()
-              .replace(/^['"]|['"]$/g, "");
-            if (key === "title") title = val;
-            if (key === "type") {
-              const cleanType = val.toLowerCase();
-              if (
-                [
-                  "character",
-                  "creature",
-                  "location",
-                  "item",
-                  "event",
-                  "faction",
-                  "note",
-                ].includes(cleanType)
-              ) {
-                type = cleanType;
-              }
-            }
-            if (key === "tags" || key === "labels") {
-              const tags = val
-                .replaceAll("[", "")
-                .replaceAll("]", "")
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean);
-              labels.push(...tags);
-            }
-          }
-        }
-      }
-
-      parsed.push({ type, title, content, labels });
-    }
-    filesParsed = parsed;
-  }
-
-  // Parses JSON formats client-side
-  async function parseJsonExport(file: File, slug: string) {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    const parsed: typeof filesParsed = [];
-
-    if (slug === "world-anvil-export") {
-      parsed.push(...parseWaExport(data));
-    } else if (slug === "kanka-json") {
-      // Kanka campaign exports
-      const entities =
-        data.entities || (Array.isArray(data) ? data : Object.values(data));
-      for (const item of entities) {
-        if (!item || typeof item !== "object") continue;
-        const title = item.name || "Untitled Entity";
-        const body = cleanHtml(
-          item.entry || item.entry_parsed || item.history || "",
-        );
-        let type = "note";
-        const kankaType = String(item.type || "").toLowerCase();
-        if (kankaType === "character") type = "character";
-        else if (kankaType === "location") type = "location";
-        else if (kankaType === "item") type = "item";
-        else if (kankaType === "organisation" || kankaType === "faction")
-          type = "faction";
-
-        parsed.push({
-          type,
-          title,
-          content: body,
-          labels: ["kanka-import", kankaType].filter(Boolean),
-        });
-      }
-    } else if (slug === "legendkeeper-json") {
-      // LegendKeeper JSON schema
-      const pages =
-        data.pages ||
-        data.documents ||
-        (Array.isArray(data) ? data : Object.values(data));
-      for (const item of pages) {
-        if (!item || typeof item !== "object") continue;
-        const title = item.name || item.title || "Untitled Page";
-        const rawContent = item.content || item.blocks || "";
-        const body =
-          typeof rawContent === "string"
-            ? rawContent
-            : JSON.stringify(rawContent);
-
-        parsed.push({
-          type: "note",
-          title,
-          content: body,
-          labels: ["legendkeeper-import"],
-        });
-      }
-    }
-
-    if (parsed.length === 0) {
-      throw new Error(
-        "No importable articles or pages found in the JSON backup.",
-      );
-    }
-    filesParsed = parsed;
   }
 
   // Handle Drag & Drop Drop
@@ -253,31 +111,6 @@
     } else {
       await handleFiles(e.dataTransfer.files);
     }
-  }
-
-  // Helper to recursively fetch files from entries
-  async function traverseEntry(entry: any): Promise<File[]> {
-    return new Promise((resolve) => {
-      if (entry.isFile) {
-        entry.file((file: File) => resolve([file]));
-      } else if (entry.isDirectory) {
-        const reader = entry.createReader();
-        const read = () => {
-          reader.readEntries(async (entries: any[]) => {
-            if (entries.length === 0) {
-              resolve([]);
-            } else {
-              const promises = entries.map((e) => traverseEntry(e));
-              const res = await Promise.all(promises);
-              resolve(res.flat());
-            }
-          });
-        };
-        read();
-      } else {
-        resolve([]);
-      }
-    });
   }
 
   // Saves parsed import package to localStorage and redirects to import handler

@@ -352,7 +352,9 @@ export class SyncCoordinator {
           errorMessage:
             _err.name === "SecurityError"
               ? "The browser blocked the folder picker. Click the sync button again to choose your folder."
-              : "Failed to select folder: " + _err.message,
+              : _err.name === "NotSupportedError"
+                ? _err.message
+                : "Failed to select folder: " + _err.message,
         });
         return;
       }

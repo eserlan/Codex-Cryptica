@@ -7,6 +7,7 @@ type DebugLogger = {
   error: (...args: any[]) => void;
 };
 import type { SearchProgressCoordinator } from "./search-progress-coordinator";
+import { systemClock } from "./runtime";
 
 type PersistenceApi = Pick<SearchEngine, "exportIndex" | "importIndex">;
 
@@ -290,7 +291,7 @@ export class SearchIndexPersistence {
         await this.getDb().searchIndex.put({
           vaultId,
           data: persistedData,
-          updatedAt: Date.now(),
+          updatedAt: systemClock.now(),
         });
         this.coordinator.isDirty = false;
         this.debug.log(

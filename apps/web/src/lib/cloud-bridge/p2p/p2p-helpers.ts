@@ -4,6 +4,7 @@ import type {
   GuestPresenceStatus,
   GuestSession,
 } from "../../stores/guest.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 type GuestRoster = Record<string, GuestSession>;
 
@@ -43,7 +44,7 @@ export function upsertGuestRoster(
     currentEntityId: string | null;
     currentEntityTitle: string | null;
   }>,
-  now = Date.now(),
+  now = systemClock.now(),
 ) {
   const existing = current[peerId];
   const base = existing ?? {

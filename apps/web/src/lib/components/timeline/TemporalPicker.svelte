@@ -8,6 +8,7 @@
   import { onMount, tick, untrack } from "svelte";
   import { scale, slide } from "svelte/transition";
   import { toDateSelection } from "./utils/toDateSelection";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let {
     value = $bindable(),
@@ -90,7 +91,7 @@
           if (index !== -1) {
             const targetScrollTop = index * 40;
             if (Math.abs(container.scrollTop - targetScrollTop) > 2) {
-              lastProgrammaticScroll[col.id] = Date.now();
+              lastProgrammaticScroll[col.id] = systemClock.now();
               container.scrollTop = targetScrollTop;
             }
           }
@@ -273,7 +274,7 @@
 
   const onWheelScroll = (colId: string, event: Event) => {
     // Ignore scroll events for 150ms after a programmatic scroll
-    if (Date.now() - (lastProgrammaticScroll[colId] || 0) < 150) {
+    if (systemClock.now() - (lastProgrammaticScroll[colId] || 0) < 150) {
       return;
     }
     const container = event.currentTarget as HTMLDivElement;

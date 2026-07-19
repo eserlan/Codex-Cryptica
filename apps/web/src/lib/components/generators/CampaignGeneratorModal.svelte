@@ -35,6 +35,7 @@
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
@@ -279,7 +280,7 @@
         source: "revise",
         chronicle: reviewed.summary || "",
         lore: reviewed.lore || "",
-        timestamp: Date.now(),
+        timestamp: systemClock.now(),
         deleteOnDiscard: true,
         generatorSessionCommit: true,
       };

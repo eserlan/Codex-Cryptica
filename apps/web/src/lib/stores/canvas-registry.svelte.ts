@@ -11,6 +11,7 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import { updateLastInternalChange } from "./vault/registry";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -119,7 +120,7 @@ class CanvasRegistryStore {
       slug,
       nodes: [],
       edges: [],
-      lastModified: Date.now(),
+      lastModified: systemClock.now(),
     };
 
     await this.saveCanvas(id);
@@ -182,7 +183,7 @@ class CanvasRegistryStore {
 
     canvas.name = newName;
     canvas.slug = this.generateSlug(newName, id);
-    canvas.lastModified = Date.now();
+    canvas.lastModified = systemClock.now();
 
     await this.saveCanvas(id);
     return canvas.slug;
@@ -191,7 +192,7 @@ class CanvasRegistryStore {
   async touch(id: string) {
     const canvas = this.canvases[id];
     if (canvas) {
-      canvas.lastModified = Date.now();
+      canvas.lastModified = systemClock.now();
     }
   }
 
@@ -280,7 +281,7 @@ class CanvasRegistryStore {
     }
     canvas.nodes = newNodes;
 
-    canvas.lastModified = Date.now();
+    canvas.lastModified = systemClock.now();
     await this.saveCanvas(canvasId);
 
     return { canvasId, added, skipped, errors };
@@ -333,7 +334,7 @@ class CanvasRegistryStore {
       slug,
       nodes,
       edges: [],
-      lastModified: Date.now(),
+      lastModified: systemClock.now(),
     };
 
     await this.saveCanvas(id);

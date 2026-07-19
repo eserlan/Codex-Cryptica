@@ -22,6 +22,7 @@ import {
   PeerJSConnectionManager,
   type ConnectionState,
 } from "./connection-manager.svelte";
+import { voiceChat } from "./voice/voice-chat.svelte";
 
 export interface ExtendedGuestDeps extends GuestDeps {
   connectionManager?: PeerJSConnectionManager;
@@ -62,6 +63,10 @@ class ConnectionManagerClientTransportAdapter implements P2PClientTransport {
 
   get connected(): boolean {
     return this.manager.state.status === "connected";
+  }
+
+  get rawPeer(): unknown {
+    return this.manager.rawPeer;
   }
 
   async connect(hostId: string): Promise<void> {
@@ -294,6 +299,7 @@ export class P2PGuestService {
   }
 
   disconnect() {
+    voiceChat.reset();
     this.isConnected = false;
     this.currentHostId = null;
     this.connectingHostId = null;
@@ -373,6 +379,14 @@ export class P2PGuestService {
   }
   get peerId() {
     return this.transport.id;
+  }
+  /** Peer ID of the host we're connected to, if any. */
+  get hostId(): string | null {
+    return this.currentHostId;
+  }
+  /** Underlying media-capable peer for the voice channel, if the transport has one. */
+  get rawPeer(): unknown {
+    return this.transport.rawPeer ?? null;
   }
 }
 

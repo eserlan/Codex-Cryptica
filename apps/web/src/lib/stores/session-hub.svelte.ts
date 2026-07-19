@@ -50,13 +50,19 @@ export class SessionHubStore {
           status: draft.status || "draft",
           reuseEnabled: true,
           pinned: false,
+          selectedForSave: true,
           createdOrder: order++,
         }));
         this.provenance = {};
         this.nextOrder = order;
         this.save();
       } else if (parsed && parsed.version === 2) {
-        this.entities = parsed.entities || [];
+        this.entities = (parsed.entities || []).map(
+          (entity: SessionEntity) => ({
+            ...entity,
+            selectedForSave: entity.selectedForSave ?? true,
+          }),
+        );
         this.provenance = parsed.provenance || {};
         this.nextOrder = parsed.nextOrder || 1;
       }
@@ -84,6 +90,7 @@ export class SessionHubStore {
     const id = generateId();
     const newEntity: SessionEntity = {
       ...entityData,
+      selectedForSave: entityData.selectedForSave ?? true,
       id,
       createdOrder: this.nextOrder++,
     };

@@ -1,5 +1,6 @@
 import { OracleCommandParser, type ChatMessage } from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export class OracleChatManager {
   isChatHistoryReady = $state(false);
@@ -53,7 +54,7 @@ export class OracleChatManager {
           id: crypto.randomUUID(),
           role: "system",
           content: "❌ This command isn't available in guest view.",
-          timestamp: Date.now(),
+          timestamp: systemClock.now(),
         });
         return;
       }

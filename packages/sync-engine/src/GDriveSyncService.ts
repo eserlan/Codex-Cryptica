@@ -3,6 +3,7 @@ import { SyncService } from "./SyncService";
 import { type GDriveBackend } from "./GDriveBackend";
 import { type OpfsBackend } from "./OpfsBackend";
 import { type CloudSyncMetadataService } from "./CloudSyncMetadataService";
+import { type Clock, systemClock } from "./runtime";
 
 export interface GDriveSyncDependencies {
   /**
@@ -14,7 +15,7 @@ export interface GDriveSyncDependencies {
   /**
    * Returns the current time in milliseconds.
    */
-  now?: () => number;
+  clock?: Clock;
 }
 
 /**
@@ -45,7 +46,7 @@ export class GDriveSyncService {
   }
 
   private getNow(): number {
-    return this.deps.now ? this.deps.now() : Date.now();
+    return (this.deps.clock ?? systemClock).now();
   }
 
   private isAnotherTabSyncing(): boolean {

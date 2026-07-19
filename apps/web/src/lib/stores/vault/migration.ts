@@ -17,6 +17,7 @@ import {
 } from "../../utils/idb";
 import { debugStore } from "../debug.svelte";
 import { walkDirectory } from "../../utils/fs";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 const LEGACY_OPFS_MIGRATION_VERSION = 1;
 
@@ -77,8 +78,8 @@ export async function migrateStructure(opfsRoot: FileSystemDirectoryHandle) {
     await db.put("vaults", {
       id: "default",
       name: "Default Vault",
-      createdAt: Date.now(),
-      lastOpenedAt: Date.now(),
+      createdAt: systemClock.now(),
+      lastOpenedAt: systemClock.now(),
       entityCount: rootFiles.length,
     });
     await db.put("settings", "default", "activeVaultId");

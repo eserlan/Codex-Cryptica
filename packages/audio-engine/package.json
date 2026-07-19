@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@codex/oracle-engine": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "comlink": "^4.4.2",
     "schema": "workspace:*"
   },

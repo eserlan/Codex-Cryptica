@@ -13,6 +13,8 @@ import type {
 } from "./transport/transport-interface";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { VTTHandler } from "./handlers/vtt-handler";
+import { VoiceHandler } from "./handlers/voice-handler";
+import { voiceChat } from "./voice/voice-chat.svelte";
 import { VaultHandler } from "./handlers/vault-handler";
 import { FileHandler } from "./handlers/file-handler";
 import { HostCharChatHandler } from "./handlers/host-char-chat-handler";
@@ -22,6 +24,7 @@ import {
   PeerJSConnectionManager,
   type ConnectionState,
 } from "./connection-manager.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -84,6 +87,7 @@ export class P2PHostService {
     this.dispatcher.register(new VaultHandler());
     this.dispatcher.register(new FileHandler());
     this.dispatcher.register(new HostCharChatHandler());
+    this.dispatcher.register(new VoiceHandler());
   }
 
   private setupTransportListeners() {
@@ -99,7 +103,7 @@ export class P2PHostService {
           const ack = {
             type: "handshake_ack",
             senderId: this.transport.id || "",
-            timestamp: Date.now(),
+            timestamp: systemClock.now(),
             payload: null,
           };
           conn.send(ack);
@@ -109,7 +113,7 @@ export class P2PHostService {
           const pong = {
             type: "pong",
             senderId: this.transport.id || "",
-            timestamp: (data as any).timestamp || Date.now(),
+            timestamp: (data as any).timestamp ?? systemClock.now(),
             payload: null,
           };
           conn.send(pong);
@@ -170,6 +174,10 @@ export class P2PHostService {
   }
   get activePeerId() {
     return this.transport.id;
+  }
+  /** Underlying media-capable peer for the voice channel, if the transport has one. */
+  get rawPeer(): unknown {
+    return this.transport.rawPeer ?? null;
   }
 
   async startHosting(onPeerId?: (peerId: string) => void): Promise<string> {
@@ -313,6 +321,7 @@ export class P2PHostService {
   }
 
   stopHosting() {
+    voiceChat.reset();
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;

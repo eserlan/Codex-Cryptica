@@ -1,4 +1,5 @@
 import Dexie from "dexie";
+import { type Clock, systemClock } from "../runtime";
 
 interface GraphEntityRecord {
   id: string;
@@ -101,6 +102,7 @@ export interface WorldServiceDependencies {
       categories?: string[],
     ): Promise<void>;
   } | null;
+  clock?: Clock;
 }
 
 const createMissingDb = (): WorldServiceDependencies["db"] => {
@@ -167,14 +169,17 @@ async function fetchFrontpageRecords(
 export class WorldServiceImplementation {
   constructor(private deps: WorldServiceDependencies = {}) {}
 
+  private getNow() {
+    return (this.deps.clock ?? systemClock).now();
+  }
+
   private get db() {
     return this.deps.db ?? createMissingDb()!;
   }
 
   async getMetadata(vaultId: string): Promise<WorldMetadata> {
     const record = (await this.db.vaultMetadata.get(vaultId)) as
-      | VaultMetadataRecord
-      | undefined;
+      VaultMetadataRecord | undefined;
 
     return {
       id: vaultId,
@@ -190,8 +195,7 @@ export class WorldServiceImplementation {
     metadata: Partial<WorldMetadata>,
   ): Promise<void> {
     const existing = (await this.db.vaultMetadata.get(vaultId)) as
-      | VaultMetadataRecord
-      | undefined;
+      VaultMetadataRecord | undefined;
 
     const next: VaultMetadataRecord = {
       id: vaultId,
@@ -199,7 +203,7 @@ export class WorldServiceImplementation {
       tagline: metadata.tagline ?? existing?.tagline ?? undefined,
       description: metadata.description ?? existing?.description ?? undefined,
       coverImage: metadata.coverImage ?? existing?.coverImage ?? undefined,
-      lastModified: Date.now(),
+      lastModified: this.getNow(),
     };
 
     await this.db.vaultMetadata.put(next);
@@ -314,7 +318,7 @@ export class WorldServiceImplementation {
       promptBase,
       modelName,
     );
-    const assetName = `world-${vaultId}-${Date.now()}`;
+    const assetName = `world-${vaultId}-${this.getNow()}`;
     const saved = await assetManager.saveImageToVault(
       blob,
       assetName,
