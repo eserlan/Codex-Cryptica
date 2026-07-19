@@ -67,7 +67,7 @@ Presence is implicit: an open media call _is_ membership. Closing the call
 ### Documentation (this feature)
 
 ```
-specs/1757-vtt-voice-chat/
+specs/144-vtt-voice-chat/
 ├── spec.md        # Retroactive feature specification
 ├── plan.md        # This file
 └── quickstart.md  # Manual two-browser smoke test
