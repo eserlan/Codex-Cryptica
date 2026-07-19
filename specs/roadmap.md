@@ -34,7 +34,7 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
-### Shipped since v0.28.0 — on staging, awaiting next release notes (as of 2026-07-19)
+### v0.29.0 — The Voice & Lineage Update (2026-07-19)
 
 - **Highlights**: In-app group voice chat for live sessions (host-mixed hub-and-spoke audio over PeerJS with mute controls and a participant roster); the CIF Mechanical Importer Phase 1 text-only core; a full Family Tree view for characters (zoom, full-screen, relation categories) extended by the multi-generation Lineage view with relationship alias normalization and sibling auto-linking; the Language (conlang profile) Generator with vault grounding and genre-following themes; copyright/fan-content notices with report intake and suspension sidecars for public worlds; the Entity Table/List view with guest-mode filters and deep-link hardening; theme bestiaries and creature catalogue packs in the importer; the discoverable Public World Directory with search and filtering; and the Entity Timeline tab in the detail panel. Internals: duplication cleanup epic (shared utils, `ModalShell`, retry helpers, DRY rule in constitution v1.3.0) and injected `Clock`/runtime dependencies across services.
 - **Associated Specifications**:

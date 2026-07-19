@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.29.0",
+    "title": "The Voice & Lineage Update",
+    "date": "2026-07-19",
+    "type": "minor",
+    "highlights": [
+      "Session Voice Chat: Talk with your players without leaving the app. Start a voice channel from the header while hosting a live session — players join with one click, can mute themselves, and everyone sees who's in the channel.",
+      "Family Trees & Lineages: Open a full family tree for any character, then zoom out to a multi-generation lineage view. Siblings and relatives are linked up automatically as you record parents and partners.",
+      "Language Generator: Give your world its own tongues. Generate languages grounded in your existing lore, with naming styles that follow your world's genre.",
+      "Entity Table View: See your whole vault as a sortable, filterable table — perfect for quick audits, label cleanups, and finding what's missing.",
+      "Entity Timeline: A new Timeline tab on every entity shows the events it took part in, and you can link events from either side.",
+      "Creature Packs: Fill your bestiary in a couple of clicks with ready-made creature packs themed to your world's setting.",
+      "Import Worlds from Other Tools: Bring an exported world file into your vault with a guided review step — you decide what gets added or updated, and re-importing a newer export later is safe.",
+      "Discover & Share Fairly: Browse the searchable directory of public worlds, and shared worlds now carry fan-content notices with a simple way to report copyright concerns."
+    ]
+  },
+  {
     "version": "0.28.0",
     "title": "Share Your World with Guests",
     "date": "2026-06-22",
