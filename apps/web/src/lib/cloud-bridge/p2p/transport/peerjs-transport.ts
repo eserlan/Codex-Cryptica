@@ -25,6 +25,10 @@ export class PeerJSTransport implements P2PTransport {
   get connections() {
     return this._connections;
   }
+  /** The underlying PeerJS Peer, used for voice media calls. */
+  get rawPeer(): unknown {
+    return this.peer;
+  }
 
   async start(peerId: string = crypto.randomUUID()): Promise<string> {
     if (this.peer) return this._id!;

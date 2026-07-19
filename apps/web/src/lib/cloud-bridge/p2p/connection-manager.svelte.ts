@@ -95,6 +95,11 @@ export class PeerJSConnectionManager {
     return this._state;
   }
 
+  /** The underlying PeerJS Peer, used for voice media calls. */
+  get rawPeer(): unknown {
+    return this.peer;
+  }
+
   /**
    * Start a Host session and wait for incoming connection
    */

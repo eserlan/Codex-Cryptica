@@ -6,6 +6,7 @@
   import VaultControls from "../VaultControls.svelte";
   import DriveStatus from "./DriveStatus.svelte";
   import P2PStatus from "./P2PStatus.svelte";
+  import VoiceChatControls from "../vtt/VoiceChatControls.svelte";
   import { openFrontPage } from "./app-header-actions";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -129,7 +130,10 @@
         onclick={() => searchStore.open()}
         aria-label="Search"
       >
-        <span class="icon-[heroicons--magnifying-glass] w-6 h-6" aria-hidden="true"></span>
+        <span
+          class="icon-[heroicons--magnifying-glass] w-6 h-6"
+          aria-hidden="true"
+        ></span>
       </button>
     </div>
 
@@ -142,6 +146,7 @@
           <span class="icon-[lucide--eye] h-3.5 w-3.5"></span>
           READ-ONLY GUEST
         </span>
+        <VoiceChatControls />
         <a
           href="{base}/worlds"
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
@@ -162,6 +167,7 @@
       {:else}
         <DriveStatus />
         <P2PStatus />
+        <VoiceChatControls />
         <VaultControls />
         <a
           href="{base}/worlds"
@@ -169,7 +175,8 @@
           title="Explore public worlds"
           aria-label="Explore public worlds"
         >
-          <span class="w-5 h-5 icon-[lucide--compass]" aria-hidden="true"></span>
+          <span class="w-5 h-5 icon-[lucide--compass]" aria-hidden="true"
+          ></span>
         </a>
         <button
           class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
@@ -180,7 +187,8 @@
           aria-label="Open Application Settings"
           data-testid="settings-button"
         >
-          <span class="w-5 h-5 icon-[lucide--settings]" aria-hidden="true"></span>
+          <span class="w-5 h-5 icon-[lucide--settings]" aria-hidden="true"
+          ></span>
         </button>
       {/if}
     </div>
