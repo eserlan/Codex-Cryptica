@@ -31,7 +31,8 @@ import {
   setItemDecision,
   setMatchDecision,
   setItemType,
-  parseCifFile,
+  parseCifPackage,
+  resolveCifAssets,
   validateCifManifest,
   normalizeCifPackage,
   cifSourceRefBuilder,
@@ -329,10 +330,11 @@ export class ImportSettingsController {
     this.importMode = "cc";
     this.statusMessage = "Preparing CIF import review...";
 
-    const parseResult = await parseCifFile({
+    const parseResult = await parseCifPackage({
       fileName: file.name,
       size: file.size,
       text: () => file.text(),
+      bytes: async () => new Uint8Array(await file.arrayBuffer()),
     });
 
     if (!parseResult.ok) {
@@ -360,7 +362,31 @@ export class ImportSettingsController {
       return;
     }
 
-    const { pkg } = normalizeCifPackage(parseResult.manifest);
+    // ZIP packages: verify and resolve binary assets before review. Integrity
+    // failures (missing files, digest mismatches, unsafe paths) block the
+    // package the same way cross-record validation errors do.
+    let resolvedAssets: Awaited<ReturnType<typeof resolveCifAssets>> | null =
+      null;
+    if (parseResult.zip) {
+      resolvedAssets = await resolveCifAssets(
+        parseResult.manifest,
+        parseResult.zip.files,
+      );
+      if (resolvedAssets.errors.length > 0) {
+        this.rejectedFiles.push({
+          name: file.name,
+          reason: resolvedAssets.errors.map((e) => e.message).join(" "),
+        });
+        this.step = "upload";
+        this.importMode = null;
+        return;
+      }
+    }
+
+    const { pkg } = normalizeCifPackage(parseResult.manifest, {
+      assets: resolvedAssets?.assets,
+      zipIgnoredPaths: parseResult.zip?.ignoredPaths,
+    });
 
     // validateCifManifest's own warnings (e.g. cif.unmapped-kind, which
     // normalizeCifPackage doesn't separately compute) must still reach the
@@ -370,7 +396,10 @@ export class ImportSettingsController {
     const seenWarnings = new Set(
       pkg.warnings.map((w) => `${w.code}:${w.ref ?? ""}:${w.message}`),
     );
-    for (const warning of validation.warnings) {
+    for (const warning of [
+      ...validation.warnings,
+      ...(resolvedAssets?.warnings ?? []),
+    ]) {
       const key = `${warning.code}:${warning.ref ?? ""}:${warning.message}`;
       if (!seenWarnings.has(key)) {
         pkg.warnings.push(warning);

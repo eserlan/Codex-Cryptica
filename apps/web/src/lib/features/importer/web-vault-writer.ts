@@ -31,6 +31,12 @@ export interface VaultWriterStoreLike {
     label?: string,
     strength?: number,
   ): Promise<boolean>;
+  /** Persists an image into the vault (OPFS) and returns its stored paths. */
+  saveImageToVault?(
+    blob: Blob | File,
+    entityId: string,
+    name?: string,
+  ): Promise<{ image: string; thumbnail: string }>;
 }
 
 export interface WebVaultWriterOptions {
@@ -288,10 +294,43 @@ export class WebVaultWriter implements VaultWriter {
     };
   }
 
-  async saveAsset(_asset: AssetInput): Promise<{ ref: string }> {
-    throw new Error(
-      "Generic CC asset persistence is not supported by the web vault adapter yet",
+  async saveAsset(asset: AssetInput): Promise<{ ref: string }> {
+    if (!this.store.saveImageToVault) {
+      throw new Error(
+        "This vault store does not support image asset persistence",
+      );
+    }
+    if (!asset.entityId) {
+      throw new Error("Asset has no target entity to attach to");
+    }
+
+    // "Skip" and in-app edits win: an entity that already has an image keeps
+    // it. The asset is reported as already satisfied rather than overwritten.
+    const existing = this.store.entities[asset.entityId];
+    if (existing?.image) {
+      return { ref: existing.image };
+    }
+
+    const blob =
+      asset.bytes instanceof Blob
+        ? asset.bytes
+        : new Blob([asset.bytes as BlobPart], { type: asset.mimeType });
+
+    // Deterministic, content-addressed name: repeat imports of the same
+    // bytes land on the same stored file instead of accumulating copies.
+    const name = asset.contentHash
+      ? `cif_${asset.contentHash.slice(0, 16)}`
+      : asset.originalName;
+
+    const { image, thumbnail } = await this.store.saveImageToVault(
+      blob,
+      asset.entityId,
+      name,
     );
+    // Attach only after a successful save, so a failure can never leave a
+    // broken image reference on the entity.
+    await this.store.updateEntity(asset.entityId, { image, thumbnail });
+    return { ref: image };
   }
 }
 
