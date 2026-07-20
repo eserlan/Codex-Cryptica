@@ -72,7 +72,7 @@
 
 {#snippet toolbarItems()}
   {#if !layoutUIStore.isMobile}
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
         ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
         : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
@@ -81,7 +81,7 @@
       aria-label="Toggle Minimap"
       aria-pressed={showMinimap}
     >
-      <span class="icon-[lucide--map] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--map] w-4 h-4"></span>
     </button>
     <GraphViewPresets {cy} />
     <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
@@ -94,21 +94,21 @@
   />
   <div class="h-6 w-px bg-theme-border/30 mx-2 flex-shrink-0"></div>
   <div class="flex gap-1 items-center">
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => cy?.zoom(cy.zoom() * 1.2)}
       title="Zoom In"
       aria-label="Zoom In"
-      ><span class="icon-[lucide--zoom-in] w-4 h-4"></span></button
+      ><span aria-hidden="true" class="icon-[lucide--zoom-in] w-4 h-4"></span></button
     >
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => cy?.zoom(cy.zoom() / 1.2)}
       title="Zoom Out"
       aria-label="Zoom Out"
-      ><span class="icon-[lucide--zoom-out] w-4 h-4"></span></button
+      ><span aria-hidden="true" class="icon-[lucide--zoom-out] w-4 h-4"></span></button
     >
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => {
         graph.requestFit();
@@ -116,9 +116,9 @@
       }}
       title="Fit to Screen"
       aria-label="Fit to Screen"
-      ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
+      ><span aria-hidden="true" class="icon-[lucide--maximize] w-4 h-4"></span></button
     >
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 {layoutUIStore.isMobile
         ? 'flex'
         : 'hidden sm:flex'} items-center justify-center border transition {graph.stableLayout
@@ -132,13 +132,14 @@
       aria-label="Toggle Stable Layout"
       aria-pressed={graph.stableLayout}
       ><span
+        aria-hidden="true"
         class="{graph.stableLayout
           ? 'icon-[lucide--pin]'
           : 'icon-[lucide--pin-off]'} w-4 h-4"
       ></span></button
     >
     {#if !sessionModeStore.isGuestMode}
-      <button
+      <button type="button"
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
@@ -154,10 +155,10 @@
         title={connectionTooltip}
         aria-label={connectionTooltip}
         aria-pressed={isConnecting}
-        ><span class="icon-[lucide--link] w-4 h-4"></span></button
+        ><span aria-hidden="true" class="icon-[lucide--link] w-4 h-4"></span></button
       >
     {/if}
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => {
         void onApplyLayout({
@@ -169,8 +170,7 @@
       }}
       title="Redraw Layout"
       aria-label="Redraw Layout"
-      ><span
-        class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
+      ><span aria-hidden="true" class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
           ? 'animate-spin'
           : ''}"
       ></span></button
@@ -182,7 +182,7 @@
       : 'hidden md:block'} flex-shrink-0"
   ></div>
   {#if !sessionModeStore.isGuestMode}
-    <button
+    <button type="button"
       class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
         ? 'flex'
         : 'hidden md:flex'} transition {sessionModeStore.sharedMode
@@ -200,13 +200,14 @@
       aria-label="Toggle player view mode"
     >
       <span
+        aria-hidden="true"
         class={sessionModeStore.sharedMode
           ? "icon-[lucide--eye] w-4 h-4"
           : "icon-[lucide--eye-off] w-4 h-4"}
       ></span></button
     >
   {/if}
-  <button
+  <button type="button"
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showLabels
@@ -219,9 +220,9 @@
     title={graph.showLabels ? "Labels: ON" : "Labels: OFF"}
     aria-label="Toggle Labels"
     aria-pressed={graph.showLabels}
-    ><span class="icon-[lucide--type] w-4 h-4"></span></button
+    ><span aria-hidden="true" class="icon-[lucide--type] w-4 h-4"></span></button
   >
-  <button
+  <button type="button"
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showImages
@@ -234,7 +235,7 @@
     title={graph.showImages ? "Images: ON" : "Images: OFF"}
     aria-label="Toggle Images"
     aria-pressed={graph.showImages}
-    ><span class="icon-[lucide--image] w-4 h-4"></span></button
+    ><span aria-hidden="true" class="icon-[lucide--image] w-4 h-4"></span></button
   >
 
   <div
@@ -245,7 +246,7 @@
     <span class="text-[11px] font-mono text-theme-primary font-bold"
       >{currentZoom.toFixed(2)}x</span
     >
-    <button
+    <button type="button"
       class="text-[10px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
       onclick={() =>
         cy?.animate({
@@ -286,7 +287,7 @@
         <div
           class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
         >
-          <span class="icon-[lucide--users] w-3 h-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--users] w-3 h-3"></span>
           Active Guests
         </div>
         <span class="text-theme-muted font-mono">{activeGuests.length}</span>
@@ -344,7 +345,7 @@
           {@render toolbarItems()}
         </div>
       {/if}
-      <button
+      <button type="button"
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
         class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
         class:rotate-45={isMobileMenuOpen}
@@ -353,6 +354,7 @@
         aria-controls="mobile-graph-controls"
       >
         <span
+          aria-hidden="true"
           class="{isMobileMenuOpen
             ? 'icon-[lucide--x]'
             : 'icon-[lucide--settings-2]'} w-5 h-5"
