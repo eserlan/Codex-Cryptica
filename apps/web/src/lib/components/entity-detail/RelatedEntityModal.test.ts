@@ -284,4 +284,40 @@ describe("RelatedEntityModal", () => {
     );
     expect(onCloseMock).toHaveBeenCalled();
   });
+
+  it("marks the Create Entity button busy and disabled while saving", async () => {
+    let releaseSave!: (id: string) => void;
+    vi.mocked(vault.createEntity).mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          releaseSave = resolve;
+        }),
+    );
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    await fireEvent.click(screen.getByText("Generate"));
+    await waitFor(() => {
+      expect(screen.getByText("Create Entity")).toBeDefined();
+    });
+
+    const createBtn = screen
+      .getByText("Create Entity")
+      .closest("button") as HTMLButtonElement;
+    await fireEvent.click(createBtn);
+
+    await waitFor(() => {
+      expect(createBtn.getAttribute("aria-busy")).toBe("true");
+      expect(createBtn.disabled).toBe(true);
+    });
+
+    releaseSave("new-entity-id");
+    await waitFor(() => {
+      expect(vault.addConnection).toHaveBeenCalled();
+    });
+  });
 });

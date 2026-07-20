@@ -64,6 +64,10 @@ export interface AssetInput {
   bytes: Blob | Uint8Array;
   originalName: string;
   mimeType: string;
+  /** Vault entity to attach this asset to (resolved from the draft's placementRef). */
+  entityId?: string;
+  /** Verified content digest; enables deterministic, deduped storage names. */
+  contentHash?: string;
 }
 
 export interface Connection {

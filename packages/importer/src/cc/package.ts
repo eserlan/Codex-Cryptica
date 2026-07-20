@@ -49,10 +49,18 @@ export type RelationshipDraft = z.infer<typeof RelationshipDraftSchema>;
 
 export const AssetDraftSchema = z.object({
   id: z.string(),
-  bytes: z.instanceof(Blob).or(z.instanceof(Uint8Array)).optional(),
+  bytes: z
+    .custom<Blob | Uint8Array>(
+      // instanceof is not realm-safe for typed arrays (worker/jsdom
+      // boundaries produce foreign-realm Uint8Arrays); ArrayBuffer.isView is.
+      (v) => v instanceof Blob || ArrayBuffer.isView(v),
+    )
+    .optional(),
   originalName: z.string(),
   mimeType: z.string(),
   placementRef: z.string(),
+  /** Verified content digest; writers use it for deterministic, deduped storage names. */
+  contentHash: z.string().optional(),
 });
 export type AssetDraft = z.infer<typeof AssetDraftSchema>;
 

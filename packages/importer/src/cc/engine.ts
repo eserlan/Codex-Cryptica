@@ -204,6 +204,7 @@ export class ImportEngine {
 
     // Track source-ref → committed id for connection resolution
     const committedIds = new Map<string, string>();
+    const skippedRefs = new Set<string>();
     const failures: CommitFailure[] = [];
 
     const totalEntities = session.items.filter(
@@ -265,6 +266,9 @@ export class ImportEngine {
           report.itemsSkipped++;
           // Still register the id so connections to this entity remain resolvable.
           committedIds.set(item.sourceRef, item.match.entityId);
+          // But remember the skip: "skip" means "don't modify", so assets
+          // placed on this entity must not be attached either.
+          skippedRefs.add(item.sourceRef);
           entityProgress++;
           onProgress?.("entity", entityProgress, totalEntities);
           continue;
@@ -523,11 +527,36 @@ export class ImportEngine {
         onProgress?.("asset", assetProgress, totalAssets);
         continue;
       }
+      if (skippedRefs.has(pa.draft.placementRef)) {
+        report.assetsSkipped.push({
+          id: pa.draft.id,
+          reason: "Its entity was skipped in review",
+        });
+        assetProgress++;
+        onProgress?.("asset", assetProgress, totalAssets);
+        continue;
+      }
+      const placementId = await this._resolveRef(
+        pa.draft.placementRef,
+        committedIds,
+        session,
+      );
+      if (!placementId) {
+        report.assetsSkipped.push({
+          id: pa.draft.id,
+          reason: "Its entity could not be resolved",
+        });
+        assetProgress++;
+        onProgress?.("asset", assetProgress, totalAssets);
+        continue;
+      }
       try {
         await this.writer.saveAsset({
           bytes: pa.draft.bytes,
           originalName: pa.draft.originalName,
           mimeType: pa.draft.mimeType,
+          entityId: placementId,
+          contentHash: pa.draft.contentHash,
         });
         report.assetsImported++;
       } catch (err) {

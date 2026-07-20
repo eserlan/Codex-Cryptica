@@ -171,3 +171,42 @@ Resolutions of the outset document's open decisions for Phase 1 (each revisitabl
 - **SC-005**: Zero silent data loss: every unmapped kind, unknown extension, omitted link, deduplicated record, unrepresentable date, and skipped media item in a test corpus appears in the import report.
 - **SC-006**: A 1,000-entity text-only package parses and validates in under 5 seconds on a typical desktop with the UI remaining interactive throughout.
 - **SC-007**: After any completed, cancelled, or failure-interrupted import, the vault contains zero references (parent or relationship) to entities that do not exist.
+
+---
+
+## Phase 2 Addendum — ZIP Packages with Image Assets (2026-07-19)
+
+**Status**: Implemented (issue #1747, PR #1760). This addendum resolves the
+Phase 2 open decisions deferred by the outset document (#4, #5, #7) and lifts
+`.cif.zip` parsing and image assets out of Out of Scope. Remote URL fetching,
+audio/document roles, and asset garbage collection remain out of scope.
+
+### Resolved decisions
+
+- **Media roles (#4)**: images only. The first image-typed media reference on
+  an entity becomes its entity image (with thumbnail); additional image
+  references and non-image media are skipped with per-asset warnings.
+- **Storage (#5)**: the vault's existing OPFS asset pipeline
+  (`AssetManager` via `vault.saveImageToVault`) — imported images get the
+  same WebP conversion and thumbnails as any other entity image.
+- **Limits (#7)**: 250 MB per archive, 512 files, 25 MB per file (aligned
+  with the engine's existing per-asset cap), enforced before any asset
+  content is trusted and re-checked after decompression.
+- **Deduplication**: storage names are content-addressed
+  (`cif_<sha256-prefix>.webp`), so repeat imports of identical bytes share
+  one stored file.
+- **Repeat-import reconciliation**: additive-only, matching Phase 1 field
+  rules — an entity that already has an image keeps it, and a record skipped
+  in review does not receive asset attachments.
+
+### Additional invariants
+
+- ZIP validation (bounds, safe paths, digest verification) lives in
+  `@codex/importer`; asset persistence is web-app-specific
+  (`WebVaultWriter.saveAsset`).
+- A declared asset that is missing from the archive, fails its SHA-256
+  check, or declares an unsafe path blocks the whole package before review
+  (same class as Phase 1 cross-record errors).
+- Image references attach only after a successful save; SC-007 extends to
+  media: no completed, cancelled, or failed import leaves an entity
+  pointing at a nonexistent image.

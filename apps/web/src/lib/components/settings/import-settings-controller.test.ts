@@ -373,7 +373,7 @@ describe("import-settings-controller — CIF detection and flow (T009)", () => {
     expect(controller.rejectedFiles[0].name).toBe("world.cif.json");
   });
 
-  it("declines a .cif.zip file with a not-yet-supported message", async () => {
+  it("rejects a malformed .cif.zip with a readable error", async () => {
     const deps = baseDeps();
     const controller = new ImportSettingsController(deps);
     const file = new File(["PK\x03\x04binarydata"], "world.cif.zip", {
@@ -384,7 +384,70 @@ describe("import-settings-controller — CIF detection and flow (T009)", () => {
 
     expect(controller.step).toBe("upload");
     expect(controller.ccSession).toBeNull();
-    expect(controller.rejectedFiles[0].reason).toMatch(/not supported/i);
+    expect(controller.rejectedFiles[0].reason).toMatch(/couldn't be read/i);
+  });
+
+  it("prepares a review session with eligible asset drafts for a .cif.zip package", async () => {
+    const { zipSync, strToU8 } = await import("fflate");
+    const { sha256Hex } = await import("@codex/importer");
+    const png = strToU8("png-bytes");
+    const manifest = JSON.parse(cifManifestText()) as Record<string, unknown>;
+    (manifest.entities as Array<Record<string, unknown>>)[0].media = [
+      { assetKey: "art/a" },
+    ];
+    manifest.assets = [
+      {
+        key: "art/a",
+        path: "assets/a.png",
+        mediaType: "image/png",
+        sha256: await sha256Hex(png),
+      },
+    ];
+    const bytes = zipSync({
+      "manifest.json": strToU8(JSON.stringify(manifest)),
+      "assets/a.png": png,
+    });
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File([bytes as BlobPart], "world.cif.zip", {
+      type: "application/zip",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("review");
+    expect(controller.ccSession?.sourceSystem).toBe("cif");
+    expect(controller.ccSession?.assets.length).toBe(1);
+    expect(controller.ccSession?.assets[0].eligible).toBe(true);
+  });
+
+  it("rejects a .cif.zip whose asset digest doesn't match, without opening review", async () => {
+    const { zipSync, strToU8 } = await import("fflate");
+    const png = strToU8("png-bytes");
+    const manifest = JSON.parse(cifManifestText()) as Record<string, unknown>;
+    manifest.assets = [
+      {
+        key: "art/a",
+        path: "assets/a.png",
+        mediaType: "image/png",
+        sha256: "0".repeat(64),
+      },
+    ];
+    const bytes = zipSync({
+      "manifest.json": strToU8(JSON.stringify(manifest)),
+      "assets/a.png": png,
+    });
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File([bytes as BlobPart], "world.cif.zip", {
+      type: "application/zip",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles[0].reason).toMatch(/doesn't match/i);
   });
 
   it("is unreachable in guest sessions (FR-019)", async () => {
