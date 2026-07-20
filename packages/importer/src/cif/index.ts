@@ -22,11 +22,29 @@ export {
 
 export {
   parseCifFile,
+  parseCifPackage,
   DEFAULT_MAX_MANIFEST_BYTES,
   type CifFileInput,
   type CifParseOptions,
   type CifParseResult,
+  type CifPackageParseResult,
 } from "./parse";
+
+export {
+  readCifZip,
+  isSafeCifZipPath,
+  sha256Hex,
+  DEFAULT_CIF_ZIP_LIMITS,
+  type CifZipLimits,
+  type CifZipContents,
+  type CifZipResult,
+} from "./zip";
+
+export {
+  resolveCifAssets,
+  type ResolvedCifAsset,
+  type ResolveCifAssetsResult,
+} from "./assets";
 
 export {
   normalizeCifPackage,
