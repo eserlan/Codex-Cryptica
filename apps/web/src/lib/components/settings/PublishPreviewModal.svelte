@@ -68,7 +68,7 @@
           class="text-theme-text/60 hover:text-theme-text transition-colors"
           aria-label="Close modal"
         >
-          <span class="icon-[lucide--x] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
         </button>
       </div>
 

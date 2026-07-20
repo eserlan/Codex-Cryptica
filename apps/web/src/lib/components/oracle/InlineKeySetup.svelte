@@ -61,9 +61,10 @@
           aria-label="{showKey ? 'Hide' : 'Show'} API Key"
         >
           {#if showKey}
-            <span class="icon-[lucide--eye-off] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--eye-off] w-4 h-4"
+            ></span>
           {:else}
-            <span class="icon-[lucide--eye] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--eye] w-4 h-4"></span>
           {/if}
         </button>
       </div>

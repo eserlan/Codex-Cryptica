@@ -82,7 +82,7 @@
           class="flex h-8 w-8 items-center justify-center rounded border border-theme-border text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
           aria-label="Close"
         >
-          <span class="icon-[lucide--x] h-4 w-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
         </button>
       </div>
 

@@ -128,15 +128,16 @@
         title="Open Dice Roller"
         data-testid="vtt-dice-roller-button"
       >
-        <span class="icon-[lucide--dices] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--dices] w-4 h-4"></span>
       </button>
       <button
+        type="button"
         onclick={handleSubmit}
         disabled={!input.trim()}
         class="w-10 h-10 flex items-center justify-center border border-theme-border bg-theme-bg/50 text-theme-muted rounded hover:border-theme-primary hover:text-theme-primary transition-all active:scale-95 shadow-inner disabled:opacity-50 disabled:grayscale shrink-0 self-end"
         aria-label="Send Message"
       >
-        <span class="icon-[lucide--send] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--send] w-4 h-4"></span>
       </button>
     </div>
   </div>

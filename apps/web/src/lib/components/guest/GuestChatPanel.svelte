@@ -157,7 +157,8 @@
             class="md:hidden p-1.5 text-theme-muted hover:text-theme-text transition border border-theme-border/50 rounded-lg"
             aria-label="Back to contacts list"
           >
-            <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--chevron-left] w-4 h-4"
+            ></span>
           </button>
           <div>
             <h2 class="text-sm font-bold text-theme-text">
@@ -261,7 +262,7 @@
             class="px-4 bg-theme-primary text-theme-bg hover:bg-theme-secondary font-bold uppercase tracking-widest text-[10px] rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             aria-label="Send message"
           >
-            <span class="icon-[lucide--send] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--send] w-4 h-4"></span>
           </button>
         </div>
       </footer>

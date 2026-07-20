@@ -58,7 +58,8 @@
         aria-expanded="false"
         type="button"
       >
-        <span class="icon-[lucide--panel-left-open] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--panel-left-open] w-4 h-4"
+        ></span>
       </button>
 
       <div class="flex flex-1 items-center justify-center">
@@ -109,7 +110,8 @@
               type="button"
               disabled={!canClearChat}
             >
-              <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+              ></span>
             </button>
           {/if}
 
@@ -120,7 +122,10 @@
             aria-expanded="true"
             type="button"
           >
-            <span class="icon-[lucide--panel-left-close] w-4 h-4"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--panel-left-close] w-4 h-4"
+            ></span>
           </button>
         </div>
       </div>

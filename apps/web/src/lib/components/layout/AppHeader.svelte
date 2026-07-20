@@ -100,7 +100,10 @@
           title="Go to front page"
           data-testid="header-front-page-button"
         >
-          <span class="icon-[lucide--book-open] w-5 h-5 text-chrome-accent">
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--book-open] w-5 h-5 text-chrome-accent"
+          >
           </span>
           <span class="hidden sm:inline">Codex Cryptica</span>
           <span class="sm:hidden text-chrome-accent">CC</span>

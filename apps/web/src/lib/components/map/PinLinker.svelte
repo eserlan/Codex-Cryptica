@@ -59,11 +59,12 @@
         Link Lore Pin
       </h3>
       <button
+        type="button"
         onclick={onCancel}
         class="text-theme-muted hover:text-theme-primary"
         aria-label="Cancel pin linking"
       >
-        <span class="icon-[lucide--x] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>
     </header>
 

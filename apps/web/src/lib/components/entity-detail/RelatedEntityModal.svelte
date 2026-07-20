@@ -332,11 +332,12 @@
             {/if}
           </div>
           <button
+            type="button"
             class="text-theme-muted hover:text-theme-text transition-colors p-1"
             onclick={onClose}
             aria-label="Close"
           >
-            <span class="icon-[lucide--x] h-6 w-6"></span>
+            <span aria-hidden="true" class="icon-[lucide--x] h-6 w-6"></span>
           </button>
         </div>
       </div>

@@ -176,7 +176,8 @@
         disabled={!imageUrl}
         type="button"
       >
-        <span class="icon-[lucide--external-link] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--external-link] w-6 h-6"
+        ></span>
       </button>
 
       {#if p2pHost.isHosting && modalUIStore.lightbox.imagePath}
@@ -199,7 +200,8 @@
           title="Share with Guests"
           type="button"
         >
-          <span class="icon-[lucide--share-2] w-6 h-6"></span>
+          <span aria-hidden="true" class="icon-[lucide--share-2] w-6 h-6"
+          ></span>
         </button>
       {/if}
 
@@ -214,7 +216,7 @@
         aria-label="Close image view"
         type="button"
       >
-        <span class="icon-[lucide--x] w-8 h-8"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-8 h-8"></span>
       </button>
     </div>
 

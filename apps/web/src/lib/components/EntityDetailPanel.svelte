@@ -413,23 +413,31 @@
                 </span>
                 <div class="flex items-center gap-1">
                   <button
+                    type="button"
                     onclick={handleApproveDraft}
                     disabled={isDraftActioning}
                     title="Approve draft"
                     aria-label="Approve draft"
                     class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/10 disabled:opacity-50"
                   >
-                    <span class="icon-[lucide--check] h-3 w-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--check] h-3 w-3"
+                    ></span>
                     Approve
                   </button>
                   <button
+                    type="button"
                     onclick={handleRejectDraft}
                     disabled={isDraftActioning}
                     title="Reject draft"
                     aria-label="Reject draft"
                     class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-red-500 transition hover:bg-red-500/10 disabled:opacity-50"
                   >
-                    <span class="icon-[lucide--trash-2] h-3 w-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--trash-2] h-3 w-3"
+                    ></span>
                     Reject
                   </button>
                 </div>

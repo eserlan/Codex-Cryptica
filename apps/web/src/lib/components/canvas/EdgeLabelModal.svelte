@@ -68,7 +68,7 @@
       aria-label="Close"
       type="button"
     >
-      <span class="icon-[lucide--x] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
     </button>
   </div>
 

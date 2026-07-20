@@ -85,7 +85,8 @@
     aria-label="Saved Views"
     aria-pressed={isOpen}
     data-testid="view-presets-toggle"
-    ><span class="icon-[lucide--bookmark] w-4 h-4"></span></button
+    ><span aria-hidden="true" class="icon-[lucide--bookmark] w-4 h-4"
+    ></span></button
   >
 
   {#if isOpen}
@@ -138,7 +139,9 @@
                   onclick={() => void commitRename()}
                   title="Save name"
                   aria-label="Save name"
-                  ><span class="icon-[lucide--check] w-3.5 h-3.5"
+                  ><span
+                    aria-hidden="true"
+                    class="icon-[lucide--check] w-3.5 h-3.5"
                   ></span></button
                 >
               {:else}
@@ -156,7 +159,10 @@
                   onclick={() => startRename(preset.id, preset.name)}
                   title="Rename"
                   aria-label={`Rename "${preset.name}"`}
-                  ><span class="icon-[lucide--pencil] w-3 h-3"></span></button
+                  ><span
+                    aria-hidden="true"
+                    class="icon-[lucide--pencil] w-3 h-3"
+                  ></span></button
                 >
                 <button
                   type="button"
@@ -164,7 +170,10 @@
                   onclick={() => void graph.deleteViewPreset(preset.id)}
                   title="Delete"
                   aria-label={`Delete "${preset.name}"`}
-                  ><span class="icon-[lucide--trash-2] w-3 h-3"></span></button
+                  ><span
+                    aria-hidden="true"
+                    class="icon-[lucide--trash-2] w-3 h-3"
+                  ></span></button
                 >
               {/if}
             </div>
@@ -191,7 +200,8 @@
           title="Save current view"
           aria-label="Save current view"
           data-testid="view-preset-save"
-          ><span class="icon-[lucide--plus] w-3.5 h-3.5"></span></button
+          ><span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+          ></span></button
         >
       </div>
     </div>

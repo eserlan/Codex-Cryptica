@@ -66,12 +66,14 @@
         MENU
       </h2>
       <button
+        type="button"
         bind:this={closeButton}
         onclick={close}
         class="p-3 text-theme-muted hover:text-theme-primary transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Close menu"
       >
-        <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[heroicons--x-mark] w-6 h-6"
+        ></span>
       </button>
     </div>
 

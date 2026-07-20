@@ -22,10 +22,11 @@
   >
     {#if isRevising}
       <span
+        aria-hidden="true"
         class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-primary"
       ></span>
     {:else}
-      <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"></span>
     {/if}
   </button>
 {/if}

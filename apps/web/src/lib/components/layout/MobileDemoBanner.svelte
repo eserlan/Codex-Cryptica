@@ -37,6 +37,7 @@
     DEMO
   </span>
   <button
+    type="button"
     class="flex-1 min-h-[36px] flex items-center justify-center gap-2 rounded bg-chrome-accent text-chrome-bg font-bold text-[11px] tracking-widest uppercase transition active:scale-95 disabled:opacity-60"
     onclick={handleSave}
     disabled={isSaving}
@@ -50,18 +51,19 @@
         aria-hidden="true"
       ></span>
     {:else}
-      <span class="icon-[lucide--save] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--save] w-3.5 h-3.5"></span>
     {/if}
     {isSaving ? "SAVING…" : `SAVE AS ${themeStore.jargon.vault.toUpperCase()}`}
   </button>
   <button
+    type="button"
     class="shrink-0 min-h-[36px] px-3 flex items-center gap-1.5 rounded border border-chrome-border text-chrome-muted font-bold text-[11px] tracking-widest uppercase transition active:scale-95 disabled:opacity-60"
     onclick={() => demoService.exitDemo()}
     disabled={isSaving}
     data-testid="mobile-exit-demo-button"
     aria-label="Exit Demo"
   >
-    <span class="icon-[lucide--log-out] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--log-out] w-3.5 h-3.5"></span>
     EXIT
   </button>
 </div>

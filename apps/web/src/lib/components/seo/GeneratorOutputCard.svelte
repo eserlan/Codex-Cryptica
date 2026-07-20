@@ -88,7 +88,7 @@
       class="text-theme-muted hover:text-theme-text transition-colors shrink-0"
       aria-label="Dismiss notice"
     >
-      <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--x] w-3.5 h-3.5"></span>
     </button>
   </div>
 {/if}

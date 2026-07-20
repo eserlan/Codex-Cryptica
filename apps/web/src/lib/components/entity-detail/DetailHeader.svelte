@@ -128,7 +128,7 @@
         title="Find in Graph"
         data-testid="find-in-graph-button"
       >
-        <span class="icon-[lucide--target] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--target] w-5 h-5"></span>
       </button>
     {/if}
     {#if vault.isGuest && guestVault.publishId}
@@ -184,7 +184,8 @@
         title="Chat with character"
         data-testid="guest-chat-button"
       >
-        <span class="icon-[lucide--messages-square] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-5 h-5"
+        ></span>
       </button>
     {/if}
     <button
@@ -195,7 +196,7 @@
       title="Zen Mode (Full Screen)"
       data-testid="enter-zen-mode-button"
     >
-      <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+      <span aria-hidden="true" class="icon-[lucide--maximize-2] w-5 h-5"></span>
     </button>
   {/if}
 {/snippet}
@@ -213,7 +214,8 @@
       class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
-      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
+      ></span>
     </button>
     <div class="flex items-center gap-1.5">
       {@render headerActions()}
@@ -298,7 +300,8 @@
         aria-label="Close panel"
         title="Close"
       >
-        <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[heroicons--x-mark] w-6 h-6"
+        ></span>
       </button>
     </div>
   </div>

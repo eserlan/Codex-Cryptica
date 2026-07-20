@@ -270,7 +270,9 @@
           class="w-full mt-2 bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden mb-4"
           aria-label="Show image to guests"
         >
-          <span class="icon-[lucide--share-2] w-4 h-4 text-theme-primary"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--share-2] w-4 h-4 text-theme-primary"
           ></span>
           <span
             class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
