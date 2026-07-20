@@ -43,21 +43,26 @@
         <div class="flex items-center gap-1">
           <!-- Detach Button -->
           <button
+            type="button"
             class="p-1.5 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
             onclick={() => openDiceWindow()}
             title="Pop out into new window"
             aria-label="Pop out into new window"
           >
-            <span class="icon-[lucide--external-link] w-4 h-4"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--external-link] w-4 h-4"
+            ></span>
           </button>
           <button
+            type="button"
             class="p-1.5 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
             onclick={() => {
               modalUIStore.showDiceModal = false;
             }}
             aria-label="Close"
           >
-            <span class="icon-[lucide--x] w-5 h-5"></span>
+            <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
           </button>
         </div>
       </div>

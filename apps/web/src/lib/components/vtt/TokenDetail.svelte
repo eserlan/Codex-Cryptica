@@ -56,7 +56,7 @@
         aria-label="Clear token selection"
         type="button"
       >
-        <span class="icon-[lucide--x] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
       </button>
     </div>
 
@@ -141,7 +141,8 @@
             aria-label="Show token image to players"
             title="Show token image to players"
           >
-            <span class="icon-[lucide--image-up] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--image-up] h-4 w-4"
+            ></span>
           </button>
         {/if}
         <button

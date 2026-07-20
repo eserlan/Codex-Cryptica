@@ -187,6 +187,7 @@
       </button>
 
       <button
+        type="button"
         bind:this={controller.pickerAnchor}
         role="menuitem"
         data-testid="add-to-canvas-button"
@@ -200,7 +201,9 @@
         aria-haspopup="true"
       >
         Add to Canvas
-        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
         ></span>
       </button>
     {:else if controller.hasImage}

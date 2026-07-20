@@ -376,6 +376,7 @@
               >
                 <span>#{activeLabel}</span>
                 <span
+                  aria-hidden="true"
                   class="icon-[lucide--x] w-3 h-3 text-chrome-accent/60 hover:text-chrome-accent transition-colors"
                 ></span>
               </button>

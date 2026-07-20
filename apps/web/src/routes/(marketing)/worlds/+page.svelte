@@ -162,7 +162,7 @@
             aria-pressed={viewMode === "grid"}
             type="button"
           >
-            <span class="icon-[lucide--grid] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--grid] h-4 w-4"></span>
           </button>
           <button
             onclick={() => setViewMode("list")}
@@ -175,7 +175,7 @@
             aria-pressed={viewMode === "list"}
             type="button"
           >
-            <span class="icon-[lucide--list] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--list] h-4 w-4"></span>
           </button>
         </div>
       </div>

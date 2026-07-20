@@ -17,6 +17,7 @@
   <span>{label}</span>
   {#if removable}
     <button
+      type="button"
       onclick={(e) => {
         e.stopPropagation();
         onRemove();
@@ -24,7 +25,7 @@
       class="hover:text-theme-primary transition-colors flex items-center justify-center -mr-1 p-0.5"
       aria-label="Remove label {label}"
     >
-      <span class="icon-[heroicons--x-mark] w-3 h-3"></span>
+      <span aria-hidden="true" class="icon-[heroicons--x-mark] w-3 h-3"></span>
     </button>
   {/if}
 </div>

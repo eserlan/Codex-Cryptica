@@ -257,7 +257,8 @@
                 title="Cancel Rename"
                 aria-label="Cancel Rename"
               >
-                <span class="icon-[lucide--x] w-4 h-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"
+                ></span>
               </button>
             </form>
           {:else}
@@ -309,7 +310,9 @@
                   aria-label="Load from Folder"
                   disabled={isLoading || !!editingId}
                 >
-                  <span class="icon-[lucide--download-cloud] w-3.5 h-3.5"
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--download-cloud] w-3.5 h-3.5"
                   ></span>
                 </button>
 
@@ -331,46 +334,64 @@
                 >
                   {#if vault.status === "saving"}
                     <span
+                      aria-hidden="true"
                       class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
                     ></span>
                   {:else if !vault.isDirty && vault.hasFolderHandle}
-                    <span class="icon-[lucide--cloud-check] w-3.5 h-3.5"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--cloud-check] w-3.5 h-3.5"
+                    ></span>
                   {:else}
-                    <span class="icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--upload-cloud] w-3.5 h-3.5"
                     ></span>
                   {/if}
                 </button>
               {:else}
                 <button
+                  type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => handleImportToVault(v)}
                   title="Restore from Folder"
                   aria-label="Restore {v.name} from Folder"
                   disabled={isLoading || !!editingId}
                 >
-                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--folder-up] w-3.5 h-3.5"
+                  ></span>
                 </button>
               {/if}
 
               <button
+                type="button"
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => startRename(v)}
                 title="Rename"
                 aria-label="Rename"
                 disabled={isLoading || !!editingId}
               >
-                <span class="icon-[lucide--edit-2] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--edit-2] w-3.5 h-3.5"
+                ></span>
               </button>
 
               {#if v.id !== vaultRegistry.activeVaultId}
                 <button
+                  type="button"
                   class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => handleDelete(v.id)}
                   title="Delete"
                   aria-label="Delete"
                   disabled={isLoading || !!editingId}
                 >
-                  <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                  ></span>
                 </button>
               {/if}
             </div>

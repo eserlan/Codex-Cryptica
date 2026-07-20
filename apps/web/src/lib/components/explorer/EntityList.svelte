@@ -232,7 +232,10 @@
                 aria-label="Create child entity"
                 disabled={isCreatingChild}
               >
-                <span class="icon-[lucide--check] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--check] w-3.5 h-3.5"
+                ></span>
               </button>
               <button
                 type="button"
@@ -245,7 +248,8 @@
                 aria-label="Cancel"
                 disabled={isCreatingChild}
               >
-                <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--x] w-3.5 h-3.5"
+                ></span>
               </button>
             </div>
             {#if createChildError}

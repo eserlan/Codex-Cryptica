@@ -241,13 +241,17 @@
         {/if}
         {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
           <button
+            type="button"
             onclick={() => guestChatStore.openChat(entity.id, entity.title)}
             class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
             title="Chat with character"
             aria-label="Chat with character"
             data-testid="zen-guest-chat-button"
           >
-            <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--messages-square] w-4 h-4"
+            ></span>
           </button>
         {/if}
         {#if vault.isGuest && guestVault.publishId && entity}

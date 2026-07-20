@@ -88,12 +88,14 @@
       <!-- Clear Chat -->
       {#if activeTab === "oracle" && oracle.messages.length > 0}
         <button
+          type="button"
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
           onclick={() => oracle.clearMessages()}
           title="Clear conversation history"
           aria-label="Clear conversation history"
         >
-          <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+          ></span>
         </button>
       {/if}
 
@@ -115,11 +117,12 @@
 
       <!-- Close -->
       <button
+        type="button"
         class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors"
         onclick={() => layoutUIStore.closeSidebar()}
         aria-label="Close panel"
       >
-        <span class="icon-[lucide--x] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
       </button>
     </div>
   </div>

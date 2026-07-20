@@ -39,11 +39,12 @@
       />
       {#if quickNoteStore.filterText}
         <button
+          type="button"
           onclick={() => (quickNoteStore.filterText = "")}
           aria-label="Clear filter"
           class="absolute right-2 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-text"
         >
-          <span class="icon-[lucide--x] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] h-3.5 w-3.5"></span>
         </button>
       {/if}
     </div>

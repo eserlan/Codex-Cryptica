@@ -221,10 +221,14 @@
           title="Revise Chronicle and Lore with AI"
         >
           {#if revisionService.isRevising}
-            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+            ></span>
             Revising
           {:else}
-            <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"
+            ></span>
             AI Revise
           {/if}
         </button>
@@ -416,7 +420,8 @@
               class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
               aria-label="Add new connection"
             >
-              <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+              <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+              ></span>
               ADD
             </button>
           {/if}
@@ -496,7 +501,9 @@
                           aria-label="Edit connection"
                           title="Edit connection"
                         >
-                          <span class="icon-[lucide--pencil] w-3.5 h-3.5"
+                          <span
+                            aria-hidden="true"
+                            class="icon-[lucide--pencil] w-3.5 h-3.5"
                           ></span>
                         </button>
                       {/if}
@@ -512,7 +519,10 @@
                           aria-label="Establish custom connection"
                           title="Establish custom connection"
                         >
-                          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+                          <span
+                            aria-hidden="true"
+                            class="icon-[lucide--plus] w-3.5 h-3.5"
+                          ></span>
                         </button>
                       {/if}
                       <button
@@ -540,7 +550,10 @@
                         aria-label="Delete connection"
                         title="Delete connection"
                       >
-                        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                        <span
+                          aria-hidden="true"
+                          class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                        ></span>
                       </button>
                     </div>
                   {/if}

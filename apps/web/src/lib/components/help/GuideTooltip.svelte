@@ -93,12 +93,13 @@
       Guide {current} of {total}
     </span>
     <button
+      type="button"
       onclick={() => helpStore.skipTour()}
       class="text-theme-muted hover:text-theme-primary transition-colors"
       title="Skip Tour"
       aria-label="Skip Tour"
     >
-      <span class="icon-[lucide--x] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
     </button>
   </div>
 

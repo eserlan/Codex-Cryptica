@@ -184,7 +184,8 @@
         title="Chat with character"
         data-testid="guest-chat-button"
       >
-        <span class="icon-[lucide--messages-square] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-5 h-5"
+        ></span>
       </button>
     {/if}
     <button
@@ -195,7 +196,7 @@
       title="Zen Mode (Full Screen)"
       data-testid="enter-zen-mode-button"
     >
-      <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+      <span aria-hidden="true" class="icon-[lucide--maximize-2] w-5 h-5"></span>
     </button>
   {/if}
 {/snippet}

@@ -57,7 +57,8 @@
         aria-expanded="false"
         type="button"
       >
-        <span class="icon-[lucide--panel-right-open] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--panel-right-open] w-4 h-4"
+        ></span>
       </button>
 
       <div class="flex flex-1 items-center justify-center">
@@ -104,7 +105,10 @@
           aria-expanded="true"
           type="button"
         >
-          <span class="icon-[lucide--panel-right-close] w-4 h-4"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--panel-right-close] w-4 h-4"
+          ></span>
         </button>
       </div>
 

@@ -291,7 +291,8 @@
           class="text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
         >
-          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+          ></span>
           ADD
         </button>
       {/if}
@@ -406,16 +407,21 @@
                 <div class="flex items-center gap-1">
                   {#if conn.isOutbound && !conn.isChild}
                     <button
+                      type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => (editingConnectionTarget = conn.targetId)}
                       aria-label="Edit connection"
                       title="Edit connection"
                     >
-                      <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--pencil] w-3 h-3"
+                      ></span>
                     </button>
                   {/if}
                   {#if conn.isChild}
                     <button
+                      type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => {
                         prefillConnectionTargetId = conn.targetId;
@@ -425,10 +431,14 @@
                       aria-label="Establish custom connection"
                       title="Establish custom connection"
                     >
-                      <span class="icon-[lucide--plus] w-3 h-3"></span>
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--plus] w-3 h-3"
+                      ></span>
                     </button>
                   {/if}
                   <button
+                    type="button"
                     class="text-theme-muted hover:text-theme-danger transition p-1"
                     onclick={() => {
                       if (conn.isChild) {
@@ -452,7 +462,10 @@
                     aria-label="Delete connection"
                     title="Delete connection"
                   >
-                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--trash-2] w-3 h-3"
+                    ></span>
                   </button>
                 </div>
               {/if}

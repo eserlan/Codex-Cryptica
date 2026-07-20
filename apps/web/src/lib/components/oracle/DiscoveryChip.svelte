@@ -181,12 +181,13 @@
 
     {#if proposal.entityId && onLink}
       <button
+        type="button"
         class="ml-1 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center border-l border-theme-primary/10 pl-2"
         onclick={() => onLink(proposal.entityId!)}
         title="Link message to this entity"
         aria-label={`Link message to ${proposal.title}`}
       >
-        <span class="icon-[lucide--link] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--link] w-3 h-3"></span>
       </button>
     {/if}
   {/if}

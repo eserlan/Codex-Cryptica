@@ -692,7 +692,10 @@
                       class="absolute bottom-1 right-1 p-0.5 bg-theme-surface/80 hover:bg-theme-primary/10 hover:text-theme-primary border border-theme-border/30 rounded text-theme-muted transition-all z-20"
                       aria-label="Direct jump to {col.label}"
                     >
-                      <span class="icon-[lucide--keyboard] w-3 h-3"></span>
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--keyboard] w-3 h-3"
+                      ></span>
                     </button>
                   {/if}
                 {/if}

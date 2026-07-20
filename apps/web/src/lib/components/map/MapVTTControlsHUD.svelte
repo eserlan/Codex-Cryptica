@@ -41,6 +41,7 @@
         }`}
       >
         <span
+          aria-hidden="true"
           class={`icon-[lucide--ruler] w-4 h-4 transition-colors ${
             mapSession.measurement.active
               ? "text-theme-primary"

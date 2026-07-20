@@ -181,12 +181,13 @@
   />
   {#if searchQuery}
     <button
+      type="button"
       onclick={() => (searchQuery = "")}
       class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-theme-muted hover:text-theme-text transition-colors"
       title="Clear search"
       aria-label="Clear search"
     >
-      <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--x] w-3.5 h-3.5"></span>
     </button>
   {/if}
 

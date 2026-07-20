@@ -128,7 +128,7 @@
         title="Open Dice Roller"
         data-testid="vtt-dice-roller-button"
       >
-        <span class="icon-[lucide--dices] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--dices] w-4 h-4"></span>
       </button>
       <button
         type="button"

@@ -374,7 +374,10 @@
           <div
             class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
           >
-            <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--image] w-8 h-8 opacity-30"
+            ></span>
             <span
               class="text-[10px] font-mono uppercase tracking-wider opacity-40"
               >Resolving Neural Visual...</span
@@ -567,7 +570,8 @@
               class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
               aria-label="Add new connection"
             >
-              <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+              <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+              ></span>
               ADD
             </button>
           {/if}

@@ -69,11 +69,13 @@
             ></span>
             {#if labelQuery}
               <button
+                type="button"
                 onclick={() => (labelQuery = "")}
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-text"
                 aria-label="Clear search"
               >
-                <span class="icon-[lucide--x] w-3 h-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3"
+                ></span>
               </button>
             {/if}
           </div>
