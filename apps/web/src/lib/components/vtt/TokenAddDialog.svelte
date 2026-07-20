@@ -117,11 +117,12 @@
           </p>
         </div>
         <button
+          type="button"
           class="text-theme-muted hover:text-theme-text"
           onclick={close}
           aria-label="Close token dialog"
         >
-          <span class="icon-[lucide--x] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
         </button>
       </div>
 

@@ -155,7 +155,10 @@
               title="Add all results to workspace"
               aria-label="Add all filtered results to active workspace"
             >
-              <span class="icon-[lucide--layout-grid] w-4 h-4"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--layout-grid] w-4 h-4"
+              ></span>
             </button>
           {/if}
         </div>

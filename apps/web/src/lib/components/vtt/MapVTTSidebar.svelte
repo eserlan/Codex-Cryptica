@@ -201,7 +201,8 @@
             title="Share Campaign"
             aria-label="Share Campaign"
           >
-            <span class="icon-[lucide--share-2] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--share-2] w-4 h-4"
+            ></span>
           </button>
         </div>
       {/if}

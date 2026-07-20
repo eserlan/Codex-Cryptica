@@ -163,6 +163,7 @@
           {tabs.find((t) => t.id === modalUIStore.activeSettingsTab)?.label}
         </h2>
         <button
+          type="button"
           onclick={close}
           aria-disabled={modalUIStore.isImporting ? "true" : "false"}
           title={modalUIStore.isImporting
@@ -173,7 +174,7 @@
             : ''}"
           aria-label="Close Settings"
         >
-          <span class="icon-[lucide--x] w-6 h-6"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-6 h-6"></span>
         </button>
       </div>
 

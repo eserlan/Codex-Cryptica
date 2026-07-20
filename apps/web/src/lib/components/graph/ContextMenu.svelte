@@ -130,12 +130,16 @@
         onclick={controller.handleMarkImportant}
         aria-label={controller.importantActionLabel}
       >
-        <span class="icon-[lucide--star] h-3.5 w-3.5 opacity-70"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--star] h-3.5 w-3.5 opacity-70"
+        ></span>
         <span>{controller.importantActionLabel}</span>
       </button>
 
       {#if controller.selectedNodes.length === 1}
         <button
+          type="button"
           bind:this={controller.imagePickerAnchor}
           role="menuitem"
           class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
@@ -155,13 +159,16 @@
                 click to view
               </span>
             {/if}
-            <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
             ></span>
           </div>
         </button>
       {/if}
 
       <button
+        type="button"
         bind:this={controller.categoryPickerAnchor}
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
@@ -173,7 +180,9 @@
         aria-haspopup="true"
       >
         Change Category
-        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
         ></span>
       </button>
 

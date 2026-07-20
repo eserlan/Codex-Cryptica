@@ -176,7 +176,8 @@
         disabled={!imageUrl}
         type="button"
       >
-        <span class="icon-[lucide--external-link] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--external-link] w-6 h-6"
+        ></span>
       </button>
 
       {#if p2pHost.isHosting && modalUIStore.lightbox.imagePath}

@@ -207,12 +207,13 @@
         VAULT SELECTOR
       </h2>
       <button
+        type="button"
         onclick={onClose}
         class="text-theme-muted hover:text-theme-text"
         title="Close Selector"
         aria-label="Close Selector"
       >
-        <span class="icon-[lucide--x] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>
     </div>
 
@@ -246,7 +247,8 @@
                 title="Save Name"
                 aria-label="Save Name"
               >
-                <span class="icon-[lucide--check] w-4 h-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--check] w-4 h-4"
+                ></span>
               </button>
               <button
                 type="button"

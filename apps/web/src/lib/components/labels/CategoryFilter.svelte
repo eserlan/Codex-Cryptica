@@ -47,6 +47,7 @@
   {#if expanded}
     <!-- All / Clear button -->
     <button
+      type="button"
       onclick={onClear}
       title="Show all types"
       aria-label="Show all types"
@@ -56,7 +57,8 @@
         : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
       data-testid="category-filter-all"
     >
-      <span class="icon-[lucide--layout-grid] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--layout-grid] w-3.5 h-3.5"
+      ></span>
     </button>
 
     <!-- Per-category icon buttons -->

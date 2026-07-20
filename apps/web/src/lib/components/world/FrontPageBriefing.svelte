@@ -119,15 +119,18 @@
             class="absolute right-3 top-3 z-20 flex flex-wrap justify-end gap-1"
           >
             <button
+              type="button"
               class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/80 bg-theme-bg/75 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={onEdit}
               disabled={isSaving}
               title="Edit briefing"
               aria-label="Edit briefing"
             >
-              <span class="icon-[lucide--pencil] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--pencil] h-4 w-4"
+              ></span>
             </button>
             <button
+              type="button"
               class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
               onclick={onGenerate}
               disabled={isSaving || isRevising}
@@ -141,7 +144,8 @@
                   aria-hidden="true"
                 ></span>
               {:else}
-                <span class="icon-[lucide--sparkles] h-4 w-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--sparkles] h-4 w-4"
+                ></span>
               {/if}
             </button>
           </div>

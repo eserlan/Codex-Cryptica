@@ -105,12 +105,15 @@
 
         <!-- New Window Toggle -->
         <button
+          type="button"
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
           onclick={popOut}
           title="Pop out to new window"
           aria-label="Pop out to new window"
         >
-          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          <span
+            aria-hidden="true"
+            class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
           ></span>
         </button>
 

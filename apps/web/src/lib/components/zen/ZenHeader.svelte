@@ -194,20 +194,23 @@
       class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
-      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
+      ></span>
     </button>
 
     <div class="flex items-center gap-1.5 md:gap-3 shrink-0 ml-auto">
       {#if !editState.isEditing}
         {#if isGraphView}
           <button
+            type="button"
             onclick={handleFindInGraph}
             class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
             title="Find in Graph"
             aria-label="Find in Graph"
             data-testid="zen-find-in-graph-button"
           >
-            <span class="icon-[lucide--target] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
+            ></span>
           </button>
         {/if}
         {#if entity && (!vault.isGuest || entity.soundBite)}
@@ -266,22 +269,26 @@
           </button>
         {/if}
         <button
+          type="button"
           onclick={onCopy}
           class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
           title="Copy Content"
           aria-label="Copy Content"
         >
           {#if isCopied}
-            <span class="icon-[lucide--check] w-4 h-4 text-theme-primary"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--check] w-4 h-4 text-theme-primary"
             ></span>
           {:else}
-            <span class="icon-[lucide--copy] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--copy] w-4 h-4"></span>
           {/if}
         </button>
       {/if}
 
       {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
         <button
+          type="button"
           onclick={onApproveDraft}
           disabled={isDraftActioning}
           title="Approve draft"
@@ -289,10 +296,11 @@
           class="flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="approve-draft-button"
         >
-          <span class="icon-[lucide--check] h-3 w-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--check] h-3 w-3"></span>
           <span class="hidden sm:inline">APPROVE</span>
         </button>
         <button
+          type="button"
           onclick={onRejectDraft}
           disabled={isDraftActioning}
           title="Reject draft"
@@ -300,20 +308,23 @@
           class="flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="reject-draft-button"
         >
-          <span class="icon-[lucide--trash-2] h-3 w-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
+          ></span>
           <span class="hidden sm:inline">REJECT</span>
         </button>
       {/if}
       {#if !editState.isEditing && !vault.isGuest && entity}
         {#if onDelete}
           <button
+            type="button"
             onclick={onDelete}
             class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             title="Delete entity"
             aria-label="Delete entity"
             data-testid="delete-entity-button"
           >
-            <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
+            ></span>
           </button>
         {/if}
         <button
@@ -348,12 +359,15 @@
 
       {#if onPopOut && !editState.isEditing}
         <button
+          type="button"
           onclick={onPopOut}
           class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
           title="Open in new tab"
           aria-label="Open in new tab"
         >
-          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          <span
+            aria-hidden="true"
+            class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
           ></span>
         </button>
       {/if}
@@ -363,11 +377,12 @@
       ></div>
 
       <button
+        type="button"
         onclick={onClose}
         class="hidden md:flex text-theme-muted hover:text-theme-primary transition p-2 hover:bg-theme-primary/10 rounded"
         aria-label="Close"
       >
-        <span class="icon-[lucide--x] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-6 h-6"></span>
       </button>
     </div>
   </div>

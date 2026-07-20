@@ -482,6 +482,7 @@
 
                   {#if isCanvasPage}
                     <button
+                      type="button"
                       class="ml-auto p-1.5 rounded-md bg-chrome-accent/10 text-chrome-accent hover:bg-chrome-accent hover:text-chrome-surface transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
@@ -497,7 +498,9 @@
                         }
                       }}
                     >
-                      <span class="icon-[heroicons--plus-circle] w-3 h-3"
+                      <span
+                        aria-hidden="true"
+                        class="icon-[heroicons--plus-circle] w-3 h-3"
                       ></span>
                       Add to Canvas
                     </button>

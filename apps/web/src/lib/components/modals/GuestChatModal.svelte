@@ -38,7 +38,7 @@
         class="absolute top-4 right-4 z-50 p-2 rounded-full bg-theme-bg/60 border border-theme-border/50 text-theme-muted hover:text-theme-text hover:bg-theme-bg transition flex items-center justify-center"
         aria-label="Close chat"
       >
-        <span class="icon-[lucide--x] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>
 
       <GuestChatPanel />
