@@ -54,6 +54,7 @@
 
 <div class="flex items-center gap-2 flex-wrap pointer-events-auto">
   <button
+    type="button"
     onclick={toggle}
     class="px-3 py-1.5 rounded text-xs font-bold tracking-widest transition-all whitespace-nowrap
     {graph.timelineMode
@@ -63,7 +64,8 @@
     aria-label="Toggle Chronological Timeline Mode"
   >
     <span class="flex items-center gap-2">
-      <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--history] w-3.5 h-3.5"
+      ></span>
       TIMELINE
     </span>
   </button>

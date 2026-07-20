@@ -473,6 +473,63 @@ describe("DetailStatusTab", () => {
     expect(generatePersonality).toHaveBeenCalledOnce();
   });
 
+  it("marks the Generate button busy while personality generation is pending", async () => {
+    const { generatePersonality } = await import("./generate-personality");
+    let releaseGeneration!: () => void;
+    vi.mocked(generatePersonality).mockImplementationOnce(
+      async ({ setGenerating }) => {
+        setGenerating(true);
+        await new Promise<void>((resolve) => {
+          releaseGeneration = resolve;
+        });
+        setGenerating(false);
+        return true;
+      },
+    );
+
+    const mockConfig = {
+      isEnabled: false,
+      contextScope: "public" as const,
+      extraInstructions: "",
+      isHostReviewable: true,
+      keepMemory: true,
+    };
+
+    render(DetailStatusTab, {
+      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
+      isEditing: true,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: mockConfig,
+    });
+
+    const checkbox = screen.getByLabelText(
+      "Enable Guest Character Chat",
+    ) as HTMLInputElement;
+    await fireEvent.click(checkbox);
+
+    const busyBtn = await waitFor(() => {
+      const btn = screen
+        .getByText("Generating...")
+        .closest("button") as HTMLButtonElement;
+      expect(btn).toBeTruthy();
+      return btn;
+    });
+    expect(busyBtn.getAttribute("aria-busy")).toBe("true");
+    expect(busyBtn.disabled).toBe(true);
+
+    releaseGeneration();
+    await waitFor(() => {
+      const idleBtn = screen
+        .getByText("Generate")
+        .closest("button") as HTMLButtonElement;
+      expect(idleBtn.getAttribute("aria-busy")).not.toBe("true");
+      expect(idleBtn.disabled).toBe(false);
+    });
+  });
+
   it("keeps prompting for manual personality rules when AI generation fails", async () => {
     const { generatePersonality } = await import("./generate-personality");
     vi.mocked(generatePersonality).mockImplementationOnce(

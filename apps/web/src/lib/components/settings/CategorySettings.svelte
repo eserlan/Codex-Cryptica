@@ -145,6 +145,7 @@
 
         <!-- Delete -->
         <button
+          type="button"
           onclick={async () => {
             if (
               await notificationStore.confirm({
@@ -161,7 +162,8 @@
           aria-label="Delete category {cat.label}"
           title="Delete Category"
         >
-          <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+          ></span>
         </button>
       </div>
     {/each}

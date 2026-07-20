@@ -17,6 +17,7 @@
 
     <!-- FAB Button -->
     <button
+      type="button"
       onclick={() => quickNoteStore.toggle()}
       class="relative flex items-center justify-center w-12 h-12 rounded-full border transition-all duration-300
              backdrop-blur-md hover:scale-105 active:scale-95 shadow-lg
@@ -25,7 +26,7 @@
         : 'bg-theme-surface/75 border-theme-border/60 text-theme-muted hover:text-theme-text hover:bg-theme-surface hover:border-theme-border/80'}"
       aria-label="Toggle scratchpad"
     >
-      <span class="icon-[lucide--zap] h-5 w-5"></span>
+      <span aria-hidden="true" class="icon-[lucide--zap] h-5 w-5"></span>
 
       <!-- Floating counter badge -->
       {#if quickNoteStore.count > 0}

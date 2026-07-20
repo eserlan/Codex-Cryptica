@@ -177,11 +177,13 @@
               class="p-3 flex items-start justify-between gap-3 bg-theme-surface hover:bg-theme-primary/5 transition-colors"
             >
               <button
+                type="button"
                 onclick={() => onPackSelect(masterPack)}
                 class="flex items-start gap-3 text-left flex-1 min-w-0 group"
                 aria-label="Import {masterPack.name}"
               >
                 <span
+                  aria-hidden="true"
                   class="icon-[lucide--book-open] w-4 h-4 mt-0.5 text-theme-muted group-hover:text-theme-primary shrink-0 transition-colors"
                 ></span>
                 <div class="min-w-0 flex-1">
@@ -193,7 +195,10 @@
                       <p
                         class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-1 shrink-0"
                       >
-                        <span class="icon-[lucide--check] w-2.5 h-2.5"></span>
+                        <span
+                          aria-hidden="true"
+                          class="icon-[lucide--check] w-2.5 h-2.5"
+                        ></span>
                         Imported
                       </p>
                     {:else if status.isPartiallyImported}
@@ -256,12 +261,14 @@
                   {#each subpacks as subpack (subpack.id)}
                     {@const subStatus = getPackImportStatus(subpack)}
                     <button
+                      type="button"
                       onclick={() => onPackSelect(subpack)}
                       class="flex items-start gap-2.5 text-left p-2.5 rounded-md border border-theme-border/50 bg-theme-surface hover:border-theme-primary/40 hover:bg-theme-primary/5 transition-all group"
                       data-testid="creature-subpack-card"
                       aria-label="Import {subpack.name}"
                     >
                       <span
+                        aria-hidden="true"
                         class="icon-[lucide--folder] w-3.5 h-3.5 mt-0.5 text-theme-muted group-hover:text-theme-primary shrink-0 transition-colors"
                       ></span>
                       <div class="min-w-0 flex-1">
@@ -279,7 +286,10 @@
                             <p
                               class="px-1 py-0.5 text-[8px] font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-0.5 shrink-0"
                             >
-                              <span class="icon-[lucide--check] w-2 h-2"></span>
+                              <span
+                                aria-hidden="true"
+                                class="icon-[lucide--check] w-2 h-2"
+                              ></span>
                               Imported
                             </p>
                           {:else if subStatus.isPartiallyImported}

@@ -138,7 +138,9 @@
           title="Pop out initiative list"
           type="button"
         >
-          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          <span
+            aria-hidden="true"
+            class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
           ></span>
         </button>
       {/if}

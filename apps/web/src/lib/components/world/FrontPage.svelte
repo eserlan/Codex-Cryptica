@@ -412,21 +412,25 @@
               </button>
             {/if}
             <button
+              type="button"
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={openCoverLightbox}
               aria-label="Open cover image lightbox"
               title="Open cover image"
             >
-              <span class="icon-[lucide--maximize-2] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--maximize-2] h-4 w-4"
+              ></span>
             </button>
             {#if onClose}
               <button
+                type="button"
                 class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
                 onclick={onClose}
                 aria-label="Close front page"
                 title="Close front page"
               >
-                <span class="icon-[lucide--x] h-4 w-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"
+                ></span>
               </button>
             {/if}
           </div>
@@ -435,12 +439,13 @@
             class="flex justify-end xl:absolute xl:right-0 xl:top-0 xl:ml-auto"
           >
             <button
+              type="button"
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={onClose}
               aria-label="Close front page"
               title="Close front page"
             >
-              <span class="icon-[lucide--x] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
             </button>
           </div>
         {/if}

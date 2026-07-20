@@ -196,28 +196,35 @@
         <div class="flex items-center gap-2 absolute top-4 right-4">
           {#if entity}
             <button
+              type="button"
               onclick={copyToClipboard}
               class="p-2 text-green-700 hover:text-green-500 transition rounded hover:bg-green-900/20"
               title="Copy Content"
               aria-label="Copy Content"
             >
               {#if copyStatus === "success"}
-                <span class="icon-[lucide--check] w-6 h-6"></span>
+                <span aria-hidden="true" class="icon-[lucide--check] w-6 h-6"
+                ></span>
               {:else if copyStatus === "error"}
-                <span class="icon-[lucide--alert-triangle] w-6 h-6 text-red-500"
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--alert-triangle] w-6 h-6 text-red-500"
                 ></span>
               {:else}
-                <span class="icon-[lucide--copy] w-6 h-6"></span>
+                <span aria-hidden="true" class="icon-[lucide--copy] w-6 h-6"
+                ></span>
               {/if}
             </button>
           {/if}
 
           <button
+            type="button"
             onclick={close}
             class="text-green-700 hover:text-green-500 transition p-2 hover:bg-green-900/20 rounded"
             aria-label="Close"
           >
-            <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+            <span aria-hidden="true" class="icon-[heroicons--x-mark] w-6 h-6"
+            ></span>
           </button>
         </div>
       </div>

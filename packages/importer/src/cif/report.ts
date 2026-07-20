@@ -9,6 +9,11 @@ export const CifWarningCode = {
   DuplicateRelationship: "cif.duplicate-relationship",
   DatePrecision: "cif.date-precision",
   KindChanged: "cif.kind-changed",
+  AssetUrlNotImported: "cif.asset-url-not-imported",
+  AssetUnsupportedType: "cif.asset-unsupported-type",
+  AssetUnplaced: "cif.asset-unplaced",
+  AssetExtraImageRef: "cif.asset-extra-image-ref",
+  ZipIgnoredFile: "cif.zip-ignored-file",
 } as const;
 
 export function noWorldKeyWarning(system: string): ImportWarning {
@@ -44,6 +49,52 @@ export function assetsNotImportedWarning(count: number): ImportWarning {
   return {
     code: CifWarningCode.AssetsNotImported,
     message: `This package references ${count} asset${count === 1 ? "" : "s"}, but media/assets aren't supported yet in this phase. World text content was imported; images and other files were not.`,
+  };
+}
+
+export function assetUrlNotImportedWarning(key: string): ImportWarning {
+  return {
+    code: CifWarningCode.AssetUrlNotImported,
+    message: `The asset "${key}" is only available as a web link, which this importer doesn't download. The entities referencing it were imported without it.`,
+    ref: key,
+  };
+}
+
+export function assetUnsupportedTypeWarning(
+  key: string,
+  mediaType: string,
+): ImportWarning {
+  return {
+    code: CifWarningCode.AssetUnsupportedType,
+    message: `The asset "${key}" is a "${mediaType}" file. Only images can be imported right now, so it was skipped.`,
+    ref: key,
+  };
+}
+
+export function assetUnplacedWarning(key: string): ImportWarning {
+  return {
+    code: CifWarningCode.AssetUnplaced,
+    message: `The asset "${key}" isn't referenced by any entity in this package, so it was not imported.`,
+    ref: key,
+  };
+}
+
+export function assetExtraImageRefWarning(
+  entityKey: string,
+  key: string,
+): ImportWarning {
+  return {
+    code: CifWarningCode.AssetExtraImageRef,
+    message: `"${entityKey}" references more than one image; only the first was attached. "${key}" was skipped.`,
+    ref: entityKey,
+  };
+}
+
+export function zipIgnoredFileWarning(path: string): ImportWarning {
+  return {
+    code: CifWarningCode.ZipIgnoredFile,
+    message: `"${path}" isn't part of the CIF package layout (manifest.json plus an assets folder) and was ignored.`,
+    ref: path,
   };
 }
 

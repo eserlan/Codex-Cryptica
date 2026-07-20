@@ -10,8 +10,10 @@
 
 {#if isHost && selectedEntityId}
   <button
+    type="button"
     onclick={() => isHost && modalUIStore.openRevisionDialog(selectedEntityId)}
     disabled={isRevising}
+    aria-busy={isRevising}
     class="toolbar-btn {isRevising
       ? 'active'
       : ''} disabled:opacity-50 disabled:cursor-not-allowed"
@@ -20,10 +22,11 @@
   >
     {#if isRevising}
       <span
+        aria-hidden="true"
         class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-primary"
       ></span>
     {:else}
-      <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"></span>
     {/if}
   </button>
 {/if}

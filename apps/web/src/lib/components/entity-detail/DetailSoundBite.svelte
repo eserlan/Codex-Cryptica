@@ -230,12 +230,13 @@
 
       {#if onClose}
         <button
+          type="button"
           class="ml-auto p-0.5 text-theme-muted hover:text-theme-text transition-colors"
           onclick={onClose}
           aria-label="Close sound bite"
           title="Close"
         >
-          <span class="icon-[lucide--x] w-4 h-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
         </button>
       {:else if !isGuest && !displayed}
         <!-- Voice mode selector -->

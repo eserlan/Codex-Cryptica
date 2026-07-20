@@ -112,11 +112,12 @@
           Merge into {targetTitle}
         </h2>
         <button
+          type="button"
           onclick={() => onClose()}
           class="text-theme-muted hover:text-theme-text"
           aria-label="Close"
         >
-          <span class="icon-[lucide--x] w-6 h-6"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-6 h-6"></span>
         </button>
       </div>
 

@@ -158,6 +158,7 @@
 
   {#if !isGuest}
     <button
+      type="button"
       class="ml-2 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
       onclick={handleCommit}
       disabled={isCommitting}
@@ -166,22 +167,27 @@
       aria-label={commitLabel}
     >
       {#if isCommitting}
-        <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+        ></span>
       {:else if proposal.entityId}
-        <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
+        ></span>
       {:else}
-        <span class="icon-[lucide--plus] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--plus] w-3 h-3"></span>
       {/if}
     </button>
 
     {#if proposal.entityId && onLink}
       <button
+        type="button"
         class="ml-1 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center border-l border-theme-primary/10 pl-2"
         onclick={() => onLink(proposal.entityId!)}
         title="Link message to this entity"
         aria-label={`Link message to ${proposal.title}`}
       >
-        <span class="icon-[lucide--link] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--link] w-3 h-3"></span>
       </button>
     {/if}
   {/if}

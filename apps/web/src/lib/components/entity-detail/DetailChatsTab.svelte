@@ -482,7 +482,8 @@
             class="p-2.5 bg-theme-primary hover:bg-theme-secondary disabled:bg-theme-surface disabled:text-theme-muted disabled:border-theme-border text-theme-bg rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
             aria-label="Send Message"
           >
-            <span class="icon-[lucide--send] w-4.5 h-4.5"></span>
+            <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"
+            ></span>
           </button>
         </div>
       {/if}

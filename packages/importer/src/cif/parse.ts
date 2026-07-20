@@ -5,11 +5,14 @@ import {
   type CifManifest,
 } from "./package";
 import type { CifValidationError } from "./package";
+import { readCifZip, DEFAULT_CIF_ZIP_LIMITS, type CifZipLimits } from "./zip";
 
 export interface CifFileInput {
   fileName: string;
   size: number;
   text(): Promise<string>;
+  /** Raw bytes, required to read ZIP packages. Browser `File` satisfies this. */
+  bytes?(): Promise<Uint8Array>;
 }
 
 export interface CifParseOptions {
@@ -86,6 +89,91 @@ export async function parseCifFile(
     };
   }
 
+  return parseManifestText(text);
+}
+
+/**
+ * Result of parsing a full CIF package: the manifest plus, for ZIP packages,
+ * the decompressed asset files and any paths outside the CIF layout.
+ */
+export type CifPackageParseResult =
+  | {
+      ok: true;
+      manifest: CifManifest;
+      zip?: { files: Map<string, Uint8Array>; ignoredPaths: string[] };
+    }
+  | { ok: false; errors: CifValidationError[] };
+
+/**
+ * Parses either package form: `.cif.json` (text-only) or `.cif.zip` (with
+ * binary assets). Same guarantees as {@link parseCifFile}: never throws,
+ * every failure is a coded plain-language error.
+ */
+export async function parseCifPackage(
+  input: CifFileInput,
+  options: CifParseOptions & { zipLimits?: CifZipLimits } = {},
+): Promise<CifPackageParseResult> {
+  const isZipName = input.fileName.toLowerCase().endsWith(".cif.zip");
+  const zipLimits = options.zipLimits ?? DEFAULT_CIF_ZIP_LIMITS;
+
+  if (!isZipName) {
+    const result = await parseCifFile(input, options);
+    if (result.ok || result.errors[0]?.code !== "zip-not-supported") {
+      return result;
+    }
+    // A `.json`-named file with ZIP magic — fall through to the ZIP path.
+  }
+
+  if (!input.bytes) {
+    return {
+      ok: false,
+      errors: [
+        {
+          code: "zip-bytes-unavailable",
+          message:
+            "This looks like a ZIP package, but its raw content couldn't be read in this context.",
+        },
+      ],
+    };
+  }
+
+  const bytes = await input.bytes();
+  const zipResult = readCifZip(bytes, zipLimits);
+  if (!zipResult.ok) {
+    return zipResult;
+  }
+
+  const maxManifestBytes =
+    options.maxManifestBytes ?? DEFAULT_MAX_MANIFEST_BYTES;
+  if (zipResult.contents.manifestText.length > maxManifestBytes) {
+    return {
+      ok: false,
+      errors: [
+        {
+          code: "oversized-manifest",
+          message: `This package's manifest.json is over the ${maxManifestBytes.toLocaleString()}-byte limit.`,
+        },
+      ],
+    };
+  }
+
+  const manifestResult = parseManifestText(zipResult.contents.manifestText);
+  if (!manifestResult.ok) {
+    return manifestResult;
+  }
+
+  return {
+    ok: true,
+    manifest: manifestResult.manifest,
+    zip: {
+      files: zipResult.contents.files,
+      ignoredPaths: zipResult.contents.ignoredPaths,
+    },
+  };
+}
+
+/** Shared manifest-text validation for both package forms. */
+function parseManifestText(text: string): CifParseResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);

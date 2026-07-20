@@ -240,7 +240,7 @@ describe("WebVaultWriter", () => {
     expect(addConnection).not.toHaveBeenCalled();
   });
 
-  it("reports asset persistence as unsupported", async () => {
+  it("reports asset persistence as unsupported when the store can't save images", async () => {
     const writer = new WebVaultWriter({
       entities: {},
       createEntity: vi.fn(),
@@ -253,8 +253,88 @@ describe("WebVaultWriter", () => {
         bytes: new Blob(["x"]),
         originalName: "map.png",
         mimeType: "image/png",
+        entityId: "hero",
       }),
-    ).rejects.toThrow("Generic CC asset persistence is not supported");
+    ).rejects.toThrow("does not support image asset persistence");
+  });
+
+  it("saves an asset with a content-addressed name and attaches it to the entity", async () => {
+    const saveImageToVault = vi
+      .fn()
+      .mockResolvedValue({ image: "images/cif_ab.webp", thumbnail: "t.webp" });
+    const updateEntity = vi.fn().mockResolvedValue(true);
+    const writer = new WebVaultWriter({
+      entities: { hero: { id: "hero" } },
+      createEntity: vi.fn(),
+      updateEntity,
+      addConnection: vi.fn(),
+      saveImageToVault,
+    });
+
+    const result = await writer.saveAsset({
+      bytes: new Uint8Array([1, 2, 3]),
+      originalName: "lyra.png",
+      mimeType: "image/png",
+      entityId: "hero",
+      contentHash: "abcdef0123456789ffff",
+    });
+
+    expect(saveImageToVault).toHaveBeenCalledTimes(1);
+    const [blob, entityId, name] = saveImageToVault.mock.calls[0];
+    expect(blob).toBeInstanceOf(Blob);
+    expect(entityId).toBe("hero");
+    expect(name).toBe("cif_abcdef0123456789");
+    expect(updateEntity).toHaveBeenCalledWith("hero", {
+      image: "images/cif_ab.webp",
+      thumbnail: "t.webp",
+    });
+    expect(result.ref).toBe("images/cif_ab.webp");
+  });
+
+  it("keeps an entity's existing image instead of overwriting it", async () => {
+    const saveImageToVault = vi.fn();
+    const updateEntity = vi.fn();
+    const writer = new WebVaultWriter({
+      entities: { hero: { id: "hero", image: "images/mine.webp" } },
+      createEntity: vi.fn(),
+      updateEntity,
+      addConnection: vi.fn(),
+      saveImageToVault,
+    });
+
+    const result = await writer.saveAsset({
+      bytes: new Uint8Array([1, 2, 3]),
+      originalName: "lyra.png",
+      mimeType: "image/png",
+      entityId: "hero",
+      contentHash: "abc",
+    });
+
+    expect(saveImageToVault).not.toHaveBeenCalled();
+    expect(updateEntity).not.toHaveBeenCalled();
+    expect(result.ref).toBe("images/mine.webp");
+  });
+
+  it("does not attach a reference when the save itself fails", async () => {
+    const saveImageToVault = vi.fn().mockRejectedValue(new Error("quota"));
+    const updateEntity = vi.fn();
+    const writer = new WebVaultWriter({
+      entities: { hero: { id: "hero" } },
+      createEntity: vi.fn(),
+      updateEntity,
+      addConnection: vi.fn(),
+      saveImageToVault,
+    });
+
+    await expect(
+      writer.saveAsset({
+        bytes: new Uint8Array([1]),
+        originalName: "lyra.png",
+        mimeType: "image/png",
+        entityId: "hero",
+      }),
+    ).rejects.toThrow("quota");
+    expect(updateEntity).not.toHaveBeenCalled();
   });
 });
 

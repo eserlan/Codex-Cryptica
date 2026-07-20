@@ -332,11 +332,12 @@
             {/if}
           </div>
           <button
+            type="button"
             class="text-theme-muted hover:text-theme-text transition-colors p-1"
             onclick={onClose}
             aria-label="Close"
           >
-            <span class="icon-[lucide--x] h-6 w-6"></span>
+            <span aria-hidden="true" class="icon-[lucide--x] h-6 w-6"></span>
           </button>
         </div>
       </div>
@@ -652,8 +653,10 @@
           </button>
           <button
             class="rounded-xl bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
             onclick={handleSave}
             disabled={isSaving}
+            aria-busy={isSaving}
           >
             <span class="icon-[lucide--check] h-4 w-4"></span>
             Create Entity

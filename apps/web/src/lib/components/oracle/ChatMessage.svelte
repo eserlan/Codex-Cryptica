@@ -221,9 +221,13 @@
                 class="text-[9px] font-bold tracking-tighter uppercase font-header"
                 >Copied!</span
               >
-              <span class="icon-[lucide--check] w-3 h-3 text-green-400"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--check] w-3 h-3 text-green-400"
+              ></span>
             {:else}
-              <span class="icon-[lucide--copy] w-3 h-3"></span>
+              <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"
+              ></span>
             {/if}
           </button>
         </div>

@@ -186,7 +186,8 @@
         title="Reroll this formula"
         aria-label="Reroll this formula"
       >
-        <span class="icon-[lucide--refresh-cw] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-4 h-4"
+        ></span>
       </button>
     </div>
   {/each}

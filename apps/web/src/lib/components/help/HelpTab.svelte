@@ -73,12 +73,14 @@
           </button>
 
           <button
+            type="button"
             onclick={() => helpStore.copyShareLink(article.id)}
             class="px-4 text-theme-muted hover:text-theme-primary transition-colors border-l border-theme-border/50"
             title="Copy direct link"
             aria-label="Copy direct link to {article.title}"
           >
-            <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+            <span aria-hidden="true" class="icon-[lucide--link] w-3.5 h-3.5"
+            ></span>
           </button>
         </div>
 

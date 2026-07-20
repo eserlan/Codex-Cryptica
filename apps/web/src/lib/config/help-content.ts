@@ -192,7 +192,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "cif-importer",
     title: "Codex Interchange Format (CIF) Import",
     content:
-      "Drop a .cif.json file exported by another compatible worldbuilding tool to bring its entities, hierarchy, and links into your vault — entirely offline, with nothing sent anywhere. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
+      "Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
     icon: "icon-[lucide--file-json-2]",
   },
   "search-indexing": {
