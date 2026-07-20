@@ -96,3 +96,8 @@
 ## 2026-07-16 - Add aria-busy to async buttons
 **Learning:** Found multiple buttons with loading states (animate-spin) that correctly disabled interactions but were missing aria-busy attributes, making the loading state opaque to screen readers.
 **Action:** Always add aria-busy={isLoading} to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
+
+## 2024-05-18 - [Add aria-hidden and type button to Graph Toolbar]
+
+**Learning:** Found multiple icon-only buttons in `GraphToolbar.svelte` that relied on outer `aria-label` attributes but didn't hide their inner SVG-based span icons (`aria-hidden="true"`) and lacked explicit `type="button"` attributes. This can cause redundant screen reader announcements and risk accidental form submission if the toolbar is ever wrapped in a form.
+**Action:** Always add `aria-hidden="true"` to inner decorative icons within icon-only buttons, and ensure all toolbar buttons have `type="button"`.
