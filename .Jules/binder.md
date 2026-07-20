@@ -59,3 +59,6 @@
 
 **Learning:** Svelte stores heavily utilize `localStorage` on initialization (`init()`). Mocking this via `vi.hoisted` and `global.localStorage` is brittle and leaks across Vitest files. The repository already provides a generic `StorageLike` interface and `browserStorage` default in `$lib/utils/runtime-deps`.
 **Action:** When a store needs local persistence, inject `storage: StorageLike = browserStorage` into its constructor. Update its tests to pass a simple spy object (`{ getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() }`) to avoid global mocks.
+## 2026-07-20 - Inject Storage and ID Dependencies in SessionHubStore
+ **Learning:** By replacing hard-coded `sessionStorage`, `crypto.randomUUID()`, and `Math.random()` calls in `SessionHubStore` with dependency injected properties, the test environment can fully decouple from the global browser APIs. This avoids leaking test state and allows using simple mocked objects instead of mutating the global `sessionStorage`.
+ **Action:** When utilizing `localStorage`, `sessionStorage`, or `randomUUID` inside a Svelte store or service, inject them as optional constructor arguments with production-safe defaults (e.g., `browserSessionStorage`, `systemIdGenerator`) rather than calling them directly.

@@ -49,3 +49,35 @@ export const browserStorage: StorageLike = {
     }
   },
 };
+
+/**
+ * Production storage backed by `sessionStorage`, resolved lazily and SSR-safe:
+ * no-ops (and returns null) when `sessionStorage` is unavailable.
+ */
+export const browserSessionStorage: StorageLike = {
+  getItem(key) {
+    if (typeof sessionStorage === "undefined") return null;
+    // Access can throw (SecurityError, blocked/quota storage) — treat as absent.
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem(key, value) {
+    if (typeof sessionStorage === "undefined") return;
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // ignore — storage unavailable or quota exceeded
+    }
+  },
+  removeItem(key) {
+    if (typeof sessionStorage === "undefined") return;
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore — storage unavailable
+    }
+  },
+};
