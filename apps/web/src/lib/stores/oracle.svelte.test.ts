@@ -123,7 +123,7 @@ vi.mock("@codex/ai-engine", () => ({
     resetSession: vi.fn(),
   },
   TIER_MODES: {
-    lite: "gemini-3.1-flash-lite",
+    lite: "gemini-3.5-flash-lite",
     advanced: "gemini-3-flash-preview",
   },
 }));

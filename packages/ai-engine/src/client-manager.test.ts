@@ -63,7 +63,7 @@ describe("DefaultAIClientManager", () => {
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
       await manager.sendInteraction({
-        model: "gemini-3.1-flash-lite",
+        model: "gemini-3.5-flash-lite",
         input: "Prompt",
         systemInstruction: "System",
         previousInteractionId: "previous-1",
@@ -75,7 +75,7 @@ describe("DefaultAIClientManager", () => {
 
       expect(body).toEqual(
         expect.objectContaining({
-          model: "gemini-3.1-flash-lite",
+          model: "gemini-3.5-flash-lite",
           input: "Prompt",
           system_instruction: "System",
           previous_interaction_id: "previous-1",
