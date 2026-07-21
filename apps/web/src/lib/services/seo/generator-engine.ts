@@ -113,7 +113,7 @@ function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
 }
 
 /** Single source of truth for the generator model id (#1494). */
-const GENERATOR_MODEL_ID = "gemini-3.1-flash-lite";
+const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
 
 export class DefaultGeneratorEngine {
   constructor(private clientManager = aiClientManager) {}

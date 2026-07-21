@@ -104,7 +104,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     // Attempt models in order of preference/strength, aligned with app default
     const models = [
-      "gemini-3.1-flash-lite", // Lite Tier (Free & Default)
+      "gemini-3.5-flash-lite", // Lite Tier (Free & Default)
       "gemini-3-flash-preview", // Advanced Tier
     ];
 

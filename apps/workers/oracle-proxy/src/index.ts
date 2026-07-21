@@ -409,7 +409,7 @@ export default {
       }
 
       // 1. Determine Model
-      const targetModel = body.model || "gemini-3.1-flash-lite";
+      const targetModel = body.model || "gemini-3.5-flash-lite";
 
       // 2. Map and clean up configuration for Google REST API (which expects snake_case)
       const rawConfig = {
@@ -592,7 +592,7 @@ async function handleInteraction(
 
   // Align with the stateless :generateContent default so a follow-up that omits
   // `model` cannot silently switch models mid-conversation.
-  const targetModel = body.model || "gemini-3.1-flash-lite";
+  const targetModel = body.model || "gemini-3.5-flash-lite";
 
   // Interactions API expects system_instruction as a plain string, not the
   // { parts: [...] } object format used by generateContent.
