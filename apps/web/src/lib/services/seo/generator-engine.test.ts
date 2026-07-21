@@ -312,7 +312,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(mockClientManager.getModel).toHaveBeenCalled();
       expect(mockClientManager.getModel).toHaveBeenCalledWith(
         "",
-        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
         "You are an assistant that generates detailed RPG campaign elements in JSON format.",
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(

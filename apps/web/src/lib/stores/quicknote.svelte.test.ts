@@ -20,7 +20,7 @@ if (!(globalThis as any).$derived) {
 vi.mock("./oracle.svelte", () => ({
   oracle: {
     effectiveApiKey: "mocked-api-key",
-    modelName: "gemini-3.1-flash-lite",
+    modelName: "gemini-3.5-flash-lite",
   },
 }));
 

@@ -8,7 +8,7 @@ import {
   type DefaultAIClientManager,
 } from "@codex/ai-engine";
 
-const GENERATOR_MODEL = "gemini-3.1-flash-lite";
+const GENERATOR_MODEL = "gemini-3.5-flash-lite";
 const GENERATOR_GENERATION_CONFIG = {
   temperature: 0.85,
   topP: 0.95,
