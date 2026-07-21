@@ -46,14 +46,14 @@
   const warningsByRef = $derived.by(() => {
     const map = new Map<string, number>();
     for (const warning of session.warnings) {
-      if (!warning.ref) continue;
-      map.set(warning.ref, (map.get(warning.ref) || 0) + 1);
+      if (warning.ref == null) continue;
+      map.set(warning.ref, (map.get(warning.ref) ?? 0) + 1);
     }
     return map;
   });
 
   const itemWarningCount = (item: CCImportSession["items"][number]) =>
-    warningsByRef.get(item.sourceRef) || 0;
+    warningsByRef.get(item.sourceRef) ?? 0;
 
   interface FieldDiff {
     field: string;
