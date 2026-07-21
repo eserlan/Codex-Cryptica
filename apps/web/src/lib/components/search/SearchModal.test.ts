@@ -272,7 +272,7 @@ describe("SearchModal", () => {
   });
 
   it("closes modal when header close button or backdrop button is clicked", async () => {
-    render(SearchModal);
+    const { container } = render(SearchModal);
 
     const closeBtn = screen.getByTestId("search-modal-close");
     await fireEvent.click(closeBtn);
@@ -280,9 +280,11 @@ describe("SearchModal", () => {
     expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
 
     mockSearchStore.close.mockReset();
-    const backdropBtn = screen.getAllByRole("button", {
-      name: "Close search",
-    })[0];
+    const backdropBtn = container.querySelector(
+      'button[aria-label="Close search"][tabindex="-1"]',
+    ) as HTMLButtonElement | null;
+    if (!backdropBtn) throw new Error("Backdrop close button not found");
+
     await fireEvent.click(backdropBtn);
 
     expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
