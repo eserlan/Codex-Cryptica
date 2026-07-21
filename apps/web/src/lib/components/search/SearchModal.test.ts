@@ -210,4 +210,81 @@ describe("SearchModal", () => {
     expect(mockModalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
     expect(mockSearchStore.close).toHaveBeenCalled();
   });
+
+  it("increments selectedIndex by 1 per ArrowDown keydown", async () => {
+    mockSearchStore.results = [
+      {
+        id: "entity-1",
+        title: "Aldric",
+        path: "characters/aldric",
+        score: 10,
+        matchType: "title",
+        type: "character",
+      },
+      {
+        id: "entity-2",
+        title: "Balthazar",
+        path: "characters/balthazar",
+        score: 8,
+        matchType: "title",
+        type: "character",
+      },
+    ];
+    mockSearchStore.selectedIndex = 0;
+
+    render(SearchModal);
+
+    const input = screen.getByTestId("search-modal-input");
+    await fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledTimes(1);
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledWith(1);
+  });
+
+  it("decrements selectedIndex by 1 per ArrowUp keydown", async () => {
+    mockSearchStore.results = [
+      {
+        id: "entity-1",
+        title: "Aldric",
+        path: "characters/aldric",
+        score: 10,
+        matchType: "title",
+        type: "character",
+      },
+      {
+        id: "entity-2",
+        title: "Balthazar",
+        path: "characters/balthazar",
+        score: 8,
+        matchType: "title",
+        type: "character",
+      },
+    ];
+    mockSearchStore.selectedIndex = 1;
+
+    render(SearchModal);
+
+    const input = screen.getByTestId("search-modal-input");
+    await fireEvent.keyDown(input, { key: "ArrowUp" });
+
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledTimes(1);
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledWith(0);
+  });
+
+  it("closes modal when header close button or backdrop button is clicked", async () => {
+    render(SearchModal);
+
+    const closeBtn = screen.getByTestId("search-modal-close");
+    await fireEvent.click(closeBtn);
+
+    expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
+
+    mockSearchStore.close.mockReset();
+    const backdropBtn = screen.getAllByRole("button", {
+      name: "Close search",
+    })[0];
+    await fireEvent.click(backdropBtn);
+
+    expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
+  });
 });

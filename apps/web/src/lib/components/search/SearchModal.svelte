@@ -171,6 +171,7 @@
         autocompleteActiveIndex =
           (autocompleteActiveIndex + 1) % suggestions.length;
         event.preventDefault();
+        event.stopPropagation();
         return;
       }
 
@@ -179,6 +180,7 @@
           (autocompleteActiveIndex - 1 + suggestions.length) %
           suggestions.length;
         event.preventDefault();
+        event.stopPropagation();
         return;
       }
 
@@ -188,10 +190,12 @@
           autocompleteActiveIndex < suggestions.length
         ) {
           event.preventDefault();
+          event.stopPropagation();
           selectLabel(suggestions[autocompleteActiveIndex]);
           return;
         } else if (event.key === "Tab" && suggestions.length > 0) {
           event.preventDefault();
+          event.stopPropagation();
           selectLabel(suggestions[0]);
           return;
         }
@@ -199,20 +203,24 @@
     }
 
     if (event.key === "ArrowDown") {
+      event.preventDefault();
+      event.stopPropagation();
       searchStore.setSelectedIndex(searchStore.selectedIndex + 1);
       scrollToSelected();
-      event.preventDefault();
       return;
     }
 
     if (event.key === "ArrowUp") {
+      event.preventDefault();
+      event.stopPropagation();
       searchStore.setSelectedIndex(searchStore.selectedIndex - 1);
       scrollToSelected();
-      event.preventDefault();
       return;
     }
 
     if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
       const selected = searchStore.selectCurrent();
       if (selected) {
         selectResult(selected as SearchResult, event);
@@ -269,7 +277,7 @@
     const selectedEl = resultsContainer.children[
       searchStore.selectedIndex
     ] as HTMLElement;
-    if (selectedEl) {
+    if (selectedEl && typeof selectedEl.scrollIntoView === "function") {
       selectedEl.scrollIntoView({ block: "nearest" });
     }
   };
@@ -297,8 +305,8 @@
       onkeydown={handleKeydown}
     >
       <!-- Input Header -->
-      <div class="p-4 border-b border-chrome-border">
-        <div class="relative">
+      <div class="p-4 border-b border-chrome-border flex items-center gap-2">
+        <div class="relative flex-1">
           <span
             aria-hidden="true"
             class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-chrome-muted"
@@ -308,7 +316,6 @@
             type="text"
             value={searchStore.query}
             oninput={handleInput}
-            onkeydown={handleKeydown}
             onfocus={() => (isFocused = true)}
             onblur={() => setTimeout(() => (isFocused = false), 200)}
             placeholder="Search notes..."
@@ -359,6 +366,16 @@
             </div>
           {/if}
         </div>
+
+        <button
+          type="button"
+          class="p-2 rounded-md text-chrome-muted hover:text-chrome-text hover:bg-chrome-bg transition-colors flex items-center justify-center shrink-0"
+          onclick={searchStore.close}
+          aria-label="Close search"
+          data-testid="search-modal-close"
+        >
+          <span class="icon-[heroicons--x-mark] w-5 h-5 block"></span>
+        </button>
 
         {#if explorerUIStore.labelFilters.size > 0}
           <div
