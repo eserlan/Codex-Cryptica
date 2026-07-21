@@ -24,7 +24,7 @@ export interface CanvasAddResult {
   errors: Array<{ entityId: string; error: string }>;
 }
 
-class CanvasRegistryStore {
+export class CanvasRegistryStore {
   _canvases = $state<Record<string, Canvas>>({});
   get canvases() {
     if (sessionModeStore.isGuestMode) {
