@@ -48,6 +48,22 @@ export const browserStorage: StorageLike = {
       // ignore — storage unavailable
     }
   },
+  get length(): number {
+    if (typeof localStorage === "undefined") return 0;
+    try {
+      return localStorage.length;
+    } catch {
+      return 0;
+    }
+  },
+  key(index: number): string | null {
+    if (typeof localStorage === "undefined") return null;
+    try {
+      return localStorage.key(index);
+    } catch {
+      return null;
+    }
+  },
 };
 
 /**
@@ -78,6 +94,22 @@ export const browserSessionStorage: StorageLike = {
       sessionStorage.removeItem(key);
     } catch {
       // ignore — storage unavailable
+    }
+  },
+  get length(): number {
+    if (typeof sessionStorage === "undefined") return 0;
+    try {
+      return sessionStorage.length;
+    } catch {
+      return 0;
+    }
+  },
+  key(index: number): string | null {
+    if (typeof sessionStorage === "undefined") return null;
+    try {
+      return sessionStorage.key(index);
+    } catch {
+      return null;
     }
   },
 };
