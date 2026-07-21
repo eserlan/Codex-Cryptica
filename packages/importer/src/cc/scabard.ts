@@ -6,6 +6,15 @@ import type {
 } from "./package";
 import { htmlToMarkdown } from "../utils";
 
+export function isScabardExport(jsonObj: unknown): boolean {
+  return (
+    !!jsonObj &&
+    typeof jsonObj === "object" &&
+    Array.isArray((jsonObj as { pages?: unknown[] }).pages) &&
+    Array.isArray((jsonObj as { conns?: unknown[] }).conns)
+  );
+}
+
 // Types matching the verified Scabard JSON structure
 export interface ScabardConnection {
   from: string;

@@ -22,6 +22,7 @@ import {
   splitTextIntoChunks,
   mergeEntities,
   getFileExtension,
+  isScabardExport,
   validateImportFile,
   parseScabardExport,
   detectChronicaExport,
@@ -72,15 +73,6 @@ export function mapThemeToGenre(themeId: string): string {
   if (["horror"].includes(rawId)) return "horror";
   if (["steampunk", "western"].includes(rawId)) return "steampunk";
   return "fantasy";
-}
-
-export function isScabardExport(jsonObj: unknown): boolean {
-  return (
-    !!jsonObj &&
-    typeof jsonObj === "object" &&
-    Array.isArray((jsonObj as { pages?: unknown[] }).pages) &&
-    Array.isArray((jsonObj as { conns?: unknown[] }).conns)
-  );
 }
 
 export interface ImportSettingsControllerDeps {
