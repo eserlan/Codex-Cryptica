@@ -14,6 +14,7 @@ import {
   hashToColor,
 } from "$lib/utils/vtt-helpers";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 const TOKEN_COORD_PRECISION = 2;
 
@@ -58,7 +59,10 @@ export class VTTTokenManager {
     return this.tokens[this.selection] ?? null;
   });
 
-  constructor(private deps: VTTTokenManagerDependencies) {}
+  constructor(
+    private deps: VTTTokenManagerDependencies,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   reset() {
     this.tokens = {};
@@ -144,7 +148,7 @@ export class VTTTokenManager {
     const mapStore = this.deps.getMapStore();
     const mapGrid = mapStore.gridSize || 50;
     return {
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       entityId: input.entityId ?? null,
       name: input.name.trim(),
       x: input.x,
@@ -458,7 +462,7 @@ export class VTTTokenManager {
 
     const clone: Token = {
       ...source,
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       name: this.getClonedTokenName(source.name),
       x: source.x + offset,
       y: source.y + offset,

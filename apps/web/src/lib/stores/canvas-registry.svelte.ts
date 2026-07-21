@@ -11,7 +11,11 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import { updateLastInternalChange } from "./vault/registry";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -41,6 +45,11 @@ class CanvasRegistryStore {
     { id: string; position?: { x: number; y: number } }[]
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
+  private idGenerator: IdGenerator;
+
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
+  }
 
   allCanvases = $derived.by(() => {
     if (sessionModeStore.isGuestMode) {
@@ -111,7 +120,7 @@ class CanvasRegistryStore {
   }
 
   async create(name: string): Promise<string | null> {
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     const slug = this.generateSlug(name, id);
 
     this.canvases[id] = {
@@ -266,7 +275,7 @@ class CanvasRegistryStore {
         const col = index % itemsPerRow;
 
         const newNode: CanvasNode = {
-          id: `node-${crypto.randomUUID()}`,
+          id: `node-${this.idGenerator.uuid()}`,
           type: "entity",
           entityId,
           position: {
@@ -309,7 +318,7 @@ class CanvasRegistryStore {
       `${normalizedEntityIds.length} ${
         normalizedEntityIds.length === 1 ? "entity" : "entities"
       }`;
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     const slug = this.generateSlug(name, id);
 
     const spacing = 250;
@@ -318,7 +327,7 @@ class CanvasRegistryStore {
       const row = Math.floor(index / itemsPerRow);
       const col = index % itemsPerRow;
       return {
-        id: `node-${crypto.randomUUID()}`,
+        id: `node-${this.idGenerator.uuid()}`,
         type: "entity",
         entityId,
         position: {
