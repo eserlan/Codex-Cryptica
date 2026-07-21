@@ -1,5 +1,10 @@
 import { createEncounterSession } from "$lib/services/vtt-session";
 import type { EncounterSnapshotSummary, SessionMode } from "../../../types/vtt";
+import {
+  browserSessionStorage,
+  browserStorage,
+  type StorageLike,
+} from "$lib/utils/runtime-deps";
 
 export interface VTTSessionLifecycleManagerDependencies {
   getMapId: () => string | null;
@@ -24,6 +29,8 @@ export interface VTTSessionLifecycleManagerDependencies {
   setSnapshots: (snapshots: EncounterSnapshotSummary[]) => void;
   resetChatManager: () => void;
   resetEncounterManager: () => void;
+  sessionStorage?: StorageLike;
+  localStorage?: StorageLike;
 }
 
 export class VTTSessionLifecycleManager {
@@ -32,6 +39,14 @@ export class VTTSessionLifecycleManager {
   hasHydratedSession = $state(false);
 
   constructor(private deps: VTTSessionLifecycleManagerDependencies) {}
+
+  private get sessionStorage(): StorageLike {
+    return this.deps.sessionStorage ?? browserSessionStorage;
+  }
+
+  private get localStorage(): StorageLike {
+    return this.deps.localStorage ?? browserStorage;
+  }
 
   setRestoring(restoring: boolean) {
     this.restoring = restoring;
@@ -92,9 +107,9 @@ export class VTTSessionLifecycleManager {
   clearSession(clearDraft = false) {
     this.deps.clearPendingSessionSnapshotBroadcast();
     const mapId = this.deps.getMapId();
-    if (clearDraft && typeof window !== "undefined" && mapId) {
-      window.sessionStorage.removeItem(this.deps.getDraftKey(mapId));
-      window.localStorage.removeItem(this.deps.getPopoutKey(mapId));
+    if (clearDraft && mapId) {
+      this.sessionStorage.removeItem(this.deps.getDraftKey(mapId));
+      this.localStorage.removeItem(this.deps.getPopoutKey(mapId));
     }
     this.deps.resetTokenManager();
     this.deps.setMapId(null);

@@ -6,6 +6,17 @@ import {
 import type { EncounterSnapshotSummary, SessionMode } from "../../../types/vtt";
 
 function createLifecycleHarness() {
+  const mockSessionStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  };
+  const mockLocalStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  };
+
   const state = {
     mapId: null as string | null,
     vttEnabled: true,
@@ -69,11 +80,15 @@ function createLifecycleHarness() {
     }),
     resetChatManager: vi.fn(),
     resetEncounterManager: vi.fn(),
+    sessionStorage: mockSessionStorage,
+    localStorage: mockLocalStorage,
   };
 
   return {
     state,
     deps,
+    mockSessionStorage,
+    mockLocalStorage,
     manager: new VTTSessionLifecycleManager(deps),
   };
 }
@@ -151,16 +166,15 @@ describe("VTTSessionLifecycleManager", () => {
   });
 
   it("clears drafts and live session state on explicit session clear", () => {
-    const { deps, state, manager } = createLifecycleHarness();
+    const { deps, state, mockSessionStorage, mockLocalStorage, manager } =
+      createLifecycleHarness();
     state.mapId = "map-1";
     manager.setHasHydratedSession(true);
-    window.sessionStorage.setItem("draft:map-1", "draft");
-    window.localStorage.setItem("popout:map-1", "popout");
 
     manager.clearSession(true);
 
-    expect(window.sessionStorage.getItem("draft:map-1")).toBeNull();
-    expect(window.localStorage.getItem("popout:map-1")).toBeNull();
+    expect(mockSessionStorage.removeItem).toHaveBeenCalledWith("draft:map-1");
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("popout:map-1");
     expect(state.mapId).toBeNull();
     expect(state.vttEnabled).toBe(false);
     expect(manager.hasHydratedSession).toBe(false);

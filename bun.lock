@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.28.1",
+      "version": "0.28.3",
       "dependencies": {
         "@codex/ai-engine": "workspace:*",
         "@codex/audio-engine": "workspace:*",
