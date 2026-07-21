@@ -1,5 +1,6 @@
 import { getDB } from "../utils/idb";
 import type { RollResult } from "dice-engine";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export interface ContextualRollResult extends RollResult {
   id: string;
@@ -9,8 +10,10 @@ export interface ContextualRollResult extends RollResult {
 export class DiceHistoryStore {
   history = $state<ContextualRollResult[]>([]);
   private _initStarted = false;
+  private idGenerator: IdGenerator;
 
-  constructor() {
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
     // Auto-initialize on the client so persisted history is available
     if (typeof window !== "undefined") {
       void this.init();
@@ -38,9 +41,7 @@ export class DiceHistoryStore {
   }
 
   async addResult(result: RollResult, context: "chat" | "modal") {
-    const id = crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).substring(2, 15);
+    const id = this.idGenerator.uuid();
     const contextual: ContextualRollResult = {
       ...result,
       id,

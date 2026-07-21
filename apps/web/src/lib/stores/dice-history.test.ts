@@ -147,19 +147,15 @@ describe("DiceHistoryStore", () => {
     consoleSpy.mockRestore();
   });
 
-  it("should use fallback for ID generation if crypto.randomUUID is not available", async () => {
-    const originalUUID = crypto.randomUUID;
-    delete (crypto as any).randomUUID;
+  it("uses the injected id generator instead of the global crypto object", async () => {
+    const mockIdGenerator = { uuid: vi.fn(() => "mock-id-1") };
+    const injectedStore = new DiceHistoryStore(mockIdGenerator);
 
     const result = createRollResult(15);
-    await store.addResult(result, "chat");
+    await injectedStore.addResult(result, "chat");
 
-    expect(store.history).toHaveLength(1);
-    expect(store.history[0].id).toBeDefined();
-    expect(typeof store.history[0].id).toBe("string");
-
-    // Restore
-    crypto.randomUUID = originalUUID;
+    expect(mockIdGenerator.uuid).toHaveBeenCalled();
+    expect(injectedStore.history[0].id).toBe("mock-id-1");
   });
 
   it("should not re-initialize if already started and force is false", async () => {

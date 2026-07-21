@@ -1,11 +1,18 @@
 import { OracleCommandParser, type ChatMessage } from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export class OracleChatManager {
   isChatHistoryReady = $state(false);
 
-  constructor(private store: IOracleStore) {}
+  constructor(
+    private store: IOracleStore,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   get messages(): ChatMessage[] {
     return this.store.chatHistoryService?.messages ?? [];
@@ -51,7 +58,7 @@ export class OracleChatManager {
         OracleCommandParser.detectImageIntent(content)
       ) {
         await this.store.chatHistoryService.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: "❌ This command isn't available in guest view.",
           timestamp: systemClock.now(),

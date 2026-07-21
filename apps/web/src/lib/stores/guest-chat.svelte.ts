@@ -8,7 +8,11 @@ import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 function resolveGuestCharacterId(
   username: string | null | undefined,
@@ -43,7 +47,10 @@ export class GuestChatStore {
     this.showChatModal = true;
   }
 
-  constructor() {
+  private idGenerator: IdGenerator;
+
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
     if (typeof window !== "undefined") {
       void this.init();
     }
@@ -73,7 +80,7 @@ export class GuestChatStore {
       const guestId = p2pGuestService.peerId || "guest-local";
       const guestName = sessionModeStore.guestUsername || "Invited Guest";
       const transcript: GuestChatTranscript = {
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         guestId,
         guestName,
         characterId,
@@ -103,7 +110,7 @@ export class GuestChatStore {
     if (!transcript) return;
 
     const userMsg: GuestChatMessage = {
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       role: "user",
       content: content.trim(),
       timestamp: systemClock.now(),
@@ -130,7 +137,7 @@ export class GuestChatStore {
     query: string,
     transcript: GuestChatTranscript,
   ) {
-    const assistantMsgId = crypto.randomUUID();
+    const assistantMsgId = this.idGenerator.uuid();
     const assistantMsg: GuestChatMessage = {
       id: assistantMsgId,
       role: "assistant",
@@ -140,7 +147,7 @@ export class GuestChatStore {
     transcript.messages.push(assistantMsg);
     transcript.lastUpdated = systemClock.now();
 
-    const requestId = crypto.randomUUID();
+    const requestId = this.idGenerator.uuid();
     this.pendingRequests.set(requestId, { characterId, assistantMsgId });
 
     const history = transcript.messages
