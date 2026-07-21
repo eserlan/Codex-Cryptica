@@ -11,7 +11,11 @@ import {
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 // Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
 // literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
@@ -27,6 +31,7 @@ export class GraphStore {
   private explorerUIStore: typeof explorerUIStore;
   private sessionModeStore: typeof sessionModeStore;
   private connectionModeStore: typeof connectionModeStore;
+  private idGenerator: IdGenerator;
   private _initPromise: Promise<void> | null = null;
   private _vaultSwitchHandler: (() => void) | null = null;
 
@@ -39,11 +44,13 @@ export class GraphStore {
     explorerStore: typeof explorerUIStore = explorerUIStore,
     sessionStore: typeof sessionModeStore = sessionModeStore,
     connectionStore: typeof connectionModeStore = connectionModeStore,
+    idGenerator: IdGenerator = systemIdGenerator,
   ) {
     this._vault = vault;
     this.explorerUIStore = explorerStore;
     this.sessionModeStore = sessionStore;
     this.connectionModeStore = connectionStore;
+    this.idGenerator = idGenerator;
   }
 
   // Svelte 5 derived state
@@ -474,10 +481,7 @@ export class GraphStore {
     if (!trimmed) return null;
     const now = systemClock.now();
     const preset: GraphViewPreset = {
-      id:
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `preset-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      id: this.idGenerator.uuid(),
       name: trimmed,
       createdAt: now,
       updatedAt: now,

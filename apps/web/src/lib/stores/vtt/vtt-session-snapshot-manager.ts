@@ -8,6 +8,7 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import { cloneMeasurement, normalizeEncounterSession } from "map-engine";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export interface VTTSessionSnapshotManagerDependencies {
   getSessionId: () => string | null;
@@ -63,7 +64,10 @@ export interface VTTSessionSnapshotManagerDependencies {
 }
 
 export class VTTSessionSnapshotManager {
-  constructor(private deps: VTTSessionSnapshotManagerDependencies) {}
+  constructor(
+    private deps: VTTSessionSnapshotManagerDependencies,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   createSnapshot(): EncounterSession {
     const rawTokens = this.deps.getTokens();
@@ -73,7 +77,7 @@ export class VTTSessionSnapshotManager {
     }
 
     return {
-      id: this.deps.getSessionId() ?? crypto.randomUUID(),
+      id: this.deps.getSessionId() ?? this.idGenerator.uuid(),
       name: this.deps.getEncounterName(),
       mapId: this.deps.getMapId() ?? "",
       mode: this.deps.getMode(),

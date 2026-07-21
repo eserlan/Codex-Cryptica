@@ -6,10 +6,10 @@ import { resolve } from "node:path";
 import { getPack } from "@codex/content-packs";
 import {
   ImportSettingsController,
-  isScabardExport,
   mapThemeToGenre,
   type ImportSettingsControllerDeps,
 } from "./import-settings-controller.svelte";
+import { isScabardExport } from "@codex/importer";
 
 function baseDeps(
   overrides: Partial<ImportSettingsControllerDeps> = {},

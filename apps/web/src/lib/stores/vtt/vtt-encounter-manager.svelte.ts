@@ -9,7 +9,11 @@ import type {
   MeasurementState,
 } from "../../../types/vtt";
 import { cloneMeasurement } from "$lib/utils/vtt-helpers";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export interface VTTEncounterManagerDependencies {
   service: VTTSessionService;
@@ -36,7 +40,10 @@ export class VTTEncounterManager {
   savedAt = $state<number | null>(null);
   snapshots = $state<EncounterSnapshotSummary[]>([]);
 
-  constructor(private deps: VTTEncounterManagerDependencies) {}
+  constructor(
+    private deps: VTTEncounterManagerDependencies,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   startNewEncounter(name = this.name) {
     const mapId = this.deps.getMapId();
@@ -44,7 +51,7 @@ export class VTTEncounterManager {
 
     const session = createEncounterSession(
       mapId,
-      crypto.randomUUID(),
+      this.idGenerator.uuid(),
       name.trim() || this.name || "Encounter",
     );
 
@@ -87,7 +94,7 @@ export class VTTEncounterManager {
   }
 
   async saveEncounterSnapshot(
-    encounterId = this.sessionId ?? crypto.randomUUID(),
+    encounterId = this.sessionId ?? this.idGenerator.uuid(),
   ) {
     const mapId = this.deps.getMapId();
     if (!mapId) return null;
