@@ -1,6 +1,7 @@
 import type { IStorageAdapter, SerializedGraph } from "../types";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { debugStore } from "../../stores/debug.svelte";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export class P2PClientAdapter implements IStorageAdapter {
   private hostId: string;
@@ -9,6 +10,7 @@ export class P2PClientAdapter implements IStorageAdapter {
   private graphPromise: Promise<SerializedGraph>;
   private graphResolver!: (g: SerializedGraph) => void;
   private readonly peerFactory: PeerFactory;
+  private readonly idGenerator: IdGenerator;
 
   // Request tracking
   private pendingRequests = new Map<
@@ -18,9 +20,13 @@ export class P2PClientAdapter implements IStorageAdapter {
 
   private objectUrls = new Set<string>();
 
-  constructor(hostId: string, deps: { peerFactory?: PeerFactory } = {}) {
+  constructor(
+    hostId: string,
+    deps: { peerFactory?: PeerFactory; idGenerator?: IdGenerator } = {},
+  ) {
     this.hostId = hostId;
     this.peerFactory = deps.peerFactory ?? createPeer;
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
     this.graphPromise = new Promise((resolve) => {
       this.graphResolver = resolve;
     });
@@ -160,7 +166,7 @@ export class P2PClientAdapter implements IStorageAdapter {
   }
 
   private async fetchFile(path: string): Promise<Blob> {
-    const requestId = crypto.randomUUID();
+    const requestId = this.idGenerator.uuid();
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(requestId, { resolve, reject });
 
