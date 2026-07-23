@@ -18,9 +18,12 @@ import {
   pruneCanvasGraph,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { type IdGenerator, systemClock, systemIdGenerator } from "$lib/utils/runtime-deps";
 
-export function createCanvasLogic(getEngine: () => CanvasStore) {
+export function createCanvasLogic(
+  getEngine: () => CanvasStore,
+  idGenerator: IdGenerator = systemIdGenerator,
+) {
   const svelteFlow = useSvelteFlow();
   const screenToFlowPosition = $derived(svelteFlow?.screenToFlowPosition);
 
@@ -130,7 +133,7 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
 
   // Mutations
   function onConnect(connection: Connection) {
-    const edgeId = `edge-${crypto.randomUUID()}`;
+    const edgeId = `edge-${idGenerator.uuid()}`;
     edges = addXyEdge(createFlowEdgeFromConnection(connection, edgeId), edges);
     untrack(() => saveCanvas());
   }
@@ -286,7 +289,7 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     // Sync edges
     const currentEdges = edges;
     getEngine().edges = currentEdges.map((e: Edge) => ({
-      id: e.id || `edge-${crypto.randomUUID()}`,
+      id: e.id || `edge-${idGenerator.uuid()}`,
       source: e.source,
       target: e.target,
       sourceHandle: undefined,
