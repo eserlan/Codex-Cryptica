@@ -49,6 +49,7 @@ import { VaultStorageManager } from "./vault/storage";
 import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
+import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 
 export class VaultStore {
   // Reactive State
@@ -709,6 +710,7 @@ export class VaultStore {
     return this.lifecycleManager.switchVault(id);
   }
   createVault(name: string) {
+    onboardingFunnel.track("vault_created");
     return this.lifecycleManager.createVault(name);
   }
   deleteVault(id: string) {

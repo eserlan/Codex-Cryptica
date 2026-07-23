@@ -39,7 +39,7 @@ describe("HelpStore", () => {
       mockOnboardingStore,
       mockModalUIStore,
       mockSearchStore,
-      customMockStorage
+      customMockStorage,
     );
 
     // Test that it uses the injected UI store
@@ -51,7 +51,7 @@ describe("HelpStore", () => {
     store.dismissHint("new-hint");
     expect(customMockStorage.setItem).toHaveBeenCalledWith(
       "codex-cryptica-help-state",
-      expect.stringContaining("new-hint")
+      expect.stringContaining("new-hint"),
     );
   });
 
@@ -84,17 +84,61 @@ describe("HelpStore", () => {
   });
 
   it("should manage tour lifecycle (next, prev, skip, complete)", () => {
+    // The tour prunes steps whose target is missing from the DOM (#1778), so
+    // mount the ActivityBar targets the onboarding tour points at.
+    const ids = [
+      "graph-empty-state-cta",
+      "activity-bar-graph",
+      "activity-bar-oracle",
+    ];
+    ids.forEach((id) => {
+      const el = document.createElement("div");
+      el.setAttribute("data-testid", id);
+      document.body.appendChild(el);
+    });
+
+    try {
+      helpStore.startTour("initial-onboarding");
+      expect(helpStore.activeTour).toBeDefined();
+      expect(helpStore.activeTour?.currentStepIndex).toBe(0);
+
+      helpStore.nextStep();
+      expect(helpStore.activeTour?.currentStepIndex).toBe(1);
+
+      helpStore.prevStep();
+      expect(helpStore.activeTour?.currentStepIndex).toBe(0);
+
+      helpStore.skipTour();
+      expect(helpStore.activeTour).toBeNull();
+      expect(helpStore.hasSeen("initial-onboarding")).toBe(true);
+    } finally {
+      ids.forEach((id) =>
+        document.querySelector(`[data-testid="${id}"]`)?.remove(),
+      );
+    }
+  });
+
+  it("pruneStepsToDom keeps body steps and drops steps with missing targets (#1778)", () => {
+    const steps = [
+      { id: "welcome", targetSelector: "body" } as any,
+      { id: "present", targetSelector: '[data-testid="present-el"]' } as any,
+      { id: "absent", targetSelector: '[data-testid="absent-el"]' } as any,
+    ];
+    const doc = {
+      querySelector: (sel: string) =>
+        sel === '[data-testid="present-el"]' ? ({} as Element) : null,
+    };
+
+    const pruned = helpStore.pruneStepsToDom(steps, doc);
+    expect(pruned.map((s) => s.id)).toEqual(["welcome", "present"]);
+  });
+
+  it("startTour marks the tour seen and does not start when no steps resolve (#1778)", () => {
+    // No ActivityBar targets are mounted, so only the body 'welcome' step would
+    // normally survive — force an all-missing scenario by pruning against an
+    // empty document to prove the empty-tour guard.
+    vi.spyOn(helpStore, "pruneStepsToDom").mockReturnValue([]);
     helpStore.startTour("initial-onboarding");
-    expect(helpStore.activeTour).toBeDefined();
-    expect(helpStore.activeTour?.currentStepIndex).toBe(0);
-
-    helpStore.nextStep();
-    expect(helpStore.activeTour?.currentStepIndex).toBe(1);
-
-    helpStore.prevStep();
-    expect(helpStore.activeTour?.currentStepIndex).toBe(0);
-
-    helpStore.skipTour();
     expect(helpStore.activeTour).toBeNull();
     expect(helpStore.hasSeen("initial-onboarding")).toBe(true);
   });

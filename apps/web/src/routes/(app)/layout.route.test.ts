@@ -123,6 +123,9 @@ vi.mock("$lib/services/demo", () => ({
     startDemo: vi.fn(),
   },
 }));
+vi.mock("$lib/app/onboarding/onboarding-funnel-init", () => ({
+  initOnboardingFunnel: vi.fn(),
+}));
 vi.mock("@codex/gdrive-sync", () => ({
   initGDriveSync: vi.fn(),
   configureGDriveSync: vi.fn(),

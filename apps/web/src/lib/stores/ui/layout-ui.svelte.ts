@@ -53,6 +53,8 @@ export class LayoutUIStore {
   private rightSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
   private cleanupWideWatch: (() => void) | null = null;
+  private cleanupTabletWatch: (() => void) | null = null;
+  private cleanupTouchWatch: (() => void) | null = null;
   private workspaceFocusActive = $state(false);
 
   #leftSidebarOpen = $state(false);
@@ -80,6 +82,12 @@ export class LayoutUIStore {
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
   isWideViewport = $state(false);
+  /** Tablet-range viewport (769–1279px): gets the desktop layout but is often
+   *  touch-driven and space-constrained. Tracked so tablet-specific affordances
+   *  (touch coaching, header reflow) can key off it (#1785). */
+  isTablet = $state(false);
+  /** Coarse pointer (touch-first device). */
+  isTouch = $state(false);
   vttSidebarCollapsed = $state(false);
   vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
@@ -93,6 +101,8 @@ export class LayoutUIStore {
     this.loadPersistedState();
     this.cleanupMobileWatch = this.watchMobileState();
     this.cleanupWideWatch = this.watchWideViewportState();
+    this.cleanupTabletWatch = this.watchTabletState();
+    this.cleanupTouchWatch = this.watchTouchState();
   }
 
   get isEntityExplorerWorkspace() {
@@ -123,6 +133,10 @@ export class LayoutUIStore {
     this.cleanupMobileWatch = null;
     this.cleanupWideWatch?.();
     this.cleanupWideWatch = null;
+    this.cleanupTabletWatch?.();
+    this.cleanupTabletWatch = null;
+    this.cleanupTouchWatch?.();
+    this.cleanupTouchWatch = null;
     if (this.leftSidebarSaveTimeout !== null) {
       this.viewport?.clearTimeout(this.leftSidebarSaveTimeout);
     }
@@ -255,6 +269,35 @@ export class LayoutUIStore {
     return this.watchMediaQuery(mediaQuery, (matches) => {
       this.isWideViewport = matches;
     });
+  }
+
+  private watchTabletState(): (() => void) | null {
+    const mediaQuery = this.viewport?.matchMedia?.(
+      "(min-width: 769px) and (max-width: 1279px)",
+    );
+    if (!mediaQuery) return null;
+    this.isTablet = mediaQuery.matches;
+    return this.watchMediaQuery(mediaQuery, (matches) => {
+      this.isTablet = matches;
+    });
+  }
+
+  private watchTouchState(): (() => void) | null {
+    const mediaQuery = this.viewport?.matchMedia?.("(pointer: coarse)");
+    if (!mediaQuery) return null;
+    this.isTouch = mediaQuery.matches;
+    return this.watchMediaQuery(mediaQuery, (matches) => {
+      this.isTouch = matches;
+    });
+  }
+
+  /**
+   * Whether to show touch-oriented coaching (e.g. the graph pan/zoom coach
+   * marks). True on phones, and on tablet-range viewports that are touch-first,
+   * so iPad users get the same guidance phones already had (#1785).
+   */
+  get prefersTouchCoaching() {
+    return this.isMobile || (this.isTablet && this.isTouch);
   }
 
   private watchMediaQuery(

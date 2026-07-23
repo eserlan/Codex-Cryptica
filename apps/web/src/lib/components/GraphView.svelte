@@ -25,8 +25,11 @@
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+  import { helpStore } from "$lib/stores/help.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
-  import { fly } from "svelte/transition";
+  import { fly, fade } from "svelte/transition";
+  import { computeSpotlightClipPath } from "$lib/utils/spotlight";
 
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
@@ -71,31 +74,85 @@
 
   let container: HTMLElement;
 
+  // targetSelector identifies the real element each mark describes, so it can
+  // be spotlighted — otherwise the card is just floating text with nothing
+  // visually tying it to the button/bar in question (#1785 follow-up: a user
+  // couldn't tell which "dark button" the graph-controls step meant, and the
+  // card was even briefly found to sit ON TOP of that exact button).
   const COACH_MARKS = [
     {
       id: "activity-bar",
       icon: "icon-[lucide--layout-grid]",
       title: "Views & tools",
       body: "Switch between Graph, Map, Canvas and more from the bar at the bottom.",
+      targetSelector: '[data-testid="activity-bar"]',
     },
     {
       id: "graph-fab",
       icon: "icon-[lucide--sliders-horizontal]",
       title: "Graph controls",
       body: "The dark button opens layout, filters, and display options for the graph.",
+      targetSelector: '[data-testid="graph-controls-fab"]',
     },
     {
       id: "graph-search",
       icon: "icon-[lucide--search]",
       title: "Find anything",
       body: "Tap the search icon to jump to any entity by name.",
+      targetSelector: '[data-testid="mobile-search-button"]',
     },
   ] as const;
 
   let coachStep = $state(0);
   const showCoachMarks = $derived(
-    layoutUIStore.isMobile && !onboardingStore.dismissedMobileGraphCoachMarks,
+    // Deliberately `isMobile` (<768px), NOT `prefersTouchCoaching`: these 3
+    // marks' copy and targets are mobile-chrome-specific — the bottom
+    // ActivityBar, GraphToolbar's collapsed FAB, and AppHeader's collapsed
+    // search icon all only render in that exact form below the `md` (768px)
+    // breakpoint. A touch tablet (769-1279px) gets the desktop side-rail
+    // ActivityBar, GraphToolbar's full inline toolbar (no FAB — it only
+    // collapses on `isMobile`), and — depending on width — either the
+    // collapsed or full search input (AppHeader collapses at `lg`, 1024px,
+    // which cuts through the middle of the tablet range). None of that
+    // matches what these marks describe, so don't show them there.
+    layoutUIStore.isMobile &&
+      !onboardingStore.dismissedMobileGraphCoachMarks &&
+      // Sequenced after the main initial-onboarding tour, never alongside it —
+      // these teach touch-specific chrome navigation, a different story from
+      // the tour's task-oriented steps. Without this, both could render at
+      // once on a touch device (two competing cards), exactly what the
+      // orchestrator (#1780) exists to prevent.
+      !helpStore.activeTour,
   );
+
+  let coachMarkTargetRect = $state<DOMRect | null>(null);
+
+  function updateCoachMarkTargetRect() {
+    if (!showCoachMarks) {
+      coachMarkTargetRect = null;
+      return;
+    }
+    const selector = COACH_MARKS[coachStep]?.targetSelector;
+    const el = selector ? document.querySelector(selector) : null;
+    coachMarkTargetRect = el ? el.getBoundingClientRect() : null;
+  }
+
+  $effect(() => {
+    // Re-measure whenever the visible mark changes.
+    void coachStep;
+    void showCoachMarks;
+    updateCoachMarkTargetRect();
+  });
+
+  const coachMarkClipPath = $derived.by(() => {
+    if (!coachMarkTargetRect || typeof window === "undefined") return "";
+    return computeSpotlightClipPath(
+      coachMarkTargetRect,
+      window.innerWidth,
+      window.innerHeight,
+      6,
+    );
+  });
 
   function nextCoachMark() {
     if (coachStep < COACH_MARKS.length - 1) {
@@ -171,6 +228,11 @@
   };
 
   onMount(() => {
+    // Funnel: reaching the graph is the final onboarding milestone. Guests are
+    // visitors, not first-time GMs, so they don't count.
+    if (!vault.isGuest) {
+      onboardingFunnel.track("graph_opened");
+    }
     void graph.init();
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
@@ -181,6 +243,11 @@
       });
       resizeObserver.observe(container);
     }
+
+    // Re-measure the coach mark's spotlighted element on resize/scroll, same
+    // as TourOverlay does for the main onboarding tour.
+    window.addEventListener("resize", updateCoachMarkTargetRect);
+    window.addEventListener("scroll", updateCoachMarkTargetRect, true);
   });
 
   onDestroy(() => {
@@ -188,6 +255,8 @@
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
+    window.removeEventListener("resize", updateCoachMarkTargetRect);
+    window.removeEventListener("scroll", updateCoachMarkTargetRect, true);
     controller.destroy();
   });
 
@@ -503,8 +572,9 @@
           headline="Your graph is empty"
           body={vault.isGuest
             ? "Nothing has been shared with you yet."
-            : "Create your first entity to see it appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create your first entity"}
+            : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
+          cta={vault.isGuest ? undefined : "＋ Create your first character"}
+          ctaTestId={vault.isGuest ? undefined : "graph-empty-state-cta"}
           onCta={vault.isGuest
             ? undefined
             : () => modalUIStore.requestCreateEntity()}
@@ -517,8 +587,29 @@
 
   {#if showCoachMarks}
     {@const mark = COACH_MARKS[coachStep]}
+    {#if coachMarkClipPath}
+      <!-- Dims everything except the element this mark describes, same
+           visual language as the desktop/general onboarding tour
+           (TourOverlay.svelte) — so highlighting reads consistently across
+           both systems, and it's now unambiguous which element a mark
+           refers to even if the card sits nearby (#1785 follow-up). -->
+      <div
+        class="fixed inset-0 z-[85] bg-black/40 backdrop-blur-[1px] transition-all duration-300"
+        style={coachMarkClipPath}
+        data-testid="mobile-coach-mark-spotlight"
+        transition:fade
+      ></div>
+    {/if}
+    <!-- Visibility is driven by `showCoachMarks` (phones + touch tablets),
+         so no responsive `hidden` class is needed here (#1785).
+         bottom-36 (not bottom-20): the graph's own "Graph Controls" FAB
+         (GraphToolbar.svelte) floats bottom-4 within the GraphView container,
+         which itself ends right above the 56px ActivityBar — so the FAB
+         occupies roughly the 72-112px band from the true screen bottom.
+         bottom-20 (80px) landed inside that band, so this card (z-90) fully
+         covered the very button its "graph-fab" step describes. -->
     <div
-      class="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-sm"
+      class="fixed bottom-36 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-sm"
       data-testid="mobile-coach-mark"
       transition:fly={{ y: 8, duration: 200 }}
     >

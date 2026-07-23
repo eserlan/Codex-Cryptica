@@ -6,6 +6,7 @@ import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 
 class DemoService implements IDemoActions {
   async startDemo(theme: string): Promise<void> {
@@ -36,6 +37,7 @@ class DemoService implements IDemoActions {
       sessionModeStore.activeDemoTheme = themeName;
       onboardingStore.dismissedLandingPage = true;
       sessionModeStore.wasConverted = false;
+      onboardingFunnel.track("demo_started");
 
       // 3. Fetch sample data
       const response = await fetch(`${base}/vault-samples/${jsonName}.json`);
