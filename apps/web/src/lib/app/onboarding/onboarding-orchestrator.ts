@@ -77,6 +77,13 @@ export function decideFirstRunAction(state: FirstRunState): FirstRunAction {
 
   // Highest priority: a user who has not been onboarded yet.
   if (!state.hasSeenTour) {
+    // Don't restart a tour that is already running (the caller re-evaluates
+    // when activeTour changes, which would otherwise reset it to step 0), and
+    // don't launch over an open modal — either would contradict the
+    // "never stack or compete" goal. Wait for the next evaluation instead.
+    if (state.activeTour || state.anyModalOpen) {
+      return { kind: "none" };
+    }
     // An empty vault they created themselves — guide them to a first entity
     // rather than silently swapping in a demo world (#1782).
     if (state.entityCount === 0) {

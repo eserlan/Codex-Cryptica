@@ -50,6 +50,28 @@ describe("decideFirstRunAction", () => {
     ).toEqual({ kind: "guided-empty" });
   });
 
+  it("does not restart a tour that is already running (no reset loop)", () => {
+    expect(
+      decideFirstRunAction({
+        ...base,
+        hasSeenTour: false,
+        entityCount: 5,
+        activeTour: true,
+      }),
+    ).toEqual({ kind: "none" });
+  });
+
+  it("does not launch the first-run tour over an open modal", () => {
+    expect(
+      decideFirstRunAction({
+        ...base,
+        hasSeenTour: false,
+        entityCount: 0,
+        anyModalOpen: true,
+      }),
+    ).toEqual({ kind: "none" });
+  });
+
   it("shows the changelog for a returning user with an unseen release", () => {
     expect(
       decideFirstRunAction({

@@ -87,7 +87,9 @@ describe("OnboardingFunnel", () => {
   });
 
   it("ignores corrupt persisted state", () => {
-    const { storage } = makeStorage({ "codex-onboarding-funnel": "not json" });
+    const { storage } = makeStorage({
+      "codex-cryptica-onboarding-funnel": "not json",
+    });
     const funnel = new OnboardingFunnel({ storage });
     expect(funnel.completed()).toEqual([]);
     expect(funnel.track("welcome_shown")).toBe(true);

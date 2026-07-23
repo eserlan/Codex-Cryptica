@@ -130,6 +130,7 @@
         />
       </div>
       <button
+        type="button"
         class="lg:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => searchStore.open()}
         aria-label="Search"

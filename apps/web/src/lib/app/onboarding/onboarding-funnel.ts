@@ -37,7 +37,7 @@ export const ONBOARDING_FUNNEL_STEPS = [
 
 export type OnboardingFunnelStep = (typeof ONBOARDING_FUNNEL_STEPS)[number];
 
-const STORAGE_KEY = "codex-onboarding-funnel";
+const STORAGE_KEY = "codex-cryptica-onboarding-funnel";
 
 /** A destination for funnel events. */
 export type FunnelSink = (
