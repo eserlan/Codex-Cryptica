@@ -663,7 +663,18 @@
     </div>
   {/if}
   {#if controller.selectedCount === 2}
-    <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">
+    <!-- Same --header-height fix as touch-gestures-hint above (was fixed
+         top-20, a hardcoded offset that only happened to clear the header
+         by coincidence, and would clip under it if the header grows — e.g.
+         the staging banner). Stacked below the touch-gestures hint (+5rem
+         instead of +1rem) rather than sharing its exact position, since a
+         touch-tablet user selecting 2 nodes can have both hints on screen
+         at once. -->
+    <div
+      class="fixed right-4 z-[60]"
+      style="top: calc(var(--header-height, 65px) + 5rem);"
+      data-testid="node-merging-hint"
+    >
       <FeatureHint hintId="node-merging" />
     </div>
   {/if}
