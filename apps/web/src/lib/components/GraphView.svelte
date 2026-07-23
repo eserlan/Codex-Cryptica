@@ -503,8 +503,8 @@
           headline="Your graph is empty"
           body={vault.isGuest
             ? "Nothing has been shared with you yet."
-            : "Create your first entity to see it appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create your first entity"}
+            : "Add a character or place to begin. Mention another name in its notes and they'll connect here automatically."}
+          cta={vault.isGuest ? undefined : "＋ Create your first character"}
           onCta={vault.isGuest
             ? undefined
             : () => modalUIStore.requestCreateEntity()}

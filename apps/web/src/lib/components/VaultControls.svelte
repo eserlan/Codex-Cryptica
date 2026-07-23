@@ -208,16 +208,16 @@
           }
         }}
         data-testid="save-as-campaign-button"
-        aria-label={`Save as ${themeStore.jargon.vault}`}
+        aria-label={`Make this my ${themeStore.jargon.vault}`}
         aria-describedby="save-as-campaign-desc-text"
-        title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
+        title="Keep this world as your own and start building — we'll walk you through the first steps"
       >
         <span class="icon-[lucide--save] w-3 h-3" aria-hidden="true"></span>
-        SAVE AS {themeStore.jargon.vault.toUpperCase()}
+        MAKE THIS MINE
       </button>
       <div class="sr-only" id="save-as-campaign-desc-text">
-        Save this demo exploration as your own persistent {themeStore.jargon
-          .vault}
+        Keep this demo world as your own editable {themeStore.jargon.vault} and start
+        building — a short guide walks you through the first steps.
       </div>
       <button
         class={isVertical
@@ -236,7 +236,8 @@
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
         title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
-        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5" aria-hidden="true"></span>
+        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5" aria-hidden="true"
+        ></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
       </div>
     {/if}
@@ -401,7 +402,8 @@
           data-testid="exit-guest-mode-button"
           aria-label="Exit Guest Mode"
         >
-          <span class="icon-[lucide--log-out] w-3 h-3" aria-hidden="true"></span>
+          <span class="icon-[lucide--log-out] w-3 h-3" aria-hidden="true"
+          ></span>
           EXIT GUEST MODE
         </button>
       {:else}
@@ -445,7 +447,10 @@
             title="Import markdown notes or JSON data into your archive."
             aria-label="Import Data"
           >
-            <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"></span>
+            <span
+              class="icon-[lucide--folder-input] w-3.5 h-3.5"
+              aria-hidden="true"
+            ></span>
             IMPORT
           </button>
         </div>
@@ -533,7 +538,8 @@
               : "Generate campaign content"}
             data-testid="open-generator-button"
           >
-            <span class="icon-[lucide--wand-2] w-3.5 h-3.5" aria-hidden="true"></span>
+            <span class="icon-[lucide--wand-2] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
             {#if isVertical}<span class="font-bold tracking-widest"
                 >GENERATE</span
               >{/if}
@@ -547,7 +553,8 @@
               ? "SHARE - Share Campaign"
               : "Share Campaign"}
           >
-            <span class="icon-[lucide--share-2] w-3.5 h-3.5" aria-hidden="true"></span>
+            <span class="icon-[lucide--share-2] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
             {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
               >{/if}
           </button>

@@ -43,7 +43,7 @@
     disabled={isSaving}
     aria-busy={isSaving}
     data-testid="mobile-save-as-campaign-button"
-    aria-label={`Save as ${themeStore.jargon.vault}`}
+    aria-label={`Make this my ${themeStore.jargon.vault} and start building`}
   >
     {#if isSaving}
       <span
@@ -53,7 +53,7 @@
     {:else}
       <span aria-hidden="true" class="icon-[lucide--save] w-3.5 h-3.5"></span>
     {/if}
-    {isSaving ? "SAVING…" : `SAVE AS ${themeStore.jargon.vault.toUpperCase()}`}
+    {isSaving ? "SAVING…" : "MAKE THIS MINE"}
   </button>
   <button
     type="button"
