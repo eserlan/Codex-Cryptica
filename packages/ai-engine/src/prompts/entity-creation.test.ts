@@ -44,6 +44,7 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("## Personality & Voice");
       expect(result).toContain("temperament");
       expect(result).toContain("speech rhythm");
+      expect(result).toContain("cliché fantasy placeholders");
     });
 
     it("should handle custom categories correctly", () => {

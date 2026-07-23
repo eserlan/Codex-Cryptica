@@ -71,7 +71,7 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
       [],
       {
         systemInstructionOverride:
-          "You write only concise markdown personality and voice notes for tabletop RPG characters. Never rewrite the full character.",
+          "You write only concise markdown personality and voice notes for tabletop RPG characters. Never rewrite the full character. Avoid generic fantasy cliché placeholder names (e.g. Vane, Kaelen, Elara).",
       },
     );
     return !!generatedText.trim();

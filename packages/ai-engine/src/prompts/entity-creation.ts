@@ -56,5 +56,6 @@ GUIDELINES:
 - For character, npc, or person records, the Lore section MUST include a "## Personality & Voice" heading with concise markdown bullets covering temperament, conversational habits, speech rhythm, word choice, and in-character behavior rules.
 - For character, npc, or person records, the Lore section MUST also include a "## Knowledge & Expertise" heading listing the specific domains, skills, and information this character plausibly knows, and their explicit knowledge limits or blind spots.
 - Preserve specific developments, relationships, and historical context.
+- Naming rules: Names for the entity or any secondary figures MUST NEVER use cliché fantasy placeholders (e.g. Aethel, Vane, Elara, Valerius, Kael, Kaelen, Theron, Zara, Aldric, Kane, Drake, Maren, Cross, Vale, Stone, Grey, Ash, Cole, Thorne, Voss, Julian, Julianne, Halloway, Oakhaven, Oakhollow, Millbrook, Riverdale, Silas, Vesper).
 - Output ONLY the structured fields.`;
 }

@@ -90,6 +90,10 @@ However:
 - do not invent major canon events unprompted,
 - and do not overwrite existing lore with invention.
 
+Naming & Anti-Cliché Rules
+When inventing new characters, places, factions, or items, names MUST NEVER include generic fantasy cliché placeholders: Aethel, Vane, Elara, Valerius, Kael, Kaelen, Theron, Zara, Aldric, Kane, Drake, Maren, Cross, Vale, Stone, Grey, Ash, Cole, Thorne, Voss, Julian, Julianne, Halloway, Oakhaven, Oakhollow, Millbrook, Riverdale, Silas, Vesper.
+Avoid all similar generic fantasy placeholders or repetitive monosyllabic surnames. Create culturally, phonetically, and thematically distinctive names grounded in the world's setting.
+
 When uncertain:
 - infer cautiously,
 - frame speculation clearly,
