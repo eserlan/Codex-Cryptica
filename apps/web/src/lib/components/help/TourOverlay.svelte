@@ -3,6 +3,7 @@
   import { fade } from "svelte/transition";
   import { onMount } from "svelte";
   import GuideTooltip from "./GuideTooltip.svelte";
+  import { computeSpotlightClipPath } from "$lib/utils/spotlight";
 
   let targetRect = $state<DOMRect | null>(null);
 
@@ -59,13 +60,6 @@
   let maskStyle = $derived.by(() => {
     if (!targetRect) return "";
 
-    const padding = 8;
-    const x = targetRect.left - padding;
-    const y = targetRect.top - padding;
-    const w = targetRect.width + padding * 2;
-    const h = targetRect.height + padding * 2;
-
-    // Clamp spotlight rectangle to viewport bounds
     const viewportWidth =
       typeof window !== "undefined"
         ? window.innerWidth || document.documentElement.clientWidth
@@ -75,33 +69,12 @@
         ? window.innerHeight || document.documentElement.clientHeight
         : 0;
 
-    if (!viewportWidth || !viewportHeight) {
-      return "";
-    }
-
-    const left = Math.max(0, x);
-    const top = Math.max(0, y);
-    const right = Math.min(viewportWidth, x + w);
-    const bottom = Math.min(viewportHeight, y + h);
-
-    // If clamping results in an invalid rectangle, skip the mask.
-    if (right <= left || bottom <= top) {
-      return "";
-    }
-
-    // SVG mask approach for maximum compatibility and sharpness
-    return `clip-path: polygon(
-            0% 0%, 
-            0% 100%, 
-            ${left}px 100%, 
-            ${left}px ${top}px, 
-            ${right}px ${top}px, 
-            ${right}px ${bottom}px, 
-            ${left}px ${bottom}px, 
-            ${left}px 100%, 
-            100% 100%, 
-            100% 0%
-        );`;
+    return computeSpotlightClipPath(
+      targetRect,
+      viewportWidth,
+      viewportHeight,
+      8,
+    );
   });
 </script>
 

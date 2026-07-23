@@ -134,6 +134,7 @@
         class="lg:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => searchStore.open()}
         aria-label="Search"
+        data-testid="mobile-search-button"
       >
         <span
           class="icon-[heroicons--magnifying-glass] w-6 h-6"
