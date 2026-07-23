@@ -81,6 +81,7 @@
 {#if helpStore.activeTour}
   {#if targetRect}
     <div
+      data-testid="tour-spotlight"
       class="fixed inset-0 z-[var(--z-index-overlay-max,150)] bg-black/60 backdrop-blur-[2px] transition-all duration-300"
       style={maskStyle}
       transition:fade
