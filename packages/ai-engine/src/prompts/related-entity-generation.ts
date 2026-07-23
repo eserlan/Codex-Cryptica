@@ -1,4 +1,5 @@
 import { u } from "./user-content";
+import { BANNED_NAMES } from "generator-engine";
 import type { ConnectedEntityPromptContext } from "schema";
 
 export function buildRelatedEntityGenerationPrompt(
@@ -56,7 +57,7 @@ GENERATION INSTRUCTIONS:
 1. ${targetTypeRule}
 2. The relationship/link from the Source Entity ("${sourceEntity.title}") to this new entity is: "${u(relationship)}". Ground the generation around this relationship.
 3. Keep the generation context-aware. Ground the new entity in the existing lore of "${sourceEntity.title}" and its direct graph neighbors, but invent creative details to make it an inspiring addition.
-4. Name the new entity using the vault's established setting, cultures, factions, languages, themes, and tone. For characters especially, infer naming conventions from the source entity and direct graph neighbors, then create a culturally and thematically coherent name. MUST NEVER use generic fantasy cliché placeholders or banned names (Aethel, Vane, Elara, Valerius, Kael, Kaelen, Theron, Zara, Aldric, Kane, Drake, Maren, Cross, Vale, Stone, Grey, Ash, Cole, Thorne, Voss, Julian, Julianne, Halloway, Oakhaven, Oakhollow, Millbrook, Riverdale, Silas, Vesper). Avoid modern default names, joke names, and names that clash with the setting unless the supplied lore clearly supports that contrast.
+4. Name the new entity using the vault's established setting, cultures, factions, languages, themes, and tone. For characters especially, infer naming conventions from the source entity and direct graph neighbors, then create a culturally and thematically coherent name. MUST NEVER use generic fantasy cliché placeholders or banned names (${BANNED_NAMES.join(", ")}). Avoid modern default names, joke names, and names that clash with the setting unless the supplied lore clearly supports that contrast.
 5. ${templateRule}
 6. Custom instructions from the user to incorporate: "${u(customInstructions)}"
 7. Normative constraint: You must use the term "Labels" for all metadata categorization. Do NOT suggest "tags" or mention "tags" anywhere. Return suggested metadata attributes under the "labels" property.
