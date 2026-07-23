@@ -113,6 +113,7 @@
       class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-theme-border bg-theme-surface shadow-2xl"
       transition:scale={{ duration: 180, start: 0.97 }}
       onclick={(event) => event.stopPropagation()}
+      onkeydown={(event) => event.stopPropagation()}
     >
       <form class="flex min-h-0 flex-1 flex-col" onsubmit={handleSubmit}>
         <div

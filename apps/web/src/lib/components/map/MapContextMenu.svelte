@@ -31,6 +31,7 @@
   style="left: {x}px; top: {y}px;"
   transition:fade={{ duration: 100 }}
   role="menu"
+  tabindex="-1"
   aria-label="Map context menu"
   onmousedown={(e) => e.stopPropagation()}
 >
