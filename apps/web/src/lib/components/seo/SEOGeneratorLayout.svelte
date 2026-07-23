@@ -30,6 +30,11 @@
     buildBreadcrumbJsonLd,
     buildResultJsonLd,
   } from "./generator-json-ld";
+  import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
+  import {
+    trackSaveToCodex,
+    countRelatedEntities,
+  } from "$lib/services/analytics/generator-save-tracking";
 
   let {
     canonicalPath,
@@ -123,6 +128,23 @@
 
   const activeThemeId = $derived(themeMap[theme] || "workspace");
 
+  // Stable per-page generator identifier for analytics (#1796) — derived from
+  // the page's own canonical path (or the eyebrow label as a fallback) so
+  // it's available immediately, before any generation happens, unlike
+  // generatedData.type which only exists after a successful generate() call.
+  const generatorType = $derived.by(() => {
+    if (canonicalPath) {
+      const segments = canonicalPath.split("/").filter(Boolean);
+      const last = segments[segments.length - 1];
+      if (last) return last;
+    }
+    const slug = eyebrow
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    return slug || "unknown";
+  });
+
   const generatedNoun = $derived(
     eyebrow.toLowerCase().includes("name")
       ? "fantasy names"
@@ -208,6 +230,10 @@
     isGenerating = true;
     errorMessage = null;
     aiFallbackDismissed = false;
+    // #1796: only ever fires for an explicit user Generate click, never the
+    // silent handleGenerateOnMount() seed draft (that path never sets
+    // userGenerated / calls handleGenerate at all).
+    trackEvent("generator_started", { generator_type: generatorType });
     // Use AI only when the user opted in *and* we're online. Read the live
     // status at click time so a generation triggered before status settles
     // still routes correctly (#1494).
@@ -215,6 +241,9 @@
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
       generatedData = await generate({ useAI: useAINow });
+      // #1796: only on the success path — a caught error below means the
+      // generation did not complete, so it must not count as one.
+      trackEvent("generator_completed", { generator_type: generatorType });
 
       if (generatedData) {
         const content = generatedData.summary
@@ -292,6 +321,18 @@
         "__codex_pending_import",
         JSON.stringify(draftsToSave),
       );
+      // #1796: fires at this outbound-click moment only — see
+      // generator-save-tracking.ts's docstring for why this never observes
+      // what actually happens after the redirect below.
+      trackSaveToCodex({
+        generatorType,
+        isHubBatch: true,
+        itemCount: draftsToSave.length,
+        relatedEntityCount: draftsToSave.reduce(
+          (sum, d) => sum + countRelatedEntities(d.content, d.references),
+          0,
+        ),
+      });
       redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
@@ -317,6 +358,15 @@
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
+      // #1796: fires at this outbound-click moment only — see
+      // generator-save-tracking.ts's docstring for why this never observes
+      // what actually happens after the redirect below.
+      trackSaveToCodex({
+        generatorType,
+        isHubBatch: false,
+        itemCount: 1,
+        relatedEntityCount: countRelatedEntities(content, undefined),
+      });
       redirectUrl = `${cleanBase}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {

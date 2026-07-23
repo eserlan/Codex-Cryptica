@@ -26,7 +26,12 @@ If you use the AI features (Lore Oracle, Image Generation), your data is process
 
 ## 4. Analytics and Telemetry
 
-Codex Cryptica does **not** include tracking pixels, third-party analytics (like Google Analytics), or hidden telemetry. We do not track your creative process or monitor your usage.
+**Nothing inside your vault is ever tracked.** Creating, editing, connecting, or deleting anything in your campaign — lore, chronicles, entities, maps — generates no analytics of any kind.
+
+Tracking is limited to our public marketing and generator pages (the pages you land on from search engines or ads, before you have a vault open):
+
+- **Cloudflare Web Analytics:** Anonymous, cookie-free pageview counts across the site.
+- **Cloudflare Zaraz:** Anonymous funnel events on marketing/generator pages only — a page visit, starting or completing a generator, and the moment you choose to save generated content to your vault (including whether that content had links to other entities). We also record which search engine, campaign, or referral link brought you to the site (via standard `utm_*` URL parameters), so we can tell which marketing efforts are effective. None of these events include your generated content, campaign data, or anything that happens after you land in the app.
 
 ## 5. Third-Party Services
 
@@ -40,4 +45,4 @@ We may update this policy to reflect changes in our storage architecture or feat
 
 ---
 
-**Last Updated:** March 2026
+**Last Updated:** July 2026
