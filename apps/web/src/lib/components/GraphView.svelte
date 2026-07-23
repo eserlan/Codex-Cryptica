@@ -30,6 +30,7 @@
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { fly, fade } from "svelte/transition";
   import { computeSpotlightClipPath } from "$lib/utils/spotlight";
+  import { COACH_MARKS } from "$lib/config/help-content";
 
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
@@ -74,47 +75,10 @@
 
   let container: HTMLElement;
 
-  // targetSelector identifies the real element each mark describes, so it can
-  // be spotlighted — otherwise the card is just floating text with nothing
-  // visually tying it to the button/bar in question (#1785 follow-up: a user
-  // couldn't tell which "dark button" the graph-controls step meant, and the
-  // card was even briefly found to sit ON TOP of that exact button).
-  const COACH_MARKS = [
-    {
-      id: "activity-bar",
-      icon: "icon-[lucide--layout-grid]",
-      title: "Views & tools",
-      body: "Switch between Graph, Map, Canvas and more from the bar at the bottom.",
-      targetSelector: '[data-testid="activity-bar"]',
-    },
-    {
-      id: "graph-fab",
-      icon: "icon-[lucide--sliders-horizontal]",
-      title: "Graph controls",
-      body: "The dark button opens layout, filters, and display options for the graph.",
-      targetSelector: '[data-testid="graph-controls-fab"]',
-    },
-    {
-      id: "graph-search",
-      icon: "icon-[lucide--search]",
-      title: "Find anything",
-      body: "Tap the search icon to jump to any entity by name.",
-      targetSelector: '[data-testid="mobile-search-button"]',
-    },
-  ] as const;
-
+  // COACH_MARKS lives in help-content.ts (config, testable) — see its
+  // docstring there for why these are scoped to isMobile, not tablets.
   let coachStep = $state(0);
   const showCoachMarks = $derived(
-    // Deliberately `isMobile` (<768px), NOT `prefersTouchCoaching`: these 3
-    // marks' copy and targets are mobile-chrome-specific — the bottom
-    // ActivityBar, GraphToolbar's collapsed FAB, and AppHeader's collapsed
-    // search icon all only render in that exact form below the `md` (768px)
-    // breakpoint. A touch tablet (769-1279px) gets the desktop side-rail
-    // ActivityBar, GraphToolbar's full inline toolbar (no FAB — it only
-    // collapses on `isMobile`), and — depending on width — either the
-    // collapsed or full search input (AppHeader collapses at `lg`, 1024px,
-    // which cuts through the middle of the tablet range). None of that
-    // matches what these marks describe, so don't show them there.
     layoutUIStore.isMobile &&
       !onboardingStore.dismissedMobileGraphCoachMarks &&
       // Sequenced after the main initial-onboarding tour, never alongside it —
@@ -583,6 +547,19 @@
         />
       </div>
     </div>
+    {#if !vault.isGuest}
+      <!-- Durable pointer back to onboarding guidance once the welcome
+           screen is dismissed and forgotten (Finding 9, #1791) — a one-time
+           reminder that Settings → Help has a getting-started checklist and
+           a tour-replay button, for whoever created an empty vault without
+           going through the demo/tour flow at all.
+           top-4 (not bottom-4): the bottom-left is already the mobile
+           GraphToolbar FAB's exact position (`bottom-4`, GraphToolbar.svelte)
+           — a corner we spent considerable effort de-crowding this session. -->
+      <div class="absolute top-4 left-4 z-20 max-w-xs pointer-events-auto">
+        <FeatureHint hintId="getting-started" />
+      </div>
+    {/if}
   {/if}
 
   {#if showCoachMarks}
@@ -665,9 +642,39 @@
     </div>
   {/if}
 
-  <FeatureHint hintId="graph-controls" />
+  {#if layoutUIStore.prefersTouchCoaching && !layoutUIStore.isMobile}
+    <!-- Touch tablets (769-1279px + coarse pointer) only — phones already get
+         the fuller mobile coach-mark walkthrough (COACH_MARKS, scoped to
+         isMobile), and this would be redundant there. Unlike the mobile
+         coach marks, this hint is genuinely layout-agnostic (no per-device
+         target selector needed): panning/zooming the graph works the same
+         regardless of where the ActivityBar happens to render (#1791 Phase 4). -->
+    <!-- top uses --header-height (set dynamically in +layout.svelte, grows
+         with the staging banner), not a hardcoded offset — `fixed` escapes
+         the graph's own container (which the header sits above, so the
+         empty-workspace hint above is naturally clear of it via `absolute`),
+         so without this it renders underneath/behind the sticky AppHeader. -->
+    <div
+      class="fixed right-4 z-[60]"
+      style="top: calc(var(--header-height, 65px) + 1rem);"
+      data-testid="touch-gestures-hint"
+    >
+      <FeatureHint hintId="touch-graph-gestures" />
+    </div>
+  {/if}
   {#if controller.selectedCount === 2}
-    <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">
+    <!-- Same --header-height fix as touch-gestures-hint above (was fixed
+         top-20, a hardcoded offset that only happened to clear the header
+         by coincidence, and would clip under it if the header grows — e.g.
+         the staging banner). Stacked below the touch-gestures hint (+5rem
+         instead of +1rem) rather than sharing its exact position, since a
+         touch-tablet user selecting 2 nodes can have both hints on screen
+         at once. -->
+    <div
+      class="fixed right-4 z-[60]"
+      style="top: calc(var(--header-height, 65px) + 5rem);"
+      data-testid="node-merging-hint"
+    >
       <FeatureHint hintId="node-merging" />
     </div>
   {/if}

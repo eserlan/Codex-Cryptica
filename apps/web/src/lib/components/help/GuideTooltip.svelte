@@ -132,6 +132,7 @@
 
 <div
   bind:this={tooltipEl}
+  data-testid="tour-tooltip"
   class="fixed z-[var(--z-index-overlay-tooltip,152)] w-72 md:w-96 bg-theme-surface border border-theme-primary/50 shadow-[0_0_30px_rgba(var(--color-accent-primary-rgb),0.2)] rounded-lg flex flex-col overflow-hidden font-mono"
   style="{tooltipStyle} box-shadow: var(--theme-glow);"
   transition:fly={{ y: 10, duration: 300 }}
