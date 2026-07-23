@@ -456,7 +456,7 @@
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
-        href="{cleanBase}/"
+        href="{cleanBase}/?utm_source=generator-logo&utm_medium=nav&utm_campaign=seo-funnel"
         class="flex items-center gap-2 group min-w-0"
         id="logo-link"
       >
@@ -487,7 +487,7 @@
       </nav>
       <div class="shrink-0">
         <a
-          href="{cleanBase}/"
+          href="{cleanBase}/?utm_source=generator-header-cta&utm_medium=nav&utm_campaign=seo-funnel"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
