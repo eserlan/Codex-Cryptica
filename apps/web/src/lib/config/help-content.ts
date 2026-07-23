@@ -169,6 +169,12 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "touch-graph-gestures": {
+    id: "touch-graph-gestures",
+    title: "Touch gestures",
+    content: "Drag to pan, pinch to zoom, and tap a node to open it.",
+    icon: "icon-[lucide--hand]",
+  },
   "getting-started": {
     id: "getting-started",
     title: "New here?",

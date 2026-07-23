@@ -642,6 +642,17 @@
     </div>
   {/if}
 
+  {#if layoutUIStore.prefersTouchCoaching && !layoutUIStore.isMobile}
+    <!-- Touch tablets (769-1279px + coarse pointer) only — phones already get
+         the fuller mobile coach-mark walkthrough (COACH_MARKS, scoped to
+         isMobile), and this would be redundant there. Unlike the mobile
+         coach marks, this hint is genuinely layout-agnostic (no per-device
+         target selector needed): panning/zooming the graph works the same
+         regardless of where the ActivityBar happens to render (#1791 Phase 4). -->
+    <div class="fixed top-4 right-4 z-[60]" data-testid="touch-gestures-hint">
+      <FeatureHint hintId="touch-graph-gestures" />
+    </div>
+  {/if}
   {#if controller.selectedCount === 2}
     <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">
       <FeatureHint hintId="node-merging" />
