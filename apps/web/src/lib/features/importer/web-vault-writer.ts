@@ -11,6 +11,12 @@ import type {
 
 export interface VaultWriterStoreLike {
   entities: Record<string, Partial<Entity>>;
+  /** Pre-cached array form of `entities`, kept in sync by the real vault
+   *  store. Iterating this instead of `Object.values(entities)` avoids
+   *  reallocating an array on every access (⚡ Bolt Optimization). Optional
+   *  so existing callers/mocks that only provide `entities` still work —
+   *  falls back to `Object.values(entities)` when absent. */
+  allEntities?: Partial<Entity>[];
   createEntity(
     type: Entity["type"],
     title: string,
@@ -57,12 +63,20 @@ export class WebVaultWriter implements VaultWriter {
     this.titleFallback = options.titleFallback ?? true;
   }
 
+  /** `allEntities` when the store provides it, else falls back to
+   *  Object.values(entities) — see VaultWriterStoreLike.allEntities. */
+  private allEntitiesList(): Partial<Entity>[] {
+    return this.store.allEntities ?? Object.values(this.store.entities);
+  }
+
   private initMaps() {
     if (this.sourceMap) return;
     this.sourceMap = new Map<string, string>();
     this.titleMap = new Map<string, string>();
     this.sanitizedIdMap = new Map<string, string>();
-    for (const entity of Object.values(this.store.entities)) {
+    // ⚡ Bolt Optimization: iterate the pre-cached allEntities array instead
+    // of reallocating via Object.values(entities).
+    for (const entity of this.allEntitiesList()) {
       if (typeof entity.id === "string") {
         if (entity.discoverySource) {
           this.sourceMap.set(entity.discoverySource, entity.id);
@@ -145,11 +159,13 @@ export class WebVaultWriter implements VaultWriter {
       return created;
     }
 
-    const knownIds = new Set(
-      Object.values(this.store.entities)
-        .map((entity) => entity.id)
-        .filter((id): id is string => typeof id === "string"),
-    );
+    // ⚡ Bolt Optimization: build the Set directly from the pre-cached
+    // allEntities array instead of Object.values(entities).map().filter(),
+    // avoiding two intermediate array allocations.
+    const knownIds = new Set<string>();
+    for (const entity of this.allEntitiesList()) {
+      if (typeof entity.id === "string") knownIds.add(entity.id);
+    }
 
     await this.store.batchCreateEntities(
       entities.map((entity) => ({
@@ -173,7 +189,9 @@ export class WebVaultWriter implements VaultWriter {
       })),
     );
 
-    const currentEntities = Object.values(this.store.entities);
+    // ⚡ Bolt Optimization: use the pre-cached allEntities array instead of
+    // reallocating via Object.values(entities).
+    const currentEntities = this.allEntitiesList();
     const candidateMap = new Map<string, string>();
     for (const candidate of currentEntities) {
       if (
