@@ -3,6 +3,7 @@ import { oracle } from "$lib/stores/oracle.svelte";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { upsertMarkdownSection } from "$lib/utils/markdown";
+import { BANNED_NAMES } from "generator-engine";
 
 export const personalitySectionTitle = "Personality & Voice";
 
@@ -70,8 +71,7 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
       false,
       [],
       {
-        systemInstructionOverride:
-          "You write only concise markdown personality and voice notes for tabletop RPG characters. Never rewrite the full character.",
+        systemInstructionOverride: `You write only concise markdown personality and voice notes for tabletop RPG characters. Never rewrite the full character. Names MUST NEVER include: ${BANNED_NAMES.join(", ")}. Avoid all similar generic fantasy cliché placeholder names.`,
       },
     );
     return !!generatedText.trim();

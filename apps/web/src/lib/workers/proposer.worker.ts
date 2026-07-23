@@ -2,6 +2,7 @@
 import { aiClientManager } from "@codex/ai-engine";
 import type { Proposal } from "@codex/proposer";
 import { systemClock } from "$lib/utils/runtime-deps";
+import { BANNED_NAMES } from "generator-engine";
 
 function normalizeTargetId(value: string): string {
   return value
@@ -26,13 +27,9 @@ async function analyzeEntityWithModel(
 
   const model = await aiClientManager.getModel(apiKey, modelName);
 
-  let truncatedContent = content.slice(0, 15000);
-  if (content.length > 15000) {
-    const lastPeriod = truncatedContent.lastIndexOf(".");
-    if (lastPeriod > 10000) {
-      truncatedContent = truncatedContent.slice(0, lastPeriod + 1);
-    }
-  }
+  // Truncate content to avoid exceeding token limits while keeping key context
+  const truncatedContent =
+    content.length > 4000 ? content.slice(0, 4000) + "..." : content;
 
   const targetsList = availableTargets
     .map((t) => `- ${t.name} (ID: ${t.id})`)
@@ -47,7 +44,7 @@ Criteria for a connection:
 3. Only suggest connections that are NOT explicitly stated as WikiLinks (assumed).
 4. Assign a confidence score (0.0 to 1.0). High confidence means explicit mention; Low means thematic link.
 5. IMPORTANT: Output a MAXIMUM of ONE connection per Target Entity. Only provide the single most relevant or strongest connection if multiple exist.
-6. CRITICAL: You MUST ONLY use "targetId" values that exactly match the IDs in the "Available Target Entities" list. Do not invent your own entities.
+6. CRITICAL: You MUST ONLY use "targetId" values that exactly match the IDs in the "Available Target Entities" list. Do not invent your own entities or use fantasy cliché names: ${BANNED_NAMES.join(", ")}.
 
 Source Entity Content:
 """
