@@ -46,6 +46,10 @@
     registerServiceWorker,
   } from "$lib/app/init/app-init";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
+  import {
+    decideFirstRunAction,
+    hasUnseenMinorRelease,
+  } from "$lib/app/onboarding/onboarding-orchestrator";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -350,57 +354,53 @@
     }
   });
 
-  // Automatic Tour/Demo Trigger
-  $effect(() => {
-    if (
-      vault.isInitialized &&
-      !onboardingStore.isLandingPageVisible &&
-      !modalUIStore.showVaultSwitcher
-    ) {
-      if (
-        !helpStore.hasSeen("initial-onboarding") &&
-        !page.url.searchParams.has("demo") &&
-        // Guests are visitors, not new users — never auto-start the GM
-        // onboarding tour (or demo) in a shared world.
-        !sessionModeStore.isGuestMode
-      ) {
-        if (
-          vault.allEntities.length === 0 &&
-          !sessionModeStore.isDemoMode &&
-          !onboardingStore.dismissedLandingPage
-        ) {
-          demoService.startDemo("fantasy");
-        } else {
-          helpStore.startTour("initial-onboarding");
-        }
-      }
-    }
-  });
-
-  // Automatic Release Note Trigger
+  // First-time user: silently record the latest release as seen so brand-new
+  // users never get a changelog popup on their very first launch.
   $effect(() => {
     if (
       browser &&
-      !onboardingStore.showChangelog &&
+      vault.isInitialized &&
       !sessionModeStore.isDemoMode &&
-      !onboardingStore.isLandingPageVisible
+      !onboardingStore.isLandingPageVisible &&
+      !onboardingStore.lastSeenVersion
     ) {
-      const lastSeenStr = onboardingStore.lastSeenVersion;
+      onboardingStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
+    }
+  });
 
-      // First-time user: no changelog popup, silently mark latest known release as seen
-      if (!lastSeenStr) {
-        onboardingStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
-        return;
-      }
+  // Unified first-run orchestrator (#1780). One decision function owns what a
+  // first-time user sees first, so the tour, guided empty state, and changelog
+  // never stack or compete. See onboarding-orchestrator.ts.
+  $effect(() => {
+    if (!browser) return;
 
-      const currentStoredMinor = parseInt(lastSeenStr.split(".")[1] || "0", 10);
-      const hasUnseenMinorRelease = releases.some((r) => {
-        const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
-        return releaseMinor > currentStoredMinor;
-      });
+    const action = decideFirstRunAction({
+      isInitialized: vault.isInitialized,
+      isGuestMode: sessionModeStore.isGuestMode,
+      isDemoMode: sessionModeStore.isDemoMode,
+      isLandingVisible: onboardingStore.isLandingPageVisible,
+      vaultSwitcherOpen: modalUIStore.showVaultSwitcher,
+      hasDemoQueryParam: page.url.searchParams.has("demo"),
+      hasSeenTour: helpStore.hasSeen("initial-onboarding"),
+      entityCount: vault.allEntities.length,
+      activeTour: !!helpStore.activeTour,
+      anyModalOpen: modalUIStore.isAnyModalOpen || modalUIStore.showZenMode,
+      hasUnseenRelease: hasUnseenMinorRelease(
+        onboardingStore.lastSeenVersion,
+        releases.map((r) => r.version),
+      ),
+    });
 
-      if (hasUnseenMinorRelease) {
-        // Delay to not conflict with tour/demo triggers
+    switch (action.kind) {
+      case "tour":
+      case "guided-empty":
+        // Both start the short, task-focused tour. In the empty-vault case the
+        // graph's guided empty state teaches the "create your first entity"
+        // step, and we deliberately do NOT auto-load a demo (#1782).
+        helpStore.startTour("initial-onboarding");
+        break;
+      case "changelog": {
+        // Small delay so it never races an overlay that is about to open.
         const timeout = setTimeout(() => {
           if (
             !helpStore.activeTour &&
@@ -413,6 +413,9 @@
         }, 2000);
         return () => clearTimeout(timeout);
       }
+      case "none":
+      default:
+        break;
     }
   });
 
