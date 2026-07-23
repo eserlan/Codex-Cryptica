@@ -4,6 +4,8 @@
 **Method:** Code-level walkthrough of the real first-run paths (routes, onboarding store, tour engine, activity bar, header, mobile menu, demo service, help content). This is a heuristic + code-evidence review, **not** a moderated usability test — so treat severities as informed hypotheses to validate, and the two "Bug" findings as verifiable defects.
 **Date:** 2026-07-23 · **Branch reviewed:** `main`
 
+> **STATUS (2026-07-23): IMPLEMENTED.** Everything below was written _before_ the fixes and is preserved as the point-in-time assessment. Epic [#1777](https://github.com/eserlan/Codex-Cryptica/issues/1777) and all 10 sub-issues were implemented in [PR #1788](https://github.com/eserlan/Codex-Cryptica/pull/1788) (merged to `staging` the same day) and manually verified on desktop, phone, and tablet viewports. See **[Outcome & recommended next steps](#outcome--recommended-next-steps)** at the end for what was fixed, what additional bugs the manual QA pass surfaced, and what to do next.
+
 ---
 
 ## TL;DR
@@ -173,3 +175,47 @@ A first-time user, on **any** of desktop / tablet / phone, can within ~2 minutes
 3. Do all of the above without hitting a tour tooltip that points at nothing, and without reading a 133-line manual first.
 
 Findings 1–3 block criterion 3 today; Findings 5 & 8 block criterion 1; Finding 2 blocks all three on phone.
+
+---
+
+## Outcome & recommended next steps
+
+_Added 2026-07-23, after [PR #1788](https://github.com/eserlan/Codex-Cryptica/pull/1788) merged. Everything above is the original pre-fix assessment._
+
+### What was implemented (PR #1788, epic #1777)
+
+| Finding                     | Issue | Resolution                                                                                                               |
+| --------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1 — stale tour selectors    | #1787 | Retargeted to `activity-bar-*`; tour rewritten around them                                                               |
+| 2 — tour desktop-only       | #1784 | Tour is layout-agnostic; `pruneStepsToDom()` skips absent targets instead of floating                                    |
+| 3 — feature tourism         | #1779 | Tour trimmed 11 → 4 task-focused steps (create → link → graph → optional AI + Help pointer)                              |
+| 4 — competing overlays      | #1780 | Pure `decideFirstRunAction()` orchestrator owns the first-run path; changelog/tour/theme-prompt sequenced, never stacked |
+| 5 — demo vs. tour fork      | #1781 | Demo convert ("MAKE THIS MINE") now chains into the guided tour                                                          |
+| 6 — jargon-forward copy     | #1783 | Plain-language tour/empty-state/intro; jargon introduced in context                                                      |
+| 7 — no tablet treatment     | #1785 | `isTablet`/`isTouch` breakpoints, 44px mobile tap targets, header search collapses below `lg`                            |
+| 8 — empty-vault demo hijack | #1782 | Empty user vaults get the guided empty state + tour, never a silent demo swap                                            |
+| 9 — no durable "start here" | —     | **Not implemented** (Low severity — see next steps)                                                                      |
+| 10 — funnel instrumentation | #1786 | `OnboardingFunnel` records the 6 milestones (once each, persisted, privacy-respecting)                                   |
+
+### What manual QA surfaced beyond the assessment
+
+The post-merge manual pass (desktop → phone → tablet) found and fixed five things this code-level review missed — worth remembering as classes of bug a static read-through under-detects:
+
+1. **`GuideTooltip` positioning was latently broken** in two ways: the safety clamp operated on pre-`transform` coordinates (so `translateY(-50%)` targets near an edge still rendered off-screen), and it trusted a fixed 200px height guess that longer step copy legitimately exceeds on narrow viewports. Now measures its real rendered size and picks whichever side genuinely has room.
+2. **Tour step 1 pointed at the wrong mental model** — the Explorer button opens a sidebar with no persistent create action; creation lives elsewhere per layout. Retargeted to the graph empty-state CTA, which only exists exactly when the instruction applies (and prunes away otherwise).
+3. **Copy overstated auto-linking.** Mentioning a name _proposes_ a connection (explicit "Apply Connection" in `DetailProposals.svelte`); it does not silently create an edge. Two spots reworded.
+4. **The mobile graph coach marks were a second, un-orchestrated onboarding system** — they could render simultaneously with the main tour, and one card literally covered the FAB it described. Now sequenced after the tour, spotlight their real targets via a shared `spotlight.ts` util, and are correctly scoped to `isMobile` only (their copy describes mobile-only chrome; tablets get the desktop rail/toolbar).
+5. **An unrelated release-blocking bug** (`snapshotValue` reflecting through `globalThis.$state` → `rune_outside_svelte` → demo load crash) — found only because a human clicked the demo button.
+
+### Recommended next steps (prioritized)
+
+1. **Selector-drift contract test** _(top pick — cheap, closes the root cause)_. Finding 1 existed because a refactor renamed testids and nothing noticed the tour pointed at ghosts. A unit test asserting every `targetSelector` in `ONBOARDING_TOUR` and `COACH_MARKS` matches a `data-testid` present in the source tree makes that bug class unrepresentable.
+2. **Fix the dangling `<FeatureHint hintId="graph-controls" />`** in `GraphView.svelte` — it references a hint absent from `FEATURE_HINTS` and silently renders nothing. Register it or remove it.
+3. **Close the funnel loop** (follow-up to #1786). The tracker emits milestones but nothing consumes them — `dataLayer`/`__codexAnalytics` are speculative hooks. Without a consumer, before/after completion rates can't actually be compared, which was the point. Smallest useful step: a dev-mode debug readout; real step: a lightweight collection event on the oracle-proxy worker.
+4. **Finding 9 — durable "Getting started" affordance** (the one unimplemented finding). A "Replay tour" entry in Help plus a small dismissible starter card would stop onboarding being a one-shot; today, replaying requires clearing localStorage, which users can't discover.
+5. **E2E of the first-run path** — Playwright: clear storage, load at desktop + mobile viewports, walk the tour. Strongest regression net; overlaps heavily with (1), so do (1) first and add this when e2e budget allows.
+6. **A genuinely layout-agnostic touch hint** ("drag to pan, pinch to zoom") on tablets — `prefersTouchCoaching` infrastructure is built, tested, and currently unused after the coach marks were correctly re-scoped to phones.
+
+### Process note
+
+The five manual-QA findings above argue that the "getting started works" definition should be verified _by walking the flow on each device class_, not only by code review — the assessment caught the structural problems, but every positioning/overlap/copy-accuracy bug required actually looking at the screen.
