@@ -23,8 +23,19 @@ import {
   asArray as arr,
 } from "./llm-response-utils";
 
-export { type PantheonMode, type PantheonSize, type PantheonWidth, pantheonConfig } from "./public-pantheon-constants";
-import { type PantheonMode, type PantheonSize, type PantheonWidth, pantheonConfig } from "./public-pantheon-constants";
+import {
+  type PantheonMode,
+  type PantheonSize,
+  type PantheonWidth,
+  pantheonConfig,
+} from "./public-pantheon-constants";
+
+export {
+  type PantheonMode,
+  type PantheonSize,
+  type PantheonWidth,
+  pantheonConfig,
+} from "./public-pantheon-constants";
 
 export interface PantheonGeneratorOptions {
   mode?: PantheonMode;
