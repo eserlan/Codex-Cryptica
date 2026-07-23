@@ -4,7 +4,7 @@
 **Method:** Code-level walkthrough of the real first-run paths (routes, onboarding store, tour engine, activity bar, header, mobile menu, demo service, help content). This is a heuristic + code-evidence review, **not** a moderated usability test — so treat severities as informed hypotheses to validate, and the two "Bug" findings as verifiable defects.
 **Date:** 2026-07-23 · **Branch reviewed:** `main`
 
-> **STATUS (2026-07-23): IMPLEMENTED.** Everything below was written _before_ the fixes and is preserved as the point-in-time assessment. Epic [#1777](https://github.com/eserlan/Codex-Cryptica/issues/1777) and all 10 sub-issues were implemented in [PR #1788](https://github.com/eserlan/Codex-Cryptica/pull/1788) (merged to `staging` the same day) and manually verified on desktop, phone, and tablet viewports. See **[Outcome & recommended next steps](#outcome--recommended-next-steps)** at the end for what was fixed, what additional bugs the manual QA pass surfaced, and what to do next.
+> **STATUS (2026-07-23): FULLY IMPLEMENTED, including all follow-ups.** Everything below was written _before_ the fixes and is preserved as the point-in-time assessment. Epic [#1777](https://github.com/eserlan/Codex-Cryptica/issues/1777) and all 10 sub-issues shipped in [PR #1788](https://github.com/eserlan/Codex-Cryptica/pull/1788); all 6 recommended next steps (selector-drift test, dangling hint fix, funnel consumer, Finding 9's Getting Started hub, e2e coverage, tablet touch hint) shipped in [issue #1791](https://github.com/eserlan/Codex-Cryptica/issues/1791) / [PR #1793](https://github.com/eserlan/Codex-Cryptica/pull/1793). Both rounds were manually verified on desktop, phone, and tablet viewports. See **[Outcome & recommended next steps](#outcome--recommended-next-steps)** at the end for what was fixed, what additional bugs manual QA surfaced (in _both_ rounds), and the current state (nothing outstanding).
 
 ---
 
@@ -194,7 +194,7 @@ _Added 2026-07-23, after [PR #1788](https://github.com/eserlan/Codex-Cryptica/pu
 | 6 — jargon-forward copy     | #1783 | Plain-language tour/empty-state/intro; jargon introduced in context                                                      |
 | 7 — no tablet treatment     | #1785 | `isTablet`/`isTouch` breakpoints, 44px mobile tap targets, header search collapses below `lg`                            |
 | 8 — empty-vault demo hijack | #1782 | Empty user vaults get the guided empty state + tour, never a silent demo swap                                            |
-| 9 — no durable "start here" | —     | **Not implemented** (Low severity — see next steps)                                                                      |
+| 9 — no durable "start here" | #1791 | Getting Started checklist + replay-tour button in Help; dismissible empty-workspace pointer                              |
 | 10 — funnel instrumentation | #1786 | `OnboardingFunnel` records the 6 milestones (once each, persisted, privacy-respecting)                                   |
 
 ### What manual QA surfaced beyond the assessment
@@ -207,15 +207,24 @@ The post-merge manual pass (desktop → phone → tablet) found and fixed five t
 4. **The mobile graph coach marks were a second, un-orchestrated onboarding system** — they could render simultaneously with the main tour, and one card literally covered the FAB it described. Now sequenced after the tour, spotlight their real targets via a shared `spotlight.ts` util, and are correctly scoped to `isMobile` only (their copy describes mobile-only chrome; tablets get the desktop rail/toolbar).
 5. **An unrelated release-blocking bug** (`snapshotValue` reflecting through `globalThis.$state` → `rune_outside_svelte` → demo load crash) — found only because a human clicked the demo button.
 
-### Recommended next steps (prioritized)
+### Recommended next steps (prioritized) — ALL DONE, 2026-07-23 (#1791, PR #1793)
 
-1. **Selector-drift contract test** _(top pick — cheap, closes the root cause)_. Finding 1 existed because a refactor renamed testids and nothing noticed the tour pointed at ghosts. A unit test asserting every `targetSelector` in `ONBOARDING_TOUR` and `COACH_MARKS` matches a `data-testid` present in the source tree makes that bug class unrepresentable.
-2. **Fix the dangling `<FeatureHint hintId="graph-controls" />`** in `GraphView.svelte` — it references a hint absent from `FEATURE_HINTS` and silently renders nothing. Register it or remove it.
-3. **Close the funnel loop** (follow-up to #1786). The tracker emits milestones but nothing consumes them — `dataLayer`/`__codexAnalytics` are speculative hooks. Without a consumer, before/after completion rates can't actually be compared, which was the point. Smallest useful step: a dev-mode debug readout; real step: a lightweight collection event on the oracle-proxy worker.
-4. **Finding 9 — durable "Getting started" affordance** (the one unimplemented finding). A "Replay tour" entry in Help plus a small dismissible starter card would stop onboarding being a one-shot; today, replaying requires clearing localStorage, which users can't discover.
-5. **E2E of the first-run path** — Playwright: clear storage, load at desktop + mobile viewports, walk the tour. Strongest regression net; overlaps heavily with (1), so do (1) first and add this when e2e budget allows.
-6. **A genuinely layout-agnostic touch hint** ("drag to pan, pinch to zoom") on tablets — `prefersTouchCoaching` infrastructure is built, tested, and currently unused after the coach marks were correctly re-scoped to phones.
+1. ✅ **Selector-drift contract test** _(top pick — cheap, closes the root cause)_. `onboarding-selector-contract.test.ts` renders the real owning component (ActivityBar, AppHeader, GraphToolbar in its mobile-FAB state) for every `targetSelector` in `ONBOARDING_TOUR`/`COACH_MARKS` — a render, not a grep, since the ActivityBar testids are dynamic (`activity-bar-${id}`). Verified it actually catches drift (simulated a rename, confirmed the test failed, reverted).
+2. ✅ **Fixed the dangling `<FeatureHint hintId="graph-controls" />`** — removed; its subject was already covered by the mobile coach mark's own "Graph controls" step.
+3. ✅ **Closed the funnel loop.** `GettingStartedChecklist.svelte` in the Help tab consumes `onboardingFunnel.completed()` directly — a local, privacy-respecting consumer, not a remote collection endpoint (deliberately not built; conflicts with the local-first/nothing-uploaded stance).
+4. ✅ **Finding 9 — durable "Getting started" affordance.** Turned out to be the same feature as (3): the checklist plus a discovery of an _already-existing_ "Replay tour" button in `HelpHeader.svelte` (missed in the original assessment), plus a dismissible empty-workspace pointer.
+5. ✅ **E2E of the first-run path.** `first-run-onboarding-e2e.spec.ts`: desktop + mobile (390×844) tour walkthroughs asserting the tooltip stays fully within the viewport, and the demo → "MAKE THIS MINE" → tour-chain path asserting the create-entity step is correctly pruned. Stable across repeated local runs.
+6. ✅ **Layout-agnostic touch hint for tablets.** "Drag to pan, pinch to zoom" via the already-built `prefersTouchCoaching` signal, scoped to touch tablets (phones keep the fuller coach-mark walkthrough).
+
+### More manual-QA findings — round 2 (post-#1791, same day)
+
+Manual testing of #1791's own new UI surfaced two more instances of the _exact_ bug class Finding 1 was about — a hardcoded position that only works by coincidence, not by correct anchoring:
+
+7. **The new touch-gesture hint rendered underneath the sticky `AppHeader`.** Used `fixed top-4` — `fixed` positioning escapes the graph's own container and anchors to the true viewport top, landing inside the header's own space. Fixed using the app's existing `--header-height` CSS var (already used by `MarkdownEditor`/`SearchModal` for the same reason) instead of a hardcoded offset.
+8. **The pre-existing "node-merging" hint had the same latent bug**, just hidden by coincidence — `fixed top-20` only cleared the header because 80px happened to be enough for the _default_ header height, and would have clipped under a taller one (e.g. the staging banner). Fixed the same way, stacked below the touch-gesture hint (+5rem vs. +1rem) since a touch-tablet user selecting 2 nodes can have both hints on screen at once.
+
+Both were caught by looking at a screenshot, not by the new e2e suite or any unit test — reinforcing the process note below.
 
 ### Process note
 
-The five manual-QA findings above argue that the "getting started works" definition should be verified _by walking the flow on each device class_, not only by code review — the assessment caught the structural problems, but every positioning/overlap/copy-accuracy bug required actually looking at the screen.
+The manual-QA findings above (both rounds) argue that the "getting started works" definition should be verified _by walking the flow on each device class_, not only by code review or automated tests — the assessment and its test suites caught the structural problems, but every positioning/overlap/copy-accuracy bug, across both #1788 and #1791, required actually looking at the screen.
