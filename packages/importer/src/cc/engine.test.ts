@@ -428,3 +428,13 @@ describe("ImportEngine — date and alias draft fields (T007)", () => {
     expect(call.aliases).toBeUndefined();
   });
 });
+
+describe("ImportEngine — IdGenerator DI", () => {
+  it("uses custom idGenerator for session ID generation when supplied", async () => {
+    const writer = mockWriter();
+    const mockIdGen = { uuid: () => "deterministic-session-id-456" };
+    const engine = new ImportEngine({ writer }, { idGenerator: mockIdGen });
+    const session = await engine.prepare(pkg());
+    expect(session.id).toBe("deterministic-session-id-456");
+  });
+});

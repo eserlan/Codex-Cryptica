@@ -1,15 +1,18 @@
 import ProposerWorker from "$lib/workers/proposer.worker?worker";
 import { browser } from "$app/environment";
 import type { Proposal } from "@codex/proposer";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export class ProposerBridge {
   private worker: Worker | null = null;
+  private readonly idGenerator: IdGenerator;
   private pendingRequests = new Map<
     string,
     { resolve: (val: any) => void; reject: (err: any) => void }
   >();
 
-  constructor() {
+  constructor(deps: { idGenerator?: IdGenerator } = {}) {
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
     if (browser) {
       this.initWorker();
     }
@@ -41,7 +44,7 @@ export class ProposerBridge {
   ): Promise<Proposal[]> {
     if (!this.worker) return [];
 
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject });
       this.worker!.postMessage({
