@@ -50,6 +50,7 @@
     decideFirstRunAction,
     hasUnseenMinorRelease,
   } from "$lib/app/onboarding/onboarding-orchestrator";
+  import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -185,6 +186,7 @@
 
     (async () => {
       isDocumentVisible = !document.hidden;
+      initOnboardingFunnel();
       helpStore.init();
       await themeStore.init();
       configureGDriveSync({

@@ -10,6 +10,7 @@
   import { SCHEMA_ORG } from "$lib/config";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";
@@ -167,6 +168,11 @@
   const isGuestMode = $derived(!!shareId);
 
   onMount(() => {
+    // Funnel: the welcome/marketing layer is the top of the onboarding funnel.
+    if (!isGuestMode && onboardingStore.isLandingPageVisible) {
+      onboardingFunnel.track("welcome_shown");
+    }
+
     // Suppress guide immediately if arriving from the importer — before the
     // async import completes, so the guide never flashes over the vault.
     if (

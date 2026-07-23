@@ -25,6 +25,7 @@
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { fly } from "svelte/transition";
 
@@ -172,6 +173,11 @@
   };
 
   onMount(() => {
+    // Funnel: reaching the graph is the final onboarding milestone. Guests are
+    // visitors, not first-time GMs, so they don't count.
+    if (!vault.isGuest) {
+      onboardingFunnel.track("graph_opened");
+    }
     void graph.init();
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
