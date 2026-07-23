@@ -33,94 +33,55 @@ export const HINT_KEYS = {
   CREATURE_PACKS: "creature-packs-hint-seen",
 } as const;
 
+/**
+ * First-run guided tour.
+ *
+ * Deliberately short (≤4 steps) and built around the core loop a newcomer
+ * should complete first: create something → link it → see it connect. Every
+ * target is chosen to exist in BOTH layouts — the ActivityBar renders as a
+ * side rail on desktop and a bottom bar on phones, but keeps the same
+ * `activity-bar-*` testids — so the tour works identically on desktop,
+ * tablet, and phone (#1777: #1779, #1784, #1787).
+ *
+ * The longer feature catalogue that used to live here now belongs in the Help
+ * center ("What else can Codex Cryptica do?"), not the first-run path.
+ *
+ * `helpStore.startTour` prunes any step whose target is missing from the DOM
+ * before the tour begins, so a layout that happens to hide a target never
+ * produces an unanchored tooltip (#1778).
+ */
 export const ONBOARDING_TOUR: GuideStep[] = [
   {
     id: "welcome",
     targetSelector: "body",
-    title: "Welcome to Codex Cryptica",
+    title: "Welcome — this is your world",
     content:
-      "This tool gives you absolute control over your world notes. Everything stays on your computer for total privacy.",
+      "Everything you create here stays on your device. No account, nothing uploaded. Let's make your first character and watch your world start to connect.",
     position: "bottom",
-  },
-  {
-    id: "vault",
-    targetSelector: '[data-testid="open-vault-button"]',
-    title: "Vault Management",
-    content:
-      "This is your active story. Click here to switch between different worlds or create a new vault.",
-    position: "bottom",
-  },
-  {
-    id: "graph",
-    targetSelector: '[data-testid="nav-graph"]',
-    title: "Knowledge Graph",
-    content:
-      "The primary view of your world. See how Character, Locations, and Events connect through an interactive web.",
-    position: "bottom",
-  },
-  {
-    id: "map",
-    targetSelector: '[data-testid="nav-map"]',
-    title: "Tactical Maps",
-    content:
-      "Plot your world data onto geographic or tactical canvases with persistent pins and Fog of War.",
-    position: "bottom",
-  },
-  {
-    id: "canvas",
-    targetSelector: '[data-testid="nav-canvas"]',
-    title: "Spatial Canvas",
-    content:
-      "Design custom layouts like conspiracy boards or quest flowcharts on an infinite board.",
-    position: "bottom",
-  },
-  {
-    id: "search",
-    targetSelector: '[data-testid="search-input"]',
-    title: "Quick Search",
-    content:
-      "Find anything instantly. Press `Cmd+K` from anywhere to search NPCs, locations, and lore.",
-    position: "bottom",
-  },
-  {
-    id: "oracle",
-    targetSelector: '[data-testid="activity-bar-oracle"]',
-    title: "Lore Oracle",
-    content:
-      "Consult the AI about your world or perform utility tasks like /roll and /create.",
-    position: "right",
   },
   {
     id: "explorer",
     targetSelector: '[data-testid="activity-bar-explorer"]',
-    title: "Entity Explorer",
+    title: "1. Create your first character",
     content:
-      "Quickly find and filter your characters and locations via the persistent sidebar.",
+      "Open the Explorer and add a character, place, or faction. That's all it takes to start — one person or place is enough.",
     position: "right",
   },
   {
-    id: "dice",
-    targetSelector: '[data-testid="dice-roller-button"]',
-    title: "Polyhedral Dice",
+    id: "graph",
+    targetSelector: '[data-testid="activity-bar-graph"]',
+    title: "2. Watch it connect",
     content:
-      "Quick access to the Die Roller modal for all your standard RPG dice needs.",
-    position: "bottom",
+      "Mention another name in your notes — like a home town or an ally — and Codex Cryptica links them for you. Open the Graph to see those connections appear.",
+    position: "right",
   },
   {
-    id: "importer",
-    targetSelector: '[data-testid="import-vault-button"]',
-    title: "Archive Importer",
+    id: "oracle",
+    targetSelector: '[data-testid="activity-bar-oracle"]',
+    title: "3. Optional AI help",
     content:
-      "Quickly bring your existing notes or JSON data into the Codex via the dedicated importer.",
-    position: "bottom",
-  },
-  {
-    id: "settings",
-    targetSelector: '[data-testid="settings-button"]',
-    title: "System Settings",
-    content:
-      "Configure your AI keys, adjust visual themes, and manage NPC categories.",
-    position: "bottom",
+      "Stuck for ideas? The Oracle can suggest names, plot hooks, and summaries whenever you want it. It's always optional — your world works fully without it.",
+    position: "right",
   },
 ];
 
