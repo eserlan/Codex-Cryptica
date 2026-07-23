@@ -116,8 +116,11 @@ export class OnboardingFunnel {
 
     const payload = { step, at: this.now() };
 
-    // 1. Local visibility.
-    debugStore.log(`[OnboardingFunnel] ${step}`, payload);
+    // 1. Local visibility. Suppressed under test to avoid console output during
+    // teardown, which aggravates a known vitest rpc teardown flake.
+    if (import.meta.env?.MODE !== "test") {
+      debugStore.log(`[OnboardingFunnel] ${step}`, payload);
+    }
 
     // 2. Ambient page analytics pipeline, if any.
     try {
