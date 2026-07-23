@@ -649,7 +649,16 @@
          coach marks, this hint is genuinely layout-agnostic (no per-device
          target selector needed): panning/zooming the graph works the same
          regardless of where the ActivityBar happens to render (#1791 Phase 4). -->
-    <div class="fixed top-4 right-4 z-[60]" data-testid="touch-gestures-hint">
+    <!-- top uses --header-height (set dynamically in +layout.svelte, grows
+         with the staging banner), not a hardcoded offset — `fixed` escapes
+         the graph's own container (which the header sits above, so the
+         empty-workspace hint above is naturally clear of it via `absolute`),
+         so without this it renders underneath/behind the sticky AppHeader. -->
+    <div
+      class="fixed right-4 z-[60]"
+      style="top: calc(var(--header-height, 65px) + 1rem);"
+      data-testid="touch-gestures-hint"
+    >
       <FeatureHint hintId="touch-graph-gestures" />
     </div>
   {/if}
