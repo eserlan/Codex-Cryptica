@@ -165,17 +165,60 @@ export class HelpStore {
 
   // --- Tour Methods ---
 
+  /**
+   * Keeps only the steps whose target is actually present in the DOM (steps
+   * that target "body" always pass). This prevents the spotlight overlay from
+   * rendering an unanchored tooltip pointing at nothing when a layout hides a
+   * target — e.g. desktop-only chrome on a phone (#1778). Skipped steps are
+   * logged so missing targets are noticeable during development.
+   *
+   * `doc` is injectable for testing; defaults to the global document.
+   */
+  pruneStepsToDom(
+    steps: GuideStep[],
+    doc: Pick<Document, "querySelector"> | undefined = globalThis.document,
+  ): GuideStep[] {
+    if (!doc) return steps;
+    return steps.filter((step) => {
+      if (step.targetSelector === "body") return true;
+      const exists = !!doc.querySelector(step.targetSelector);
+      if (!exists) {
+        debugStore.log(
+          `[HelpStore] Skipping tour step "${step.id}": target "${step.targetSelector}" not found in DOM.`,
+        );
+      }
+      return exists;
+    });
+  }
+
   startTour(id: string) {
     if (id === "initial-onboarding") {
       // Dismiss landing page and close settings modal to ensure the tour is visible
       this.onboardingStore.dismissedLandingPage = true;
       this.modalUIStore.closeSettings();
 
+      const steps = this.pruneStepsToDom(ONBOARDING_TOUR);
+
+      // Nothing to show (e.g. chrome not mounted yet) — mark seen so we don't
+      // loop, and bail rather than starting an empty tour.
+      if (steps.length === 0) {
+        this.completeTourById(id);
+        return;
+      }
+
       this.activeTour = {
         id,
         currentStepIndex: 0,
-        steps: ONBOARDING_TOUR,
+        steps,
       };
+    }
+  }
+
+  /** Marks a tour completed without requiring it to be the active tour. */
+  private completeTourById(id: string) {
+    if (!this.state.completedTours.includes(id)) {
+      this.state.completedTours.push(id);
+      this.save();
     }
   }
 

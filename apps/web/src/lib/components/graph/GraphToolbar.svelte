@@ -72,7 +72,8 @@
 
 {#snippet toolbarItems()}
   {#if !layoutUIStore.isMobile}
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
         ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
         : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
@@ -94,21 +95,26 @@
   />
   <div class="h-6 w-px bg-theme-border/30 mx-2 flex-shrink-0"></div>
   <div class="flex gap-1 items-center">
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => cy?.zoom(cy.zoom() * 1.2)}
       title="Zoom In"
       aria-label="Zoom In"
-      ><span aria-hidden="true" class="icon-[lucide--zoom-in] w-4 h-4"></span></button
+      ><span aria-hidden="true" class="icon-[lucide--zoom-in] w-4 h-4"
+      ></span></button
     >
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => cy?.zoom(cy.zoom() / 1.2)}
       title="Zoom Out"
       aria-label="Zoom Out"
-      ><span aria-hidden="true" class="icon-[lucide--zoom-out] w-4 h-4"></span></button
+      ><span aria-hidden="true" class="icon-[lucide--zoom-out] w-4 h-4"
+      ></span></button
     >
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => {
         graph.requestFit();
@@ -116,9 +122,11 @@
       }}
       title="Fit to Screen"
       aria-label="Fit to Screen"
-      ><span aria-hidden="true" class="icon-[lucide--maximize] w-4 h-4"></span></button
+      ><span aria-hidden="true" class="icon-[lucide--maximize] w-4 h-4"
+      ></span></button
     >
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 {layoutUIStore.isMobile
         ? 'flex'
         : 'hidden sm:flex'} items-center justify-center border transition {graph.stableLayout
@@ -139,7 +147,8 @@
       ></span></button
     >
     {#if !sessionModeStore.isGuestMode}
-      <button type="button"
+      <button
+        type="button"
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
@@ -155,10 +164,12 @@
         title={connectionTooltip}
         aria-label={connectionTooltip}
         aria-pressed={isConnecting}
-        ><span aria-hidden="true" class="icon-[lucide--link] w-4 h-4"></span></button
+        ><span aria-hidden="true" class="icon-[lucide--link] w-4 h-4"
+        ></span></button
       >
     {/if}
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => {
         void onApplyLayout({
@@ -170,7 +181,9 @@
       }}
       title="Redraw Layout"
       aria-label="Redraw Layout"
-      ><span aria-hidden="true" class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
+      ><span
+        aria-hidden="true"
+        class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
           ? 'animate-spin'
           : ''}"
       ></span></button
@@ -182,7 +195,8 @@
       : 'hidden md:block'} flex-shrink-0"
   ></div>
   {#if !sessionModeStore.isGuestMode}
-    <button type="button"
+    <button
+      type="button"
       class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
         ? 'flex'
         : 'hidden md:flex'} transition {sessionModeStore.sharedMode
@@ -207,7 +221,8 @@
       ></span></button
     >
   {/if}
-  <button type="button"
+  <button
+    type="button"
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showLabels
@@ -220,9 +235,11 @@
     title={graph.showLabels ? "Labels: ON" : "Labels: OFF"}
     aria-label="Toggle Labels"
     aria-pressed={graph.showLabels}
-    ><span aria-hidden="true" class="icon-[lucide--type] w-4 h-4"></span></button
+    ><span aria-hidden="true" class="icon-[lucide--type] w-4 h-4"
+    ></span></button
   >
-  <button type="button"
+  <button
+    type="button"
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showImages
@@ -235,7 +252,8 @@
     title={graph.showImages ? "Images: ON" : "Images: OFF"}
     aria-label="Toggle Images"
     aria-pressed={graph.showImages}
-    ><span aria-hidden="true" class="icon-[lucide--image] w-4 h-4"></span></button
+    ><span aria-hidden="true" class="icon-[lucide--image] w-4 h-4"
+    ></span></button
   >
 
   <div
@@ -246,7 +264,8 @@
     <span class="text-[11px] font-mono text-theme-primary font-bold"
       >{currentZoom.toFixed(2)}x</span
     >
-    <button type="button"
+    <button
+      type="button"
       class="text-[10px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
       onclick={() =>
         cy?.animate({
@@ -345,13 +364,15 @@
           {@render toolbarItems()}
         </div>
       {/if}
-      <button type="button"
+      <button
+        type="button"
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
         class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
         class:rotate-45={isMobileMenuOpen}
         aria-label="Graph Controls"
         aria-expanded={isMobileMenuOpen}
         aria-controls="mobile-graph-controls"
+        data-testid="graph-controls-fab"
       >
         <span
           aria-hidden="true"

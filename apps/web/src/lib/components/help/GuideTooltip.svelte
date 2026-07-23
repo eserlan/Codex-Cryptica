@@ -17,6 +17,33 @@
   // Using $derived.by ensures it only recomputes when step.content actually changes.
   const parsedContent = $derived.by(() => renderMarkdown(step.content));
 
+  // Real rendered size, measured after each step's content paints. Content
+  // length varies a lot per step/device (e.g. a 4-line body on a narrow
+  // mobile width), so a fixed size guess can under-reserve space and let the
+  // box overflow the viewport even though the position math "clamped" it —
+  // the clamp was only ever as accurate as the guess. Falls back to a rough
+  // estimate for the very first paint, before measurement completes.
+  let tooltipEl = $state<HTMLElement | undefined>();
+  let measuredSize = $state<{ width: number; height: number } | null>(null);
+
+  $effect(() => {
+    // Re-measure whenever the step changes (title/content length differs).
+    void step;
+    measuredSize = null;
+    let raf: number | undefined;
+    if (typeof requestAnimationFrame !== "undefined") {
+      raf = requestAnimationFrame(() => {
+        if (tooltipEl) {
+          const rect = tooltipEl.getBoundingClientRect();
+          measuredSize = { width: rect.width, height: rect.height };
+        }
+      });
+    }
+    return () => {
+      if (raf !== undefined) cancelAnimationFrame(raf);
+    };
+  });
+
   let tooltipStyle = $derived.by(() => {
     if (!targetRect || step.targetSelector === "body") {
       // Center of screen
@@ -32,53 +59,79 @@
       return "top: 50%; left: 50%; transform: translate(-50%, -50%);";
     }
 
-    let top = 0;
-    let left = 0;
-    let transform = "";
+    const estimatedWidth = measuredSize?.width ?? 350;
+    const estimatedHeight = measuredSize?.height ?? 200;
 
-    // Determine best position
+    // Pick whichever side actually has room, rather than trusting the step's
+    // authored `position` unconditionally. A step's "right" makes sense for a
+    // vertical desktop rail icon, but the same target can be a horizontal
+    // bottom-bar icon on mobile — there's no meaningful "right" of an icon
+    // packed in a row near the screen edge, and forcing it there just pushes
+    // the box off whichever edge is actually short on space.
+    const spaceTop = targetRect.top;
+    const spaceBottom = vh - targetRect.bottom;
+    const spaceLeft = targetRect.left;
+    const spaceRight = vw - targetRect.right;
+
+    const fits: Record<typeof step.position, boolean> = {
+      top: spaceTop >= estimatedHeight + padding,
+      bottom: spaceBottom >= estimatedHeight + padding,
+      left: spaceLeft >= estimatedWidth + padding,
+      right: spaceRight >= estimatedWidth + padding,
+    };
+
     let pos = step.position;
-    if (pos === "bottom" && targetRect.bottom + 250 > vh) pos = "top";
-    if (pos === "top" && targetRect.top - 250 < 0) pos = "bottom";
+    if (!fits[pos]) {
+      const bySpace: Array<[typeof step.position, number]> = [
+        ["top", spaceTop],
+        ["bottom", spaceBottom],
+        ["left", spaceLeft],
+        ["right", spaceRight],
+      ];
+      bySpace.sort((a, b) => b[1] - a[1]);
+      pos = bySpace[0][0];
+    }
+
+    // Compute the tooltip's actual rendered top-left corner directly, rather
+    // than a pre-transform anchor point paired with a CSS `transform` for
+    // centering/flipping. The safety clamp below needs to operate on real
+    // render coordinates — clamping a pre-transform value doesn't stop a
+    // `translateY(-50%)`/`translate(-100%, -50%)` shift from still pushing
+    // the box off-screen for a target near a viewport edge.
+    let top: number;
+    let left: number;
 
     switch (pos) {
       case "bottom":
         top = targetRect.bottom + padding;
-        left = targetRect.left + targetRect.width / 2;
-        transform = "translateX(-50%)";
+        left = targetRect.left + targetRect.width / 2 - estimatedWidth / 2;
         break;
       case "top":
-        top = targetRect.top - padding;
-        left = targetRect.left + targetRect.width / 2;
-        transform = "translate(-50%, -100%)";
+        top = targetRect.top - padding - estimatedHeight;
+        left = targetRect.left + targetRect.width / 2 - estimatedWidth / 2;
         break;
       case "left":
-        top = targetRect.top + targetRect.height / 2;
-        left = targetRect.left - padding;
-        transform = "translate(-100%, -50%)";
+        top = targetRect.top + targetRect.height / 2 - estimatedHeight / 2;
+        left = targetRect.left - padding - estimatedWidth;
         break;
       case "right":
-        top = targetRect.top + targetRect.height / 2;
+      default:
+        top = targetRect.top + targetRect.height / 2 - estimatedHeight / 2;
         left = targetRect.right + padding;
-        transform = "translateY(-50%)";
         break;
     }
 
-    // Final safety clamp
-    const estimatedWidth = 350;
-    const estimatedHeight = 200;
-
+    // Final safety clamp — now consistent with the coordinates actually drawn,
+    // and using the same (measured, when available) size as the fit check.
     top = Math.max(padding, Math.min(vh - estimatedHeight - padding, top));
-    left = Math.max(
-      estimatedWidth / 2 + padding,
-      Math.min(vw - estimatedWidth / 2 - padding, left),
-    );
+    left = Math.max(padding, Math.min(vw - estimatedWidth - padding, left));
 
-    return `top: ${top}px; left: ${left}px; transform: ${transform};`;
+    return `top: ${top}px; left: ${left}px;`;
   });
 </script>
 
 <div
+  bind:this={tooltipEl}
   class="fixed z-[var(--z-index-overlay-tooltip,152)] w-72 md:w-96 bg-theme-surface border border-theme-primary/50 shadow-[0_0_30px_rgba(var(--color-accent-primary-rgb),0.2)] rounded-lg flex flex-col overflow-hidden font-mono"
   style="{tooltipStyle} box-shadow: var(--theme-glow);"
   transition:fly={{ y: 10, duration: 300 }}

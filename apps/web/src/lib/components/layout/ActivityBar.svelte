@@ -140,7 +140,7 @@
     {@const active = isViewActive(view)}
     <a
       href={view.href}
-      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+      class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={view.label}
@@ -177,7 +177,7 @@
         : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
-      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+      class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={tool.label}
