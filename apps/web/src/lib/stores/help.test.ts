@@ -87,7 +87,7 @@ describe("HelpStore", () => {
     // The tour prunes steps whose target is missing from the DOM (#1778), so
     // mount the ActivityBar targets the onboarding tour points at.
     const ids = [
-      "activity-bar-explorer",
+      "graph-empty-state-cta",
       "activity-bar-graph",
       "activity-bar-oracle",
     ];
