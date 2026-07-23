@@ -111,9 +111,10 @@
       </h1>
     </div>
 
-    <!-- Search (Desktop: Input, Mobile: Button) -->
-    <div class="flex-1 max-w-xl md:px-4 flex justify-end md:justify-center">
-      <div class="hidden md:block w-full relative group">
+    <!-- Search — full input at lg+, compact icon button below (frees space on
+         tablet-range viewports where the right cluster is crowded, #1785). -->
+    <div class="flex-1 max-w-xl lg:px-4 flex justify-end lg:justify-center">
+      <div class="hidden lg:block w-full relative group">
         <span
           class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-chrome-muted group-focus-within:text-chrome-accent transition-colors"
         ></span>
@@ -129,7 +130,7 @@
         />
       </div>
       <button
-        class="md:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
+        class="lg:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => searchStore.open()}
         aria-label="Search"
       >

@@ -125,6 +125,34 @@ describe("LayoutUIStore", () => {
     expect(store.isMobile).toBe(true);
   });
 
+  it("tracks tablet-range and coarse-pointer media queries (#1785)", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    expect(store.isTablet).toBe(false);
+    expect(store.isTouch).toBe(false);
+    expect(store.prefersTouchCoaching).toBe(false);
+
+    fakeViewport.emit("(min-width: 769px) and (max-width: 1279px)", true);
+    expect(store.isTablet).toBe(true);
+    // Tablet alone (mouse) should not trigger touch coaching.
+    expect(store.prefersTouchCoaching).toBe(false);
+
+    fakeViewport.emit("(pointer: coarse)", true);
+    expect(store.isTouch).toBe(true);
+    // Touch + tablet => coaching on.
+    expect(store.prefersTouchCoaching).toBe(true);
+  });
+
+  it("prefers touch coaching on phones regardless of tablet range (#1785)", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    fakeViewport.emit("(max-width: 768px)", true);
+    expect(store.isMobile).toBe(true);
+    expect(store.prefersTouchCoaching).toBe(true);
+  });
+
   it("tracks wide viewport media query changes and derives Explorer workspace eligibility", () => {
     const fakeViewport = viewport();
     const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);

@@ -94,7 +94,8 @@
 
   let coachStep = $state(0);
   const showCoachMarks = $derived(
-    layoutUIStore.isMobile && !onboardingStore.dismissedMobileGraphCoachMarks,
+    layoutUIStore.prefersTouchCoaching &&
+      !onboardingStore.dismissedMobileGraphCoachMarks,
   );
 
   function nextCoachMark() {
@@ -517,8 +518,10 @@
 
   {#if showCoachMarks}
     {@const mark = COACH_MARKS[coachStep]}
+    <!-- Visibility is driven by `showCoachMarks` (phones + touch tablets),
+         so no responsive `hidden` class is needed here (#1785). -->
     <div
-      class="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-sm"
+      class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-sm"
       data-testid="mobile-coach-mark"
       transition:fly={{ y: 8, duration: 200 }}
     >
