@@ -1,5 +1,5 @@
 import { MigrationStore } from "./store";
-import { type Clock, systemClock } from "../runtime";
+import { type Clock, type IdGenerator, systemClock, systemIdGenerator } from "../runtime";
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -35,11 +35,15 @@ async function copyDirectoryContents(
   }
 }
 
-function createSnapshotName(targetVersion: number, clock: Clock): string {
-  const timestamp = new Date(clock.now()).toISOString().replace(/[:.]/g, "-");
-  const nonce =
-    globalThis.crypto?.randomUUID?.() ??
-    `${clock.now()}-${Math.random().toString(36).slice(2)}`;
+function createSnapshotName(
+  targetVersion: number,
+  clock: Clock = systemClock,
+  idGenerator: IdGenerator = systemIdGenerator,
+): string {
+  const activeClock = clock ?? systemClock;
+  const activeIdGen = idGenerator ?? systemIdGenerator;
+  const timestamp = new Date(activeClock.now()).toISOString().replace(/[:.]/g, "-");
+  const nonce = activeIdGen.uuid();
 
   return `v${targetVersion - 1}_before_v${targetVersion}_${timestamp}_${nonce}`;
 }
@@ -47,9 +51,10 @@ function createSnapshotName(targetVersion: number, clock: Clock): string {
 async function createMigrationSnapshot(
   opfsRoot: FileSystemDirectoryHandle,
   targetVersion: number,
-  clock: Clock,
+  clock: Clock = systemClock,
+  idGenerator: IdGenerator = systemIdGenerator,
 ): Promise<string> {
-  const snapshotName = createSnapshotName(targetVersion, clock);
+  const snapshotName = createSnapshotName(targetVersion, clock, idGenerator);
   const snapshotsDir = await opfsRoot.getDirectoryHandle("snapshots", {
     create: true,
   });
@@ -68,6 +73,7 @@ export async function runMigration(
   targetVersion: number,
   migrationTask: () => Promise<void>,
   clock: Clock = systemClock,
+  idGenerator: IdGenerator = systemIdGenerator,
 ): Promise<void> {
   let rollbackSnapshotId: string;
   try {
@@ -75,6 +81,7 @@ export async function runMigration(
       opfsRoot,
       targetVersion,
       clock,
+      idGenerator,
     );
   } catch (error) {
     const message = getErrorMessage(error);

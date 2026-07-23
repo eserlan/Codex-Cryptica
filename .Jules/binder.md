@@ -62,3 +62,6 @@
 ## 2026-07-20 - Inject Storage and ID Dependencies in SessionHubStore
  **Learning:** By replacing hard-coded `sessionStorage`, `crypto.randomUUID()`, and `Math.random()` calls in `SessionHubStore` with dependency injected properties, the test environment can fully decouple from the global browser APIs. This avoids leaking test state and allows using simple mocked objects instead of mutating the global `sessionStorage`.
  **Action:** When utilizing `localStorage`, `sessionStorage`, or `randomUUID` inside a Svelte store or service, inject them as optional constructor arguments with production-safe defaults (e.g., `browserSessionStorage`, `systemIdGenerator`) rather than calling them directly.
+## 2026-07-22 - Refactored P2P classes to use dependency injection for ID generation
+**Learning:** The p2p networking components in `apps/web/src/lib/cloud-bridge/p2p` (`PeerJSTransport`, `P2PHostService`, and `P2PClientAdapter`) previously used hard-coded `crypto.randomUUID()` calls to assign peer IDs and file request IDs, making tests dependent on the global crypto API.
+**Action:** We injected an `IdGenerator` dependency directly into their constructors with a fallback to `systemIdGenerator`, preserving behavior while creating clean testability seams.

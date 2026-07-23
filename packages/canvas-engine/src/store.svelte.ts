@@ -1,10 +1,16 @@
 import { type CanvasNode, type CanvasEdge, type Canvas } from "./types";
+import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 
 export class CanvasStore {
   nodes = $state<CanvasNode[]>([]);
   edges = $state<CanvasEdge[]>([]);
+  private readonly idGenerator: IdGenerator;
 
-  constructor(initialData?: Canvas) {
+  constructor(
+    initialData?: Canvas,
+    deps: { idGenerator?: IdGenerator } = {},
+  ) {
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
     if (initialData) {
       this.loadData(initialData);
     }
@@ -26,7 +32,7 @@ export class CanvasStore {
 
   addNode(entityId: string, position: { x: number; y: number }) {
     const newNode: CanvasNode = {
-      id: `node-${crypto.randomUUID()}`,
+      id: `node-${this.idGenerator.uuid()}`,
       type: "entity",
       entityId,
       position,
@@ -59,7 +65,7 @@ export class CanvasStore {
     label?: string,
   ) {
     const newEdge: CanvasEdge = {
-      id: `edge-${crypto.randomUUID()}`,
+      id: `edge-${this.idGenerator.uuid()}`,
       source,
       target,
       sourceHandle: sourceHandle || undefined,

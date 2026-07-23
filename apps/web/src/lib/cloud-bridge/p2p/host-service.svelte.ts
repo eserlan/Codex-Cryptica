@@ -24,7 +24,7 @@ import {
   PeerJSConnectionManager,
   type ConnectionState,
 } from "./connection-manager.svelte";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { type IdGenerator, systemIdGenerator, systemClock } from "$lib/utils/runtime-deps";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -37,6 +37,7 @@ type HostDeps = {
   transport?: P2PTransport;
   dispatcher?: P2PDispatcher;
   connectionManager?: PeerJSConnectionManager;
+  idGenerator?: IdGenerator;
 };
 
 export class P2PHostService {
@@ -62,6 +63,7 @@ export class P2PHostService {
   private readonly mapStore: typeof defaultMapStore;
   private readonly sessionModeStore: typeof defaultSessionModeStore;
   private readonly notificationStore: typeof defaultNotificationStore;
+  private idGenerator: IdGenerator;
 
   constructor(deps: HostDeps = {}) {
     this.vault = deps.vault ?? defaultVault;
@@ -70,12 +72,16 @@ export class P2PHostService {
     this.mapStore = deps.mapStore ?? defaultMapStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
 
     this.connectionManager =
       deps.connectionManager ??
       new PeerJSConnectionManager(deps.peerFactory ?? createPeer);
     this.transport =
-      deps.transport ?? new PeerJSTransport(deps.peerFactory ?? createPeer);
+      deps.transport ?? new PeerJSTransport({
+        peerFactory: deps.peerFactory,
+        idGenerator: this.idGenerator,
+      });
     this.dispatcher = deps.dispatcher ?? new P2PDispatcher();
 
     this.setupDispatcher();
@@ -186,7 +192,7 @@ export class P2PHostService {
       return this.transport.id;
     }
 
-    const peerId = crypto.randomUUID();
+    const peerId = this.idGenerator.uuid();
     onPeerId?.(peerId);
 
     this.state.status = "connecting";
