@@ -89,7 +89,8 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     expect(prompt).toContain(
       "For characters especially, infer naming conventions from the source entity and direct graph neighbors",
     );
-    expect(prompt).toContain("Avoid generic placeholder names");
+    expect(prompt).toContain("MUST NEVER use generic fantasy cliché placeholders or banned names");
+    expect(prompt).toContain("Vane");
   });
 
   it("wraps user content fields in delimiters for security", () => {
