@@ -547,6 +547,19 @@
         />
       </div>
     </div>
+    {#if !vault.isGuest}
+      <!-- Durable pointer back to onboarding guidance once the welcome
+           screen is dismissed and forgotten (Finding 9, #1791) — a one-time
+           reminder that Settings → Help has a getting-started checklist and
+           a tour-replay button, for whoever created an empty vault without
+           going through the demo/tour flow at all.
+           top-4 (not bottom-4): the bottom-left is already the mobile
+           GraphToolbar FAB's exact position (`bottom-4`, GraphToolbar.svelte)
+           — a corner we spent considerable effort de-crowding this session. -->
+      <div class="absolute top-4 left-4 z-20 max-w-xs pointer-events-auto">
+        <FeatureHint hintId="getting-started" />
+      </div>
+    {/if}
   {/if}
 
   {#if showCoachMarks}

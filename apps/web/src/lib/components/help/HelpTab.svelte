@@ -6,6 +6,7 @@
   import DOMPurify from "dompurify";
   import { slide } from "svelte/transition";
   import HelpHeader from "./HelpHeader.svelte";
+  import GettingStartedChecklist from "./GettingStartedChecklist.svelte";
 
   let { isStandalone = false } = $props();
 
@@ -36,6 +37,7 @@
 
 <div class="help-tab-container" class:p-2={!isStandalone}>
   <HelpHeader {isStandalone} />
+  <GettingStartedChecklist />
 
   <div class="space-y-3">
     {#each helpStore.searchResults as article (article.id)}

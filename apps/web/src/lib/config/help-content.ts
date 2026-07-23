@@ -169,6 +169,13 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "getting-started": {
+    id: "getting-started",
+    title: "New here?",
+    content:
+      "Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
+    icon: "icon-[lucide--compass]",
+  },
   "lore-oracle": {
     id: "lore-oracle",
     title: "AI Oracle",
