@@ -21,9 +21,19 @@ import { systemClock } from "./runtime";
 const INDEX_BATCH_SIZE = 100;
 
 function snapshotValue<T>(value: T): T {
-  const state = (globalThis as any).$state;
-  if (typeof state?.snapshot === "function") return state.snapshot(value);
-  return JSON.parse(JSON.stringify(value)) as T;
+  // Strips Svelte reactive proxies before handing data to the Comlink worker
+  // (postMessage requires structured-cloneable data anyway). Reflecting
+  // through `(globalThis as any).$state.snapshot(...)` used to be tried here,
+  // but that dynamic access trips Svelte's "rune_outside_svelte" guard once
+  // called from inside an async continuation (e.g. after an `await`), which
+  // is exactly how every caller in this file uses it. `$state.snapshot` as
+  // compiler syntax has the same restriction, so skip the rune entirely and
+  // rely on structuredClone, which every value here already needs to satisfy.
+  try {
+    return structuredClone(value);
+  } catch {
+    return JSON.parse(JSON.stringify(value)) as T;
+  }
 }
 
 // Fields that FlexSearch indexes via mapToSearchEntry — exported so
