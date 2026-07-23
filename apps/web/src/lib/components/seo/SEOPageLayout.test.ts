@@ -119,4 +119,64 @@ describe("SEOPageLayout Breadcrumb & Schema Generation", () => {
 
     expect(breadcrumbFound).toBe(true);
   });
+
+  describe("UTM Referral Attribution Links", () => {
+    it("renders solution-type navigation and CTA links with solution UTM params", () => {
+      const { container } = render(SEOPageLayout, {
+        props: {
+          data: mockData,
+          type: "solution",
+        },
+      });
+
+      const logoLink = container.querySelector("#logo-link") as HTMLAnchorElement;
+      const navCtaBtn = container.querySelector("#nav-cta-btn") as HTMLAnchorElement;
+      const heroCtaBtn = container.querySelector("#hero-primary-cta") as HTMLAnchorElement;
+      const footerCtaBtn = container.querySelector("#footer-cta-btn") as HTMLAnchorElement;
+
+      expect(logoLink).toBeTruthy();
+      expect(logoLink.getAttribute("href")).toContain("utm_source=solution-logo");
+      expect(logoLink.getAttribute("href")).toContain("utm_medium=nav");
+      expect(logoLink.getAttribute("href")).toContain("utm_campaign=seo-funnel");
+
+      expect(navCtaBtn).toBeTruthy();
+      expect(navCtaBtn.getAttribute("href")).toContain("utm_source=solution-nav");
+
+      expect(heroCtaBtn).toBeTruthy();
+      expect(heroCtaBtn.getAttribute("href")).toContain("utm_source=solution-hero");
+
+      expect(footerCtaBtn).toBeTruthy();
+      expect(footerCtaBtn.getAttribute("href")).toContain("utm_source=solution-footer");
+
+      // Negative path check: verify links are not bare root links lacking UTM params
+      expect(logoLink.getAttribute("href")).not.toBe("/");
+      expect(navCtaBtn.getAttribute("href")).not.toBe("/");
+    });
+
+    it("renders comparison-type navigation and CTA links with vs UTM params", () => {
+      const mockComparisonData = {
+        ...mockData,
+        competitorName: "World Anvil",
+        comparisonTable: [],
+        verdict: "Codex wins",
+      };
+
+      const { container } = render(SEOPageLayout, {
+        props: {
+          data: mockComparisonData as any,
+          type: "comparison",
+        },
+      });
+
+      const logoLink = container.querySelector("#logo-link") as HTMLAnchorElement;
+      const navCtaBtn = container.querySelector("#nav-cta-btn") as HTMLAnchorElement;
+      const heroCtaBtn = container.querySelector("#hero-primary-cta") as HTMLAnchorElement;
+      const footerCtaBtn = container.querySelector("#footer-cta-btn") as HTMLAnchorElement;
+
+      expect(logoLink.getAttribute("href")).toContain("utm_source=vs-logo");
+      expect(navCtaBtn.getAttribute("href")).toContain("utm_source=vs-nav");
+      expect(heroCtaBtn.getAttribute("href")).toContain("utm_source=vs-hero");
+      expect(footerCtaBtn.getAttribute("href")).toContain("utm_source=vs-footer");
+    });
+  });
 });

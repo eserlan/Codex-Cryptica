@@ -363,4 +363,36 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(container.textContent).toContain("Tone");
     });
   });
+
+  describe("UTM Referral Attribution Links", () => {
+    it("renders header logo and CTA links with generator UTM params", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const logoLink = container.querySelector("#logo-link") as HTMLAnchorElement;
+      const navCtaBtn = container.querySelector("#nav-cta-btn") as HTMLAnchorElement;
+
+      expect(logoLink).toBeTruthy();
+      expect(logoLink.getAttribute("href")).toContain("utm_source=generator-logo");
+      expect(logoLink.getAttribute("href")).toContain("utm_medium=nav");
+      expect(logoLink.getAttribute("href")).toContain("utm_campaign=seo-funnel");
+
+      expect(navCtaBtn).toBeTruthy();
+      expect(navCtaBtn.getAttribute("href")).toContain("utm_source=generator-header-cta");
+      expect(navCtaBtn.getAttribute("href")).toContain("utm_medium=nav");
+
+      // Negative path check: verify links are not bare root links lacking UTM params
+      expect(logoLink.getAttribute("href")).not.toBe("/");
+      expect(navCtaBtn.getAttribute("href")).not.toBe("/");
+    });
+  });
 });
