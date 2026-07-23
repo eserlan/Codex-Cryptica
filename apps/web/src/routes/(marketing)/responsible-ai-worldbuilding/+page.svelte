@@ -176,7 +176,7 @@
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
-        href="{cleanBase}/"
+        href="{cleanBase}/?utm_source=ra-pillar-logo&utm_medium=nav&utm_campaign=seo-funnel"
         class="flex items-center gap-2 group min-w-0"
         id="logo-link"
       >
@@ -207,7 +207,7 @@
       </nav>
       <div class="shrink-0">
         <a
-          href="{cleanBase}/?ref=ra-pillar-nav"
+          href="{cleanBase}/?utm_source=ra-pillar-nav&utm_medium=nav&utm_campaign=seo-funnel"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
@@ -523,7 +523,7 @@
       </p>
       <div class="flex flex-wrap justify-center gap-4">
         <a
-          href="{base}/?ref=ra-pillar-footer"
+          href="{base}/?utm_source=ra-pillar-footer&utm_medium=footer-cta&utm_campaign=seo-funnel"
           class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >

@@ -132,6 +132,26 @@ describe("GuestFileClient", () => {
     transport.simulateClose();
     await expect(promise).rejects.toThrow(/closed/);
   });
+
+  it("uses custom IdGenerator when provided in constructor", async () => {
+    const mockIdGen = { uuid: vi.fn().mockReturnValue("custom-req-id-123") };
+    const customClient = new GuestFileClient(transport, {
+      idGenerator: mockIdGen,
+    });
+    const promise = customClient.getFile("test.png");
+    const sent = transport.sent[transport.sent.length - 1];
+
+    expect(mockIdGen.uuid).toHaveBeenCalled();
+    expect(sent.requestId).toBe("custom-req-id-123");
+
+    transport.simulateData({
+      type: "FILE_RESPONSE",
+      requestId: "custom-req-id-123",
+      found: true,
+      data: new Uint8Array([1]).buffer,
+    });
+    await promise;
+  });
 });
 
 function countListeners(transport: MockClientTransport): number {

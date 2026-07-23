@@ -12,6 +12,7 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/runtime": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "vite": "^8.0.14",
     "zod": "^4.4.3"

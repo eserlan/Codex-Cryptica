@@ -1,5 +1,5 @@
 import type { P2PClientTransport } from "./transport/client-transport";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 const FILE_REQUEST_TIMEOUT_MS = 15_000;
 
@@ -16,17 +16,21 @@ type RequestState = {
  * reassembles `FILE_RESPONSE` chunks into a single Blob per request.
  */
 export class GuestFileClient {
-  constructor(private readonly transport: P2PClientTransport) {}
+  private readonly idGenerator: IdGenerator;
+
+  constructor(
+    private readonly transport: P2PClientTransport,
+    deps: { idGenerator?: IdGenerator } = {},
+  ) {
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
+  }
 
   async getFile(path: string): Promise<Blob> {
     if (!this.transport.connected) {
       throw new Error("Not connected to host");
     }
 
-    const requestId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `req-${systemClock.now()}-${Math.random()}`;
+    const requestId = this.idGenerator.uuid();
 
     return new Promise<Blob>((resolve, reject) => {
       let state: RequestState | null = null;
