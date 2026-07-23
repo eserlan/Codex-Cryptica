@@ -14,8 +14,10 @@ describe("ProposerBridge", () => {
 
   it("uses injected IdGenerator for worker request IDs", async () => {
     const mockIdGen = { uuid: vi.fn().mockReturnValue("req-proposer-999") };
-    const bridge = new ProposerBridge({ idGenerator: mockIdGen });
-    (bridge as any).worker = mockWorker;
+    const bridge = new ProposerBridge({
+      idGenerator: mockIdGen,
+      worker: mockWorker,
+    });
 
     const analyzePromise = bridge.analyzeEntity(
       "key",
@@ -41,7 +43,7 @@ describe("ProposerBridge", () => {
     });
 
     // Simulate successful worker message
-    (bridge as any).worker.onmessage({
+    mockWorker.onmessage({
       data: {
         type: "SUCCESS",
         id: "req-proposer-999",
@@ -55,8 +57,10 @@ describe("ProposerBridge", () => {
 
   it("handles worker error responses gracefully", async () => {
     const mockIdGen = { uuid: vi.fn().mockReturnValue("req-proposer-err") };
-    const bridge = new ProposerBridge({ idGenerator: mockIdGen });
-    (bridge as any).worker = mockWorker;
+    const bridge = new ProposerBridge({
+      idGenerator: mockIdGen,
+      worker: mockWorker,
+    });
 
     const analyzePromise = bridge.analyzeEntity(
       "key",
@@ -68,7 +72,7 @@ describe("ProposerBridge", () => {
     );
 
     // Simulate error worker message
-    (bridge as any).worker.onmessage({
+    mockWorker.onmessage({
       data: {
         type: "ERROR",
         id: "req-proposer-err",
@@ -80,15 +84,17 @@ describe("ProposerBridge", () => {
   });
 
   it("returns empty array if worker is not initialized", async () => {
-    const bridge = new ProposerBridge();
+    const bridge = new ProposerBridge({ worker: null });
     const result = await bridge.analyzeEntity("key", "model", "v", "e", "c", []);
     expect(result).toEqual([]);
   });
 
   it("rejects pending requests when terminated", async () => {
     const mockIdGen = { uuid: vi.fn().mockReturnValue("req-term") };
-    const bridge = new ProposerBridge({ idGenerator: mockIdGen });
-    (bridge as any).worker = mockWorker;
+    const bridge = new ProposerBridge({
+      idGenerator: mockIdGen,
+      worker: mockWorker,
+    });
 
     const promise = bridge.analyzeEntity("key", "model", "v", "e", "c", []);
     bridge.terminate();

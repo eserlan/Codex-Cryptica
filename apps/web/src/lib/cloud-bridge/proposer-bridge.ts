@@ -11,16 +11,22 @@ export class ProposerBridge {
     { resolve: (val: any) => void; reject: (err: any) => void }
   >();
 
-  constructor(deps: { idGenerator?: IdGenerator } = {}) {
+  constructor(
+    deps: { idGenerator?: IdGenerator; worker?: Worker | null } = {},
+  ) {
     this.idGenerator = deps.idGenerator ?? systemIdGenerator;
-    if (browser) {
+    if (deps.worker !== undefined) {
+      this.worker = deps.worker;
+      if (this.worker) {
+        this.attachWorkerHandler(this.worker);
+      }
+    } else if (browser) {
       this.initWorker();
     }
   }
 
-  private initWorker() {
-    this.worker = new ProposerWorker();
-    this.worker.onmessage = (event) => {
+  private attachWorkerHandler(worker: Worker) {
+    worker.onmessage = (event) => {
       const { type, payload, id } = event.data;
       if (id && this.pendingRequests.has(id)) {
         const { resolve, reject } = this.pendingRequests.get(id)!;
@@ -32,6 +38,11 @@ export class ProposerBridge {
         this.pendingRequests.delete(id);
       }
     };
+  }
+
+  private initWorker() {
+    this.worker = new ProposerWorker();
+    this.attachWorkerHandler(this.worker);
   }
 
   public async analyzeEntity(
