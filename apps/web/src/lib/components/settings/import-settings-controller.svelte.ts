@@ -746,9 +746,10 @@ export class ImportSettingsController {
         });
 
         const knownEntities: Record<string, string> = {};
-        Object.values(this.deps.vault.entities).forEach((e) => {
+        // ⚡ Bolt Optimization: Replace inline Object.values().forEach() with an imperative loop on cached allEntities
+        for (const e of this.deps.vault.allEntities) {
           knownEntities[e.title] = e.id;
-        });
+        }
 
         const chunks = splitTextIntoChunks(result.text);
         this.totalChunks = chunks.length;

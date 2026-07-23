@@ -24,6 +24,30 @@ describe("WebVaultWriter", () => {
     await expect(writer.findBySourceRef("scabard:id:999")).resolves.toBeNull();
   });
 
+  // ⚡ Bolt Optimization regression test: when the store provides the
+  // pre-cached allEntities array, the writer must read from it instead of
+  // falling back to Object.values(entities) — deliberately diverges the two
+  // fields here (entities is empty) so the only way this test can pass is if
+  // allEntities is actually consulted.
+  it("uses the pre-cached allEntities array when the store provides it, not entities", async () => {
+    const writer = new WebVaultWriter({
+      entities: {},
+      allEntities: [
+        {
+          id: "hero",
+          discoverySource: "scabard:id:123",
+        },
+      ],
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      addConnection: vi.fn(),
+    });
+
+    await expect(writer.findBySourceRef("scabard:id:123")).resolves.toEqual({
+      id: "hero",
+    });
+  });
+
   it("maps labels separately from tags when creating entities", async () => {
     const createEntity = vi.fn().mockResolvedValue("hero");
     const writer = new WebVaultWriter({
@@ -136,6 +160,53 @@ describe("WebVaultWriter", () => {
         },
       },
     ]);
+    expect(result).toEqual([{ id: "hero" }, { id: "harbor" }]);
+  });
+
+  // ⚡ Bolt Optimization regression test: same batchCreateEntities scenario
+  // as above, but the store only ever exposes allEntities — entities stays
+  // permanently empty/wrong, so a pass here proves both the pre-existing
+  // knownIds computation and the post-create candidateMap resolution read
+  // from allEntities, not Object.values(entities).
+  it("resolves batch-created ids via allEntities when entities is never populated", async () => {
+    const store = {
+      entities: {
+        stale: { id: "stale", discoverySource: "not-real" },
+      } as Record<string, any>,
+      allEntities: [] as any[],
+      createEntity: vi.fn(),
+      updateEntity: vi.fn(),
+      batchCreateEntities: vi.fn(async (_entities) => {
+        store.allEntities = [
+          { id: "hero", title: "Hero", discoverySource: "scabard:id:1" },
+          {
+            id: "harbor",
+            title: "Moon Harbor",
+            discoverySource: "scabard:id:2",
+          },
+        ];
+      }),
+      addConnection: vi.fn(),
+    };
+    const writer = new WebVaultWriter(store);
+
+    const result = await writer.batchCreateEntities([
+      {
+        type: "character",
+        title: "Hero",
+        content: "Lore",
+        tags: [],
+        discoverySource: "scabard:id:1",
+      },
+      {
+        type: "location",
+        title: "Moon Harbor",
+        content: "Harbor note",
+        tags: [],
+        discoverySource: "scabard:id:2",
+      },
+    ]);
+
     expect(result).toEqual([{ id: "hero" }, { id: "harbor" }]);
   });
 

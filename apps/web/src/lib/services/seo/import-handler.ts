@@ -97,14 +97,18 @@ export class SeoImportService {
           let counter = 1;
           const titleLower = title.toLowerCase();
 
-          const isDuplicate = Object.values(this.vaultStore.entities).some(
+          // ⚡ Bolt Optimization: use the pre-cached allEntities array instead
+          // of reallocating via Object.values(entities) — the while loop
+          // below re-checks this on every duplicate-suffix attempt, so the
+          // old version allocated a fresh array on every iteration.
+          const isDuplicate = this.vaultStore.allEntities.some(
             (e) => e.title.toLowerCase() === titleLower,
           );
 
           if (isDuplicate) {
             let uniqueTitle = title;
             while (
-              Object.values(this.vaultStore.entities).some(
+              this.vaultStore.allEntities.some(
                 (e) => e.title.toLowerCase() === uniqueTitle.toLowerCase(),
               )
             ) {
