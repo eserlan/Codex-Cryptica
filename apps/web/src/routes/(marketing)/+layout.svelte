@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../../app.css";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { SCHEMA_ORG } from "$lib/config";
@@ -9,6 +10,7 @@
   import {
     trackEvent,
     initCodexAnalyticsBridge,
+    resetCodexAnalyticsBridge,
   } from "$lib/services/analytics/zaraz-analytics";
 
   let { children } = $props();
@@ -33,6 +35,14 @@
   // docstrings for the hard "nothing inside the app" scope boundary.
   onMount(() => {
     initCodexAnalyticsBridge();
+  });
+
+  // Reactive on page.url (not just onMount) so a second attributed URL
+  // visited via client-side navigation within (marketing) — no full reload
+  // — is still captured, not just the very first page load (#1796 review
+  // feedback).
+  $effect(() => {
+    if (!browser) return;
     const capturedNewAttribution = attributionStore.captureIfAttributed(
       new URL(page.url),
     );
@@ -41,6 +51,15 @@
         entry_page_type: entryPageType(page.url.pathname),
       });
     }
+  });
+
+  // Tears down window.__codexAnalytics.track when leaving (marketing) — e.g.
+  // a client-side navigation into (app) that never triggers a full page
+  // reload — so onboarding-funnel.ts's in-app milestone calls go back to
+  // no-oping instead of reaching Zaraz through a hook that outlived the
+  // pages it's scoped to (#1796 review feedback).
+  onDestroy(() => {
+    resetCodexAnalyticsBridge();
   });
 </script>
 

@@ -87,6 +87,19 @@ describe("AttributionStore", () => {
     expect(attribution?.utm_campaign).toBeUndefined();
   });
 
+  it("treats a present-but-empty utm_* param as no attribution", () => {
+    const { storage } = makeStorage();
+    const store = new AttributionStore({ storage, now: () => 100 });
+
+    const captured = store.captureIfAttributed(
+      urlWith("/generators/npc", { utm_source: "" }),
+    );
+
+    expect(captured).toBe(false);
+    expect(store.getFirstTouch()).toBeNull();
+    expect(store.getLatestTouch()).toBeNull();
+  });
+
   it("ignores corrupt persisted state and treats it as no attribution", () => {
     const { storage } = makeStorage({
       "codex-cryptica-attribution-first": "not json",

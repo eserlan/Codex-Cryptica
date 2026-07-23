@@ -77,7 +77,7 @@ export class AttributionStore {
    * Returns true if this call actually captured (new) attribution.
    */
   captureIfAttributed(url: URL): boolean {
-    const hasAnyUtm = UTM_PARAMS.some((p) => url.searchParams.has(p));
+    const hasAnyUtm = UTM_PARAMS.some((p) => !!url.searchParams.get(p));
     if (!hasAnyUtm) return false;
 
     const attribution: Attribution = {

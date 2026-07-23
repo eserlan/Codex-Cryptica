@@ -78,7 +78,23 @@ export function initCodexAnalyticsBridge(
   }
 }
 
-/** Resets the bridge-initialized guard. Primarily for tests. */
-export function resetCodexAnalyticsBridge(): void {
+/**
+ * Resets the bridge-initialized guard and, when a window-like object is
+ * given (or the real `window` is available), removes the
+ * `__codexAnalytics.track` hook from it. Used both by tests and by the
+ * marketing layout's teardown when navigating away from the (marketing)
+ * route group, so the hook doesn't outlive the pages it's scoped to — see
+ * the module docstring's "nothing inside the app is ever tracked" boundary.
+ */
+export function resetCodexAnalyticsBridge(
+  win: any = typeof window !== "undefined" ? window : undefined,
+): void {
   bridgeInitialized = false;
+  try {
+    if (win?.__codexAnalytics) {
+      delete win.__codexAnalytics.track;
+    }
+  } catch {
+    // never let analytics wiring break the app
+  }
 }

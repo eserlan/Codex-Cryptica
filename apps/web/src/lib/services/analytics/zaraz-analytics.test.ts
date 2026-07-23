@@ -107,3 +107,34 @@ describe("initCodexAnalyticsBridge", () => {
     expect(() => initCodexAnalyticsBridge(undefined)).not.toThrow();
   });
 });
+
+describe("resetCodexAnalyticsBridge", () => {
+  beforeEach(() => {
+    resetCodexAnalyticsBridge();
+  });
+
+  it("removes window.__codexAnalytics.track so in-app calls stop reaching zaraz", () => {
+    const track = vi.fn();
+    const win: any = { zaraz: { track } };
+
+    initCodexAnalyticsBridge(win);
+    win.__codexAnalytics.track("onboarding_funnel", { step: "vault_created" });
+    expect(track).toHaveBeenCalledTimes(1);
+
+    resetCodexAnalyticsBridge(win);
+
+    expect(win.__codexAnalytics.track).toBeUndefined();
+  });
+
+  it("re-defines the hook if initCodexAnalyticsBridge is called again after a reset", () => {
+    const track = vi.fn();
+    const win: any = { zaraz: { track } };
+
+    initCodexAnalyticsBridge(win);
+    resetCodexAnalyticsBridge(win);
+    initCodexAnalyticsBridge(win);
+    win.__codexAnalytics.track("onboarding_funnel", { step: "vault_created" });
+
+    expect(track).toHaveBeenCalledTimes(1);
+  });
+});
