@@ -252,6 +252,14 @@
     coverImageAssetId = worldStore.metadata.coverImage;
   }
 
+  function useWorldDescription() {
+    if (!worldStore.metadata?.description) return;
+    description = truncate(
+      worldStore.metadata.description,
+      PUBLISH_LIMITS.maxListingDescriptionLength,
+    );
+  }
+
   async function handleDelist() {
     if (isSaving || !publishId || !writeToken) return;
 
@@ -356,9 +364,20 @@
 
       <label class="space-y-1 md:col-span-2">
         <span
-          class="text-xs uppercase tracking-wider font-header text-theme-text/60"
-          >Public description</span
+          class="flex items-center justify-between gap-2 text-xs uppercase tracking-wider font-header text-theme-text/60"
         >
+          <span>Public description</span>
+          {#if worldStore.metadata?.description}
+            <button
+              type="button"
+              onclick={useWorldDescription}
+              class="normal-case tracking-normal font-body font-medium text-theme-primary hover:underline"
+              data-testid="public-listing-use-world-description"
+            >
+              Use world frontpage description
+            </button>
+          {/if}
+        </span>
         <textarea
           bind:value={description}
           rows="4"

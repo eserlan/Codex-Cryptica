@@ -372,6 +372,142 @@ describe("PublicListingSettings", () => {
     worldStore.metadata = null;
   });
 
+  it('fills the description field from the world frontpage description via "Use world frontpage description"', async () => {
+    worldStore.metadata = {
+      id: "vault-1",
+      name: "Night Market",
+      description: "A neon-soaked bazaar of smugglers and rumors.",
+    };
+
+    render(PublicListingSettings, {
+      props: {
+        publishId: "pub-123",
+        writeToken: "write-token-123",
+        vaultTitle: "Night Market",
+        service: {
+          getPublicListing: vi.fn(async () => ({
+            schemaVersion: 1,
+            publishId: "pub-123",
+            guestUrl: "/guest/pub-123",
+            title: "Night Market",
+            description: "Saved public description",
+            labels: ["cyberpunk"],
+            visibleEntityCount: 1,
+            snapshotPublishedAt: "2026-06-30T12:00:00.000Z",
+            listingCreatedAt: "2026-06-30T12:00:00.000Z",
+            listingUpdatedAt: "2026-06-30T12:00:00.000Z",
+          })),
+          getNotice: vi.fn(async () => null),
+          // Simulates an already-saved listing — description hydrates from
+          // the saved listing, not the frontpage, until the button is used.
+          createListingDraft: vi.fn(({ existingListing }) => ({
+            publishId: existingListing.publishId,
+            title: existingListing.title,
+            description: existingListing.description,
+            labels: existingListing.labels,
+            rightsAcknowledged: true,
+          })),
+          enablePublicListing: vi.fn(),
+          saveNotice: vi.fn(),
+          disablePublicListing: vi.fn(),
+        } as any,
+      },
+    });
+
+    const useDescriptionButton = await waitFor(() =>
+      screen.getByTestId("public-listing-use-world-description"),
+    );
+    expect(
+      (screen.getByTestId("public-listing-description") as HTMLTextAreaElement)
+        .value,
+    ).toBe("Saved public description");
+
+    await fireEvent.click(useDescriptionButton);
+
+    expect(
+      (screen.getByTestId("public-listing-description") as HTMLTextAreaElement)
+        .value,
+    ).toBe("A neon-soaked bazaar of smugglers and rumors.");
+
+    worldStore.metadata = null;
+  });
+
+  it("truncates an overlong world description to the listing description limit", async () => {
+    worldStore.metadata = {
+      id: "vault-1",
+      name: "Night Market",
+      description: "A".repeat(400),
+    };
+
+    render(PublicListingSettings, {
+      props: {
+        publishId: "pub-123",
+        writeToken: "write-token-123",
+        vaultTitle: "Night Market",
+        service: {
+          getPublicListing: vi.fn(async () => null),
+          getNotice: vi.fn(async () => null),
+          createListingDraft: vi.fn(() => ({
+            title: "Night Market",
+            description: "",
+            labels: [],
+            rightsAcknowledged: false,
+          })),
+          enablePublicListing: vi.fn(),
+          saveNotice: vi.fn(),
+          disablePublicListing: vi.fn(),
+        } as any,
+      },
+    });
+
+    const useDescriptionButton = await waitFor(() =>
+      screen.getByTestId("public-listing-use-world-description"),
+    );
+    await fireEvent.click(useDescriptionButton);
+
+    const value = (
+      screen.getByTestId("public-listing-description") as HTMLTextAreaElement
+    ).value;
+    expect(value.length).toBeLessThanOrEqual(280);
+    expect(value.endsWith("...")).toBe(true);
+
+    worldStore.metadata = null;
+  });
+
+  it('does not show "Use world frontpage description" when the vault has no description', async () => {
+    worldStore.metadata = { id: "vault-1", name: "Night Market" };
+
+    render(PublicListingSettings, {
+      props: {
+        publishId: "pub-123",
+        writeToken: "write-token-123",
+        vaultTitle: "Night Market",
+        service: {
+          getPublicListing: vi.fn(async () => null),
+          getNotice: vi.fn(async () => null),
+          createListingDraft: vi.fn(() => ({
+            title: "Night Market",
+            description: "",
+            labels: [],
+            rightsAcknowledged: false,
+          })),
+          enablePublicListing: vi.fn(),
+          saveNotice: vi.fn(),
+          disablePublicListing: vi.fn(),
+        } as any,
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("public-listing-description")).toBeTruthy();
+    });
+    expect(
+      screen.queryByTestId("public-listing-use-world-description"),
+    ).toBeNull();
+
+    worldStore.metadata = null;
+  });
+
   it("displays a suspended/under-review warning banner when notice.suspended === true", async () => {
     const createListingDraft = vi.fn(() => ({
       title: "Suspended World",
