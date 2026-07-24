@@ -3,6 +3,15 @@ import { VisualizationExecutor } from "./visualization-executor";
 
 const originalURL = globalThis.URL;
 
+const drawEntityGenerator = () => ({
+  prepareEntityVisualizationPrompt: vi.fn().mockResolvedValue({
+    prompt: "composed prompt",
+    negativeTerms: ["watermark"],
+    metadata: { artDirectionVersion: 2, categoryId: "character" },
+  }),
+  generateVisualizationFromPrompt: vi.fn().mockResolvedValue(new Blob([])),
+});
+
 describe("VisualizationExecutor", () => {
   beforeEach(() => {
     (globalThis as any).URL = {
@@ -16,9 +25,7 @@ describe("VisualizationExecutor", () => {
   });
 
   it("should draw an entity in demo mode", async () => {
-    const generator = {
-      generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
-    };
+    const generator = drawEntityGenerator();
     const executor = new VisualizationExecutor(generator as any);
     const addMessage = vi.fn();
     const emit = vi.fn();
@@ -36,7 +43,7 @@ describe("VisualizationExecutor", () => {
 
     await executor.execute(intent, context);
 
-    expect(generator.generateEntityVisualization).toHaveBeenCalled();
+    expect(generator.generateVisualizationFromPrompt).toHaveBeenCalled();
     expect(addMessage).toHaveBeenCalledWith(
       expect.objectContaining({ type: "image", imageUrl: "blob-url" }),
     );
@@ -46,9 +53,7 @@ describe("VisualizationExecutor", () => {
   });
 
   it("should draw an entity and save to vault in non-demo mode", async () => {
-    const generator = {
-      generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
-    };
+    const generator = drawEntityGenerator();
     const executor = new VisualizationExecutor(generator as any);
     const saveImageToVault = vi
       .fn()
@@ -72,10 +77,19 @@ describe("VisualizationExecutor", () => {
     await executor.execute(intent, context);
 
     expect(saveImageToVault).toHaveBeenCalled();
-    expect(updateEntity).toHaveBeenCalledWith("e1", {
-      image: "path",
-      thumbnail: "thumb",
-    });
+    // Art Direction v2 inputs are stored with the image for reproducibility.
+    expect(updateEntity).toHaveBeenCalledWith(
+      "e1",
+      expect.objectContaining({
+        image: "path",
+        thumbnail: "thumb",
+        imageArtDirection: expect.objectContaining({
+          artDirectionVersion: 2,
+          prompt: "composed prompt",
+          negativePrompt: "watermark",
+        }),
+      }),
+    );
   });
 
   it("should draw a message", async () => {
@@ -105,7 +119,7 @@ describe("VisualizationExecutor", () => {
       prepareEntityVisualizationPrompt: vi
         .fn()
         .mockResolvedValue({ prompt: "final prompt" }),
-      generateEntityVisualization: vi.fn(),
+      generateVisualizationFromPrompt: vi.fn(),
     };
     const executor = new VisualizationExecutor(generator as any);
     const context = {
@@ -122,7 +136,7 @@ describe("VisualizationExecutor", () => {
       context,
       {},
     );
-    expect(generator.generateEntityVisualization).not.toHaveBeenCalled();
+    expect(generator.generateVisualizationFromPrompt).not.toHaveBeenCalled();
   });
 
   it("should skip entity prompt preparation when the entity is missing", async () => {

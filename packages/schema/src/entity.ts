@@ -136,6 +136,29 @@ export const GuestChatTranscriptSchema = z.object({
 export type GuestChatMessage = z.infer<typeof GuestChatMessageSchema>;
 export type GuestChatTranscript = z.infer<typeof GuestChatTranscriptSchema>;
 
+/**
+ * Reproducibility record for a generated image: the Art Direction inputs plus
+ * the exact prompts sent to the provider.
+ */
+export const ImageArtDirectionRecordSchema = z.object({
+  artDirectionVersion: z.number(),
+  prompt: z.string(),
+  negativePrompt: z.string().optional(),
+  categoryId: z.string().optional(),
+  themeId: z.string().optional(),
+  cameraPresetId: z.string().optional(),
+  cameraVariant: z.string().optional(),
+  styleReferenceMode: z.string().optional(),
+  styleOverridden: z.boolean().optional(),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  generatedAt: z.number().optional(),
+});
+
+export type ImageArtDirectionRecord = z.infer<
+  typeof ImageArtDirectionRecordSchema
+>;
+
 export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
@@ -150,6 +173,12 @@ export const EntitySchema = z.object({
   artDirection: z.string().optional(),
   image: z.string().optional(),
   thumbnail: z.string().optional(),
+  /**
+   * Art Direction inputs and composed prompts for the current image, kept so a
+   * generation can be reproduced or explained. Absent on images generated
+   * before Art Direction v2; those need no migration.
+   */
+  imageArtDirection: ImageArtDirectionRecordSchema.optional(),
   date: TemporalMetadataSchema.optional(),
   start_date: TemporalMetadataSchema.optional(),
   end_date: TemporalMetadataSchema.optional(),

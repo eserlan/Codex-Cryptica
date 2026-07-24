@@ -52,7 +52,7 @@ describe("ImageGenerationService", () => {
           response: { text: () => "Final Prompt" },
         });
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "api-key",
         "query",
         "context",
@@ -63,7 +63,7 @@ describe("ImageGenerationService", () => {
     });
 
     it("should return query as is when no context is provided", async () => {
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "api-key",
         "query",
         "",
@@ -74,7 +74,7 @@ describe("ImageGenerationService", () => {
 
     it("should return query immediately if isAIEnabled is false", async () => {
       localStorage.setItem("codex_ai_disabled", "true");
-      const result = await service.distillVisualPrompt("key", "q", "c", "m");
+      const result = await service.distillVisualSubject("key", "q", "c", "m");
       expect(result).toBe("q");
     });
   });

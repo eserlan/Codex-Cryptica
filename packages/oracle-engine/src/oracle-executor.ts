@@ -7,6 +7,7 @@ import { ConnectExecutor } from "./executors/connect-executor";
 import { MergeExecutor } from "./executors/merge-executor";
 import { PlotExecutor } from "./executors/plot-executor";
 import { VisualizationExecutor } from "./executors/visualization-executor";
+import type { VisualizationPromptOptions } from "./oracle-generator";
 import { ReviseExecutor } from "./executors/revise-executor";
 import { ChatExecutor } from "./executors/chat-executor";
 import { GuestChatExecutor } from "./executors/guest-chat-executor";
@@ -149,7 +150,7 @@ export class OracleActionExecutor {
   async prepareEntityPrompt(
     entityId: string,
     context: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    options: VisualizationPromptOptions = {},
   ) {
     return this.visualizationExecutor.prepareEntityPrompt(
       entityId,
@@ -180,8 +181,13 @@ export class OracleActionExecutor {
   async prepareMessagePrompt(
     messageId: string,
     context: OracleExecutionContext,
+    options: VisualizationPromptOptions = {},
   ) {
-    return this.visualizationExecutor.prepareMessagePrompt(messageId, context);
+    return this.visualizationExecutor.prepareMessagePrompt(
+      messageId,
+      context,
+      options,
+    );
   }
 
   async generateMessageFromPrompt(

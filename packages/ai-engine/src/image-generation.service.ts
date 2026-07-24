@@ -2,7 +2,7 @@ import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import type { ImageGenerationService, ImageGenerationOptions } from "schema";
 import {
   buildVisualCanonResolutionPrompt,
-  buildVisualPromptGenerationPrompt,
+  buildVisualSubjectPrompt,
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 import { GEMINI_API_BASE_URL } from "./config";
@@ -15,7 +15,14 @@ export class DefaultImageGenerationService implements ImageGenerationService {
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
-  async distillVisualPrompt(
+  /**
+   * Resolves vault canon into a descriptive SUBJECT phrase.
+   *
+   * Art Direction v2: this produces the subject layer only. Category framing,
+   * theme, camera, style lineage, and negatives are composed deterministically
+   * around the result by `composeImagePrompt` — the model must not emit them.
+   */
+  async distillVisualSubject(
     apiKey: string,
     query: string,
     context: string,
@@ -37,27 +44,22 @@ export class DefaultImageGenerationService implements ImageGenerationService {
     const canonResult = await model.generateContent(canonResolutionPrompt);
     const canonSummary = canonResult.response.text()?.trim() || "";
 
-    console.log(
-      `[ImageGenerationService] Stage 2: Generating visual prompt...`,
-    );
+    console.log(`[ImageGenerationService] Stage 2: Writing visual subject...`);
 
-    // Stage 2: Generation Layer - Visual Prompt Generation
-    const promptGenerationPrompt = buildVisualPromptGenerationPrompt(
-      canonSummary,
-      query,
-    );
+    // Stage 2: Subject Layer - concrete physical description, nothing else
+    const subjectPrompt = buildVisualSubjectPrompt(canonSummary, query);
 
     try {
-      const result = await model.generateContent(promptGenerationPrompt);
+      const result = await model.generateContent(subjectPrompt);
       const response = await result.response;
       const distilled = response.text().trim();
       console.log(
-        `[ImageGenerationService] Final Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`,
+        `[ImageGenerationService] Distilled Visual Subject: "${distilled.slice(0, 50)}..."`,
       );
       return distilled;
     } catch (err) {
       console.warn(
-        "[ImageGenerationService] Failed to generate visual prompt, falling back to canon summary.",
+        "[ImageGenerationService] Failed to write visual subject, falling back to canon summary.",
         err,
       );
       return canonSummary || query;
@@ -101,6 +103,9 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           form.append("prompt", prompt);
           form.append("width", "1024");
           form.append("height", "1024");
+          if (options?.negativePrompt) {
+            form.append("negative_prompt", options.negativePrompt);
+          }
           const response = await this.fetcher(url, {
             method: "POST",
             headers: {
@@ -152,6 +157,9 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             body: JSON.stringify({
               model: modelName,
               prompt: prompt,
+              ...(options?.negativePrompt
+                ? { negative_prompt: options.negativePrompt }
+                : {}),
             }),
           });
 
@@ -197,6 +205,9 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             prompt: prompt,
             response_format: "b64_json",
             n: 1,
+            ...(options?.negativePrompt
+              ? { negative_prompt: options.negativePrompt }
+              : {}),
           }),
         });
 

@@ -13,16 +13,13 @@ USER REQUEST:
 ${u(query)}
 
 Search the vault context for established:
-- art direction
-- visual motifs
-- faction aesthetics
-- cultural styling
-- architecture and heraldry
-- materials and symbols
-- clothing traditions
+- physical appearance and anatomy
+- clothing, armour, and personal equipment
+- materials, colours, and surface condition
+- faction, cultural, and regional visual markers
+- architecture, heraldry, and symbols
 - creature design language
 - environmental tone
-- and category-specific visual guidance
 
 Priority order:
 1. Entity-specific visual canon
@@ -32,18 +29,26 @@ Priority order:
 5. Logical stylistic inference
 
 If established visual direction exists, preserve it consistently.
-If no direct guidance exists, infer stylistically from related vault records, maintain internal consistency, and avoid generic fantasy defaults.
+If no direct guidance exists, infer from related vault records, maintain internal consistency, and avoid generic fantasy defaults.
 
-Visual identity is part of canonical continuity. 
+Visual identity is part of canonical continuity.
 
-Output a distilled "Visual Canon Summary" that will be used to generate the final image prompt.`;
+Output a distilled "Visual Canon Summary" describing the physical facts that must appear in the image.`;
 }
 
-export function buildVisualPromptGenerationPrompt(
+/**
+ * Art Direction v2: the model produces the SUBJECT LAYER ONLY.
+ *
+ * Medium, palette, lighting, camera, framing, style lineage, and negatives are
+ * supplied deterministically by `composeImagePrompt` after this returns. If the
+ * model emits any of them here they will be duplicated or contradicted
+ * downstream, so the instructions forbid them explicitly.
+ */
+export function buildVisualSubjectPrompt(
   canonSummary: string,
   userQuery: string,
 ): string {
-  return `You are a Visual Prompt Architect. Using the established Visual Canon Summary and the original user request, generate a high-fidelity visual prompt for an image generation model.
+  return `You are a Visual Subject Writer. Using the Visual Canon Summary and the original request, write the SUBJECT of an image — what is physically present in frame, and nothing else.
 
 VISUAL CANON SUMMARY:
 ${canonSummary}
@@ -51,24 +56,31 @@ ${canonSummary}
 ORIGINAL REQUEST:
 ${u(userQuery)}
 
-GUIDELINES:
-- Preserve all explicit theme, genre, medium, palette, lighting, and material directives from the original request in the final prompt. Treat theme/default-art-style language as required art direction, not optional flavor.
-- Keep named genre/style anchors verbatim when present, such as "Cyberpunk", "gothic horror", "oil painting", "photographic", "noir", or "pulp adventure", unless they directly conflict with stronger vault canon.
-- If the original request includes a composed category + theme + global art direction, carry the theme information into the final prompt even while reducing repetition.
-- Prioritize concrete, visual details (e.g., specific clothing materials, physical features, worn gear, posture, and facial expressions) over abstract character names or name repetition.
-- Emphasize distinctive setting identity and preserve cultural specificity.
-- Ground the mood in environmental storytelling, lighting, and architecture.
-- Avoid generic fantasy phrasing (e.g., "epic", "cinematic", "visual concept art").
-- Avoid vague fillers, and provide enough concrete material/form details to paint a clear visual picture.
+WRITE:
+- One or two clauses. Short.
+- Concrete physical facts only: species, gender presentation, age range, role, build, clothing, materials, condition, equipment, expression, posture, and action.
+- Material and condition over abstract mood. Prefer "cracked lacquer over pine" to "ancient and mysterious".
+- One distinctive asymmetry, repair, or specific wear detail where it suits the subject.
 
-Generate only the final, concrete visual prompt.`;
+NEVER INCLUDE:
+- Proper names of any kind — no character, faction, location, item, or place names. Describe the subject instead: write "male human veteran officer", not the character's name. Write "weathered basalt border fortress", not the fortress's name.
+- Art medium, style, or genre words (oil painting, digital art, concept art, photographic, cyberpunk, gothic).
+- Palette, colour grading, or lighting direction.
+- Camera, lens, focal length, aperture, framing, shot size, or aspect ratio.
+- Artist names or style lineages.
+- Quality filler: epic, 8k, masterpiece, hyperdetailed, trending on ArtStation, award winning.
+- Any "avoid" or negative phrasing.
+
+These are all applied separately and will conflict with your output if you include them.
+
+Output only the subject text. No preamble, no quotation marks, no trailing punctuation commentary.`;
 }
 
 /**
  * Legacy support for the existing interface
  */
 export function buildEnhancePrompt(query: string, context: string): string {
-  return `${buildVisualCanonResolutionPrompt(query, context)}\n\n${buildVisualPromptGenerationPrompt(
+  return `${buildVisualCanonResolutionPrompt(query, context)}\n\n${buildVisualSubjectPrompt(
     "[Distilled from above]",
     query,
   )}`;

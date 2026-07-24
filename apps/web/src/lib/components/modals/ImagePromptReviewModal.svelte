@@ -8,14 +8,42 @@
   const dialog = $derived(modalUIStore.imagePromptReview);
   const target = $derived(dialog.target);
   let editedPrompt = $state("");
+  let negativeTerms = $state<string[]>([]);
   let error = $state("");
   let isRevisingPrompt = $state(false);
+  let showAdvanced = $state(false);
+
+  // Advanced Art Direction settings. Ordinary use never touches these; the
+  // category and theme defaults already supply framing and style.
+  let cameraVariant = $state("");
+  let styleReferenceMode = $state<"named" | "name-free" | "disabled">("named");
+
+  const CAMERA_VARIANTS = [
+    { value: "", label: "Category default" },
+    { value: "portrait", label: "Portrait (characters)" },
+    { value: "anatomy", label: "Anatomy study (creatures)" },
+    { value: "interior", label: "Interior (locations)" },
+    { value: "in-hand", label: "In hand (items)" },
+    { value: "authority", label: "Authority (factions)" },
+    { value: "ranks", label: "Massed ranks (factions)" },
+    { value: "aftermath", label: "Aftermath (events)" },
+  ];
+
+  const STYLE_MODES = [
+    { value: "named", label: "Named style lineage" },
+    { value: "name-free", label: "Name-free description" },
+    { value: "disabled", label: "No style lineage" },
+  ] as const;
 
   $effect(() => {
     if (dialog.open) {
       editedPrompt = dialog.prompt;
+      negativeTerms = dialog.negativeTerms;
       error = "";
       isRevisingPrompt = false;
+      showAdvanced = false;
+      cameraVariant = "";
+      styleReferenceMode = "named";
     }
   });
 
@@ -52,8 +80,13 @@
   };
 
   const copyPrompt = async () => {
+    // Negatives are part of the request, so an external generator needs them
+    // too — otherwise a pasted prompt behaves differently from ours.
+    const text = negativeTerms.length
+      ? `${editedPrompt}\n\nNegative prompt:\n${negativeTerms.join(", ")}`
+      : editedPrompt;
     try {
-      await navigator.clipboard.writeText(editedPrompt);
+      await navigator.clipboard.writeText(text);
       notificationStore.notify("Copied image prompt", "success");
     } catch {
       notificationStore.notify("Could not copy image prompt.", "error");
@@ -66,12 +99,17 @@
     isRevisingPrompt = true;
     error = "";
     try {
-      const prompt =
+      const options = {
+        cameraVariant: cameraVariant || undefined,
+        styleReferenceMode,
+      };
+      const result =
         target.kind === "entity"
-          ? await oracle.regenerateEntityPrompt(target.id)
-          : await oracle.regenerateMessagePrompt(target.id);
-      if (prompt?.trim()) {
-        editedPrompt = prompt.trim();
+          ? await oracle.regenerateEntityPrompt(target.id, options)
+          : await oracle.regenerateMessagePrompt(target.id, options);
+      if (result?.prompt?.trim()) {
+        editedPrompt = result.prompt.trim();
+        negativeTerms = result.negativeTerms;
       } else {
         error = "Could not revise a prompt.";
       }
@@ -172,6 +210,85 @@
               {error}
             </p>
           {/if}
+
+          {#if negativeTerms.length}
+            <div class="mt-4">
+              <p
+                class="mb-2 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+              >
+                Negative prompt
+              </p>
+              <p
+                data-testid="image-prompt-negative"
+                class="rounded border border-theme-border bg-theme-bg/40 p-3 font-body text-xs leading-relaxed text-theme-muted"
+              >
+                {negativeTerms.join(", ")}
+              </p>
+              <p class="mt-1 text-[10px] text-theme-muted">
+                Sent separately where your image provider supports it, and
+                folded into the prompt where it does not.
+              </p>
+            </div>
+          {/if}
+
+          <div class="mt-4 border-t border-theme-border pt-3">
+            <button
+              type="button"
+              onclick={() => (showAdvanced = !showAdvanced)}
+              aria-expanded={showAdvanced}
+              class="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-theme-muted transition hover:text-theme-primary"
+            >
+              <span
+                class="h-3 w-3 {showAdvanced
+                  ? 'icon-[lucide--chevron-down]'
+                  : 'icon-[lucide--chevron-right]'}"
+                aria-hidden="true"
+              ></span>
+              Advanced art direction
+            </button>
+
+            {#if showAdvanced}
+              <div class="mt-3 grid gap-3 md:grid-cols-2">
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
+                    Camera
+                  </span>
+                  <select
+                    bind:value={cameraVariant}
+                    data-testid="image-prompt-camera-variant"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each CAMERA_VARIANTS as variant (variant.value)}
+                      <option value={variant.value}>{variant.label}</option>
+                    {/each}
+                  </select>
+                </label>
+
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
+                    Style reference
+                  </span>
+                  <select
+                    bind:value={styleReferenceMode}
+                    data-testid="image-prompt-style-mode"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each STYLE_MODES as mode (mode.value)}
+                      <option value={mode.value}>{mode.label}</option>
+                    {/each}
+                  </select>
+                </label>
+              </div>
+              <p class="mt-2 text-[10px] text-theme-muted">
+                Choose a camera that matches the subject's category. Revise the
+                prompt to apply these.
+              </p>
+            {/if}
+          </div>
         </div>
 
         <div

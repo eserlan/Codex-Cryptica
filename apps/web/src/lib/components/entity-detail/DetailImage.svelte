@@ -4,7 +4,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { fade } from "svelte/transition";
-  import { isEntityVisible, resolveArtDirection } from "schema";
+  import { isEntityVisible, composeImagePrompt } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
@@ -43,16 +43,21 @@
     });
   });
 
+  // Preview of the direction applied around the AI-written subject. The real
+  // subject comes from vault canon at generation time; the entity title stands
+  // in here so the preview reads as a sentence.
   const artDirectionPrompt = $derived.by(() => {
     if (!entity) return "";
-    const res = resolveArtDirection({
-      surface: "entity",
+    return composeImagePrompt({
       subject: entity.title,
-      categoryId: entity.type,
-      themeId: themeStore.activeTheme?.id || "default",
-      entityArtDirection: entity.artDirection,
-    });
-    return res.prompt;
+      category: entity.type,
+      theme: themeStore.activeTheme?.id || "default",
+      styleOverride: entity.artDirection,
+      subjectOptions: {
+        names: [entity.title],
+        descriptor: entity.type ? `a ${entity.type}` : undefined,
+      },
+    }).prompt;
   });
 
   $effect(() => {

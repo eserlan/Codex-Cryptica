@@ -10,7 +10,7 @@ describe("front-page-prompts", () => {
   // -----------------------------------------------------------------------
 
   describe("createWorldCoverPrompt", () => {
-    it("includes the world name, theme name, and theme description", () => {
+    it("includes the theme name and description but never the world name", () => {
       const result = createWorldCoverPrompt(
         "Moonfall",
         "Neon Night",
@@ -18,9 +18,11 @@ describe("front-page-prompts", () => {
         "A broken moon.",
         "Extra context",
       );
-      expect(result).toContain('"Moonfall"');
       expect(result).toContain("Neon Night");
       expect(result).toContain("Cyberpunk neon-noir");
+      // Art Direction v2: proper names carry no visual information and are
+      // stripped before the prompt reaches the provider.
+      expect(result).not.toContain("Moonfall");
     });
 
     it("includes the briefing text", () => {
@@ -45,7 +47,7 @@ describe("front-page-prompts", () => {
       expect(result).toContain("Sky-market politics.");
     });
 
-    it("uses fallbacks when world name is empty", () => {
+    it("composes without a world name", () => {
       const result = createWorldCoverPrompt(
         "",
         "Theme",
@@ -53,7 +55,8 @@ describe("front-page-prompts", () => {
         "Briefing",
         "Context",
       );
-      expect(result).toContain('"this world"');
+      expect(result).toContain("Create cover art");
+      expect(result).toContain("Briefing");
     });
 
     it("uses fallback when briefing is empty", () => {
@@ -78,7 +81,7 @@ describe("front-page-prompts", () => {
       expect(result).toContain("No additional context was retrieved.");
     });
 
-    it("includes art-direction requirements", () => {
+    it("applies the cover category framing, camera, and negatives", () => {
       const result = createWorldCoverPrompt(
         "World",
         "Theme",
@@ -86,11 +89,26 @@ describe("front-page-prompts", () => {
         "Briefing",
         "Context",
       );
-      expect(result).toContain("Portrait composition");
-      expect(result).toContain("2:3 aspect ratio");
-      expect(result).toContain(
-        "No text, no title lettering, no UI, no borders",
+      expect(result).toContain("atmospheric cover art");
+      // Portrait framing and the reserved title space come from the cover
+      // camera preset rather than being restated in prose.
+      expect(result).toContain("2:3 portrait framing");
+      expect(result).toContain("negative space");
+      expect(result).toContain("Do not render the world's name");
+      expect(result).toContain("Avoid:");
+      expect(result).toContain("generated text");
+    });
+
+    it("applies the theme medium when a theme id is given", () => {
+      const result = createWorldCoverPrompt(
+        "World",
+        "Neon Night",
+        "Desc",
+        "Briefing",
+        "Context",
+        "cyberpunk",
       );
+      expect(result).toContain("dense signage");
     });
   });
 

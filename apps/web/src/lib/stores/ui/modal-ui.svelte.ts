@@ -101,10 +101,13 @@ export class ModalUIStore {
     open: boolean;
     target: ImagePromptReviewTarget | null;
     prompt: string;
+    /** Negative terms, shown read-only; delivery format is provider-specific. */
+    negativeTerms: string[];
   }>({
     open: false,
     target: null,
     prompt: "",
+    negativeTerms: [],
   });
 
   revisionDialog = $state<{
@@ -268,11 +271,16 @@ export class ModalUIStore {
     this.showShare = false;
   }
 
-  openImagePromptReview(target: ImagePromptReviewTarget, prompt: string) {
+  openImagePromptReview(
+    target: ImagePromptReviewTarget,
+    prompt: string,
+    negativeTerms: string[] = [],
+  ) {
     this.imagePromptReview = {
       open: true,
       target,
       prompt,
+      negativeTerms,
     };
   }
 
@@ -281,6 +289,7 @@ export class ModalUIStore {
       open: false,
       target: null,
       prompt: "",
+      negativeTerms: [],
     };
   }
 
