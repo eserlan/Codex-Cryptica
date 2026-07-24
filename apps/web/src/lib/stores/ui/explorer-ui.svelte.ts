@@ -197,7 +197,9 @@ export class ExplorerUIStore {
     if (entries.size === 0) {
       delete nextState[scope];
     } else {
-      nextState[scope] = Array.from(entries).sort((a, b) => a.localeCompare(b));
+      nextState[scope] = Array.from(entries).sort((a, b) =>
+        (a ?? "").localeCompare(b ?? ""),
+      );
     }
     return nextState;
   }

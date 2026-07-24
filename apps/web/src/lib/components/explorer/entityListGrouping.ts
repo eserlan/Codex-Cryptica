@@ -38,7 +38,7 @@ export function groupEntitiesForExplorer(
     }
 
     const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-      a.localeCompare(b),
+      (a ?? "").localeCompare(b ?? ""),
     );
 
     return {
@@ -70,7 +70,7 @@ export function groupEntitiesForExplorer(
   }
 
   const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-    a.localeCompare(b),
+    (a ?? "").localeCompare(b ?? ""),
   );
 
   return {
