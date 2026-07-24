@@ -172,6 +172,8 @@ export class WebVaultWriter implements VaultWriter {
         type: entity.type,
         title: entity.title,
         initialData: {
+          type: entity.type,
+          title: entity.title,
           content: entity.content,
           lore: entity.lore,
           tags: entity.tags,
@@ -227,24 +229,30 @@ export class WebVaultWriter implements VaultWriter {
   }
 
   async updateEntity(id: string, patch: EntityPatch): Promise<void> {
-    const updates: Partial<Entity> = {
-      type: patch.type as Entity["type"],
-      title: patch.title,
-      content: patch.content,
-      lore: patch.lore,
-      tags: patch.tags,
-      labels: patch.labels,
-      aliases: patch.aliases,
-      image: patch.image,
-      thumbnail: patch.thumbnail,
-      metadata: patch.metadata as Entity["metadata"],
-      parent: patch.parent,
-      start_date: toTemporalMetadata(patch.startDate),
-      end_date: toTemporalMetadata(patch.endDate),
-    };
-    if (patch.connections !== undefined) {
+    // `"key" in patch` (not `!== undefined`) so a caller can still explicitly
+    // clear a field by passing `undefined` for it (replace-all reimports do
+    // this deliberately) — only a key genuinely absent from the patch (as
+    // CIF's update policy relies on for fields it never wants to touch, e.g.
+    // `type`) is left untouched here.
+    const updates: Partial<Entity> = {};
+    if ("type" in patch) updates.type = patch.type as Entity["type"];
+    if ("title" in patch) updates.title = patch.title;
+    if ("content" in patch) updates.content = patch.content;
+    if ("lore" in patch) updates.lore = patch.lore;
+    if ("tags" in patch) updates.tags = patch.tags;
+    if ("labels" in patch) updates.labels = patch.labels;
+    if ("aliases" in patch) updates.aliases = patch.aliases;
+    if ("image" in patch) updates.image = patch.image;
+    if ("thumbnail" in patch) updates.thumbnail = patch.thumbnail;
+    if ("metadata" in patch)
+      updates.metadata = patch.metadata as Entity["metadata"];
+    if ("parent" in patch) updates.parent = patch.parent;
+    if ("startDate" in patch)
+      updates.start_date = toTemporalMetadata(patch.startDate);
+    if ("endDate" in patch)
+      updates.end_date = toTemporalMetadata(patch.endDate);
+    if ("connections" in patch)
       updates.connections = patch.connections as Entity["connections"];
-    }
     const success = await this.store.updateEntity(id, updates);
 
     if (!success) {

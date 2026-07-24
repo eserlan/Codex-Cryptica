@@ -159,6 +159,22 @@ describe("Adapters", () => {
       expect(entity!._path).toEqual(["path"]);
     });
 
+    it("keeps type=note for a note with an unrelated `kind` sub-classification (e.g. SEO language entries)", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "elvish-glossary",
+          type: "note",
+          kind: "language",
+          title: "Elvish Glossary",
+        },
+        content: "body",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", [
+        "elvish-glossary.md",
+      ]);
+      expect(entity!.type).toBe("note");
+    });
+
     it("should handle missing metadata in parseMarkdown and use defaults", () => {
       vi.mocked(markdown.parseMarkdown).mockReturnValue({
         metadata: {},
