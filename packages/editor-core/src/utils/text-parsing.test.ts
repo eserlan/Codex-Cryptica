@@ -46,4 +46,11 @@ describe("extractProposals", () => {
     expect(extractProposals("")).toEqual([]);
     expect(extractProposals(undefined as any)).toEqual([]);
   });
+
+  it("should safely handle undefined or null titles in existingEntityTitles set", () => {
+    const markdown = "We have **New** and **Other** entities.";
+    const existing = new Set(["Existing", undefined as any, null as any, ""]);
+    const result = extractProposals(markdown, existing);
+    expect(result).toEqual(["New", "Other"]);
+  });
 });
