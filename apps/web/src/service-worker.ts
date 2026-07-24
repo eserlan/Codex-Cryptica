@@ -9,7 +9,7 @@ import {
   precacheBuild,
 } from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "440";
+const CACHE_VERSION = "441";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
 const ASSETS = [
