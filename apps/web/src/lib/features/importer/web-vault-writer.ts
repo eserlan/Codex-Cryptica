@@ -172,6 +172,8 @@ export class WebVaultWriter implements VaultWriter {
         type: entity.type,
         title: entity.title,
         initialData: {
+          type: entity.type,
+          title: entity.title,
           content: entity.content,
           lore: entity.lore,
           tags: entity.tags,
@@ -227,24 +229,25 @@ export class WebVaultWriter implements VaultWriter {
   }
 
   async updateEntity(id: string, patch: EntityPatch): Promise<void> {
-    const updates: Partial<Entity> = {
-      type: patch.type as Entity["type"],
-      title: patch.title,
-      content: patch.content,
-      lore: patch.lore,
-      tags: patch.tags,
-      labels: patch.labels,
-      aliases: patch.aliases,
-      image: patch.image,
-      thumbnail: patch.thumbnail,
-      metadata: patch.metadata as Entity["metadata"],
-      parent: patch.parent,
-      start_date: toTemporalMetadata(patch.startDate),
-      end_date: toTemporalMetadata(patch.endDate),
-    };
-    if (patch.connections !== undefined) {
+    const updates: Partial<Entity> = {};
+    if (patch.type !== undefined) updates.type = patch.type as Entity["type"];
+    if (patch.title !== undefined) updates.title = patch.title;
+    if (patch.content !== undefined) updates.content = patch.content;
+    if (patch.lore !== undefined) updates.lore = patch.lore;
+    if (patch.tags !== undefined) updates.tags = patch.tags;
+    if (patch.labels !== undefined) updates.labels = patch.labels;
+    if (patch.aliases !== undefined) updates.aliases = patch.aliases;
+    if (patch.image !== undefined) updates.image = patch.image;
+    if (patch.thumbnail !== undefined) updates.thumbnail = patch.thumbnail;
+    if (patch.metadata !== undefined)
+      updates.metadata = patch.metadata as Entity["metadata"];
+    if (patch.parent !== undefined) updates.parent = patch.parent;
+    if (patch.startDate !== undefined)
+      updates.start_date = toTemporalMetadata(patch.startDate);
+    if (patch.endDate !== undefined)
+      updates.end_date = toTemporalMetadata(patch.endDate);
+    if (patch.connections !== undefined)
       updates.connections = patch.connections as Entity["connections"];
-    }
     const success = await this.store.updateEntity(id, updates);
 
     if (!success) {

@@ -48,9 +48,11 @@ export function createEntity(
     }
   }
 
+  const resolvedType =
+    initialData.type || (initialData as any)?.kind || type || "note";
+
   const entity = {
     id,
-    type,
     title,
     tags: [],
     labels: [],
@@ -62,6 +64,7 @@ export function createEntity(
     createdAt: systemClock.now(),
     modifiedAt: systemClock.now(),
     ...initialData,
+    type: resolvedType,
   } as LocalEntity;
 
   if (!entity.connections) {
@@ -414,8 +417,10 @@ export function batchCreateEntities(
     let entity: LocalEntity;
 
     if ("id" in item) {
+      const resolvedType = (item as any).type || (item as any).kind || "note";
       entity = {
         ...item,
+        type: resolvedType,
         updatedAt: systemClock.now(),
         createdAt: (item as Partial<Entity>).createdAt ?? systemClock.now(),
         modifiedAt: systemClock.now(),

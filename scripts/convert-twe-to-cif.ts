@@ -14,7 +14,10 @@ function cleanText(val: any, fallback: string = ""): string {
   return str.length > 0 ? str : fallback;
 }
 
-export function convertThreadWeaverToCif(inputPath: string, outputPath?: string) {
+export function convertThreadWeaverToCif(
+  inputPath: string,
+  outputPath?: string,
+) {
   if (!fs.existsSync(inputPath)) {
     throw new Error(`Input file not found: ${inputPath}`);
   }
@@ -25,8 +28,11 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
   const factions: any[] = net.factions || [];
   const settlements: any[] = net.settlements || [];
 
-  // Build lookup maps for wiki-style [[Title]] cross-referencing
-  const settlementMap = new Map<string, { id: string; name: string; key: string }>();
+  // Build lookup maps for entity cross-referencing
+  const settlementMap = new Map<
+    string,
+    { id: string; name: string; key: string }
+  >();
   for (const s of settlements) {
     const sId = cleanText(s.id, "unknown");
     const name = cleanText(s.name, sId);
@@ -42,7 +48,10 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
     factionMap.set(slug(name), { name, key });
   }
 
-  const characterMap = new Map<string, { id: string; name: string; key: string }>();
+  const characterMap = new Map<
+    string,
+    { id: string; name: string; key: string }
+  >();
   for (const c of characters) {
     const cId = c.id !== undefined && c.id !== null ? String(c.id) : "unknown";
     const name = cleanText(c.name, `Character ${cId}`);
@@ -63,7 +72,10 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
     entityKeySet.add(key);
 
     const type = cleanText(s.type, "Settlement");
-    const population = s.population !== undefined && s.population !== null ? s.population : "Unknown";
+    const population =
+      s.population !== undefined && s.population !== null
+        ? s.population
+        : "Unknown";
     const nation = cleanText(s.nation, "Uncharted Region");
     const description = cleanText(s.description, "No description recorded.");
 
@@ -74,18 +86,24 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
         for (const cell of f.cells) {
           if (cleanText(cell.settlement_id) === sId) {
             const fName = cleanText(f.name, "Faction");
-            const leaderName = cell.local_leader_id !== undefined ? characterMap.get(String(cell.local_leader_id))?.name : undefined;
-            const leaderLink = leaderName ? `[[${leaderName}]]` : "Unassigned";
+            const leaderName =
+              cell.local_leader_id !== undefined
+                ? characterMap.get(String(cell.local_leader_id))?.name
+                : undefined;
+            const leaderStr = leaderName ? `**${leaderName}**` : "Unassigned";
             const status = cleanText(cell.cell_status, "active");
-            cellLines.push(`- **[[${fName}]]**: Led by ${leaderLink} (*${status} cell*)`);
+            cellLines.push(
+              `- **${fName}**: Led by ${leaderStr} (*${status} cell*)`,
+            );
           }
         }
       }
     }
 
-    const cellSection = cellLines.length > 0
-      ? `\n\n## Active Faction Cells\n${cellLines.join("\n")}`
-      : "";
+    const cellSection =
+      cellLines.length > 0
+        ? `\n\n## Active Faction Cells\n${cellLines.join("\n")}`
+        : "";
 
     entities.push({
       key,
@@ -96,7 +114,9 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
         format: "markdown",
         body: `${description}\n\n## Overview\n- **Type**: ${type}\n- **Population**: ${population}\n- **Nation**: ${nation}${cellSection}`,
       },
-      labels: ["location", type, nation].filter((l) => l && l !== "Uncharted Region" && l !== "Settlement" ? true : Boolean(l)),
+      labels: ["location", type, nation].filter((l) =>
+        l && l !== "Uncharted Region" && l !== "Settlement" ? true : Boolean(l),
+      ),
       source: { id: sId },
     });
   }
@@ -118,24 +138,37 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
 
     const hqId = cleanText(f.headquarters);
     const hqSettlement = hqId ? settlementMap.get(hqId) : undefined;
-    const hqLink = hqSettlement ? `[[${hqSettlement.name}]]` : "None";
+    const hqStr = hqSettlement ? `**${hqSettlement.name}**` : "None";
 
     const cellLines: string[] = [];
     if (Array.isArray(f.cells)) {
       for (const cell of f.cells) {
-        const sName = cell.settlement_id ? settlementMap.get(cleanText(cell.settlement_id))?.name : undefined;
-        const sLink = sName ? `[[${sName}]]` : cleanText(cell.settlement_name, "Settlement");
-        const leaderName = cell.local_leader_id !== undefined ? characterMap.get(String(cell.local_leader_id))?.name : undefined;
-        const leaderLink = leaderName ? `[[${leaderName}]]` : "Unassigned";
+        const sName = cell.settlement_id
+          ? settlementMap.get(cleanText(cell.settlement_id))?.name
+          : undefined;
+        const sStr = sName
+          ? `**${sName}**`
+          : cleanText(cell.settlement_name, "Settlement");
+        const leaderName =
+          cell.local_leader_id !== undefined
+            ? characterMap.get(String(cell.local_leader_id))?.name
+            : undefined;
+        const leaderStr = leaderName ? `**${leaderName}**` : "Unassigned";
         const status = cleanText(cell.cell_status, "active");
-        const strengthPct = typeof cell.strength === "number" ? ` (${Math.round(cell.strength * 100)}% strength)` : "";
-        cellLines.push(`- **${sLink}**: Leader ${leaderLink} (*${status}*${strengthPct})`);
+        const strengthPct =
+          typeof cell.strength === "number"
+            ? ` (${Math.round(cell.strength * 100)}% strength)`
+            : "";
+        cellLines.push(
+          `- ${sStr}: Leader ${leaderStr} (*${status}*${strengthPct})`,
+        );
       }
     }
 
-    const cellSection = cellLines.length > 0
-      ? `\n\n## Cells & Footholds\n${cellLines.join("\n")}`
-      : "";
+    const cellSection =
+      cellLines.length > 0
+        ? `\n\n## Cells & Footholds\n${cellLines.join("\n")}`
+        : "";
 
     entities.push({
       key,
@@ -144,7 +177,7 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
       summary: `Short goal: ${shortGoal}. Long goal: ${longGoal}.`,
       content: {
         format: "markdown",
-        body: `## Tenet\n${tenet}\n\n## Details\n- **Color**: ${color}\n- **Structure**: ${structure}\n- **Multi-settlement**: ${Boolean(f.multi_settlement)}\n- **Headquarters**: ${hqLink}\n- **Short-Term Goal**: ${shortGoal}\n- **Long-Term Goal**: ${longGoal}${cellSection}\n\n## Secret\n${secret}\n\n## Rumour\n${rumour}\n\n## Identifier\n${identifier}`,
+        body: `## Tenet\n${tenet}\n\n## Details\n- **Color**: ${color}\n- **Structure**: ${structure}\n- **Multi-settlement**: ${Boolean(f.multi_settlement)}\n- **Headquarters**: ${hqStr}\n- **Short-Term Goal**: ${shortGoal}\n- **Long-Term Goal**: ${longGoal}${cellSection}\n\n## Secret\n${secret}\n\n## Rumour\n${rumour}\n\n## Identifier\n${identifier}`,
       },
       labels: ["faction", structure].filter(Boolean),
       parent: hqSettlement ? hqSettlement.key : undefined,
@@ -160,50 +193,67 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
     entityKeySet.add(key);
 
     const factionName = cleanText(c.faction, "Independent");
-    const factionObj = factionMap.get(factionName) || factionMap.get(slug(factionName));
-    const factionLink = factionObj ? `[[${factionObj.name}]]` : factionName;
+    const factionObj =
+      factionMap.get(factionName) || factionMap.get(slug(factionName));
+    const factionStr = factionObj ? `**${factionObj.name}**` : factionName;
 
     const role = cleanText(c.role, "Wanderer");
     const personality = cleanText(c.personality, "Unspecified");
     const motivation = cleanText(c.motivation, "Unspecified goals");
     const flaw = cleanText(c.flaw, "None recorded");
-    const appearanceHook = cleanText(c.appearanceHook, "Unremarkable appearance");
-    const voiceManner = cleanText(c.voiceManner, "Standard speech and demeanor");
+    const appearanceHook = cleanText(
+      c.appearanceHook,
+      "Unremarkable appearance",
+    );
+    const voiceManner = cleanText(
+      c.voiceManner,
+      "Standard speech and demeanor",
+    );
     const secret = cleanText(c.secret, "No secret recorded.");
     const rumour = cleanText(c.rumour, "No rumour recorded.");
     const factionTier = c.factionTier ?? 1;
 
-    const settId = c.settlement && c.settlement.id ? cleanText(c.settlement.id) : undefined;
+    const settId =
+      c.settlement && c.settlement.id ? cleanText(c.settlement.id) : undefined;
     const settObj = settId ? settlementMap.get(settId) : undefined;
-    const settLink = settObj ? `[[${settObj.name}]]` : (c.settlement?.name ? cleanText(c.settlement.name) : "Unassigned");
+    const settStr = settObj
+      ? `**${settObj.name}**`
+      : c.settlement?.name
+        ? cleanText(c.settlement.name)
+        : "Unassigned";
 
     const wantLines: string[] = [];
     if (Array.isArray(c.wants)) {
       for (const w of c.wants) {
-        let targetLink: string | undefined;
+        let targetStr: string | undefined;
         if (w.fromType === "faction" && w.fromName) {
-          const fObj = factionMap.get(cleanText(w.fromName)) || factionMap.get(slug(cleanText(w.fromName)));
-          targetLink = fObj ? `[[${fObj.name}]]` : cleanText(w.fromName);
+          const fObj =
+            factionMap.get(cleanText(w.fromName)) ||
+            factionMap.get(slug(cleanText(w.fromName)));
+          targetStr = fObj ? `**${fObj.name}**` : cleanText(w.fromName);
         } else if (w.fromType === "character" && w.fromId !== undefined) {
           const cTarget = characterMap.get(String(w.fromId));
-          targetLink = cTarget ? `[[${cTarget.name}]]` : `Character ${w.fromId}`;
+          targetStr = cTarget ? `**${cTarget.name}**` : `Character ${w.fromId}`;
         } else if (w.fromType === "settlement" && w.fromId) {
           const sTarget = settlementMap.get(cleanText(w.fromId));
-          targetLink = sTarget ? `[[${sTarget.name}]]` : cleanText(w.fromName || w.fromId);
+          targetStr = sTarget
+            ? `**${sTarget.name}**`
+            : cleanText(w.fromName || w.fromId);
         }
 
         const what = cleanText(w.what, "unspecified desire");
-        if (targetLink) {
-          wantLines.push(`- Wants *${what}* from ${targetLink}`);
+        if (targetStr) {
+          wantLines.push(`- Wants *${what}* from ${targetStr}`);
         } else {
           wantLines.push(`- Wants *${what}*`);
         }
       }
     }
 
-    const wantSection = wantLines.length > 0
-      ? `\n\n## Desires & Agendas\n${wantLines.join("\n")}`
-      : "";
+    const wantSection =
+      wantLines.length > 0
+        ? `\n\n## Desires & Agendas\n${wantLines.join("\n")}`
+        : "";
 
     entities.push({
       key,
@@ -212,9 +262,11 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
       summary: `Role: ${role} (${factionName}). Personality: ${personality}.`,
       content: {
         format: "markdown",
-        body: `## Overview\n- **Faction**: ${factionLink} (Tier ${factionTier})\n- **Role**: ${role}\n- **Home Settlement**: ${settLink}\n- **Personality**: ${personality}\n- **Motivation**: ${motivation}\n- **Flaw**: ${flaw}${wantSection}\n\n## Appearance & Voice\n- **Appearance**: ${appearanceHook}\n- **Voice & Manner**: ${voiceManner}\n\n## Secret\n${secret}\n\n## Rumour\n${rumour}`,
+        body: `## Overview\n- **Faction**: ${factionStr} (Tier ${factionTier})\n- **Role**: ${role}\n- **Home Settlement**: ${settStr}\n- **Personality**: ${personality}\n- **Motivation**: ${motivation}\n- **Flaw**: ${flaw}${wantSection}\n\n## Appearance & Voice\n- **Appearance**: ${appearanceHook}\n- **Voice & Manner**: ${voiceManner}\n\n## Secret\n${secret}\n\n## Rumour\n${rumour}`,
       },
-      labels: ["character", role, factionName].filter((l) => l && l !== "Independent" ? true : Boolean(l)),
+      labels: ["character", role, factionName].filter((l) =>
+        l && l !== "Independent" ? true : Boolean(l),
+      ),
       parent: settObj ? settObj.key : undefined,
       source: { id: cId },
     });
@@ -227,7 +279,8 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
     label?: string,
     directed = true,
   ) {
-    if (!from || !to || !entityKeySet.has(from) || !entityKeySet.has(to)) return;
+    if (!from || !to || !entityKeySet.has(from) || !entityKeySet.has(to))
+      return;
     if (from === to) return;
     const relKey = `rel-${from}-${to}-${kind}`;
     if (relKeySet.has(relKey)) return;
@@ -264,7 +317,8 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
 
     const factionName = cleanText(c.faction);
     if (factionName && factionName !== "Independent") {
-      const fObj = factionMap.get(factionName) || factionMap.get(slug(factionName));
+      const fObj =
+        factionMap.get(factionName) || factionMap.get(slug(factionName));
       if (fObj) {
         const role = cleanText(c.role, "Member");
         const tier = c.factionTier ?? 1;
@@ -272,11 +326,18 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
       }
     }
 
-    const settId = c.settlement && c.settlement.id ? cleanText(c.settlement.id) : undefined;
+    const settId =
+      c.settlement && c.settlement.id ? cleanText(c.settlement.id) : undefined;
     if (settId && settlementMap.has(settId)) {
       const sKey = `location-${settId}`;
       const sObj = settlementMap.get(settId);
-      addRel(cKey, sKey, "located_in", `Resident of ${sObj?.name || "Settlement"}`, true);
+      addRel(
+        cKey,
+        sKey,
+        "located_in",
+        `Resident of ${sObj?.name || "Settlement"}`,
+        true,
+      );
     }
 
     if (Array.isArray(c.relationships)) {
@@ -285,7 +346,10 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
         const targetKey = `character-${r.characterId}`;
         const rType = cleanText(r.type, "related");
         const k = slug(rType) || "related";
-        const sentiment = r.sentiment !== undefined && r.sentiment !== null ? ` (Sentiment: ${r.sentiment})` : "";
+        const sentiment =
+          r.sentiment !== undefined && r.sentiment !== null
+            ? ` (Sentiment: ${r.sentiment})`
+            : "";
         addRel(cKey, targetKey, k, `${rType}${sentiment}`, true);
       }
     }
@@ -294,7 +358,9 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
       for (const w of c.wants) {
         let targetKey: string | undefined;
         if (w.fromType === "faction" && w.fromName) {
-          const fObj = factionMap.get(cleanText(w.fromName)) || factionMap.get(slug(cleanText(w.fromName)));
+          const fObj =
+            factionMap.get(cleanText(w.fromName)) ||
+            factionMap.get(slug(cleanText(w.fromName)));
           if (fObj) targetKey = fObj.key;
         } else if (w.fromType === "character" && w.fromId !== undefined) {
           targetKey = `character-${w.fromId}`;
@@ -319,7 +385,9 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
     if (Array.isArray(f.outwardLinks)) {
       for (const l of f.outwardLinks) {
         if (!l.target) continue;
-        const targetObj = factionMap.get(cleanText(l.target)) || factionMap.get(slug(cleanText(l.target)));
+        const targetObj =
+          factionMap.get(cleanText(l.target)) ||
+          factionMap.get(slug(cleanText(l.target)));
         if (targetObj) {
           const lType = cleanText(l.type, "related");
           addRel(fKey, targetObj.key, slug(lType) || "related", lType, true);
@@ -330,10 +398,18 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
     if (Array.isArray(f.emergentLinks)) {
       for (const l of f.emergentLinks) {
         if (!l.target) continue;
-        const targetObj = factionMap.get(cleanText(l.target)) || factionMap.get(slug(cleanText(l.target)));
+        const targetObj =
+          factionMap.get(cleanText(l.target)) ||
+          factionMap.get(slug(cleanText(l.target)));
         if (targetObj) {
           const lType = cleanText(l.type, "related");
-          addRel(fKey, targetObj.key, slug(lType) || "related", `Emergent: ${lType}`, true);
+          addRel(
+            fKey,
+            targetObj.key,
+            slug(lType) || "related",
+            `Emergent: ${lType}`,
+            true,
+          );
         }
       }
     }
@@ -342,11 +418,26 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
       for (const cell of f.cells) {
         const sId = cleanText(cell.settlement_id);
         if (sId && settlementMap.has(sId)) {
-          addRel(fKey, `location-${sId}`, "cell_presence", `Cell in ${settlementMap.get(sId)?.name}`, true);
+          addRel(
+            fKey,
+            `location-${sId}`,
+            "cell_presence",
+            `Cell in ${settlementMap.get(sId)?.name}`,
+            true,
+          );
         }
-        if (cell.local_leader_id !== undefined && cell.local_leader_id !== null) {
+        if (
+          cell.local_leader_id !== undefined &&
+          cell.local_leader_id !== null
+        ) {
           const status = cleanText(cell.cell_status, "active");
-          addRel(fKey, `character-${cell.local_leader_id}`, "cell_leader", `Cell Leader (${status})`, true);
+          addRel(
+            fKey,
+            `character-${cell.local_leader_id}`,
+            "cell_leader",
+            `Cell Leader (${status})`,
+            true,
+          );
         }
       }
     }
@@ -363,14 +454,24 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
         const targetId = cleanText(l.target);
         if (settlementMap.has(targetId)) {
           const lType = cleanText(l.type, "related");
-          const sentiment = l.sentiment !== undefined && l.sentiment !== null ? ` (Sentiment: ${l.sentiment})` : "";
-          addRel(sKey, `location-${targetId}`, slug(lType) || "related", `${lType}${sentiment}`, true);
+          const sentiment =
+            l.sentiment !== undefined && l.sentiment !== null
+              ? ` (Sentiment: ${l.sentiment})`
+              : "";
+          addRel(
+            sKey,
+            `location-${targetId}`,
+            slug(lType) || "related",
+            `${lType}${sentiment}`,
+            true,
+          );
         }
       }
     }
   }
 
-  const rawSeed = raw.generator && raw.generator.seed ? cleanText(raw.generator.seed) : "";
+  const rawSeed =
+    raw.generator && raw.generator.seed ? cleanText(raw.generator.seed) : "";
   const cifPackage = {
     format: "codex-world-interchange",
     version: "1.0",
@@ -397,9 +498,13 @@ export function convertThreadWeaverToCif(inputPath: string, outputPath?: string)
 if (import.meta.main) {
   const args = process.argv.slice(2);
   if (!args[0]) {
-    console.log("Usage: bun scripts/convert-twe-to-cif.ts <input_json_path> [output_cif_json_path]");
+    console.log(
+      "Usage: bun scripts/convert-twe-to-cif.ts <input_json_path> [output_cif_json_path]",
+    );
     process.exit(1);
   }
   const { targetPath, cifPackage } = convertThreadWeaverToCif(args[0], args[1]);
-  console.log(`Successfully converted ${cifPackage.entities.length} entities and ${cifPackage.relationships.length} relationships to ${targetPath}`);
+  console.log(
+    `Successfully converted ${cifPackage.entities.length} entities and ${cifPackage.relationships.length} relationships to ${targetPath}`,
+  );
 }

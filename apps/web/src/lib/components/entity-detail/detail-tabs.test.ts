@@ -4,6 +4,7 @@ import {
   entityDetailTabs,
   getNextEntityDetailTab,
   getNextEntityDetailTabInList,
+  getTemporalLabel,
 } from "./detail-tabs";
 
 describe("entity detail tab ids", () => {
@@ -57,5 +58,25 @@ describe("entity detail tab ids", () => {
     expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
       "timeline",
     );
+  });
+});
+
+describe("getTemporalLabel", () => {
+  it("returns correct labels for known types", () => {
+    expect(getTemporalLabel("character", "start")).toBe("Born");
+    expect(getTemporalLabel("character", "end")).toBe("Died");
+    expect(getTemporalLabel("location", "start")).toBe("Founded");
+    expect(getTemporalLabel("location", "end")).toBe("Dissolved");
+    expect(getTemporalLabel("item", "start")).toBe("Created");
+    expect(getTemporalLabel("item", "end")).toBe("Destroyed");
+    expect(getTemporalLabel("anything", "date")).toBe("Occurrence");
+  });
+
+  it("safely handles undefined and null types", () => {
+    expect(getTemporalLabel(undefined, "start")).toBe("Started");
+    expect(getTemporalLabel(null, "start")).toBe("Started");
+    expect(getTemporalLabel(undefined, "end")).toBe("Ended");
+    expect(getTemporalLabel(null, "end")).toBe("Ended");
+    expect(getTemporalLabel(undefined, "date")).toBe("Occurrence");
   });
 });
