@@ -35,16 +35,15 @@ describe("DefaultImageGenerationService", () => {
       visualDistillation,
       "buildVisualCanonResolutionPrompt",
     ).mockReturnValue("canon-res-prompt");
-    vi.spyOn(
-      visualDistillation,
-      "buildVisualPromptGenerationPrompt",
-    ).mockReturnValue("prompt-gen-prompt");
+    vi.spyOn(visualDistillation, "buildVisualSubjectPrompt").mockReturnValue(
+      "prompt-gen-prompt",
+    );
   });
 
-  describe("distillVisualPrompt", () => {
+  describe("distillVisualSubject", () => {
     it("should return query early if AI is disabled", async () => {
       vi.spyOn(capabilityGuard, "isAIEnabled").mockReturnValue(false);
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "ctx",
@@ -54,7 +53,7 @@ describe("DefaultImageGenerationService", () => {
     });
 
     it("should return query early if context is missing", async () => {
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "",
@@ -67,7 +66,7 @@ describe("DefaultImageGenerationService", () => {
       const resolvedPrompt =
         "Almos, full-body character concept art with readable silhouette";
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         resolvedPrompt,
         "",
@@ -86,7 +85,7 @@ describe("DefaultImageGenerationService", () => {
           response: { text: () => " distilled result " },
         });
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "ctx",
@@ -103,7 +102,7 @@ describe("DefaultImageGenerationService", () => {
         })
         .mockRejectedValueOnce(new Error("Gemini Error"));
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "ctx",

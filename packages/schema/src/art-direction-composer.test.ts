@@ -420,6 +420,31 @@ describe("composeImagePrompt", () => {
     expect(prompt).not.toContain("watermark");
   });
 
+  it("lets a style override replace the theme and suppress the lineage", () => {
+    const { layers, metadata } = composeImagePrompt({
+      ...base,
+      styleOverride: "ink wash on rice paper, silver leaf highlights",
+    });
+
+    expect(layers.theme).toBe("ink wash on rice paper, silver leaf highlights");
+    // Stacking the shipped theme on top would specify two mediums at once.
+    expect(layers.theme).not.toContain("painterly oil");
+    expect(layers.styleReference).toBe("");
+    expect(metadata.styleOverridden).toBe(true);
+    // Framing, camera, and negatives are unaffected.
+    expect(layers.category).toContain("full-body character concept art");
+    expect(layers.camera).toContain("85mm lens");
+  });
+
+  it("ignores a blank style override", () => {
+    const { layers, metadata } = composeImagePrompt({
+      ...base,
+      styleOverride: "   ",
+    });
+    expect(layers.theme).toBe(ART_THEMES.fantasy.prompt);
+    expect(metadata.styleOverridden).toBe(false);
+  });
+
   it("can omit negatives entirely", () => {
     expect(
       composeImagePrompt({ ...base, includeNegatives: false }).negativeTerms,

@@ -69,8 +69,12 @@ export class VisualizationExecutor
     if (!generator) throw new Error("Generator not available in context.");
 
     try {
-      const blob = await generator.generateEntityVisualization(
+      const prepared = await generator.prepareEntityVisualizationPrompt(
         entityId,
+        context,
+      );
+      const blob = await generator.generateVisualizationFromPrompt(
+        prepared,
         context,
       );
 
@@ -93,6 +97,13 @@ export class VisualizationExecutor
         await context.vault.updateEntity(entityId, {
           image,
           thumbnail,
+          imageArtDirection: {
+            ...prepared.metadata,
+            prompt: prepared.prompt,
+            negativePrompt: prepared.negativeTerms.join(", ") || undefined,
+            provider: context.imageProvider,
+            generatedAt: this.clock.now(),
+          },
         });
       }
     } catch (err: any) {
@@ -103,8 +114,17 @@ export class VisualizationExecutor
           role: "assistant",
           content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
         });
+        // Recorded as generation provenance, not as `artDirection`: that field
+        // is user-authored style direction and now overrides the theme layer,
+        // so storing a fully composed prompt there would duplicate the
+        // category and camera layers on the next generation.
         await context.vault.updateEntity(entityId, {
-          artDirection: prompt,
+          imageArtDirection: {
+            artDirectionVersion: 2,
+            prompt,
+            provider: context.imageProvider,
+            generatedAt: this.clock.now(),
+          },
         });
         return;
       }

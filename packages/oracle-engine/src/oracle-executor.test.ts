@@ -22,6 +22,11 @@ describe("OracleActionExecutor - Detailed", () => {
         .mockResolvedValue({ primaryEntityId: "e1", sourceIds: ["e1"] }),
       generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateMessageVisualization: vi.fn().mockResolvedValue(new Blob([])),
+      prepareEntityVisualizationPrompt: vi.fn().mockResolvedValue({
+        prompt: "composed prompt",
+        negativeTerms: [],
+        metadata: { artDirectionVersion: 2 },
+      }),
       generateVisualizationFromPrompt: vi.fn().mockResolvedValue(new Blob([])),
       generateCreationResponse: vi
         .fn()
@@ -86,7 +91,7 @@ describe("OracleActionExecutor - Detailed", () => {
       },
       imageGeneration: {
         generateImage: vi.fn(),
-        distillVisualPrompt: vi.fn(),
+        distillVisualSubject: vi.fn(),
       },
       proposeConnectionsForEntity: vi.fn().mockResolvedValue(undefined),
       contextRetrieval: {
@@ -1101,7 +1106,7 @@ describe("OracleActionExecutor - Detailed", () => {
 
     it("should let direct entity image failures bubble to UI callers", async () => {
       mockContext.vault.entities = { e1: { title: "T" } };
-      mockGenerator.generateEntityVisualization.mockRejectedValue(
+      mockGenerator.generateVisualizationFromPrompt.mockRejectedValue(
         new Error("Daily image generation limit exceeded."),
       );
 

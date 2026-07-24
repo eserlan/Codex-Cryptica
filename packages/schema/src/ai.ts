@@ -201,6 +201,12 @@ export interface ImageGenerationOptions {
   provider?: "gemini" | "cloudflare" | "custom";
   baseUrl?: string;
   cloudflareAccountId?: string;
+  /**
+   * Negative direction for providers exposing a dedicated field. Providers
+   * without one receive negatives inline in the prompt instead; see
+   * `formatForProvider` in the schema package.
+   */
+  negativePrompt?: string;
 }
 
 export interface ImageGenerationService {
@@ -210,7 +216,12 @@ export interface ImageGenerationService {
     modelName: string,
     options?: ImageGenerationOptions,
   ): Promise<Blob>;
-  distillVisualPrompt(
+  /**
+   * Resolves vault canon into a descriptive subject phrase. Art Direction v2
+   * composes category, theme, camera, and negatives around the result, so this
+   * returns the subject layer only — never a complete image prompt.
+   */
+  distillVisualSubject(
     apiKey: string,
     query: string,
     context: string,

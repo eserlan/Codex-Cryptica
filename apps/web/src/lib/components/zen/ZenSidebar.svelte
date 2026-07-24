@@ -7,7 +7,7 @@
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
-  import { isEntityVisible, resolveArtDirection, type Entity } from "schema";
+  import { isEntityVisible, composeImagePrompt, type Entity } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
@@ -114,16 +114,20 @@
     }
   }
 
+  // See DetailImage: preview of the direction wrapped around the AI-written
+  // subject, with the entity title standing in for that subject.
   const artDirectionPrompt = $derived.by(() => {
     if (!entity) return "";
-    const res = resolveArtDirection({
-      surface: "entity",
+    return composeImagePrompt({
       subject: entity.title,
-      categoryId: entity.type,
-      themeId: themeStore.activeTheme?.id || "default",
-      entityArtDirection: entity.artDirection,
-    });
-    return res.prompt;
+      category: entity.type,
+      theme: themeStore.activeTheme?.id || "default",
+      styleOverride: entity.artDirection,
+      subjectOptions: {
+        names: [entity.title],
+        descriptor: entity.type ? `a ${entity.type}` : undefined,
+      },
+    }).prompt;
   });
 
   $effect(() => {

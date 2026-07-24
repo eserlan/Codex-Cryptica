@@ -60,6 +60,13 @@ export interface ComposeImagePromptInput {
   opticsOverrides?: OpticsOverrides;
   /** Defaults to `named`. */
   styleReferenceMode?: StyleReferenceMode;
+  /**
+   * User- or entity-authored style direction. Replaces the theme layer and
+   * suppresses the style lineage, so a vault's own art direction wins over
+   * shipped theme defaults. Category framing, camera, and negatives still
+   * apply.
+   */
+  styleOverride?: string;
   /** Names to strip from the subject, and the descriptor to fall back on. */
   subjectOptions?: SubjectPreparationOptions;
   /** Include the camera/optics layer. Defaults to true. */
@@ -98,6 +105,8 @@ export interface ComposedPromptMetadata {
   cameraPresetId?: string;
   cameraVariant?: string;
   styleReferenceMode: StyleReferenceMode;
+  /** True when vault-authored direction replaced the shipped theme layer. */
+  styleOverridden: boolean;
   /** Proper names removed from the subject. Kept for provenance only. */
   removedNames: string[];
   truncated: boolean;
@@ -219,12 +228,17 @@ export function composeImagePrompt(
           input.opticsOverrides,
         );
 
+  // Vault-authored direction replaces the shipped theme wholesale; mixing the
+  // two produces prompts that specify two different mediums at once.
+  const styleOverride = (input.styleOverride || "").trim();
   const layers: ComposedPromptLayers = {
     subject: prepared.subject,
     category: buildCategoryLayer(category, categoryId, themeId),
-    theme: theme?.prompt || "",
+    theme: styleOverride || theme?.prompt || "",
     camera: formatOptics(camera),
-    styleReference: buildStyleReferenceLayer(theme, styleReferenceMode),
+    styleReference: styleOverride
+      ? ""
+      : buildStyleReferenceLayer(theme, styleReferenceMode),
   };
 
   const { prompt, truncated } = capPrompt(
@@ -250,6 +264,7 @@ export function composeImagePrompt(
       cameraPresetId: camera?.id,
       cameraVariant: input.cameraVariant,
       styleReferenceMode,
+      styleOverridden: Boolean(styleOverride),
       removedNames: prepared.removedNames,
       truncated,
     },

@@ -1,5 +1,11 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
-import { resolveArtDirection } from "schema";
+import {
+  composeImagePrompt,
+  formatForProvider,
+  type ComposedPromptMetadata,
+  type ImageProviderId,
+  type StyleReferenceMode,
+} from "schema";
 import {
   DEFAULT_CF_IMAGE_MODEL,
   DEFAULT_CUSTOM_IMAGE_MODEL,
@@ -17,53 +23,42 @@ interface VisualEntityLike {
 }
 
 export interface PreparedVisualizationPrompt {
+  /** The composed positive prompt, before provider formatting. */
   prompt: string;
+  /** Provider-neutral negative terms. */
+  negativeTerms: string[];
+  /** Art Direction v2 inputs, stored alongside the generated image. */
+  metadata: ComposedPromptMetadata;
+}
+
+/** Advanced overrides an entry point may pass through to the composer. */
+export interface VisualizationPromptOptions {
+  ignoreSavedArtDirection?: boolean;
+  cameraVariant?: string;
+  styleReferenceMode?: StyleReferenceMode;
 }
 
 export class OracleGenerator {
-  private buildEntityVisualQuery(
+  /**
+   * Builds the seed sent to the subject distiller. This is a request for a
+   * description, not a prompt — the distiller answers with physical facts and
+   * the composer supplies everything else.
+   */
+  private buildEntitySubjectSeed(
     entity: VisualEntityLike,
-    context?: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    labels?: string[],
   ): string {
-    const artDirection = resolveArtDirection({
-      subject: entity.title,
-      entityId: entity.id,
-      entityTitle: entity.title,
-      categoryId: entity.categoryId || entity.type,
-      categoryLabel: entity.type,
-      themeId: context?.uiStore?.activeThemeId,
-      surface: "entity",
-      entityArtDirection: options.ignoreSavedArtDirection
-        ? undefined
-        : this.extractEntityArtDirection(entity),
-    });
+    const descriptors = [
+      entity.type ? `a ${entity.type}` : "",
+      `named "${entity.title}"`,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-    return this.appendVisualLabels(artDirection.prompt, entity.labels);
-  }
-
-  private buildMessageVisualQuery(
-    message: ChatMessage,
-    entity: VisualEntityLike | null,
-    context: OracleExecutionContext,
-  ): string {
-    if (entity) {
-      return this.buildEntityVisualQuery(entity, context);
-    }
-
-    const commandSubject = this.extractDrawCommandSubject(message.content);
-    const artDirection = resolveArtDirection({
-      subject: commandSubject.subject,
-      surface: "chat",
-      categoryId: commandSubject.categoryId,
-      categoryIdIsHint: Boolean(commandSubject.categoryId),
-      themeId: context.uiStore?.activeThemeId,
-      userAuthoredArtDirection: this.extractArtDirectionFromText(
-        message.content,
-      ),
-    });
-
-    return artDirection.prompt;
+    return this.appendVisualLabels(
+      `Describe what ${descriptors} physically looks like, for an illustration.`,
+      labels,
+    );
   }
 
   private appendVisualLabels(basePrompt: string, labels?: string[]): string {
@@ -75,7 +70,7 @@ export class OracleGenerator {
 HIGH-PRIORITY VISUAL LABELS:
 ${cleanLabels.map((label) => `- ${label}`).join("\n")}
 
-Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
+Treat these labels as strong direction for the subject's appearance, attire, and condition.`;
   }
 
   private extractEntityArtDirection(entity: VisualEntityLike) {
@@ -311,17 +306,17 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     entityId: string,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const { prompt } = await this.prepareEntityVisualizationPrompt(
+    const prepared = await this.prepareEntityVisualizationPrompt(
       entityId,
       context,
     );
-    return this.generateVisualizationFromPrompt(prompt, context);
+    return this.generateVisualizationFromPrompt(prepared, context);
   }
 
   async prepareEntityVisualizationPrompt(
     entityId: string,
     context: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    options: VisualizationPromptOptions = {},
   ): Promise<PreparedVisualizationPrompt> {
     const apiKey = context.effectiveApiKey || "";
     const entity = context.vault.entities[entityId];
@@ -334,14 +329,35 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         true,
       );
 
+    // Stage 1: the model resolves vault canon into physical description only.
+    const subject = await context.imageGeneration.distillVisualSubject(
+      apiKey,
+      this.buildEntitySubjectSeed(entity, entity.labels),
+      aiContext,
+      context.modelName,
+      context.isDemoMode,
+    );
+
+    // Stage 2: deterministic composition around that subject.
+    const composed = composeImagePrompt({
+      subject,
+      category: entity.categoryId || entity.type,
+      theme: context?.uiStore?.activeThemeId,
+      cameraVariant: options.cameraVariant,
+      styleReferenceMode: options.styleReferenceMode,
+      styleOverride: options.ignoreSavedArtDirection
+        ? undefined
+        : this.extractEntityArtDirection(entity),
+      subjectOptions: {
+        names: [entity.title],
+        descriptor: entity.type ? `a ${entity.type}` : undefined,
+      },
+    });
+
     return {
-      prompt: await context.imageGeneration.distillVisualPrompt(
-        apiKey,
-        this.buildEntityVisualQuery(entity, context, options),
-        aiContext,
-        context.modelName,
-        context.isDemoMode,
-      ),
+      prompt: composed.prompt,
+      negativeTerms: composed.negativeTerms,
+      metadata: composed.metadata,
     };
   }
 
@@ -352,47 +368,75 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     message: ChatMessage,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const { prompt } = await this.prepareMessageVisualizationPrompt(
+    const prepared = await this.prepareMessageVisualizationPrompt(
       message,
       context,
     );
-    return this.generateVisualizationFromPrompt(prompt, context);
+    return this.generateVisualizationFromPrompt(prepared, context);
   }
 
   async prepareMessageVisualizationPrompt(
     message: ChatMessage,
     context: OracleExecutionContext,
+    options: VisualizationPromptOptions = {},
   ): Promise<PreparedVisualizationPrompt> {
+    if (message.entityId && context.vault.entities[message.entityId]) {
+      return this.prepareEntityVisualizationPrompt(
+        message.entityId,
+        context,
+        options,
+      );
+    }
+
     const apiKey = context.effectiveApiKey || "";
-    const entity = message.entityId
-      ? context.vault.entities[message.entityId]
-      : null;
-    const searchQuery = entity ? entity.title : message.content.slice(0, 100);
+    const command = this.extractDrawCommandSubject(message.content);
 
     const { content: aiContext } =
       await context.contextRetrieval.retrieveContext(
-        searchQuery,
+        message.content.slice(0, 100),
         new Set(),
         context.vault,
         message.entityId,
         true,
       );
 
+    const subject = await context.imageGeneration.distillVisualSubject(
+      apiKey,
+      command.subject,
+      aiContext,
+      context.modelName,
+      context.isDemoMode,
+    );
+
+    const composed = composeImagePrompt({
+      subject,
+      category: command.categoryId,
+      theme: context.uiStore?.activeThemeId,
+      cameraVariant: options.cameraVariant,
+      styleReferenceMode: options.styleReferenceMode,
+      styleOverride: this.extractArtDirectionFromText(message.content),
+    });
+
     return {
-      prompt: await context.imageGeneration.distillVisualPrompt(
-        apiKey,
-        this.buildMessageVisualQuery(message, entity, context),
-        aiContext,
-        context.modelName,
-        context.isDemoMode,
-      ),
+      prompt: composed.prompt,
+      negativeTerms: composed.negativeTerms,
+      metadata: composed.metadata,
     };
   }
 
+  /**
+   * Accepts either a composed prompt with its negatives, or a bare string for
+   * the manual-override path where the user has hand-edited the prompt.
+   */
   async generateVisualizationFromPrompt(
-    prompt: string,
+    input: string | PreparedVisualizationPrompt,
     context: OracleExecutionContext,
   ): Promise<Blob> {
+    const composed =
+      typeof input === "string"
+        ? { prompt: input, negativeTerms: [] as string[] }
+        : input;
+
     const apiKey = context.effectiveApiKey || "";
     const isCustom = context.imageProvider === "custom";
     const isCloudflare = context.imageProvider === "cloudflare";
@@ -414,17 +458,25 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     const needsKey =
       (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
 
+    // Negatives are attached in whichever form this provider understands:
+    // a dedicated field, or inline in the prompt.
+    const payload = formatForProvider(
+      composed,
+      context.imageProvider as ImageProviderId | undefined,
+    );
+
     if (needsKey) {
-      throw new Error(`MISSING_KEY_PROMPT|${prompt}`);
+      throw new Error(`MISSING_KEY_PROMPT|${payload.prompt}`);
     }
 
     return await context.imageGeneration.generateImage(
       targetKey,
-      prompt,
+      payload.prompt,
       targetModel,
       {
         provider: context.imageProvider,
         baseUrl: context.customImageBaseUrl,
+        negativePrompt: payload.negativePrompt,
       },
     );
   }
