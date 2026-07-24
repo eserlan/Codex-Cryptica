@@ -162,7 +162,7 @@
           <span class="{getIconClass(cat.icon)} h-3.5 w-3.5" aria-hidden="true"
           ></span>
         {/if}
-        {cat?.label ?? entity.type}
+        {cat?.label ?? (entity.type || "note")}
       </button>
     {:else if cat}
       <span

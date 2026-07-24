@@ -131,15 +131,20 @@ describe("WebVaultWriter", () => {
         type: "character",
         title: "Hero",
         initialData: {
+          type: "character",
+          title: "Hero",
           content: "Lore",
           lore: undefined,
           tags: [],
           labels: ["important"],
+          aliases: undefined,
           image: "https://cdn.example.com/hero.png",
           thumbnail: "https://cdn.example.com/hero-thumb.png",
           metadata: undefined,
           discoverySource: "scabard:id:1",
           parent: undefined,
+          start_date: undefined,
+          end_date: undefined,
           connections: [],
         },
       },
@@ -147,15 +152,20 @@ describe("WebVaultWriter", () => {
         type: "location",
         title: "Moon Harbor",
         initialData: {
+          type: "location",
+          title: "Moon Harbor",
           content: "Harbor note",
           lore: undefined,
           tags: [],
           labels: ["port"],
+          aliases: undefined,
           image: undefined,
           thumbnail: undefined,
           metadata: undefined,
           discoverySource: "scabard:id:2",
           parent: undefined,
+          start_date: undefined,
+          end_date: undefined,
           connections: [],
         },
       },
@@ -659,6 +669,45 @@ describe("WebVaultWriter — dates and aliases (T008)", () => {
         start_date: { year: 1142, month: undefined, day: undefined },
       }),
     );
+  });
+
+  it("clears a field the new draft no longer has, instead of leaving the stale value (replace-all reimport)", async () => {
+    // Exercise the real merge (spread `{...entity, ...updates}`), not a
+    // mock capturing call args — `{aliases: undefined}` and `{}` look the
+    // same to toHaveBeenCalledWith/objectContaining, but differ once
+    // spread onto the existing entity.
+    const { updateEntity: pureUpdateEntity } =
+      await import("../../stores/vault/entities");
+    let entities: Record<string, any> = {
+      hero: {
+        id: "hero",
+        type: "character",
+        title: "Hero",
+        aliases: ["The Wanderer"],
+        image: "old.png",
+      },
+    };
+    const writer = new WebVaultWriter({
+      entities,
+      createEntity: vi.fn(),
+      updateEntity: async (id: string, updates: any) => {
+        const result = pureUpdateEntity(entities, id, updates);
+        entities = result.entities;
+        return result.updated !== null;
+      },
+      addConnection: vi.fn(),
+    });
+
+    await writer.updateEntity("hero", {
+      type: "character",
+      title: "Hero",
+      content: "new content",
+      aliases: undefined,
+      image: undefined,
+    } as any);
+
+    expect(entities.hero.aliases).toBeUndefined();
+    expect(entities.hero.image).toBeUndefined();
   });
 });
 

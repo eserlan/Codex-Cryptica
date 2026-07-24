@@ -48,9 +48,10 @@ export function createEntity(
     }
   }
 
+  const resolvedType = initialData.type || type || "note";
+
   const entity = {
     id,
-    type,
     title,
     tags: [],
     labels: [],
@@ -62,6 +63,7 @@ export function createEntity(
     createdAt: systemClock.now(),
     modifiedAt: systemClock.now(),
     ...initialData,
+    type: resolvedType,
   } as LocalEntity;
 
   if (!entity.connections) {
@@ -416,6 +418,7 @@ export function batchCreateEntities(
     if ("id" in item) {
       entity = {
         ...item,
+        type: (item as Partial<Entity>).type || "note",
         updatedAt: systemClock.now(),
         createdAt: (item as Partial<Entity>).createdAt ?? systemClock.now(),
         modifiedAt: systemClock.now(),
