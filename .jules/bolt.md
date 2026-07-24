@@ -166,3 +166,8 @@
 
 **Learning:** In VTT applications, `graph.entities` payloads can be exceptionally large (containing thousands of items). Chaining methods like `Object.entries().map().map()` followed by `Object.fromEntries()` allocates multiple large, short-lived arrays. These intermediate allocations place immense pressure on the garbage collector during data sync/initialization, leading to jank and latency spikes. Replacing these chains with a single imperative loop (`for...in`) directly building the target dictionary avoids these array allocations entirely.
 **Action:** When transforming large data collections (especially dictionaries like `entities`), actively look for `Object.keys/values/entries` combined with `.map()` or `.filter()`, and refactor them into a single imperative loop.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** When generating a specific entity ID by resolving against a username across all entities (such as in `resolveGuestCharacterId`), using `Object.values(entities)` inline will allocate a new intermediate array on every resolution. Since `resolveGuestCharacterId` can be called frequently (e.g. per message, on connection setup), doing full allocations adds unnecessary memory pressure and garbage collection overhead.
+**Action:** Replace `Object.values(obj)` iterations with imperative `for...in` loops accessing `obj[key]` to process objects directly without intermediate array allocation when performing matching or transforming subsets that run frequently.

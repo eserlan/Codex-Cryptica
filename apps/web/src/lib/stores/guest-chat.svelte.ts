@@ -20,7 +20,9 @@ function resolveGuestCharacterId(
 ): string | null {
   if (!username?.trim()) return null;
   const name = username.trim().toLowerCase();
-  for (const entity of Object.values(entities)) {
+  // ⚡ Bolt Optimization: Use imperative loop over keys instead of Object.values() array allocation
+  for (const id in entities) {
+    const entity = entities[id];
     if (entity.type !== "character") continue;
     if (entity.title?.toLowerCase() === name) return entity.id;
     if (entity.aliases?.some((a: string) => a.toLowerCase() === name))
