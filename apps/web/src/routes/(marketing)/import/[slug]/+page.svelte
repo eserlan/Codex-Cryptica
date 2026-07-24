@@ -280,13 +280,14 @@
     class="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
-      <div
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
+      <a
+        href="{cleanBase}/migrations"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
         Migration Hub
-      </div>
+      </a>
       <h1
         class="font-header font-extrabold text-3xl md:text-5xl tracking-wide uppercase text-theme-primary mb-4"
       >

@@ -259,6 +259,33 @@ describe("Imports SvelteKit Route", () => {
     });
   });
 
+  describe("Migration Hub pill", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("links to the Migration Hub", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      const link = screen.getByRole("link", { name: /migration hub/i });
+      expect(link.getAttribute("href")).toBe("/migrations");
+    });
+  });
+
   describe("Tool credit link", () => {
     afterEach(() => {
       document.head.innerHTML = "";
