@@ -247,6 +247,11 @@
     }
   }
 
+  function useWorldCoverImage() {
+    if (!worldStore.metadata?.coverImage) return;
+    coverImageAssetId = worldStore.metadata.coverImage;
+  }
+
   async function handleDelist() {
     if (isSaving || !publishId || !writeToken) return;
 
@@ -378,9 +383,20 @@
 
       <label class="space-y-1">
         <span
-          class="text-xs uppercase tracking-wider font-header text-theme-text/60"
-          >Cover image asset ID</span
+          class="flex items-center justify-between gap-2 text-xs uppercase tracking-wider font-header text-theme-text/60"
         >
+          <span>Cover image asset ID</span>
+          {#if worldStore.metadata?.coverImage}
+            <button
+              type="button"
+              onclick={useWorldCoverImage}
+              class="normal-case tracking-normal font-body font-medium text-theme-primary hover:underline"
+              data-testid="public-listing-use-world-cover"
+            >
+              Use current world cover
+            </button>
+          {/if}
+        </span>
         <input
           bind:value={coverImageAssetId}
           type="text"
