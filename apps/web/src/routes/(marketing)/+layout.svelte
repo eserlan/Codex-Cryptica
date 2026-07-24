@@ -26,6 +26,7 @@
     if (pathname.startsWith(`${base}/alternatives`)) return "alternatives";
     if (pathname.startsWith(`${base}/blog`)) return "blog";
     if (pathname.startsWith(`${base}/import`)) return "importer";
+    if (pathname.startsWith(`${base}/migrations`)) return "importer";
     if (pathname.startsWith(`${base}/tools`)) return "tools";
     return "other";
   }

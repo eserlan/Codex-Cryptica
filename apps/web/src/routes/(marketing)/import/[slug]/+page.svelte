@@ -297,6 +297,17 @@
       >
         {pageData.subheading}
       </p>
+      {#if pageData.toolUrl}
+        <a
+          href={pageData.toolUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
+        >
+          <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+          Get {pageData.toolLabel ?? pageData.competitorName}
+        </a>
+      {/if}
     </div>
 
     <!-- Features Grid -->

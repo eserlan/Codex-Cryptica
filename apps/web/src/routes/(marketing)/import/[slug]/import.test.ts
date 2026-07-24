@@ -50,6 +50,8 @@ describe("Imports SvelteKit Route", () => {
         { slug: "world-anvil-export" },
         { slug: "kanka-json" },
         { slug: "legendkeeper-json" },
+        { slug: "thread-weaver" },
+        { slug: "scabard" },
       ]);
     });
   });
@@ -254,6 +256,69 @@ describe("Imports SvelteKit Route", () => {
           (l) => l.href === "/vs/legendkeeper",
         ),
       ).toBe(true);
+    });
+  });
+
+  describe("Tool credit link", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("renders a credit link when toolUrl is provided", () => {
+      const mockPageData = {
+        slug: "thread-weaver",
+        competitorName: "Thread Weaver Engine",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+        toolUrl: "https://ambiancearchitect.itch.io/thread-weaver-engine",
+        toolLabel: "Thread Weaver Engine",
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      const link = screen.getByRole("link", {
+        name: /get thread weaver engine/i,
+      });
+      expect(link.getAttribute("href")).toBe(
+        "https://ambiancearchitect.itch.io/thread-weaver-engine",
+      );
+    });
+
+    it("does not render a credit link when toolUrl is absent", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      expect(screen.queryByText(/^Get /)).toBeNull();
+    });
+
+    it("thread-weaver and scabard configs load correctly", async () => {
+      const { importsConfig } = (await vi.importActual(
+        "$lib/config/seo-pages",
+      )) as typeof import("$lib/config/seo-pages");
+      expect(importsConfig["thread-weaver"].toolUrl).toBe(
+        "https://ambiancearchitect.itch.io/thread-weaver-engine",
+      );
+      expect(importsConfig["scabard"].slug).toBe("scabard");
     });
   });
 });
