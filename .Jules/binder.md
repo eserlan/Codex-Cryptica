@@ -65,3 +65,6 @@
 ## 2026-07-22 - Refactored P2P classes to use dependency injection for ID generation
 **Learning:** The p2p networking components in `apps/web/src/lib/cloud-bridge/p2p` (`PeerJSTransport`, `P2PHostService`, and `P2PClientAdapter`) previously used hard-coded `crypto.randomUUID()` calls to assign peer IDs and file request IDs, making tests dependent on the global crypto API.
 **Action:** We injected an `IdGenerator` dependency directly into their constructors with a fallback to `systemIdGenerator`, preserving behavior while creating clean testability seams.
+## 2026-07-23 - Injecting IdGenerator into createCanvasLogic
+ **Learning:** Canvas logic in Svelte 5 (`use-canvas-logic.svelte.ts`) frequently hardcodes ID generation for dynamic nodes and edges using `crypto.randomUUID()`, which requires complex global mocking during component tests.
+ **Action:** We modified `createCanvasLogic` to accept an optional `idGenerator: IdGenerator` parameter with a default of `systemIdGenerator`. This cleanly abstracts the infrastructure dependency (ID generation) while preserving the hook's standard production behavior, maintaining the established pattern of DI for ambient utilities in this repository.
