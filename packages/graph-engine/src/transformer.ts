@@ -190,7 +190,7 @@ export class GraphTransformer {
       );
       const nodeData: GraphNode["data"] = {
         id: entity.id,
-        label: entity.title,
+        label: entity.title || entity.id || "Untitled",
         type: entity.type,
         status: entity.status,
         weight: weights.get(entity.id) ?? 0,
@@ -259,7 +259,7 @@ export class GraphTransformer {
               id: edgeId,
               source: entity.id,
               target: conn.target,
-              label: conn.label || conn.type,
+              label: conn.label || conn.type || "",
               connectionType: conn.type,
               strength: conn.strength,
             },
@@ -438,8 +438,11 @@ export const getGraphStyle = (
         width: 32,
         height: 32,
         shape: graph.nodeShape,
-        label: (node: any) =>
-          node.data("isPast") ? `${node.data("label")}*` : node.data("label"),
+        label: (node: any) => {
+          const l = node.data("label");
+          if (l === null || l === undefined) return "";
+          return node.data("isPast") ? `${l}*` : String(l);
+        },
         color: tokens.text,
         "font-family": sanitizeFontForCytoscape(tokens.fontHeader),
         "font-size": 10,
