@@ -62,3 +62,8 @@
 
 **Learning:** Large feature generator files (like `public-npc.ts`) often bundle extensive configuration, theme options, and prompt constants directly above the logic. This creates massive scrolling distance (1000+ lines) between related functional components.
 **Action:** Always extract static configuration objects, string pools, and constants into a cohesive `-constants.ts` file, leaving behind a focused module that only contains the execution logic, re-exporting the constants to maintain API contracts.
+## 2025-07-24 - Extracting huge template dictionaries from core business logic
+
+**Learning:** `packages/schema/src/art-direction.ts` contained its own core logic (`resolveArtDirection`) alongside hundreds of lines of static template configurations (e.g., `FACTION_THEME_TEMPLATES`, `CATEGORY_ART_DIRECTION_DEFAULTS`). Extracting these static blocks into `art-direction-templates.ts` significantly improved file readability without touching logic.
+
+**Action:** Look out for files defining core types/logic that are drowned out by their own default configuration maps. Extract the static maps to a `-templates.ts` or `-constants.ts` file, and re-export them from the original file to keep imports clean.
