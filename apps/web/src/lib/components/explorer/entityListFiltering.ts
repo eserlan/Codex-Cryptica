@@ -82,7 +82,7 @@ export function filterEntities(
     }
   }
 
-  return filtered.sort((a, b) => a.title.localeCompare(b.title));
+  return filtered.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
 }
 
 export function countEntityTypes(

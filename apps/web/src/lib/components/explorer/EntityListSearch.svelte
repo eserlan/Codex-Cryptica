@@ -24,7 +24,9 @@
         }
       }
     }
-    return Array.from(labelsSet).sort((a, b) => a.localeCompare(b));
+    return Array.from(labelsSet).sort((a, b) =>
+      (a ?? "").localeCompare(b ?? ""),
+    );
   });
 
   const activeWord = $derived.by(() => {

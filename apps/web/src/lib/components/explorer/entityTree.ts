@@ -139,7 +139,9 @@ export function buildEntityTree(
 
   // Helper to sort tree nodes recursively
   const sortTreeNodes = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => a.entity.title.localeCompare(b.entity.title));
+    nodes.sort((a, b) =>
+      (a.entity?.title ?? "").localeCompare(b.entity?.title ?? ""),
+    );
     for (const node of nodes) {
       if (node.children.length > 0) {
         sortTreeNodes(node.children);

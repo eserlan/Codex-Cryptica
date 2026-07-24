@@ -49,7 +49,7 @@
       if (shared.size === 0) break;
     }
 
-    return Array.from(shared).sort((a, b) => a.localeCompare(b));
+    return Array.from(shared).sort((a, b) => (a ?? "").localeCompare(b ?? ""));
   });
 
   // Labels present in at least one selected entity (for remove tab when no shared ones)
