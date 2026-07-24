@@ -33,7 +33,9 @@
         }
       }
     }
-    return Array.from(labelsSet).sort((a, b) => a.localeCompare(b));
+    return Array.from(labelsSet).sort((a, b) =>
+      (a ?? "").localeCompare(b ?? ""),
+    );
   });
 
   // Autocomplete state
