@@ -77,6 +77,14 @@ const THEME_ALIASES: Record<string, string> = {
   "pulp-adventure": "pulp_adventure",
 };
 
+/**
+ * Art Direction v1 resolver (legacy).
+ *
+ * @deprecated Use `composeImagePrompt` from `art-direction-composer.ts`. This
+ * flattens every layer into one string, so camera direction and negatives
+ * cannot be handled separately or formatted per provider. Kept until all
+ * image-generation entry points are migrated.
+ */
 export function resolveArtDirection(
   context: DrawRequestContext,
 ): ResolvedArtDirection {

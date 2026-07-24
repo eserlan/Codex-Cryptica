@@ -1,3 +1,12 @@
+/**
+ * Art Direction v1 templates (legacy).
+ *
+ * Superseded by the structured catalogue in `art-direction-catalogue.ts`,
+ * which separates framing from medium and moves negatives into
+ * `art-direction-negatives.ts`. These strings stay in place until every call
+ * site is migrated from `resolveArtDirection` to `composeImagePrompt`; do not
+ * add new prompt copy here.
+ */
 import type { ArtDirectionTemplate } from "./art-direction";
 
 export const GLOBAL_ART_DIRECTION_DEFAULT: ArtDirectionTemplate = {

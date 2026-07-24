@@ -9,6 +9,11 @@ export * from "./map";
 export * from "./ai";
 export * from "./sync";
 export * from "./art-direction";
+export * from "./art-direction-catalogue";
+export * from "./art-direction-composer";
+export * from "./art-direction-negatives";
+export * from "./art-direction-optics";
+export * from "./art-direction-subject";
 export * from "./migrations";
 export * from "./publishing";
 
