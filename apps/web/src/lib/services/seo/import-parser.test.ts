@@ -51,6 +51,56 @@ describe("import-parser", () => {
       /No importable articles or pages found/,
     );
   });
+
+  it("parses a Thread Weaver export into characters, factions, and locations", async () => {
+    const json = JSON.stringify({
+      twe_format: "thread-weaver-campaign",
+      networkData: {
+        settlements: [{ id: "s1", name: "Greyhaven" }],
+        factions: [{ name: "The Iron Ledger", headquarters: "s1" }],
+        characters: [
+          {
+            id: 1,
+            name: "Mira",
+            faction: "The Iron Ledger",
+            settlement: { id: "s1" },
+          },
+        ],
+      },
+    });
+    const file = new File([json], "campaign.json", {
+      type: "application/json",
+    });
+    const parsed = await parseJsonExport(file, "thread-weaver");
+
+    expect(parsed.map((p) => p.type).sort()).toEqual([
+      "character",
+      "faction",
+      "location",
+    ]);
+    expect(parsed.find((p) => p.type === "character")?.title).toBe("Mira");
+  });
+
+  it("parses a Scabard export into mapped entity types", async () => {
+    const json = JSON.stringify({
+      pages: [
+        {
+          id: 1,
+          concept: "Character",
+          page: { id: 1, name: "Hero", concept: "Character" },
+        },
+      ],
+      conns: [],
+    });
+    const file = new File([json], "scabard.json", {
+      type: "application/json",
+    });
+    const parsed = await parseJsonExport(file, "scabard");
+
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].title).toBe("Hero");
+    expect(parsed[0].type).toBe("character");
+  });
 });
 
 describe("traverseEntry", () => {
