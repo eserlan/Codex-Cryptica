@@ -19,7 +19,9 @@ export function extractProposals(
   let linkMatch;
   const linkedTerms = new Set<string>();
   while ((linkMatch = linkRegex.exec(markdown)) !== null) {
-    const term = linkMatch[1]
+    const rawTerm = linkMatch[1];
+    if (!rawTerm) continue;
+    const term = String(rawTerm)
       .replace(/\*\*|__/g, "")
       .trim()
       .toLowerCase();
@@ -41,7 +43,7 @@ export function extractProposals(
   let match;
 
   while ((match = boldRegex.exec(textWithoutLinks)) !== null) {
-    const term = match[1].trim();
+    const term = (match[1] || "").trim();
     if (term.length > 0) {
       const lower = term.toLowerCase();
       if (!seenLower.has(lower)) {
@@ -53,11 +55,13 @@ export function extractProposals(
 
   // Filter out existing entities and any terms that are already linked in the document (case insensitive match)
   const existingLower = new Set([
-    ...Array.from(existingEntityTitles).map((t) => t.toLowerCase()),
+    ...Array.from(existingEntityTitles)
+      .filter((t): t is string => Boolean(t))
+      .map((t) => String(t).toLowerCase()),
     ...Array.from(linkedTerms),
   ]);
 
   return Array.from(proposals).filter(
-    (term) => !existingLower.has(term.toLowerCase()),
+    (term) => term && !existingLower.has(String(term).toLowerCase()),
   );
 }
