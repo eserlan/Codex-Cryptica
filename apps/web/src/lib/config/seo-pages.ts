@@ -588,6 +588,9 @@ export { featuresConfig } from "./seo-features";
 
 export interface SEOImportPageData extends SEOPageData {
   competitorName: string;
+  /** Optional outbound link to the source tool, shown as a small credit line in the hero (e.g. a companion generator, not a competitor). */
+  toolUrl?: string;
+  toolLabel?: string;
 }
 
 export { importsConfig } from "./seo-imports";

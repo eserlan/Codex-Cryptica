@@ -52,6 +52,7 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain("<urlset");
     expect(xml).toContain("https://codexcryptica.com/tools");
+    expect(xml).toContain("https://codexcryptica.com/migrations");
     expect(xml).toContain("https://codexcryptica.com/generators");
     expect(xml).toContain("https://codexcryptica.com/generators/faction");
     expect(xml).toContain(

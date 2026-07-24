@@ -222,4 +222,107 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       },
     ],
   },
+  "thread-weaver": {
+    slug: "thread-weaver",
+    competitorName: "Thread Weaver Engine",
+    title:
+      "Import Thread Weaver Campaigns to Codex Cryptica | Free JSON Import",
+    description:
+      "Import a Thread Weaver Engine campaign export. Characters, factions, and settlements — plus every relationship between them — converted and previewed entirely offline.",
+    h1: "Thread Weaver Campaign Importer",
+    subheading:
+      "Bring a Thread Weaver Engine campaign export straight into Codex Cryptica.",
+    introText:
+      "Thread Weaver Engine generates whole campaign networks — characters, factions, and settlements, wired together with relationships. Drop its export file here to preview every entity before it becomes part of your vault, entirely offline.",
+    ctaText: "Start Thread Weaver Import",
+    toolUrl: "https://ambiancearchitect.itch.io/thread-weaver-engine",
+    toolLabel: "Thread Weaver Engine",
+    keywords: [
+      "import thread weaver",
+      "thread weaver engine export",
+      "thread weaver campaign json",
+    ],
+    features: [
+      {
+        title: "Faction Cells & Goals",
+        description:
+          "Each faction's structure, headquarters, short- and long-term goals, secrets, and rumours carry over into its lore.",
+        icon: "icon-[lucide--flag]",
+      },
+      {
+        title: "Character Relationships",
+        description:
+          "Faction membership, home settlements, wants, and character-to-character ties all become real connections.",
+        icon: "icon-[lucide--users]",
+      },
+      {
+        title: "Offline Sandbox Preview",
+        description:
+          "Inspect every discovered character, faction, and settlement completely offline before importing.",
+        icon: "icon-[lucide--eye]",
+      },
+    ],
+    faq: [
+      {
+        question: "Where do I get a Thread Weaver export?",
+        answer:
+          "Generate a campaign with Thread Weaver Engine on itch.io, then export it as a JSON file from the app.",
+      },
+      {
+        question: "Do I need to convert the file first?",
+        answer:
+          "No. Drop the raw export here (or in Codex Cryptica's own Import dialog) and the conversion happens automatically in your browser.",
+      },
+    ],
+  },
+  scabard: {
+    slug: "scabard",
+    competitorName: "Scabard",
+    title: "Import Scabard Campaigns to Codex Cryptica | Free JSON Import",
+    description:
+      "Import your Scabard campaign export. Pages, categories, and connections are converted into characters, factions, locations, and linked relationships.",
+    h1: "Scabard Campaign Importer",
+    subheading:
+      "Bring your Scabard campaign export straight into Codex Cryptica.",
+    introText:
+      "Already building your world in Scabard? Drop its campaign export here to preview every page and connection — converted into characters, factions, locations, and items — before anything is written to your vault, entirely offline.",
+    ctaText: "Start Scabard Import",
+    keywords: [
+      "import scabard",
+      "scabard campaign export",
+      "scabard json to markdown",
+    ],
+    features: [
+      {
+        title: "Category-Aware Mapping",
+        description:
+          "Scabard's Character, Place, Group, Item, and Event categories map directly onto Codex Cryptica's entity types.",
+        icon: "icon-[lucide--shapes]",
+      },
+      {
+        title: "Connection Preservation",
+        description:
+          "Relationships between pages become real links, and classification connections become labels instead of clutter.",
+        icon: "icon-[lucide--link]",
+      },
+      {
+        title: "Offline Sandbox Preview",
+        description:
+          "Inspect the parsed structure and content hierarchy completely offline before exporting into your vault.",
+        icon: "icon-[lucide--eye]",
+      },
+    ],
+    faq: [
+      {
+        question: "Where do I get my Scabard export?",
+        answer:
+          "Export your campaign from Scabard as a JSON file from its campaign settings.",
+      },
+      {
+        question: "Are secret pages and GM notes imported?",
+        answer:
+          "Yes — GM secrets are mapped to each entity's private lore field, kept separate from the public-facing content.",
+      },
+    ],
+  },
 };
