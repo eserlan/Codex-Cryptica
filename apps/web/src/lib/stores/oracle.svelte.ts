@@ -35,6 +35,8 @@ import {
   type EntityRevisionRequest,
   type EntityRevisionResult,
   type IOracleStore,
+  type PromptRegenerationOptions,
+  type RegeneratedPrompt,
 } from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
 import { OracleChatManager } from "./oracle/chat-manager.svelte";
@@ -398,12 +400,18 @@ export class OracleStore implements IOracleStore {
     await this.actions.generateMessageFromPrompt(messageId, prompt);
   }
 
-  async regenerateEntityPrompt(entityId: string): Promise<string | null> {
-    return this.actions.regenerateEntityPrompt(entityId);
+  async regenerateEntityPrompt(
+    entityId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null> {
+    return this.actions.regenerateEntityPrompt(entityId, options);
   }
 
-  async regenerateMessagePrompt(messageId: string): Promise<string | null> {
-    return this.actions.regenerateMessagePrompt(messageId);
+  async regenerateMessagePrompt(
+    messageId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null> {
+    return this.actions.regenerateMessagePrompt(messageId, options);
   }
 
   isVisualizingEntity(entityId: string | null | undefined) {

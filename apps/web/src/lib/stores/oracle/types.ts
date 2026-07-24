@@ -10,6 +10,17 @@ import type {
 } from "@codex/oracle-engine";
 import type { TextGenerationService } from "schema";
 
+/** Advanced Art Direction settings a user may apply when revising a prompt. */
+export interface PromptRegenerationOptions {
+  cameraVariant?: string;
+  styleReferenceMode?: "named" | "name-free" | "disabled";
+}
+
+export interface RegeneratedPrompt {
+  prompt: string;
+  negativeTerms: string[];
+}
+
 export type OracleUiSnapshot = {
   aiDisabled: boolean;
   isDemoMode: boolean;
@@ -110,8 +121,14 @@ export interface IOracleStore {
   drawMessage(messageId: string): Promise<void>;
   generateEntityFromPrompt(entityId: string, prompt: string): Promise<void>;
   generateMessageFromPrompt(messageId: string, prompt: string): Promise<void>;
-  regenerateEntityPrompt(entityId: string): Promise<string | null>;
-  regenerateMessagePrompt(messageId: string): Promise<string | null>;
+  regenerateEntityPrompt(
+    entityId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null>;
+  regenerateMessagePrompt(
+    messageId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null>;
   isVisualizingEntity(entityId: string | null | undefined): boolean;
   isVisualizingMessage(messageId: string | null | undefined): boolean;
   clearMessages(): Promise<void>;

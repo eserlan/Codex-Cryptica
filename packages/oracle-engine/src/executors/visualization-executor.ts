@@ -5,7 +5,10 @@ import type {
 } from "../types";
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
-import type { OracleGenerator } from "../oracle-generator";
+import type {
+  OracleGenerator,
+  VisualizationPromptOptions,
+} from "../oracle-generator";
 import type { Clock, IdGenerator } from "../runtime";
 
 export class VisualizationExecutor
@@ -135,7 +138,7 @@ export class VisualizationExecutor
   async prepareEntityPrompt(
     entityId: string,
     context: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    options: VisualizationPromptOptions = {},
   ) {
     const entity = context.vault.entities[entityId];
     if (!entity) return null;
@@ -255,6 +258,7 @@ export class VisualizationExecutor
   async prepareMessagePrompt(
     messageId: string,
     context: OracleExecutionContext,
+    options: VisualizationPromptOptions = {},
   ) {
     const msgIndex = context.chatHistory.messages.findIndex(
       (m: any) => m.id === messageId,
@@ -267,6 +271,7 @@ export class VisualizationExecutor
     return generator.prepareMessageVisualizationPrompt(
       context.chatHistory.messages[msgIndex],
       context,
+      options,
     );
   }
 

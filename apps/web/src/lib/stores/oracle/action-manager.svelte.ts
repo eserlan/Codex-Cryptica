@@ -1,6 +1,10 @@
 import { appEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import type { IOracleStore } from "./types";
+import type {
+  IOracleStore,
+  PromptRegenerationOptions,
+  RegeneratedPrompt,
+} from "./types";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
 
@@ -40,14 +44,10 @@ export class OracleActionManager {
       const entity = this.store.vault.entities[entityId];
       if (!entity) return;
 
-      if (entity.artDirection?.trim()) {
-        modalUIStore.openImagePromptReview(
-          { kind: "entity", id: entityId, title: entity.title },
-          entity.artDirection.trim(),
-        );
-        return;
-      }
-
+      // Saved art direction no longer short-circuits composition. Under Art
+      // Direction v2 it is a style override layer, so it must go through the
+      // composer to pick up the subject, category framing, camera, and
+      // negatives rather than being sent to the provider on its own.
       const result = await this.store.executor.prepareEntityPrompt(
         entityId,
         this.store.getExecutionContext(),
@@ -56,6 +56,7 @@ export class OracleActionManager {
         modalUIStore.openImagePromptReview(
           { kind: "entity", id: entityId, title: entity.title },
           result.prompt,
+          result.negativeTerms,
         );
       }
     } catch (err) {
@@ -78,19 +79,7 @@ export class OracleActionManager {
       const linkedEntity = message?.entityId
         ? this.store.vault.entities[message.entityId]
         : null;
-      if (message && linkedEntity?.artDirection?.trim()) {
-        modalUIStore.openImagePromptReview(
-          {
-            kind: "message",
-            id: messageId,
-            title: linkedEntity.title,
-            entityId: message.entityId,
-          },
-          linkedEntity.artDirection.trim(),
-        );
-        return;
-      }
-
+      // See drawEntity: saved art direction is composed, never sent raw.
       const result = await this.store.executor.prepareMessagePrompt(
         messageId,
         this.store.getExecutionContext(),
@@ -104,6 +93,7 @@ export class OracleActionManager {
             entityId: message.entityId,
           },
           result.prompt,
+          result.negativeTerms,
         );
       }
     } catch (err) {
@@ -120,7 +110,11 @@ export class OracleActionManager {
 
     this.store.ui.visualizingEntityId = entityId;
     try {
-      await this.store.vault.updateEntity(entityId, { artDirection: prompt });
+      // The composed prompt is not written back to `artDirection`: that field
+      // is user-authored style direction and now overrides the theme layer, so
+      // storing a full prompt there would duplicate the category and camera
+      // layers on the next generation. Provenance is kept in
+      // `imageArtDirection` when the image is saved.
       await this.store.executor.generateEntityFromPrompt(
         entityId,
         prompt,
@@ -140,14 +134,8 @@ export class OracleActionManager {
 
     this.store.ui.visualizingMessageId = messageId;
     try {
-      const message = this.store.chatHistoryService.messages.find(
-        (m: any) => m.id === messageId,
-      );
-      if (message?.entityId) {
-        await this.store.vault.updateEntity(message.entityId, {
-          artDirection: prompt,
-        });
-      }
+      // See generateEntityFromPrompt: composed prompts are not written back
+      // to `artDirection`.
       await this.store.executor.generateMessageFromPrompt(
         messageId,
         prompt,
@@ -162,21 +150,32 @@ export class OracleActionManager {
     }
   }
 
-  async regenerateEntityPrompt(entityId: string): Promise<string | null> {
+  async regenerateEntityPrompt(
+    entityId: string,
+    options: PromptRegenerationOptions = {},
+  ): Promise<RegeneratedPrompt | null> {
     const result = await this.store.executor.prepareEntityPrompt(
       entityId,
       this.store.getExecutionContext(),
-      { ignoreSavedArtDirection: true },
+      { ignoreSavedArtDirection: true, ...options },
     );
-    return result?.prompt ?? null;
+    return result
+      ? { prompt: result.prompt, negativeTerms: result.negativeTerms }
+      : null;
   }
 
-  async regenerateMessagePrompt(messageId: string): Promise<string | null> {
+  async regenerateMessagePrompt(
+    messageId: string,
+    options: PromptRegenerationOptions = {},
+  ): Promise<RegeneratedPrompt | null> {
     const result = await this.store.executor.prepareMessagePrompt(
       messageId,
       this.store.getExecutionContext(),
+      options,
     );
-    return result?.prompt ?? null;
+    return result
+      ? { prompt: result.prompt, negativeTerms: result.negativeTerms }
+      : null;
   }
 
   pushUndoAction(
