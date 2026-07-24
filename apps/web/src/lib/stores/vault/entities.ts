@@ -48,8 +48,7 @@ export function createEntity(
     }
   }
 
-  const resolvedType =
-    initialData.type || (initialData as any)?.kind || type || "note";
+  const resolvedType = initialData.type || type || "note";
 
   const entity = {
     id,
@@ -417,10 +416,9 @@ export function batchCreateEntities(
     let entity: LocalEntity;
 
     if ("id" in item) {
-      const resolvedType = (item as any).type || (item as any).kind || "note";
       entity = {
         ...item,
-        type: resolvedType,
+        type: (item as Partial<Entity>).type || "note",
         updatedAt: systemClock.now(),
         createdAt: (item as Partial<Entity>).createdAt ?? systemClock.now(),
         modifiedAt: systemClock.now(),

@@ -27,7 +27,6 @@ import { readOpfsBlob, getDirHandle } from "../../utils/opfs";
 import { pickDirectory } from "../../utils/fs";
 import { convertToWebP, generateThumbnail } from "../../utils/image-processing";
 import { DEFAULT_ENTITY_TYPE } from "schema";
-import type { Entity } from "schema";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export const fileIOAdapter: IFileIOAdapter = {
@@ -79,35 +78,10 @@ export const fileIOAdapter: IFileIOAdapter = {
       }
     }
 
-    const inferredType =
-      parsed.metadata.type && parsed.metadata.type !== "note"
-        ? parsed.metadata.type
-        : (parsed.metadata as any)?.kind ||
-          (parsed.metadata.discoverySource?.includes("character")
-            ? "character"
-            : parsed.metadata.discoverySource?.includes("faction")
-              ? "faction"
-              : parsed.metadata.discoverySource?.includes("location")
-                ? "location"
-                : (parsed.metadata.labels ?? [])
-                    .find((l: string) =>
-                      [
-                        "character",
-                        "faction",
-                        "location",
-                        "creature",
-                        "item",
-                        "event",
-                      ].includes(l.toLowerCase()),
-                    )
-                    ?.toLowerCase()) ||
-          parsed.metadata.type ||
-          DEFAULT_ENTITY_TYPE;
-
     const entity = {
       ...parsed.metadata,
       id: id!,
-      type: inferredType as Entity["type"],
+      type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
       title:
         parsed.metadata.title ||
         (path && path.length > 0

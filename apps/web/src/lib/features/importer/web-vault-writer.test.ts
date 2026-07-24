@@ -670,6 +670,45 @@ describe("WebVaultWriter — dates and aliases (T008)", () => {
       }),
     );
   });
+
+  it("clears a field the new draft no longer has, instead of leaving the stale value (replace-all reimport)", async () => {
+    // Exercise the real merge (spread `{...entity, ...updates}`), not a
+    // mock capturing call args — `{aliases: undefined}` and `{}` look the
+    // same to toHaveBeenCalledWith/objectContaining, but differ once
+    // spread onto the existing entity.
+    const { updateEntity: pureUpdateEntity } =
+      await import("../../stores/vault/entities");
+    let entities: Record<string, any> = {
+      hero: {
+        id: "hero",
+        type: "character",
+        title: "Hero",
+        aliases: ["The Wanderer"],
+        image: "old.png",
+      },
+    };
+    const writer = new WebVaultWriter({
+      entities,
+      createEntity: vi.fn(),
+      updateEntity: async (id: string, updates: any) => {
+        const result = pureUpdateEntity(entities, id, updates);
+        entities = result.entities;
+        return result.updated !== null;
+      },
+      addConnection: vi.fn(),
+    });
+
+    await writer.updateEntity("hero", {
+      type: "character",
+      title: "Hero",
+      content: "new content",
+      aliases: undefined,
+      image: undefined,
+    } as any);
+
+    expect(entities.hero.aliases).toBeUndefined();
+    expect(entities.hero.image).toBeUndefined();
+  });
 });
 
 describe("WebVaultWriter — getEntityFields (T018)", () => {
