@@ -1,3 +1,5 @@
+import type { AspectRatio } from "schema";
+
 export type SettingsTab =
   | "vault"
   | "intelligence"
@@ -103,6 +105,12 @@ export class ModalUIStore {
     prompt: string;
     /** Negative terms, shown read-only; delivery format is provider-specific. */
     negativeTerms: string[];
+    /**
+     * The composed framing. Not recoverable from the prompt text, and a
+     * provider that takes explicit dimensions needs it, so it rides along with
+     * the reviewed prompt rather than being recomposed.
+     */
+    aspectRatio?: AspectRatio;
   }>({
     open: false,
     target: null,
@@ -275,12 +283,14 @@ export class ModalUIStore {
     target: ImagePromptReviewTarget,
     prompt: string,
     negativeTerms: string[] = [],
+    aspectRatio?: AspectRatio,
   ) {
     this.imagePromptReview = {
       open: true,
       target,
       prompt,
       negativeTerms,
+      aspectRatio,
     };
   }
 
@@ -290,6 +300,7 @@ export class ModalUIStore {
       target: null,
       prompt: "",
       negativeTerms: [],
+      aspectRatio: undefined,
     };
   }
 

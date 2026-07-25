@@ -7,6 +7,7 @@ import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type {
   OracleGenerator,
+  VisualizationPromptInput,
   VisualizationPromptOptions,
 } from "../oracle-generator";
 import type { Clock, IdGenerator } from "../runtime";
@@ -155,7 +156,7 @@ export class VisualizationExecutor
 
   async generateEntityFromPrompt(
     entityId: string,
-    prompt: string,
+    prompt: VisualizationPromptInput,
     context: OracleExecutionContext,
   ) {
     const entity = context.vault.entities[entityId];
@@ -277,7 +278,7 @@ export class VisualizationExecutor
 
   async generateMessageFromPrompt(
     messageId: string,
-    prompt: string,
+    prompt: VisualizationPromptInput,
     context: OracleExecutionContext,
   ) {
     const msgIndex = context.chatHistory.messages.findIndex(

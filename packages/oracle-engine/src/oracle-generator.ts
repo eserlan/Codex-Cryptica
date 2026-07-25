@@ -3,6 +3,7 @@ import {
   ASPECT_RATIO_DIMENSIONS,
   composeImagePrompt,
   formatForProvider,
+  type AspectRatio,
   type ComposedPromptMetadata,
   type ImageProviderId,
   type StyleReferenceMode,
@@ -46,6 +47,19 @@ export interface PreparedVisualizationPrompt {
   /** Art Direction v2 inputs, stored alongside the generated image. */
   metadata: ComposedPromptMetadata;
 }
+
+/**
+ * A prompt a user has seen and possibly edited, carrying the parts of the
+ * composition that are not recoverable from its text.
+ */
+export interface ReviewedVisualizationPrompt {
+  prompt: string;
+  negativeTerms?: string[];
+  aspectRatio?: AspectRatio;
+}
+
+export type VisualizationPromptInput =
+  string | PreparedVisualizationPrompt | ReviewedVisualizationPrompt;
 
 /** Advanced overrides an entry point may pass through to the composer. */
 export interface VisualizationPromptOptions {
@@ -508,15 +522,21 @@ Treat these labels as strong direction for the subject's appearance, attire, and
    * the manual-override path where the user has hand-edited the prompt.
    */
   async generateVisualizationFromPrompt(
-    input: string | PreparedVisualizationPrompt,
+    input: VisualizationPromptInput,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const composed =
-      typeof input === "string"
-        ? { prompt: input, negativeTerms: [] as string[] }
-        : input;
+    // A bare string is the last-resort form and carries nothing with it. The
+    // review dialog used to send one, which silently dropped every negative
+    // term and the composed framing on the path most images actually take.
+    const reviewed = typeof input === "string" ? { prompt: input } : input;
+    const composed = {
+      prompt: reviewed.prompt,
+      negativeTerms: reviewed.negativeTerms || [],
+    };
     const aspectRatio =
-      typeof input === "string" ? undefined : input.metadata?.aspectRatio;
+      "metadata" in reviewed
+        ? reviewed.metadata?.aspectRatio
+        : reviewed.aspectRatio;
 
     const apiKey = context.effectiveApiKey || "";
     const isCustom = context.imageProvider === "custom";

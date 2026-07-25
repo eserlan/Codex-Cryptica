@@ -1,4 +1,5 @@
 import { OracleGenerator } from "./oracle-generator";
+import type { VisualizationPromptInput } from "./oracle-generator";
 import { DraftingEngine, draftingEngine } from "./drafting-engine";
 import { DiceExecutor } from "./executors/dice-executor";
 import { MetaExecutor } from "./executors/meta-executor";
@@ -161,7 +162,7 @@ export class OracleActionExecutor {
 
   async generateEntityFromPrompt(
     entityId: string,
-    prompt: string,
+    prompt: VisualizationPromptInput,
     context: OracleExecutionContext,
   ) {
     await this.visualizationExecutor.generateEntityFromPrompt(
@@ -192,7 +193,7 @@ export class OracleActionExecutor {
 
   async generateMessageFromPrompt(
     messageId: string,
-    prompt: string,
+    prompt: VisualizationPromptInput,
     context: OracleExecutionContext,
   ) {
     await this.visualizationExecutor.generateMessageFromPrompt(

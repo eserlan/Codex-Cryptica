@@ -4,6 +4,7 @@ import type {
   IOracleStore,
   PromptRegenerationOptions,
   RegeneratedPrompt,
+  ReviewedPromptOptions,
 } from "./types";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
@@ -57,6 +58,7 @@ export class OracleActionManager {
           { kind: "entity", id: entityId, title: entity.title },
           result.prompt,
           result.negativeTerms,
+          result.metadata?.aspectRatio,
         );
       }
     } catch (err) {
@@ -94,6 +96,7 @@ export class OracleActionManager {
           },
           result.prompt,
           result.negativeTerms,
+          result.metadata?.aspectRatio,
         );
       }
     } catch (err) {
@@ -105,7 +108,11 @@ export class OracleActionManager {
     }
   }
 
-  async generateEntityFromPrompt(entityId: string, prompt: string) {
+  async generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    options: ReviewedPromptOptions = {},
+  ) {
     if (this.store.ui.visualizingEntityId === entityId) return;
 
     this.store.ui.visualizingEntityId = entityId;
@@ -117,7 +124,7 @@ export class OracleActionManager {
       // `imageArtDirection` when the image is saved.
       await this.store.executor.generateEntityFromPrompt(
         entityId,
-        prompt,
+        { prompt, ...options },
         this.store.getExecutionContext(),
       );
     } catch (err) {
@@ -129,7 +136,11 @@ export class OracleActionManager {
     }
   }
 
-  async generateMessageFromPrompt(messageId: string, prompt: string) {
+  async generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    options: ReviewedPromptOptions = {},
+  ) {
     if (this.store.ui.visualizingMessageId === messageId) return;
 
     this.store.ui.visualizingMessageId = messageId;
@@ -138,7 +149,7 @@ export class OracleActionManager {
       // to `artDirection`.
       await this.store.executor.generateMessageFromPrompt(
         messageId,
-        prompt,
+        { prompt, ...options },
         this.store.getExecutionContext(),
       );
     } catch (err) {

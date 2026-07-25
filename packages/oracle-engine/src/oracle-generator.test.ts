@@ -492,6 +492,27 @@ describe("OracleGenerator", () => {
       ).resolves.toBeDefined();
     });
 
+    it("should keep the negatives and framing of a reviewed prompt", async () => {
+      // The review dialog sends text the user may have edited; neither the
+      // negatives nor the aspect ratio can be recovered from it, and sending
+      // the string alone dropped both on the path most images take.
+      mockContext.imageProvider = "cloudflare";
+
+      await generator.generateVisualizationFromPrompt(
+        {
+          prompt: "an edited prompt",
+          negativeTerms: ["watermark", "extra fingers"],
+          aspectRatio: "2:3",
+        },
+        mockContext,
+      );
+
+      const [, , , options] = (mockContext.imageGeneration.generateImage as any)
+        .mock.calls[0];
+      expect(options.negativePrompt).toContain("watermark");
+      expect(options.dimensions).toEqual(ASPECT_RATIO_DIMENSIONS["2:3"]);
+    });
+
     it("should leave dimensions to the provider for a hand-edited prompt", async () => {
       mockContext.imageProvider = "cloudflare";
 

@@ -184,16 +184,25 @@ describe("OracleActionManager", () => {
     const context = { uiStore: { activeThemeId: "fantasy" } };
     mockStore.getExecutionContext.mockReturnValue(context);
 
-    await manager.generateEntityFromPrompt("entity-1", "edited prompt");
+    await manager.generateEntityFromPrompt("entity-1", "edited prompt", {
+      negativeTerms: ["watermark"],
+      aspectRatio: "2:3",
+    });
 
     expect(mockStore.ui.visualizingEntityId).toBeNull();
     // The composed prompt is not written back to `artDirection`: it would
     // become a style override and duplicate the category and camera layers on
     // the next generation.
     expect(mockStore.vault.updateEntity).not.toHaveBeenCalled();
+    // The negatives and the framing ride with the reviewed text: sending the
+    // string alone dropped both on the path most images take.
     expect(mockExecutor.generateEntityFromPrompt).toHaveBeenCalledWith(
       "entity-1",
-      "edited prompt",
+      {
+        prompt: "edited prompt",
+        negativeTerms: ["watermark"],
+        aspectRatio: "2:3",
+      },
       context,
     );
   });
@@ -205,13 +214,15 @@ describe("OracleActionManager", () => {
       { id: "message-1", content: "Draw", entityId: "entity-1" },
     ];
 
-    await manager.generateMessageFromPrompt("message-1", "message prompt");
+    await manager.generateMessageFromPrompt("message-1", "message prompt", {
+      negativeTerms: ["watermark"],
+    });
 
     // See above: composed prompts are provenance, not style direction.
     expect(mockStore.vault.updateEntity).not.toHaveBeenCalled();
     expect(mockExecutor.generateMessageFromPrompt).toHaveBeenCalledWith(
       "message-1",
-      "message prompt",
+      { prompt: "message prompt", negativeTerms: ["watermark"] },
       context,
     );
   });
