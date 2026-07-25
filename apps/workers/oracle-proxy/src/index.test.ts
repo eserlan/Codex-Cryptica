@@ -217,9 +217,15 @@ describe("Oracle Proxy Worker image generation", () => {
       success: true,
       result: { image: "base64-image" },
     });
+    // The default is a FLUX.2 model, which takes multipart.
     expect(ai.run).toHaveBeenCalledWith(
       DEFAULT_CF_IMAGE_MODEL,
-      expect.objectContaining({ prompt: "castle at sunset" }),
+      expect.objectContaining({
+        multipart: expect.objectContaining({
+          body: expect.any(Object),
+          contentType: expect.stringContaining("multipart/form-data"),
+        }),
+      }),
     );
   });
 
@@ -259,11 +265,13 @@ describe("Oracle Proxy Worker image generation", () => {
       {} as ExecutionContext,
     );
 
-    expect(ai.run).toHaveBeenCalledWith(
-      DEFAULT_CF_IMAGE_MODEL,
-      expect.objectContaining({ width: 1024, height: 1024 }),
-    );
-    expect(ai.run.mock.calls[0][1].negative_prompt).toBeUndefined();
+    const { body, contentType } = ai.run.mock.calls[0][1].multipart;
+    const form = await new Response(body, {
+      headers: { "content-type": contentType },
+    }).formData();
+
+    expect(form.get("width")).toBe("1024");
+    expect(form.get("negative_prompt")).toBeNull();
   });
 
   it("uses the requested Cloudflare image model when one is provided", async () => {
@@ -349,6 +357,49 @@ describe("Oracle Proxy Worker image generation", () => {
     );
 
     expect(ai.run.mock.calls[0][1].negative_prompt).toBe("watermark");
+  });
+
+  it("explains the shared daily budget instead of quoting neurons", async () => {
+    // 4006 is the account's daily allocation, not a fault in the request, and
+    // reached users as a raw provider string about neurons.
+    const ai = {
+      run: vi.fn(async () => {
+        throw new Error(
+          "4006: you have used up your daily free allocation of 10,000 neurons",
+        );
+      }),
+    };
+
+    const response = await worker.fetch(
+      request({ prompt: "a tall figure" }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(429);
+    const body = (await response.json()) as any;
+    expect(body.error.code).toBe("IMAGE_BUDGET_EXCEEDED");
+    expect(body.error.message).toContain("shared image allowance");
+    expect(body.error.message).not.toContain("neurons");
+  });
+
+  it("still reports other generation failures as they came", async () => {
+    const ai = {
+      run: vi.fn(async () => {
+        throw new Error("5012: Invalid input");
+      }),
+    };
+
+    const response = await worker.fetch(
+      request({ prompt: "a tall figure" }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(500);
+    const body = (await response.json()) as any;
+    expect(body.error.code).toBe("IMAGE_GEN_FAILED");
+    expect(body.error.message).toContain("5012");
   });
 
   it("omits the negative prompt when the caller sends none", async () => {
