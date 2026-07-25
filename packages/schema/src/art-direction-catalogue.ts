@@ -63,6 +63,13 @@ export interface ArtTheme {
    * Replaces the craft and terrain vocabularies rather than joining them.
    */
   exaltedMaterials: string;
+  /**
+   * Palette for an exalted stature. The ordinary palette names the same metals
+   * the exalted materials do — "ochre, umber, and tarnished gold" over spun
+   * gold and moonlit silver — which renders as one flat colour, and
+   * "tarnished" argues with the register besides.
+   */
+  exaltedPalette: string;
   /** Optional theme-level camera bias applied when the category allows it. */
   defaultCamera?: Partial<OpticsPreset>;
   /** Named style lineage. At most two are ever emitted at compose time. */
@@ -214,6 +221,12 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
     label: "Faction",
     prompt:
       "wide faction concept art of the group mid-action rather than posed in a line. One figure anchors the foreground and the rest recede behind. Restrained heraldry repeated across role-specific equipment, deliberate spacing, a restricted faction palette, and visible differences of rank and role",
+    // An exalted group is still by definition. Asking for a decisive moment and
+    // absolute stillness in the same prompt satisfied neither and produced a
+    // ceremonial lineup — the shape both clauses were written to avoid. This
+    // also states the hierarchy in pixels: larger, not merely nearer.
+    exaltedPrompt:
+      "wide faction concept art composed as a hierarchical tableau rather than a moment of action. The central figure is rendered larger than those behind it, not merely nearer, and the rest are arranged in ranked depth around that axis. Restrained repeated motifs across role-specific equipment, deliberate spacing, and a restricted palette",
     defaultCamera: {
       id: "optics.faction.default",
       shotSize: "wide",
@@ -246,7 +259,11 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
       },
     },
     negativePrompt: CATEGORY_NEGATIVE_PROMPTS.faction,
-    materialFocus: "both",
+    // Craft, not both: a faction is people and their equipment. The terrain
+    // clause supplied the thatched village behind one group portrait and the
+    // mossy watchtower behind another, neither of which any layer asked for.
+    // A setting that matters comes through the subject.
+    materialFocus: "craft",
     includesFigures: true,
   },
 
@@ -371,6 +388,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "hand-cut stone, weathered timber, thatch and slate, moss and lichen over old masonry",
     exaltedMaterials:
       "spun gold thread, moonlit silver, living amber, crystal that holds its own light, cloth that never frays",
+    exaltedPalette:
+      "cool ivory and deep shadow with one saturated accent, the metals reading as light rather than colour",
     styleReferences: ["nineteenth-century romantic oil painting"],
     nameFreeFallback:
       "traditional oil painting on canvas, layered glazes, warm varnished tone",
@@ -389,6 +408,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "poured composite, modular panelling, sealed joints, machined structural spans",
     exaltedMaterials:
       "seamless white composite, alloys with no visible join, light held inside glass, surfaces that do not scuff",
+    exaltedPalette: "white and pale blue with a single clean spectral accent",
     styleReferences: ["1970s hard science fiction production design"],
     nameFreeFallback:
       "clean industrial-design matte painting, engineered surfaces, even practical lighting",
@@ -409,6 +429,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "concrete, corrugated steel, accreted signage and ducting over older facades",
     exaltedMaterials:
       "liquid chrome, translucent shells lit from within, filament-fine circuitry, signage that answers the figure rather than the street",
+    exaltedPalette:
+      "near-black with one saturated colour holding the figure and everything else desaturated",
     defaultCamera: { lensCharacter: ["halation"] },
     styleReferences: ["1980s neo-noir cyberpunk cinema"],
     nameFreeFallback:
@@ -428,6 +450,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "poured concrete, painted steel, glass, asphalt, utilitarian cladding",
     exaltedMaterials:
       "flawless tailoring, unmarked cloth, pale unblemished stone, glass without a single fingerprint",
+    exaltedPalette: "pale neutrals and clean white with one restrained accent",
     defaultCamera: { focalLength: "35mm", filmStock: "portra-400" },
     styleReferences: ["street documentary photography"],
     nameFreeFallback:
@@ -448,6 +471,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "cracked concrete, rusted rebar, sun-bleached timber, drifted dust over collapsed structure",
     exaltedMaterials:
       "relic metal untouched by rust, glass unclouded by dust, cloth the wind has never frayed",
+    exaltedPalette: "bleached bone and clear sky against the dust",
     styleReferences: ["desert wasteland survival cinema"],
     nameFreeFallback:
       "desaturated wasteland illustration, scavenged repairs, harsh dusty daylight",
@@ -467,6 +491,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "damp stone, blistered plaster, rotting timber, iron gone to rust",
     exaltedMaterials:
       "reliquary gold, bone polished to ivory, gilt and wax over something older, unclouded black glass",
+    exaltedPalette: "black and bone with a single deep red note",
     defaultCamera: { lighting: "chiaroscuro" },
     styleReferences: ["baroque tenebrist painting"],
     nameFreeFallback:
@@ -485,6 +510,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "soot-blackened brick, riveted iron spans, glazed tile, copper piping",
     exaltedMaterials:
       "mirror-polished brass, jewelled movements, clockwork without a mark of wear, glass blown thin as breath",
+    exaltedPalette: "warm ivory and clear glass against dark iron",
     styleReferences: ["Victorian industrial engraving"],
     nameFreeFallback:
       "gouache illustration, exposed brass mechanisms, warm amber forge light",
@@ -502,6 +528,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "dressed ashlar, carved relief, gold inlay, worn ceremonial pavement",
     exaltedMaterials:
       "gold ground and haloed leaf, lapis and cinnabar, materials that emit light rather than reflect it",
+    exaltedPalette: "lapis and cinnabar against a gold ground",
     styleReferences: ["Byzantine panel icon"],
     nameFreeFallback:
       "egg tempera panel, gold ground, frontal symbolic composition, source-less glow",
@@ -521,6 +548,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "cut stone ruins, jungle overgrowth, timber scaffolding, weathered rope",
     exaltedMaterials:
       "burnished idol gold, jewelled inlay, obsidian mirror, relic metal catching the key light",
+    exaltedPalette: "hard black and white with one saturated red",
     styleReferences: ["mid-century pulp magazine cover"],
     nameFreeFallback:
       "screen-print poster, bold ink linework, saturated flat colour, hard black shadows",
@@ -539,6 +567,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "cracked asphalt, corrugated tin, faded enamel signage, pre-war concrete",
     exaltedMaterials:
       "unblemished enamel, chrome without a scratch, vault-white polymer still factory-new",
+    exaltedPalette: "clean vault blue and white against the dust",
     styleReferences: ["1950s advertising illustration"],
     nameFreeFallback:
       "mid-century American advertising illustration weathered by decades of ruin",
@@ -558,6 +587,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "prefabricated modular structure, sand-scoured plating, exposed conduit",
     exaltedMaterials:
       "unmarked ceremonial plating, deep lacquer, robes with no field repair, polished ritual metal",
+    exaltedPalette: "white and deep black with a single colour accent",
     styleReferences: ["1970s space opera production painting"],
     nameFreeFallback:
       "lived-in practical-effects concept painting, carbon-scored hardware, dramatic rim light",
@@ -576,6 +606,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "smooth composite bulkheads, inlaid lighting strips, seamless engineered surfaces",
     exaltedMaterials:
       "polished ceremonial alloy, inlaid light, seamless white ceramic",
+    exaltedPalette: "clean white and cool blue with restrained role colour",
     styleReferences: ["1990s television production illustration"],
     nameFreeFallback:
       "clean production illustration, smooth engineered surfaces, even practical lighting",
@@ -594,6 +625,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "prefab military structure, blast berms, stencilled containers, churned ground",
     exaltedMaterials:
       "parade-finish armour, mirror-anodised plate, crisp unweathered stencils, machined ceremonial trim",
+    exaltedPalette: "white and gunmetal with one hazard accent",
     styleReferences: ["military technical manual illustration"],
     nameFreeFallback:
       "military technical illustration, stencilled worn panels, functional hardware design",
@@ -616,6 +648,7 @@ export function composeThemeLayer(
     // the stature's camera bias supplies the replacement.
     return composeThemeParts(theme, [theme.exaltedMaterials], {
       includeLighting: false,
+      palette: theme.exaltedPalette,
     });
   }
 
@@ -633,12 +666,12 @@ export function composeThemeLayer(
 function composeThemeParts(
   theme: ArtTheme,
   materials: string[],
-  options: { includeLighting?: boolean } = {},
+  options: { includeLighting?: boolean; palette?: string } = {},
 ): string {
   return [
     theme.medium,
     `Materials — ${materials.join("; ")}`,
-    theme.palette,
+    options.palette || theme.palette,
     options.includeLighting === false ? "" : theme.lighting,
   ]
     .map((part) => part.trim().replace(/[.\s]+$/, ""))

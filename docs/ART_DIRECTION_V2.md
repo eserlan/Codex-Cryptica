@@ -58,12 +58,18 @@ A theme's handcrafted-goods language ("worn leather, hammered iron") is right
 for a figure or a prop and wrong for a mountain range. Themes therefore carry
 two material clauses and each category selects via `materialFocus`:
 
-| Focus     | Categories                | Emits                                     |
-| --------- | ------------------------- | ----------------------------------------- |
-| `craft`   | character, creature, item | Clothing, equipment, props                |
-| `terrain` | location, cover           | Landform, architecture, surfaces at scale |
-| `both`    | faction, event, note      | Both clauses                              |
-| `exalted` | any, via stature          | Materials beyond mortal making            |
+| Focus     | Categories                         | Emits                                     |
+| --------- | ---------------------------------- | ----------------------------------------- |
+| `craft`   | character, creature, item, faction | Clothing, equipment, props                |
+| `terrain` | location, cover                    | Landform, architecture, surfaces at scale |
+| `both`    | event, note                        | Both clauses                              |
+| `exalted` | any, via stature                   | Materials beyond mortal making            |
+
+`faction` is `craft` rather than `both` because a faction is people and their
+equipment. While it was `both`, the terrain clause supplied a thatched village
+behind one group portrait and a mossy watchtower behind another, neither of
+which any layer had asked for. A setting that matters comes through the
+subject.
 
 ## Stature
 
@@ -89,11 +95,14 @@ exalted stature _replaces_ what it disagrees with:
 | `mythic`   | Material vocabulary, faction signals, wear clause | Hierarchical scale, low angle, rim light                    |
 | `divine`   | The same, plus the theme's lighting logic         | Self-originating light, `2:3`, mundane-vocabulary negatives |
 
-Three seams carry it, all of them pre-existing: themes gained
-`exaltedMaterials` alongside craft and terrain; the stature's `defaultCamera`
-merges over the theme's bias and under any explicit override; and categories
-whose prompt asks for wear (`character`, `item`, `location`) carry an
-`exaltedPrompt` used in its place. A positive "practical wear — repairs, stains"
+Four seams carry it, all of them pre-existing: themes gained `exaltedMaterials`
+and `exaltedPalette` alongside craft and terrain, because the ordinary palette
+names the same metals the exalted materials do and renders as one flat colour;
+the stature's `defaultCamera` merges over the theme's bias and under any
+explicit override; and categories whose prompt argues with the register carry an
+`exaltedPrompt` used in its place — `character`, `item` and `location` because
+they ask for wear, and `faction` because "mid-action" cannot hold alongside
+"absolute stillness" and produced a ceremonial lineup that satisfied neither. A positive "practical wear — repairs, stains"
 standing next to a negative "patched cloth" is a fight the negative block loses,
 which is why the clause is swapped rather than countered.
 
@@ -271,14 +280,14 @@ timestamp. Images generated before v2 have no record and need no migration.
 ## Extending
 
 - **New theme**: add to `ART_THEMES` with `medium`, `palette`, `lighting`,
-  `craftMaterials`, `terrainMaterials`, `exaltedMaterials`, a
+  `craftMaterials`, `terrainMaterials`, `exaltedMaterials`, `exaltedPalette`, a
   `nameFreeFallback`, and optional
   `aliases` and `styleReferences` (max two). Add a matching
   `FACTION_BLUEPRINTS` entry. Tests assert both exist.
 - **New category**: add to `ART_CATEGORIES` with a framing-only prompt, a
   `defaultCamera` including an `aspectRatio`, a `materialFocus`, an
   `includesFigures` flag, and a `CATEGORY_NEGATIVE_PROMPTS` block. Add an
-  `exaltedPrompt` if the prompt asks for wear, repair, or decay. Add a golden
+  `exaltedPrompt` if the prompt asks for wear, decay, or a decisive moment. Add a golden
   fixture.
 - **New provider**: add to `PROVIDER_CAPABILITIES`. Nothing else should need to
   change.

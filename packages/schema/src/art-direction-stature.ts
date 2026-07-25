@@ -88,7 +88,7 @@ export const ART_STATURES: Record<StatureId, ArtStature> = {
     id: "stature.divine",
     label: "Divine",
     prompt:
-      "divine presence: hierarchical scale where importance sets size, light originating from the figures rather than the scene, frontal authority, absolute stillness, and no trace of use, repair, or wear on anything they touch",
+      "divine presence: hierarchical scale where importance sets size, light originating from the figures rather than the scene, frontal authority, absolute stillness, and materials that hold their finish without ageing",
     materialFocus: "exalted",
     defaultCamera: { angle: "low", lighting: "radiant", aspectRatio: "2:3" },
     // The vocabulary that produced a village militia from a prompt for gods.
