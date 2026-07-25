@@ -209,6 +209,38 @@ camera, and negatives still apply.
 It replaces rather than stacks because two style blocks specify two different
 mediums at once, and the model resolves that arbitrarily.
 
+### Naming fields instead of replacing everything
+
+Replacing the whole layer is right when a subject belongs to a different world
+than the theme describes, and blunt when it belongs to the same world and merely
+looks different in it: an omitted field does not fall back to the theme, it
+deletes. A faction written as materials, palette and light lost its medium and
+rendered in a different technique from every other entity in the vault.
+
+So a block may name the fields it means. The theme layer is already exactly
+these four, and a named field replaces its counterpart while the theme supplies
+the rest:
+
+```markdown
+## Art Direction
+
+Materials: black-lacquered plate, oxblood wool, verdigris bronze, bone and cold iron
+Palette: black, oxblood and bone-ash with sickly green as the only cool note
+Lighting: low guttering torchlight from below, everything past it falling to dark
+Mood: oppressive, ceremonial rather than heroic
+```
+
+`Medium`, `Materials`, `Palette`, `Lighting` and `Style` are recognised, with the
+obvious synonyms (`Colours`, `Light`, `Tradition`). Lines no theme field owns —
+`Mood:` above — are kept as prose rather than dropped. A block with no recognised
+key keeps the original replace-everything behaviour, so nothing written before
+this existed changes meaning, and `metadata.styleOverrideMode` records which
+applied.
+
+Any override suppresses the theme's style lineage, keyed or not: a shipped
+tradition carries a place and a century with it, and that is usually the thing
+being overridden. `Style:` is how a block asks for one back.
+
 Composed prompts are never written back to `artDirection` — that would turn a
 full prompt into a style override on the next generation and duplicate the
 category and camera layers. Generation provenance goes to
