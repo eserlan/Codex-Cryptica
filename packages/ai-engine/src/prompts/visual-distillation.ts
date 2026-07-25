@@ -92,10 +92,17 @@ ORIGINAL REQUEST:
 ${u(userQuery)}
 
 WRITE:
-- One or two clauses. Short.
+- One or two clauses. Short. A third only when the canon supplies specific markers that would otherwise be cut.
 - Concrete physical facts only: species, gender presentation, age range, role, build, clothing, materials, condition, equipment, expression, posture, and action.
 - Material and condition over abstract mood. Prefer "cracked lacquer over pine" to "ancient and mysterious".
 - One distinctive asymmetry, repair, or specific wear detail where it suits the subject.
+
+KEEP THE SPECIFICS:
+Everything after your sentence — framing, medium, palette, lighting — is generic to the world, not to this subject. Anything particular to it can only come from you, so when the canon names something and you have to cut, cut the generic word and keep the particular one.
+
+- Named colours, materials, finishes, insignia, marks, and adornments recorded in the canon are the first thing to keep and the last thing to drop.
+- Prefer "black lacquered plate over oxblood cloth, a shaven tattooed skull" to "grim, jagged iron plate". Both are the same length; only one says which faction this is.
+- Adjectives of mood or intensity — grim, fearsome, majestic, ancient, imposing — are the first thing to cut. They describe nothing a model can draw and cost the space a specific does need.
 
 NEVER INCLUDE:
 - Proper names of any kind — no character, faction, location, item, or place names. Describe the subject instead: write "male human veteran officer", not the character's name. Write "weathered basalt border fortress", not the fortress's name.

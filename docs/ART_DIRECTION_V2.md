@@ -21,6 +21,19 @@ formatForProvider ─────► negatives in a dedicated field, or inline
 generateImage
 ```
 
+The subject is roughly a fifth of the finished prompt — 19 words against 160 in
+a typical faction composition — and every other word is generic to the world
+rather than to this subject. So whatever identifies a subject at all has to
+survive stage 2's compression, and stage 2 is instructed accordingly: named
+colours, materials, finishes, insignia and marks recorded in the canon are the
+last thing to drop, and mood adjectives ("grim", "ancient", "imposing") are the
+first, since they describe nothing a model can draw.
+
+Note what this cannot fix. Stage 2 is forbidden palette, lighting, medium and
+style, because those belong to the theme — so a setting's _objects_ can come
+from vault canon, and its _tone_ cannot. A world whose look differs from its
+theme needs a theme change or an `## Art Direction` override, not more lore.
+
 The model writes **only** the subject. Everything after that is deterministic:
 identical inputs always produce an identical prompt. This is why the subject
 prompt in `packages/ai-engine/src/prompts/visual-distillation.ts` explicitly
