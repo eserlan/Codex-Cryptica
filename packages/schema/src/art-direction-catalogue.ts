@@ -226,7 +226,7 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
     // ceremonial lineup — the shape both clauses were written to avoid. This
     // also states the hierarchy in pixels: larger, not merely nearer.
     exaltedPrompt:
-      "wide faction concept art composed as a hierarchical tableau rather than a moment of action. The central figure is rendered larger than those behind it, not merely nearer, and the rest are arranged in ranked depth around that axis. Restrained repeated motifs across role-specific equipment, deliberate spacing, and a restricted palette",
+      "wide faction concept art composed as a hierarchical tableau rather than a moment of action. The central figure is rendered larger than those behind it, not merely nearer, and the rest are arranged in ranked depth around that axis, each distinguished by the emblem or attribute of a different domain, no two silhouettes alike. Restrained repeated motifs across role-specific equipment, deliberate spacing, and a restricted palette",
     defaultCamera: {
       id: "optics.faction.default",
       shotSize: "wide",

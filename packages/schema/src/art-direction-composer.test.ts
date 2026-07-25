@@ -810,6 +810,20 @@ describe("stature", () => {
     expect(divine.layers.category).not.toContain("mid-action");
   });
 
+  it("still asks a still group to differentiate its members", () => {
+    // The mundane prompt ends with "visible differences of rank and role". The
+    // first exalted rewrite dropped it and rendered seven identical figures —
+    // the `clones` negative alone does not carry it. Stated as attribute
+    // rather than activity so it cannot reintroduce the mid-action clash.
+    for (const stature of ["deity", "legendary"]) {
+      const { layers } = composeImagePrompt({ ...gods, stature });
+      expect(layers.category, stature).toMatch(
+        /different domain|differences of rank and role/,
+      );
+      expect(layers.category, stature).toContain("no two silhouettes alike");
+    }
+  });
+
   it("does not forbid every mark on an exalted subject", () => {
     // A war god's notched blade is legitimate; the clause describes materials
     // that do not degrade rather than banning damage the subject specified.
