@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   composeImagePrompt,
   type ComposeImagePromptInput,
@@ -8,13 +10,39 @@ import { ART_CATEGORIES, ART_THEMES } from "./art-direction-catalogue";
 /**
  * Golden prompt fixtures.
  *
- * These snapshots are the contract for composed output. A change here means
- * every generated image shifts, so update the snapshot only when the art
- * direction itself was deliberately revised.
+ * The committed JSON fixture is the contract for composed output. A change
+ * there means every generated image shifts, so regenerate it only when the art
+ * direction was deliberately revised:
+ *
+ *   UPDATE_GOLDENS=1 bun test src/art-direction-golden.test.ts
+ *
+ * Deliberately a plain file comparison rather than `toMatchSnapshot`. This
+ * package runs under `bun test`, whose snapshot keys differ from vitest's, so
+ * snapshots written by one runner are silently *added* rather than matched by
+ * the other — the assertion passes without ever comparing anything.
  *
  * Subjects are descriptive by construction — no fixture may contain a
  * setting-specific proper name.
  */
+
+const GOLDEN_FILE = join(
+  import.meta.dirname ?? __dirname,
+  "__fixtures__",
+  "golden-prompts.json",
+);
+
+type GoldenRecord = Record<
+  string,
+  { prompt: string; negativeTerms: string[]; metadata: unknown }
+>;
+
+function readGoldens(): GoldenRecord {
+  try {
+    return JSON.parse(readFileSync(GOLDEN_FILE, "utf8")) as GoldenRecord;
+  } catch {
+    return {};
+  }
+}
 
 const GOLDEN_CASES: Array<{ name: string; input: ComposeImagePromptInput }> = [
   // --- The three worked examples from the reviewed guide -------------------
@@ -178,16 +206,44 @@ const GOLDEN_CASES: Array<{ name: string; input: ComposeImagePromptInput }> = [
 ];
 
 describe("golden prompts", () => {
+  const goldens = readGoldens();
+
+  if (process.env.UPDATE_GOLDENS) {
+    const regenerated: GoldenRecord = {};
+    for (const { name, input } of GOLDEN_CASES) {
+      const result = composeImagePrompt(input);
+      regenerated[name] = {
+        prompt: result.prompt,
+        negativeTerms: result.negativeTerms,
+        metadata: result.metadata as unknown,
+      };
+    }
+    writeFileSync(GOLDEN_FILE, `${JSON.stringify(regenerated, null, 2)}\n`);
+    Object.assign(goldens, regenerated);
+  }
+
   for (const { name, input } of GOLDEN_CASES) {
     it(`composes ${name}`, () => {
       const result = composeImagePrompt(input);
-      expect({
-        prompt: result.prompt,
-        negativeTerms: result.negativeTerms,
-        metadata: result.metadata,
-      }).toMatchSnapshot();
+      const expected = goldens[name];
+
+      expect(
+        expected,
+        `no golden recorded for "${name}" — run UPDATE_GOLDENS=1`,
+      ).toBeDefined();
+      expect(result.prompt).toBe(expected.prompt);
+      expect(result.negativeTerms).toEqual(expected.negativeTerms);
+      expect(JSON.parse(JSON.stringify(result.metadata))).toEqual(
+        expected.metadata,
+      );
     });
   }
+
+  it("records a golden for every case and no others", () => {
+    expect(Object.keys(goldens).sort()).toEqual(
+      GOLDEN_CASES.map((c) => c.name).sort(),
+    );
+  });
 
   it("covers every catalogue category", () => {
     const covered = new Set(
