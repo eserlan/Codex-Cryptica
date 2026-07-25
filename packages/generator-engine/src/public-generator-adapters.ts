@@ -163,3 +163,13 @@ export function adaptLanguage(
   const req = baseReq("language", options as any);
   return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
 }
+
+/** Generate a Dungeon / Delve using the package's local generator. */
+export function adaptDungeon(
+  options: Record<string, unknown> = {},
+  themeId?: string,
+): PublicGeneratorOutput {
+  const gen = getGenerator("dungeon");
+  const req = baseReq("dungeon", options, themeId);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
+}

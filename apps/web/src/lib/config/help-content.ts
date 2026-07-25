@@ -543,7 +543,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "in-app-generators",
     title: "Campaign Generators",
     content:
-      "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+      "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
   "entity-timeline": {
@@ -573,6 +573,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
     icon: "icon-[lucide--newspaper]",
+  },
+  "dungeon-generator": {
+    id: "dungeon-generator",
+    title: "Dungeon & Delve Generator",
+    content:
+      "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
+    icon: "icon-[lucide--castle]",
   },
 };
 
