@@ -13,16 +13,13 @@ USER REQUEST:
 ${u(query)}
 
 Search the vault context for established:
-- art direction
-- visual motifs
-- faction aesthetics
-- cultural styling
-- architecture and heraldry
-- materials and symbols
-- clothing traditions
+- physical appearance and anatomy
+- clothing, armour, and personal equipment
+- materials, colours, and surface condition
+- faction, cultural, and regional visual markers
+- architecture, heraldry, and symbols
 - creature design language
 - environmental tone
-- and category-specific visual guidance
 
 Priority order:
 1. Entity-specific visual canon
@@ -32,18 +29,61 @@ Priority order:
 5. Logical stylistic inference
 
 If established visual direction exists, preserve it consistently.
-If no direct guidance exists, infer stylistically from related vault records, maintain internal consistency, and avoid generic fantasy defaults.
+If no direct guidance exists, infer from related vault records, maintain internal consistency, and avoid generic fantasy defaults.
 
-Visual identity is part of canonical continuity. 
+Visual identity is part of canonical continuity.
 
-Output a distilled "Visual Canon Summary" that will be used to generate the final image prompt.`;
+Output a distilled "Visual Canon Summary" describing the physical facts that must appear in the image.
+
+Then, on a final line by itself, classify the subject's standing in the world:
+
+STATURE: mundane | renowned | mythic | divine
+
+- divine — the vault says this is worshipped, prayed to, venerated, or given offerings. A god, not merely a very powerful person.
+- mythic — the vault treats this as legend: stories are told about it, its name is invoked, people doubt it is real.
+- renowned — known and deferred to by name within its own society: a ruler, a champion, a famous master of a craft.
+- mundane — everything else.
+
+Being old, large, powerful, magical, rare, or important to the plot is NOT stature. An ancient ruin, a dragon, a king's sword, and a wizard are all mundane unless the vault says otherwise. If the canon does not say, answer mundane.`;
 }
 
-export function buildVisualPromptGenerationPrompt(
+const STATURE_LINE =
+  /^[ \t]*STATURE[ \t]*:[ \t]*(mundane|renowned|mythic|divine)\b.*$/im;
+
+/**
+ * Splits the classification line off the canon summary.
+ *
+ * The value is validated against the closed set, and anything else counts as
+ * no signal: a model that ignores the instruction, hedges, or invents a fifth
+ * tier must leave the prompt exactly as it would have been.
+ */
+export function extractStature(canonSummary: string): {
+  summary: string;
+  stature?: string;
+} {
+  const match = canonSummary.match(STATURE_LINE);
+  if (!match) return { summary: canonSummary };
+
+  const summary = canonSummary.replace(STATURE_LINE, "").trimEnd();
+  const stature = match[1].toLowerCase();
+  // Mundane is the default anyway, and not returning it keeps a no-op from
+  // looking like a decision downstream.
+  return stature === "mundane" ? { summary } : { summary, stature };
+}
+
+/**
+ * Art Direction v2: the model produces the SUBJECT LAYER ONLY.
+ *
+ * Medium, palette, lighting, camera, framing, style lineage, and negatives are
+ * supplied deterministically by `composeImagePrompt` after this returns. If the
+ * model emits any of them here they will be duplicated or contradicted
+ * downstream, so the instructions forbid them explicitly.
+ */
+export function buildVisualSubjectPrompt(
   canonSummary: string,
   userQuery: string,
 ): string {
-  return `You are a Visual Prompt Architect. Using the established Visual Canon Summary and the original user request, generate a high-fidelity visual prompt for an image generation model.
+  return `You are a Visual Subject Writer. Using the Visual Canon Summary and the original request, write the SUBJECT of an image — what is physically present in frame, and nothing else.
 
 VISUAL CANON SUMMARY:
 ${canonSummary}
@@ -51,24 +91,38 @@ ${canonSummary}
 ORIGINAL REQUEST:
 ${u(userQuery)}
 
-GUIDELINES:
-- Preserve all explicit theme, genre, medium, palette, lighting, and material directives from the original request in the final prompt. Treat theme/default-art-style language as required art direction, not optional flavor.
-- Keep named genre/style anchors verbatim when present, such as "Cyberpunk", "gothic horror", "oil painting", "photographic", "noir", or "pulp adventure", unless they directly conflict with stronger vault canon.
-- If the original request includes a composed category + theme + global art direction, carry the theme information into the final prompt even while reducing repetition.
-- Prioritize concrete, visual details (e.g., specific clothing materials, physical features, worn gear, posture, and facial expressions) over abstract character names or name repetition.
-- Emphasize distinctive setting identity and preserve cultural specificity.
-- Ground the mood in environmental storytelling, lighting, and architecture.
-- Avoid generic fantasy phrasing (e.g., "epic", "cinematic", "visual concept art").
-- Avoid vague fillers, and provide enough concrete material/form details to paint a clear visual picture.
+WRITE:
+- One or two clauses. Short. A third only when the canon supplies specific markers that would otherwise be cut.
+- Concrete physical facts only: species, gender presentation, age range, role, build, clothing, materials, condition, equipment, expression, posture, and action.
+- Material and condition over abstract mood. Prefer "cracked lacquer over pine" to "ancient and mysterious".
+- One distinctive asymmetry, repair, or specific wear detail where it suits the subject.
 
-Generate only the final, concrete visual prompt.`;
+KEEP THE SPECIFICS:
+Everything after your sentence — framing, medium, palette, lighting — is generic to the world, not to this subject. Anything particular to it can only come from you, so when the canon names something and you have to cut, cut the generic word and keep the particular one.
+
+- Named colours, materials, finishes, insignia, marks, and adornments recorded in the canon are the first thing to keep and the last thing to drop.
+- Prefer "black lacquered plate over oxblood cloth, a shaven tattooed skull" to "grim, jagged iron plate". Both are the same length; only one says which faction this is.
+- Adjectives of mood or intensity — grim, fearsome, majestic, ancient, imposing — are the first thing to cut. They describe nothing a model can draw and cost the space a specific does need.
+
+NEVER INCLUDE:
+- Proper names of any kind — no character, faction, location, item, or place names. Describe the subject instead: write "male human veteran officer", not the character's name. Write "weathered basalt border fortress", not the fortress's name.
+- Art medium, style, or genre words (oil painting, digital art, concept art, photographic, cyberpunk, gothic).
+- Palette, colour grading, or lighting direction.
+- Camera, lens, focal length, aperture, framing, shot size, or aspect ratio.
+- Artist names or style lineages.
+- Quality filler: epic, 8k, masterpiece, hyperdetailed, trending on ArtStation, award winning.
+- Any "avoid" or negative phrasing.
+
+These are all applied separately and will conflict with your output if you include them.
+
+Output only the subject text. No preamble, no quotation marks, no trailing punctuation commentary.`;
 }
 
 /**
  * Legacy support for the existing interface
  */
 export function buildEnhancePrompt(query: string, context: string): string {
-  return `${buildVisualCanonResolutionPrompt(query, context)}\n\n${buildVisualPromptGenerationPrompt(
+  return `${buildVisualCanonResolutionPrompt(query, context)}\n\n${buildVisualSubjectPrompt(
     "[Distilled from above]",
     query,
   )}`;

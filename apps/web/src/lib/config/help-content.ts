@@ -385,6 +385,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.",
     icon: "icon-[lucide--brush]",
   },
+  "image-stature": {
+    id: "image-stature",
+    title: "Drawing Gods and Legends",
+    content:
+      "A picture of a god should not look like a picture of a villager. Label an entity 'deity', 'god', 'divine', 'immortal' or 'titan' and its images are drawn in materials beyond mortal making, lit from within, and framed from below. 'legendary' or 'demigod' does the same a step down. Everything else is drawn as ordinary, and the entity panel shows which one is in effect. You can also set it for a single picture under Advanced art direction when you review a prompt.",
+    icon: "icon-[lucide--sparkles]",
+  },
   "demo-mode": {
     id: "demo-mode",
     title: "Demo Mode",
@@ -543,7 +550,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "in-app-generators",
     title: "Campaign Generators",
     content:
-      "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+      "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
   "entity-timeline": {
@@ -573,6 +580,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
     icon: "icon-[lucide--newspaper]",
+  },
+  "dungeon-generator": {
+    id: "dungeon-generator",
+    title: "Dungeon & Delve Generator",
+    content:
+      "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
+    icon: "icon-[lucide--castle]",
   },
 };
 

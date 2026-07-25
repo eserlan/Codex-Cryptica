@@ -23,6 +23,7 @@ export {
   adaptNomadClan,
   adaptShip,
   adaptLanguage,
+  adaptDungeon,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
@@ -152,6 +153,16 @@ export {
   type NewsSheetGeneratorOptions,
   type NewsSheetPrompt,
 } from "./public-news-sheet";
+export {
+  buildDungeonPrompt,
+  parseDungeonResponse,
+  generateDungeonLocal,
+  dungeonConfig,
+  type DungeonGeneratorOptions,
+  type DungeonPrompt,
+  type DungeonSector,
+  type ResolvedDungeon,
+} from "./public-dungeon";
 export {
   CampaignGeneratorService,
   campaignGeneratorService,

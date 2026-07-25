@@ -82,8 +82,8 @@ export class OracleContextManager {
         ),
       },
       imageGeneration: {
-        distillVisualPrompt: wrap(
-          s.imageGeneration.distillVisualPrompt?.bind(s.imageGeneration),
+        distillVisualSubject: wrap(
+          s.imageGeneration.distillVisualSubject?.bind(s.imageGeneration),
         ),
         generateImage: wrap(
           s.imageGeneration.generateImage?.bind(s.imageGeneration),

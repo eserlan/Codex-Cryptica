@@ -3,19 +3,91 @@
   import { focusTrap } from "$lib/actions/focusTrap";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const dialog = $derived(modalUIStore.imagePromptReview);
   const target = $derived(dialog.target);
   let editedPrompt = $state("");
+  let negativeTerms = $state<string[]>([]);
   let error = $state("");
   let isRevisingPrompt = $state(false);
+  let showAdvanced = $state(false);
+
+  // Advanced Art Direction settings. Ordinary use never touches these; the
+  // category and theme defaults already supply framing and style.
+  let cameraVariant = $state("");
+  let styleReferenceMode = $state<"named" | "name-free" | "disabled">("named");
+  let stature = $state("");
+  // What the last revision actually composed at. Stature is normally read from
+  // the entity's labels, so without this the setting is invisible until an
+  // image comes back looking wrong.
+  let resolvedStature = $state("");
+  let resolvedStatureSource = $state("");
+  let isApplyingStatureLabel = $state(false);
+
+  // A reading of the lore is recomputed every generation and can drift. Turning
+  // it into a label makes it the user's, stable, visible on the entity, and
+  // searchable — so it is offered, never applied behind their back.
+  const canPinStature = $derived(
+    resolvedStatureSource === "inferred" &&
+      !!resolvedStature &&
+      resolvedStature !== "mundane" &&
+      target?.kind === "entity" &&
+      !vault.isGuest,
+  );
+
+  const CAMERA_VARIANTS = [
+    { value: "", label: "Category default" },
+    { value: "portrait", label: "Portrait (characters)" },
+    { value: "anatomy", label: "Anatomy study (creatures)" },
+    { value: "interior", label: "Interior (locations)" },
+    { value: "in-hand", label: "In hand (items)" },
+    { value: "authority", label: "Authority (factions)" },
+    { value: "ranks", label: "Massed ranks (factions)" },
+    { value: "aftermath", label: "Aftermath (events)" },
+  ];
+
+  const STATURES = [
+    { value: "", label: "Auto (from labels)" },
+    { value: "mundane", label: "Mundane" },
+    { value: "renowned", label: "Renowned" },
+    { value: "mythic", label: "Mythic" },
+    { value: "divine", label: "Divine" },
+  ];
+
+  const STATURE_SOURCES: Record<string, string> = {
+    explicit: "your choice",
+    labels: "from labels",
+    inferred: "read from your lore",
+  };
+
+  const STATURE_LABELS: Record<string, string> = {
+    mundane: "Mundane",
+    renowned: "Renowned",
+    mythic: "Mythic",
+    divine: "Divine",
+  };
+
+  const STYLE_MODES = [
+    { value: "named", label: "Named style lineage" },
+    { value: "name-free", label: "Name-free description" },
+    { value: "disabled", label: "No style lineage" },
+  ] as const;
 
   $effect(() => {
     if (dialog.open) {
       editedPrompt = dialog.prompt;
+      negativeTerms = dialog.negativeTerms;
       error = "";
       isRevisingPrompt = false;
+      showAdvanced = false;
+      cameraVariant = "";
+      styleReferenceMode = "named";
+      stature = "";
+      resolvedStature = "";
+      resolvedStatureSource = "";
+      isApplyingStatureLabel = false;
     }
   });
 
@@ -44,16 +116,29 @@
 
     error = "";
     if (target.kind === "entity") {
-      await oracle.generateEntityFromPrompt(target.id, prompt);
+      // The dialog already holds both; sending the text alone dropped every
+      // negative term and the composed framing.
+      await oracle.generateEntityFromPrompt(target.id, prompt, {
+        negativeTerms,
+        aspectRatio: dialog.aspectRatio,
+      });
     } else {
-      await oracle.generateMessageFromPrompt(target.id, prompt);
+      await oracle.generateMessageFromPrompt(target.id, prompt, {
+        negativeTerms,
+        aspectRatio: dialog.aspectRatio,
+      });
     }
     modalUIStore.closeImagePromptReview();
   };
 
   const copyPrompt = async () => {
+    // Negatives are part of the request, so an external generator needs them
+    // too — otherwise a pasted prompt behaves differently from ours.
+    const text = negativeTerms.length
+      ? `${editedPrompt}\n\nNegative prompt:\n${negativeTerms.join(", ")}`
+      : editedPrompt;
     try {
-      await navigator.clipboard.writeText(editedPrompt);
+      await navigator.clipboard.writeText(text);
       notificationStore.notify("Copied image prompt", "success");
     } catch {
       notificationStore.notify("Could not copy image prompt.", "error");
@@ -66,12 +151,20 @@
     isRevisingPrompt = true;
     error = "";
     try {
-      const prompt =
+      const options = {
+        cameraVariant: cameraVariant || undefined,
+        styleReferenceMode,
+        stature: stature || undefined,
+      };
+      const result =
         target.kind === "entity"
-          ? await oracle.regenerateEntityPrompt(target.id)
-          : await oracle.regenerateMessagePrompt(target.id);
-      if (prompt?.trim()) {
-        editedPrompt = prompt.trim();
+          ? await oracle.regenerateEntityPrompt(target.id, options)
+          : await oracle.regenerateMessagePrompt(target.id, options);
+      if (result?.prompt?.trim()) {
+        editedPrompt = result.prompt.trim();
+        negativeTerms = result.negativeTerms;
+        resolvedStature = result.statureId || "mundane";
+        resolvedStatureSource = result.statureSource || "";
       } else {
         error = "Could not revise a prompt.";
       }
@@ -79,6 +172,20 @@
       error = err instanceof Error ? err.message : "Could not revise a prompt.";
     } finally {
       isRevisingPrompt = false;
+    }
+  };
+
+  const pinStatureAsLabel = async () => {
+    if (!target || target.kind !== "entity" || !canPinStature) return;
+    isApplyingStatureLabel = true;
+    try {
+      await vault.addLabel(target.id, resolvedStature);
+      resolvedStatureSource = "labels";
+      notificationStore.notify(`Labelled ${resolvedStature}`, "success");
+    } catch {
+      notificationStore.notify("Could not add the label.", "error");
+    } finally {
+      isApplyingStatureLabel = false;
     }
   };
 
@@ -172,6 +279,133 @@
               {error}
             </p>
           {/if}
+
+          {#if negativeTerms.length}
+            <div class="mt-4">
+              <p
+                class="mb-2 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+              >
+                Negative prompt
+              </p>
+              <p
+                data-testid="image-prompt-negative"
+                class="rounded border border-theme-border bg-theme-bg/40 p-3 font-body text-xs leading-relaxed text-theme-muted"
+              >
+                {negativeTerms.join(", ")}
+              </p>
+              <p class="mt-1 text-[10px] text-theme-muted">
+                Sent separately where your image provider supports it, and
+                folded into the prompt where it does not.
+              </p>
+            </div>
+          {/if}
+
+          <div class="mt-4 border-t border-theme-border pt-3">
+            <button
+              type="button"
+              onclick={() => (showAdvanced = !showAdvanced)}
+              aria-expanded={showAdvanced}
+              class="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-theme-muted transition hover:text-theme-primary"
+            >
+              <span
+                class="h-3 w-3 {showAdvanced
+                  ? 'icon-[lucide--chevron-down]'
+                  : 'icon-[lucide--chevron-right]'}"
+                aria-hidden="true"
+              ></span>
+              Advanced art direction
+            </button>
+
+            {#if showAdvanced}
+              <div class="mt-3 grid gap-3 md:grid-cols-2">
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
+                    Camera
+                  </span>
+                  <select
+                    bind:value={cameraVariant}
+                    data-testid="image-prompt-camera-variant"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each CAMERA_VARIANTS as variant (variant.value)}
+                      <option value={variant.value}>{variant.label}</option>
+                    {/each}
+                  </select>
+                </label>
+
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
+                    Stature
+                  </span>
+                  <select
+                    bind:value={stature}
+                    data-testid="image-prompt-stature"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each STATURES as option (option.value)}
+                      <option value={option.value}>{option.label}</option>
+                    {/each}
+                  </select>
+                </label>
+
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
+                    Style reference
+                  </span>
+                  <select
+                    bind:value={styleReferenceMode}
+                    data-testid="image-prompt-style-mode"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each STYLE_MODES as mode (mode.value)}
+                      <option value={mode.value}>{mode.label}</option>
+                    {/each}
+                  </select>
+                </label>
+              </div>
+              <p class="mt-2 text-[10px] text-theme-muted">
+                Choose a camera that matches the subject's category. Stature
+                decides whether something is drawn as ordinary, renowned, or
+                worshipped, and is read from labels like <em>deity</em> unless you
+                set it here. Revise the prompt to apply these.
+              </p>
+              {#if resolvedStature}
+                <p
+                  class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  data-testid="image-prompt-resolved-stature"
+                >
+                  Drawn as: {STATURE_LABELS[resolvedStature] ||
+                    resolvedStature}{#if STATURE_SOURCES[resolvedStatureSource]}
+                    <span class="font-normal normal-case tracking-normal"
+                      >({STATURE_SOURCES[resolvedStatureSource]})</span
+                    >{/if}
+                </p>
+                {#if canPinStature}
+                  <button
+                    type="button"
+                    onclick={pinStatureAsLabel}
+                    disabled={isApplyingStatureLabel}
+                    data-testid="image-prompt-pin-stature"
+                    class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-primary underline-offset-2 transition hover:underline disabled:opacity-50"
+                  >
+                    Keep it — label this {STATURE_LABELS[
+                      resolvedStature
+                    ]?.toLowerCase() || resolvedStature}
+                  </button>
+                  <p class="mt-0.5 text-[10px] text-theme-muted">
+                    Without a label the Oracle re-reads this every time, and its
+                    answer can change between pictures.
+                  </p>
+                {/if}
+              {/if}
+            {/if}
+          </div>
         </div>
 
         <div

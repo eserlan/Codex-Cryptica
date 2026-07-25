@@ -57,6 +57,10 @@
     {
       label: "Adventure",
       items: [
+        {
+          label: "Dungeon & Delve Generator",
+          path: "/generators/dungeon-generator",
+        },
         { label: "Quest Hook Generator", path: "/generators/quest" },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
         { label: "Tavern Generator", path: "/generators/tavern" },
