@@ -228,6 +228,50 @@ describe("Oracle Proxy Worker image generation", () => {
     );
   });
 
+  it("forwards the requested size and the negative prompt", async () => {
+    // Both were dropped: every proxy image came back 1024x1024 whatever
+    // framing the prompt asked for, and its negative terms went nowhere.
+    const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
+
+    await worker.fetch(
+      request({
+        prompt: "a tall figure",
+        width: 832,
+        height: 1216,
+        negative_prompt: "watermark, extra fingers",
+      }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    const { body, contentType } = ai.run.mock.calls[0][1].multipart;
+    const form = await new Response(body, {
+      headers: { "content-type": contentType },
+    }).formData();
+
+    expect(form.get("width")).toBe("832");
+    expect(form.get("height")).toBe("1216");
+    expect(form.get("negative_prompt")).toBe("watermark, extra fingers");
+  });
+
+  it("still defaults the size when the caller sends none", async () => {
+    const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
+
+    await worker.fetch(
+      request({ prompt: "a tall figure" }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    const { body, contentType } = ai.run.mock.calls[0][1].multipart;
+    const form = await new Response(body, {
+      headers: { "content-type": contentType },
+    }).formData();
+
+    expect(form.get("width")).toBe("1024");
+    expect(form.get("negative_prompt")).toBeNull();
+  });
+
   it("uses the requested Cloudflare image model when one is provided", async () => {
     const ai = {
       run: vi.fn(async () => ({ image: "base64-image" })),

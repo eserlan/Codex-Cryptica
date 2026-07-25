@@ -280,6 +280,12 @@ export default {
         form.append("prompt", prompt);
         form.append("width", String(body.width || 1024));
         form.append("height", String(body.height || 1024));
+        // Forwarded rather than dropped: the client has always sent this and
+        // the proxy has always discarded it, so every negative term composed
+        // for a proxy image went nowhere.
+        if (body.negative_prompt) {
+          form.append("negative_prompt", String(body.negative_prompt));
+        }
 
         const formResponse = new Response(form);
         const formBody = formResponse.body || form;
