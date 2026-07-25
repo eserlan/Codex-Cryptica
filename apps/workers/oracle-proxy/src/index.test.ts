@@ -219,16 +219,11 @@ describe("Oracle Proxy Worker image generation", () => {
     });
     expect(ai.run).toHaveBeenCalledWith(
       DEFAULT_CF_IMAGE_MODEL,
-      expect.objectContaining({
-        multipart: expect.objectContaining({
-          body: expect.any(Object),
-          contentType: expect.stringContaining("multipart/form-data"),
-        }),
-      }),
+      expect.objectContaining({ prompt: "castle at sunset" }),
     );
   });
 
-  it("forwards the requested size and the negative prompt", async () => {
+  it("forwards the requested size and the negative prompt as multipart", async () => {
     // Both were dropped: every proxy image came back 1024x1024 whatever
     // framing the prompt asked for, and its negative terms went nowhere.
     const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
@@ -236,6 +231,7 @@ describe("Oracle Proxy Worker image generation", () => {
     await worker.fetch(
       request({
         prompt: "a tall figure",
+        model: "@cf/black-forest-labs/flux-2-klein-4b",
         width: 832,
         height: 1216,
         negative_prompt: "watermark, extra fingers",
@@ -263,20 +259,18 @@ describe("Oracle Proxy Worker image generation", () => {
       {} as ExecutionContext,
     );
 
-    const { body, contentType } = ai.run.mock.calls[0][1].multipart;
-    const form = await new Response(body, {
-      headers: { "content-type": contentType },
-    }).formData();
-
-    expect(form.get("width")).toBe("1024");
-    expect(form.get("negative_prompt")).toBeNull();
+    expect(ai.run).toHaveBeenCalledWith(
+      DEFAULT_CF_IMAGE_MODEL,
+      expect.objectContaining({ width: 1024, height: 1024 }),
+    );
+    expect(ai.run.mock.calls[0][1].negative_prompt).toBeUndefined();
   });
 
   it("uses the requested Cloudflare image model when one is provided", async () => {
     const ai = {
       run: vi.fn(async () => ({ image: "base64-image" })),
     };
-    const model = "@cf/example/custom-image-model";
+    const model = "@cf/black-forest-labs/flux-2-dev";
 
     const response = await worker.fetch(
       request({ prompt: "castle at sunset", model }),
@@ -294,6 +288,47 @@ describe("Oracle Proxy Worker image generation", () => {
         }),
       }),
     );
+  });
+
+  it("sends a plain object to models that do not take multipart", async () => {
+    // Workers AI answers a multipart body with "5012: field required: prompt"
+    // for anything outside the FLUX.2 family — a hard failure, not a fallback.
+    const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
+
+    await worker.fetch(
+      request({
+        prompt: "a tall figure",
+        model: "@cf/leonardo/phoenix-1.0",
+        width: 832,
+        height: 1216,
+        negative_prompt: "watermark",
+      }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(ai.run).toHaveBeenCalledWith("@cf/leonardo/phoenix-1.0", {
+      prompt: "a tall figure",
+      width: 832,
+      height: 1216,
+      negative_prompt: "watermark",
+    });
+  });
+
+  it("omits the negative prompt when the caller sends none", async () => {
+    const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
+
+    await worker.fetch(
+      request({ prompt: "a tall figure", model: "@cf/leonardo/lucid-origin" }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(ai.run).toHaveBeenCalledWith("@cf/leonardo/lucid-origin", {
+      prompt: "a tall figure",
+      width: 1024,
+      height: 1024,
+    });
   });
 });
 
