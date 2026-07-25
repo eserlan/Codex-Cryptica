@@ -115,6 +115,13 @@ export const ART_STATURES: Record<StatureId, ArtStature> = {
  * Label → stature. Vaults already carry labels and the distiller already
  * treats them as strong subject direction; this makes the same label steer the
  * layers the subject cannot reach.
+ *
+ * Only words that can *only* mean standing are listed. A label like "ancient"
+ * belongs to a ruin, a tome, and a forest far more often than to a legend, and
+ * an exalted stature would strip exactly the weathering a ruin exists to show.
+ * Age, power, and importance to the plot are not stature. When in doubt the
+ * word is left out: a missed stature costs one explicit label, a false one
+ * silently rewrites the entity's whole material vocabulary.
  */
 export const STATURE_ALIASES: Record<string, StatureId> = {
   deity: "divine",
@@ -127,15 +134,9 @@ export const STATURE_ALIASES: Record<string, StatureId> = {
   immortal: "divine",
   primordial: "divine",
   titan: "divine",
-  mythic: "mythic",
   legend: "mythic",
   legendary: "mythic",
   demigod: "mythic",
-  ancient: "mythic",
-  renowned: "renowned",
-  celebrated: "renowned",
-  famous: "renowned",
-  notable: "renowned",
 };
 
 /** Highest stature wins: a "legendary deity" is divine, not mythic. */

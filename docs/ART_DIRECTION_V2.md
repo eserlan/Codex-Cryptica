@@ -100,12 +100,28 @@ which is why the clause is swapped rather than countered.
 Anything the stature wants _absent_ goes in the negative block and never into
 the prompt as a denial: a positive "no banners" tends to produce banners.
 
-**Where it comes from**: labels. `deity`, `god`, `divine`, `immortal`, `titan` →
-divine; `legendary`, `mythic`, `demigod`, `ancient` → mythic; `renowned`,
-`famous`, `notable` → renowned. Highest wins, so a "legendary deity" is divine.
-An explicit `stature` on the compose input overrides the labels. A vault that
-uses none of those labels composes byte-identical prompts to before the axis
-existed.
+**Where it comes from**: labels. `deity`, `god`, `goddess`, `divine`,
+`divinity`, `immortal`, `primordial`, `titan` → divine; `legend`, `legendary`,
+`demigod` → mythic. The stature ids themselves (`renowned`, `mythic`, …) also
+resolve, so any tier can be set explicitly. Highest wins, so a "legendary deity"
+is divine, and an explicit `stature` on the compose input overrides the labels
+entirely.
+
+Only words that can _only_ mean standing are aliased. `ancient` was deliberately
+dropped: it belongs to a ruin, a tome, and a forest far more often than to a
+legend, and an exalted stature would strip exactly the weathering a ruin exists
+to show. Age, power, and importance to the plot are not stature. A missed
+stature costs one explicit label; a false one silently rewrites the entity's
+whole material vocabulary.
+
+A vault that uses none of these labels composes byte-identical prompts to before
+the axis existed.
+
+**Where it shows**: the entity panel carries a "Drawn as _X_" badge beside the
+labels whenever a stature applies, so the inference is never invisible — and the
+label that caused it is right next to the badge. The prompt review dialog's
+Advanced art direction section has a Stature selector (defaulting to _Auto (from
+labels)_) and reports what the last revision actually composed at.
 
 ## No proper names
 

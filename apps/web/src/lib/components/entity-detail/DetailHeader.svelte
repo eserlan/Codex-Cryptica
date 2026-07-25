@@ -2,7 +2,7 @@
   import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-  import { isEntityVisible } from "schema";
+  import { isEntityVisible, resolveStatureFromLabels } from "schema";
   import { fade } from "svelte/transition";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
@@ -74,6 +74,15 @@
   };
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
+
+  // A label like "deity" changes how every image of this entity is composed.
+  // Surfaced here so the inference is never invisible: a wrong one is fixed by
+  // editing the label that caused it, which is right next to this badge.
+  const statureLabel = $derived.by(() => {
+    const stature = resolveStatureFromLabels(entity.labels);
+    if (!stature || stature === "mundane") return "";
+    return stature.charAt(0).toUpperCase() + stature.slice(1);
+  });
 
   const parentEntity = $derived(
     entity?.parent ? vault.entities[entity.parent] : null,
@@ -316,6 +325,15 @@
           onRemove={async () => await vault.removeLabel(entity.id, label)}
         />
       {/each}
+      {#if statureLabel}
+        <span
+          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider self-center"
+          title="Images of this entity are drawn at {statureLabel} stature, read from its labels."
+          data-testid="entity-stature-badge"
+        >
+          Drawn as {statureLabel}
+        </span>
+      {/if}
       {#if !entity.labels?.length && vault.isGuest}
         <span
           class="text-[9px] text-theme-muted italic uppercase tracking-tighter"

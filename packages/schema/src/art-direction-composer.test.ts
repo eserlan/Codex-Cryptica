@@ -741,6 +741,25 @@ describe("stature", () => {
     expect(resolveStatureFromLabels(["forest", "windswept"])).toBeUndefined();
   });
 
+  it("does not read stature into ordinary descriptive labels", () => {
+    // An ancient ruin is a ruin. An exalted stature would strip the weathering
+    // it exists to show, so these must stay mundane unless said explicitly.
+    for (const label of [
+      "ancient",
+      "famous",
+      "notable",
+      "celebrated",
+      "powerful",
+      "old",
+      "sacred",
+    ]) {
+      expect(resolveStatureFromLabels([label]), label).toBeUndefined();
+    }
+    // The ids themselves still resolve, so an explicit label always works.
+    expect(resolveStatureFromLabels(["renowned"])).toBe("renowned");
+    expect(resolveStatureFromLabels(["mythic"])).toBe("mythic");
+  });
+
   it("changes nothing when no stature is named", () => {
     const plain = composeImagePrompt(gods);
     const labelled = composeImagePrompt({

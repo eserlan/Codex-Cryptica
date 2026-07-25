@@ -160,7 +160,11 @@ export class OracleActionManager {
       { ignoreSavedArtDirection: true, ...options },
     );
     return result
-      ? { prompt: result.prompt, negativeTerms: result.negativeTerms }
+      ? {
+          prompt: result.prompt,
+          negativeTerms: result.negativeTerms,
+          statureId: result.metadata?.statureId,
+        }
       : null;
   }
 
@@ -174,7 +178,11 @@ export class OracleActionManager {
       options,
     );
     return result
-      ? { prompt: result.prompt, negativeTerms: result.negativeTerms }
+      ? {
+          prompt: result.prompt,
+          negativeTerms: result.negativeTerms,
+          statureId: result.metadata?.statureId,
+        }
       : null;
   }
 

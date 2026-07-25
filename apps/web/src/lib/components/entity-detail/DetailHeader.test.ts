@@ -165,3 +165,26 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     expect(getByText("Mock Parent Entity")).toBeTruthy();
   });
 });
+
+describe("DetailHeader stature badge", () => {
+  const renderWithLabels = (labels: string[]) =>
+    render(DetailHeader, {
+      entity: { id: "entity-1", title: "Test Entity", labels } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  it("shows how an entity's images will be drawn when a label sets it", () => {
+    const { getByTestId } = renderWithLabels(["elven", "deity"]);
+    expect(getByTestId("entity-stature-badge").textContent).toContain("Divine");
+  });
+
+  it("stays quiet for ordinary labels", () => {
+    // The badge exists so a stature is never inferred invisibly; showing one
+    // where none applies would be the same noise in reverse.
+    const { queryByTestId } = renderWithLabels(["ancient", "ruined"]);
+    expect(queryByTestId("entity-stature-badge")).toBeNull();
+  });
+});

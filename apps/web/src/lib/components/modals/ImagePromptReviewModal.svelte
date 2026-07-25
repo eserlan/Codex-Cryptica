@@ -17,6 +17,11 @@
   // category and theme defaults already supply framing and style.
   let cameraVariant = $state("");
   let styleReferenceMode = $state<"named" | "name-free" | "disabled">("named");
+  let stature = $state("");
+  // What the last revision actually composed at. Stature is normally read from
+  // the entity's labels, so without this the setting is invisible until an
+  // image comes back looking wrong.
+  let resolvedStature = $state("");
 
   const CAMERA_VARIANTS = [
     { value: "", label: "Category default" },
@@ -28,6 +33,21 @@
     { value: "ranks", label: "Massed ranks (factions)" },
     { value: "aftermath", label: "Aftermath (events)" },
   ];
+
+  const STATURES = [
+    { value: "", label: "Auto (from labels)" },
+    { value: "mundane", label: "Mundane" },
+    { value: "renowned", label: "Renowned" },
+    { value: "mythic", label: "Mythic" },
+    { value: "divine", label: "Divine" },
+  ];
+
+  const STATURE_LABELS: Record<string, string> = {
+    mundane: "Mundane",
+    renowned: "Renowned",
+    mythic: "Mythic",
+    divine: "Divine",
+  };
 
   const STYLE_MODES = [
     { value: "named", label: "Named style lineage" },
@@ -44,6 +64,8 @@
       showAdvanced = false;
       cameraVariant = "";
       styleReferenceMode = "named";
+      stature = "";
+      resolvedStature = "";
     }
   });
 
@@ -102,6 +124,7 @@
       const options = {
         cameraVariant: cameraVariant || undefined,
         styleReferenceMode,
+        stature: stature || undefined,
       };
       const result =
         target.kind === "entity"
@@ -110,6 +133,7 @@
       if (result?.prompt?.trim()) {
         editedPrompt = result.prompt.trim();
         negativeTerms = result.negativeTerms;
+        resolvedStature = result.statureId || "mundane";
       } else {
         error = "Could not revise a prompt.";
       }
@@ -270,6 +294,23 @@
                   <span
                     class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
                   >
+                    Stature
+                  </span>
+                  <select
+                    bind:value={stature}
+                    data-testid="image-prompt-stature"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each STATURES as option (option.value)}
+                      <option value={option.value}>{option.label}</option>
+                    {/each}
+                  </select>
+                </label>
+
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
                     Style reference
                   </span>
                   <select
@@ -284,9 +325,19 @@
                 </label>
               </div>
               <p class="mt-2 text-[10px] text-theme-muted">
-                Choose a camera that matches the subject's category. Revise the
-                prompt to apply these.
+                Choose a camera that matches the subject's category. Stature
+                decides whether something is drawn as ordinary, renowned, or
+                worshipped, and is read from labels like <em>deity</em> unless you
+                set it here. Revise the prompt to apply these.
               </p>
+              {#if resolvedStature}
+                <p
+                  class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  data-testid="image-prompt-resolved-stature"
+                >
+                  Drawn as: {STATURE_LABELS[resolvedStature] || resolvedStature}
+                </p>
+              {/if}
             {/if}
           </div>
         </div>

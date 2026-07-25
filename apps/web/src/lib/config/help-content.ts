@@ -385,6 +385,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.",
     icon: "icon-[lucide--brush]",
   },
+  "image-stature": {
+    id: "image-stature",
+    title: "Drawing Gods and Legends",
+    content:
+      "A picture of a god should not look like a picture of a villager. Label an entity 'deity', 'god', 'divine', 'immortal' or 'titan' and its images are drawn in materials beyond mortal making, lit from within, and framed from below. 'legendary' or 'demigod' does the same a step down. Everything else is drawn as ordinary, and the entity panel shows which one is in effect. You can also set it for a single picture under Advanced art direction when you review a prompt.",
+    icon: "icon-[lucide--sparkles]",
+  },
   "demo-mode": {
     id: "demo-mode",
     title: "Demo Mode",
