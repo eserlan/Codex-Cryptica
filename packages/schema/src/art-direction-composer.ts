@@ -22,6 +22,10 @@ import {
 } from "./art-direction-catalogue";
 import { composeNegativeTerms } from "./art-direction-negatives";
 import {
+  parseArtDirectionOverride,
+  type ArtDirectionOverrideFields,
+} from "./art-direction-override";
+import {
   formatOptics,
   mergeOptics,
   validateOptics,
@@ -135,8 +139,14 @@ export interface ComposedPromptMetadata {
   cameraPresetId?: string;
   cameraVariant?: string;
   styleReferenceMode: StyleReferenceMode;
-  /** True when vault-authored direction replaced the shipped theme layer. */
+  /** True when vault-authored direction replaced or adjusted the theme layer. */
   styleOverridden: boolean;
+  /**
+   * How it applied. `replace` swaps the whole layer, the original behaviour of
+   * a free-text block; `layered` substitutes only the fields the block named
+   * and leaves the theme to supply the rest.
+   */
+  styleOverrideMode?: "replace" | "layered";
   /** Whether the anatomy negative block was included. */
   figureInFrame: boolean;
   /**
@@ -232,6 +242,32 @@ function buildCategoryLayer(
   return `${prompt}. Establish the group through ${signals}`;
 }
 
+/** Drops the non-theme keys and any field the block did not actually name. */
+function toThemeFieldOverrides(fields: ArtDirectionOverrideFields) {
+  const overrides: Record<string, string> = {};
+  for (const key of ["medium", "materials", "palette", "lighting"] as const) {
+    const value = fields[key];
+    if (value) overrides[key] = value;
+  }
+  return overrides;
+}
+
+/**
+ * A shipped lineage carries a place and a century with it, which is usually
+ * the thing a vault is overriding — so any override suppresses it, and a block
+ * that wants one names it.
+ */
+function buildOverriddenStyleReference(
+  theme: ArtTheme | undefined,
+  mode: StyleReferenceMode,
+  styleOverride: string,
+  namedStyle?: string,
+): string {
+  if (namedStyle) return `in the tradition of ${namedStyle}`;
+  if (styleOverride) return "";
+  return buildStyleReferenceLayer(theme, mode);
+}
+
 function resolveCamera(
   category: ArtCategory | undefined,
   theme: ArtTheme | undefined,
@@ -294,26 +330,39 @@ export function composeImagePrompt(
           input.opticsOverrides,
         );
 
-  // Vault-authored direction replaces the shipped theme wholesale; mixing the
-  // two produces prompts that specify two different mediums at once.
+  // Vault-authored direction either replaces the shipped theme wholesale — a
+  // free-text block, where mixing the two would specify two mediums at once —
+  // or names individual fields, where the theme still supplies the rest.
   const styleOverride = (input.styleOverride || "").trim();
+  const override = parseArtDirectionOverride(styleOverride);
+  const themeFields = toThemeFieldOverrides(override.fields);
+
   // Stature overrides the category's material focus: what a thing is made of
   // follows from its standing before it follows from its kind.
   const themeLayer = theme
     ? composeThemeLayer(
         theme,
         stature?.materialFocus ?? category?.materialFocus,
+        override.layered ? themeFields : {},
       )
     : "";
+
+  const layeredTheme = [themeLayer, override.remainder]
+    .filter(Boolean)
+    .join(". ");
+
   const layers: ComposedPromptLayers = {
     subject: prepared.subject,
     stature: stature?.prompt || "",
     category: buildCategoryLayer(category, categoryId, themeId, stature),
-    theme: styleOverride || themeLayer,
+    theme: override.layered ? layeredTheme : styleOverride || themeLayer,
     camera: formatOptics(camera),
-    styleReference: styleOverride
-      ? ""
-      : buildStyleReferenceLayer(theme, styleReferenceMode),
+    styleReference: buildOverriddenStyleReference(
+      theme,
+      styleReferenceMode,
+      styleOverride,
+      override.fields.style,
+    ),
   };
 
   const { prompt, truncated } = capPrompt(
@@ -355,6 +404,11 @@ export function composeImagePrompt(
       cameraVariant: input.cameraVariant,
       styleReferenceMode,
       styleOverridden: Boolean(styleOverride),
+      styleOverrideMode: styleOverride
+        ? override.layered
+          ? "layered"
+          : "replace"
+        : undefined,
       figureInFrame,
       aspectRatio: camera?.aspectRatio,
       removedNames: prepared.removedNames,

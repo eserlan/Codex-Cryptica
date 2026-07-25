@@ -639,6 +639,7 @@ export const ART_THEMES: Record<string, ArtTheme> = {
 export function composeThemeLayer(
   theme: ArtTheme,
   materialFocus: MaterialFocus = "both",
+  overrides: ThemeFieldOverrides = {},
 ): string {
   // Exalted replaces rather than joins: a god listed alongside thatch and worn
   // leather renders as a villager, however many divine adjectives precede it.
@@ -647,8 +648,11 @@ export function composeThemeLayer(
     // argues with the self-originating light an exalted stature asks for, and
     // the stature's camera bias supplies the replacement.
     return composeThemeParts(theme, [theme.exaltedMaterials], {
-      includeLighting: false,
+      // A vault that names its own lighting means it; the exalted default only
+      // applies where nothing was said.
+      includeLighting: Boolean(overrides.lighting),
       palette: theme.exaltedPalette,
+      ...overrides,
     });
   }
 
@@ -660,19 +664,28 @@ export function composeThemeLayer(
     materials.push(theme.terrainMaterials);
   }
 
-  return composeThemeParts(theme, materials);
+  return composeThemeParts(theme, materials, overrides);
+}
+
+/** Vault-authored replacements for individual theme fields. */
+export interface ThemeFieldOverrides {
+  medium?: string;
+  materials?: string;
+  palette?: string;
+  lighting?: string;
 }
 
 function composeThemeParts(
   theme: ArtTheme,
   materials: string[],
-  options: { includeLighting?: boolean; palette?: string } = {},
+  options: ThemeFieldOverrides & { includeLighting?: boolean } = {},
 ): string {
+  const lighting = options.lighting || theme.lighting;
   return [
-    theme.medium,
-    `Materials — ${materials.join("; ")}`,
+    options.medium || theme.medium,
+    `Materials — ${options.materials || materials.join("; ")}`,
     options.palette || theme.palette,
-    options.includeLighting === false ? "" : theme.lighting,
+    options.includeLighting === false ? "" : lighting,
   ]
     .map((part) => part.trim().replace(/[.\s]+$/, ""))
     .filter(Boolean)

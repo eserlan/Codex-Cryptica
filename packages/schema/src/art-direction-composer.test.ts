@@ -722,6 +722,71 @@ describe("composeImagePrompt", () => {
     expect(suppressed.negativeTerms).not.toContain("extra fingers");
   });
 
+  it("keeps the theme's medium when an override only names other fields", () => {
+    // The defect: a block written as materials, palette and light deleted the
+    // medium too, so one entity rendered in a different technique from every
+    // other in the vault.
+    const { layers, metadata } = composeImagePrompt({
+      ...base,
+      category: "faction",
+      theme: "fantasy",
+      styleOverride: [
+        "Materials: black-lacquered plate, oxblood wool, verdigris bronze",
+        "Palette: black, oxblood and bone-ash",
+        "Lighting: low guttering torchlight from below",
+      ].join("\n"),
+    });
+
+    expect(metadata.styleOverrideMode).toBe("layered");
+    expect(layers.theme).toContain("painterly oil rendering");
+    expect(layers.theme).toContain("black-lacquered plate");
+    expect(layers.theme).toContain("low guttering torchlight");
+    // The fields the block replaced are gone.
+    expect(layers.theme).not.toContain("worn leather");
+    expect(layers.theme).not.toContain("ochre, umber");
+    expect(layers.theme).not.toContain("firelit key");
+  });
+
+  it("keeps prose a keyed block carries alongside its fields", () => {
+    const { layers } = composeImagePrompt({
+      ...base,
+      styleOverride: "Palette: bone and rust\nOppressive and airless.",
+    });
+
+    expect(layers.theme).toContain("bone and rust");
+    expect(layers.theme).toContain("Oppressive and airless");
+  });
+
+  it("suppresses the shipped lineage for any override, and restores a named one", () => {
+    // A tradition carries a place and a century, which is usually the thing
+    // being overridden.
+    const silent = composeImagePrompt({
+      ...base,
+      styleOverride: "Palette: bone and rust",
+    });
+    expect(silent.layers.styleReference).toBe("");
+
+    const named = composeImagePrompt({
+      ...base,
+      styleOverride: "Palette: bone and rust\nTradition: baroque tenebrism",
+    });
+    expect(named.layers.styleReference).toBe(
+      "in the tradition of baroque tenebrism",
+    );
+  });
+
+  it("still replaces the whole layer for a free-text block", () => {
+    const { layers, metadata } = composeImagePrompt({
+      ...base,
+      styleOverride: "ink wash portrait with a silver mask",
+    });
+
+    expect(metadata.styleOverrideMode).toBe("replace");
+    expect(layers.theme).toBe("ink wash portrait with a silver mask");
+    expect(layers.theme).not.toContain("painterly oil rendering");
+    expect(layers.styleReference).toBe("");
+  });
+
   it("keeps unrenderable brief language out of category prompts", () => {
     // A diffusion model cannot render "history" or "intent".
     for (const [id, category] of Object.entries(ART_CATEGORIES)) {
