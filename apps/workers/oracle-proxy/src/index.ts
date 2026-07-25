@@ -416,18 +416,24 @@ export default {
           "[Oracle Proxy] Cloudflare Workers AI image error:",
           error,
         );
+        const raw =
+          error instanceof Error ? error.message : "Image generation failed";
+        // 4006 is the shared account's daily neuron budget, not a fault in the
+        // request. It reached users as a raw provider string about neurons,
+        // which explains nothing and suggests nothing they can do.
+        const outOfBudget = /\b4006\b|daily free allocation/i.test(raw);
+
         return new Response(
           JSON.stringify({
             error: {
-              message:
-                error instanceof Error
-                  ? error.message
-                  : "Image generation failed",
-              code: "IMAGE_GEN_FAILED",
+              message: outOfBudget
+                ? "The shared image allowance for today is used up. It resets daily — or configure your own Cloudflare Account ID and API Token in settings to generate without the shared limit."
+                : raw,
+              code: outOfBudget ? "IMAGE_BUDGET_EXCEEDED" : "IMAGE_GEN_FAILED",
             },
           }),
           {
-            status: 500,
+            status: outOfBudget ? 429 : 500,
             headers: {
               ...getCorsHeaders(request.headers, env),
               "Content-Type": "application/json",
