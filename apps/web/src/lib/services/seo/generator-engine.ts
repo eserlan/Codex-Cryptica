@@ -495,10 +495,8 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildDungeonPrompt(
-          dungeonOptions,
-          getSessionContext(),
-        );
+        const { systemInstruction, userMessage } =
+          buildDungeonPrompt(dungeonOptions);
         const text = await this.runModel(systemInstruction, userMessage);
         return parseDungeonResponse(text, dungeonOptions);
       },
