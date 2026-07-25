@@ -64,6 +64,21 @@ export function usesMultipartInput(model: string): boolean {
   return /flux-2/i.test(model);
 }
 
+/**
+ * Whether a model's schema declares `negative_prompt`.
+ *
+ * The AI binding validates input against that schema and answers "8001:
+ * Invalid input" for a field the model does not declare — Lucid Origin, for
+ * one. The REST endpoint is more forgiving and ignores it, which is how this
+ * was missed: the same request succeeded over REST and failed through the
+ * binding. An allow-list, because a rejection breaks generation outright while
+ * an omitted negative merely goes unused.
+ */
+export function supportsNegativePrompt(model: string): boolean {
+  if (usesMultipartInput(model)) return true;
+  return /stable-diffusion|dreamshaper|phoenix/i.test(model);
+}
+
 function buildMultipartInput(
   prompt: string,
   width: number,
@@ -331,7 +346,9 @@ export default {
               prompt,
               width,
               height,
-              ...(negativePrompt ? { negative_prompt: negativePrompt } : {}),
+              ...(negativePrompt && supportsNegativePrompt(targetModel)
+                ? { negative_prompt: negativePrompt }
+                : {}),
             });
 
         let buffer: ArrayBuffer;
