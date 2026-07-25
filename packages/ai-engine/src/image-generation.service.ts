@@ -177,6 +177,15 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             body: JSON.stringify({
               model: modelName,
               prompt: prompt,
+              // The proxy has always accepted these and defaulted them to
+              // 1024x1024; not sending them rendered every composed framing as
+              // a square, whatever aspect ratio the prompt asked for.
+              ...(options?.dimensions
+                ? {
+                    width: options.dimensions.width,
+                    height: options.dimensions.height,
+                  }
+                : {}),
               ...(options?.negativePrompt
                 ? { negative_prompt: options.negativePrompt }
                 : {}),
@@ -225,6 +234,12 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             prompt: prompt,
             response_format: "b64_json",
             n: 1,
+            ...(options?.dimensions
+              ? {
+                  width: options.dimensions.width,
+                  height: options.dimensions.height,
+                }
+              : {}),
             ...(options?.negativePrompt
               ? { negative_prompt: options.negativePrompt }
               : {}),

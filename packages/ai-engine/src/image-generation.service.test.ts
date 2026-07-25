@@ -457,6 +457,42 @@ describe("DefaultImageGenerationService", () => {
       expect(await blob.text()).toBe("proxy-cloudflare-image");
     });
 
+    it("should send the composed dimensions and negatives through the proxy", async () => {
+      // Neither was sent before, so every proxy image came back square with no
+      // negative direction at all.
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ result: { image: "aW1n" } }),
+      });
+
+      await service.generateImage("", "prompt", "@cf/model", {
+        provider: "cloudflare",
+        dimensions: { width: 832, height: 1216 },
+        negativePrompt: "watermark, extra fingers",
+      });
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.width).toBe(832);
+      expect(body.height).toBe(1216);
+      expect(body.negative_prompt).toBe("watermark, extra fingers");
+    });
+
+    it("should send the composed dimensions to a custom provider", async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ b64_json: "aW1n" }] }),
+      });
+
+      await service.generateImage("key", "prompt", "model", {
+        provider: "custom",
+        dimensions: { width: 1216, height: 832 },
+      });
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.width).toBe(1216);
+      expect(body.height).toBe(832);
+    });
+
     it("should preserve proxy Cloudflare daily image limit guidance", async () => {
       (global.fetch as any).mockResolvedValue({
         ok: false,
