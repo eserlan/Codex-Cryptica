@@ -32,6 +32,20 @@ describe("visual-distillation prompts", () => {
       expect(result).toContain("Art medium, style, or genre words");
       expect(result).toContain("Camera, lens, focal length");
     });
+
+    it("tells the writer to keep canon specifics over generic adjectives", () => {
+      // The subject is roughly a fifth of the composed prompt and the rest is
+      // generic to the world, so a specific dropped during compression is the
+      // only thing that could have identified this subject at all.
+      const result = buildVisualSubjectPrompt("CanonSummary", "cat");
+
+      expect(result).toContain("KEEP THE SPECIFICS");
+      expect(result).toContain(
+        "first thing to keep and the last thing to drop",
+      );
+      // Mood adjectives are what should be cut instead.
+      expect(result).toMatch(/grim, fearsome, majestic, ancient, imposing/);
+    });
   });
 
   it("wraps vault context and query in USER_CONTENT delimiters", () => {
