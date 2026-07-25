@@ -21,6 +21,7 @@ const validSlugs = new Set([
   "ship-generator",
   "language-generator",
   "news-sheet-generator",
+  "dungeon-generator",
   "random",
 ]);
 

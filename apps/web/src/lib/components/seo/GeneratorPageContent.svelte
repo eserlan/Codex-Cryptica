@@ -20,6 +20,7 @@
   import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
   import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
+  import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -38,6 +39,7 @@
     shipConfig,
     languageConfig,
     newsSheetConfig,
+    dungeonConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -266,6 +268,13 @@
     campaignContext: "",
   });
 
+  let dungeon = $state({
+    purpose: dungeonConfig.purposes[0],
+    currentState: dungeonConfig.currentStates[0],
+    scale: dungeonConfig.scales[1],
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -463,6 +472,8 @@
       generatorEngine.generateLanguage({ ...language, useAI }),
     "news-sheet-generator": (useAI) =>
       generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
+    "dungeon-generator": (useAI) =>
+      generatorEngine.generateDungeon({ ...dungeon, useAI }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -670,6 +681,14 @@
         bind:placeName={newsSheet.placeName}
         bind:headlineEvent={newsSheet.headlineEvent}
         bind:campaignContext={newsSheet.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "dungeon-generator"}
+      <DungeonFormFields
+        bind:purpose={dungeon.purpose}
+        bind:currentState={dungeon.currentState}
+        bind:scale={dungeon.scale}
+        bind:campaignContext={dungeon.campaignContext}
         onSurprise={trigger}
       />
     {/if}

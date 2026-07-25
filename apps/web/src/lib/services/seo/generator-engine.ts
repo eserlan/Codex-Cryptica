@@ -49,6 +49,9 @@ import {
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
   generateNewsSheetLocal,
+  buildDungeonPrompt,
+  parseDungeonResponse,
+  generateDungeonLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -65,6 +68,7 @@ import {
   type ShipGeneratorOptions,
   type LanguageGeneratorOptions,
   type NewsSheetGeneratorOptions,
+  type DungeonGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -100,6 +104,7 @@ export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
 export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
+export { dungeonConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -479,6 +484,25 @@ export class DefaultGeneratorEngine {
         return parseNewsSheetResponse(text);
       },
       () => generateNewsSheetLocal(sheetOptions),
+    );
+  }
+
+  /** Dungeon & Delve generation delegates to the generator-engine package. */
+  async generateDungeon(
+    options: DungeonGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...dungeonOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = buildDungeonPrompt(
+          dungeonOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseDungeonResponse(text, dungeonOptions);
+      },
+      () => generateDungeonLocal(dungeonOptions),
     );
   }
 }

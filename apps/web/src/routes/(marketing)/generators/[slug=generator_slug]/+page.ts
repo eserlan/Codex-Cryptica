@@ -24,6 +24,7 @@ const validSlugs = new Set([
   "ship-generator",
   "language-generator",
   "news-sheet-generator",
+  "dungeon-generator",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -51,7 +52,8 @@ export const load: PageLoad = ({ params }) => {
       | "god-generator"
       | "ship-generator"
       | "language-generator"
-      | "news-sheet-generator",
+      | "news-sheet-generator"
+      | "dungeon-generator",
   };
 };
 
@@ -77,5 +79,6 @@ export const entries: EntryGenerator = () => {
     { slug: "ship-generator" },
     { slug: "language-generator" },
     { slug: "news-sheet-generator" },
+    { slug: "dungeon-generator" },
   ];
 };
