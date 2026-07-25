@@ -101,6 +101,13 @@
           icon: "icon-[lucide--landmark]",
         },
         {
+          href: "/generators/dungeon-generator",
+          label: "Dungeon & Delve Generator",
+          summary:
+            "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
+          icon: "icon-[lucide--layers]",
+        },
+        {
           href: "/generators/magic-item",
           label: "Magic Item Generator",
           summary:

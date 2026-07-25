@@ -18,7 +18,8 @@ export type ValidSlug =
   | "god-generator"
   | "ship-generator"
   | "language-generator"
-  | "news-sheet-generator";
+  | "news-sheet-generator"
+  | "dungeon-generator";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -403,6 +404,39 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/quest", label: "Quest Hook Generator" },
       { href: "/generators/settlement", label: "Settlement Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
+    ],
+  },
+  "dungeon-generator": {
+    pageTitle:
+      "Dungeon & Delve Generator | Multi-Genre RPG Delve Generator | Codex Cryptica",
+    metaDescription:
+      "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities for any RPG genre. Signature features, current conflicts, sectors, inhabitants, traps, boss mysteries, and loot.",
+    introTitle: "Dungeon / Delve Idea Generator",
+    eyebrow: "Dungeon Generator",
+    introText:
+      "Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks.",
+    canonicalPath: "/generators/dungeon-generator",
+    faqs: [
+      {
+        question: "What does the dungeon generator create?",
+        answer:
+          "It creates complete, multi-layered dungeon & delve concepts including history, current state, signature landmark, active conflict, 3–5 distinct sectors, resident factions, environmental hazards, secrets, loot, and adventure hooks.",
+      },
+      {
+        question: "Is it only for fantasy games?",
+        answer:
+          "No. The generator dynamically adapts to any world theme — fantasy delves, subterranean sci-fi research facilities, cyberpunk megastructure sectors, post-apocalyptic vaults, gothic cathedrals, post-human Lancer sites, or steampipe labyrinths.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy dungeons on this page without logging in. Save drafts directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/settlement", label: "Settlement Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
     ],
   },
 };

@@ -66,6 +66,13 @@
       summary: settlementSummary,
       icon: "icon-[lucide--building-2]",
     },
+    {
+      slug: "dungeon-generator",
+      label: "Dungeon & Delve Generator",
+      summary:
+        "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
+      icon: "icon-[lucide--layers]",
+    },
   ];
 
   const surpriseMeCard: GeneratorCard = {
