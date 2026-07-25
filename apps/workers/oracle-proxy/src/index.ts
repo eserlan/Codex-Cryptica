@@ -55,6 +55,37 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "http://127.0.0.1",
 ];
 
+/**
+ * FLUX.2 models are served through the multipart image-generation endpoint.
+ * Matched by family rather than by an exhaustive list so a new klein or dev
+ * variant keeps working without a proxy deploy.
+ */
+export function usesMultipartInput(model: string): boolean {
+  return /flux-2/i.test(model);
+}
+
+function buildMultipartInput(
+  prompt: string,
+  width: number,
+  height: number,
+  negativePrompt?: string,
+) {
+  const form = new FormData();
+  form.append("prompt", prompt);
+  form.append("width", String(width));
+  form.append("height", String(height));
+  if (negativePrompt) form.append("negative_prompt", negativePrompt);
+
+  const formResponse = new Response(form);
+  return {
+    multipart: {
+      body: formResponse.body || form,
+      contentType:
+        formResponse.headers.get("content-type") || "multipart/form-data",
+    },
+  };
+}
+
 export default {
   async fetch(
     request: Request,
@@ -276,28 +307,32 @@ export default {
         console.log(
           `[Oracle Proxy] Generating image using Workers AI model: ${targetModel}`,
         );
-        const form = new FormData();
-        form.append("prompt", prompt);
-        form.append("width", String(body.width || 1024));
-        form.append("height", String(body.height || 1024));
+        const width = Number(body.width) || 1024;
+        const height = Number(body.height) || 1024;
         // Forwarded rather than dropped: the client has always sent this and
         // the proxy has always discarded it, so every negative term composed
         // for a proxy image went nowhere.
-        if (body.negative_prompt) {
-          form.append("negative_prompt", String(body.negative_prompt));
-        }
+        const negativePrompt = body.negative_prompt
+          ? String(body.negative_prompt)
+          : undefined;
 
-        const formResponse = new Response(form);
-        const formBody = formResponse.body || form;
-        const formContentType =
-          formResponse.headers.get("content-type") || "multipart/form-data";
-
-        const output = await env.AI.run(targetModel, {
-          multipart: {
-            body: formBody,
-            contentType: formContentType,
-          },
-        });
+        // Workers AI does not take one input shape. The FLUX.2 family expects
+        // a multipart body, because that endpoint also accepts reference
+        // images for editing; every other text-to-image model expects a plain
+        // object and answers a multipart body with "field required: prompt".
+        // Sending the wrong one is a 5012, not a soft failure, so the shape
+        // follows the model.
+        const output = usesMultipartInput(targetModel)
+          ? await env.AI.run(
+              targetModel,
+              buildMultipartInput(prompt, width, height, negativePrompt),
+            )
+          : await env.AI.run(targetModel, {
+              prompt,
+              width,
+              height,
+              ...(negativePrompt ? { negative_prompt: negativePrompt } : {}),
+            });
 
         let buffer: ArrayBuffer;
         if (output instanceof ArrayBuffer) {
