@@ -151,6 +151,7 @@ export const ImageArtDirectionRecordSchema = z.object({
   styleReferenceMode: z.string().optional(),
   styleOverridden: z.boolean().optional(),
   statureId: z.string().optional(),
+  statureSource: z.string().optional(),
   figureInFrame: z.boolean().optional(),
   aspectRatio: z.string().optional(),
   provider: z.string().optional(),

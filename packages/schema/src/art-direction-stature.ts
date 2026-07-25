@@ -24,6 +24,9 @@ import type { OpticsPreset } from "./art-direction-optics";
 
 export type StatureId = "mundane" | "renowned" | "mythic" | "divine";
 
+/** How a composed stature was decided. */
+export type StatureSource = "explicit" | "labels" | "inferred";
+
 export interface ArtStature {
   id: string;
   label: string;

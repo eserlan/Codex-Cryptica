@@ -49,7 +49,7 @@ describe("DefaultImageGenerationService", () => {
         "ctx",
         "model",
       );
-      expect(result).toBe("query");
+      expect(result.subject).toBe("query");
     });
 
     it("should return query early if context is missing", async () => {
@@ -59,7 +59,7 @@ describe("DefaultImageGenerationService", () => {
         "",
         "model",
       );
-      expect(result).toBe("query");
+      expect(result.subject).toBe("query");
     });
 
     it("should preserve a resolved art direction query when context is missing", async () => {
@@ -73,7 +73,7 @@ describe("DefaultImageGenerationService", () => {
         "model",
       );
 
-      expect(result).toBe(resolvedPrompt);
+      expect(result.subject).toBe(resolvedPrompt);
     });
 
     it("should return distilled text on success", async () => {
@@ -91,7 +91,7 @@ describe("DefaultImageGenerationService", () => {
         "ctx",
         "model",
       );
-      expect(result).toBe("distilled result");
+      expect(result.subject).toBe("distilled result");
       expect(mockAiClientManager.getModel).toHaveBeenCalledWith("key", "model");
     });
 
@@ -108,7 +108,70 @@ describe("DefaultImageGenerationService", () => {
         "ctx",
         "model",
       );
-      expect(result).toBe("canon summary");
+      expect(result.subject).toBe("canon summary");
+    });
+
+    it("reads the stature line out of the canon summary and strips it", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: {
+            text: () =>
+              "worshipped at every crossroads shrine\nSTATURE: divine",
+          },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "tall figures in flowing garments" },
+        });
+
+      const result = await service.distillVisualSubject(
+        "key",
+        "query",
+        "ctx",
+        "model",
+      );
+
+      expect(result.stature).toBe("divine");
+      expect(result.subject).toBe("tall figures in flowing garments");
+      // The line is direction for the composer, not for the subject writer.
+      const subjectPrompt = mockModel.generateContent.mock.calls[1][0];
+      expect(subjectPrompt).not.toContain("STATURE:");
+    });
+
+    it("treats an unreadable classification as no signal", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "canon summary\nSTATURE: extremely epic" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "distilled result" },
+        });
+
+      const result = await service.distillVisualSubject(
+        "key",
+        "query",
+        "ctx",
+        "model",
+      );
+
+      expect(result.stature).toBeUndefined();
+    });
+
+    it("keeps the stature when stage 2 fails", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "canon summary\nSTATURE: mythic" },
+        })
+        .mockRejectedValueOnce(new Error("Gemini Error"));
+
+      const result = await service.distillVisualSubject(
+        "key",
+        "query",
+        "ctx",
+        "model",
+      );
+
+      expect(result.subject).toBe("canon summary");
+      expect(result.stature).toBe("mythic");
     });
   });
 

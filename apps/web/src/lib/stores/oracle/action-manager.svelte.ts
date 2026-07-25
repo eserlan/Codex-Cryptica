@@ -164,6 +164,7 @@ export class OracleActionManager {
           prompt: result.prompt,
           negativeTerms: result.negativeTerms,
           statureId: result.metadata?.statureId,
+          statureSource: result.metadata?.statureSource,
         }
       : null;
   }
@@ -182,6 +183,7 @@ export class OracleActionManager {
           prompt: result.prompt,
           negativeTerms: result.negativeTerms,
           statureId: result.metadata?.statureId,
+          statureSource: result.metadata?.statureSource,
         }
       : null;
   }

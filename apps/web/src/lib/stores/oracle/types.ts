@@ -23,6 +23,8 @@ export interface RegeneratedPrompt {
   negativeTerms: string[];
   /** What the prompt was actually composed at, inferred or explicit. */
   statureId?: string;
+  /** Whether that came from the request, a label, or the Oracle's reading. */
+  statureSource?: string;
 }
 
 export type OracleUiSnapshot = {

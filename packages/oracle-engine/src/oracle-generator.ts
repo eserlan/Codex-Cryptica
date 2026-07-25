@@ -332,8 +332,11 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         true,
       );
 
-    // Stage 1: the model resolves vault canon into physical description only.
-    const subject = await context.imageGeneration.distillVisualSubject(
+    // Stage 1: the model resolves vault canon into physical description, and
+    // reads the standing that canon implies. It is the only stage that sees the
+    // lore, so it is the only one that can tell a god from a well-armed
+    // soldier.
+    const distilled = await context.imageGeneration.distillVisualSubject(
       apiKey,
       this.buildEntitySubjectSeed(entity, entity.labels),
       aiContext,
@@ -343,13 +346,15 @@ Treat these labels as strong direction for the subject's appearance, attire, and
 
     // Stage 2: deterministic composition around that subject.
     const composed = composeImagePrompt({
-      subject,
+      subject: distilled.subject,
       category: entity.categoryId || entity.type,
       theme: context?.uiStore?.activeThemeId,
       // Labels already steer the distiller; a label like "deity" now also
-      // steers the layers the subject text cannot reach.
+      // steers the layers the subject text cannot reach. The model's reading of
+      // the canon fills in only where neither says anything.
       stature: options.stature,
       statureLabels: entity.labels,
+      inferredStature: distilled.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: options.ignoreSavedArtDirection
@@ -407,7 +412,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         true,
       );
 
-    const subject = await context.imageGeneration.distillVisualSubject(
+    const distilled = await context.imageGeneration.distillVisualSubject(
       apiKey,
       command.subject,
       aiContext,
@@ -416,11 +421,13 @@ Treat these labels as strong direction for the subject's appearance, attire, and
     );
 
     const composed = composeImagePrompt({
-      subject,
+      subject: distilled.subject,
       category: command.categoryId,
       theme: context.uiStore?.activeThemeId,
-      // A free-text draw command has no entity, so stature is explicit only.
+      // A free-text draw command has no entity and therefore no labels; the
+      // model's reading of the retrieved canon is the only implicit signal.
       stature: options.stature,
+      inferredStature: distilled.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: this.extractArtDirectionFromText(message.content),

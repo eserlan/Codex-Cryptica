@@ -26,7 +26,7 @@ describe("OracleGenerator", () => {
         }),
       },
       imageGeneration: {
-        distillVisualSubject: vi.fn().mockResolvedValue("prompt"),
+        distillVisualSubject: vi.fn().mockResolvedValue({ subject: "prompt" }),
         generateImage: vi.fn().mockResolvedValue(new Blob([])),
       },
       vault: {
@@ -197,7 +197,9 @@ describe("OracleGenerator", () => {
       };
       (
         mockContext.imageGeneration.distillVisualSubject as any
-      ).mockResolvedValue("Almos, a scarred courier in a patched leather coat");
+      ).mockResolvedValue({
+        subject: "Almos, a scarred courier in a patched leather coat",
+      });
 
       const prepared = await generator.prepareEntityVisualizationPrompt(
         "e1",
@@ -316,6 +318,40 @@ describe("OracleGenerator", () => {
 
       expect(prepared.metadata.statureId).toBe("divine");
       expect(prepared.prompt).toContain("divine presence");
+    });
+
+    it("should use the stature the distiller read when no label says", async () => {
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.imageGeneration.distillVisualSubject.mockResolvedValue({
+        subject: "a tall figure in flowing garments",
+        stature: "divine",
+      });
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("divine");
+      expect(prepared.metadata.statureSource).toBe("inferred");
+    });
+
+    it("should let a label beat the distiller's reading", async () => {
+      // The user typed the label; the model only guessed.
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.vault.entities.e1.labels = ["legendary"];
+      mockContext.imageGeneration.distillVisualSubject.mockResolvedValue({
+        subject: "a tall figure in flowing garments",
+        stature: "divine",
+      });
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("mythic");
+      expect(prepared.metadata.statureSource).toBe("labels");
     });
 
     it("should leave dimensions to the provider for a hand-edited prompt", async () => {

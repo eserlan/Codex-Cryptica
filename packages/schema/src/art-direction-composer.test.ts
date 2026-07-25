@@ -869,6 +869,41 @@ describe("stature", () => {
     }
   });
 
+  it("takes the distiller's reading only when nothing else says", () => {
+    const inferred = composeImagePrompt({
+      ...gods,
+      inferredStature: "divine",
+    });
+    expect(inferred.metadata.statureId).toBe("divine");
+    expect(inferred.metadata.statureSource).toBe("inferred");
+
+    // A label the user typed beats a model's reading of the lore.
+    const labelled = composeImagePrompt({
+      ...gods,
+      statureLabels: ["legendary"],
+      inferredStature: "divine",
+    });
+    expect(labelled.metadata.statureId).toBe("mythic");
+    expect(labelled.metadata.statureSource).toBe("labels");
+
+    // And an explicit request beats both.
+    const explicit = composeImagePrompt({
+      ...gods,
+      stature: "renowned",
+      statureLabels: ["deity"],
+      inferredStature: "divine",
+    });
+    expect(explicit.metadata.statureId).toBe("renowned");
+    expect(explicit.metadata.statureSource).toBe("explicit");
+  });
+
+  it("ignores an unusable inferred value", () => {
+    const junk = composeImagePrompt({ ...gods, inferredStature: "very epic" });
+    expect(junk.metadata.statureId).toBeUndefined();
+    expect(junk.metadata.statureSource).toBeUndefined();
+    expect(junk.prompt).toBe(composeImagePrompt(gods).prompt);
+  });
+
   it("leaves the register clause out of the mundane stature", () => {
     expect(ART_STATURES.mundane.prompt).toBe("");
     expect(ART_STATURES.mundane.negativePrompt).toEqual([]);

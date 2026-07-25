@@ -36,6 +36,7 @@ import {
   resolveStatureId,
   type ArtStature,
   type StatureId,
+  type StatureSource,
 } from "./art-direction-stature";
 import {
   prepareSubject,
@@ -73,6 +74,11 @@ export interface ComposeImagePromptInput {
    * wins, and labels naming no stature leave the prompt unchanged.
    */
   statureLabels?: readonly string[];
+  /**
+   * Stature the subject distiller read out of vault canon. Lowest precedence:
+   * a label the user typed always beats a model's reading of the lore.
+   */
+  inferredStature?: string;
   /** Named camera variant from the category, e.g. `portrait`. */
   cameraVariant?: string;
   /** Advanced per-request optics adjustments. */
@@ -124,6 +130,8 @@ export interface ComposedPromptMetadata {
   categoryId?: string;
   themeId?: string;
   statureId?: StatureId;
+  /** Where the stature came from. Absent when none applied. */
+  statureSource?: StatureSource;
   cameraPresetId?: string;
   cameraVariant?: string;
   styleReferenceMode: StyleReferenceMode;
@@ -255,9 +263,19 @@ export function composeImagePrompt(
   const themeId = resolveThemeId(input.theme);
   const category = getCategory(categoryId);
   const theme = getTheme(themeId);
+  // Explicit beats labels beats inference: the user's own words win over a
+  // model's reading of the lore, and both win over nothing.
   const statureId =
     resolveStatureId(input.stature) ??
-    resolveStatureFromLabels(input.statureLabels);
+    resolveStatureFromLabels(input.statureLabels) ??
+    resolveStatureId(input.inferredStature);
+  const statureSource: StatureSource | undefined = !statureId
+    ? undefined
+    : resolveStatureId(input.stature)
+      ? "explicit"
+      : resolveStatureFromLabels(input.statureLabels)
+        ? "labels"
+        : "inferred";
   const stature = getStature(statureId);
 
   const prepared = prepareSubject(input.subject, input.subjectOptions || {});
@@ -332,6 +350,7 @@ export function composeImagePrompt(
       categoryId,
       themeId,
       statureId,
+      statureSource,
       cameraPresetId: camera?.id,
       cameraVariant: input.cameraVariant,
       styleReferenceMode,

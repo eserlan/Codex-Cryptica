@@ -1,8 +1,13 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
-import type { ImageGenerationService, ImageGenerationOptions } from "schema";
+import type {
+  DistilledVisualSubject,
+  ImageGenerationService,
+  ImageGenerationOptions,
+} from "schema";
 import {
   buildVisualCanonResolutionPrompt,
   buildVisualSubjectPrompt,
+  extractStature,
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 import { GEMINI_API_BASE_URL } from "./config";
@@ -28,9 +33,9 @@ export class DefaultImageGenerationService implements ImageGenerationService {
     context: string,
     modelName: string,
     _demoMode = false,
-  ): Promise<string> {
-    if (!isAIEnabled()) return query;
-    if (!context) return query;
+  ): Promise<DistilledVisualSubject> {
+    if (!isAIEnabled()) return { subject: query };
+    if (!context) return { subject: query };
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
@@ -42,7 +47,12 @@ export class DefaultImageGenerationService implements ImageGenerationService {
       context,
     );
     const canonResult = await model.generateContent(canonResolutionPrompt);
-    const canonSummary = canonResult.response.text()?.trim() || "";
+    // Stage 1 is the only place that reads vault canon, so it is the only
+    // place that can tell a god from a very well-equipped soldier. The
+    // classification rides along on the call already being made.
+    const { summary: canonSummary, stature } = extractStature(
+      canonResult.response.text()?.trim() || "",
+    );
 
     console.log(`[ImageGenerationService] Stage 2: Writing visual subject...`);
 
@@ -54,15 +64,19 @@ export class DefaultImageGenerationService implements ImageGenerationService {
       const response = await result.response;
       const distilled = response.text().trim();
       console.log(
-        `[ImageGenerationService] Distilled Visual Subject: "${distilled.slice(0, 50)}..."`,
+        `[ImageGenerationService] Distilled Visual Subject: "${distilled.slice(0, 50)}..."${
+          stature ? ` [stature: ${stature}]` : ""
+        }`,
       );
-      return distilled;
+      return { subject: distilled, stature };
     } catch (err) {
       console.warn(
         "[ImageGenerationService] Failed to write visual subject, falling back to canon summary.",
         err,
       );
-      return canonSummary || query;
+      // The canon summary is a usable fallback subject; the stature read from
+      // it still stands.
+      return { subject: canonSummary || query, stature };
     }
   }
 

@@ -22,6 +22,7 @@
   // the entity's labels, so without this the setting is invisible until an
   // image comes back looking wrong.
   let resolvedStature = $state("");
+  let resolvedStatureSource = $state("");
 
   const CAMERA_VARIANTS = [
     { value: "", label: "Category default" },
@@ -41,6 +42,12 @@
     { value: "mythic", label: "Mythic" },
     { value: "divine", label: "Divine" },
   ];
+
+  const STATURE_SOURCES: Record<string, string> = {
+    explicit: "your choice",
+    labels: "from labels",
+    inferred: "read from your lore",
+  };
 
   const STATURE_LABELS: Record<string, string> = {
     mundane: "Mundane",
@@ -66,6 +73,7 @@
       styleReferenceMode = "named";
       stature = "";
       resolvedStature = "";
+      resolvedStatureSource = "";
     }
   });
 
@@ -134,6 +142,7 @@
         editedPrompt = result.prompt.trim();
         negativeTerms = result.negativeTerms;
         resolvedStature = result.statureId || "mundane";
+        resolvedStatureSource = result.statureSource || "";
       } else {
         error = "Could not revise a prompt.";
       }
@@ -335,7 +344,11 @@
                   class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
                   data-testid="image-prompt-resolved-stature"
                 >
-                  Drawn as: {STATURE_LABELS[resolvedStature] || resolvedStature}
+                  Drawn as: {STATURE_LABELS[resolvedStature] ||
+                    resolvedStature}{#if STATURE_SOURCES[resolvedStatureSource]}
+                    <span class="font-normal normal-case tracking-normal"
+                      >({STATURE_SOURCES[resolvedStatureSource]})</span
+                    >{/if}
                 </p>
               {/if}
             {/if}

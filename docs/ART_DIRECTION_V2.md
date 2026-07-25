@@ -117,11 +117,28 @@ whole material vocabulary.
 A vault that uses none of these labels composes byte-identical prompts to before
 the axis existed.
 
+**When nothing says**: stage 1 of the distiller — the only stage that reads
+vault canon — ends its summary with a `STATURE:` line, parsed against the closed
+set and stripped before stage 2 sees it. No extra call, no extra latency: the
+classification rides along on a request already being made. Canon is where
+standing actually lives ("_worshipped at every crossroads shrine_"); labels and
+subject text usually do not carry it.
+
+The instruction is biased hard toward `mundane`, because a loose classifier
+makes every character with a sword legendary and the axis stops meaning
+anything. Age, power, rarity, and importance to the plot are explicitly not
+stature. An unparseable or invented value counts as no signal, so a model that
+ignores the instruction leaves the prompt exactly as it would have been.
+
+`metadata.statureSource` records which of the three decided it — `explicit`,
+`labels`, or `inferred` — and is stored with the image.
+
 **Where it shows**: the entity panel carries a "Drawn as _X_" badge beside the
 labels whenever a stature applies, so the inference is never invisible — and the
 label that caused it is right next to the badge. The prompt review dialog's
 Advanced art direction section has a Stature selector (defaulting to _Auto (from
-labels)_) and reports what the last revision actually composed at.
+labels)_) and reports what the last revision actually composed at, and where that came
+from — _your choice_, _from labels_, or _read from your lore_.
 
 ## No proper names
 
