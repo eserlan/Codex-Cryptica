@@ -81,6 +81,7 @@ describe("catalogue", () => {
       expect(theme.craftMaterials.length).toBeGreaterThan(10);
       expect(theme.terrainMaterials.length).toBeGreaterThan(10);
       expect(theme.exaltedMaterials.length).toBeGreaterThan(10);
+      expect(theme.exaltedPalette.length).toBeGreaterThan(10);
       expect(theme.nameFreeFallback.trim()).not.toBe("");
     }
   });
@@ -622,6 +623,15 @@ describe("composeImagePrompt", () => {
     expect(item.layers.theme).toContain("worn leather");
   });
 
+  it("keeps landscape vocabulary out of a group portrait", () => {
+    // The terrain clause supplied a thatched village behind one faction and a
+    // mossy watchtower behind another. A faction is people and their gear.
+    const faction = composeImagePrompt({ ...base, category: "faction" });
+    expect(faction.layers.theme).toContain("worn leather");
+    expect(faction.layers.theme).not.toContain("thatch");
+    expect(faction.layers.theme).not.toContain("moss and lichen");
+  });
+
   it("gives mixed categories both material vocabularies", () => {
     const event = composeImagePrompt({ ...base, category: "event" });
     expect(event.layers.theme).toContain("worn leather");
@@ -785,6 +795,29 @@ describe("stature", () => {
     expect(divine.layers.theme).not.toContain("moss and lichen");
     // The theme's own lighting logic argues with self-originating light.
     expect(divine.layers.theme).not.toContain("firelit");
+    // And its palette names the same metals the materials just did, which
+    // renders as one flat colour — plus "tarnished" contradicts the register.
+    expect(divine.layers.theme).toContain("cool ivory and deep shadow");
+    expect(divine.layers.theme).not.toContain("tarnished gold");
+  });
+
+  it("composes an exalted faction as a tableau, not a decisive moment", () => {
+    // "mid-action" and "absolute stillness" in one prompt satisfied neither and
+    // produced a ceremonial lineup.
+    const divine = composeImagePrompt({ ...gods, stature: "deity" });
+    expect(divine.layers.category).toContain("hierarchical tableau");
+    expect(divine.layers.category).toContain("larger than those behind");
+    expect(divine.layers.category).not.toContain("mid-action");
+  });
+
+  it("does not forbid every mark on an exalted subject", () => {
+    // A war god's notched blade is legitimate; the clause describes materials
+    // that do not degrade rather than banning damage the subject specified.
+    const divine = composeImagePrompt({ ...gods, stature: "deity" });
+    expect(divine.layers.stature).toContain("without ageing");
+    expect(divine.layers.stature).not.toMatch(
+      /no trace of use|repair, or wear/,
+    );
   });
 
   it("suppresses the vocabulary that dragged the subject back down", () => {
