@@ -11,6 +11,7 @@
  */
 
 import {
+  composeThemeLayer,
   getCategory,
   getFactionBlueprint,
   getTheme,
@@ -24,6 +25,7 @@ import {
   formatOptics,
   mergeOptics,
   validateOptics,
+  type AspectRatio,
   type OpticsOverrides,
   type OpticsPreset,
   type OpticsWarning,
@@ -107,6 +109,13 @@ export interface ComposedPromptMetadata {
   styleReferenceMode: StyleReferenceMode;
   /** True when vault-authored direction replaced the shipped theme layer. */
   styleOverridden: boolean;
+  /** Whether the anatomy negative block was included. */
+  figureInFrame: boolean;
+  /**
+   * The composed framing. Carried out of the composer so a provider that takes
+   * explicit pixel dimensions can request the shape the prompt asks for.
+   */
+  aspectRatio?: AspectRatio;
   /** Proper names removed from the subject. Kept for provenance only. */
   removedNames: string[];
   truncated: boolean;
@@ -182,7 +191,8 @@ function buildCategoryLayer(
 
   const blueprint = getFactionBlueprint(themeId);
   if (!blueprint) return category.prompt;
-  return `${category.prompt} Establish the group through ${blueprint.signals}`;
+  // Category prompts carry no trailing punctuation, so the break is added here.
+  return `${category.prompt}. Establish the group through ${blueprint.signals}`;
 }
 
 function resolveCamera(
@@ -231,10 +241,13 @@ export function composeImagePrompt(
   // Vault-authored direction replaces the shipped theme wholesale; mixing the
   // two produces prompts that specify two different mediums at once.
   const styleOverride = (input.styleOverride || "").trim();
+  const themeLayer = theme
+    ? composeThemeLayer(theme, category?.materialFocus)
+    : "";
   const layers: ComposedPromptLayers = {
     subject: prepared.subject,
     category: buildCategoryLayer(category, categoryId, themeId),
-    theme: styleOverride || theme?.prompt || "",
+    theme: styleOverride || themeLayer,
     camera: formatOptics(camera),
     styleReference: styleOverride
       ? ""
@@ -252,10 +265,19 @@ export function composeImagePrompt(
     input.maxPromptLength || DEFAULT_MAX_PROMPT_LENGTH,
   );
 
+  // Anatomy negatives are only worth spending on images that contain anatomy.
+  // A preset or override can add a figure to a category that normally has none
+  // (the item `in-hand` framing) or take one away, so an explicit value wins
+  // over the category default in both directions.
+  const figureInFrame =
+    camera?.figureInFrame ?? category?.includesFigures ?? false;
+
   return {
     prompt,
     negativeTerms:
-      input.includeNegatives === false ? [] : composeNegativeTerms(categoryId),
+      input.includeNegatives === false
+        ? []
+        : composeNegativeTerms(categoryId, { figureInFrame }),
     layers,
     metadata: {
       artDirectionVersion: ART_DIRECTION_VERSION,
@@ -265,6 +287,8 @@ export function composeImagePrompt(
       cameraVariant: input.cameraVariant,
       styleReferenceMode,
       styleOverridden: Boolean(styleOverride),
+      figureInFrame,
+      aspectRatio: camera?.aspectRatio,
       removedNames: prepared.removedNames,
       truncated,
     },

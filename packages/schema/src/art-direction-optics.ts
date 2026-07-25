@@ -103,6 +103,13 @@ export interface OpticsPreset {
   lensCharacter?: LensCharacter[];
   /** Free-form composition note appended after the structured optics terms. */
   composition?: string;
+  /**
+   * Set when this framing puts a person in frame for a category that normally
+   * has none — the item `in-hand` variant, for instance. Not an optical
+   * property; it selects the anatomy negative block, which would otherwise be
+   * omitted and let the visible hand render badly.
+   */
+  figureInFrame?: boolean;
 }
 
 /** Overrides an advanced user may apply on top of a category/theme default. */
@@ -165,6 +172,23 @@ export const ASPECT_RATIO_PHRASES: Record<AspectRatio, string> = {
   "4:5": "4:5 portrait framing",
   "2:3": "2:3 portrait framing",
   "1:1": "1:1 square framing",
+};
+
+/**
+ * Pixel dimensions for each ratio, for providers that take an explicit size
+ * instead of reading the framing out of the prompt. Kept near 1 megapixel and
+ * on multiples of 64, which is what diffusion models are trained on.
+ */
+export const ASPECT_RATIO_DIMENSIONS: Record<
+  AspectRatio,
+  { width: number; height: number }
+> = {
+  "2.39:1": { width: 1536, height: 640 },
+  "16:9": { width: 1344, height: 768 },
+  "3:2": { width: 1216, height: 832 },
+  "4:5": { width: 896, height: 1152 },
+  "2:3": { width: 832, height: 1216 },
+  "1:1": { width: 1024, height: 1024 },
 };
 
 export const LIGHTING_RECIPE_PHRASES: Record<LightingRecipe, string> = {

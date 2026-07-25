@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ASPECT_RATIO_DIMENSIONS } from "schema";
 import { OracleGenerator } from "./oracle-generator";
 
 describe("OracleGenerator", () => {
@@ -290,6 +291,31 @@ describe("OracleGenerator", () => {
       const options = (mockContext.imageGeneration.generateImage as any).mock
         .calls[0][3];
       expect(options.negativePrompt).toContain("watermark");
+    });
+
+    it("should request the dimensions the composed framing asks for", async () => {
+      mockContext.imageProvider = "cloudflare";
+      mockContext.vault.entities.e1.type = "character";
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      const options = (mockContext.imageGeneration.generateImage as any).mock
+        .calls[0][3];
+      // A prompt that states 2:3 must not be rendered as a square.
+      expect(options.dimensions).toEqual(ASPECT_RATIO_DIMENSIONS["2:3"]);
+    });
+
+    it("should leave dimensions to the provider for a hand-edited prompt", async () => {
+      mockContext.imageProvider = "cloudflare";
+
+      await generator.generateVisualizationFromPrompt(
+        "a hand-written prompt",
+        mockContext,
+      );
+
+      const options = (mockContext.imageGeneration.generateImage as any).mock
+        .calls[0][3];
+      expect(options.dimensions).toBeUndefined();
     });
 
     it("should inline negatives for a provider without a negative field", async () => {

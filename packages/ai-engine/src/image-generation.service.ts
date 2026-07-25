@@ -101,8 +101,14 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           const url = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelName}`;
           const form = new FormData();
           form.append("prompt", prompt);
-          form.append("width", "1024");
-          form.append("height", "1024");
+          // A square default would contradict the framing every Art Direction
+          // category now states in the prompt.
+          const { width, height } = options?.dimensions || {
+            width: 1024,
+            height: 1024,
+          };
+          form.append("width", String(width));
+          form.append("height", String(height));
           if (options?.negativePrompt) {
             form.append("negative_prompt", options.negativePrompt);
           }

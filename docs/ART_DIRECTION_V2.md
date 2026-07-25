@@ -34,14 +34,34 @@ composed around it.
 | --------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- |
 | Subject         | Species, role, build, clothing, materials, condition, equipment, expression, posture, action        | AI, from vault canon         |
 | Category        | Framing, composition, silhouette readability, depth                                                 | `art-direction-catalogue.ts` |
-| Theme           | Medium, brushwork, palette, lighting logic, material language                                       | `art-direction-catalogue.ts` |
+| Theme           | Medium, palette, lighting logic, material vocabulary                                                | `art-direction-catalogue.ts` |
 | Camera          | Focal length, aperture, shot size, angle, lighting recipe, aspect ratio, film stock, lens character | `art-direction-optics.ts`    |
 | Style reference | Named lineage, name-free fallback, or nothing                                                       | `art-direction-catalogue.ts` |
-| Negatives       | General + category failure modes                                                                    | `art-direction-negatives.ts` |
+| Negatives       | Universal + figure + category failure modes                                                         | `art-direction-negatives.ts` |
 
 Categories never contain medium or palette language, and themes never contain
-framing. That separation is what lets any category render in any theme, and it
-is enforced by a test.
+camera direction — lens, aperture, or shot size. That separation is what lets
+any category render in any theme, and both halves are enforced by a test. Two
+themes do carry a composition bias that is inseparable from the style
+(`mythic`'s hierarchical scale, `pulp_adventure`'s diagonal action layout);
+those are the deliberate exceptions.
+
+Category prompts also stay renderable. Brief language written for a human
+concept artist — "implies its builders", "communicates intent", "establishes
+history" — consumes model attention without steering pixels, and a test keeps
+it out.
+
+### Material vocabulary
+
+A theme's handcrafted-goods language ("worn leather, hammered iron") is right
+for a figure or a prop and wrong for a mountain range. Themes therefore carry
+two material clauses and each category selects via `materialFocus`:
+
+| Focus     | Categories                | Emits                                     |
+| --------- | ------------------------- | ----------------------------------------- |
+| `craft`   | character, creature, item | Clothing, equipment, props                |
+| `terrain` | location, cover           | Landform, architecture, surfaces at scale |
+| `both`    | faction, event, note      | Both clauses                              |
 
 ## No proper names
 
@@ -76,6 +96,34 @@ full prompt into a style override on the next generation and duplicate the
 category and camera layers. Generation provenance goes to
 `entity.imageArtDirection` instead.
 
+## Negatives
+
+Three blocks, merged in order and deduplicated:
+
+- **Universal** — `text`, `watermark`, `artist signature`, `logo`,
+  `oversaturated HDR`, `lens dirt overlay`, `tiling`. Always applied.
+- **Figure** — `extra fingers`, `extra limbs`, `fused hands`,
+  `distorted anatomy`, `asymmetrical eyes`, `plastic skin`, `cropped head`.
+  Applied only when a person or creature is in frame, since anatomy negatives
+  on a landscape waste budget and mildly contradict a camera asking for a
+  human-scale reference figure.
+- **Category** — that category's specific failure modes.
+
+A camera preset or optics override sets `figureInFrame` to add the block to a
+category that normally has none — the item `in-hand` framing uses this — or to
+take it away. An explicit value wins over the category's `includesFigures`
+default in both directions.
+
+## Aspect ratio
+
+Every category and variant sets one, and it reaches the image two ways: as a
+framing phrase at the end of the camera layer, and — for providers that take
+explicit pixel dimensions — as `dimensions` on the generation request, mapped
+from the ratio by `ASPECT_RATIO_DIMENSIONS`. Sending only the phrase let the
+direct Cloudflare path render every shot as a 1024×1024 square while the prompt
+asked for 2.39:1. The hand-edited prompt path carries no composed metadata, so
+the provider default applies there.
+
 ## Providers
 
 Provider differences live only in `art-direction-providers.ts`.
@@ -95,6 +143,8 @@ truncates the positive prompt and never the negative block.
 | -------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Generic, forgettable figure            | Subject lacks specific materials, repairs, or props                     | Add physical facts to the entity's content; the distiller can only describe what the vault records |
 | Background overpowers the subject      | Aperture too deep or focal hierarchy wrong                              | Use a wider aperture variant — `portrait` for characters, `in-hand` for items                      |
+| Landscape rendered in leather and iron | Category has the wrong `materialFocus`                                  | Environment categories must be `terrain` or `both`, never `craft`                                  |
+| Figure cropped or floating in dead air | Provider rendering a different shape than the prompt states             | Every category sets an aspect ratio; providers taking explicit dimensions get it via `dimensions`  |
 | Faction looks like clones              | No internal hierarchy or specialist roles                               | The faction blueprint supplies signals, but the subject needs distinct roles to differentiate      |
 | Plastic-looking surfaces               | Missing directional or raking light                                     | Pick a camera variant with a lighting recipe, or a theme with stronger lighting logic              |
 | Style drifts between images            | Theme changed, or an entity style override is set on some entities only | Check `imageArtDirection.styleOverridden` in the stored metadata                                   |
@@ -124,12 +174,14 @@ timestamp. Images generated before v2 have no record and need no migration.
 
 ## Extending
 
-- **New theme**: add to `ART_THEMES` with a prompt, a `nameFreeFallback`, and
-  optional `aliases` and `styleReferences` (max two). Add a matching
+- **New theme**: add to `ART_THEMES` with `medium`, `palette`, `lighting`,
+  `craftMaterials`, `terrainMaterials`, a `nameFreeFallback`, and optional
+  `aliases` and `styleReferences` (max two). Add a matching
   `FACTION_BLUEPRINTS` entry. Tests assert both exist.
-- **New category**: add to `ART_CATEGORIES` with framing-only prompt, a
-  `defaultCamera`, and a `CATEGORY_NEGATIVE_PROMPTS` block. Add a golden
-  fixture.
+- **New category**: add to `ART_CATEGORIES` with a framing-only prompt, a
+  `defaultCamera` including an `aspectRatio`, a `materialFocus`, an
+  `includesFigures` flag, and a `CATEGORY_NEGATIVE_PROMPTS` block. Add a
+  golden fixture.
 - **New provider**: add to `PROVIDER_CAPABILITIES`. Nothing else should need to
   change.
 

@@ -1,5 +1,6 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
 import {
+  ASPECT_RATIO_DIMENSIONS,
   composeImagePrompt,
   formatForProvider,
   type ComposedPromptMetadata,
@@ -436,6 +437,8 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       typeof input === "string"
         ? { prompt: input, negativeTerms: [] as string[] }
         : input;
+    const aspectRatio =
+      typeof input === "string" ? undefined : input.metadata?.aspectRatio;
 
     const apiKey = context.effectiveApiKey || "";
     const isCustom = context.imageProvider === "custom";
@@ -477,6 +480,11 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         provider: context.imageProvider,
         baseUrl: context.customImageBaseUrl,
         negativePrompt: payload.negativePrompt,
+        // The hand-edited prompt path has no composed metadata; the provider
+        // default applies there.
+        dimensions: aspectRatio
+          ? ASPECT_RATIO_DIMENSIONS[aspectRatio]
+          : undefined,
       },
     );
   }
