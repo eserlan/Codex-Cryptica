@@ -2,28 +2,46 @@
  * Art Direction v2 — negative prompt library.
  *
  * Negatives are stored as discrete terms rather than prose so they can be
- * merged, deduplicated, and formatted per provider. Category blocks describe
- * failure modes specific to that subject type; the general block covers
- * failures every category shares.
+ * merged, deduplicated, and formatted per provider.
+ *
+ * The blocks are split by what they actually apply to. Anatomy negatives on a
+ * landscape waste prompt budget and mildly contradict a camera that asks for a
+ * human-scale reference figure, so they are only emitted when a figure is
+ * actually in frame.
  */
 
-export const GENERAL_NEGATIVE_PROMPT: readonly string[] = [
+/** Applies to every image regardless of subject. */
+export const UNIVERSAL_NEGATIVE_PROMPT: readonly string[] = [
   "text",
   "watermark",
   // Qualified deliberately: the bare term "signature" collides with the
   // character category's "signature equipment", which is positive direction.
   "artist signature",
   "logo",
+  "oversaturated HDR",
+  "lens dirt overlay",
+  "tiling",
+];
+
+/** Applies only when a person or creature is in frame. */
+export const FIGURE_NEGATIVE_PROMPT: readonly string[] = [
   "extra fingers",
   "extra limbs",
   "fused hands",
   "distorted anatomy",
   "asymmetrical eyes",
   "plastic skin",
-  "oversaturated HDR",
-  "lens dirt overlay",
-  "tiling",
   "cropped head",
+];
+
+/**
+ * @deprecated Use {@link UNIVERSAL_NEGATIVE_PROMPT} and
+ * {@link FIGURE_NEGATIVE_PROMPT}. Retained as the union for callers that want
+ * the full historical block.
+ */
+export const GENERAL_NEGATIVE_PROMPT: readonly string[] = [
+  ...UNIVERSAL_NEGATIVE_PROMPT,
+  ...FIGURE_NEGATIVE_PROMPT,
 ];
 
 export const CATEGORY_NEGATIVE_PROMPTS: Record<string, readonly string[]> = {
@@ -83,18 +101,36 @@ export const CATEGORY_NEGATIVE_PROMPTS: Record<string, readonly string[]> = {
   ],
 };
 
+export interface NegativeCompositionOptions {
+  /**
+   * Whether a person or creature appears in frame. Drives inclusion of the
+   * figure block. Defaults to false so figureless categories stay clean.
+   */
+  figureInFrame?: boolean;
+}
+
 /**
- * Merges the general block with the selected category block, preserving order
- * (general first, then category) and dropping case-insensitive duplicates.
+ * Merges the universal block, the figure block where relevant, and the
+ * selected category block, preserving that order and dropping
+ * case-insensitive duplicates.
  */
-export function composeNegativeTerms(categoryId?: string): string[] {
+export function composeNegativeTerms(
+  categoryId?: string,
+  options: NegativeCompositionOptions = {},
+): string[] {
   const categoryTerms = categoryId
     ? CATEGORY_NEGATIVE_PROMPTS[categoryId] || []
     : [];
+  const figureTerms = options.figureInFrame ? FIGURE_NEGATIVE_PROMPT : [];
+
   const seen = new Set<string>();
   const merged: string[] = [];
 
-  for (const term of [...GENERAL_NEGATIVE_PROMPT, ...categoryTerms]) {
+  for (const term of [
+    ...UNIVERSAL_NEGATIVE_PROMPT,
+    ...figureTerms,
+    ...categoryTerms,
+  ]) {
     const key = term.trim().toLowerCase();
     if (!key || seen.has(key)) continue;
     seen.add(key);

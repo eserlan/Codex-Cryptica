@@ -11,6 +11,7 @@
  */
 
 import {
+  composeThemeLayer,
   getCategory,
   getFactionBlueprint,
   getTheme,
@@ -107,6 +108,8 @@ export interface ComposedPromptMetadata {
   styleReferenceMode: StyleReferenceMode;
   /** True when vault-authored direction replaced the shipped theme layer. */
   styleOverridden: boolean;
+  /** Whether the anatomy negative block was included. */
+  figureInFrame: boolean;
   /** Proper names removed from the subject. Kept for provenance only. */
   removedNames: string[];
   truncated: boolean;
@@ -182,7 +185,8 @@ function buildCategoryLayer(
 
   const blueprint = getFactionBlueprint(themeId);
   if (!blueprint) return category.prompt;
-  return `${category.prompt} Establish the group through ${blueprint.signals}`;
+  // Category prompts carry no trailing punctuation, so the break is added here.
+  return `${category.prompt}. Establish the group through ${blueprint.signals}`;
 }
 
 function resolveCamera(
@@ -231,10 +235,16 @@ export function composeImagePrompt(
   // Vault-authored direction replaces the shipped theme wholesale; mixing the
   // two produces prompts that specify two different mediums at once.
   const styleOverride = (input.styleOverride || "").trim();
+  const themeLayer =
+    theme && category
+      ? composeThemeLayer(theme, category.materialFocus)
+      : theme
+        ? composeThemeLayer(theme)
+        : "";
   const layers: ComposedPromptLayers = {
     subject: prepared.subject,
     category: buildCategoryLayer(category, categoryId, themeId),
-    theme: styleOverride || theme?.prompt || "",
+    theme: styleOverride || themeLayer,
     camera: formatOptics(camera),
     styleReference: styleOverride
       ? ""
@@ -252,10 +262,19 @@ export function composeImagePrompt(
     input.maxPromptLength || DEFAULT_MAX_PROMPT_LENGTH,
   );
 
+  // Anatomy negatives are only worth spending on images that contain anatomy.
+  // A camera variant can add a figure to a category that normally has none,
+  // e.g. the item `in-hand` framing.
+  const figureInFrame = Boolean(
+    category?.includesFigures || camera?.figureInFrame,
+  );
+
   return {
     prompt,
     negativeTerms:
-      input.includeNegatives === false ? [] : composeNegativeTerms(categoryId),
+      input.includeNegatives === false
+        ? []
+        : composeNegativeTerms(categoryId, { figureInFrame }),
     layers,
     metadata: {
       artDirectionVersion: ART_DIRECTION_VERSION,
@@ -265,6 +284,7 @@ export function composeImagePrompt(
       cameraVariant: input.cameraVariant,
       styleReferenceMode,
       styleOverridden: Boolean(styleOverride),
+      figureInFrame,
       removedNames: prepared.removedNames,
       truncated,
     },

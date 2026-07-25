@@ -103,6 +103,13 @@ export interface OpticsPreset {
   lensCharacter?: LensCharacter[];
   /** Free-form composition note appended after the structured optics terms. */
   composition?: string;
+  /**
+   * Set when this framing puts a person in frame for a category that normally
+   * has none — the item `in-hand` variant, for instance. Not an optical
+   * property; it selects the anatomy negative block, which would otherwise be
+   * omitted and let the visible hand render badly.
+   */
+  figureInFrame?: boolean;
 }
 
 /** Overrides an advanced user may apply on top of a category/theme default. */

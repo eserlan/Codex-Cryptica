@@ -7,6 +7,7 @@ import {
 import {
   ART_CATEGORIES,
   ART_THEMES,
+  composeThemeLayer,
   FACTION_BLUEPRINTS,
   getFactionBlueprint,
   resolveCategoryId,
@@ -14,7 +15,8 @@ import {
 } from "./art-direction-catalogue";
 import {
   CATEGORY_NEGATIVE_PROMPTS,
-  GENERAL_NEGATIVE_PROMPT,
+  FIGURE_NEGATIVE_PROMPT,
+  UNIVERSAL_NEGATIVE_PROMPT,
   composeNegativeTerms,
 } from "./art-direction-negatives";
 import {
@@ -66,7 +68,11 @@ describe("catalogue", () => {
     for (const id of REQUIRED_THEMES) {
       const theme = ART_THEMES[id];
       expect(theme, `missing theme ${id}`).toBeDefined();
-      expect(theme.prompt.length).toBeGreaterThan(40);
+      expect(theme.medium.length).toBeGreaterThan(10);
+      expect(theme.palette.length).toBeGreaterThan(10);
+      expect(theme.lighting.length).toBeGreaterThan(5);
+      expect(theme.craftMaterials.length).toBeGreaterThan(10);
+      expect(theme.terrainMaterials.length).toBeGreaterThan(10);
       expect(theme.nameFreeFallback.trim()).not.toBe("");
     }
   });
@@ -112,7 +118,7 @@ describe("catalogue", () => {
   it("does not imitate named living artists", () => {
     const shipped = [
       ...Object.values(ART_CATEGORIES).map((c) => c.prompt),
-      ...Object.values(ART_THEMES).map((t) => t.prompt),
+      ...Object.values(ART_THEMES).map((t) => composeThemeLayer(t)),
       ...Object.values(ART_THEMES).flatMap((t) => t.styleReferences || []),
       ...Object.values(ART_THEMES).map((t) => t.nameFreeFallback),
     ].join("\n");
@@ -124,13 +130,25 @@ describe("catalogue", () => {
 });
 
 describe("negative prompt library", () => {
-  it("merges the general block with the category block in order", () => {
-    const terms = composeNegativeTerms("character");
-    expect(terms.slice(0, GENERAL_NEGATIVE_PROMPT.length)).toEqual([
-      ...GENERAL_NEGATIVE_PROMPT,
+  it("merges universal, figure, and category blocks in order", () => {
+    const terms = composeNegativeTerms("character", { figureInFrame: true });
+    expect(terms.slice(0, UNIVERSAL_NEGATIVE_PROMPT.length)).toEqual([
+      ...UNIVERSAL_NEGATIVE_PROMPT,
     ]);
+    expect(terms).toContain("extra fingers");
     expect(terms).toContain("stiff A-pose");
     expect(terms).toContain("hidden hands");
+  });
+
+  it("omits anatomy negatives when no figure is in frame", () => {
+    const terms = composeNegativeTerms("location");
+    for (const anatomy of FIGURE_NEGATIVE_PROMPT) {
+      expect(terms, `${anatomy} should not apply to a landscape`).not.toContain(
+        anatomy,
+      );
+    }
+    expect(terms).toContain("empty stage");
+    expect(terms).toContain("watermark");
   });
 
   it("deduplicates terms shared between the general and category blocks", () => {
@@ -139,11 +157,11 @@ describe("negative prompt library", () => {
     expect(new Set(terms).size).toBe(terms.length);
   });
 
-  it("returns only the general block for an unknown category", () => {
+  it("returns only the universal block for an unknown category", () => {
     expect(composeNegativeTerms("unknown")).toEqual([
-      ...GENERAL_NEGATIVE_PROMPT,
+      ...UNIVERSAL_NEGATIVE_PROMPT,
     ]);
-    expect(composeNegativeTerms()).toEqual([...GENERAL_NEGATIVE_PROMPT]);
+    expect(composeNegativeTerms()).toEqual([...UNIVERSAL_NEGATIVE_PROMPT]);
   });
 
   it("covers every reviewed category", () => {
@@ -415,6 +433,7 @@ describe("composeImagePrompt", () => {
     const { prompt, negativeTerms } = composeImagePrompt(base);
     expect(negativeTerms).toContain("stiff A-pose");
     expect(negativeTerms).toContain("watermark");
+    expect(negativeTerms).toContain("extra fingers");
     // Negatives travel separately; they must not leak into the positive prompt.
     expect(prompt).not.toContain("stiff A-pose");
     expect(prompt).not.toContain("watermark");
@@ -441,7 +460,12 @@ describe("composeImagePrompt", () => {
       ...base,
       styleOverride: "   ",
     });
-    expect(layers.theme).toBe(ART_THEMES.fantasy.prompt);
+    expect(layers.theme).toBe(
+      composeThemeLayer(
+        ART_THEMES.fantasy,
+        ART_CATEGORIES.character.materialFocus,
+      ),
+    );
     expect(metadata.styleOverridden).toBe(false);
   });
 
@@ -483,7 +507,7 @@ describe("composeImagePrompt", () => {
     expect(layers.category).toContain(
       getFactionBlueprint("cyberpunk")!.signals,
     );
-    expect(layers.category).toContain("defining moment rather than a lineup");
+    expect(layers.category).toContain("mid-action rather than posed in a line");
   });
 
   it("keeps the generic faction framing when the theme has no blueprint", () => {
@@ -492,7 +516,7 @@ describe("composeImagePrompt", () => {
       category: "faction",
       theme: "workspace",
     });
-    expect(layers.category).toContain("defining moment rather than a lineup");
+    expect(layers.category).toContain("mid-action rather than posed in a line");
     expect(layers.category).toBe(ART_CATEGORIES.faction.prompt);
   });
 
@@ -539,5 +563,80 @@ describe("composeImagePrompt", () => {
     expect(layers.category).toBe("");
     expect(metadata.categoryId).toBeUndefined();
     expect(metadata.themeId).toBeUndefined();
+  });
+  it("gives environment categories terrain materials, not handcrafted goods", () => {
+    const location = composeImagePrompt({
+      subject: "slate-grey mountain peaks above a fortified watchtower",
+      category: "location",
+      theme: "fantasy",
+    });
+
+    expect(location.layers.theme).toContain("hand-cut stone");
+    // A mountain range is not made of worn leather and hammered iron.
+    expect(location.layers.theme).not.toContain("worn leather");
+    expect(location.layers.theme).not.toContain("hammered iron");
+  });
+
+  it("gives figure and prop categories craft materials", () => {
+    const character = composeImagePrompt({ ...base, category: "character" });
+    expect(character.layers.theme).toContain("worn leather");
+    expect(character.layers.theme).not.toContain("hand-cut stone");
+
+    const item = composeImagePrompt({ ...base, category: "item" });
+    expect(item.layers.theme).toContain("worn leather");
+  });
+
+  it("gives mixed categories both material vocabularies", () => {
+    const event = composeImagePrompt({ ...base, category: "event" });
+    expect(event.layers.theme).toContain("worn leather");
+    expect(event.layers.theme).toContain("hand-cut stone");
+  });
+
+  it("omits anatomy negatives for figureless categories", () => {
+    for (const category of ["location", "item", "note", "cover"]) {
+      const result = composeImagePrompt({ ...base, category });
+      expect(result.metadata.figureInFrame, category).toBe(false);
+      expect(result.negativeTerms, category).not.toContain("extra fingers");
+      expect(result.negativeTerms, category).not.toContain("cropped head");
+    }
+  });
+
+  it("includes anatomy negatives for categories with figures", () => {
+    for (const category of ["character", "creature", "faction", "event"]) {
+      const result = composeImagePrompt({ ...base, category });
+      expect(result.metadata.figureInFrame, category).toBe(true);
+      expect(result.negativeTerms, category).toContain("extra fingers");
+    }
+  });
+
+  it("adds anatomy negatives when a camera variant puts a hand in frame", () => {
+    const shelf = composeImagePrompt({ ...base, category: "item" });
+    expect(shelf.negativeTerms).not.toContain("fused hands");
+
+    const inHand = composeImagePrompt({
+      ...base,
+      category: "item",
+      cameraVariant: "in-hand",
+    });
+    expect(inHand.metadata.figureInFrame).toBe(true);
+    expect(inHand.negativeTerms).toContain("fused hands");
+  });
+
+  it("emits an aspect ratio for every category", () => {
+    for (const category of Object.keys(ART_CATEGORIES)) {
+      const { layers } = composeImagePrompt({ ...base, category });
+      expect(layers.camera, `${category} has no aspect ratio`).toMatch(
+        /framing$/,
+      );
+    }
+  });
+
+  it("keeps unrenderable brief language out of category prompts", () => {
+    // A diffusion model cannot render "history" or "intent".
+    for (const [id, category] of Object.entries(ART_CATEGORIES)) {
+      expect(category.prompt, id).not.toMatch(
+        /\b(implies?|communicates?|conveys?|history|ideology|intent)\b/i,
+      );
+    }
   });
 });
