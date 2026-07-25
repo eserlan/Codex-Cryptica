@@ -116,9 +116,17 @@
 
     error = "";
     if (target.kind === "entity") {
-      await oracle.generateEntityFromPrompt(target.id, prompt);
+      // The dialog already holds both; sending the text alone dropped every
+      // negative term and the composed framing.
+      await oracle.generateEntityFromPrompt(target.id, prompt, {
+        negativeTerms,
+        aspectRatio: dialog.aspectRatio,
+      });
     } else {
-      await oracle.generateMessageFromPrompt(target.id, prompt);
+      await oracle.generateMessageFromPrompt(target.id, prompt, {
+        negativeTerms,
+        aspectRatio: dialog.aspectRatio,
+      });
     }
     modalUIStore.closeImagePromptReview();
   };

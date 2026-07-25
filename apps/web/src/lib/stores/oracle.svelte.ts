@@ -36,6 +36,7 @@ import {
   type EntityRevisionResult,
   type IOracleStore,
   type PromptRegenerationOptions,
+  type ReviewedPromptOptions,
   type RegeneratedPrompt,
 } from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
@@ -392,12 +393,20 @@ export class OracleStore implements IOracleStore {
     await this.actions.drawMessage(messageId);
   }
 
-  async generateEntityFromPrompt(entityId: string, prompt: string) {
-    await this.actions.generateEntityFromPrompt(entityId, prompt);
+  async generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ) {
+    await this.actions.generateEntityFromPrompt(entityId, prompt, options);
   }
 
-  async generateMessageFromPrompt(messageId: string, prompt: string) {
-    await this.actions.generateMessageFromPrompt(messageId, prompt);
+  async generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ) {
+    await this.actions.generateMessageFromPrompt(messageId, prompt, options);
   }
 
   async regenerateEntityPrompt(

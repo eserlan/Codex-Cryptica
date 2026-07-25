@@ -8,7 +8,7 @@ import type {
   OracleActionExecutor,
   DraftingEngine,
 } from "@codex/oracle-engine";
-import type { TextGenerationService } from "schema";
+import type { TextGenerationService, AspectRatio } from "schema";
 
 /** Advanced Art Direction settings a user may apply when revising a prompt. */
 export interface PromptRegenerationOptions {
@@ -16,6 +16,15 @@ export interface PromptRegenerationOptions {
   styleReferenceMode?: "named" | "name-free" | "disabled";
   /** Overrides the stature the entity's labels imply. */
   stature?: string;
+}
+
+/**
+ * What a reviewed prompt carries besides its text. Neither is recoverable from
+ * the prompt itself, and sending the text alone dropped both.
+ */
+export interface ReviewedPromptOptions {
+  negativeTerms?: string[];
+  aspectRatio?: AspectRatio;
 }
 
 export interface RegeneratedPrompt {
@@ -125,8 +134,16 @@ export interface IOracleStore {
   ask(content: string): Promise<void>;
   drawEntity(entityId: string): Promise<void>;
   drawMessage(messageId: string): Promise<void>;
-  generateEntityFromPrompt(entityId: string, prompt: string): Promise<void>;
-  generateMessageFromPrompt(messageId: string, prompt: string): Promise<void>;
+  generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ): Promise<void>;
+  generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ): Promise<void>;
   regenerateEntityPrompt(
     entityId: string,
     options?: PromptRegenerationOptions,
