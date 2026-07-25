@@ -775,6 +775,19 @@ describe("composeImagePrompt", () => {
     );
   });
 
+  it("keeps a keyed block when there is no theme to layer onto", () => {
+    // An unrecognised theme id, or a vault with none, must not silently
+    // discard the vault's own direction.
+    const { layers } = composeImagePrompt({
+      ...base,
+      theme: "workspace",
+      styleOverride: "Materials: cold iron\nPalette: bone and rust",
+    });
+
+    expect(layers.theme).toContain("Materials — cold iron");
+    expect(layers.theme).toContain("bone and rust");
+  });
+
   it("still replaces the whole layer for a free-text block", () => {
     const { layers, metadata } = composeImagePrompt({
       ...base,

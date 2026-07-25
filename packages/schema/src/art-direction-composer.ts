@@ -96,6 +96,12 @@ export interface ComposeImagePromptInput {
    * apply.
    */
   styleOverride?: string;
+  /**
+   * Where that direction came from, when it is not the entity's own — today
+   * "inherited", for a look taken from a parent or a linked faction. Recorded
+   * so an image can be explained as well as reproduced.
+   */
+  styleOverrideSource?: string;
   /** Names to strip from the subject, and the descriptor to fall back on. */
   subjectOptions?: SubjectPreparationOptions;
   /** Include the camera/optics layer. Defaults to true. */
@@ -147,6 +153,8 @@ export interface ComposedPromptMetadata {
    * and leaves the theme to supply the rest.
    */
   styleOverrideMode?: "replace" | "layered";
+  /** Set when the direction came from somewhere other than the entity itself. */
+  styleOverrideSource?: string;
   /** Whether the anatomy negative block was included. */
   figureInFrame: boolean;
   /**
@@ -240,6 +248,19 @@ function buildCategoryLayer(
   if (!signals) return prompt;
   // Category prompts carry no trailing punctuation, so the break is added here.
   return `${prompt}. Establish the group through ${signals}`;
+}
+
+/** Renders named fields on their own, in the same order a theme layer uses. */
+function composeFieldsOnly(fields: Record<string, string>): string {
+  return [
+    fields.medium,
+    fields.materials ? `Materials — ${fields.materials}` : "",
+    fields.palette,
+    fields.lighting,
+  ]
+    .filter(Boolean)
+    .map((part) => part.trim().replace(/[.\s]+$/, ""))
+    .join(". ");
 }
 
 /** Drops the non-theme keys and any field the block did not actually name. */
@@ -345,7 +366,10 @@ export function composeImagePrompt(
         stature?.materialFocus ?? category?.materialFocus,
         override.layered ? themeFields : {},
       )
-    : "";
+    : // With no theme to layer onto — an unrecognised theme id, or a vault that
+      // has none — the named fields are all there is, and dropping them would
+      // silently discard the vault's own direction.
+      composeFieldsOnly(themeFields);
 
   const layeredTheme = [themeLayer, override.remainder]
     .filter(Boolean)
@@ -408,6 +432,9 @@ export function composeImagePrompt(
         ? override.layered
           ? "layered"
           : "replace"
+        : undefined,
+      styleOverrideSource: styleOverride
+        ? input.styleOverrideSource
         : undefined,
       figureInFrame,
       aspectRatio: camera?.aspectRatio,
