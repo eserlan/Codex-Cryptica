@@ -20,6 +20,8 @@ import {
   composeNegativeTerms,
 } from "./art-direction-negatives";
 import {
+  ASPECT_RATIO_DIMENSIONS,
+  ASPECT_RATIO_PHRASES,
   formatOptics,
   mergeOptics,
   validateOptics,
@@ -83,6 +85,34 @@ describe("catalogue", () => {
       expect(ART_CATEGORIES[id].prompt).not.toMatch(
         /\b(oil painting|gouache|tempera|palette of|film grain)\b/i,
       );
+    }
+  });
+
+  it("keeps camera language out of theme layers", () => {
+    // Themes own how a shot is rendered; the optics layer owns how it is shot.
+    // "35mm photography" is a medium and stays; a lens, an aperture, or a shot
+    // size is camera direction and belongs in the optics layer, where an
+    // override can reach it. Two themes also carry a composition bias that is
+    // inseparable from the style (mythic's hierarchical scale, pulp's diagonal
+    // action layout), which is why this checks camera terms and not framing.
+    for (const id of REQUIRED_THEMES) {
+      expect(composeThemeLayer(ART_THEMES[id]), id).not.toMatch(
+        /\b(\d+mm lens|f\/\d|close-up shot|wide shot|full-body shot)\b/i,
+      );
+    }
+  });
+
+  it("maps every aspect ratio to renderable dimensions", () => {
+    for (const [ratio, phrase] of Object.entries(ASPECT_RATIO_PHRASES)) {
+      const dimensions =
+        ASPECT_RATIO_DIMENSIONS[ratio as keyof typeof ASPECT_RATIO_DIMENSIONS];
+      expect(dimensions, `${ratio} has no dimensions`).toBeDefined();
+      // Diffusion models are trained on multiples of 64.
+      expect(dimensions.width % 64, ratio).toBe(0);
+      expect(dimensions.height % 64, ratio).toBe(0);
+      // Portrait phrasing must not ship landscape pixels, and vice versa.
+      const isPortrait = /portrait/.test(phrase);
+      expect(dimensions.height > dimensions.width, ratio).toBe(isPortrait);
     }
   });
 
@@ -593,7 +623,7 @@ describe("composeImagePrompt", () => {
   });
 
   it("omits anatomy negatives for figureless categories", () => {
-    for (const category of ["location", "item", "note", "cover"]) {
+    for (const category of ["location", "item", "note"]) {
       const result = composeImagePrompt({ ...base, category });
       expect(result.metadata.figureInFrame, category).toBe(false);
       expect(result.negativeTerms, category).not.toContain("extra fingers");
@@ -602,7 +632,14 @@ describe("composeImagePrompt", () => {
   });
 
   it("includes anatomy negatives for categories with figures", () => {
-    for (const category of ["character", "creature", "faction", "event"]) {
+    // Cover included: both cover framings ask for a backlit hero silhouette.
+    for (const category of [
+      "character",
+      "creature",
+      "faction",
+      "event",
+      "cover",
+    ]) {
       const result = composeImagePrompt({ ...base, category });
       expect(result.metadata.figureInFrame, category).toBe(true);
       expect(result.negativeTerms, category).toContain("extra fingers");
@@ -622,13 +659,51 @@ describe("composeImagePrompt", () => {
     expect(inHand.negativeTerms).toContain("fused hands");
   });
 
-  it("emits an aspect ratio for every category", () => {
-    for (const category of Object.keys(ART_CATEGORIES)) {
-      const { layers } = composeImagePrompt({ ...base, category });
-      expect(layers.camera, `${category} has no aspect ratio`).toMatch(
-        /framing$/,
+  it("emits an aspect ratio for every category framing", () => {
+    for (const [id, category] of Object.entries(ART_CATEGORIES)) {
+      // Variants included: a new framing is where a missing ratio hides.
+      const presets = [
+        category.defaultCamera,
+        ...Object.values(category.variants || {}),
+      ];
+      for (const preset of presets) {
+        const ratio = preset.aspectRatio;
+        expect(ratio, `${id}/${preset.id} has no aspect ratio`).toBeDefined();
+      }
+
+      for (const [variant, preset] of Object.entries(category.variants || {})) {
+        const { layers, metadata } = composeImagePrompt({
+          ...base,
+          category: id,
+          cameraVariant: variant,
+        });
+        expect(metadata.aspectRatio, `${id}/${variant}`).toBe(
+          preset.aspectRatio,
+        );
+        expect(layers.camera, `${id}/${variant}`).toContain(
+          ASPECT_RATIO_PHRASES[preset.aspectRatio!],
+        );
+      }
+
+      const { layers, metadata } = composeImagePrompt({
+        ...base,
+        category: id,
+      });
+      expect(metadata.aspectRatio, id).toBe(category.defaultCamera.aspectRatio);
+      expect(layers.camera, id).toContain(
+        ASPECT_RATIO_PHRASES[category.defaultCamera.aspectRatio!],
       );
     }
+  });
+
+  it("lets an explicit framing flag override the category default", () => {
+    const suppressed = composeImagePrompt({
+      ...base,
+      category: "character",
+      opticsOverrides: { figureInFrame: false },
+    });
+    expect(suppressed.metadata.figureInFrame).toBe(false);
+    expect(suppressed.negativeTerms).not.toContain("extra fingers");
   });
 
   it("keeps unrenderable brief language out of category prompts", () => {

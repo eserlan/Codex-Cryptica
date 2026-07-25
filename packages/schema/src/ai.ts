@@ -207,6 +207,12 @@ export interface ImageGenerationOptions {
    * `formatForProvider` in the schema package.
    */
   negativePrompt?: string;
+  /**
+   * Output size for providers that take explicit dimensions. Derived from the
+   * composed aspect ratio so the request matches the framing the prompt asks
+   * for; providers that infer size from the prompt ignore it.
+   */
+  dimensions?: { width: number; height: number };
 }
 
 export interface ImageGenerationService {

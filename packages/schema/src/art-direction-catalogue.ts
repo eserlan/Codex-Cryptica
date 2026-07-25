@@ -312,8 +312,10 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
       },
     },
     negativePrompt: CATEGORY_NEGATIVE_PROMPTS.cover,
-    materialFocus: "terrain",
-    includesFigures: false,
+    // Both cover framings ask for a backlit hero silhouette, so a figure is in
+    // frame and the scene carries made things as well as landform.
+    materialFocus: "both",
+    includesFigures: true,
   },
 };
 
@@ -338,8 +340,11 @@ export const ART_THEMES: Record<string, ArtTheme> = {
   fantasy: {
     id: "theme.fantasy",
     label: "Fantasy",
-    medium:
-      "painterly oil rendering with visible brushwork, magic shown as material detail rather than overt effects",
+    // No "magic as subtle material detail" clause: it is the one theme rule
+    // that can be flatly wrong for an in-theme subject — an arch-lich mid-cast
+    // or a rift opening — and the theme layer sits after the subject, so it
+    // would get the last word.
+    medium: "painterly oil rendering with visible brushwork",
     palette:
       "warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow",
     lighting: "natural or firelit key",

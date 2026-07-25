@@ -25,6 +25,7 @@ import {
   formatOptics,
   mergeOptics,
   validateOptics,
+  type AspectRatio,
   type OpticsOverrides,
   type OpticsPreset,
   type OpticsWarning,
@@ -110,6 +111,11 @@ export interface ComposedPromptMetadata {
   styleOverridden: boolean;
   /** Whether the anatomy negative block was included. */
   figureInFrame: boolean;
+  /**
+   * The composed framing. Carried out of the composer so a provider that takes
+   * explicit pixel dimensions can request the shape the prompt asks for.
+   */
+  aspectRatio?: AspectRatio;
   /** Proper names removed from the subject. Kept for provenance only. */
   removedNames: string[];
   truncated: boolean;
@@ -235,12 +241,9 @@ export function composeImagePrompt(
   // Vault-authored direction replaces the shipped theme wholesale; mixing the
   // two produces prompts that specify two different mediums at once.
   const styleOverride = (input.styleOverride || "").trim();
-  const themeLayer =
-    theme && category
-      ? composeThemeLayer(theme, category.materialFocus)
-      : theme
-        ? composeThemeLayer(theme)
-        : "";
+  const themeLayer = theme
+    ? composeThemeLayer(theme, category?.materialFocus)
+    : "";
   const layers: ComposedPromptLayers = {
     subject: prepared.subject,
     category: buildCategoryLayer(category, categoryId, themeId),
@@ -263,11 +266,11 @@ export function composeImagePrompt(
   );
 
   // Anatomy negatives are only worth spending on images that contain anatomy.
-  // A camera variant can add a figure to a category that normally has none,
-  // e.g. the item `in-hand` framing.
-  const figureInFrame = Boolean(
-    category?.includesFigures || camera?.figureInFrame,
-  );
+  // A preset or override can add a figure to a category that normally has none
+  // (the item `in-hand` framing) or take one away, so an explicit value wins
+  // over the category default in both directions.
+  const figureInFrame =
+    camera?.figureInFrame ?? category?.includesFigures ?? false;
 
   return {
     prompt,
@@ -285,6 +288,7 @@ export function composeImagePrompt(
       styleReferenceMode,
       styleOverridden: Boolean(styleOverride),
       figureInFrame,
+      aspectRatio: camera?.aspectRatio,
       removedNames: prepared.removedNames,
       truncated,
     },

@@ -209,6 +209,15 @@ describe("golden prompts", () => {
   const goldens = readGoldens();
 
   if (process.env.UPDATE_GOLDENS) {
+    // In update mode every assertion below compares the output against itself,
+    // so the suite asserts nothing. That must never be how CI runs — it is the
+    // same silent pass the snapshot runner mismatch produced.
+    if (process.env.CI) {
+      throw new Error(
+        "UPDATE_GOLDENS must not be set in CI: it makes the golden suite self-approving.",
+      );
+    }
+
     const regenerated: GoldenRecord = {};
     for (const { name, input } of GOLDEN_CASES) {
       const result = composeImagePrompt(input);

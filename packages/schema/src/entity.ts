@@ -150,6 +150,8 @@ export const ImageArtDirectionRecordSchema = z.object({
   cameraVariant: z.string().optional(),
   styleReferenceMode: z.string().optional(),
   styleOverridden: z.boolean().optional(),
+  figureInFrame: z.boolean().optional(),
+  aspectRatio: z.string().optional(),
   provider: z.string().optional(),
   model: z.string().optional(),
   generatedAt: z.number().optional(),

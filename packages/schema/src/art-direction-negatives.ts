@@ -34,16 +34,6 @@ export const FIGURE_NEGATIVE_PROMPT: readonly string[] = [
   "cropped head",
 ];
 
-/**
- * @deprecated Use {@link UNIVERSAL_NEGATIVE_PROMPT} and
- * {@link FIGURE_NEGATIVE_PROMPT}. Retained as the union for callers that want
- * the full historical block.
- */
-export const GENERAL_NEGATIVE_PROMPT: readonly string[] = [
-  ...UNIVERSAL_NEGATIVE_PROMPT,
-  ...FIGURE_NEGATIVE_PROMPT,
-];
-
 export const CATEGORY_NEGATIVE_PROMPTS: Record<string, readonly string[]> = {
   character: [
     "stiff A-pose",

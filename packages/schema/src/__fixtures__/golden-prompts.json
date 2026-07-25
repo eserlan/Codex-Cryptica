@@ -1,6 +1,6 @@
 {
   "character / fantasy": {
-    "prompt": "male human veteran officer, weary expression, scarred obsidian breastplate over a patched wool campaign coat, one gauntlet replaced with mismatched brass plate. full-body character concept art with a clean readable silhouette, clear face, visible hands, and an expressive stance with purposeful gesture. Layered clothing with costume asymmetry, signature equipment, and practical wear — repairs, seams, fasteners, stains, crafted ornament. Presentation lighting frames the figure without competing with it. painterly oil rendering with visible brushwork, magic shown as material detail rather than overt effects. Materials — worn leather, hammered iron, stained wood, oiled cloth. warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow. natural or firelit key. full-length shot with headroom, 85mm lens, f/4, moderate depth of field, eye-level angle, three-quarter turn, background legible but subordinate to the figure, 2:3 portrait framing. in the tradition of nineteenth-century romantic oil painting.",
+    "prompt": "male human veteran officer, weary expression, scarred obsidian breastplate over a patched wool campaign coat, one gauntlet replaced with mismatched brass plate. full-body character concept art with a clean readable silhouette, clear face, visible hands, and an expressive stance with purposeful gesture. Layered clothing with costume asymmetry, signature equipment, and practical wear — repairs, seams, fasteners, stains, crafted ornament. Presentation lighting frames the figure without competing with it. painterly oil rendering with visible brushwork. Materials — worn leather, hammered iron, stained wood, oiled cloth. warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow. natural or firelit key. full-length shot with headroom, 85mm lens, f/4, moderate depth of field, eye-level angle, three-quarter turn, background legible but subordinate to the figure, 2:3 portrait framing. in the tradition of nineteenth-century romantic oil painting.",
     "negativeTerms": [
       "text",
       "watermark",
@@ -31,6 +31,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "2:3",
       "removedNames": [],
       "truncated": false
     }
@@ -59,6 +60,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": false,
+      "aspectRatio": "1:1",
       "removedNames": [],
       "truncated": false
     }
@@ -95,6 +97,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "3:2",
       "removedNames": [],
       "truncated": false
     }
@@ -130,6 +133,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "3:2",
       "removedNames": [],
       "truncated": false
     }
@@ -158,6 +162,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": false,
+      "aspectRatio": "3:2",
       "removedNames": [],
       "truncated": false
     }
@@ -192,6 +197,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "2.39:1",
       "removedNames": [],
       "truncated": false
     }
@@ -218,12 +224,13 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": false,
+      "aspectRatio": "4:5",
       "removedNames": [],
       "truncated": false
     }
   },
   "cover / steampunk": {
-    "prompt": "airship silhouetted against a smoke-choked industrial skyline, mooring towers below. atmospheric cover art with one dominant focal point, layered depth, and genre-defining setting detail. The upper third is held clear as negative space for a title, with the focal point below it. gouache rendering with flat opaque colour. Materials — soot-blackened brick, riveted iron spans, glazed tile, copper piping. warm amber and sepia. industrial forge light from below or behind, steam catching it. wide shot, 28mm wide-angle lens, f/8, sharp through the subject, eye-level angle, rim and kicker light separating the subject from the background, low horizon, backlit hero silhouette, quiet upper third, 2:3 portrait framing. in the tradition of Victorian industrial engraving.",
+    "prompt": "airship silhouetted against a smoke-choked industrial skyline, mooring towers below. atmospheric cover art with one dominant focal point, layered depth, and genre-defining setting detail. The upper third is held clear as negative space for a title, with the focal point below it. gouache rendering with flat opaque colour. Materials — riveted brass plate, leather strapping, polished gauges, oiled linkages; soot-blackened brick, riveted iron spans, glazed tile, copper piping. warm amber and sepia. industrial forge light from below or behind, steam catching it. wide shot, 28mm wide-angle lens, f/8, sharp through the subject, eye-level angle, rim and kicker light separating the subject from the background, low horizon, backlit hero silhouette, quiet upper third, 2:3 portrait framing. in the tradition of Victorian industrial engraving.",
     "negativeTerms": [
       "text",
       "watermark",
@@ -232,6 +239,13 @@
       "oversaturated HDR",
       "lens dirt overlay",
       "tiling",
+      "extra fingers",
+      "extra limbs",
+      "fused hands",
+      "distorted anatomy",
+      "asymmetrical eyes",
+      "plastic skin",
+      "cropped head",
       "busy top third",
       "centred focal point",
       "missing negative space",
@@ -244,7 +258,8 @@
       "cameraPresetId": "optics.cover.default",
       "styleReferenceMode": "named",
       "styleOverridden": false,
-      "figureInFrame": false,
+      "figureInFrame": true,
+      "aspectRatio": "2:3",
       "removedNames": [],
       "truncated": false
     }
@@ -282,6 +297,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "4:5",
       "removedNames": [],
       "truncated": false
     }
@@ -318,6 +334,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "1:1",
       "removedNames": [],
       "truncated": false
     }
@@ -355,6 +372,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "4:5",
       "removedNames": [],
       "truncated": false
     }
@@ -384,6 +402,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": false,
+      "aspectRatio": "3:2",
       "removedNames": [],
       "truncated": false
     }
@@ -420,6 +439,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "4:5",
       "removedNames": [],
       "truncated": false
     }
@@ -456,12 +476,13 @@
       "styleReferenceMode": "name-free",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "2:3",
       "removedNames": [],
       "truncated": false
     }
   },
   "cover / fantasy, style reference disabled": {
-    "prompt": "flooded cathedral nave with a single boat drawn up between the pillars. atmospheric cover art with one dominant focal point, layered depth, and genre-defining setting detail. The upper third is held clear as negative space for a title, with the focal point below it. painterly oil rendering with visible brushwork, magic shown as material detail rather than overt effects. Materials — hand-cut stone, weathered timber, thatch and slate, moss and lichen over old masonry. warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow. natural or firelit key. wide shot, 28mm wide-angle lens, f/8, sharp through the subject, eye-level angle, rim and kicker light separating the subject from the background, low horizon, backlit hero silhouette, quiet upper third, 2:3 portrait framing.",
+    "prompt": "flooded cathedral nave with a single boat drawn up between the pillars. atmospheric cover art with one dominant focal point, layered depth, and genre-defining setting detail. The upper third is held clear as negative space for a title, with the focal point below it. painterly oil rendering with visible brushwork. Materials — worn leather, hammered iron, stained wood, oiled cloth; hand-cut stone, weathered timber, thatch and slate, moss and lichen over old masonry. warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow. natural or firelit key. wide shot, 28mm wide-angle lens, f/8, sharp through the subject, eye-level angle, rim and kicker light separating the subject from the background, low horizon, backlit hero silhouette, quiet upper third, 2:3 portrait framing.",
     "negativeTerms": [
       "text",
       "watermark",
@@ -470,6 +491,13 @@
       "oversaturated HDR",
       "lens dirt overlay",
       "tiling",
+      "extra fingers",
+      "extra limbs",
+      "fused hands",
+      "distorted anatomy",
+      "asymmetrical eyes",
+      "plastic skin",
+      "cropped head",
       "busy top third",
       "centred focal point",
       "missing negative space",
@@ -482,7 +510,8 @@
       "cameraPresetId": "optics.cover.default",
       "styleReferenceMode": "disabled",
       "styleOverridden": false,
-      "figureInFrame": false,
+      "figureInFrame": true,
+      "aspectRatio": "2:3",
       "removedNames": [],
       "truncated": false
     }
@@ -518,6 +547,7 @@
       "styleReferenceMode": "named",
       "styleOverridden": false,
       "figureInFrame": true,
+      "aspectRatio": "2.39:1",
       "removedNames": [],
       "truncated": false
     }

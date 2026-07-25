@@ -334,6 +334,32 @@ describe("DefaultImageGenerationService", () => {
       expect(await blob.text()).toBe("cloudflare-image");
     });
 
+    it("should request the composed aspect ratio rather than a fixed square", async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            result: { image: "Y2xvdWRmbGFyZS1pbWFnZQ==" },
+          }),
+      });
+
+      await service.generateImage(
+        "cf-token",
+        "prompt, 2:3 portrait framing",
+        "@cf/black-forest-labs/flux-1-schnell",
+        {
+          provider: "cloudflare",
+          cloudflareAccountId: "cf-account-id",
+          dimensions: { width: 832, height: 1216 },
+        },
+      );
+
+      const body = (global.fetch as any).mock.calls[0][1].body as FormData;
+      expect(body.get("width")).toBe("832");
+      expect(body.get("height")).toBe("1216");
+    });
+
     it("should generate an image via proxy Cloudflare Workers AI when account ID is not provided", async () => {
       const mockImageData = "cHJveHktY2xvdWRmbGFyZS1pbWFnZQ=="; // "proxy-cloudflare-image" in base64
       (global.fetch as any).mockResolvedValue({
