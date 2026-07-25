@@ -111,7 +111,9 @@ vi.mock("@codex/ai-engine", () => ({
   },
   imageGenerationService: {
     generateImage: vi.fn().mockResolvedValue(new Blob()),
-    distillVisualSubject: vi.fn().mockResolvedValue("visual prompt"),
+    distillVisualSubject: vi
+      .fn()
+      .mockResolvedValue({ subject: "visual prompt" }),
   },
   interactionSessions: {
     enabled: true,

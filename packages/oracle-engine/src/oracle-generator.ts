@@ -21,6 +21,7 @@ interface VisualEntityLike {
   content?: string;
   lore?: string;
   artDirection?: string;
+  imageArtDirection?: { statureId?: string };
 }
 
 export interface PreparedVisualizationPrompt {
@@ -37,6 +38,8 @@ export interface VisualizationPromptOptions {
   ignoreSavedArtDirection?: boolean;
   cameraVariant?: string;
   styleReferenceMode?: StyleReferenceMode;
+  /** Overrides the stature the entity's labels imply. */
+  stature?: string;
 }
 
 export class OracleGenerator {
@@ -330,8 +333,11 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         true,
       );
 
-    // Stage 1: the model resolves vault canon into physical description only.
-    const subject = await context.imageGeneration.distillVisualSubject(
+    // Stage 1: the model resolves vault canon into physical description, and
+    // reads the standing that canon implies. It is the only stage that sees the
+    // lore, so it is the only one that can tell a god from a well-armed
+    // soldier.
+    const distilled = await context.imageGeneration.distillVisualSubject(
       apiKey,
       this.buildEntitySubjectSeed(entity, entity.labels),
       aiContext,
@@ -341,9 +347,19 @@ Treat these labels as strong direction for the subject's appearance, attire, and
 
     // Stage 2: deterministic composition around that subject.
     const composed = composeImagePrompt({
-      subject,
+      subject: distilled.subject,
       category: entity.categoryId || entity.type,
       theme: context?.uiStore?.activeThemeId,
+      // Labels already steer the distiller; a label like "deity" now also
+      // steers the layers the subject text cannot reach. The model's reading of
+      // the canon fills in only where neither says anything.
+      stature: options.stature,
+      statureLabels: entity.labels,
+      // The stature recorded on the last image wins over a fresh reading: a
+      // model that classifies an entity divine today and mythic next week
+      // produces a gallery that does not match itself, which is worse than
+      // being wrong once. A label or an explicit choice still overrides it.
+      inferredStature: entity.imageArtDirection?.statureId || distilled.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: options.ignoreSavedArtDirection
@@ -401,7 +417,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         true,
       );
 
-    const subject = await context.imageGeneration.distillVisualSubject(
+    const distilled = await context.imageGeneration.distillVisualSubject(
       apiKey,
       command.subject,
       aiContext,
@@ -410,9 +426,13 @@ Treat these labels as strong direction for the subject's appearance, attire, and
     );
 
     const composed = composeImagePrompt({
-      subject,
+      subject: distilled.subject,
       category: command.categoryId,
       theme: context.uiStore?.activeThemeId,
+      // A free-text draw command has no entity and therefore no labels; the
+      // model's reading of the retrieved canon is the only implicit signal.
+      stature: options.stature,
+      inferredStature: distilled.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: this.extractArtDirectionFromText(message.content),

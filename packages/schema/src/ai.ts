@@ -215,6 +215,17 @@ export interface ImageGenerationOptions {
   dimensions?: { width: number; height: number };
 }
 
+export interface DistilledVisualSubject {
+  /** The subject layer: physical facts only. */
+  subject: string;
+  /**
+   * Standing the vault canon implies — "worshipped", "prayed to", "a legend
+   * told to children". Only the canon says this; labels and the subject text
+   * usually do not. Absent when unstated, unreadable, or AI is unavailable.
+   */
+  stature?: string;
+}
+
 export interface ImageGenerationService {
   generateImage(
     apiKey: string,
@@ -223,9 +234,10 @@ export interface ImageGenerationService {
     options?: ImageGenerationOptions,
   ): Promise<Blob>;
   /**
-   * Resolves vault canon into a descriptive subject phrase. Art Direction v2
-   * composes category, theme, camera, and negatives around the result, so this
-   * returns the subject layer only — never a complete image prompt.
+   * Resolves vault canon into a descriptive subject phrase, plus the stature
+   * that canon implies. Art Direction v2 composes category, theme, camera, and
+   * negatives around the result, so this returns the subject layer only —
+   * never a complete image prompt.
    */
   distillVisualSubject(
     apiKey: string,
@@ -233,7 +245,7 @@ export interface ImageGenerationService {
     context: string,
     modelName: string,
     demoMode?: boolean,
-  ): Promise<string>;
+  ): Promise<DistilledVisualSubject>;
 }
 
 // ─── Sound Bite ───────────────────────────────────────────────────────────────

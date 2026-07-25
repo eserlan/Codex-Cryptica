@@ -281,6 +281,7 @@ describe("OracleActionManager", () => {
     await manager.regenerateEntityPrompt("entity-1", {
       cameraVariant: "portrait",
       styleReferenceMode: "name-free",
+      stature: "divine",
     });
 
     expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalledWith(
@@ -290,7 +291,23 @@ describe("OracleActionManager", () => {
         ignoreSavedArtDirection: true,
         cameraVariant: "portrait",
         styleReferenceMode: "name-free",
+        stature: "divine",
       },
     );
+  });
+
+  it("should report the stature a revised prompt was composed at", async () => {
+    // Stature is normally inferred from labels, so the caller has no other way
+    // to know which one applied.
+    mockStore.getExecutionContext.mockReturnValue({});
+    mockExecutor.prepareEntityPrompt.mockResolvedValue({
+      prompt: "fresh prompt",
+      negativeTerms: [],
+      metadata: { statureId: "divine" },
+    });
+
+    const result = await manager.regenerateEntityPrompt("entity-1");
+
+    expect(result?.statureId).toBe("divine");
   });
 });

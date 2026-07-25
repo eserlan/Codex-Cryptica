@@ -14,11 +14,17 @@ import type { TextGenerationService } from "schema";
 export interface PromptRegenerationOptions {
   cameraVariant?: string;
   styleReferenceMode?: "named" | "name-free" | "disabled";
+  /** Overrides the stature the entity's labels imply. */
+  stature?: string;
 }
 
 export interface RegeneratedPrompt {
   prompt: string;
   negativeTerms: string[];
+  /** What the prompt was actually composed at, inferred or explicit. */
+  statureId?: string;
+  /** Whether that came from the request, a label, or the Oracle's reading. */
+  statureSource?: string;
 }
 
 export type OracleUiSnapshot = {

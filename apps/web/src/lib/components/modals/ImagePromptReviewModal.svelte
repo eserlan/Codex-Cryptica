@@ -3,6 +3,7 @@
   import { focusTrap } from "$lib/actions/focusTrap";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const dialog = $derived(modalUIStore.imagePromptReview);
@@ -17,6 +18,24 @@
   // category and theme defaults already supply framing and style.
   let cameraVariant = $state("");
   let styleReferenceMode = $state<"named" | "name-free" | "disabled">("named");
+  let stature = $state("");
+  // What the last revision actually composed at. Stature is normally read from
+  // the entity's labels, so without this the setting is invisible until an
+  // image comes back looking wrong.
+  let resolvedStature = $state("");
+  let resolvedStatureSource = $state("");
+  let isApplyingStatureLabel = $state(false);
+
+  // A reading of the lore is recomputed every generation and can drift. Turning
+  // it into a label makes it the user's, stable, visible on the entity, and
+  // searchable — so it is offered, never applied behind their back.
+  const canPinStature = $derived(
+    resolvedStatureSource === "inferred" &&
+      !!resolvedStature &&
+      resolvedStature !== "mundane" &&
+      target?.kind === "entity" &&
+      !vault.isGuest,
+  );
 
   const CAMERA_VARIANTS = [
     { value: "", label: "Category default" },
@@ -28,6 +47,27 @@
     { value: "ranks", label: "Massed ranks (factions)" },
     { value: "aftermath", label: "Aftermath (events)" },
   ];
+
+  const STATURES = [
+    { value: "", label: "Auto (from labels)" },
+    { value: "mundane", label: "Mundane" },
+    { value: "renowned", label: "Renowned" },
+    { value: "mythic", label: "Mythic" },
+    { value: "divine", label: "Divine" },
+  ];
+
+  const STATURE_SOURCES: Record<string, string> = {
+    explicit: "your choice",
+    labels: "from labels",
+    inferred: "read from your lore",
+  };
+
+  const STATURE_LABELS: Record<string, string> = {
+    mundane: "Mundane",
+    renowned: "Renowned",
+    mythic: "Mythic",
+    divine: "Divine",
+  };
 
   const STYLE_MODES = [
     { value: "named", label: "Named style lineage" },
@@ -44,6 +84,10 @@
       showAdvanced = false;
       cameraVariant = "";
       styleReferenceMode = "named";
+      stature = "";
+      resolvedStature = "";
+      resolvedStatureSource = "";
+      isApplyingStatureLabel = false;
     }
   });
 
@@ -102,6 +146,7 @@
       const options = {
         cameraVariant: cameraVariant || undefined,
         styleReferenceMode,
+        stature: stature || undefined,
       };
       const result =
         target.kind === "entity"
@@ -110,6 +155,8 @@
       if (result?.prompt?.trim()) {
         editedPrompt = result.prompt.trim();
         negativeTerms = result.negativeTerms;
+        resolvedStature = result.statureId || "mundane";
+        resolvedStatureSource = result.statureSource || "";
       } else {
         error = "Could not revise a prompt.";
       }
@@ -117,6 +164,20 @@
       error = err instanceof Error ? err.message : "Could not revise a prompt.";
     } finally {
       isRevisingPrompt = false;
+    }
+  };
+
+  const pinStatureAsLabel = async () => {
+    if (!target || target.kind !== "entity" || !canPinStature) return;
+    isApplyingStatureLabel = true;
+    try {
+      await vault.addLabel(target.id, resolvedStature);
+      resolvedStatureSource = "labels";
+      notificationStore.notify(`Labelled ${resolvedStature}`, "success");
+    } catch {
+      notificationStore.notify("Could not add the label.", "error");
+    } finally {
+      isApplyingStatureLabel = false;
     }
   };
 
@@ -270,6 +331,23 @@
                   <span
                     class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
                   >
+                    Stature
+                  </span>
+                  <select
+                    bind:value={stature}
+                    data-testid="image-prompt-stature"
+                    class="w-full rounded border border-theme-border bg-theme-bg/60 p-2 font-body text-sm text-theme-text outline-none transition focus:border-theme-primary"
+                  >
+                    {#each STATURES as option (option.value)}
+                      <option value={option.value}>{option.label}</option>
+                    {/each}
+                  </select>
+                </label>
+
+                <label class="block">
+                  <span
+                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  >
                     Style reference
                   </span>
                   <select
@@ -284,9 +362,40 @@
                 </label>
               </div>
               <p class="mt-2 text-[10px] text-theme-muted">
-                Choose a camera that matches the subject's category. Revise the
-                prompt to apply these.
+                Choose a camera that matches the subject's category. Stature
+                decides whether something is drawn as ordinary, renowned, or
+                worshipped, and is read from labels like <em>deity</em> unless you
+                set it here. Revise the prompt to apply these.
               </p>
+              {#if resolvedStature}
+                <p
+                  class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  data-testid="image-prompt-resolved-stature"
+                >
+                  Drawn as: {STATURE_LABELS[resolvedStature] ||
+                    resolvedStature}{#if STATURE_SOURCES[resolvedStatureSource]}
+                    <span class="font-normal normal-case tracking-normal"
+                      >({STATURE_SOURCES[resolvedStatureSource]})</span
+                    >{/if}
+                </p>
+                {#if canPinStature}
+                  <button
+                    type="button"
+                    onclick={pinStatureAsLabel}
+                    disabled={isApplyingStatureLabel}
+                    data-testid="image-prompt-pin-stature"
+                    class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-primary underline-offset-2 transition hover:underline disabled:opacity-50"
+                  >
+                    Keep it — label this {STATURE_LABELS[
+                      resolvedStature
+                    ]?.toLowerCase() || resolvedStature}
+                  </button>
+                  <p class="mt-0.5 text-[10px] text-theme-muted">
+                    Without a label the Oracle re-reads this every time, and its
+                    answer can change between pictures.
+                  </p>
+                {/if}
+              {/if}
             {/if}
           </div>
         </div>

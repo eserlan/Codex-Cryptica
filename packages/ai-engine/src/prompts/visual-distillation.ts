@@ -33,7 +33,42 @@ If no direct guidance exists, infer from related vault records, maintain interna
 
 Visual identity is part of canonical continuity.
 
-Output a distilled "Visual Canon Summary" describing the physical facts that must appear in the image.`;
+Output a distilled "Visual Canon Summary" describing the physical facts that must appear in the image.
+
+Then, on a final line by itself, classify the subject's standing in the world:
+
+STATURE: mundane | renowned | mythic | divine
+
+- divine — the vault says this is worshipped, prayed to, venerated, or given offerings. A god, not merely a very powerful person.
+- mythic — the vault treats this as legend: stories are told about it, its name is invoked, people doubt it is real.
+- renowned — known and deferred to by name within its own society: a ruler, a champion, a famous master of a craft.
+- mundane — everything else.
+
+Being old, large, powerful, magical, rare, or important to the plot is NOT stature. An ancient ruin, a dragon, a king's sword, and a wizard are all mundane unless the vault says otherwise. If the canon does not say, answer mundane.`;
+}
+
+const STATURE_LINE =
+  /^[ \t]*STATURE[ \t]*:[ \t]*(mundane|renowned|mythic|divine)\b.*$/im;
+
+/**
+ * Splits the classification line off the canon summary.
+ *
+ * The value is validated against the closed set, and anything else counts as
+ * no signal: a model that ignores the instruction, hedges, or invents a fifth
+ * tier must leave the prompt exactly as it would have been.
+ */
+export function extractStature(canonSummary: string): {
+  summary: string;
+  stature?: string;
+} {
+  const match = canonSummary.match(STATURE_LINE);
+  if (!match) return { summary: canonSummary };
+
+  const summary = canonSummary.replace(STATURE_LINE, "").trimEnd();
+  const stature = match[1].toLowerCase();
+  // Mundane is the default anyway, and not returning it keeps a no-op from
+  // looking like a decision downstream.
+  return stature === "mundane" ? { summary } : { summary, stature };
 }
 
 /**

@@ -58,7 +58,7 @@ describe("ImageGenerationService", () => {
         "context",
         "model",
       );
-      expect(result).toBe("Final Prompt");
+      expect(result.subject).toBe("Final Prompt");
       expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
     });
 
@@ -69,13 +69,13 @@ describe("ImageGenerationService", () => {
         "",
         "model",
       );
-      expect(result).toBe("query");
+      expect(result.subject).toBe("query");
     });
 
     it("should return query immediately if isAIEnabled is false", async () => {
       localStorage.setItem("codex_ai_disabled", "true");
       const result = await service.distillVisualSubject("key", "q", "c", "m");
-      expect(result).toBe("q");
+      expect(result.subject).toBe("q");
     });
   });
 });

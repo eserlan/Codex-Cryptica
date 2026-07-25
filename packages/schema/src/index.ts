@@ -13,6 +13,7 @@ export * from "./art-direction-composer";
 export * from "./art-direction-negatives";
 export * from "./art-direction-optics";
 export * from "./art-direction-providers";
+export * from "./art-direction-stature";
 export * from "./art-direction-subject";
 export * from "./migrations";
 export * from "./publishing";
