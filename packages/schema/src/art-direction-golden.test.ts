@@ -203,6 +203,27 @@ const GOLDEN_CASES: Array<{ name: string; input: ComposeImagePromptInput }> = [
       opticsOverrides: { aspectRatio: "2.39:1", lensCharacter: ["grain"] },
     },
   },
+  // --- Stature: the axis that keeps gods out of the village ----------------
+  {
+    name: "faction / fantasy / divine",
+    input: {
+      subject:
+        "tall lithe elven deities in flowing garments interwoven with living plant motifs, holding slender crystal staves",
+      category: "faction",
+      theme: "fantasy",
+      stature: "deity",
+    },
+  },
+  {
+    name: "character / mythic, stature from labels",
+    input: {
+      subject:
+        "a scarred warrior queen in lamellar, her sword resting point-down before her",
+      category: "character",
+      theme: "mythic",
+      statureLabels: ["warrior", "legendary"],
+    },
+  },
 ];
 
 describe("golden prompts", () => {

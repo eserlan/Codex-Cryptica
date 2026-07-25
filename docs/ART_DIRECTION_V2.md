@@ -33,6 +33,7 @@ composed around it.
 | Layer           | Owns                                                                                                | Source                       |
 | --------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- |
 | Subject         | Species, role, build, clothing, materials, condition, equipment, expression, posture, action        | AI, from vault canon         |
+| Stature         | Standing: mundane, renowned, mythic, or divine                                                      | `art-direction-stature.ts`   |
 | Category        | Framing, composition, silhouette readability, depth                                                 | `art-direction-catalogue.ts` |
 | Theme           | Medium, palette, lighting logic, material vocabulary                                                | `art-direction-catalogue.ts` |
 | Camera          | Focal length, aperture, shot size, angle, lighting recipe, aspect ratio, film stock, lens character | `art-direction-optics.ts`    |
@@ -62,6 +63,49 @@ two material clauses and each category selects via `materialFocus`:
 | `craft`   | character, creature, item | Clothing, equipment, props                |
 | `terrain` | location, cover           | Landform, architecture, surfaces at scale |
 | `both`    | faction, event, note      | Both clauses                              |
+| `exalted` | any, via stature          | Materials beyond mortal making            |
+
+## Stature
+
+Categories say what kind of thing is in frame, themes say what world it belongs
+to, optics say how it is shot. None of them say whether it is a farmhand, a
+duke, a hero, or a god — so before this axis existed, "divine" could only appear
+as adjectives in the subject layer, which every later layer overrides.
+
+The failure that produced it: a prompt for elven deities composed the fantasy
+material vocabulary — "worn leather, hammered iron ... thatch and slate, moss
+and lichen over old masonry" — and rendered a village militia. Six words of
+subject lost to sixty words of downstream peasant vocabulary.
+
+Hence the rule the axis is built on: **a contradiction is resolved by
+substitution, not addition.** Appending "radiant, divine" to a prompt that still
+says thatch and worn leather returns the same militia with a glow on it. So an
+exalted stature _replaces_ what it disagrees with:
+
+| Stature    | Replaces                                          | Adds                                                        |
+| ---------- | ------------------------------------------------- | ----------------------------------------------------------- |
+| `mundane`  | nothing — emits nothing at all                    | nothing                                                     |
+| `renowned` | nothing                                           | A standing clause                                           |
+| `mythic`   | Material vocabulary, faction signals, wear clause | Hierarchical scale, low angle, rim light                    |
+| `divine`   | The same, plus the theme's lighting logic         | Self-originating light, `2:3`, mundane-vocabulary negatives |
+
+Three seams carry it, all of them pre-existing: themes gained
+`exaltedMaterials` alongside craft and terrain; the stature's `defaultCamera`
+merges over the theme's bias and under any explicit override; and categories
+whose prompt asks for wear (`character`, `item`, `location`) carry an
+`exaltedPrompt` used in its place. A positive "practical wear — repairs, stains"
+standing next to a negative "patched cloth" is a fight the negative block loses,
+which is why the clause is swapped rather than countered.
+
+Anything the stature wants _absent_ goes in the negative block and never into
+the prompt as a denial: a positive "no banners" tends to produce banners.
+
+**Where it comes from**: labels. `deity`, `god`, `divine`, `immortal`, `titan` →
+divine; `legendary`, `mythic`, `demigod`, `ancient` → mythic; `renowned`,
+`famous`, `notable` → renowned. Highest wins, so a "legendary deity" is divine.
+An explicit `stature` on the compose input overrides the labels. A vault that
+uses none of those labels composes byte-identical prompts to before the axis
+existed.
 
 ## No proper names
 
@@ -175,16 +219,19 @@ timestamp. Images generated before v2 have no record and need no migration.
 ## Extending
 
 - **New theme**: add to `ART_THEMES` with `medium`, `palette`, `lighting`,
-  `craftMaterials`, `terrainMaterials`, a `nameFreeFallback`, and optional
+  `craftMaterials`, `terrainMaterials`, `exaltedMaterials`, a
+  `nameFreeFallback`, and optional
   `aliases` and `styleReferences` (max two). Add a matching
   `FACTION_BLUEPRINTS` entry. Tests assert both exist.
 - **New category**: add to `ART_CATEGORIES` with a framing-only prompt, a
   `defaultCamera` including an `aspectRatio`, a `materialFocus`, an
-  `includesFigures` flag, and a `CATEGORY_NEGATIVE_PROMPTS` block. Add a
-  golden fixture.
+  `includesFigures` flag, and a `CATEGORY_NEGATIVE_PROMPTS` block. Add an
+  `exaltedPrompt` if the prompt asks for wear, repair, or decay. Add a golden
+  fixture.
 - **New provider**: add to `PROVIDER_CAPABILITIES`. Nothing else should need to
   change.
 
-Golden snapshots in `packages/schema/src/__snapshots__` are the contract for
-composed output. A change there shifts every generated image — update them only
-when the art direction was deliberately revised.
+The committed fixture in `packages/schema/src/__fixtures__/golden-prompts.json`
+is the contract for composed output. A change there shifts every generated image
+— regenerate it with `UPDATE_GOLDENS=1` only when the art direction was
+deliberately revised.

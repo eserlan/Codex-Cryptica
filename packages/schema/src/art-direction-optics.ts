@@ -60,6 +60,7 @@ export type LightingRecipe =
   | "butterfly"
   | "loop"
   | "rim"
+  | "radiant"
   | "chiaroscuro"
   | "high-key"
   | "low-key"
@@ -197,6 +198,8 @@ export const LIGHTING_RECIPE_PHRASES: Record<LightingRecipe, string> = {
   butterfly: "butterfly key light casting a small shadow under the nose",
   loop: "loop key light with a short nose shadow",
   rim: "rim and kicker light separating the subject from the background",
+  radiant:
+    "source-less ambient glow originating from the subject rather than the scene",
   chiaroscuro: "chiaroscuro lighting with deep unresolved shadow",
   "high-key": "high-key lighting, bright and low contrast",
   "low-key": "low-key lighting, dark with controlled highlights",

@@ -305,6 +305,19 @@ describe("OracleGenerator", () => {
       expect(options.dimensions).toEqual(ASPECT_RATIO_DIMENSIONS["2:3"]);
     });
 
+    it("should read stature from the entity's labels", async () => {
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.vault.entities.e1.labels = ["elven", "deity"];
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("divine");
+      expect(prepared.prompt).toContain("divine presence");
+    });
+
     it("should leave dimensions to the provider for a hand-edited prompt", async () => {
       mockContext.imageProvider = "cloudflare";
 

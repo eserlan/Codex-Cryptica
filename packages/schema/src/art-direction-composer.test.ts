@@ -26,6 +26,11 @@ import {
   mergeOptics,
   validateOptics,
 } from "./art-direction-optics";
+import {
+  ART_STATURES,
+  resolveStatureFromLabels,
+  resolveStatureId,
+} from "./art-direction-stature";
 import { prepareSubject } from "./art-direction-subject";
 
 const REQUIRED_CATEGORIES = [
@@ -75,6 +80,7 @@ describe("catalogue", () => {
       expect(theme.lighting.length).toBeGreaterThan(5);
       expect(theme.craftMaterials.length).toBeGreaterThan(10);
       expect(theme.terrainMaterials.length).toBeGreaterThan(10);
+      expect(theme.exaltedMaterials.length).toBeGreaterThan(10);
       expect(theme.nameFreeFallback.trim()).not.toBe("");
     }
   });
@@ -712,6 +718,143 @@ describe("composeImagePrompt", () => {
       expect(category.prompt, id).not.toMatch(
         /\b(implies?|communicates?|conveys?|history|ideology|intent)\b/i,
       );
+    }
+  });
+});
+
+describe("stature", () => {
+  const gods = {
+    subject:
+      "tall lithe elven deities in flowing garments interwoven with living plant motifs, holding slender crystal staves",
+    category: "faction",
+    theme: "fantasy",
+  };
+
+  it("resolves ids, aliases, and labels, highest stature winning", () => {
+    expect(resolveStatureId("divine")).toBe("divine");
+    expect(resolveStatureId("Deity")).toBe("divine");
+    expect(resolveStatureId("legendary")).toBe("mythic");
+    expect(resolveStatureId("blacksmith")).toBeUndefined();
+    expect(resolveStatureFromLabels(["forest", "legendary", "deity"])).toBe(
+      "divine",
+    );
+    expect(resolveStatureFromLabels(["forest", "windswept"])).toBeUndefined();
+  });
+
+  it("changes nothing when no stature is named", () => {
+    const plain = composeImagePrompt(gods);
+    const labelled = composeImagePrompt({
+      ...gods,
+      statureLabels: ["forest", "elven"],
+    });
+
+    expect(labelled.prompt).toBe(plain.prompt);
+    expect(labelled.metadata.statureId).toBeUndefined();
+    expect(labelled.layers.stature).toBe("");
+  });
+
+  it("replaces mundane materials rather than adding divine adjectives", () => {
+    // The defect this axis exists for: a prompt for gods that composed
+    // "worn leather ... thatch and slate, moss and lichen" and rendered a
+    // village militia. Adding "radiant" to that returns the militia with a
+    // glow on it, so the vocabulary has to be substituted, not extended.
+    const divine = composeImagePrompt({ ...gods, stature: "deity" });
+
+    expect(divine.layers.theme).toContain("living amber");
+    expect(divine.layers.theme).not.toContain("worn leather");
+    expect(divine.layers.theme).not.toContain("thatch");
+    expect(divine.layers.theme).not.toContain("moss and lichen");
+    // The theme's own lighting logic argues with self-originating light.
+    expect(divine.layers.theme).not.toContain("firelit");
+  });
+
+  it("suppresses the vocabulary that dragged the subject back down", () => {
+    const divine = composeImagePrompt({ ...gods, stature: "deity" });
+
+    for (const term of ["thatch", "worn leather", "militia", "rust"]) {
+      expect(divine.negativeTerms, term).toContain(term);
+    }
+    // The shared blocks still apply.
+    expect(divine.negativeTerms).toContain("watermark");
+    expect(divine.negativeTerms).toContain("extra fingers");
+    expect(new Set(divine.negativeTerms).size).toBe(
+      divine.negativeTerms.length,
+    );
+  });
+
+  it("shoots an exalted subject from below, in light of its own", () => {
+    const divine = composeImagePrompt({ ...gods, stature: "deity" });
+
+    expect(divine.layers.camera).toContain("slightly low angle");
+    expect(divine.layers.camera).toContain("source-less ambient glow");
+    expect(divine.metadata.aspectRatio).toBe("2:3");
+  });
+
+  it("keeps an explicit optics override above the stature bias", () => {
+    const divine = composeImagePrompt({
+      ...gods,
+      stature: "deity",
+      opticsOverrides: { angle: "birds-eye" },
+    });
+
+    expect(divine.layers.camera).toContain("bird's-eye");
+    expect(divine.layers.camera).not.toContain("slightly low angle");
+  });
+
+  it("replaces the faction blueprint's mortal signals", () => {
+    const mortal = composeImagePrompt(gods);
+    const divine = composeImagePrompt({ ...gods, stature: "deity" });
+
+    expect(mortal.layers.category).toContain("battle standards");
+    expect(divine.layers.category).toContain("self-originating light");
+    // Stated positively in the prompt, suppressed in the negative block: a
+    // positive "no banners" tends to summon banners.
+    expect(divine.layers.category).not.toContain("battle standards");
+    expect(divine.layers.category).not.toContain("tabards");
+    expect(divine.negativeTerms).toContain("battle standards");
+    expect(divine.negativeTerms).toContain("tabards");
+  });
+
+  it("reads stature from labels, and lets an explicit value win", () => {
+    const fromLabel = composeImagePrompt({
+      ...gods,
+      statureLabels: ["elven", "deity"],
+    });
+    expect(fromLabel.metadata.statureId).toBe("divine");
+    expect(fromLabel.layers.stature).toContain("divine presence");
+
+    const overridden = composeImagePrompt({
+      ...gods,
+      stature: "renowned",
+      statureLabels: ["deity"],
+    });
+    expect(overridden.metadata.statureId).toBe("renowned");
+  });
+
+  it("drops the wear clause instead of contradicting it in negatives", () => {
+    // The positive layer is what gets rendered: "practical wear — repairs,
+    // stains" alongside a negative "patched cloth" is a fight the negative
+    // block loses.
+    const mortal = composeImagePrompt({ ...gods, category: "character" });
+    expect(mortal.layers.category).toContain("practical wear");
+
+    for (const category of ["character", "item", "location"]) {
+      const divine = composeImagePrompt({
+        ...gods,
+        category,
+        stature: "deity",
+      });
+      expect(divine.layers.category, category).not.toMatch(
+        /\b(practical wear|repairs|chipped|tarnish)\b/i,
+      );
+    }
+  });
+
+  it("leaves the register clause out of the mundane stature", () => {
+    expect(ART_STATURES.mundane.prompt).toBe("");
+    expect(ART_STATURES.mundane.negativePrompt).toEqual([]);
+    for (const id of ["renowned", "mythic", "divine"] as const) {
+      expect(ART_STATURES[id].prompt.length, id).toBeGreaterThan(20);
     }
   });
 });

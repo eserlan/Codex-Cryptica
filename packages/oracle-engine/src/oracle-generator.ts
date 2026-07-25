@@ -37,6 +37,8 @@ export interface VisualizationPromptOptions {
   ignoreSavedArtDirection?: boolean;
   cameraVariant?: string;
   styleReferenceMode?: StyleReferenceMode;
+  /** Overrides the stature the entity's labels imply. */
+  stature?: string;
 }
 
 export class OracleGenerator {
@@ -344,6 +346,10 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       subject,
       category: entity.categoryId || entity.type,
       theme: context?.uiStore?.activeThemeId,
+      // Labels already steer the distiller; a label like "deity" now also
+      // steers the layers the subject text cannot reach.
+      stature: options.stature,
+      statureLabels: entity.labels,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: options.ignoreSavedArtDirection
@@ -413,6 +419,8 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       subject,
       category: command.categoryId,
       theme: context.uiStore?.activeThemeId,
+      // A free-text draw command has no entity, so stature is explicit only.
+      stature: options.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: this.extractArtDirectionFromText(message.content),

@@ -97,6 +97,11 @@ export interface NegativeCompositionOptions {
    * figure block. Defaults to false so figureless categories stay clean.
    */
   figureInFrame?: boolean;
+  /**
+   * Terms contributed by another axis — today the stature, which suppresses
+   * the mundane vocabulary its positive clause is arguing against.
+   */
+  extraTerms?: readonly string[];
 }
 
 /**
@@ -120,6 +125,7 @@ export function composeNegativeTerms(
     ...UNIVERSAL_NEGATIVE_PROMPT,
     ...figureTerms,
     ...categoryTerms,
+    ...(options.extraTerms || []),
   ]) {
     const key = term.trim().toLowerCase();
     if (!key || seen.has(key)) continue;

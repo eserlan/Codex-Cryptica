@@ -19,13 +19,20 @@ import type { OpticsPreset } from "./art-direction-optics";
  * and actively wrong for a mountain range, so themes carry both and the
  * category selects.
  */
-export type MaterialFocus = "craft" | "terrain" | "both";
+export type MaterialFocus = "craft" | "terrain" | "both" | "exalted";
 
 export interface ArtCategory {
   id: string;
   label: string;
   /** Framing and composition direction. Never contains medium or palette. */
   prompt: string;
+  /**
+   * Used instead of `prompt` for an exalted stature, where the base prompt
+   * asks for wear, repair, or decay. Only set where that conflict exists: a
+   * positive "stains and repairs" cannot stand next to a negative "patched
+   * cloth", and the positive layer is what the model actually renders.
+   */
+  exaltedPrompt?: string;
   defaultCamera: OpticsPreset;
   /** Named alternative framings, e.g. `portrait` for characters. */
   variants?: Record<string, OpticsPreset>;
@@ -51,6 +58,11 @@ export interface ArtTheme {
   craftMaterials: string;
   /** Materials of places: landform, architecture, surfaces at scale. */
   terrainMaterials: string;
+  /**
+   * Materials of things beyond mortal making, selected by an exalted stature.
+   * Replaces the craft and terrain vocabularies rather than joining them.
+   */
+  exaltedMaterials: string;
   /** Optional theme-level camera bias applied when the category allows it. */
   defaultCamera?: Partial<OpticsPreset>;
   /** Named style lineage. At most two are ever emitted at compose time. */
@@ -69,6 +81,8 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
     label: "Character",
     prompt:
       "full-body character concept art with a clean readable silhouette, clear face, visible hands, and an expressive stance with purposeful gesture. Layered clothing with costume asymmetry, signature equipment, and practical wear — repairs, seams, fasteners, stains, crafted ornament. Presentation lighting frames the figure without competing with it",
+    exaltedPrompt:
+      "full-body character concept art with a clean readable silhouette, clear face, visible hands, and a still, deliberate stance. Layered garments with costume asymmetry, signature equipment, and crafted ornament, everything unmarked and undamaged. Presentation lighting frames the figure without competing with it",
     defaultCamera: {
       id: "optics.character.default",
       shotSize: "full",
@@ -132,6 +146,8 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
     label: "Location",
     prompt:
       "establishing environment art with distinct foreground, midground, and background. Architecture or landforms show their construction method, wear, and repair. Weather and atmosphere carry the depth, lighting states the hour, and the composition offers a clear path into the scene",
+    exaltedPrompt:
+      "establishing environment art with distinct foreground, midground, and background. Architecture or landforms stand unweathered and exact, built at a scale that dwarfs anything mortal. Weather and atmosphere carry the depth, and the composition offers a clear path into the scene",
     defaultCamera: {
       id: "optics.location.default",
       shotSize: "extreme-wide",
@@ -163,6 +179,8 @@ export const ART_CATEGORIES: Record<string, ArtCategory> = {
     label: "Item",
     prompt:
       "close-up prop concept art on an unobtrusive presentation surface, with a readable silhouette, clear scale, and visible construction — seams, fasteners, contact points, maker marks, inscriptions. Surfaces carry wear, repairs, handling polish, chipped edges, and tarnish",
+    exaltedPrompt:
+      "close-up prop concept art on an unobtrusive presentation surface, with a readable silhouette, clear scale, and visible construction — seams, fasteners, contact points, maker marks, inscriptions. Surfaces are flawless, edges crisp, the finish holding light like the day it was made",
     defaultCamera: {
       id: "optics.item.default",
       shotSize: "close",
@@ -351,6 +369,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
     craftMaterials: "worn leather, hammered iron, stained wood, oiled cloth",
     terrainMaterials:
       "hand-cut stone, weathered timber, thatch and slate, moss and lichen over old masonry",
+    exaltedMaterials:
+      "spun gold thread, moonlit silver, living amber, crystal that holds its own light, cloth that never frays",
     styleReferences: ["nineteenth-century romantic oil painting"],
     nameFreeFallback:
       "traditional oil painting on canvas, layered glazes, warm varnished tone",
@@ -367,6 +387,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "brushed chrome, carbon fibre, matte polymer, machined panel gaps",
     terrainMaterials:
       "poured composite, modular panelling, sealed joints, machined structural spans",
+    exaltedMaterials:
+      "seamless white composite, alloys with no visible join, light held inside glass, surfaces that do not scuff",
     styleReferences: ["1970s hard science fiction production design"],
     nameFreeFallback:
       "clean industrial-design matte painting, engineered surfaces, even practical lighting",
@@ -385,6 +407,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "spliced cabling, scuffed polymer, taped repairs, chrome over older hardware",
     terrainMaterials:
       "concrete, corrugated steel, accreted signage and ducting over older facades",
+    exaltedMaterials:
+      "liquid chrome, translucent shells lit from within, filament-fine circuitry, signage that answers the figure rather than the street",
     defaultCamera: { lensCharacter: ["halation"] },
     styleReferences: ["1980s neo-noir cyberpunk cinema"],
     nameFreeFallback:
@@ -402,6 +426,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "off-the-peg fabric, worn denim, moulded plastic, brushed steel",
     terrainMaterials:
       "poured concrete, painted steel, glass, asphalt, utilitarian cladding",
+    exaltedMaterials:
+      "flawless tailoring, unmarked cloth, pale unblemished stone, glass without a single fingerprint",
     defaultCamera: { focalLength: "35mm", filmStock: "portra-400" },
     styleReferences: ["street documentary photography"],
     nameFreeFallback:
@@ -420,6 +446,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "mismatched panels, wire binding, patched fabric, salvaged fastenings",
     terrainMaterials:
       "cracked concrete, rusted rebar, sun-bleached timber, drifted dust over collapsed structure",
+    exaltedMaterials:
+      "relic metal untouched by rust, glass unclouded by dust, cloth the wind has never frayed",
     styleReferences: ["desert wasteland survival cinema"],
     nameFreeFallback:
       "desaturated wasteland illustration, scavenged repairs, harsh dusty daylight",
@@ -437,6 +465,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "tarnished silver, stiffened leather, mildewed cloth, cold iron",
     terrainMaterials:
       "damp stone, blistered plaster, rotting timber, iron gone to rust",
+    exaltedMaterials:
+      "reliquary gold, bone polished to ivory, gilt and wax over something older, unclouded black glass",
     defaultCamera: { lighting: "chiaroscuro" },
     styleReferences: ["baroque tenebrist painting"],
     nameFreeFallback:
@@ -453,6 +483,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "riveted brass plate, leather strapping, polished gauges, oiled linkages",
     terrainMaterials:
       "soot-blackened brick, riveted iron spans, glazed tile, copper piping",
+    exaltedMaterials:
+      "mirror-polished brass, jewelled movements, clockwork without a mark of wear, glass blown thin as breath",
     styleReferences: ["Victorian industrial engraving"],
     nameFreeFallback:
       "gouache illustration, exposed brass mechanisms, warm amber forge light",
@@ -468,6 +500,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
     craftMaterials: "beaten gold, carved ivory, dyed wool, polished bronze",
     terrainMaterials:
       "dressed ashlar, carved relief, gold inlay, worn ceremonial pavement",
+    exaltedMaterials:
+      "gold ground and haloed leaf, lapis and cinnabar, materials that emit light rather than reflect it",
     styleReferences: ["Byzantine panel icon"],
     nameFreeFallback:
       "egg tempera panel, gold ground, frontal symbolic composition, source-less glow",
@@ -485,6 +519,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "canvas webbing, scuffed leather, blued steel, brass fittings",
     terrainMaterials:
       "cut stone ruins, jungle overgrowth, timber scaffolding, weathered rope",
+    exaltedMaterials:
+      "burnished idol gold, jewelled inlay, obsidian mirror, relic metal catching the key light",
     styleReferences: ["mid-century pulp magazine cover"],
     nameFreeFallback:
       "screen-print poster, bold ink linework, saturated flat colour, hard black shadows",
@@ -501,6 +537,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "patched jumpsuit fabric, painted steel, cracked bakelite, duct tape",
     terrainMaterials:
       "cracked asphalt, corrugated tin, faded enamel signage, pre-war concrete",
+    exaltedMaterials:
+      "unblemished enamel, chrome without a scratch, vault-white polymer still factory-new",
     styleReferences: ["1950s advertising illustration"],
     nameFreeFallback:
       "mid-century American advertising illustration weathered by decades of ruin",
@@ -518,6 +556,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "carbon-scored plating, patched fabric, mismatched field repairs",
     terrainMaterials:
       "prefabricated modular structure, sand-scoured plating, exposed conduit",
+    exaltedMaterials:
+      "unmarked ceremonial plating, deep lacquer, robes with no field repair, polished ritual metal",
     styleReferences: ["1970s space opera production painting"],
     nameFreeFallback:
       "lived-in practical-effects concept painting, carbon-scored hardware, dramatic rim light",
@@ -534,6 +574,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
     craftMaterials: "moulded composite, smooth fabric weave, machined trim",
     terrainMaterials:
       "smooth composite bulkheads, inlaid lighting strips, seamless engineered surfaces",
+    exaltedMaterials:
+      "polished ceremonial alloy, inlaid light, seamless white ceramic",
     styleReferences: ["1990s television production illustration"],
     nameFreeFallback:
       "clean production illustration, smooth engineered surfaces, even practical lighting",
@@ -550,6 +592,8 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "worn armour panels, stencil markings, hazard striping, exposed actuators",
     terrainMaterials:
       "prefab military structure, blast berms, stencilled containers, churned ground",
+    exaltedMaterials:
+      "parade-finish armour, mirror-anodised plate, crisp unweathered stencils, machined ceremonial trim",
     styleReferences: ["military technical manual illustration"],
     nameFreeFallback:
       "military technical illustration, stencilled worn panels, functional hardware design",
@@ -564,6 +608,17 @@ export function composeThemeLayer(
   theme: ArtTheme,
   materialFocus: MaterialFocus = "both",
 ): string {
+  // Exalted replaces rather than joins: a god listed alongside thatch and worn
+  // leather renders as a villager, however many divine adjectives precede it.
+  if (materialFocus === "exalted") {
+    // The theme's lighting logic is dropped with it: "natural or firelit key"
+    // argues with the self-originating light an exalted stature asks for, and
+    // the stature's camera bias supplies the replacement.
+    return composeThemeParts(theme, [theme.exaltedMaterials], {
+      includeLighting: false,
+    });
+  }
+
   const materials: string[] = [];
   if (materialFocus === "craft" || materialFocus === "both") {
     materials.push(theme.craftMaterials);
@@ -572,11 +627,19 @@ export function composeThemeLayer(
     materials.push(theme.terrainMaterials);
   }
 
+  return composeThemeParts(theme, materials);
+}
+
+function composeThemeParts(
+  theme: ArtTheme,
+  materials: string[],
+  options: { includeLighting?: boolean } = {},
+): string {
   return [
     theme.medium,
     `Materials — ${materials.join("; ")}`,
     theme.palette,
-    theme.lighting,
+    options.includeLighting === false ? "" : theme.lighting,
   ]
     .map((part) => part.trim().replace(/[.\s]+$/, ""))
     .filter(Boolean)

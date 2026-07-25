@@ -31,6 +31,13 @@ import {
   type OpticsWarning,
 } from "./art-direction-optics";
 import {
+  getStature,
+  resolveStatureFromLabels,
+  resolveStatureId,
+  type ArtStature,
+  type StatureId,
+} from "./art-direction-stature";
+import {
   prepareSubject,
   type SubjectPreparationOptions,
 } from "./art-direction-subject";
@@ -56,6 +63,16 @@ export interface ComposeImagePromptInput {
   category?: string;
   /** Active vault theme id. Aliases and light/dark suffixes are tolerated. */
   theme?: string;
+  /**
+   * Standing of the subject: mundane, renowned, mythic, or divine. Ids and
+   * aliases ("deity", "legendary") are both accepted.
+   */
+  stature?: string;
+  /**
+   * Entity labels, read for stature when none is passed explicitly. Highest
+   * wins, and labels naming no stature leave the prompt unchanged.
+   */
+  statureLabels?: readonly string[];
   /** Named camera variant from the category, e.g. `portrait`. */
   cameraVariant?: string;
   /** Advanced per-request optics adjustments. */
@@ -81,6 +98,8 @@ export interface ComposeImagePromptInput {
 
 export interface ComposedPromptLayers {
   subject: string;
+  /** Register clause. Empty unless the subject carries stature. */
+  stature: string;
   category: string;
   theme: string;
   camera: string;
@@ -104,6 +123,7 @@ export interface ComposedPromptMetadata {
   artDirectionVersion: typeof ART_DIRECTION_VERSION;
   categoryId?: string;
   themeId?: string;
+  statureId?: StatureId;
   cameraPresetId?: string;
   cameraVariant?: string;
   styleReferenceMode: StyleReferenceMode;
@@ -185,19 +205,29 @@ function buildCategoryLayer(
   category: ArtCategory | undefined,
   categoryId: string | undefined,
   themeId: string | undefined,
+  stature: ArtStature | undefined,
 ): string {
   if (!category) return "";
-  if (categoryId !== "faction") return category.prompt;
+  // An exalted subject shows no wear, so the prompt asking for stains and
+  // repairs is replaced rather than contradicted by a negative term.
+  const prompt =
+    (stature?.materialFocus === "exalted" && category.exaltedPrompt) ||
+    category.prompt;
+  if (categoryId !== "faction") return prompt;
 
-  const blueprint = getFactionBlueprint(themeId);
-  if (!blueprint) return category.prompt;
+  // A blueprint describes a mortal order — livery, tabards, battle standards.
+  // An exalted stature says how rank reads instead.
+  const signals =
+    stature?.factionSignals || getFactionBlueprint(themeId)?.signals;
+  if (!signals) return prompt;
   // Category prompts carry no trailing punctuation, so the break is added here.
-  return `${category.prompt}. Establish the group through ${blueprint.signals}`;
+  return `${prompt}. Establish the group through ${signals}`;
 }
 
 function resolveCamera(
   category: ArtCategory | undefined,
   theme: ArtTheme | undefined,
+  stature: ArtStature | undefined,
   variant: string | undefined,
   overrides: OpticsOverrides | undefined,
 ): OpticsPreset | undefined {
@@ -207,8 +237,11 @@ function resolveCamera(
     (variant && category.variants?.[variant]) || category.defaultCamera;
   // Theme camera bias sits between the category default and user overrides:
   // a theme may prefer a film stock, but an explicit override always wins.
+  // Stature sits above the theme: a god shot in any theme is still shot from
+  // below, in light of its own.
   const themed = mergeOptics(base, theme?.defaultCamera);
-  return mergeOptics(themed, overrides);
+  const statured = mergeOptics(themed, stature?.defaultCamera);
+  return mergeOptics(statured, overrides);
 }
 
 /**
@@ -222,6 +255,10 @@ export function composeImagePrompt(
   const themeId = resolveThemeId(input.theme);
   const category = getCategory(categoryId);
   const theme = getTheme(themeId);
+  const statureId =
+    resolveStatureId(input.stature) ??
+    resolveStatureFromLabels(input.statureLabels);
+  const stature = getStature(statureId);
 
   const prepared = prepareSubject(input.subject, input.subjectOptions || {});
   if (!prepared.subject) {
@@ -234,6 +271,7 @@ export function composeImagePrompt(
       : resolveCamera(
           category,
           theme,
+          stature,
           input.cameraVariant,
           input.opticsOverrides,
         );
@@ -241,12 +279,18 @@ export function composeImagePrompt(
   // Vault-authored direction replaces the shipped theme wholesale; mixing the
   // two produces prompts that specify two different mediums at once.
   const styleOverride = (input.styleOverride || "").trim();
+  // Stature overrides the category's material focus: what a thing is made of
+  // follows from its standing before it follows from its kind.
   const themeLayer = theme
-    ? composeThemeLayer(theme, category?.materialFocus)
+    ? composeThemeLayer(
+        theme,
+        stature?.materialFocus ?? category?.materialFocus,
+      )
     : "";
   const layers: ComposedPromptLayers = {
     subject: prepared.subject,
-    category: buildCategoryLayer(category, categoryId, themeId),
+    stature: stature?.prompt || "",
+    category: buildCategoryLayer(category, categoryId, themeId, stature),
     theme: styleOverride || themeLayer,
     camera: formatOptics(camera),
     styleReference: styleOverride
@@ -257,6 +301,7 @@ export function composeImagePrompt(
   const { prompt, truncated } = capPrompt(
     joinLayers([
       layers.subject,
+      layers.stature,
       layers.category,
       layers.theme,
       layers.camera,
@@ -277,12 +322,16 @@ export function composeImagePrompt(
     negativeTerms:
       input.includeNegatives === false
         ? []
-        : composeNegativeTerms(categoryId, { figureInFrame }),
+        : composeNegativeTerms(categoryId, {
+            figureInFrame,
+            extraTerms: stature?.negativePrompt,
+          }),
     layers,
     metadata: {
       artDirectionVersion: ART_DIRECTION_VERSION,
       categoryId,
       themeId,
+      statureId,
       cameraPresetId: camera?.id,
       cameraVariant: input.cameraVariant,
       styleReferenceMode,
