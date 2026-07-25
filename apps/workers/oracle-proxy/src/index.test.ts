@@ -315,6 +315,42 @@ describe("Oracle Proxy Worker image generation", () => {
     });
   });
 
+  it("withholds the negative prompt from a model that does not declare it", async () => {
+    // The binding validates against the model schema and answers "8001:
+    // Invalid input" for an undeclared field, which fails the generation
+    // outright. REST ignores the same field, which is how this was missed.
+    const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
+
+    await worker.fetch(
+      request({
+        prompt: "a tall figure",
+        model: "@cf/leonardo/lucid-origin",
+        negative_prompt: "watermark",
+      }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(ai.run.mock.calls[0][1].negative_prompt).toBeUndefined();
+    expect(ai.run.mock.calls[0][1].prompt).toBe("a tall figure");
+  });
+
+  it("sends the negative prompt to a model that does declare it", async () => {
+    const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
+
+    await worker.fetch(
+      request({
+        prompt: "a tall figure",
+        model: "@cf/leonardo/phoenix-1.0",
+        negative_prompt: "watermark",
+      }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(ai.run.mock.calls[0][1].negative_prompt).toBe("watermark");
+  });
+
   it("omits the negative prompt when the caller sends none", async () => {
     const ai = { run: vi.fn(async () => ({ image: "base64-image" })) };
 
