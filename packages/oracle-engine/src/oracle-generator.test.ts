@@ -372,6 +372,126 @@ describe("OracleGenerator", () => {
       expect(prepared.metadata.statureId).toBe("mythic");
     });
 
+    it("should inherit a look from the entity's parent", async () => {
+      // A knight of a faction drawn alone otherwise gets the plain vault theme
+      // and looks nothing like the faction portrait beside it.
+      mockContext.vault.entities.faction1 = {
+        id: "faction1",
+        title: "The Order",
+        type: "faction",
+        artDirection: "Palette: black, oxblood and bone-ash",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        parent: "faction1",
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("black, oxblood and bone-ash");
+      expect(prepared.metadata.styleOverrideSource).toBe("inherited");
+    });
+
+    it("should inherit from a connected faction when there is no parent", async () => {
+      mockContext.vault.entities.faction1 = {
+        id: "faction1",
+        title: "The Order",
+        type: "faction",
+        artDirection: "Palette: black, oxblood and bone-ash",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        connections: [{ target: "faction1" }],
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("black, oxblood and bone-ash");
+    });
+
+    it("should not inherit a look from an arbitrary connection", async () => {
+      // Being linked to a character is not a reason to look like them.
+      mockContext.vault.entities.rival = {
+        id: "rival",
+        title: "A Rival",
+        type: "character",
+        artDirection: "Palette: hot pink",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        connections: [{ target: "rival" }],
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).not.toContain("hot pink");
+      expect(prepared.metadata.styleOverrideSource).toBeUndefined();
+    });
+
+    it("should prefer the entity's own look over an inherited one", async () => {
+      mockContext.vault.entities.faction1 = {
+        id: "faction1",
+        title: "The Order",
+        type: "faction",
+        artDirection: "Palette: black, oxblood and bone-ash",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        parent: "faction1",
+        artDirection: "Palette: hot pink",
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("hot pink");
+      expect(prepared.prompt).not.toContain("bone-ash");
+      expect(prepared.metadata.styleOverrideSource).toBeUndefined();
+    });
+
+    it("should survive a parent cycle", async () => {
+      mockContext.vault.entities.a = {
+        id: "a",
+        title: "A",
+        type: "faction",
+        parent: "e1",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        parent: "a",
+      };
+
+      await expect(
+        generator.prepareEntityVisualizationPrompt("e1", mockContext),
+      ).resolves.toBeDefined();
+    });
+
     it("should leave dimensions to the provider for a hand-edited prompt", async () => {
       mockContext.imageProvider = "cloudflare";
 

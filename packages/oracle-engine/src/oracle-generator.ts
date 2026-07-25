@@ -22,7 +22,21 @@ interface VisualEntityLike {
   lore?: string;
   artDirection?: string;
   imageArtDirection?: { statureId?: string };
+  parent?: string;
+  connections?: Array<{ target: string }>;
 }
+
+/** How far up a parent chain a look is inherited before giving up. */
+const MAX_ART_DIRECTION_DEPTH = 4;
+
+/** Entity types whose look is meant to be shared by what belongs to them. */
+const LOOK_DEFINING_TYPES = new Set([
+  "faction",
+  "organization",
+  "organisation",
+  "culture",
+  "world",
+]);
 
 export interface PreparedVisualizationPrompt {
   /** The composed positive prompt, before provider formatting. */
@@ -83,6 +97,47 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       this.extractArtDirectionFromText(entity.content) ||
       this.extractArtDirectionFromText(entity.lore)
     );
+  }
+
+  /**
+   * Resolves the look an entity should be drawn with: its own block, else one
+   * inherited from what it belongs to.
+   *
+   * A knight of a faction drawn on their own otherwise gets the plain vault
+   * theme and looks nothing like the faction portrait beside it. Inheritance
+   * runs up the parent chain first — the hierarchy the user built by hand — and
+   * then to connected factions, cultures and worlds, whose whole purpose is a
+   * shared look. It deliberately does not inherit from an arbitrary connection:
+   * being linked to a character is not a reason to look like them.
+   */
+  private resolveArtDirection(
+    entity: VisualEntityLike,
+    entities: Record<string, VisualEntityLike> | undefined,
+  ): { text?: string; inherited: boolean } {
+    const own = this.extractEntityArtDirection(entity);
+    if (own) return { text: own, inherited: false };
+    if (!entities) return { inherited: false };
+
+    const seen = new Set<string>([entity.id || ""]);
+
+    let ancestor = entity.parent ? entities[entity.parent] : undefined;
+    for (let depth = 0; ancestor && depth < MAX_ART_DIRECTION_DEPTH; depth++) {
+      if (seen.has(ancestor.id || "")) break;
+      seen.add(ancestor.id || "");
+      const inheritedText = this.extractEntityArtDirection(ancestor);
+      if (inheritedText) return { text: inheritedText, inherited: true };
+      ancestor = ancestor.parent ? entities[ancestor.parent] : undefined;
+    }
+
+    for (const connection of entity.connections || []) {
+      const linked = entities[connection.target];
+      if (!linked || seen.has(linked.id || "")) continue;
+      if (!LOOK_DEFINING_TYPES.has((linked.type || "").toLowerCase())) continue;
+      const inheritedText = this.extractEntityArtDirection(linked);
+      if (inheritedText) return { text: inheritedText, inherited: true };
+    }
+
+    return { inherited: false };
   }
 
   private extractArtDirectionFromText(text?: string) {
@@ -345,6 +400,10 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       context.isDemoMode,
     );
 
+    const artDirection = options.ignoreSavedArtDirection
+      ? { inherited: false }
+      : this.resolveArtDirection(entity, context.vault?.entities);
+
     // Stage 2: deterministic composition around that subject.
     const composed = composeImagePrompt({
       subject: distilled.subject,
@@ -362,9 +421,8 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       inferredStature: entity.imageArtDirection?.statureId || distilled.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
-      styleOverride: options.ignoreSavedArtDirection
-        ? undefined
-        : this.extractEntityArtDirection(entity),
+      styleOverride: artDirection.text,
+      styleOverrideSource: artDirection.inherited ? "inherited" : undefined,
       subjectOptions: {
         names: [entity.title],
         descriptor: entity.type ? `a ${entity.type}` : undefined,

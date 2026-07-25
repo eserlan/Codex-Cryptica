@@ -241,6 +241,21 @@ Any override suppresses the theme's style lineage, keyed or not: a shipped
 tradition carries a place and a century with it, and that is usually the thing
 being overridden. `Style:` is how a block asks for one back.
 
+### Inherited looks
+
+An entity without its own block inherits one from what it belongs to, so a look
+is written once for a faction and every knight, blade and hall of that faction
+is drawn to match. Resolution order:
+
+1. The entity's own block.
+2. The nearest ancestor with one, up the `parent` chain (four levels, cycle-safe).
+3. A connected `faction`, `organization`, `culture` or `world` with one.
+
+Deliberately not any connection: being linked to a rival is not a reason to look
+like them, so only entity types whose whole purpose is a shared look are
+inherited from. `metadata.styleOverrideSource` records `inherited` when the
+direction was not the entity's own.
+
 Composed prompts are never written back to `artDirection` — that would turn a
 full prompt into a style override on the next generation and duplicate the
 category and camera layers. Generation provenance goes to

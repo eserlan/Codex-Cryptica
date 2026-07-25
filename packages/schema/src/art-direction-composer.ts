@@ -96,6 +96,12 @@ export interface ComposeImagePromptInput {
    * apply.
    */
   styleOverride?: string;
+  /**
+   * Where that direction came from, when it is not the entity's own — today
+   * "inherited", for a look taken from a parent or a linked faction. Recorded
+   * so an image can be explained as well as reproduced.
+   */
+  styleOverrideSource?: string;
   /** Names to strip from the subject, and the descriptor to fall back on. */
   subjectOptions?: SubjectPreparationOptions;
   /** Include the camera/optics layer. Defaults to true. */
@@ -147,6 +153,8 @@ export interface ComposedPromptMetadata {
    * and leaves the theme to supply the rest.
    */
   styleOverrideMode?: "replace" | "layered";
+  /** Set when the direction came from somewhere other than the entity itself. */
+  styleOverrideSource?: string;
   /** Whether the anatomy negative block was included. */
   figureInFrame: boolean;
   /**
@@ -409,6 +417,7 @@ export function composeImagePrompt(
           ? "layered"
           : "replace"
         : undefined,
+      styleOverrideSource: styleOverride ? input.styleOverrideSource : undefined,
       figureInFrame,
       aspectRatio: camera?.aspectRatio,
       removedNames: prepared.removedNames,
