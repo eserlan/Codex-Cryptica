@@ -21,6 +21,7 @@ interface VisualEntityLike {
   content?: string;
   lore?: string;
   artDirection?: string;
+  imageArtDirection?: { statureId?: string };
 }
 
 export interface PreparedVisualizationPrompt {
@@ -354,7 +355,11 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       // the canon fills in only where neither says anything.
       stature: options.stature,
       statureLabels: entity.labels,
-      inferredStature: distilled.stature,
+      // The stature recorded on the last image wins over a fresh reading: a
+      // model that classifies an entity divine today and mythic next week
+      // produces a gallery that does not match itself, which is worse than
+      // being wrong once. A label or an explicit choice still overrides it.
+      inferredStature: entity.imageArtDirection?.statureId || distilled.stature,
       cameraVariant: options.cameraVariant,
       styleReferenceMode: options.styleReferenceMode,
       styleOverride: options.ignoreSavedArtDirection

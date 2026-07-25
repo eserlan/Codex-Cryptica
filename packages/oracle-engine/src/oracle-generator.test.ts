@@ -354,6 +354,24 @@ describe("OracleGenerator", () => {
       expect(prepared.metadata.statureSource).toBe("labels");
     });
 
+    it("should keep the stature recorded on the entity's last image", async () => {
+      // Otherwise a re-classification drifts and the entity's images stop
+      // matching each other.
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.vault.entities.e1.imageArtDirection = { statureId: "mythic" };
+      mockContext.imageGeneration.distillVisualSubject.mockResolvedValue({
+        subject: "a tall figure in flowing garments",
+        stature: "divine",
+      });
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("mythic");
+    });
+
     it("should leave dimensions to the provider for a hand-edited prompt", async () => {
       mockContext.imageProvider = "cloudflare";
 

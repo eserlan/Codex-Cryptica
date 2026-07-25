@@ -3,6 +3,7 @@
   import { focusTrap } from "$lib/actions/focusTrap";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const dialog = $derived(modalUIStore.imagePromptReview);
@@ -23,6 +24,18 @@
   // image comes back looking wrong.
   let resolvedStature = $state("");
   let resolvedStatureSource = $state("");
+  let isApplyingStatureLabel = $state(false);
+
+  // A reading of the lore is recomputed every generation and can drift. Turning
+  // it into a label makes it the user's, stable, visible on the entity, and
+  // searchable — so it is offered, never applied behind their back.
+  const canPinStature = $derived(
+    resolvedStatureSource === "inferred" &&
+      !!resolvedStature &&
+      resolvedStature !== "mundane" &&
+      target?.kind === "entity" &&
+      !vault.isGuest,
+  );
 
   const CAMERA_VARIANTS = [
     { value: "", label: "Category default" },
@@ -74,6 +87,7 @@
       stature = "";
       resolvedStature = "";
       resolvedStatureSource = "";
+      isApplyingStatureLabel = false;
     }
   });
 
@@ -150,6 +164,20 @@
       error = err instanceof Error ? err.message : "Could not revise a prompt.";
     } finally {
       isRevisingPrompt = false;
+    }
+  };
+
+  const pinStatureAsLabel = async () => {
+    if (!target || target.kind !== "entity" || !canPinStature) return;
+    isApplyingStatureLabel = true;
+    try {
+      await vault.addLabel(target.id, resolvedStature);
+      resolvedStatureSource = "labels";
+      notificationStore.notify(`Labelled ${resolvedStature}`, "success");
+    } catch {
+      notificationStore.notify("Could not add the label.", "error");
+    } finally {
+      isApplyingStatureLabel = false;
     }
   };
 
@@ -350,6 +378,23 @@
                       >({STATURE_SOURCES[resolvedStatureSource]})</span
                     >{/if}
                 </p>
+                {#if canPinStature}
+                  <button
+                    type="button"
+                    onclick={pinStatureAsLabel}
+                    disabled={isApplyingStatureLabel}
+                    data-testid="image-prompt-pin-stature"
+                    class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-primary underline-offset-2 transition hover:underline disabled:opacity-50"
+                  >
+                    Keep it — label this {STATURE_LABELS[
+                      resolvedStature
+                    ]?.toLowerCase() || resolvedStature}
+                  </button>
+                  <p class="mt-0.5 text-[10px] text-theme-muted">
+                    Without a label the Oracle re-reads this every time, and its
+                    answer can change between pictures.
+                  </p>
+                {/if}
               {/if}
             {/if}
           </div>

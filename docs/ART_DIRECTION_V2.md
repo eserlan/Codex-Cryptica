@@ -133,6 +133,15 @@ ignores the instruction leaves the prompt exactly as it would have been.
 `metadata.statureSource` records which of the three decided it — `explicit`,
 `labels`, or `inferred` — and is stored with the image.
 
+**Drift**: a reading of the lore is recomputed on every generation, and a model
+that answers divine today and mythic next week produces a gallery that does not
+match itself — worse than being wrong once. Two things hold it still. The
+stature recorded on the entity's last image (`imageArtDirection.statureId`)
+outranks a fresh reading, so the first answer sticks; and the review dialog
+offers to keep an inferred stature as a label, which promotes it from a guess to
+the user's own, stable, visible on the entity, and searchable. Neither writes to
+the vault without being asked.
+
 **Where it shows**: the entity panel carries a "Drawn as _X_" badge beside the
 labels whenever a stature applies, so the inference is never invisible — and the
 label that caused it is right next to the badge. The prompt review dialog's
