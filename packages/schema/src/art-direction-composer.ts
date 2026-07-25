@@ -250,6 +250,19 @@ function buildCategoryLayer(
   return `${prompt}. Establish the group through ${signals}`;
 }
 
+/** Renders named fields on their own, in the same order a theme layer uses. */
+function composeFieldsOnly(fields: Record<string, string>): string {
+  return [
+    fields.medium,
+    fields.materials ? `Materials — ${fields.materials}` : "",
+    fields.palette,
+    fields.lighting,
+  ]
+    .filter(Boolean)
+    .map((part) => part.trim().replace(/[.\s]+$/, ""))
+    .join(". ");
+}
+
 /** Drops the non-theme keys and any field the block did not actually name. */
 function toThemeFieldOverrides(fields: ArtDirectionOverrideFields) {
   const overrides: Record<string, string> = {};
@@ -353,7 +366,10 @@ export function composeImagePrompt(
         stature?.materialFocus ?? category?.materialFocus,
         override.layered ? themeFields : {},
       )
-    : "";
+    : // With no theme to layer onto — an unrecognised theme id, or a vault that
+      // has none — the named fields are all there is, and dropping them would
+      // silently discard the vault's own direction.
+      composeFieldsOnly(themeFields);
 
   const layeredTheme = [themeLayer, override.remainder]
     .filter(Boolean)
@@ -417,7 +433,9 @@ export function composeImagePrompt(
           ? "layered"
           : "replace"
         : undefined,
-      styleOverrideSource: styleOverride ? input.styleOverrideSource : undefined,
+      styleOverrideSource: styleOverride
+        ? input.styleOverrideSource
+        : undefined,
       figureInFrame,
       aspectRatio: camera?.aspectRatio,
       removedNames: prepared.removedNames,
