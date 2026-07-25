@@ -137,14 +137,24 @@ ignores the instruction leaves the prompt exactly as it would have been.
 that answers divine today and mythic next week produces a gallery that does not
 match itself — worse than being wrong once. Two things hold it still. The
 stature recorded on the entity's last image (`imageArtDirection.statureId`)
-outranks a fresh reading, so the first answer sticks; and the review dialog
-offers to keep an inferred stature as a label, which promotes it from a guess to
-the user's own, stable, visible on the entity, and searchable. Neither writes to
-the vault without being asked.
+outranks a fresh reading, so the first answer sticks; and both the entity badge and the review
+dialog offer to keep an inferred stature as a label, which promotes it from a
+guess to the user's own — stable, visible, and searchable. Neither writes to the
+vault without being asked.
+
+Deliberately not automatic, despite `applyAutoLabels` setting a precedent by
+adding `past` on its own. That label is a projection of a fact the user entered
+and disappears when the fact does; an inferred stature is a guess that would
+read exactly like a typed label afterwards, outrank every later reading, and
+travel into exports and published worlds.
 
 **Where it shows**: the entity panel carries a "Drawn as _X_" badge beside the
 labels whenever a stature applies, so the inference is never invisible — and the
-label that caused it is right next to the badge. The prompt review dialog's
+label that caused it is right next to the badge. The badge reads a label first
+and falls back to the stature recorded on the entity's last image, which is what
+makes an Oracle reading visible on the ordinary DRAW path rather than only
+inside the prompt dialog; when it is not yet a label, a **Keep** action beside
+the badge promotes it to one. The prompt review dialog's
 Advanced art direction section has a Stature selector (defaulting to _Auto (from
 labels)_) and reports what the last revision actually composed at, and where that came
 from — _your choice_, _from labels_, or _read from your lore_.

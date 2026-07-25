@@ -75,14 +75,41 @@
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 
-  // A label like "deity" changes how every image of this entity is composed.
-  // Surfaced here so the inference is never invisible: a wrong one is fixed by
-  // editing the label that caused it, which is right next to this badge.
-  const statureLabel = $derived.by(() => {
-    const stature = resolveStatureFromLabels(entity.labels);
-    if (!stature || stature === "mundane") return "";
-    return stature.charAt(0).toUpperCase() + stature.slice(1);
+  // Stature changes how every image of this entity is composed, so it is shown
+  // wherever the thing that caused it can be edited. A label the user typed
+  // wins; otherwise the stature recorded on the last image stands in, which is
+  // the only place an Oracle reading is visible outside the prompt dialog.
+  const statureFromLabel = $derived(resolveStatureFromLabels(entity.labels));
+  const statureFromImage = $derived(
+    (entity as { imageArtDirection?: { statureId?: string } }).imageArtDirection
+      ?.statureId,
+  );
+  const stature = $derived.by(() => {
+    const value = statureFromLabel || statureFromImage;
+    return !value || value === "mundane" ? "" : value;
   });
+  const statureLabel = $derived(
+    stature ? stature.charAt(0).toUpperCase() + stature.slice(1) : "",
+  );
+  // An Oracle reading is recomputed on every generation. Keeping it as a label
+  // makes it the user's own — stable, searchable, and editable like any other.
+  const canKeepStature = $derived(
+    !!stature && !statureFromLabel && !vault.isGuest,
+  );
+  let isKeepingStature = $state(false);
+
+  const keepStature = async () => {
+    if (!canKeepStature || isKeepingStature) return;
+    isKeepingStature = true;
+    try {
+      await vault.addLabel(entity.id, stature);
+      notificationStore.notify(`Labelled ${stature}`, "success");
+    } catch {
+      notificationStore.notify("Could not add the label.", "error");
+    } finally {
+      isKeepingStature = false;
+    }
+  };
 
   const parentEntity = $derived(
     entity?.parent ? vault.entities[entity.parent] : null,
@@ -328,11 +355,25 @@
       {#if statureLabel}
         <span
           class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider self-center"
-          title="Images of this entity are drawn at {statureLabel} stature, read from its labels."
+          title={statureFromLabel
+            ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
+            : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
           data-testid="entity-stature-badge"
         >
           Drawn as {statureLabel}
         </span>
+        {#if canKeepStature}
+          <button
+            type="button"
+            onclick={keepStature}
+            disabled={isKeepingStature}
+            title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
+            data-testid="entity-stature-keep"
+            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-[8px] md:text-[9px] font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+          >
+            Keep
+          </button>
+        {/if}
       {/if}
       {#if !entity.labels?.length && vault.isGuest}
         <span
