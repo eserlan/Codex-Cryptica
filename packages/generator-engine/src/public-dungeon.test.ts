@@ -141,6 +141,70 @@ describe("generateDungeonLocal", () => {
     }
   });
 
+  it("derives the history's original use from the selected purpose", () => {
+    // A mine must not be described as a reliquary: the history sentence has to
+    // come from ORIGINAL_USE_BY_PURPOSE, not an independent per-genre roll.
+    for (let seed = 1; seed <= 10; seed++) {
+      const mine = generateDungeonLocal(
+        { purpose: "Mine & Shafts" },
+        seededRng(seed),
+      );
+      const history = mine.content
+        .split("## History & Original Purpose")[1]
+        .split("##")[0];
+      expect(history).toMatch(/excavation|quarry|dig site|shaft network/);
+
+      const tomb = generateDungeonLocal(
+        { purpose: "Tomb & Catacomb" },
+        seededRng(seed + 50),
+      );
+      const tombHistory = tomb.content
+        .split("## History & Original Purpose")[1]
+        .split("##")[0];
+      expect(tombHistory).toMatch(/burial vault|ossuary|catacomb|barrow/);
+    }
+  });
+
+  it("derives the condition from the selected current state so they never contradict", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const sealed = generateDungeonLocal(
+        { currentState: "Sealed Vault" },
+        seededRng(seed),
+      );
+      const state = sealed.content
+        .split("## Current State & Function")[1]
+        .split("##")[0];
+      expect(state).toContain("Sealed Vault —");
+      // A sealed vault must not also be open to the weather or half-flooded.
+      expect(state).toMatch(
+        /airtight|shut from the inside|intact behind a door|preserved exactly/,
+      );
+      expect(state).not.toMatch(/open to the weather|half-flooded/);
+    }
+  });
+
+  it("only offers purposes and states that suit the active genre", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const cyber = generateDungeonLocal(
+        { themeId: "cyberpunk" },
+        seededRng(seed),
+      );
+      // Fantasy-only purposes must never surface under a cyberpunk theme.
+      expect(cyber.labels).not.toContain("temple-shrine");
+      expect(cyber.labels).not.toContain("tomb-catacomb");
+      expect(cyber.labels).not.toContain("planar-anomaly");
+    }
+  });
+
+  it("falls back gracefully for a custom purpose or state with no dedicated table", () => {
+    const out = generateDungeonLocal(
+      { purpose: "Submerged Beacon", currentState: "Submerged in Brine" },
+      seededRng(4),
+    );
+    expect(out.content).toContain("## History & Original Purpose");
+    expect(out.content).toContain("Submerged in Brine —");
+  });
+
   it("draws faction names from a pool wide enough to avoid one name dominating", () => {
     // FACTION_NAMES_BY_GENRE has 10 entries per genre; over 30 draws we should
     // see well more than half of them, not just the same one or two repeating.

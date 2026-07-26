@@ -46,7 +46,67 @@
       "Eroded subterranean tunnels, underground rivers, or volcanic tubes.",
     "Planar Anomaly":
       "Unstable dimensional rift or reality-warping pocket plane.",
+    "Data Vault & Archive":
+      "Off-grid records store holding backups and research nobody admits exists.",
+    "Bio-Containment Wing":
+      "Quarantine and isolation labs built to hold specimens that shouldn't escape.",
+    "Fallout Shelter":
+      "Hardened civil-defence bunker stocked for years of life underground.",
+    "Ancestral Mausoleum":
+      "Family crypt built to outlast the bloodline it was meant to honour.",
   };
+
+  // Only offer purposes/states that suit the chosen vibe. Theme labels carry a
+  // qualifier the tables don't ("Classic Fantasy" -> "Fantasy",
+  // "Sci-Fi / Space Opera" -> "Sci-Fi / Space Opera"), so try the label, then
+  // its unqualified form, before falling back to the full union.
+  function forTheme(
+    table: Record<string, string[]>,
+    label: string,
+    fallback: string[],
+  ): string[] {
+    return (
+      table[label] ??
+      table[label.replace(/^Classic /, "")] ??
+      table[label.replace(/ \/ .*/, "")] ??
+      fallback
+    );
+  }
+
+  const availablePurposes = $derived(
+    forTheme(dungeonConfig.purposesByGenre, theme, dungeonConfig.purposes),
+  );
+  const availableStates = $derived(
+    forTheme(
+      dungeonConfig.currentStatesByGenre,
+      theme,
+      dungeonConfig.currentStates,
+    ),
+  );
+  // Known values across every genre — used so a *custom* purpose/state the user
+  // typed is never clobbered when the vibe changes, matching FactionFormFields.
+  const knownPurposes = dungeonConfig.purposes;
+  const knownStates = dungeonConfig.currentStates;
+
+  $effect(() => {
+    if (
+      purpose &&
+      knownPurposes.includes(purpose) &&
+      !availablePurposes.includes(purpose)
+    ) {
+      purpose = availablePurposes[0];
+    }
+  });
+
+  $effect(() => {
+    if (
+      currentState &&
+      knownStates.includes(currentState) &&
+      !availableStates.includes(currentState)
+    ) {
+      currentState = availableStates[0];
+    }
+  });
 </script>
 
 <SelectWithCustomOption
@@ -65,7 +125,7 @@
   id="dungeon-purpose-select"
   label="Original Purpose"
   bind:value={purpose}
-  choices={dungeonConfig.purposes.map((p: string) => ({ value: p, label: p }))}
+  choices={availablePurposes.map((p: string) => ({ value: p, label: p }))}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
@@ -80,7 +140,7 @@
   id="dungeon-state-select"
   label="Current State & Function"
   bind:value={currentState}
-  choices={dungeonConfig.currentStates.map((s: string) => ({
+  choices={availableStates.map((s: string) => ({
     value: s,
     label: s,
   }))}
@@ -128,8 +188,8 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
-      purpose = pickFrom(dungeonConfig.purposes);
-      currentState = pickFrom(dungeonConfig.currentStates);
+      purpose = pickFrom(availablePurposes);
+      currentState = pickFrom(availableStates);
       scale = pickFrom(dungeonConfig.scales);
       onSurprise?.();
     }}
