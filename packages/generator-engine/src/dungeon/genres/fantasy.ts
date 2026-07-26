@@ -122,7 +122,7 @@ export const fantasyTables: DungeonGenreTables = {
   ],
   factionObstacles: [
     "a dwindling supply of food and clean water",
-    "a rival faction holding the only other stair",
+    "a rival faction holding the way down",
     "an old binding-oath none of them dare break",
     "their own internal discord and mistrust",
     "a wasting sickness moving through their number",

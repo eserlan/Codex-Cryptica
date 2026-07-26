@@ -182,6 +182,20 @@ describe("dungeon genre coverage", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("uses no faction obstacle that presumes a map the layout never fixes", () => {
+    // "the only other stair" asserts a second stair exists. The layout is a
+    // pointcrawl of sectors and never establishes how many stairs there are, so
+    // a delve whose prose says there is one way in contradicts its own obstacle.
+    // "the only X" is fine — that is a singular claim, not a count.
+    for (const [label, tables] of Object.entries(DUNGEON_GENRE_TABLES)) {
+      for (const obstacle of tables.factionObstacles) {
+        expect(obstacle, `${label} presumes a second one exists`).not.toMatch(
+          /\bonly other\b/i,
+        );
+      }
+    }
+  });
+
   it("only overrides purposes the genre actually offers", () => {
     for (const [label, tables] of Object.entries(DUNGEON_GENRE_TABLES)) {
       for (const purpose of Object.keys(tables.originalUsesByPurpose ?? {})) {
