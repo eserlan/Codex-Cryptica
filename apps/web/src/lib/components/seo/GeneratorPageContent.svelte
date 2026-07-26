@@ -2,6 +2,8 @@
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { hubContext } from "$lib/stores/hub-context.svelte";
+  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { collectSessionNames } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -475,7 +477,13 @@
     "news-sheet-generator": (useAI) =>
       generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
     "dungeon-generator": (useAI) =>
-      generatorEngine.generateDungeon({ ...dungeon, useAI }),
+      generatorEngine.generateDungeon({
+        ...dungeon,
+        useAI,
+        // Names already drafted this session, so the model does not fall back
+        // on the same faction it invented for the last delve.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
