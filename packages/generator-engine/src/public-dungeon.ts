@@ -58,6 +58,17 @@ export interface DungeonGeneratorOptions {
   currentState?: string;
   scale?: string;
   instruction?: string;
+  /**
+   * Names already used elsewhere in this session.
+   *
+   * The static ban list only catches well-known clichés. A model has its own
+   * narrower repertoire and returns to it — "The Obsidian Directorate" turned
+   * up as a faction in both a cyberpunk data vault and a classic-fantasy
+   * dwarven observatory, with the same goal and vice both times. Nothing in a
+   * stateless prompt can see that, so the caller passes what it has already
+   * generated and the model is asked to avoid it.
+   */
+  avoidNames?: string[];
 }
 
 const STOCK_TYPES = ["Monster", "Lore", "Special", "Trap"] as const;
@@ -434,6 +445,30 @@ function resolveDungeon(
 }
 
 /**
+ * Names from this session's drafts that the model should not reuse.
+ *
+ * Takes entity titles plus any faction names in their rendered content, which
+ * appear as "- **Name** — ...". The leading article is stripped so "the
+ * Obsidian Directorate" also blocks "Obsidian Directorate".
+ */
+export function collectSessionNames(
+  entities: Array<{ title?: string; content?: string }>,
+  limit = 24,
+): string[] {
+  const names = new Set<string>();
+  for (const entity of entities) {
+    const title = entity.title?.trim();
+    if (title) names.add(title);
+    for (const match of (entity.content ?? "").matchAll(/- \*\*(.+?)\*\* —/g)) {
+      const name = match[1].replace(/^the\s+/i, "").trim();
+      if (name) names.add(name);
+    }
+  }
+  // Most recent first, capped so the prompt does not balloon over a long session.
+  return [...names].reverse().slice(0, limit);
+}
+
+/**
  * Render the mechanical rolls as creative seeds plus fixed structural
  * requirements.
  *
@@ -444,7 +479,10 @@ function resolveDungeon(
  * faithfully. The seeds below are starting points to interpret; the structure
  * is the part that must not move.
  */
-function formatDungeonSeeds(dungeon: ResolvedDungeon): string {
+function formatDungeonSeeds(
+  dungeon: ResolvedDungeon,
+  avoidNames: string[] = [],
+): string {
   const stockPlan = dungeon.sectors
     .map((s, idx) => `  ${idx + 1}. ${s.stockType ?? "Lore"}`)
     .join("\n");
@@ -465,6 +503,13 @@ function formatDungeonSeeds(dungeon: ResolvedDungeon): string {
     `- Each sector's stocked content must match its assigned type:`,
     stockPlan,
     `- EXACTLY 2 factions, opposed, pursuing the two goals above. Name them yourself.`,
+    ...(avoidNames.length > 0
+      ? [
+          ``,
+          `Already used elsewhere in this session — pick different names:`,
+          ...avoidNames.map((n) => `- ${n}`),
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -595,7 +640,7 @@ Setting Context:
 - Scale: ${dungeon.scale}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
-${formatDungeonSeeds(dungeon)}
+${formatDungeonSeeds(dungeon, options.avoidNames ?? [])}
 
 Required JSON schema:
 {
@@ -638,11 +683,17 @@ Required JSON schema:
  * Checked against name fields only. Descriptions legitimately contain words
  * like "stone" and "ash", and flagging those would reject good responses.
  */
-function bannedNamesIn(values: string[]): string[] {
+function bannedNamesIn(values: string[], extra: string[] = []): string[] {
   const found = new Set<string>();
+  // Multi-word session names are matched whole; single words get a word
+  // boundary so "Spine" does not match "Spineless".
+  const forbidden = [...BANNED_NAMES, ...extra].filter((n) => n.trim());
   for (const value of values) {
-    for (const banned of BANNED_NAMES) {
-      if (new RegExp(`\\b${banned}\\b`, "i").test(value)) found.add(banned);
+    for (const banned of forbidden) {
+      const escaped = banned.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`\\b${escaped}\\b`, "i").test(value)) {
+        found.add(banned.trim());
+      }
     }
   }
   return [...found];
@@ -662,16 +713,26 @@ function validateAiDungeon(
   sectors: DungeonSector[],
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
+  avoidNames: string[] = [],
 ): string[] {
   const problems: string[] = [];
 
-  const banned = bannedNamesIn([
+  const names = [
     title,
     ...sectors.map((s) => s.name),
     ...factions.map((f) => f.name),
-  ]);
+  ];
+  const banned = bannedNamesIn(names);
   if (banned.length > 0) {
     problems.push(`uses banned cliché names: ${banned.join(", ")}`);
+  }
+  const reused = bannedNamesIn(names, avoidNames).filter(
+    (n) => !banned.includes(n),
+  );
+  if (reused.length > 0) {
+    problems.push(
+      `reuses names already used elsewhere in this session: ${reused.join(", ")}`,
+    );
   }
 
   if (sectors.length !== foundation.sectors.length) {
@@ -819,7 +880,13 @@ export function parseDungeonResponseDetailed(
     // violates it, ship the foundation the prompt was built from rather than a
     // dungeon that isn't the one the user asked for.
     if (foundation) {
-      const problems = validateAiDungeon(title, sectors, factions, foundation);
+      const problems = validateAiDungeon(
+        title,
+        sectors,
+        factions,
+        foundation,
+        options.avoidNames ?? [],
+      );
       if (problems.length > 0) {
         return { output: renderResolvedDungeon(foundation), problems };
       }

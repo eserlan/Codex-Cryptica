@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDungeonPrompt,
+  collectSessionNames,
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
   dungeonConfig,
@@ -743,6 +744,71 @@ describe("parseDungeonResponse", () => {
     expect(result.output.title).toBe("The Bruneth Deep");
   });
 
+  it("tells the model which session names to avoid, and rejects reuse", () => {
+    const avoidNames = ["The Obsidian Directorate", "Khaz-Mar"];
+    const prompt = buildDungeonPrompt({
+      themeId: "cyberpunk",
+      scale: "Medium Complex (3-4 Sectors)",
+      avoidNames,
+    });
+    expect(prompt.userMessage).toContain(
+      "Already used elsewhere in this session",
+    );
+    for (const name of avoidNames) {
+      expect(prompt.userMessage).toContain(name);
+    }
+
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const factions = [
+      {
+        name: "The Obsidian Directorate",
+        virtue: "Bold",
+        vice: "Cruel",
+        goal: "Wealth",
+        obstacle: "o1",
+      },
+      {
+        name: "the Neon Sanctuary",
+        virtue: "Wise",
+        vice: "Greedy",
+        goal: "Survival",
+        obstacle: "o2",
+      },
+    ];
+    const reused = JSON.stringify({
+      title: "Fine Title",
+      summary: "S",
+      sectors,
+      factions,
+    });
+
+    const result = parseDungeonResponseDetailed(
+      reused,
+      { avoidNames },
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(result.problems.join(" ")).toContain("already used elsewhere");
+    expect(result.problems.join(" ")).toContain("Obsidian Directorate");
+    expect(result.output.title).toBe(prompt.resolved.title);
+
+    // The same response is fine in a session that has not used those names.
+    expect(
+      parseDungeonResponseDetailed(reused, {}, seededRng(1), prompt.resolved)
+        .problems,
+    ).toEqual([]);
+  });
+
+  it("omits the avoid-list section when the session is empty", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.userMessage).not.toContain("Already used elsewhere");
+  });
+
   it("rejects AI-authored names drawn from the banned cliché list", () => {
     const prompt = buildDungeonPrompt({ themeId: "fantasy" });
     const sectors = prompt.resolved.sectors.map((s, i) => ({
@@ -960,6 +1026,36 @@ describe("parseDungeonResponse", () => {
     expect(out.title).toBeTruthy();
     expect(out.content).toContain("## Key Sectors & Layout");
     expect(out.labels).toContain("dungeon");
+  });
+});
+
+describe("collectSessionNames", () => {
+  it("gathers titles and faction names, newest first, article stripped", () => {
+    const names = collectSessionNames([
+      { title: "First Delve", content: "- **the Iron Pact** — a, but b." },
+      { title: "Second Delve", content: "- **The Ashen Choir** — a, but b." },
+    ]);
+    expect(names).toContain("First Delve");
+    expect(names).toContain("Second Delve");
+    // Leading article dropped so "the X" also blocks "X".
+    expect(names).toContain("Iron Pact");
+    expect(names).toContain("Ashen Choir");
+    // Newest first.
+    expect(names.indexOf("Ashen Choir")).toBeLessThan(
+      names.indexOf("Iron Pact"),
+    );
+  });
+
+  it("caps the list so a long session cannot balloon the prompt", () => {
+    const entities = Array.from({ length: 50 }, (_, i) => ({
+      title: `Delve ${i}`,
+      content: "",
+    }));
+    expect(collectSessionNames(entities).length).toBeLessThanOrEqual(24);
+  });
+
+  it("ignores entities with no title or content", () => {
+    expect(collectSessionNames([{}, { title: "  " }])).toEqual([]);
   });
 });
 
