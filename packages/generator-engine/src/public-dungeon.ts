@@ -570,6 +570,10 @@ export function buildDungeonPrompt(
 
 You will be given a "Locally-generated foundation" of already-decided facts: title seed, history, condition, signature feature, two named factions with goals/obstacles, the conflict between them, named sectors with stocked content, a secret, hazards, treasures, and hooks. Elaborate and dramatize every one of these into vivid prose — do NOT rename factions or sectors, do NOT invent a different conflict, and do NOT contradict any given fact. Your job is embellishment, not reinvention.
 
+Return one "sectors" entry for every sector listed in the foundation — all of them, in the given order.
+
+If two given facts appear to conflict (a sealed delve that also has adventurers arriving through open gates, say), treat the hooks as describing the present day and the condition as the older record, and write one sentence reconciling them. Never restate both sides flatly as though the contradiction were not there.
+
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
   const userMessage = `Expand the locally-generated dungeon foundation below into a detailed, original ${dungeon.genre} dungeon / delve write-up.
@@ -597,6 +601,7 @@ Required JSON schema:
   ],
   "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
   "sectors": [
+    // EXACTLY ${dungeon.sectors.length} entries — one per sector listed in the foundation, same order. Do not merge, drop, or invent sectors.
     { "name": "(the text inside the quotes of one given sector, reproduced exactly — do NOT include the surrounding quote marks, a leading number, or a 'Sector N:' prefix)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
   ],
   "inhabitants": "How the two named factions relate to each other, referencing both by name.",
@@ -620,6 +625,13 @@ export function parseDungeonResponse(
   rawText: string,
   options: DungeonGeneratorOptions = {},
   rng: Rng = defaultRng,
+  /**
+   * The sectors the prompt asked the model to expand. When the response comes
+   * back short — models do sometimes follow the schema's single example rather
+   * than the foundation's list — the missing ones are restored from here so a
+   * medium complex never renders as a one-room dungeon.
+   */
+  expectedSectors?: DungeonSector[],
 ): PublicGeneratorOutput {
   try {
     const parsed = parseFencedJson<Record<string, unknown>>(rawText);
@@ -663,6 +675,17 @@ export function parseDungeonResponse(
           typeof s?.stockDetail === "string" ? s.stockDetail.trim() : undefined,
       }),
     );
+
+    // Restore any sector the model dropped, matching on name so a reordered or
+    // partial response still keeps the scale the user asked for.
+    if (expectedSectors && sectors.length < expectedSectors.length) {
+      const returned = new Set(sectors.map((s) => s.name.toLowerCase()));
+      for (const expected of expectedSectors) {
+        if (!returned.has(expected.name.toLowerCase())) {
+          sectors.push(expected);
+        }
+      }
+    }
 
     const rawFactions = Array.isArray(parsed.factions) ? parsed.factions : [];
     const factions: DungeonFaction[] = rawFactions

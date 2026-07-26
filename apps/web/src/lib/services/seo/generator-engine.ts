@@ -495,10 +495,17 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } =
+        const { systemInstruction, userMessage, resolved } =
           buildDungeonPrompt(dungeonOptions);
         const text = await this.runModel(systemInstruction, userMessage);
-        return parseDungeonResponse(text, dungeonOptions);
+        // Pass the resolved sectors so a short AI response can't silently
+        // shrink the dungeon below the scale the user selected.
+        return parseDungeonResponse(
+          text,
+          dungeonOptions,
+          undefined,
+          resolved.sectors,
+        );
       },
       () => generateDungeonLocal(dungeonOptions),
     );

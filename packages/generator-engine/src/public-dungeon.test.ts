@@ -511,6 +511,55 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toContain("halls..");
   });
 
+  it("restores sectors the AI dropped so the dungeon keeps its selected scale", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "lancer",
+      scale: "Sprawling Megadungeon (5+ Sectors)",
+    });
+    expect(prompt.resolved.sectors.length).toBeGreaterThanOrEqual(5);
+
+    // A model that follows the schema's single example instead of the
+    // foundation's list returns one sector for a six-sector dungeon.
+    const short = JSON.stringify({
+      title: "T",
+      summary: "S",
+      sectors: [
+        {
+          name: prompt.resolved.sectors[0].name,
+          description: "Expanded.",
+          stockType: "Trap",
+          stockDetail: "d",
+        },
+      ],
+    });
+
+    const out = parseDungeonResponse(
+      short,
+      {},
+      seededRng(1),
+      prompt.resolved.sectors,
+    );
+    const rendered = (out.content.match(/### Sector \d+:/g) ?? []).length;
+    expect(rendered).toBe(prompt.resolved.sectors.length);
+    // The one the model did expand keeps its richer description.
+    expect(out.content).toContain("Expanded.");
+    for (const sector of prompt.resolved.sectors) {
+      expect(out.content).toContain(sector.name);
+    }
+  });
+
+  it("tells the AI exactly how many sectors to return", () => {
+    const prompt = buildDungeonPrompt({
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    expect(prompt.userMessage).toContain(
+      `EXACTLY ${prompt.resolved.sectors.length} entries`,
+    );
+    expect(prompt.systemInstruction).toContain(
+      'one "sectors" entry for every sector',
+    );
+  });
+
   it("strips quote marks an AI copies from the prompt into a sector name", () => {
     const sampleJson = JSON.stringify({
       title: "T",
