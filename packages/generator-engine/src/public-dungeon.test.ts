@@ -141,6 +141,84 @@ describe("generateDungeonLocal", () => {
     }
   });
 
+  it("derives the history's original use from the selected purpose", () => {
+    // A mine must not be described as a reliquary: the history sentence has to
+    // come from ORIGINAL_USE_BY_PURPOSE, not an independent per-genre roll.
+    for (let seed = 1; seed <= 10; seed++) {
+      const mine = generateDungeonLocal(
+        { purpose: "Mine & Shafts" },
+        seededRng(seed),
+      );
+      const history = mine.content
+        .split("## History & Original Purpose")[1]
+        .split("##")[0];
+      expect(history).toMatch(/excavation|quarry|dig site|shaft network/);
+
+      const tomb = generateDungeonLocal(
+        { purpose: "Tomb & Catacomb" },
+        seededRng(seed + 50),
+      );
+      const tombHistory = tomb.content
+        .split("## History & Original Purpose")[1]
+        .split("##")[0];
+      expect(tombHistory).toMatch(/burial vault|ossuary|catacomb|barrow/);
+    }
+  });
+
+  it("derives the condition from the selected current state so they never contradict", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const sealed = generateDungeonLocal(
+        { currentState: "Sealed Vault" },
+        seededRng(seed),
+      );
+      const state = sealed.content
+        .split("## Current State & Function")[1]
+        .split("##")[0];
+      expect(state).toContain("Sealed Vault —");
+      // A sealed vault must not also be open to the weather or half-flooded.
+      expect(state).toMatch(
+        /airtight|shut from the inside|intact behind a door|preserved exactly/,
+      );
+      expect(state).not.toMatch(/open to the weather|half-flooded/);
+    }
+  });
+
+  it("only offers purposes and states that suit the active genre", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const cyber = generateDungeonLocal(
+        { themeId: "cyberpunk" },
+        seededRng(seed),
+      );
+      // Fantasy-only purposes must never surface under a cyberpunk theme.
+      expect(cyber.labels).not.toContain("temple-shrine");
+      expect(cyber.labels).not.toContain("tomb-catacomb");
+      expect(cyber.labels).not.toContain("planar-anomaly");
+    }
+  });
+
+  it("falls back gracefully for a custom purpose or state with no dedicated table", () => {
+    const out = generateDungeonLocal(
+      { purpose: "Submerged Beacon", currentState: "Submerged in Brine" },
+      seededRng(4),
+    );
+    expect(out.content).toContain("## History & Original Purpose");
+    expect(out.content).toContain("Submerged in Brine —");
+  });
+
+  it("draws faction names from a pool wide enough to avoid one name dominating", () => {
+    // FACTION_NAMES_BY_GENRE has 10 entries per genre; over 30 draws we should
+    // see well more than half of them, not just the same one or two repeating.
+    const seenNames = new Set<string>();
+    for (let seed = 1; seed <= 30; seed++) {
+      const out = generateDungeonLocal({}, seededRng(seed));
+      const names = [...out.content.matchAll(/- \*\*(.+?)\*\* — /g)].map(
+        (m) => m[1],
+      );
+      for (const name of names) seenNames.add(name);
+    }
+    expect(seenNames.size).toBeGreaterThanOrEqual(6);
+  });
+
   it("does not repeat a stock detail within the same bucket type unless the pool is exhausted", () => {
     // INHABITANTS/HAZARDS/HOOKS/SIGNATURE_FEATURES_BY_GENRE all have 5 entries
     // per genre; the global pick (hooks/hazards/signatureFeature) also
@@ -379,6 +457,36 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toMatch(/held back by held back by/i);
     expect(out.content).not.toMatch(/held back by struggling against/i);
     expect(out.content).not.toContain("halls..");
+  });
+
+  it("strips a redundant 'Seeks' lead-in an AI adds to a goal", () => {
+    const sampleJson = JSON.stringify({
+      title: "T",
+      summary: "S",
+      factions: [
+        {
+          name: "the Testers",
+          virtue: "Bold",
+          vice: "Reckless",
+          goal: "Seeks Survival",
+          obstacle: "a rival faction",
+        },
+        {
+          name: "the Others",
+          virtue: "Wise",
+          vice: "Cruel",
+          goal: "Seeking Ascension.",
+          obstacle: "an ancient guardian",
+        },
+      ],
+      sectors: [],
+    });
+
+    const out = parseDungeonResponse(sampleJson, {});
+    expect(out.content).toContain("Seeks Survival;");
+    expect(out.content).toContain("Seeks Ascension;");
+    expect(out.content).not.toMatch(/seeks seeks/i);
+    expect(out.content).not.toMatch(/seeks seeking/i);
   });
 
   it("falls back to local generation on invalid JSON input", () => {

@@ -27,9 +27,11 @@ import {
   GENRE_HINTS,
   SAMPLE_TITLES_BY_GENRE,
   BUILDER_BY_GENRE,
+  ORIGINAL_USE_BY_PURPOSE,
   ORIGINAL_USE_BY_GENRE,
   ENTRANCE_BY_GENRE,
   COMPOSITION_BY_GENRE,
+  CONDITION_BY_STATE,
   CONDITION_BY_GENRE,
   CAUSE_BY_GENRE,
   SIGNATURE_FEATURES_BY_GENRE,
@@ -187,6 +189,14 @@ function sanitizeObstacle(s: string): string {
     .replace(/\.+$/, "");
 }
 
+/** Strip a leading "Seeks"/"Seeking" an AI response may have added to a goal, since callers add their own lead-in. */
+function sanitizeGoal(s: string): string {
+  return s
+    .replace(/^\s*(seeks|seeking)\s*/i, "")
+    .trim()
+    .replace(/\.+$/, "");
+}
+
 interface UsedFactionTraits {
   names: Set<string>;
   goals: Set<string>;
@@ -267,9 +277,14 @@ function resolveDungeon(
   const themeId = options.themeId || "fantasy";
   const genre = options.genre || themeIdToLabel[themeId] || "Classic Fantasy";
 
-  const purpose = options.purpose || pickFrom(dungeonConfig.purposes, rng);
+  // Offer only purposes/states that suit the active genre. forGenre() handles
+  // the "Classic Fantasy" -> "Fantasy" alias and falls back for unlisted genres.
+  const purpose =
+    options.purpose ||
+    pickFrom(forGenre(dungeonConfig.purposesByGenre, genre), rng);
   const currentState =
-    options.currentState || pickFrom(dungeonConfig.currentStates, rng);
+    options.currentState ||
+    pickFrom(forGenre(dungeonConfig.currentStatesByGenre, genre), rng);
   const scale = options.scale || pickFrom(dungeonConfig.scales, rng);
 
   const titles = forGenre(SAMPLE_TITLES_BY_GENRE, genre);
@@ -279,13 +294,22 @@ function resolveDungeon(
 
   // Purpose & Construction axes (Cairn-style paired rolls), composed into history.
   const builder = pickFrom(forGenre(BUILDER_BY_GENRE, genre), rng);
-  const originalUse = pickFrom(forGenre(ORIGINAL_USE_BY_GENRE, genre), rng);
+  // Derived from the selected purpose so the history describes what the user
+  // actually asked for; genre table is only the fallback for custom purposes.
+  const originalUse = pickFrom(
+    ORIGINAL_USE_BY_PURPOSE[purpose] ?? forGenre(ORIGINAL_USE_BY_GENRE, genre),
+    rng,
+  );
   const entrance = pickFrom(forGenre(ENTRANCE_BY_GENRE, genre), rng);
   const composition = pickFrom(forGenre(COMPOSITION_BY_GENRE, genre), rng);
   const history = `Raised by ${builder} as ${originalUse}, the delve is entered through ${entrance}, its halls built from ${composition}.`;
 
   // Ruination axis, composed onto the picked current-state category.
-  const condition = pickFrom(forGenre(CONDITION_BY_GENRE, genre), rng);
+  // Derived from the selected current state so the two can't contradict.
+  const condition = pickFrom(
+    CONDITION_BY_STATE[currentState] ?? forGenre(CONDITION_BY_GENRE, genre),
+    rng,
+  );
   const cause = pickFrom(forGenre(CAUSE_BY_GENRE, genre), rng);
   const currentStateDetail = `${currentState} — now ${condition}, the result of ${cause}.`;
 
@@ -425,7 +449,7 @@ function formatFactionsList(factions: DungeonFaction[]): string {
   return factions
     .map(
       (f) =>
-        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${sanitizeObstacle(f.obstacle)}.`,
+        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${sanitizeGoal(f.goal)}; held back by ${sanitizeObstacle(f.obstacle)}.`,
     )
     .join("\n");
 }
@@ -546,8 +570,8 @@ Required JSON schema:
   "currentState": "Vivid prose expansion of the given Current Condition fact.",
   "signatureFeature": "Vivid prose expansion of the given Signature Feature.",
   "factions": [
-    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction A's given goal exactly — do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words like 'held back by' or 'struggling against', no trailing period)" },
-    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction B's given goal exactly — do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words, no trailing period)" }
+    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction A's given goal exactly — no lead-in word like 'Seeks', do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words like 'held back by' or 'struggling against', no trailing period)" },
+    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction B's given goal exactly — no lead-in word like 'Seeks', do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words, no trailing period)" }
   ],
   "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
   "sectors": [
