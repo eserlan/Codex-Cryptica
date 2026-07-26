@@ -349,6 +349,31 @@ export class CanvasRegistryStore {
     await this.saveCanvas(id);
     return { id, slug, name };
   }
+
+  async importCanvas(doc: any): Promise<string> {
+    const id = doc.id || this.idGenerator.uuid();
+    const name = doc.name || "Delve Canvas Map";
+    const slug = doc.slug || this.generateSlug(name, id);
+
+    const canvasData: Canvas = {
+      id,
+      name,
+      slug,
+      nodes: doc.nodes || [],
+      edges: doc.edges || [],
+      lastModified: doc.lastModified || systemClock.now(),
+    };
+
+    this.canvases[id] = canvasData;
+
+    const { vault } = await import("./vault.svelte");
+    if (vault.activeVaultId) {
+      vault.canvases[id] = canvasData;
+    }
+
+    await this.saveCanvas(id);
+    return slug;
+  }
 }
 
 export const canvasRegistry = new CanvasRegistryStore();

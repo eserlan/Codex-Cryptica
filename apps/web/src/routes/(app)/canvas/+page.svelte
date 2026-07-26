@@ -35,6 +35,31 @@
     }
 
     if (vault.activeVaultId && canvasRegistry.isLoaded) {
+      const pendingCanvasRaw =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem("__codex_pending_canvas")
+          : null;
+      if (pendingCanvasRaw) {
+        try {
+          const pendingDoc = JSON.parse(pendingCanvasRaw);
+          localStorage.removeItem("__codex_pending_canvas");
+          hasNavigated = true;
+          canvasRegistry
+            .importCanvas(pendingDoc)
+            .then((slug) => {
+              goto(`/canvas/${slug}`);
+            })
+            .catch((err) => {
+              console.error("Failed to import pending delve canvas:", err);
+              goto(`/canvas/${pendingDoc.slug || pendingDoc.id}`);
+            });
+          return;
+        } catch (e) {
+          console.error("Error parsing pending canvas:", e);
+          localStorage.removeItem("__codex_pending_canvas");
+        }
+      }
+
       const allCanvases = untrack(() => canvasRegistry.allCanvases);
 
       if (allCanvases.length > 0) {
