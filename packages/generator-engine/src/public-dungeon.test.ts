@@ -24,9 +24,9 @@ const NARRATIVE = {
   currentConflict: "cc",
   inhabitants: "i",
   secret: "sec",
-  hazards: "hz",
-  treasures: "t",
-  hooks: "hk",
+  hazards: ["hz"],
+  treasures: ["t"],
+  hooks: ["hk"],
 };
 
 function seededRng(seed = 1): () => number {
@@ -433,7 +433,9 @@ describe("buildDungeonPrompt", () => {
     expect(prompt.userMessage).not.toContain(prompt.resolved.history);
     expect(prompt.userMessage).not.toContain(prompt.resolved.currentConflict);
     expect(prompt.userMessage).not.toContain(prompt.resolved.secret);
-    expect(prompt.userMessage).not.toContain(prompt.resolved.treasures);
+    for (const t of prompt.resolved.treasures) {
+      expect(prompt.userMessage).not.toContain(t);
+    }
     expect(prompt.userMessage).not.toContain(prompt.resolved.signatureFeature);
     for (const faction of prompt.resolved.factions) {
       expect(prompt.userMessage).not.toContain(faction.name);
@@ -989,6 +991,42 @@ describe("parseDungeonResponse", () => {
     expect(structural.output.title).toBe(prompt.resolved.title);
   });
 
+  it("renders hooks, hazards and treasures as lists in both paths", () => {
+    // These are discrete entries a GM picks between, not prose. Joining them
+    // welded three distinct hooks into one run-on paragraph.
+    const local = generateDungeonLocal(
+      { themeId: "sci-fi", scale: "Medium Complex (3-4 Sectors)" },
+      seededRng(5),
+    );
+    for (const heading of [
+      "### Hazards & Traps",
+      "### Treasures & Artifacts",
+      "### Adventure Hooks & Rumours",
+    ]) {
+      const section = local.lore.split(heading)[1].split("###")[0];
+      const bullets = (section.match(/^- /gm) ?? []).length;
+      expect(bullets, `${heading} should be a list`).toBeGreaterThanOrEqual(2);
+    }
+
+    // The offline path used to offer exactly one of each.
+    const resolved = buildDungeonPrompt({ themeId: "sci-fi" }).resolved;
+    expect(resolved.hooks.length).toBeGreaterThanOrEqual(2);
+    expect(resolved.hazards.length).toBeGreaterThanOrEqual(2);
+    expect(resolved.treasures.length).toBeGreaterThanOrEqual(2);
+    // The central secret stays singular — a delve has one.
+    expect(typeof resolved.secret).toBe("string");
+  });
+
+  it("declares the list sections as arrays in the schema", () => {
+    // The old schema asked hooks for "2-3 reasons" while typing it a string.
+    // A model resolving that toward the count produced an array we read as
+    // missing, and silently replaced with table prose.
+    const prompt = buildDungeonPrompt({ themeId: "sci-fi" });
+    expect(prompt.userMessage).toContain('"hooks": [');
+    expect(prompt.userMessage).toContain('"hazards": [');
+    expect(prompt.userMessage).toContain('"treasures": [');
+  });
+
   it("accepts a narrative field returned as a list rather than a string", () => {
     // "2-3 reasons a party would come here" invites a JSON array. Requiring a
     // string made an arrayed answer look like an omission, so it was quietly
@@ -1042,7 +1080,9 @@ describe("parseDungeonResponse", () => {
     expect(result.output.lore).toContain("A distress beacon resumed");
     expect(result.output.lore).toContain("has not reported since");
     // The table hook must not have been substituted.
-    expect(result.output.lore).not.toContain(prompt.resolved.hooks);
+    for (const h of prompt.resolved.hooks) {
+      expect(result.output.lore).not.toContain(h);
+    }
   });
 
   it("asks again for an omitted narrative field instead of substituting table prose", () => {
@@ -1301,7 +1341,7 @@ describe("parseDungeonResponse", () => {
       expect(out.lore, `missing ${heading}`).toContain(heading);
     }
     // The fallback text is the foundation's, not an empty heading.
-    expect(out.lore).toContain(prompt.resolved.hooks);
+    expect(out.lore).toContain(prompt.resolved.hooks[0]);
     expect(out.lore).toContain(prompt.resolved.secret);
     expect(out.content).toContain(prompt.resolved.history);
   });
