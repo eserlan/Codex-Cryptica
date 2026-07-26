@@ -11,8 +11,11 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
+  import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
+  import DelveEdge from "$lib/components/canvas/DelveEdge.svelte";
+  import EdgeAttributeModal from "$lib/components/canvas/EdgeAttributeModal.svelte";
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
@@ -35,6 +38,16 @@
 
   const logic = createCanvasLogic(() => engine);
 
+  let edgeModal = $state<{
+    isOpen: boolean;
+    edgeId: string;
+    edgeData: any;
+  }>({
+    isOpen: false,
+    edgeId: "",
+    edgeData: null,
+  });
+
   useCanvasEvents({
     onQuickSpawn: (id, pos, screenPos) =>
       logic.handleQuickSpawn(id, pos, screenPos),
@@ -42,6 +55,24 @@
       logic.labelModal = { isOpen: true, edgeId, currentLabel };
     },
     onFlushSave: () => logic.flushSave(),
+  });
+
+  $effect(() => {
+    function handleEditDelveEdge(e: Event) {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        edgeModal = {
+          isOpen: true,
+          edgeId: customEvent.detail.edgeId,
+          edgeData: customEvent.detail.edgeData,
+        };
+      }
+    }
+
+    window.addEventListener("edit-delve-edge", handleEditDelveEdge);
+    return () => {
+      window.removeEventListener("edit-delve-edge", handleEditDelveEdge);
+    };
   });
 
   const filteredNodes = $derived.by(() => {
@@ -53,11 +84,13 @@
 
   const nodeTypes = {
     entity: EntityNode,
+    delveRoom: DelveRoomNode,
   };
 
   const edgeTypes = {
     straight: CustomEdge,
     smoothstep: CustomEdge,
+    delveEdge: DelveEdge,
   };
 
   // Initialization & Lifecycle
@@ -250,6 +283,19 @@
     initialValue={logic.labelModal.currentLabel}
     onSave={logic.saveLabelModal}
     onCancel={() => (logic.labelModal.isOpen = false)}
+  />
+  <EdgeAttributeModal
+    isOpen={edgeModal.isOpen}
+    edgeData={edgeModal.edgeData}
+    onSave={(updates) => {
+      logic.edges = logic.edges.map((e) => {
+        if (e.id === edgeModal.edgeId) {
+          return { ...e, data: { ...(e.data as any), ...updates } };
+        }
+        return e;
+      });
+    }}
+    onClose={() => (edgeModal.isOpen = false)}
   />
 </div>
 
