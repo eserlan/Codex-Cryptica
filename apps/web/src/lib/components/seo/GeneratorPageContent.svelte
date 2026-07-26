@@ -269,6 +269,7 @@
   });
 
   let dungeon = $state({
+    genre: factionConfig.themes[0],
     purpose: dungeonConfig.purposes[0],
     currentState: dungeonConfig.currentStates[0],
     scale: dungeonConfig.scales[1],
@@ -315,6 +316,7 @@
     else if (slug === "news-sheet-generator")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+    else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
   });
 
   onMount(() => {
@@ -685,6 +687,7 @@
       />
     {:else if slug === "dungeon-generator"}
       <DungeonFormFields
+        bind:theme={activeTheme}
         bind:purpose={dungeon.purpose}
         bind:currentState={dungeon.currentState}
         bind:scale={dungeon.scale}

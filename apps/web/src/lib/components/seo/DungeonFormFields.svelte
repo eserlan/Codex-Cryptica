@@ -1,14 +1,20 @@
 <script lang="ts">
-  import { dungeonConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import {
+    dungeonConfig,
+    factionConfig,
+    pickFrom,
+  } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
+    theme = $bindable(factionConfig.themes[0]),
     purpose = $bindable(dungeonConfig.purposes[0]),
     currentState = $bindable(dungeonConfig.currentStates[0]),
     scale = $bindable(dungeonConfig.scales[1]),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
+    theme: string;
     purpose: string;
     currentState: string;
     scale: string;
@@ -42,6 +48,18 @@
       "Unstable dimensional rift or reality-warping pocket plane.",
   };
 </script>
+
+<SelectWithCustomOption
+  id="dungeon-theme-select"
+  name="dungeon_theme"
+  label="Choose a vibe"
+  bind:value={theme}
+  choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom vibe"
+/>
 
 <SelectWithCustomOption
   id="dungeon-purpose-select"
