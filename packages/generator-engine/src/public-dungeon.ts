@@ -716,12 +716,20 @@ function bannedNamesIn(values: string[], extra: string[] = []): string[] {
 function validateAiDungeon(
   title: string,
   throughline: string,
+  omitted: readonly string[],
   sectors: DungeonSector[],
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
   avoidNames: string[] = [],
 ): string[] {
   const problems: string[] = [];
+
+  // Silently substituting local prose for a field the model skipped puts back
+  // the verbatim table text this generator moved away from. Ask for it instead;
+  // the foundation is still the floor if the retry also omits it.
+  if (omitted.length > 0) {
+    problems.push(`missing required fields: ${omitted.join(", ")}`);
+  }
 
   // The throughline is what keeps history, state, and conflict pointing at the
   // same causal chain. A response that skipped it was not planned as a whole.
@@ -848,6 +856,23 @@ export function parseDungeonResponseDetailed(
     const str = (v: unknown, fallback = "") =>
       typeof v === "string" && v.trim() ? v.trim() : fallback;
 
+    // Which narrative fields the model actually supplied. Checked before the
+    // foundation fallbacks below fill them in, since after that an omission is
+    // indistinguishable from a real answer.
+    const omitted = (
+      [
+        "history",
+        "currentState",
+        "signatureFeature",
+        "currentConflict",
+        "inhabitants",
+        "secret",
+        "hazards",
+        "treasures",
+        "hooks",
+      ] as const
+    ).filter((k) => !(typeof parsed[k] === "string" && parsed[k].trim()));
+
     // Planning scaffolding: the model writes this first so the fields after it
     // are generated against a single stated causal chain. Not rendered — the
     // summary already covers what the reader needs.
@@ -901,6 +926,7 @@ export function parseDungeonResponseDetailed(
       const problems = validateAiDungeon(
         title,
         throughline,
+        omitted,
         sectors,
         factions,
         foundation,
