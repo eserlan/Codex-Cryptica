@@ -208,6 +208,8 @@ function sanitizeGoal(s: string): string {
 
 interface UsedFactionTraits {
   names: Set<string>;
+  virtues: Set<string>;
+  vices: Set<string>;
   goals: Set<string>;
   obstacles: Set<string>;
 }
@@ -231,8 +233,10 @@ function generateFaction(
   );
   return {
     name,
-    virtue: pickFrom(FACTION_VIRTUES, rng),
-    vice: pickFrom(FACTION_VICES, rng),
+    // Virtue and vice are deduped alongside goal and obstacle: two factions
+    // that are both "greedy" read as one faction written twice.
+    virtue: pickUnused(FACTION_VIRTUES, used.virtues, rng),
+    vice: pickUnused(FACTION_VICES, used.vices, rng),
     goal,
     obstacle,
   };
@@ -338,6 +342,8 @@ function resolveDungeon(
   // don't read as reskins of each other.
   const usedFactionTraits: UsedFactionTraits = {
     names: new Set(),
+    virtues: new Set(),
+    vices: new Set(),
     goals: new Set(),
     obstacles: new Set(),
   };
