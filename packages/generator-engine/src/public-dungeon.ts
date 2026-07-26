@@ -721,14 +721,16 @@ function validateAiDungeon(
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
   avoidNames: string[] = [],
-): string[] {
+): { structural: string[]; content: string[] } {
   const problems: string[] = [];
 
-  // Silently substituting local prose for a field the model skipped puts back
-  // the verbatim table text this generator moved away from. Ask for it instead;
-  // the foundation is still the floor if the retry also omits it.
+  // A skipped field is worth another attempt — silently substituting local
+  // prose puts back the verbatim table text this generator moved away from —
+  // but it does not make the rest of the response unusable, so it is reported
+  // separately from the violations that do.
+  const content: string[] = [];
   if (omitted.length > 0) {
-    problems.push(`missing required fields: ${omitted.join(", ")}`);
+    content.push(`missing required fields: ${omitted.join(", ")}`);
   }
 
   // The throughline is what keeps history, state, and conflict pointing at the
@@ -786,7 +788,7 @@ function validateAiDungeon(
     }
   }
 
-  return problems;
+  return { structural: problems, content };
 }
 
 /**
@@ -794,6 +796,12 @@ function validateAiDungeon(
  */
 export interface DungeonParseResult {
   output: PublicGeneratorOutput;
+  /**
+   * True when the response was structurally unusable and `output` is the local
+   * foundation. False means `output` is the model's work, even if `problems`
+   * lists gaps that were patched from the foundation.
+   */
+  rejected: boolean;
   /**
    * Why the response was rejected, empty when it was used. Surfaced so the
    * caller can tell the model what was wrong and give it another attempt
@@ -855,6 +863,10 @@ export function parseDungeonResponseDetailed(
     // whole section from the document.
     const str = (v: unknown, fallback = "") =>
       typeof v === "string" && v.trim() ? v.trim() : fallback;
+
+    // Gaps the model left that were patched from the foundation. Reported so a
+    // retry can ask for them, without discarding an otherwise good response.
+    let contentGaps: string[] = [];
 
     // Which narrative fields the model actually supplied. Checked before the
     // foundation fallbacks below fill them in, since after that an omission is
@@ -923,7 +935,7 @@ export function parseDungeonResponseDetailed(
     // violates it, ship the foundation the prompt was built from rather than a
     // dungeon that isn't the one the user asked for.
     if (foundation) {
-      const problems = validateAiDungeon(
+      const { structural, content } = validateAiDungeon(
         title,
         throughline,
         omitted,
@@ -932,9 +944,17 @@ export function parseDungeonResponseDetailed(
         foundation,
         options.avoidNames ?? [],
       );
-      if (problems.length > 0) {
-        return { output: renderResolvedDungeon(foundation), problems };
+      if (structural.length > 0) {
+        return {
+          output: renderResolvedDungeon(foundation),
+          problems: [...structural, ...contentGaps],
+          rejected: true,
+        };
       }
+      // Content gaps are still reported so the retry can ask for them, but the
+      // response is kept: one missing field is not worth discarding an entire
+      // AI-authored dungeon in favour of table prose.
+      contentGaps = content;
     }
 
     const inhabitants = str(parsed.inhabitants, foundation?.inhabitants ?? "");
@@ -999,7 +1019,8 @@ export function parseDungeonResponseDetailed(
         ],
         status: "active",
       },
-      problems: [],
+      problems: contentGaps,
+      rejected: false,
     };
   } catch {
     // Malformed JSON is worth another attempt too, so report it as a problem
@@ -1011,6 +1032,7 @@ export function parseDungeonResponseDetailed(
       problems: [
         "the response was not valid JSON matching the requested schema",
       ],
+      rejected: true,
     };
   }
 }

@@ -521,7 +521,13 @@ export class DefaultGeneratorEngine {
           undefined,
           resolved,
         );
-        return second.problems.length === 0 ? second.output : first.output;
+        if (second.problems.length === 0) return second.output;
+
+        // Neither attempt was clean. Prefer whichever is still the model's own
+        // work over the local foundation — a response missing one field, with
+        // that field patched, beats a whole dungeon of table prose.
+        if (!second.rejected) return second.output;
+        return first.output;
       },
       () => generateDungeonLocal(dungeonOptions),
     );
