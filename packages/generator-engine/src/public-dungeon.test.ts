@@ -30,22 +30,29 @@ describe("dungeonConfig", () => {
 });
 
 describe("generateDungeonLocal", () => {
-  it("generates a structured dungeon concept with all key sections including signature feature and current conflict", () => {
+  it("generates a structured dungeon concept with narrative in content and GM reference in lore", () => {
     const out = generateDungeonLocal({}, seededRng(42));
     expect(out.title).toBeTruthy();
     expect(out.summary).toContain(out.title);
-    expect(out.lore).toContain("## History & Original Purpose");
-    expect(out.lore).toContain("## Current State & Function");
-    expect(out.lore).toContain("## Signature Feature");
-    expect(out.lore).toContain("## Current Conflict");
-    expect(out.lore).toContain("## Key Sectors & Layout");
-    expect(out.lore).toContain("## Inhabitants & Factions");
-    expect(out.lore).toContain("## Central Secret / Boss Mystery");
-    expect(out.lore).toContain("## Hazards & Traps");
-    expect(out.lore).toContain("## Treasures & Artifacts");
-    expect(out.lore).toContain("## Adventure Hooks & Rumours");
+    expect(out.content).toContain("## History & Original Purpose");
+    expect(out.content).toContain("## Current State & Function");
+    expect(out.content).toContain("## Signature Feature");
+    expect(out.content).toContain("## Current Conflict");
+    expect(out.content).toContain("## Key Sectors & Layout");
+    expect(out.content).toContain("## Inhabitants & Factions");
+    expect(out.lore).toContain("### Dungeon Layout");
+    expect(out.lore).toContain("### Central Secret / Boss Mystery");
+    expect(out.lore).toContain("### Hazards & Traps");
+    expect(out.lore).toContain("### Treasures & Artifacts");
+    expect(out.lore).toContain("### Adventure Hooks & Rumours");
     expect(out.labels).toContain("dungeon");
     expect(out.labels).toContain("location");
+  });
+
+  it("does not duplicate the document between content and lore", () => {
+    const out = generateDungeonLocal({}, seededRng(3));
+    expect(out.content).not.toContain("### Central Secret / Boss Mystery");
+    expect(out.lore).not.toContain("## History & Original Purpose");
   });
 
   it("respects themeId from campaign context for Sci-Fi theme", () => {
@@ -60,12 +67,12 @@ describe("generateDungeonLocal", () => {
     );
     expect(out.labels).toContain("sci-fi-space-opera");
     expect(out.labels).toContain("research-facility");
-    expect(out.lore).toContain("## Signature Feature");
-    expect(out.lore).toContain("## Current Conflict");
+    expect(out.content).toContain("## Signature Feature");
+    expect(out.content).toContain("## Current Conflict");
   });
 
-  function sectorCount(lore: string): number {
-    return (lore.match(/### Sector \d+:/g) ?? []).length;
+  function sectorCount(content: string): number {
+    return (content.match(/### Sector \d+:/g) ?? []).length;
   }
 
   it("generates a sector count matching each scale's documented range", () => {
@@ -74,51 +81,63 @@ describe("generateDungeonLocal", () => {
         { scale: "Small Lair (1-2 Sectors)" },
         seededRng(seed),
       );
-      expect(sectorCount(small.lore)).toBeGreaterThanOrEqual(1);
-      expect(sectorCount(small.lore)).toBeLessThanOrEqual(2);
+      expect(sectorCount(small.content)).toBeGreaterThanOrEqual(1);
+      expect(sectorCount(small.content)).toBeLessThanOrEqual(2);
 
       const medium = generateDungeonLocal(
         { scale: "Medium Complex (3-4 Sectors)" },
         seededRng(seed + 100),
       );
-      expect(sectorCount(medium.lore)).toBeGreaterThanOrEqual(3);
-      expect(sectorCount(medium.lore)).toBeLessThanOrEqual(4);
+      expect(sectorCount(medium.content)).toBeGreaterThanOrEqual(3);
+      expect(sectorCount(medium.content)).toBeLessThanOrEqual(4);
 
       const sprawling = generateDungeonLocal(
         { scale: "Sprawling Megadungeon (5+ Sectors)" },
         seededRng(seed + 200),
       );
-      expect(sectorCount(sprawling.lore)).toBeGreaterThanOrEqual(5);
+      expect(sectorCount(sprawling.content)).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it("never doubles the sector name (e.g. 'Sector 1: Sector 1: ...')", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const out = generateDungeonLocal(
+        { scale: "Sprawling Megadungeon (5+ Sectors)" },
+        seededRng(seed),
+      );
+      expect(out.content).not.toMatch(/### Sector \d+: Sector \d+:/);
     }
   });
 
   it("derives inhabitants and current conflict from the same two named factions", () => {
     const out = generateDungeonLocal({}, seededRng(7));
-    const factionsSection = out.lore.split("## Inhabitants & Factions")[1];
+    const factionsSection = out.content.split("## Inhabitants & Factions")[1];
     const names = [...factionsSection.matchAll(/- \*\*(.+?)\*\* —/g)].map(
       (m) => m[1],
     );
     expect(names).toHaveLength(2);
     expect(names[0]).not.toBe(names[1]);
 
-    const conflictSection = out.lore
+    const conflictSection = out.content
       .split("## Current Conflict")[1]
-      .split("## Dungeon Layout")[0]
+      .split("## Key Sectors & Layout")[0]
       .toLowerCase();
     for (const name of names) {
       expect(conflictSection).toContain(name.toLowerCase());
     }
   });
 
-  it("renders a dungeon layout map with one node per sector", () => {
+  it("renders a dungeon layout list with one entry per sector", () => {
     const out = generateDungeonLocal(
       { scale: "Medium Complex (3-4 Sectors)" },
       seededRng(9),
     );
-    expect(out.lore).toContain("## Dungeon Layout");
-    const mapSection = out.lore.split("## Dungeon Layout")[1].split("```")[1];
-    const nodeRefs = [...mapSection.matchAll(/\[\d+\]/g)];
-    expect(nodeRefs.length).toBeGreaterThanOrEqual(sectorCount(out.lore));
+    expect(out.lore).toContain("### Dungeon Layout");
+    const mapSection = out.lore
+      .split("### Dungeon Layout")[1]
+      .split("### Central Secret")[0];
+    const steps = [...mapSection.matchAll(/^\d+\.\s/gm)];
+    expect(steps.length).toBe(sectorCount(out.content));
   });
 
   it("stocks every sector with a Monster/Lore/Special/Trap detail", () => {
@@ -127,9 +146,9 @@ describe("generateDungeonLocal", () => {
       seededRng(11),
     );
     const stockLines = [
-      ...out.lore.matchAll(/\*(Monster|Lore|Special|Trap) — .+?\*/g),
+      ...out.content.matchAll(/\*(Monster|Lore|Special|Trap) — .+?\*/g),
     ];
-    expect(stockLines.length).toBe(sectorCount(out.lore));
+    expect(stockLines.length).toBe(sectorCount(out.content));
   });
 });
 
@@ -160,9 +179,15 @@ describe("buildDungeonPrompt", () => {
     for (const faction of prompt.resolved.factions) {
       expect(prompt.userMessage).toContain(faction.name);
     }
-    for (const sector of prompt.resolved.sectors) {
-      expect(prompt.userMessage).toContain(sector.name);
-    }
+    prompt.resolved.sectors.forEach((sector, idx) => {
+      // Quoted, not prefixed with "Sector N:" — otherwise a compliant AI that
+      // "reuses the given name exactly" copies the ordinal into the name itself
+      // and formatSector() doubles it (e.g. "Sector 1: Sector 1: ...").
+      expect(prompt.userMessage).toContain(`"${sector.name}"`);
+      expect(prompt.userMessage).not.toContain(
+        `Sector ${idx + 1}: ${sector.name}`,
+      );
+    });
   });
 });
 
@@ -197,15 +222,16 @@ describe("parseDungeonResponse", () => {
     expect(out.summary).toBe(
       "An abandoned sub-surface laboratory harboring a sleeping AI.",
     );
-    expect(out.lore).toContain("## History & Original Purpose");
-    expect(out.lore).toContain("Built by Aegis Dynamics");
-    expect(out.lore).toContain("## Signature Feature");
-    expect(out.lore).toContain("Sub-Zero Server Monolith");
-    expect(out.lore).toContain("## Current Conflict");
-    expect(out.lore).toContain("Net-scrapper squatters");
-    expect(out.lore).toContain("### Sector 1: Decontamination Lock");
-    expect(out.lore).toContain("### Sector 2: Mainframe Core");
+    expect(out.content).toContain("## History & Original Purpose");
+    expect(out.content).toContain("Built by Aegis Dynamics");
+    expect(out.content).toContain("## Signature Feature");
+    expect(out.content).toContain("Sub-Zero Server Monolith");
+    expect(out.content).toContain("## Current Conflict");
+    expect(out.content).toContain("Net-scrapper squatters");
+    expect(out.content).toContain("### Sector 1: Decontamination Lock");
+    expect(out.content).toContain("### Sector 2: Mainframe Core");
     expect(out.lore).toContain("The AI possesses the master overrides");
+    expect(out.content).not.toContain("The AI possesses the master overrides");
   });
 
   it("parses AI-provided factions and per-sector stocking, rendering both", () => {
@@ -249,10 +275,10 @@ describe("parseDungeonResponse", () => {
     });
 
     const out = parseDungeonResponse(sampleJson, { themeId: "cyberpunk" });
-    expect(out.lore).toContain("- **the Net-Scrapper Squatters**");
-    expect(out.lore).toContain("- **the Corporate Erasure Squad**");
-    expect(out.lore).toContain("*Trap — Laser grid tripwires.*");
-    expect(out.lore).toContain("## Dungeon Layout");
+    expect(out.content).toContain("- **the Net-Scrapper Squatters**");
+    expect(out.content).toContain("- **the Corporate Erasure Squad**");
+    expect(out.content).toContain("*Trap — Laser grid tripwires.*");
+    expect(out.lore).toContain("### Dungeon Layout");
   });
 
   it("falls back to local generation on invalid JSON input", () => {
@@ -260,7 +286,7 @@ describe("parseDungeonResponse", () => {
       themeId: "fantasy",
     });
     expect(out.title).toBeTruthy();
-    expect(out.lore).toContain("## Key Sectors & Layout");
+    expect(out.content).toContain("## Key Sectors & Layout");
     expect(out.labels).toContain("dungeon");
   });
 });
