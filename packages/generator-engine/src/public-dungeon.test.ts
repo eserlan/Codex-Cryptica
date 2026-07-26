@@ -396,13 +396,15 @@ describe("buildDungeonPrompt", () => {
       currentState: "Occupied Stronghold",
     });
     expect(prompt.systemInstruction).toContain(
-      "Your history must arrive at exactly that state",
+      'Write the "throughline" field first',
     );
     expect(prompt.systemInstruction).toContain(
-      "do not kill everyone in a delve that currently has inhabitants",
+      "The Current State is a setting",
     );
-    expect(prompt.userMessage).toContain(
-      "end it somewhere compatible with the Current State",
+    expect(prompt.userMessage).toContain('"throughline":');
+    // The throughline is generated before the fields it constrains.
+    expect(prompt.userMessage.indexOf('"throughline"')).toBeLessThan(
+      prompt.userMessage.indexOf('"history"'),
     );
   });
 
@@ -732,6 +734,7 @@ describe("parseDungeonResponse", () => {
     const valid = JSON.stringify({
       title: "The Bruneth Deep",
       summary: "S",
+      throughline: "Built, ruined, and now contested.",
       sectors: prompt.resolved.sectors.map((s, i) => ({
         name: `Room ${i + 1}`,
         description: "d",
@@ -804,6 +807,7 @@ describe("parseDungeonResponse", () => {
     const reused = JSON.stringify({
       title: "Fine Title",
       summary: "S",
+      throughline: "Built, ruined, and now contested.",
       sectors,
       factions,
     });
@@ -830,6 +834,64 @@ describe("parseDungeonResponse", () => {
     expect(prompt.userMessage).not.toContain("Already used elsewhere");
   });
 
+  it("rejects a response that skipped the throughline planning step", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "cyberpunk",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const factions = [
+      {
+        name: "the First",
+        virtue: "Bold",
+        vice: "Cruel",
+        goal: "Wealth",
+        obstacle: "o1",
+      },
+      {
+        name: "the Second",
+        virtue: "Wise",
+        vice: "Greedy",
+        goal: "Survival",
+        obstacle: "o2",
+      },
+    ];
+
+    const noThroughline = JSON.stringify({
+      title: "Fine Title",
+      summary: "S",
+      sectors,
+      factions,
+    });
+    const result = parseDungeonResponseDetailed(
+      noThroughline,
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(result.problems.join(" ")).toContain("throughline");
+    // Rejection routes into the corrective retry rather than being accepted.
+    expect(result.output.title).toBe(prompt.resolved.title);
+
+    // With one present, the same response is fine.
+    const withIt = JSON.stringify({
+      title: "Fine Title",
+      summary: "S",
+      throughline: "Built as a vault, gutted by a purge, now contested.",
+      sectors,
+      factions,
+    });
+    expect(
+      parseDungeonResponseDetailed(withIt, {}, seededRng(1), prompt.resolved)
+        .problems,
+    ).toEqual([]);
+  });
+
   it("rejects AI-authored names drawn from the banned cliché list", () => {
     const prompt = buildDungeonPrompt({ themeId: "fantasy" });
     const sectors = prompt.resolved.sectors.map((s, i) => ({
@@ -854,7 +916,7 @@ describe("parseDungeonResponse", () => {
         obstacle: "o2",
       },
     ];
-    const base = { summary: "S", sectors, factions };
+    const base = { summary: "S", throughline: "T", sectors, factions };
 
     // The ban list has only ever been a prompt request; these assert it is
     // actually enforced now that the model authors every name.
@@ -895,6 +957,7 @@ describe("parseDungeonResponse", () => {
     const valid = JSON.stringify({
       title: "The Wholly Invented Vault",
       summary: "A delve the model named itself.",
+      throughline: "Built, ruined, and now contested.",
       history: "Model history.",
       currentState: "Model state.",
       signatureFeature: "Model feature.",
