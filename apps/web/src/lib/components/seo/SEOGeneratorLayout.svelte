@@ -453,7 +453,7 @@
     try {
       const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
       localStorage.setItem("__codex_pending_canvas", JSON.stringify(canvasDoc));
-      void goto(`${cleanBase}/canvas/${canvasDoc.id}`);
+      void goto(`${cleanBase}/canvas`);
     } catch (err) {
       console.error("Failed to build delve canvas:", err);
     }

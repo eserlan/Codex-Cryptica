@@ -18,7 +18,11 @@ import {
   pruneCanvasGraph,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
-import { type IdGenerator, systemClock, systemIdGenerator } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export function createCanvasLogic(
   getEngine: () => CanvasStore,
@@ -249,9 +253,15 @@ export function createCanvasLogic(
         }
 
         targetVaultId = vault.activeVaultId;
-        targetCanvasId = canvasId;
-
-        const data = vault.canvases[canvasId];
+        const matchedCanvas =
+          vault.canvases[canvasId] ||
+          canvasRegistry.allCanvases.find(
+            (c) => c.slug === canvasId || c.id === canvasId,
+          );
+        const data = matchedCanvas
+          ? (vault.canvases[matchedCanvas.id] ||= matchedCanvas)
+          : undefined;
+        targetCanvasId = matchedCanvas ? matchedCanvas.id : canvasId;
 
         if (data) {
           for (const node of data.nodes || []) {
