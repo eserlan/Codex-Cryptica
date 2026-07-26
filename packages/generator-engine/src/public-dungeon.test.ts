@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDungeonPrompt,
+  buildDungeonRetryMessage,
+  parseDungeonResponseDetailed,
   dungeonConfig,
   generateDungeonLocal,
   parseDungeonResponse,
@@ -560,7 +562,12 @@ describe("parseDungeonResponse", () => {
   });
 
   it("rejects a response whose factions collapse into one", () => {
-    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    // Scale pinned: an unpinned prompt can roll a one-sector lair, where a
+    // duplicate-stock check has nothing to compare.
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
     const sectors = prompt.resolved.sectors.map((s, i) => ({
       name: `Room ${i + 1}`,
       description: "d",
@@ -617,6 +624,109 @@ describe("parseDungeonResponse", () => {
     expect(
       parseDungeonResponse(dupDetail, {}, seededRng(1), prompt.resolved).title,
     ).toBe(prompt.resolved.title);
+  });
+
+  it("reports why a response was rejected so the caller can retry", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const short = JSON.stringify({
+      title: "The Vault of Oakhaven",
+      summary: "S",
+      sectors: [{ name: "Only Room", description: "d" }],
+      factions: [
+        {
+          name: "A",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "o",
+        },
+        {
+          name: "B",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Wealth",
+          obstacle: "o",
+        },
+      ],
+    });
+
+    const result = parseDungeonResponseDetailed(
+      short,
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(result.problems.length).toBeGreaterThan(0);
+    expect(result.problems.join(" ")).toContain("sectors");
+    expect(result.problems.join(" ")).toContain("same goal");
+    expect(result.problems.join(" ")).toContain("Oakhaven");
+    // The fallback is still there for a caller that cannot retry.
+    expect(result.output.title).toBe(prompt.resolved.title);
+  });
+
+  it("reports malformed JSON as a retryable problem", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    const result = parseDungeonResponseDetailed(
+      "not json at all",
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(result.problems).toHaveLength(1);
+    expect(result.problems[0]).toContain("not valid JSON");
+    expect(result.output.title).toBe(prompt.resolved.title);
+  });
+
+  it("builds a retry message naming each problem", () => {
+    const retry = buildDungeonRetryMessage("ORIGINAL PROMPT", [
+      "expected 6 sectors, got 1",
+      "both factions pursue the same goal",
+    ]);
+    expect(retry).toContain("ORIGINAL PROMPT");
+    expect(retry).toContain("previous response was rejected");
+    expect(retry).toContain("- expected 6 sectors, got 1");
+    expect(retry).toContain("- both factions pursue the same goal");
+  });
+
+  it("returns no problems for a response that satisfies every invariant", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    const valid = JSON.stringify({
+      title: "The Bruneth Deep",
+      summary: "S",
+      sectors: prompt.resolved.sectors.map((s, i) => ({
+        name: `Room ${i + 1}`,
+        description: "d",
+        stockType: s.stockType,
+        stockDetail: `detail ${i + 1}`,
+      })),
+      factions: [
+        {
+          name: "the First",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "o1",
+        },
+        {
+          name: "the Second",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Survival",
+          obstacle: "o2",
+        },
+      ],
+    });
+    const result = parseDungeonResponseDetailed(
+      valid,
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(result.problems).toEqual([]);
+    expect(result.output.title).toBe("The Bruneth Deep");
   });
 
   it("rejects AI-authored names drawn from the banned cliché list", () => {

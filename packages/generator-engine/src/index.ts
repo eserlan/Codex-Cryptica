@@ -155,7 +155,10 @@ export {
 } from "./public-news-sheet";
 export {
   buildDungeonPrompt,
+  buildDungeonRetryMessage,
   parseDungeonResponse,
+  parseDungeonResponseDetailed,
+  type DungeonParseResult,
   generateDungeonLocal,
   dungeonConfig,
   forGenre as forDungeonGenre,

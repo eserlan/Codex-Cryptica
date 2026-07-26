@@ -703,7 +703,37 @@ function validateAiDungeon(
 /**
  * Parse an AI JSON response for a Dungeon concept, falling back to local generator on error.
  */
-export function parseDungeonResponse(
+export interface DungeonParseResult {
+  output: PublicGeneratorOutput;
+  /**
+   * Why the response was rejected, empty when it was used. Surfaced so the
+   * caller can tell the model what was wrong and give it another attempt
+   * rather than silently shipping the local fallback.
+   */
+  problems: string[];
+}
+
+/**
+ * Build a corrective follow-up prompt naming what the previous attempt got
+ * wrong. The structural requirements are already in the original message, so
+ * this only has to point at the violations.
+ */
+export function buildDungeonRetryMessage(
+  userMessage: string,
+  problems: string[],
+): string {
+  return [
+    userMessage,
+    ``,
+    `Your previous response was rejected for these reasons:`,
+    ...problems.map((p) => `- ${p}`),
+    ``,
+    `Return a corrected JSON object that fixes every point above. Keep whatever`,
+    `was already good; change only what the list requires.`,
+  ].join("\n");
+}
+
+export function parseDungeonResponseDetailed(
   rawText: string,
   options: DungeonGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -717,7 +747,7 @@ export function parseDungeonResponse(
    * the local text for that section instead of dropping it.
    */
   foundation?: ResolvedDungeon,
-): PublicGeneratorOutput {
+): DungeonParseResult {
   try {
     const parsed = parseFencedJson<Record<string, unknown>>(rawText);
 
@@ -785,7 +815,7 @@ export function parseDungeonResponse(
     if (foundation) {
       const problems = validateAiDungeon(title, sectors, factions, foundation);
       if (problems.length > 0) {
-        return renderResolvedDungeon(foundation);
+        return { output: renderResolvedDungeon(foundation), problems };
       }
     }
 
@@ -838,19 +868,46 @@ export function parseDungeonResponse(
     const genre = options.genre || themeIdToLabel[themeId] || "Classic Fantasy";
 
     return {
-      type: "location",
-      title,
-      summary,
-      content,
-      lore,
-      labels: [
-        "dungeon",
-        "location",
-        genre.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      ],
-      status: "active",
+      output: {
+        type: "location",
+        title,
+        summary,
+        content,
+        lore,
+        labels: [
+          "dungeon",
+          "location",
+          genre.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        ],
+        status: "active",
+      },
+      problems: [],
     };
   } catch {
-    return generateDungeonLocal(options);
+    // Malformed JSON is worth another attempt too, so report it as a problem
+    // rather than quietly returning the fallback.
+    return {
+      output: foundation
+        ? renderResolvedDungeon(foundation)
+        : generateDungeonLocal(options),
+      problems: [
+        "the response was not valid JSON matching the requested schema",
+      ],
+    };
   }
+}
+
+/**
+ * Parse an AI dungeon response, discarding the rejection reasons.
+ *
+ * Kept for callers that cannot retry. Prefer parseDungeonResponseDetailed and
+ * a corrective second attempt where a model call is available.
+ */
+export function parseDungeonResponse(
+  rawText: string,
+  options: DungeonGeneratorOptions = {},
+  rng: Rng = defaultRng,
+  foundation?: ResolvedDungeon,
+): PublicGeneratorOutput {
+  return parseDungeonResponseDetailed(rawText, options, rng, foundation).output;
 }
