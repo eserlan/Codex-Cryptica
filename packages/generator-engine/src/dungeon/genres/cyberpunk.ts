@@ -1,0 +1,156 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const cyberpunkTables: DungeonGenreTables = {
+  hint: "Describe subterranean server farms, abandoned black-budget R&D bunkers, neural-interface test vaults, and automated drone nests.",
+  purposes: [
+    "Research Facility",
+    "Data Vault & Archive",
+    "Bio-Containment Wing",
+    "Prison & Vault",
+    "Fallout Shelter",
+    "Fortress & Citadel",
+  ],
+  currentStates: [
+    "Overrun by Squatters",
+    "Still Operational",
+    "Sealed Vault",
+    "Occupied Stronghold",
+    "Arcane / Tech Anomaly",
+    "Abandoned Ruins",
+  ],
+  sampleTitles: [
+    "Aegis Corp Sub-Level 04",
+    "The Rust-Core Server Vault",
+    "Grid-Zero Neural Testing Bunker",
+    "Black-Ops Data Sinking Shaft",
+    "Project Nemesis Underground Complex",
+  ],
+  builders: [
+    "a shell corporation three layers removed from its parent",
+    "a black-budget R&D division",
+    "a private military contractor",
+    "a rogue AI research division since disavowed",
+    "a syndicate of ex-corporate scientists",
+  ],
+  originalUses: [
+    "an off-books neural interface lab",
+    "a data-laundering server farm",
+    "a cybernetic prototype testing bay",
+    "a black-site holding facility",
+    "an illegal cloning annex",
+  ],
+  entrances: [
+    "a freight elevator with its logs wiped",
+    "a storm drain retrofitted as a service tunnel",
+    "a fire escape bricked over from the inside",
+    "a decommissioned subway platform",
+    "a maintenance hatch behind a dead vending wall",
+  ],
+  compositions: [
+    "reinforced concrete lined with dead fiber-optic veins",
+    "salvaged shipping containers welded into a warren",
+    "matte polymer panels scorched by old firefights",
+    "exposed rebar over standing floodwater",
+    "server racks repurposed as load-bearing walls",
+  ],
+  conditions: [
+    "still drawing power off a forgotten grid tap",
+    "squatted by three rival factions at once",
+    "locked down under an automated security protocol",
+    "stripped bare by scavengers, save one guarded room",
+    "running hot, its cooling systems failing",
+  ],
+  causes: [
+    "a leak that brought corporate deniability crashing down",
+    "an internal purge that went further than planned",
+    "a rival's hostile buyout turned violent",
+    "whistleblower sabotage that was never fully traced",
+    "the parent company simply walking away overnight",
+  ],
+  sectors: [
+    {
+      name: "Security Checkpoint Sub-Level 1",
+      description:
+        "Heavy blast doors backed by automated turret mounts and fried biometric scanners.",
+    },
+    {
+      name: "Server Mainframe Row",
+      description:
+        "Towering black server banks cooled by liquid nitrogen channels and tangled cabling.",
+    },
+    {
+      name: "Bio-Engineering Wet Lab",
+      description:
+        "Smashed glass vats containing preserve fluid and cybernetic prosthetic prototypes.",
+    },
+    {
+      name: "Black Budget Vault",
+      description:
+        "EMP-shielded underground safe room housing offline data drives and black market funds.",
+    },
+    {
+      name: "Executive Escape Tunnel",
+      description:
+        "A narrow, camera-free service corridor built for a quiet exit that was never used.",
+    },
+    {
+      name: "Cold Storage Archive",
+      description:
+        "Refrigerated shelving racks of backup tapes and physical prototypes, half-looted.",
+    },
+  ],
+  inhabitants: [
+    "A gang of Net-Scrapper Squatters utilizing the facility power to mine underground cryptocurrency.",
+    "Automated Rogue Cyber-Security Drones with corrupted target identification matrices.",
+    "A rogue corporate black-ops squad sent to erase all evidence of illegal bio-experiments.",
+    "A cluster of escaped cybernetic test subjects hiding from their former handlers.",
+    "A squatter militia running an illegal chop-shop out of the lower levels.",
+  ],
+  factionNames: [
+    "the Net-Scrapper Squatters",
+    "the Corporate Erasure Squad",
+    "the Rogue Security Drone Cluster",
+    "the Black-Market Data Brokers",
+    "the Displaced Lab Subjects",
+    "the Chop-Shop Militia",
+    "the Cybernetic Test-Subject Cell",
+    "the Cold Storage Archivists",
+    "the Escape-Tunnel Smuggler Ring",
+    "the Ghost-Terminal Netrunners",
+  ],
+  secrets: [
+    "The mainframe holds an unredacted copy of the corporate executive board's illegal bioweapon deal.",
+    "The facility's AI has achieved true Sentience and is seeking an escape vessel.",
+    "The central vault contains the original neural backup of a legendary netrunner.",
+    "The site is still billing a parent company that dissolved twelve years ago, and the invoices are being paid.",
+    "Every employee record in the archive was fabricated; none of the staff listed here ever existed.",
+  ],
+  hazards: [
+    "High-voltage electrical leaks energizing standing water in flooded service corridors.",
+    "Laser-grid security barriers capable of slicing through body armor.",
+    "Halon gas fire-suppression systems triggered by unauthorized heat signatures.",
+    "A malfunctioning drone turret still running its last kill-order.",
+    "A collapsing server rack primed to crush anyone who trips its sensor array.",
+  ],
+  treasures: [
+    "A military-grade cybernetic optic implant with thermographic vision.",
+    "An encrypted datapad containing bearer bond keys worth 50,000 credits.",
+    "A prototype stealth-field generator belt.",
+    "A cold-storage backup of a market-moving algorithm three generations ahead of anything shipping.",
+    "A clean legend package \u2014 identity, history, and credit record \u2014 good enough to disappear into.",
+  ],
+  hooks: [
+    "A fix-it netrunner hires the crew to extract an offline AI core from the corporate bunker.",
+    "A rival gang has fortified the facility and is using it to launch drone strikes on city blocks.",
+    "Your crew needs to wipe your criminal records stored on the facility's legacy mainframe.",
+    "A whistleblower needs proof of the site's illegal experiments before the corp scrubs it clean.",
+    "A missing-persons case leads straight to the facility's sealed sub-levels.",
+  ],
+  signatureFeatures: [
+    "The Sub-Zero Server Monolith: A four-story black mainframe array venting ice-cold nitrogen vapor into standing water.",
+    "The Fiber-Optic Canopy: Thousands of luminescent data cables hanging from the ceiling like glowing jungle vines.",
+    "The Prototype Neural Vault: A reinforced glass sphere surrounded by cyber-linking armatures and fried monitors.",
+    "The Ghost Terminal: A workstation that still logs in under a name no one on staff recognizes.",
+    "The Signal Well: A satellite uplink shaft that hums with a broadcast no one has decrypted yet.",
+  ],
+};

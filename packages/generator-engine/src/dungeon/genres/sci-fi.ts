@@ -1,0 +1,159 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const sciFiTables: DungeonGenreTables = {
+  hint: "Focus on precursor mega-structures, bio-luminescent hydroponics, stasis pod shafts, automated defense turrets, and zero-g corridors.",
+  purposes: [
+    "Research Facility",
+    "Bio-Containment Wing",
+    "Data Vault & Archive",
+    "Prison & Vault",
+    "Fortress & Citadel",
+    "Mine & Shafts",
+    "Natural Cavern Network",
+    "Planar Anomaly",
+  ],
+  currentStates: [
+    "Abandoned Ruins",
+    "Sealed Vault",
+    "Arcane / Tech Anomaly",
+    "Still Operational",
+    "Occupied Stronghold",
+    "Overrun by Squatters",
+    "Buried & Forgotten",
+  ],
+  sampleTitles: [
+    "Arch 9 Precursor Orbital Reliquary",
+    "Sub-Surface Vault Epsilon-7",
+    "The Silent Hydro-Bunker",
+    "Cryo-Containment Ring 14",
+    "Void-Shift Anomaly Alpha",
+  ],
+  builders: [
+    "an extinct precursor stellar empire",
+    "a rogue terraforming consortium",
+    "a fringe research collective",
+    "a colony ship's automated founding crew",
+    "a defunct planetary defense authority",
+  ],
+  originalUses: [
+    "a deep-core research annex",
+    "an emergency cryo-stasis shelter",
+    "a xenobiology containment wing",
+    "a relay station for a since-collapsed hyperlane",
+    "a seed vault for a dying homeworld",
+  ],
+  entrances: [
+    "a jammed blast airlock half-buried in regolith",
+    "a collapsed maintenance shaft",
+    "a derelict docking umbilical",
+    "a fissure torn open by orbital bombardment",
+    "a service tunnel behind a dead sensor array",
+  ],
+  compositions: [
+    "salvaged precursor alloy that hums faintly underfoot",
+    "radiation-hardened ceramic composite",
+    "carbon lattice grown rather than built",
+    "scavenged hull plating from a dozen wrecks",
+    "biomechanical growths fused into the original structure",
+  ],
+  conditions: [
+    "running on failing backup power",
+    "overtaken by feral automation",
+    "pressurized but leaking atmosphere slowly",
+    "dark except for one still-functioning sector",
+    "looping a distress signal no one has answered in years",
+  ],
+  causes: [
+    "a containment breach that was never fully sealed",
+    "a mutiny among the last living crew",
+    "a reactor cascade contained just in time — barely",
+    "an evacuation order that came a day too late",
+    "first contact with something the crew was not equipped to survive",
+  ],
+  sectors: [
+    {
+      name: "Decontamination Bay Alpha",
+      description:
+        "Pressurized entry airlock equipped with malfunctioning automated sterilization lasers.",
+    },
+    {
+      name: "Hydroponic Bio-Racks",
+      description:
+        "Sprawling vertical farming columns overgrown with alien flora and bioluminescent spores.",
+    },
+    {
+      name: "Stasis Pod Core",
+      description:
+        "Cryogenic containment gallery lined with hundreds of dormant life-support units.",
+    },
+    {
+      name: "The Singularity Reactor Room",
+      description:
+        "Suspended magnetic bridge spanning an open energy shaft pulsing with gravity distortions.",
+    },
+    {
+      name: "The Archive Spindle",
+      description:
+        "A cylindrical data-crystal library rotating slowly on a magnetic axis, most tiers dark.",
+    },
+    {
+      name: "The Fabrication Bay",
+      description:
+        "Idle assembly arms frozen mid-motion over an unfinished hull section.",
+    },
+  ],
+  inhabitants: [
+    "Rogue Combat Drones continuing their automated defense patrol 500 years after facility abandonment.",
+    "Mutated Specimen Swarms that escaped cryo-containment when power failed.",
+    "A precursor AI Sentinel speaking in broken logic puzzles while activating containment fields.",
+    "A stranded salvage crew that has gone half-feral scavenging the wreck for parts.",
+    "A colony of bioluminescent Void-Moths drawn to the facility's remaining power core.",
+  ],
+  factionNames: [
+    "the Rogue Sentinel Drones",
+    "the Mutated Specimen Collective",
+    "the Salvager Crew Squatting in the Lower Decks",
+    "the Precursor AI Custodian",
+    "the Stranded Colonist Remnant",
+    "the Void-Moth Swarm",
+    "the Feral Bio-Specimen Cluster",
+    "the Archive Spindle Sentries",
+    "the Fabrication Bay Drone Line",
+    "the Quarantine Protocol Enforcers",
+  ],
+  secrets: [
+    "The entire facility is actually a stasis ship that crash-landed thousands of years ago.",
+    "The precursor AI is not hostile; it is holding back a planet-killing void anomaly.",
+    "The stasis pods hold living ancestors of the current planetary population.",
+    "The distress beacon was never automatic \u2014 someone re-triggers it manually, roughly once a decade.",
+    "The facility's charter lists a second site, coordinates included, that no survey has ever found.",
+  ],
+  hazards: [
+    "Malfunctioning automated plasma turrets targeting heat signatures.",
+    "Sub-zero containment breaches creating flash-freeze hazards across metal catwalks.",
+    "Gravity-reversal corridors causing disorientation and crushing impacts.",
+    "A ruptured coolant line venting corrosive vapor into a narrow corridor.",
+    "An unstable energy conduit prone to arcing lethal discharge underfoot.",
+  ],
+  treasures: [
+    "A precursor energy cell capable of powering a starship for 100 years.",
+    "An alien nano-fabricator capable of constructing medical stimpacks.",
+    "An encrypted memory crystal containing star maps to unmapped star systems.",
+    "A precursor translation matrix that renders any recorded language into plain speech.",
+    "A sealed sample canister logged as empty, and measurably heavier than empty.",
+  ],
+  hooks: [
+    "A deep-space distress beacon began broadcasting from a long-silent planetary vault.",
+    "A mega-corporation contracts the party to salvage precursor technology before a rival faction arrives.",
+    "Atmospheric sensors detect a dangerous energy spike emanating from the vault's reactor core.",
+    "A survivor's garbled transmission mentions coordinates and something that 'shouldn't still be alive'.",
+    "An archivist offers passage off-world in exchange for a single recovered data core.",
+  ],
+  signatureFeatures: [
+    "The Singularity Core: A floating zero-g sphere of localized spatial distortion held stable by three humming magnetic pylons.",
+    "The Bioluminescent Hydro-Gallery: Vertical glass tubes extending hundreds of meters containing giant alien flora.",
+    "The Precursor Hologram Beacon: An interactive 3D map projecting extinct star systems in sapphire light.",
+    "The Frozen Garden: A hydroponics bay locked in perfect cryo-stasis, plants suspended mid-growth.",
+    "The Echo Chamber: A resonant hall that replays fragments of the crew's final transmissions.",
+  ],
+};

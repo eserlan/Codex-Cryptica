@@ -2,6 +2,7 @@
   import {
     dungeonConfig,
     factionConfig,
+    forDungeonGenre,
     pickFrom,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
@@ -54,34 +55,26 @@
       "Hardened civil-defence bunker stocked for years of life underground.",
     "Ancestral Mausoleum":
       "Family crypt built to outlast the bloodline it was meant to honour.",
+    "Pirate Cove & Smuggler's Hold":
+      "Hidden tidal anchorage, powder store, and shareout hall for a crew with no home port.",
+    "Mech Bay & Hangar":
+      "Sub-surface maintenance bay and hardpoint cache for frames too large to service topside.",
+    "Rail Tunnel & Depot":
+      "Freight tunnel, siding, and depot bored through the range for a line that stalled.",
+    "Clockwork Engine Works":
+      "Subterranean engine house and pressure gallery driving the machinery of the city above.",
+    "Black Site":
+      "Unlisted detention and research installation outside every applicable jurisdiction.",
   };
 
-  // Only offer purposes/states that suit the chosen vibe. Theme labels carry a
-  // qualifier the tables don't ("Classic Fantasy" -> "Fantasy",
-  // "Sci-Fi / Space Opera" -> "Sci-Fi / Space Opera"), so try the label, then
-  // its unqualified form, before falling back to the full union.
-  function forTheme(
-    table: Record<string, string[]>,
-    label: string,
-    fallback: string[],
-  ): string[] {
-    return (
-      table[label] ??
-      table[label.replace(/^Classic /, "")] ??
-      table[label.replace(/ \/ .*/, "")] ??
-      fallback
-    );
-  }
-
+  // Only offer purposes/states that suit the chosen vibe. Uses the same
+  // resolver as the engine so the dropdown can never offer an option the
+  // generator wouldn't pick on its own.
   const availablePurposes = $derived(
-    forTheme(dungeonConfig.purposesByGenre, theme, dungeonConfig.purposes),
+    forDungeonGenre(dungeonConfig.purposesByGenre, theme),
   );
   const availableStates = $derived(
-    forTheme(
-      dungeonConfig.currentStatesByGenre,
-      theme,
-      dungeonConfig.currentStates,
-    ),
+    forDungeonGenre(dungeonConfig.currentStatesByGenre, theme),
   );
   // Known values across every genre — used so a *custom* purpose/state the user
   // typed is never clobbered when the vibe changes, matching FactionFormFields.

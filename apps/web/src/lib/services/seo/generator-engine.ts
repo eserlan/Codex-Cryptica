@@ -104,7 +104,7 @@ export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
 export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
-export { dungeonConfig } from "generator-engine";
+export { dungeonConfig, forDungeonGenre } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
