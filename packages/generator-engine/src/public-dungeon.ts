@@ -125,10 +125,16 @@ export interface ResolvedDungeon {
   sectorEdges: DungeonSectorEdge[];
   map: string;
   inhabitants: string;
+  /** Singular by definition — a delve has one central secret. */
   secret: string;
-  hazards: string;
-  treasures: string;
-  hooks: string;
+  /**
+   * Discrete items a GM picks from, so these are lists rather than prose. The
+   * schema previously asked hooks for "2-3 reasons" while typing it a string,
+   * and that contradiction is what let an arrayed answer read as a missing one.
+   */
+  hazards: string[];
+  treasures: string[];
+  hooks: string[];
 }
 
 export interface DungeonPrompt {
@@ -209,6 +215,11 @@ function sanitizeSectorName(s: string): string {
     .trim();
 }
 
+/** Render discrete entries as a markdown list, so a GM can scan them. */
+function formatList(items: string[]): string {
+  return items.map((i) => `- ${i}`).join("\n");
+}
+
 /**
  * Coerce a narrative field to prose, accepting a list.
  *
@@ -218,6 +229,17 @@ function sanitizeSectorName(s: string): string {
  * omission, so it was silently replaced with table text — three consecutive
  * generated delves had table hooks under otherwise entirely original prose.
  */
+function narrativeList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      .map((v) => v.trim());
+  }
+  // A prose blob becomes a single entry: degraded, never wrong.
+  const text = narrativeText(value);
+  return text ? [text] : [];
+}
+
 function narrativeText(value: unknown): string {
   if (typeof value === "string") return value.trim();
   if (Array.isArray(value)) {
@@ -399,13 +421,17 @@ function resolveDungeon(
   const secret = pickFrom(secretsList, rng);
 
   const hazardsList = forGenre(HAZARDS_BY_GENRE, genre);
-  const hazards = pickFrom(hazardsList, rng);
+  const hazards = pickRandomItems(hazardsList, 2 + Math.floor(rng() * 2), rng);
 
   const treasuresList = forGenre(TREASURES_BY_GENRE, genre);
-  const treasures = pickFrom(treasuresList, rng);
+  const treasures = pickRandomItems(
+    treasuresList,
+    2 + Math.floor(rng() * 2),
+    rng,
+  );
 
   const hooksList = forGenre(HOOKS_BY_GENRE, genre);
-  const hooks = pickFrom(hooksList, rng);
+  const hooks = pickRandomItems(hooksList, 2 + Math.floor(rng() * 2), rng);
 
   const availableSectors = forGenre(SECTORS_BY_GENRE, genre);
   const sectorCount = Math.min(
@@ -418,9 +444,9 @@ function resolveDungeon(
   // elsewhere in the document.
   const usedByType: Record<DungeonStockType, Set<string>> = {
     Monster: new Set(),
-    Lore: new Set([hooks]),
+    Lore: new Set(hooks),
     Special: new Set([signatureFeature]),
-    Trap: new Set([hazards]),
+    Trap: new Set(hazards),
   };
   const sectors: DungeonSector[] = pickedSectors.map((s) => {
     const stockType = rollStockType(rng);
@@ -606,13 +632,13 @@ function renderResolvedDungeon(
     dungeon.secret,
     ``,
     `### Hazards & Traps`,
-    dungeon.hazards,
+    formatList(dungeon.hazards),
     ``,
     `### Treasures & Artifacts`,
-    dungeon.treasures,
+    formatList(dungeon.treasures),
     ``,
     `### Adventure Hooks & Rumours`,
-    dungeon.hooks,
+    formatList(dungeon.hooks),
   ].join("\n");
 
   return {
@@ -685,9 +711,9 @@ Required JSON schema:
   ],
   "inhabitants": "How the two named factions relate to each other, referencing both by name.",
   "secret": "The hidden truth at the heart of this delve. Invent it, and make it connect to the history.",
-  "hazards": "The environmental or structural dangers of this place.",
-  "treasures": "Notable loot, relics, or knowledge to be found here.",
-  "hooks": "2-3 reasons a party would come here, and rumours circulating about it."
+  "hazards": ["2-3 distinct dangers, one per entry"],
+  "treasures": ["2-3 distinct finds, one per entry"],
+  "hooks": ["2-3 reasons a party would come here or rumours about it, one per entry"]
 }`;
 
   return {
@@ -902,7 +928,11 @@ export function parseDungeonResponseDetailed(
         "treasures",
         "hooks",
       ] as const
-    ).filter((k) => !narrativeText(parsed[k]));
+    ).filter((k) =>
+      k === "hazards" || k === "treasures" || k === "hooks"
+        ? narrativeList(parsed[k]).length === 0
+        : !narrativeText(parsed[k]),
+    );
 
     // Planning scaffolding: the model writes this first so the fields after it
     // are generated against a single stated causal chain. Not rendered — the
@@ -981,9 +1011,15 @@ export function parseDungeonResponseDetailed(
 
     const inhabitants = str(parsed.inhabitants, foundation?.inhabitants ?? "");
     const secret = str(parsed.secret, foundation?.secret ?? "");
-    const hazards = str(parsed.hazards, foundation?.hazards ?? "");
-    const treasures = str(parsed.treasures, foundation?.treasures ?? "");
-    const hooks = str(parsed.hooks, foundation?.hooks ?? "");
+    // List-shaped sections: an array is the expected form, a prose blob
+    // degrades to a single entry, and an empty result falls back per-field.
+    const list = (v: unknown, fallback: string[] = []) => {
+      const parsedList = narrativeList(v);
+      return parsedList.length > 0 ? parsedList : fallback;
+    };
+    const hazards = list(parsed.hazards, foundation?.hazards ?? []);
+    const treasures = list(parsed.treasures, foundation?.treasures ?? []);
+    const hooks = list(parsed.hooks, foundation?.hooks ?? []);
 
     const sectorEdges = buildSectorEdges(sectors.length, rng);
     const map = renderDungeonMap(
@@ -1017,9 +1053,11 @@ export function parseDungeonResponseDetailed(
     const lore = [
       map ? `### Dungeon Layout\n${map}\n` : "",
       secret ? `### Central Secret / Boss Mystery\n${secret}\n` : "",
-      hazards ? `### Hazards & Traps\n${hazards}\n` : "",
-      treasures ? `### Treasures & Artifacts\n${treasures}\n` : "",
-      hooks ? `### Adventure Hooks & Rumours\n${hooks}` : "",
+      hazards.length ? `### Hazards & Traps\n${formatList(hazards)}\n` : "",
+      treasures.length
+        ? `### Treasures & Artifacts\n${formatList(treasures)}\n`
+        : "",
+      hooks.length ? `### Adventure Hooks & Rumours\n${formatList(hooks)}` : "",
     ]
       .filter(Boolean)
       .join("\n");
