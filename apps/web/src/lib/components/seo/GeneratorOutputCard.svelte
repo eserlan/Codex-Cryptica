@@ -167,7 +167,7 @@
                 Save to Codex
               </button>
             {/if}
-            {#if (generatedData?.kind as string) === "dungeon" && onBuildDelveCanvas}
+            {#if ((generatedData?.kind as string) === "dungeon" || generatedData?.labels?.includes("dungeon")) && onBuildDelveCanvas}
               <button
                 type="button"
                 onclick={() => onBuildDelveCanvas(generatedData!)}
