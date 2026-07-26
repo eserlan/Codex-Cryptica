@@ -162,6 +162,19 @@ describe("dungeon genre coverage", () => {
     }
   });
 
+  it("gives the optimistic setting explicit tonal direction", () => {
+    // Since the model authors hazards itself, the deliberately non-malicious
+    // tone of this genre's tables never reaches it — the hint is the only
+    // signal. Without tone in the hint the default prior wins, and a hopeful
+    // exploration setting came back as "The Cyanide Bastion" with acid traps.
+    const hint = DUNGEON_GENRE_TABLES["Optimistic Exploration Sci-Fi"].hint;
+    expect(hint).toMatch(/tone/i);
+    expect(hint).toMatch(/hopeful/i);
+    expect(hint).toMatch(
+      /never toxicity|not built to harm|nothing here was built to harm/i,
+    );
+  });
+
   it("uses no banned cliché names in any name-bearing field", () => {
     // Name fields only — descriptions legitimately contain "stone", "ash", etc.
     const offenders: string[] = [];
