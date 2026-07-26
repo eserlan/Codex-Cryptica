@@ -629,6 +629,10 @@ You will be given creative seeds and a fixed structure. The seeds are raw materi
 
 Everything else is yours to invent: the delve's name, every sector's name and description, the signature feature, the central secret, the hazards, the treasures, the hooks, and both faction names. Make them specific to this delve rather than generic to the genre, and make the whole document internally consistent — the history should explain the present state, the factions' goals should explain the conflict, and the secret should be worth the trip.
 
+Write the "throughline" field first and let it govern everything else. It is one sentence covering who built the delve, what went wrong, and how that leaves it in exactly the Current State given above. Every later field must be consistent with it — if the throughline says the place is occupied and contested, the history cannot end with it permanently sealed or everyone inside dead.
+
+The Current State is a setting the user chose. It is fixed. Whatever went wrong in the history, the place must end up in that stated condition, with both factions able to reach and contest it.
+
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
   const userMessage = `Write an original ${dungeon.genre} dungeon / delve.
@@ -646,7 +650,8 @@ Required JSON schema:
 {
   "title": "Evocative, specific name for this delve.",
   "summary": "1-2 sentence premise of why this location is interesting.",
-  "history": "Who built it, what for, and what went wrong. Grow this from the 'Built by' and 'Ruined by' seeds.",
+  "throughline": "ONE sentence: who built it, what went wrong, and how that leaves it in the Current State above. Write this before the fields below and keep them all consistent with it.",
+  "history": "Who built it, what for, and what went wrong. Elaborate the throughline from the 'Built by' and 'Ruined by' seeds; it must end where the throughline says it ends.",
   "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
   "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
   "factions": [
@@ -710,12 +715,21 @@ function bannedNamesIn(values: string[], extra: string[] = []): string[] {
  */
 function validateAiDungeon(
   title: string,
+  throughline: string,
   sectors: DungeonSector[],
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
   avoidNames: string[] = [],
 ): string[] {
   const problems: string[] = [];
+
+  // The throughline is what keeps history, state, and conflict pointing at the
+  // same causal chain. A response that skipped it was not planned as a whole.
+  if (!throughline) {
+    problems.push(
+      "no throughline: state in one sentence how the history leaves the delve in the given Current State",
+    );
+  }
 
   const names = [
     title,
@@ -834,6 +848,10 @@ export function parseDungeonResponseDetailed(
     const str = (v: unknown, fallback = "") =>
       typeof v === "string" && v.trim() ? v.trim() : fallback;
 
+    // Planning scaffolding: the model writes this first so the fields after it
+    // are generated against a single stated causal chain. Not rendered — the
+    // summary already covers what the reader needs.
+    const throughline = str(parsed.throughline);
     const history = str(parsed.history, foundation?.history ?? "");
     const currentState = str(
       parsed.currentState,
@@ -882,6 +900,7 @@ export function parseDungeonResponseDetailed(
     if (foundation) {
       const problems = validateAiDungeon(
         title,
+        throughline,
         sectors,
         factions,
         foundation,
