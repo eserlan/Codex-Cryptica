@@ -68,3 +68,6 @@
 ## 2026-07-23 - Injecting IdGenerator into createCanvasLogic
  **Learning:** Canvas logic in Svelte 5 (`use-canvas-logic.svelte.ts`) frequently hardcodes ID generation for dynamic nodes and edges using `crypto.randomUUID()`, which requires complex global mocking during component tests.
  **Action:** We modified `createCanvasLogic` to accept an optional `idGenerator: IdGenerator` parameter with a default of `systemIdGenerator`. This cleanly abstracts the infrastructure dependency (ID generation) while preserving the hook's standard production behavior, maintaining the established pattern of DI for ambient utilities in this repository.
+## 2025-02-22 - Injecting storage adapters in web components
+**Learning:** Found hardcoded `window.localStorage` usage in `front-page-prefs.ts` within `apps/web`. SvelteKit files may execute on the server during SSR where `window` is undefined. The repository uses `browserStorage` from `$lib/utils/runtime-deps` which handles SSR safely.
+**Action:** Replaced direct `window.localStorage` usage with explicit dependency injection of `StorageLike`, defaulting to `browserStorage`. Updated tests to use a fully implemented mock `StorageLike` to avoid Vitest/Bun global pollution.
