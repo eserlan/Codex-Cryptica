@@ -428,42 +428,37 @@ function resolveDungeon(
 }
 
 /**
- * Compact plain-text rendering of everything resolveDungeon() already generated,
- * so the AI prompt embellishes a locally-generated foundation instead of
- * silently discarding it and inventing an unrelated dungeon from scratch.
+ * Render the mechanical rolls as creative seeds plus fixed structural
+ * requirements.
+ *
+ * Deliberately withholds the locally-generated prose. When the prompt handed
+ * over finished sentences the model reproduced them verbatim, so output variety
+ * was capped by table size (a sprawling delve used the entire six-entry sector
+ * pool every time) and most defects were failures to echo imposed text
+ * faithfully. The seeds below are starting points to interpret; the structure
+ * is the part that must not move.
  */
-function formatDungeonFoundation(dungeon: ResolvedDungeon): string {
-  const factionLines = dungeon.factions
-    .map(
-      (f) =>
-        `  - ${f.name} — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${f.obstacle}.`,
-    )
-    .join("\n");
-  const sectorLines = dungeon.sectors
-    .map(
-      (s, idx) =>
-        `  ${idx + 1}. "${s.name}" — ${s.description}${
-          s.stockType && s.stockDetail
-            ? ` [${s.stockType}: ${s.stockDetail}]`
-            : ""
-        }`,
-    )
+function formatDungeonSeeds(dungeon: ResolvedDungeon): string {
+  const stockPlan = dungeon.sectors
+    .map((s, idx) => `  ${idx + 1}. ${s.stockType ?? "Lore"}`)
     .join("\n");
 
   return [
-    `- Title seed: ${dungeon.title}`,
-    `- History: ${dungeon.history}`,
-    `- Current Condition: ${dungeon.currentStateDetail}`,
-    `- Signature Feature: ${dungeon.signatureFeature}`,
-    `- Factions:`,
-    factionLines,
-    `- Current Conflict: ${dungeon.currentConflict}`,
-    `- Sectors:`,
-    sectorLines,
-    `- Central Secret: ${dungeon.secret}`,
-    `- Hazards: ${dungeon.hazards}`,
-    `- Treasures: ${dungeon.treasures}`,
-    `- Hooks: ${dungeon.hooks}`,
+    `Creative seeds — starting points to interpret. Write your own prose from these;`,
+    `do NOT quote them back or treat them as finished text.`,
+    `- Built by: ${dungeon.builder}`,
+    `- Ruined by: ${dungeon.cause}`,
+    `- Present condition: ${dungeon.condition}`,
+    `- Entered via: ${dungeon.entrance}`,
+    `- Built from: ${dungeon.composition}`,
+    `- Faction A wants: ${dungeon.factions[0]?.goal ?? "Survival"} (obstacle: ${dungeon.factions[0]?.obstacle ?? "a rival faction"})`,
+    `- Faction B wants: ${dungeon.factions[1]?.goal ?? "Dominion"} (obstacle: ${dungeon.factions[1]?.obstacle ?? "a rival faction"})`,
+    ``,
+    `Structure — fixed. Honour these exactly.`,
+    `- EXACTLY ${dungeon.sectors.length} sectors, in order. Name and describe each one yourself.`,
+    `- Each sector's stocked content must match its assigned type:`,
+    stockPlan,
+    `- EXACTLY 2 factions, opposed, pursuing the two goals above. Name them yourself.`,
   ].join("\n");
 }
 
@@ -491,8 +486,19 @@ export function generateDungeonLocal(
   options: DungeonGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const dungeon = resolveDungeon(options, rng);
+  return renderResolvedDungeon(resolveDungeon(options, rng));
+}
 
+/**
+ * Render an already-resolved dungeon as the public document.
+ *
+ * Split out from generateDungeonLocal so a rejected AI response can fall back
+ * to the exact foundation the prompt was built from, rather than re-rolling a
+ * different dungeon than the one the user was told they were getting.
+ */
+function renderResolvedDungeon(
+  dungeon: ResolvedDungeon,
+): PublicGeneratorOutput {
   const sectorsFormatted = dungeon.sectors
     .map((s, idx) => formatSector(s, idx))
     .join("\n\n");
@@ -566,17 +572,15 @@ export function buildDungeonPrompt(
     GENRE_HINTS["Classic Fantasy"] ||
     GENRE_HINTS["Fantasy"];
 
-  const systemInstruction = `You are a master worldbuilder and TTRPG dungeon designer turning a locally-generated dungeon skeleton into evocative, campaign-ready prose.
+  const systemInstruction = `You are a master worldbuilder and TTRPG dungeon designer. You write original ${dungeon.genre} delves that a GM can run at the table.
 
-You will be given a "Locally-generated foundation" of already-decided facts: title seed, history, condition, signature feature, two named factions with goals/obstacles, the conflict between them, named sectors with stocked content, a secret, hazards, treasures, and hooks. Elaborate and dramatize every one of these into vivid prose — do NOT rename factions or sectors, do NOT invent a different conflict, and do NOT contradict any given fact. Your job is embellishment, not reinvention.
+You will be given creative seeds and a fixed structure. The seeds are raw material — interpret them, build on them, and write your own prose. Do not quote them back. The structure (sector count, each sector's stocked-content type, exactly two opposed factions with the stated goals) is fixed and must be honoured precisely.
 
-Return one "sectors" entry for every sector listed in the foundation — all of them, in the given order.
-
-If two given facts appear to conflict (a sealed delve that also has adventurers arriving through open gates, say), treat the hooks as describing the present day and the condition as the older record, and write one sentence reconciling them. Never restate both sides flatly as though the contradiction were not there.
+Everything else is yours to invent: the delve's name, every sector's name and description, the signature feature, the central secret, the hazards, the treasures, the hooks, and both faction names. Make them specific to this delve rather than generic to the genre, and make the whole document internally consistent — the history should explain the present state, the factions' goals should explain the conflict, and the secret should be worth the trip.
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
-  const userMessage = `Expand the locally-generated dungeon foundation below into a detailed, original ${dungeon.genre} dungeon / delve write-up.
+  const userMessage = `Write an original ${dungeon.genre} dungeon / delve.
 
 Setting Context:
 - Active Theme / Genre: ${dungeon.genre} (${genreHint})
@@ -585,30 +589,29 @@ Setting Context:
 - Scale: ${dungeon.scale}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
-Locally-generated foundation (embellish; keep every named fact intact):
-${formatDungeonFoundation(dungeon)}
+${formatDungeonSeeds(dungeon)}
 
 Required JSON schema:
 {
-  "title": "Evocative name for the delve, may refine the title seed above.",
+  "title": "Evocative, specific name for this delve.",
   "summary": "1-2 sentence premise of why this location is interesting.",
-  "history": "Vivid prose expansion of the given History fact — same facts, richer telling.",
-  "currentState": "Vivid prose expansion of the given Current Condition fact.",
-  "signatureFeature": "Vivid prose expansion of the given Signature Feature.",
+  "history": "Who built it, what for, and what went wrong. Grow this from the 'Built by' and 'Ruined by' seeds.",
+  "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
+  "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
   "factions": [
-    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction A's given goal exactly — no lead-in word like 'Seeks', do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words like 'held back by' or 'struggling against', no trailing period)" },
-    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction B's given goal exactly — no lead-in word like 'Seeks', do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words, no trailing period)" }
+    { "name": "Your name for Faction A", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[0]?.goal ?? "Survival"}", "obstacle": "What stands in their way — no lead-in words like 'held back by', no trailing period" },
+    { "name": "Your name for Faction B", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[1]?.goal ?? "Dominion"}", "obstacle": "What stands in their way — no lead-in words, no trailing period" }
   ],
-  "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
+  "currentConflict": "How the two factions' goals are colliding right now, naming both.",
   "sectors": [
-    // EXACTLY ${dungeon.sectors.length} entries — one per sector listed in the foundation, same order. Do not merge, drop, or invent sectors.
-    { "name": "(the text inside the quotes of one given sector, reproduced exactly — do NOT include the surrounding quote marks, a leading number, or a 'Sector N:' prefix)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
+    // EXACTLY ${dungeon.sectors.length} entries, in the order of the stocked-content plan above.
+    { "name": "Your name for this area — no leading number, no 'Sector N:' prefix, no surrounding quote marks", "description": "2-3 sentences of vivid, specific description.", "stockType": "the type assigned to this sector in the plan above", "stockDetail": "One concrete thing here matching that type: a creature for Monster, findable evidence for Lore, a landmark for Special, a danger for Trap." }
   ],
   "inhabitants": "How the two named factions relate to each other, referencing both by name.",
-  "secret": "Vivid prose expansion of the given Central Secret.",
-  "hazards": "Vivid prose expansion of the given Hazards.",
-  "treasures": "Vivid prose expansion of the given Treasures.",
-  "hooks": "2-3 adventure hooks and rumours, expanding the given Hooks."
+  "secret": "The hidden truth at the heart of this delve. Invent it, and make it connect to the history.",
+  "hazards": "The environmental or structural dangers of this place.",
+  "treasures": "Notable loot, relics, or knowledge to be found here.",
+  "hooks": "2-3 reasons a party would come here, and rumours circulating about it."
 }`;
 
   return {
@@ -616,6 +619,54 @@ Required JSON schema:
     userMessage,
     resolved: dungeon,
   };
+}
+
+/**
+ * Check the structural invariants the mechanical layer owns.
+ *
+ * The model authors all the prose now, so there is nothing to check for
+ * fidelity — we no longer care whether it echoed our sentences. What must hold
+ * is the shape: the scale the user picked, the two opposed factions, and one
+ * stocked room per sector. A violation means the response is not the dungeon
+ * that was asked for, so the caller renders the foundation instead.
+ */
+function validateAiDungeon(
+  sectors: DungeonSector[],
+  factions: DungeonFaction[],
+  foundation: ResolvedDungeon,
+): string[] {
+  const problems: string[] = [];
+
+  if (sectors.length !== foundation.sectors.length) {
+    problems.push(
+      `expected ${foundation.sectors.length} sectors, got ${sectors.length}`,
+    );
+  }
+  if (sectors.some((s) => !s.name.trim() || !s.description.trim())) {
+    problems.push("a sector is missing its name or description");
+  }
+  const details = sectors
+    .map((s) => s.stockDetail?.trim().toLowerCase())
+    .filter((d): d is string => !!d);
+  if (new Set(details).size !== details.length) {
+    problems.push("two sectors share the same stocked content");
+  }
+
+  if (factions.length !== 2) {
+    problems.push(`expected 2 factions, got ${factions.length}`);
+  } else {
+    const [a, b] = factions;
+    if (a.name.trim().toLowerCase() === b.name.trim().toLowerCase()) {
+      problems.push("both factions have the same name");
+    }
+    if (
+      sanitizeGoal(a.goal).toLowerCase() === sanitizeGoal(b.goal).toLowerCase()
+    ) {
+      problems.push("both factions pursue the same goal");
+    }
+  }
+
+  return problems;
 }
 
 /**
@@ -686,18 +737,6 @@ export function parseDungeonResponse(
       }),
     );
 
-    // Restore any sector the model dropped, matching on name so a reordered or
-    // partial response still keeps the scale the user asked for.
-    const expectedSectors = foundation?.sectors;
-    if (expectedSectors && sectors.length < expectedSectors.length) {
-      const returned = new Set(sectors.map((s) => s.name.toLowerCase()));
-      for (const expected of expectedSectors) {
-        if (!returned.has(expected.name.toLowerCase())) {
-          sectors.push(expected);
-        }
-      }
-    }
-
     const rawFactions = Array.isArray(parsed.factions) ? parsed.factions : [];
     const factions: DungeonFaction[] = rawFactions
       .filter((f): f is Record<string, unknown> => !!f && typeof f === "object")
@@ -708,8 +747,15 @@ export function parseDungeonResponse(
         goal: typeof f.goal === "string" ? f.goal : "",
         obstacle: typeof f.obstacle === "string" ? f.obstacle : "",
       }));
-    if (factions.length === 0 && foundation?.factions.length) {
-      factions.push(...foundation.factions);
+
+    // Structure is the mechanical layer's to guarantee. If the response
+    // violates it, ship the foundation the prompt was built from rather than a
+    // dungeon that isn't the one the user asked for.
+    if (foundation) {
+      const problems = validateAiDungeon(sectors, factions, foundation);
+      if (problems.length > 0) {
+        return renderResolvedDungeon(foundation);
+      }
     }
 
     const inhabitants = str(parsed.inhabitants, foundation?.inhabitants ?? "");

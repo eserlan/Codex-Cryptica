@@ -368,23 +368,26 @@ describe("buildDungeonPrompt", () => {
     expect(prompt.userMessage).toContain("Required JSON schema");
   });
 
-  it("passes the locally-generated foundation through instead of discarding it", () => {
+  it("gives the AI seeds to interpret, not finished prose to echo", () => {
     const prompt = buildDungeonPrompt({ themeId: "fantasy" });
-    expect(prompt.userMessage).toContain("Locally-generated foundation");
-    expect(prompt.userMessage).toContain(prompt.resolved.history);
-    expect(prompt.userMessage).toContain(prompt.resolved.currentConflict);
+    // The seeds (raw axes) are present...
+    expect(prompt.userMessage).toContain("Creative seeds");
+    expect(prompt.userMessage).toContain(prompt.resolved.builder);
+    expect(prompt.userMessage).toContain(prompt.resolved.cause);
+    expect(prompt.userMessage).toContain(prompt.resolved.condition);
+    // ...but the composed local prose is deliberately withheld, so the model
+    // writes its own rather than reproducing ours verbatim.
+    expect(prompt.userMessage).not.toContain(prompt.resolved.history);
+    expect(prompt.userMessage).not.toContain(prompt.resolved.currentConflict);
+    expect(prompt.userMessage).not.toContain(prompt.resolved.secret);
+    expect(prompt.userMessage).not.toContain(prompt.resolved.treasures);
+    expect(prompt.userMessage).not.toContain(prompt.resolved.signatureFeature);
     for (const faction of prompt.resolved.factions) {
-      expect(prompt.userMessage).toContain(faction.name);
+      expect(prompt.userMessage).not.toContain(faction.name);
     }
-    prompt.resolved.sectors.forEach((sector, idx) => {
-      // Quoted, not prefixed with "Sector N:" — otherwise a compliant AI that
-      // "reuses the given name exactly" copies the ordinal into the name itself
-      // and formatSector() doubles it (e.g. "Sector 1: Sector 1: ...").
-      expect(prompt.userMessage).toContain(`"${sector.name}"`);
-      expect(prompt.userMessage).not.toContain(
-        `Sector ${idx + 1}: ${sector.name}`,
-      );
-    });
+    for (const sector of prompt.resolved.sectors) {
+      expect(prompt.userMessage).not.toContain(sector.name);
+    }
   });
 });
 
@@ -511,24 +514,40 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toContain("halls..");
   });
 
-  it("restores sectors the AI dropped so the dungeon keeps its selected scale", () => {
+  it("rejects a response with the wrong sector count and ships the foundation", () => {
     const prompt = buildDungeonPrompt({
       themeId: "lancer",
       scale: "Sprawling Megadungeon (5+ Sectors)",
     });
     expect(prompt.resolved.sectors.length).toBeGreaterThanOrEqual(5);
 
-    // A model that follows the schema's single example instead of the
-    // foundation's list returns one sector for a six-sector dungeon.
+    // One sector for a five-plus sector dungeon is not the dungeon the user
+    // asked for, so the whole response is discarded.
     const short = JSON.stringify({
-      title: "T",
+      title: "Model Title",
       summary: "S",
       sectors: [
         {
-          name: prompt.resolved.sectors[0].name,
-          description: "Expanded.",
+          name: "Only Room",
+          description: "d",
           stockType: "Trap",
-          stockDetail: "d",
+          stockDetail: "x",
+        },
+      ],
+      factions: [
+        {
+          name: "A",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "o1",
+        },
+        {
+          name: "B",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Survival",
+          obstacle: "o2",
         },
       ],
     });
@@ -536,11 +555,116 @@ describe("parseDungeonResponse", () => {
     const out = parseDungeonResponse(short, {}, seededRng(1), prompt.resolved);
     const rendered = (out.content.match(/### Sector \d+:/g) ?? []).length;
     expect(rendered).toBe(prompt.resolved.sectors.length);
-    // The one the model did expand keeps its richer description.
-    expect(out.content).toContain("Expanded.");
-    for (const sector of prompt.resolved.sectors) {
-      expect(out.content).toContain(sector.name);
-    }
+    expect(out.title).toBe(prompt.resolved.title);
+    expect(out.content).not.toContain("Only Room");
+  });
+
+  it("rejects a response whose factions collapse into one", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+
+    const sameGoal = JSON.stringify({
+      title: "Model Title",
+      summary: "S",
+      sectors,
+      factions: [
+        {
+          name: "A",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "o1",
+        },
+        {
+          name: "B",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Wealth",
+          obstacle: "o2",
+        },
+      ],
+    });
+    expect(
+      parseDungeonResponse(sameGoal, {}, seededRng(1), prompt.resolved).title,
+    ).toBe(prompt.resolved.title);
+
+    const dupDetail = JSON.stringify({
+      title: "Model Title",
+      summary: "S",
+      sectors: sectors.map((s) => ({ ...s, stockDetail: "identical" })),
+      factions: [
+        {
+          name: "A",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "o1",
+        },
+        {
+          name: "B",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Survival",
+          obstacle: "o2",
+        },
+      ],
+    });
+    expect(
+      parseDungeonResponse(dupDetail, {}, seededRng(1), prompt.resolved).title,
+    ).toBe(prompt.resolved.title);
+  });
+
+  it("keeps a structurally valid response even though it invents every name", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    const valid = JSON.stringify({
+      title: "The Wholly Invented Vault",
+      summary: "A delve the model named itself.",
+      history: "Model history.",
+      currentState: "Model state.",
+      signatureFeature: "Model feature.",
+      currentConflict: "Model conflict.",
+      sectors: prompt.resolved.sectors.map((s, i) => ({
+        name: `Invented Room ${i + 1}`,
+        description: `Invented description ${i + 1}.`,
+        stockType: s.stockType,
+        stockDetail: `Invented detail ${i + 1}.`,
+      })),
+      factions: [
+        {
+          name: "the Invented First",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "o1",
+        },
+        {
+          name: "the Invented Second",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Survival",
+          obstacle: "o2",
+        },
+      ],
+      inhabitants: "Model inhabitants.",
+      secret: "Model secret.",
+      hazards: "Model hazards.",
+      treasures: "Model treasures.",
+      hooks: "Model hooks.",
+    });
+
+    const out = parseDungeonResponse(valid, {}, seededRng(1), prompt.resolved);
+    expect(out.title).toBe("The Wholly Invented Vault");
+    expect(out.content).toContain("Invented Room 1");
+    expect(out.content).toContain("the Invented First");
+    expect(out.lore).toContain("Model secret.");
+    // None of the local prose leaks through when the model supplied its own.
+    expect(out.lore).not.toContain(prompt.resolved.secret);
+    expect(out.content).not.toContain(prompt.resolved.sectors[0].name);
   });
 
   it("never drops a section when the AI omits its field", () => {
@@ -575,16 +699,22 @@ describe("parseDungeonResponse", () => {
     expect(out.content).toContain(prompt.resolved.history);
   });
 
-  it("tells the AI exactly how many sectors to return", () => {
+  it("fixes the structure the model must honour", () => {
     const prompt = buildDungeonPrompt({
       scale: "Medium Complex (3-4 Sectors)",
     });
-    expect(prompt.userMessage).toContain(
-      `EXACTLY ${prompt.resolved.sectors.length} entries`,
-    );
-    expect(prompt.systemInstruction).toContain(
-      'one "sectors" entry for every sector',
-    );
+    const n = prompt.resolved.sectors.length;
+    expect(prompt.userMessage).toContain(`EXACTLY ${n} sectors`);
+    expect(prompt.userMessage).toContain(`EXACTLY ${n} entries`);
+    expect(prompt.userMessage).toContain("EXACTLY 2 factions");
+    // The per-sector stock plan is mechanical and must reach the model.
+    for (const sector of prompt.resolved.sectors) {
+      expect(prompt.userMessage).toContain(sector.stockType as string);
+    }
+    // Both faction goals are fixed by the roll, not chosen by the model.
+    for (const faction of prompt.resolved.factions) {
+      expect(prompt.userMessage).toContain(faction.goal);
+    }
   });
 
   it("strips quote marks an AI copies from the prompt into a sector name", () => {
