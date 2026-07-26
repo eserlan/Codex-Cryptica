@@ -849,6 +849,146 @@ describe("parseDungeonResponse", () => {
     expect(prompt.userMessage).not.toContain("Already used elsewhere");
   });
 
+  it("flags a rejected response so the UI can say the AI output was unusable", () => {
+    // runWithAIFallback only stamps aiFallback when the model call throws. A
+    // call that succeeds and is then rejected by validation used to be
+    // indistinguishable from an ordinary local generation, so two consecutive
+    // fully-local delves gave no clue the AI path had failed at all.
+    const prompt = buildDungeonPrompt({ themeId: "sci-fi" });
+
+    const structural = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors: [],
+        factions: [],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(structural.rejected).toBe(true);
+    expect(structural.output.aiFallback).toBe(true);
+
+    const malformed = parseDungeonResponseDetailed(
+      "not json",
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(malformed.output.aiFallback).toBe(true);
+
+    // A response that was actually used is not flagged.
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const ok = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors,
+        factions: [
+          {
+            name: "the First",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+            obstacle: "o1",
+          },
+          {
+            name: "the Second",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(ok.rejected).toBe(false);
+    expect(ok.output.aiFallback).toBeUndefined();
+  });
+
+  it("keeps the model's work for a content gap but discards it for a structural one", () => {
+    // Conflating the two meant one skipped field cost the entire AI-authored
+    // dungeon, replacing it with table prose — strictly worse than the single
+    // substituted section the rejection was meant to prevent.
+    const prompt = buildDungeonPrompt({
+      themeId: "sci-fi",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Invented Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const factions = [
+      {
+        name: "the First",
+        virtue: "Bold",
+        vice: "Cruel",
+        goal: "Wealth",
+        obstacle: "o1",
+      },
+      {
+        name: "the Second",
+        virtue: "Wise",
+        vice: "Greedy",
+        goal: "Survival",
+        obstacle: "o2",
+      },
+    ];
+    const { hooks: _dropped, ...withoutHooks } = NARRATIVE;
+
+    // Content gap: reported, but the response survives with the gap patched.
+    const gap = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "The Invented Vault",
+        summary: "S",
+        throughline: "T",
+        ...withoutHooks,
+        sectors,
+        factions,
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(gap.rejected).toBe(false);
+    expect(gap.problems.join(" ")).toContain("hooks");
+    expect(gap.output.title).toBe("The Invented Vault");
+    expect(gap.output.content).toContain("Invented Room 1");
+    expect(gap.output.lore).toContain("### Adventure Hooks & Rumours");
+
+    // Structural violation: the response is not the dungeon that was asked for.
+    const structural = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "The Invented Vault",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors: [sectors[0]],
+        factions,
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(structural.rejected).toBe(true);
+    expect(structural.output.title).toBe(prompt.resolved.title);
+  });
+
   it("asks again for an omitted narrative field instead of substituting table prose", () => {
     // A delve came back whose Adventure Hooks were one flat sentence lifted
     // verbatim from the cyberpunk table, because the model omitted "hooks" and
