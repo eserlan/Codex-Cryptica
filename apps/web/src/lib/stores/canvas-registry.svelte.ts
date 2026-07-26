@@ -1,6 +1,5 @@
 import { getVaultDir } from "../utils/opfs";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { vault } from "./vault.svelte";
 import {
   saveCanvasToDisk,
   loadCanvasesFromDisk,
@@ -367,6 +366,7 @@ export class CanvasRegistryStore {
 
     this.canvases[id] = canvasData;
 
+    const { vault } = await import("./vault.svelte");
     if (vault.activeVaultId) {
       vault.canvases[id] = canvasData;
     }
