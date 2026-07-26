@@ -190,20 +190,23 @@ function generateFaction(
   };
 }
 
-/** Render a lightweight pointcrawl: a linear chain plus any non-adjacent shortcut routes. */
+/**
+ * Render a lightweight pointcrawl as a wrap-friendly numbered list (not a fenced
+ * ASCII diagram — fixed-width unicode chains don't reflow on narrow screens).
+ */
 function renderDungeonMap(
   sectorNames: string[],
   edges: DungeonSectorEdge[],
 ): string {
   if (sectorNames.length === 0) return "";
-  const chain = sectorNames.map((n, i) => `[${i + 1}] ${n}`).join("  ──  ");
+  const steps = sectorNames.map((n, i) => `${i + 1}. ${n}`).join("\n");
   const branches = edges.filter((e) => e.to !== e.from + 1);
-  if (branches.length === 0) return chain;
+  if (branches.length === 0) return steps;
   const branchLines = branches.map(
     (e) =>
-      `Additional route: [${e.from + 1}] ${sectorNames[e.from]} ↔ [${e.to + 1}] ${sectorNames[e.to]} via ${e.via}`,
+      `*Shortcut: ${sectorNames[e.from]} ↔ ${sectorNames[e.to]}, via ${e.via}.*`,
   );
-  return [chain, "", ...branchLines].join("\n");
+  return [steps, "", ...branchLines].join("\n");
 }
 
 /**
@@ -354,7 +357,7 @@ function formatDungeonFoundation(dungeon: ResolvedDungeon): string {
   const sectorLines = dungeon.sectors
     .map(
       (s, idx) =>
-        `  - Sector ${idx + 1}: ${s.name} — ${s.description}${
+        `  ${idx + 1}. "${s.name}" — ${s.description}${
           s.stockType && s.stockDetail
             ? ` [${s.stockType}: ${s.stockDetail}]`
             : ""
@@ -409,7 +412,8 @@ export function generateDungeonLocal(
     .map((s, idx) => formatSector(s, idx))
     .join("\n\n");
 
-  const lore = [
+  // Main column: the narrative — what the dungeon is and why it matters.
+  const content = [
     `## History & Original Purpose`,
     dungeon.history,
     ``,
@@ -422,11 +426,6 @@ export function generateDungeonLocal(
     `## Current Conflict`,
     dungeon.currentConflict,
     ``,
-    `## Dungeon Layout`,
-    "```",
-    dungeon.map,
-    "```",
-    ``,
     `## Key Sectors & Layout`,
     sectorsFormatted,
     ``,
@@ -434,17 +433,23 @@ export function generateDungeonLocal(
     dungeon.inhabitants,
     ``,
     formatFactionsList(dungeon.factions),
+  ].join("\n");
+
+  // Right rail / GM quick reference: what you need at the table.
+  const lore = [
+    `### Dungeon Layout`,
+    dungeon.map,
     ``,
-    `## Central Secret / Boss Mystery`,
+    `### Central Secret / Boss Mystery`,
     dungeon.secret,
     ``,
-    `## Hazards & Traps`,
+    `### Hazards & Traps`,
     dungeon.hazards,
     ``,
-    `## Treasures & Artifacts`,
+    `### Treasures & Artifacts`,
     dungeon.treasures,
     ``,
-    `## Adventure Hooks & Rumours`,
+    `### Adventure Hooks & Rumours`,
     dungeon.hooks,
   ].join("\n");
 
@@ -452,7 +457,7 @@ export function generateDungeonLocal(
     type: "location",
     title: dungeon.title,
     summary: dungeon.premise,
-    content: lore,
+    content,
     lore,
     labels: [
       "dungeon",
@@ -507,7 +512,7 @@ Required JSON schema:
   ],
   "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
   "sectors": [
-    { "name": "(reuse a given sector name)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
+    { "name": "(reuse a given sector's quoted name exactly, with no leading number and no added prefix)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
   ],
   "inhabitants": "How the two named factions relate to each other, referencing both by name.",
   "secret": "Vivid prose expansion of the given Central Secret.",
@@ -606,20 +611,27 @@ export function parseDungeonResponse(
     const factionsFormatted =
       factions.length > 0 ? formatFactionsList(factions) : "";
 
-    const lore = [
+    // Main column: the narrative — what the dungeon is and why it matters.
+    const content = [
       history ? `## History & Original Purpose\n${history}\n` : "",
       currentState ? `## Current State & Function\n${currentState}\n` : "",
       signatureFeature ? `## Signature Feature\n${signatureFeature}\n` : "",
       currentConflict ? `## Current Conflict\n${currentConflict}\n` : "",
-      map ? `## Dungeon Layout\n\`\`\`\n${map}\n\`\`\`\n` : "",
       `## Key Sectors & Layout\n${sectorsFormatted}\n`,
       inhabitants || factionsFormatted
         ? `## Inhabitants & Factions\n${[inhabitants, factionsFormatted].filter(Boolean).join("\n\n")}\n`
         : "",
-      secret ? `## Central Secret / Boss Mystery\n${secret}\n` : "",
-      hazards ? `## Hazards & Traps\n${hazards}\n` : "",
-      treasures ? `## Treasures & Artifacts\n${treasures}\n` : "",
-      hooks ? `## Adventure Hooks & Rumours\n${hooks}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    // Right rail / GM quick reference: what you need at the table.
+    const lore = [
+      map ? `### Dungeon Layout\n${map}\n` : "",
+      secret ? `### Central Secret / Boss Mystery\n${secret}\n` : "",
+      hazards ? `### Hazards & Traps\n${hazards}\n` : "",
+      treasures ? `### Treasures & Artifacts\n${treasures}\n` : "",
+      hooks ? `### Adventure Hooks & Rumours\n${hooks}` : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -631,7 +643,7 @@ export function parseDungeonResponse(
       type: "location",
       title,
       summary,
-      content: lore,
+      content,
       lore,
       labels: [
         "dungeon",
