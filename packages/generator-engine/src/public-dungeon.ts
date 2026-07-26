@@ -187,6 +187,14 @@ function sanitizeObstacle(s: string): string {
     .replace(/\.+$/, "");
 }
 
+/** Strip a leading "Seeks"/"Seeking" an AI response may have added to a goal, since callers add their own lead-in. */
+function sanitizeGoal(s: string): string {
+  return s
+    .replace(/^\s*(seeks|seeking)\s*/i, "")
+    .trim()
+    .replace(/\.+$/, "");
+}
+
 interface UsedFactionTraits {
   names: Set<string>;
   goals: Set<string>;
@@ -425,7 +433,7 @@ function formatFactionsList(factions: DungeonFaction[]): string {
   return factions
     .map(
       (f) =>
-        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${sanitizeObstacle(f.obstacle)}.`,
+        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${sanitizeGoal(f.goal)}; held back by ${sanitizeObstacle(f.obstacle)}.`,
     )
     .join("\n");
 }
@@ -546,8 +554,8 @@ Required JSON schema:
   "currentState": "Vivid prose expansion of the given Current Condition fact.",
   "signatureFeature": "Vivid prose expansion of the given Signature Feature.",
   "factions": [
-    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction A's given goal exactly — do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words like 'held back by' or 'struggling against', no trailing period)" },
-    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction B's given goal exactly — do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words, no trailing period)" }
+    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction A's given goal exactly — no lead-in word like 'Seeks', do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words like 'held back by' or 'struggling against', no trailing period)" },
+    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction B's given goal exactly — no lead-in word like 'Seeks', do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words, no trailing period)" }
   ],
   "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
   "sectors": [

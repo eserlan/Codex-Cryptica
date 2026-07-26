@@ -141,6 +141,20 @@ describe("generateDungeonLocal", () => {
     }
   });
 
+  it("draws faction names from a pool wide enough to avoid one name dominating", () => {
+    // FACTION_NAMES_BY_GENRE has 10 entries per genre; over 30 draws we should
+    // see well more than half of them, not just the same one or two repeating.
+    const seenNames = new Set<string>();
+    for (let seed = 1; seed <= 30; seed++) {
+      const out = generateDungeonLocal({}, seededRng(seed));
+      const names = [...out.content.matchAll(/- \*\*(.+?)\*\* — /g)].map(
+        (m) => m[1],
+      );
+      for (const name of names) seenNames.add(name);
+    }
+    expect(seenNames.size).toBeGreaterThanOrEqual(6);
+  });
+
   it("does not repeat a stock detail within the same bucket type unless the pool is exhausted", () => {
     // INHABITANTS/HAZARDS/HOOKS/SIGNATURE_FEATURES_BY_GENRE all have 5 entries
     // per genre; the global pick (hooks/hazards/signatureFeature) also
@@ -379,6 +393,36 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toMatch(/held back by held back by/i);
     expect(out.content).not.toMatch(/held back by struggling against/i);
     expect(out.content).not.toContain("halls..");
+  });
+
+  it("strips a redundant 'Seeks' lead-in an AI adds to a goal", () => {
+    const sampleJson = JSON.stringify({
+      title: "T",
+      summary: "S",
+      factions: [
+        {
+          name: "the Testers",
+          virtue: "Bold",
+          vice: "Reckless",
+          goal: "Seeks Survival",
+          obstacle: "a rival faction",
+        },
+        {
+          name: "the Others",
+          virtue: "Wise",
+          vice: "Cruel",
+          goal: "Seeking Ascension.",
+          obstacle: "an ancient guardian",
+        },
+      ],
+      sectors: [],
+    });
+
+    const out = parseDungeonResponse(sampleJson, {});
+    expect(out.content).toContain("Seeks Survival;");
+    expect(out.content).toContain("Seeks Ascension;");
+    expect(out.content).not.toMatch(/seeks seeks/i);
+    expect(out.content).not.toMatch(/seeks seeking/i);
   });
 
   it("falls back to local generation on invalid JSON input", () => {
