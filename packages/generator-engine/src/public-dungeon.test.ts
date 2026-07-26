@@ -63,7 +63,7 @@ describe("generateDungeonLocal", () => {
         themeId: "scifi",
         purpose: "Research Facility",
         currentState: "Arcane / Tech Anomaly",
-        scale: "Small Lair (1-2 Sectors)",
+        scale: "Small Lair (2 Sectors)",
       },
       seededRng(100),
     );
@@ -80,11 +80,10 @@ describe("generateDungeonLocal", () => {
   it("generates a sector count matching each scale's documented range", () => {
     for (let seed = 1; seed <= 15; seed++) {
       const small = generateDungeonLocal(
-        { scale: "Small Lair (1-2 Sectors)" },
+        { scale: "Small Lair (2 Sectors)" },
         seededRng(seed),
       );
-      expect(sectorCount(small.content)).toBeGreaterThanOrEqual(1);
-      expect(sectorCount(small.content)).toBeLessThanOrEqual(2);
+      expect(sectorCount(small.content)).toBe(2);
 
       const medium = generateDungeonLocal(
         { scale: "Medium Complex (3-4 Sectors)" },
@@ -98,6 +97,21 @@ describe("generateDungeonLocal", () => {
         seededRng(seed + 200),
       );
       expect(sectorCount(sprawling.content)).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it("never generates a single-sector dungeon, whatever the scale", () => {
+    // Two rival factions and a navigable layout are generated unconditionally,
+    // and neither means anything in one room.
+    const scales = [...dungeonConfig.scales, "Some Custom Scale"];
+    for (const scale of scales) {
+      for (let seed = 1; seed <= 20; seed++) {
+        const out = generateDungeonLocal({ scale }, seededRng(seed));
+        expect(
+          sectorCount(out.content),
+          `${scale} seed ${seed}`,
+        ).toBeGreaterThanOrEqual(2);
+      }
     }
   });
 
