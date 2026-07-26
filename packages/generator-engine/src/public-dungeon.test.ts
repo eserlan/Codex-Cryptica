@@ -205,6 +205,52 @@ describe("generateDungeonLocal", () => {
     expect(out.content).toContain("Submerged in Brine —");
   });
 
+  it("stocks Lore and Monster rooms from room-scale tables, not hooks or factions", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const out = generateDungeonLocal(
+        { themeId: "lancer", scale: "Sprawling Megadungeon (5+ Sectors)" },
+        seededRng(seed),
+      );
+      const globalHooks = out.lore
+        .split("### Adventure Hooks & Rumours")[1]
+        .trim();
+      for (const [, detail] of out.content.matchAll(/\*Lore — (.+?)\*/g)) {
+        // A Lore room holds findable evidence, not a GM-facing prompt.
+        expect(globalHooks).not.toContain(detail);
+        expect(detail).not.toMatch(
+          /hires the party|wants .* audited|will pay/i,
+        );
+      }
+      // A Monster room holds a room-scale threat, not one of the two factions
+      // already named in Inhabitants & Factions.
+      const factionNames = [...out.content.matchAll(/- \*\*(.+?)\*\* —/g)].map(
+        (m) => m[1].replace(/^the /i, ""),
+      );
+      for (const [, detail] of out.content.matchAll(/\*Monster — (.+?)\*/g)) {
+        for (const name of factionNames) {
+          expect(detail).not.toContain(name);
+        }
+      }
+    }
+  });
+
+  it("uses genre-appropriate faction obstacles", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const lancer = generateDungeonLocal(
+        { themeId: "lancer" },
+        seededRng(seed),
+      );
+      // Fantasy phrasing must not reach a hard sci-fi theme.
+      expect(lancer.content).not.toMatch(/slow curse|ancient guardian/i);
+
+      const fantasy = generateDungeonLocal(
+        { themeId: "fantasy" },
+        seededRng(seed),
+      );
+      expect(fantasy.content).not.toMatch(/reactor margin|Union inspection/i);
+    }
+  });
+
   it("draws faction names from a pool wide enough to avoid one name dominating", () => {
     // FACTION_NAMES_BY_GENRE has 10 entries per genre; over 30 draws we should
     // see well more than half of them, not just the same one or two repeating.
@@ -457,6 +503,28 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toMatch(/held back by held back by/i);
     expect(out.content).not.toMatch(/held back by struggling against/i);
     expect(out.content).not.toContain("halls..");
+  });
+
+  it("strips quote marks an AI copies from the prompt into a sector name", () => {
+    const sampleJson = JSON.stringify({
+      title: "T",
+      summary: "S",
+      sectors: [
+        { name: '"The Cold Bay"', description: "d" },
+        { name: "Sector 2: The Printer Deck", description: "d" },
+        { name: "“The Core Vault”", description: "d" },
+      ],
+    });
+
+    const out = parseDungeonResponse(sampleJson, {});
+    expect(out.content).toContain("### Sector 1: The Cold Bay");
+    expect(out.content).toContain("### Sector 2: The Printer Deck");
+    expect(out.content).toContain("### Sector 3: The Core Vault");
+    expect(out.content).not.toMatch(/### Sector \d+: ["“]/);
+    expect(out.content).not.toMatch(/### Sector \d+: Sector \d+:/);
+    // The layout list is built from the same names, so it must be clean too.
+    expect(out.lore).toContain("1. The Cold Bay");
+    expect(out.lore).not.toMatch(/^\d+\. ["“]/m);
   });
 
   it("strips a redundant 'Seeks' lead-in an AI adds to a goal", () => {

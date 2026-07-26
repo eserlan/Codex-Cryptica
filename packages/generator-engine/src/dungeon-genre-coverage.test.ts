@@ -37,6 +37,9 @@ describe("dungeon genre coverage", () => {
     "sectors",
     "inhabitants",
     "factionNames",
+    "factionObstacles",
+    "loreFinds",
+    "roomEncounters",
     "secrets",
     "hazards",
     "treasures",
@@ -79,6 +82,9 @@ describe("dungeon genre coverage", () => {
         sectors: 6,
         inhabitants: 5,
         factionNames: 10,
+        factionObstacles: 8,
+        loreFinds: 5,
+        roomEncounters: 5,
         // Secrets and treasures are drawn once per dungeon and never dedup'd
         // against anything, so the pool size alone decides how often a GM sees
         // a repeat. Held higher than the per-sector pools for that reason.
@@ -125,6 +131,34 @@ describe("dungeon genre coverage", () => {
       (s) => !CONDITION_BY_STATE[s],
     );
     expect(uncovered).toEqual([]);
+  });
+
+  it("keeps room encounters distinct from hazards", () => {
+    // The Monster bucket should hold something that acts; the Trap bucket holds
+    // environmental danger. Writing a hazard into roomEncounters puts the same
+    // idea in two sectors of one dungeon under different labels.
+    const significant = (s: string) =>
+      new Set(
+        s
+          .toLowerCase()
+          .replace(/[^a-z\s]/g, "")
+          .split(/\s+/)
+          .filter((w) => w.length > 3),
+      );
+    for (const [label, tables] of Object.entries(DUNGEON_GENRE_TABLES)) {
+      for (const encounter of tables.roomEncounters) {
+        const a = significant(encounter);
+        for (const hazard of tables.hazards) {
+          const b = significant(hazard);
+          const shared = [...a].filter((w) => b.has(w)).length;
+          const overlap = shared / Math.min(a.size, b.size);
+          expect(
+            overlap,
+            `${label}: room encounter restates a hazard\n  ${encounter}\n  ${hazard}`,
+          ).toBeLessThan(0.6);
+        }
+      }
+    }
   });
 
   it("only overrides purposes the genre actually offers", () => {

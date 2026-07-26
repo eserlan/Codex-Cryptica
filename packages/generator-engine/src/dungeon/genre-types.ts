@@ -37,6 +37,24 @@ export interface DungeonGenreTables {
   sectors: Array<{ name: string; description: string }>;
   inhabitants: string[];
   factionNames: string[];
+  /**
+   * What holds a faction back, completing "held back by X". Genre-specific
+   * because a generic list puts "a slow curse eating away at their numbers"
+   * in front of a Lancer NHP.
+   */
+  factionObstacles: string[];
+  /**
+   * Discoverable evidence for a Lore-stocked room — something the party finds
+   * and reads, not a reason to come here. Distinct from `hooks`, which are
+   * GM-facing prompts and read wrong when printed as room contents.
+   */
+  loreFinds: string[];
+  /**
+   * A room-scale creature or threat for a Monster-stocked sector. Distinct
+   * from `inhabitants`, which describes dungeon-wide factions and duplicates
+   * the two named factions when used as per-room content.
+   */
+  roomEncounters: string[];
   secrets: string[];
   hazards: string[];
   treasures: string[];
