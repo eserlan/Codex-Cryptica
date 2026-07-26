@@ -385,6 +385,27 @@ describe("buildDungeonPrompt", () => {
     expect(prompt.userMessage).toContain("Required JSON schema");
   });
 
+  it("requires the invented history to arrive at the fixed current state", () => {
+    // The model authors the history now, so it can write an ending that
+    // contradicts the state it was given — a delve "sealed permanently" with
+    // "every human executed" that is nonetheless an occupied stronghold with
+    // human sentinels and two factions fighting inside. This is a prompt-level
+    // constraint only; there is no code check that the prose is coherent.
+    const prompt = buildDungeonPrompt({
+      themeId: "cyberpunk",
+      currentState: "Occupied Stronghold",
+    });
+    expect(prompt.systemInstruction).toContain(
+      "Your history must arrive at exactly that state",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "do not kill everyone in a delve that currently has inhabitants",
+    );
+    expect(prompt.userMessage).toContain(
+      "end it somewhere compatible with the Current State",
+    );
+  });
+
   it("gives the AI seeds to interpret, not finished prose to echo", () => {
     const prompt = buildDungeonPrompt({ themeId: "fantasy" });
     // The seeds (raw axes) are present...

@@ -629,6 +629,8 @@ You will be given creative seeds and a fixed structure. The seeds are raw materi
 
 Everything else is yours to invent: the delve's name, every sector's name and description, the signature feature, the central secret, the hazards, the treasures, the hooks, and both faction names. Make them specific to this delve rather than generic to the genre, and make the whole document internally consistent — the history should explain the present state, the factions' goals should explain the conflict, and the secret should be worth the trip.
 
+The Current State above is fixed and describes the delve as it is right now. Your history must arrive at exactly that state. Do not end the history in a condition that contradicts it: do not seal a delve permanently that is currently occupied, do not kill everyone in a delve that currently has inhabitants, and do not flood or bury a delve that the factions are presently moving through. Whatever went wrong, the place must end up in the stated condition with the two factions able to contest it.
+
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
   const userMessage = `Write an original ${dungeon.genre} dungeon / delve.
@@ -646,7 +648,7 @@ Required JSON schema:
 {
   "title": "Evocative, specific name for this delve.",
   "summary": "1-2 sentence premise of why this location is interesting.",
-  "history": "Who built it, what for, and what went wrong. Grow this from the 'Built by' and 'Ruined by' seeds.",
+  "history": "Who built it, what for, and what went wrong. Grow this from the 'Built by' and 'Ruined by' seeds, and end it somewhere compatible with the Current State — the two factions must still be able to get in and fight over it.",
   "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
   "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
   "factions": [
