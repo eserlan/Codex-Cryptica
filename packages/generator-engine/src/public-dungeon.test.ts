@@ -1472,6 +1472,112 @@ describe("parseDungeonResponse", () => {
     expect(out.lore).not.toMatch(/^\d+\. ["“]/m);
   });
 
+  it("lowercases an obstacle so it continues the 'held back by' sentence", () => {
+    // Every seed obstacle is written lowercase because the template reads
+    // "held back by X". A model asked "what stands in their way" answers with a
+    // capital, and the line renders as "held back by Deep-seated paranoia".
+    const sampleJson = JSON.stringify({
+      title: "T",
+      summary: "S",
+      throughline: "T",
+      ...NARRATIVE,
+      sectors: [],
+      factions: [
+        {
+          name: "A",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "Deep-seated paranoia among their captains.",
+        },
+        {
+          name: "B",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Survival",
+          obstacle: "An unbreakable blood-oath.",
+        },
+      ],
+    });
+
+    const out = parseDungeonResponse(sampleJson, {});
+    expect(out.content).toContain("held back by deep-seated paranoia");
+    expect(out.content).toContain("held back by an unbreakable blood-oath");
+    expect(out.content).not.toMatch(/held back by [A-Z]/);
+  });
+
+  it("leaves a proper noun at the start of an obstacle capitalised", () => {
+    const sampleJson = JSON.stringify({
+      title: "T",
+      summary: "S",
+      throughline: "T",
+      ...NARRATIVE,
+      sectors: [],
+      factions: [
+        {
+          name: "A",
+          virtue: "Bold",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "Union Command already has the site flagged",
+        },
+        {
+          name: "B",
+          virtue: "Wise",
+          vice: "Greedy",
+          goal: "Survival",
+          obstacle: "NHP lockouts they cannot clear",
+        },
+      ],
+    });
+
+    const out = parseDungeonResponse(sampleJson, {});
+    expect(out.content).toContain("held back by Union Command");
+    expect(out.content).toContain("held back by NHP lockouts");
+  });
+
+  it("closes a stock detail the model left unterminated", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const out = parseDungeonResponse(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors: prompt.resolved.sectors.map((s, i) => ({
+          name: `Room ${i + 1}`,
+          description: "d",
+          stockType: s.stockType,
+          stockDetail: `a ballista manned by mercenaries ${i + 1}`,
+        })),
+        factions: [
+          {
+            name: "the First",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+            obstacle: "o1",
+          },
+          {
+            name: "the Second",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(out.content).toContain("mercenaries 1.*");
+    expect(out.content).not.toMatch(/mercenaries \d\*/);
+  });
+
   it("strips a redundant 'Seeks' lead-in an AI adds to a goal", () => {
     const sampleJson = JSON.stringify({
       title: "T",

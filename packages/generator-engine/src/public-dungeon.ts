@@ -202,10 +202,19 @@ function sentenceCase(s: string): string {
  * AI response may have added to an obstacle string, since callers add their own lead-in.
  */
 function sanitizeObstacle(s: string): string {
-  return s
+  const stripped = s
     .replace(/^\s*(held back by|struggling against)\s*/i, "")
     .trim()
     .replace(/\.+$/, "");
+  // The template reads "held back by X", so X continues a sentence. Every seed
+  // obstacle is written lowercase for that reason, but a model asked "what
+  // stands in their way" answers with a capital and renders as "held back by
+  // Deep-seated paranoia". Only the first word is lowered, and only when it
+  // looks like an ordinary word rather than an acronym or a name that keeps
+  // capitalising ("NHP", "Union Command").
+  const [first = "", second = ""] = stripped.split(/\s+/);
+  const ordinary = /^[A-Z][a-z-]+$/.test(first) && !/^[A-Z]/.test(second);
+  return ordinary ? stripped[0].toLowerCase() + stripped.slice(1) : stripped;
 }
 
 /**
@@ -607,10 +616,16 @@ function formatFactionsList(factions: DungeonFaction[]): string {
     .join("\n");
 }
 
+/** Close a sentence the model left unterminated, so it sits with table entries. */
+function endSentence(text: string): string {
+  const trimmed = text.trim();
+  return !trimmed || /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 function formatSector(s: DungeonSector, idx: number): string {
   const stockLine =
     s.stockType && s.stockDetail
-      ? `\n\n*${s.stockType} — ${s.stockDetail}*`
+      ? `\n\n*${s.stockType} — ${endSentence(s.stockDetail)}*`
       : "";
   return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}`;
 }
@@ -740,8 +755,8 @@ Required JSON schema:
   "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
   "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
   "factions": [
-    { "name": "Your name for Faction A", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[0]?.goal ?? "Survival"}", "obstacle": "What stands in their way — no lead-in words like 'held back by', no trailing period" },
-    { "name": "Your name for Faction B", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[1]?.goal ?? "Dominion"}", "obstacle": "What stands in their way — no lead-in words, no trailing period" }
+    { "name": "Your name for Faction A", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[0]?.goal ?? "Survival"}", "obstacle": "What stands in their way, phrased to continue the sentence 'held back by …' — start lowercase, no lead-in words, no trailing period" },
+    { "name": "Your name for Faction B", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[1]?.goal ?? "Dominion"}", "obstacle": "What stands in their way, phrased to continue 'held back by …' — start lowercase, no lead-in words, no trailing period" }
   ],
   "currentConflict": "How the two factions' goals are colliding right now, naming both.",
   "sectors": [
