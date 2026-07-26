@@ -588,6 +588,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
     icon: "icon-[lucide--castle]",
   },
+  "delve-structural-builder": {
+    id: "delve-structural-builder",
+    title: "Delve Spatial Canvas Builder",
+    content:
+      "Transform dungeon concepts into interactive spatial canvas maps. Open a generated dungeon concept and click 'Build Delve on Canvas' to create a .canvas layout with sector group frames, tactical room role badges, custom passage edges (hidden, locked, vertical), and context-aware room stocking.",
+    icon: "icon-[lucide--map]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

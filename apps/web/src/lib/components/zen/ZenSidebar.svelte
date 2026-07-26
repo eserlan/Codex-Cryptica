@@ -42,6 +42,8 @@
 
   let isImageLoaded = $state(false);
   let isDraggingOver = $state(false);
+  let fileInput = $state<HTMLInputElement | null>(null);
+  let imageUploadError = $state("");
 
   const handleDragOver = (e: DragEvent) => {
     if (vault.isGuest) return;
@@ -91,26 +93,41 @@
 
     // Fallback to standard file drop
     if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      await handleFileDrop(e.dataTransfer.files[0]);
+      await handleImageFile(e.dataTransfer.files[0]);
     }
   };
 
-  async function handleFileDrop(file: File) {
+  const handleFileInputChange = async (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+
+    try {
+      if (file) await handleImageFile(file);
+    } finally {
+      // Selecting the same image again should still trigger a new upload.
+      input.value = "";
+    }
+  };
+
+  async function handleImageFile(file: File) {
     if (!entity || !file) return;
-    if (file.type.startsWith("image/")) {
-      try {
-        const { image, thumbnail } = await vault.saveImageToVault(
-          file,
-          entity.id,
-        );
-        await vault.updateEntity(entity.id, { image, thumbnail });
-      } catch (err) {
-        debugStore.error("[ZenSidebar] Failed to save external file:", err);
-        notificationStore.notify(
-          "Failed to save image. Check the console for details.",
-          "error",
-        );
-      }
+    if (!file.type.startsWith("image/")) {
+      imageUploadError = "Choose an image file to upload.";
+      notificationStore.notify(imageUploadError, "error");
+      return;
+    }
+
+    try {
+      const { image, thumbnail } = await vault.saveImageToVault(
+        file,
+        entity.id,
+      );
+      await vault.updateEntity(entity.id, { image, thumbnail });
+      imageUploadError = "";
+    } catch (err) {
+      debugStore.error("[ZenSidebar] Failed to save external file:", err);
+      imageUploadError = "Failed to save image. Please try again.";
+      notificationStore.notify(imageUploadError, "error");
     }
   }
 
@@ -332,6 +349,39 @@
     role="region"
     aria-label="Image drop zone"
   >
+    {#if !editState.isEditing && !vault.isGuest}
+      <input
+        bind:this={fileInput}
+        type="file"
+        accept="image/*"
+        class="sr-only"
+        onchange={handleFileInputChange}
+        aria-hidden="true"
+        tabindex="-1"
+      />
+      <button
+        type="button"
+        onclick={() => fileInput?.click()}
+        class="mb-2 w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+        aria-describedby={imageUploadError ? "zen-image-upload-error" : undefined}
+      >
+        <span
+          class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        {entity?.image ? "Replace image" : "Choose image"}
+      </button>
+      {#if imageUploadError}
+        <p
+          id="zen-image-upload-error"
+          class="mb-2 text-xs text-theme-error"
+          role="alert"
+        >
+          {imageUploadError}
+        </p>
+      {/if}
+    {/if}
+
     {#if !isVisible && vault.isGuest}
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"

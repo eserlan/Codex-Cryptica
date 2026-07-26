@@ -2,6 +2,8 @@
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { hubContext } from "$lib/stores/hub-context.svelte";
+  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { collectSessionNames, collectSessionTraits } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -269,6 +271,7 @@
   });
 
   let dungeon = $state({
+    genre: factionConfig.themes[0],
     purpose: dungeonConfig.purposes[0],
     currentState: dungeonConfig.currentStates[0],
     scale: dungeonConfig.scales[1],
@@ -315,6 +318,7 @@
     else if (slug === "news-sheet-generator")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+    else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
   });
 
   onMount(() => {
@@ -473,7 +477,14 @@
     "news-sheet-generator": (useAI) =>
       generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
     "dungeon-generator": (useAI) =>
-      generatorEngine.generateDungeon({ ...dungeon, useAI }),
+      generatorEngine.generateDungeon({
+        ...dungeon,
+        useAI,
+        // Names already drafted this session, so the model does not fall back
+        // on the same faction it invented for the last delve.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+        avoidTraits: collectSessionTraits(sessionHubStore.entities),
+      }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -685,6 +696,7 @@
       />
     {:else if slug === "dungeon-generator"}
       <DungeonFormFields
+        bind:theme={activeTheme}
         bind:purpose={dungeon.purpose}
         bind:currentState={dungeon.currentState}
         bind:scale={dungeon.scale}

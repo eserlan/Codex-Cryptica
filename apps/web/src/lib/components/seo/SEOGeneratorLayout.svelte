@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { goto } from "$app/navigation";
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -19,6 +20,7 @@
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
   import {
     getContextSelection,
     computeProvenance,
@@ -446,6 +448,16 @@
       }
     }
   }
+
+  function handleBuildDelveCanvas(data: GeneratorOutput) {
+    try {
+      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
+      localStorage.setItem("__codex_pending_canvas", JSON.stringify(canvasDoc));
+      void goto(`${cleanBase}/canvas/${canvasDoc.id}`);
+    } catch (err) {
+      console.error("Failed to build delve canvas:", err);
+    }
+  }
 </script>
 
 <svelte:head>
@@ -592,6 +604,7 @@
         onContainerKeydown={handleContainerKeydown}
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
         onSaveHubToCodex={handleSaveHubToCodex}
+        onBuildDelveCanvas={handleBuildDelveCanvas}
       />
     </div>
 

@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-05
+Auto-generated from all feature plans. Last updated: 2026-07-26
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine` (145-dungeon-structural-builder)
+- OPFS & IndexedDB (via Vault Repository storing `.canvas` JSON documents and linked Concept notes) (145-dungeon-structural-builder)
 
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (141-language-generator)
 - OPFS (Vault notes) & IndexedDB (via vault stores) (141-language-generator)
@@ -216,10 +219,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 141-language-generator: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
+- 145-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
+- 1843-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
 
-- 137-standalone-generator-session-hub: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, Tailwind 4, `@codex/events`, `generator-engine`
-- 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
+- 141-language-generator: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
 
 <!-- MANUAL ADDITIONS START -->
 

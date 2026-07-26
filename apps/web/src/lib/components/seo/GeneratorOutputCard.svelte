@@ -44,6 +44,7 @@
     onContainerKeydown,
     onSelectHubEntity,
     onSaveHubToCodex,
+    onBuildDelveCanvas,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -65,6 +66,7 @@
     onContainerKeydown: (event: KeyboardEvent) => void;
     onSelectHubEntity: (entity: SessionEntity) => void;
     onSaveHubToCodex: (entities: SessionEntity[]) => void;
+    onBuildDelveCanvas?: (data: GeneratorOutput) => void;
   } = $props();
 </script>
 
@@ -163,6 +165,19 @@
                 title="Import this draft into your local Codex Cryptica vault"
               >
                 Save to Codex
+              </button>
+            {/if}
+            {#if (generatedData?.kind as string) === "dungeon" && onBuildDelveCanvas}
+              <button
+                type="button"
+                onclick={() => onBuildDelveCanvas(generatedData!)}
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                id="build-delve-canvas-btn"
+                title="Build and open an interactive Delve Canvas for this dungeon"
+              >
+                <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
+                ></span>
+                Build Delve Canvas
               </button>
             {/if}
             <button

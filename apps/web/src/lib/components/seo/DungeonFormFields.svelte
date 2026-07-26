@@ -1,14 +1,21 @@
 <script lang="ts">
-  import { dungeonConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import {
+    dungeonConfig,
+    factionConfig,
+    forDungeonGenre,
+    pickFrom,
+  } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
+    theme = $bindable(factionConfig.themes[0]),
     purpose = $bindable(dungeonConfig.purposes[0]),
     currentState = $bindable(dungeonConfig.currentStates[0]),
     scale = $bindable(dungeonConfig.scales[1]),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
+    theme: string;
     purpose: string;
     currentState: string;
     scale: string;
@@ -40,14 +47,78 @@
       "Eroded subterranean tunnels, underground rivers, or volcanic tubes.",
     "Planar Anomaly":
       "Unstable dimensional rift or reality-warping pocket plane.",
+    "Data Vault & Archive":
+      "Off-grid records store holding backups and research nobody admits exists.",
+    "Bio-Containment Wing":
+      "Quarantine and isolation labs built to hold specimens that shouldn't escape.",
+    "Fallout Shelter":
+      "Hardened civil-defence bunker stocked for years of life underground.",
+    "Ancestral Mausoleum":
+      "Family crypt built to outlast the bloodline it was meant to honour.",
+    "Pirate Cove & Smuggler's Hold":
+      "Hidden tidal anchorage, powder store, and shareout hall for a crew with no home port.",
+    "Mech Bay & Hangar":
+      "Sub-surface maintenance bay and hardpoint cache for frames too large to service topside.",
+    "Rail Tunnel & Depot":
+      "Freight tunnel, siding, and depot bored through the range for a line that stalled.",
+    "Clockwork Engine Works":
+      "Subterranean engine house and pressure gallery driving the machinery of the city above.",
+    "Black Site":
+      "Unlisted detention and research installation outside every applicable jurisdiction.",
   };
+
+  // Only offer purposes/states that suit the chosen vibe. Uses the same
+  // resolver as the engine so the dropdown can never offer an option the
+  // generator wouldn't pick on its own.
+  const availablePurposes = $derived(
+    forDungeonGenre(dungeonConfig.purposesByGenre, theme),
+  );
+  const availableStates = $derived(
+    forDungeonGenre(dungeonConfig.currentStatesByGenre, theme),
+  );
+  // Known values across every genre — used so a *custom* purpose/state the user
+  // typed is never clobbered when the vibe changes, matching FactionFormFields.
+  const knownPurposes = dungeonConfig.purposes;
+  const knownStates = dungeonConfig.currentStates;
+
+  $effect(() => {
+    if (
+      purpose &&
+      knownPurposes.includes(purpose) &&
+      !availablePurposes.includes(purpose)
+    ) {
+      purpose = availablePurposes[0];
+    }
+  });
+
+  $effect(() => {
+    if (
+      currentState &&
+      knownStates.includes(currentState) &&
+      !availableStates.includes(currentState)
+    ) {
+      currentState = availableStates[0];
+    }
+  });
 </script>
+
+<SelectWithCustomOption
+  id="dungeon-theme-select"
+  name="dungeon_theme"
+  label="Choose a vibe"
+  bind:value={theme}
+  choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom vibe"
+/>
 
 <SelectWithCustomOption
   id="dungeon-purpose-select"
   label="Original Purpose"
   bind:value={purpose}
-  choices={dungeonConfig.purposes.map((p: string) => ({ value: p, label: p }))}
+  choices={availablePurposes.map((p: string) => ({ value: p, label: p }))}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
@@ -62,7 +133,7 @@
   id="dungeon-state-select"
   label="Current State & Function"
   bind:value={currentState}
-  choices={dungeonConfig.currentStates.map((s: string) => ({
+  choices={availableStates.map((s: string) => ({
     value: s,
     label: s,
   }))}
@@ -110,8 +181,8 @@
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
-      purpose = pickFrom(dungeonConfig.purposes);
-      currentState = pickFrom(dungeonConfig.currentStates);
+      purpose = pickFrom(availablePurposes);
+      currentState = pickFrom(availableStates);
       scale = pickFrom(dungeonConfig.scales);
       onSurprise?.();
     }}
