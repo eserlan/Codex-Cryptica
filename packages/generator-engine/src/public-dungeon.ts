@@ -13,7 +13,7 @@
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import { NAME_BAN_PROMPT } from "./public-npc";
+import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,
   defaultRng,
@@ -622,6 +622,27 @@ Required JSON schema:
 }
 
 /**
+ * Banned names appearing in a field that carries an actual name.
+ *
+ * The ban list has only ever been a request in the prompt — every call site in
+ * the codebase injects it into a string and nothing checks the response. That
+ * was tolerable while names came from local tables; now that the model names
+ * the delve, its sectors, and both factions, the list is worth enforcing.
+ *
+ * Checked against name fields only. Descriptions legitimately contain words
+ * like "stone" and "ash", and flagging those would reject good responses.
+ */
+function bannedNamesIn(values: string[]): string[] {
+  const found = new Set<string>();
+  for (const value of values) {
+    for (const banned of BANNED_NAMES) {
+      if (new RegExp(`\\b${banned}\\b`, "i").test(value)) found.add(banned);
+    }
+  }
+  return [...found];
+}
+
+/**
  * Check the structural invariants the mechanical layer owns.
  *
  * The model authors all the prose now, so there is nothing to check for
@@ -631,11 +652,21 @@ Required JSON schema:
  * that was asked for, so the caller renders the foundation instead.
  */
 function validateAiDungeon(
+  title: string,
   sectors: DungeonSector[],
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
 ): string[] {
   const problems: string[] = [];
+
+  const banned = bannedNamesIn([
+    title,
+    ...sectors.map((s) => s.name),
+    ...factions.map((f) => f.name),
+  ]);
+  if (banned.length > 0) {
+    problems.push(`uses banned cliché names: ${banned.join(", ")}`);
+  }
 
   if (sectors.length !== foundation.sectors.length) {
     problems.push(
@@ -752,7 +783,7 @@ export function parseDungeonResponse(
     // violates it, ship the foundation the prompt was built from rather than a
     // dungeon that isn't the one the user asked for.
     if (foundation) {
-      const problems = validateAiDungeon(sectors, factions, foundation);
+      const problems = validateAiDungeon(title, sectors, factions, foundation);
       if (problems.length > 0) {
         return renderResolvedDungeon(foundation);
       }

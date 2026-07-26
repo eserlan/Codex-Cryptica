@@ -619,6 +619,66 @@ describe("parseDungeonResponse", () => {
     ).toBe(prompt.resolved.title);
   });
 
+  it("rejects AI-authored names drawn from the banned cliché list", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const factions = [
+      {
+        name: "A",
+        virtue: "Bold",
+        vice: "Cruel",
+        goal: "Wealth",
+        obstacle: "o1",
+      },
+      {
+        name: "B",
+        virtue: "Wise",
+        vice: "Greedy",
+        goal: "Survival",
+        obstacle: "o2",
+      },
+    ];
+    const base = { summary: "S", sectors, factions };
+
+    // The ban list has only ever been a prompt request; these assert it is
+    // actually enforced now that the model authors every name.
+    const inTitle = JSON.stringify({ ...base, title: "The Vault of Oakhaven" });
+    expect(
+      parseDungeonResponse(inTitle, {}, seededRng(1), prompt.resolved).title,
+    ).toBe(prompt.resolved.title);
+
+    const inSector = JSON.stringify({
+      ...base,
+      title: "Fine Title",
+      sectors: sectors.map((s, i) =>
+        i === 0 ? { ...s, name: "Elara's Rest" } : s,
+      ),
+    });
+    expect(
+      parseDungeonResponse(inSector, {}, seededRng(1), prompt.resolved).title,
+    ).toBe(prompt.resolved.title);
+
+    const inFaction = JSON.stringify({
+      ...base,
+      title: "Fine Title",
+      factions: [{ ...factions[0], name: "the Thorne Compact" }, factions[1]],
+    });
+    expect(
+      parseDungeonResponse(inFaction, {}, seededRng(1), prompt.resolved).title,
+    ).toBe(prompt.resolved.title);
+
+    // A clean response is untouched.
+    const clean = JSON.stringify({ ...base, title: "The Bruneth Deep" });
+    expect(
+      parseDungeonResponse(clean, {}, seededRng(1), prompt.resolved).title,
+    ).toBe("The Bruneth Deep");
+  });
+
   it("keeps a structurally valid response even though it invents every name", () => {
     const prompt = buildDungeonPrompt({ themeId: "fantasy" });
     const valid = JSON.stringify({
