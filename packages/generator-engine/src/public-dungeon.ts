@@ -69,6 +69,13 @@ export interface DungeonGeneratorOptions {
    * generated and the model is asked to avoid it.
    */
   avoidNames?: string[];
+  /**
+   * Virtue/vice pairs already used this session. Unlike `avoidNames`, reusing
+   * one is reported but never rejects the response — losing a whole dungeon
+   * over a repeated adjective is the disproportion this generator already had
+   * to correct once.
+   */
+  avoidTraits?: string[];
 }
 
 const STOCK_TYPES = ["Monster", "Lore", "Special", "Trap"] as const;
@@ -515,6 +522,29 @@ export function collectSessionNames(
 }
 
 /**
+ * Virtue/vice pairs already used this session.
+ *
+ * The model pairs archetypes with traits consistently — knowledge-seekers kept
+ * coming back as "Curiosity, but Hubris" and devotional factions as "Devotion,
+ * but Fanaticism", across genres and under different faction names. The names
+ * vary; the characterisation does not.
+ */
+export function collectSessionTraits(
+  entities: Array<{ content?: string }>,
+  limit = 12,
+): string[] {
+  const pairs = new Set<string>();
+  for (const entity of entities) {
+    for (const match of (entity.content ?? "").matchAll(
+      /- \*\*.+?\*\* — (\w+), but (\w+)\./g,
+    )) {
+      pairs.add(`${match[1]}, but ${match[2]}`);
+    }
+  }
+  return [...pairs].reverse().slice(0, limit);
+}
+
+/**
  * Render the mechanical rolls as creative seeds plus fixed structural
  * requirements.
  *
@@ -528,6 +558,7 @@ export function collectSessionNames(
 function formatDungeonSeeds(
   dungeon: ResolvedDungeon,
   avoidNames: string[] = [],
+  avoidTraits: string[] = [],
 ): string {
   const stockPlan = dungeon.sectors
     .map((s, idx) => `  ${idx + 1}. ${s.stockType ?? "Lore"}`)
@@ -554,6 +585,14 @@ function formatDungeonSeeds(
           ``,
           `Already used elsewhere in this session — pick different names:`,
           ...avoidNames.map((n) => `- ${n}`),
+        ]
+      : []),
+    ...(avoidTraits.length > 0
+      ? [
+          ``,
+          `Virtue/vice pairs already used this session — characterise these`,
+          `factions differently:`,
+          ...avoidTraits.map((t) => `- ${t}`),
         ]
       : []),
   ].join("\n");
@@ -690,7 +729,7 @@ Setting Context:
 - Scale: ${dungeon.scale}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
-${formatDungeonSeeds(dungeon, options.avoidNames ?? [])}
+${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}
 
 Required JSON schema:
 {
@@ -767,6 +806,7 @@ function validateAiDungeon(
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
   avoidNames: string[] = [],
+  avoidTraits: string[] = [],
 ): { structural: string[]; content: string[] } {
   const problems: string[] = [];
 
@@ -777,6 +817,16 @@ function validateAiDungeon(
   const content: string[] = [];
   if (omitted.length > 0) {
     content.push(`missing required fields: ${omitted.join(", ")}`);
+  }
+  const reusedTraits = factions
+    .map((f) => `${f.virtue}, but ${f.vice}`)
+    .filter((pair) =>
+      avoidTraits.some((used) => used.toLowerCase() === pair.toLowerCase()),
+    );
+  if (reusedTraits.length > 0) {
+    content.push(
+      `reuses virtue/vice pairs already used this session: ${reusedTraits.join("; ")}`,
+    );
   }
 
   // The throughline is what keeps history, state, and conflict pointing at the
@@ -992,6 +1042,7 @@ export function parseDungeonResponseDetailed(
         factions,
         foundation,
         options.avoidNames ?? [],
+        options.avoidTraits ?? [],
       );
       if (structural.length > 0) {
         return {

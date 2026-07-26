@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildDungeonPrompt,
   collectSessionNames,
+  collectSessionTraits,
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
   dungeonConfig,
@@ -784,6 +785,91 @@ describe("parseDungeonResponse", () => {
     expect(result.output.title).toBe("The Bruneth Deep");
   });
 
+  it("asks for different traits after a pair is used, without rejecting", () => {
+    // The model pairs archetypes with traits consistently: knowledge-seekers
+    // kept returning as "Curiosity, but Hubris" across genres under different
+    // names. Reported so the retry asks — but never rejected, since losing a
+    // whole dungeon over a repeated adjective is the disproportion #1864 fixed.
+    const avoidTraits = ["Curiosity, but Hubris"];
+    const prompt = buildDungeonPrompt({
+      themeId: "sci-fi",
+      scale: "Medium Complex (3-4 Sectors)",
+      avoidTraits,
+    });
+    expect(prompt.userMessage).toContain("Virtue/vice pairs already used");
+    expect(prompt.userMessage).toContain("Curiosity, but Hubris");
+
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const body = {
+      title: "The Invented Vault",
+      summary: "S",
+      throughline: "T",
+      ...NARRATIVE,
+      sectors,
+    };
+
+    const reused = parseDungeonResponseDetailed(
+      JSON.stringify({
+        ...body,
+        factions: [
+          {
+            name: "the First",
+            virtue: "Curiosity",
+            vice: "Hubris",
+            goal: "Knowledge",
+            obstacle: "o1",
+          },
+          {
+            name: "the Second",
+            virtue: "Resolve",
+            vice: "Greed",
+            goal: "Wealth",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      { avoidTraits },
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(reused.problems.join(" ")).toContain("virtue/vice pairs");
+    // Reported, but the model's work is kept.
+    expect(reused.rejected).toBe(false);
+    expect(reused.output.title).toBe("The Invented Vault");
+
+    // A fresh pair is clean.
+    const fresh = parseDungeonResponseDetailed(
+      JSON.stringify({
+        ...body,
+        factions: [
+          {
+            name: "the First",
+            virtue: "Patience",
+            vice: "Spite",
+            goal: "Knowledge",
+            obstacle: "o1",
+          },
+          {
+            name: "the Second",
+            virtue: "Resolve",
+            vice: "Greed",
+            goal: "Wealth",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      { avoidTraits },
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(fresh.problems).toEqual([]);
+  });
+
   it("tells the model which session names to avoid, and rejects reuse", () => {
     const avoidNames = ["The Obsidian Directorate", "Khaz-Mar"];
     const prompt = buildDungeonPrompt({
@@ -1423,6 +1509,33 @@ describe("parseDungeonResponse", () => {
     expect(out.title).toBeTruthy();
     expect(out.content).toContain("## Key Sectors & Layout");
     expect(out.labels).toContain("dungeon");
+  });
+});
+
+describe("collectSessionTraits", () => {
+  it("extracts virtue/vice pairs from rendered faction bullets", () => {
+    const pairs = collectSessionTraits([
+      {
+        content:
+          "- **the Choir** — Devotion, but Fanaticism. Seeks Ascension; held back by x.",
+      },
+      {
+        content:
+          "- **the Cell** — Curiosity, but Hubris. Seeks Knowledge; held back by y.",
+      },
+    ]);
+    expect(pairs).toContain("Devotion, but Fanaticism");
+    expect(pairs).toContain("Curiosity, but Hubris");
+  });
+
+  it("caps the list and ignores entities with no factions", () => {
+    expect(collectSessionTraits([{}, { content: "no factions here" }])).toEqual(
+      [],
+    );
+    const many = Array.from({ length: 40 }, (_, i) => ({
+      content: `- **f${i}** — V${i}, but W${i}. Seeks G; held back by o.`,
+    }));
+    expect(collectSessionTraits(many).length).toBeLessThanOrEqual(12);
   });
 });
 

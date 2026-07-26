@@ -3,7 +3,7 @@
   import { browser } from "$app/environment";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import { collectSessionNames } from "generator-engine";
+  import { collectSessionNames, collectSessionTraits } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -483,6 +483,7 @@
         // Names already drafted this session, so the model does not fall back
         // on the same faction it invented for the last delve.
         avoidNames: collectSessionNames(sessionHubStore.entities),
+        avoidTraits: collectSessionTraits(sessionHubStore.entities),
       }),
   };
 
