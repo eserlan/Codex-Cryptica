@@ -127,17 +127,23 @@ describe("generateDungeonLocal", () => {
     }
   });
 
-  it("gives the two factions distinct goals and obstacles, not reskins of each other", () => {
-    for (let seed = 1; seed <= 20; seed++) {
+  it("gives the two factions distinct virtue, vice, goal, and obstacle", () => {
+    // Sharing any one of the four makes the pair read as one faction written
+    // twice — two "greedy" factions was showing up in ~12% of dungeons.
+    for (let seed = 1; seed <= 40; seed++) {
       const out = generateDungeonLocal({}, seededRng(seed));
       const bullets = [
         ...out.content.matchAll(
-          /- \*\*(.+?)\*\* — .+?\. Seeks (.+?); held back by (.+?)\./g,
+          /- \*\*(.+?)\*\* — (\w+), but (\w+)\. Seeks (.+?); held back by (.+?)\./g,
         ),
       ];
       expect(bullets).toHaveLength(2);
-      expect(bullets[0][2]).not.toBe(bullets[1][2]);
-      expect(bullets[0][3]).not.toBe(bullets[1][3]);
+      for (const group of [1, 2, 3, 4, 5]) {
+        expect(
+          bullets[0][group],
+          `factions share capture group ${group}`,
+        ).not.toBe(bullets[1][group]);
+      }
     }
   });
 
