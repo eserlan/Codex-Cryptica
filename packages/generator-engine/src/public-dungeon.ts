@@ -142,26 +142,33 @@ function rollStockType(rng: Rng): DungeonStockType {
   return "Trap";
 }
 
+/** Pick an item from a genre pool, avoiding anything already in `used` when possible. */
+function pickUnused<T extends string>(
+  pool: readonly T[],
+  used: Set<string>,
+  rng: Rng,
+): T {
+  const remaining = pool.filter((f) => !used.has(f));
+  const picked = pickFrom(remaining.length > 0 ? remaining : pool, rng);
+  used.add(picked);
+  return picked;
+}
+
 function pickStockDetail(
   stockType: DungeonStockType,
   genre: string,
-  usedSpecials: Set<string>,
+  usedByType: Record<DungeonStockType, Set<string>>,
   rng: Rng,
 ): string {
-  if (stockType === "Monster") {
-    return pickFrom(forGenre(INHABITANTS_BY_GENRE, genre), rng);
-  }
-  if (stockType === "Lore") {
-    return pickFrom(forGenre(HOOKS_BY_GENRE, genre), rng);
-  }
-  if (stockType === "Special") {
-    const pool = forGenre(SIGNATURE_FEATURES_BY_GENRE, genre);
-    const remaining = pool.filter((f) => !usedSpecials.has(f));
-    const picked = pickFrom(remaining.length > 0 ? remaining : pool, rng);
-    usedSpecials.add(picked);
-    return picked;
-  }
-  return pickFrom(forGenre(HAZARDS_BY_GENRE, genre), rng);
+  const pool =
+    stockType === "Monster"
+      ? forGenre(INHABITANTS_BY_GENRE, genre)
+      : stockType === "Lore"
+        ? forGenre(HOOKS_BY_GENRE, genre)
+        : stockType === "Special"
+          ? forGenre(SIGNATURE_FEATURES_BY_GENRE, genre)
+          : forGenre(HAZARDS_BY_GENRE, genre);
+  return pickUnused(pool, usedByType[stockType], rng);
 }
 
 /** Capitalize the first letter, for sentences that open with a lowercase faction name like "the X". */
@@ -169,24 +176,42 @@ function sentenceCase(s: string): string {
   return s.length > 0 ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
+/**
+ * Strip a leading "held back by"/"struggling against" lead-in and trailing period an
+ * AI response may have added to an obstacle string, since callers add their own lead-in.
+ */
+function sanitizeObstacle(s: string): string {
+  return s
+    .replace(/^\s*(held back by|struggling against)\s*/i, "")
+    .trim()
+    .replace(/\.+$/, "");
+}
+
+interface UsedFactionTraits {
+  names: Set<string>;
+  goals: Set<string>;
+  obstacles: Set<string>;
+}
+
 /** Generate a named faction with Cairn-style virtue/vice traits and a goal/obstacle agenda. */
 function generateFaction(
   genre: string,
   rng: Rng,
-  usedNames: Set<string>,
+  used: UsedFactionTraits,
 ): DungeonFaction {
-  const namePool = forGenre(FACTION_NAMES_BY_GENRE, genre);
-  let name = pickFrom(namePool, rng);
-  for (let attempt = 0; attempt < 10 && usedNames.has(name); attempt++) {
-    name = pickFrom(namePool, rng);
-  }
-  usedNames.add(name);
+  const name = pickUnused(
+    forGenre(FACTION_NAMES_BY_GENRE, genre),
+    used.names,
+    rng,
+  );
+  const goal = pickUnused(FACTION_GOALS, used.goals, rng);
+  const obstacle = pickUnused(FACTION_OBSTACLES, used.obstacles, rng);
   return {
     name,
     virtue: pickFrom(FACTION_VIRTUES, rng),
     vice: pickFrom(FACTION_VICES, rng),
-    goal: pickFrom(FACTION_GOALS, rng),
-    obstacle: pickFrom(FACTION_OBSTACLES, rng),
+    goal,
+    obstacle,
   };
 }
 
@@ -269,9 +294,15 @@ function resolveDungeon(
 
   // Two rival factions (virtue/vice + goal/obstacle) drive inhabitants and conflict together,
   // so the two sections stay internally consistent rather than being picked independently.
-  const usedFactionNames = new Set<string>();
-  const factionA = generateFaction(genre, rng, usedFactionNames);
-  const factionB = generateFaction(genre, rng, usedFactionNames);
+  // Names, goals, and obstacles are each drawn distinct across the pair so the two factions
+  // don't read as reskins of each other.
+  const usedFactionTraits: UsedFactionTraits = {
+    names: new Set(),
+    goals: new Set(),
+    obstacles: new Set(),
+  };
+  const factionA = generateFaction(genre, rng, usedFactionTraits);
+  const factionB = generateFaction(genre, rng, usedFactionTraits);
   const factions = [factionA, factionB];
 
   const inhabitants = sentenceCase(
@@ -279,25 +310,6 @@ function resolveDungeon(
   );
   const currentConflict = sentenceCase(
     `${factionA.name} pursue ${factionA.goal.toLowerCase()}, held back by ${factionA.obstacle}. ${sentenceCase(factionB.name)} want these halls for themselves — driven by ${factionB.goal.toLowerCase()}, and struggling against ${factionB.obstacle} — putting the two factions on a collision course.`,
-  );
-
-  const availableSectors = forGenre(SECTORS_BY_GENRE, genre);
-  const sectorCount = Math.min(
-    sectorCountForScale(scale, rng),
-    availableSectors.length,
-  );
-  const pickedSectors = pickRandomItems(availableSectors, sectorCount, rng);
-  const usedSpecials = new Set<string>([signatureFeature]);
-  const sectors: DungeonSector[] = pickedSectors.map((s) => {
-    const stockType = rollStockType(rng);
-    const stockDetail = pickStockDetail(stockType, genre, usedSpecials, rng);
-    return { name: s.name, description: s.description, stockType, stockDetail };
-  });
-
-  const sectorEdges = buildSectorEdges(sectors.length, rng);
-  const map = renderDungeonMap(
-    sectors.map((s) => s.name),
-    sectorEdges,
   );
 
   const secretsList = forGenre(SECRETS_BY_GENRE, genre);
@@ -311,6 +323,33 @@ function resolveDungeon(
 
   const hooksList = forGenre(HOOKS_BY_GENRE, genre);
   const hooks = pickFrom(hooksList, rng);
+
+  const availableSectors = forGenre(SECTORS_BY_GENRE, genre);
+  const sectorCount = Math.min(
+    sectorCountForScale(scale, rng),
+    availableSectors.length,
+  );
+  const pickedSectors = pickRandomItems(availableSectors, sectorCount, rng);
+  // Seed each bucket's "used" set with the matching global pick (e.g. the Lore bucket
+  // with the global Hooks text) so a sector never just echoes what's already stated
+  // elsewhere in the document.
+  const usedByType: Record<DungeonStockType, Set<string>> = {
+    Monster: new Set(),
+    Lore: new Set([hooks]),
+    Special: new Set([signatureFeature]),
+    Trap: new Set([hazards]),
+  };
+  const sectors: DungeonSector[] = pickedSectors.map((s) => {
+    const stockType = rollStockType(rng);
+    const stockDetail = pickStockDetail(stockType, genre, usedByType, rng);
+    return { name: s.name, description: s.description, stockType, stockDetail };
+  });
+
+  const sectorEdges = buildSectorEdges(sectors.length, rng);
+  const map = renderDungeonMap(
+    sectors.map((s) => s.name),
+    sectorEdges,
+  );
 
   return {
     themeId,
@@ -386,7 +425,7 @@ function formatFactionsList(factions: DungeonFaction[]): string {
   return factions
     .map(
       (f) =>
-        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${f.obstacle}.`,
+        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${sanitizeObstacle(f.obstacle)}.`,
     )
     .join("\n");
 }
@@ -507,8 +546,8 @@ Required JSON schema:
   "currentState": "Vivid prose expansion of the given Current Condition fact.",
   "signatureFeature": "Vivid prose expansion of the given Signature Feature.",
   "factions": [
-    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "One-word goal (e.g. Survival, Dominion, Knowledge, Vengeance)", "obstacle": "The given obstacle, elaborated." },
-    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "One-word goal", "obstacle": "The given obstacle, elaborated." }
+    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction A's given goal exactly — do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words like 'held back by' or 'struggling against', no trailing period)" },
+    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "(reuse Faction B's given goal exactly — do not substitute a different one)", "obstacle": "(the given obstacle only — no lead-in words, no trailing period)" }
   ],
   "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
   "sectors": [

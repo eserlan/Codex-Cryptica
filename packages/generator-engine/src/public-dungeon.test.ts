@@ -127,6 +127,73 @@ describe("generateDungeonLocal", () => {
     }
   });
 
+  it("gives the two factions distinct goals and obstacles, not reskins of each other", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const out = generateDungeonLocal({}, seededRng(seed));
+      const bullets = [
+        ...out.content.matchAll(
+          /- \*\*(.+?)\*\* — .+?\. Seeks (.+?); held back by (.+?)\./g,
+        ),
+      ];
+      expect(bullets).toHaveLength(2);
+      expect(bullets[0][2]).not.toBe(bullets[1][2]);
+      expect(bullets[0][3]).not.toBe(bullets[1][3]);
+    }
+  });
+
+  it("does not repeat a stock detail within the same bucket type unless the pool is exhausted", () => {
+    // INHABITANTS/HAZARDS/HOOKS/SIGNATURE_FEATURES_BY_GENRE all have 5 entries
+    // per genre; the global pick (hooks/hazards/signatureFeature) also
+    // occupies one Lore/Trap/Special slot before sectors are stocked.
+    const POOL_SIZE: Record<string, number> = {
+      Monster: 5,
+      Lore: 4,
+      Special: 4,
+      Trap: 4,
+    };
+    for (let seed = 1; seed <= 20; seed++) {
+      const out = generateDungeonLocal(
+        { scale: "Sprawling Megadungeon (5+ Sectors)" },
+        seededRng(seed),
+      );
+      const stockLines = [
+        ...out.content.matchAll(/\*(Monster|Lore|Special|Trap) — (.+?)\*/g),
+      ];
+      const byType: Record<string, string[]> = {};
+      for (const [, type, detail] of stockLines) {
+        (byType[type] ??= []).push(detail);
+      }
+      for (const [type, details] of Object.entries(byType)) {
+        if (details.length <= POOL_SIZE[type]) {
+          expect(new Set(details).size).toBe(details.length);
+        }
+      }
+    }
+  });
+
+  it("never echoes the global hooks or hazards text verbatim inside a sector's stock detail", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const out = generateDungeonLocal(
+        { scale: "Sprawling Megadungeon (5+ Sectors)" },
+        seededRng(seed + 500),
+      );
+      const loreDetails = [...out.content.matchAll(/\*Lore — (.+?)\*/g)].map(
+        (m) => m[1],
+      );
+      const trapDetails = [...out.content.matchAll(/\*Trap — (.+?)\*/g)].map(
+        (m) => m[1],
+      );
+      for (const detail of loreDetails) {
+        expect(out.lore).not.toContain(
+          `### Adventure Hooks & Rumours\n${detail}`,
+        );
+      }
+      for (const detail of trapDetails) {
+        expect(out.lore).not.toContain(`### Hazards & Traps\n${detail}`);
+      }
+    }
+  });
+
   it("renders a dungeon layout list with one entry per sector", () => {
     const out = generateDungeonLocal(
       { scale: "Medium Complex (3-4 Sectors)" },
@@ -279,6 +346,39 @@ describe("parseDungeonResponse", () => {
     expect(out.content).toContain("- **the Corporate Erasure Squad**");
     expect(out.content).toContain("*Trap — Laser grid tripwires.*");
     expect(out.lore).toContain("### Dungeon Layout");
+  });
+
+  it("strips a redundant lead-in phrase and trailing period an AI adds to an obstacle", () => {
+    const sampleJson = JSON.stringify({
+      title: "T",
+      summary: "S",
+      factions: [
+        {
+          name: "the Testers",
+          virtue: "Bold",
+          vice: "Reckless",
+          goal: "Knowledge",
+          obstacle: "Held back by a rival faction sharing these halls.",
+        },
+        {
+          name: "the Others",
+          virtue: "Wise",
+          vice: "Cruel",
+          goal: "Wealth",
+          obstacle: "struggling against an ancient guardian.",
+        },
+      ],
+      sectors: [],
+    });
+
+    const out = parseDungeonResponse(sampleJson, {});
+    expect(out.content).toContain(
+      "held back by a rival faction sharing these halls.",
+    );
+    expect(out.content).toContain("held back by an ancient guardian.");
+    expect(out.content).not.toMatch(/held back by held back by/i);
+    expect(out.content).not.toMatch(/held back by struggling against/i);
+    expect(out.content).not.toContain("halls..");
   });
 
   it("falls back to local generation on invalid JSON input", () => {
