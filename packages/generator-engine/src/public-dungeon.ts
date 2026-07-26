@@ -946,7 +946,10 @@ export function parseDungeonResponseDetailed(
       );
       if (structural.length > 0) {
         return {
-          output: renderResolvedDungeon(foundation),
+          // Flagged so the UI's existing "AI was unavailable" notice fires.
+          // Without it a rejected response is indistinguishable from a normal
+          // local generation, and nobody can tell the AI path failed at all.
+          output: { ...renderResolvedDungeon(foundation), aiFallback: true },
           problems: [...structural, ...contentGaps],
           rejected: true,
         };
@@ -1026,9 +1029,12 @@ export function parseDungeonResponseDetailed(
     // Malformed JSON is worth another attempt too, so report it as a problem
     // rather than quietly returning the fallback.
     return {
-      output: foundation
-        ? renderResolvedDungeon(foundation)
-        : generateDungeonLocal(options),
+      output: {
+        ...(foundation
+          ? renderResolvedDungeon(foundation)
+          : generateDungeonLocal(options)),
+        aiFallback: true,
+      },
       problems: [
         "the response was not valid JSON matching the requested schema",
       ],

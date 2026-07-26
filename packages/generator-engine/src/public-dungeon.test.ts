@@ -849,6 +849,76 @@ describe("parseDungeonResponse", () => {
     expect(prompt.userMessage).not.toContain("Already used elsewhere");
   });
 
+  it("flags a rejected response so the UI can say the AI output was unusable", () => {
+    // runWithAIFallback only stamps aiFallback when the model call throws. A
+    // call that succeeds and is then rejected by validation used to be
+    // indistinguishable from an ordinary local generation, so two consecutive
+    // fully-local delves gave no clue the AI path had failed at all.
+    const prompt = buildDungeonPrompt({ themeId: "sci-fi" });
+
+    const structural = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors: [],
+        factions: [],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(structural.rejected).toBe(true);
+    expect(structural.output.aiFallback).toBe(true);
+
+    const malformed = parseDungeonResponseDetailed(
+      "not json",
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(malformed.output.aiFallback).toBe(true);
+
+    // A response that was actually used is not flagged.
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const ok = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors,
+        factions: [
+          {
+            name: "the First",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+            obstacle: "o1",
+          },
+          {
+            name: "the Second",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(ok.rejected).toBe(false);
+    expect(ok.output.aiFallback).toBeUndefined();
+  });
+
   it("keeps the model's work for a content gap but discards it for a structural one", () => {
     // Conflating the two meant one skipped field cost the entire AI-authored
     // dungeon, replacing it with table prose — strictly worse than the single
