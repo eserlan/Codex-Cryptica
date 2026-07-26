@@ -498,14 +498,9 @@ export class DefaultGeneratorEngine {
         const { systemInstruction, userMessage, resolved } =
           buildDungeonPrompt(dungeonOptions);
         const text = await this.runModel(systemInstruction, userMessage);
-        // Pass the resolved sectors so a short AI response can't silently
-        // shrink the dungeon below the scale the user selected.
-        return parseDungeonResponse(
-          text,
-          dungeonOptions,
-          undefined,
-          resolved.sectors,
-        );
+        // Pass the resolved dungeon so an incomplete AI response degrades to
+        // the local text per section instead of dropping sections entirely.
+        return parseDungeonResponse(text, dungeonOptions, undefined, resolved);
       },
       () => generateDungeonLocal(dungeonOptions),
     );

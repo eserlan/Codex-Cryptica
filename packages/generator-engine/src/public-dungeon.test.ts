@@ -533,12 +533,7 @@ describe("parseDungeonResponse", () => {
       ],
     });
 
-    const out = parseDungeonResponse(
-      short,
-      {},
-      seededRng(1),
-      prompt.resolved.sectors,
-    );
+    const out = parseDungeonResponse(short, {}, seededRng(1), prompt.resolved);
     const rendered = (out.content.match(/### Sector \d+:/g) ?? []).length;
     expect(rendered).toBe(prompt.resolved.sectors.length);
     // The one the model did expand keeps its richer description.
@@ -546,6 +541,38 @@ describe("parseDungeonResponse", () => {
     for (const sector of prompt.resolved.sectors) {
       expect(out.content).toContain(sector.name);
     }
+  });
+
+  it("never drops a section when the AI omits its field", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    // A response with only the two mandatory fields — every other key absent,
+    // which previously deleted those sections from the rendered document.
+    const sparse = JSON.stringify({ title: "T", summary: "S" });
+
+    const out = parseDungeonResponse(sparse, {}, seededRng(1), prompt.resolved);
+    for (const heading of [
+      "## History & Original Purpose",
+      "## Current State & Function",
+      "## Signature Feature",
+      "## Current Conflict",
+      "## Key Sectors & Layout",
+      "## Inhabitants & Factions",
+    ]) {
+      expect(out.content, `missing ${heading}`).toContain(heading);
+    }
+    for (const heading of [
+      "### Dungeon Layout",
+      "### Central Secret / Boss Mystery",
+      "### Hazards & Traps",
+      "### Treasures & Artifacts",
+      "### Adventure Hooks & Rumours",
+    ]) {
+      expect(out.lore, `missing ${heading}`).toContain(heading);
+    }
+    // The fallback text is the foundation's, not an empty heading.
+    expect(out.lore).toContain(prompt.resolved.hooks);
+    expect(out.lore).toContain(prompt.resolved.secret);
+    expect(out.content).toContain(prompt.resolved.history);
   });
 
   it("tells the AI exactly how many sectors to return", () => {

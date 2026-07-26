@@ -626,12 +626,15 @@ export function parseDungeonResponse(
   options: DungeonGeneratorOptions = {},
   rng: Rng = defaultRng,
   /**
-   * The sectors the prompt asked the model to expand. When the response comes
-   * back short — models do sometimes follow the schema's single example rather
-   * than the foundation's list — the missing ones are restored from here so a
-   * medium complex never renders as a one-room dungeon.
+   * The locally-resolved dungeon the prompt asked the model to expand.
+   *
+   * Every section below renders only when its field is non-empty, so anything
+   * the model omits disappears from the document silently — a delve came back
+   * with no Adventure Hooks at all, and another with one sector out of six.
+   * Falling back to the foundation means an incomplete response degrades to
+   * the local text for that section instead of dropping it.
    */
-  expectedSectors?: DungeonSector[],
+  foundation?: ResolvedDungeon,
 ): PublicGeneratorOutput {
   try {
     const parsed = parseFencedJson<Record<string, unknown>>(rawText);
@@ -646,18 +649,25 @@ export function parseDungeonResponse(
         ? parsed.summary.trim()
         : "An unexplored subterranean complex filled with danger.";
 
-    const history =
-      typeof parsed.history === "string" ? parsed.history.trim() : "";
-    const currentState =
-      typeof parsed.currentState === "string" ? parsed.currentState.trim() : "";
-    const signatureFeature =
-      typeof parsed.signatureFeature === "string"
-        ? parsed.signatureFeature.trim()
-        : "";
-    const currentConflict =
-      typeof parsed.currentConflict === "string"
-        ? parsed.currentConflict.trim()
-        : "";
+    // Each field falls back to the foundation the model was asked to expand,
+    // so an omitted key degrades to the local prose rather than deleting the
+    // whole section from the document.
+    const str = (v: unknown, fallback = "") =>
+      typeof v === "string" && v.trim() ? v.trim() : fallback;
+
+    const history = str(parsed.history, foundation?.history ?? "");
+    const currentState = str(
+      parsed.currentState,
+      foundation?.currentStateDetail ?? "",
+    );
+    const signatureFeature = str(
+      parsed.signatureFeature,
+      foundation?.signatureFeature ?? "",
+    );
+    const currentConflict = str(
+      parsed.currentConflict,
+      foundation?.currentConflict ?? "",
+    );
 
     const rawSectors = Array.isArray(parsed.sectors) ? parsed.sectors : [];
     const sectors: DungeonSector[] = rawSectors.map(
@@ -678,6 +688,7 @@ export function parseDungeonResponse(
 
     // Restore any sector the model dropped, matching on name so a reordered or
     // partial response still keeps the scale the user asked for.
+    const expectedSectors = foundation?.sectors;
     if (expectedSectors && sectors.length < expectedSectors.length) {
       const returned = new Set(sectors.map((s) => s.name.toLowerCase()));
       for (const expected of expectedSectors) {
@@ -697,16 +708,15 @@ export function parseDungeonResponse(
         goal: typeof f.goal === "string" ? f.goal : "",
         obstacle: typeof f.obstacle === "string" ? f.obstacle : "",
       }));
+    if (factions.length === 0 && foundation?.factions.length) {
+      factions.push(...foundation.factions);
+    }
 
-    const inhabitants =
-      typeof parsed.inhabitants === "string" ? parsed.inhabitants.trim() : "";
-    const secret =
-      typeof parsed.secret === "string" ? parsed.secret.trim() : "";
-    const hazards =
-      typeof parsed.hazards === "string" ? parsed.hazards.trim() : "";
-    const treasures =
-      typeof parsed.treasures === "string" ? parsed.treasures.trim() : "";
-    const hooks = typeof parsed.hooks === "string" ? parsed.hooks.trim() : "";
+    const inhabitants = str(parsed.inhabitants, foundation?.inhabitants ?? "");
+    const secret = str(parsed.secret, foundation?.secret ?? "");
+    const hazards = str(parsed.hazards, foundation?.hazards ?? "");
+    const treasures = str(parsed.treasures, foundation?.treasures ?? "");
+    const hooks = str(parsed.hooks, foundation?.hooks ?? "");
 
     const sectorEdges = buildSectorEdges(sectors.length, rng);
     const map = renderDungeonMap(
