@@ -50,7 +50,8 @@ import {
   parseNewsSheetResponse,
   generateNewsSheetLocal,
   buildDungeonPrompt,
-  parseDungeonResponse,
+  buildDungeonRetryMessage,
+  parseDungeonResponseDetailed,
   generateDungeonLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
@@ -498,9 +499,29 @@ export class DefaultGeneratorEngine {
         const { systemInstruction, userMessage, resolved } =
           buildDungeonPrompt(dungeonOptions);
         const text = await this.runModel(systemInstruction, userMessage);
-        // Pass the resolved dungeon so an incomplete AI response degrades to
-        // the local text per section instead of dropping sections entirely.
-        return parseDungeonResponse(text, dungeonOptions, undefined, resolved);
+        const first = parseDungeonResponseDetailed(
+          text,
+          dungeonOptions,
+          undefined,
+          resolved,
+        );
+        if (first.problems.length === 0) return first.output;
+
+        // Tell the model exactly what it got wrong and let it try once more.
+        // A single retry: two calls is an acceptable cost for a usable result,
+        // an unbounded loop is not. If the retry also fails, `first.output` is
+        // the locally-resolved dungeon the prompt was built from.
+        const retryText = await this.runModel(
+          systemInstruction,
+          buildDungeonRetryMessage(userMessage, first.problems),
+        );
+        const second = parseDungeonResponseDetailed(
+          retryText,
+          dungeonOptions,
+          undefined,
+          resolved,
+        );
+        return second.problems.length === 0 ? second.output : first.output;
       },
       () => generateDungeonLocal(dungeonOptions),
     );

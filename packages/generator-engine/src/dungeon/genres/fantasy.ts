@@ -21,7 +21,7 @@ export const fantasyTables: DungeonGenreTables = {
     "Buried & Forgotten",
   ],
   sampleTitles: [
-    "The Hollowed Citadel of Oakhaven",
+    "The Hollowed Citadel of Bruneth",
     "Subterranean Vault of Sunken Runes",
     "The Obsidian Delve of Gorgaroth",
     "Iron-Vein Mine of the Fallen King",

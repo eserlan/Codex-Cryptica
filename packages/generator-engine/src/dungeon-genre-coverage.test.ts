@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { factionConfig } from "./public-faction-constants";
+import { BANNED_NAMES } from "./public-npc-constants";
 import {
   DUNGEON_GENRE_TABLES,
   ORIGINAL_USE_BY_PURPOSE,
@@ -159,6 +160,26 @@ describe("dungeon genre coverage", () => {
         }
       }
     }
+  });
+
+  it("uses no banned cliché names in any name-bearing field", () => {
+    // Name fields only — descriptions legitimately contain "stone", "ash", etc.
+    const offenders: string[] = [];
+    for (const [label, tables] of Object.entries(DUNGEON_GENRE_TABLES)) {
+      const named = [
+        ...tables.sampleTitles,
+        ...tables.sectors.map((s) => s.name),
+        ...tables.factionNames,
+      ];
+      for (const value of named) {
+        for (const banned of BANNED_NAMES) {
+          if (new RegExp(`\\b${banned}\\b`).test(value)) {
+            offenders.push(`${label}: "${banned}" in "${value}"`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it("only overrides purposes the genre actually offers", () => {

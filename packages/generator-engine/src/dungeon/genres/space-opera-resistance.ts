@@ -21,7 +21,7 @@ export const spaceOperaResistanceTables: DungeonGenreTables = {
   sampleTitles: [
     "Cell Base Ashfall, Third Moon",
     "The Requisitioned Relay at Korren Deep",
-    "Cache Point Nine, Asteroid Belt Grey",
+    "Cache Point Nine, Asteroid Belt Sorrow",
     "The Blown Safehouse of Tannic Reach",
     "Listening Post Ember, Off-Register",
   ],

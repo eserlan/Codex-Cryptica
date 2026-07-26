@@ -115,7 +115,7 @@ export const postApocalypticTables: DungeonGenreTables = {
     "the Mutant Scavenger Clan",
     "the Settlement Refugee Enclave",
     "the Irradiated Scavenger Hound Pack",
-    "the Ash-Walker Cult",
+    "the Cinder-Walker Cult",
     "the Medical Ward Survivors",
     "the Water Reclamation Guard",
     "the Silo Warhead Cultists",
