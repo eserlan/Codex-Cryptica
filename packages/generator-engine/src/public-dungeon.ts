@@ -697,6 +697,7 @@ function renderResolvedDungeon(
 
   return {
     type: "location",
+    kind: "dungeon",
     title: dungeon.title,
     summary: dungeon.premise,
     content,
@@ -1134,6 +1135,7 @@ export function parseDungeonResponseDetailed(
     return {
       output: {
         type: "location",
+        kind: "dungeon",
         title,
         summary,
         content,
