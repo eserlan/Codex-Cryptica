@@ -16,6 +16,19 @@ import {
 } from "./campaign-generator-registry";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
+/** The narrative fields a complete AI response must supply. */
+const NARRATIVE = {
+  history: "h",
+  currentState: "c",
+  signatureFeature: "sf",
+  currentConflict: "cc",
+  inhabitants: "i",
+  secret: "sec",
+  hazards: "hz",
+  treasures: "t",
+  hooks: "hk",
+};
+
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
   return () => {
@@ -735,6 +748,7 @@ describe("parseDungeonResponse", () => {
       title: "The Bruneth Deep",
       summary: "S",
       throughline: "Built, ruined, and now contested.",
+      ...NARRATIVE,
       sectors: prompt.resolved.sectors.map((s, i) => ({
         name: `Room ${i + 1}`,
         description: "d",
@@ -808,6 +822,7 @@ describe("parseDungeonResponse", () => {
       title: "Fine Title",
       summary: "S",
       throughline: "Built, ruined, and now contested.",
+      ...NARRATIVE,
       sectors,
       factions,
     });
@@ -832,6 +847,60 @@ describe("parseDungeonResponse", () => {
   it("omits the avoid-list section when the session is empty", () => {
     const prompt = buildDungeonPrompt({ themeId: "fantasy" });
     expect(prompt.userMessage).not.toContain("Already used elsewhere");
+  });
+
+  it("asks again for an omitted narrative field instead of substituting table prose", () => {
+    // A delve came back whose Adventure Hooks were one flat sentence lifted
+    // verbatim from the cyberpunk table, because the model omitted "hooks" and
+    // the per-field fallback quietly filled it in. That reintroduces exactly
+    // the local text this generator moved away from, so an omission is now a
+    // problem the retry can name.
+    const prompt = buildDungeonPrompt({
+      themeId: "cyberpunk",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const factions = [
+      {
+        name: "the First",
+        virtue: "Bold",
+        vice: "Cruel",
+        goal: "Wealth",
+        obstacle: "o1",
+      },
+      {
+        name: "the Second",
+        virtue: "Wise",
+        vice: "Greedy",
+        goal: "Survival",
+        obstacle: "o2",
+      },
+    ];
+    const { hooks: _dropped, ...withoutHooks } = NARRATIVE;
+
+    const result = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "Fine Title",
+        summary: "S",
+        throughline: "T",
+        ...withoutHooks,
+        sectors,
+        factions,
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(result.problems.join(" ")).toContain("missing required fields");
+    expect(result.problems.join(" ")).toContain("hooks");
+
+    // The foundation is still the floor once the retry has had its chance.
+    expect(result.output.lore).toContain("### Adventure Hooks & Rumours");
   });
 
   it("rejects a response that skipped the throughline planning step", () => {
@@ -865,6 +934,7 @@ describe("parseDungeonResponse", () => {
     const noThroughline = JSON.stringify({
       title: "Fine Title",
       summary: "S",
+      ...NARRATIVE,
       sectors,
       factions,
     });
@@ -883,6 +953,7 @@ describe("parseDungeonResponse", () => {
       title: "Fine Title",
       summary: "S",
       throughline: "Built as a vault, gutted by a purge, now contested.",
+      ...NARRATIVE,
       sectors,
       factions,
     });
@@ -916,7 +987,13 @@ describe("parseDungeonResponse", () => {
         obstacle: "o2",
       },
     ];
-    const base = { summary: "S", throughline: "T", sectors, factions };
+    const base = {
+      summary: "S",
+      throughline: "T",
+      ...NARRATIVE,
+      sectors,
+      factions,
+    };
 
     // The ban list has only ever been a prompt request; these assert it is
     // actually enforced now that the model authors every name.
