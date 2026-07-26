@@ -209,6 +209,26 @@ function sanitizeSectorName(s: string): string {
     .trim();
 }
 
+/**
+ * Coerce a narrative field to prose, accepting a list.
+ *
+ * The schema asks hooks for "2-3 reasons a party would come here", which
+ * invites a JSON array, and several other fields read naturally as lists.
+ * Requiring a string meant an arrayed answer was indistinguishable from an
+ * omission, so it was silently replaced with table text — three consecutive
+ * generated delves had table hooks under otherwise entirely original prose.
+ */
+function narrativeText(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    return value
+      .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      .map((v) => v.trim())
+      .join(" ");
+  }
+  return "";
+}
+
 /** Strip a leading "Seeks"/"Seeking" an AI response may have added to a goal, since callers add their own lead-in. */
 function sanitizeGoal(s: string): string {
   return s
@@ -861,8 +881,7 @@ export function parseDungeonResponseDetailed(
     // Each field falls back to the foundation the model was asked to expand,
     // so an omitted key degrades to the local prose rather than deleting the
     // whole section from the document.
-    const str = (v: unknown, fallback = "") =>
-      typeof v === "string" && v.trim() ? v.trim() : fallback;
+    const str = (v: unknown, fallback = "") => narrativeText(v) || fallback;
 
     // Gaps the model left that were patched from the foundation. Reported so a
     // retry can ask for them, without discarding an otherwise good response.
@@ -883,7 +902,7 @@ export function parseDungeonResponseDetailed(
         "treasures",
         "hooks",
       ] as const
-    ).filter((k) => !(typeof parsed[k] === "string" && parsed[k].trim()));
+    ).filter((k) => !narrativeText(parsed[k]));
 
     // Planning scaffolding: the model writes this first so the fields after it
     // are generated against a single stated causal chain. Not rendered — the
