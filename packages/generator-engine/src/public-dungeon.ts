@@ -3,6 +3,13 @@
  *
  * Generates structured, multi-sector subterranean complexes, ruins, alien vaults,
  * and monster lairs using Codex Cryptica's world theme system.
+ *
+ * Generation method — Purpose/Construction/Ruination as paired dice-style axes,
+ * factions built from virtue/vice + goal/obstacle, and a pointcrawl-style sector
+ * map — is patterned after the "Dungeon Seeds" procedure in the Cairn RPG
+ * Warden's Guide (2nd Edition) by Yochai Gal, https://cairnrpg.com (text CC
+ * BY-SA 4.0). All table entries below are original; only the compositional
+ * method is borrowed. See public-dungeon-constants.ts for the full notice.
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
@@ -19,11 +26,21 @@ import {
   dungeonConfig,
   GENRE_HINTS,
   SAMPLE_TITLES_BY_GENRE,
-  HISTORIES_BY_GENRE,
+  BUILDER_BY_GENRE,
+  ORIGINAL_USE_BY_GENRE,
+  ENTRANCE_BY_GENRE,
+  COMPOSITION_BY_GENRE,
+  CONDITION_BY_GENRE,
+  CAUSE_BY_GENRE,
   SIGNATURE_FEATURES_BY_GENRE,
-  CONFLICTS_BY_GENRE,
   SECTORS_BY_GENRE,
   INHABITANTS_BY_GENRE,
+  FACTION_NAMES_BY_GENRE,
+  FACTION_VIRTUES,
+  FACTION_VICES,
+  FACTION_GOALS,
+  FACTION_OBSTACLES,
+  SECTOR_CONNECTORS,
   SECRETS_BY_GENRE,
   HAZARDS_BY_GENRE,
   TREASURES_BY_GENRE,
@@ -41,9 +58,35 @@ export interface DungeonGeneratorOptions {
   instruction?: string;
 }
 
+const STOCK_TYPES = ["Monster", "Lore", "Special", "Trap"] as const;
+type DungeonStockType = (typeof STOCK_TYPES)[number];
+
+function isStockType(v: unknown): v is DungeonStockType {
+  return (
+    typeof v === "string" && (STOCK_TYPES as readonly string[]).includes(v)
+  );
+}
+
 export interface DungeonSector {
   name: string;
   description: string;
+  /** Cairn-style room-stocking bucket: Monster / Lore / Special / Trap. */
+  stockType?: DungeonStockType;
+  stockDetail?: string;
+}
+
+export interface DungeonSectorEdge {
+  from: number;
+  to: number;
+  via: string;
+}
+
+export interface DungeonFaction {
+  name: string;
+  virtue: string;
+  vice: string;
+  goal: string;
+  obstacle: string;
 }
 
 export interface ResolvedDungeon {
@@ -54,10 +97,20 @@ export interface ResolvedDungeon {
   scale: string;
   title: string;
   premise: string;
+  builder: string;
+  originalUse: string;
+  entrance: string;
+  composition: string;
+  condition: string;
+  cause: string;
   history: string;
+  currentStateDetail: string;
   signatureFeature: string;
+  factions: DungeonFaction[];
   currentConflict: string;
   sectors: DungeonSector[];
+  sectorEdges: DungeonSectorEdge[];
+  map: string;
   inhabitants: string;
   secret: string;
   hazards: string;
@@ -80,6 +133,105 @@ function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
   );
 }
 
+/** Roll a Cairn-style d6 room-stocking bucket: 1 Monster / 2-3 Lore / 4 Special / 5-6 Trap. */
+function rollStockType(rng: Rng): DungeonStockType {
+  const roll = Math.floor(rng() * 6) + 1;
+  if (roll === 1) return "Monster";
+  if (roll <= 3) return "Lore";
+  if (roll === 4) return "Special";
+  return "Trap";
+}
+
+function pickStockDetail(
+  stockType: DungeonStockType,
+  genre: string,
+  usedSpecials: Set<string>,
+  rng: Rng,
+): string {
+  if (stockType === "Monster") {
+    return pickFrom(forGenre(INHABITANTS_BY_GENRE, genre), rng);
+  }
+  if (stockType === "Lore") {
+    return pickFrom(forGenre(HOOKS_BY_GENRE, genre), rng);
+  }
+  if (stockType === "Special") {
+    const pool = forGenre(SIGNATURE_FEATURES_BY_GENRE, genre);
+    const remaining = pool.filter((f) => !usedSpecials.has(f));
+    const picked = pickFrom(remaining.length > 0 ? remaining : pool, rng);
+    usedSpecials.add(picked);
+    return picked;
+  }
+  return pickFrom(forGenre(HAZARDS_BY_GENRE, genre), rng);
+}
+
+/** Capitalize the first letter, for sentences that open with a lowercase faction name like "the X". */
+function sentenceCase(s: string): string {
+  return s.length > 0 ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+/** Generate a named faction with Cairn-style virtue/vice traits and a goal/obstacle agenda. */
+function generateFaction(
+  genre: string,
+  rng: Rng,
+  usedNames: Set<string>,
+): DungeonFaction {
+  const namePool = forGenre(FACTION_NAMES_BY_GENRE, genre);
+  let name = pickFrom(namePool, rng);
+  for (let attempt = 0; attempt < 10 && usedNames.has(name); attempt++) {
+    name = pickFrom(namePool, rng);
+  }
+  usedNames.add(name);
+  return {
+    name,
+    virtue: pickFrom(FACTION_VIRTUES, rng),
+    vice: pickFrom(FACTION_VICES, rng),
+    goal: pickFrom(FACTION_GOALS, rng),
+    obstacle: pickFrom(FACTION_OBSTACLES, rng),
+  };
+}
+
+/** Render a lightweight pointcrawl: a linear chain plus any non-adjacent shortcut routes. */
+function renderDungeonMap(
+  sectorNames: string[],
+  edges: DungeonSectorEdge[],
+): string {
+  if (sectorNames.length === 0) return "";
+  const chain = sectorNames.map((n, i) => `[${i + 1}] ${n}`).join("  ──  ");
+  const branches = edges.filter((e) => e.to !== e.from + 1);
+  if (branches.length === 0) return chain;
+  const branchLines = branches.map(
+    (e) =>
+      `Additional route: [${e.from + 1}] ${sectorNames[e.from]} ↔ [${e.to + 1}] ${sectorNames[e.to]} via ${e.via}`,
+  );
+  return [chain, "", ...branchLines].join("\n");
+}
+
+/**
+ * Sector count for a scale label, matching dungeonConfig.scales' documented ranges:
+ * Small Lair 1-2, Medium Complex 3-4, Sprawling Megadungeon 5+ (capped by available templates).
+ */
+function sectorCountForScale(scale: string, rng: Rng): number {
+  if (scale.includes("Small")) return 1 + Math.floor(rng() * 2); // 1-2
+  if (scale.includes("Sprawling")) return 5 + Math.floor(rng() * 2); // 5-6
+  return 3 + Math.floor(rng() * 2); // 3-4 (Medium, and any custom scale)
+}
+
+/** Build the linear pointcrawl chain, plus an optional non-adjacent shortcut for larger dungeons. */
+function buildSectorEdges(sectorCount: number, rng: Rng): DungeonSectorEdge[] {
+  const edges: DungeonSectorEdge[] = [];
+  for (let i = 0; i < sectorCount - 1; i++) {
+    edges.push({ from: i, to: i + 1, via: "the main passage" });
+  }
+  if (sectorCount >= 3 && rng() < 0.5) {
+    edges.push({
+      from: 0,
+      to: sectorCount - 1,
+      via: pickFrom(SECTOR_CONNECTORS, rng),
+    });
+  }
+  return edges;
+}
+
 function resolveDungeon(
   options: DungeonGeneratorOptions,
   rng: Rng = defaultRng,
@@ -97,25 +249,53 @@ function resolveDungeon(
 
   const premise = `${title} — A ${scale.toLowerCase()} ${purpose.toLowerCase()} currently serving as an ${currentState.toLowerCase()}.`;
 
-  const histories = forGenre(HISTORIES_BY_GENRE, genre);
-  const history = pickFrom(histories, rng);
+  // Purpose & Construction axes (Cairn-style paired rolls), composed into history.
+  const builder = pickFrom(forGenre(BUILDER_BY_GENRE, genre), rng);
+  const originalUse = pickFrom(forGenre(ORIGINAL_USE_BY_GENRE, genre), rng);
+  const entrance = pickFrom(forGenre(ENTRANCE_BY_GENRE, genre), rng);
+  const composition = pickFrom(forGenre(COMPOSITION_BY_GENRE, genre), rng);
+  const history = `Raised by ${builder} as ${originalUse}, the delve is entered through ${entrance}, its halls built from ${composition}.`;
+
+  // Ruination axis, composed onto the picked current-state category.
+  const condition = pickFrom(forGenre(CONDITION_BY_GENRE, genre), rng);
+  const cause = pickFrom(forGenre(CAUSE_BY_GENRE, genre), rng);
+  const currentStateDetail = `${currentState} — now ${condition}, the result of ${cause}.`;
 
   const signatureFeatures = forGenre(SIGNATURE_FEATURES_BY_GENRE, genre);
   const signatureFeature = pickFrom(signatureFeatures, rng);
 
-  const conflicts = forGenre(CONFLICTS_BY_GENRE, genre);
-  const currentConflict = pickFrom(conflicts, rng);
+  // Two rival factions (virtue/vice + goal/obstacle) drive inhabitants and conflict together,
+  // so the two sections stay internally consistent rather than being picked independently.
+  const usedFactionNames = new Set<string>();
+  const factionA = generateFaction(genre, rng, usedFactionNames);
+  const factionB = generateFaction(genre, rng, usedFactionNames);
+  const factions = [factionA, factionB];
+
+  const inhabitants = sentenceCase(
+    `${factionA.name} (${factionA.virtue.toLowerCase()}, but ${factionA.vice.toLowerCase()}) hold the upper hand here, opposed by ${factionB.name} (${factionB.virtue.toLowerCase()}, but ${factionB.vice.toLowerCase()}).`,
+  );
+  const currentConflict = sentenceCase(
+    `${factionA.name} pursue ${factionA.goal.toLowerCase()}, held back by ${factionA.obstacle}. ${sentenceCase(factionB.name)} want these halls for themselves — driven by ${factionB.goal.toLowerCase()}, and struggling against ${factionB.obstacle} — putting the two factions on a collision course.`,
+  );
 
   const availableSectors = forGenre(SECTORS_BY_GENRE, genre);
-  const sectorCount = scale.includes("Small")
-    ? 2
-    : scale.includes("Sprawling")
-      ? 4
-      : 3;
-  const sectors = pickRandomItems(availableSectors, sectorCount, rng);
+  const sectorCount = Math.min(
+    sectorCountForScale(scale, rng),
+    availableSectors.length,
+  );
+  const pickedSectors = pickRandomItems(availableSectors, sectorCount, rng);
+  const usedSpecials = new Set<string>([signatureFeature]);
+  const sectors: DungeonSector[] = pickedSectors.map((s) => {
+    const stockType = rollStockType(rng);
+    const stockDetail = pickStockDetail(stockType, genre, usedSpecials, rng);
+    return { name: s.name, description: s.description, stockType, stockDetail };
+  });
 
-  const inhabitantsList = forGenre(INHABITANTS_BY_GENRE, genre);
-  const inhabitants = pickFrom(inhabitantsList, rng);
+  const sectorEdges = buildSectorEdges(sectors.length, rng);
+  const map = renderDungeonMap(
+    sectors.map((s) => s.name),
+    sectorEdges,
+  );
 
   const secretsList = forGenre(SECRETS_BY_GENRE, genre);
   const secret = pickFrom(secretsList, rng);
@@ -137,16 +317,83 @@ function resolveDungeon(
     scale,
     title,
     premise,
+    builder,
+    originalUse,
+    entrance,
+    composition,
+    condition,
+    cause,
     history,
+    currentStateDetail,
     signatureFeature,
+    factions,
     currentConflict,
     sectors,
+    sectorEdges,
+    map,
     inhabitants,
     secret,
     hazards,
     treasures,
     hooks,
   };
+}
+
+/**
+ * Compact plain-text rendering of everything resolveDungeon() already generated,
+ * so the AI prompt embellishes a locally-generated foundation instead of
+ * silently discarding it and inventing an unrelated dungeon from scratch.
+ */
+function formatDungeonFoundation(dungeon: ResolvedDungeon): string {
+  const factionLines = dungeon.factions
+    .map(
+      (f) =>
+        `  - ${f.name} — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${f.obstacle}.`,
+    )
+    .join("\n");
+  const sectorLines = dungeon.sectors
+    .map(
+      (s, idx) =>
+        `  - Sector ${idx + 1}: ${s.name} — ${s.description}${
+          s.stockType && s.stockDetail
+            ? ` [${s.stockType}: ${s.stockDetail}]`
+            : ""
+        }`,
+    )
+    .join("\n");
+
+  return [
+    `- Title seed: ${dungeon.title}`,
+    `- History: ${dungeon.history}`,
+    `- Current Condition: ${dungeon.currentStateDetail}`,
+    `- Signature Feature: ${dungeon.signatureFeature}`,
+    `- Factions:`,
+    factionLines,
+    `- Current Conflict: ${dungeon.currentConflict}`,
+    `- Sectors:`,
+    sectorLines,
+    `- Central Secret: ${dungeon.secret}`,
+    `- Hazards: ${dungeon.hazards}`,
+    `- Treasures: ${dungeon.treasures}`,
+    `- Hooks: ${dungeon.hooks}`,
+  ].join("\n");
+}
+
+function formatFactionsList(factions: DungeonFaction[]): string {
+  return factions
+    .map(
+      (f) =>
+        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${f.goal}; held back by ${f.obstacle}.`,
+    )
+    .join("\n");
+}
+
+function formatSector(s: DungeonSector, idx: number): string {
+  const stockLine =
+    s.stockType && s.stockDetail
+      ? `\n\n*${s.stockType} — ${s.stockDetail}*`
+      : "";
+  return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}`;
 }
 
 /**
@@ -159,7 +406,7 @@ export function generateDungeonLocal(
   const dungeon = resolveDungeon(options, rng);
 
   const sectorsFormatted = dungeon.sectors
-    .map((s, idx) => `### Sector ${idx + 1}: ${s.name}\n${s.description}`)
+    .map((s, idx) => formatSector(s, idx))
     .join("\n\n");
 
   const lore = [
@@ -167,7 +414,7 @@ export function generateDungeonLocal(
     dungeon.history,
     ``,
     `## Current State & Function`,
-    dungeon.currentState,
+    dungeon.currentStateDetail,
     ``,
     `## Signature Feature`,
     dungeon.signatureFeature,
@@ -175,11 +422,18 @@ export function generateDungeonLocal(
     `## Current Conflict`,
     dungeon.currentConflict,
     ``,
+    `## Dungeon Layout`,
+    "```",
+    dungeon.map,
+    "```",
+    ``,
     `## Key Sectors & Layout`,
     sectorsFormatted,
     ``,
     `## Inhabitants & Factions`,
     dungeon.inhabitants,
+    ``,
+    formatFactionsList(dungeon.factions),
     ``,
     `## Central Secret / Boss Mystery`,
     dungeon.secret,
@@ -222,11 +476,13 @@ export function buildDungeonPrompt(
     GENRE_HINTS["Classic Fantasy"] ||
     GENRE_HINTS["Fantasy"];
 
-  const systemInstruction = `You are a master worldbuilder and TTRPG dungeon designer creating evocative, campaign-ready subterranean complexes, ancient ruins, alien vaults, or tech facilities.
-  
+  const systemInstruction = `You are a master worldbuilder and TTRPG dungeon designer turning a locally-generated dungeon skeleton into evocative, campaign-ready prose.
+
+You will be given a "Locally-generated foundation" of already-decided facts: title seed, history, condition, signature feature, two named factions with goals/obstacles, the conflict between them, named sectors with stocked content, a secret, hazards, treasures, and hooks. Elaborate and dramatize every one of these into vivid prose — do NOT rename factions or sectors, do NOT invent a different conflict, and do NOT contradict any given fact. Your job is embellishment, not reinvention.
+
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
-  const userMessage = `Create a detailed, original ${dungeon.genre} dungeon / delve concept.
+  const userMessage = `Expand the locally-generated dungeon foundation below into a detailed, original ${dungeon.genre} dungeon / delve write-up.
 
 Setting Context:
 - Active Theme / Genre: ${dungeon.genre} (${genreHint})
@@ -235,24 +491,29 @@ Setting Context:
 - Scale: ${dungeon.scale}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
+Locally-generated foundation (embellish; keep every named fact intact):
+${formatDungeonFoundation(dungeon)}
+
 Required JSON schema:
 {
-  "title": "Evocative Name of the Delve",
+  "title": "Evocative name for the delve, may refine the title seed above.",
   "summary": "1-2 sentence premise of why this location is interesting.",
-  "history": "Original purpose and the event(s) that transformed it into its current state.",
-  "currentState": "How the delve functions today and its current operational condition.",
-  "signatureFeature": "One distinctive, memorable landmark or phenomenon that defines this location.",
-  "currentConflict": "An active tension already unfolding before the PCs arrive.",
-  "sectors": [
-    { "name": "Sector Name 1", "description": "Description of this area/level." },
-    { "name": "Sector Name 2", "description": "Description of this area/level." },
-    { "name": "Sector Name 3", "description": "Description of this area/level." }
+  "history": "Vivid prose expansion of the given History fact — same facts, richer telling.",
+  "currentState": "Vivid prose expansion of the given Current Condition fact.",
+  "signatureFeature": "Vivid prose expansion of the given Signature Feature.",
+  "factions": [
+    { "name": "(reuse Faction A's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "One-word goal (e.g. Survival, Dominion, Knowledge, Vengeance)", "obstacle": "The given obstacle, elaborated." },
+    { "name": "(reuse Faction B's given name exactly)", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "One-word goal", "obstacle": "The given obstacle, elaborated." }
   ],
-  "inhabitants": "Dominant inhabitants, rivals, guardians, and their internal relationship dynamic.",
-  "secret": "The central mystery, hidden truth, or boss-level complication at the heart of the location.",
-  "hazards": "Environmental, structural, trap, or security dangers.",
-  "treasures": "Notable loot, relics, technology, or valuable knowledge.",
-  "hooks": "2-3 adventure hooks and rumours circulating about this delve."
+  "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
+  "sectors": [
+    { "name": "(reuse a given sector name)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
+  ],
+  "inhabitants": "How the two named factions relate to each other, referencing both by name.",
+  "secret": "Vivid prose expansion of the given Central Secret.",
+  "hazards": "Vivid prose expansion of the given Hazards.",
+  "treasures": "Vivid prose expansion of the given Treasures.",
+  "hooks": "2-3 adventure hooks and rumours, expanding the given Hooks."
 }`;
 
   return {
@@ -268,6 +529,7 @@ Required JSON schema:
 export function parseDungeonResponse(
   rawText: string,
   options: DungeonGeneratorOptions = {},
+  rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   try {
     const parsed = parseFencedJson<Record<string, unknown>>(rawText);
@@ -303,8 +565,22 @@ export function parseDungeonResponse(
           typeof s?.description === "string"
             ? s.description
             : "An unexplored section.",
+        stockType: isStockType(s?.stockType) ? s.stockType : undefined,
+        stockDetail:
+          typeof s?.stockDetail === "string" ? s.stockDetail.trim() : undefined,
       }),
     );
+
+    const rawFactions = Array.isArray(parsed.factions) ? parsed.factions : [];
+    const factions: DungeonFaction[] = rawFactions
+      .filter((f): f is Record<string, unknown> => !!f && typeof f === "object")
+      .map((f) => ({
+        name: typeof f.name === "string" ? f.name : "An unnamed faction",
+        virtue: typeof f.virtue === "string" ? f.virtue : "",
+        vice: typeof f.vice === "string" ? f.vice : "",
+        goal: typeof f.goal === "string" ? f.goal : "",
+        obstacle: typeof f.obstacle === "string" ? f.obstacle : "",
+      }));
 
     const inhabitants =
       typeof parsed.inhabitants === "string" ? parsed.inhabitants.trim() : "";
@@ -316,22 +592,30 @@ export function parseDungeonResponse(
       typeof parsed.treasures === "string" ? parsed.treasures.trim() : "";
     const hooks = typeof parsed.hooks === "string" ? parsed.hooks.trim() : "";
 
+    const sectorEdges = buildSectorEdges(sectors.length, rng);
+    const map = renderDungeonMap(
+      sectors.map((s) => s.name),
+      sectorEdges,
+    );
+
     const sectorsFormatted =
       sectors.length > 0
-        ? sectors
-            .map(
-              (s, idx) => `### Sector ${idx + 1}: ${s.name}\n${s.description}`,
-            )
-            .join("\n\n")
+        ? sectors.map((s, idx) => formatSector(s, idx)).join("\n\n")
         : "### Sector 1: The Main Complex\nAn ancient subterranean structure.";
+
+    const factionsFormatted =
+      factions.length > 0 ? formatFactionsList(factions) : "";
 
     const lore = [
       history ? `## History & Original Purpose\n${history}\n` : "",
       currentState ? `## Current State & Function\n${currentState}\n` : "",
       signatureFeature ? `## Signature Feature\n${signatureFeature}\n` : "",
       currentConflict ? `## Current Conflict\n${currentConflict}\n` : "",
+      map ? `## Dungeon Layout\n\`\`\`\n${map}\n\`\`\`\n` : "",
       `## Key Sectors & Layout\n${sectorsFormatted}\n`,
-      inhabitants ? `## Inhabitants & Factions\n${inhabitants}\n` : "",
+      inhabitants || factionsFormatted
+        ? `## Inhabitants & Factions\n${[inhabitants, factionsFormatted].filter(Boolean).join("\n\n")}\n`
+        : "",
       secret ? `## Central Secret / Boss Mystery\n${secret}\n` : "",
       hazards ? `## Hazards & Traps\n${hazards}\n` : "",
       treasures ? `## Treasures & Artifacts\n${treasures}\n` : "",
