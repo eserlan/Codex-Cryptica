@@ -38,7 +38,7 @@ describe("help-content feature hints", () => {
     );
     expect(FEATURE_HINTS["delve-structural-builder"].title).toBeTruthy();
     expect(FEATURE_HINTS["delve-structural-builder"].content).toContain(
-      "Spatial Canvas",
+      "spatial canvas",
     );
   });
 });
