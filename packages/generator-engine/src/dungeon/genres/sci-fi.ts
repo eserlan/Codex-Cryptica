@@ -127,6 +127,9 @@ export const sciFiTables: DungeonGenreTables = {
     "The stasis pods hold living ancestors of the current planetary population.",
     "The distress beacon was never automatic \u2014 someone re-triggers it manually, roughly once a decade.",
     "The facility's charter lists a second site, coordinates included, that no survey has ever found.",
+    "The facility clock is wrong by four centuries, and it was set that way deliberately.",
+    "There is a second crew manifest, and not one name on it appears on the first.",
+    "The anomaly this outpost was built to observe has been drifting toward the facility for a thousand years.",
   ],
   hazards: [
     "Malfunctioning automated plasma turrets targeting heat signatures.",
@@ -141,6 +144,9 @@ export const sciFiTables: DungeonGenreTables = {
     "An encrypted memory crystal containing star maps to unmapped star systems.",
     "A precursor translation matrix that renders any recorded language into plain speech.",
     "A sealed sample canister logged as empty, and measurably heavier than empty.",
+    "A navigational core logging a route to a system no survey has ever confirmed exists.",
+    "A medical suite capable of reversing decompression injury, still fully stocked.",
+    "A precursor tool that reshapes metal at a touch, with no mechanism anyone can identify.",
   ],
   hooks: [
     "A deep-space distress beacon began broadcasting from a long-silent planetary vault.",

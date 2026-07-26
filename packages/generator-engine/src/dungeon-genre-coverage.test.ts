@@ -79,9 +79,12 @@ describe("dungeon genre coverage", () => {
         sectors: 6,
         inhabitants: 5,
         factionNames: 10,
-        secrets: 5,
+        // Secrets and treasures are drawn once per dungeon and never dedup'd
+        // against anything, so the pool size alone decides how often a GM sees
+        // a repeat. Held higher than the per-sector pools for that reason.
+        secrets: 8,
         hazards: 5,
-        treasures: 5,
+        treasures: 8,
         hooks: 5,
         signatureFeatures: 5,
         purposes: 5,

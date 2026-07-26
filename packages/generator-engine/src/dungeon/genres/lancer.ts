@@ -124,6 +124,9 @@ export const lancerTables: DungeonGenreTables = {
     "The withdrawal was not a withdrawal — the garrison was ordered to abandon something specific and leave it sealed.",
     "The half-printed chassis on the deck is to a pattern that has never been licensed anywhere.",
     "The crater was not an impact. Something came out, and the facility was built to watch the hole.",
+    "The bay inventory lists one more frame than there are cradles to hold.",
+    "The withdrawal order was issued nine hours before the event that supposedly prompted it.",
+    "The vault NHP has run this facility alone for decades and has developed opinions about being left.",
   ],
   hazards: [
     "Bay defence turrets tracking on an obsolete IFF list.",
@@ -138,6 +141,9 @@ export const lancerTables: DungeonGenreTables = {
     "A licence key for a frame pattern worth more than the salvage.",
     "The garrison's full maintenance archive, naming every frame that left.",
     "A pilot's personalised control yoke, machined to a dead operator's hands.",
+    "A pilot's neural-link harness tuned to a frame that no longer exists.",
+    "A sealed manufacturer's diagnostic key that unlocks any chassis on the line.",
+    "A crate of printer feedstock in an alloy grade no longer licensed anywhere.",
   ],
   hooks: [
     "A cartel is paying for anything recovered from the bay, no questions about provenance.",

@@ -124,6 +124,9 @@ export const vampireTables: DungeonGenreTables = {
     "The crypt's wards are weakening, and sunrise no longer stops the shadows within from moving.",
     "The family upstairs still pays the crypt's upkeep, and has done so without interruption for two hundred years.",
     "One sarcophagus is empty and has always been empty; the name on it belongs to someone currently living.",
+    "The wards were laid by the family \u2014 not against the crypt's occupant, but at its instruction.",
+    "A servant's stair at the back of the crypt was in nightly use until very recently.",
+    "The elder's coffin has stood empty for a decade, and the household has kept up appearances regardless.",
   ],
   hazards: [
     "Razor-sharp swinging scythe pendulum traps hidden in dark gothic archways.",
@@ -138,6 +141,9 @@ export const vampireTables: DungeonGenreTables = {
     "A signet ring of pure platinum conferring immunity to vampire charm effects.",
     "A silver-cased daguerreotype showing the estate's current owner, dated ninety years ago.",
     "A sheaf of letters proving the bloodline's claim to the city above is a forgery.",
+    "A silvered hand-mirror that shows a room's true occupants.",
+    "A bottle of consecrated wine from a vintage the church no longer admits to producing.",
+    "A locket portrait of the current heir, painted from life, four generations ago.",
   ],
   hooks: [
     "Townspeople have been disappearing on full moons, dragged into the catacombs beneath the old manor.",

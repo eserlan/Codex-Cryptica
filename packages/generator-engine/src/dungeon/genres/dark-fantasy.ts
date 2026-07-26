@@ -125,6 +125,9 @@ export const darkFantasyTables: DungeonGenreTables = {
     "The weeping walls are formed from the compressed bodies of a betrayed holy crusade.",
     "The rite performed here every year was never stopped, only moved, and someone is still keeping the calendar.",
     "The bodies in the lower ossuary are all the same person, interred a dozen times across three centuries.",
+    "The corruption is not spreading outward from the altar. It is spreading toward it, and something is drinking.",
+    "The order that built this place is still chartered, still funded, and still meets four times a year.",
+    "The relic everyone comes looking for was removed generations ago and replaced with a very good forgery.",
   ],
   hazards: [
     "Rooms filled with intoxicating spore mist causing hallucinations of lost loved ones.",
@@ -139,6 +142,9 @@ export const darkFantasyTables: DungeonGenreTables = {
     "An iron ring engraved with runes that ward off fear and madness.",
     "A reliquary finger-bone that stills the whispers within arm's reach of its bearer.",
     "A confessor's ledger naming every patron who paid for a name to be removed from it.",
+    "A censer whose smoke shows the dead as they were, not as they ended.",
+    "A flagellant's scourge, barbs blessed, that draws blood only from the wielder's enemies.",
+    "A sealed confession naming the saint's true crime, signed by three witnesses who died the same night.",
   ],
   hooks: [
     "A weeping mother begs the party to rescue her daughter, kidnapped for a ritual in the ossuary.",

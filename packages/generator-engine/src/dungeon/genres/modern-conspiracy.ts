@@ -124,6 +124,9 @@ export const modernConspiracyTables: DungeonGenreTables = {
     "The containment cells were built to hold people, and the paperwork calls them something else entirely.",
     "The caretaker crew were never told the programme ended, and have kept working for decades.",
     "The site sits directly above something older that the facility was really built to monitor.",
+    "The facility appears on a current budget document under a different name.",
+    "Every camera in the building is still recording, and the feed terminates somewhere.",
+    "One subject listed as deceased has been sending postcards.",
   ],
   hazards: [
     "Blast doors on dead-man timers that seal a wing without warning.",
@@ -138,6 +141,9 @@ export const modernConspiracyTables: DungeonGenreTables = {
     "A cased sidearm and credentials belonging to an officer declared dead abroad.",
     "A specimen container from the containment wing, still intact and still cold.",
     "A ledger of payments linking the programme to three sitting officials.",
+    "A courier case under diplomatic seal with no listed origin.",
+    "A photograph of six people, five publicly known and one who does not officially exist.",
+    "An encryption key still valid on a network decommissioned in the nineties.",
   ],
   hooks: [
     "A journalist has gone dark after arranging to meet a source at the site.",

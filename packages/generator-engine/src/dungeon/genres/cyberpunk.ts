@@ -124,6 +124,9 @@ export const cyberpunkTables: DungeonGenreTables = {
     "The central vault contains the original neural backup of a legendary netrunner.",
     "The site is still billing a parent company that dissolved twelve years ago, and the invoices are being paid.",
     "Every employee record in the archive was fabricated; none of the staff listed here ever existed.",
+    "Site security is being run remotely by someone who does not work for the owner.",
+    "Three bodies in cold storage match employees currently clocked in upstairs.",
+    "The facility was sold four times in one week, and every buyer still believes they hold the deed.",
   ],
   hazards: [
     "High-voltage electrical leaks energizing standing water in flooded service corridors.",
@@ -138,6 +141,9 @@ export const cyberpunkTables: DungeonGenreTables = {
     "A prototype stealth-field generator belt.",
     "A cold-storage backup of a market-moving algorithm three generations ahead of anything shipping.",
     "A clean legend package \u2014 identity, history, and credit record \u2014 good enough to disappear into.",
+    "A hardware root key that signs firmware for an entire product line.",
+    "An unlisted handset with a direct line to somebody who actually picks up.",
+    "A biometric spoof rig good enough to walk through corporate security exactly once.",
   ],
   hooks: [
     "A fix-it netrunner hires the crew to extract an offline AI core from the corporate bunker.",

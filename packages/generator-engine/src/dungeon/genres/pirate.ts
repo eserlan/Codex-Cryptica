@@ -158,6 +158,9 @@ export const pirateTables: DungeonGenreTables = {
     "The captain everyone believes drowned is alive, and holds the only chart out through the reef.",
     "A pardon signed for the whole crew was hidden rather than delivered, and it is still valid.",
     "The cove connects to a sea cave the navy has been searching for since the war.",
+    "The articles the crew signed are still binding, and one signatory now sits on the admiralty board.",
+    "The cove has a second mouth that opens only on a storm surge.",
+    "The fleet's best navigator was murdered here; her charts were never found because she hid them well.",
   ],
   hazards: [
     "Galleries that flood without warning when the tide turns.",
@@ -172,6 +175,9 @@ export const pirateTables: DungeonGenreTables = {
     "A cased pair of duelling pistols, silver-chased and unfired.",
     "A bolt of stolen silk, somehow kept dry for twenty years.",
     "A signed letter of marque that would make its bearer legitimate overnight.",
+    "A whalebone boatswain's whistle that carries far further than it has any right to.",
+    "A sealed ledger recording which ports took the crew's coin and asked nothing.",
+    "A brass-bound spyglass ground finer than any naval issue.",
   ],
   hooks: [
     "A dying sailor sells directions to the cove for the price of his passage home.",

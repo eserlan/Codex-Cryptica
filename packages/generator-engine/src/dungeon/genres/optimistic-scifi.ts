@@ -153,6 +153,9 @@ export const optimisticSciFiTables: DungeonGenreTables = {
     "The garden contains a species deliberately preserved because its homeworld was lost.",
     "The dormant crew can be woken, and they left instructions on how to ask.",
     "The quiet room is empty because what it held was successfully released, exactly as planned.",
+    "The outpost has been waiting for one specific question, and the answer is already prepared.",
+    "The builders left because they succeeded, and the account of what they achieved is on the top shelf.",
+    "The garden's caretaker systems have been quietly correcting our surveys for two decades.",
   ],
   hazards: [
     "Atmosphere mixes calibrated for lungs that are not human.",
@@ -167,6 +170,9 @@ export const optimisticSciFiTables: DungeonGenreTables = {
     "An observation record of a stellar event no living astronomer witnessed.",
     "A self-repairing ceramic sample that has resisted every attempt at analysis.",
     "A welcome token, offered by the caretaker, that opens every door in the outpost.",
+    "A teaching lattice that adapts its explanation to whoever is holding it.",
+    "A star chart annotated with four other outposts, all of them still standing.",
+    "A gift left explicitly for the first visitor, with a note apologising for the wait.",
   ],
   hooks: [
     "The outpost has begun broadcasting again after centuries, and it is using our languages.",

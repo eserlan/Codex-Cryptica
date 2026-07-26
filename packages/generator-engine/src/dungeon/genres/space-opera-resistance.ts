@@ -124,6 +124,9 @@ export const spaceOperaResistanceTables: DungeonGenreTables = {
     "The cache was never fully inventoried, and part of it was diverted a second time.",
     "The cadre did not evacuate. They are still here, behind the scuttle point, and they will not open it.",
     "The base was never a resistance asset at all — it was run as a trap from the day it was dug.",
+    "The cell's dead-drop is still live, and someone emptied it last week.",
+    "The occupation knows about this base and has left it running to see who arrives.",
+    "Half the cadre took the amnesty and are living openly two systems away.",
   ],
   hazards: [
     "Scuttle charges still armed on a dead-man circuit.",
@@ -138,6 +141,9 @@ export const spaceOperaResistanceTables: DungeonGenreTables = {
     "Medical supplies worth more than currency on an occupied world.",
     "A diverted convoy manifest proving who sold the shipment on.",
     "A functioning long-range transmitter, unregistered and untraceable.",
+    "A forged transit authority good enough to move an entire family off-world.",
+    "A cache of untraceable credits, split into amounts too small to flag.",
+    "A recording of an occupation officer admitting to an order that was never officially given.",
   ],
   hooks: [
     "A cell has gone silent, and the last transmission was a partial evacuation code.",

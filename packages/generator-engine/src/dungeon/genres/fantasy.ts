@@ -126,6 +126,9 @@ export const fantasyTables: DungeonGenreTables = {
     "The central fountain grants true sight for one hour, but draws immediate attention from subterranean fiends.",
     "The seal on the lowest door was placed from the inside, and whatever set it is still honouring the bargain.",
     "The builders never finished: the deepest gallery opens onto a second, older complex nobody has surveyed.",
+    "A second stair, deliberately unmapped, links the lowest gallery to a rival delve half a mile away.",
+    "The wards were not built to keep anything in \u2014 they were built to keep the surface from noticing what lies below.",
+    "Every builder's name was struck from the foundation stone, and the erasure is far more recent than the stone.",
   ],
   hazards: [
     "Pressure-plate needle traps laced with paralyzing wyvern venom.",
@@ -140,6 +143,9 @@ export const fantasyTables: DungeonGenreTables = {
     "A sealed potion flask containing liquid dragonfire.",
     "A warded strongbox of cut gemstones, each one etched with a different house sigil.",
     "A set of dwarven master-keys that open every door in the complex, including the ones bricked over.",
+    "A house banner thought extinct, worth a war of succession to the right claimant.",
+    "A cache of spell-scribed vellum, each sheet good for exactly one casting.",
+    "A smith's hammer that never needs re-hafting and rings a different note near true silver.",
   ],
   hooks: [
     "A local scholar hires the party to retrieve an ancient astrological tablet from the ruins.",

@@ -124,6 +124,9 @@ export const westernTables: DungeonGenreTables = {
     "The men sealed in during the strike were alive for far longer than the inquest recorded.",
     "The rail tunnel breaks into a natural cavern the survey deliberately left off the maps.",
     "The town did not empty because of the fever — it emptied because of what came up out of the sump.",
+    "The company still holds the mineral rights, and the filing renews itself every year without anyone signing.",
+    "The rail line was routed around this claim at enormous cost, and no surviving document says why.",
+    "The men who sealed the adit did it from the outside, and the inquest never thought to ask who.",
   ],
   hazards: [
     "Rotten square-set timbering that drops a ceiling at a shout.",
@@ -138,6 +141,9 @@ export const westernTables: DungeonGenreTables = {
     "A cased Sharps rifle wrapped in oilcloth and perfectly preserved.",
     "The company's true assay ledger, worth more than the ore ever was.",
     "A deed to the whole claim, unrecorded and therefore still open.",
+    "A brand-book identifying every herd moved through the territory in a decade.",
+    "A surveyor's transit in its original case, worth a season's wages intact.",
+    "A pardon signed by the territorial governor, undated and with the name left blank.",
   ],
   hooks: [
     "The territorial marshal wants an outlaw band flushed out of the old workings.",

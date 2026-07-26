@@ -126,6 +126,9 @@ export const postApocalypticTables: DungeonGenreTables = {
     "The facility was built to seed a new ecosystem using preserved pre-collapse DNA strains.",
     "The shelter's registry shows it was opened from the outside years before the all-clear was ever given.",
     "The seed vault was quietly emptied before the collapse, and the manifest names who took it.",
+    "The air here has been clean for thirty years, and the reason nobody left is written plainly in the log.",
+    "The settlement above draws its water from this facility's reservoir and has no idea.",
+    "The all-clear was received. Someone in command chose not to pass it on.",
   ],
   hazards: [
     "Concentrated radiation pockets near ruptured reactor cores.",
@@ -140,6 +143,9 @@ export const postApocalypticTables: DungeonGenreTables = {
     "A water filtration core module in original military packing.",
     "A working geiger-mapped survey of every clean water source within a hundred miles.",
     "A crate of pre-war fuel cells, still sealed and still holding charge.",
+    "A working shortwave set with four other shelters' frequencies inked inside the lid.",
+    "A crate of pre-collapse seed stock, viability-tested and still good.",
+    "A hand-drawn map of every safe crossing between here and the coast.",
   ],
   hooks: [
     "Settlement leaders need a vital replacement part from the bunker's generator to survive winter.",

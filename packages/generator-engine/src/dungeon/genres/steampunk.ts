@@ -124,6 +124,9 @@ export const steampunkTables: DungeonGenreTables = {
     "The governor hall does not regulate pressure; it regulates something the engineers refused to name in writing.",
     "The boiler failure was deliberate, and the man blamed for it was already dead when it happened.",
     "The lowest gallery breaks into a natural cavern the survey maps deliberately omit.",
+    "The works still hold the city's pressure charter, which makes shutting them down legally impossible.",
+    "The automatons were built with a governor fitting that was never actually connected to anything.",
+    "There is a shift roster for next week, filled out in fresh ink.",
   ],
   hazards: [
     "Pipe joints venting scalding steam without warning.",
@@ -138,6 +141,9 @@ export const steampunkTables: DungeonGenreTables = {
     "A strongbox of the works' payroll in heavy silver coin.",
     "An automaton control key that commands every frame on the line.",
     "A bound set of the chief engineer's private notebooks.",
+    "A master gauge calibrated against a standard that exists nowhere else.",
+    "A set of guild pattern-cards for a movement nobody has managed to copy.",
+    "A brass key-plate opening every pressure station in the district.",
   ],
   hooks: [
     "The district above is losing pressure, and the fault is somewhere in the old works.",
