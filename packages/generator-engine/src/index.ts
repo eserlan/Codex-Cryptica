@@ -157,6 +157,7 @@ export {
   buildDungeonPrompt,
   buildDungeonRetryMessage,
   collectSessionNames,
+  collectSessionTraits,
   parseDungeonResponse,
   parseDungeonResponseDetailed,
   type DungeonParseResult,
