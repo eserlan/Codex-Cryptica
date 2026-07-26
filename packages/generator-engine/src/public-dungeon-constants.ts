@@ -1,5 +1,13 @@
 /**
  * Constants, configuration options, and thematic tables for the Dungeon / Delve Generator.
+ *
+ * Structural inspiration: the paired-axis composition tables (builder × use,
+ * entrance × composition, condition × cause) and the faction model (virtue/vice,
+ * goal/obstacle) below are patterned after the "Dungeon Seeds" and faction/agenda
+ * procedures in the Cairn RPG Warden's Guide (2nd Edition) by Yochai Gal,
+ * https://cairnrpg.com — text licensed CC BY-SA 4.0. All entries in this file are
+ * original prose written for Codex Cryptica; only the compositional *method* is
+ * borrowed, not Cairn's table text.
  */
 
 export const dungeonConfig = {
@@ -102,96 +110,279 @@ export const SAMPLE_TITLES_BY_GENRE: Record<string, string[]> = {
   ],
 };
 
-export const HISTORIES_BY_GENRE: Record<string, string[]> = {
+/** Who raised the delve. Paired with ORIGINAL_USE_BY_GENRE to compose history. */
+export const BUILDER_BY_GENRE: Record<string, string[]> = {
   Fantasy: [
-    "Originally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently overrun by subterranean beasts.",
-    "Constructed as a high-security vault by an ancient archmage, the complex fell into ruin after a miscast spell shattered its warding anchors.",
+    "a fallen dwarven dynasty",
+    "a cabal of exiled archmages",
+    "an order of militant clerics",
+    "a tribe of stormforged giants",
+    "a guild of subterranean smiths",
   ],
   "Dark Fantasy": [
-    "Erected as a holy catacomb for honored martyrs, the site was desecrated during a bloody siege and transformed into a horrific sacrificial tomb.",
-    "Once a prosperous underground iron mine, the miners delved too deep and breached a pit of darkness that consumed the entire settlement.",
+    "a flagellant order sworn to a bleeding saint",
+    "a lineage of witch-judges",
+    "a plague-cult of the Hollow Choir",
+    "the last loyalists of a dethroned tyrant",
+    "a covenant of grave-binders",
   ],
   "Sci-Fi / Space Opera": [
-    "Built 5,000 years ago by an extinct precursor civilization as a planetary research station, it entered emergency stasis when the star system collapsed.",
-    "Constructed as an off-world bio-containment facility, an automated quarantine protocol permanently locked down all airlocks after a specimen breach.",
+    "an extinct precursor stellar empire",
+    "a rogue terraforming consortium",
+    "a fringe research collective",
+    "a colony ship's automated founding crew",
+    "a defunct planetary defense authority",
   ],
   "Cyberpunk / Corporate": [
-    "Built by Aegis Dynamics for black-budget neural interface testing, the bunker was scrubbed from official corporate maps following an internal purge.",
-    "Originally an underground automated server farm, it was abandoned during the Net collapse and left under the control of legacy defense routines.",
+    "a shell corporation three layers removed from its parent",
+    "a black-budget R&D division",
+    "a private military contractor",
+    "a rogue AI research division since disavowed",
+    "a syndicate of ex-corporate scientists",
   ],
   "Post-Apocalyptic": [
-    "Constructed before the Great Collapse as a military command bunker, its inhabitants survived for three generations before life-support systems failed.",
-    "Built as a nuclear missile silo and fallout shelter, the blast doors were welded shut from the outside during the initial strikes.",
+    "a pre-collapse federal contractor",
+    "a survivalist cooperative",
+    "the last standing regional government",
+    "a corporate bunker consortium",
+    "a scientific continuity project",
   ],
   "Vampire / Gothic Noir": [
-    "Commissioned in the 14th century by Duke Von Draven as an ancestral mausoleum, it became the covert seat of an elder vampire bloodline.",
-    "Built as a subterranean monastery for an ascetic order, the monks were gradually turned or slaughtered by a shadow creature sealed in the cellar.",
+    "a noble house since fallen from grace",
+    "a covenant of blood-sworn physicians",
+    "the founding elder of the local bloodline",
+    "a guild of silversmiths turned reluctant jailers",
+    "a monastic order that made a terrible bargain",
   ],
 };
 
-export const SIGNATURE_FEATURES_BY_GENRE: Record<string, string[]> = {
+/** What the delve was built for. Paired with BUILDER_BY_GENRE. */
+export const ORIGINAL_USE_BY_GENRE: Record<string, string[]> = {
   Fantasy: [
-    "The Singing Crystal Shaft: A 100-foot chasm spanning glowing acoustic crystals that hum harmonically when air passes through.",
-    "The Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.",
-    "The Clockwork Celestial Globe: A giant brass planetarium in the main dome that continues to rotate, tracking real stars above.",
+    "a reliquary for a captured god-shard",
+    "a redoubt against the first orc wars",
+    "a proving ground for battle-mages",
+    "a granary to survive a century-long winter",
+    "a sealed nursery for a dying bloodline",
   ],
   "Dark Fantasy": [
-    "The Bleeding Stone Arch: A monolithic gateway of porous granite that perpetually drips dark viscous crimson fluid into a channel.",
-    "The Cage of Screaming Iron: A colossal iron cage suspended over a pit chasm, resonating with faint trapped voices.",
-    "The Obsidian Altar of Tears: A polished black altar surrounded by glass jars containing preserved eyes.",
+    "a penance-house for the unconfessed",
+    "a quarantine ward for the first plague-born",
+    "a sacrificial repository beneath a cathedral",
+    "an archive of confessions no one was meant to read",
+    "a breeding pit for war-hounds bred on fear",
   ],
   "Sci-Fi / Space Opera": [
-    "The Singularity Core: A floating zero-g sphere of localized spatial distortion held stable by three humming magnetic pylons.",
-    "The Bioluminescent Hydro-Gallery: Vertical glass tubes extending hundreds of meters containing giant alien flora.",
-    "The Precursor Hologram Beacon: An interactive 3D map projecting extinct star systems in sapphire light.",
+    "a deep-core research annex",
+    "an emergency cryo-stasis shelter",
+    "a xenobiology containment wing",
+    "a relay station for a since-collapsed hyperlane",
+    "a seed vault for a dying homeworld",
   ],
   "Cyberpunk / Corporate": [
-    "The Sub-Zero Server Monolith: A four-story black mainframe array venting ice-cold nitrogen vapor into standing water.",
-    "The Fiber-Optic Canopy: Thousands of luminescent data cables hanging from the ceiling like glowing jungle vines.",
-    "The Prototype Neural Vault: A reinforced glass sphere surrounded by cyber-linking armatures and fried monitors.",
+    "an off-books neural interface lab",
+    "a data-laundering server farm",
+    "a cybernetic prototype testing bay",
+    "a black-site holding facility",
+    "an illegal cloning annex",
   ],
   "Post-Apocalyptic": [
-    "The Unexploded Warhead: A nuclear missile resting upright in its rusted launch bay, worshipped by local scavengers.",
-    "The Sealed Hydro-Dome: A massive glass ecosystem containing pre-collapse pine trees and filtered groundwater.",
-    "The Irradiated Turbine Shaft: A subterranean generator room glowing with faint blue Cherenkov radiation.",
+    "a continuity-of-government shelter",
+    "a seed and gene bank for post-collapse recovery",
+    "a fallout-hardened hospital wing",
+    "a rationed water reclamation plant",
+    "a munitions and armor stockpile",
   ],
   "Vampire / Gothic Noir": [
-    "The Silver-Bound Grand Organ: A massive pipe organ in the subterranean chapel powered by underground water currents.",
-    "The Gallery of Moving Portraits: Oil paintings of ancestral elders whose eyes slowly track movement in the room.",
-    "The Rose-Glass Window: An underground stained-glass window illuminated from behind by a glowing subterranean lava vein.",
+    "an ancestral mausoleum built to outlast the family name",
+    "a hidden feeding ground for the newly turned",
+    "a scriptorium for forbidden alchemical texts",
+    "a sanctuary from a witch-hunt that never quite ended",
+    "a prison for an elder too dangerous to destroy",
   ],
 };
 
-export const CONFLICTS_BY_GENRE: Record<string, string[]> = {
+/** How you get in. Paired with COMPOSITION_BY_GENRE. */
+export const ENTRANCE_BY_GENRE: Record<string, string[]> = {
   Fantasy: [
-    "An invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.",
-    "Arcane cultists are attempting a ritual to break the dungeon's lowest seal, while garrisoned guardians attempt to stop them.",
-    "Rising subterranean water levels threaten to flood the lower vaults and drown the treasures hidden within.",
+    "a crumbling stair behind a waterfall",
+    "a sinkhole choked with root and briar",
+    "a sealed bronze door bearing a forgotten sigil",
+    "a mine adit half-swallowed by scree",
+    "a barrow mound split open by lightning",
   ],
   "Dark Fantasy": [
-    "A horde of starved ghouls is trying to breach the inner sanctum where corrupted knight-revenants stand guard.",
-    "Eldritch whispers emanating from the lowest pit are driving the resident bandit gang into violent madness.",
-    "A plague of corpse-rot spores is spreading through the upper sectors, threatening nearby surface villages.",
+    "a mausoleum door fused shut with old wax",
+    "a well that no longer echoes when you drop a stone",
+    "a confessional booth with a false floor",
+    "a crack behind the altar of an abandoned chapel",
+    "a drainage tunnel beneath a plague-house",
   ],
   "Sci-Fi / Space Opera": [
-    "Automated security drones are engaged in a fire-fight against rogue bio-specimens that broke out of cryo-stasis.",
-    "A power fluctuation is causing the containment field around the central singularity to decay, risking spatial collapse.",
-    "A rival corporate mercenary team is already inside, attempting to steal precursor datadrives before your arrival.",
+    "a jammed blast airlock half-buried in regolith",
+    "a collapsed maintenance shaft",
+    "a derelict docking umbilical",
+    "a fissure torn open by orbital bombardment",
+    "a service tunnel behind a dead sensor array",
   ],
   "Cyberpunk / Corporate": [
-    "Net-scrapper squatters are battling automated corporate security turrets to gain control of the mainframe.",
-    "A rogue AI has locked down the sublevels and is threatening to purge oxygen unless its demands are met.",
-    "A black-ops erasure squad has entered the facility with orders to incinerate all evidence and eliminate witnesses.",
+    "a freight elevator with its logs wiped",
+    "a storm drain retrofitted as a service tunnel",
+    "a fire escape bricked over from the inside",
+    "a decommissioned subway platform",
+    "a maintenance hatch behind a dead vending wall",
   ],
   "Post-Apocalyptic": [
-    "Wasteland raiders are laying siege to a group of peaceful vault-dweller descendants trapped in the living quarters.",
-    "Leaking radiation from a breached reactor core is forcing the resident mutant tribe to expand into upper sectors.",
-    "Scavengers are attempting to dismantle the main generator, which would shut down the settlement's water filter nearby.",
+    "a blast door half-melted into its frame",
+    "a collapsed highway overpass",
+    "a rusted grain silo hatch",
+    "a flooded subway entrance",
+    "a fenced-off ruin still marked with faded hazard signs",
   ],
   "Vampire / Gothic Noir": [
-    "Rival vampire spawn are fighting for possession of the master's sarcophagus while the elder reawakens.",
-    "A fanatic order of witch-hunters has penetrated the upper vestibule, laying silver traps and burning coffins.",
-    "Blood-sworn cultists are sacrificing hostages to fuel a ritual, while feral ghoul hounds roam the corridors.",
+    "a family crypt sealed with silver-worked hinges",
+    "a confessional with a false back panel",
+    "a wine cellar deeper than any map admits",
+    "a garden folly built over a hidden stair",
+    "a chapel crypt behind a bricked-over archway",
+  ],
+};
+
+/** What the halls are built from. Paired with ENTRANCE_BY_GENRE. */
+export const COMPOSITION_BY_GENRE: Record<string, string[]> = {
+  Fantasy: [
+    "black basalt quarried from a dead volcano",
+    "fused glass from a long-ago dragonfire",
+    "interlocking dwarven stonework laid without mortar",
+    "bone and antler lashed over a timber frame",
+    "veins of raw mithril still weeping ore",
+  ],
+  "Dark Fantasy": [
+    "mortar mixed with ash and bone-meal",
+    "stone that sweats a faint red damp",
+    "warped iron that never fully rusts",
+    "stitched leather stretched over a wooden frame",
+    "glass blackened from some old, unrecorded fire",
+  ],
+  "Sci-Fi / Space Opera": [
+    "salvaged precursor alloy that hums faintly underfoot",
+    "radiation-hardened ceramic composite",
+    "carbon lattice grown rather than built",
+    "scavenged hull plating from a dozen wrecks",
+    "biomechanical growths fused into the original structure",
+  ],
+  "Cyberpunk / Corporate": [
+    "reinforced concrete lined with dead fiber-optic veins",
+    "salvaged shipping containers welded into a warren",
+    "matte polymer panels scorched by old firefights",
+    "exposed rebar over standing floodwater",
+    "server racks repurposed as load-bearing walls",
+  ],
+  "Post-Apocalyptic": [
+    "pre-collapse reinforced concrete, cracked but standing",
+    "salvaged scrap welded over the original walls",
+    "lead-lined chambers gone brittle with age",
+    "rust-streaked steel that groans in the wind",
+    "irradiated glass fused smooth by old heat",
+  ],
+  "Vampire / Gothic Noir": [
+    "marble veined black with old blood",
+    "oak paneling that never seems to rot",
+    "stained glass that dims no matter the hour",
+    "silver-inlaid stone, tarnished but intact",
+    "wrought iron shaped into mourning figures",
+  ],
+};
+
+/** The delve's current physical condition. Paired with CAUSE_BY_GENRE. */
+export const CONDITION_BY_GENRE: Record<string, string[]> = {
+  Fantasy: [
+    "half-flooded and slowly sinking",
+    "riddled with fungal growth that glows faintly at night",
+    "structurally sound but eerily silent",
+    "cracked along a fault line that groans with every tremor",
+    "scorched black in patches by some old cataclysm",
+  ],
+  "Dark Fantasy": [
+    "silent but for a heartbeat sound in the deep walls",
+    "overgrown with a fungus that smells faintly of copper",
+    "kept unnervingly clean by unseen hands",
+    "sagging under the weight of its own guilt-carved reliefs",
+    "frozen mid-collapse, as if time itself flinched",
+  ],
+  "Sci-Fi / Space Opera": [
+    "running on failing backup power",
+    "overtaken by feral automation",
+    "pressurized but leaking atmosphere slowly",
+    "dark except for one still-functioning sector",
+    "looping a distress signal no one has answered in years",
+  ],
+  "Cyberpunk / Corporate": [
+    "still drawing power off a forgotten grid tap",
+    "squatted by three rival factions at once",
+    "locked down under an automated security protocol",
+    "stripped bare by scavengers, save one guarded room",
+    "running hot, its cooling systems failing",
+  ],
+  "Post-Apocalyptic": [
+    "still sealed, waiting for an all-clear that never came",
+    "overrun by a settlement that doesn't know what it's sitting on",
+    "half-flooded from a burst reclamation tank",
+    "picked nearly clean save for one locked vault",
+    "running on a generator someone still maintains",
+  ],
+  "Vampire / Gothic Noir": [
+    "draped in dust but eerily undisturbed",
+    "reeking faintly of copper and old candle-smoke",
+    "cold in a way no fire quite fixes",
+    "watched over by portraits whose eyes seem to follow",
+    "kept in perfect order by someone who should be dead",
+  ],
+};
+
+/** What caused that condition. Paired with CONDITION_BY_GENRE. */
+export const CAUSE_BY_GENRE: Record<string, string[]> = {
+  Fantasy: [
+    "a betrayal from within its own garrison",
+    "an uncontained ritual that went catastrophically wrong",
+    "the slow erosion of centuries and forgotten upkeep",
+    "a siege that was won but never truly ended",
+    "the awakening of something that should have stayed buried",
+  ],
+  "Dark Fantasy": [
+    "a mass suicide that consecrated the lowest floor",
+    "an inquisition that purged its own founders",
+    "a famine that turned the faithful to worse things",
+    "an oath broken at the worst possible moment",
+    "the slow, patient work of something that only whispers",
+  ],
+  "Sci-Fi / Space Opera": [
+    "a containment breach that was never fully sealed",
+    "a mutiny among the last living crew",
+    "a reactor cascade contained just in time — barely",
+    "an evacuation order that came a day too late",
+    "first contact with something the crew was not equipped to survive",
+  ],
+  "Cyberpunk / Corporate": [
+    "a leak that brought corporate deniability crashing down",
+    "an internal purge that went further than planned",
+    "a rival's hostile buyout turned violent",
+    "whistleblower sabotage that was never fully traced",
+    "the parent company simply walking away overnight",
+  ],
+  "Post-Apocalyptic": [
+    "a containment failure during the initial collapse",
+    "a mutiny among the shelter's own survivors",
+    "rationing riots that turned the halls into a battleground",
+    "a slow systems failure no one was left to fix",
+    "the day the blast doors opened and nothing came in",
+  ],
+  "Vampire / Gothic Noir": [
+    "a rivalry between bloodlines that turned violent",
+    "a witch-hunter's purge that was answered in kind",
+    "an elder's slow descent into torpor and madness",
+    "a broken pact with the mortal family upstairs",
+    "a betrayal sealed in blood and never forgiven",
   ],
 };
 
@@ -220,6 +411,16 @@ export const SECTORS_BY_GENRE: Record<
       description:
         "Dark underground lake fed by subterranean waterfalls, crossed by a ruined stone causeway.",
     },
+    {
+      name: "The Sunken Forge",
+      description:
+        "Cold anvils and cracked crucibles ringing a dead furnace pit, tools still hung on the walls.",
+    },
+    {
+      name: "The Ossuary Stair",
+      description:
+        "A switchback stairwell lined with alcoves of stacked bones descending into darker halls.",
+    },
   ],
   "Dark Fantasy": [
     {
@@ -241,6 +442,16 @@ export const SECTORS_BY_GENRE: Record<
       name: "The Pit of Abominations",
       description:
         "Sunken arena where failed alchemical amalgamations were cast down.",
+    },
+    {
+      name: "The Choir Loft",
+      description:
+        "Collapsed balcony overlooking the nave, its organ pipes clogged with dried viscera.",
+    },
+    {
+      name: "The Penitent's Cellar",
+      description:
+        "Rows of stone cells with rusted manacles bolted to sweating walls.",
     },
   ],
   "Sci-Fi / Space Opera": [
@@ -264,6 +475,16 @@ export const SECTORS_BY_GENRE: Record<
       description:
         "Suspended magnetic bridge spanning an open energy shaft pulsing with gravity distortions.",
     },
+    {
+      name: "The Archive Spindle",
+      description:
+        "A cylindrical data-crystal library rotating slowly on a magnetic axis, most tiers dark.",
+    },
+    {
+      name: "The Fabrication Bay",
+      description:
+        "Idle assembly arms frozen mid-motion over an unfinished hull section.",
+    },
   ],
   "Cyberpunk / Corporate": [
     {
@@ -285,6 +506,16 @@ export const SECTORS_BY_GENRE: Record<
       name: "Black Budget Vault",
       description:
         "EMP-shielded underground safe room housing offline data drives and black market funds.",
+    },
+    {
+      name: "Executive Escape Tunnel",
+      description:
+        "A narrow, camera-free service corridor built for a quiet exit that was never used.",
+    },
+    {
+      name: "Cold Storage Archive",
+      description:
+        "Refrigerated shelving racks of backup tapes and physical prototypes, half-looted.",
     },
   ],
   "Post-Apocalyptic": [
@@ -308,6 +539,16 @@ export const SECTORS_BY_GENRE: Record<
       description:
         "Reinforced control room looking out through thick leaded glass onto empty launch tubes.",
     },
+    {
+      name: "Medical Ward Annex",
+      description:
+        "Rusted gurneys and empty IV racks lining a corridor of long-since-looted supply cabinets.",
+    },
+    {
+      name: "Water Reclamation Loop",
+      description:
+        "Dripping pipework and rust-choked filtration tanks feeding a stagnant reserve pool.",
+    },
   ],
   "Vampire / Gothic Noir": [
     {
@@ -330,9 +571,25 @@ export const SECTORS_BY_GENRE: Record<
       description:
         "Subterranean gallery displaying oil portraits of vampire elders whose eyes appear to follow visitors.",
     },
+    {
+      name: "The Silvered Reliquary",
+      description:
+        "A narrow strongroom lined with consecrated silver, holding relics too dangerous to display.",
+    },
+    {
+      name: "The Undertaker's Workshop",
+      description:
+        "Embalming tables and half-finished coffins beneath racks of surgical silver tools.",
+    },
   ],
 };
 
+/**
+ * Short faction identities per genre, used to name the two rival denizen
+ * factions and — separately — as "Monster" stocking flavor for sectors that
+ * don't belong to either named faction (Codex's analogue to Cairn's Monster
+ * table, distinct from the Traits/Agendas-driven named factions below).
+ */
 export const INHABITANTS_BY_GENRE: Record<string, string[]> = {
   Fantasy: [
     "A desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.",
@@ -365,6 +622,110 @@ export const INHABITANTS_BY_GENRE: Record<string, string[]> = {
     "Rival Vampire Spawn vying for control over the ancestral blood vault.",
   ],
 };
+
+/** Short named factions, paired with generic virtue/vice/goal/obstacle tables. */
+export const FACTION_NAMES_BY_GENRE: Record<string, string[]> = {
+  Fantasy: [
+    "the Goblin Warren-Kin",
+    "the Kobold Digging Crew",
+    "the Silent Cultists of the Deep Seal",
+    "the Gargoyle Wardens",
+    "the Bandit Remnant",
+  ],
+  "Dark Fantasy": [
+    "the Ghoul Scavenger Pack",
+    "the Corrupted Templar Remnant",
+    "the Flagellant Zealots",
+    "the Chitinous Burrower Swarm",
+    "the Grave-Binder Cabal",
+  ],
+  "Sci-Fi / Space Opera": [
+    "the Rogue Sentinel Drones",
+    "the Mutated Specimen Collective",
+    "the Salvager Crew Squatting in the Lower Decks",
+    "the Precursor AI Custodian",
+    "the Stranded Colonist Remnant",
+  ],
+  "Cyberpunk / Corporate": [
+    "the Net-Scrapper Squatters",
+    "the Corporate Erasure Squad",
+    "the Rogue Security Drone Cluster",
+    "the Black-Market Data Brokers",
+    "the Displaced Lab Subjects",
+  ],
+  "Post-Apocalyptic": [
+    "the Raider Warband",
+    "the Feral Vault-Dweller Remnant",
+    "the Autonomous Turret Network",
+    "the Mutant Scavenger Clan",
+    "the Settlement Refugee Enclave",
+  ],
+  "Vampire / Gothic Noir": [
+    "the Blood-Sworn Thrall Cult",
+    "the Rival Vampire Spawn",
+    "the Witch-Hunter Infiltrators",
+    "the Feral Ghoul Hounds",
+    "the Estate's Loyal Undead Servants",
+  ],
+};
+
+/**
+ * Generic, theme-agnostic faction traits — deliberately abstract so they hold
+ * up for any genre, including ones without dedicated flavor tables above.
+ */
+export const FACTION_VIRTUES: string[] = [
+  "Disciplined",
+  "Curious",
+  "Vigilant",
+  "Devoted",
+  "Patient",
+  "Merciful",
+  "Resourceful",
+  "Proud",
+];
+
+export const FACTION_VICES: string[] = [
+  "Paranoid",
+  "Greedy",
+  "Cruel",
+  "Vengeful",
+  "Reckless",
+  "Deceitful",
+  "Cowardly",
+  "Wrathful",
+];
+
+export const FACTION_GOALS: string[] = [
+  "Survival",
+  "Dominion",
+  "Knowledge",
+  "Vengeance",
+  "Wealth",
+  "Ascension",
+  "Redemption",
+  "Destruction",
+];
+
+export const FACTION_OBSTACLES: string[] = [
+  "a dwindling food and resource supply",
+  "a rival faction sharing these halls",
+  "an ancient guardian bound to stop them",
+  "their own internal discord and mistrust",
+  "a slow curse eating away at their numbers",
+  "the watchful eyes of something far older",
+  "a debt owed to a power outside these walls",
+  "time — whatever they're planning, it's nearly too late",
+];
+
+/** Generic connector flavor for non-linear pointcrawl routes between sectors. */
+export const SECTOR_CONNECTORS: string[] = [
+  "a collapsed passage just wide enough to crawl through",
+  "a rope-and-plank bridge over open dark",
+  "a hidden service route only the desperate would use",
+  "a flooded stretch passable only by wading",
+  "a narrow shaft requiring rope or climbing gear",
+  "a sealed door that answers to force more readily than keys",
+];
 
 export const SECRETS_BY_GENRE: Record<string, string[]> = {
   Fantasy: [
@@ -495,5 +856,38 @@ export const HOOKS_BY_GENRE: Record<string, string[]> = {
     "Townspeople have been disappearing on full moons, dragged into the catacombs beneath the old manor.",
     "An old nobleman's will reveals that his family's lost fortune is guarded in the family crypt.",
     "A mysterious vampire hunter seeks allies to penetrate the master's lair before the moonless night.",
+  ],
+};
+
+export const SIGNATURE_FEATURES_BY_GENRE: Record<string, string[]> = {
+  Fantasy: [
+    "The Singing Crystal Shaft: A 100-foot chasm spanning glowing acoustic crystals that hum harmonically when air passes through.",
+    "The Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.",
+    "The Clockwork Celestial Globe: A giant brass planetarium in the main dome that continues to rotate, tracking real stars above.",
+  ],
+  "Dark Fantasy": [
+    "The Bleeding Stone Arch: A monolithic gateway of porous granite that perpetually drips dark viscous crimson fluid into a channel.",
+    "The Cage of Screaming Iron: A colossal iron cage suspended over a pit chasm, resonating with faint trapped voices.",
+    "The Obsidian Altar of Tears: A polished black altar surrounded by glass jars containing preserved eyes.",
+  ],
+  "Sci-Fi / Space Opera": [
+    "The Singularity Core: A floating zero-g sphere of localized spatial distortion held stable by three humming magnetic pylons.",
+    "The Bioluminescent Hydro-Gallery: Vertical glass tubes extending hundreds of meters containing giant alien flora.",
+    "The Precursor Hologram Beacon: An interactive 3D map projecting extinct star systems in sapphire light.",
+  ],
+  "Cyberpunk / Corporate": [
+    "The Sub-Zero Server Monolith: A four-story black mainframe array venting ice-cold nitrogen vapor into standing water.",
+    "The Fiber-Optic Canopy: Thousands of luminescent data cables hanging from the ceiling like glowing jungle vines.",
+    "The Prototype Neural Vault: A reinforced glass sphere surrounded by cyber-linking armatures and fried monitors.",
+  ],
+  "Post-Apocalyptic": [
+    "The Unexploded Warhead: A nuclear missile resting upright in its rusted launch bay, worshipped by local scavengers.",
+    "The Sealed Hydro-Dome: A massive glass ecosystem containing pre-collapse pine trees and filtered groundwater.",
+    "The Irradiated Turbine Shaft: A subterranean generator room glowing with faint blue Cherenkov radiation.",
+  ],
+  "Vampire / Gothic Noir": [
+    "The Silver-Bound Grand Organ: A massive pipe organ in the subterranean chapel powered by underground water currents.",
+    "The Gallery of Moving Portraits: Oil paintings of ancestral elders whose eyes slowly track movement in the room.",
+    "The Rose-Glass Window: An underground stained-glass window illuminated from behind by a glowing subterranean lava vein.",
   ],
 };
