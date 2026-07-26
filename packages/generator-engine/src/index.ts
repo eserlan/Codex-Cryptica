@@ -185,3 +185,4 @@ export {
   type GeneratorAcceptedEntity,
 } from "./generator-session";
 export * from "./session-hub-helpers";
+export * from "./dungeon";

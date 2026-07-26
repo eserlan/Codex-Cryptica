@@ -30,4 +30,15 @@ describe("help-content feature hints", () => {
     expect(FEATURE_HINTS["cif-importer"].content).toContain("offline");
     expect(FEATURE_HINTS["cif-importer"].content).toContain("family");
   });
+
+  it("FEATURE_HINTS includes a delve-structural-builder entry", () => {
+    expect(FEATURE_HINTS["delve-structural-builder"]).toBeDefined();
+    expect(FEATURE_HINTS["delve-structural-builder"].id).toBe(
+      "delve-structural-builder",
+    );
+    expect(FEATURE_HINTS["delve-structural-builder"].title).toBeTruthy();
+    expect(FEATURE_HINTS["delve-structural-builder"].content).toContain(
+      "Spatial Canvas",
+    );
+  });
 });
