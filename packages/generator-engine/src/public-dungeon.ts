@@ -24,6 +24,8 @@ import { parseFencedJson } from "./llm-response-utils";
 import { themeIdToLabel } from "./public-faction-constants";
 import {
   dungeonConfig,
+  forGenre,
+  forGenreTables,
   GENRE_HINTS,
   SAMPLE_TITLES_BY_GENRE,
   BUILDER_BY_GENRE,
@@ -49,7 +51,7 @@ import {
   HOOKS_BY_GENRE,
 } from "./public-dungeon-constants";
 
-export { dungeonConfig };
+export { dungeonConfig, forGenre };
 
 export interface DungeonGeneratorOptions {
   themeId?: string;
@@ -124,15 +126,6 @@ export interface DungeonPrompt {
   systemInstruction: string;
   userMessage: string;
   resolved: ResolvedDungeon;
-}
-
-function forGenre<T>(record: Record<string, T[]>, genre: string): T[] {
-  return (
-    record[genre] ??
-    record[genre.replace(/ \/ .*/, "")] ??
-    record["Fantasy"] ??
-    record["Classic Fantasy"]
-  );
 }
 
 /** Roll a Cairn-style d6 room-stocking bucket: 1 Monster / 2-3 Lore / 4 Special / 5-6 Trap. */
@@ -295,9 +288,12 @@ function resolveDungeon(
   // Purpose & Construction axes (Cairn-style paired rolls), composed into history.
   const builder = pickFrom(forGenre(BUILDER_BY_GENRE, genre), rng);
   // Derived from the selected purpose so the history describes what the user
-  // actually asked for; genre table is only the fallback for custom purposes.
+  // actually asked for. A genre may override the shared wording where its tone
+  // clashes; the genre-wide table is only the fallback for custom purposes.
   const originalUse = pickFrom(
-    ORIGINAL_USE_BY_PURPOSE[purpose] ?? forGenre(ORIGINAL_USE_BY_GENRE, genre),
+    forGenreTables(genre).originalUsesByPurpose?.[purpose] ??
+      ORIGINAL_USE_BY_PURPOSE[purpose] ??
+      forGenre(ORIGINAL_USE_BY_GENRE, genre),
     rng,
   );
   const entrance = pickFrom(forGenre(ENTRANCE_BY_GENRE, genre), rng);

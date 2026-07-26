@@ -42,6 +42,12 @@ vi.mock("$lib/services/seo/generator-engine", () => ({
     ],
   },
   pickFrom: (arr: string[]) => arr[0],
+  forDungeonGenre: (record: Record<string, string[]>, genre: string) =>
+    record[genre] ??
+    record[genre.replace(/^Classic /, "")] ??
+    record[genre.replace(/ \/ .*/, "")] ??
+    record["Fantasy"] ??
+    record["Classic Fantasy"],
 }));
 
 describe("DungeonFormFields theme selector", () => {

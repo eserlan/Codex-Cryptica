@@ -1,0 +1,162 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const vampireTables: DungeonGenreTables = {
+  hint: "Emphasize blood-drenched ossuaries, gargoyle-crested crypts, subterranean portraits of ancient lineages, and silver-bound sarcophagi.",
+  purposes: [
+    "Ancestral Mausoleum",
+    "Tomb & Catacomb",
+    "Temple & Shrine",
+    "Prison & Vault",
+    "Fortress & Citadel",
+    "Natural Cavern Network",
+  ],
+  currentStates: [
+    "Occupied Stronghold",
+    "Cursed Ruin",
+    "Sealed Vault",
+    "Abandoned Ruins",
+    "Active Monster Lair",
+    "Buried & Forgotten",
+  ],
+  sampleTitles: [
+    "The Crypt of House Von Draven",
+    "Sanctuary of the Bleeding Rose",
+    "The Silver-Bound Ossuary",
+    "Subterranean Mausoleum of the Pale Duke",
+    "The Blood-Glass Vaults",
+  ],
+  builders: [
+    "a noble house since fallen from grace",
+    "a covenant of blood-sworn physicians",
+    "the founding elder of the local bloodline",
+    "a guild of silversmiths turned reluctant jailers",
+    "a monastic order that made a terrible bargain",
+  ],
+  originalUses: [
+    "an ancestral mausoleum built to outlast the family name",
+    "a hidden feeding ground for the newly turned",
+    "a scriptorium for forbidden alchemical texts",
+    "a sanctuary from a witch-hunt that never quite ended",
+    "a prison for an elder too dangerous to destroy",
+  ],
+  entrances: [
+    "a family crypt sealed with silver-worked hinges",
+    "a confessional with a false back panel",
+    "a wine cellar deeper than any map admits",
+    "a garden folly built over a hidden stair",
+    "a chapel crypt behind a bricked-over archway",
+  ],
+  compositions: [
+    "marble veined black with old blood",
+    "oak paneling that never seems to rot",
+    "stained glass that dims no matter the hour",
+    "silver-inlaid stone, tarnished but intact",
+    "wrought iron shaped into mourning figures",
+  ],
+  conditions: [
+    "draped in dust but eerily undisturbed",
+    "reeking faintly of copper and old candle-smoke",
+    "cold in a way no fire quite fixes",
+    "watched over by portraits whose eyes seem to follow",
+    "kept in perfect order by someone who should be dead",
+  ],
+  causes: [
+    "a rivalry between bloodlines that turned violent",
+    "a witch-hunter's purge that was answered in kind",
+    "an elder's slow descent into torpor and madness",
+    "a broken pact with the mortal family upstairs",
+    "a betrayal sealed in blood and never forgiven",
+  ],
+  sectors: [
+    {
+      name: "The Grand Vestibule",
+      description:
+        "Marble staircases flanked by carved gargoyles and faded silk tapestries of ancient battles.",
+    },
+    {
+      name: "The Blood-Vault Sarcophagi",
+      description:
+        "Crypt containing silver-bound coffins resting in basins of holy water turned black.",
+    },
+    {
+      name: "The Alchemist's Scriptoria",
+      description:
+        "Workbenches littered with glass retorts, crimson-stained parchment, and ancient herbarium jars.",
+    },
+    {
+      name: "The Private Gallery of Lineage",
+      description:
+        "Subterranean gallery displaying oil portraits of vampire elders whose eyes appear to follow visitors.",
+    },
+    {
+      name: "The Silvered Reliquary",
+      description:
+        "A narrow strongroom lined with consecrated silver, holding relics too dangerous to display.",
+    },
+    {
+      name: "The Undertaker's Workshop",
+      description:
+        "Embalming tables and half-finished coffins beneath racks of surgical silver tools.",
+    },
+  ],
+  inhabitants: [
+    "A thrall cult of Blood-Sworn Initiates preparing the master's sarcophagus for revival.",
+    "Feral Ghoul Hounds hunting intruders who disturb the master's subterranean sleep.",
+    "Rival Vampire Spawn vying for control over the ancestral blood vault.",
+    "A coven of grave-robbing Alchemists harvesting the crypt for components.",
+    "A silent order of Mourning Servants who still tend the estate out of ancient loyalty.",
+  ],
+  factionNames: [
+    "the Blood-Sworn Thrall Cult",
+    "the Rival Vampire Spawn",
+    "the Witch-Hunter Infiltrators",
+    "the Feral Ghoul Hounds",
+    "the Estate's Loyal Undead Servants",
+    "the Grave-Robbing Alchemist Coven",
+    "the Silvered Reliquary Guardians",
+    "the Undertaker's Apprentices",
+    "the Mourning Servant Order",
+    "the Bloodline Rivalry Faction",
+  ],
+  secrets: [
+    "The vampire lord sleeping in the deepest crypt is the long-lost founder of the noble house ruling the city above.",
+    "A flask of primordial blood hidden in the altar can cure any curse—or transform the imbiber into an elder vampire.",
+    "The crypt's wards are weakening, and sunrise no longer stops the shadows within from moving.",
+    "The family upstairs still pays the crypt's upkeep, and has done so without interruption for two hundred years.",
+    "One sarcophagus is empty and has always been empty; the name on it belongs to someone currently living.",
+    "The wards were laid by the family \u2014 not against the crypt's occupant, but at its instruction.",
+    "A servant's stair at the back of the crypt was in nightly use until very recently.",
+    "The elder's coffin has stood empty for a decade, and the household has kept up appearances regardless.",
+  ],
+  hazards: [
+    "Razor-sharp swinging scythe pendulum traps hidden in dark gothic archways.",
+    "Sarcophagus warding glyphs that inflict necrotic burns on living intruders.",
+    "Mirrors that reflect distorted horrific illusions causing panic.",
+    "A hidden portcullis rigged to seal an intruder inside with the crypt's occupants.",
+    "Silver-dust censers that sear the lungs of anyone who breathes them in.",
+  ],
+  treasures: [
+    "A vial of elder vampire blood sealed in silver wire.",
+    "An antique music box playing a tune that pacifies subterranean beasts.",
+    "A signet ring of pure platinum conferring immunity to vampire charm effects.",
+    "A silver-cased daguerreotype showing the estate's current owner, dated ninety years ago.",
+    "A sheaf of letters proving the bloodline's claim to the city above is a forgery.",
+    "A silvered hand-mirror that shows a room's true occupants.",
+    "A bottle of consecrated wine from a vintage the church no longer admits to producing.",
+    "A locket portrait of the current heir, painted from life, four generations ago.",
+  ],
+  hooks: [
+    "Townspeople have been disappearing on full moons, dragged into the catacombs beneath the old manor.",
+    "An old nobleman's will reveals that his family's lost fortune is guarded in the family crypt.",
+    "A mysterious vampire hunter seeks allies to penetrate the master's lair before the moonless night.",
+    "A grieving widow wants her husband's body recovered before the estate claims it too.",
+    "A blood debt comes due, and the only way to pay it is to enter the crypt and not come back empty-handed.",
+  ],
+  signatureFeatures: [
+    "The Silver-Bound Grand Organ: A massive pipe organ in the subterranean chapel powered by underground water currents.",
+    "The Gallery of Moving Portraits: Oil paintings of ancestral elders whose eyes slowly track movement in the room.",
+    "The Rose-Glass Window: An underground stained-glass window illuminated from behind by a glowing subterranean lava vein.",
+    "The Weeping Font: A basin of holy water gone black, still dripping despite no visible source.",
+    "The Silent Bell Tower: A crypt bell that tolls on its own at the stroke of midnight, heard by no living ear.",
+  ],
+};

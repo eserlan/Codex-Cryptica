@@ -1,0 +1,164 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const fantasyTables: DungeonGenreTables = {
+  hint: "Focus on lost elemental sanctuaries, forgotten dwarven holds, dragon-scarred subterranean halls, or wizard towers collapsed underground.",
+  purposes: [
+    "Temple & Shrine",
+    "Fortress & Citadel",
+    "Tomb & Catacomb",
+    "Mine & Shafts",
+    "Prison & Vault",
+    "Natural Cavern Network",
+    "Planar Anomaly",
+  ],
+  currentStates: [
+    "Active Monster Lair",
+    "Abandoned Ruins",
+    "Sealed Vault",
+    "Occupied Stronghold",
+    "Arcane / Tech Anomaly",
+    "Cursed Ruin",
+    "Buried & Forgotten",
+  ],
+  sampleTitles: [
+    "The Hollowed Citadel of Oakhaven",
+    "Subterranean Vault of Sunken Runes",
+    "The Obsidian Delve of Gorgaroth",
+    "Iron-Vein Mine of the Fallen King",
+    "Echoing Sanctum of the Silver Flame",
+  ],
+  builders: [
+    "a fallen dwarven dynasty",
+    "a cabal of exiled archmages",
+    "an order of militant clerics",
+    "a tribe of stormforged giants",
+    "a guild of subterranean smiths",
+  ],
+  originalUses: [
+    "a reliquary for a captured god-shard",
+    "a redoubt against the first orc wars",
+    "a proving ground for battle-mages",
+    "a granary to survive a century-long winter",
+    "a sealed nursery for a dying bloodline",
+  ],
+  entrances: [
+    "a crumbling stair behind a waterfall",
+    "a sinkhole choked with root and briar",
+    "a sealed bronze door bearing a forgotten sigil",
+    "a mine adit half-swallowed by scree",
+    "a barrow mound split open by lightning",
+  ],
+  compositions: [
+    "black basalt quarried from a dead volcano",
+    "fused glass from a long-ago dragonfire",
+    "interlocking dwarven stonework laid without mortar",
+    "bone and antler lashed over a timber frame",
+    "veins of raw mithril still weeping ore",
+  ],
+  conditions: [
+    "half-flooded and slowly sinking",
+    "riddled with fungal growth that glows faintly at night",
+    "structurally sound but eerily silent",
+    "cracked along a fault line that groans with every tremor",
+    "scorched black in patches by some old cataclysm",
+  ],
+  causes: [
+    "a betrayal from within its own garrison",
+    "an uncontained ritual that went catastrophically wrong",
+    "the slow erosion of centuries and forgotten upkeep",
+    "a siege that was won but never truly ended",
+    "the awakening of something that should have stayed buried",
+  ],
+  sectors: [
+    {
+      name: "The Guarded Gateway",
+      description:
+        "Fortified entry halls with collapse traps and arrow slits overlooking the main descent.",
+    },
+    {
+      name: "The Hall of Ancestral Pillars",
+      description:
+        "Towering carved stone columns supporting vast vaulted ceilings filled with roosting bat swarms.",
+    },
+    {
+      name: "The Deep Arcana Vault",
+      description:
+        "Sealed inner chamber housing warding circles and ancient containment sarcophagi.",
+    },
+    {
+      name: "The Subterranean Reservoir",
+      description:
+        "Dark underground lake fed by subterranean waterfalls, crossed by a ruined stone causeway.",
+    },
+    {
+      name: "The Sunken Forge",
+      description:
+        "Cold anvils and cracked crucibles ringing a dead furnace pit, tools still hung on the walls.",
+    },
+    {
+      name: "The Ossuary Stair",
+      description:
+        "A switchback stairwell lined with alcoves of stacked bones descending into darker halls.",
+    },
+  ],
+  inhabitants: [
+    "A desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.",
+    "A rogue order of Banished Arcane Cultists performing rituals to break the dungeon's lowest seal.",
+    "Gargoyle guardians bound by ancient oath, attacking anyone who touches sacred relics.",
+    "A pack of feral Dire Wolves denning in the collapsed lower galleries.",
+    "A squatting band of Bandit deserters looting whatever the original occupants left behind.",
+  ],
+  factionNames: [
+    "the Goblin Warren-Kin",
+    "the Kobold Digging Crew",
+    "the Silent Cultists of the Deep Seal",
+    "the Gargoyle Wardens",
+    "the Bandit Remnant",
+    "the Feral Dire Wolf Pack",
+    "the Renegade Battle-Mage Circle",
+    "the Ossuary Bone-Cult",
+    "the Stormforged Giant Remnant",
+    "the Deep-Delving Duergar Crew",
+  ],
+  secrets: [
+    "The dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.",
+    "The dungeon's deepest shrine hides the true heir's royal signet ring and crown.",
+    "The central fountain grants true sight for one hour, but draws immediate attention from subterranean fiends.",
+    "The seal on the lowest door was placed from the inside, and whatever set it is still honouring the bargain.",
+    "The builders never finished: the deepest gallery opens onto a second, older complex nobody has surveyed.",
+    "A second stair, deliberately unmapped, links the lowest gallery to a rival delve half a mile away.",
+    "The wards were not built to keep anything in \u2014 they were built to keep the surface from noticing what lies below.",
+    "Every builder's name was struck from the foundation stone, and the erasure is far more recent than the stone.",
+  ],
+  hazards: [
+    "Pressure-plate needle traps laced with paralyzing wyvern venom.",
+    "Collapse-prone stone archways triggered by loud sonic vibration or spellcasting.",
+    "Spike pits filled with corrosive green slime.",
+    "Rune-scribed tripwires that summon a burst of choking arcane smoke.",
+    "A false floor over a shaft lined with rusted iron spikes.",
+  ],
+  treasures: [
+    "A silver-hilted shortsword glowing with pale starlight near undead.",
+    "A pouch of 300 ancient dwarven gold sovereigns and a gemstone map scroll.",
+    "A sealed potion flask containing liquid dragonfire.",
+    "A warded strongbox of cut gemstones, each one etched with a different house sigil.",
+    "A set of dwarven master-keys that open every door in the complex, including the ones bricked over.",
+    "A house banner thought extinct, worth a war of succession to the right claimant.",
+    "A cache of spell-scribed vellum, each sheet good for exactly one casting.",
+    "A smith's hammer that never needs re-hafting and rings a different note near true silver.",
+  ],
+  hooks: [
+    "A local scholar hires the party to retrieve an ancient astrological tablet from the ruins.",
+    "Monster raids on nearby trade roads have been traced back to the open gates of this forgotten delve.",
+    "A rival adventuring party entered the dungeon three days ago and has failed to return.",
+    "A dying prospector swears the lowest vault holds a map to a second, richer delve.",
+    "Livestock in a nearby village have started vanishing, dragged toward the delve's entrance.",
+  ],
+  signatureFeatures: [
+    "The Singing Crystal Shaft: A 100-foot chasm spanning glowing acoustic crystals that hum harmonically when air passes through.",
+    "The Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.",
+    "The Clockwork Celestial Globe: A giant brass planetarium in the main dome that continues to rotate, tracking real stars above.",
+    "The Petrified Grove: A ring of stone trees, each once a guardian caught mid-transformation.",
+    "The Weeping Colossus: A collapsed statue whose eyes still leak a faintly glowing tear-like resin.",
+  ],
+};

@@ -158,6 +158,7 @@ export {
   parseDungeonResponse,
   generateDungeonLocal,
   dungeonConfig,
+  forGenre as forDungeonGenre,
   type DungeonGeneratorOptions,
   type DungeonPrompt,
   type DungeonSector,

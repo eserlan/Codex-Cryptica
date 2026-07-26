@@ -1,0 +1,162 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const westernTables: DungeonGenreTables = {
+  hint: "Focus on played-out silver mines, rail tunnels bored through the range, ghost-town cellars, burial caves above the treeline, and assay offices left exactly as they were.",
+  purposes: [
+    "Mine & Shafts",
+    "Rail Tunnel & Depot",
+    "Natural Cavern Network",
+    "Fortress & Citadel",
+    "Tomb & Catacomb",
+    "Prison & Vault",
+  ],
+  currentStates: [
+    "Abandoned Ruins",
+    "Overrun by Squatters",
+    "Buried & Forgotten",
+    "Occupied Stronghold",
+    "Active Monster Lair",
+    "Sealed Vault",
+  ],
+  sampleTitles: [
+    "The Played-Out Silver of Cutbank Draw",
+    "Tunnel Nine, Copper Ridge Line",
+    "The Ghost Cellars of Amity Wells",
+    "Deadman's Assay Beneath the Mesa",
+    "The Sealed Adit at Widow's Rest",
+  ],
+  builders: [
+    "a mining company that folded before it paid its men",
+    "a railway concern cutting through on a fixed deadline",
+    "a territorial garrison holding a road nobody uses now",
+    "a homesteader cooperative digging deeper than was wise",
+    "a claim-jumper who never registered any of it",
+  ],
+  originalUses: [
+    "a silver working that assayed rich and ran out fast",
+    "a rail cut driven through the range in one brutal season",
+    "a strongroom for payroll that arrived by coach once a month",
+    "a cold store and root cellar for a town that dried up",
+    "a stockade holding prisoners the territory had nowhere else to put",
+  ],
+  entrances: [
+    "a timbered adit half-buried in scree",
+    "a rail tunnel mouth boarded over and posted against trespass",
+    "a cellar stair behind a collapsed saloon front",
+    "a dry wash that cuts straight into the mesa",
+    "a hoist shaft with its headframe still standing",
+  ],
+  compositions: [
+    "square-set timbering going soft with rot",
+    "blasted rock left rough where the powder took it",
+    "adobe and fieldstone laid by hands in a hurry",
+    "rail ties and salvaged track iron used as shoring",
+    "hardpan and caliche cut straight without facing",
+  ],
+  conditions: [
+    "choked with dust that hangs in the air for hours",
+    "creaking as the timbering finally gives up",
+    "stripped of every fitting worth carrying out",
+    "cool and dry, and preserved far better than it should be",
+    "half-drowned where the water table came back up",
+  ],
+  causes: [
+    "a cave-in the company reported as an act of God",
+    "a payroll robbery that emptied the town within a month",
+    "an assay that came back worthless after the shafts were cut",
+    "a strike that ended with the mine sealed and the men still inside",
+    "a fever season that took more than the accidents ever did",
+  ],
+  sectors: [
+    {
+      name: "The Headframe Landing",
+      description:
+        "A hoist platform over an open shaft, its cable long since cut and coiled.",
+    },
+    {
+      name: "The Assay Office",
+      description:
+        "A cramped room of scales, crucibles, and ledgers that stop mid-column.",
+    },
+    {
+      name: "The Deep Drift",
+      description:
+        "A low working following a vein that pinched out, tools abandoned at the face.",
+    },
+    {
+      name: "The Powder Store",
+      description:
+        "A side chamber of sweating dynamite nobody has been brave enough to remove.",
+    },
+    {
+      name: "The Flooded Sump",
+      description:
+        "A standing pool at the low point of the workings, still and rust-coloured.",
+    },
+    {
+      name: "The Burial Cut",
+      description:
+        "A side gallery where the company laid its dead rather than haul them up.",
+    },
+  ],
+  inhabitants: [
+    "An outlaw band using the workings as a place the law will not follow.",
+    "A prospector who never accepted the claim was worthless, and never left.",
+    "A pack of cave-dwelling lions denned in the upper drifts.",
+    "A squatter camp of families burned out of somewhere else.",
+    "A company man still guarding a payroll that stopped coming decades ago.",
+  ],
+  factionNames: [
+    "the Cutbank Outlaws",
+    "the Company Holdouts",
+    "the Amity Wells Squatters",
+    "the Last Prospector's Camp",
+    "the Rail Gang Deserters",
+    "the Drift Lion Pack",
+    "the Territorial Posse",
+    "the Claim-Jumper Ring",
+    "the Widow's Rest Families",
+    "the Sealed-In Dead",
+  ],
+  secrets: [
+    "The vein never pinched out — the assay was falsified so the company could buy the claim back cheap.",
+    "The stolen payroll was never carried off; it is still in the strongroom, behind a false face of rock.",
+    "The men sealed in during the strike were alive for far longer than the inquest recorded.",
+    "The rail tunnel breaks into a natural cavern the survey deliberately left off the maps.",
+    "The town did not empty because of the fever — it emptied because of what came up out of the sump.",
+    "The company still holds the mineral rights, and the filing renews itself every year without anyone signing.",
+    "The rail line was routed around this claim at enormous cost, and no surviving document says why.",
+    "The men who sealed the adit did it from the outside, and the inquest never thought to ask who.",
+  ],
+  hazards: [
+    "Rotten square-set timbering that drops a ceiling at a shout.",
+    "Sweating dynamite too unstable to move.",
+    "Bad air pooling in the deep drifts, silent and unlit.",
+    "An unmarked winze opening straight down through the floor.",
+    "Rail iron laid over a gap, rusted through in the middle.",
+  ],
+  treasures: [
+    "A strongbox of territorial banknotes, still banded and countable.",
+    "A high-grade silver sample nobody was ever shown.",
+    "A cased Sharps rifle wrapped in oilcloth and perfectly preserved.",
+    "The company's true assay ledger, worth more than the ore ever was.",
+    "A deed to the whole claim, unrecorded and therefore still open.",
+    "A brand-book identifying every herd moved through the territory in a decade.",
+    "A surveyor's transit in its original case, worth a season's wages intact.",
+    "A pardon signed by the territorial governor, undated and with the name left blank.",
+  ],
+  hooks: [
+    "The territorial marshal wants an outlaw band flushed out of the old workings.",
+    "A mining company is quietly buying the claim back, and wants to know what is down there first.",
+    "A widow has the only surviving map and wants her husband's body brought up.",
+    "Cattle have been going missing along the draw, and the tracks lead into the adit.",
+    "The railway needs the tunnel cleared before the season closes, and the last crew walked off.",
+  ],
+  signatureFeatures: [
+    "The Standing Headframe: A timber hoist tower still upright over the shaft, swaying visibly in any wind.",
+    "The Ledger Room: An assay office where every book lies open to the same date, as though the men stepped out mid-shift.",
+    "The Glass Wall: A drift face where the blast fused the rock to a black mirror that shows the lamp back doubled.",
+    "The Buried Locomotive: An engine driven into the tunnel and left, its boiler cold, its bell still bright.",
+    "The Whistling Winze: A vertical shaft that draws air with a low steady note audible three galleries away.",
+  ],
+};
