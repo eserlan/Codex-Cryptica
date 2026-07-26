@@ -38,12 +38,10 @@ import {
   CAUSE_BY_GENRE,
   SIGNATURE_FEATURES_BY_GENRE,
   SECTORS_BY_GENRE,
-  INHABITANTS_BY_GENRE,
   FACTION_NAMES_BY_GENRE,
   FACTION_VIRTUES,
   FACTION_VICES,
   FACTION_GOALS,
-  FACTION_OBSTACLES,
   SECTOR_CONNECTORS,
   SECRETS_BY_GENRE,
   HAZARDS_BY_GENRE,
@@ -155,11 +153,15 @@ function pickStockDetail(
   usedByType: Record<DungeonStockType, Set<string>>,
   rng: Rng,
 ): string {
+  // Monster and Lore draw from room-scale tables, not the dungeon-wide
+  // inhabitants/hooks lists — those describe whole factions and GM-facing
+  // prompts, and read wrong when printed as the contents of one room.
+  const tables = forGenreTables(genre);
   const pool =
     stockType === "Monster"
-      ? forGenre(INHABITANTS_BY_GENRE, genre)
+      ? tables.roomEncounters
       : stockType === "Lore"
-        ? forGenre(HOOKS_BY_GENRE, genre)
+        ? tables.loreFinds
         : stockType === "Special"
           ? forGenre(SIGNATURE_FEATURES_BY_GENRE, genre)
           : forGenre(HAZARDS_BY_GENRE, genre);
@@ -180,6 +182,20 @@ function sanitizeObstacle(s: string): string {
     .replace(/^\s*(held back by|struggling against)\s*/i, "")
     .trim()
     .replace(/\.+$/, "");
+}
+
+/**
+ * Strip wrapping quotes and any leading "Sector N:" from an AI-returned sector
+ * name. The prompt quotes each name to mark where it starts and ends, and a
+ * literal-minded model copies the quotes into the value; formatSector() then
+ * renders `### Sector 1: "The Cold Bay"`.
+ */
+function sanitizeSectorName(s: string): string {
+  return s
+    .trim()
+    .replace(/^["'“”]+|["'“”]+$/g, "")
+    .replace(/^\s*Sector\s+\d+\s*:\s*/i, "")
+    .trim();
 }
 
 /** Strip a leading "Seeks"/"Seeking" an AI response may have added to a goal, since callers add their own lead-in. */
@@ -208,7 +224,11 @@ function generateFaction(
     rng,
   );
   const goal = pickUnused(FACTION_GOALS, used.goals, rng);
-  const obstacle = pickUnused(FACTION_OBSTACLES, used.obstacles, rng);
+  const obstacle = pickUnused(
+    forGenreTables(genre).factionObstacles,
+    used.obstacles,
+    rng,
+  );
   return {
     name,
     virtue: pickFrom(FACTION_VIRTUES, rng),
@@ -571,7 +591,7 @@ Required JSON schema:
   ],
   "currentConflict": "Vivid prose expansion of the given Current Conflict, naming both factions.",
   "sectors": [
-    { "name": "(reuse a given sector's quoted name exactly, with no leading number and no added prefix)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
+    { "name": "(the text inside the quotes of one given sector, reproduced exactly — do NOT include the surrounding quote marks, a leading number, or a 'Sector N:' prefix)", "description": "Expanded description of this area/level.", "stockType": "Monster | Lore | Special | Trap", "stockDetail": "Expansion of the given stocked content for this sector." }
   ],
   "inhabitants": "How the two named factions relate to each other, referencing both by name.",
   "secret": "Vivid prose expansion of the given Central Secret.",
@@ -624,7 +644,10 @@ export function parseDungeonResponse(
     const rawSectors = Array.isArray(parsed.sectors) ? parsed.sectors : [];
     const sectors: DungeonSector[] = rawSectors.map(
       (s: Record<string, unknown>, idx: number) => ({
-        name: typeof s?.name === "string" ? s.name : `Sector ${idx + 1}`,
+        name:
+          typeof s?.name === "string" && sanitizeSectorName(s.name)
+            ? sanitizeSectorName(s.name)
+            : `Sector ${idx + 1}`,
         description:
           typeof s?.description === "string"
             ? s.description
