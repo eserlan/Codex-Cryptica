@@ -989,6 +989,62 @@ describe("parseDungeonResponse", () => {
     expect(structural.output.title).toBe(prompt.resolved.title);
   });
 
+  it("accepts a narrative field returned as a list rather than a string", () => {
+    // "2-3 reasons a party would come here" invites a JSON array. Requiring a
+    // string made an arrayed answer look like an omission, so it was quietly
+    // replaced with table prose while the rest of the delve stayed original.
+    const prompt = buildDungeonPrompt({
+      themeId: "sci-fi",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+    const { hooks: _s, ...rest } = NARRATIVE;
+
+    const result = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...rest,
+        hooks: [
+          "A distress beacon resumed after forty years.",
+          "A rival crew went in and has not reported since.",
+        ],
+        sectors,
+        factions: [
+          {
+            name: "the First",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+            obstacle: "o1",
+          },
+          {
+            name: "the Second",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+
+    expect(result.problems).toEqual([]);
+    expect(result.output.lore).toContain("A distress beacon resumed");
+    expect(result.output.lore).toContain("has not reported since");
+    // The table hook must not have been substituted.
+    expect(result.output.lore).not.toContain(prompt.resolved.hooks);
+  });
+
   it("asks again for an omitted narrative field instead of substituting table prose", () => {
     // A delve came back whose Adventure Hooks were one flat sentence lifted
     // verbatim from the cyberpunk table, because the model omitted "hooks" and
