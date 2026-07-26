@@ -262,11 +262,17 @@ function renderDungeonMap(
 }
 
 /**
- * Sector count for a scale label, matching dungeonConfig.scales' documented ranges:
- * Small Lair 1-2, Medium Complex 3-4, Sprawling Megadungeon 5+ (capped by available templates).
+ * Sector count for a scale label, matching dungeonConfig.scales:
+ * Small Lair 2, Medium Complex 3-4, Sprawling Megadungeon 5-6.
+ *
+ * Two is the floor for every scale. The generator unconditionally produces two
+ * rival factions contesting the place and renders a navigable layout, and
+ * neither means anything in a single room — a one-sector delve came out with
+ * both factions fighting over a "descending stairway" and a "threshold" that
+ * were not sectors, because there was only one.
  */
 function sectorCountForScale(scale: string, rng: Rng): number {
-  if (scale.includes("Small")) return 1 + Math.floor(rng() * 2); // 1-2
+  if (scale.includes("Small")) return 2;
   if (scale.includes("Sprawling")) return 5 + Math.floor(rng() * 2); // 5-6
   return 3 + Math.floor(rng() * 2); // 3-4 (Medium, and any custom scale)
 }

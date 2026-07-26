@@ -68,7 +68,7 @@ export const dungeonConfig = {
   /** Union of every current state across all genres. See `currentStatesByGenre`. */
   currentStates: unionOf("currentStates"),
   scales: [
-    "Small Lair (1-2 Sectors)",
+    "Small Lair (2 Sectors)",
     "Medium Complex (3-4 Sectors)",
     "Sprawling Megadungeon (5+ Sectors)",
   ],
