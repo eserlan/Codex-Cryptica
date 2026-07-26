@@ -147,12 +147,20 @@
       page.url.pathname.startsWith(`${base}/map`) ||
       sessionModeStore.isGuestMode
     ) {
-      import("$lib/stores/map-session.svelte").then((m) => {
-        mapSession = m.mapSession;
-      });
-      import("$lib/components/vtt/VTTSharedImageLightbox.svelte").then((m) => {
-        VTTSharedImageLightbox = m.default;
-      });
+      import("$lib/stores/map-session.svelte")
+        .then((m) => {
+          mapSession = m.mapSession;
+        })
+        .catch((err) => {
+          console.error("Failed to lazy-load map-session store", err);
+        });
+      import("$lib/components/vtt/VTTSharedImageLightbox.svelte")
+        .then((m) => {
+          VTTSharedImageLightbox = m.default;
+        })
+        .catch((err) => {
+          console.error("Failed to lazy-load VTTSharedImageLightbox", err);
+        });
     }
   });
 
