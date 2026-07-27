@@ -26,11 +26,31 @@ export class DungeonDelveService {
     const title = entity.title || entity.name || "Untitled Dungeon";
     const metadata = entity.metadata || {};
 
-    const sectors = Array.isArray(metadata.sectors)
+    let sectors = Array.isArray(metadata.sectors)
       ? metadata.sectors
       : Array.isArray(entity.sectors)
         ? entity.sectors
         : [];
+
+    if (sectors.length === 0 && typeof entity.content === "string") {
+      const parsedSectors: Array<{ id: string; name: string }> = [];
+      const matches = entity.content.matchAll(
+        /### Sector \d+:\s*(.+?)(?=\n|$)/g,
+      );
+      let idx = 1;
+      for (const m of matches) {
+        if (m[1]?.trim()) {
+          parsedSectors.push({
+            id: `sec-${idx}`,
+            name: m[1].trim(),
+          });
+          idx++;
+        }
+      }
+      if (parsedSectors.length > 0) {
+        sectors = parsedSectors;
+      }
+    }
 
     const size = metadata.size || entity.size || "medium";
     const factions = metadata.factions || entity.factions;
