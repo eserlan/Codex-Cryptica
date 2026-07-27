@@ -6,7 +6,10 @@
     type EdgeProps,
   } from "@xyflow/svelte";
   import type { DelveEdgeData, PassageType } from "generator-engine";
-  import { getPassageEdgeStyle } from "./delve-helpers";
+  import {
+    getPassageDirectionMarkers,
+    getPassageEdgeStyle,
+  } from "./delve-helpers";
 
   let {
     id,
@@ -22,6 +25,12 @@
   const delveEdgeData = $derived((data ?? {}) as unknown as DelveEdgeData);
   const passageType: PassageType = $derived(delveEdgeData.type ?? "standard");
   const edgeStyleConfig = $derived(getPassageEdgeStyle(passageType));
+  const markerId = $derived(
+    `delve-arrow-${String(id).replace(/[^a-zA-Z0-9_-]/g, "-")}`,
+  );
+  const directionMarkers = $derived(
+    getPassageDirectionMarkers(delveEdgeData.bidirectional !== false, markerId),
+  );
 
   const [edgePath, labelX, labelY] = $derived(
     getSmoothStepPath({
@@ -53,7 +62,27 @@
   }
 </script>
 
-<BaseEdge path={edgePath} style={styleString} />
+<defs>
+  <marker
+    id={markerId}
+    viewBox="0 0 8 8"
+    markerWidth="8"
+    markerHeight="8"
+    refX="7"
+    refY="4"
+    orient="auto-start-reverse"
+    markerUnits="strokeWidth"
+  >
+    <path d="M 0 0 L 8 4 L 0 8 z" fill={edgeStyleConfig.strokeColor}></path>
+  </marker>
+</defs>
+
+<BaseEdge
+  path={edgePath}
+  style={styleString}
+  markerStart={directionMarkers.markerStart}
+  markerEnd={directionMarkers.markerEnd}
+/>
 
 <EdgeLabel x={labelX} y={labelY}>
   <button

@@ -24,7 +24,7 @@ const mockVault = vi.hoisted(() => {
         labels: ["Quest"],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 300,
       },
       {
         id: "npc-only",
@@ -34,7 +34,7 @@ const mockVault = vi.hoisted(() => {
         labels: ["NPC"],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 100,
       },
       {
         id: "both",
@@ -44,7 +44,7 @@ const mockVault = vi.hoisted(() => {
         labels: ["NPC", "Quest"],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 200,
       },
       {
         id: "parent-1",
@@ -54,7 +54,7 @@ const mockVault = vi.hoisted(() => {
         labels: [],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 400,
       },
       {
         id: "child-1",
@@ -64,7 +64,7 @@ const mockVault = vi.hoisted(() => {
         labels: [],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 500,
         parent: "parent-1",
       },
       {
@@ -116,6 +116,8 @@ vi.mock("$lib/utils/icon", () => ({
 describe("EntityList", () => {
   beforeEach(() => {
     explorerUIStore.explorerViewMode = "list";
+    explorerUIStore.explorerSortKey = "name";
+    explorerUIStore.explorerSortDirection = "asc";
     explorerUIStore.clearLabelFilters();
     explorerUIStore.explorerCollapsedCategoryGroups = {};
     explorerUIStore.explorerCollapsedLabelGroups = {};
@@ -234,6 +236,43 @@ describe("EntityList", () => {
     await fireEvent.click(clearButton);
 
     expect(input.value).toBe("");
+  });
+
+  it("sorts tree siblings by last edited time in either direction", async () => {
+    render(EntityList);
+
+    await fireEvent.change(screen.getByLabelText("Sort"), {
+      target: { value: "updated" },
+    });
+    await tick();
+
+    const ids = () =>
+      screen
+        .getAllByTestId("entity-list-item")
+        .map((item) => item.getAttribute("data-entity-id"));
+
+    expect(ids()).toEqual([
+      "parent-1",
+      "child-1",
+      "quest-only",
+      "both",
+      "npc-only",
+    ]);
+
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sort last edited oldest first",
+      }),
+    );
+    await tick();
+
+    expect(ids()).toEqual([
+      "npc-only",
+      "both",
+      "quest-only",
+      "parent-1",
+      "child-1",
+    ]);
   });
 
   it("automatically applies the label in the graph filter when an autocomplete option is selected", async () => {

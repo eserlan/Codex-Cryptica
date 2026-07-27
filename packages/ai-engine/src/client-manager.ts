@@ -30,11 +30,7 @@ export class DefaultAIClientManager {
     return (
       (typeof import.meta !== "undefined" &&
         import.meta.env?.VITE_ORACLE_PROXY_URL) ||
-      (typeof import.meta !== "undefined" &&
-      import.meta.env?.DEV &&
-      !import.meta.env?.VITEST
-        ? "http://localhost:8787"
-        : "https://oracle-proxy.espen-erlandsen.workers.dev")
+      "https://oracle-proxy.espen-erlandsen.workers.dev"
     );
   }
 

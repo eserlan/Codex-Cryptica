@@ -3,6 +3,12 @@ import type { Canvas, CanvasEdge, CanvasNode } from "@codex/canvas-engine";
 
 export type CanvasWorkspacePoint = { x: number; y: number };
 
+const DELVE_ROOM_WIDTH = 220;
+const DELVE_ROOM_HEIGHT = 120;
+const SECTOR_PADDING_X = 40;
+const SECTOR_PADDING_TOP = 60;
+const SECTOR_PADDING_BOTTOM = 40;
+
 export interface CanvasWorkspaceMetadataSource {
   name?: string | null;
   slug?: string | null;
@@ -20,6 +26,8 @@ export function isGenericCanvasName(
 }
 
 export function canvasNodeToFlowNode(node: CanvasNode): Node {
+  const isSectorGroup = node.type === "delveSectorGroup";
+  const isDelveRoom = node.type === "delveRoom";
   return {
     id: node.id,
     type: node.type || "entity",
@@ -28,6 +36,11 @@ export function canvasNodeToFlowNode(node: CanvasNode): Node {
     style: (node as any).style,
     width: node.width,
     height: node.height,
+    draggable: true,
+    selectable: !isSectorGroup,
+    dragHandle: isSectorGroup ? ".sector-drag-handle" : undefined,
+    extent: isDelveRoom ? null : ((node as any).extent ?? undefined),
+    zIndex: isSectorGroup ? 0 : undefined,
     data: {
       entityId: node.entityId,
       width: node.width,
@@ -48,6 +61,114 @@ export function canvasEdgeToFlowEdge(edge: CanvasEdge): Edge {
     type: edge.type === "line" || !edge.type ? "straight" : (edge.type as any),
     style: typeof edge.style === "string" ? edge.style : undefined,
     data: (edge as any).data || {},
+  };
+}
+
+export function flowNodeToCanvasNode(node: Node): CanvasNode {
+  const data = (node.data ?? {}) as Record<string, unknown>;
+  return {
+    id: node.id,
+    type: (node.type ?? "entity") as CanvasNode["type"],
+    position: node.position,
+    entityId: typeof data.entityId === "string" ? data.entityId : undefined,
+    width: node.width ?? (data.width as number | undefined),
+    height: node.height ?? (data.height as number | undefined),
+    parentId: node.parentId,
+    extent: typeof node.extent === "string" ? node.extent : undefined,
+    style: node.style,
+    data,
+  } as CanvasNode;
+}
+
+function nodeWidth(node: Node): number {
+  return (
+    node.measured?.width ??
+    node.width ??
+    (node.data?.width as number | undefined) ??
+    DELVE_ROOM_WIDTH
+  );
+}
+
+function nodeHeight(node: Node): number {
+  return (
+    node.measured?.height ??
+    node.height ??
+    (node.data?.height as number | undefined) ??
+    DELVE_ROOM_HEIGHT
+  );
+}
+
+/**
+ * Fits each delve sector frame to its child Areas. Child coordinates are
+ * shifted by the inverse frame movement, so their absolute canvas positions
+ * remain unchanged.
+ */
+export function fitDelveSectorFrames(nodes: Node[]): Node[] {
+  const updates = new Map<
+    string,
+    Pick<Node, "position" | "width" | "height">
+  >();
+
+  for (const sector of nodes.filter(
+    (node) => node.type === "delveSectorGroup",
+  )) {
+    const rooms = nodes.filter(
+      (node) => node.type === "delveRoom" && node.parentId === sector.id,
+    );
+    if (rooms.length === 0) continue;
+
+    const minX = Math.min(...rooms.map((room) => room.position.x));
+    const minY = Math.min(...rooms.map((room) => room.position.y));
+    const maxX = Math.max(
+      ...rooms.map((room) => room.position.x + nodeWidth(room)),
+    );
+    const maxY = Math.max(
+      ...rooms.map((room) => room.position.y + nodeHeight(room)),
+    );
+    const frameShiftX = minX - SECTOR_PADDING_X;
+    const frameShiftY = minY - SECTOR_PADDING_TOP;
+
+    updates.set(sector.id, {
+      position: {
+        x: sector.position.x + frameShiftX,
+        y: sector.position.y + frameShiftY,
+      },
+      width: maxX - minX + SECTOR_PADDING_X * 2,
+      height: maxY - minY + SECTOR_PADDING_TOP + SECTOR_PADDING_BOTTOM,
+    });
+    for (const room of rooms) {
+      updates.set(room.id, {
+        position: {
+          x: room.position.x - frameShiftX,
+          y: room.position.y - frameShiftY,
+        },
+        width: room.width,
+        height: room.height,
+      });
+    }
+  }
+
+  return nodes.map((node) => {
+    const update = updates.get(node.id);
+    return update ? { ...node, ...update } : node;
+  });
+}
+
+export function flowEdgeToCanvasEdge(
+  edge: Edge,
+  createFallbackId?: () => string,
+): CanvasEdge {
+  return {
+    id: edge.id || createFallbackId?.() || `edge-${edge.source}-${edge.target}`,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourceHandle ?? undefined,
+    targetHandle: edge.targetHandle ?? undefined,
+    label: typeof edge.label === "string" ? edge.label : undefined,
+    type: edge.type ?? "smoothstep",
+    style: edge.style as CanvasEdge["style"],
+    data: edge.data,
+    animated: edge.animated,
   };
 }
 
