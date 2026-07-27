@@ -1,15 +1,14 @@
 import type { GuestHistory } from "schema";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock, browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "guest_history";
 
 /**
- * Retrieves the guest history entries from localStorage, sorted by last accessed date descending.
+ * Retrieves the guest history entries from storage, sorted by last accessed date descending.
  */
-export function getGuestHistory(): GuestHistory[] {
-  if (typeof window === "undefined") return [];
+export function getGuestHistory(storage: StorageLike = browserStorage): GuestHistory[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -35,12 +34,11 @@ export function getGuestHistory(): GuestHistory[] {
 }
 
 /**
- * Adds or updates a guest history entry in localStorage.
+ * Adds or updates a guest history entry in storage.
  * Automatically caps history at 10 items.
  */
-export function addGuestHistory(publishId: string, vaultTitle: string): void {
-  if (typeof window === "undefined") return;
-  const history = getGuestHistory();
+export function addGuestHistory(publishId: string, vaultTitle: string, storage: StorageLike = browserStorage): void {
+  const history = getGuestHistory(storage);
   const index = history.findIndex((h) => h.publishId === publishId);
 
   const entry: GuestHistory = {
@@ -55,7 +53,7 @@ export function addGuestHistory(publishId: string, vaultTitle: string): void {
     history.push(entry);
   }
 
-  // Keep it sorted and cap to 10 entries to prevent localStorage bloat
+  // Keep it sorted and cap to 10 entries to prevent storage bloat
   const updated = history
     .sort(
       (a, b) =>
@@ -64,33 +62,31 @@ export function addGuestHistory(publishId: string, vaultTitle: string): void {
     .slice(0, 10);
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    storage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (e) {
     console.warn("Failed to save guest history", e);
   }
 }
 
 /**
- * Removes a guest history entry from localStorage.
+ * Removes a guest history entry from storage.
  */
-export function removeGuestHistory(publishId: string): void {
-  if (typeof window === "undefined") return;
-  const history = getGuestHistory();
+export function removeGuestHistory(publishId: string, storage: StorageLike = browserStorage): void {
+  const history = getGuestHistory(storage);
   const updated = history.filter((h) => h.publishId !== publishId);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    storage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (e) {
     console.warn("Failed to remove guest history entry", e);
   }
 }
 
 /**
- * Clears all guest history from localStorage.
+ * Clears all guest history from storage.
  */
-export function clearGuestHistory(): void {
-  if (typeof window === "undefined") return;
+export function clearGuestHistory(storage: StorageLike = browserStorage): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    storage.removeItem(STORAGE_KEY);
   } catch (e) {
     console.warn("Failed to clear guest history", e);
   }
