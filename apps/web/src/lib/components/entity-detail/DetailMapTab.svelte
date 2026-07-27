@@ -3,10 +3,48 @@
   import { goto } from "$app/navigation";
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let { entity } = $props<{ entity?: Entity | null }>();
+
+  let isDungeonLocation = $derived.by(() => {
+    return isDelveLocationEntity(entity);
+  });
+
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
+  );
+
+  async function handleBuildDelveCanvas() {
+    if (!entity) return;
+    try {
+      console.log(
+        "[DelveCanvas] Building delve canvas from in-app entity:",
+        entity,
+      );
+      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(entity);
+      console.log("[DelveCanvas] Generated canvas document:", canvasDoc);
+      const slug = await canvasRegistry.importCanvas(canvasDoc);
+      openCanvasFromZen({ slug }, goto);
+    } catch (err: any) {
+      console.error("[DelveCanvas] Failed to build delve canvas:", err);
+      notificationStore.notify("Failed to build delve canvas map.", "error");
+    }
+  }
 
   let linkedMap = $derived.by(() => {
     if (!entity) return undefined;
@@ -93,6 +131,56 @@
 </script>
 
 <div class="p-4 md:p-6 space-y-6">
+  {#if isDungeonLocation}
+    <div
+      class="p-4 bg-theme-primary/5 border border-theme-border rounded-lg flex items-center justify-between gap-4"
+    >
+      <div>
+        <h4
+          class="text-xs font-bold text-theme-primary uppercase font-header tracking-wider"
+        >
+          Spatial {delveCanvasLabel}
+        </h4>
+        <p class="text-[10px] text-theme-muted mt-0.5">
+          {existingCanvas
+            ? "Interactive room & sector floor plan on Spatial Canvas."
+            : "Generate an interactive floor plan with sector frames, room stocking, and passage types on Spatial Canvas."}
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        {#if existingCanvas}
+          <button
+            type="button"
+            onclick={() => {
+              openCanvasFromZen(existingCanvas, goto);
+            }}
+            class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-[10px] rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+            Open {delveCanvasLabel}
+          </button>
+          <button
+            type="button"
+            title="Rebuild Canvas Map"
+            onclick={handleBuildDelveCanvas}
+            class="p-2 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
+          >
+            <span class="icon-[lucide--rotate-cw] w-4 h-4"></span>
+          </button>
+        {:else}
+          <button
+            type="button"
+            onclick={handleBuildDelveCanvas}
+            class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-[10px] rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+            Build {delveCanvasLabel}
+          </button>
+        {/if}
+      </div>
+    </div>
+  {/if}
+
   {#if linkedMap}
     <div class="space-y-4">
       <div class="flex items-center justify-between">

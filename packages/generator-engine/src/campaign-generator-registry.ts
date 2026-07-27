@@ -18,6 +18,7 @@ import {
   buildDungeonPrompt,
   generateDungeonLocal,
   dungeonConfig,
+  type DungeonGeneratorOptions,
 } from "./public-dungeon";
 
 /**
@@ -69,6 +70,24 @@ function optionString(
 ): string {
   const value = request.options[key];
   return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
+  return {
+    themeId: request.themeId || optionString(request, "themeId", "fantasy"),
+    purpose: optionString(request, "purpose", ""),
+    currentState: optionString(
+      request,
+      "currentState",
+      optionString(request, "status", ""),
+    ),
+    scale: optionString(request, "scale", ""),
+    instruction: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
 }
 
 /**
@@ -617,17 +636,7 @@ function generateLanguage(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 function generateDungeon(request: GeneratorRunRequest): GeneratorOutput {
-  const result = generateDungeonLocal({
-    themeId: request.themeId || optionString(request, "themeId", "fantasy"),
-    purpose: optionString(request, "purpose", ""),
-    currentState: optionString(
-      request,
-      "currentState",
-      optionString(request, "status", ""),
-    ),
-    scale: optionString(request, "scale", ""),
-    instruction: request.instructions,
-  });
+  const result = generateDungeonLocal(dungeonOptions(request));
   return {
     title: result.title,
     summary: result.summary || "",
@@ -637,20 +646,20 @@ function generateDungeon(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
-function dungeonPrompt(request: GeneratorRunRequest): string {
-  const options = {
-    themeId: request.themeId || optionString(request, "themeId", "fantasy"),
-    purpose: optionString(request, "purpose", ""),
-    currentState: optionString(
-      request,
-      "currentState",
-      optionString(request, "status", ""),
-    ),
-    scale: optionString(request, "scale", ""),
-    instruction: request.instructions,
-  };
+export function buildCampaignDungeonPrompt(request: GeneratorRunRequest) {
+  const options = dungeonOptions(request);
   const prompt = buildDungeonPrompt(options);
-  return prompt.userMessage;
+  return {
+    ...prompt,
+    options,
+    userMessage: `${contextChain(request)}
+
+${prompt.userMessage}`,
+  };
+}
+
+function dungeonPrompt(request: GeneratorRunRequest): string {
+  return buildCampaignDungeonPrompt(request).userMessage;
 }
 
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {

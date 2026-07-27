@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   CampaignGeneratorService,
+  composeDraftVaultFields,
   DraftSaveError,
   type GeneratorVaultGateway,
 } from "./campaign-generator-service";
@@ -189,6 +190,46 @@ describe("saveDraft", () => {
     );
   });
 
+  it("stores a dungeon summary as content and combines its document with GM lore", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    await svc.saveDraft({
+      draft: draft({
+        sourceGeneratorId: "dungeon",
+        entityType: "location",
+        summary: "A contested glass sanctuary.",
+        content: "## History & Original Purpose\nForged by dragonfire.",
+        lore: "## Central Secret / Boss Mystery\nA star sleeps below.",
+        labels: ["dungeon", "location"],
+      }),
+      createRelationship: false,
+    });
+
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "location",
+      "Kaeldar",
+      expect.objectContaining({
+        content: "A contested glass sanctuary.",
+        lore: "## History & Original Purpose\nForged by dragonfire.\n\n## Central Secret / Boss Mystery\nA star sleeps below.",
+        kind: "dungeon",
+      }),
+    );
+  });
+
+  it("does not merge rich content into lore for ordinary entity drafts", () => {
+    expect(
+      composeDraftVaultFields(
+        draft({
+          content: "Public presentation",
+          lore: "Private notes",
+        }),
+      ),
+    ).toEqual({
+      content: "A guard.",
+      lore: "Private notes",
+    });
+  });
+
   it("creates a relationship only after entity creation when requested", async () => {
     const vault = gateway();
     const svc = new CampaignGeneratorService({ vault });
@@ -338,6 +379,176 @@ describe("AI policy (US2)", () => {
     expect(aiGateway.complete).toHaveBeenCalledTimes(1);
     expect(d.title).toBe("Zara the Witch");
     expect(d.labels).toContain("Witch");
+  });
+
+  it("parses the internal dungeon generator's AI-specific response shape", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "The Bellfound Depths",
+          summary:
+            "A drowned signal foundry contested by oath-bound salvagers.",
+          throughline:
+            "Rebel smiths built the foundry, a ritual flood ruined it, and rival salvagers now fight over its living bells.",
+          history:
+            "Rebel smiths cast warning bells here until a failed silencing rite flooded the lower works.",
+          currentState:
+            "The upper galleries remain occupied while black water rises through the furnaces.",
+          signatureFeature:
+            "A suspended bronze bell rings when anyone speaks a lie.",
+          factions: [
+            {
+              name: "The Rivet Oath",
+              virtue: "Patient",
+              vice: "Possessive",
+              goal: "Recovery",
+              obstacle: "the flooded casting floor",
+            },
+            {
+              name: "The Siltbound",
+              virtue: "Resourceful",
+              vice: "Vindictive",
+              goal: "Escape",
+              obstacle: "their broken diving engine",
+            },
+          ],
+          currentConflict:
+            "The Rivet Oath needs the Siltbound engine, while the Siltbound need the Oath's bell-key.",
+          sectors: [
+            {
+              name: "The Riveted Mouth",
+              description:
+                "Flood doors shudder around a gallery of cracked warning bells.",
+              stockType: "Lore",
+              stockDetail:
+                "Strike marks identify which bell opened each floodgate.",
+            },
+            {
+              name: "The Drowned Belfry",
+              description:
+                "A tilted casting hall descends beneath oil-black water.",
+              stockType: "Trap",
+              stockDetail:
+                "Speaking above a whisper releases a suspended clapper.",
+            },
+          ],
+          inhabitants:
+            "The Rivet Oath controls the dry galleries while the Siltbound move through flooded service shafts.",
+          secret:
+            "The bells are a lock keeping the river beneath the foundry asleep.",
+          hazards: ["Sudden floodgate releases", "Falling bronze moulds"],
+          treasures: ["The bell-key", "A case of rebel maker's marks"],
+          hooks: [
+            "Recover a bell that rings with a missing heir's voice.",
+            "Stop both factions from sounding the river alarm.",
+          ],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(
+      run("dungeon", {
+        useAI: true,
+        themeId: "fantasy",
+        options: {
+          purpose: "Forge for a Great Weapon",
+          currentState: "Active Monster Lair",
+          scale: "Small Lair (2 Sectors)",
+        },
+      }),
+    );
+
+    expect(aiGateway.complete).toHaveBeenCalledOnce();
+    expect(aiGateway.complete.mock.calls[0][1]).toContain(
+      "TTRPG dungeon designer",
+    );
+    expect(generated.title).toBe("The Bellfound Depths");
+    expect(generated.content).toContain("The Riveted Mouth");
+    expect(generated.lore).toContain("The bells are a lock");
+  });
+
+  it("does not commit a rejected dungeon interaction replaced by a stateless retry", async () => {
+    const corrected = {
+      title: "The Corrected Depths",
+      summary: "A corrected two-sector delve.",
+      throughline:
+        "A sealed forge failed and two rivals now contest its heart.",
+      history: "The forge was sealed after its central bell cracked.",
+      currentState: "Two rival crews occupy separate galleries.",
+      signatureFeature: "A cracked bell vibrates above every doorway.",
+      currentConflict: "Each crew needs the mechanism held by the other.",
+      factions: [
+        {
+          name: "The Rivet Oath",
+          virtue: "Patient",
+          vice: "Possessive",
+          goal: "Recovery",
+          obstacle: "the flooded floor",
+        },
+        {
+          name: "The Siltbound",
+          virtue: "Resourceful",
+          vice: "Vindictive",
+          goal: "Escape",
+          obstacle: "their broken engine",
+        },
+      ],
+      sectors: [
+        {
+          name: "The Riveted Mouth",
+          description: "Cracked doors guard the upper works.",
+          stockType: "Lore",
+          stockDetail: "Maker marks reveal the original lock sequence.",
+        },
+        {
+          name: "The Drowned Belfry",
+          description: "Black water fills the lower casting hall.",
+          stockType: "Trap",
+          stockDetail: "Loud speech releases a suspended clapper.",
+        },
+      ],
+      inhabitants: "The rivals patrol opposite sides of the forge.",
+      secret: "The central bell restrains the river below.",
+      hazards: ["Floodgate releases", "Falling bronze moulds"],
+      treasures: ["The bell-key", "Rebel maker marks"],
+      hooks: ["Recover the bell-key.", "Prevent the final flood."],
+    };
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValueOnce({
+        text: JSON.stringify({ title: "Rejected Fragment" }),
+        usedInteraction: true,
+        interactionId: "interaction-rejected",
+      })
+      .mockResolvedValueOnce(JSON.stringify(corrected));
+    const onInteractionResult = vi.fn();
+    const service = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onInteractionResult,
+    });
+
+    const generated = await service.generateDraft(
+      run("dungeon", {
+        useAI: true,
+        themeId: "fantasy",
+        options: { scale: "Small Lair (2 Sectors)" },
+        interaction: {
+          input: "Generate the next delve.",
+          previousInteractionId: "interaction-previous",
+          store: true,
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(generated.title).toBe("The Corrected Depths");
+    expect(typeof generated.summary).toBe("string");
+    expect(onInteractionResult).not.toHaveBeenCalled();
   });
 
   it("passes interaction request through to the AI gateway when present", async () => {

@@ -1,0 +1,139 @@
+import { z } from "zod";
+import type { Entity } from "schema";
+import type { Canvas } from "@codex/canvas-engine";
+import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { ImportDraftSchema, type ImportDraft } from "./import-handler";
+
+export const PENDING_DELVE_CANVAS_KEY = "__codex_pending_canvas";
+
+const PendingDelveTransferSchema = z.object({
+  version: z.literal(1),
+  canvas: z.record(z.string(), z.unknown()),
+  sourceEntity: ImportDraftSchema,
+  sourceEntityId: z.string().optional(),
+});
+
+export type PendingDelveTransfer = z.infer<typeof PendingDelveTransferSchema>;
+
+interface DelveEntityStore {
+  allEntities: Entity[];
+  createEntity(
+    type: Entity["type"],
+    title: string,
+    initialData: Partial<Entity>,
+  ): Promise<string>;
+}
+
+interface DelveCanvasImporter {
+  importCanvas(doc: Canvas | Record<string, unknown>): Promise<string>;
+}
+
+function isGeneratedDelve(entity: Entity): boolean {
+  if (entity.type !== "location") return false;
+
+  const labels = (entity.labels ?? []).map((label) => label.toLowerCase());
+  return (
+    entity.kind?.toLowerCase() === "dungeon" ||
+    labels.includes("dungeon") ||
+    labels.includes("delve")
+  );
+}
+
+export function createPendingDelveTransfer(
+  canvas: unknown,
+  sourceEntity: ImportDraft,
+): PendingDelveTransfer {
+  return PendingDelveTransferSchema.parse({
+    version: 1,
+    canvas,
+    sourceEntity: {
+      ...sourceEntity,
+      type: "location",
+      kind: "dungeon",
+    },
+  });
+}
+
+export class PendingDelveTransferService {
+  constructor(
+    private entityStore: DelveEntityStore = vault,
+    private canvasImporter: DelveCanvasImporter = canvasRegistry,
+    private storage: StorageLike = browserStorage,
+  ) {}
+
+  hasPending(): boolean {
+    return this.storage.getItem(PENDING_DELVE_CANVAS_KEY) !== null;
+  }
+
+  async importPending(): Promise<string | null> {
+    const serialized = this.storage.getItem(PENDING_DELVE_CANVAS_KEY);
+    if (!serialized) return null;
+
+    const raw = JSON.parse(serialized) as unknown;
+    const parsedTransfer = PendingDelveTransferSchema.safeParse(raw);
+
+    if (!parsedTransfer.success) {
+      // Canvases created before the source-entity handoff remain importable.
+      const slug = await this.canvasImporter.importCanvas(
+        raw as Record<string, unknown>,
+      );
+      this.storage.removeItem(PENDING_DELVE_CANVAS_KEY);
+      return slug;
+    }
+
+    const transfer = parsedTransfer.data;
+    const entityId =
+      transfer.sourceEntityId ??
+      (await this.findOrCreateSourceEntity(transfer.sourceEntity));
+
+    const retryableTransfer: PendingDelveTransfer = {
+      ...transfer,
+      sourceEntityId: entityId,
+    };
+    this.storage.setItem(
+      PENDING_DELVE_CANVAS_KEY,
+      JSON.stringify(retryableTransfer),
+    );
+
+    const metadata =
+      transfer.canvas.metadata &&
+      typeof transfer.canvas.metadata === "object" &&
+      !Array.isArray(transfer.canvas.metadata)
+        ? transfer.canvas.metadata
+        : {};
+    const linkedCanvas = {
+      ...transfer.canvas,
+      metadata: {
+        ...metadata,
+        kind: "delve",
+        sourceEntityId: entityId,
+      },
+    };
+
+    const slug = await this.canvasImporter.importCanvas(linkedCanvas);
+    this.storage.removeItem(PENDING_DELVE_CANVAS_KEY);
+    return slug;
+  }
+
+  private async findOrCreateSourceEntity(draft: ImportDraft): Promise<string> {
+    const normalizedTitle = draft.title.trim().toLowerCase();
+    const existing = this.entityStore.allEntities.find(
+      (entity) =>
+        entity.title.trim().toLowerCase() === normalizedTitle &&
+        isGeneratedDelve(entity),
+    );
+    if (existing) return existing.id;
+
+    return this.entityStore.createEntity("location", draft.title, {
+      content: draft.content,
+      lore: draft.lore ?? "",
+      labels: draft.labels,
+      status: draft.status,
+      kind: "dungeon",
+    });
+  }
+}
+
+export const pendingDelveTransferService = new PendingDelveTransferService();

@@ -17,6 +17,8 @@ export const UI_STORAGE_KEYS = {
     "codex_explorer_collapsed_category_groups",
   EXPLORER_COLLAPSED_LABEL_GROUPS: "codex_explorer_collapsed_label_groups",
   EXPLORER_COLLAPSED_ENTITY_IDS: "codex_explorer_collapsed_entity_ids",
+  EXPLORER_SORT_DIRECTION: "codex_explorer_sort_direction",
+  EXPLORER_SORT_KEY: "codex_explorer_sort_key",
   EXPLORER_VIEW_MODE: "codex_explorer_view_mode",
   LAST_CONNECTION_LABEL: "codex_last_connection_label",
   LAST_SEEN_VERSION: "codex_last_seen_version",

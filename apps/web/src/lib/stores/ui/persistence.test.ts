@@ -14,6 +14,8 @@ describe("UIPersistence", () => {
       "codex_explorer_collapsed_category_groups",
       "codex_explorer_collapsed_entity_ids",
       "codex_explorer_collapsed_label_groups",
+      "codex_explorer_sort_direction",
+      "codex_explorer_sort_key",
       "codex_explorer_view_mode",
       "codex_last_connection_label",
       "codex_last_seen_version",

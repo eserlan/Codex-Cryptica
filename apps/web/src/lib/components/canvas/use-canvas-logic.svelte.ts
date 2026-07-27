@@ -14,6 +14,8 @@ import {
   buildCanvasSavePayload,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  flowEdgeToCanvasEdge,
+  flowNodeToCanvasNode,
   hydrateCanvasGraph,
   pruneCanvasGraph,
   resolveSpawnPosition,
@@ -319,29 +321,30 @@ export function createCanvasLogic(
 
     // Sync edges
     const currentEdges = edges;
-    getEngine().edges = currentEdges.map((e: Edge) => ({
-      id: e.id || `edge-${idGenerator.uuid()}`,
-      source: e.source,
-      target: e.target,
-      sourceHandle: undefined,
-      targetHandle: undefined,
-      label: (e.label as string) || "",
-      type: "straight",
-      style: (e.style as string) || "",
-    }));
+    getEngine().edges = currentEdges.map((edge) =>
+      flowEdgeToCanvasEdge(edge, () => `edge-${idGenerator.uuid()}`),
+    );
 
     // Sync nodes
     const currentNodes = nodes;
-    getEngine().nodes = currentNodes.map((n: Node) => ({
-      id: n.id,
-      type: n.type as "entity",
-      position: n.position,
-      entityId: (n.data?.entityId as string) || "",
-      width: n.data?.width as number,
-      height: n.data?.height as number,
-    }));
+    getEngine().nodes = currentNodes.map(flowNodeToCanvasNode);
 
     debouncedSave();
+  }
+
+  async function fitGraphForExport() {
+    const viewport = svelteFlow.getViewport();
+    await svelteFlow.fitView({
+      nodes,
+      padding: 0.08,
+      duration: 0,
+      includeHiddenNodes: true,
+    });
+    await tick();
+    return async () => {
+      await svelteFlow.setViewport(viewport, { duration: 0 });
+      await tick();
+    };
   }
 
   return {
@@ -396,6 +399,7 @@ export function createCanvasLogic(
     initializeCanvas,
     pruneNodes,
     syncEngine,
+    fitGraphForExport,
     flushSave,
   };
 }

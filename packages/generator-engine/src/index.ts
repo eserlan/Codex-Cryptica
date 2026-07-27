@@ -170,8 +170,14 @@ export {
   type ResolvedDungeon,
 } from "./public-dungeon";
 export {
+  buildDelveDossier,
+  type DelveDossier,
+  type DelveDossierInput,
+} from "./dungeon/delve-dossier";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
+  composeDraftVaultFields,
   DraftSaveError,
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,

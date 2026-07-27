@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+const CanvasNodeBaseSchema = z.object({
+  id: z.string(),
+  position: z.object({
+    x: z.number(),
+    y: z.number(),
+  }),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  color: z.string().optional(),
+  parentId: z.string().optional(),
+  extent: z.string().optional(),
+  style: z.unknown().optional(),
+});
+
 export const CanvasNodeSchema = z.preprocess(
   (val: any) => {
     if (
@@ -16,18 +30,18 @@ export const CanvasNodeSchema = z.preprocess(
     }
     return val;
   },
-  z.object({
-    id: z.string(),
-    type: z.literal("entity"),
-    position: z.object({
-      x: z.number(),
-      y: z.number(),
+  z.discriminatedUnion("type", [
+    CanvasNodeBaseSchema.extend({
+      type: z.literal("entity"),
+      entityId: z.string(),
+      data: z.unknown().optional(),
     }),
-    entityId: z.string(),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    color: z.string().optional(),
-  }),
+    CanvasNodeBaseSchema.extend({
+      type: z.enum(["delveRoom", "delveSectorGroup", "group"]),
+      entityId: z.string().optional(),
+      data: z.unknown(),
+    }),
+  ]),
 );
 
 export const CanvasEdgeSchema = z.object({
@@ -44,6 +58,8 @@ export const CanvasEdgeSchema = z.object({
       z.record(z.string(), z.union([z.string(), z.number()])),
     ])
     .optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  animated: z.boolean().optional(),
 });
 
 export const CanvasSchema = z.object({
@@ -52,6 +68,7 @@ export const CanvasSchema = z.object({
   slug: z.string().optional(),
   nodes: z.array(CanvasNodeSchema),
   edges: z.array(CanvasEdgeSchema),
+  metadata: z.record(z.string(), z.any()).optional(),
   lastModified: z.number().optional(),
   playerVisible: z.boolean().optional(),
 });

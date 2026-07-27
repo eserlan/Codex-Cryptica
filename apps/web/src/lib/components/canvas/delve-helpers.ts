@@ -1,9 +1,111 @@
-import type { DungeonRoomRole, PassageType } from "generator-engine";
+import type {
+  DelveRoomNodeData,
+  DungeonRoomRole,
+  PassageType,
+} from "generator-engine";
 
 export interface RoleBadgeConfig {
   label: string;
   icon: string;
   colorClass: string;
+}
+
+export interface DelveRoomCardPreview {
+  description: string;
+  detail?: {
+    icon: string;
+    label: string;
+    text: string;
+    additionalCount: number;
+  };
+}
+
+/**
+ * Selects the most useful at-a-glance prose for an Area card. AI-enhanced
+ * details take precedence over the mechanical topology summary, while the
+ * first populated stocking category supplies one compact playable cue.
+ */
+export function getDelveRoomCardPreview(
+  room: DelveRoomNodeData,
+): DelveRoomCardPreview {
+  const description = room.description?.trim() || room.summary?.trim() || "";
+  const climaxStakes =
+    room.role === "climax" ? room.climax?.stakes.trim() : undefined;
+  if (climaxStakes) {
+    return {
+      description,
+      detail: {
+        icon: "icon-[lucide--flame]",
+        label: "Stakes",
+        text: climaxStakes,
+        additionalCount: room.climax?.outcomes.length ?? 0,
+      },
+    };
+  }
+  const candidates = [
+    {
+      icon: "icon-[lucide--swords]",
+      label: "Encounter",
+      values: room.stocking?.encounters,
+    },
+    {
+      icon: "icon-[lucide--alert-triangle]",
+      label: "Hazard",
+      values: room.stocking?.hazards,
+    },
+    {
+      icon: "icon-[lucide--gem]",
+      label: "Treasure",
+      values: room.stocking?.treasure,
+    },
+    {
+      icon: "icon-[lucide--eye]",
+      label: "Secret",
+      values: room.stocking?.secrets,
+    },
+  ];
+  const populated = candidates.find(({ values }) =>
+    values?.some((value) => value.trim()),
+  );
+  const populatedValues = populated?.values?.filter((value) => value.trim());
+
+  if (populated && populatedValues?.length) {
+    return {
+      description,
+      detail: {
+        icon: populated.icon,
+        label: populated.label,
+        text: populatedValues[0],
+        additionalCount: populatedValues.length - 1,
+      },
+    };
+  }
+
+  const factionPresence = room.stocking?.factionPresence?.trim();
+  if (factionPresence) {
+    return {
+      description,
+      detail: {
+        icon: "icon-[lucide--shield]",
+        label: "Faction",
+        text: factionPresence,
+        additionalCount: 0,
+      },
+    };
+  }
+
+  const atmosphere = room.stocking?.atmosphere?.trim();
+  return {
+    description,
+    detail: atmosphere
+      ? {
+          icon: "icon-[lucide--wind]",
+          label: "Atmosphere",
+          text: atmosphere,
+          additionalCount: 0,
+        }
+      : undefined,
+  };
 }
 
 export function getRoleBadgeConfig(role: DungeonRoomRole): RoleBadgeConfig {
@@ -50,6 +152,12 @@ export function getRoleBadgeConfig(role: DungeonRoomRole): RoleBadgeConfig {
         icon: "icon-[lucide--shield]",
         colorClass: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
       };
+    case "climax":
+      return {
+        label: "Climax",
+        icon: "icon-[lucide--flame]",
+        colorClass: "bg-red-500/20 text-red-300 border-red-400/50",
+      };
     case "special":
     default:
       return {
@@ -65,6 +173,23 @@ export interface PassageEdgeStyle {
   strokeDasharray?: string;
   strokeColor: string;
   badgeIcon: string;
+}
+
+export interface PassageDirectionMarkers {
+  markerStart?: string;
+  markerEnd?: string;
+}
+
+export function getPassageDirectionMarkers(
+  bidirectional: boolean,
+  markerId: string,
+): PassageDirectionMarkers {
+  if (bidirectional) return {};
+
+  const markerUrl = `url(#${markerId})`;
+  return {
+    markerEnd: markerUrl,
+  };
 }
 
 export function getPassageEdgeStyle(type: PassageType): PassageEdgeStyle {

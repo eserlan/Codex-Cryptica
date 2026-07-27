@@ -7,11 +7,15 @@ import {
 type ExplorerCollapsedLabelGroups = Record<string, string[]>;
 type ExplorerCollapsedCategoryGroups = Record<string, string[]>;
 type ExplorerViewMode = "list" | "label" | "category";
+export type ExplorerSortKey = "name" | "updated";
+export type ExplorerSortDirection = "asc" | "desc";
 
 export class ExplorerUIStore {
   private persistence: UIPersistence;
 
   explorerViewMode = $state<ExplorerViewMode>("list");
+  explorerSortKey = $state<ExplorerSortKey>("name");
+  explorerSortDirection = $state<ExplorerSortDirection>("asc");
   explorerCollapsedCategoryGroups = $state<ExplorerCollapsedCategoryGroups>({});
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
   explorerCollapsedEntityIds = $state<Record<string, string[]>>({});
@@ -36,6 +40,24 @@ export class ExplorerUIStore {
       this.explorerViewMode = explorerMode;
     }
 
+    const sortKey = this.persistence.read(
+      UI_STORAGE_KEYS.EXPLORER_SORT_KEY,
+      (v) => v,
+      "name",
+    );
+    if (sortKey === "name" || sortKey === "updated") {
+      this.explorerSortKey = sortKey;
+    }
+
+    const sortDirection = this.persistence.read(
+      UI_STORAGE_KEYS.EXPLORER_SORT_DIRECTION,
+      (v) => v,
+      this.explorerSortKey === "updated" ? "desc" : "asc",
+    );
+    if (sortDirection === "asc" || sortDirection === "desc") {
+      this.explorerSortDirection = sortDirection;
+    }
+
     this.explorerCollapsedCategoryGroups = this.persistence.read(
       UI_STORAGE_KEYS.EXPLORER_COLLAPSED_CATEGORY_GROUPS,
       (v) => this.parseStringArrayMap(v, "Invalid collapsed category groups"),
@@ -58,6 +80,27 @@ export class ExplorerUIStore {
   setExplorerViewMode(mode: ExplorerViewMode) {
     this.explorerViewMode = mode;
     this.persistence.write(UI_STORAGE_KEYS.EXPLORER_VIEW_MODE, mode, String);
+  }
+
+  setExplorerSortKey(key: ExplorerSortKey) {
+    this.explorerSortKey = key;
+    this.explorerSortDirection = key === "updated" ? "desc" : "asc";
+    this.persistence.write(UI_STORAGE_KEYS.EXPLORER_SORT_KEY, key, String);
+    this.persistence.write(
+      UI_STORAGE_KEYS.EXPLORER_SORT_DIRECTION,
+      this.explorerSortDirection,
+      String,
+    );
+  }
+
+  toggleExplorerSortDirection() {
+    this.explorerSortDirection =
+      this.explorerSortDirection === "asc" ? "desc" : "asc";
+    this.persistence.write(
+      UI_STORAGE_KEYS.EXPLORER_SORT_DIRECTION,
+      this.explorerSortDirection,
+      String,
+    );
   }
 
   toggleLabelFilter(label: string, isMulti = false) {
