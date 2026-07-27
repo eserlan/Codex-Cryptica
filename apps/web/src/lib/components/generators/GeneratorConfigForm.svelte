@@ -1,7 +1,10 @@
 <script lang="ts">
   import {
+    dungeonConfig,
+    forDungeonGenre,
     getGenerator,
     listGenerators,
+    themeIdToLabel,
   } from "generator-engine";
   import type {
     AIPolicy,
@@ -9,6 +12,7 @@
     GeneratorRunRequest,
   } from "generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
 
   interface Props {
     generatorId: GeneratorId | null;
@@ -21,6 +25,7 @@
     disabled?: boolean;
     aiPolicy?: AIPolicy;
     categoryLabels?: Array<{ id: string; label: string }>;
+    themeId?: string;
   }
 
   let {
@@ -29,10 +34,18 @@
     disabled = false,
     aiPolicy,
     categoryLabels = [],
+    themeId = "workspace",
   }: Props = $props();
 
-  function resolveLabel(gen: { label: string; entityType: string }): string {
+  function resolveLabel(gen: {
+    id: GeneratorId;
+    label: string;
+    entityType: string;
+  }): string {
     const match = categoryLabels.find((c) => c.id === gen.entityType);
+    if (gen.id === "dungeon" && gen.entityType === "location") {
+      return getDelveLocationTypeLabel(themeId);
+    }
     return match?.label ?? gen.label;
   }
 
@@ -55,6 +68,28 @@
   let optionValues = $state<Record<string, unknown>>({});
   let lastOptionsGeneratorId = $state<GeneratorId | null>(null);
   const selectedGenerator = $derived(getGenerator(selectedId));
+  const dungeonGenre = $derived(themeIdToLabel[themeId] ?? "Classic Fantasy");
+  const availableDungeonPurposes = $derived(
+    forDungeonGenre(dungeonConfig.purposesByGenre, dungeonGenre),
+  );
+  const availableDungeonStates = $derived(
+    forDungeonGenre(dungeonConfig.currentStatesByGenre, dungeonGenre),
+  );
+
+  function choicesForOption(option: {
+    id: string;
+    choices?: Array<{ value: string; label: string }>;
+  }): Array<{ value: string; label: string }> {
+    if (selectedId !== "dungeon") return option.choices ?? [];
+    if (option.id === "purpose") {
+      return availableDungeonPurposes.map((value) => ({ value, label: value }));
+    }
+    if (option.id === "currentState") {
+      return availableDungeonStates.map((value) => ({ value, label: value }));
+    }
+    return option.choices ?? [];
+  }
+
   $effect(() => {
     if (generatorId) selectedId = generatorId;
   });
@@ -66,13 +101,37 @@
     // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
     // to prevent intermediate array allocations and reduce GC overhead.
     const nextValues: Record<string, unknown> = {};
-for (const option of definition.options) {
+    for (const option of definition.options) {
       nextValues[option.id] =
         typeof previousValues[option.id] !== "undefined"
           ? previousValues[option.id]
           : (definition.defaults[option.id] ?? option.defaultValue ?? "");
     }
     optionValues = nextValues;
+  });
+  $effect(() => {
+    if (selectedId !== "dungeon") return;
+    const nextValues = { ...optionValues };
+    let changed = false;
+    const purpose = nextValues.purpose;
+    if (
+      typeof purpose === "string" &&
+      dungeonConfig.purposes.includes(purpose) &&
+      !availableDungeonPurposes.includes(purpose)
+    ) {
+      nextValues.purpose = availableDungeonPurposes[0] ?? "";
+      changed = true;
+    }
+    const currentState = nextValues.currentState;
+    if (
+      typeof currentState === "string" &&
+      dungeonConfig.currentStates.includes(currentState) &&
+      !availableDungeonStates.includes(currentState)
+    ) {
+      nextValues.currentState = availableDungeonStates[0] ?? "";
+      changed = true;
+    }
+    if (changed) optionValues = nextValues;
   });
 
   function updateOptionValue(optionId: string, value: unknown) {
@@ -143,8 +202,8 @@ for (const option of definition.options) {
             value={stringValue(option.id)}
             onvaluechange={(nextValue) =>
               updateOptionValue(option.id, nextValue)}
-            choices={option.choices}
-            disabled={disabled}
+            choices={choicesForOption(option)}
+            {disabled}
             className="flex flex-col gap-1.5"
             labelClass="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
             inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
@@ -200,7 +259,8 @@ for (const option of definition.options) {
               type="number"
               value={numberValue(option.id)}
               oninput={(event) => {
-                const rawValue = (event.currentTarget as HTMLInputElement).value;
+                const rawValue = (event.currentTarget as HTMLInputElement)
+                  .value;
                 updateOptionValue(
                   option.id,
                   rawValue === "" ? "" : Number(rawValue),

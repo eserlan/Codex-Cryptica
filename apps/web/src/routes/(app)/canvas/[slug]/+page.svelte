@@ -2,32 +2,25 @@
   import { SvelteFlowProvider } from "@xyflow/svelte";
   import { CanvasStore } from "@codex/canvas-engine";
   import CanvasWorkspace from "$lib/components/canvas/CanvasWorkspace.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { pendingDelveTransferService } from "$lib/services/seo/pending-delve-transfer";
   import { onMount } from "svelte";
   import "@xyflow/svelte/dist/style.css";
 
   const engine = new CanvasStore();
 
-  onMount(() => {
-    const pendingCanvasRaw =
-      typeof localStorage !== "undefined"
-        ? localStorage.getItem("__codex_pending_canvas")
-        : null;
-    if (pendingCanvasRaw) {
-      try {
-        const pendingDoc = JSON.parse(pendingCanvasRaw);
-        console.log(
-          "[DelveCanvas] Found pending canvas doc on slug route:",
-          pendingDoc,
-        );
-        localStorage.removeItem("__codex_pending_canvas");
-        canvasRegistry.importCanvas(pendingDoc);
-      } catch (e) {
-        console.error(
-          "[DelveCanvas] Failed to import pending canvas on slug page:",
-          e,
-        );
-      }
+  onMount(async () => {
+    if (!pendingDelveTransferService.hasPending()) return;
+
+    try {
+      const slug = await pendingDelveTransferService.importPending();
+      if (slug) void goto(resolve("/(app)/canvas/[slug]", { slug }));
+    } catch (error) {
+      console.error(
+        "[DelveCanvas] Failed to import pending delve on slug page:",
+        error,
+      );
     }
   });
 </script>

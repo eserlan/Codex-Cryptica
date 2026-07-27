@@ -9,6 +9,28 @@ export interface DungeonDelveServiceDeps {
   flowLayout?: DelveFlowLayout;
 }
 
+function extractGeneratedSectorNames(narrative: string): string[] {
+  const explicitSectors = Array.from(
+    narrative.matchAll(/^###\s+Sector\s+\d+\s*:\s*(.+?)\s*$/gim),
+    (match) => match[1]?.trim(),
+  ).filter((name): name is string => Boolean(name));
+  if (explicitSectors.length > 0) return explicitSectors;
+
+  const layoutSection = narrative.match(
+    /(?:^|\n)#{2,3}\s+Dungeon Layout\s*\n([\s\S]*?)(?=\n#{2,3}\s+|$)/i,
+  )?.[1];
+  if (!layoutSection) return [];
+
+  return Array.from(
+    layoutSection.matchAll(/^\s*\d+[.)]\s+(.+?)\s*$/gm),
+    (match) =>
+      match[1]
+        ?.trim()
+        .replace(/^(\*\*|__)/, "")
+        .replace(/(\*\*|__)$/, ""),
+  ).filter((name): name is string => Boolean(name));
+}
+
 export class DungeonDelveService {
   private topologyGenerator: DelveTopologyGenerator;
   private flowLayout: DelveFlowLayout;
@@ -32,21 +54,17 @@ export class DungeonDelveService {
         ? entity.sectors
         : [];
 
-    if (sectors.length === 0 && typeof entity.content === "string") {
-      const parsedSectors: Array<{ id: string; name: string }> = [];
-      const matches = entity.content.matchAll(
-        /### Sector \d+:\s*(.+?)(?=\n|$)/g,
+    const generatedNarrative = [entity.content, entity.lore]
+      .filter((value): value is string => typeof value === "string")
+      .join("\n");
+
+    if (sectors.length === 0 && generatedNarrative) {
+      const parsedSectors = extractGeneratedSectorNames(generatedNarrative).map(
+        (name, index) => ({
+          id: `sec-${index + 1}`,
+          name,
+        }),
       );
-      let idx = 1;
-      for (const m of matches) {
-        if (m[1]?.trim()) {
-          parsedSectors.push({
-            id: `sec-${idx}`,
-            name: m[1].trim(),
-          });
-          idx++;
-        }
-      }
       if (parsedSectors.length > 0) {
         sectors = parsedSectors;
       }
@@ -65,8 +83,57 @@ export class DungeonDelveService {
       hazards,
     });
 
-    return this.flowLayout.applyLayout(rawDoc);
+    const flowDoc = this.flowLayout.applyLayout(rawDoc);
+    (flowDoc as any).metadata = {
+      ...((flowDoc as any).metadata || {}),
+      sourceEntityId: conceptId,
+      kind: "delve",
+      autoPopulateAreas: true,
+      areaPopulationStatus: "pending",
+    };
+    return flowDoc;
   }
+}
+
+export function isDelveLocationEntity(
+  entity: Record<string, any> | null | undefined,
+): boolean {
+  if (!entity) return false;
+
+  const metadata = entity.metadata || {};
+  const kind = entity.kind || metadata.kind;
+  const labels = Array.isArray(entity.labels)
+    ? entity.labels.map((l: string) => String(l).toLowerCase())
+    : [];
+  const generatedNarrative = [entity.content, entity.lore]
+    .filter((value): value is string => typeof value === "string")
+    .join("\n");
+
+  // 1. Explicit generator kind or delve/sector metadata
+  if (
+    kind === "dungeon" ||
+    (Array.isArray(metadata.sectors) && metadata.sectors.length > 0) ||
+    metadata.delve
+  ) {
+    return true;
+  }
+
+  // 2. Marked with delve / dungeon / facility / lair / hideout labels AND has sector structure or delve metadata
+  const hasDelveLabel = labels.some((l: string) =>
+    ["dungeon", "delve", "facility", "lair", "hideout"].includes(l),
+  );
+
+  const hasSectorStructure =
+    extractGeneratedSectorNames(generatedNarrative).length > 0;
+
+  if (
+    hasDelveLabel &&
+    (hasSectorStructure || Array.isArray(metadata.sectors))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export const dungeonDelveService = new DungeonDelveService();

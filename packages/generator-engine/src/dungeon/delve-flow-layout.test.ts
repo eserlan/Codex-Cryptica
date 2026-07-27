@@ -80,4 +80,103 @@ describe("DelveFlowLayout", () => {
       sector1.position.y + (sector1.height || 0),
     );
   });
+
+  it("places the sector entrance above its sibling branches", () => {
+    const layoutEngine = new DelveFlowLayout();
+    const positionedDoc = layoutEngine.applyLayout({
+      id: "branch-layout",
+      conceptId: "branch-layout",
+      title: "Branch Layout",
+      metadata: {
+        size: "small",
+        entranceRoomIds: ["room-1"],
+        createdAt: 1,
+        updatedAt: 1,
+      },
+      nodes: [
+        {
+          id: "sector-1",
+          type: "delveSectorGroup",
+          position: { x: 0, y: 0 },
+          data: {
+            id: "sector-1",
+            name: "Upper Halls",
+            theme: "Stone",
+            description: "",
+            order: 1,
+          },
+        },
+        ...[
+          ["room-1", "entrance"],
+          ["room-2", "hazard"],
+          ["room-3", "secret"],
+        ].map(([id, role]) => ({
+          id,
+          type: "delveRoom",
+          parentId: "sector-1",
+          position: { x: 0, y: 0 },
+          data: {
+            id,
+            sectorId: "sector-1",
+            sectorName: "Upper Halls",
+            name: id,
+            role,
+            summary: "",
+            description: "",
+            stocking: {},
+          },
+        })),
+      ] as any,
+      edges: [
+        {
+          id: "edge-1-2",
+          source: "room-1",
+          target: "room-2",
+          data: {
+            id: "edge-1-2",
+            sourceRoomId: "room-1",
+            targetRoomId: "room-2",
+            type: "standard",
+            bidirectional: true,
+          },
+        },
+        {
+          id: "edge-1-3",
+          source: "room-1",
+          target: "room-3",
+          data: {
+            id: "edge-1-3",
+            sourceRoomId: "room-1",
+            targetRoomId: "room-3",
+            type: "conditional",
+            bidirectional: true,
+          },
+        },
+        {
+          id: "edge-2-3",
+          source: "room-2",
+          target: "room-3",
+          data: {
+            id: "edge-2-3",
+            sourceRoomId: "room-2",
+            targetRoomId: "room-3",
+            type: "hidden",
+            bidirectional: true,
+          },
+        },
+      ],
+    });
+    const entrance = positionedDoc.nodes.find((node) => node.id === "room-1")!;
+    const leftBranch = positionedDoc.nodes.find(
+      (node) => node.id === "room-2",
+    )!;
+    const rightBranch = positionedDoc.nodes.find(
+      (node) => node.id === "room-3",
+    )!;
+
+    expect(leftBranch.position.y).toBe(rightBranch.position.y);
+    expect(leftBranch.position.y).toBeGreaterThan(entrance.position.y);
+    expect(leftBranch.position.x).toBeLessThan(entrance.position.x);
+    expect(rightBranch.position.x).toBeGreaterThan(entrance.position.x);
+  });
 });

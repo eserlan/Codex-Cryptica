@@ -6,6 +6,7 @@ export type DungeonRoomRole =
   | "secret"
   | "lore"
   | "faction"
+  | "climax"
   | "special";
 
 export interface DelveRoomStocking {
@@ -17,6 +18,12 @@ export interface DelveRoomStocking {
   atmosphere?: string;
 }
 
+export interface DelveClimaxResolution {
+  stakes: string;
+  decision: string;
+  outcomes: string[];
+}
+
 export interface DelveRoomNodeData {
   id: string;
   sectorId: string;
@@ -26,7 +33,11 @@ export interface DelveRoomNodeData {
   summary: string;
   description: string;
   stocking: DelveRoomStocking;
+  /** Present only for climax Areas; omitted from ordinary Areas. */
+  climax?: DelveClimaxResolution;
   isCustom?: boolean;
+  /** Set after Location-aware AI enrichment so interrupted bulk runs can resume. */
+  aiEnhancedAt?: number;
 }
 
 export type PassageType = "standard" | "hidden" | "conditional" | "vertical";
@@ -39,6 +50,8 @@ export interface DelveEdgeData {
   bidirectional: boolean;
   description?: string;
   condition?: string;
+  /** Set after Location-aware AI replaces structural placeholder prose. */
+  aiEnhancedAt?: number;
 }
 
 export interface DungeonSectorFrameData {

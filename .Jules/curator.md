@@ -67,3 +67,8 @@
 **Learning:** `packages/schema/src/art-direction.ts` contained its own core logic (`resolveArtDirection`) alongside hundreds of lines of static template configurations (e.g., `FACTION_THEME_TEMPLATES`, `CATEGORY_ART_DIRECTION_DEFAULTS`). Extracting these static blocks into `art-direction-templates.ts` significantly improved file readability without touching logic.
 
 **Action:** Look out for files defining core types/logic that are drowned out by their own default configuration maps. Extract the static maps to a `-templates.ts` or `-constants.ts` file, and re-export them from the original file to keep imports clean.
+
+## 2024-07-26 - Extract config object from public names file
+
+**Learning:** Large feature files like `public-names.ts` often bundle extensive configuration and theme constants (e.g., `nameGeneratorConfig` with large arrays of cultures, prefixes, and suffixes) directly alongside the logic. This bloats the file to nearly 1000 lines.
+**Action:** Extract the static configuration object (`nameGeneratorConfig`) into a sibling `-constants.ts` file (`public-names-constants.ts`), leaving behind a focused module that only contains the execution logic, and re-export the config to maintain API contracts.

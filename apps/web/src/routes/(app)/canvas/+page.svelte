@@ -2,7 +2,9 @@
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { untrack } from "svelte";
+  import { pendingDelveTransferService } from "$lib/services/seo/pending-delve-transfer";
 
   let showFallback = $state(false);
   let initializationError = $state<string | null>(null);
@@ -21,7 +23,7 @@
 
     if (vault.isInitialized && !vault.activeVaultId) {
       hasNavigated = true;
-      goto("/");
+      goto(resolve("/"));
       return;
     }
 
@@ -35,53 +37,39 @@
     }
 
     if (vault.activeVaultId && canvasRegistry.isLoaded) {
-      const pendingCanvasRaw =
-        typeof localStorage !== "undefined"
-          ? localStorage.getItem("__codex_pending_canvas")
-          : null;
-      if (pendingCanvasRaw) {
-        try {
-          const pendingDoc = JSON.parse(pendingCanvasRaw);
-          console.log(
-            "[DelveCanvas] Found pending canvas doc in localStorage:",
-            pendingDoc,
-          );
-          localStorage.removeItem("__codex_pending_canvas");
-          hasNavigated = true;
-          canvasRegistry
-            .importCanvas(pendingDoc)
-            .then((slug) => {
-              console.log(
-                "[DelveCanvas] Imported canvas, navigating to /canvas/" + slug,
-              );
-              goto(`/canvas/${slug}`);
-            })
-            .catch((err) => {
-              console.error(
-                "[DelveCanvas] Failed to import pending delve canvas:",
-                err,
-              );
-              goto(`/canvas/${pendingDoc.slug || pendingDoc.id}`);
-            });
-          return;
-        } catch (e) {
-          console.error("[DelveCanvas] Error parsing pending canvas:", e);
-          localStorage.removeItem("__codex_pending_canvas");
-        }
+      if (pendingDelveTransferService.hasPending()) {
+        hasNavigated = true;
+        pendingDelveTransferService
+          .importPending()
+          .then((slug) => {
+            if (slug) {
+              void goto(resolve("/(app)/canvas/[slug]", { slug }));
+            }
+          })
+          .catch((err: unknown) => {
+            initializationError =
+              "Failed to import the generated Location and Delve Canvas";
+            console.error("[DelveCanvas] Failed to import pending delve:", err);
+          });
+        return;
       }
 
       const allCanvases = untrack(() => canvasRegistry.allCanvases);
 
       if (allCanvases.length > 0) {
         hasNavigated = true;
-        goto(`/canvas/${allCanvases[0].slug}`);
+        goto(
+          resolve("/(app)/canvas/[slug]", {
+            slug: allCanvases[0].slug ?? "",
+          }),
+        );
       } else {
         canvasRegistry
           .create("Primary Workspace")
           .then((slug) => {
             if (slug) {
               hasNavigated = true;
-              goto(`/canvas/${slug}`);
+              goto(resolve("/(app)/canvas/[slug]", { slug }));
             }
           })
           .catch((err: unknown) => {

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
 
@@ -51,5 +51,30 @@ describe("GeneratorConfigForm", () => {
 
     expect(screen.queryByLabelText("Race (Own option)")).toBeNull();
     expect(screen.queryByLabelText("Role (Own option)")).toBeNull();
+  });
+
+  it("uses theme terminology and only offers theme-appropriate delve purposes", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "dungeon",
+        themeId: "scifi",
+        categoryLabels: [{ id: "location", label: "Location" }],
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    expect(
+      screen.getByRole("radio", { name: "Location (Facility)" }),
+    ).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByLabelText("Original Purpose")).toBeTruthy();
+    });
+    expect(
+      screen.getByRole("option", { name: "Research Facility" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("option", { name: "Temple & Shrine" }),
+    ).toBeNull();
   });
 });

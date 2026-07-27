@@ -16,6 +16,7 @@ import {
   type IdGenerator,
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
+import { toRouteSlug } from "$lib/utils/slug";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -98,10 +99,7 @@ export class CanvasRegistryStore {
   }
 
   private generateSlug(name: string, id: string): string {
-    const base = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    const base = toRouteSlug(name);
 
     // If base is empty (e.g. name only had symbols), fallback to ID
     if (!base) return id.slice(0, 8);
@@ -350,9 +348,20 @@ export class CanvasRegistryStore {
     return { id, slug, name };
   }
 
+  findCanvasForEntity(entityId: string, title?: string): Canvas | undefined {
+    const list = this.allCanvases;
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      if ((c as any).metadata?.sourceEntityId === entityId) return c;
+      if (c.id === entityId || c.slug === entityId) return c;
+      if (title && c.name?.toLowerCase() === title.toLowerCase()) return c;
+    }
+    return undefined;
+  }
+
   async importCanvas(doc: any): Promise<string> {
     const id = doc.id || this.idGenerator.uuid();
-    const name = doc.name || "Delve Canvas Map";
+    const name = doc.name || doc.title || "Delve Canvas Map";
     const slug = doc.slug || this.generateSlug(name, id);
 
     const canvasData: Canvas = {
@@ -361,6 +370,7 @@ export class CanvasRegistryStore {
       slug,
       nodes: doc.nodes || [],
       edges: doc.edges || [],
+      metadata: doc.metadata || {},
       lastModified: doc.lastModified || systemClock.now(),
     };
 

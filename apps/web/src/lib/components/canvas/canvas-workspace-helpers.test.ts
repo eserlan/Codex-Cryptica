@@ -6,6 +6,9 @@ import {
   canvasNodeToFlowNode,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  flowEdgeToCanvasEdge,
+  flowNodeToCanvasNode,
+  fitDelveSectorFrames,
   hydrateCanvasGraph,
   isGenericCanvasName,
   pruneCanvasGraph,
@@ -38,7 +41,7 @@ describe("canvas-workspace-helpers", () => {
     });
 
     expect(graph.nodes).toEqual([
-      {
+      expect.objectContaining({
         id: "node-1",
         type: "entity",
         position: { x: 10, y: 20 },
@@ -47,10 +50,10 @@ describe("canvas-workspace-helpers", () => {
           width: 120,
           height: 80,
         },
-      },
+      }),
     ]);
     expect(graph.edges).toEqual([
-      {
+      expect.objectContaining({
         id: "edge-1",
         source: "node-1",
         target: "node-2",
@@ -59,7 +62,7 @@ describe("canvas-workspace-helpers", () => {
         label: "Rel",
         type: "straight",
         style: undefined,
-      },
+      }),
     ]);
   });
 
@@ -239,6 +242,173 @@ describe("canvas-workspace-helpers", () => {
       type: "straight",
       animated: true,
     });
+  });
+
+  it("hydrates sector frames with a dedicated drag handle", () => {
+    expect(
+      canvasNodeToFlowNode({
+        id: "sector-1",
+        type: "delveSectorGroup",
+        position: { x: 0, y: 0 },
+        width: 600,
+        height: 500,
+        data: {
+          id: "sector-1",
+          name: "The Hollowed Choir",
+          theme: "Resonant glass",
+          description: "",
+          order: 2,
+        },
+      }),
+    ).toMatchObject({
+      type: "delveSectorGroup",
+      draggable: true,
+      selectable: false,
+      dragHandle: ".sector-drag-handle",
+      zIndex: 0,
+    });
+  });
+
+  it("fits sector frames around moved Areas without moving them on the canvas", () => {
+    const nodes = [
+      {
+        id: "sector-1",
+        type: "delveSectorGroup",
+        position: { x: 100, y: 200 },
+        width: 900,
+        height: 800,
+        data: {},
+      },
+      {
+        id: "room-1",
+        type: "delveRoom",
+        parentId: "sector-1",
+        position: { x: -60, y: 100 },
+        width: 220,
+        height: 120,
+        data: {},
+      },
+      {
+        id: "room-2",
+        type: "delveRoom",
+        parentId: "sector-1",
+        position: { x: 400, y: 360 },
+        width: 220,
+        height: 120,
+        data: {},
+      },
+    ] as any;
+
+    const fitted = fitDelveSectorFrames(nodes);
+    const sector = fitted.find((node) => node.id === "sector-1")!;
+    const firstRoom = fitted.find((node) => node.id === "room-1")!;
+    const secondRoom = fitted.find((node) => node.id === "room-2")!;
+
+    expect(sector).toMatchObject({
+      position: { x: 0, y: 240 },
+      width: 760,
+      height: 480,
+    });
+    expect(firstRoom.position).toEqual({ x: 40, y: 60 });
+    expect(secondRoom.position).toEqual({ x: 500, y: 320 });
+    expect({
+      x: sector.position.x + firstRoom.position.x,
+      y: sector.position.y + firstRoom.position.y,
+    }).toEqual({ x: 40, y: 300 });
+    expect({
+      x: sector.position.x + secondRoom.position.x,
+      y: sector.position.y + secondRoom.position.y,
+    }).toEqual({ x: 500, y: 560 });
+  });
+
+  it("leaves empty sectors and unrelated canvas nodes unchanged", () => {
+    const nodes = [
+      {
+        id: "sector-empty",
+        type: "delveSectorGroup",
+        position: { x: 25, y: 50 },
+        width: 400,
+        height: 300,
+        data: {},
+      },
+      {
+        id: "entity-1",
+        type: "entity",
+        position: { x: 700, y: 800 },
+        data: { entityId: "entity-1" },
+      },
+    ] as any;
+
+    expect(fitDelveSectorFrames(nodes)).toEqual(nodes);
+  });
+
+  it("preserves Delve Area and Passage data when serializing the flow", () => {
+    const roomData = {
+      id: "room-1",
+      sectorId: "sector-1",
+      sectorName: "The Forge",
+      name: "Ash Hall",
+      role: "hazard",
+      summary: "A soot-blackened hall.",
+      description: "Hot ash drifts through the chamber.",
+      stocking: { hazards: ["Falling cinders"] },
+    };
+    const node = flowNodeToCanvasNode({
+      id: "room-1",
+      type: "delveRoom",
+      position: { x: 20, y: 30 },
+      parentId: "sector-1",
+      data: roomData,
+    } as any);
+    const hydratedRoom = canvasNodeToFlowNode({
+      id: "room-1",
+      type: "delveRoom",
+      position: { x: 20, y: 30 },
+      parentId: "sector-1",
+      extent: "parent",
+      data: roomData,
+    });
+    const edge = flowEdgeToCanvasEdge({
+      id: "passage-1",
+      source: "room-1",
+      target: "room-2",
+      type: "delveEdge",
+      data: {
+        type: "hidden",
+        bidirectional: true,
+      },
+    } as any);
+
+    expect(node).toMatchObject({
+      type: "delveRoom",
+      parentId: "sector-1",
+      data: roomData,
+    });
+    expect(hydratedRoom.extent).toBeNull();
+    expect(edge).toMatchObject({
+      type: "delveEdge",
+      data: {
+        type: "hidden",
+        bidirectional: true,
+      },
+    });
+  });
+
+  it("normalizes missing flow edge IDs and types during serialization", () => {
+    const createFallbackId = vi.fn(() => "edge-generated");
+
+    const edge = flowEdgeToCanvasEdge(
+      {
+        id: "",
+        source: "room-1",
+        target: "room-2",
+      } as any,
+      createFallbackId,
+    );
+
+    expect(edge.id).toBe("edge-generated");
+    expect(edge.type).toBe("smoothstep");
+    expect(createFallbackId).toHaveBeenCalledOnce();
   });
 
   it("treats generic canvas labels as placeholders", () => {

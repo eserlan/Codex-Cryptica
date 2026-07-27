@@ -19,6 +19,13 @@ vi.mock("./vault/io", () => ({
   deleteCanvasFromDisk: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("./vault.svelte", () => ({
+  vault: {
+    activeVaultId: null,
+    canvases: {},
+  },
+}));
+
 vi.mock("../utils/opfs", () => ({
   getVaultDir: vi
     .fn()
@@ -103,6 +110,44 @@ describe("CanvasRegistryStore", () => {
     expect(slug).toBeDefined();
     expect(slug?.length).toBeGreaterThan(0);
     expect(canvasRegistry.allCanvases[0].name).toBe("!!!@#$%");
+  });
+
+  it("should use an imported delve title as the canvas name", async () => {
+    const slug = await canvasRegistry.importCanvas({
+      id: "delve-canvas-howling-caverns",
+      title: "The Howling Caverns",
+      nodes: [],
+      edges: [],
+    });
+
+    expect(slug).toBe("the-howling-caverns");
+    expect(canvasRegistry.canvases["delve-canvas-howling-caverns"].name).toBe(
+      "The Howling Caverns",
+    );
+  });
+
+  it("should preserve accented letters when generating a canvas slug", async () => {
+    const slug = await canvasRegistry.importCanvas({
+      id: "delve-canvas-sziklakonny",
+      title: "Sziklakönny Grotto",
+      nodes: [],
+      edges: [],
+    });
+
+    expect(slug).toBe("sziklakonny-grotto");
+  });
+
+  it("should retain the generic canvas name when an import has no name or title", async () => {
+    const slug = await canvasRegistry.importCanvas({
+      id: "unnamed-delve-canvas",
+      nodes: [],
+      edges: [],
+    });
+
+    expect(slug).toBe("delve-canvas-map");
+    expect(canvasRegistry.canvases["unnamed-delve-canvas"].name).toBe(
+      "Delve Canvas Map",
+    );
   });
 
   it("should correctly load canvases from vault", async () => {
