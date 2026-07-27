@@ -16,10 +16,17 @@
     if (pendingCanvasRaw) {
       try {
         const pendingDoc = JSON.parse(pendingCanvasRaw);
+        console.log(
+          "[DelveCanvas] Found pending canvas doc on slug route:",
+          pendingDoc,
+        );
         localStorage.removeItem("__codex_pending_canvas");
         canvasRegistry.importCanvas(pendingDoc);
       } catch (e) {
-        console.error("Failed to import pending canvas on slug page:", e);
+        console.error(
+          "[DelveCanvas] Failed to import pending canvas on slug page:",
+          e,
+        );
       }
     }
   });

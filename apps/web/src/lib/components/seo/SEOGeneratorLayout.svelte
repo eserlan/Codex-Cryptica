@@ -451,11 +451,13 @@
 
   function handleBuildDelveCanvas(data: GeneratorOutput) {
     try {
+      console.log("[DelveCanvas] Building delve canvas from concept:", data);
       const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
+      console.log("[DelveCanvas] Generated canvas document:", canvasDoc);
       localStorage.setItem("__codex_pending_canvas", JSON.stringify(canvasDoc));
       void goto(`${cleanBase}/canvas`);
     } catch (err) {
-      console.error("Failed to build delve canvas:", err);
+      console.error("[DelveCanvas] Failed to build delve canvas:", err);
     }
   }
 </script>

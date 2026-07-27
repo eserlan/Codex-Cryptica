@@ -24,10 +24,15 @@ export function canvasNodeToFlowNode(node: CanvasNode): Node {
     id: node.id,
     type: node.type || "entity",
     position: node.position || { x: 0, y: 0 },
+    parentId: (node as any).parentId,
+    style: (node as any).style,
+    width: node.width,
+    height: node.height,
     data: {
       entityId: node.entityId,
       width: node.width,
       height: node.height,
+      ...((node as any).data || {}),
     },
   };
 }
@@ -42,6 +47,7 @@ export function canvasEdgeToFlowEdge(edge: CanvasEdge): Edge {
     label: edge.label || "",
     type: edge.type === "line" || !edge.type ? "straight" : (edge.type as any),
     style: typeof edge.style === "string" ? edge.style : undefined,
+    data: (edge as any).data || {},
   };
 }
 

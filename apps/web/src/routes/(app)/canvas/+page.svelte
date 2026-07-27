@@ -42,20 +42,30 @@
       if (pendingCanvasRaw) {
         try {
           const pendingDoc = JSON.parse(pendingCanvasRaw);
+          console.log(
+            "[DelveCanvas] Found pending canvas doc in localStorage:",
+            pendingDoc,
+          );
           localStorage.removeItem("__codex_pending_canvas");
           hasNavigated = true;
           canvasRegistry
             .importCanvas(pendingDoc)
             .then((slug) => {
+              console.log(
+                "[DelveCanvas] Imported canvas, navigating to /canvas/" + slug,
+              );
               goto(`/canvas/${slug}`);
             })
             .catch((err) => {
-              console.error("Failed to import pending delve canvas:", err);
+              console.error(
+                "[DelveCanvas] Failed to import pending delve canvas:",
+                err,
+              );
               goto(`/canvas/${pendingDoc.slug || pendingDoc.id}`);
             });
           return;
         } catch (e) {
-          console.error("Error parsing pending canvas:", e);
+          console.error("[DelveCanvas] Error parsing pending canvas:", e);
           localStorage.removeItem("__codex_pending_canvas");
         }
       }

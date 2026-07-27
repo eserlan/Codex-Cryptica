@@ -262,17 +262,38 @@ export function createCanvasLogic(
           ? (vault.canvases[matchedCanvas.id] ||= matchedCanvas)
           : undefined;
         targetCanvasId = matchedCanvas ? matchedCanvas.id : canvasId;
+        console.log(
+          "[DelveCanvas] Loading graph for canvas:",
+          canvasId,
+          "Target ID:",
+          targetCanvasId,
+          "Matched canvas:",
+          matchedCanvas,
+        );
 
         if (data) {
           for (const node of data.nodes || []) {
-            vault.loadEntityContent(node.entityId);
+            if (node.entityId) {
+              vault.loadEntityContent(node.entityId);
+            }
           }
 
           skipLoadingSaves = 2;
           const graph = hydrateCanvasGraph(data);
+          console.log(
+            "[DelveCanvas] Hydrated graph nodes:",
+            graph.nodes.length,
+            "edges:",
+            graph.edges.length,
+            graph,
+          );
           nodes = graph.nodes;
           edges = graph.edges;
         } else {
+          console.warn(
+            "[DelveCanvas] No canvas data found for target canvas:",
+            canvasId,
+          );
           nodes = [];
           edges = [];
         }
