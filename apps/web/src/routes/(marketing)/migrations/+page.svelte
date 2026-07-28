@@ -3,6 +3,7 @@
   const cleanBase = base === "/" ? "" : base;
   import { importsConfig } from "$lib/config/seo-pages";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   const importers = Object.values(importsConfig);
 
@@ -127,24 +128,5 @@
     </ul>
   </main>
 
-  <!-- Marketing Footer -->
-  <footer
-    class="border-t border-theme-border/60 bg-theme-surface/20 px-6 py-8 mt-auto text-center text-[10px] text-theme-muted tracking-wider uppercase font-header"
-  >
-    <div
-      class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
-    >
-      <div>© 2026 Codex Cryptica. All rights reserved.</div>
-      <div class="flex gap-6">
-        <a
-          href="{cleanBase}/tools"
-          class="hover:text-theme-primary transition-colors">Tools</a
-        >
-        <a
-          href="{cleanBase}/sitemap.xml"
-          class="hover:text-theme-primary transition-colors">Sitemap</a
-        >
-      </div>
-    </div>
-  </footer>
+  <MarketingFooter />
 </div>

@@ -527,6 +527,22 @@
               ></span>
               Changelog
             </a>
+            <a
+              href="https://groupfinder.gg/library/codex-cryptica"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center opacity-70 hover:opacity-100 transition-opacity"
+              aria-label="Codex Cryptica on Groupfinder"
+            >
+              <img
+                src="https://groupfinder.gg/images/badges/gf-badge-light.svg"
+                alt="Codex Cryptica on Groupfinder"
+                width="164"
+                height="45"
+                loading="lazy"
+                class="h-5 w-auto"
+              />
+            </a>
           </div>
 
           <div
