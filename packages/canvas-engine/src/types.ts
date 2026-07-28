@@ -25,7 +25,17 @@ export const CanvasNodeSchema = z.preprocess(
 
     if (
       normalized.data === undefined &&
-      ["delveRoom", "delveSectorGroup", "group"].includes(normalized.type)
+      [
+        "delveRoom",
+        "delveSectorGroup",
+        "group",
+        "situation",
+        "location",
+        "npc",
+        "clue",
+        "threat",
+        "outcome",
+      ].includes(normalized.type)
     ) {
       const {
         type: _type,
@@ -57,7 +67,17 @@ export const CanvasNodeSchema = z.preprocess(
       data: z.unknown().optional(),
     }),
     CanvasNodeBaseSchema.extend({
-      type: z.enum(["delveRoom", "delveSectorGroup", "group"]),
+      type: z.enum([
+        "delveRoom",
+        "delveSectorGroup",
+        "group",
+        "situation",
+        "location",
+        "npc",
+        "clue",
+        "threat",
+        "outcome",
+      ]),
       entityId: z.string().optional(),
       data: z.unknown(),
     }),
