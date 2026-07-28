@@ -73,6 +73,13 @@
         "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
       icon: "icon-[lucide--layers]",
     },
+    {
+      slug: "adventure-generator",
+      label: "Adventure Idea Generator",
+      summary:
+        "Generate campaign-ready adventure concepts with initial situation, primary pressure, key locations, threats, and non-linear outcomes.",
+      icon: "icon-[lucide--map]",
+    },
   ];
 
   const surpriseMeCard: GeneratorCard = {

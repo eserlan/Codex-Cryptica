@@ -46,6 +46,7 @@ describe("registry lookup", () => {
       "language",
       "news-sheet",
       "dungeon",
+      "adventure",
     ]);
   });
 
@@ -460,6 +461,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       language: "note",
       "news-sheet": "note",
       dungeon: "location",
+      adventure: "event",
     });
   });
 

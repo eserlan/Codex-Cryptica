@@ -23,6 +23,7 @@
   import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
+  import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -42,6 +43,7 @@
     languageConfig,
     newsSheetConfig,
     dungeonConfig,
+    adventureConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -278,6 +280,15 @@
     campaignContext: "",
   });
 
+  let adventure = $state({
+    genre: factionConfig.themes[0],
+    archetype: adventureConfig.archetypes[0],
+    scale: adventureConfig.scales[1],
+    tone: adventureConfig.tones[0],
+    seed: "",
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -319,6 +330,11 @@
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
+    else if (
+      slug === "adventure-generator" ||
+      slug === "adventure-idea-generator"
+    )
+      adventure.genre = activeTheme;
   });
 
   onMount(() => {
@@ -484,6 +500,22 @@
         // on the same faction it invented for the last delve.
         avoidNames: collectSessionNames(sessionHubStore.entities),
         avoidTraits: collectSessionTraits(sessionHubStore.entities),
+      }),
+    "adventure-generator": (useAI) =>
+      generatorEngine.generateAdventure({
+        ...adventure,
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "adventure-idea-generator": (useAI) =>
+      generatorEngine.generateAdventure({
+        ...adventure,
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
   };
 
@@ -701,6 +733,16 @@
         bind:currentState={dungeon.currentState}
         bind:scale={dungeon.scale}
         bind:campaignContext={dungeon.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "adventure-generator" || slug === "adventure-idea-generator"}
+      <AdventureFormFields
+        bind:theme={activeTheme}
+        bind:archetype={adventure.archetype}
+        bind:scale={adventure.scale}
+        bind:tone={adventure.tone}
+        bind:seed={adventure.seed}
+        bind:campaignContext={adventure.campaignContext}
         onSurprise={trigger}
       />
     {/if}

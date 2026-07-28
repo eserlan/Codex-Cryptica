@@ -61,6 +61,10 @@
           label: "Dungeon & Delve Generator",
           path: "/generators/dungeon-generator",
         },
+        {
+          label: "Adventure Idea Generator",
+          path: "/generators/adventure-generator",
+        },
         { label: "Quest Hook Generator", path: "/generators/quest" },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
         { label: "Tavern Generator", path: "/generators/tavern" },

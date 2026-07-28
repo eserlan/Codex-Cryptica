@@ -15,7 +15,8 @@ export type GeneratorId =
   | "ship"
   | "language"
   | "news-sheet"
-  | "dungeon";
+  | "dungeon"
+  | "adventure";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -27,6 +28,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "language",
   "news-sheet",
   "dungeon",
+  "adventure",
 ] as const;
 
 /** A user-configurable field for a generator. */

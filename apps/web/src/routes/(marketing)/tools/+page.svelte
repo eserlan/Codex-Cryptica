@@ -122,6 +122,13 @@
               icon: "icon-[lucide--layers]",
             },
             {
+              href: "/generators/adventure-generator",
+              label: "Adventure Idea Generator",
+              summary:
+                "Generate campaign-ready adventure situations with primary pressure, key actors, discoveries, complications, and non-linear outcomes.",
+              icon: "icon-[lucide--map]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:
