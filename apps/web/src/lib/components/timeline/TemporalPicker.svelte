@@ -238,7 +238,8 @@
 
     const parsed = parseDirectDateInput(directDateInput, calendarStore.config);
     if (!parsed) {
-      directDateError = "Use YYYY, -YYYY, DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
+      directDateError =
+        "Use a year (such as 45 or -594), DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
       return;
     }
 
