@@ -293,6 +293,7 @@
               class="{entity.soundBite
                 ? 'icon-[lucide--volume-2]'
                 : 'icon-[lucide--mic]'} w-4 h-4"
+              aria-hidden="true"
             ></span>
           </button>
         {/if}
@@ -326,6 +327,7 @@
               class="{linkCopied
                 ? 'icon-[lucide--check]'
                 : 'icon-[lucide--link]'} w-4 h-4"
+              aria-hidden="true"
             ></span>
           </button>
         {/if}
