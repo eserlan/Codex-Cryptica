@@ -69,6 +69,7 @@ describe("trackSaveToCodex", () => {
     expect(track.eventNames()).toContain("related_entity_created");
     const [, props] = track.callFor("related_entity_created");
     expect(props.related_entity_count).toBe("2-5");
+    expect(props.generator_type).toBe("npc");
   });
 
   it("never fires related_entity_created when the count is 0", () => {
