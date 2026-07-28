@@ -376,7 +376,10 @@
           aria-label="Close search"
           data-testid="search-modal-close"
         >
-          <span class="icon-[heroicons--x-mark] w-5 h-5 block" aria-hidden="true"></span>
+          <span
+            class="icon-[heroicons--x-mark] w-5 h-5 block"
+            aria-hidden="true"
+          ></span>
         </button>
 
         {#if explorerUIStore.labelFilters.size > 0}

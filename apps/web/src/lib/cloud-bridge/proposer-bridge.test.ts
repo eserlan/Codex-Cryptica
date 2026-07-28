@@ -85,7 +85,14 @@ describe("ProposerBridge", () => {
 
   it("returns empty array if worker is not initialized", async () => {
     const bridge = new ProposerBridge({ worker: null });
-    const result = await bridge.analyzeEntity("key", "model", "v", "e", "c", []);
+    const result = await bridge.analyzeEntity(
+      "key",
+      "model",
+      "v",
+      "e",
+      "c",
+      [],
+    );
     expect(result).toEqual([]);
   });
 

@@ -136,11 +136,13 @@
 
         <!-- Icon Trigger -->
         <button
+          type="button"
+          aria-label="Change {cat.label} Icon"
           onclick={() => openPicker(cat.id)}
           class="w-8 h-8 flex items-center justify-center bg-theme-bg/30 border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary"
           title="Change Icon"
         >
-          <span class="{getIconClass(cat.icon)} w-4 h-4"></span>
+          <span aria-hidden="true" class="{getIconClass(cat.icon)} w-4 h-4"></span>
         </button>
 
         <!-- Delete -->
@@ -186,13 +188,16 @@
         onfocus={() => (errorMessage = "")}
       />
       <button
+        type="button"
+        aria-label="Select Icon"
         onclick={() => openPicker("new")}
         class="w-9 h-9 flex items-center justify-center bg-theme-surface border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary shrink-0"
         title="Select Icon"
       >
-        <span class="{getIconClass(newIcon)} w-5 h-5"></span>
+        <span aria-hidden="true" class="{getIconClass(newIcon)} w-5 h-5"></span>
       </button>
       <button
+        type="button"
         onclick={handleAdd}
         disabled={!newLabel.trim()}
         class="px-3 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded text-sm tracking-widest disabled:opacity-30 transition-all shrink-0 font-header"
@@ -211,10 +216,11 @@
   <!-- Reset Section -->
   <div class="pt-4 border-t border-theme-border">
     <button
+      type="button"
       onclick={() => categories.resetToDefaults()}
       class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-theme-bg rounded text-xs font-bold tracking-widest transition-all flex items-center justify-center gap-2 font-header"
     >
-      <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
+      <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"></span>
       RESET TO DEFAULTS
     </button>
   </div>
@@ -245,11 +251,12 @@
           Glyph Library
         </h5>
         <button
+          type="button"
           onclick={() => (isPickerOpen = false)}
           aria-label="Close"
           class="text-gray-500 hover:text-theme-text"
         >
-          ✕
+          <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
         </button>
       </div>
 
@@ -259,12 +266,13 @@
         {#each selectableIcons as icon}
           {@const label = formatIconName(icon)}
           <button
+            type="button"
             onclick={() => selectIcon(icon)}
             class="aspect-square flex items-center justify-center rounded border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/10 text-theme-muted hover:text-theme-primary transition-all"
             title="Select {label} icon"
             aria-label="Select {label} icon"
           >
-            <span class="{getIconClass(icon)} w-5 h-5"></span>
+            <span aria-hidden="true" class="{getIconClass(icon)} w-5 h-5"></span>
           </button>
         {/each}
       </div>

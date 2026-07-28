@@ -286,16 +286,16 @@ Example feedback:
 
 Measure behaviour rather than relying mainly on page views, upvotes or account registrations.
 
-| Stage | Proposed metric |
-|---|---|
-| Discovery | Generator or thematic landing page visitors |
-| Curiosity | Generation started |
-| Value | Generation completed |
-| Activation | First entity saved |
-| Depth | Three connected entities created |
-| Return | User returns within seven days |
-| Retention | User returns within thirty days |
-| Advocacy | Result, entity or vault shared publicly |
+| Stage      | Proposed metric                             |
+| ---------- | ------------------------------------------- |
+| Discovery  | Generator or thematic landing page visitors |
+| Curiosity  | Generation started                          |
+| Value      | Generation completed                        |
+| Activation | First entity saved                          |
+| Depth      | Three connected entities created            |
+| Return     | User returns within seven days              |
+| Retention  | User returns within thirty days             |
+| Advocacy   | Result, entity or vault shared publicly     |
 
 Important questions:
 

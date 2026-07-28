@@ -142,7 +142,10 @@
                   class="px-3 py-1.5 bg-theme-primary hover:bg-theme-primary/95 text-white text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
                 >
                   Open
-                  <span aria-hidden="true" class="icon-[lucide--chevron-right] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--chevron-right] w-3.5 h-3.5"
+                  ></span>
                 </a>
                 <button
                   type="button"
@@ -151,7 +154,10 @@
                   title="Forget this world"
                   aria-label="Forget this world"
                 >
-                  <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--trash-2] w-4 h-4"
+                  ></span>
                 </button>
               </div>
             </div>

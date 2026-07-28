@@ -24,7 +24,11 @@ import {
   PeerJSConnectionManager,
   type ConnectionState,
 } from "./connection-manager.svelte";
-import { type IdGenerator, systemIdGenerator, systemClock } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+  systemClock,
+} from "$lib/utils/runtime-deps";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -78,7 +82,8 @@ export class P2PHostService {
       deps.connectionManager ??
       new PeerJSConnectionManager(deps.peerFactory ?? createPeer);
     this.transport =
-      deps.transport ?? new PeerJSTransport({
+      deps.transport ??
+      new PeerJSTransport({
         peerFactory: deps.peerFactory,
         idGenerator: this.idGenerator,
       });

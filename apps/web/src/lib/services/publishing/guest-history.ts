@@ -1,12 +1,18 @@
 import type { GuestHistory } from "schema";
-import { systemClock, browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import {
+  systemClock,
+  browserStorage,
+  type StorageLike,
+} from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "guest_history";
 
 /**
  * Retrieves the guest history entries from storage, sorted by last accessed date descending.
  */
-export function getGuestHistory(storage: StorageLike = browserStorage): GuestHistory[] {
+export function getGuestHistory(
+  storage: StorageLike = browserStorage,
+): GuestHistory[] {
   try {
     const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -37,7 +43,11 @@ export function getGuestHistory(storage: StorageLike = browserStorage): GuestHis
  * Adds or updates a guest history entry in storage.
  * Automatically caps history at 10 items.
  */
-export function addGuestHistory(publishId: string, vaultTitle: string, storage: StorageLike = browserStorage): void {
+export function addGuestHistory(
+  publishId: string,
+  vaultTitle: string,
+  storage: StorageLike = browserStorage,
+): void {
   const history = getGuestHistory(storage);
   const index = history.findIndex((h) => h.publishId === publishId);
 
@@ -71,7 +81,10 @@ export function addGuestHistory(publishId: string, vaultTitle: string, storage: 
 /**
  * Removes a guest history entry from storage.
  */
-export function removeGuestHistory(publishId: string, storage: StorageLike = browserStorage): void {
+export function removeGuestHistory(
+  publishId: string,
+  storage: StorageLike = browserStorage,
+): void {
   const history = getGuestHistory(storage);
   const updated = history.filter((h) => h.publishId !== publishId);
   try {

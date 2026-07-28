@@ -285,7 +285,9 @@ export class TimelineStore {
       }
     }
     return [...items.values()].sort((a, b) =>
-      (a.title ?? "").localeCompare(b.title ?? "", undefined, { sensitivity: "base" }),
+      (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+        sensitivity: "base",
+      }),
     );
   });
 

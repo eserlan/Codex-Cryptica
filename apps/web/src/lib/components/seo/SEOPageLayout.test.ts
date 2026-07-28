@@ -129,24 +129,42 @@ describe("SEOPageLayout Breadcrumb & Schema Generation", () => {
         },
       });
 
-      const logoLink = container.querySelector("#logo-link") as HTMLAnchorElement;
-      const navCtaBtn = container.querySelector("#nav-cta-btn") as HTMLAnchorElement;
-      const heroCtaBtn = container.querySelector("#hero-primary-cta") as HTMLAnchorElement;
-      const footerCtaBtn = container.querySelector("#footer-cta-btn") as HTMLAnchorElement;
+      const logoLink = container.querySelector(
+        "#logo-link",
+      ) as HTMLAnchorElement;
+      const navCtaBtn = container.querySelector(
+        "#nav-cta-btn",
+      ) as HTMLAnchorElement;
+      const heroCtaBtn = container.querySelector(
+        "#hero-primary-cta",
+      ) as HTMLAnchorElement;
+      const footerCtaBtn = container.querySelector(
+        "#footer-cta-btn",
+      ) as HTMLAnchorElement;
 
       expect(logoLink).toBeTruthy();
-      expect(logoLink.getAttribute("href")).toContain("utm_source=solution-logo");
+      expect(logoLink.getAttribute("href")).toContain(
+        "utm_source=solution-logo",
+      );
       expect(logoLink.getAttribute("href")).toContain("utm_medium=nav");
-      expect(logoLink.getAttribute("href")).toContain("utm_campaign=seo-funnel");
+      expect(logoLink.getAttribute("href")).toContain(
+        "utm_campaign=seo-funnel",
+      );
 
       expect(navCtaBtn).toBeTruthy();
-      expect(navCtaBtn.getAttribute("href")).toContain("utm_source=solution-nav");
+      expect(navCtaBtn.getAttribute("href")).toContain(
+        "utm_source=solution-nav",
+      );
 
       expect(heroCtaBtn).toBeTruthy();
-      expect(heroCtaBtn.getAttribute("href")).toContain("utm_source=solution-hero");
+      expect(heroCtaBtn.getAttribute("href")).toContain(
+        "utm_source=solution-hero",
+      );
 
       expect(footerCtaBtn).toBeTruthy();
-      expect(footerCtaBtn.getAttribute("href")).toContain("utm_source=solution-footer");
+      expect(footerCtaBtn.getAttribute("href")).toContain(
+        "utm_source=solution-footer",
+      );
 
       // Negative path check: verify links are not bare root links lacking UTM params
       expect(logoLink.getAttribute("href")).not.toBe("/");
@@ -168,15 +186,25 @@ describe("SEOPageLayout Breadcrumb & Schema Generation", () => {
         },
       });
 
-      const logoLink = container.querySelector("#logo-link") as HTMLAnchorElement;
-      const navCtaBtn = container.querySelector("#nav-cta-btn") as HTMLAnchorElement;
-      const heroCtaBtn = container.querySelector("#hero-primary-cta") as HTMLAnchorElement;
-      const footerCtaBtn = container.querySelector("#footer-cta-btn") as HTMLAnchorElement;
+      const logoLink = container.querySelector(
+        "#logo-link",
+      ) as HTMLAnchorElement;
+      const navCtaBtn = container.querySelector(
+        "#nav-cta-btn",
+      ) as HTMLAnchorElement;
+      const heroCtaBtn = container.querySelector(
+        "#hero-primary-cta",
+      ) as HTMLAnchorElement;
+      const footerCtaBtn = container.querySelector(
+        "#footer-cta-btn",
+      ) as HTMLAnchorElement;
 
       expect(logoLink.getAttribute("href")).toContain("utm_source=vs-logo");
       expect(navCtaBtn.getAttribute("href")).toContain("utm_source=vs-nav");
       expect(heroCtaBtn.getAttribute("href")).toContain("utm_source=vs-hero");
-      expect(footerCtaBtn.getAttribute("href")).toContain("utm_source=vs-footer");
+      expect(footerCtaBtn.getAttribute("href")).toContain(
+        "utm_source=vs-footer",
+      );
     });
   });
 });

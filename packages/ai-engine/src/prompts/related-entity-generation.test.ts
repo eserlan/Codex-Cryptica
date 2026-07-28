@@ -33,6 +33,12 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     expect(prompt).toContain("Make it majestic.");
     expect(prompt).toContain("character, location");
     expect(prompt).toContain("## History\n## Geography");
+
+    // Priority block must appear before the source entity section
+    const priorityIdx = prompt.indexOf("[HIGHEST PRIORITY");
+    const sourceIdx = prompt.indexOf("SOURCE ENTITY (Origin)");
+    expect(priorityIdx).toBeGreaterThanOrEqual(0);
+    expect(priorityIdx).toBeLessThan(sourceIdx);
   });
 
   it("handles Surprise Me target type dynamically", () => {
@@ -59,6 +65,51 @@ describe("buildRelatedEntityGenerationPrompt", () => {
       'Since the user selected "Surprise Me", you must dynamically choose',
     );
     expect(prompt).toContain("character, location");
+  });
+
+  it("places user instructions as highest-priority block before source entity and locks the name", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      {
+        title: "Glowstone Marrow",
+        type: "location",
+        content: "A subterranean salt cavern.",
+        lore: "Known for its bioluminescent fungi.",
+      },
+      "faction",
+      "guard",
+      "- **The Ashen Remnant:** Repentance, but Despair. Guards the lower water cisterns.",
+      [],
+      [{ id: "faction", label: "Faction" }],
+    );
+
+    // Priority block must be present and before the source entity
+    const priorityIdx = prompt.indexOf("[HIGHEST PRIORITY — User instructions, override defaults]");
+    const sourceIdx = prompt.indexOf("SOURCE ENTITY (Origin)");
+    expect(priorityIdx).toBeGreaterThanOrEqual(0);
+    expect(priorityIdx).toBeLessThan(sourceIdx);
+
+    // Name-lock directive must be present
+    expect(prompt).toContain("If a specific name is stated, you MUST use that exact name");
+    expect(prompt).toContain("never substitute a different subject for the one requested");
+
+    // The user's instructions content must be in the block
+    expect(prompt).toContain("The Ashen Remnant");
+
+    // The old soft rule must NOT appear
+    expect(prompt).not.toContain("Custom instructions from the user to incorporate");
+  });
+
+  it("omits priority block entirely when no custom instructions are given", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      { title: "Iron Keep", type: "location", content: "A fortress.", lore: "" },
+      "character",
+      "warden",
+      "",
+      [],
+      [{ id: "character", label: "Character" }],
+    );
+
+    expect(prompt).not.toContain("[HIGHEST PRIORITY");
   });
 
   it("instructs generated names to match setting, culture, and theme", () => {
@@ -89,7 +140,9 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     expect(prompt).toContain(
       "For characters especially, infer naming conventions from the source entity and direct graph neighbors",
     );
-    expect(prompt).toContain("MUST NEVER use generic fantasy cliché placeholders or banned names");
+    expect(prompt).toContain(
+      "MUST NEVER use generic fantasy cliché placeholders or banned names",
+    );
     expect(prompt).toContain("Vane");
   });
 
@@ -120,7 +173,7 @@ describe("buildRelatedEntityGenerationPrompt", () => {
 
     const blocks =
       prompt.match(/<USER_CONTENT>[\s\S]*?<\/USER_CONTENT>/g) ?? [];
-    // We expect: content, lore, neighbor, template, relationship, custom
+    // We expect: content, lore, neighbor, template, relationship, custom (priority block)
     expect(blocks.length).toBeGreaterThanOrEqual(6);
     expect(prompt).toContain(
       `<USER_CONTENT>\n${INJECTION} content\n</USER_CONTENT>`,
