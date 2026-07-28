@@ -588,6 +588,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
     icon: "icon-[lucide--castle]",
   },
+  "adventure-generator": {
+    id: "adventure-generator",
+    title: "Adventure Idea Generator",
+    content:
+      "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
+    icon: "icon-[lucide--map]",
+  },
   "delve-structural-builder": {
     id: "delve-structural-builder",
     title: "Delve Spatial Canvas Builder",
