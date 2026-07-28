@@ -363,7 +363,9 @@
         type="button"
         onclick={() => fileInput?.click()}
         class="mb-2 w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
-        aria-describedby={imageUploadError ? "zen-image-upload-error" : undefined}
+        aria-describedby={imageUploadError
+          ? "zen-image-upload-error"
+          : undefined}
       >
         <span
           class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"

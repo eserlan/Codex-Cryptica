@@ -46,8 +46,12 @@ vi.mock("$lib/stores/debug.svelte", () => ({ debugStore: { error: vi.fn() } }));
 vi.mock("$lib/stores/guest-chat.svelte", () => ({
   guestChatStore: { openChat: vi.fn() },
 }));
-vi.mock("$lib/components/labels/LabelBadge.svelte", () => ({ default: vi.fn() }));
-vi.mock("$lib/components/labels/LabelInput.svelte", () => ({ default: vi.fn() }));
+vi.mock("$lib/components/labels/LabelBadge.svelte", () => ({
+  default: vi.fn(),
+}));
+vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
+  default: vi.fn(),
+}));
 vi.mock("$lib/components/connections/ConnectionEditor.svelte", () => ({
   default: vi.fn(),
 }));
@@ -91,7 +95,10 @@ describe("ZenSidebar image file picker", () => {
     await fireEvent.change(input!, { target: { files: [image] } });
 
     await waitFor(() => {
-      expect(mockVault.saveImageToVault).toHaveBeenCalledWith(image, "entity-1");
+      expect(mockVault.saveImageToVault).toHaveBeenCalledWith(
+        image,
+        "entity-1",
+      );
       expect(mockVault.updateEntity).toHaveBeenCalledWith("entity-1", {
         image: "images/entity.png",
         thumbnail: "",
@@ -108,7 +115,9 @@ describe("ZenSidebar image file picker", () => {
   it("rejects a non-image without changing the entity", async () => {
     const { container, getByRole } = renderSidebar("images/current.png");
     const input = container.querySelector('input[type="file"]');
-    const file = new File(["not an image"], "notes.txt", { type: "text/plain" });
+    const file = new File(["not an image"], "notes.txt", {
+      type: "text/plain",
+    });
 
     await fireEvent.change(input!, { target: { files: [file] } });
 

@@ -81,7 +81,18 @@ describe("entityListFiltering pure functions", () => {
     it("should safely sort entities with missing or undefined titles without throwing", () => {
       const entitiesWithUndefinedTitles = [
         ...mockEntities,
-        { id: "e-no-title", title: undefined as any, type: "npc", status: "active" as const, content: "", labels: [], tags: [], aliases: [], connections: [], updatedAt: 0 },
+        {
+          id: "e-no-title",
+          title: undefined as any,
+          type: "npc",
+          status: "active" as const,
+          content: "",
+          labels: [],
+          tags: [],
+          aliases: [],
+          connections: [],
+          updatedAt: 0,
+        },
       ];
       const result = filterEntities(entitiesWithUndefinedTitles, {
         searchQuery: "",

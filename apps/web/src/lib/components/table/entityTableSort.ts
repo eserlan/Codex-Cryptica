@@ -2,12 +2,7 @@ import type { Entity } from "schema";
 
 /** Columns the Entity Table can be sorted by. */
 export type SortKey =
-  | "title"
-  | "type"
-  | "connections"
-  | "labels"
-  | "created"
-  | "modified";
+  "title" | "type" | "connections" | "labels" | "created" | "modified";
 export type SortDirection = "asc" | "desc";
 
 export interface SortState {
@@ -77,8 +72,7 @@ export function sortEntities(
         sort.key === "created" ? getEntityCreatedAt : getEntityModifiedAt;
       const av = read(a);
       const bv = read(b);
-      if (av === undefined && bv === undefined)
-        return compareTitles(a, b);
+      if (av === undefined && bv === undefined) return compareTitles(a, b);
       if (av === undefined) return 1;
       if (bv === undefined) return -1;
       if (av !== bv) return (av - bv) * dir;
@@ -95,8 +89,7 @@ export function sortEntities(
       // Compare by first label (alphabetical); unlabeled entities sort last.
       const la = firstLabel(a);
       const lb = firstLabel(b);
-      if (la === undefined && lb === undefined)
-        return compareTitles(a, b);
+      if (la === undefined && lb === undefined) return compareTitles(a, b);
       if (la === undefined) return 1;
       if (lb === undefined) return -1;
       const l = (la ?? "").localeCompare(lb ?? "");

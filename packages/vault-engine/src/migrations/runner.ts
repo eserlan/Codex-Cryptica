@@ -1,5 +1,10 @@
 import { MigrationStore } from "./store";
-import { type Clock, type IdGenerator, systemClock, systemIdGenerator } from "../runtime";
+import {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "../runtime";
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -42,7 +47,9 @@ function createSnapshotName(
 ): string {
   const activeClock = clock ?? systemClock;
   const activeIdGen = idGenerator ?? systemIdGenerator;
-  const timestamp = new Date(activeClock.now()).toISOString().replace(/[:.]/g, "-");
+  const timestamp = new Date(activeClock.now())
+    .toISOString()
+    .replace(/[:.]/g, "-");
   const nonce = activeIdGen.uuid();
 
   return `v${targetVersion - 1}_before_v${targetVersion}_${timestamp}_${nonce}`;

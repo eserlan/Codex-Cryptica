@@ -53,7 +53,10 @@ describe("createCanvasLogic idGenerator dependency injection", () => {
       uuid: () => `fake-uuid-${++callCount}`,
     };
 
-    const logic = createCanvasLogic(() => mockEngine as CanvasStore, fakeIdGenerator);
+    const logic = createCanvasLogic(
+      () => mockEngine as CanvasStore,
+      fakeIdGenerator,
+    );
 
     const connection = {
       source: "node-1",
@@ -74,7 +77,10 @@ describe("createCanvasLogic idGenerator dependency injection", () => {
       uuid: () => `sync-uuid-${++callCount}`,
     };
 
-    const logic = createCanvasLogic(() => mockEngine as CanvasStore, fakeIdGenerator);
+    const logic = createCanvasLogic(
+      () => mockEngine as CanvasStore,
+      fakeIdGenerator,
+    );
 
     logic.initializeCanvas("canvas-1");
     // Manually set an edge with an empty ID after initialization

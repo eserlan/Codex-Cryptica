@@ -6,10 +6,7 @@ export class CanvasStore {
   edges = $state<CanvasEdge[]>([]);
   private readonly idGenerator: IdGenerator;
 
-  constructor(
-    initialData?: Canvas,
-    deps: { idGenerator?: IdGenerator } = {},
-  ) {
+  constructor(initialData?: Canvas, deps: { idGenerator?: IdGenerator } = {}) {
     this.idGenerator = deps.idGenerator ?? systemIdGenerator;
     if (initialData) {
       this.loadData(initialData);
