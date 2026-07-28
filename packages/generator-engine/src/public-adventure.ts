@@ -381,12 +381,12 @@ Required JSON schema:
   "title": "Evocative, specific title for this adventure.",
   "summary": "1-2 sentence premise: what is this adventure about and why should players care?",
   "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, and why does it demand action immediately?",
-  "primaryObjective": "One clear objective with an explicit pressure or deadline that makes inaction costly.",
+  "primaryObjective": "One clear objective with an explicit, measurable deadline or pressure (e.g. 3 days, before solstice, 24 hours) that makes inaction costly.",
   "keyLocations": [
     { "name": "Specific location name", "description": "2 sentences: what it is and why it matters to this adventure." }
   ],
   "npcs": [
-    { "name": "NPC or faction name", "role": "Their role in the situation", "goal": "What they want", "secret": "What they are hiding or what the party doesn't know about them yet" }
+    { "name": "NPC or faction name", "role": "Their role in the situation", "goal": "What they want — specific and actionable", "secret": "What they are hiding or what the party doesn't know about them yet" }
   ],
   "threats": ["1-2 sentences per threat: who or what opposes the party and how"],
   "discoveries": ["1-2 sentences per discovery: specific clues, secrets, or revelations the players can find"],
@@ -597,12 +597,14 @@ export function parseAdventureResponseDetailed(
             const role = typeof n.role === "string" ? n.role.trim() : "";
             const goal = typeof n.goal === "string" ? n.goal.trim() : "";
             const secret = typeof n.secret === "string" ? n.secret.trim() : "";
-            return [
-              name ? `**${name}**` : "",
-              role,
-              goal ? `Wants: ${goal}.` : "",
-              secret ? `Secret: ${secret}` : "",
-            ]
+            const details = [];
+            if (role) details.push(role);
+            if (goal)
+              details.push(
+                `**Wants:** ${goal.endsWith(".") ? goal : goal + "."}`,
+              );
+            if (secret) details.push(`**Secret:** ${secret}`);
+            return [name ? `**${name}**` : "", details.join(" — ")]
               .filter(Boolean)
               .join(" — ");
           }
