@@ -9,6 +9,52 @@ export type VaultSelectionPort = {
   selectedEntityId: string | null;
 };
 
+export type CanvasRouteRef = {
+  id?: string;
+  slug?: string;
+};
+
+export type ZenModePort = {
+  closeZenMode(): void;
+};
+
+export type NavigatePort = (href: string) => unknown;
+
+export function openCanvasFromZen(
+  canvas: CanvasRouteRef | null | undefined,
+  navigate: NavigatePort,
+  zenMode: ZenModePort = modalUIStore,
+  layout: LayoutUIStore = layoutUIStore,
+): boolean {
+  const canvasKey = canvas?.slug || canvas?.id;
+  if (!canvasKey) return false;
+
+  const href = `/canvas/${canvasKey}`;
+  zenMode.closeZenMode();
+  layout.clearEntityExplorerWorkspaceFocus();
+  focusEntity(layout, null);
+  void navigate(href);
+  return true;
+}
+
+export function openCanvasHref(
+  href: string,
+  navigate: NavigatePort,
+  zenMode: ZenModePort = modalUIStore,
+  layout: LayoutUIStore = layoutUIStore,
+): boolean {
+  const match = href.match(/^\/canvas\/([^/?#]+)(?:[?#].*)?$/);
+  if (!match) return false;
+
+  let canvasKey: string;
+  try {
+    canvasKey = decodeURIComponent(match[1]);
+  } catch {
+    return false;
+  }
+  return openCanvasFromZen({ slug: canvasKey }, navigate, zenMode, layout);
+}
+
 export function focusEntity(
   entityId: string | null,
   vault?: VaultSelectionPort | null,

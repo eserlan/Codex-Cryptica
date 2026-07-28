@@ -157,6 +157,7 @@ export {
   buildDungeonPrompt,
   buildDungeonRetryMessage,
   collectSessionNames,
+  collectSessionTraits,
   parseDungeonResponse,
   parseDungeonResponseDetailed,
   type DungeonParseResult,
@@ -169,8 +170,14 @@ export {
   type ResolvedDungeon,
 } from "./public-dungeon";
 export {
+  buildDelveDossier,
+  type DelveDossier,
+  type DelveDossierInput,
+} from "./dungeon/delve-dossier";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
+  composeDraftVaultFields,
   DraftSaveError,
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,
@@ -184,3 +191,4 @@ export {
   type GeneratorAcceptedEntity,
 } from "./generator-session";
 export * from "./session-hub-helpers";
+export * from "./dungeon";

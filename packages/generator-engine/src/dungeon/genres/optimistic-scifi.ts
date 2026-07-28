@@ -1,7 +1,7 @@
 import type { DungeonGenreTables } from "../genre-types";
 
 export const optimisticSciFiTables: DungeonGenreTables = {
-  hint: "Focus on ancient alien research outposts, stellar observation vaults, terraforming hubs, first-contact archives, and derelicts that reward careful study rather than force.",
+  hint: "Focus on ancient alien research outposts, stellar observation vaults, terraforming hubs, first-contact archives, and derelicts that reward careful study rather than force. TONE IS THE POINT OF THIS SETTING AND THE EASIEST THING TO GET WRONG: it is hopeful. Nothing here was built to harm visitors, and nothing lays traps for intruders. Danger comes from scale, age, and mismatch \u2014 atmospheres meant for other lungs, gravity set for a heavier world, systems still politely enforcing a rule nobody remembers, a door that opens for anyone who arrives unarmed. Names and hazards should carry curiosity and welcome, never toxicity, decay, or menace.",
   purposes: [
     "Research Facility",
     "Data Vault & Archive",

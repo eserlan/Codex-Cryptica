@@ -171,3 +171,8 @@
 
 **Learning:** When generating a specific entity ID by resolving against a username across all entities (such as in `resolveGuestCharacterId`), using `Object.values(entities)` inline will allocate a new intermediate array on every resolution. Since `resolveGuestCharacterId` can be called frequently (e.g. per message, on connection setup), doing full allocations adds unnecessary memory pressure and garbage collection overhead.
 **Action:** Replace `Object.values(obj)` iterations with imperative `for...in` loops accessing `obj[key]` to process objects directly without intermediate array allocation when performing matching or transforming subsets that run frequently.
+
+## 2026-06-30 - [Performance Insight: Replace .filter() array methods with imperative loops over allEntities]
+
+**Learning:** When navigating connections or locating children nodes, invoking `.filter()` on the large `vault.allEntities` array triggers full O(N) traversal and allocates a new intermediate array on every evaluation (such as in `DetailStatusTab` and `ZenContent`). This places pressure on the garbage collector during rendering.
+**Action:** Replace `allEntities.filter(...)` with an imperative `for...of` (or traditional `for`) loop that checks conditions and constructs the necessary subsets or result shapes directly in a single pass.

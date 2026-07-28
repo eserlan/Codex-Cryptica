@@ -1,33 +1,67 @@
 import { z } from "zod";
 
+const CanvasNodeBaseSchema = z.object({
+  id: z.string(),
+  position: z.object({
+    x: z.number(),
+    y: z.number(),
+  }),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  color: z.string().optional(),
+  parentId: z.string().optional(),
+  extent: z.string().optional(),
+  style: z.unknown().optional(),
+});
+
 export const CanvasNodeSchema = z.preprocess(
   (val: any) => {
+    if (!val || typeof val !== "object") return val;
+
+    const normalized =
+      !val.position && typeof val.x === "number" && typeof val.y === "number"
+        ? { ...val, position: { x: val.x, y: val.y } }
+        : val;
+
     if (
-      val &&
-      typeof val === "object" &&
-      !val.position &&
-      typeof val.x === "number" &&
-      typeof val.y === "number"
+      normalized.data === undefined &&
+      ["delveRoom", "delveSectorGroup", "group"].includes(normalized.type)
     ) {
+      const {
+        type: _type,
+        position: _position,
+        x: _x,
+        y: _y,
+        width: _width,
+        height: _height,
+        color: _color,
+        parentId: _parentId,
+        extent: _extent,
+        style: _style,
+        ...legacyData
+      } = normalized;
       return {
-        ...val,
-        position: { x: val.x, y: val.y },
+        ...normalized,
+        // Early public-generator builds stored the domain payload directly on
+        // the node. Preserve it under `data` so those canvases remain usable.
+        data: legacyData,
       };
     }
-    return val;
+
+    return normalized;
   },
-  z.object({
-    id: z.string(),
-    type: z.literal("entity"),
-    position: z.object({
-      x: z.number(),
-      y: z.number(),
+  z.discriminatedUnion("type", [
+    CanvasNodeBaseSchema.extend({
+      type: z.literal("entity"),
+      entityId: z.string(),
+      data: z.unknown().optional(),
     }),
-    entityId: z.string(),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    color: z.string().optional(),
-  }),
+    CanvasNodeBaseSchema.extend({
+      type: z.enum(["delveRoom", "delveSectorGroup", "group"]),
+      entityId: z.string().optional(),
+      data: z.unknown(),
+    }),
+  ]),
 );
 
 export const CanvasEdgeSchema = z.object({
@@ -44,6 +78,8 @@ export const CanvasEdgeSchema = z.object({
       z.record(z.string(), z.union([z.string(), z.number()])),
     ])
     .optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  animated: z.boolean().optional(),
 });
 
 export const CanvasSchema = z.object({
@@ -52,6 +88,7 @@ export const CanvasSchema = z.object({
   slug: z.string().optional(),
   nodes: z.array(CanvasNodeSchema),
   edges: z.array(CanvasEdgeSchema),
+  metadata: z.record(z.string(), z.any()).optional(),
   lastModified: z.number().optional(),
   playerVisible: z.boolean().optional(),
 });

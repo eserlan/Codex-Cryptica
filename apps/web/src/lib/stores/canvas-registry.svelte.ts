@@ -6,7 +6,11 @@ import {
   deleteCanvasFromDisk,
 } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
-import type { Canvas, CanvasNode } from "@codex/canvas-engine";
+import {
+  CanvasSchema,
+  type Canvas,
+  type CanvasNode,
+} from "@codex/canvas-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
@@ -16,6 +20,7 @@ import {
   type IdGenerator,
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
+import { toRouteSlug } from "$lib/utils/slug";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -98,10 +103,7 @@ export class CanvasRegistryStore {
   }
 
   private generateSlug(name: string, id: string): string {
-    const base = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    const base = toRouteSlug(name);
 
     // If base is empty (e.g. name only had symbols), fallback to ID
     if (!base) return id.slice(0, 8);
@@ -348,6 +350,43 @@ export class CanvasRegistryStore {
 
     await this.saveCanvas(id);
     return { id, slug, name };
+  }
+
+  findCanvasForEntity(entityId: string, title?: string): Canvas | undefined {
+    const list = this.allCanvases;
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      if ((c as any).metadata?.sourceEntityId === entityId) return c;
+      if (c.id === entityId || c.slug === entityId) return c;
+      if (title && c.name?.toLowerCase() === title.toLowerCase()) return c;
+    }
+    return undefined;
+  }
+
+  async importCanvas(doc: any): Promise<string> {
+    const id = doc.id || this.idGenerator.uuid();
+    const name = doc.name || doc.title || "Delve Canvas Map";
+    const slug = doc.slug || this.generateSlug(name, id);
+
+    const canvasData = CanvasSchema.parse({
+      id,
+      name,
+      slug,
+      nodes: doc.nodes || [],
+      edges: doc.edges || [],
+      metadata: doc.metadata || {},
+      lastModified: doc.lastModified || systemClock.now(),
+    });
+
+    this.canvases[id] = canvasData;
+
+    const { vault } = await import("./vault.svelte");
+    if (vault.activeVaultId) {
+      vault.canvases[id] = canvasData;
+    }
+
+    await this.saveCanvas(id);
+    return slug;
   }
 }
 

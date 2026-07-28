@@ -16,6 +16,14 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
   import { generatePersonality } from "./generate-personality";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
+  import { goto } from "$app/navigation";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let isGeneratingPersonality = $state(false);
   let personalityError = $state<string | null>(null);
@@ -130,27 +138,27 @@
     }
 
     // Add children if exist
-    const entityId = entity.id;
-    // ⚡ Bolt Optimization: Use vault.allEntities instead of allocating Object.values()
+    const entityId = entity.id.toLowerCase();
+    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
     const allEntities = vault.allEntities || [];
-    const children = allEntities.filter(
-      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
-    );
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (checkVisibility(child.id)) {
-        const alreadyConnected = result.some((c) => c.targetId === child.id);
-        if (!alreadyConnected) {
-          result.push({
-            targetId: child.id,
-            type: "child",
-            label: "Child",
-            isOutbound: false,
-            isChild: true,
-            displayTitle: child.title,
-            hasPastLabel:
-              child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
-          });
+
+    for (let i = 0; i < allEntities.length; i++) {
+      const child = allEntities[i];
+      if (child.parent && child.parent.toLowerCase() === entityId) {
+        if (checkVisibility(child.id)) {
+          const alreadyConnected = result.some((c) => c.targetId === child.id);
+          if (!alreadyConnected) {
+            result.push({
+              targetId: child.id,
+              type: "child",
+              label: "Child",
+              isOutbound: false,
+              isChild: true,
+              displayTitle: child.title,
+              hasPastLabel:
+                child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
+            });
+          }
         }
       }
     }
@@ -176,6 +184,15 @@
     revisionService.pendingDraft?.entityId === entity.id
       ? revisionService.pendingDraft
       : null,
+  );
+
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
   );
 </script>
 
@@ -223,10 +240,81 @@
       </div>
     </div>
   {/if}
-
   <!-- Chronicle -->
   {#if isEditing || isVisible}
     <div>
+      {#if !isEditing && isDelveLocationEntity(entity)}
+        <div
+          class="mb-4 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
+            ></span>
+            <div>
+              <span
+                class="text-xs font-bold text-theme-primary uppercase font-header tracking-wider block"
+              >
+                Spatial {delveCanvasLabel}
+              </span>
+              <span class="text-[10px] text-theme-muted">
+                {existingCanvas
+                  ? "Interactive room & sector floor plan on Spatial Canvas."
+                  : "Generate an interactive room & sector floor plan on Spatial Canvas."}
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            {#if existingCanvas}
+              <button
+                type="button"
+                onclick={() => {
+                  openCanvasFromZen(existingCanvas, goto);
+                }}
+                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                Open {delveCanvasLabel}
+              </button>
+              <button
+                type="button"
+                title="Rebuild Canvas Map"
+                onclick={async () => {
+                  try {
+                    const canvasDoc =
+                      dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                    const slug = await canvasRegistry.importCanvas(canvasDoc);
+                    openCanvasFromZen({ slug }, goto);
+                  } catch (err) {
+                    console.error("[DelveCanvas] Rebuild failed:", err);
+                  }
+                }}
+                class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
+              >
+                <span class="icon-[lucide--rotate-cw] w-3.5 h-3.5"></span>
+              </button>
+            {:else}
+              <button
+                type="button"
+                onclick={async () => {
+                  try {
+                    const canvasDoc =
+                      dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                    const slug = await canvasRegistry.importCanvas(canvasDoc);
+                    openCanvasFromZen({ slug }, goto);
+                  } catch (err) {
+                    console.error("[DelveCanvas] Build failed:", err);
+                  }
+                }}
+                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                Build {delveCanvasLabel}
+              </button>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       <div
         class="prose-content {draft
           ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'

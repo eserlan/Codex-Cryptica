@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { base } from "$app/paths";
+  import { base, resolve } from "$app/paths";
+  import { goto } from "$app/navigation";
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -7,7 +8,7 @@
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import { browser } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
@@ -19,6 +20,12 @@
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
+  import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
+  import {
+    createPendingDelveTransfer,
+    PENDING_DELVE_CANVAS_KEY,
+  } from "$lib/services/seo/pending-delve-transfer";
   import {
     getContextSelection,
     computeProvenance,
@@ -446,6 +453,36 @@
       }
     }
   }
+
+  async function handleBuildDelveCanvas(data: GeneratorOutput) {
+    try {
+      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
+      const layout = getGeneratorDocumentLayout(data);
+      const content = data.summary
+        ? `*${data.summary}*\n\n${layout.content}`
+        : layout.content;
+      const transfer = createPendingDelveTransfer(canvasDoc, {
+        type: "location",
+        kind: "dungeon",
+        title: data.title,
+        content,
+        lore: layout.lore,
+        labels: data.labels,
+        status: data.status,
+      });
+      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
+      await unregisterDevelopmentServiceWorkers(dev);
+      if (dev) {
+        window.location.assign(resolve("/canvas"));
+        return;
+      }
+      await goto(resolve("/canvas"));
+    } catch (err) {
+      console.error("[DelveCanvas] Failed to build delve canvas:", err);
+      errorMessage =
+        "The generated delve could not be opened. Your pending canvas has been preserved so you can retry.";
+    }
+  }
 </script>
 
 <svelte:head>
@@ -592,6 +629,7 @@
         onContainerKeydown={handleContainerKeydown}
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
         onSaveHubToCodex={handleSaveHubToCodex}
+        onBuildDelveCanvas={handleBuildDelveCanvas}
       />
     </div>
 

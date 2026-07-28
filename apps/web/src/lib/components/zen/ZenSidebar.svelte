@@ -218,27 +218,27 @@
     }
 
     // Add children if exist
-    const entityId = entity?.id || "";
-    // ⚡ Bolt Optimization: Use vault.allEntities instead of allocating Object.values()
+    const entityId = (entity?.id || "").toLowerCase();
+    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
     const allEntities = vault.allEntities || [];
-    const children = allEntities.filter(
-      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
-    );
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (checkVisibility(child.id)) {
-        const alreadyConnected = result.some((c) => c.id === child.id);
-        if (!alreadyConnected) {
-          result.push({
-            id: child.id,
-            key: `${child.id}-child-${i}`,
-            displayLabel: "Child",
-            rawLabel: "Child",
-            title: child.title,
-            type: "child",
-            isOutbound: false,
-            isChild: true,
-          });
+
+    for (let i = 0; i < allEntities.length; i++) {
+      const child = allEntities[i];
+      if (child.parent && child.parent.toLowerCase() === entityId) {
+        if (checkVisibility(child.id)) {
+          const alreadyConnected = result.some((c) => c.id === child.id);
+          if (!alreadyConnected) {
+            result.push({
+              id: child.id,
+              key: `${child.id}-child-${i}`,
+              displayLabel: "Child",
+              rawLabel: "Child",
+              title: child.title,
+              type: "child",
+              isOutbound: false,
+              isChild: true,
+            });
+          }
         }
       }
     }
@@ -363,7 +363,9 @@
         type="button"
         onclick={() => fileInput?.click()}
         class="mb-2 w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
-        aria-describedby={imageUploadError ? "zen-image-upload-error" : undefined}
+        aria-describedby={imageUploadError
+          ? "zen-image-upload-error"
+          : undefined}
       >
         <span
           class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"

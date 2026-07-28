@@ -21,6 +21,14 @@
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
+  import { goto } from "$app/navigation";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let {
     entity,
@@ -115,6 +123,15 @@
     entity?.parent ? vault.entities[entity.parent] : null,
   );
 
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
+  );
+
   const handleOpenParent = () => {
     if (parentEntity) {
       vault.selectedEntityId = parentEntity.id;
@@ -155,6 +172,40 @@
 {#snippet headerActions()}
   {#if !isEditing}
     <SidepanelRevisionButton entityId={entity.id} />
+    {#if isDelveLocationEntity(entity)}
+      <button
+        type="button"
+        onclick={async () => {
+          try {
+            if (existingCanvas) {
+              openCanvasFromZen(existingCanvas, goto);
+              return;
+            }
+            const canvasDoc =
+              dungeonDelveService.buildDelveCanvasFromConcept(entity);
+            const slug = await canvasRegistry.importCanvas(canvasDoc);
+            openCanvasFromZen({ slug }, goto);
+          } catch (err) {
+            console.error("[DelveCanvas] Header action failed:", err);
+          }
+        }}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        aria-label={existingCanvas
+          ? `Open ${delveCanvasLabel}`
+          : `Build ${delveCanvasLabel}`}
+        title={existingCanvas
+          ? `Open ${delveCanvasLabel}`
+          : `Build ${delveCanvasLabel}`}
+        data-testid="build-delve-canvas-header-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{existingCanvas
+            ? 'icon-[lucide--external-link]'
+            : 'icon-[lucide--map]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
     {#if isGraphView}
       <button
         type="button"
@@ -182,6 +233,7 @@
           class="{linkCopied
             ? 'icon-[lucide--check]'
             : 'icon-[lucide--link]'} w-5 h-5"
+          aria-hidden="true"
         ></span>
       </button>
     {/if}
@@ -208,6 +260,7 @@
           class="{entity.soundBite
             ? 'icon-[lucide--volume-2]'
             : 'icon-[lucide--mic]'} w-5 h-5"
+          aria-hidden="true"
         ></span>
       </button>
     {/if}

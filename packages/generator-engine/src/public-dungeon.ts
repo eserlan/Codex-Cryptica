@@ -69,6 +69,13 @@ export interface DungeonGeneratorOptions {
    * generated and the model is asked to avoid it.
    */
   avoidNames?: string[];
+  /**
+   * Virtue/vice pairs already used this session. Unlike `avoidNames`, reusing
+   * one is reported but never rejects the response — losing a whole dungeon
+   * over a repeated adjective is the disproportion this generator already had
+   * to correct once.
+   */
+  avoidTraits?: string[];
 }
 
 const STOCK_TYPES = ["Monster", "Lore", "Special", "Trap"] as const;
@@ -195,10 +202,19 @@ function sentenceCase(s: string): string {
  * AI response may have added to an obstacle string, since callers add their own lead-in.
  */
 function sanitizeObstacle(s: string): string {
-  return s
+  const stripped = s
     .replace(/^\s*(held back by|struggling against)\s*/i, "")
     .trim()
     .replace(/\.+$/, "");
+  // The template reads "held back by X", so X continues a sentence. Every seed
+  // obstacle is written lowercase for that reason, but a model asked "what
+  // stands in their way" answers with a capital and renders as "held back by
+  // Deep-seated paranoia". Only the first word is lowered, and only when it
+  // looks like an ordinary word rather than an acronym or a name that keeps
+  // capitalising ("NHP", "Union Command").
+  const [first = "", second = ""] = stripped.split(/\s+/);
+  const ordinary = /^[A-Z][a-z-]+$/.test(first) && !/^[A-Z]/.test(second);
+  return ordinary ? stripped[0].toLowerCase() + stripped.slice(1) : stripped;
 }
 
 /**
@@ -515,6 +531,29 @@ export function collectSessionNames(
 }
 
 /**
+ * Virtue/vice pairs already used this session.
+ *
+ * The model pairs archetypes with traits consistently — knowledge-seekers kept
+ * coming back as "Curiosity, but Hubris" and devotional factions as "Devotion,
+ * but Fanaticism", across genres and under different faction names. The names
+ * vary; the characterisation does not.
+ */
+export function collectSessionTraits(
+  entities: Array<{ content?: string }>,
+  limit = 12,
+): string[] {
+  const pairs = new Set<string>();
+  for (const entity of entities) {
+    for (const match of (entity.content ?? "").matchAll(
+      /- \*\*.+?\*\* — (\w+), but (\w+)\./g,
+    )) {
+      pairs.add(`${match[1]}, but ${match[2]}`);
+    }
+  }
+  return [...pairs].reverse().slice(0, limit);
+}
+
+/**
  * Render the mechanical rolls as creative seeds plus fixed structural
  * requirements.
  *
@@ -528,6 +567,7 @@ export function collectSessionNames(
 function formatDungeonSeeds(
   dungeon: ResolvedDungeon,
   avoidNames: string[] = [],
+  avoidTraits: string[] = [],
 ): string {
   const stockPlan = dungeon.sectors
     .map((s, idx) => `  ${idx + 1}. ${s.stockType ?? "Lore"}`)
@@ -556,6 +596,14 @@ function formatDungeonSeeds(
           ...avoidNames.map((n) => `- ${n}`),
         ]
       : []),
+    ...(avoidTraits.length > 0
+      ? [
+          ``,
+          `Virtue/vice pairs already used this session — characterise these`,
+          `factions differently:`,
+          ...avoidTraits.map((t) => `- ${t}`),
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -568,10 +616,16 @@ function formatFactionsList(factions: DungeonFaction[]): string {
     .join("\n");
 }
 
+/** Close a sentence the model left unterminated, so it sits with table entries. */
+function endSentence(text: string): string {
+  const trimmed = text.trim();
+  return !trimmed || /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 function formatSector(s: DungeonSector, idx: number): string {
   const stockLine =
     s.stockType && s.stockDetail
-      ? `\n\n*${s.stockType} — ${s.stockDetail}*`
+      ? `\n\n*${s.stockType} — ${endSentence(s.stockDetail)}*`
       : "";
   return `### Sector ${idx + 1}: ${s.name}\n${s.description}${stockLine}`;
 }
@@ -643,6 +697,7 @@ function renderResolvedDungeon(
 
   return {
     type: "location",
+    kind: "dungeon",
     title: dungeon.title,
     summary: dungeon.premise,
     content,
@@ -690,7 +745,7 @@ Setting Context:
 - Scale: ${dungeon.scale}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
-${formatDungeonSeeds(dungeon, options.avoidNames ?? [])}
+${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}
 
 Required JSON schema:
 {
@@ -701,8 +756,8 @@ Required JSON schema:
   "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
   "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
   "factions": [
-    { "name": "Your name for Faction A", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[0]?.goal ?? "Survival"}", "obstacle": "What stands in their way — no lead-in words like 'held back by', no trailing period" },
-    { "name": "Your name for Faction B", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[1]?.goal ?? "Dominion"}", "obstacle": "What stands in their way — no lead-in words, no trailing period" }
+    { "name": "Your name for Faction A", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[0]?.goal ?? "Survival"}", "obstacle": "What stands in their way, phrased to continue the sentence 'held back by …' — start lowercase, no lead-in words, no trailing period" },
+    { "name": "Your name for Faction B", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[1]?.goal ?? "Dominion"}", "obstacle": "What stands in their way, phrased to continue 'held back by …' — start lowercase, no lead-in words, no trailing period" }
   ],
   "currentConflict": "How the two factions' goals are colliding right now, naming both.",
   "sectors": [
@@ -767,6 +822,7 @@ function validateAiDungeon(
   factions: DungeonFaction[],
   foundation: ResolvedDungeon,
   avoidNames: string[] = [],
+  avoidTraits: string[] = [],
 ): { structural: string[]; content: string[] } {
   const problems: string[] = [];
 
@@ -777,6 +833,16 @@ function validateAiDungeon(
   const content: string[] = [];
   if (omitted.length > 0) {
     content.push(`missing required fields: ${omitted.join(", ")}`);
+  }
+  const reusedTraits = factions
+    .map((f) => `${f.virtue}, but ${f.vice}`)
+    .filter((pair) =>
+      avoidTraits.some((used) => used.toLowerCase() === pair.toLowerCase()),
+    );
+  if (reusedTraits.length > 0) {
+    content.push(
+      `reuses virtue/vice pairs already used this session: ${reusedTraits.join("; ")}`,
+    );
   }
 
   // The throughline is what keeps history, state, and conflict pointing at the
@@ -992,6 +1058,7 @@ export function parseDungeonResponseDetailed(
         factions,
         foundation,
         options.avoidNames ?? [],
+        options.avoidTraits ?? [],
       );
       if (structural.length > 0) {
         return {
@@ -1068,6 +1135,7 @@ export function parseDungeonResponseDetailed(
     return {
       output: {
         type: "location",
+        kind: "dungeon",
         title,
         summary,
         content,
