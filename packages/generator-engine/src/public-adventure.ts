@@ -360,6 +360,8 @@ You will be given creative seeds and a fixed structure. The seeds are raw materi
 
 Everything else is yours to invent: the adventure's title, specific names for locations and NPCs, the exact nature of the clues and complications, and the texture of the possible outcomes. Make them specific to this adventure rather than generic to the genre, and make the whole document internally consistent — the initial situation should explain why the objective is urgent, the threats should explain why it is dangerous, and the discoveries should reward the players for engaging with the world.
 
+Write the "throughline" field first and let it govern everything else. It is ONE sentence covering who set events in motion, what is at stake, and how that leads to the initial situation, primary objective, and outcomes. Every later field must be consistent with it.
+
 The output must describe a SITUATION, not a plot. Provide multiple avenues of action, not a required sequence of scenes. The possible outcomes should represent genuinely different resolutions, not variations on a single ending.
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
@@ -380,6 +382,7 @@ Required JSON schema:
 {
   "title": "Evocative, specific title for this adventure.",
   "summary": "1-2 sentence premise: what is this adventure about and why should players care?",
+  "throughline": "ONE sentence: who set events in motion, what is at stake, and how that leads to the initial situation and primary objective. Write this before the fields below and keep them all consistent with it.",
   "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, and why does it demand action immediately?",
   "primaryObjective": "One clear objective with an explicit, measurable deadline or pressure (e.g. 3 days, before solstice, 24 hours) that makes inaction costly.",
   "keyLocations": [
@@ -482,6 +485,7 @@ export function parseAdventureResponseDetailed(
     // Check which narrative fields the model supplied.
     const omitted = (
       [
+        "throughline",
         "initialSituation",
         "primaryObjective",
         "keyLocations",

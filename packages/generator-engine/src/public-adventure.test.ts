@@ -213,6 +213,8 @@ const VALID_AI_RESPONSE = JSON.stringify({
   title: "The Ledger That Burns",
   summary:
     "A stolen financial record implicates half the city's council — and whoever holds it next.",
+  throughline:
+    "A courier carrying evidence of council embezzlement was killed, forcing the party to reach the magistrate before corrupt factions destroy the evidence.",
   initialSituation:
     "A courier was found dead in the river, a waterproofed package strapped to his chest. The package contains an accounting ledger implicating three council members in a decade-long embezzlement scheme. Two factions already know it exists.",
   primaryObjective:
