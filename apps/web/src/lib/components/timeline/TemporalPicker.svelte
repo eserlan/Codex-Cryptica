@@ -62,6 +62,10 @@
   );
 
   const formatDirectDateInput = (sel: DateSelection) => {
+    if (sel.precision === "year") {
+      return String(sel.year);
+    }
+
     if (sel.precision === "day" && sel.day !== undefined && sel.unitId) {
       const config = calendarStore.config;
       const months = calendarEngine.getMonths(config);
@@ -234,7 +238,17 @@
 
     const parsed = parseDirectDateInput(directDateInput, calendarStore.config);
     if (!parsed) {
-      directDateError = "Use DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
+      directDateError = "Use YYYY, -YYYY, DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
+      return;
+    }
+
+    if (parsed.day === undefined || parsed.month === undefined) {
+      activeSelection = {
+        precision: "year",
+        year: parsed.year,
+        calendarRevision: calendarStore.config.revision || 1,
+      };
+      directDateError = "";
       return;
     }
 
@@ -574,7 +588,7 @@
             class="w-full bg-theme-bg border {directDateError
               ? 'border-red-500/70'
               : 'border-theme-border'} rounded px-3 py-1.5 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
-            placeholder="DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY"
+            placeholder="YYYY, -YYYY, DDMMYYYY, or DD/MM/-YYYY"
             aria-invalid={!!directDateError}
             aria-describedby={directDateError ? "direct-date-error" : undefined}
           />

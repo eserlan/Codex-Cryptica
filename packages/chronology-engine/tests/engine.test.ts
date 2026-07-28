@@ -132,6 +132,21 @@ describe("CalendarEngine", () => {
   });
 
   describe("parseDirectDateInput", () => {
+    it("parses four-digit year-only input, including negative years", () => {
+      expect(parseDirectDateInput("1240", DEFAULT_CALENDAR)).toEqual({
+        year: 1240,
+      });
+      expect(parseDirectDateInput("-1240", DEFAULT_CALENDAR)).toEqual({
+        year: -1240,
+      });
+    });
+
+    it("rejects malformed year-only input", () => {
+      expect(parseDirectDateInput("124", DEFAULT_CALENDAR)).toBeNull();
+      expect(parseDirectDateInput("12400", DEFAULT_CALENDAR)).toBeNull();
+      expect(parseDirectDateInput("--1240", DEFAULT_CALENDAR)).toBeNull();
+    });
+
     it("parses compact ddmmyyyy input", () => {
       expect(parseDirectDateInput("12011240", DEFAULT_CALENDAR)).toEqual({
         year: 1240,
