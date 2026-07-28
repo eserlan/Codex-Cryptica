@@ -12,6 +12,7 @@ import {
 import { aiClientManager } from "@codex/ai-engine";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { z } from "zod";
 
 const EnhancedAreaSchema = z.object({
@@ -158,6 +159,7 @@ export class DelveAreaEnhancementService {
     private readonly aiClient: AreaEnhancementAIClient = aiClientManager,
     private readonly settings: AreaEnhancementSettings = oracle,
     private readonly stockingService = new DelveStockingService(),
+    private readonly clock: Clock = systemClock,
   ) {}
 
   async enhanceArea({
@@ -187,7 +189,7 @@ export class DelveAreaEnhancementService {
         return this.runModel(systemInstruction, userPrompt, 1200);
       },
     });
-    return { ...enhanced, aiEnhancedAt: Date.now() };
+    return { ...enhanced, aiEnhancedAt: this.clock.now() };
   }
 
   async populateAllAreas(
@@ -376,7 +378,7 @@ For every Area, invent a distinctive location-relevant name and write a vivid 2-
         .filter((room) => room.sectorId !== sectorId)
         .map((room) => room.name.trim().toLowerCase()),
     );
-    const now = Date.now();
+    const now = this.clock.now();
     const enhancedRooms = parsed.areas
       .filter((area) => requestedIds.has(area.id))
       .map((area) => {
