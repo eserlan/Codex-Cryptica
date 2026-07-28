@@ -16,6 +16,11 @@ vi.mock("$app/paths", () => ({
   base: "",
 }));
 
+const trackEventMock = vi.hoisted(() => vi.fn());
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
+  trackEvent: trackEventMock,
+}));
+
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
 if (typeof Element !== "undefined" && !Element.prototype.animate) {
   Element.prototype.animate = () => {
@@ -361,6 +366,122 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(container.querySelector("[onerror]")).toBeNull();
       expect(container.innerHTML).not.toContain("<script>alert(1)</script>");
       expect(container.textContent).toContain("Tone");
+    });
+  });
+
+  describe("UTM Referral Attribution Links", () => {
+    it("renders header logo and CTA links with generator UTM params", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const logoLink = container.querySelector(
+        "#logo-link",
+      ) as HTMLAnchorElement;
+      const navCtaBtn = container.querySelector(
+        "#nav-cta-btn",
+      ) as HTMLAnchorElement;
+
+      expect(logoLink).toBeTruthy();
+      expect(logoLink.getAttribute("href")).toContain(
+        "utm_source=generator-logo",
+      );
+      expect(logoLink.getAttribute("href")).toContain("utm_medium=nav");
+      expect(logoLink.getAttribute("href")).toContain(
+        "utm_campaign=seo-funnel",
+      );
+
+      expect(navCtaBtn).toBeTruthy();
+      expect(navCtaBtn.getAttribute("href")).toContain(
+        "utm_source=generator-header-cta",
+      );
+      expect(navCtaBtn.getAttribute("href")).toContain("utm_medium=nav");
+
+      // Negative path check: verify links are not bare root links lacking UTM params
+      expect(logoLink.getAttribute("href")).not.toBe("/");
+      expect(navCtaBtn.getAttribute("href")).not.toBe("/");
+    });
+  });
+
+  describe("Generator funnel tracking (#1796)", () => {
+    beforeEach(() => {
+      trackEventMock.mockClear();
+    });
+
+    it("does not fire generator_started/generator_completed for the silent on-mount auto-draft", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "character",
+        title: "Auto Draft",
+        content: "auto",
+        lore: "",
+        labels: [],
+        status: "draft",
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalled());
+
+      expect(trackEventMock).not.toHaveBeenCalledWith(
+        "generator_started",
+        expect.anything(),
+      );
+      expect(trackEventMock).not.toHaveBeenCalledWith(
+        "generator_completed",
+        expect.anything(),
+      );
+    });
+
+    it("fires generator_started then generator_completed on an explicit Generate click", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        content: "seed",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+      const mockGenerate = vi.fn().mockResolvedValue(seedDraft);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      trackEventMock.mockClear();
+      mockGenerate.mockClear();
+
+      const button = container.querySelector(
+        "#generate-button",
+      ) as HTMLButtonElement;
+      await fireEvent.click(button);
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalled());
+
+      expect(trackEventMock).toHaveBeenCalledWith("generator_started", {
+        generator_type: "npc",
+      });
+      expect(trackEventMock).toHaveBeenCalledWith("generator_completed", {
+        generator_type: "npc",
+      });
     });
   });
 });

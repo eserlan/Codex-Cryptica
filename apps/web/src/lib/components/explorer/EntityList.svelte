@@ -12,6 +12,7 @@
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sortExplorerEntities } from "./entityListSorting";
 
   let {
     onSelect,
@@ -43,6 +44,18 @@
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
   const viewMode = $derived(explorerUIStore.explorerViewMode);
+  const sortKey = $derived(explorerUIStore.explorerSortKey);
+  const sortDirection = $derived(explorerUIStore.explorerSortDirection);
+  const sortDirectionAction = $derived.by(() => {
+    if (sortKey === "name") {
+      return sortDirection === "asc"
+        ? "Sort names Z to A"
+        : "Sort names A to Z";
+    }
+    return sortDirection === "desc"
+      ? "Sort last edited oldest first"
+      : "Sort last edited newest first";
+  });
   const effectiveViewMode = $derived(
     viewMode === "category" && typeFilters.size === 1 ? "list" : viewMode,
   );
@@ -70,8 +83,15 @@
     }),
   );
 
+  const sortedEntities = $derived(
+    sortExplorerEntities(filteredEntities, {
+      key: sortKey,
+      direction: sortDirection,
+    }),
+  );
+
   const groupedEntities = $derived(
-    groupEntitiesForExplorer(filteredEntities, effectiveViewMode),
+    groupEntitiesForExplorer(sortedEntities, effectiveViewMode),
   );
 
   const collapsedEntities = $derived(
@@ -79,7 +99,10 @@
   );
 
   const entityTree = $derived(
-    buildEntityTree(vault.allEntities, filteredEntities),
+    buildEntityTree(vault.allEntities, sortedEntities, {
+      key: sortKey,
+      direction: sortDirection,
+    }),
   );
 
   let inlineCreationParentId = $state<string | null>(null);
@@ -130,6 +153,40 @@
   <div class="p-4 border-b border-theme-border shrink-0 space-y-3">
     <EntityListSearch bind:searchQuery />
     <EntityListFilterBar bind:typeFilters {typeCounts} {allowedTypes} />
+    <div class="flex items-center justify-end gap-1.5">
+      <label
+        for="entity-explorer-sort"
+        class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+      >
+        Sort
+      </label>
+      <select
+        id="entity-explorer-sort"
+        value={sortKey}
+        onchange={(event) =>
+          explorerUIStore.setExplorerSortKey(
+            event.currentTarget.value as "name" | "updated",
+          )}
+        class="rounded-lg border border-theme-border/60 bg-theme-surface/40 px-2 py-1 text-[10px] font-mono text-theme-text outline-none transition-colors hover:border-theme-primary/50 focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20"
+      >
+        <option value="name">Name</option>
+        <option value="updated">Last edited</option>
+      </select>
+      <button
+        type="button"
+        onclick={() => explorerUIStore.toggleExplorerSortDirection()}
+        aria-label={sortDirectionAction}
+        title={sortDirectionAction}
+        class="flex h-7 w-7 items-center justify-center rounded-lg border border-theme-border/60 bg-theme-surface/40 text-theme-muted transition-colors hover:border-theme-primary/50 hover:text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/30"
+      >
+        <span
+          class="{sortDirection === 'asc'
+            ? 'icon-[lucide--arrow-up]'
+            : 'icon-[lucide--arrow-down]'} h-3.5 w-3.5"
+          aria-hidden="true"
+        ></span>
+      </button>
+    </div>
   </div>
 
   <div
@@ -454,7 +511,7 @@
           />
         {/each}
       {/if}
-      {#if filteredEntities.length === 0}
+      {#if sortedEntities.length === 0}
         <div data-testid="no-entities-found">
           <EmptyState
             icon="icon-[lucide--search-x]"
@@ -495,7 +552,7 @@
           {/each}
         {/if}
       {/each}
-      {#if filteredEntities.length === 0}
+      {#if sortedEntities.length === 0}
         <div data-testid="no-entities-found">
           <EmptyState
             icon="icon-[lucide--search-x]"

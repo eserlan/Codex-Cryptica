@@ -1,5 +1,13 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
-import { resolveArtDirection } from "schema";
+import {
+  ASPECT_RATIO_DIMENSIONS,
+  composeImagePrompt,
+  formatForProvider,
+  type AspectRatio,
+  type ComposedPromptMetadata,
+  type ImageProviderId,
+  type StyleReferenceMode,
+} from "schema";
 import {
   DEFAULT_CF_IMAGE_MODEL,
   DEFAULT_CUSTOM_IMAGE_MODEL,
@@ -14,56 +22,75 @@ interface VisualEntityLike {
   content?: string;
   lore?: string;
   artDirection?: string;
+  imageArtDirection?: { statureId?: string };
+  parent?: string;
+  connections?: Array<{ target: string }>;
 }
 
+/** How far up a parent chain a look is inherited before giving up. */
+const MAX_ART_DIRECTION_DEPTH = 4;
+
+/** Entity types whose look is meant to be shared by what belongs to them. */
+const LOOK_DEFINING_TYPES = new Set([
+  "faction",
+  "organization",
+  "organisation",
+  "culture",
+  "world",
+]);
+
 export interface PreparedVisualizationPrompt {
+  /** The composed positive prompt, before provider formatting. */
   prompt: string;
+  /** Provider-neutral negative terms. */
+  negativeTerms: string[];
+  /** Art Direction v2 inputs, stored alongside the generated image. */
+  metadata: ComposedPromptMetadata;
+}
+
+/**
+ * A prompt a user has seen and possibly edited, carrying the parts of the
+ * composition that are not recoverable from its text.
+ */
+export interface ReviewedVisualizationPrompt {
+  prompt: string;
+  negativeTerms?: string[];
+  aspectRatio?: AspectRatio;
+}
+
+export type VisualizationPromptInput =
+  string | PreparedVisualizationPrompt | ReviewedVisualizationPrompt;
+
+/** Advanced overrides an entry point may pass through to the composer. */
+export interface VisualizationPromptOptions {
+  ignoreSavedArtDirection?: boolean;
+  cameraVariant?: string;
+  styleReferenceMode?: StyleReferenceMode;
+  /** Overrides the stature the entity's labels imply. */
+  stature?: string;
 }
 
 export class OracleGenerator {
-  private buildEntityVisualQuery(
+  /**
+   * Builds the seed sent to the subject distiller. This is a request for a
+   * description, not a prompt — the distiller answers with physical facts and
+   * the composer supplies everything else.
+   */
+  private buildEntitySubjectSeed(
     entity: VisualEntityLike,
-    context?: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    labels?: string[],
   ): string {
-    const artDirection = resolveArtDirection({
-      subject: entity.title,
-      entityId: entity.id,
-      entityTitle: entity.title,
-      categoryId: entity.categoryId || entity.type,
-      categoryLabel: entity.type,
-      themeId: context?.uiStore?.activeThemeId,
-      surface: "entity",
-      entityArtDirection: options.ignoreSavedArtDirection
-        ? undefined
-        : this.extractEntityArtDirection(entity),
-    });
+    const descriptors = [
+      entity.type ? `a ${entity.type}` : "",
+      `named "${entity.title}"`,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-    return this.appendVisualLabels(artDirection.prompt, entity.labels);
-  }
-
-  private buildMessageVisualQuery(
-    message: ChatMessage,
-    entity: VisualEntityLike | null,
-    context: OracleExecutionContext,
-  ): string {
-    if (entity) {
-      return this.buildEntityVisualQuery(entity, context);
-    }
-
-    const commandSubject = this.extractDrawCommandSubject(message.content);
-    const artDirection = resolveArtDirection({
-      subject: commandSubject.subject,
-      surface: "chat",
-      categoryId: commandSubject.categoryId,
-      categoryIdIsHint: Boolean(commandSubject.categoryId),
-      themeId: context.uiStore?.activeThemeId,
-      userAuthoredArtDirection: this.extractArtDirectionFromText(
-        message.content,
-      ),
-    });
-
-    return artDirection.prompt;
+    return this.appendVisualLabels(
+      `Describe what ${descriptors} physically looks like, for an illustration.`,
+      labels,
+    );
   }
 
   private appendVisualLabels(basePrompt: string, labels?: string[]): string {
@@ -75,7 +102,7 @@ export class OracleGenerator {
 HIGH-PRIORITY VISUAL LABELS:
 ${cleanLabels.map((label) => `- ${label}`).join("\n")}
 
-Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
+Treat these labels as strong direction for the subject's appearance, attire, and condition.`;
   }
 
   private extractEntityArtDirection(entity: VisualEntityLike) {
@@ -84,6 +111,47 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       this.extractArtDirectionFromText(entity.content) ||
       this.extractArtDirectionFromText(entity.lore)
     );
+  }
+
+  /**
+   * Resolves the look an entity should be drawn with: its own block, else one
+   * inherited from what it belongs to.
+   *
+   * A knight of a faction drawn on their own otherwise gets the plain vault
+   * theme and looks nothing like the faction portrait beside it. Inheritance
+   * runs up the parent chain first — the hierarchy the user built by hand — and
+   * then to connected factions, cultures and worlds, whose whole purpose is a
+   * shared look. It deliberately does not inherit from an arbitrary connection:
+   * being linked to a character is not a reason to look like them.
+   */
+  private resolveArtDirection(
+    entity: VisualEntityLike,
+    entities: Record<string, VisualEntityLike> | undefined,
+  ): { text?: string; inherited: boolean } {
+    const own = this.extractEntityArtDirection(entity);
+    if (own) return { text: own, inherited: false };
+    if (!entities) return { inherited: false };
+
+    const seen = new Set<string>([entity.id || ""]);
+
+    let ancestor = entity.parent ? entities[entity.parent] : undefined;
+    for (let depth = 0; ancestor && depth < MAX_ART_DIRECTION_DEPTH; depth++) {
+      if (seen.has(ancestor.id || "")) break;
+      seen.add(ancestor.id || "");
+      const inheritedText = this.extractEntityArtDirection(ancestor);
+      if (inheritedText) return { text: inheritedText, inherited: true };
+      ancestor = ancestor.parent ? entities[ancestor.parent] : undefined;
+    }
+
+    for (const connection of entity.connections || []) {
+      const linked = entities[connection.target];
+      if (!linked || seen.has(linked.id || "")) continue;
+      if (!LOOK_DEFINING_TYPES.has((linked.type || "").toLowerCase())) continue;
+      const inheritedText = this.extractEntityArtDirection(linked);
+      if (inheritedText) return { text: inheritedText, inherited: true };
+    }
+
+    return { inherited: false };
   }
 
   private extractArtDirectionFromText(text?: string) {
@@ -311,17 +379,17 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     entityId: string,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const { prompt } = await this.prepareEntityVisualizationPrompt(
+    const prepared = await this.prepareEntityVisualizationPrompt(
       entityId,
       context,
     );
-    return this.generateVisualizationFromPrompt(prompt, context);
+    return this.generateVisualizationFromPrompt(prepared, context);
   }
 
   async prepareEntityVisualizationPrompt(
     entityId: string,
     context: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    options: VisualizationPromptOptions = {},
   ): Promise<PreparedVisualizationPrompt> {
     const apiKey = context.effectiveApiKey || "";
     const entity = context.vault.entities[entityId];
@@ -334,14 +402,51 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         true,
       );
 
+    // Stage 1: the model resolves vault canon into physical description, and
+    // reads the standing that canon implies. It is the only stage that sees the
+    // lore, so it is the only one that can tell a god from a well-armed
+    // soldier.
+    const distilled = await context.imageGeneration.distillVisualSubject(
+      apiKey,
+      this.buildEntitySubjectSeed(entity, entity.labels),
+      aiContext,
+      context.modelName,
+      context.isDemoMode,
+    );
+
+    const artDirection = options.ignoreSavedArtDirection
+      ? { inherited: false }
+      : this.resolveArtDirection(entity, context.vault?.entities);
+
+    // Stage 2: deterministic composition around that subject.
+    const composed = composeImagePrompt({
+      subject: distilled.subject,
+      category: entity.categoryId || entity.type,
+      theme: context?.uiStore?.activeThemeId,
+      // Labels already steer the distiller; a label like "deity" now also
+      // steers the layers the subject text cannot reach. The model's reading of
+      // the canon fills in only where neither says anything.
+      stature: options.stature,
+      statureLabels: entity.labels,
+      // The stature recorded on the last image wins over a fresh reading: a
+      // model that classifies an entity divine today and mythic next week
+      // produces a gallery that does not match itself, which is worse than
+      // being wrong once. A label or an explicit choice still overrides it.
+      inferredStature: entity.imageArtDirection?.statureId || distilled.stature,
+      cameraVariant: options.cameraVariant,
+      styleReferenceMode: options.styleReferenceMode,
+      styleOverride: artDirection.text,
+      styleOverrideSource: artDirection.inherited ? "inherited" : undefined,
+      subjectOptions: {
+        names: [entity.title],
+        descriptor: entity.type ? `a ${entity.type}` : undefined,
+      },
+    });
+
     return {
-      prompt: await context.imageGeneration.distillVisualPrompt(
-        apiKey,
-        this.buildEntityVisualQuery(entity, context, options),
-        aiContext,
-        context.modelName,
-        context.isDemoMode,
-      ),
+      prompt: composed.prompt,
+      negativeTerms: composed.negativeTerms,
+      metadata: composed.metadata,
     };
   }
 
@@ -352,47 +457,87 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     message: ChatMessage,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const { prompt } = await this.prepareMessageVisualizationPrompt(
+    const prepared = await this.prepareMessageVisualizationPrompt(
       message,
       context,
     );
-    return this.generateVisualizationFromPrompt(prompt, context);
+    return this.generateVisualizationFromPrompt(prepared, context);
   }
 
   async prepareMessageVisualizationPrompt(
     message: ChatMessage,
     context: OracleExecutionContext,
+    options: VisualizationPromptOptions = {},
   ): Promise<PreparedVisualizationPrompt> {
+    if (message.entityId && context.vault.entities[message.entityId]) {
+      return this.prepareEntityVisualizationPrompt(
+        message.entityId,
+        context,
+        options,
+      );
+    }
+
     const apiKey = context.effectiveApiKey || "";
-    const entity = message.entityId
-      ? context.vault.entities[message.entityId]
-      : null;
-    const searchQuery = entity ? entity.title : message.content.slice(0, 100);
+    const command = this.extractDrawCommandSubject(message.content);
 
     const { content: aiContext } =
       await context.contextRetrieval.retrieveContext(
-        searchQuery,
+        message.content.slice(0, 100),
         new Set(),
         context.vault,
         message.entityId,
         true,
       );
 
+    const distilled = await context.imageGeneration.distillVisualSubject(
+      apiKey,
+      command.subject,
+      aiContext,
+      context.modelName,
+      context.isDemoMode,
+    );
+
+    const composed = composeImagePrompt({
+      subject: distilled.subject,
+      category: command.categoryId,
+      theme: context.uiStore?.activeThemeId,
+      // A free-text draw command has no entity and therefore no labels; the
+      // model's reading of the retrieved canon is the only implicit signal.
+      stature: options.stature,
+      inferredStature: distilled.stature,
+      cameraVariant: options.cameraVariant,
+      styleReferenceMode: options.styleReferenceMode,
+      styleOverride: this.extractArtDirectionFromText(message.content),
+    });
+
     return {
-      prompt: await context.imageGeneration.distillVisualPrompt(
-        apiKey,
-        this.buildMessageVisualQuery(message, entity, context),
-        aiContext,
-        context.modelName,
-        context.isDemoMode,
-      ),
+      prompt: composed.prompt,
+      negativeTerms: composed.negativeTerms,
+      metadata: composed.metadata,
     };
   }
 
+  /**
+   * Accepts either a composed prompt with its negatives, or a bare string for
+   * the manual-override path where the user has hand-edited the prompt.
+   */
   async generateVisualizationFromPrompt(
-    prompt: string,
+    input: VisualizationPromptInput,
     context: OracleExecutionContext,
   ): Promise<Blob> {
+    // A bare string is the last-resort form and carries nothing with it. The
+    // review dialog used to send one, which silently dropped every negative
+    // term and the composed framing on the path most images actually take.
+    const reviewed = typeof input === "string" ? { prompt: input } : input;
+    const composed = {
+      prompt: reviewed.prompt,
+      negativeTerms: reviewed.negativeTerms || [],
+    };
+    const aspectRatio =
+      "metadata" in reviewed
+        ? reviewed.metadata?.aspectRatio
+        : reviewed.aspectRatio;
+
     const apiKey = context.effectiveApiKey || "";
     const isCustom = context.imageProvider === "custom";
     const isCloudflare = context.imageProvider === "cloudflare";
@@ -414,17 +559,30 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     const needsKey =
       (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
 
+    // Negatives are attached in whichever form this provider understands:
+    // a dedicated field, or inline in the prompt.
+    const payload = formatForProvider(
+      composed,
+      context.imageProvider as ImageProviderId | undefined,
+    );
+
     if (needsKey) {
-      throw new Error(`MISSING_KEY_PROMPT|${prompt}`);
+      throw new Error(`MISSING_KEY_PROMPT|${payload.prompt}`);
     }
 
     return await context.imageGeneration.generateImage(
       targetKey,
-      prompt,
+      payload.prompt,
       targetModel,
       {
         provider: context.imageProvider,
         baseUrl: context.customImageBaseUrl,
+        negativePrompt: payload.negativePrompt,
+        // The hand-edited prompt path has no composed metadata; the provider
+        // default applies there.
+        dimensions: aspectRatio
+          ? ASPECT_RATIO_DIMENSIONS[aspectRatio]
+          : undefined,
       },
     );
   }

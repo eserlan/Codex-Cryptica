@@ -19,6 +19,13 @@ vi.mock("./vault/io", () => ({
   deleteCanvasFromDisk: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("./vault.svelte", () => ({
+  vault: {
+    activeVaultId: null,
+    canvases: {},
+  },
+}));
+
 vi.mock("../utils/opfs", () => ({
   getVaultDir: vi
     .fn()
@@ -103,6 +110,76 @@ describe("CanvasRegistryStore", () => {
     expect(slug).toBeDefined();
     expect(slug?.length).toBeGreaterThan(0);
     expect(canvasRegistry.allCanvases[0].name).toBe("!!!@#$%");
+  });
+
+  it("should use an imported delve title as the canvas name", async () => {
+    const slug = await canvasRegistry.importCanvas({
+      id: "delve-canvas-howling-caverns",
+      title: "The Howling Caverns",
+      nodes: [],
+      edges: [],
+    });
+
+    expect(slug).toBe("the-howling-caverns");
+    expect(canvasRegistry.canvases["delve-canvas-howling-caverns"].name).toBe(
+      "The Howling Caverns",
+    );
+  });
+
+  it("should canonicalize legacy delve node payloads before persistence", async () => {
+    await canvasRegistry.importCanvas({
+      id: "legacy-public-delve",
+      title: "The Bell Vault",
+      nodes: [
+        {
+          id: "room-1",
+          type: "delveRoom",
+          position: { x: 0, y: 0 },
+          sectorId: "sector-1",
+          sectorName: "The Bell Vault",
+          name: "Flooded Threshold",
+          role: "entrance",
+          summary: "A flooded gate.",
+          description: "Black water covers the steps.",
+          stocking: {},
+        },
+      ],
+      edges: [],
+    });
+
+    const savedCanvas = vi.mocked(vaultIO.saveCanvasToDisk).mock.calls[0][2];
+    expect(savedCanvas.nodes[0]).toMatchObject({
+      id: "room-1",
+      data: expect.objectContaining({
+        sectorId: "sector-1",
+        name: "Flooded Threshold",
+      }),
+    });
+    expect(savedCanvas.nodes[0]).not.toHaveProperty("sectorId");
+  });
+
+  it("should preserve accented letters when generating a canvas slug", async () => {
+    const slug = await canvasRegistry.importCanvas({
+      id: "delve-canvas-sziklakonny",
+      title: "Sziklakönny Grotto",
+      nodes: [],
+      edges: [],
+    });
+
+    expect(slug).toBe("sziklakonny-grotto");
+  });
+
+  it("should retain the generic canvas name when an import has no name or title", async () => {
+    const slug = await canvasRegistry.importCanvas({
+      id: "unnamed-delve-canvas",
+      nodes: [],
+      edges: [],
+    });
+
+    expect(slug).toBe("delve-canvas-map");
+    expect(canvasRegistry.canvases["unnamed-delve-canvas"].name).toBe(
+      "Delve Canvas Map",
+    );
   });
 
   it("should correctly load canvases from vault", async () => {

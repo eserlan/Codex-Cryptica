@@ -1,4 +1,25 @@
 import { parseWaExport, cleanHtml, type ParsedEntity } from "./wa-parser";
+import {
+  convertThreadWeaverJsonToCif,
+  parseScabardExport,
+} from "@codex/importer";
+
+const KNOWN_ENTITY_TYPES: ParsedEntity["type"][] = [
+  "character",
+  "creature",
+  "location",
+  "item",
+  "event",
+  "faction",
+  "note",
+];
+
+function toKnownType(value: string | undefined): ParsedEntity["type"] {
+  const lower = (value ?? "").toLowerCase();
+  return (KNOWN_ENTITY_TYPES as string[]).includes(lower)
+    ? (lower as ParsedEntity["type"])
+    : "note";
+}
 
 // Parses Obsidian vault files (.md)
 export async function parseObsidianFiles(
@@ -123,6 +144,26 @@ export async function parseJsonExport(
         title,
         content: body,
         labels: ["legendkeeper-import"],
+      });
+    }
+  } else if (slug === "thread-weaver") {
+    const cif = convertThreadWeaverJsonToCif(data);
+    for (const e of cif.entities) {
+      parsed.push({
+        type: toKnownType(e.kind),
+        title: e.title,
+        content: e.content?.body ?? e.summary ?? "",
+        labels: e.labels ?? [],
+      });
+    }
+  } else if (slug === "scabard") {
+    const pkg = parseScabardExport(data);
+    for (const draft of pkg.entityDrafts) {
+      parsed.push({
+        type: toKnownType(draft.sourceType),
+        title: draft.title,
+        content: draft.content || draft.lore || "",
+        labels: draft.labels ?? [],
       });
     }
   }

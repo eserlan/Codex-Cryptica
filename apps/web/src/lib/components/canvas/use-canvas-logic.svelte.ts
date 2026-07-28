@@ -14,13 +14,22 @@ import {
   buildCanvasSavePayload,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  flowEdgeToCanvasEdge,
+  flowNodeToCanvasNode,
   hydrateCanvasGraph,
   pruneCanvasGraph,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
-export function createCanvasLogic(getEngine: () => CanvasStore) {
+export function createCanvasLogic(
+  getEngine: () => CanvasStore,
+  idGenerator: IdGenerator = systemIdGenerator,
+) {
   const svelteFlow = useSvelteFlow();
   const screenToFlowPosition = $derived(svelteFlow?.screenToFlowPosition);
 
@@ -130,7 +139,7 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
 
   // Mutations
   function onConnect(connection: Connection) {
-    const edgeId = `edge-${crypto.randomUUID()}`;
+    const edgeId = `edge-${idGenerator.uuid()}`;
     edges = addXyEdge(createFlowEdgeFromConnection(connection, edgeId), edges);
     untrack(() => saveCanvas());
   }
@@ -246,20 +255,47 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
         }
 
         targetVaultId = vault.activeVaultId;
-        targetCanvasId = canvasId;
-
-        const data = vault.canvases[canvasId];
+        const matchedCanvas =
+          vault.canvases[canvasId] ||
+          canvasRegistry.allCanvases.find(
+            (c) => c.slug === canvasId || c.id === canvasId,
+          );
+        const data = matchedCanvas
+          ? (vault.canvases[matchedCanvas.id] ||= matchedCanvas)
+          : undefined;
+        targetCanvasId = matchedCanvas ? matchedCanvas.id : canvasId;
+        console.log(
+          "[DelveCanvas] Loading graph for canvas:",
+          canvasId,
+          "Target ID:",
+          targetCanvasId,
+          "Matched canvas:",
+          matchedCanvas,
+        );
 
         if (data) {
           for (const node of data.nodes || []) {
-            vault.loadEntityContent(node.entityId);
+            if (node.entityId) {
+              vault.loadEntityContent(node.entityId);
+            }
           }
 
           skipLoadingSaves = 2;
           const graph = hydrateCanvasGraph(data);
+          console.log(
+            "[DelveCanvas] Hydrated graph nodes:",
+            graph.nodes.length,
+            "edges:",
+            graph.edges.length,
+            graph,
+          );
           nodes = graph.nodes;
           edges = graph.edges;
         } else {
+          console.warn(
+            "[DelveCanvas] No canvas data found for target canvas:",
+            canvasId,
+          );
           nodes = [];
           edges = [];
         }
@@ -285,29 +321,30 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
 
     // Sync edges
     const currentEdges = edges;
-    getEngine().edges = currentEdges.map((e: Edge) => ({
-      id: e.id || `edge-${crypto.randomUUID()}`,
-      source: e.source,
-      target: e.target,
-      sourceHandle: undefined,
-      targetHandle: undefined,
-      label: (e.label as string) || "",
-      type: "straight",
-      style: (e.style as string) || "",
-    }));
+    getEngine().edges = currentEdges.map((edge) =>
+      flowEdgeToCanvasEdge(edge, () => `edge-${idGenerator.uuid()}`),
+    );
 
     // Sync nodes
     const currentNodes = nodes;
-    getEngine().nodes = currentNodes.map((n: Node) => ({
-      id: n.id,
-      type: n.type as "entity",
-      position: n.position,
-      entityId: (n.data?.entityId as string) || "",
-      width: n.data?.width as number,
-      height: n.data?.height as number,
-    }));
+    getEngine().nodes = currentNodes.map(flowNodeToCanvasNode);
 
     debouncedSave();
+  }
+
+  async function fitGraphForExport() {
+    const viewport = svelteFlow.getViewport();
+    await svelteFlow.fitView({
+      nodes,
+      padding: 0.08,
+      duration: 0,
+      includeHiddenNodes: true,
+    });
+    await tick();
+    return async () => {
+      await svelteFlow.setViewport(viewport, { duration: 0 });
+      await tick();
+    };
   }
 
   return {
@@ -362,6 +399,7 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     initializeCanvas,
     pruneNodes,
     syncEngine,
+    fitGraphForExport,
     flushSave,
   };
 }

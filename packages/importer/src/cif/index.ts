@@ -58,3 +58,8 @@ export {
 export { validateCifManifest, type CifValidationResult } from "./validate";
 
 export { CifWarningCode } from "./report";
+
+export {
+  isThreadWeaverExport,
+  convertThreadWeaverJsonToCif,
+} from "./thread-weaver";

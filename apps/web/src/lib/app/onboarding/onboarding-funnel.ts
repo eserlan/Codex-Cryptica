@@ -16,11 +16,19 @@
  * re-emit steps they already completed. This makes the persisted set a simple
  * funnel-completion record.
  *
- * The tracker is sink-agnostic. By default it forwards to whatever analytics
- * pipeline happens to be present on the page (a GTM-style `window.dataLayer`,
- * or a `window.__codexAnalytics.track` hook) and logs to the debug store. The
+ * The tracker forwards to `window.__codexAnalytics.track` when present (a
+ * hook explicitly wired only from the (marketing) layout, see
+ * `$lib/services/analytics/zaraz-analytics.ts`) and logs to the debug store.
+ *
+ * It deliberately does NOT forward through a GTM-style `window.dataLayer`,
+ * even though that's a common "ambient pipeline" pattern: Cloudflare Zaraz
+ * auto-defines `window.dataLayer` site-wide the moment it's enabled (a GTM
+ * migration-compatibility shim), on every route, regardless of anything this
+ * app's own code does. A `dataLayer.push` forwarder here would silently leak
+ * every in-app milestone unconditionally the instant Zaraz is turned on —
+ * which is exactly what happened in #1796 before this was removed. The
  * existing Cloudflare Web Analytics beacon only records pageviews and has no
- * custom-event API, so funnel events deliberately do not depend on it.
+ * custom-event API, so funnel events deliberately do not depend on it either.
  */
 
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
@@ -122,16 +130,12 @@ export class OnboardingFunnel {
       debugStore.log(`[OnboardingFunnel] ${step}`, payload);
     }
 
-    // 2. Ambient page analytics pipeline, if any.
+    // 2. The __codexAnalytics bridge, if present. Never window.dataLayer —
+    // see the module docstring for why that one is unconditionally unsafe.
     try {
       const w = this.win;
-      if (w) {
-        if (Array.isArray(w.dataLayer)) {
-          w.dataLayer.push({ event: "onboarding_funnel", ...payload });
-        }
-        if (typeof w.__codexAnalytics?.track === "function") {
-          w.__codexAnalytics.track("onboarding_funnel", payload);
-        }
+      if (typeof w?.__codexAnalytics?.track === "function") {
+        w.__codexAnalytics.track("onboarding_funnel", payload);
       }
     } catch {
       // never let analytics break the app

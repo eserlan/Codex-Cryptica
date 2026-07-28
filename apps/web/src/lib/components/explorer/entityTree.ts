@@ -1,6 +1,9 @@
 import type { Entity } from "schema";
 import { sanitizeId } from "../../utils/markdown";
-import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  compareExplorerEntities,
+  type EntitySortOptions,
+} from "./entityListSorting";
 
 export interface TreeNode {
   entity: Entity;
@@ -11,6 +14,10 @@ export interface TreeNode {
 export function buildEntityTree(
   entities: Entity[],
   filteredEntities: Entity[],
+  sortOptions: EntitySortOptions = {
+    key: "name",
+    direction: "asc",
+  },
 ): TreeNode[] {
   // 1. Build a lookup record of all entities in the vault by SANITIZED ID
   const allEntitiesMap = new Map<string, Entity>();
@@ -75,7 +82,7 @@ export function buildEntityTree(
             content: "",
             lore: "",
             _path: path,
-            updatedAt: systemClock.now(),
+            updatedAt: 0,
             isVirtual: true,
           } as any);
 
@@ -139,7 +146,9 @@ export function buildEntityTree(
 
   // Helper to sort tree nodes recursively
   const sortTreeNodes = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => a.entity.title.localeCompare(b.entity.title));
+    nodes.sort((a, b) =>
+      compareExplorerEntities(a.entity, b.entity, sortOptions),
+    );
     for (const node of nodes) {
       if (node.children.length > 0) {
         sortTreeNodes(node.children);

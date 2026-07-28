@@ -55,7 +55,11 @@ describe("OnboardingFunnel", () => {
     expect(next.track("demo_started")).toBe(false);
   });
 
-  it("forwards to a GTM-style dataLayer when present", () => {
+  it("never forwards through window.dataLayer, even when one is present", () => {
+    // Cloudflare Zaraz auto-defines window.dataLayer site-wide once enabled
+    // (a GTM-compatibility shim), regardless of route — forwarding through it
+    // would leak every in-app milestone unconditionally (#1796). Milestones
+    // must only ever reach the explicitly-scoped __codexAnalytics bridge.
     const { storage } = makeStorage();
     const dataLayer: any[] = [];
     const funnel = new OnboardingFunnel({
@@ -65,9 +69,7 @@ describe("OnboardingFunnel", () => {
     });
 
     funnel.track("graph_opened");
-    expect(dataLayer).toEqual([
-      { event: "onboarding_funnel", step: "graph_opened", at: 5 },
-    ]);
+    expect(dataLayer).toEqual([]);
   });
 
   it("forwards to a __codexAnalytics.track hook when present", () => {

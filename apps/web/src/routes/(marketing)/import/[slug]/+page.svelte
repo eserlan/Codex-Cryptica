@@ -235,7 +235,7 @@
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
-        href="{cleanBase}/"
+        href="{cleanBase}/?utm_source=importer-logo&utm_medium=nav&utm_campaign=seo-funnel"
         class="flex items-center gap-2 group min-w-0"
         id="logo-link"
       >
@@ -266,7 +266,7 @@
       </nav>
       <div class="shrink-0">
         <a
-          href="{cleanBase}/?ref=import-nav"
+          href="{cleanBase}/?utm_source=importer-nav&utm_medium=nav&utm_campaign=seo-funnel"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
@@ -280,13 +280,14 @@
     class="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
-      <div
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
+      <a
+        href="{cleanBase}/migrations"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
         Migration Hub
-      </div>
+      </a>
       <h1
         class="font-header font-extrabold text-3xl md:text-5xl tracking-wide uppercase text-theme-primary mb-4"
       >
@@ -297,6 +298,17 @@
       >
         {pageData.subheading}
       </p>
+      {#if pageData.toolUrl}
+        <a
+          href={pageData.toolUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
+        >
+          <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+          Get {pageData.toolLabel ?? pageData.competitorName}
+        </a>
+      {/if}
     </div>
 
     <!-- Features Grid -->

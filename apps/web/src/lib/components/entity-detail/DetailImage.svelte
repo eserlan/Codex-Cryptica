@@ -4,7 +4,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { fade } from "svelte/transition";
-  import { isEntityVisible, resolveArtDirection } from "schema";
+  import { isEntityVisible, composeImagePrompt } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
@@ -25,6 +25,8 @@
   let resolvedImageUrl = $state("");
   let isDraggingOver = $state(false);
   let isImageLoaded = $state(false);
+  let fileInput = $state<HTMLInputElement | null>(null);
+  let imageUploadError = $state("");
 
   $effect(() => {
     // Reset loaded state when image URL changes
@@ -43,16 +45,21 @@
     });
   });
 
+  // Preview of the direction applied around the AI-written subject. The real
+  // subject comes from vault canon at generation time; the entity title stands
+  // in here so the preview reads as a sentence.
   const artDirectionPrompt = $derived.by(() => {
     if (!entity) return "";
-    const res = resolveArtDirection({
-      surface: "entity",
+    return composeImagePrompt({
       subject: entity.title,
-      categoryId: entity.type,
-      themeId: themeStore.activeTheme?.id || "default",
-      entityArtDirection: entity.artDirection,
-    });
-    return res.prompt;
+      category: entity.type,
+      theme: themeStore.activeTheme?.id || "default",
+      styleOverride: entity.artDirection,
+      subjectOptions: {
+        names: [entity.title],
+        descriptor: entity.type ? `a ${entity.type}` : undefined,
+      },
+    }).prompt;
   });
 
   $effect(() => {
@@ -133,26 +140,41 @@
 
     // Fallback to standard file drop
     if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      await handleFileDrop(e.dataTransfer.files[0]);
+      await handleImageFile(e.dataTransfer.files[0]);
     }
   };
 
-  async function handleFileDrop(file: File) {
+  const handleFileInputChange = async (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+
+    try {
+      if (file) await handleImageFile(file);
+    } finally {
+      // Let someone choose the same image again after correcting an error.
+      input.value = "";
+    }
+  };
+
+  async function handleImageFile(file: File) {
     if (!entity || !file) return;
-    if (file.type.startsWith("image/")) {
-      try {
-        const { image, thumbnail } = await vault.saveImageToVault(
-          file,
-          entity.id,
-        );
-        await vault.updateEntity(entity.id, { image, thumbnail });
-      } catch (err) {
-        debugStore.error("[DetailImage] Failed to save external file:", err);
-        notificationStore.notify(
-          "Failed to save image. Check the console for details.",
-          "error",
-        );
-      }
+    if (!file.type.startsWith("image/")) {
+      imageUploadError = "Choose an image file to upload.";
+      notificationStore.notify(imageUploadError, "error");
+      return;
+    }
+
+    try {
+      const { image, thumbnail } = await vault.saveImageToVault(
+        file,
+        entity.id,
+      );
+      await vault.updateEntity(entity.id, { image, thumbnail });
+      imageUploadError = "";
+    } catch (err) {
+      debugStore.error("[DetailImage] Failed to save external file:", err);
+      imageUploadError = "Failed to save image. Please try again.";
+      notificationStore.notify(imageUploadError, "error");
     }
   }
 
@@ -174,6 +196,43 @@
   role="region"
   aria-label="Image drop zone"
 >
+  {#if !isEditing && !vault.isGuest}
+    <input
+      bind:this={fileInput}
+      type="file"
+      accept="image/*"
+      class="sr-only"
+      onchange={handleFileInputChange}
+      aria-hidden="true"
+      tabindex="-1"
+    />
+    <div class="mb-4 px-4 md:px-6">
+      <button
+        type="button"
+        onclick={() => fileInput?.click()}
+        class="w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+        aria-describedby={imageUploadError
+          ? "entity-image-upload-error"
+          : undefined}
+      >
+        <span
+          class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        {entity.image ? "Replace image" : "Choose image"}
+      </button>
+      {#if imageUploadError}
+        <p
+          id="entity-image-upload-error"
+          class="mt-2 text-xs text-theme-error"
+          role="alert"
+        >
+          {imageUploadError}
+        </p>
+      {/if}
+    </div>
+  {/if}
+
   {#if isEditing}
     <div class="mb-4 px-4 md:px-6">
       <label

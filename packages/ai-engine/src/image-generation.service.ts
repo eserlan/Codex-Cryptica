@@ -1,8 +1,13 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
-import type { ImageGenerationService, ImageGenerationOptions } from "schema";
+import type {
+  DistilledVisualSubject,
+  ImageGenerationService,
+  ImageGenerationOptions,
+} from "schema";
 import {
   buildVisualCanonResolutionPrompt,
-  buildVisualPromptGenerationPrompt,
+  buildVisualSubjectPrompt,
+  extractStature,
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 import { GEMINI_API_BASE_URL } from "./config";
@@ -15,15 +20,22 @@ export class DefaultImageGenerationService implements ImageGenerationService {
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
-  async distillVisualPrompt(
+  /**
+   * Resolves vault canon into a descriptive SUBJECT phrase.
+   *
+   * Art Direction v2: this produces the subject layer only. Category framing,
+   * theme, camera, style lineage, and negatives are composed deterministically
+   * around the result by `composeImagePrompt` — the model must not emit them.
+   */
+  async distillVisualSubject(
     apiKey: string,
     query: string,
     context: string,
     modelName: string,
     _demoMode = false,
-  ): Promise<string> {
-    if (!isAIEnabled()) return query;
-    if (!context) return query;
+  ): Promise<DistilledVisualSubject> {
+    if (!isAIEnabled()) return { subject: query };
+    if (!context) return { subject: query };
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
@@ -35,32 +47,36 @@ export class DefaultImageGenerationService implements ImageGenerationService {
       context,
     );
     const canonResult = await model.generateContent(canonResolutionPrompt);
-    const canonSummary = canonResult.response.text()?.trim() || "";
-
-    console.log(
-      `[ImageGenerationService] Stage 2: Generating visual prompt...`,
+    // Stage 1 is the only place that reads vault canon, so it is the only
+    // place that can tell a god from a very well-equipped soldier. The
+    // classification rides along on the call already being made.
+    const { summary: canonSummary, stature } = extractStature(
+      canonResult.response.text()?.trim() || "",
     );
 
-    // Stage 2: Generation Layer - Visual Prompt Generation
-    const promptGenerationPrompt = buildVisualPromptGenerationPrompt(
-      canonSummary,
-      query,
-    );
+    console.log(`[ImageGenerationService] Stage 2: Writing visual subject...`);
+
+    // Stage 2: Subject Layer - concrete physical description, nothing else
+    const subjectPrompt = buildVisualSubjectPrompt(canonSummary, query);
 
     try {
-      const result = await model.generateContent(promptGenerationPrompt);
+      const result = await model.generateContent(subjectPrompt);
       const response = await result.response;
       const distilled = response.text().trim();
       console.log(
-        `[ImageGenerationService] Final Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`,
+        `[ImageGenerationService] Distilled Visual Subject: "${distilled.slice(0, 50)}..."${
+          stature ? ` [stature: ${stature}]` : ""
+        }`,
       );
-      return distilled;
+      return { subject: distilled, stature };
     } catch (err) {
       console.warn(
-        "[ImageGenerationService] Failed to generate visual prompt, falling back to canon summary.",
+        "[ImageGenerationService] Failed to write visual subject, falling back to canon summary.",
         err,
       );
-      return canonSummary || query;
+      // The canon summary is a usable fallback subject; the stature read from
+      // it still stands.
+      return { subject: canonSummary || query, stature };
     }
   }
 
@@ -99,8 +115,17 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           const url = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelName}`;
           const form = new FormData();
           form.append("prompt", prompt);
-          form.append("width", "1024");
-          form.append("height", "1024");
+          // A square default would contradict the framing every Art Direction
+          // category now states in the prompt.
+          const { width, height } = options?.dimensions || {
+            width: 1024,
+            height: 1024,
+          };
+          form.append("width", String(width));
+          form.append("height", String(height));
+          if (options?.negativePrompt) {
+            form.append("negative_prompt", options.negativePrompt);
+          }
           const response = await this.fetcher(url, {
             method: "POST",
             headers: {
@@ -152,6 +177,18 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             body: JSON.stringify({
               model: modelName,
               prompt: prompt,
+              // The proxy has always accepted these and defaulted them to
+              // 1024x1024; not sending them rendered every composed framing as
+              // a square, whatever aspect ratio the prompt asked for.
+              ...(options?.dimensions
+                ? {
+                    width: options.dimensions.width,
+                    height: options.dimensions.height,
+                  }
+                : {}),
+              ...(options?.negativePrompt
+                ? { negative_prompt: options.negativePrompt }
+                : {}),
             }),
           });
 
@@ -197,6 +234,15 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             prompt: prompt,
             response_format: "b64_json",
             n: 1,
+            ...(options?.dimensions
+              ? {
+                  width: options.dimensions.width,
+                  height: options.dimensions.height,
+                }
+              : {}),
+            ...(options?.negativePrompt
+              ? { negative_prompt: options.negativePrompt }
+              : {}),
           }),
         });
 

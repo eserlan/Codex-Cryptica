@@ -2,12 +2,7 @@ import type { Entity } from "schema";
 
 /** Columns the Entity Table can be sorted by. */
 export type SortKey =
-  | "title"
-  | "type"
-  | "connections"
-  | "labels"
-  | "created"
-  | "modified";
+  "title" | "type" | "connections" | "labels" | "created" | "modified";
 export type SortDirection = "asc" | "desc";
 
 export interface SortState {
@@ -50,6 +45,14 @@ function firstLabel(entity: Entity): string | undefined {
   return min;
 }
 
+function compareTitles(a: Entity, b: Entity): number {
+  return (a?.title ?? "").localeCompare(b?.title ?? "");
+}
+
+function compareTypes(a: Entity, b: Entity): number {
+  return (a?.type ?? "").localeCompare(b?.type ?? "");
+}
+
 /**
  * Sort entities for the table. Returns a new array; the input is not mutated.
  * Entities missing the sort value (e.g. no created/modified timestamp) always
@@ -69,42 +72,40 @@ export function sortEntities(
         sort.key === "created" ? getEntityCreatedAt : getEntityModifiedAt;
       const av = read(a);
       const bv = read(b);
-      if (av === undefined && bv === undefined)
-        return a.title.localeCompare(b.title);
+      if (av === undefined && bv === undefined) return compareTitles(a, b);
       if (av === undefined) return 1;
       if (bv === undefined) return -1;
       if (av !== bv) return (av - bv) * dir;
-      return a.title.localeCompare(b.title);
+      return compareTitles(a, b);
     }
 
     if (sort.key === "type") {
-      const t = a.type.localeCompare(b.type);
+      const t = compareTypes(a, b);
       if (t !== 0) return t * dir;
-      return a.title.localeCompare(b.title);
+      return compareTitles(a, b);
     }
 
     if (sort.key === "labels") {
       // Compare by first label (alphabetical); unlabeled entities sort last.
       const la = firstLabel(a);
       const lb = firstLabel(b);
-      if (la === undefined && lb === undefined)
-        return a.title.localeCompare(b.title);
+      if (la === undefined && lb === undefined) return compareTitles(a, b);
       if (la === undefined) return 1;
       if (lb === undefined) return -1;
-      const l = la.localeCompare(lb);
+      const l = (la ?? "").localeCompare(lb ?? "");
       if (l !== 0) return l * dir;
-      return a.title.localeCompare(b.title);
+      return compareTitles(a, b);
     }
 
     if (sort.key === "connections") {
       const countA = connectionCounts[a.id]?.total ?? 0;
       const countB = connectionCounts[b.id]?.total ?? 0;
       if (countA !== countB) return (countA - countB) * dir;
-      return a.title.localeCompare(b.title);
+      return compareTitles(a, b);
     }
 
     // title
-    return a.title.localeCompare(b.title) * dir;
+    return compareTitles(a, b) * dir;
   });
 }
 

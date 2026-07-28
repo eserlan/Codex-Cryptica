@@ -17,7 +17,7 @@ describe("PeerJSTransport", () => {
       send: vi.fn(),
       close: vi.fn(),
     };
-    transport = new PeerJSTransport(() => mockPeer);
+    transport = new PeerJSTransport({ peerFactory: () => mockPeer });
   });
 
   it("should start and resolve with peer id", async () => {

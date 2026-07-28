@@ -181,4 +181,15 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["rpg-handout", "news-sheet-generator", "imported-draft"],
     status: "draft",
   },
+  "dungeon-generator": {
+    type: "location",
+    title: "The Submerged Vault of Sunken Runes",
+    summary:
+      "An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.",
+    content:
+      "## Overview\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\n\n## Signature Feature\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.",
+    lore: "### Delve Overview\n- **Scale**: Medium Complex (3-4 Sectors)\n- **Genre**: Classic Fantasy\n- **Original Purpose**: Temple & Shrine\n- **Current State**: Active Monster Lair\n\n### Key Sectors\n- **📍 Sector 1: The Guarded Gateway**: Fortified entry halls with collapse traps.\n- **📍 Sector 2: The Deep Arcana Vault**: Sealed inner chamber housing warding circles.\n\n### Inhabitants & Factions\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\n\n### Hazards & Traps\nPressure-plate needle traps laced with paralyzing wyvern venom.\n\n### Secret\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.",
+    labels: ["dungeon", "location", "dungeon-generator", "imported-draft"],
+    status: "draft",
+  },
 };

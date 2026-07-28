@@ -41,6 +41,7 @@
   <div
     class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-sm w-full shadow-2xl relative z-10"
     onclick={(e) => e.stopPropagation()}
+    onkeydown={(e) => e.stopPropagation()}
     transition:fade={{ duration: 150 }}
     role="dialog"
     aria-modal="true"

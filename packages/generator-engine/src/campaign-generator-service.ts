@@ -1,9 +1,18 @@
-import { getGenerator, isTitleBanned } from "./campaign-generator-registry";
+import {
+  buildCampaignDungeonPrompt,
+  getGenerator,
+  isTitleBanned,
+} from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
+import {
+  buildDungeonRetryMessage,
+  parseDungeonResponseDetailed,
+} from "./public-dungeon";
 import {
   type AIGeneratorGateway,
   type AIGeneratorCompleteResult,
   type AIPolicy,
+  type CampaignGeneratorDefinition,
   type DraftSaveRequest,
   type DraftSaveResult,
   type GeneratedDraft,
@@ -13,9 +22,33 @@ import {
   type SuggestedConnection,
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
+import type { PublicGeneratorOutput } from "./public-generator-adapters";
 
 function completeText(result: string | AIGeneratorCompleteResult): string {
   return typeof result === "string" ? result : result.text;
+}
+
+function normalizeDungeonOutput(
+  output: PublicGeneratorOutput,
+): GeneratorOutput {
+  const summary =
+    output.summary?.trim() ||
+    output.content
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.replace(/^#+\s*/gm, "").trim())
+      .find(Boolean) ||
+    output.lore
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.replace(/^#+\s*/gm, "").trim())
+      .find(Boolean) ||
+    output.title;
+  return {
+    title: output.title,
+    summary,
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+  };
 }
 
 function withGeneratorRequest(input: string, prompt: string): string {
@@ -27,6 +60,25 @@ function withGeneratorRequest(input: string, prompt: string): string {
 
 function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
+}
+
+/**
+ * Translate generator presentation fields into the two fields stored by vault
+ * entities. Dungeon generators expose a player-facing summary, a full keyed
+ * location document, and a separate GM reference; the latter two both belong
+ * in vault lore.
+ */
+export function composeDraftVaultFields(draft: GeneratedDraft): {
+  content: string;
+  lore: string;
+} {
+  return {
+    content: draft.summary || "",
+    lore:
+      draft.sourceGeneratorId === "dungeon"
+        ? [draft.content, draft.lore].filter(Boolean).join("\n\n")
+        : draft.lore || "",
+  };
 }
 
 function promptMetrics(params: {
@@ -160,6 +212,85 @@ export class CampaignGeneratorService {
     this.onPromptMetrics = deps.onPromptMetrics;
   }
 
+  private async generateDungeonWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+  ): Promise<GeneratedDraft | null> {
+    if (!this.aiGateway) return null;
+
+    const prompt = buildCampaignDungeonPrompt(request);
+    const interaction = request.interaction
+      ? {
+          ...request.interaction,
+          input: withGeneratorRequest(
+            request.interaction.input,
+            prompt.userMessage,
+          ),
+          replayPrompt: request.interaction.replayPrompt ?? prompt.userMessage,
+        }
+      : undefined;
+
+    try {
+      const result = await this.aiGateway.complete(
+        prompt.userMessage,
+        prompt.systemInstruction,
+        { interaction },
+      );
+      const first = parseDungeonResponseDetailed(
+        completeText(result),
+        prompt.options,
+        undefined,
+        prompt.resolved,
+      );
+      let output = first.output;
+      let acceptedInteractionResult: AIGeneratorCompleteResult | undefined =
+        typeof result !== "string" && result.usedInteraction
+          ? result
+          : undefined;
+
+      if (first.problems.length > 0) {
+        const retry = await this.aiGateway.complete(
+          buildDungeonRetryMessage(prompt.userMessage, first.problems),
+          prompt.systemInstruction,
+        );
+        const second = parseDungeonResponseDetailed(
+          completeText(retry),
+          prompt.options,
+          undefined,
+          prompt.resolved,
+        );
+        if (second.problems.length === 0 || !second.rejected) {
+          output = second.output;
+          // The corrective retry is stateless. Do not advance the interaction
+          // from the rejected response that it replaced.
+          acceptedInteractionResult = undefined;
+        }
+      }
+
+      if (acceptedInteractionResult) {
+        this.onInteractionResult?.(acceptedInteractionResult);
+      }
+      this.onPromptMetrics?.(
+        promptMetrics({
+          request,
+          fullPrompt: prompt.userMessage,
+          sentPrompt:
+            typeof result !== "string" && result.replayed
+              ? (interaction?.replayPrompt ?? prompt.userMessage)
+              : (interaction?.input ?? prompt.userMessage),
+          usedInteraction: typeof result !== "string" && result.usedInteraction,
+          replayed: typeof result !== "string" && !!result.replayed,
+        }),
+      );
+      return generator.mapOutputToDraft(
+        normalizeDungeonOutput(output),
+        request,
+      );
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Produce a transient draft. When `useAI` is true and both AI policy and
    * gateway are available, calls the AI gateway and parses JSON output.
@@ -192,7 +323,15 @@ export class CampaignGeneratorService {
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
-    if (canUseAI && this.aiGateway) {
+    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "dungeon") {
+      const dungeonDraft = await this.generateDungeonWithAI(
+        generator,
+        mergedRequest,
+      );
+      if (dungeonDraft) return dungeonDraft;
+    }
+
+    if (canUseAI && this.aiGateway && mergedRequest.generatorId !== "dungeon") {
       const fullPrompt = generator.buildPrompt({
         ...mergedRequest,
         interaction: undefined,
@@ -295,14 +434,18 @@ export class CampaignGeneratorService {
       );
     }
 
+    const vaultFields = composeDraftVaultFields(draft);
     const entityId = await this.vault.createEntity(
       draft.entityType,
       draft.title,
       {
-        content: draft.summary,
-        lore: draft.lore,
+        ...vaultFields,
         labels: draft.labels,
-        kind: draft.sourceGeneratorId === "language" ? "language" : undefined,
+        kind:
+          draft.sourceGeneratorId === "language" ||
+          draft.sourceGeneratorId === "dungeon"
+            ? draft.sourceGeneratorId
+            : undefined,
         ...(request.start_date ? { start_date: request.start_date } : {}),
       },
     );

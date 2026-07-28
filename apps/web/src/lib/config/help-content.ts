@@ -113,7 +113,75 @@ export const ONBOARDING_TOUR: GuideStep[] = [
   },
 ];
 
+export interface CoachMark {
+  id: string;
+  icon: string;
+  title: string;
+  body: string;
+  targetSelector: string;
+}
+
+/**
+ * Mobile-only graph coach marks (GraphView.svelte).
+ *
+ * Deliberately `isMobile`-scoped, NOT extended to touch tablets: this content
+ * and its targets are mobile-chrome-specific — the bottom ActivityBar,
+ * GraphToolbar's collapsed FAB, and AppHeader's collapsed search icon all
+ * only render in that exact form below the `md` (768px) breakpoint. A touch
+ * tablet (769-1279px) gets the desktop side-rail ActivityBar, GraphToolbar's
+ * full inline toolbar (no FAB — it only collapses on `isMobile`), and —
+ * depending on width — either the collapsed or full search input (AppHeader
+ * collapses at `lg`, 1024px, which cuts through the middle of the tablet
+ * range). None of that matches what these marks describe.
+ *
+ * `targetSelector` identifies the real element each mark describes, so it
+ * can be spotlighted — otherwise the card is just floating text with nothing
+ * visually tying it to the button/bar in question (#1785 follow-up: a user
+ * couldn't tell which "dark button" the graph-controls step meant, and the
+ * card was even briefly found to sit ON TOP of that exact button).
+ *
+ * Lives here (not inline in GraphView.svelte) so a selector-drift contract
+ * test can assert every targetSelector still resolves to a real element —
+ * the exact bug class that broke the main tour (#1787).
+ */
+export const COACH_MARKS: CoachMark[] = [
+  {
+    id: "activity-bar",
+    icon: "icon-[lucide--layout-grid]",
+    title: "Views & tools",
+    body: "Switch between Graph, Map, Canvas and more from the bar at the bottom.",
+    targetSelector: '[data-testid="activity-bar"]',
+  },
+  {
+    id: "graph-fab",
+    icon: "icon-[lucide--sliders-horizontal]",
+    title: "Graph controls",
+    body: "The dark button opens layout, filters, and display options for the graph.",
+    targetSelector: '[data-testid="graph-controls-fab"]',
+  },
+  {
+    id: "graph-search",
+    icon: "icon-[lucide--search]",
+    title: "Find anything",
+    body: "Tap the search icon to jump to any entity by name.",
+    targetSelector: '[data-testid="mobile-search-button"]',
+  },
+];
+
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "touch-graph-gestures": {
+    id: "touch-graph-gestures",
+    title: "Touch gestures",
+    content: "Drag to pan, pinch to zoom, and tap a node to open it.",
+    icon: "icon-[lucide--hand]",
+  },
+  "getting-started": {
+    id: "getting-started",
+    title: "New here?",
+    content:
+      "Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
+    icon: "icon-[lucide--compass]",
+  },
   "lore-oracle": {
     id: "lore-oracle",
     title: "AI Oracle",
@@ -181,7 +249,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "cif-importer",
     title: "Codex Interchange Format (CIF) Import",
     content:
-      "Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
+      "Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too — it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
     icon: "icon-[lucide--file-json-2]",
   },
   "search-indexing": {
@@ -317,6 +385,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.",
     icon: "icon-[lucide--brush]",
   },
+  "image-stature": {
+    id: "image-stature",
+    title: "Drawing Gods and Legends",
+    content:
+      "A picture of a god should not look like a picture of a villager. Label an entity 'deity', 'god', 'divine', 'immortal' or 'titan' and its images are drawn in materials beyond mortal making, lit from within, and framed from below. 'legendary' or 'demigod' does the same a step down. Everything else is drawn as ordinary, and the entity panel shows which one is in effect. You can also set it for a single picture under Advanced art direction when you review a prompt.",
+    icon: "icon-[lucide--sparkles]",
+  },
   "demo-mode": {
     id: "demo-mode",
     title: "Demo Mode",
@@ -391,7 +466,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases), and sort by name or last edited time in either direction. Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {
@@ -475,7 +550,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "in-app-generators",
     title: "Campaign Generators",
     content:
-      "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+      "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
   "entity-timeline": {
@@ -505,6 +580,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
     icon: "icon-[lucide--newspaper]",
+  },
+  "dungeon-generator": {
+    id: "dungeon-generator",
+    title: "Dungeon & Delve Generator",
+    content:
+      "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
+    icon: "icon-[lucide--castle]",
+  },
+  "delve-structural-builder": {
+    id: "delve-structural-builder",
+    title: "Delve Spatial Canvas Builder",
+    content:
+      "Transform dungeon concepts into interactive spatial canvas maps. Open a generated dungeon concept and click 'Build Delve on Canvas' to create a .canvas layout with sector group frames, tactical Area role badges, custom passages (hidden, locked, vertical), and context-aware stocking. Every new delve ends with a dedicated Climax Area chosen by AI from the Location's established canon. Its editor records what is at stake, the players' decision, and possible outcomes, so the finale can be a confrontation, negotiation, ritual, revelation, crisis, siege, escape, or another decisive turn rather than a required boss fight. When the layout is ready, use Finalize Dossier to create a linked GM Note containing the original briefing, every populated sector and Area, room-level connections, climax outcomes, a fitted image of the complete map, and a link back to the canvas. Finalize again after edits to refresh the image and update the same Note.",
+    icon: "icon-[lucide--map]",
   },
 };
 

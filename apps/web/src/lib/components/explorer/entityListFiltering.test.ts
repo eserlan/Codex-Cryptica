@@ -78,6 +78,32 @@ describe("entityListFiltering pure functions", () => {
       expect(result.map((r) => r.id)).toEqual(["e2", "e1"]); // Sorted alphabetically by title: "Castle Guard", "City Guard"
     });
 
+    it("should safely sort entities with missing or undefined titles without throwing", () => {
+      const entitiesWithUndefinedTitles = [
+        ...mockEntities,
+        {
+          id: "e-no-title",
+          title: undefined as any,
+          type: "npc",
+          status: "active" as const,
+          content: "",
+          labels: [],
+          tags: [],
+          aliases: [],
+          connections: [],
+          updatedAt: 0,
+        },
+      ];
+      const result = filterEntities(entitiesWithUndefinedTitles, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+      });
+      expect(result.length).toBe(5);
+    });
+
     it("should filter by typeFilters", () => {
       const result = filterEntities(mockEntities, {
         searchQuery: "",

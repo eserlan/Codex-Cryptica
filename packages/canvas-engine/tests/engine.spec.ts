@@ -117,4 +117,16 @@ describe("CanvasStore", () => {
     // No-op but coverage met
     expect(true).toBe(true);
   });
+
+  it("uses custom IdGenerator for node and edge IDs when provided", () => {
+    let count = 0;
+    const mockIdGen = { uuid: () => `deterministic-${++count}` };
+    const store = new CanvasStore(undefined, { idGenerator: mockIdGen });
+
+    const nodeId = store.addNode("e1", { x: 0, y: 0 });
+    const edgeId = store.addEdge(nodeId, "other-node");
+
+    expect(nodeId).toBe("node-deterministic-1");
+    expect(edgeId).toBe("edge-deterministic-2");
+  });
 });

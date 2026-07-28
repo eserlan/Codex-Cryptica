@@ -12,6 +12,7 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/runtime": "workspace:*",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "vite": "^8.0.14",
     "zod": "^4.4.3"
@@ -26,7 +27,7 @@
     "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^10.7.0",
     "schema": "workspace:*",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   }
 }

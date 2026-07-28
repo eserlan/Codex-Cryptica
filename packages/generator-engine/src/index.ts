@@ -23,6 +23,7 @@ export {
   adaptNomadClan,
   adaptShip,
   adaptLanguage,
+  adaptDungeon,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
@@ -153,8 +154,30 @@ export {
   type NewsSheetPrompt,
 } from "./public-news-sheet";
 export {
+  buildDungeonPrompt,
+  buildDungeonRetryMessage,
+  collectSessionNames,
+  collectSessionTraits,
+  parseDungeonResponse,
+  parseDungeonResponseDetailed,
+  type DungeonParseResult,
+  generateDungeonLocal,
+  dungeonConfig,
+  forGenre as forDungeonGenre,
+  type DungeonGeneratorOptions,
+  type DungeonPrompt,
+  type DungeonSector,
+  type ResolvedDungeon,
+} from "./public-dungeon";
+export {
+  buildDelveDossier,
+  type DelveDossier,
+  type DelveDossierInput,
+} from "./dungeon/delve-dossier";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
+  composeDraftVaultFields,
   DraftSaveError,
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,
@@ -168,3 +191,4 @@ export {
   type GeneratorAcceptedEntity,
 } from "./generator-session";
 export * from "./session-hub-helpers";
+export * from "./dungeon";

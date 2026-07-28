@@ -5,7 +5,11 @@ import type {
 } from "../types";
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
-import type { OracleGenerator } from "../oracle-generator";
+import type {
+  OracleGenerator,
+  VisualizationPromptInput,
+  VisualizationPromptOptions,
+} from "../oracle-generator";
 import type { Clock, IdGenerator } from "../runtime";
 
 export class VisualizationExecutor
@@ -69,8 +73,12 @@ export class VisualizationExecutor
     if (!generator) throw new Error("Generator not available in context.");
 
     try {
-      const blob = await generator.generateEntityVisualization(
+      const prepared = await generator.prepareEntityVisualizationPrompt(
         entityId,
+        context,
+      );
+      const blob = await generator.generateVisualizationFromPrompt(
+        prepared,
         context,
       );
 
@@ -93,6 +101,13 @@ export class VisualizationExecutor
         await context.vault.updateEntity(entityId, {
           image,
           thumbnail,
+          imageArtDirection: {
+            ...prepared.metadata,
+            prompt: prepared.prompt,
+            negativePrompt: prepared.negativeTerms.join(", ") || undefined,
+            provider: context.imageProvider,
+            generatedAt: this.clock.now(),
+          },
         });
       }
     } catch (err: any) {
@@ -103,8 +118,17 @@ export class VisualizationExecutor
           role: "assistant",
           content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
         });
+        // Recorded as generation provenance, not as `artDirection`: that field
+        // is user-authored style direction and now overrides the theme layer,
+        // so storing a fully composed prompt there would duplicate the
+        // category and camera layers on the next generation.
         await context.vault.updateEntity(entityId, {
-          artDirection: prompt,
+          imageArtDirection: {
+            artDirectionVersion: 2,
+            prompt,
+            provider: context.imageProvider,
+            generatedAt: this.clock.now(),
+          },
         });
         return;
       }
@@ -115,7 +139,7 @@ export class VisualizationExecutor
   async prepareEntityPrompt(
     entityId: string,
     context: OracleExecutionContext,
-    options: { ignoreSavedArtDirection?: boolean } = {},
+    options: VisualizationPromptOptions = {},
   ) {
     const entity = context.vault.entities[entityId];
     if (!entity) return null;
@@ -132,7 +156,7 @@ export class VisualizationExecutor
 
   async generateEntityFromPrompt(
     entityId: string,
-    prompt: string,
+    prompt: VisualizationPromptInput,
     context: OracleExecutionContext,
   ) {
     const entity = context.vault.entities[entityId];
@@ -235,6 +259,7 @@ export class VisualizationExecutor
   async prepareMessagePrompt(
     messageId: string,
     context: OracleExecutionContext,
+    options: VisualizationPromptOptions = {},
   ) {
     const msgIndex = context.chatHistory.messages.findIndex(
       (m: any) => m.id === messageId,
@@ -247,12 +272,13 @@ export class VisualizationExecutor
     return generator.prepareMessageVisualizationPrompt(
       context.chatHistory.messages[msgIndex],
       context,
+      options,
     );
   }
 
   async generateMessageFromPrompt(
     messageId: string,
-    prompt: string,
+    prompt: VisualizationPromptInput,
     context: OracleExecutionContext,
   ) {
     const msgIndex = context.chatHistory.messages.findIndex(

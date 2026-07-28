@@ -1,13 +1,4 @@
-const randomUUID = () => {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 import type { CCImportPackage, ImportWarning, EntityDraft } from "./package";
 import { validatePackage } from "./validate";
 import {
@@ -50,6 +41,7 @@ export interface ImportEngineOptions {
   /** Overrides identity derivation (default: buildEntitySourceRef). CIF uses a kind-independent, injective builder. */
   sourceRefBuilder?: SourceRefBuilder;
   updatePolicy?: UpdatePolicy;
+  idGenerator?: IdGenerator;
 }
 
 function dedupeStrings(values: string[]): string[] {
@@ -62,10 +54,12 @@ export interface ImportEngineDeps {
 
 export class ImportEngine {
   private writer: VaultWriter;
-  private options: Required<ImportEngineOptions>;
+  private options: Required<Omit<ImportEngineOptions, "idGenerator">>;
+  private idGenerator: IdGenerator;
 
   constructor(deps: ImportEngineDeps, options: ImportEngineOptions = {}) {
     this.writer = deps.writer;
+    this.idGenerator = options.idGenerator ?? systemIdGenerator;
     this.options = {
       mappingRules: options.mappingRules ?? DEFAULT_MAPPING_RULES,
       maxAssetBytes: options.maxAssetBytes ?? DEFAULT_MAX_ASSET_BYTES,
@@ -168,7 +162,7 @@ export class ImportEngine {
     });
 
     return {
-      id: randomUUID(),
+      id: this.idGenerator.uuid(),
       sourceSystem: pkg.sourceSystem,
       sourceLabel: pkg.sourceLabel,
       items,

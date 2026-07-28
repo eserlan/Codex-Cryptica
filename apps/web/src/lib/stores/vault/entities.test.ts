@@ -102,6 +102,16 @@ describe("Vault Entities Operations", () => {
       );
       expect(entity.parent).toBe("parent-id");
     });
+
+    it("keeps the explicit type when initialData carries an unrelated `kind` sub-classification (e.g. SEO language drafts)", () => {
+      const entity = createEntity(
+        "Elvish Glossary",
+        "note",
+        { kind: "language" } as any,
+        {},
+      );
+      expect(entity.type).toBe("note");
+    });
   });
 
   describe("updateEntity", () => {

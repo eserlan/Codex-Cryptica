@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 (global as any).$state = (value: any) => value;
 
 import { LayoutUIStore } from "./layout-ui.svelte";
-import { focusEntity } from "./navigation";
+import { focusEntity, openCanvasFromZen, openCanvasHref } from "./navigation";
 import { UIPersistence } from "./persistence";
 
 describe("focusEntity — ownership rules", () => {
@@ -44,6 +44,79 @@ describe("focusEntity — ownership rules", () => {
     focusEntity(layout, "e2", vault);
     focusEntity(layout, null, vault);
     expect(vault.selectedEntityId).toBe("e2");
+  });
+});
+
+describe("openCanvasFromZen", () => {
+  it("captures the canvas route before closing reactive Zen state", () => {
+    const canvas = { id: "canvas-1", slug: "hollowed-citadel" };
+    const navigate = vi.fn();
+    const layout = new LayoutUIStore(new UIPersistence(), null);
+    layout.openEntityExplorerWorkspace("entity-1");
+    const zenMode = {
+      closeZenMode: vi.fn(() => {
+        canvas.id = "";
+        canvas.slug = "";
+      }),
+    };
+
+    expect(openCanvasFromZen(canvas, navigate, zenMode, layout)).toBe(true);
+    expect(zenMode.closeZenMode).toHaveBeenCalledOnce();
+    expect(layout.mainViewMode).toBe("visualization");
+    expect(layout.focusedEntityId).toBeNull();
+    expect(navigate).toHaveBeenCalledWith("/canvas/hollowed-citadel");
+  });
+
+  it("does not close Zen Mode or navigate without a canvas route", () => {
+    const navigate = vi.fn();
+    const zenMode = { closeZenMode: vi.fn() };
+    const layout = new LayoutUIStore(new UIPersistence(), null);
+    layout.openEntityExplorerWorkspace("entity-1");
+
+    expect(openCanvasFromZen({}, navigate, zenMode, layout)).toBe(false);
+    expect(zenMode.closeZenMode).not.toHaveBeenCalled();
+    expect(layout.mainViewMode).toBe("focus");
+    expect(layout.focusedEntityId).toBe("entity-1");
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe("openCanvasHref", () => {
+  it("opens an internal canvas link through canvas navigation", () => {
+    const navigate = vi.fn();
+    const zenMode = { closeZenMode: vi.fn() };
+    const layout = new LayoutUIStore(new UIPersistence(), null);
+    layout.openEntityExplorerWorkspace("entity-1");
+
+    expect(
+      openCanvasHref("/canvas/the-glass-sanctuary", navigate, zenMode, layout),
+    ).toBe(true);
+    expect(zenMode.closeZenMode).toHaveBeenCalledOnce();
+    expect(layout.focusedEntityId).toBeNull();
+    expect(navigate).toHaveBeenCalledWith("/canvas/the-glass-sanctuary");
+  });
+
+  it("ignores external, unrelated, and malformed links", () => {
+    const navigate = vi.fn();
+    const zenMode = { closeZenMode: vi.fn() };
+    const layout = new LayoutUIStore(new UIPersistence(), null);
+
+    expect(
+      openCanvasHref(
+        "https://example.com/canvas/other",
+        navigate,
+        zenMode,
+        layout,
+      ),
+    ).toBe(false);
+    expect(
+      openCanvasHref("/entities/location-1", navigate, zenMode, layout),
+    ).toBe(false);
+    expect(openCanvasHref("/canvas/%E0%A4%A", navigate, zenMode, layout)).toBe(
+      false,
+    );
+    expect(navigate).not.toHaveBeenCalled();
+    expect(zenMode.closeZenMode).not.toHaveBeenCalled();
   });
 });
 

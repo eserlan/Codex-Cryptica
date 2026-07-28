@@ -25,8 +25,10 @@
   const existingTitles = $derived.by(() => {
     const names = new Set<string>();
     for (const entity of vault.allEntities) {
-      names.add(entity.title);
-      for (const alias of entity.aliases ?? []) names.add(alias);
+      if (entity.title) names.add(entity.title);
+      for (const alias of entity.aliases ?? []) {
+        if (alias) names.add(alias);
+      }
     }
     return names;
   });
@@ -35,8 +37,9 @@
   );
   const proposals = $derived(
     extractProposals(content, existingTitles)
-      .filter((title) => !title.toLowerCase().endsWith("'s"))
-      .filter((title) => !ignoredTitles.has(title.toLowerCase())),
+      .filter((title) => Boolean(title))
+      .filter((title) => !(title ?? "").toLowerCase().endsWith("'s"))
+      .filter((title) => !ignoredTitles.has((title ?? "").toLowerCase())),
   );
   let draftingTitle = $state<string | null>(null);
 

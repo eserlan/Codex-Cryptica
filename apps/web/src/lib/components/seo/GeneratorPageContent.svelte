@@ -2,6 +2,8 @@
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { hubContext } from "$lib/stores/hub-context.svelte";
+  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { collectSessionNames, collectSessionTraits } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -20,6 +22,7 @@
   import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
   import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
+  import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -38,6 +41,7 @@
     shipConfig,
     languageConfig,
     newsSheetConfig,
+    dungeonConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -266,6 +270,14 @@
     campaignContext: "",
   });
 
+  let dungeon = $state({
+    genre: factionConfig.themes[0],
+    purpose: dungeonConfig.purposes[0],
+    currentState: dungeonConfig.currentStates[0],
+    scale: dungeonConfig.scales[1],
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -306,6 +318,7 @@
     else if (slug === "news-sheet-generator")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+    else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
   });
 
   onMount(() => {
@@ -463,6 +476,15 @@
       generatorEngine.generateLanguage({ ...language, useAI }),
     "news-sheet-generator": (useAI) =>
       generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
+    "dungeon-generator": (useAI) =>
+      generatorEngine.generateDungeon({
+        ...dungeon,
+        useAI,
+        // Names already drafted this session, so the model does not fall back
+        // on the same faction it invented for the last delve.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+        avoidTraits: collectSessionTraits(sessionHubStore.entities),
+      }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -670,6 +692,15 @@
         bind:placeName={newsSheet.placeName}
         bind:headlineEvent={newsSheet.headlineEvent}
         bind:campaignContext={newsSheet.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "dungeon-generator"}
+      <DungeonFormFields
+        bind:theme={activeTheme}
+        bind:purpose={dungeon.purpose}
+        bind:currentState={dungeon.currentState}
+        bind:scale={dungeon.scale}
+        bind:campaignContext={dungeon.campaignContext}
         onSurprise={trigger}
       />
     {/if}

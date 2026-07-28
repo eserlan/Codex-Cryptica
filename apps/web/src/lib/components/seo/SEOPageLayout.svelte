@@ -164,7 +164,9 @@
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
-        href="{cleanBase}/"
+        href="{cleanBase}/?utm_source={type === 'comparison'
+          ? 'vs-logo'
+          : 'solution-logo'}&utm_medium=nav&utm_campaign=seo-funnel"
         class="flex items-center gap-2 group min-w-0"
         id="logo-link"
       >
@@ -205,9 +207,9 @@
       </nav>
       <div class="shrink-0">
         <a
-          href="{cleanBase}/?ref={type === 'comparison'
+          href="{cleanBase}/?utm_source={type === 'comparison'
             ? 'vs-nav'
-            : 'solution-nav'}"
+            : 'solution-nav'}&utm_medium=nav&utm_campaign=seo-funnel"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
@@ -257,9 +259,9 @@
     {/each}
     <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
       <a
-        href="{cleanBase}/?ref={type === 'comparison'
+        href="{cleanBase}/?utm_source={type === 'comparison'
           ? 'vs-hero'
-          : 'solution-hero'}"
+          : 'solution-hero'}&utm_medium=hero-cta&utm_campaign=seo-funnel"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap"
         id="hero-primary-cta"
       >
@@ -616,9 +618,9 @@
           : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
       <a
-        href="{cleanBase}/?ref={type === 'comparison'
+        href="{cleanBase}/?utm_source={type === 'comparison'
           ? 'vs-footer'
-          : 'solution-footer'}"
+          : 'solution-footer'}&utm_medium=footer-cta&utm_campaign=seo-funnel"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all whitespace-nowrap"
         id="footer-cta-btn"
       >

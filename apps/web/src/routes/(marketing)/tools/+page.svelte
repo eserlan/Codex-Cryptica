@@ -114,6 +114,13 @@
               icon: "icon-[lucide--landmark]",
             },
             {
+              href: "/generators/dungeon-generator",
+              label: "Dungeon & Delve Generator",
+              summary:
+                "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
+              icon: "icon-[lucide--layers]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:
@@ -293,10 +300,17 @@
     {
       title: "Migration & Imports",
       description:
-        "Client-side drag-and-drop parsers to preview and import campaign vaults from other services.",
+        "Client-side drag-and-drop parsers to preview and import campaign vaults from other services. See the full Migration Hub for every option in one place.",
       groups: [
         {
           links: [
+            {
+              href: "/migrations",
+              label: "Migration Hub",
+              summary:
+                "Every supported import source in one place — pick the tool you're migrating from.",
+              icon: "icon-[lucide--folder-input]",
+            },
             {
               href: "/import/obsidian-vault",
               label: "Obsidian Vault Importer",
@@ -325,44 +339,19 @@
                 "Extract LegendKeeper visual maps and slate blocks into clean, parent-child markdown folders.",
               icon: "icon-[lucide--folder-tree]",
             },
-          ],
-        },
-      ],
-    },
-    {
-      title: "Migration & Importer Hubs",
-      description:
-        "Migrate your campaign notes, wikis, and databases from other worldbuilding tools into local Codex Cryptica vaults.",
-      groups: [
-        {
-          links: [
             {
-              href: "/import/obsidian-vault",
-              label: "Obsidian Vault Importer",
+              href: "/import/scabard",
+              label: "Scabard Importer",
               summary:
-                "Import your Obsidian campaign vault. Convert Markdown files, wiki-links, and YAML frontmatter into Codex.",
-              icon: "icon-[lucide--folder-down]",
+                "Convert Scabard campaign JSON exports — pages, categories, and connections — into your vault.",
+              icon: "icon-[lucide--shapes]",
             },
             {
-              href: "/import/world-anvil-export",
-              label: "World Anvil Importer",
+              href: "/import/thread-weaver",
+              label: "Thread Weaver Importer",
               summary:
-                "Extract your campaign lore from World Anvil backup JSON exports and preview them offline.",
-              icon: "icon-[lucide--download-cloud]",
-            },
-            {
-              href: "/import/kanka-json",
-              label: "Kanka Importer",
-              summary:
-                "Upload your Kanka campaign JSON export to import characters, locations, factions, and items.",
-              icon: "icon-[lucide--download]",
-            },
-            {
-              href: "/import/legendkeeper-json",
-              label: "LegendKeeper Importer",
-              summary:
-                "Convert your LegendKeeper JSON project backups into offline campaign notes.",
-              icon: "icon-[lucide--file-archive]",
+                "Bring a Thread Weaver Engine campaign export's characters, factions, and settlements into Codex.",
+              icon: "icon-[lucide--network]",
             },
           ],
         },

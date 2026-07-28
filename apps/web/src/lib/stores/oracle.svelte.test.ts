@@ -111,7 +111,9 @@ vi.mock("@codex/ai-engine", () => ({
   },
   imageGenerationService: {
     generateImage: vi.fn().mockResolvedValue(new Blob()),
-    distillVisualPrompt: vi.fn().mockResolvedValue("visual prompt"),
+    distillVisualSubject: vi
+      .fn()
+      .mockResolvedValue({ subject: "visual prompt" }),
   },
   interactionSessions: {
     enabled: true,
@@ -634,7 +636,7 @@ describe("OracleStore", () => {
 
       // Image generation methods
       expect(context.imageGeneration).toBeDefined();
-      expect(typeof context.imageGeneration.distillVisualPrompt).toBe(
+      expect(typeof context.imageGeneration.distillVisualSubject).toBe(
         "function",
       );
       expect(typeof context.imageGeneration.generateImage).toBe("function");

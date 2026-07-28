@@ -5,6 +5,7 @@ import type {
 } from "./transport-interface";
 import type { TransportErrorPayload } from "./transport-events";
 import { createPeer, type PeerFactory } from "../peer-factory";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 const MAX_GUESTS = 10;
 
@@ -14,9 +15,13 @@ export class PeerJSTransport implements P2PTransport {
   private _connections: P2PConnection[] = [];
   private listeners: Record<string, ((payload: any) => void)[]> = {};
   private readonly peerFactory: PeerFactory;
+  private readonly idGenerator: IdGenerator;
 
-  constructor(peerFactory: PeerFactory = createPeer) {
-    this.peerFactory = peerFactory;
+  constructor(
+    deps: { peerFactory?: PeerFactory; idGenerator?: IdGenerator } = {},
+  ) {
+    this.peerFactory = deps.peerFactory ?? createPeer;
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
   }
 
   get id() {
@@ -30,7 +35,7 @@ export class PeerJSTransport implements P2PTransport {
     return this.peer;
   }
 
-  async start(peerId: string = crypto.randomUUID()): Promise<string> {
+  async start(peerId: string = this.idGenerator.uuid()): Promise<string> {
     if (this.peer) return this._id!;
 
     return new Promise((resolve, reject) => {

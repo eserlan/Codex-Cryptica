@@ -248,11 +248,11 @@ export class TimelineStore {
       const aSort = a.sortKey ?? Number.MAX_SAFE_INTEGER;
       const bSort = b.sortKey ?? Number.MAX_SAFE_INTEGER;
       if (aSort !== bSort) return aSort - bSort;
-      const t = a.title.localeCompare(b.title, undefined, {
+      const t = (a.title ?? "").localeCompare(b.title ?? "", undefined, {
         sensitivity: "base",
       });
       if (t !== 0) return t;
-      return a.entityId.localeCompare(b.entityId, undefined, {
+      return (a.entityId ?? "").localeCompare(b.entityId ?? "", undefined, {
         sensitivity: "base",
       });
     });
@@ -264,7 +264,7 @@ export class TimelineStore {
       for (const label of entry.labels ?? []) labels.add(label);
     }
     return [...labels].sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" }),
+      (a ?? "").localeCompare(b ?? "", undefined, { sensitivity: "base" }),
     );
   });
 
@@ -285,7 +285,9 @@ export class TimelineStore {
       }
     }
     return [...items.values()].sort((a, b) =>
-      a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+      (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+        sensitivity: "base",
+      }),
     );
   });
 

@@ -35,46 +35,45 @@ describe("DefaultImageGenerationService", () => {
       visualDistillation,
       "buildVisualCanonResolutionPrompt",
     ).mockReturnValue("canon-res-prompt");
-    vi.spyOn(
-      visualDistillation,
-      "buildVisualPromptGenerationPrompt",
-    ).mockReturnValue("prompt-gen-prompt");
+    vi.spyOn(visualDistillation, "buildVisualSubjectPrompt").mockReturnValue(
+      "prompt-gen-prompt",
+    );
   });
 
-  describe("distillVisualPrompt", () => {
+  describe("distillVisualSubject", () => {
     it("should return query early if AI is disabled", async () => {
       vi.spyOn(capabilityGuard, "isAIEnabled").mockReturnValue(false);
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "ctx",
         "model",
       );
-      expect(result).toBe("query");
+      expect(result.subject).toBe("query");
     });
 
     it("should return query early if context is missing", async () => {
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "",
         "model",
       );
-      expect(result).toBe("query");
+      expect(result.subject).toBe("query");
     });
 
     it("should preserve a resolved art direction query when context is missing", async () => {
       const resolvedPrompt =
         "Almos, full-body character concept art with readable silhouette";
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         resolvedPrompt,
         "",
         "model",
       );
 
-      expect(result).toBe(resolvedPrompt);
+      expect(result.subject).toBe(resolvedPrompt);
     });
 
     it("should return distilled text on success", async () => {
@@ -86,13 +85,13 @@ describe("DefaultImageGenerationService", () => {
           response: { text: () => " distilled result " },
         });
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "ctx",
         "model",
       );
-      expect(result).toBe("distilled result");
+      expect(result.subject).toBe("distilled result");
       expect(mockAiClientManager.getModel).toHaveBeenCalledWith("key", "model");
     });
 
@@ -103,13 +102,76 @@ describe("DefaultImageGenerationService", () => {
         })
         .mockRejectedValueOnce(new Error("Gemini Error"));
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "key",
         "query",
         "ctx",
         "model",
       );
-      expect(result).toBe("canon summary");
+      expect(result.subject).toBe("canon summary");
+    });
+
+    it("reads the stature line out of the canon summary and strips it", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: {
+            text: () =>
+              "worshipped at every crossroads shrine\nSTATURE: divine",
+          },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "tall figures in flowing garments" },
+        });
+
+      const result = await service.distillVisualSubject(
+        "key",
+        "query",
+        "ctx",
+        "model",
+      );
+
+      expect(result.stature).toBe("divine");
+      expect(result.subject).toBe("tall figures in flowing garments");
+      // The line is direction for the composer, not for the subject writer.
+      const subjectPrompt = mockModel.generateContent.mock.calls[1][0];
+      expect(subjectPrompt).not.toContain("STATURE:");
+    });
+
+    it("treats an unreadable classification as no signal", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "canon summary\nSTATURE: extremely epic" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "distilled result" },
+        });
+
+      const result = await service.distillVisualSubject(
+        "key",
+        "query",
+        "ctx",
+        "model",
+      );
+
+      expect(result.stature).toBeUndefined();
+    });
+
+    it("keeps the stature when stage 2 fails", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "canon summary\nSTATURE: mythic" },
+        })
+        .mockRejectedValueOnce(new Error("Gemini Error"));
+
+      const result = await service.distillVisualSubject(
+        "key",
+        "query",
+        "ctx",
+        "model",
+      );
+
+      expect(result.subject).toBe("canon summary");
+      expect(result.stature).toBe("mythic");
     });
   });
 
@@ -335,6 +397,32 @@ describe("DefaultImageGenerationService", () => {
       expect(await blob.text()).toBe("cloudflare-image");
     });
 
+    it("should request the composed aspect ratio rather than a fixed square", async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            result: { image: "Y2xvdWRmbGFyZS1pbWFnZQ==" },
+          }),
+      });
+
+      await service.generateImage(
+        "cf-token",
+        "prompt, 2:3 portrait framing",
+        "@cf/black-forest-labs/flux-1-schnell",
+        {
+          provider: "cloudflare",
+          cloudflareAccountId: "cf-account-id",
+          dimensions: { width: 832, height: 1216 },
+        },
+      );
+
+      const body = (global.fetch as any).mock.calls[0][1].body as FormData;
+      expect(body.get("width")).toBe("832");
+      expect(body.get("height")).toBe("1216");
+    });
+
     it("should generate an image via proxy Cloudflare Workers AI when account ID is not provided", async () => {
       const mockImageData = "cHJveHktY2xvdWRmbGFyZS1pbWFnZQ=="; // "proxy-cloudflare-image" in base64
       (global.fetch as any).mockResolvedValue({
@@ -367,6 +455,42 @@ describe("DefaultImageGenerationService", () => {
       );
       expect(blob).toBeInstanceOf(Blob);
       expect(await blob.text()).toBe("proxy-cloudflare-image");
+    });
+
+    it("should send the composed dimensions and negatives through the proxy", async () => {
+      // Neither was sent before, so every proxy image came back square with no
+      // negative direction at all.
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ result: { image: "aW1n" } }),
+      });
+
+      await service.generateImage("", "prompt", "@cf/model", {
+        provider: "cloudflare",
+        dimensions: { width: 832, height: 1216 },
+        negativePrompt: "watermark, extra fingers",
+      });
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.width).toBe(832);
+      expect(body.height).toBe(1216);
+      expect(body.negative_prompt).toBe("watermark, extra fingers");
+    });
+
+    it("should send the composed dimensions to a custom provider", async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ b64_json: "aW1n" }] }),
+      });
+
+      await service.generateImage("key", "prompt", "model", {
+        provider: "custom",
+        dimensions: { width: 1216, height: 832 },
+      });
+
+      const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+      expect(body.width).toBe(1216);
+      expect(body.height).toBe(832);
     });
 
     it("should preserve proxy Cloudflare daily image limit guidance", async () => {

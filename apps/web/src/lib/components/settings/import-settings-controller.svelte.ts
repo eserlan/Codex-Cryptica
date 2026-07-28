@@ -38,6 +38,8 @@ import {
   normalizeCifPackage,
   cifSourceRefBuilder,
   CIF_MAPPING_RULES,
+  isThreadWeaverExport,
+  convertThreadWeaverJsonToCif,
 } from "@codex/importer";
 import type {
   ChronicaExportDocument,
@@ -305,11 +307,45 @@ export class ImportSettingsController {
   }
 
   /**
+   * A raw Thread Weaver campaign export (not yet converted to CIF). Detected
+   * separately from — and after — `looksLikeCifFile`, so a real `.cif.json`
+   * always takes that dedicated path first.
+   */
+  private async looksLikeThreadWeaverFile(file: File): Promise<boolean> {
+    if (!file.name.toLowerCase().endsWith(".json")) return false;
+    try {
+      const parsed = JSON.parse(await file.text());
+      return isThreadWeaverExport(parsed);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * CIF is a single self-contained package (FR-001): parse + validate fully
    * before opening review (FR-003), never mutating the vault on failure or
    * cancellation (FR-009). Guests never reach the flow (FR-019).
    */
   private async handleCifFile(file: File, signal: AbortSignal) {
+    await this.handleCifSource(
+      {
+        fileName: file.name,
+        size: file.size,
+        text: () => file.text(),
+        bytes: async () => new Uint8Array(await file.arrayBuffer()),
+      },
+      file.name,
+      signal,
+    );
+  }
+
+  /**
+   * Users shouldn't need to run the conversion script themselves: a raw
+   * Thread Weaver export is converted to a CIF package in-browser (the same
+   * pure `convertThreadWeaverJsonToCif` the CLI script wraps), then handed
+   * to the exact same parse/validate/review pipeline as a real `.cif.json`.
+   */
+  private async handleThreadWeaverFile(file: File, signal: AbortSignal) {
     if (this.deps.vault.isGuest) {
       this.rejectedFiles.push({
         name: file.name,
@@ -320,18 +356,60 @@ export class ImportSettingsController {
     }
 
     this.importMode = "cc";
+    this.statusMessage = "Converting Thread Weaver export...";
+
+    let convertedText: string;
+    try {
+      const raw = JSON.parse(await file.text());
+      convertedText = JSON.stringify(convertThreadWeaverJsonToCif(raw));
+    } catch (error) {
+      this.rejectedFiles.push({
+        name: file.name,
+        reason:
+          error instanceof Error
+            ? error.message
+            : "Failed to convert Thread Weaver export",
+      });
+      this.step = "upload";
+      this.importMode = null;
+      return;
+    }
+
+    const bytes = new TextEncoder().encode(convertedText);
+    await this.handleCifSource(
+      {
+        fileName: file.name.replace(/\.json$/i, ".cif.json"),
+        size: bytes.byteLength,
+        text: async () => convertedText,
+        bytes: async () => bytes,
+      },
+      file.name,
+      signal,
+    );
+  }
+
+  private async handleCifSource(
+    source: Parameters<typeof parseCifPackage>[0],
+    displayName: string,
+    signal: AbortSignal,
+  ) {
+    if (this.deps.vault.isGuest) {
+      this.rejectedFiles.push({
+        name: displayName,
+        reason: "Guests cannot import into a vault.",
+      });
+      this.step = "upload";
+      return;
+    }
+
+    this.importMode = "cc";
     this.statusMessage = "Preparing CIF import review...";
 
-    const parseResult = await parseCifPackage({
-      fileName: file.name,
-      size: file.size,
-      text: () => file.text(),
-      bytes: async () => new Uint8Array(await file.arrayBuffer()),
-    });
+    const parseResult = await parseCifPackage(source);
 
     if (!parseResult.ok) {
       this.rejectedFiles.push({
-        name: file.name,
+        name: displayName,
         reason: parseResult.errors.map((e) => e.message).join(" "),
       });
       this.step = "upload";
@@ -346,7 +424,7 @@ export class ImportSettingsController {
     const validation = validateCifManifest(parseResult.manifest);
     if (!validation.ok) {
       this.rejectedFiles.push({
-        name: file.name,
+        name: displayName,
         reason: validation.errors.map((e) => e.message).join(" "),
       });
       this.step = "upload";
@@ -366,7 +444,7 @@ export class ImportSettingsController {
       );
       if (resolvedAssets.errors.length > 0) {
         this.rejectedFiles.push({
-          name: file.name,
+          name: displayName,
           reason: resolvedAssets.errors.map((e) => e.message).join(" "),
         });
         this.step = "upload";
@@ -416,7 +494,7 @@ export class ImportSettingsController {
         return;
       }
       this.rejectedFiles.push({
-        name: file.name,
+        name: displayName,
         reason:
           error instanceof Error ? error.message : "Invalid CIF import package",
       });
@@ -518,6 +596,17 @@ export class ImportSettingsController {
     // consistent with the rest of this deterministic import surface.
     if (files.length === 1 && (await this.looksLikeCifFile(files[0]))) {
       await this.handleCifFile(files[0], signal);
+      return;
+    }
+
+    // Raw Thread Weaver export: convert to CIF in-browser, then the same
+    // review pipeline as above. Checked after looksLikeCifFile so an
+    // already-converted `.cif.json` never gets re-converted.
+    if (
+      files.length === 1 &&
+      (await this.looksLikeThreadWeaverFile(files[0]))
+    ) {
+      await this.handleThreadWeaverFile(files[0], signal);
       return;
     }
 
@@ -746,9 +835,10 @@ export class ImportSettingsController {
         });
 
         const knownEntities: Record<string, string> = {};
-        Object.values(this.deps.vault.entities).forEach((e) => {
+        // ⚡ Bolt Optimization: Replace inline Object.values().forEach() with an imperative loop on cached allEntities
+        for (const e of this.deps.vault.allEntities) {
           knownEntities[e.title] = e.id;
-        });
+        }
 
         const chunks = splitTextIntoChunks(result.text);
         this.totalChunks = chunks.length;

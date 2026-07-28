@@ -9,6 +9,9 @@ describe("buildSystemInstruction", () => {
     expect(result).toContain("archivist of worlds");
     expect(result).toContain("The vault is the canonical source of truth");
     expect(result).toContain("Canonical Priority");
+    expect(result).toContain("Naming & Anti-Cliché Rules");
+    expect(result).toContain("Vane");
+    expect(result).toContain("Kaelen");
     expect(result).toContain("Do NOT append artificial labels");
     expect(result).toContain("I cannot find that in your records.");
   });

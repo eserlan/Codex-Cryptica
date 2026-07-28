@@ -24,6 +24,11 @@ describe("SeoImportService", () => {
       isInitialized: true,
       activeVaultId: "v1",
       entities: {},
+      // Mirrors the real vault store's relationship between `entities` and
+      // the pre-cached `allEntities` array the implementation now reads from.
+      get allEntities() {
+        return Object.values(this.entities);
+      },
       init: vi.fn().mockResolvedValue(undefined),
       switchVault: vi.fn().mockResolvedValue(undefined),
       createEntity: vi.fn().mockResolvedValue("e1"),

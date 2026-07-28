@@ -103,11 +103,15 @@ export function buildEntityTimeline(
   datedRows.sort((a, b) => {
     const diff = (a.sortKey as number) - (b.sortKey as number);
     if (diff !== 0) return diff;
-    return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+    return (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+      sensitivity: "base",
+    });
   });
 
   undatedRows.sort((a, b) =>
-    a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+    (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+      sensitivity: "base",
+    }),
   );
 
   // Step 5: build groups

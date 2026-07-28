@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { base } from "$app/paths";
+  import { base, resolve } from "$app/paths";
+  import { goto } from "$app/navigation";
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -7,7 +8,7 @@
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import { browser } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
@@ -19,6 +20,12 @@
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
+  import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
+  import {
+    createPendingDelveTransfer,
+    PENDING_DELVE_CANVAS_KEY,
+  } from "$lib/services/seo/pending-delve-transfer";
   import {
     getContextSelection,
     computeProvenance,
@@ -30,6 +37,11 @@
     buildBreadcrumbJsonLd,
     buildResultJsonLd,
   } from "./generator-json-ld";
+  import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
+  import {
+    trackSaveToCodex,
+    countRelatedEntities,
+  } from "$lib/services/analytics/generator-save-tracking";
 
   let {
     canonicalPath,
@@ -123,6 +135,23 @@
 
   const activeThemeId = $derived(themeMap[theme] || "workspace");
 
+  // Stable per-page generator identifier for analytics (#1796) — derived from
+  // the page's own canonical path (or the eyebrow label as a fallback) so
+  // it's available immediately, before any generation happens, unlike
+  // generatedData.type which only exists after a successful generate() call.
+  const generatorType = $derived.by(() => {
+    if (canonicalPath) {
+      const segments = canonicalPath.split("/").filter(Boolean);
+      const last = segments[segments.length - 1];
+      if (last) return last;
+    }
+    const slug = eyebrow
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    return slug || "unknown";
+  });
+
   const generatedNoun = $derived(
     eyebrow.toLowerCase().includes("name")
       ? "fantasy names"
@@ -208,6 +237,10 @@
     isGenerating = true;
     errorMessage = null;
     aiFallbackDismissed = false;
+    // #1796: only ever fires for an explicit user Generate click, never the
+    // silent handleGenerateOnMount() seed draft (that path never sets
+    // userGenerated / calls handleGenerate at all).
+    trackEvent("generator_started", { generator_type: generatorType });
     // Use AI only when the user opted in *and* we're online. Read the live
     // status at click time so a generation triggered before status settles
     // still routes correctly (#1494).
@@ -215,6 +248,9 @@
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
       generatedData = await generate({ useAI: useAINow });
+      // #1796: only on the success path — a caught error below means the
+      // generation did not complete, so it must not count as one.
+      trackEvent("generator_completed", { generator_type: generatorType });
 
       if (generatedData) {
         const content = generatedData.summary
@@ -292,6 +328,18 @@
         "__codex_pending_import",
         JSON.stringify(draftsToSave),
       );
+      // #1796: fires at this outbound-click moment only — see
+      // generator-save-tracking.ts's docstring for why this never observes
+      // what actually happens after the redirect below.
+      trackSaveToCodex({
+        generatorType,
+        isHubBatch: true,
+        itemCount: draftsToSave.length,
+        relatedEntityCount: draftsToSave.reduce(
+          (sum, d) => sum + countRelatedEntities(d.content, d.references),
+          0,
+        ),
+      });
       redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
@@ -317,6 +365,15 @@
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
+      // #1796: fires at this outbound-click moment only — see
+      // generator-save-tracking.ts's docstring for why this never observes
+      // what actually happens after the redirect below.
+      trackSaveToCodex({
+        generatorType,
+        isHubBatch: false,
+        itemCount: 1,
+        relatedEntityCount: countRelatedEntities(content, undefined),
+      });
       redirectUrl = `${cleanBase}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
@@ -396,6 +453,36 @@
       }
     }
   }
+
+  async function handleBuildDelveCanvas(data: GeneratorOutput) {
+    try {
+      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
+      const layout = getGeneratorDocumentLayout(data);
+      const content = data.summary
+        ? `*${data.summary}*\n\n${layout.content}`
+        : layout.content;
+      const transfer = createPendingDelveTransfer(canvasDoc, {
+        type: "location",
+        kind: "dungeon",
+        title: data.title,
+        content,
+        lore: layout.lore,
+        labels: data.labels,
+        status: data.status,
+      });
+      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
+      await unregisterDevelopmentServiceWorkers(dev);
+      if (dev) {
+        window.location.assign(resolve("/canvas"));
+        return;
+      }
+      await goto(resolve("/canvas"));
+    } catch (err) {
+      console.error("[DelveCanvas] Failed to build delve canvas:", err);
+      errorMessage =
+        "The generated delve could not be opened. Your pending canvas has been preserved so you can retry.";
+    }
+  }
 </script>
 
 <svelte:head>
@@ -456,7 +543,7 @@
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
-        href="{cleanBase}/"
+        href="{cleanBase}/?utm_source=generator-logo&utm_medium=nav&utm_campaign=seo-funnel"
         class="flex items-center gap-2 group min-w-0"
         id="logo-link"
       >
@@ -487,7 +574,7 @@
       </nav>
       <div class="shrink-0">
         <a
-          href="{cleanBase}/"
+          href="{cleanBase}/?utm_source=generator-header-cta&utm_medium=nav&utm_campaign=seo-funnel"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
@@ -542,6 +629,7 @@
         onContainerKeydown={handleContainerKeydown}
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
         onSaveHubToCodex={handleSaveHubToCodex}
+        onBuildDelveCanvas={handleBuildDelveCanvas}
       />
     </div>
 

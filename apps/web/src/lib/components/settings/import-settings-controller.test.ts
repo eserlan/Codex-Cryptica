@@ -497,6 +497,109 @@ describe("import-settings-controller — CIF detection and flow (T009)", () => {
   });
 });
 
+function threadWeaverExportText(
+  overrides: Record<string, unknown> = {},
+): string {
+  return JSON.stringify({
+    twe_format: "thread-weaver-campaign",
+    twe_version: 2,
+    exportedAt: "2026-01-01T00:00:00.000Z",
+    generator: { seed: "test-seed" },
+    networkData: {
+      settlements: [
+        {
+          id: "s1",
+          name: "Greyhaven",
+          type: "City",
+          population: 5000,
+          nation: "Aldoria",
+          description: "A grey harbor town.",
+        },
+      ],
+      factions: [
+        {
+          name: "The Iron Ledger",
+          headquarters: "s1",
+          structure_type: "guild",
+        },
+      ],
+      characters: [
+        {
+          id: 1,
+          name: "Mira",
+          faction: "The Iron Ledger",
+          role: "Enforcer",
+          settlement: { id: "s1" },
+        },
+      ],
+    },
+    ...overrides,
+  });
+}
+
+describe("import-settings-controller — Thread Weaver direct import", () => {
+  it("converts a raw Thread Weaver export in-browser and prepares a CIF review session", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File([threadWeaverExportText()], "campaign.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("review");
+    expect(controller.importMode).toBe("cc");
+    expect(controller.ccSession?.sourceSystem).toBe("cif");
+    // location + faction + character
+    expect(controller.ccSession?.items.length).toBe(3);
+    const types = controller.ccSession?.items.map((i) => i.resolvedType);
+    expect(types).toContain("location");
+    expect(types).toContain("faction");
+    expect(types).toContain("character");
+  });
+
+  it("does not shadow a real .cif.json file (CIF detection still wins)", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File([cifManifestText()], "world.cif.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.ccSession?.items.length).toBe(2);
+  });
+
+  it("rejects a malformed Thread Weaver export with a readable error, without opening review", async () => {
+    const deps = baseDeps();
+    const controller = new ImportSettingsController(deps);
+    const file = new File(
+      [threadWeaverExportText({ networkData: { characters: "not-an-array" } })],
+      "campaign.json",
+      { type: "application/json" },
+    );
+
+    await controller.handleFiles([file]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+  });
+
+  it("is unreachable in guest sessions", async () => {
+    const deps = baseDeps({ vault: { isGuest: true } as any });
+    const controller = new ImportSettingsController(deps);
+    const file = new File([threadWeaverExportText()], "campaign.json", {
+      type: "application/json",
+    });
+
+    await controller.handleFiles([file]);
+
+    expect(controller.ccSession).toBeNull();
+    expect(controller.step).toBe("upload");
+    expect(controller.rejectedFiles.length).toBe(1);
+  });
+});
+
 describe("import-settings-controller — CIF blocking validation (T016/FR-003)", () => {
   it("rejects a structurally invalid CIF package (duplicate entity key) before opening review", async () => {
     const deps = baseDeps();

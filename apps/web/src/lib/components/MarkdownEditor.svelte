@@ -1,17 +1,22 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { Editor } from "@tiptap/core";
+  import { Editor, mergeAttributes } from "@tiptap/core";
   import StarterKit from "@tiptap/starter-kit";
   import { Markdown } from "tiptap-markdown";
   import Link from "@tiptap/extension-link";
+  import Image from "@tiptap/extension-image";
   import { BubbleMenu } from "@tiptap/extension-bubble-menu";
+  import { goto } from "$app/navigation";
 
   import { Table } from "@tiptap/extension-table";
   import { TableRow } from "@tiptap/extension-table-row";
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { protectVaultImageSource } from "./editor/vault-image";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { openCanvasHref } from "$lib/stores/ui/navigation";
+  import { vault } from "$lib/stores/vault.svelte";
   import {
     createEntityAutoLinkExtension,
     ENTITY_INDEX_CHANGED_META,
@@ -63,6 +68,38 @@
   let editor = $state<Editor | null>(null);
   let bubbleMenuComponent: ReturnType<typeof mount> | undefined;
   let isZenMode = $state(false);
+  const resolvedVaultImages = new Map<string, string>();
+
+  const VaultImage = Image.extend({
+    renderHTML({ HTMLAttributes }) {
+      return [
+        "img",
+        mergeAttributes(
+          this.options.HTMLAttributes,
+          protectVaultImageSource(HTMLAttributes),
+        ),
+      ];
+    },
+  });
+
+  async function resolveLocalImages() {
+    const images = element?.querySelectorAll<HTMLImageElement>(
+      "img[data-vault-asset-path]",
+    );
+    for (const image of images ?? []) {
+      const assetPath = image.dataset.vaultAssetPath;
+      if (!assetPath) continue;
+      let resolved = resolvedVaultImages.get(assetPath);
+      if (!resolved) {
+        resolved = await vault.resolveImageUrl(assetPath);
+        if (!resolved) continue;
+        resolvedVaultImages.set(assetPath, resolved);
+      }
+      if (image.isConnected) {
+        image.src = resolved;
+      }
+    }
+  }
 
   const toggleZenMode = () => {
     isZenMode = !isZenMode;
@@ -96,6 +133,12 @@
             class: "text-theme-primary underline cursor-pointer",
           },
         }) as any,
+        VaultImage.configure({
+          allowBase64: false,
+          HTMLAttributes: {
+            class: "rounded-lg border border-theme-primary/25 shadow-lg",
+          },
+        }),
         BubbleMenu.configure({
           element: menuDom,
           pluginKey: "bubbleMenu",
@@ -114,6 +157,7 @@
         if (onUpdate) onUpdate(markdown);
       },
     });
+    void resolveLocalImages();
 
     try {
       bubbleMenuComponent = mount(EditorBubbleMenu, {
@@ -139,6 +183,7 @@
       (editor.storage as any).markdown.getMarkdown() !== content
     ) {
       editor.commands.setContent(content);
+      void resolveLocalImages();
     }
   });
 
@@ -170,6 +215,10 @@
   });
 
   onDestroy(() => {
+    for (const assetPath of resolvedVaultImages.keys()) {
+      vault.releaseImageUrl(assetPath);
+    }
+    resolvedVaultImages.clear();
     if (bubbleMenuComponent) {
       try {
         unmount(bubbleMenuComponent);
@@ -201,6 +250,12 @@
     class:readonly={!editable}
     onclickcapture={(e) => {
       const target = e.target as HTMLElement;
+      const anchor = target?.closest<HTMLAnchorElement>("a[href]");
+      const href = anchor?.getAttribute("href");
+      if (!editable && href && openCanvasHref(href, goto)) {
+        e.preventDefault();
+        return;
+      }
       if (target && target.tagName === "IMG") {
         const img = target as HTMLImageElement;
         const rect = img.getBoundingClientRect();

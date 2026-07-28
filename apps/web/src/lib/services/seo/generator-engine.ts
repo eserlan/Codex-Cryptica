@@ -49,6 +49,10 @@ import {
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
   generateNewsSheetLocal,
+  buildDungeonPrompt,
+  buildDungeonRetryMessage,
+  parseDungeonResponseDetailed,
+  generateDungeonLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -65,6 +69,7 @@ import {
   type ShipGeneratorOptions,
   type LanguageGeneratorOptions,
   type NewsSheetGeneratorOptions,
+  type DungeonGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -100,6 +105,7 @@ export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
 export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
+export { dungeonConfig, forDungeonGenre } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -479,6 +485,51 @@ export class DefaultGeneratorEngine {
         return parseNewsSheetResponse(text);
       },
       () => generateNewsSheetLocal(sheetOptions),
+    );
+  }
+
+  /** Dungeon & Delve generation delegates to the generator-engine package. */
+  async generateDungeon(
+    options: DungeonGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...dungeonOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildDungeonPrompt(dungeonOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        const first = parseDungeonResponseDetailed(
+          text,
+          dungeonOptions,
+          undefined,
+          resolved,
+        );
+        if (first.problems.length === 0) return first.output;
+
+        // Tell the model exactly what it got wrong and let it try once more.
+        // A single retry: two calls is an acceptable cost for a usable result,
+        // an unbounded loop is not. If the retry also fails, `first.output` is
+        // the locally-resolved dungeon the prompt was built from.
+        const retryText = await this.runModel(
+          systemInstruction,
+          buildDungeonRetryMessage(userMessage, first.problems),
+        );
+        const second = parseDungeonResponseDetailed(
+          retryText,
+          dungeonOptions,
+          undefined,
+          resolved,
+        );
+        if (second.problems.length === 0) return second.output;
+
+        // Neither attempt was clean. Prefer whichever is still the model's own
+        // work over the local foundation — a response missing one field, with
+        // that field patched, beats a whole dungeon of table prose.
+        if (!second.rejected) return second.output;
+        return first.output;
+      },
+      () => generateDungeonLocal(dungeonOptions),
     );
   }
 }

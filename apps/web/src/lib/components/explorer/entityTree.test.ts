@@ -85,6 +85,30 @@ describe("entityTree helper", () => {
     expect(roots[0].children[0].children[0].isMatchingQuery).toBe(true); // e3 matches query
   });
 
+  it("sorts siblings recursively by last edited time", () => {
+    const newerRoot = { ...e4, updatedAt: 400 };
+    const olderRoot = { ...e1, updatedAt: 100 };
+    const olderChild = { ...e2, id: "older-child", updatedAt: 200 };
+    const newerChild = {
+      ...e2,
+      id: "newer-child",
+      title: "Newer Child",
+      updatedAt: 300,
+    };
+    const entities = [olderRoot, newerRoot, olderChild, newerChild];
+
+    const roots = buildEntityTree(entities, entities, {
+      key: "updated",
+      direction: "desc",
+    });
+
+    expect(roots.map((node) => node.entity.id)).toEqual(["e4", "e1"]);
+    expect(roots[1].children.map((node) => node.entity.id)).toEqual([
+      "newer-child",
+      "older-child",
+    ]);
+  });
+
   it("should dynamically create virtual folders for missing parent entities or subdirectories", () => {
     const childWithMissingParent: Entity = {
       id: "bob",

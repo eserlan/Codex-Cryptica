@@ -16,6 +16,10 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     faction: { type: "Guild" },
     "magic-item": { rarity: "Uncommon" },
     event: { type: "Battle" },
+    dungeon: {
+      purpose: "Temple & Shrine",
+      currentState: "Active Monster Lair",
+    },
   },
   scifi: {
     npc: { race: "Human", role: "Crew" },
@@ -23,6 +27,7 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     faction: { type: "Corporation" },
     "magic-item": { rarity: "Uncommon" },
     event: { type: "Discovery" },
+    dungeon: { purpose: "Research Facility", currentState: "Abandoned Ruins" },
   },
   modern: {
     npc: { race: "Human", role: "Civilian" },
@@ -30,6 +35,7 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     faction: { type: "Guild" },
     "magic-item": { rarity: "Rare" },
     event: { type: "Disaster" },
+    dungeon: { purpose: "Prison & Vault", currentState: "Sealed Vault" },
   },
   horror: {
     npc: { race: "Human", role: "Survivor" },
@@ -37,6 +43,7 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     faction: { type: "Cult" },
     "magic-item": { rarity: "Rare" },
     event: { type: "Ritual" },
+    dungeon: { purpose: "Tomb & Catacomb", currentState: "Cursed Ruin" },
   },
   cyberpunk: {
     npc: { race: "Human", role: "Runner" },
@@ -44,6 +51,10 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     faction: { type: "Syndicate" },
     "magic-item": { rarity: "Rare" },
     event: { type: "Uprising" },
+    dungeon: {
+      purpose: "Research Facility",
+      currentState: "Occupied Stronghold",
+    },
   },
 };
 

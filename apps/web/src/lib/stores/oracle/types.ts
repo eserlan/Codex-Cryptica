@@ -8,7 +8,33 @@ import type {
   OracleActionExecutor,
   DraftingEngine,
 } from "@codex/oracle-engine";
-import type { TextGenerationService } from "schema";
+import type { TextGenerationService, AspectRatio } from "schema";
+
+/** Advanced Art Direction settings a user may apply when revising a prompt. */
+export interface PromptRegenerationOptions {
+  cameraVariant?: string;
+  styleReferenceMode?: "named" | "name-free" | "disabled";
+  /** Overrides the stature the entity's labels imply. */
+  stature?: string;
+}
+
+/**
+ * What a reviewed prompt carries besides its text. Neither is recoverable from
+ * the prompt itself, and sending the text alone dropped both.
+ */
+export interface ReviewedPromptOptions {
+  negativeTerms?: string[];
+  aspectRatio?: AspectRatio;
+}
+
+export interface RegeneratedPrompt {
+  prompt: string;
+  negativeTerms: string[];
+  /** What the prompt was actually composed at, inferred or explicit. */
+  statureId?: string;
+  /** Whether that came from the request, a label, or the Oracle's reading. */
+  statureSource?: string;
+}
 
 export type OracleUiSnapshot = {
   aiDisabled: boolean;
@@ -108,10 +134,24 @@ export interface IOracleStore {
   ask(content: string): Promise<void>;
   drawEntity(entityId: string): Promise<void>;
   drawMessage(messageId: string): Promise<void>;
-  generateEntityFromPrompt(entityId: string, prompt: string): Promise<void>;
-  generateMessageFromPrompt(messageId: string, prompt: string): Promise<void>;
-  regenerateEntityPrompt(entityId: string): Promise<string | null>;
-  regenerateMessagePrompt(messageId: string): Promise<string | null>;
+  generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ): Promise<void>;
+  generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ): Promise<void>;
+  regenerateEntityPrompt(
+    entityId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null>;
+  regenerateMessagePrompt(
+    messageId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null>;
   isVisualizingEntity(entityId: string | null | undefined): boolean;
   isVisualizingMessage(messageId: string | null | undefined): boolean;
   clearMessages(): Promise<void>;

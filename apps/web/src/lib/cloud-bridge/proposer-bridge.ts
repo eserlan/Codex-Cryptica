@@ -1,23 +1,32 @@
 import ProposerWorker from "$lib/workers/proposer.worker?worker";
 import { browser } from "$app/environment";
 import type { Proposal } from "@codex/proposer";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export class ProposerBridge {
   private worker: Worker | null = null;
+  private readonly idGenerator: IdGenerator;
   private pendingRequests = new Map<
     string,
     { resolve: (val: any) => void; reject: (err: any) => void }
   >();
 
-  constructor() {
-    if (browser) {
+  constructor(
+    deps: { idGenerator?: IdGenerator; worker?: Worker | null } = {},
+  ) {
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
+    if (deps.worker !== undefined) {
+      this.worker = deps.worker;
+      if (this.worker) {
+        this.attachWorkerHandler(this.worker);
+      }
+    } else if (browser) {
       this.initWorker();
     }
   }
 
-  private initWorker() {
-    this.worker = new ProposerWorker();
-    this.worker.onmessage = (event) => {
+  private attachWorkerHandler(worker: Worker) {
+    worker.onmessage = (event) => {
       const { type, payload, id } = event.data;
       if (id && this.pendingRequests.has(id)) {
         const { resolve, reject } = this.pendingRequests.get(id)!;
@@ -31,6 +40,11 @@ export class ProposerBridge {
     };
   }
 
+  private initWorker() {
+    this.worker = new ProposerWorker();
+    this.attachWorkerHandler(this.worker);
+  }
+
   public async analyzeEntity(
     apiKey: string,
     modelName: string,
@@ -41,7 +55,7 @@ export class ProposerBridge {
   ): Promise<Proposal[]> {
     if (!this.worker) return [];
 
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject });
       this.worker!.postMessage({

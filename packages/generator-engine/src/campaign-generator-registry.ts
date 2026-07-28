@@ -14,6 +14,12 @@ import {
   languageConfig,
 } from "./public-language";
 import { generateNewsSheetLocal, newsSheetConfig } from "./public-news-sheet";
+import {
+  buildDungeonPrompt,
+  generateDungeonLocal,
+  dungeonConfig,
+  type DungeonGeneratorOptions,
+} from "./public-dungeon";
 
 /**
  * Generator id -> default vault category id.
@@ -30,6 +36,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   ship: "location",
   language: "note",
   "news-sheet": "note",
+  dungeon: "location",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -63,6 +70,24 @@ function optionString(
 ): string {
   const value = request.options[key];
   return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
+  return {
+    themeId: request.themeId || optionString(request, "themeId", "fantasy"),
+    purpose: optionString(request, "purpose", ""),
+    currentState: optionString(
+      request,
+      "currentState",
+      optionString(request, "status", ""),
+    ),
+    scale: optionString(request, "scale", ""),
+    instruction: request.instructions,
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
 }
 
 /**
@@ -300,6 +325,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   ship: `{"title":"CSV Meridian","summary":"A worn freighter that earns its living asking no questions — and keeping no honest records.","lore":"## Who Controls It\\nIndependent in name; in practice, whoever can pay the docking fees this month.\\n## Complication\\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts.\\n## Secret\\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\\n## Hook\\nThe Meridian is the only vessel in port that will run this route — but the crew wants something in return.","labels":["Freighter","Sci-Fi","Independent"],"connections":[{"targetTitle":"Harbour Authority","relationship":"flagged by"}]}`,
   "news-sheet": `{"title":"The Harbourside Ledger — Issue 214","summary":"A dockside broadsheet whose lead story about a warehouse fire carefully avoids naming the warehouse's owner.","lore":"# The Harbourside Ledger\\n*All the truth the tide brings in — Issue No. 214*\\n\\n## FIRE ON THE SALT ROW: 'AN ACCIDENT', SAYS EVERYONE PAID TO SAY SO\\nThe grain warehouse on Salt Row burned through the night despite standing ten paces from the harbour. The watch calls it a lantern mishap. The night-loaders who fled the district before dawn were unavailable for comment.\\n\\n### Concord Announces Relief Levy\\nThe Salt Concord will fund rebuilding through a temporary levy on dock traffic. The levy has no announced end date.\\n\\n### Notices & Classifieds\\n- LOST: one ledger, water-stained, of sentimental value only. Generous reward. No questions.\\n- WANTED: strong backs for night work, discretion assumed.\\n\\n### Word on the Street\\n- The warehouse was empty when it burned — emptied two nights earlier, say the rats.\\n\\n## GM Notes\\n**The truth**: the fire concealed the theft of the grain reserve; the 'lost ledger' classified was placed by the clerk who falsified the inventory.\\n**Hooks**: the clerk will pay the party to recover the ledger before the Concord's auditors do; a night-loader who saw the carts is hiding in the Drowned Market.","labels":["broadsheet","harbour","handout"],"connections":[{"targetTitle":"The Salt Concord","relationship":"covers for"},{"targetTitle":"Greywick Landing","relationship":"published in"}]}`,
   language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","content":"## Pronunciation & Phonology\\nLow-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n\\n## Cultural Role & Usage\\nSpoken in the deep galleries where torchlight is rationed; surface-folk who use it mark themselves as tunnel-kin.\\n\\n## Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n\\n## Common Vocabulary & Word Bank\\n| Word | Pronunciation | English Meaning |\\n| --- | --- | --- |\\n| Vur | VOOR | Iron |\\n| Lith | LITH | Stone |\\n\\n## Sample Phrases\\n- *\\"Vur-Lith-Garon\\"* — (VOOR-lith-GAH-ron) — \\"Solid as iron\\"","lore":"### At a Glance\\n- **Genre / Setting**: Classic Fantasy\\n- **Tone**: Harsh & Consonant-heavy\\n- **Role**: Common Speech\\n- **Name Structure**: Compound Words\\n\\n### Example Names\\n- **Garon-Vur** — Iron Seeker (person)\\n- **Kael-Lith** — Stone Speaker (person)\\n\\n### At the Table\\n- Greet with a short falling whistle before speaking; skipping it reads as a threat.","labels":["dialect","underdark","conlang"],"connections":[]}`,
+  dungeon: `{"title":"The Submerged Vault of Sunken Runes","summary":"An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.","lore":"## History & Original Purpose\\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\\n## Current State & Function\\nCurrently overrun by a desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Signature Feature\\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.\\n## Current Conflict\\nAn invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.\\n## Key Sectors & Layout\\n### Sector 1: The Guarded Gateway\\nFortified entry halls with collapse traps.\\n### Sector 2: The Deep Arcana Vault\\nSealed inner chamber housing warding circles.\\n## Inhabitants & Factions\\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Central Secret / Boss Mystery\\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.\\n## Hazards & Traps\\nPressure-plate needle traps laced with paralyzing wyvern venom.\\n## Treasures & Artifacts\\nA silver-hilted shortsword glowing with pale starlight near undead.\\n## Adventure Hooks & Rumours\\nA local scholar hires the party to retrieve an ancient astrological tablet from the ruins.","labels":["dungeon","location","fantasy","temple-shrine"]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -609,6 +635,33 @@ function generateLanguage(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
+function generateDungeon(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateDungeonLocal(dungeonOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary || "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+export function buildCampaignDungeonPrompt(request: GeneratorRunRequest) {
+  const options = dungeonOptions(request);
+  const prompt = buildDungeonPrompt(options);
+  return {
+    ...prompt,
+    options,
+    userMessage: `${contextChain(request)}
+
+${prompt.userMessage}`,
+  };
+}
+
+function dungeonPrompt(request: GeneratorRunRequest): string {
+  return buildCampaignDungeonPrompt(request).userMessage;
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   npc: {
     id: "npc",
@@ -888,6 +941,47 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
     }),
     buildPrompt: newsSheetPrompt,
+  },
+  dungeon: {
+    id: "dungeon",
+    label: "Dungeon / Delve",
+    description:
+      "Generate a multi-sector subterranean complex, ancient ruin, precursor vault, or monster lair with layout, factions, secret boss lore, hazards, and adventure hooks.",
+    entityType: GENERATOR_ENTITY_TYPE.dungeon,
+    defaultInstruction:
+      "A thematic, multi-sector dungeon complex complete with architectural atmosphere, key sectors, inhabitant factions, central secret, hazards, loot, and adventure hooks.",
+    icon: "lucide:castle",
+    options: [
+      {
+        id: "purpose",
+        label: "Original Purpose",
+        control: "select",
+        choices: dungeonConfig.purposes.map((p) => ({ value: p, label: p })),
+      },
+      {
+        id: "currentState",
+        label: "Current State",
+        control: "select",
+        choices: dungeonConfig.currentStates.map((s) => ({
+          value: s,
+          label: s,
+        })),
+      },
+      {
+        id: "scale",
+        label: "Scale",
+        control: "select",
+        choices: dungeonConfig.scales.map((sc) => ({ value: sc, label: sc })),
+      },
+    ],
+    defaults: {
+      purpose: "Temple & Shrine",
+      currentState: "Active Monster Lair",
+      scale: "Medium Complex (3-4 Sectors)",
+    },
+    generate: generateDungeon,
+    mapOutputToDraft: mapOutputToDraft("dungeon"),
+    buildPrompt: dungeonPrompt,
   },
 };
 

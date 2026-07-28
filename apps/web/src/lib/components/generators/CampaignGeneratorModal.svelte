@@ -11,6 +11,7 @@
   } from "$lib/services/generators/generator-vault-context";
   import {
     CampaignGeneratorService,
+    composeDraftVaultFields,
     getDefaultInstruction,
     isSupportedGenerator,
     resolveEntityType,
@@ -236,6 +237,7 @@
         draft: {
           ...reviewed,
           summary: "",
+          content: undefined,
           lore: "",
           sourceEntityId: workflow.sourceEntityId ?? undefined,
           relationshipLabel:
@@ -275,11 +277,12 @@
       }
       // Push generated content as a pending draft so zen mode shows the
       // proposal diff — user accepts or discards from the editor.
+      const vaultFields = composeDraftVaultFields(reviewed);
       revisionService.pendingDraft = {
         entityId: result.entityId,
         source: "revise",
-        chronicle: reviewed.summary || "",
-        lore: reviewed.lore || "",
+        chronicle: vaultFields.content,
+        lore: vaultFields.lore,
         timestamp: systemClock.now(),
         deleteOnDiscard: true,
         generatorSessionCommit: true,
@@ -376,6 +379,7 @@
         bind:generatorId
         onsubmit={onGenerate}
         aiPolicy={svc.aiPolicy}
+        themeId={themeStore.worldThemeId ?? "workspace"}
         categoryLabels={categories.list.map((c) => ({
           id: c.id,
           label: c.label,
@@ -400,6 +404,7 @@
         bind:draft
         categories={categories.list}
         saving={stage === "saving"}
+        themeId={themeStore.worldThemeId ?? "workspace"}
         showRelationshipToggle={workflow.launchMode === "contextual" &&
           !!workflow.sourceEntityId}
         onsave={onSave}
