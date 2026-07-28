@@ -505,7 +505,6 @@
   canonicalPath={meta.canonicalPath}
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
-  featureHighlight={meta.featureHighlight}
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
   {generate}

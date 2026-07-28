@@ -4,7 +4,12 @@
     faqs,
   }: {
     introTitle: string;
-    faqs: { question: string; answer: string }[];
+    faqs: {
+      question: string;
+      answer: string;
+      image?: string;
+      imageAlt?: string;
+    }[];
   } = $props();
 </script>
 
@@ -18,18 +23,41 @@
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         {#each faqs as faq (faq.question)}
-          <article
-            class="border border-theme-border/60 bg-theme-surface/30 rounded-xl p-5"
-          >
-            <h3
-              class="font-header font-bold text-sm uppercase tracking-wider mb-2"
+          {#if faq.image}
+            <article
+              class="md:col-span-2 border border-theme-primary/30 bg-theme-surface/30 rounded-xl overflow-hidden"
             >
-              {faq.question}
-            </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
-              {faq.answer}
-            </p>
-          </article>
+              <img
+                src={faq.image}
+                alt={faq.imageAlt ?? ""}
+                loading="lazy"
+                class="w-full h-auto block border-b border-theme-primary/20"
+              />
+              <div class="p-6">
+                <h3
+                  class="font-header font-bold text-sm uppercase tracking-wider mb-2"
+                >
+                  {faq.question}
+                </h3>
+                <p class="text-sm text-theme-muted leading-relaxed">
+                  {faq.answer}
+                </p>
+              </div>
+            </article>
+          {:else}
+            <article
+              class="border border-theme-border/60 bg-theme-surface/30 rounded-xl p-5"
+            >
+              <h3
+                class="font-header font-bold text-sm uppercase tracking-wider mb-2"
+              >
+                {faq.question}
+              </h3>
+              <p class="text-sm text-theme-muted leading-relaxed">
+                {faq.answer}
+              </p>
+            </article>
+          {/if}
         {/each}
       </div>
     </div>

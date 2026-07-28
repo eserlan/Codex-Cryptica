@@ -28,14 +28,13 @@ export type SlugMetaEntry = {
   eyebrow: string;
   introText: string;
   canonicalPath: string;
-  faqs?: { question: string; answer: string }[];
+  faqs?: {
+    question: string;
+    answer: string;
+    image?: string;
+    imageAlt?: string;
+  }[];
   relatedLinks?: { href: string; label: string }[];
-  featureHighlight?: {
-    image: string;
-    imageAlt: string;
-    label: string;
-    body: string;
-  };
 };
 
 export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
@@ -442,6 +441,9 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         question: "Can I turn this into an explorable map, not just text?",
         answer:
           "Yes — hit Build Delve Canvas on any generated dungeon to open an interactive, room-by-room map with connected areas, loops, and hidden routes you can rearrange and edit. This Structural Builder is exclusive to Codex Cryptica: it's not part of the plain text generator, but it's still free and needs no account — just open your world in the app.",
+        image: "/images/dungeon-canvas.png",
+        imageAlt:
+          "The interactive Dungeon Canvas showing a two-sector delve map with entrance, hazard, secret, and faction nodes connected by labeled passages",
       },
     ],
     relatedLinks: [
@@ -449,12 +451,5 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/quest", label: "Quest Hook Generator" },
     ],
-    featureHighlight: {
-      image: "/images/dungeon-canvas.png",
-      imageAlt:
-        "The interactive Dungeon Canvas showing a two-sector delve map with entrance, hazard, secret, and faction nodes connected by labeled passages",
-      label: "Codex Cryptica exclusive",
-      body: "Build Delve Canvas turns this into an explorable, room-by-room map — connected areas, loops, and hidden routes you can rearrange and edit.",
-    },
   },
 };

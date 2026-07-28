@@ -52,7 +52,6 @@
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
     relatedLinks = [],
     faqs = [],
-    featureHighlight = undefined,
     theme = $bindable("Classic Fantasy"),
     isThemeCustomizable = false,
     generate,
@@ -73,12 +72,6 @@
     introText?: string;
     relatedLinks?: { href: string; label: string }[];
     faqs?: { question: string; answer: string }[];
-    featureHighlight?: {
-      image: string;
-      imageAlt: string;
-      label: string;
-      body: string;
-    };
     theme?: string;
     isThemeCustomizable?: boolean;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
@@ -708,30 +701,6 @@
         <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
         </p>
-        {#if featureHighlight}
-          <figure
-            class="mb-5 rounded-xl border border-theme-primary/30 bg-theme-bg/35 overflow-hidden"
-          >
-            <img
-              src={featureHighlight.image}
-              alt={featureHighlight.imageAlt}
-              loading="lazy"
-              class="w-full h-auto block border-b border-theme-primary/20"
-            />
-            <figcaption class="p-3">
-              <span
-                class="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest font-header text-theme-primary mb-1.5"
-              >
-                <span class="icon-[lucide--sparkles] w-3 h-3" aria-hidden="true"
-                ></span>
-                {featureHighlight.label}
-              </span>
-              <p class="text-[11px] text-theme-text/70 leading-snug">
-                {featureHighlight.body}
-              </p>
-            </figcaption>
-          </figure>
-        {/if}
         {#if inputHint}
           <p
             class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
