@@ -362,8 +362,8 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       });
 
       expect(container.querySelector("script")).toBeNull();
-      expect(container.querySelector("img")).toBeNull();
       expect(container.querySelector("[onerror]")).toBeNull();
+      expect(container.querySelector('img[src="x"]')).toBeNull();
       expect(container.innerHTML).not.toContain("<script>alert(1)</script>");
       expect(container.textContent).toContain("Tone");
     });

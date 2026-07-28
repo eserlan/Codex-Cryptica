@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   type ToolLink = {
     href: string;
@@ -458,4 +459,6 @@
       </section>
     {/each}
   </div>
+
+  <MarketingFooter />
 </main>

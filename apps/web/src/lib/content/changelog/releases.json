@@ -1,5 +1,20 @@
 [
   {
+    "version": "0.30.0",
+    "title": "The Dungeon & Delve Update",
+    "date": "2026-07-28",
+    "type": "minor",
+    "highlights": [
+      "Dungeon / Delve Generator: Generate a fully realized explorable location — a haunted crypt, a corporate blacksite, a pirate hideout, whatever fits your world's theme — complete with history, current conflict, factions, hazards, a central secret, and adventure hooks.",
+      "Dungeon & Delve Structural Builder: Turn a generated delve into a room-by-room map with connected areas, loops, and hidden routes you can explore and edit on an interactive canvas.",
+      "Layered Art Direction: Character portraits and scene art now pick up a faction's visual identity automatically, respect a subject's stature and scale, and keep canon details intact even when a description gets compressed.",
+      "Smoother First Run: A redesigned onboarding tour and Getting Started hub walk new worldbuilders through their first steps, with better tablet support.",
+      "Import From Other Tools, Phase 2: Bring in a full exported world package — images included, not just the text.",
+      "Thread Weaver Import: Import directly from Thread Weaver and Scabard exports with wiki links and cell relationships preserved, backed by a new in-app migration guide.",
+      "Mobile Image Uploads: Attach or replace an entity's image straight from your phone."
+    ]
+  },
+  {
     "version": "0.29.0",
     "title": "The Voice & Lineage Update",
     "date": "2026-07-19",

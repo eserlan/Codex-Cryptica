@@ -126,6 +126,38 @@ describe("CanvasRegistryStore", () => {
     );
   });
 
+  it("should canonicalize legacy delve node payloads before persistence", async () => {
+    await canvasRegistry.importCanvas({
+      id: "legacy-public-delve",
+      title: "The Bell Vault",
+      nodes: [
+        {
+          id: "room-1",
+          type: "delveRoom",
+          position: { x: 0, y: 0 },
+          sectorId: "sector-1",
+          sectorName: "The Bell Vault",
+          name: "Flooded Threshold",
+          role: "entrance",
+          summary: "A flooded gate.",
+          description: "Black water covers the steps.",
+          stocking: {},
+        },
+      ],
+      edges: [],
+    });
+
+    const savedCanvas = vi.mocked(vaultIO.saveCanvasToDisk).mock.calls[0][2];
+    expect(savedCanvas.nodes[0]).toMatchObject({
+      id: "room-1",
+      data: expect.objectContaining({
+        sectorId: "sector-1",
+        name: "Flooded Threshold",
+      }),
+    });
+    expect(savedCanvas.nodes[0]).not.toHaveProperty("sectorId");
+  });
+
   it("should preserve accented letters when generating a canvas slug", async () => {
     const slug = await canvasRegistry.importCanvas({
       id: "delve-canvas-sziklakonny",

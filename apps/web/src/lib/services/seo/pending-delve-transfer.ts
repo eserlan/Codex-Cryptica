@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Entity } from "schema";
-import type { Canvas } from "@codex/canvas-engine";
+import { CanvasSchema, type Canvas } from "@codex/canvas-engine";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
@@ -39,6 +39,38 @@ function isGeneratedDelve(entity: Entity): boolean {
     labels.includes("dungeon") ||
     labels.includes("delve")
   );
+}
+
+function prepareTransferredCanvas(
+  input: unknown,
+  sourceEntityId?: string,
+): Canvas {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("The transferred delve canvas is invalid.");
+  }
+  const canvas = input as Record<string, unknown>;
+  const metadata =
+    canvas.metadata &&
+    typeof canvas.metadata === "object" &&
+    !Array.isArray(canvas.metadata)
+      ? canvas.metadata
+      : {};
+  const title =
+    typeof canvas.name === "string"
+      ? canvas.name
+      : typeof canvas.title === "string"
+        ? canvas.title
+        : undefined;
+
+  return CanvasSchema.parse({
+    ...canvas,
+    name: title,
+    metadata: {
+      ...metadata,
+      kind: "delve",
+      ...(sourceEntityId ? { sourceEntityId } : {}),
+    },
+  });
 }
 
 export function createPendingDelveTransfer(
@@ -84,6 +116,9 @@ export class PendingDelveTransferService {
     }
 
     const transfer = parsedTransfer.data;
+    // Validate and migrate the canvas before creating the Location. This
+    // prevents an unimportable public payload from leaving an orphan entity.
+    const preparedCanvas = prepareTransferredCanvas(transfer.canvas);
     const entityId =
       transfer.sourceEntityId ??
       (await this.findOrCreateSourceEntity(transfer.sourceEntity));
@@ -97,20 +132,7 @@ export class PendingDelveTransferService {
       JSON.stringify(retryableTransfer),
     );
 
-    const metadata =
-      transfer.canvas.metadata &&
-      typeof transfer.canvas.metadata === "object" &&
-      !Array.isArray(transfer.canvas.metadata)
-        ? transfer.canvas.metadata
-        : {};
-    const linkedCanvas = {
-      ...transfer.canvas,
-      metadata: {
-        ...metadata,
-        kind: "delve",
-        sourceEntityId: entityId,
-      },
-    };
+    const linkedCanvas = prepareTransferredCanvas(preparedCanvas, entityId);
 
     const slug = await this.canvasImporter.importCanvas(linkedCanvas);
     this.storage.removeItem(PENDING_DELVE_CANVAS_KEY);

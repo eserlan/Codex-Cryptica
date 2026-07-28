@@ -17,6 +17,7 @@
   import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
+  import MarketingFooter from "./MarketingFooter.svelte";
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
@@ -832,38 +833,7 @@
     onClose={() => (selectedHubEntity = null)}
   />
 
-  <!-- Marketing Footer -->
-  <footer
-    class="border-t border-theme-border/60 bg-theme-surface/20 px-6 py-8 mt-auto text-center text-[10px] text-theme-muted tracking-wider uppercase font-header"
-  >
-    <div
-      class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
-    >
-      <div>© 2026 Codex Cryptica. All rights reserved.</div>
-      <div class="flex gap-6">
-        <a
-          href="{cleanBase}/terms"
-          class="hover:text-theme-primary transition-colors">Terms</a
-        >
-        <a
-          href="{cleanBase}/privacy"
-          class="hover:text-theme-primary transition-colors">Privacy</a
-        >
-        <a
-          href="{cleanBase}/tools"
-          class="hover:text-theme-primary transition-colors">Tools</a
-        >
-        <a
-          href="{cleanBase}/sitemap.xml"
-          class="hover:text-theme-primary transition-colors">Sitemap</a
-        >
-        <a
-          href="{cleanBase}/llms.txt"
-          class="hover:text-theme-primary transition-colors">LLM Docs</a
-        >
-      </div>
-    </div>
-  </footer>
+  <MarketingFooter />
 </div>
 
 <style>
