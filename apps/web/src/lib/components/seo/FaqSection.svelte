@@ -11,6 +11,8 @@
       answer: string;
       image?: string;
       imageAlt?: string;
+      inlineImage?: string;
+      inlineImageAlt?: string;
     }[];
   } = $props();
 
@@ -101,6 +103,21 @@
                 <p class="text-sm text-theme-muted leading-relaxed">
                   {faq.answer}
                 </p>
+                {#if faq.inlineImage}
+                  <div class="mt-4 inline-flex flex-col gap-1.5">
+                    <img
+                      src={faq.inlineImage}
+                      alt={faq.inlineImageAlt ?? ""}
+                      loading="lazy"
+                      class="rounded-lg border border-theme-primary/25 max-w-full h-auto"
+                    />
+                    <span
+                      class="text-[9px] uppercase tracking-widest font-header text-theme-muted/70"
+                    >
+                      The Build Delve Canvas button on any generated result
+                    </span>
+                  </div>
+                {/if}
               </div>
             </article>
           {:else}

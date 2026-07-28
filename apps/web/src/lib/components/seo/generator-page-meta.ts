@@ -33,6 +33,8 @@ export type SlugMetaEntry = {
     answer: string;
     image?: string;
     imageAlt?: string;
+    inlineImage?: string;
+    inlineImageAlt?: string;
   }[];
   relatedLinks?: { href: string; label: string }[];
 };
@@ -444,6 +446,9 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         image: "/images/dungeon-canvas.png",
         imageAlt:
           "The interactive Dungeon Canvas showing a two-sector delve map with entrance, hazard, secret, and faction nodes connected by labeled passages",
+        inlineImage: "/images/dungeon-canvas-button.png",
+        inlineImageAlt:
+          "The Build Delve Canvas button, next to Save to Codex and Copy, on a generated dungeon result",
       },
     ],
     relatedLinks: [
