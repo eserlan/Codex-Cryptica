@@ -362,7 +362,14 @@ Everything else is yours to invent: the adventure's title, specific names for lo
 
 Write the "throughline" field first and let it govern everything else. It is ONE sentence covering who set events in motion, what is at stake, and how that leads to the initial situation, primary objective, and outcomes. Every later field must be consistent with it.
 
-The output must describe a SITUATION, not a plot. Provide multiple avenues of action, not a required sequence of scenes. The possible outcomes should represent genuinely different resolutions, not variations on a single ending.
+Critical Structural Guidelines:
+1. CAUSAL RELATIONSHIPS OVER IDEA CONFETTI: Do not throw unlinked magical ideas into the document. Every location MUST serve a functional purpose in the scenario (e.g. holding a clue, hosting a solution, or providing refuge). Every NPC MUST have an explicit relationship to another NPC, faction, or the objective.
+2. COMMIT TO THE PC ROLE: State clearly in the initial situation whether the PCs are the main actors (e.g. the troupe), hired escorts, or accidental witnesses.
+3. TICKING CLOCK INTEGRATION: If a deadline or pressure is introduced in the summary/premise (e.g. "tax-dragons arrive at dawn"), it MUST appear as an explicit, trackable clock in the primary objective and complications.
+4. GROUNDED CONTRAST: Pick 2-3 genuinely extraordinary or magical elements and set them against realistic geography, logistics, and human motivations. Do not give every single object a whimsical modifier.
+5. TRUE END-STATE OUTCOMES: The "outcomes" field MUST describe permanent changes in the world state (end-game consequences), NOT mid-adventure tactics (e.g. "bribing a guard") or player actions.
+
+The output must describe a SITUATION, not a plot. Provide multiple avenues of action, not a required sequence of scenes.
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
@@ -383,19 +390,19 @@ Required JSON schema:
   "title": "Evocative, specific title for this adventure.",
   "summary": "1-2 sentence premise: what is this adventure about and why should players care?",
   "throughline": "ONE sentence: who set events in motion, what is at stake, and how that leads to the initial situation and primary objective. Write this before the fields below and keep them all consistent with it.",
-  "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, and why does it demand action immediately?",
-  "primaryObjective": "One clear objective with an explicit, measurable deadline or pressure (e.g. 3 days, before solstice, 24 hours) that makes inaction costly.",
+  "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, why does it demand action immediately, and explicitly what role the PCs play.",
+  "primaryObjective": "One clear objective with an explicit, trackable deadline or countdown clock (e.g. 'Dawn: Tax-Dragons arrive') that makes inaction costly.",
   "keyLocations": [
-    { "name": "Specific location name", "description": "2 sentences: what it is and why it matters to this adventure." }
+    { "name": "Specific location name", "description": "2 sentences: what it is and why it matters.", "roleInScenario": "Explicit functional purpose in this adventure (e.g. holds clue X, offers route Y to solve obstacle Z)." }
   ],
   "npcs": [
-    { "name": "NPC or faction name", "role": "Their role in the situation", "goal": "What they want — specific and actionable", "secret": "What they are hiding or what the party doesn't know about them yet" }
+    { "name": "NPC or faction name", "role": "Their role in the situation", "goal": "What they want — specific and actionable", "secret": "What they are hiding", "relationship": "How they connect to another NPC, faction, or the objective." }
   ],
-  "threats": ["1-2 sentences per threat: who or what opposes the party and how"],
-  "discoveries": ["1-2 sentences per discovery: specific clues, secrets, or revelations the players can find"],
-  "complications": ["1-2 sentences per complication: specific escalating pressures that make the situation harder"],
+  "threats": ["1-2 sentences per threat: who or what opposes the party and how, aligned with the main ticking clock"],
+  "discoveries": ["1-2 sentences per discovery: specific clues or revelations that solve an obstacle or reveal an NPC secret — not standalone facts"],
+  "complications": ["1-2 sentences per complication: specific escalating pressures or clock steps that make the situation harder"],
   "rewards": ["1 sentence per reward: what players can gain — specific and proportionate to the stakes"],
-  "outcomes": ["2-3 sentences per outcome: a genuinely different resolution, written as a situation rather than a required ending"],
+  "outcomes": ["2-3 sentences per outcome: a genuinely different WORLD END-STATE (what has permanently changed in the setting after the adventure ends), written as a situation rather than player tactics or mid-scene events"],
   "hooks": ["1-2 sentences per hook: a specific reason a particular party would engage with this adventure"]
 }`;
 
@@ -581,7 +588,13 @@ export function parseAdventureResponseDetailed(
             const name = typeof l.name === "string" ? l.name.trim() : "";
             const desc =
               typeof l.description === "string" ? l.description.trim() : "";
-            return name && desc ? `**${name}** — ${desc}` : name || desc;
+            const roleInScenario =
+              typeof l.roleInScenario === "string"
+                ? l.roleInScenario.trim()
+                : "";
+            let text = name && desc ? `**${name}** — ${desc}` : name || desc;
+            if (roleInScenario) text += ` (*Role:* ${roleInScenario})`;
+            return text;
           }
           return "";
         })
@@ -601,8 +614,11 @@ export function parseAdventureResponseDetailed(
             const role = typeof n.role === "string" ? n.role.trim() : "";
             const goal = typeof n.goal === "string" ? n.goal.trim() : "";
             const secret = typeof n.secret === "string" ? n.secret.trim() : "";
+            const relationship =
+              typeof n.relationship === "string" ? n.relationship.trim() : "";
             const details = [];
             if (role) details.push(role);
+            if (relationship) details.push(`**Relation:** ${relationship}`);
             if (goal)
               details.push(
                 `**Wants:** ${goal.endsWith(".") ? goal : goal + "."}`,
