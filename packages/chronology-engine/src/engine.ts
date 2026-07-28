@@ -482,6 +482,13 @@ export function parseDirectDateInput(
   const trimmed = input.trim();
   if (!trimmed) return null;
 
+  const yearOnlyMatch = trimmed.match(/^(-?\d{4})$/);
+  if (yearOnlyMatch) {
+    const year = Number.parseInt(yearOnlyMatch[1], 10);
+    const date = { year };
+    return calendarEngine.isValid(date, config) ? date : null;
+  }
+
   const compactMatch = trimmed.match(/^(\d{2})(\d{2})(-?\d+)$/);
   const separatedMatch =
     trimmed.match(/^(\d{1,2})[./\s](\d{1,2})[./\s](-?\d+)$/) ||
