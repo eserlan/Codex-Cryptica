@@ -94,7 +94,10 @@ export function trackSaveToCodex(
   if (input.relatedEntityCount > 0) {
     trackEvent(
       "related_entity_created",
-      { related_entity_count: bucketCount(input.relatedEntityCount) },
+      {
+        ...baseProperties,
+        related_entity_count: bucketCount(input.relatedEntityCount),
+      },
       deps.win,
     );
   }
