@@ -362,14 +362,25 @@ Everything else is yours to invent: the adventure's title, specific names for lo
 
 Write the "throughline" field first and let it govern everything else. It is ONE sentence covering who set events in motion, what is at stake, and how that leads to the initial situation, primary objective, and outcomes. Every later field must be consistent with it.
 
-Critical Structural Guidelines:
-1. CAUSAL RELATIONSHIPS OVER IDEA CONFETTI: Do not throw unlinked magical ideas into the document. Every location MUST serve a functional purpose in the scenario (e.g. holding a clue, hosting a solution, or providing refuge). Every NPC MUST have an explicit relationship to another NPC, faction, or the objective.
-2. COMMIT TO THE PC ROLE: State clearly in the initial situation whether the PCs are the main actors (e.g. the troupe), hired escorts, or accidental witnesses.
-3. TICKING CLOCK INTEGRATION: If a deadline or pressure is introduced in the summary/premise (e.g. "tax-dragons arrive at dawn"), it MUST appear as an explicit, trackable clock in the primary objective and complications.
-4. GROUNDED CONTRAST: Pick 2-3 genuinely extraordinary or magical elements and set them against realistic geography, logistics, and human motivations. Do not give every single object a whimsical modifier.
-5. TRUE END-STATE OUTCOMES: The "outcomes" field MUST describe permanent changes in the world state (end-game consequences), NOT mid-adventure tactics (e.g. "bribing a guard") or player actions.
-
-The output must describe a SITUATION, not a plot. Provide multiple avenues of action, not a required sequence of scenes.
+Critical Structural Guidelines for Playability & Global Causal Coherence:
+1. SCENARIO-PATH GLOBAL CONSISTENCY PASS (The Primary Rule): After generating all elements, perform a scenario-path consistency pass. Trace where the objective physically is, how the players can reach it, which locations provide prerequisites or alternate routes, and how they escape. Every required transition between locations must be explicit. If two locations claim the same narrative function, reconcile them. Any essential place mentioned in another element — especially the objective location, climax, or target — MUST exist explicitly as its own key location card.
+2. PRIORITISE CAUSAL COHERENCE OVER IDEA CONFETTI: Every major element (locations, NPCs, threats, clues, complications, rewards) must EARN its place through causal relationships. Prefer fewer, deeply interconnected ideas over many unrelated clever details. Avoid isolated flavour details that do not affect play.
+3. THE 4-POINT FILTER (Role, Relation, Leverage, Consequence):
+   - Role: why it exists in this adventure.
+   - Relation: what other adventure elements (NPCs, locations, objectives) it connects to.
+   - Leverage: what the players can do with, to, or because of it.
+   - Consequence: what changes if players engage with, expose, or fail against it.
+4. LEGITIMATE DILEMMAS BETWEEN COMPETING PRIORITIES: Prefer dilemmas between two legitimate priorities, costs, risks, or opportunities (e.g. save time vs. preserve secret, help oppressed locals vs. secure patron payout, save the artifact vs. save an innocent life). Avoid manufacturing dilemmas by making one option gratuitously cruel or merely offering two tactical methods for solving the same obstacle.
+5. ACTIONABLE CLUES & SECRETS: Clues and secrets MUST change the players' available actions, understanding of a decision, or consequences. Do not include revelations solely for flavour.
+6. SITUATION NETWORK, NOT A PLOT SEQUENCE: Provide multiple viable routes to make progress. No single clue, NPC, or location should accidentally become an unintended single point of failure / lone bottleneck.
+7. TITLE & ENVIRONMENT CONSISTENCY: Ensure the title matches the environment and premise (e.g. do not call an adventure 'The Drowned Heir' if it takes place in a frozen mountain pass with no water, unless the prose explicitly justifies the title).
+8. INTERNAL CONSISTENCY & LOCATION COUNT:
+   - Provide 2-3 key locations, each with a distinct role in the situation network.
+   - Patrons, enemies, and factions must not contradict one another.
+   - Deadlines and clocks must have a clear causal basis (e.g. if the summary promises 'tax-dragons at dawn', that clock must drive the objective and complications).
+   - Names and titles must remain consistent throughout.
+   - Complications should introduce new decisions, costs, or relationships rather than merely increasing numeric difficulty.
+   - Outcomes must describe distinct WORLD END-STATES (permanent consequences), not player tactics or mid-scene events.
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
@@ -393,16 +404,31 @@ Required JSON schema:
   "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, why does it demand action immediately, and explicitly what role the PCs play.",
   "primaryObjective": "One clear objective with an explicit, trackable deadline or countdown clock (e.g. 'Dawn: Tax-Dragons arrive') that makes inaction costly.",
   "keyLocations": [
-    { "name": "Specific location name", "description": "2 sentences: what it is and why it matters.", "roleInScenario": "Explicit functional purpose in this adventure (e.g. holds clue X, offers route Y to solve obstacle Z)." }
+    {
+      "name": "Specific location name",
+      "description": "2 sentences: physical description and atmosphere.",
+      "role": "Why it exists in this scenario",
+      "relation": "Which NPC, threat, or clue connects to this location",
+      "leverage": "What players can discover, leverage, or achieve here to make progress",
+      "dilemma": "Meaningful choice between competing priorities this location forces on players"
+    }
   ],
   "npcs": [
-    { "name": "NPC or faction name", "role": "Their role in the situation", "goal": "What they want — specific and actionable", "secret": "What they are hiding", "relationship": "How they connect to another NPC, faction, or the objective." }
+    {
+      "name": "NPC or faction name",
+      "role": "Their role in the situation",
+      "relation": "How they connect to another NPC, faction, or the objective",
+      "goal": "What they want — specific and actionable",
+      "secret": "What they are hiding or what the party doesn't know about them yet",
+      "leverage": "What players can bargain with, expose, or use against them",
+      "dilemma": "Meaningful choice between competing priorities this NPC forces on players"
+    }
   ],
   "threats": ["1-2 sentences per threat: who or what opposes the party and how, aligned with the main ticking clock"],
-  "discoveries": ["1-2 sentences per discovery: specific clues or revelations that solve an obstacle or reveal an NPC secret — not standalone facts"],
-  "complications": ["1-2 sentences per complication: specific escalating pressures or clock steps that make the situation harder"],
+  "discoveries": ["1-2 sentences per clue: an actionable revelation that solves an obstacle or opens an alternative pathway — no standalone facts"],
+  "complications": ["1-2 sentences per complication: new decisions, costs, or shifting relationships that escalate the pressure"],
   "rewards": ["1 sentence per reward: what players can gain — specific and proportionate to the stakes"],
-  "outcomes": ["2-3 sentences per outcome: a genuinely different WORLD END-STATE (what has permanently changed in the setting after the adventure ends), written as a situation rather than player tactics or mid-scene events"],
+  "outcomes": ["2-3 sentences per outcome: a genuinely different WORLD END-STATE (permanent world consequences after the adventure ends), NOT mid-adventure tactics or player actions"],
   "hooks": ["1-2 sentences per hook: a specific reason a particular party would engage with this adventure"]
 }`;
 
@@ -554,6 +580,299 @@ export function parseAdventureResponseDetailed(
       );
     }
 
+    // 1. Programmatic Title vs. Environment Coherence Validation (Multi-Domain)
+    const titleLower = title.toLowerCase();
+    const fullTextLower = JSON.stringify(parsed).toLowerCase();
+    const environmentDomainRules = [
+      {
+        domain: "aquatic/flooding",
+        titleKeywords: [
+          "drowned",
+          "sunken",
+          "submerged",
+          "underwater",
+          "flooded",
+          "maritime",
+        ],
+        contextKeywords: [
+          "water",
+          "flood",
+          "river",
+          "sea",
+          "ocean",
+          "lake",
+          "drown",
+          "belfry",
+          "mere",
+          "rain",
+          "swamp",
+          "marsh",
+          "tide",
+          "ship",
+          "harbor",
+          "coastal",
+          "stream",
+        ],
+      },
+      {
+        domain: "mountain/alpine",
+        titleKeywords: [
+          "mountain",
+          "alpine",
+          "summit",
+          "peak",
+          "crag",
+          "cliff",
+          "glacier",
+          "pass",
+        ],
+        contextKeywords: [
+          "mountain",
+          "peak",
+          "crag",
+          "cliff",
+          "pass",
+          "glacier",
+          "altitude",
+          "gorge",
+          "ravine",
+          "granite",
+          "rock",
+          "slope",
+          "switchback",
+        ],
+      },
+      {
+        domain: "forest/wilds",
+        titleKeywords: [
+          "forest",
+          "jungle",
+          "sylvan",
+          "grove",
+          "thicket",
+          "canopy",
+          "timber",
+        ],
+        contextKeywords: [
+          "forest",
+          "tree",
+          "wood",
+          "jungle",
+          "grove",
+          "thicket",
+          "canopy",
+          "timber",
+          "leaf",
+          "bough",
+          "root",
+          "foliage",
+          "sylvan",
+        ],
+      },
+      {
+        domain: "desert/arid",
+        titleKeywords: ["desert", "dune", "arid", "wasteland", "sand"],
+        contextKeywords: [
+          "desert",
+          "sand",
+          "dune",
+          "arid",
+          "waste",
+          "heat",
+          "oasis",
+          "cactus",
+          "dust",
+          "barren",
+          "sun-baked",
+        ],
+      },
+      {
+        domain: "urban/city",
+        titleKeywords: [
+          "city",
+          "urban",
+          "metropolis",
+          "spire",
+          "borough",
+          "district",
+        ],
+        contextKeywords: [
+          "city",
+          "street",
+          "alley",
+          "market",
+          "plaza",
+          "court",
+          "building",
+          "inn",
+          "tavern",
+          "capital",
+          "urban",
+          "borough",
+          "district",
+          "tenement",
+        ],
+      },
+      {
+        domain: "subterranean/cavern",
+        titleKeywords: [
+          "subterranean",
+          "underdark",
+          "cavern",
+          "catacomb",
+          "chasm",
+          "tomb",
+          "vault",
+        ],
+        contextKeywords: [
+          "cave",
+          "cavern",
+          "subterranean",
+          "underground",
+          "tomb",
+          "catacomb",
+          "chasm",
+          "tunnel",
+          "shaft",
+          "mine",
+          "abyss",
+          "depths",
+        ],
+      },
+      {
+        domain: "arctic/frost",
+        titleKeywords: ["frost", "frozen", "arctic", "ice", "blizzard"],
+        contextKeywords: [
+          "frost",
+          "ice",
+          "snow",
+          "frozen",
+          "blizzard",
+          "winter",
+          "chill",
+          "glacier",
+          "rime",
+          "cold",
+          "freezing",
+        ],
+      },
+    ];
+
+    for (const rule of environmentDomainRules) {
+      const matchesTitle = rule.titleKeywords.some((term) =>
+        titleLower.includes(term),
+      );
+      if (matchesTitle) {
+        const matchesContext = rule.contextKeywords.some((term) =>
+          fullTextLower.includes(term),
+        );
+        if (!matchesContext) {
+          problems.push(
+            `Title '${title}' references ${rule.domain} keywords but the adventure context has no corresponding ${rule.domain} elements.`,
+          );
+        }
+      }
+    }
+
+    // 2. Programmatic Dilemma Presence Validation (Locations & NPCs)
+    let missingDilemmas = 0;
+    for (const loc of rawLocations) {
+      if (loc && typeof loc === "object") {
+        const d = (loc as Record<string, unknown>).dilemma;
+        if (typeof d !== "string" || !d.trim()) missingDilemmas++;
+      }
+    }
+    for (const npc of rawNpcs) {
+      if (npc && typeof npc === "object") {
+        const d = (npc as Record<string, unknown>).dilemma;
+        if (typeof d !== "string" || !d.trim()) missingDilemmas++;
+      }
+    }
+    if (missingDilemmas > 0) {
+      problems.push(
+        "keyLocations and npcs must each include a 'dilemma' field detailing a choice between competing priorities.",
+      );
+    }
+
+    // 3. Programmatic Ticking Clock Integration Validation
+    const summaryObjText =
+      `${parsed.summary ?? ""} ${parsed.primaryObjective ?? ""}`.toLowerCase();
+    const clockTerms = [
+      "hour",
+      "dawn",
+      "dusk",
+      "solstice",
+      "equinox",
+      "midnight",
+      "eclipse",
+      "day",
+      "clock",
+      "timer",
+      "deadline",
+      "expire",
+    ];
+    const hasClockInObjective = clockTerms.some((term) =>
+      summaryObjText.includes(term),
+    );
+    if (hasClockInObjective) {
+      const threatsCompText =
+        `${JSON.stringify(parsed.threats ?? "")} ${JSON.stringify(parsed.complications ?? "")}`.toLowerCase();
+      const integratesClock = clockTerms.some((term) =>
+        threatsCompText.includes(term),
+      );
+      if (!integratesClock) {
+        problems.push(
+          "Primary objective deadline/clock must be integrated into threats or complications.",
+        );
+      }
+    }
+
+    // 4. Programmatic Destination Site Representation Validation
+    const objectiveText =
+      `${parsed.primaryObjective ?? ""} ${parsed.throughline ?? ""}`.toLowerCase();
+    const destinationKeywords = [
+      "hermitage",
+      "sanctuary",
+      "tomb",
+      "vault",
+      "shrine",
+      "bastion",
+      "fortress",
+      "citadel",
+      "parish",
+      "temple",
+      "ruins",
+      "court",
+      "haven",
+      "catacombs",
+      "monastery",
+      "keep",
+      "garrison",
+      "chamber",
+    ];
+    const mentionedDestinations = destinationKeywords.filter((term) =>
+      objectiveText.includes(term),
+    );
+    if (mentionedDestinations.length > 0) {
+      const locationNamesText = rawLocations
+        .map((loc) => {
+          if (typeof loc === "string") return loc;
+          if (loc && typeof loc === "object" && typeof loc.name === "string")
+            return loc.name;
+          return "";
+        })
+        .join(" ")
+        .toLowerCase();
+      const isRepresentedInLocations = mentionedDestinations.some((term) =>
+        locationNamesText.includes(term),
+      );
+      if (!isRepresentedInLocations) {
+        problems.push(
+          `The primary objective destination site ('${mentionedDestinations.join(", ")}') must be included as an explicit keyLocations card.`,
+        );
+      }
+    }
+
     // Structural violations cause rejection.
     const structural = problems.filter(
       (p) => p.startsWith("uses banned") || p.startsWith("reuses names"),
@@ -575,26 +894,54 @@ export function parseAdventureResponseDetailed(
       foundation?.primaryObjective ?? "",
     );
 
-    // keyLocations can be objects or strings.
+    // keyLocations formatted as structured sub-bullets without emdashes
     const keyLocations: string[] = (() => {
       const rawLocs = Array.isArray(parsed.keyLocations)
         ? parsed.keyLocations
         : [];
       const mapped = rawLocs
         .map((loc: unknown) => {
-          if (typeof loc === "string") return loc.trim();
+          if (typeof loc === "string")
+            return loc.replace(/\s*—\s*/g, ": ").trim();
           if (loc && typeof loc === "object") {
             const l = loc as Record<string, unknown>;
-            const name = typeof l.name === "string" ? l.name.trim() : "";
-            const desc =
-              typeof l.description === "string" ? l.description.trim() : "";
-            const roleInScenario =
-              typeof l.roleInScenario === "string"
-                ? l.roleInScenario.trim()
+            const name =
+              typeof l.name === "string"
+                ? l.name.replace(/\s*—\s*/g, ": ").trim()
                 : "";
-            let text = name && desc ? `**${name}** — ${desc}` : name || desc;
-            if (roleInScenario) text += ` (*Role:* ${roleInScenario})`;
-            return text;
+            const desc =
+              typeof l.description === "string"
+                ? l.description.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const role =
+              typeof l.role === "string"
+                ? l.role.replace(/\s*—\s*/g, ": ").trim()
+                : typeof l.roleInScenario === "string"
+                  ? l.roleInScenario.replace(/\s*—\s*/g, ": ").trim()
+                  : "";
+            const relation =
+              typeof l.relation === "string"
+                ? l.relation.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const leverage =
+              typeof l.leverage === "string"
+                ? l.leverage.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const dilemma =
+              typeof l.dilemma === "string"
+                ? l.dilemma.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+
+            const subBullets: string[] = [];
+            if (role) subBullets.push(`  - **Role:** ${role}`);
+            if (relation) subBullets.push(`  - **Relation:** ${relation}`);
+            if (leverage) subBullets.push(`  - **Leverage:** ${leverage}`);
+            if (dilemma) subBullets.push(`  - **Dilemma:** ${dilemma}`);
+
+            const header = name && desc ? `**${name}**: ${desc}` : name || desc;
+            return subBullets.length > 0
+              ? `${header}\n${subBullets.join("\n")}`
+              : header;
           }
           return "";
         })
@@ -602,31 +949,60 @@ export function parseAdventureResponseDetailed(
       return mapped.length > 0 ? mapped : (foundation?.keyLocations ?? []);
     })();
 
-    // npcs can be objects or strings.
+    // npcs formatted as structured sub-bullets without emdashes
     const npcLines: string[] = (() => {
       const rawNpcList = Array.isArray(parsed.npcs) ? parsed.npcs : [];
       const mapped = rawNpcList
         .map((npc: unknown) => {
-          if (typeof npc === "string") return npc.trim();
+          if (typeof npc === "string")
+            return npc.replace(/\s*—\s*/g, ": ").trim();
           if (npc && typeof npc === "object") {
             const n = npc as Record<string, unknown>;
-            const name = typeof n.name === "string" ? n.name.trim() : "";
-            const role = typeof n.role === "string" ? n.role.trim() : "";
-            const goal = typeof n.goal === "string" ? n.goal.trim() : "";
-            const secret = typeof n.secret === "string" ? n.secret.trim() : "";
-            const relationship =
-              typeof n.relationship === "string" ? n.relationship.trim() : "";
-            const details = [];
-            if (role) details.push(role);
-            if (relationship) details.push(`**Relation:** ${relationship}`);
+            const name =
+              typeof n.name === "string"
+                ? n.name.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const role =
+              typeof n.role === "string"
+                ? n.role.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const goal =
+              typeof n.goal === "string"
+                ? n.goal.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const secret =
+              typeof n.secret === "string"
+                ? n.secret.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const relation =
+              typeof n.relationship === "string"
+                ? n.relationship.replace(/\s*—\s*/g, ": ").trim()
+                : typeof n.relation === "string"
+                  ? n.relation.replace(/\s*—\s*/g, ": ").trim()
+                  : "";
+            const leverage =
+              typeof n.leverage === "string"
+                ? n.leverage.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+            const dilemma =
+              typeof n.dilemma === "string"
+                ? n.dilemma.replace(/\s*—\s*/g, ": ").trim()
+                : "";
+
+            const subBullets: string[] = [];
+            if (relation) subBullets.push(`  - **Relation:** ${relation}`);
             if (goal)
-              details.push(
-                `**Wants:** ${goal.endsWith(".") ? goal : goal + "."}`,
+              subBullets.push(
+                `  - **Wants:** ${goal.endsWith(".") ? goal : goal + "."}`,
               );
-            if (secret) details.push(`**Secret:** ${secret}`);
-            return [name ? `**${name}**` : "", details.join(" — ")]
-              .filter(Boolean)
-              .join(" — ");
+            if (secret) subBullets.push(`  - **Secret:** ${secret}`);
+            if (leverage) subBullets.push(`  - **Leverage:** ${leverage}`);
+            if (dilemma) subBullets.push(`  - **Dilemma:** ${dilemma}`);
+
+            const header = name && role ? `**${name}**: ${role}` : name || role;
+            return subBullets.length > 0
+              ? `${header}\n${subBullets.join("\n")}`
+              : header;
           }
           return "";
         })

@@ -224,11 +224,15 @@ const VALID_AI_RESPONSE = JSON.stringify({
       name: "The Drowned Courier's Lodging",
       description:
         "A rented room above a cooperage; the courier's belongings are still here and so are two watchers.",
+      dilemma:
+        "Burn the room to destroy evidence of your visit or leave it intact to keep the watchers off your trail.",
     },
     {
       name: "The Magistrate's Court",
       description:
         "A fortified administrative building with three entrances, two of which are currently watched.",
+      dilemma:
+        "Force passage through the watched main doors or bribe a corrupt clerk to use the sewer grate.",
     },
   ],
   npcs: [
@@ -238,6 +242,8 @@ const VALID_AI_RESPONSE = JSON.stringify({
       goal: "Destroy the ledger before the morning session",
       secret:
         "He is already cooperating with the second faction to narrow the suspects — he intends to betray them once the ledger is gone.",
+      dilemma:
+        "Extort Venn for a massive reward or expose his double-cross to the investigators.",
     },
     {
       name: "Sera Osel",
@@ -245,6 +251,8 @@ const VALID_AI_RESPONSE = JSON.stringify({
       goal: "Ensure the ledger reaches her employer",
       secret:
         "She already copied three pages before it was stolen and has been waiting for the right moment to surface them.",
+      dilemma:
+        "Trust Sera with the original ledger or use her stolen copies as bait.",
     },
   ],
   threats: [
