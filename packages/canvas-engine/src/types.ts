@@ -16,19 +16,39 @@ const CanvasNodeBaseSchema = z.object({
 
 export const CanvasNodeSchema = z.preprocess(
   (val: any) => {
+    if (!val || typeof val !== "object") return val;
+
+    const normalized =
+      !val.position && typeof val.x === "number" && typeof val.y === "number"
+        ? { ...val, position: { x: val.x, y: val.y } }
+        : val;
+
     if (
-      val &&
-      typeof val === "object" &&
-      !val.position &&
-      typeof val.x === "number" &&
-      typeof val.y === "number"
+      normalized.data === undefined &&
+      ["delveRoom", "delveSectorGroup", "group"].includes(normalized.type)
     ) {
+      const {
+        type: _type,
+        position: _position,
+        x: _x,
+        y: _y,
+        width: _width,
+        height: _height,
+        color: _color,
+        parentId: _parentId,
+        extent: _extent,
+        style: _style,
+        ...legacyData
+      } = normalized;
       return {
-        ...val,
-        position: { x: val.x, y: val.y },
+        ...normalized,
+        // Early public-generator builds stored the domain payload directly on
+        // the node. Preserve it under `data` so those canvases remain usable.
+        data: legacyData,
       };
     }
-    return val;
+
+    return normalized;
   },
   z.discriminatedUnion("type", [
     CanvasNodeBaseSchema.extend({
