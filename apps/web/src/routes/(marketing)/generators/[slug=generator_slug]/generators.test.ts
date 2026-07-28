@@ -42,6 +42,8 @@ describe("Generators SvelteKit Route", () => {
         { slug: "language-generator" },
         { slug: "news-sheet-generator" },
         { slug: "dungeon-generator" },
+        { slug: "adventure-generator" },
+        { slug: "adventure-idea-generator" },
       ]);
     });
   });

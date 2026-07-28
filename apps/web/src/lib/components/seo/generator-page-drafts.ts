@@ -192,4 +192,26 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["dungeon", "location", "dungeon-generator", "imported-draft"],
     status: "draft",
   },
+  "adventure-generator": {
+    type: "event",
+    title: "The Witness Who Came Back",
+    summary:
+      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.",
+    content:
+      "## Initial Situation\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.",
+    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
+    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
+    status: "draft",
+  },
+  "adventure-idea-generator": {
+    type: "event",
+    title: "The Witness Who Came Back",
+    summary:
+      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.",
+    content:
+      "## Initial Situation\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.",
+    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
+    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
+    status: "draft",
+  },
 };

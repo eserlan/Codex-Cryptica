@@ -26,6 +26,8 @@ const validSlugs = new Set([
   "language-generator",
   "news-sheet-generator",
   "dungeon-generator",
+  "adventure-generator",
+  "adventure-idea-generator",
 ]);
 
 export const load: PageLoad = ({ params }) => {
