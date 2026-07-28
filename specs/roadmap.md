@@ -34,6 +34,13 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.30.0 — The Dungeon & Delve Update (2026-07-28)
+
+- **Highlights**: The Dungeon / Delve Idea Generator, building coherent explorable locations across all CC world themes around a purpose→history→current state→conflict→signature feature chain, with key areas, factions, hazards, a central secret, and hooks; the companion Dungeon & Delve Structural Builder turning a generated delve into a room-by-room map with connections, loops, and hidden routes on an interactive canvas; Layered Art Direction v2 (faction-inherited visual identity, a stature/scale axis, canon-preserving subject compression); a redesigned first-run onboarding tour and Getting Started hub; CIF Mechanical Importer Phase 2 (ZIP packages with image assets); Thread Weaver/Scabard import support with a migration guide; and mobile entity image uploads.
+- **Associated Specifications**:
+  - [1825-dungeon-idea-generator](./1825-dungeon-idea-generator/spec.md) (Dungeon / Delve Idea Generator, 2026-07-25)
+  - [145-dungeon-structural-builder](./145-dungeon-structural-builder/spec.md) (Dungeon & Delve Structural Builder, 2026-07-26)
+
 ### v0.29.0 — The Voice & Lineage Update (2026-07-19)
 
 - **Highlights**: In-app group voice chat for live sessions (host-mixed hub-and-spoke audio over PeerJS with mute controls and a participant roster); the CIF Mechanical Importer Phase 1 text-only core; a full Family Tree view for characters (zoom, full-screen, relation categories) extended by the multi-generation Lineage view with relationship alias normalization and sibling auto-linking; the Language (conlang profile) Generator with vault grounding and genre-following themes; copyright/fan-content notices with report intake and suspension sidecars for public worlds; the Entity Table/List view with guest-mode filters and deep-link hardening; theme bestiaries and creature catalogue packs in the importer; the discoverable Public World Directory with search and filtering; and the Entity Timeline tab in the detail panel. Internals: duplication cleanup epic (shared utils, `ModalShell`, retry helpers, DRY rule in constitution v1.3.0) and injected `Clock`/runtime dependencies across services.
