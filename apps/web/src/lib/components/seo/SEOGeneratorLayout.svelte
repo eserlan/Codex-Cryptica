@@ -30,6 +30,7 @@
   import {
     getContextSelection,
     computeProvenance,
+    generateAdventureGraphTopology,
     type SessionEntity,
   } from "generator-engine";
   import {
@@ -484,6 +485,35 @@
         "The generated delve could not be opened. Your pending canvas has been preserved so you can retry.";
     }
   }
+
+  async function handleBuildAdventureCanvas(data: GeneratorOutput) {
+    try {
+      const canvasDoc = generateAdventureGraphTopology(data);
+      const layout = getGeneratorDocumentLayout(data);
+      const content = data.summary
+        ? `*${data.summary}*\n\n${layout.content}`
+        : layout.content;
+      const transfer = createPendingDelveTransfer(canvasDoc as any, {
+        type: "event",
+        kind: "adventure",
+        title: data.title,
+        content,
+        lore: layout.lore,
+        labels: data.labels,
+        status: data.status,
+      });
+      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
+      await unregisterDevelopmentServiceWorkers(dev);
+      if (dev) {
+        window.location.assign(resolve("/canvas"));
+        return;
+      }
+      await goto(resolve("/canvas"));
+    } catch (err) {
+      console.error("[AdventureCanvas] Failed to build adventure canvas:", err);
+      errorMessage = "Failed to open Adventure Canvas for this scenario.";
+    }
+  }
 </script>
 
 <svelte:head>
@@ -631,6 +661,7 @@
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
         onSaveHubToCodex={handleSaveHubToCodex}
         onBuildDelveCanvas={handleBuildDelveCanvas}
+        onBuildAdventureCanvas={handleBuildAdventureCanvas}
       />
     </div>
 

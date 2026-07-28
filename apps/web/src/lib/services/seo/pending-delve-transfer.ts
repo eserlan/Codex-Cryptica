@@ -46,14 +46,14 @@ function prepareTransferredCanvas(
   sourceEntityId?: string,
 ): Canvas {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
-    throw new Error("The transferred delve canvas is invalid.");
+    throw new Error("The transferred canvas is invalid.");
   }
   const canvas = input as Record<string, unknown>;
   const metadata =
     canvas.metadata &&
     typeof canvas.metadata === "object" &&
     !Array.isArray(canvas.metadata)
-      ? canvas.metadata
+      ? (canvas.metadata as Record<string, unknown>)
       : {};
   const title =
     typeof canvas.name === "string"
@@ -62,12 +62,19 @@ function prepareTransferredCanvas(
         ? canvas.title
         : undefined;
 
+  const kind =
+    typeof metadata.kind === "string"
+      ? metadata.kind
+      : typeof (canvas as Record<string, unknown>).kind === "string"
+        ? (canvas as Record<string, unknown>).kind
+        : "delve";
+
   return CanvasSchema.parse({
     ...canvas,
     name: title,
     metadata: {
       ...metadata,
-      kind: "delve",
+      kind,
       ...(sourceEntityId ? { sourceEntityId } : {}),
     },
   });
@@ -82,8 +89,8 @@ export function createPendingDelveTransfer(
     canvas,
     sourceEntity: {
       ...sourceEntity,
-      type: "location",
-      kind: "dungeon",
+      type: sourceEntity.type || "location",
+      kind: sourceEntity.kind || "dungeon",
     },
   });
 }
@@ -116,7 +123,7 @@ export class PendingDelveTransferService {
     }
 
     const transfer = parsedTransfer.data;
-    // Validate and migrate the canvas before creating the Location. This
+    // Validate and migrate the canvas before creating the Entity. This
     // prevents an unimportable public payload from leaving an orphan entity.
     const preparedCanvas = prepareTransferredCanvas(transfer.canvas);
     const entityId =
@@ -141,19 +148,22 @@ export class PendingDelveTransferService {
 
   private async findOrCreateSourceEntity(draft: ImportDraft): Promise<string> {
     const normalizedTitle = draft.title.trim().toLowerCase();
+    const targetType = (draft.type as Entity["type"]) || "location";
+    const targetKind = draft.kind || "dungeon";
+
     const existing = this.entityStore.allEntities.find(
       (entity) =>
         entity.title.trim().toLowerCase() === normalizedTitle &&
-        isGeneratedDelve(entity),
+        (entity.type === targetType || isGeneratedDelve(entity)),
     );
     if (existing) return existing.id;
 
-    return this.entityStore.createEntity("location", draft.title, {
+    return this.entityStore.createEntity(targetType, draft.title, {
       content: draft.content,
       lore: draft.lore ?? "",
       labels: draft.labels,
       status: draft.status,
-      kind: "dungeon",
+      kind: targetKind,
     });
   }
 }

@@ -14,6 +14,7 @@
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
   import DelveSectorNode from "$lib/components/canvas/DelveSectorNode.svelte";
+  import AdventureNode from "$lib/components/canvas/AdventureNode.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
   import DelveEdge from "$lib/components/canvas/DelveEdge.svelte";
@@ -141,6 +142,12 @@
     entity: EntityNode,
     delveRoom: DelveRoomNode,
     delveSectorGroup: DelveSectorNode,
+    situation: AdventureNode,
+    location: AdventureNode,
+    npc: AdventureNode,
+    clue: AdventureNode,
+    threat: AdventureNode,
+    outcome: AdventureNode,
   };
 
   const edgeTypes = {

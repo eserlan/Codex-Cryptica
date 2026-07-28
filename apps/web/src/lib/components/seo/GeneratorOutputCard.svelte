@@ -45,6 +45,7 @@
     onSelectHubEntity,
     onSaveHubToCodex,
     onBuildDelveCanvas,
+    onBuildAdventureCanvas,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -67,6 +68,7 @@
     onSelectHubEntity: (entity: SessionEntity) => void;
     onSaveHubToCodex: (entities: SessionEntity[]) => void;
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
+    onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
   } = $props();
 </script>
 
@@ -178,6 +180,19 @@
                 <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
                 ></span>
                 Build Delve Canvas
+              </button>
+            {/if}
+            {#if ((generatedData?.kind as string) === "adventure" || (generatedData?.kind as string) === "event" || generatedData?.labels?.includes("adventure")) && onBuildAdventureCanvas}
+              <button
+                type="button"
+                onclick={() => onBuildAdventureCanvas(generatedData!)}
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                id="build-adventure-canvas-btn"
+                title="Build and open an interactive Adventure Canvas for this scenario"
+              >
+                <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
+                ></span>
+                Open Adventure Canvas
               </button>
             {/if}
             <button
