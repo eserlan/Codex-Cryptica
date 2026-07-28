@@ -28,7 +28,14 @@ export type SlugMetaEntry = {
   eyebrow: string;
   introText: string;
   canonicalPath: string;
-  faqs?: { question: string; answer: string }[];
+  faqs?: {
+    question: string;
+    answer: string;
+    image?: string;
+    imageAlt?: string;
+    inlineImage?: string;
+    inlineImageAlt?: string;
+  }[];
   relatedLinks?: { href: string; label: string }[];
 };
 
@@ -414,7 +421,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "Dungeon / Delve Idea Generator",
     eyebrow: "Dungeon Generator",
     introText:
-      "Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks.",
+      "Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks. Every generated delve can also become a fully explorable, room-by-room map — the interactive Dungeon Canvas is exclusive to Codex Cryptica, free to open once you're in the app.",
     canonicalPath: "/generators/dungeon-generator",
     faqs: [
       {
@@ -431,6 +438,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         question: "Does it work without an account?",
         answer:
           "Yes. Generate and copy dungeons on this page without logging in. Save drafts directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+      {
+        question: "Can I turn this into an explorable map, not just text?",
+        answer:
+          "Yes — hit Build Delve Canvas on any generated dungeon to open an interactive, room-by-room map with connected areas, loops, and hidden routes you can rearrange and edit, plus a full GM Dossier with atmosphere, connections, and secrets written out room by room. The dungeon itself is saved as a Location entity in your vault, so it's linked up with the rest of your world from the start. Both are exclusive to Codex Cryptica: they're not part of the plain text generator, but they're still free and need no account — just open your world in the app.",
+        image: "/images/dungeon-canvas.png",
+        imageAlt:
+          "The interactive Dungeon Canvas showing a two-sector delve map with entrance, hazard, secret, and faction nodes connected by labeled passages",
+        inlineImage: "/images/dungeon-canvas-button.png",
+        inlineImageAlt:
+          "The Build Delve Canvas button, next to Save to Codex and Copy, on a generated dungeon result",
       },
     ],
     relatedLinks: [
