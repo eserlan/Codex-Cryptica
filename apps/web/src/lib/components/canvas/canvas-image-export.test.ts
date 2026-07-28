@@ -27,6 +27,7 @@ describe("exportCanvasImage", () => {
       expect.objectContaining({
         cacheBust: true,
         pixelRatio: expect.any(Number),
+        skipFonts: true,
       }),
     );
   });

@@ -73,6 +73,83 @@ describe("PendingDelveTransferService", () => {
     expect(storage.getItem(PENDING_DELVE_CANVAS_KEY)).toBeNull();
   });
 
+  it("migrates root-level public delve nodes before importing and linking", async () => {
+    const legacyCanvas = {
+      ...canvas,
+      nodes: [
+        {
+          id: "room-1",
+          type: "delveRoom",
+          position: { x: 0, y: 0 },
+          sectorId: "sector-1",
+          sectorName: "The Sunken Forge",
+          name: "Flooded Threshold",
+          role: "entrance",
+          summary: "A flooded gate.",
+          description: "Black water covers the lower steps.",
+          stocking: {},
+        },
+      ],
+    };
+    const storage = createMemoryStorage(
+      createPendingDelveTransfer(legacyCanvas, sourceEntity),
+    );
+    const entityStore = {
+      allEntities: [],
+      createEntity: vi.fn().mockResolvedValue("location-bruneth"),
+    };
+    const canvasImporter = {
+      importCanvas: vi.fn().mockResolvedValue("hollowed-citadel"),
+    };
+    const service = new PendingDelveTransferService(
+      entityStore as never,
+      canvasImporter,
+      storage,
+    );
+
+    await service.importPending();
+
+    expect(entityStore.createEntity).toHaveBeenCalledOnce();
+    expect(canvasImporter.importCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: sourceEntity.title,
+        nodes: [
+          expect.objectContaining({
+            id: "room-1",
+            data: expect.objectContaining({
+              sectorId: "sector-1",
+              name: "Flooded Threshold",
+            }),
+          }),
+        ],
+        metadata: expect.objectContaining({
+          sourceEntityId: "location-bruneth",
+        }),
+      }),
+    );
+  });
+
+  it("does not create a Location for an invalid transferred canvas", async () => {
+    const storage = createMemoryStorage(
+      createPendingDelveTransfer(
+        { ...canvas, nodes: [{ id: "broken" }] },
+        sourceEntity,
+      ),
+    );
+    const entityStore = {
+      allEntities: [],
+      createEntity: vi.fn().mockResolvedValue("location-bruneth"),
+    };
+    const service = new PendingDelveTransferService(
+      entityStore as never,
+      { importCanvas: vi.fn() },
+      storage,
+    );
+
+    await expect(service.importPending()).rejects.toThrow();
+    expect(entityStore.createEntity).not.toHaveBeenCalled();
+  });
+
   it("reuses an existing generated delve Location with the same title", async () => {
     const transfer = createPendingDelveTransfer(canvas, sourceEntity);
     const storage = createMemoryStorage(transfer);

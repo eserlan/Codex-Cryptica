@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { Editor } from "@tiptap/core";
+  import { Editor, mergeAttributes } from "@tiptap/core";
   import StarterKit from "@tiptap/starter-kit";
   import { Markdown } from "tiptap-markdown";
   import Link from "@tiptap/extension-link";
@@ -13,6 +13,7 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { protectVaultImageSource } from "./editor/vault-image";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openCanvasHref } from "$lib/stores/ui/navigation";
   import { vault } from "$lib/stores/vault.svelte";
@@ -69,12 +70,24 @@
   let isZenMode = $state(false);
   const resolvedVaultImages = new Map<string, string>();
 
+  const VaultImage = Image.extend({
+    renderHTML({ HTMLAttributes }) {
+      return [
+        "img",
+        mergeAttributes(
+          this.options.HTMLAttributes,
+          protectVaultImageSource(HTMLAttributes),
+        ),
+      ];
+    },
+  });
+
   async function resolveLocalImages() {
     const images = element?.querySelectorAll<HTMLImageElement>(
-      'img[src^="images/"]',
+      "img[data-vault-asset-path]",
     );
     for (const image of images ?? []) {
-      const assetPath = image.getAttribute("src");
+      const assetPath = image.dataset.vaultAssetPath;
       if (!assetPath) continue;
       let resolved = resolvedVaultImages.get(assetPath);
       if (!resolved) {
@@ -83,7 +96,6 @@
         resolvedVaultImages.set(assetPath, resolved);
       }
       if (image.isConnected) {
-        image.dataset.vaultAssetPath = assetPath;
         image.src = resolved;
       }
     }
@@ -121,7 +133,7 @@
             class: "text-theme-primary underline cursor-pointer",
           },
         }) as any,
-        Image.configure({
+        VaultImage.configure({
           allowBase64: false,
           HTMLAttributes: {
             class: "rounded-lg border border-theme-primary/25 shadow-lg",

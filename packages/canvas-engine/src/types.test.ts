@@ -80,4 +80,39 @@ describe("CanvasSchema", () => {
       }),
     ).toThrow();
   });
+
+  it("migrates legacy delve nodes whose payload lived at the node root", () => {
+    const parsed = CanvasSchema.parse({
+      id: "legacy-delve",
+      nodes: [
+        {
+          id: "room-1",
+          type: "delveRoom",
+          position: { x: 10, y: 20 },
+          sectorId: "sector-1",
+          sectorName: "The Bell Vault",
+          name: "Riven Threshold",
+          role: "entrance",
+          summary: "A cracked gate.",
+          description: "Bronze doors hang from one hinge.",
+          stocking: { atmosphere: "Cold metal and rain" },
+        },
+      ],
+      edges: [],
+    });
+
+    expect(parsed.nodes[0]).toMatchObject({
+      id: "room-1",
+      type: "delveRoom",
+      position: { x: 10, y: 20 },
+      data: {
+        id: "room-1",
+        sectorId: "sector-1",
+        sectorName: "The Bell Vault",
+        name: "Riven Threshold",
+        role: "entrance",
+      },
+    });
+    expect(parsed.nodes[0]).not.toHaveProperty("sectorId");
+  });
 });

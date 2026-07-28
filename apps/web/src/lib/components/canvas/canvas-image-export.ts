@@ -28,6 +28,10 @@ export async function exportCanvasImage(
       cacheBust: true,
       filter: includeInExport,
       pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+      // Fonts are already loaded by the app. Asking html-to-image to embed them
+      // makes it inspect cross-origin Google Font stylesheets, which browsers
+      // correctly block through CSSOM and report as noisy SecurityErrors.
+      skipFonts: true,
     });
     if (!blob) {
       throw new Error("The canvas image could not be rendered.");

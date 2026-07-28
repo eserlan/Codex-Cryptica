@@ -6,7 +6,11 @@ import {
   deleteCanvasFromDisk,
 } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
-import type { Canvas, CanvasNode } from "@codex/canvas-engine";
+import {
+  CanvasSchema,
+  type Canvas,
+  type CanvasNode,
+} from "@codex/canvas-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
@@ -364,7 +368,7 @@ export class CanvasRegistryStore {
     const name = doc.name || doc.title || "Delve Canvas Map";
     const slug = doc.slug || this.generateSlug(name, id);
 
-    const canvasData: Canvas = {
+    const canvasData = CanvasSchema.parse({
       id,
       name,
       slug,
@@ -372,7 +376,7 @@ export class CanvasRegistryStore {
       edges: doc.edges || [],
       metadata: doc.metadata || {},
       lastModified: doc.lastModified || systemClock.now(),
-    };
+    });
 
     this.canvases[id] = canvasData;
 
