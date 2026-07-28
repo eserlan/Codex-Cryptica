@@ -440,7 +440,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I turn this into an explorable map, not just text?",
         answer:
-          "Yes — hit Build Delve Canvas on any generated dungeon to open an interactive, room-by-room map with connected areas, loops, and hidden routes you can rearrange and edit. This Structural Builder is exclusive to Codex Cryptica: it's not part of the plain text generator, but it's still free and needs no account — just open your world in the app.",
+          "Yes — hit Build Delve Canvas on any generated dungeon to open an interactive, room-by-room map with connected areas, loops, and hidden routes you can rearrange and edit, plus a full GM Dossier with atmosphere, connections, and secrets written out room by room. Both are exclusive to Codex Cryptica: they're not part of the plain text generator, but they're still free and need no account — just open your world in the app.",
         image: "/images/dungeon-canvas.png",
         imageAlt:
           "The interactive Dungeon Canvas showing a two-sector delve map with entrance, hazard, secret, and faction nodes connected by labeled passages",
