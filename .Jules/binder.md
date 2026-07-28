@@ -82,3 +82,8 @@
 
 **Learning:** Using `typeof window === "undefined"` checks alongside hardcoded `localStorage` calls makes testing complex and couples services to browser globals. The `browserStorage` from `$lib/utils/runtime-deps` already handles SSR safety implicitly.
 **Action:** Inject `storage: StorageLike = browserStorage` into service functions instead of hardcoding `localStorage`, and remove redundant `window` checks. Pass simple in-memory storage objects during testing.
+
+## 2025-02-22 - Injecting storage adapters in web components
+
+**Learning:** Found hardcoded `window.localStorage` usage in `front-page-prefs.ts` within `apps/web`. SvelteKit files may execute on the server during SSR where `window` is undefined. The repository uses `browserStorage` from `$lib/utils/runtime-deps` which handles SSR safely.
+**Action:** Replaced direct `window.localStorage` usage with explicit dependency injection of `StorageLike`, defaulting to `browserStorage`. Updated tests to use a fully implemented mock `StorageLike` to avoid Vitest/Bun global pollution.

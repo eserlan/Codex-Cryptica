@@ -6,6 +6,20 @@ import {
   readRecentLimit,
 } from "./front-page-prefs";
 import { DEFAULT_RECENT_LIMIT } from "./front-page-constants";
+import type { StorageLike } from "$lib/utils/runtime-deps";
+
+function createMockStorage(): StorageLike {
+  const store = new Map<string, string>();
+  return {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, value),
+    removeItem: (key) => store.delete(key),
+    get length() {
+      return store.size;
+    },
+    key: (index) => Array.from(store.keys())[index] ?? null,
+  };
+}
 
 describe("front-page-prefs", () => {
   describe("getRecentLimitStorageKey", () => {
@@ -42,49 +56,48 @@ describe("front-page-prefs", () => {
   });
 
   describe("readRecentLimit", () => {
+    let mockStorage: StorageLike;
+
     beforeEach(() => {
-      window.localStorage.clear();
+      mockStorage = createMockStorage();
     });
 
     it("returns the default when no key exists", () => {
-      expect(readRecentLimit("vault-1")).toBe(DEFAULT_RECENT_LIMIT);
+      expect(readRecentLimit("vault-1", mockStorage)).toBe(
+        DEFAULT_RECENT_LIMIT,
+      );
     });
 
     it("returns the stored value when valid", () => {
-      window.localStorage.setItem(
-        "codex_front_page_recent_limit:vault-1",
-        "10",
-      );
-      expect(readRecentLimit("vault-1")).toBe(10);
+      mockStorage.setItem("codex_front_page_recent_limit:vault-1", "10");
+      expect(readRecentLimit("vault-1", mockStorage)).toBe(10);
     });
 
     it("returns the default when the stored value is not a number", () => {
-      window.localStorage.setItem(
-        "codex_front_page_recent_limit:vault-1",
-        "abc",
+      mockStorage.setItem("codex_front_page_recent_limit:vault-1", "abc");
+      expect(readRecentLimit("vault-1", mockStorage)).toBe(
+        DEFAULT_RECENT_LIMIT,
       );
-      expect(readRecentLimit("vault-1")).toBe(DEFAULT_RECENT_LIMIT);
     });
 
     it("clamps the stored value to the allowed range", () => {
-      window.localStorage.setItem(
-        "codex_front_page_recent_limit:vault-1",
-        "50",
-      );
-      expect(readRecentLimit("vault-1")).toBe(24);
+      mockStorage.setItem("codex_front_page_recent_limit:vault-1", "50");
+      expect(readRecentLimit("vault-1", mockStorage)).toBe(24);
     });
   });
 
   describe("persistRecentLimit", () => {
+    let mockStorage: StorageLike;
+
     beforeEach(() => {
-      window.localStorage.clear();
+      mockStorage = createMockStorage();
     });
 
-    it("writes the limit to localStorage", () => {
-      persistRecentLimit("vault-1", 8);
-      expect(
-        window.localStorage.getItem("codex_front_page_recent_limit:vault-1"),
-      ).toBe("8");
+    it("writes the limit to storage", () => {
+      persistRecentLimit("vault-1", 8, mockStorage);
+      expect(mockStorage.getItem("codex_front_page_recent_limit:vault-1")).toBe(
+        "8",
+      );
     });
   });
 });
