@@ -12,7 +12,7 @@ The feature consists of:
 2. Constant data tables in `packages/generator-engine/src/public-adventure-constants.ts` (adventure types, tones, scales, archetype-keyed situation seeds, NPC role seeds, threat types, complication seeds, outcome seeds).
 3. Genre content in `packages/generator-engine/src/adventure/genres/` (one file per theme, matching dungeon genre file shape).
 4. Registration in `campaign-generator-types.ts`, `campaign-generator-registry.ts`, and `index.ts`.
-5. Adapter & converter logic to map adventure output to `event` entities with follow-up suggestions (e.g. Build Adventure, Generate NPC, Generate Location).
+5. Adapter & converter logic to map adventure output to `note` entities (`kind: "adventure"`) with player summary in `content`, full 10-section GM lore in `lore`, and automatic creation of the Adventure Canvas.
 6. Comprehensive unit testing across local generation, AI prompt formatting, AI parsing, and registry dispatch in `packages/generator-engine`.
 7. Help content documentation update in `apps/web/src/lib/config/help-content.ts`.
 

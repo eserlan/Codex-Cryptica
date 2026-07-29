@@ -31,6 +31,9 @@ export const optimisticSciFiAdventureTables: AdventureGenreTables = {
     "a crew that has been in the field longer than their mission parameters covered",
     "a research team whose ethical framework is being stress-tested by what they found",
     "a contact species that has decided to initiate, on their own terms",
+    "a terraforming guild engineer attempting to preserve a non-sentient alien biosphere",
+    "a deep-space stellar cartographer who found a Dyson sphere in a dead system",
+    "a pacifist diplomatic envoy seeking asylum from a warp-capable empire",
   ],
   objectiveTypes: [
     "Establish communication and basic trust with a species that is waiting to see whether to bother",
@@ -45,6 +48,9 @@ export const optimisticSciFiAdventureTables: AdventureGenreTables = {
     "a contact zone where two civilisations have been exchanging signals for a generation without making progress",
     "an expedition base that was established under one set of assumptions and is operating under a different reality",
     "a vessel that has gone somewhere it was not designed to go and has not come back",
+    "a bio-dome habitat cultivating rare bioluminescent flora on a rogue asteroid",
+    "a stellar observatory orbiting a binary star system on the verge of supernova",
+    "a cooperative diplomatic concourse where thirty alien delegates convene",
   ],
   npcRoles: [
     "the expedition linguist who is one breakthrough away from something and knows it",
@@ -58,7 +64,10 @@ export const optimisticSciFiAdventureTables: AdventureGenreTables = {
     "a discovery whose implications have created a genuine ethical impasse",
     "an environmental challenge that the mission equipment was not designed for",
     "an organisational misunderstanding that has been processed as a hostile act",
-    "time — the window for this encounter, negotiation, or rescue has a hard edge",
+    "time - the window for this encounter, negotiation, or rescue has a hard edge",
+    "a stellar anomaly destabilizing local gravity shields",
+    "a panicked terraforming drone swarm running an outdated biosphere clean protocol",
+    "a rogue survey contractor attempting to privatize an alien archaeological site",
   ],
   discoveryTypes: [
     "a signal that is clearly structured and clearly not produced by any known origin",
@@ -66,6 +75,9 @@ export const optimisticSciFiAdventureTables: AdventureGenreTables = {
     "a contact attempt that predates the party's arrival by a timeframe that changes the context",
     "a crew record showing when the expedition's assumptions began to drift from their observations",
     "a translation breakthrough that reframes every previous exchange",
+    "a harmonised bio-harmonic crystal resonating with local flora",
+    "a ancient star-chart carved into a crystalline monolith showing forgotten jump-gates",
+    "a non-violent bio-luminescent beacon emitting mathematically precise prime-number pulses",
   ],
   complicationTypes: [
     "the discovery has implications that the mission parameters do not address and that cannot be deferred",
@@ -75,7 +87,7 @@ export const optimisticSciFiAdventureTables: AdventureGenreTables = {
     "the contact species makes a decision that is logical from their framework and genuinely dangerous from the party's",
   ],
   rewardTypes: [
-    "a contact established — fragile, provisional, and genuinely important",
+    "a contact established - fragile, provisional, and genuinely important",
     "data that will reshape the field's understanding of the discovery",
     "the crew's return, which matters to specific people in specific ways",
     "a technological exchange whose value is not immediately obvious",
@@ -91,7 +103,7 @@ export const optimisticSciFiAdventureTables: AdventureGenreTables = {
   hooks: [
     "A signal the party picked up on a routine survey turns out to be a response to a transmission that was sent before any of them were born.",
     "An expedition checks in, on schedule, and the check-in is word-for-word identical to the previous seventeen.",
-    "The party receives a contact request — in their own language, from a species that should not have access to it.",
+    "The party receives a contact request - in their own language, from a species that should not have access to it.",
     "A discovery the party made on a previous mission turns out to have been observed. Someone is asking to talk about it.",
   ],
 };

@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-26
+Auto-generated from all feature plans. Last updated: 2026-07-29
 
 ## Active Technologies
 
@@ -221,8 +221,6 @@ TypeScript: Follow standard conventions
 
 - 145-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
 - 1843-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
-
-- 141-language-generator: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
 
 <!-- MANUAL ADDITIONS START -->
 

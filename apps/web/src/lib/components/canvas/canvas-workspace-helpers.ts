@@ -1,5 +1,17 @@
 import type { Connection, Edge, Node } from "@xyflow/svelte";
 import type { Canvas, CanvasEdge, CanvasNode } from "@codex/canvas-engine";
+import {
+  AdventureFlowLayout,
+  DelveFlowLayout,
+  type AdventureCanvasDocument,
+  type AdventureEdge,
+  type AdventureNode,
+  type AdventureNodeType,
+  type DelveCanvasDocument,
+  type DelveCanvasEdge,
+  type DelveCanvasNode,
+  type DelveRoomNodeData,
+} from "generator-engine";
 
 export type CanvasWorkspacePoint = { x: number; y: number };
 
@@ -257,14 +269,208 @@ export function createFlowEntityNode(
 export function createFlowEdgeFromConnection(
   connection: Connection,
   edgeId: string,
+  sourceNode?: Node,
+  targetNode?: Node,
 ): Edge {
-  return {
+  const edge = {
     ...connection,
     id: edgeId,
     type: "straight",
     animated: true,
     style: "stroke: var(--color-theme-primary); stroke-width: 2;",
   } as Edge;
+
+  if (sourceNode?.type === "delveRoom" && targetNode?.type === "delveRoom") {
+    return {
+      ...edge,
+      type: "delveEdge",
+      animated: false,
+      style: undefined,
+      data: {
+        id: edgeId,
+        sourceRoomId: connection.source,
+        targetRoomId: connection.target,
+        type: "standard",
+        bidirectional: true,
+      },
+    };
+  }
+
+  const adventureTypes: AdventureNodeType[] = [
+    "situation",
+    "location",
+    "npc",
+    "clue",
+    "threat",
+    "outcome",
+  ];
+  const sourceType = (sourceNode?.data?.type ||
+    sourceNode?.type) as AdventureNodeType;
+  const targetType = (targetNode?.data?.type ||
+    targetNode?.type) as AdventureNodeType;
+  const isAdventure =
+    sourceNode?.type === "adventureNode" ||
+    targetNode?.type === "adventureNode" ||
+    adventureTypes.includes(sourceType) ||
+    adventureTypes.includes(targetType);
+  if (!isAdventure) return edge;
+
+  let label = "leads to";
+  let type = "leads_to";
+  if (targetType === "clue") {
+    label = "holds clue";
+    type = "holds_clue";
+  } else if (targetType === "threat") {
+    label = "threatens";
+    type = "threatens";
+  } else if (targetType === "outcome") {
+    label = "resolves to";
+    type = "resolves_to";
+  }
+
+  return {
+    ...edge,
+    label,
+    type,
+    data: { relation: label },
+  };
+}
+
+export function reconnectFlowEdge(edge: Edge, connection: Connection): Edge {
+  const data =
+    edge.type === "delveEdge"
+      ? {
+          ...(edge.data || {}),
+          sourceRoomId: connection.source,
+          targetRoomId: connection.target,
+        }
+      : edge.data;
+
+  return {
+    ...edge,
+    source: connection.source,
+    target: connection.target,
+    sourceHandle: connection.sourceHandle,
+    targetHandle: connection.targetHandle,
+    data,
+  };
+}
+
+const ADVENTURE_NODE_TYPES = new Set<AdventureNodeType>([
+  "situation",
+  "location",
+  "npc",
+  "clue",
+  "threat",
+  "outcome",
+]);
+
+function getAdventureNodeType(node: Node): AdventureNodeType | null {
+  const type = (node.data?.type || node.type) as AdventureNodeType;
+  return ADVENTURE_NODE_TYPES.has(type) ? type : null;
+}
+
+export function autoArrangeCanvasNodes(params: {
+  canvasId: string;
+  title: string;
+  nodes: Node[];
+  edges: Edge[];
+}): Node[] | null {
+  const delveRooms = params.nodes.filter((node) => node.type === "delveRoom");
+  if (delveRooms.length > 0) {
+    const now = Date.now();
+    const rawDoc: DelveCanvasDocument = {
+      id: params.canvasId,
+      conceptId: params.canvasId,
+      title: params.title,
+      nodes: params.nodes.map(flowNodeToCanvasNode) as DelveCanvasNode[],
+      edges: params.edges.map((edge) =>
+        flowEdgeToCanvasEdge(edge),
+      ) as DelveCanvasEdge[],
+      metadata: {
+        size: "medium",
+        entranceRoomIds: delveRooms
+          .filter(
+            (node) =>
+              (node.data as unknown as DelveRoomNodeData).role === "entrance",
+          )
+          .map((node) => node.id),
+        createdAt: now,
+        updatedAt: now,
+      },
+    };
+    const positioned = new DelveFlowLayout().applyLayout(rawDoc);
+    const positionedById = new Map(
+      positioned.nodes.map((node) => [node.id, node]),
+    );
+    return params.nodes.map((node) => {
+      const match = positionedById.get(node.id);
+      if (!match) return node;
+      return {
+        ...node,
+        position: match.position,
+        width: match.width,
+        height: match.height,
+        parentId: match.parentId,
+        extent:
+          match.extent === "parent" ? "parent" : (node.extent ?? undefined),
+      };
+    });
+  }
+
+  const adventureNodes = params.nodes.flatMap((node): AdventureNode[] => {
+    const type = getAdventureNodeType(node);
+    if (!type) return [];
+    return [
+      {
+        id: node.id,
+        type,
+        position: node.position,
+        data: {
+          ...(node.data as unknown as AdventureNode["data"]),
+          type,
+          title:
+            typeof node.data?.title === "string"
+              ? node.data.title
+              : "Untitled Node",
+        },
+      },
+    ];
+  });
+  if (adventureNodes.length === 0) return null;
+
+  const adventureNodeIds = new Set(adventureNodes.map((node) => node.id));
+  const now = new Date().toISOString();
+  const rawDoc: AdventureCanvasDocument = {
+    id: params.canvasId,
+    title: params.title,
+    summary: "",
+    genre: "Fantasy",
+    nodes: adventureNodes,
+    edges: params.edges
+      .filter(
+        (edge) =>
+          adventureNodeIds.has(edge.source) &&
+          adventureNodeIds.has(edge.target),
+      )
+      .map((edge): AdventureEdge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: typeof edge.label === "string" ? edge.label : undefined,
+      })),
+    metadata: { kind: "adventure" },
+    createdAt: now,
+    updatedAt: now,
+  };
+  const positioned = new AdventureFlowLayout().applyLayout(rawDoc);
+  const positionedById = new Map(
+    positioned.nodes.map((node) => [node.id, node.position]),
+  );
+  return params.nodes.map((node) => {
+    const position = positionedById.get(node.id);
+    return position ? { ...node, position } : node;
+  });
 }
 
 export function resolveSpawnPosition(params: {

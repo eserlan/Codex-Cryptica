@@ -18,7 +18,7 @@ import { optimisticSciFiAdventureTables } from "./optimistic-scifi";
  * Every genre the adventure generator can produce content for, keyed by the theme
  * label used at runtime.
  *
- * Keys must stay in step with `factionConfig.themes` — the theme selector offers
+ * Keys must stay in step with `factionConfig.themes` - the theme selector offers
  * those labels, and any label missing here silently falls back to Fantasy.
  */
 export const ADVENTURE_GENRE_TABLES: Record<string, AdventureGenreTables> = {
