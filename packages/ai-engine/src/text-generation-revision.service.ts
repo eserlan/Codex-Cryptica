@@ -85,6 +85,25 @@ export class TextGenerationRevisionService {
       ? { ...cleanEntity, lore: "" }
       : cleanEntity;
 
+    const isEntityEmpty =
+      !(sanitizedEntity?.content || "").trim() &&
+      !(sanitizedEntity?.lore || "").trim();
+    const isIncomingEmpty =
+      !(cleanIncoming?.chronicle || "").trim() &&
+      !(cleanIncoming?.lore || "").trim();
+    const isInstructionEmpty = !(options?.instructions || "").trim();
+
+    if (
+      isEntityEmpty &&
+      isIncomingEmpty &&
+      isInstructionEmpty &&
+      (!cleanRelatedEntities || cleanRelatedEntities.length === 0)
+    ) {
+      throw new Error(
+        "Insufficient information available to generate meaningful content. Please add a description or connect this entity to related lore first.",
+      );
+    }
+
     const loreTemplate = sanitizedEntity?.type
       ? resolveAITemplate(sanitizedEntity.type, options?.themeId) || undefined
       : undefined;
