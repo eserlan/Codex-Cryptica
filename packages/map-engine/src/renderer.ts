@@ -170,7 +170,7 @@ export function renderMap(options: RenderOptions) {
   // Clear canvas
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-  if (!image) return;
+  if (!image || image.width === 0 || image.height === 0) return;
 
   const center = imageToViewport(
     originPt,
@@ -520,11 +520,18 @@ export function renderMap(options: RenderOptions) {
   // 6. Draw Fog of War above pins and tokens so the reveal state masks them.
   // Applying destination-out directly on the main canvas would erase the map
   // image itself, not just the fog layer on top of it.
-  if (showFog && maskCanvas) {
+  if (
+    showFog &&
+    maskCanvas &&
+    maskCanvas.width > 0 &&
+    maskCanvas.height > 0 &&
+    canvasSize.width > 0 &&
+    canvasSize.height > 0
+  ) {
     const fog = getFogCanvas(canvasSize.width, canvasSize.height, cache);
     const fogCtx = fog.getContext("2d");
 
-    if (fogCtx) {
+    if (fogCtx && fog.width > 0 && fog.height > 0) {
       // 1. Clear the entire offscreen buffer so there's no stale fog outside the map
       fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
