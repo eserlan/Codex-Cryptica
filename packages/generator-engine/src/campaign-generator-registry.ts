@@ -43,7 +43,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   language: "note",
   "news-sheet": "note",
   dungeon: "location",
-  adventure: "event",
+  adventure: "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */

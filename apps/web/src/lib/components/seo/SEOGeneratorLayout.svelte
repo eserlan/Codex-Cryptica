@@ -353,15 +353,30 @@
     if (!generatedData) return;
 
     try {
-      const content = generatedData.summary
-        ? `*${generatedData.summary}*\n\n${documentLayout.content}`
-        : documentLayout.content;
+      const isAdventure =
+        generatedData.kind === "adventure" ||
+        generatedData.labels?.includes("adventure");
+
+      const content = isAdventure
+        ? generatedData.summary
+          ? `*${generatedData.summary}*`
+          : ""
+        : generatedData.summary
+          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+          : documentLayout.content;
+
+      const lore = isAdventure
+        ? [generatedData.content, generatedData.lore]
+            .filter(Boolean)
+            .join("\n\n")
+        : documentLayout.lore;
+
       const payload = {
-        type: generatedData.type,
+        type: isAdventure ? "note" : generatedData.type,
         kind: generatedData.kind,
         title: generatedData.title,
         content,
-        lore: documentLayout.lore,
+        lore,
         labels: generatedData.labels,
         status: generatedData.status,
       };
@@ -489,16 +504,14 @@
   async function handleBuildAdventureCanvas(data: GeneratorOutput) {
     try {
       const canvasDoc = generateAdventureGraphTopology(data);
-      const layout = getGeneratorDocumentLayout(data);
-      const content = data.summary
-        ? `*${data.summary}*\n\n${layout.content}`
-        : layout.content;
+      const content = data.summary ? `*${data.summary}*` : "";
+      const lore = [data.content, data.lore].filter(Boolean).join("\n\n");
       const transfer = createPendingDelveTransfer(canvasDoc as any, {
-        type: "event",
+        type: "note",
         kind: "adventure",
         title: data.title,
         content,
-        lore: layout.lore,
+        lore,
         labels: data.labels,
         status: data.status,
       });
@@ -645,7 +658,7 @@
         {isExampleDraft}
         {generatedSingular}
         {variant}
-        {worldTheme}
+        worldTheme={theme || worldTheme}
         documentContent={documentLayout.content}
         {documentSections}
         {copied}

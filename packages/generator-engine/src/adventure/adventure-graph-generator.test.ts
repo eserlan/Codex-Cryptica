@@ -82,9 +82,9 @@ describe("generateAdventureGraphTopology", () => {
     const locNodes = doc.nodes.filter((n) => n.type === "location");
 
     expect(locNodes.length).toBe(2);
-    expect(locNodes[0].position.x).toBe(380);
-    expect(locNodes[1].position.x).toBe(380);
-    expect(locNodes[1].position.y).toBeGreaterThan(locNodes[0].position.y);
+    expect(locNodes[0].position.y).toBe(320);
+    expect(locNodes[1].position.y).toBe(320);
+    expect(locNodes[1].position.x).toBeGreaterThan(locNodes[0].position.x);
   });
 });
 

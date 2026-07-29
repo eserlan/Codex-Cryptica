@@ -31,6 +31,9 @@ export const modernConspiracyAdventureTables: AdventureGenreTables = {
     "a whistleblower who has the documents but not the means to use them safely",
     "a journalist whose source just went dark",
     "an operative who was supposed to stay buried and has decided not to",
+    "a rogue bio-surveillance lab director leaking unauthorized genetic tracking data",
+    "a mercenary intelligence firm orchestrating dark-money election interference",
+    "a disgraced senator attempting to retrieve un-sanitised wiretap tapes",
   ],
   objectiveTypes: [
     "Get the document to someone who can act on it before the window closes",
@@ -45,6 +48,9 @@ export const modernConspiracyAdventureTables: AdventureGenreTables = {
     "a safe house that is safe until it isn't",
     "an archive whose most useful section is in boxes marked for destruction",
     "a foreign city where the party has no jurisdiction and limited cover",
+    "a subterranean bio-lab concealed beneath a decommissioned subway station",
+    "a high-security impound yard housing seized surveillance vehicles",
+    "a private airstrip hangar operating under an unlisted shell company",
   ],
   npcRoles: [
     "the inside contact who can confirm but cannot be seen to",
@@ -59,6 +65,9 @@ export const modernConspiracyAdventureTables: AdventureGenreTables = {
     "an operative who was trained by the same people who trained the party's ally",
     "a third-party actor who wants the information buried for unrelated reasons",
     "the institution itself, which does not need to be malicious to be dangerous",
+    "a deniable black-ops hit team operating under a black budget code name",
+    "a media smear campaign deploying deep-fake audio to destroy credibility",
+    "a telecommunications monopoly wiretapping every burner phone in the city",
   ],
   discoveryTypes: [
     "a document that is legitimate and whose implications nobody has worked through yet",
@@ -66,6 +75,9 @@ export const modernConspiracyAdventureTables: AdventureGenreTables = {
     "a person listed as deceased who signed something three months ago",
     "a surveillance record that proves the surveillance began before the investigation",
     "an internal communication that makes the official account impossible",
+    "an encrypted micro-SD card hidden inside a fountain pen recording wiretap logs",
+    "a black-market passport containing diplomatic visas stamped after the war",
+    "a suppressed forensic audit detailing off-book offshore accounts",
   ],
   complicationTypes: [
     "the party's secure channel is compromised",
@@ -75,7 +87,7 @@ export const modernConspiracyAdventureTables: AdventureGenreTables = {
     "publishing the information harms someone the party did not intend to harm",
   ],
   rewardTypes: [
-    "immunity — negotiated, conditional, and currently holding",
+    "immunity - negotiated, conditional, and currently holding",
     "the story runs; whether anything changes is a separate question",
     "a contact inside the institution who owes the party one",
     "classified access to a file that answers one question and opens five",
@@ -90,7 +102,7 @@ export const modernConspiracyAdventureTables: AdventureGenreTables = {
   ],
   hooks: [
     "A journalist the party knows professionally sends a single encrypted message and goes offline.",
-    "A public records request the party filed eight months ago is suddenly answered — in person, by someone who is not from the records office.",
+    "A public records request the party filed eight months ago is suddenly answered - in person, by someone who is not from the records office.",
     "The party's email contains a message from an address that does not exist, containing a file that does not have a name.",
     "A source reaches out to say they have been approached by someone asking specific questions about the party.",
   ],

@@ -1,10 +1,12 @@
 export const BANNED_NAMES = [
   "Aethel",
+  "Vance",
   "Vane",
   "Elara",
   "Valerius",
   "Kael",
   "Kaelen",
+  "Caelen",
   "Theron",
   "Zara",
   "Aldric",
@@ -28,6 +30,10 @@ export const BANNED_NAMES = [
   "Riverdale",
   "Silas",
   "Vesper",
+  "Sterling",
+  "Blackwood",
+  "Ironwood",
+  "Ravenscroft",
 ] as const;
 
 export const NAME_BAN_PROMPT =

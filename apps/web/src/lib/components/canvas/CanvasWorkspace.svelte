@@ -42,6 +42,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
+    autoArrangeCanvasNodes,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodeToCanvasNode,
@@ -61,7 +62,7 @@
       (c) => c.slug === canvasSlug || c.id === canvasSlug,
     ) as Canvas | undefined,
   );
-  const canvasId = $derived(canvas?.id);
+  const canvasId = $derived(canvas?.id || canvasSlug);
   const sourceEntityId = $derived.by(() => {
     const id = canvas?.metadata?.sourceEntityId;
     return typeof id === "string" && id ? id : undefined;
@@ -113,6 +114,11 @@
     } as AdventureNodeGraph;
   });
 
+  const activeAdventureNode = $derived(
+    (logic.draftAdventureNode as unknown as AdventureNodeGraph | null) ||
+      selectedAdventureNode,
+  );
+
   let edgeModal = $state<{
     isOpen: boolean;
     edgeId: string;
@@ -162,6 +168,7 @@
     entity: EntityNode,
     delveRoom: DelveRoomNode,
     delveSectorGroup: DelveSectorNode,
+    adventureNode: AdventureNode,
     situation: AdventureNode,
     location: AdventureNode,
     npc: AdventureNode,
@@ -174,12 +181,30 @@
     straight: CustomEdge,
     smoothstep: CustomEdge,
     delveEdge: DelveEdge,
+    leads_to: CustomEdge,
+    holds_clue: CustomEdge,
+    threatens: CustomEdge,
+    resolves_to: CustomEdge,
   };
+
+  let arrangedCanvasId = $state<string | null>(null);
 
   // Initialization & Lifecycle
   $effect(() => {
     if (canvasId) {
       logic.initializeCanvas(canvasId);
+    }
+  });
+
+  $effect(() => {
+    if (canvasId && logic.hasInitialized && arrangedCanvasId !== canvasId) {
+      arrangedCanvasId = canvasId;
+      untrack(() => {
+        const isManual = canvas?.metadata?.layoutState === "manual";
+        if (!isManual) {
+          handleAutoArrange();
+        }
+      });
     }
   });
 
@@ -286,6 +311,13 @@
     if (movedNodes.some((movedNode) => movedNode.type === "delveRoom")) {
       logic.nodes = fitDelveSectorFrames(logic.nodes);
     }
+    if (canvas) {
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        layoutState: "manual",
+      };
+    }
+    logic.flushSave();
   }
 
   async function finalizeDossier() {
@@ -528,6 +560,177 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
+  async function handleOpenOrCreateSourceEntity() {
+    if (sourceEntityId && vault.entities[sourceEntityId]) {
+      modalUIStore.openZenMode(sourceEntityId);
+      return;
+    }
+
+    const title = canvas?.name || "Untitled Adventure";
+    const existing = vault.allEntities.find(
+      (e) =>
+        e.title.trim().toLowerCase() === title.trim().toLowerCase() &&
+        e.type === "event",
+    );
+
+    let targetId = existing?.id;
+    if (!targetId) {
+      const sourceLore = (canvas?.metadata as any)?.sourceLore as
+        string | undefined;
+      const situationNode = logic.nodes.find((n) => n.type === "situation");
+      const situationData = situationNode?.data as any;
+      const canvasSummary = (canvas?.metadata as any)?.summary as
+        string | undefined;
+      const situationSummary =
+        situationData?.summary ||
+        situationData?.description ||
+        canvasSummary ||
+        "";
+      const situationHook =
+        situationData?.hook || situationData?.startingHook || "";
+      const situationGoal =
+        situationData?.goal || situationData?.objective || "";
+
+      if (sourceLore && sourceLore.trim()) {
+        targetId = await vault.createEntity("note", title, {
+          content: situationSummary ? `*${situationSummary}*` : "",
+          lore: sourceLore.trim(),
+          kind: "adventure",
+          labels: ["adventure"],
+        });
+      } else {
+        let markdown = `# ${title}\n\n`;
+        if (situationSummary) markdown += `*${situationSummary}*\n\n`;
+
+        if (situationHook || situationGoal) {
+          markdown += `## Situation & Hook\n`;
+          if (situationHook)
+            markdown += `**Starting Hook:** ${situationHook}\n\n`;
+          if (situationGoal) markdown += `**Objective:** ${situationGoal}\n\n`;
+        }
+
+        const locations = logic.nodes.filter((n) => n.type === "location");
+        if (locations.length > 0) {
+          markdown += `## Key Locations\n`;
+          for (const loc of locations) {
+            const d = loc.data as any;
+            const name =
+              (loc as any).label || d?.title || d?.name || "Location";
+            const desc = d?.description || d?.summary || "";
+            const role = d?.role || "";
+            const relation = d?.relation || "";
+            const leverage = d?.leverage || "";
+            const dilemma = d?.dilemma || "";
+            const hazard = d?.hazard || d?.danger || "";
+            markdown += `### ${name}\n`;
+            if (desc) markdown += `${desc}\n\n`;
+            if (role) markdown += `- **Role:** ${role}\n`;
+            if (relation) markdown += `- **Relation:** ${relation}\n`;
+            if (leverage) markdown += `- **Leverage:** ${leverage}\n`;
+            if (dilemma) markdown += `- **Dilemma:** ${dilemma}\n`;
+            if (hazard) markdown += `- **Hazard/Danger:** ${hazard}\n`;
+            markdown += `\n`;
+          }
+        }
+
+        const npcs = logic.nodes.filter((n) => n.type === "npc");
+        if (npcs.length > 0) {
+          markdown += `## Important NPCs & Factions\n`;
+          for (const npc of npcs) {
+            const d = npc.data as any;
+            const name = (npc as any).label || d?.title || d?.name || "NPC";
+            const role = d?.role || "";
+            const desc = d?.description || d?.summary || "";
+            const relation = d?.relation || "";
+            const wants = d?.wants || d?.motivation || "";
+            const secret = d?.secret || "";
+            const leverage = d?.leverage || "";
+            const dilemma = d?.dilemma || "";
+            markdown += `### ${name}${role ? ` (${role})` : ""}\n`;
+            if (desc) markdown += `${desc}\n\n`;
+            if (relation) markdown += `- **Relation:** ${relation}\n`;
+            if (wants) markdown += `- **Wants:** ${wants}\n`;
+            if (secret) markdown += `- **Secret:** ${secret}\n`;
+            if (leverage) markdown += `- **Leverage:** ${leverage}\n`;
+            if (dilemma) markdown += `- **Dilemma:** ${dilemma}\n`;
+            markdown += `\n`;
+          }
+        }
+
+        const clues = logic.nodes.filter((n) => n.type === "clue");
+        const threats = logic.nodes.filter((n) => n.type === "threat");
+        if (clues.length > 0 || threats.length > 0) {
+          markdown += `## Clues & Threats\n`;
+          for (const clue of clues) {
+            const d = clue.data as any;
+            const name = (clue as any).label || d?.title || d?.name || "Clue";
+            const desc = d?.description || d?.summary || "";
+            const leadsTo = d?.leadsTo || "";
+            markdown += `- **${name}:** ${desc}${leadsTo ? ` *(Leads to: ${leadsTo})*` : ""}\n`;
+          }
+          if (clues.length > 0 && threats.length > 0) markdown += `\n`;
+          for (const threat of threats) {
+            const d = threat.data as any;
+            const name =
+              (threat as any).label || d?.title || d?.name || "Threat";
+            const desc = d?.description || d?.summary || "";
+            const trigger = d?.trigger || "";
+            markdown += `- **${name}:** ${desc}${trigger ? ` *(Trigger: ${trigger})*` : ""}\n`;
+          }
+          markdown += `\n`;
+        }
+
+        const outcomes = logic.nodes.filter((n) => n.type === "outcome");
+        if (outcomes.length > 0) {
+          markdown += `## Possible Outcomes\n`;
+          for (const outcome of outcomes) {
+            const d = outcome.data as any;
+            const name =
+              (outcome as any).label || d?.title || d?.name || "Outcome";
+            const desc = d?.description || d?.summary || "";
+            markdown += `### ${name}\n${desc}\n\n`;
+          }
+        }
+
+        targetId = await vault.createEntity("note", title, {
+          content: situationSummary ? `*${situationSummary}*` : "",
+          lore: markdown.trim(),
+          kind: "adventure",
+          labels: ["adventure"],
+        });
+      }
+    }
+
+    if (canvas?.id) {
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        sourceEntityId: targetId,
+      };
+      await canvasRegistry.saveCanvas(canvas.id);
+    }
+
+    modalUIStore.openZenMode(targetId);
+  }
+
+  function handleAutoArrange() {
+    const positionedNodes = autoArrangeCanvasNodes({
+      canvasId: canvas?.id || "temp",
+      title: canvas?.name || "Canvas",
+      nodes: logic.nodes,
+      edges: logic.edges,
+    });
+    if (!positionedNodes) return;
+
+    logic.nodes = positionedNodes;
+    if (canvas) {
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        layoutState: "auto",
+      };
+    }
+    logic.saveNow();
+  }
+
   $effect(() => {
     return () => {
       logic.flushSave();
@@ -538,9 +741,7 @@
 <div
   class="canvas-container {logic.isConnecting
     ? 'is-connecting'
-    : ''} flex h-[var(--app-content-height)] w-full overflow-hidden relative"
-  tabindex="-1"
-  role="none"
+    : ''} relative w-full h-full overflow-hidden select-none flex flex-col"
 >
   <div
     class="flex-1 relative"
@@ -564,6 +765,13 @@
       logic.nodes.some((node) => node.type === "delveRoom")
         ? finalizeDossier
         : undefined}
+      onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
+      onAutoArrange={handleAutoArrange}
+      onAddAdventureNode={canvas?.metadata?.kind === "adventure" ||
+      sourceEntity?.kind === "adventure" ||
+      logic.nodes.some((n) => n.type === "adventureNode")
+        ? (type) => logic.handleAddAdventureNode(type)
+        : undefined}
       activeCategories={logic.activeCategories}
       onToggleCategory={logic.toggleCategoryFilter}
       onClearCategories={logic.clearCategoryFilters}
@@ -576,6 +784,7 @@
         {nodeTypes}
         {edgeTypes}
         onconnect={!vault.isGuest ? logic.onConnect : undefined}
+        onreconnect={!vault.isGuest ? logic.onReconnect : undefined}
         onconnectstart={() => {
           if (vault.isGuest) return;
           logic.isConnecting = true;
@@ -639,6 +848,9 @@
       y={logic.contextMenu.y}
       targetId={logic.contextMenu?.id}
       targetType={logic.contextMenu.type}
+      isAdventure={canvas?.metadata?.kind === "adventure" ||
+        sourceEntity?.kind === "adventure" ||
+        logic.nodes.some((n) => n.type === "adventureNode")}
       onDelete={logic.handleDelete}
       onRename={() => {
         const edge = logic.edges.find((e) => e.id === logic.contextMenu?.id);
@@ -650,6 +862,11 @@
         logic.contextMenu = null;
       }}
       onCreateEntity={logic.handleCreateEntity}
+      onAddAdventureNode={(type) =>
+        logic.handleAddAdventureNode(type, {
+          x: logic.contextMenu?.x || 0,
+          y: logic.contextMenu?.y || 0,
+        })}
       onClose={() => (logic.contextMenu = null)}
     />
   {/if}
@@ -683,17 +900,33 @@
     onRegenerateAi={enhanceRoom}
     onClose={() => (selectedRoomId = null)}
   />
+
   <AdventureNodeDrawer
-    isOpen={selectedAdventureNode !== null}
-    node={selectedAdventureNode}
-    onClose={() => (selectedAdventureNodeId = null)}
+    isOpen={activeAdventureNode !== null}
+    node={activeAdventureNode}
+    onClose={() => {
+      selectedAdventureNodeId = null;
+      logic.handleCancelDraftAdventureNode();
+    }}
     onSave={(updatedNode) => {
-      logic.nodes = logic.nodes.map((n) =>
-        n.id === updatedNode.id
-          ? { ...n, data: { ...(n.data as any), ...updatedNode.data } }
-          : n,
-      );
-      logic.flushSave();
+      if (logic.draftAdventureNode) {
+        const flowNode = {
+          ...logic.draftAdventureNode,
+          data: {
+            ...logic.draftAdventureNode.data,
+            ...updatedNode.data,
+          },
+        };
+        logic.handleSaveAdventureNode(flowNode);
+      } else {
+        logic.nodes = logic.nodes.map((n) =>
+          n.id === updatedNode.id
+            ? { ...n, data: { ...(n.data as any), ...updatedNode.data } }
+            : n,
+        );
+        logic.flushSave();
+      }
+      selectedAdventureNodeId = null;
     }}
   />
 </div>

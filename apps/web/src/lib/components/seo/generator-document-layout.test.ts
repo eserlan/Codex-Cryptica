@@ -339,4 +339,21 @@ The mayor is skimming grain taxes and the harvest is already short.
     expect(layout.content).toBe("Plain prose without headings.");
     expect(layout.lore).toBe("Plain lore without headings.");
   });
+
+  it("leaves lore in the 3rd column rail for adventure generator UI card", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "event",
+      kind: "adventure",
+      title: "Blood on the Siding",
+      content:
+        "## Initial Situation\nThe locomotive limped into town.\n\n## Primary Objective & Pressure\nRecover the silver.",
+      lore: "### Complications & Escalating Pressures\n- A flash flood washes out the bridge.\n\n### Possible Outcomes\n- Marshal Galt is stripped of his badge.",
+      labels: ["adventure", "event", "western"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## Initial Situation");
+    expect(layout.lore).toContain("### Complications & Escalating Pressures");
+    expect(layout.lore).toContain("### Possible Outcomes");
+  });
 });

@@ -38,23 +38,27 @@ Extend the spatial canvas infrastructure (`@xyflow/svelte`) to support the **Adv
 
 - Create `AdventureNode.svelte` in `apps/web/src/lib/components/canvas/AdventureNode.svelte`:
   - Visually distinct cards for Location, NPC, Clue, Threat, Outcome, and Situation.
+  - 4-direction handles (Top, Bottom, Left, Right) for flexible connection dragging from any direction.
   - Render Role, Relation, Leverage, and Dilemma tags cleanly.
   - Action buttons: "Create Vault Entity", "Open Entity", "Launch Dungeon Builder" (for Location nodes).
 - Create `AdventureEdge.svelte` for typed relationship display.
+- Wire `onReconnect` in `use-canvas-logic.svelte.ts` and `CanvasWorkspace.svelte` for drag-reconnecting edge endpoints.
 - Wire into `CanvasWorkspace.svelte` and `CanvasSelectionModal.svelte`.
 
-### Phase 3: Interactive Drawer & Entity Linking (P2)
+### Phase 3: Dynamic Node Spawning & Interactive Drawer & Entity Linking (P2)
 
+- Add "+ Add Element" dropdown in `CanvasHUD.svelte` and pane context menu options in `CanvasContextMenu.svelte` to spawn any of the 6 Adventure Node types directly onto the canvas.
 - Create `AdventureNodeDrawer.svelte` for editing node content, dilemma, leverage, and relationship edges.
 - Wire "Launch Dungeon Builder" from suitable Location nodes directly into the existing Dungeon Canvas flow.
 - Support creating and binding Codex Cryptica vault notes (`Concept`, `Location`, `Character`, `Faction`) to nodes.
 
-### Phase 4: Non-Blocking Graph Validation & Persistence (P3)
+### Phase 4: Non-Blocking Graph Validation & Full 10-Section GM Lore Persistence (P3)
 
 - Create `validateAdventureGraph()` in `packages/generator-engine/src/adventure/adventure-graph-validator.ts`:
   - Detect orphan nodes, unreachable outcome nodes, single mandatory progression bottlenecks, and unlinked clues.
 - Render contextual warning badges in `CanvasHUD.svelte` without blocking editing.
-- Persist node positions and manual edits in browser IndexedDB/OPFS across sessions.
+- Embed `sourceLore` metadata in `AdventureCanvasDocument` so Vault Note exports retain **ALL 10 GM Sections** in full detail.
+- Persist node positions, `sourceLore` metadata, and manual edits in browser IndexedDB/OPFS across sessions.
 
 ## File Touches & Additions
 

@@ -66,7 +66,7 @@ describe("generateAdventureLocal", () => {
     expect(out.labels).toContain("event");
   });
 
-  it("does not duplicate GM-only sections into the player-facing content", () => {
+  it("does not put GM-only sections into the player-facing content", () => {
     const out = generateAdventureLocal({}, seededRng(3));
     expect(out.content).not.toContain("### Complications");
     expect(out.content).not.toContain("### Possible Outcomes");
@@ -170,6 +170,25 @@ describe("buildAdventurePrompt", () => {
   it("includes genre hint in the user message", () => {
     const prompt = buildAdventurePrompt({ genre: "Cyberpunk / Corporate" });
     expect(prompt.userMessage).toContain("Cyberpunk / Corporate");
+  });
+
+  it("includes multi-asset classification and preservation dilemma instructions", () => {
+    const prompt = buildAdventurePrompt({ genre: "Western Frontier" });
+    expect(prompt.systemInstruction).toContain(
+      "MULTI-ASSET CLASSIFICATION & PRESERVATION DILEMMAS",
+    );
+    expect(prompt.systemInstruction).toContain("Essential");
+    expect(prompt.systemInstruction).toContain("Expendable");
+    expect(prompt.systemInstruction).toContain("Secretly Critical");
+  });
+
+  it("includes consistent objective asset tracking and split asset allocation instructions", () => {
+    const prompt = buildAdventurePrompt({ genre: "Fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "CONSISTENT OBJECTIVE ASSET TRACKING & SPLIT ASSET ALLOCATION",
+    );
+    expect(prompt.systemInstruction).toContain("initialSituation");
+    expect(prompt.systemInstruction).toContain("primaryObjective");
   });
 
   it("includes custom seed in user message when provided", () => {
@@ -435,8 +454,8 @@ describe("adventure generator registry", () => {
     expect(ids).toContain("adventure");
   });
 
-  it("resolves to event entity type", () => {
-    expect(resolveEntityType("adventure")).toBe("event");
+  it("resolves to note entity type", () => {
+    expect(resolveEntityType("adventure")).toBe("note");
   });
 
   it("has required fields in its definition", () => {
@@ -444,7 +463,7 @@ describe("adventure generator registry", () => {
     expect(def.id).toBe("adventure");
     expect(def.label).toBeTruthy();
     expect(def.description).toBeTruthy();
-    expect(def.entityType).toBe("event");
+    expect(def.entityType).toBe("note");
     expect(def.options.length).toBeGreaterThan(0);
     expect(def.defaults).toBeDefined();
     expect(typeof def.generate).toBe("function");

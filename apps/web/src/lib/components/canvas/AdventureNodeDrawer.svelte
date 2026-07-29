@@ -22,8 +22,11 @@
   let wants = $state("");
   let secret = $state("");
 
+  let isNew = $state(false);
+
   $effect(() => {
     if (node) {
+      isNew = !node.data.title;
       title = node.data.title || "";
       description = node.data.description || node.data.summary || "";
       role = node.data.role || "";
@@ -37,11 +40,14 @@
 
   function handleSave() {
     if (!node) return;
+    const finalTitle =
+      title.trim() ||
+      `Untitled ${node.data.type.slice(0, 1).toUpperCase() + node.data.type.slice(1)}`;
     const updated: AdventureNode = {
       ...node,
       data: {
         ...node.data,
-        title,
+        title: finalTitle,
         description,
         role: role || undefined,
         relation: relation || undefined,
@@ -67,10 +73,13 @@
         class="font-header font-bold text-sm text-theme-text flex items-center gap-2"
       >
         <span
-          class="icon-[lucide--edit-3] h-4 w-4 text-theme-primary"
+          class="{isNew
+            ? 'icon-[lucide--sparkles]'
+            : 'icon-[lucide--edit-3]'} h-4 w-4 text-theme-primary"
           aria-hidden="true"
         ></span>
-        Edit Node: {node.data.type.toUpperCase()}
+        {isNew ? "Create Node:" : "Edit Node:"}
+        {node.data.type.toUpperCase()}
       </h3>
       <button
         type="button"
@@ -92,6 +101,15 @@
           id="adv-node-title"
           type="text"
           bind:value={title}
+          placeholder={node.data.type === "clue"
+            ? "e.g. Wax-Sealed Governor's Dispatch"
+            : node.data.type === "location"
+              ? "e.g. High-Altitude Assay Office"
+              : node.data.type === "threat"
+                ? "e.g. Syndicate Ambush Crew"
+                : node.data.type === "npc"
+                  ? "e.g. Bartholomew Crane"
+                  : "e.g. Title..."}
           class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
         />
       </div>
@@ -106,6 +124,7 @@
           id="adv-node-desc"
           rows="3"
           bind:value={description}
+          placeholder="Describe the details, clues, or scenario context..."
           class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
         ></textarea>
       </div>
@@ -121,6 +140,7 @@
             id="adv-node-role"
             type="text"
             bind:value={role}
+            placeholder="Why this location exists in the scenario..."
             class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
           />
         </div>
@@ -136,6 +156,7 @@
             id="adv-node-wants"
             type="text"
             bind:value={wants}
+            placeholder="Actionable goal..."
             class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
           />
         </div>
@@ -149,6 +170,7 @@
             id="adv-node-secret"
             type="text"
             bind:value={secret}
+            placeholder="Hidden truth or secret..."
             class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
           />
         </div>
@@ -164,6 +186,7 @@
           id="adv-node-leverage"
           type="text"
           bind:value={leverage}
+          placeholder="What players can discover, bargain with, or expose..."
           class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
         />
       </div>
@@ -178,6 +201,7 @@
           id="adv-node-dilemma"
           type="text"
           bind:value={dilemma}
+          placeholder="Meaningful choice between competing priorities..."
           class="w-full px-2.5 py-1.5 rounded-md border border-theme-border bg-theme-bg/60 text-theme-text focus:outline-none focus:ring-1 focus:ring-theme-primary"
         />
       </div>
@@ -196,9 +220,11 @@
       <button
         type="button"
         onclick={handleSave}
-        class="px-3 py-1.5 rounded-md bg-theme-primary text-theme-bg font-semibold text-xs hover:bg-theme-primary/90 transition-colors"
+        class="px-3.5 py-1.5 rounded-md bg-theme-primary text-theme-bg font-semibold text-xs hover:bg-theme-primary/90 transition-colors flex items-center gap-1.5"
       >
-        Save Changes
+        <span class="icon-[lucide--sparkles] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
+        {isNew ? "Materialize on Canvas" : "Save Changes"}
       </button>
     </div>
   </div>

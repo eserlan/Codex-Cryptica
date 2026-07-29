@@ -70,6 +70,8 @@ export interface ResolvedAdventure {
   initialSituation: string;
   primaryObjective: string;
   pressure: string;
+  primaryPressure: string;
+  secondaryPressure?: string;
   keyLocations: string[];
   npcRoles: string[];
   threats: string[];
@@ -100,7 +102,15 @@ function pickUnused<T extends string>(
 
 /** Render discrete entries as a markdown list. */
 function formatList(items: string[]): string {
-  return items.map((i) => `- ${i}`).join("\n");
+  return items
+    .map((i) => {
+      const clean = i.trim();
+      if (/^-\s*-/.test(clean)) {
+        return clean.replace(/^-\s*-+/, "-").trim();
+      }
+      return clean.startsWith("- ") ? clean : `- ${clean}`;
+    })
+    .join("\n");
 }
 
 /**
@@ -163,10 +173,23 @@ function resolveAdventure(
     forAdventureGenre(ADVENTURE_OBJECTIVE_TYPES_BY_GENRE, genre),
     rng,
   );
-  const pressure = pickFrom(PRESSURE_TYPES, rng);
+  const primaryPressure = pickFrom(PRESSURE_TYPES, rng);
+  const secondaryPressure =
+    rng() > 0.35 || scale.includes("Arc")
+      ? pickFrom(
+          PRESSURE_TYPES.filter((p) => p !== primaryPressure),
+          rng,
+        )
+      : undefined;
+
+  const pressure = secondaryPressure
+    ? `${primaryPressure} coupled with ${secondaryPressure}`
+    : primaryPressure;
 
   const initialSituation = `${incitingActor.charAt(0).toUpperCase() + incitingActor.slice(1)} has set events in motion. ${objectiveType}.`;
-  const primaryObjective = `${objectiveType} — with ${pressure}.`;
+  const primaryObjective = secondaryPressure
+    ? `${objectiveType} — driven by ${primaryPressure} and complicated by ${secondaryPressure}.`
+    : `${objectiveType} — driven by ${primaryPressure}.`;
 
   const usedLocations = new Set<string>();
   const locationPool = forAdventureGenre(
@@ -224,6 +247,8 @@ function resolveAdventure(
     initialSituation,
     primaryObjective,
     pressure,
+    primaryPressure,
+    secondaryPressure,
     keyLocations,
     npcRoles,
     threats,
@@ -279,7 +304,7 @@ function renderResolvedAdventure(
   ].join("\n");
 
   return {
-    type: "event",
+    type: "note",
     kind: "adventure",
     title: adventure.title,
     summary: adventure.premise,
@@ -319,12 +344,15 @@ function formatAdventureSeeds(
     `do NOT quote them back or treat them as finished text.`,
     `- Archetype: ${adventure.archetype}`,
     `- Tone: ${adventure.tone}`,
-    `- Inciting pressure: ${adventure.pressure}`,
+    `- Primary Pressure: ${adventure.primaryPressure}`,
+    ...(adventure.secondaryPressure
+      ? [`- Secondary Interacting Pressure: ${adventure.secondaryPressure}`]
+      : []),
     `- 2-3 key locations (seed types): ${adventure.keyLocations.join(", ")}`,
     ``,
     `Structure — fixed. Honour these exactly.`,
     `- EXACTLY one clear initial situation (who, what, why now).`,
-    `- EXACTLY one primary objective with a ticking pressure.`,
+    `- EXACTLY one primary objective with a clear pressure source.`,
     `- 2-3 key locations, named and briefly described.`,
     `- 2-3 important NPCs or factions, each with a goal.`,
     `- 1-2 threats or antagonists.`,
@@ -374,13 +402,22 @@ Critical Structural Guidelines for Playability & Global Causal Coherence:
 5. ACTIONABLE CLUES & SECRETS: Clues and secrets MUST change the players' available actions, understanding of a decision, or consequences. Do not include revelations solely for flavour.
 6. SITUATION NETWORK, NOT A PLOT SEQUENCE: Provide multiple viable routes to make progress. No single clue, NPC, or location should accidentally become an unintended single point of failure / lone bottleneck.
 7. TITLE & ENVIRONMENT CONSISTENCY: Ensure the title matches the environment and premise (e.g. do not call an adventure 'The Drowned Heir' if it takes place in a frozen mountain pass with no water, unless the prose explicitly justifies the title).
-8. INTERNAL CONSISTENCY & LOCATION COUNT:
-   - Provide 2-3 key locations, each with a distinct role in the situation network.
-   - Patrons, enemies, and factions must not contradict one another.
-   - Deadlines and clocks must have a clear causal basis (e.g. if the summary promises 'tax-dragons at dawn', that clock must drive the objective and complications).
+8. DYNAMIC PRESSURE & STAKES (Primary + Secondary Pressure):
+   - Pressure answers 'What makes inaction, delay, or a bad choice costly?' using clear pressure sources (e.g. Countdown/Deadline, Rival Race, Dwindling Resource, Active Pursuit/Hunt, Cover-Up/Evidence Decay, Escalating Crisis, Institutional Crackdown, Fragile Relationship, Opportunity Window, Accumulating Consequences).
+   - Deadlines and countdown clocks are NOT mandatory. Pursuits, evidence decay, fragile relationships, or accumulating consequences provide urgency without artificial clocks.
+   - When a secondary pressure is specified in the seeds, it MUST interact directly with the primary pressure (e.g. Deadline + Rival Race, Institutional Crackdown + Cover-Up, Escalating Crisis + Dwindling Resource, Fragile Relationship + Opportunity Window).
    - Names and titles must remain consistent throughout.
    - Complications should introduce new decisions, costs, or relationships rather than merely increasing numeric difficulty.
    - Outcomes must describe distinct WORLD END-STATES (permanent consequences), not player tactics or mid-scene events.
+9. ANTAGONIST & FACTION DIVERSITY: Invent original, distinct antagonists and factions tailored to the scenario (e.g. mining cartels, corrupt land speculators, rogue officers, cultists, smuggling rings, merchant cartels, cattle barons, or outlaw bands). Do not default to repetitive tropes like a generic "Rail Syndicate" unless explicitly requested by the user prompt.
+10. CLUE & DISCOVERY DIVERSITY: Vary clue and item types across scenarios. Avoid defaulting to generic "ledgers" or "account books". Use tangible, genre-appropriate items (e.g. cipher wheels, wax-sealed dispatches, forged land deeds, blackmail photographs, broken signet rings, smuggler charts, audio cylinders, or contraband manifests).
+11. MULTI-ASSET CLASSIFICATION & PRESERVATION DILEMMAS:
+   - When an adventure involves transporting, protecting, recovering, or managing multiple assets or objectives (e.g. convoy cargo, pack mules, assay maps, mercury crates, hostages, relics, VIPs, or supply caches), explicitly distinguish which assets are **Essential** (mission critical), **Expendable** (can be sacrificed to buy time or solve obstacles), **Optional** (bonus payout/leverage), or **Secretly Critical** (holds far greater hidden importance or revelation than first appears).
+   - Construct key dilemmas, complications, and world outcomes directly around what the players choose to preserve, trade, or sacrifice during the scenario.
+12. CONSISTENT OBJECTIVE ASSET TRACKING & SPLIT ASSET ALLOCATION:
+   - Track objective assets consistently across the entire adventure document.
+   - If cargo, evidence, assay maps, mercury crates, prisoners, or key items are divided between different locations, NPCs, or factions, establish that divided state explicitly in initialSituation (e.g. "The genuine land treaty has been split into three signed notarized sheets: one held at the Assay Office, one seized by Barnaby Gault, and one hidden at the Saloon").
+   - Success conditions in primaryObjective, keyLocations, and outcomes MUST explicitly reflect what assets/components must actually be recovered, secured, or re-assembled, and where each piece currently resides.
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
@@ -401,8 +438,8 @@ Required JSON schema:
   "title": "Evocative, specific title for this adventure.",
   "summary": "1-2 sentence premise: what is this adventure about and why should players care?",
   "throughline": "ONE sentence: who set events in motion, what is at stake, and how that leads to the initial situation and primary objective. Write this before the fields below and keep them all consistent with it.",
-  "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, why does it demand action immediately, and explicitly what role the PCs play.",
-  "primaryObjective": "One clear objective with an explicit, trackable deadline or countdown clock (e.g. 'Dawn: Tax-Dragons arrive') that makes inaction costly.",
+  "initialSituation": "2-3 sentences: what is happening right now, who set it in motion, why does it demand action immediately, explicitly what role the PCs play, and if objective assets (cargo, evidence, prisoners, relics) are divided across locations or factions, establish that initial allocation explicitly here.",
+  "primaryObjective": "One clear objective with explicit success conditions (what assets/components must actually be recovered/secured) and a trackable pressure/deadline (e.g. 'Dawn: Tax-Dragons arrive') that makes inaction costly.",
   "keyLocations": [
     {
       "name": "Specific location name",
@@ -424,12 +461,12 @@ Required JSON schema:
       "dilemma": "Meaningful choice between competing priorities this NPC forces on players"
     }
   ],
-  "threats": ["1-2 sentences per threat: who or what opposes the party and how, aligned with the main ticking clock"],
-  "discoveries": ["1-2 sentences per clue: an actionable revelation that solves an obstacle or opens an alternative pathway — no standalone facts"],
-  "complications": ["1-2 sentences per complication: new decisions, costs, or shifting relationships that escalate the pressure"],
-  "rewards": ["1 sentence per reward: what players can gain — specific and proportionate to the stakes"],
-  "outcomes": ["2-3 sentences per outcome: a genuinely different WORLD END-STATE (permanent world consequences after the adventure ends), NOT mid-adventure tactics or player actions"],
-  "hooks": ["1-2 sentences per hook: a specific reason a particular party would engage with this adventure"]
+  "threats": ["Format as '- **Evocative Threat Title**: 1-2 sentences describing who or what opposes the party, aligned with the main ticking clock'"],
+  "discoveries": ["Format as '- **Evocative Clue Title**: 1-2 sentences describing an actionable revelation that solves an obstacle or opens an alternative pathway'"],
+  "complications": ["Format as '- **Evocative Complication Title**: 1-2 sentences describing new decisions, costs, or shifting relationships that escalate the pressure'"],
+  "rewards": ["Format as '- **Evocative Reward Title**: 1 sentence describing what players can gain — specific and proportionate to the stakes'"],
+  "outcomes": ["Format as '- **Evocative Outcome Title**: 2-3 sentences describing a genuinely different WORLD END-STATE (permanent world consequences after the adventure ends)'"],
+  "hooks": ["Format as '- **Evocative Hook Title**: 1-2 sentences describing a specific reason a particular party would engage with this adventure'"]
 }`;
 
   return {
@@ -1059,7 +1096,7 @@ export function parseAdventureResponseDetailed(
 
     return {
       output: {
-        type: "event",
+        type: "note",
         kind: "adventure",
         title,
         summary,

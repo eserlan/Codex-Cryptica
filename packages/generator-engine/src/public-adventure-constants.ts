@@ -105,10 +105,14 @@ export const NPC_MOTIVATIONS: string[] = [
  * Genre-agnostic so they apply across all themes.
  */
 export const PRESSURE_TYPES: string[] = [
-  "a closing time window before the threat acts",
-  "a rival faction racing for the same objective",
-  "a resource running out before the job is done",
-  "a coverup already in motion",
-  "a chain reaction begun by the inciting event",
-  "an authority moving to shut down the situation — and the party — before they finish",
+  "Countdown / Deadline (A known event will occur at a specific time unless the party acts: execution, ritual, invasion, gate closure, auction, eclipse)",
+  "Rival Race (Another actor is pursuing the same or a conflicting objective and progresses independently)",
+  "Dwindling Resource (Something finite is being consumed: food, air, medicine, money, political capital, ammunition, magical stability)",
+  "Active Pursuit / Hunt (The party, objective, or ally is being actively tracked, searched for, or hunted)",
+  "Cover-Up / Evidence Decay (Evidence, witnesses, records, or traces are being destroyed, altered, silenced, or disappearing)",
+  "Escalating Crisis (The situation worsens through stages regardless of party action: flooding, plague, riot, magical corruption, structural collapse)",
+  "Institutional Crackdown (An organisation progressively restricts movement, rights, access, or options: curfew, martial law, quarantine, audit, purge, lockdown)",
+  "Fragile Relationship (Trust, legitimacy, alliances, negotiations, or public support can deteriorate through mishandling)",
+  "Opportunity Window (A favourable condition exists only temporarily: low tide, festival crowds, guard rotation, diplomatic immunity, rare celestial event)",
+  "Accumulating Consequences (No immediate deadline, but unattended problems create worsening political, social, or environmental world consequences over time)",
 ];

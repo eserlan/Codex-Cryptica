@@ -7,20 +7,26 @@
     y,
     targetId,
     targetType = "node",
+    isAdventure = false,
     onDelete,
     onRename,
     onRevise,
     onCreateEntity,
+    onAddAdventureNode,
     onClose,
   } = $props<{
     x: number;
     y: number;
     targetId?: string;
     targetType?: "node" | "edge" | "pane";
+    isAdventure?: boolean;
     onDelete: () => void;
     onRename?: () => void;
     onRevise?: () => void;
     onCreateEntity?: (type: string) => void;
+    onAddAdventureNode?: (
+      type: "location" | "npc" | "clue" | "threat" | "outcome" | "situation",
+    ) => void;
     onClose: () => void;
   }>();
 
@@ -84,56 +90,127 @@
     {/if}
 
     {#if targetType === "pane"}
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
-          onCreateEntity?.("character");
-          onClose();
-        }}
-      >
-        Create Character
-      </button>
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
-          onCreateEntity?.("location");
-          onClose();
-        }}
-      >
-        Create Location
-      </button>
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
-          onCreateEntity?.("event");
-          onClose();
-        }}
-      >
-        Create Event
-      </button>
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
-          onCreateEntity?.("item");
-          onClose();
-        }}
-      >
-        Create Item
-      </button>
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={() => {
-          onCreateEntity?.("lore");
-          onClose();
-        }}
-      >
-        Create Lore
-      </button>
+      {#if isAdventure}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onAddAdventureNode?.("location");
+            onClose();
+          }}
+        >
+          <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
+          ></span>
+          Add Location
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onAddAdventureNode?.("npc");
+            onClose();
+          }}
+        >
+          <span class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"></span>
+          Add NPC / Faction
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onAddAdventureNode?.("clue");
+            onClose();
+          }}
+        >
+          <span class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
+          ></span>
+          Add Clue / Secret
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onAddAdventureNode?.("threat");
+            onClose();
+          }}
+        >
+          <span class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"></span>
+          Add Threat
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onAddAdventureNode?.("outcome");
+            onClose();
+          }}
+        >
+          <span class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"></span>
+          Add Outcome
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onAddAdventureNode?.("situation");
+            onClose();
+          }}
+        >
+          <span class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"></span>
+          Add Situation
+        </button>
+      {:else}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onCreateEntity?.("character");
+            onClose();
+          }}
+        >
+          Create Character
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onCreateEntity?.("location");
+            onClose();
+          }}
+        >
+          Create Location
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onCreateEntity?.("event");
+            onClose();
+          }}
+        >
+          Create Event
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onCreateEntity?.("item");
+            onClose();
+          }}
+        >
+          Create Item
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+          onclick={() => {
+            onCreateEntity?.("lore");
+            onClose();
+          }}
+        >
+          Create Lore
+        </button>
+      {/if}
     {/if}
 
     {#if targetType === "node" && (targetId || onRevise)}

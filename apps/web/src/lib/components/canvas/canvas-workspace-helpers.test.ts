@@ -6,12 +6,14 @@ import {
   canvasNodeToFlowNode,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
   flowNodeToCanvasNode,
   fitDelveSectorFrames,
   hydrateCanvasGraph,
   isGenericCanvasName,
   pruneCanvasGraph,
+  reconnectFlowEdge,
   resolveBatchSpawnPosition,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
@@ -242,6 +244,172 @@ describe("canvas-workspace-helpers", () => {
       type: "straight",
       animated: true,
     });
+  });
+
+  it("creates domain-aware Adventure and Delve connections", () => {
+    const connection = {
+      source: "room-1",
+      target: "room-2",
+      sourceHandle: "source-right",
+      targetHandle: "target-left",
+    } as any;
+
+    expect(
+      createFlowEdgeFromConnection(
+        connection,
+        "passage-1",
+        { id: "room-1", type: "delveRoom" } as any,
+        { id: "room-2", type: "delveRoom" } as any,
+      ),
+    ).toMatchObject({
+      id: "passage-1",
+      type: "delveEdge",
+      data: {
+        id: "passage-1",
+        sourceRoomId: "room-1",
+        targetRoomId: "room-2",
+        type: "standard",
+        bidirectional: true,
+      },
+    });
+
+    expect(
+      createFlowEdgeFromConnection(
+        { source: "situation", target: "clue" } as any,
+        "adventure-edge-1",
+        {
+          id: "situation",
+          type: "adventureNode",
+          data: { type: "situation" },
+        } as any,
+        {
+          id: "clue",
+          type: "adventureNode",
+          data: { type: "clue" },
+        } as any,
+      ),
+    ).toMatchObject({
+      type: "holds_clue",
+      label: "holds clue",
+      data: { relation: "holds clue" },
+    });
+  });
+
+  it("keeps Delve passage metadata aligned when reconnecting", () => {
+    const reconnected = reconnectFlowEdge(
+      {
+        id: "passage-1",
+        source: "room-1",
+        target: "room-2",
+        type: "delveEdge",
+        data: {
+          id: "passage-1",
+          sourceRoomId: "room-1",
+          targetRoomId: "room-2",
+          type: "hidden",
+          bidirectional: true,
+        },
+      } as any,
+      {
+        source: "room-3",
+        target: "room-4",
+        sourceHandle: "source-bottom",
+        targetHandle: "target-top",
+      } as any,
+    );
+
+    expect(reconnected).toMatchObject({
+      source: "room-3",
+      target: "room-4",
+      data: {
+        sourceRoomId: "room-3",
+        targetRoomId: "room-4",
+        type: "hidden",
+      },
+    });
+  });
+
+  it("auto-arranges Delve rooms through the shared canvas layout entry point", () => {
+    const nodes = [
+      {
+        id: "sector-1",
+        type: "delveSectorGroup",
+        position: { x: 0, y: 0 },
+        data: {
+          id: "sector-1",
+          name: "Upper Halls",
+          theme: "Stone",
+          description: "",
+          order: 1,
+        },
+      },
+      ...["room-1", "room-2"].map((id, index) => ({
+        id,
+        type: "delveRoom",
+        parentId: "sector-1",
+        position: { x: 0, y: 0 },
+        data: {
+          id,
+          sectorId: "sector-1",
+          sectorName: "Upper Halls",
+          name: id,
+          role: index === 0 ? "entrance" : "encounter",
+          summary: "",
+          description: "",
+          stocking: {},
+        },
+      })),
+    ] as any;
+
+    const arranged = autoArrangeCanvasNodes({
+      canvasId: "delve-1",
+      title: "Test Delve",
+      nodes,
+      edges: [
+        {
+          id: "passage-1",
+          source: "room-1",
+          target: "room-2",
+          type: "delveEdge",
+          data: {
+            id: "passage-1",
+            sourceRoomId: "room-1",
+            targetRoomId: "room-2",
+            type: "standard",
+            bidirectional: true,
+          },
+        },
+      ] as any,
+    });
+
+    expect(arranged).not.toBeNull();
+    expect(arranged?.find((node) => node.id === "sector-1")).toMatchObject({
+      width: expect.any(Number),
+      height: expect.any(Number),
+    });
+    expect(
+      arranged?.find((node) => node.id === "room-2")?.position.y,
+    ).toBeGreaterThan(
+      arranged?.find((node) => node.id === "room-1")?.position.y ?? 0,
+    );
+  });
+
+  it("does not auto-arrange an ordinary entity canvas", () => {
+    expect(
+      autoArrangeCanvasNodes({
+        canvasId: "canvas-1",
+        title: "Entity Canvas",
+        nodes: [
+          {
+            id: "entity-node",
+            type: "entity",
+            position: { x: 40, y: 80 },
+            data: { entityId: "entity-1" },
+          },
+        ] as any,
+        edges: [],
+      }),
+    ).toBeNull();
   });
 
   it("hydrates sector frames with a dedicated drag handle", () => {

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Handle, Position } from "@xyflow/svelte";
   import type { AdventureNodeData, AdventureNodeType } from "generator-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import CanvasCenterConnectionHandles from "./CanvasCenterConnectionHandles.svelte";
 
   let {
     data,
@@ -157,10 +157,9 @@
     ? 'border-theme-primary ring-2 ring-theme-primary/40 shadow-lg'
     : 'border-theme-border/70 hover:border-theme-border'}"
 >
-  <Handle
-    type="target"
-    position={Position.Top}
-    class="w-3 h-3 !bg-theme-primary"
+  <CanvasCenterConnectionHandles
+    legacyTargetHandleIds={["target-top", "target-left"]}
+    legacySourceHandleIds={["source-bottom", "source-right"]}
   />
 
   <div class="flex items-center justify-between gap-2 mb-1.5">
@@ -255,10 +254,4 @@
       {data.entityId ? "View Entity" : "Create Entity"}
     </button>
   </div>
-
-  <Handle
-    type="source"
-    position={Position.Bottom}
-    class="w-3 h-3 !bg-theme-primary"
-  />
 </div>

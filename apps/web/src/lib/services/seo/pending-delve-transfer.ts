@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Entity } from "schema";
 import { CanvasSchema, type Canvas } from "@codex/canvas-engine";
+import { AdventureFlowLayout } from "generator-engine";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
@@ -78,9 +79,25 @@ function prepareTransferredCanvas(
         ? (canvas as Record<string, unknown>).kind
         : inferredKind;
 
+  let processedNodes = rawNodes;
+  if (hasAdventureNodes) {
+    const rawDoc: any = {
+      id: "temp",
+      title: title || "Adventure",
+      summary: "",
+      genre: "Fantasy",
+      nodes: rawNodes,
+      edges: Array.isArray(canvas.edges) ? canvas.edges : [],
+    };
+    const layoutEngine = new AdventureFlowLayout();
+    const positioned = layoutEngine.applyLayout(rawDoc);
+    processedNodes = positioned.nodes;
+  }
+
   return CanvasSchema.parse({
     ...canvas,
     name: title,
+    nodes: processedNodes,
     metadata: {
       ...metadata,
       kind,

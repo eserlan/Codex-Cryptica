@@ -70,6 +70,22 @@
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
     onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
   } = $props();
+
+  import { getThemeLoadingMessages } from "generator-engine";
+
+  let loadingIndex = $state(0);
+  let activeMessages = $derived(getThemeLoadingMessages(worldTheme));
+
+  $effect(() => {
+    if (!isBusy) {
+      loadingIndex = 0;
+      return;
+    }
+    const interval = setInterval(() => {
+      loadingIndex = (loadingIndex + 1) % activeMessages.length;
+    }, 4200);
+    return () => clearInterval(interval);
+  });
 </script>
 
 {#if generatedData?.aiFallback && !aiFallbackDismissed}
@@ -97,6 +113,11 @@
   </div>
 {/if}
 <div
+  onclick={onContainerClick}
+  onkeydown={onContainerKeydown}
+  tabindex="-1"
+  role="region"
+  aria-label="Generated Output Workspace"
   class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
 >
   {#if isBusy}
@@ -111,9 +132,9 @@
         aria-hidden="true"
       ></span>
       <p
-        class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse"
+        class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse transition-all duration-300 text-center px-6 max-w-md"
       >
-        Forging {generatedSingular}...
+        {activeMessages[loadingIndex] ?? `Forging ${generatedSingular}...`}
       </p>
     </div>
   {/if}

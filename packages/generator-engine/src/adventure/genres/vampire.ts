@@ -30,6 +30,9 @@ export const vampireAdventureTables: AdventureGenreTables = {
     "a mortal family that has been serving the court for four generations and wants out",
     "a pretender to a court seat who needs human agents to act where they cannot",
     "a hunter who is hunting the wrong thing for the right reasons",
+    "a blood-bank administrator smuggling plasma to an unsanctioned court fledglings' refuge",
+    "a vampire elder's ghoul who stole their master's coffin key",
+    "a rival city's emissary offering forbidden blood-alchemy secrets",
   ],
   objectiveTypes: [
     "Navigate a court obligation without becoming a permanent asset",
@@ -39,11 +42,14 @@ export const vampireAdventureTables: AdventureGenreTables = {
     "Expose a rogue actor without implicating the court that made them",
   ],
   locationTypes: [
-    "a city that runs on blood money — metaphorically and literally",
+    "a city that runs on blood money - metaphorically and literally",
     "an estate that belongs to no name on any current registry",
     "a private members' club whose membership list is a state secret",
     "a masquerade event where the masks are the only thing keeping everyone safe",
     "a neighbourhood the court considers its exclusive feeding ground",
+    "a subterranean blood vault hidden beneath an operating hospital mortuary",
+    "a sun-less penthouse suite equipped with blast-shielded velvet drapes",
+    "an abandoned gothic cathedral converted into a night-court tribunal",
   ],
   npcRoles: [
     "the court herald who speaks for a principal they have never seen awake",
@@ -56,15 +62,21 @@ export const vampireAdventureTables: AdventureGenreTables = {
     "a court faction that has decided the players are more useful as leverage than agents",
     "a hunter organisation with accurate intelligence and poor judgment",
     "a rogue element who has been operating outside court sanction for decades",
-    "the compact itself — an old agreement whose terms are worse on re-reading",
+    "the compact itself - an old agreement whose terms are worse on re-reading",
     "a mortal institution that has started to suspect what it is actually dealing with",
+    "an ancient blood-curse manifesting as uncontrollable thirst among city ghouls",
+    "a fanatical inquisitor armed with UV-searchlights and holy water grenades",
+    "a rival prince's archons executing unannounced domain purges",
   ],
   discoveryTypes: [
     "a name in the court register that belongs to someone the party knows as mortal",
-    "a transaction between two courts that should be at war",
-    "a blood sample that matches two people who cannot possibly be related",
+    "a sealed vellum lineage scroll bound in crimson silk",
+    "a silver phial containing preserved blood from a sire long thought dead",
     "a contract clause that transfers the obligation to whoever receives the debt",
     "a witness account from 1887 that describes the same individual the party met this morning",
+    "a heavy iron key forged with sun-motifs that opens the elder's daylight vault",
+    "a mortal coroner's report detailing bodies drained completely of blood with no puncture marks",
+    "a hidden portrait showing the city mayor standing beside the vampire prince in 1912",
   ],
   complicationTypes: [
     "the party's handler is recalled mid-mission for reasons the court declines to share",
@@ -77,7 +89,7 @@ export const vampireAdventureTables: AdventureGenreTables = {
     "a letter of patronage worth exactly one future favour from exactly one court",
     "territorial access that will make the next job easier and create a problem three jobs from now",
     "proof of something that cannot be acted upon without revealing how it was obtained",
-    "a blood debt called clear — for now, and with conditions",
+    "a blood debt called clear - for now, and with conditions",
     "the court's official ignorance of what the party did tonight",
   ],
   outcomeTypes: [
@@ -90,7 +102,7 @@ export const vampireAdventureTables: AdventureGenreTables = {
   hooks: [
     "An envelope arrives at the party's lodging containing a card with an address, a time, and a single word: 'Come.'",
     "A mortal who works for a court contact is found dead in circumstances that would embarrass the court considerably.",
-    "The party is offered work — the brief is to recover a person, but the name on the file belongs to someone who died fourteen years ago.",
+    "The party is offered work - the brief is to recover a person, but the name on the file belongs to someone who died fourteen years ago.",
     "A note delivered with the party's meal reads: 'The court knows you are here. The court would like to discuss terms.'",
   ],
 };
