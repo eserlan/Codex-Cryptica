@@ -424,9 +424,14 @@
           .join(" and ");
         autoPopulationMessage = `${failures} could not be enhanced. They will retry next time this canvas opens.`;
       }
-    } catch {
-      autoPopulationMessage =
-        "Automatic AI population paused. Existing Area details were preserved and it will retry next time.";
+    } catch (err) {
+      console.error(
+        "[DelveAutoPopulation] Error during canvas auto-population:",
+        err,
+      );
+      const detail =
+        err instanceof Error && err.message ? ` (${err.message})` : "";
+      autoPopulationMessage = `Automatic AI population paused${detail}. Existing Area details were preserved and it will retry next time.`;
     } finally {
       isAutoPopulating = false;
     }
