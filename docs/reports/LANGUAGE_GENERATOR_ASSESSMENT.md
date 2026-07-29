@@ -35,7 +35,8 @@ Success should therefore be measured primarily by whether an AI-generated langua
 - can be saved as reusable structured worldbuilding context;
 - can guide later generation consistently across Codex Cryptica.
 
-The offline path only needs to remain coherent, usable, and compatible with the same public output contract where practical.
+The offline path only needs to remain coherent, usable, and compatible with the
+minimum fallback contract defined below.
 
 ## Configuration and Variation Surface
 
@@ -185,6 +186,62 @@ Illustrative shape:
 
 The goal is not linguistic completeness. The goal is enough structured information for later generation to reliably sound like the same language.
 
+### Versioning and Persistence
+
+The structured profile needs an explicit, versioned home in the shared entity
+schema. The current `EntitySchema` has `kind`, `content`, and `lore`, but no
+field for language-specific structured data. The proposed persistence boundary
+is:
+
+```ts
+interface LanguageProfileV1 {
+  phonology: {
+    sounds: string[];
+    rhythm: string;
+    pronunciationRules: string[];
+  };
+  morphology: {
+    wordFormation: string[];
+    prefixes: Array<{ form: string; meaning: string }>;
+    suffixes: Array<{ form: string; meaning: string }>;
+    compounding: string;
+  };
+  naming: {
+    personalNamePatterns: string[];
+    placeNamePatterns: string[];
+    titlePatterns: string[];
+    lineagePatterns: string[];
+  };
+  lexicon: Array<{
+    word: string;
+    pronunciation: string;
+    meaning: string;
+    partOfSpeech?: string;
+  }>;
+  grammar: {
+    phrasePatterns: string[];
+    functionWords: Array<{ word: string; meaning: string }>;
+  };
+  register: {
+    role: string;
+    formality: string;
+    socialRules: string[];
+  };
+}
+
+interface LanguageEntityFields {
+  languageProfileVersion: 1;
+  languageProfile: LanguageProfileV1;
+}
+```
+
+Implementation must extend `EntitySchema`, entity creation, Markdown
+frontmatter serialization/loading, and relevant public/publishing schemas.
+Existing `kind: language` notes without structured data remain valid and fall
+back to their readable lore excerpts. Future incompatible changes increment
+`languageProfileVersion` and supply an explicit migration or compatibility
+adapter.
+
 For example, once a language is saved, CC should be able to use it when generating:
 
 - character names;
@@ -222,6 +279,12 @@ The missing UX is an explicit **Naming Language / Language Profile** selector. R
 
 Automatic suggestions can still exist, ideally ranked by source relationship, category, and recent use, but they should not replace explicit choice.
 
+The MVP should accept **one primary language profile**. Selecting several
+profiles without defining how they interact can produce contradictory sound and
+naming rules. Multi-language generation should be a later, explicit mode with
+semantics such as loanword influence, bilingual naming, regional mixture, or a
+creole.
+
 ## Local / Offline Fallback
 
 The local path currently uses five tone-based sound tables and combines spelling fragments through simple C/V patterns. Genre contributes one glossary concept, while role, structure, and context have little or no procedural effect.
@@ -233,14 +296,125 @@ The fallback should **not** become a full conlang engine unless future product e
 Minimum fallback goals:
 
 - never crash when AI is unavailable;
-- produce coherent names and vocabulary with reasonable uniqueness;
-- satisfy the minimum public output shape;
+- return non-empty `title`, `summary`, `content`, `lore`, and `labels`;
+- include all five narrative sections and all three GM-reference sections;
+- include at least 10 unique glossary words;
+- include at least 3 unique example names;
+- include at least 2 sample phrases;
+- include the selected genre, tone, role, and structure in the reference output;
 - avoid obviously broken sound-table classifications;
 - make selected structure/role visible where inexpensive and useful;
 - clearly communicate controls or context that are AI-only, where applicable;
 - preserve compatibility with saved `kind: language` entities.
 
 Local enhancements should be judged by fallback quality and implementation cost, not by parity with the AI path.
+
+### Current Fallback Rule Appendix
+
+This appendix records the exact current procedural rules as a regression
+baseline. Retaining the inventory does not imply that the fallback should grow
+into a full linguistic simulation.
+
+A generated word selects one pattern and replaces each `C` or `V` with one
+whole fragment from the corresponding table. Fragments can contain several
+letters.
+
+| Tone | Consonant fragments | Vowel fragments | Patterns |
+| --- | --- | --- | --- |
+| Harsh & Consonant-heavy | `kr gr kh z x th br v d t r` | `a u o ur ok ak` | `CVC CVCC CCVC` |
+| Lyrical & Vowel-rich | `l m n s v y f r sh` | `ae ia ea io ele ana i` | `CV CVCV VCV` |
+| Ancient & Formal | `ph th ae r s t n m k l` | `ae o u aa ii or` | `CVCV CVC VCCV` |
+| Clipped & Technical | `t k p d g b r n ts` | `i e u ek in` | `CVC VC CV` |
+| Shadowy & Whispered | `sh th f s h z ph lh` | `i o y uu is` | `CVC CV VCV` |
+| Unknown/custom tone | `k l m n s t r` | `a e i o u` | `CVC CV` |
+
+Current assembly behaviour:
+
+- The language title concatenates two independently generated words.
+- Each glossary entry receives one independently generated word.
+- Each example name concatenates two independently generated words.
+- All four name-structure selections use the same assembly algorithm.
+- There are no separators, reusable affixes, grammatical particles, agreement
+  rules, or uniqueness checks.
+- A custom tone silently uses the generic table.
+
+The fixed local glossary meanings are:
+
+1. friend
+2. enemy
+3. water
+4. fire
+5. shadow
+6. light
+7. city
+8. journey
+9. one genre-specific concept
+10. leader
+
+| Genre | Genre-specific concept |
+| --- | --- |
+| Classic Fantasy | sword-oath |
+| Cyberpunk / Corporate | network |
+| Vampire / Gothic Noir | bloodline |
+| Sci-Fi / Space Opera | starship |
+| Modern Conspiracy | secret |
+| Post-Apocalyptic | ruin |
+| Pirate | crew-oath |
+| Unknown/custom genre | wanderer |
+
+The fixed phrase templates are:
+
+- `friend + shadow` → “A friend in shadows.”
+- `leader + city` → “The leader of the city.”
+- `friend + light` → greeting meaning “friend of light.”
+
+These translations rely on unstated articles, prepositions, possession, and
+plural rules.
+
+## AI Quality Evaluation Plan
+
+Unit tests can prove that prompts and validators contain the intended rules,
+but they cannot prove that a nondeterministic model follows those rules. The AI
+path therefore needs a small repeatable evaluation suite alongside ordinary
+tests.
+
+Use a fixed set of representative world contexts and vary one control at a
+time. At minimum, cover:
+
+- all five tones against the same genre, role, structure, and context;
+- all four name structures against the same remaining inputs;
+- contrasting language roles such as Common Speech, Sacred / Ritual Tongue,
+  and Thieves' Cant;
+- at least three sharply different genres;
+- a standard context, a highly specific custom context, and an empty context;
+- at least one custom tone, role, structure, and genre.
+
+Score each result on a documented rubric:
+
+| Criterion | Passing expectation |
+| --- | --- |
+| Control fidelity | The varied control produces observable differences in rules and examples |
+| Internal consistency | Names, glossary words, and phrases follow the stated sound and morphology rules |
+| Context grounding | Supplied cultures, history, institutions, or concepts materially shape the language |
+| Contract completeness | Every required field, section, count, and pronunciation is present |
+| Reusability | The structured profile contains enough data to guide downstream generation |
+| Name safety | Generated names avoid prohibited and existing-name collisions |
+
+Prompt snapshot tests, schema/repair tests, and this evaluation rubric serve
+different purposes and should all remain visible in implementation results.
+
+## Delivery Plan
+
+[Issue #1899](https://github.com/eserlan/Codex-Cryptica/issues/1899)
+remains the tracking epic. Implementation is split into focused issues in this
+dependency order:
+
+1. [#1900 — AI control fidelity and evaluation harness](https://github.com/eserlan/Codex-Cryptica/issues/1900)
+2. [#1901 — Shared runtime validation and repair/regeneration](https://github.com/eserlan/Codex-Cryptica/issues/1901)
+3. [#1902 — Versioned structured profile schema and persistence](https://github.com/eserlan/Codex-Cryptica/issues/1902)
+4. [#1903 — Single saved-language selector and context plumbing](https://github.com/eserlan/Codex-Cryptica/issues/1903)
+5. [#1904 — Downstream generator consumption and adherence](https://github.com/eserlan/Codex-Cryptica/issues/1904)
+6. [#1905 — Fallback contract hygiene and genre/marketing alignment](https://github.com/eserlan/Codex-Cryptica/issues/1905)
 
 ## Strengths
 
@@ -277,7 +451,10 @@ Local enhancements should be judged by fallback quality and implementation cost,
 - [ ] Validate pronunciation presence where required.
 - [ ] Reject, repair, or regenerate malformed AI output before presenting it.
 - [ ] Use the same parser and validation rules in the public and in-app generation paths.
-- [ ] Check banned names across titles, example names, roots, glossary words, phrases, and direct derivatives.
+- [ ] Check language titles and example names against prohibited names,
+      existing titles, and direct name derivatives.
+- [ ] Treat glossary words and phrases as ordinary vocabulary: reject only exact
+      whole-name collisions, not incidental substrings or short root overlap.
 - [ ] Add lightweight consistency checks where practical, especially for duplicate names/words and failure to demonstrate the selected name structure.
 
 ### Priority 1 — Persist Structured Language Rules
@@ -291,11 +468,13 @@ Local enhancements should be judged by fallback quality and implementation cost,
 ### Priority 1 — Improve Saved-Language Reuse
 
 - [ ] Add an explicit Naming Language / Language Profile selector to relevant generators.
-- [ ] Let users choose one or more profiles instead of automatically relying on the first five detected profiles.
+- [ ] Let users choose one primary profile instead of automatically relying on the first five detected profiles.
 - [ ] Rank automatic suggestions by source relationship, category, and recent use.
 - [ ] Feed structured naming, phonology, morphology, glossary, and register rules into downstream AI prompts.
 - [ ] Make downstream generators demonstrate adherence to the selected language profile in their output.
 - [ ] Define graceful behaviour for legacy saved languages without structured profile data.
+- [ ] Defer multiple-profile blending until loanword, bilingual, regional-mixture,
+      or creole semantics are explicitly designed.
 
 ### Priority 2 — UX and Coverage
 
@@ -318,8 +497,10 @@ Local enhancements should be judged by fallback quality and implementation cost,
 
 - [ ] Test that AI prompts encode genre, tone, role, structure, and world context distinctly.
 - [ ] Add fixture-based tests showing materially different prompt guidance across preset dimensions.
+- [ ] Run the representative AI evaluation matrix and record rubric results.
 - [ ] Test runtime rejection, repair, or regeneration of missing sections and malformed glossary data.
-- [ ] Test banned-name collisions in titles, example names, vocabulary, phrases, and derivatives.
+- [ ] Test strict banned-name handling for titles/example names and
+      whole-collision-only handling for ordinary vocabulary.
 - [ ] Test duplicate-name and duplicate-word handling.
 - [ ] Test structured profile parsing/storage and backwards compatibility.
 - [ ] Test explicit saved-language selection and downstream context injection.
@@ -334,8 +515,10 @@ The AI-first improvement is complete when:
 - [ ] Tone, genre, role, name structure, and world context each materially influence AI generation and are visible in produced examples.
 - [ ] AI output is validated and malformed responses are repaired, regenerated, or rejected consistently across public and in-app paths.
 - [ ] Generated languages persist a reusable structured profile alongside readable lore.
-- [ ] Banned-name checks cover the title, examples, glossary roots/words, phrases, and direct derivatives.
-- [ ] Users can explicitly select which saved language profile guides relevant downstream generation.
+- [ ] Strict banned-name checks cover language titles, example names, and direct
+      name derivatives; ordinary vocabulary rejects exact whole-name collisions
+      without treating incidental substrings as violations.
+- [ ] Users can explicitly select one primary saved language profile for relevant downstream generation.
 - [ ] Downstream AI generators can consume the selected profile's naming, sound, morphology, vocabulary, and register rules.
 - [ ] Existing `kind: language` notes remain compatible.
 - [ ] The local generator remains a reliable fallback without requiring feature parity with AI.
