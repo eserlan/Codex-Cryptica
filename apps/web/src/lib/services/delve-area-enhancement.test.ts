@@ -141,20 +141,46 @@ describe("DelveAreaEnhancementService", () => {
     expect(enhanced.stocking.secrets).toBeUndefined();
   });
 
-  it("rejects without changing the Area when the source Location is unavailable", async () => {
+  it("uses fallback canon when the source Location is unavailable or unlinked", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify({
+            name: "The Ember Tally",
+            description: "A mechanical chamber reinforced with steel.",
+            stocking: {
+              atmosphere: "Hot steam",
+              encounters: ["An Ember Compact guard"],
+            },
+          }),
+      },
+    });
+    const aiClient = {
+      getModel: vi.fn().mockResolvedValue({ generateContent }),
+    };
     const service = new DelveAreaEnhancementService(
       {
         entities: {},
         loadEntityContent: vi.fn().mockResolvedValue(undefined),
       },
-      { getModel: vi.fn() },
+      aiClient,
       { effectiveApiKey: null, modelName: "test-model" },
     );
 
-    await expect(
-      service.enhanceArea({ canvas, room, nearbyAreas: [] }),
-    ).rejects.toThrow("source Location could not be found");
-    expect(room.description).toBe("A mechanical chamber.");
+    const unlinkedCanvas = { ...canvas, metadata: {} } as Canvas;
+    const enhanced = await service.enhanceArea({
+      canvas: unlinkedCanvas,
+      room,
+      nearbyAreas: [],
+    });
+    expect(enhanced.name).toBe("The Ember Tally");
+    expect(aiClient.getModel).toHaveBeenCalledWith(
+      "",
+      "test-model",
+      expect.stringContaining("closed roster"),
+    );
+    const request = generateContent.mock.calls[0][0];
+    expect(request.contents[0].parts[0].text).toContain("Title: Dungeon Delve");
   });
 
   it("populates a whole sector in one request and reports progress", async () => {
