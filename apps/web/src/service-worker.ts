@@ -87,6 +87,22 @@ sw.addEventListener("fetch", (event) => {
     try {
       const response = await fetch(event.request);
 
+      const contentType = response.headers.get("content-type") || "";
+      const isJsOrCss =
+        url.pathname.endsWith(".js") ||
+        url.pathname.endsWith(".css") ||
+        url.pathname.includes("/_app/immutable/");
+
+      // If a JS/CSS asset request returns HTML (e.g., Cloudflare SPA 404 fallback),
+      // return a 404 text response so script error handlers fail cleanly rather than throwing syntax errors.
+      if (isJsOrCss && contentType.includes("text/html")) {
+        return new Response("Asset missing (Version Skew)", {
+          status: 404,
+          statusText: "Not Found",
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
+
       // Only cache valid successful responses from our own origin
       if (response.status === 200 && url.origin === location.origin) {
         cache.put(event.request, response.clone());

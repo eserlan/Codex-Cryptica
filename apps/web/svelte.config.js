@@ -3,6 +3,9 @@ import adapter from "@sveltejs/adapter-static";
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   kit: {
+    version: {
+      pollInterval: 60000,
+    },
     // Using adapter-static to generate a fully static site suitable for Cloudflare Pages (no SSR, only prerendered assets).
     // Cloudflare Pages serves static files directly, and the fallback index.html supports SPA routing for the app shell.
     // See https://svelte.dev/docs/kit/adapters for more information about adapter-static and other deployment targets.
