@@ -611,11 +611,25 @@ describe("DefaultTextGenerationService", () => {
         service.reviseEntityUpdate!(
           "key",
           "model",
-          { title: "T", type: "npc", content: "", lore: "" },
+          { title: "T", type: "npc", content: "existing chronicle", lore: "" },
           { chronicle: "", lore: "" },
           [],
         ),
       ).rejects.toThrow("Entity revision failed: Direct throw");
+    });
+
+    it("should throw insufficient info error when revising an empty entity with no context", async () => {
+      await expect(
+        service.reviseEntityUpdate!(
+          "key",
+          "model",
+          { title: "T", type: "npc", content: "", lore: "" },
+          { chronicle: "", lore: "" },
+          [],
+        ),
+      ).rejects.toThrow(
+        "Insufficient information available to generate meaningful content",
+      );
     });
   });
 
