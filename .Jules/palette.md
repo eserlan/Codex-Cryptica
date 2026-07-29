@@ -104,3 +104,7 @@
 
 **Learning:** Found multiple icon-only buttons in `GraphToolbar.svelte` that relied on outer `aria-label` attributes but didn't hide their inner SVG-based span icons (`aria-hidden="true"`) and lacked explicit `type="button"` attributes. This can cause redundant screen reader announcements and risk accidental form submission if the toolbar is ever wrapped in a form.
 **Action:** Always add `aria-hidden="true"` to inner decorative icons within icon-only buttons, and ensure all toolbar buttons have `type="button"`.
+
+## 2024-07-29 - [Button Spinners and Accessibility]
+**Learning:** Found multiple buttons with loading states (like export/import and push/pull to drive) that relied only on text changes or disabled states, lacking visual spinners and proper accessibility attributes like `aria-busy` and `type="button"`.
+**Action:** Always swap static icons to animated spinners (`icon-[lucide--loader-2] animate-spin`) during async operations, add `aria-busy`, ensure `type="button"` is set, add `aria-hidden="true"` to inner icons, and ensure explicit `focus-visible` states are present.
