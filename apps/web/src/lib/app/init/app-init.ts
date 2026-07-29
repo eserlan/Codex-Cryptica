@@ -8,6 +8,10 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
 import { searchService } from "@codex/search-orchestrator";
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
+import {
+  handleVersionSkewReload,
+  isVersionSkewError,
+} from "../../../hooks.client";
 
 /**
  * Core system bootstrapping.
@@ -50,10 +54,28 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       event.target instanceof HTMLScriptElement ||
       event.target instanceof HTMLLinkElement
     ) {
+      const src =
+        (event.target as HTMLScriptElement).src ||
+        (event.target as HTMLLinkElement).href ||
+        "";
+      if (src.includes("/_app/immutable/")) {
+        console.warn("[VersionSkew] Failed to load immutable asset:", src);
+        handleVersionSkewReload();
+        return;
+      }
       return;
     }
 
     const message = event.message || "";
+    if (isVersionSkewError(event.error || message)) {
+      console.warn(
+        "[VersionSkew] Dynamic import error detected in handleGlobalError:",
+        message,
+      );
+      handleVersionSkewReload();
+      return;
+    }
+
     if (
       message.includes("Script error") ||
       message.includes("Load failed") ||
@@ -78,7 +100,16 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     const reason = event.reason;
-    const message = reason?.message || "";
+    const message = reason?.message || String(reason || "");
+
+    if (isVersionSkewError(reason || message)) {
+      console.warn(
+        "[VersionSkew] Dynamic import unhandled rejection:",
+        message,
+      );
+      handleVersionSkewReload();
+      return;
+    }
 
     if (
       message.includes("Failed to fetch") ||
@@ -512,9 +543,22 @@ export function registerServiceWorker(deps?: {
     isRegistered = true;
     cleanup();
 
-    nav.serviceWorker.register(`${base}/service-worker.js`).catch((error) => {
-      console.warn("Service Worker registration failed:", error);
-    });
+    nav.serviceWorker.register(`${base}/service-worker.js`).then(
+      (registration) => {
+        if (registration && typeof registration.update === "function") {
+          void registration.update().catch(() => {});
+
+          doc.addEventListener("visibilitychange", () => {
+            if (doc.visibilityState === "visible") {
+              void registration.update().catch(() => {});
+            }
+          });
+        }
+      },
+      (error) => {
+        console.warn("Service Worker registration failed:", error);
+      },
+    );
   };
 
   if (doc.readyState === "complete") {
