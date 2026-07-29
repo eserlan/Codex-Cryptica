@@ -5,6 +5,7 @@ import {
 } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import {
+  buildDungeonCoherencePrompt,
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
 } from "./public-dungeon";
@@ -248,7 +249,9 @@ export class CampaignGeneratorService {
           ? result
           : undefined;
 
-      if (first.problems.length > 0) {
+      if (first.rejected) {
+        // Structurally unusable — nothing to repair it into, so ask for a
+        // fresh attempt against the original prompt plus what went wrong.
         const retry = await this.aiGateway.complete(
           buildDungeonRetryMessage(prompt.userMessage, first.problems),
           prompt.systemInstruction,
@@ -263,6 +266,35 @@ export class CampaignGeneratorService {
           output = second.output;
           // The corrective retry is stateless. Do not advance the interaction
           // from the rejected response that it replaced.
+          acceptedInteractionResult = undefined;
+        }
+      } else if (first.structured) {
+        // Passed hard validation, but hard validation only catches what code
+        // can check (sector ids, required fields, placeholder names) — the
+        // failures that actually recur (an item placed in a sector whose own
+        // Lore never names it, a self-siege goal, an invented obstacle) are
+        // semantic and produce zero `problems`. Gating this pass behind
+        // `problems.length > 0` meant it never ran for exactly the responses
+        // most likely to need it, so it always runs once: a targeted
+        // proofread/repair pass, not a full regenerate, so the parts that
+        // already work are left alone.
+        const coherence = buildDungeonCoherencePrompt(
+          first.structured,
+          prompt.resolved,
+        );
+        const repair = await this.aiGateway.complete(
+          coherence.userMessage,
+          coherence.systemInstruction,
+        );
+        const repaired = parseDungeonResponseDetailed(
+          completeText(repair),
+          prompt.options,
+          undefined,
+          prompt.resolved,
+        );
+        if (!repaired.rejected) {
+          output = repaired.output;
+          // The repair pass is stateless, same reasoning as the retry above.
           acceptedInteractionResult = undefined;
         }
       }

@@ -19,6 +19,7 @@ import {
   defaultRng,
   pickFrom,
   pickRandomItems,
+  generatePlaceholderName,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { themeIdToLabel } from "./public-faction-constants";
@@ -39,9 +40,18 @@ import {
   SIGNATURE_FEATURES_BY_GENRE,
   SECTORS_BY_GENRE,
   FACTION_NAMES_BY_GENRE,
+  FACTION_IDENTITIES,
   FACTION_VIRTUES,
   FACTION_VICES,
-  FACTION_GOALS,
+  FACTION_DRIVES,
+  FACTION_GOALS_BY_DRIVE,
+  FACTION_LEADER_DESCRIPTORS,
+  FACTION_NOTABLE_DESCRIPTORS,
+  FACTION_STRENGTHS,
+  FACTION_INSTABILITY_HOOKS,
+  FACTION_ORIGIN_TEMPLATES,
+  FACTION_BELIEF_TEMPLATES,
+  type FactionLoreContext,
   SECTOR_CONNECTORS,
   SECRETS_BY_GENRE,
   HAZARDS_BY_GENRE,
@@ -88,11 +98,24 @@ function isStockType(v: unknown): v is DungeonStockType {
 }
 
 export interface DungeonSector {
+  /**
+   * Positional id ("sector-1", "sector-2", ...), fixed by the mechanical
+   * layer before any name or description exists — for local generation and
+   * for AI generation alike, since sector count and stock-type plan are
+   * locked seeds either way. Factions reference sectors by this id, never by
+   * name, so a faction's territory can be validated against the dungeon that
+   * actually exists rather than whatever string the model wrote.
+   */
+  id: string;
   name: string;
   description: string;
   /** Cairn-style room-stocking bucket: Monster / Lore / Special / Trap. */
   stockType?: DungeonStockType;
   stockDetail?: string;
+}
+
+function sectorId(index: number): string {
+  return `sector-${index + 1}`;
 }
 
 export interface DungeonSectorEdge {
@@ -101,12 +124,41 @@ export interface DungeonSectorEdge {
   via: string;
 }
 
+/** A named faction NPC — structured so rendering owns the "Name — description" format, not the model. */
+export interface DungeonFactionNpc {
+  name: string;
+  description: string;
+}
+
 export interface DungeonFaction {
   name: string;
+  /** What these people are, in plain language — e.g. "A militant religious order fallen into extremism." */
+  identity: string;
   virtue: string;
   vice: string;
+  /** Concrete, present-tense objective inside this dungeon — what they're doing right now. */
   goal: string;
+  /** Underlying motivation the goal serves, e.g. Redemption, Survival, Dominion. */
+  drive: string;
+  /** Immediate pressure stopping them from just succeeding. */
   obstacle: string;
+  /** Why the faction exists and how it became connected to this dungeon. */
+  origin: string;
+  /** What it believes about the dungeon, its mission, or the current conflict. */
+  belief: string;
+  /**
+   * Sector ids (see DungeonSector.id) it currently controls — never a
+   * free-form place name, so territory can be validated against sectors
+   * that actually exist rather than geography the model invented.
+   */
+  territorySectorIds: string[];
+  /** Its primary strategic advantage — not just numbers. */
+  strength: string;
+  leader: DungeonFactionNpc;
+  /** A second useful faction NPC and role, distinct from the leader. */
+  notable: DungeonFactionNpc;
+  /** Specific, actionable relationship to at least one other faction. */
+  relationship: string;
 }
 
 export interface ResolvedDungeon {
@@ -127,11 +179,11 @@ export interface ResolvedDungeon {
   currentStateDetail: string;
   signatureFeature: string;
   factions: DungeonFaction[];
-  currentConflict: string;
+  /** 2-3 sentences: what each side wants, why that conflicts, why it's unresolved, what makes it unstable. */
+  factionSituation: string;
   sectors: DungeonSector[];
   sectorEdges: DungeonSectorEdge[];
   map: string;
-  inhabitants: string;
   /** Singular by definition — a delve has one central secret. */
   secret: string;
   /**
@@ -142,6 +194,13 @@ export interface ResolvedDungeon {
   hazards: string[];
   treasures: string[];
   hooks: string[];
+  /**
+   * Already-established named/described things a faction may reference but
+   * must not contradict or replace — the dungeon is authoritative, factions
+   * adapt to it. Composed from signatureFeature, secret, hazards, and
+   * treasures rather than invented separately.
+   */
+  knownFeatures: string[];
 }
 
 export interface DungeonPrompt {
@@ -167,6 +226,19 @@ function pickUnused<T extends string>(
 ): T {
   const remaining = pool.filter((f) => !used.has(f));
   const picked = pickFrom(remaining.length > 0 ? remaining : pool, rng);
+  used.add(picked);
+  return picked;
+}
+
+/** Like pickUnused, but for pools that aren't plain strings (e.g. template functions), indexed by position. */
+function pickUnusedIndex(
+  poolLength: number,
+  used: Set<number>,
+  rng: Rng,
+): number {
+  const all = Array.from({ length: poolLength }, (_, i) => i);
+  const remaining = all.filter((i) => !used.has(i));
+  const picked = pickFrom(remaining.length > 0 ? remaining : all, rng);
   used.add(picked);
   return picked;
 }
@@ -198,23 +270,16 @@ function sentenceCase(s: string): string {
 }
 
 /**
- * Strip a leading "held back by"/"struggling against" lead-in and trailing period an
- * AI response may have added to an obstacle string, since callers add their own lead-in.
+ * Strip a leading "held back by"/"struggling against" lead-in and trailing
+ * period an AI response may add to an obstacle string. The Obstacle field
+ * stands alone now ("**Obstacle:** X."), so callers re-capitalize the result
+ * themselves rather than lowering it to continue a sentence.
  */
 function sanitizeObstacle(s: string): string {
-  const stripped = s
+  return s
     .replace(/^\s*(held back by|struggling against)\s*/i, "")
     .trim()
     .replace(/\.+$/, "");
-  // The template reads "held back by X", so X continues a sentence. Every seed
-  // obstacle is written lowercase for that reason, but a model asked "what
-  // stands in their way" answers with a capital and renders as "held back by
-  // Deep-seated paranoia". Only the first word is lowered, and only when it
-  // looks like an ordinary word rather than an acronym or a name that keeps
-  // capitalising ("NHP", "Union Command").
-  const [first = "", second = ""] = stripped.split(/\s+/);
-  const ordinary = /^[A-Z][a-z-]+$/.test(first) && !/^[A-Z]/.test(second);
-  return ordinary ? stripped[0].toLowerCase() + stripped.slice(1) : stripped;
 }
 
 /**
@@ -267,48 +332,171 @@ function narrativeText(value: unknown): string {
   return "";
 }
 
-/** Strip a leading "Seeks"/"Seeking" an AI response may have added to a goal, since callers add their own lead-in. */
+/**
+ * Strip a leading "to"/"Seeks"/"they want to" lead-in an AI response may add
+ * to a goal clause, since callers either render it standalone (capitalized)
+ * or embed it after their own lead-in ("want to X").
+ */
 function sanitizeGoal(s: string): string {
   return s
-    .replace(/^\s*(seeks|seeking)\s*/i, "")
+    .replace(/^\s*(to|seeks?( to)?|they want to|wants? to)\s+/i, "")
     .trim()
     .replace(/\.+$/, "");
 }
 
 interface UsedFactionTraits {
   names: Set<string>;
+  identities: Set<string>;
   virtues: Set<string>;
   vices: Set<string>;
-  goals: Set<string>;
+  drives: Set<string>;
   obstacles: Set<string>;
+  leaderDescriptors: Set<string>;
+  notableDescriptors: Set<string>;
+  /** Indices into the dungeon's sector list, so the two factions don't default to controlling the same ground. */
+  territorySectorIdx: Set<number>;
+  originIdx: Set<number>;
+  beliefIdx: Set<number>;
 }
 
-/** Generate a named faction with Cairn-style virtue/vice traits and a goal/obstacle agenda. */
+/**
+ * Generate a named faction: virtue/vice traits, a drive with a concrete goal
+ * that serves it, an immediate obstacle, dungeon-specific origin/belief, a
+ * named leader plus one other notable NPC, and territory drawn from the
+ * dungeon's own sector ids (never a free-form place name). `relationship` is
+ * left blank — it can only be written once both of the dungeon's factions exist.
+ */
 function generateFaction(
   genre: string,
   rng: Rng,
   used: UsedFactionTraits,
+  ctx: FactionLoreContext,
+  sectorIds: string[],
 ): DungeonFaction {
   const name = pickUnused(
     forGenre(FACTION_NAMES_BY_GENRE, genre),
     used.names,
     rng,
   );
-  const goal = pickUnused(FACTION_GOALS, used.goals, rng);
+  const drive = pickUnused(FACTION_DRIVES, used.drives, rng);
+  const goal = pickFrom(
+    FACTION_GOALS_BY_DRIVE[drive] ?? FACTION_GOALS_BY_DRIVE.Survival,
+    rng,
+  );
   const obstacle = pickUnused(
     forGenreTables(genre).factionObstacles,
     used.obstacles,
     rng,
   );
+  const leaderDescriptor = pickUnused(
+    FACTION_LEADER_DESCRIPTORS,
+    used.leaderDescriptors,
+    rng,
+  );
+  const notableDescriptor = pickUnused(
+    FACTION_NOTABLE_DESCRIPTORS,
+    used.notableDescriptors,
+    rng,
+  );
+  // One sector of the dungeon's own — never a free-form place name — so
+  // territory can be validated against the sectors that actually exist.
+  const territorySectorIds = [
+    sectorIds[pickUnusedIndex(sectorIds.length, used.territorySectorIdx, rng)],
+  ];
+  const strength = sentenceCase(pickFrom(FACTION_STRENGTHS, rng));
+  const origin =
+    FACTION_ORIGIN_TEMPLATES[
+      pickUnusedIndex(FACTION_ORIGIN_TEMPLATES.length, used.originIdx, rng)
+    ](ctx);
+  const belief =
+    FACTION_BELIEF_TEMPLATES[
+      pickUnusedIndex(FACTION_BELIEF_TEMPLATES.length, used.beliefIdx, rng)
+    ](ctx);
   return {
     name,
-    // Virtue and vice are deduped alongside goal and obstacle: two factions
+    identity: pickUnused(FACTION_IDENTITIES, used.identities, rng),
+    // Virtue and vice are deduped alongside drive and obstacle: two factions
     // that are both "greedy" read as one faction written twice.
     virtue: pickUnused(FACTION_VIRTUES, used.virtues, rng),
     vice: pickUnused(FACTION_VICES, used.vices, rng),
     goal,
+    drive,
     obstacle,
+    origin,
+    belief,
+    territorySectorIds,
+    strength,
+    leader: {
+      name: generatePlaceholderName(rng),
+      description: leaderDescriptor,
+    },
+    notable: {
+      name: generatePlaceholderName(rng),
+      description: notableDescriptor,
+    },
+    relationship: "",
   };
+}
+
+/** Resolve sector ids to their names for prose, joined naturally ("A, B and C"). */
+function territoryNames(ids: string[], sectors: DungeonSector[]): string {
+  const byId = new Map(sectors.map((s) => [s.id, s.name]));
+  const names = ids.map((id) => byId.get(id)).filter((n): n is string => !!n);
+  if (names.length === 0) return "these halls";
+  if (names.length === 1) return names[0];
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/**
+ * A faction's own strategy, attitude, or planned response to the shared
+ * standoff — not a restatement of the mutual dependency, which the shared
+ * Faction Situation paragraph already covers. This is "what they intend to
+ * do about it", drawn independently per faction so the two need not mirror.
+ */
+function composeRelationship(
+  self: DungeonFaction,
+  other: DungeonFaction,
+  sectors: DungeonSector[],
+  rng: Rng,
+): string {
+  const otherTerritory = territoryNames(other.territorySectorIds, sectors);
+  const templates: Array<() => string> = [
+    () =>
+      `${self.name} are stalling, betting ${other.name} breaks first rather than risk open conflict now.`,
+    () =>
+      `${self.name} are quietly preparing to strike first, unwilling to let the standoff drag on much longer.`,
+    () =>
+      `${self.name} would rather negotiate than fight, if ${other.name} can be made to see reason.`,
+    () =>
+      `${self.name} treat ${other.name} as a nuisance to be dealt with later, not a real threat yet.`,
+    () =>
+      `${self.name} are gathering intelligence on ${other.name} before committing to any move against them.`,
+    () =>
+      `${self.name} have already written ${other.name} off as beyond negotiation, and are arming for it.`,
+    () =>
+      `${self.name} probe ${other.name}'s hold on ${otherTerritory} for a weakness, without yet risking a direct move.`,
+  ];
+  return sentenceCase(pickFrom(templates, rng)());
+}
+
+/**
+ * Shared 2-3 sentence paragraph covering the whole faction situation: what
+ * each side wants, why that's incompatible, why neither has already won, and
+ * what could tip the current, unstable balance — the thing the PCs can act on.
+ */
+function composeFactionSituation(
+  a: DungeonFaction,
+  b: DungeonFaction,
+  rng: Rng,
+): string {
+  const wants = sentenceCase(
+    `${a.name} want to ${a.goal}, while ${b.name} want to ${b.goal} — ambitions that cannot both succeed while either side still holds ground the other needs.`,
+  );
+  const stuck = sentenceCase(
+    `${a.name} are held back by ${a.obstacle}, and ${b.name} by ${b.obstacle}, so neither can force the issue outright.`,
+  );
+  const unstable = sentenceCase(`${pickFrom(FACTION_INSTABILITY_HOOKS, rng)}.`);
+  return [wants, stuck, unstable].join(" ");
 }
 
 /**
@@ -411,28 +599,6 @@ function resolveDungeon(
   const signatureFeatures = forGenre(SIGNATURE_FEATURES_BY_GENRE, genre);
   const signatureFeature = pickFrom(signatureFeatures, rng);
 
-  // Two rival factions (virtue/vice + goal/obstacle) drive inhabitants and conflict together,
-  // so the two sections stay internally consistent rather than being picked independently.
-  // Names, goals, and obstacles are each drawn distinct across the pair so the two factions
-  // don't read as reskins of each other.
-  const usedFactionTraits: UsedFactionTraits = {
-    names: new Set(),
-    virtues: new Set(),
-    vices: new Set(),
-    goals: new Set(),
-    obstacles: new Set(),
-  };
-  const factionA = generateFaction(genre, rng, usedFactionTraits);
-  const factionB = generateFaction(genre, rng, usedFactionTraits);
-  const factions = [factionA, factionB];
-
-  const inhabitants = sentenceCase(
-    `${factionA.name} (${factionA.virtue.toLowerCase()}, but ${factionA.vice.toLowerCase()}) hold the upper hand here, opposed by ${factionB.name} (${factionB.virtue.toLowerCase()}, but ${factionB.vice.toLowerCase()}).`,
-  );
-  const currentConflict = sentenceCase(
-    `${factionA.name} pursue ${factionA.goal.toLowerCase()}, held back by ${factionA.obstacle}. ${sentenceCase(factionB.name)} want these halls for themselves — driven by ${factionB.goal.toLowerCase()}, and struggling against ${factionB.obstacle} — putting the two factions on a collision course.`,
-  );
-
   const secretsList = forGenre(SECRETS_BY_GENRE, genre);
   const secret = pickFrom(secretsList, rng);
 
@@ -449,6 +615,8 @@ function resolveDungeon(
   const hooksList = forGenre(HOOKS_BY_GENRE, genre);
   const hooks = pickRandomItems(hooksList, 2 + Math.floor(rng() * 2), rng);
 
+  // Sectors are resolved before factions: territory now references sector
+  // ids, so the sectors a faction can hold have to already exist.
   const availableSectors = forGenre(SECTORS_BY_GENRE, genre);
   const sectorCount = Math.min(
     sectorCountForScale(scale, rng),
@@ -464,10 +632,16 @@ function resolveDungeon(
     Special: new Set([signatureFeature]),
     Trap: new Set(hazards),
   };
-  const sectors: DungeonSector[] = pickedSectors.map((s) => {
+  const sectors: DungeonSector[] = pickedSectors.map((s, idx) => {
     const stockType = rollStockType(rng);
     const stockDetail = pickStockDetail(stockType, genre, usedByType, rng);
-    return { name: s.name, description: s.description, stockType, stockDetail };
+    return {
+      id: sectorId(idx),
+      name: s.name,
+      description: s.description,
+      stockType,
+      stockDetail,
+    };
   });
 
   const sectorEdges = buildSectorEdges(sectors.length, rng);
@@ -475,6 +649,52 @@ function resolveDungeon(
     sectors.map((s) => s.name),
     sectorEdges,
   );
+
+  // Facts a faction may draw on but must not contradict or replace — the
+  // dungeon is authoritative, factions adapt to it.
+  // The secret is deliberately excluded: it's the dungeon's twist reveal, and
+  // the AI schema still asks for its own invented secret rather than being
+  // handed one as a locked fact to reference.
+  const knownFeatures = [signatureFeature, ...hazards, ...treasures];
+
+  // Two factions (virtue/vice, drive/goal/obstacle, origin/belief) built together
+  // so the situation stays internally consistent rather than being picked
+  // independently. Traits are drawn distinct across the pair so the two
+  // factions don't read as reskins of each other.
+  const factionCtx: FactionLoreContext = { builder, cause, originalUse };
+  const usedFactionTraits: UsedFactionTraits = {
+    names: new Set(),
+    identities: new Set(),
+    virtues: new Set(),
+    vices: new Set(),
+    drives: new Set(),
+    obstacles: new Set(),
+    leaderDescriptors: new Set(),
+    notableDescriptors: new Set(),
+    territorySectorIdx: new Set(),
+    originIdx: new Set(),
+    beliefIdx: new Set(),
+  };
+  const sectorIds = sectors.map((s) => s.id);
+  const factionA = generateFaction(
+    genre,
+    rng,
+    usedFactionTraits,
+    factionCtx,
+    sectorIds,
+  );
+  const factionB = generateFaction(
+    genre,
+    rng,
+    usedFactionTraits,
+    factionCtx,
+    sectorIds,
+  );
+  factionA.relationship = composeRelationship(factionA, factionB, sectors, rng);
+  factionB.relationship = composeRelationship(factionB, factionA, sectors, rng);
+  const factions = [factionA, factionB];
+
+  const factionSituation = composeFactionSituation(factionA, factionB, rng);
 
   return {
     themeId,
@@ -494,15 +714,15 @@ function resolveDungeon(
     currentStateDetail,
     signatureFeature,
     factions,
-    currentConflict,
+    factionSituation,
     sectors,
     sectorEdges,
     map,
-    inhabitants,
     secret,
     hazards,
     treasures,
     hooks,
+    knownFeatures,
   };
 }
 
@@ -521,7 +741,9 @@ export function collectSessionNames(
   for (const entity of entities) {
     const title = entity.title?.trim();
     if (title) names.add(title);
-    for (const match of (entity.content ?? "").matchAll(/- \*\*(.+?)\*\* —/g)) {
+    for (const match of (entity.content ?? "").matchAll(
+      /^### (.+)\n\n\w+, but \w+\./gm,
+    )) {
       const name = match[1].replace(/^the\s+/i, "").trim();
       if (name) names.add(name);
     }
@@ -545,7 +767,7 @@ export function collectSessionTraits(
   const pairs = new Set<string>();
   for (const entity of entities) {
     for (const match of (entity.content ?? "").matchAll(
-      /- \*\*.+?\*\* — (\w+), but (\w+)\./g,
+      /^### .+\n\n(\w+), but (\w+)\./gm,
     )) {
       pairs.add(`${match[1]}, but ${match[2]}`);
     }
@@ -570,7 +792,10 @@ function formatDungeonSeeds(
   avoidTraits: string[] = [],
 ): string {
   const stockPlan = dungeon.sectors
-    .map((s, idx) => `  ${idx + 1}. ${s.stockType ?? "Lore"}`)
+    .map(
+      (s) =>
+        `  ${s.id}: ${s.stockType ?? "Lore"} (name and describe this one yourself)`,
+    )
     .join("\n");
 
   return [
@@ -581,14 +806,18 @@ function formatDungeonSeeds(
     `- Present condition: ${dungeon.condition}`,
     `- Entered via: ${dungeon.entrance}`,
     `- Built from: ${dungeon.composition}`,
-    `- Faction A wants: ${dungeon.factions[0]?.goal ?? "Survival"} (obstacle: ${dungeon.factions[0]?.obstacle ?? "a rival faction"})`,
-    `- Faction B wants: ${dungeon.factions[1]?.goal ?? "Dominion"} (obstacle: ${dungeon.factions[1]?.obstacle ?? "a rival faction"})`,
+    `- Faction A drive: ${dungeon.factions[0]?.drive ?? "Survival"} (obstacle category, for shape only, not finished text: "${dungeon.factions[0]?.obstacle ?? "a rival faction"}" — reinterpret this using the sectors/hazards/treasures you write below; do not keep this wording or the entity it implies)`,
+    `- Faction B drive: ${dungeon.factions[1]?.drive ?? "Dominion"} (obstacle category, for shape only, not finished text: "${dungeon.factions[1]?.obstacle ?? "a rival faction"}" — reinterpret this using the sectors/hazards/treasures you write below; do not keep this wording or the entity it implies)`,
     ``,
     `Structure — fixed. Honour these exactly.`,
-    `- EXACTLY ${dungeon.sectors.length} sectors, in order. Name and describe each one yourself.`,
-    `- Each sector's stocked content must match its assigned type:`,
+    `- EXACTLY ${dungeon.sectors.length} sectors, in this order, using these exact ids. Name and describe each one yourself; the id stays fixed regardless of what you name it:`,
     stockPlan,
-    `- EXACTLY 2 factions, opposed, pursuing the two goals above. Name them yourself.`,
+    `- EXACTLY 2 factions, each keeping its assigned drive but inventing everything else about it — see schema.`,
+    `- Each faction's territorySectorIds must be a subset of the sector ids above — no other value is valid.`,
+    `- Do not invent any new sector, level, chamber, route, entrance, exit, stairwell, elevator, vault, or archive beyond the ${dungeon.sectors.length} sectors listed above. A faction may add small local dressing inside a sector it holds (a barricade, a camp, a shrine, a patrol) but not a new named place.`,
+    ``,
+    `Already-established facts — do not contradict or replace these. A faction's goal, obstacle, origin, and belief must draw on these or on the sectors above, not on a new artifact, threat, or location you invent:`,
+    ...dungeon.knownFeatures.map((f) => `- ${f}`),
     ...(avoidNames.length > 0
       ? [
           ``,
@@ -607,13 +836,42 @@ function formatDungeonSeeds(
   ].join("\n");
 }
 
-function formatFactionsList(factions: DungeonFaction[]): string {
-  return factions
-    .map(
-      (f) =>
-        `- **${f.name}** — ${f.virtue}, but ${f.vice}. Seeks ${sanitizeGoal(f.goal)}; held back by ${sanitizeObstacle(f.obstacle)}.`,
-    )
-    .join("\n");
+/** Render one faction as its own section: identity, agenda, backstory, holdings, faces, and its stake in the other faction. */
+/** Render a faction NPC as "Name — description.", capitalizing only the description's first letter. */
+function formatNpc(npc: DungeonFactionNpc): string {
+  return `${npc.name} — ${endSentence(npc.description)}`;
+}
+
+function formatFaction(f: DungeonFaction, sectors: DungeonSector[]): string {
+  return [
+    `### ${f.name}`,
+    ``,
+    `**Identity:** ${endSentence(f.identity)}`,
+    ``,
+    `${f.virtue}, but ${f.vice}.`,
+    ``,
+    `**Goal:** ${endSentence(sentenceCase(sanitizeGoal(f.goal)))}`,
+    `**Drive:** ${endSentence(f.drive)}`,
+    `**Obstacle:** ${endSentence(sentenceCase(sanitizeObstacle(f.obstacle)))}`,
+    ``,
+    `**Origin:** ${endSentence(f.origin)}`,
+    `**Belief:** ${endSentence(f.belief)}`,
+    ``,
+    `**Territory:** ${endSentence(sentenceCase(territoryNames(f.territorySectorIds, sectors)))}`,
+    `**Strength:** ${endSentence(f.strength)}`,
+    ``,
+    `**Leader:** ${formatNpc(f.leader)}`,
+    `**Notable:** ${formatNpc(f.notable)}`,
+    ``,
+    `**Relationship:** ${endSentence(f.relationship)}`,
+  ].join("\n");
+}
+
+function formatFactions(
+  factions: DungeonFaction[],
+  sectors: DungeonSector[],
+): string {
+  return factions.map((f) => formatFaction(f, sectors)).join("\n\n");
 }
 
 /** Close a sentence the model left unterminated, so it sits with table entries. */
@@ -665,16 +923,13 @@ function renderResolvedDungeon(
     `## Signature Feature`,
     dungeon.signatureFeature,
     ``,
-    `## Current Conflict`,
-    dungeon.currentConflict,
-    ``,
     `## Key Sectors & Layout`,
     sectorsFormatted,
     ``,
-    `## Inhabitants & Factions`,
-    dungeon.inhabitants,
+    `## Faction Situation`,
+    dungeon.factionSituation,
     ``,
-    formatFactionsList(dungeon.factions),
+    formatFactions(dungeon.factions, dungeon.sectors),
   ].join("\n");
 
   // Right rail / GM quick reference: what you need at the table.
@@ -726,13 +981,40 @@ export function buildDungeonPrompt(
 
   const systemInstruction = `You are a master worldbuilder and TTRPG dungeon designer. You write original ${dungeon.genre} delves that a GM can run at the table.
 
-You will be given creative seeds and a fixed structure. The seeds are raw material — interpret them, build on them, and write your own prose. Do not quote them back. The structure (sector count, each sector's stocked-content type, exactly two opposed factions with the stated goals) is fixed and must be honoured precisely.
+You will be given creative seeds and a fixed structure. The seeds are raw material — interpret them, build on them, and write your own prose. Do not quote them back. The structure (sector count, each sector's stocked-content type, exactly two factions each keeping its assigned drive) is fixed and must be honoured precisely.
 
-Everything else is yours to invent: the delve's name, every sector's name and description, the signature feature, the central secret, the hazards, the treasures, the hooks, and both faction names. Make them specific to this delve rather than generic to the genre, and make the whole document internally consistent — the history should explain the present state, the factions' goals should explain the conflict, and the secret should be worth the trip.
+Everything else is yours to invent: the delve's name, every sector's name and description, the signature feature, the central secret, the hazards, the treasures, the hooks, and both factions' full write-ups. Make them specific to this delve rather than generic to the genre, and make the whole document internally consistent — the history should explain the present state, and the secret should be worth the trip.
 
-Write the "throughline" field first and let it govern everything else. It is one sentence covering who built the delve, what went wrong, and how that leaves it in exactly the Current State given above. Every later field must be consistent with it — if the throughline says the place is occupied and contested, the history cannot end with it permanently sealed or everyone inside dead.
+The dungeon you establish is authoritative. Factions animate it; they do not add to it. Write the sectors, secret, hazards, and treasures first, in the order the schema lists them, before the faction situation and factions — those come last precisely so a faction's goal, obstacle, and belief can reference something that already exists on the page, instead of the other way around. Once written, those are the only geography and named things that exist. A faction may add small local dressing inside a sector it holds (a barricade, a camp, a shrine, a supply pile, a patrol route) without that counting as new geography, but must not invent a new chamber, vault, archive, route, entrance, stairwell, artifact, or unexplained power just to have something to want or fear. Sectors are referenced by id, never by a place name you make up on the spot — a faction's territory is always one or more of the sector ids you already assigned. Treasures must fit who built this delve and what it was for — a dwarven, elven, or otherwise culturally-specific artifact or key reads as a mistake unless that people or craft is actually named somewhere in the history; do not borrow a race or culture from the wider setting just because it's genre-typical.
+
+Each faction is a compact working entry for a GM to run, not a full standalone faction article — keep every field tight and useful, not decorative. Every faction needs an invented name of its own. Never write a placeholder like "Faction A", "Faction 1", "First Faction", or "Unnamed Faction" into the name field — those are labels for you to fill in, not values.
+
+Identity is one plain-language sentence stating what kind of faction this is (a cult, a mercenary crew, a corporate strike team, whatever fits), read before anything else about them. Four fields must each mean something different: Goal is what it wants right now; Drive (fixed, given below) is why it wants that; Obstacle is what is blocking or pressuring it; Belief is what it thinks is true, which need not be correct. None of the four may restate another — and Drive must naturally explain this faction's Identity and Goal, not just be consistent with them if you squint. Test it by swapping the Drive for a different one: if the Identity and Goal would read exactly the same either way, Drive isn't actually doing anything. A faction of profit-driven treasure hunters whose Belief is dismissively practical has no business running on a Drive of Vengeance; a faction whose Identity is archivists chasing political leverage and whose Belief is about lineage and legitimacy is not driven by Knowledge — that is Ascension, Dominion, or Redemption. If Drive is Vengeance, the Identity, Goal, and Belief should all read as someone settling a score, not an unrelated grab for loot. Obstacle must arise from an established sector, hazard, treasure, or the other faction — a trap that already injured them, a shortage the hazards explain, a rival holding something they need, a deadline tied to the secret — and it must actually stand between this faction and its Goal from where its Territory places it, not just be a generic pressure lifted from elsewhere. Never a new watcher, curse, debt, or power that wasn't already on the page; that is a second mystery competing with the one you already wrote. Origin and Belief must connect directly to this delve's own history, current state, or transformation — not generic faction lore that could belong to any dungeon.
+
+Territory and Strength answer different questions and must not collapse into each other: Territory is where the faction is established — one or more sector ids. Strength is what makes it effective or hard to dislodge there — knowledge, equipment, legitimacy, mobility, numbers, whatever it is. Do not restate the territory itself (a place name) as if holding it were the advantage; the advantage is what they can do because of it. Strength may take the edge off this faction's own Obstacle, but must not cancel it outright — if Strength already neutralizes what Obstacle describes, Obstacle isn't actually blocking anything and one of the two needs to change. A faction's Goal must never ask it to acquire something the rest of its own entry — Strength, Territory, or factionSituation — already says it possesses or controls; if Strength says they hold the strongbox, Goal cannot also be "secure the strongbox." Likewise, a faction should not seek to acquire something already sitting inside its own Territory unless the text explains why possession remains out of reach (sealed in a vault they can't open, guarded by something even they avoid). Leader and Notable are each a name plus one sentence identifying who they are and why they matter; render them as separate name/description fields, not a formatted string.
+
+Write a factionSituation field first, before the factions: 2-3 sentences on what each side wants, why those wants collide, why neither has already won, and what makes the current standoff unstable enough for the party to actually change. Prefer mutual dependency over one-sided conflict, but only where the established sectors, hazards, treasures, or secret actually support it both ways — do not force artificial symmetry ("each needs something from the other") if what you've actually established only really gives one side something to withhold. If factionSituation says a faction wants an item for a reason, that faction's own Goal must give the same reason — a scroll cache introduced as a weapon against a monster cannot become "research material for antidotes" once you reach that faction's Goal; the two fields are describing the same want and must not disagree about why. Everything in the two factions must be consistent with it — after writing both factions, re-check factionSituation once more against their actual Territory, Goal, Strength, and Relationship; it must still hold, not just have been plausible when you first wrote it.
+
+Relationship is each faction's own strategy, attitude, or planned response to that standoff — not a restatement of the mutual dependency factionSituation already covers. It might be stalling for time, preparing to strike first, seeking a deal, gathering intelligence, or refusing to take the other side seriously. Never a flat "they are rivals" or "they distrust each other", and never just "we need X from them" again. It also must not contradict Obstacle: if Obstacle says a binding oath, an injury, or a lockdown stops this faction from acting in a particular sector or against the other faction directly, Relationship cannot then have them actively doing exactly that.
+
+Write the "throughline" field before factionSituation and let it govern everything else. It is one sentence covering who built the delve, what went wrong, and how that leaves it in exactly the Current State given above. Every later field must be consistent with it — if the throughline says the place is occupied and contested, the history cannot end with it permanently sealed or everyone inside dead.
 
 The Current State is a setting the user chose. It is fixed. Whatever went wrong in the history, the place must end up in that stated condition, with both factions able to reach and contest it.
+
+Before you finish, run this checklist per faction. Start with one blunt question, before any of the others: given this faction's Territory, and everything the sector(s) in it already establish (their own Lore/stockDetail entries), what does this faction already physically control? Write that list for yourself first. Goal and Obstacle both get derived from it, not invented independently:
+1. Does Goal name something outside that list of already-controlled things? If the thing it wants is already on the list, that isn't the goal anymore — unless the text explains why it's still out of reach despite being there (sealed in a vault they can't open, guarded by something even they avoid).
+2. Wherever a field claims a treasure, hazard, or creature belongs to a specific sector — is that the same sector whose own Lore/stockDetail/Monster entry actually establishes it? A sector's own entry is the only confirmed source for what's in it. Never relocate a treasure or hazard to a different sector, never invent a creature or threat for a sector beyond what its own entry establishes (or what's clearly derived from it — a "pack" implied by a lone wolf, not an unrelated new monster), and never place anything in a sector whose entry doesn't mention it.
+3. Does Obstacle describe a real barrier between this faction and reaching something it doesn't yet control — not something actually impossible (ground it never needed to cross to reach its Goal, or a restriction that could only ever be lifted by doing the very thing it forbids)?
+4. Does factionSituation actually describe this faction's own Goal — the same want, the same item, the same location — not a different one, and not a loose paraphrase?
+5. Does Relationship describe a strategy or attitude toward the rival faction specifically, not just a mood in isolation?
+6. Does Drive explain why this faction wants its Goal, and fit its Identity too — not just restate the danger or pressure that belongs in Obstacle? (A faction driven by Wealth or Ascension doesn't become "driven by Survival" just because something in the dungeon could kill it.)
+7. Is Territory/Obstacle spatially sensible against the sector chain (sector-1 to sector-2 to sector-3, in order, unless a shortcut is described)? If this faction's own Territory spans two non-adjacent sectors, is there an established shortcut connecting them, or does the text explain how it holds both despite the gap?
+8. Does every treasure's cultural provenance (dwarven, elven, or otherwise) trace to something the history actually names, not just implies?
+9. Can every item do what its text claims (a key opens locks, not masonry; a map informs, it doesn't fund anything) — and does every later mention of it stick to that same description, with no new power added on top?
+10. Does every item named in a Goal materially serve it, for the same reason factionSituation already gave for wanting it?
+11. Could this standoff be sharper than "both sides want the same treasure" using facts you've already established?
+
+If any answer is off, fix that field using only what's already established elsewhere — don't invent something new to patch it.
 
 Return ONLY a single valid JSON object matching the requested schema. ${NAME_BAN_PROMPT}`;
 
@@ -747,29 +1029,7 @@ ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
 ${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}
 
-Required JSON schema:
-{
-  "title": "Evocative, specific name for this delve.",
-  "summary": "1-2 sentence premise of why this location is interesting.",
-  "throughline": "ONE sentence: who built it, what went wrong, and how that leaves it in the Current State above. Write this before the fields below and keep them all consistent with it.",
-  "history": "Who built it, what for, and what went wrong. Elaborate the throughline from the 'Built by' and 'Ruined by' seeds; it must end where the throughline says it ends.",
-  "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
-  "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
-  "factions": [
-    { "name": "Your name for Faction A", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[0]?.goal ?? "Survival"}", "obstacle": "What stands in their way, phrased to continue the sentence 'held back by …' — start lowercase, no lead-in words, no trailing period" },
-    { "name": "Your name for Faction B", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "${dungeon.factions[1]?.goal ?? "Dominion"}", "obstacle": "What stands in their way, phrased to continue 'held back by …' — start lowercase, no lead-in words, no trailing period" }
-  ],
-  "currentConflict": "How the two factions' goals are colliding right now, naming both.",
-  "sectors": [
-    // EXACTLY ${dungeon.sectors.length} entries, in the order of the stocked-content plan above.
-    { "name": "Your name for this area — no leading number, no 'Sector N:' prefix, no surrounding quote marks", "description": "2-3 sentences of vivid, specific description.", "stockType": "the type assigned to this sector in the plan above", "stockDetail": "One concrete thing here matching that type: a creature for Monster, findable evidence for Lore, a landmark for Special, a danger for Trap." }
-  ],
-  "inhabitants": "How the two named factions relate to each other, referencing both by name.",
-  "secret": "The hidden truth at the heart of this delve. Invent it, and make it connect to the history.",
-  "hazards": ["2-3 distinct dangers, one per entry"],
-  "treasures": ["2-3 distinct finds, one per entry"],
-  "hooks": ["2-3 reasons a party would come here or rumours about it, one per entry"]
-}`;
+${formatDungeonJsonSchema(dungeon)}`;
 
   return {
     systemInstruction,
@@ -777,6 +1037,45 @@ Required JSON schema:
     resolved: dungeon,
   };
 }
+
+/**
+ * The "Required JSON schema" block shared by the first-pass generation prompt
+ * and the second-pass coherence prompt, so the two can't drift apart on what
+ * each field means.
+ */
+function formatDungeonJsonSchema(dungeon: ResolvedDungeon): string {
+  return `Required JSON schema:
+{
+  "title": "Evocative, specific name for this delve.",
+  "summary": "1-2 sentence premise of why this location is interesting.",
+  "throughline": "ONE sentence: who built it, what went wrong, and how that leaves it in the Current State above. Write this before the fields below and keep them all consistent with it.",
+  "history": "Who built it, what for, and what went wrong. Elaborate the throughline from the 'Built by' and 'Ruined by' seeds; it must end where the throughline says it ends.",
+  "currentState": "How it functions today and what state it is in, consistent with the '${dungeon.currentState}' setting above.",
+  "signatureFeature": "One distinctive landmark or phenomenon that defines this delve. Invent it.",
+  "sectors": [
+    // EXACTLY ${dungeon.sectors.length} entries, in the order of the id/stock-type plan above. Write these before the factions below, since factions reference these sectors by id.
+    { "id": "sector-1", "name": "Your name for this area — no leading number, no 'Sector N:' prefix, no surrounding quote marks", "description": "2-3 sentences of vivid, specific description.", "stockType": "the type assigned to this sector in the plan above", "stockDetail": "One concrete thing here matching that type: a creature for Monster, findable evidence for Lore, a landmark for Special, a danger for Trap." }
+    // ...one entry per sector id above, "id" copied exactly from the plan.
+  ],
+  "secret": "The hidden truth at the heart of this delve. Invent it, and make it connect to the history. Write this and the two lists below before the factions — they are established facts a faction may want, guard, or be undone by, not things to invent after the fact.",
+  "hazards": ["2-3 distinct dangers, one per entry"],
+  "treasures": ["2-3 distinct finds, one per entry — consistent with who built this delve and what it was for. No orphaned relics from a people or craft the history never mentioned."],
+  "factionSituation": "2-3 sentences: what each faction wants, why that's incompatible, why neither has already won, and what makes the current balance unstable. Prefer mutual dependency — A controls or needs something B has, and B controls or needs something A has. Name both factions.",
+  "factions": [
+    { "name": "An invented name for this faction — never a placeholder like 'Faction A' or 'First Faction'.", "identity": "What these people are, in plain language — one sentence, no proper names besides the faction's own.", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "Concrete, present-tense: what they are trying to accomplish inside this dungeon right now, achievable using only the sectors, hazards, treasures, and secret already established above.", "drive": "${dungeon.factions[0]?.drive ?? "Survival"}", "obstacle": "The immediate pressure stopping them — draw this from an established sector, hazard, treasure, or the other faction, never a new threat or power invented for the occasion. A deadline, shortage, injury, or standoff, whatever fits. One sentence.", "origin": "Why this faction exists and how it became connected to this specific dungeon — tied to the history/current state above.", "belief": "What it believes about the dungeon, interpreting facts already established above — not unrelated lore.", "territorySectorIds": ["sector-1"], "strength": "Its real strategic advantage — not just numbers, and not the territory itself: could be position, knowledge, equipment, legitimacy, mobility, access.", "leader": { "name": "Character name", "description": "One concise sentence on who they are and why they lead." }, "notable": { "name": "A different character name than the leader", "description": "One concise sentence on their role." }, "relationship": "This faction's own strategy, attitude, or planned response to the standoff in factionSituation — stalling, striking first, seeking a deal, gathering intelligence, refusing to engage, whatever fits. Not a repeat of what it needs from the other faction." },
+    { "name": "An invented name for this faction — never a placeholder like 'Faction B' or 'Second Faction'.", "identity": "What these people are, in plain language — one sentence, no proper names besides the faction's own.", "virtue": "One-word virtue", "vice": "One-word vice", "goal": "Concrete, present-tense: what they are trying to accomplish inside this dungeon right now, achievable using only the sectors, hazards, treasures, and secret already established above.", "drive": "${dungeon.factions[1]?.drive ?? "Dominion"}", "obstacle": "The immediate pressure stopping them — draw this from an established sector, hazard, treasure, or the other faction, never a new threat or power invented for the occasion. A deadline, shortage, injury, or standoff, whatever fits. One sentence.", "origin": "Why this faction exists and how it became connected to this specific dungeon — tied to the history/current state above.", "belief": "What it believes about the dungeon, interpreting facts already established above — not unrelated lore.", "territorySectorIds": ["sector-2"], "strength": "Its real strategic advantage — not just numbers, and not the territory itself: could be position, knowledge, equipment, legitimacy, mobility, access.", "leader": { "name": "Character name", "description": "One concise sentence on who they are and why they lead." }, "notable": { "name": "A different character name than the leader", "description": "One concise sentence on their role." }, "relationship": "This faction's own strategy, attitude, or planned response to the standoff in factionSituation — stalling, striking first, seeking a deal, gathering intelligence, refusing to engage, whatever fits. Not a repeat of what it needs from the other faction." }
+  ],
+  "hooks": ["2-3 reasons a party would come here or rumours about it, one per entry"]
+}`;
+}
+
+/**
+ * Matches a schema-echo instead of an invented name — the model returning
+ * "Faction A", "The First Faction", "Unnamed Faction", or similar literally
+ * lifted from the prompt's placeholder labels rather than naming the faction.
+ */
+const PLACEHOLDER_FACTION_NAME =
+  /^(the\s+)?(first|second|1st|2nd)\s+faction$|faction\s*[ab12]\b|^((an?|the)\s+)?unnamed\s+faction$/i;
 
 /**
  * Banned names appearing in a field that carries an actual name.
@@ -823,6 +1122,8 @@ function validateAiDungeon(
   foundation: ResolvedDungeon,
   avoidNames: string[] = [],
   avoidTraits: string[] = [],
+  invalidTerritoryFactions: readonly string[] = [],
+  omittedFactionFields: readonly string[] = [],
 ): { structural: string[]; content: string[] } {
   const problems: string[] = [];
 
@@ -833,6 +1134,19 @@ function validateAiDungeon(
   const content: string[] = [];
   if (omitted.length > 0) {
     content.push(`missing required fields: ${omitted.join(", ")}`);
+  }
+  if (omittedFactionFields.length > 0) {
+    content.push(
+      `missing required faction fields: ${omittedFactionFields.join(", ")}`,
+    );
+  }
+  // Territory claiming a sector that doesn't exist is the exact failure this
+  // whole id scheme exists to catch — treated as structural, not a gap to
+  // patch, since a faction that controls invented ground isn't grounded at all.
+  if (invalidTerritoryFactions.length > 0) {
+    problems.push(
+      `references a territorySectorIds value outside the established sectors: ${invalidTerritoryFactions.join(", ")}`,
+    );
   }
   const reusedTraits = factions
     .map((f) => `${f.virtue}, but ${f.vice}`)
@@ -893,14 +1207,46 @@ function validateAiDungeon(
     if (a.name.trim().toLowerCase() === b.name.trim().toLowerCase()) {
       problems.push("both factions have the same name");
     }
+    if (a.drive.trim().toLowerCase() === b.drive.trim().toLowerCase()) {
+      problems.push("both factions share the same drive");
+    }
     if (
       sanitizeGoal(a.goal).toLowerCase() === sanitizeGoal(b.goal).toLowerCase()
     ) {
       problems.push("both factions pursue the same goal");
     }
+    const placeholders = [a, b]
+      .filter((f) => PLACEHOLDER_FACTION_NAME.test(f.name.trim()))
+      .map((f) => f.name);
+    if (placeholders.length > 0) {
+      problems.push(
+        `uses a placeholder faction name instead of an invented one: ${placeholders.join(", ")}`,
+      );
+    }
   }
 
   return { structural: problems, content };
+}
+
+/**
+ * The AI-facing dungeon shape — the same fields the "Required JSON schema"
+ * asks for, already parsed and fallback-filled. Round-trips through
+ * `JSON.stringify` straight back into the schema the coherence pass is asked
+ * to return, so a repair pass has the exact thing it's meant to proofread.
+ */
+export interface DungeonJson {
+  title: string;
+  summary: string;
+  history: string;
+  currentState: string;
+  signatureFeature: string;
+  sectors: DungeonSector[];
+  factionSituation: string;
+  factions: DungeonFaction[];
+  secret: string;
+  hazards: string[];
+  treasures: string[];
+  hooks: string[];
 }
 
 /**
@@ -920,6 +1266,13 @@ export interface DungeonParseResult {
    * rather than silently shipping the local fallback.
    */
   problems: string[];
+  /**
+   * The structured shape behind `output`, present only when the response was
+   * accepted (`!rejected`). A caller can feed this straight into
+   * `buildDungeonCoherencePrompt` for a proofreading pass, without needing to
+   * re-derive it from the rendered markdown.
+   */
+  structured?: DungeonJson;
 }
 
 /**
@@ -940,6 +1293,73 @@ export function buildDungeonRetryMessage(
     `Return a corrected JSON object that fixes every point above. Keep whatever`,
     `was already good; change only what the list requires.`,
   ].join("\n");
+}
+
+/**
+ * Build an optional second-pass prompt that proofreads and repairs an
+ * already-accepted dungeon response, rather than generating a new one.
+ *
+ * Unlike `buildDungeonRetryMessage` (which re-sends the original prompt to a
+ * response that failed structural validation and asks for a fresh attempt),
+ * this hands the model its own prior output and asks it to fix specific
+ * coherence issues in place — same names, same premise, same sectors,
+ * touching only what needs touching. Callers should only reach for this once
+ * a response has already passed hard validation; it has nothing to repair a
+ * structurally broken response into.
+ */
+export function buildDungeonCoherencePrompt(
+  structured: DungeonJson,
+  resolved: ResolvedDungeon,
+): DungeonPrompt {
+  const sectorPlan = resolved.sectors
+    .map((s) => `  ${s.id}: ${s.stockType ?? "Lore"}`)
+    .join("\n");
+
+  const systemInstruction = `You are proofreading and repairing a ${resolved.genre} dungeon / delve write-up you already produced. This is NOT a new generation — do not rewrite the premise, invent a different history, or replace names, tone, or ideas that already work. Your job is targeted correction, and preserving good existing content is itself a success condition, not a fallback.
+
+Your actual job: read the whole document as one connected argument about a single place. Every field is a claim — about what exists, who wants what and why, who holds what, who can act where. If any two claims can't both be true at once, that's a contradiction, and you resolve it using only what's already established elsewhere in the document — never by inventing something new to paper over it. The list below names the contradictions this generator produces most often, to calibrate your eye. It is a set of examples, not an exhaustive checklist — a real contradiction that doesn't match any item on it is still yours to find and fix.
+
+Structural things to fix first:
+1. Contradictions between top-level sections (history vs. current state, throughline vs. secret, etc.).
+2. Any faction referencing a sector, room, route, item, hazard, or NPC that isn't actually established below — ground it in something real or remove it. Never invent new major geography (rooms, routes, stairs, lifts, vaults, archives) to fix this.
+3. A placeholder faction name such as "Faction A", "First Faction", or "Unnamed Faction" — replace it with an actual invented name and update every reference to match.
+
+Then, per faction, start with one blunt question before any of the others: given this faction's Territory, and everything the sector(s) in it already establish (their own Lore/stockDetail entries), what does this faction already physically control? Work that out first — Goal and Obstacle both get checked against it, not treated as independent claims:
+4. Does Goal name something outside that already-controlled list? If the thing it wants is already on the list, that isn't the goal anymore — unless the text explains why it's still out of reach despite being there (sealed in a vault they can't open, guarded by something even they avoid).
+5. Wherever a field claims a treasure, hazard, or creature belongs to a specific sector — is that the same sector whose own Lore/stockDetail/Monster entry actually establishes it? A sector's own entry is the only confirmed source for what's in it — if a faction's Goal, Obstacle, or Relationship places something in a different sector, invents a creature/threat beyond what a sector's own entry establishes (or what's clearly derived from it), or names a sector no entry ever placed it in, that's the error to fix, not the sector text.
+6. Does Obstacle describe a real barrier between this faction and reaching something it doesn't yet control — not something actually impossible (ground it never needed to cross to reach its Goal, or a restriction that could only ever be lifted by doing the very thing it forbids)?
+7. Does factionSituation actually describe this faction's own Goal — the same want, the same item, the same location — not a different one, and not a loose paraphrase?
+8. Does Relationship describe a strategy or attitude toward the rival faction specifically, not just a mood in isolation, and not something that contradicts Obstacle (bound by an oath from entering a sector, then actively sweeping into that same sector)?
+9. Does Drive explain why this faction wants its Goal, and fit its Identity too — not just restate the danger or pressure that belongs in Obstacle?
+10. Does Strength name a real advantage rather than restating Territory, and does it take the edge off this faction's Obstacle without cancelling it outright?
+11. Does every treasure's cultural provenance (dwarven, elven, or otherwise) trace to something the history actually names, not just implies — can every item do what its text claims (a key opens locks, not masonry; a map informs, it doesn't fund anything) — and does every later mention of an item stick to that same description, with no new power added on top?
+12. Does every item named in a Goal materially serve it, for the same reason factionSituation already gave for wanting it?
+13. Could this standoff be sharper than "both sides want the same treasure" using facts already established?
+14. If this faction's own Territory spans two non-adjacent sectors, is there an established shortcut connecting them, or does the text explain how it holds both despite the gap?
+
+Anything else that doesn't sit right — two fields that can't both be true, a claim with nothing behind it, spatial logic against the sector chain that doesn't add up — is still yours to find and fix even if it isn't named above. Trust your read of the whole document over this list.
+
+Only touch what's actually broken. If a field already satisfies all of this, leave it exactly as written — do not paraphrase working prose for its own sake, and do not expand anything beyond what fixing the problem requires. Do not add fields beyond the schema below, and do not rename an established sector or faction unless the rename itself is the fix (e.g. replacing a placeholder name).
+
+Sector ids are fixed and must not change: ${resolved.sectors.map((s) => s.id).join(", ")}. Every territorySectorIds value in the output must be one of these.
+
+Return ONLY a single valid JSON object matching the schema below — the same shape you were given, corrected.`;
+
+  const userMessage = `Here is the dungeon you produced. Proofread it against the rules above and return the corrected JSON.
+
+Sector plan (id: stocked-content type — unchanged from the original generation):
+${sectorPlan}
+
+Previous output to repair:
+${JSON.stringify(structured, null, 2)}
+
+${formatDungeonJsonSchema(resolved)}`;
+
+  return {
+    systemInstruction,
+    userMessage,
+    resolved,
+  };
 }
 
 export function parseDungeonResponseDetailed(
@@ -987,8 +1407,7 @@ export function parseDungeonResponseDetailed(
         "history",
         "currentState",
         "signatureFeature",
-        "currentConflict",
-        "inhabitants",
+        "factionSituation",
         "secret",
         "hazards",
         "treasures",
@@ -1013,14 +1432,15 @@ export function parseDungeonResponseDetailed(
       parsed.signatureFeature,
       foundation?.signatureFeature ?? "",
     );
-    const currentConflict = str(
-      parsed.currentConflict,
-      foundation?.currentConflict ?? "",
+    const factionSituation = str(
+      parsed.factionSituation,
+      foundation?.factionSituation ?? "",
     );
 
     const rawSectors = Array.isArray(parsed.sectors) ? parsed.sectors : [];
     const sectors: DungeonSector[] = rawSectors.map(
       (s: Record<string, unknown>, idx: number) => ({
+        id: sectorId(idx),
         name:
           typeof s?.name === "string" && sanitizeSectorName(s.name)
             ? sanitizeSectorName(s.name)
@@ -1035,16 +1455,114 @@ export function parseDungeonResponseDetailed(
       }),
     );
 
+    // Territory ids are only ever trusted if they name a sector that actually
+    // exists in this response — an id the model invented is worth exactly as
+    // much as a free-form place name would have been.
+    const validSectorIds = new Set(sectors.map((s) => s.id));
+
+    // Unknown ids and missing mandatory sub-fields, checked against the raw
+    // response before any fallback fills them in — same rule as the
+    // top-level `omitted` check above. Unknown ids are structural (the
+    // faction claims ground that doesn't exist); missing fields are content
+    // gaps, reported for a retry without discarding an otherwise good response.
+    const invalidTerritoryFactions: string[] = [];
+    const omittedFactionFields: string[] = [];
+    const MANDATORY_FACTION_FIELDS = [
+      "identity",
+      "goal",
+      "drive",
+      "obstacle",
+      "origin",
+      "belief",
+      "strength",
+      "relationship",
+    ] as const;
+
     const rawFactions = Array.isArray(parsed.factions) ? parsed.factions : [];
     const factions: DungeonFaction[] = rawFactions
       .filter((f): f is Record<string, unknown> => !!f && typeof f === "object")
-      .map((f) => ({
-        name: typeof f.name === "string" ? f.name : "An unnamed faction",
-        virtue: typeof f.virtue === "string" ? f.virtue : "",
-        vice: typeof f.vice === "string" ? f.vice : "",
-        goal: typeof f.goal === "string" ? f.goal : "",
-        obstacle: typeof f.obstacle === "string" ? f.obstacle : "",
-      }));
+      .map((f, idx) => {
+        const fallback = foundation?.factions[idx];
+        const factionLabel =
+          typeof f.name === "string" && f.name.trim()
+            ? f.name.trim()
+            : `faction ${idx + 1}`;
+        // A field the model left blank falls back to the foundation's value
+        // for the same field, never to a different field's text.
+        const field = (v: unknown, fallbackValue = "") => {
+          const value = narrativeText(v);
+          return value || fallbackValue;
+        };
+        for (const key of MANDATORY_FACTION_FIELDS) {
+          if (!narrativeText(f[key])) {
+            omittedFactionFields.push(`${factionLabel}.${key}`);
+          }
+        }
+        const npc = (
+          v: unknown,
+          fallbackValue?: DungeonFactionNpc,
+          label = "",
+        ): DungeonFactionNpc => {
+          const obj =
+            v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+          if (!narrativeText(obj.name)) {
+            omittedFactionFields.push(`${factionLabel}.${label}.name`);
+          }
+          if (!narrativeText(obj.description)) {
+            omittedFactionFields.push(`${factionLabel}.${label}.description`);
+          }
+          return {
+            name: field(obj.name, fallbackValue?.name),
+            description: field(obj.description, fallbackValue?.description),
+          };
+        };
+        const rawTerritoryIds = Array.isArray(f.territorySectorIds)
+          ? f.territorySectorIds
+          : [];
+        if (rawTerritoryIds.some((id) => !validSectorIds.has(id))) {
+          invalidTerritoryFactions.push(factionLabel);
+        }
+        const territorySectorIds = rawTerritoryIds.filter(
+          (id): id is string =>
+            typeof id === "string" && validSectorIds.has(id),
+        );
+        return {
+          name: typeof f.name === "string" ? f.name : "An unnamed faction",
+          identity: field(f.identity, fallback?.identity),
+          virtue: field(f.virtue, fallback?.virtue),
+          vice: field(f.vice, fallback?.vice),
+          goal: field(f.goal, fallback?.goal),
+          drive: field(f.drive, fallback?.drive),
+          obstacle: field(f.obstacle, fallback?.obstacle),
+          origin: field(f.origin, fallback?.origin),
+          belief: field(f.belief, fallback?.belief),
+          territorySectorIds:
+            territorySectorIds.length > 0
+              ? territorySectorIds
+              : (fallback?.territorySectorIds ?? []),
+          strength: field(f.strength, fallback?.strength),
+          leader: npc(f.leader, fallback?.leader, "leader"),
+          notable: npc(f.notable, fallback?.notable, "notable"),
+          // Not falling back to the foundation's own relationship text here:
+          // that text names the foundation's sectors by name, which leaks a
+          // local sector name into an otherwise fully AI-authored response
+          // once the AI names its own sectors differently. An omission is
+          // recomposed fresh below, against the sectors that actually render.
+          relationship: field(f.relationship),
+        };
+      });
+
+    // A relationship the model omitted is recomposed against the sectors and
+    // factions that actually made it into this response, rather than reusing
+    // the foundation's pre-written text (which names the foundation's own
+    // sectors, not necessarily the ones just parsed above).
+    if (factions.length === 2) {
+      const [a, b] = factions;
+      if (!a.relationship)
+        a.relationship = composeRelationship(a, b, sectors, rng);
+      if (!b.relationship)
+        b.relationship = composeRelationship(b, a, sectors, rng);
+    }
 
     // Structure is the mechanical layer's to guarantee. If the response
     // violates it, ship the foundation the prompt was built from rather than a
@@ -1059,6 +1577,8 @@ export function parseDungeonResponseDetailed(
         foundation,
         options.avoidNames ?? [],
         options.avoidTraits ?? [],
+        invalidTerritoryFactions,
+        omittedFactionFields,
       );
       if (structural.length > 0) {
         return {
@@ -1076,7 +1596,6 @@ export function parseDungeonResponseDetailed(
       contentGaps = content;
     }
 
-    const inhabitants = str(parsed.inhabitants, foundation?.inhabitants ?? "");
     const secret = str(parsed.secret, foundation?.secret ?? "");
     // List-shaped sections: an array is the expected form, a prose blob
     // degrades to a single entry, and an empty result falls back per-field.
@@ -1100,17 +1619,16 @@ export function parseDungeonResponseDetailed(
         : "### Sector 1: The Main Complex\nAn ancient subterranean structure.";
 
     const factionsFormatted =
-      factions.length > 0 ? formatFactionsList(factions) : "";
+      factions.length > 0 ? formatFactions(factions, sectors) : "";
 
     // Main column: the narrative — what the dungeon is and why it matters.
     const content = [
       history ? `## History & Original Purpose\n${history}\n` : "",
       currentState ? `## Current State & Function\n${currentState}\n` : "",
       signatureFeature ? `## Signature Feature\n${signatureFeature}\n` : "",
-      currentConflict ? `## Current Conflict\n${currentConflict}\n` : "",
       `## Key Sectors & Layout\n${sectorsFormatted}\n`,
-      inhabitants || factionsFormatted
-        ? `## Inhabitants & Factions\n${[inhabitants, factionsFormatted].filter(Boolean).join("\n\n")}\n`
+      factionSituation || factionsFormatted
+        ? `## Faction Situation\n${[factionSituation, factionsFormatted].filter(Boolean).join("\n\n")}\n`
         : "",
     ]
       .filter(Boolean)
@@ -1149,6 +1667,20 @@ export function parseDungeonResponseDetailed(
       },
       problems: contentGaps,
       rejected: false,
+      structured: {
+        title,
+        summary,
+        history,
+        currentState,
+        signatureFeature,
+        sectors,
+        factionSituation,
+        factions,
+        secret,
+        hazards,
+        treasures,
+        hooks,
+      },
     };
   } catch {
     // Malformed JSON is worth another attempt too, so report it as a problem

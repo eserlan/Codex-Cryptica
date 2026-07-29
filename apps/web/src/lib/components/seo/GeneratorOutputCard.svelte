@@ -45,6 +45,7 @@
     onSelectHubEntity,
     onSaveHubToCodex,
     onBuildDelveCanvas,
+    onBuildAdventureCanvas,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -67,7 +68,24 @@
     onSelectHubEntity: (entity: SessionEntity) => void;
     onSaveHubToCodex: (entities: SessionEntity[]) => void;
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
+    onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
   } = $props();
+
+  import { getThemeLoadingMessages } from "generator-engine";
+
+  let loadingIndex = $state(0);
+  let activeMessages = $derived(getThemeLoadingMessages(worldTheme));
+
+  $effect(() => {
+    if (!isBusy) {
+      loadingIndex = 0;
+      return;
+    }
+    const interval = setInterval(() => {
+      loadingIndex = (loadingIndex + 1) % activeMessages.length;
+    }, 4200);
+    return () => clearInterval(interval);
+  });
 </script>
 
 {#if generatedData?.aiFallback && !aiFallbackDismissed}
@@ -95,6 +113,11 @@
   </div>
 {/if}
 <div
+  onclick={onContainerClick}
+  onkeydown={onContainerKeydown}
+  tabindex="-1"
+  role="region"
+  aria-label="Generated Output Workspace"
   class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
 >
   {#if isBusy}
@@ -109,9 +132,9 @@
         aria-hidden="true"
       ></span>
       <p
-        class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse"
+        class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse transition-all duration-300 text-center px-6 max-w-md"
       >
-        Forging {generatedSingular}...
+        {activeMessages[loadingIndex] ?? `Forging ${generatedSingular}...`}
       </p>
     </div>
   {/if}
@@ -178,6 +201,19 @@
                 <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
                 ></span>
                 Build Delve Canvas
+              </button>
+            {/if}
+            {#if ((generatedData?.kind as string) === "adventure" || (generatedData?.kind as string) === "event" || generatedData?.labels?.includes("adventure")) && onBuildAdventureCanvas}
+              <button
+                type="button"
+                onclick={() => onBuildAdventureCanvas(generatedData!)}
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                id="build-adventure-canvas-btn"
+                title="Build and open an interactive Adventure Canvas for this scenario"
+              >
+                <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
+                ></span>
+                Open Adventure Canvas
               </button>
             {/if}
             <button

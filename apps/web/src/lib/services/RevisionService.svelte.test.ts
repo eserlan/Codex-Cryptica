@@ -100,7 +100,7 @@ describe("RevisionService", () => {
     expect(revisionService.pendingDraft).toBeNull();
     expect(revisionService.error).toBe("boom");
     expect(revisionService.isRevising).toBe(false);
-    expect(notificationStore.notify).not.toHaveBeenCalled();
+    expect(notificationStore.notify).toHaveBeenCalledWith("boom", "error");
     expect(vault.updateEntity).not.toHaveBeenCalled();
   });
 
@@ -253,6 +253,27 @@ describe("RevisionService", () => {
         entityId: "target",
         timestamp: 1234567890,
       }),
+    );
+  });
+
+  it("notifies user with a warning when revision fails due to insufficient info", async () => {
+    vi.mocked(oracle.reviseEntity).mockRejectedValue(
+      new Error(
+        "Insufficient information available to generate meaningful content. Please add a description or connect this entity to related lore first.",
+      ),
+    );
+
+    const result = await revisionService.revise("empty-1");
+
+    expect(result).toBe(false);
+    expect(revisionService.error).toContain(
+      "Insufficient information available to generate meaningful content",
+    );
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Insufficient information available to generate meaningful content",
+      ),
+      "error",
     );
   });
 });

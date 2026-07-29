@@ -19,7 +19,9 @@ export type ValidSlug =
   | "ship-generator"
   | "language-generator"
   | "news-sheet-generator"
-  | "dungeon-generator";
+  | "dungeon-generator"
+  | "adventure-generator"
+  | "adventure-idea-generator";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -35,8 +37,26 @@ export type SlugMetaEntry = {
     imageAlt?: string;
     inlineImage?: string;
     inlineImageAlt?: string;
+    exclusiveLabel?: string;
+    inlineImageCaption?: string;
   }[];
   relatedLinks?: { href: string; label: string }[];
+};
+
+const ADVENTURE_CANVAS_FAQ: NonNullable<SlugMetaEntry["faqs"]>[number] = {
+  question: "Can I turn this into an interactive adventure canvas?",
+  answer:
+    "Yes — select Open Adventure Canvas on any generated scenario to create an interactive relationship map of its situation, locations, NPCs and factions, threats, clues, and possible outcomes. You can rearrange the nodes, edit their connections, and create linked vault entities as the adventure develops. The Adventure Canvas is exclusive to Codex Cryptica, but it is still free and needs no account — just open your world in the app.",
+  image: "/images/adventure-canvas.png",
+  imageAlt:
+    "An interactive Adventure Canvas showing a non-linear scenario with situations, locations, factions, threats, clues, and outcomes connected by labeled relationships",
+  inlineImage: "/images/adventure-canvas-button.png",
+  inlineImageAlt:
+    "The Open Adventure Canvas button, next to Save to Codex and Copy, on a generated adventure result",
+  exclusiveLabel:
+    "Codex Cryptica exclusive — build full Adventure Canvases inside the app",
+  inlineImageCaption:
+    "The Open Adventure Canvas button on any generated result",
 };
 
 export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
@@ -449,10 +469,83 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         inlineImage: "/images/dungeon-canvas-button.png",
         inlineImageAlt:
           "The Build Delve Canvas button, next to Save to Codex and Copy, on a generated dungeon result",
+        exclusiveLabel:
+          "Codex Cryptica exclusive — generate full Delve Canvases and Dossiers inside the app",
+        inlineImageCaption:
+          "The Build Delve Canvas button on any generated result",
       },
     ],
     relatedLinks: [
       { href: "/generators/settlement", label: "Settlement Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+    ],
+  },
+  "adventure-generator": {
+    pageTitle:
+      "Adventure Idea Generator | Multi-Genre RPG Scenario Generator | Codex Cryptica",
+    metaDescription:
+      "Generate campaign-ready adventure concepts for any RPG genre — initial situations, primary objectives, key locations, threats, clues, complications, and possible outcomes.",
+    introTitle: "Adventure Idea Generator",
+    eyebrow: "Adventure Generator",
+    introText:
+      "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
+    canonicalPath: "/generators/adventure-generator",
+    faqs: [
+      {
+        question: "What does the adventure generator create?",
+        answer:
+          "It creates complete, campaign-ready adventure situations including initial situation, primary objective & pressure, key locations, important NPCs & factions, threats, discoveries, complications, rewards, and multiple possible outcomes.",
+      },
+      {
+        question: "Does it force a linear plot?",
+        answer:
+          "No. The generator produces a dynamic situation with multiple non-linear resolutions and key actors, giving players full agency rather than railroading them through a fixed sequence of events.",
+      },
+      {
+        question: "Is it only for fantasy games?",
+        answer:
+          "No. The generator dynamically adapts to all Codex Cryptica world themes — fantasy, sci-fi, cyberpunk, dark fantasy, gothic horror, post-apocalyptic, pirate, western, steampunk, modern conspiracy, and Lancer.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy adventure ideas on this page without logging in. Save drafts directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+      ADVENTURE_CANVAS_FAQ,
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/dungeon-generator",
+        label: "Dungeon & Delve Generator",
+      },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+    ],
+  },
+  "adventure-idea-generator": {
+    pageTitle:
+      "Adventure Idea Generator | Multi-Genre RPG Scenario Generator | Codex Cryptica",
+    metaDescription:
+      "Generate campaign-ready adventure concepts for any RPG genre — initial situations, primary objectives, key locations, threats, clues, complications, and possible outcomes.",
+    introTitle: "Adventure Idea Generator",
+    eyebrow: "Adventure Generator",
+    introText:
+      "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
+    canonicalPath: "/generators/adventure-generator",
+    faqs: [
+      {
+        question: "What does the adventure generator create?",
+        answer:
+          "It creates complete, campaign-ready adventure situations including initial situation, primary objective & pressure, key locations, important NPCs & factions, threats, discoveries, complications, rewards, and multiple possible outcomes.",
+      },
+      ADVENTURE_CANVAS_FAQ,
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/dungeon-generator",
+        label: "Dungeon & Delve Generator",
+      },
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/quest", label: "Quest Hook Generator" },
     ],

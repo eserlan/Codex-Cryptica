@@ -2,7 +2,7 @@
   import {
     BaseEdge,
     EdgeLabel,
-    getSmoothStepPath,
+    getStraightPath,
     type EdgeProps,
   } from "@xyflow/svelte";
   import type { DelveEdgeData, PassageType } from "generator-engine";
@@ -11,16 +11,7 @@
     getPassageEdgeStyle,
   } from "./delve-helpers";
 
-  let {
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    data,
-  }: EdgeProps = $props();
+  let { id, sourceX, sourceY, targetX, targetY, data }: EdgeProps = $props();
 
   const delveEdgeData = $derived((data ?? {}) as unknown as DelveEdgeData);
   const passageType: PassageType = $derived(delveEdgeData.type ?? "standard");
@@ -33,14 +24,11 @@
   );
 
   const [edgePath, labelX, labelY] = $derived(
-    getSmoothStepPath({
+    getStraightPath({
       sourceX,
       sourceY,
-      sourcePosition,
       targetX,
       targetY,
-      targetPosition,
-      borderRadius: 12,
     }),
   );
 

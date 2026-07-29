@@ -4,6 +4,7 @@ import type {
   DelveCanvasNode,
   DelveRoomNodeData,
 } from "./delve-builder-types";
+import { calculateGraphLevels } from "../graph-flow-layout";
 
 export class DelveFlowLayout {
   private readonly roomWidth = 220;
@@ -20,55 +21,19 @@ export class DelveFlowLayout {
     edges: DelveCanvasEdge[],
   ): DelveCanvasNode[][] {
     if (rooms.length === 0) return [];
-    const roomIds = new Set(rooms.map((room) => room.id));
-    const adjacency = new Map<string, string[]>(
-      rooms.map((room) => [room.id, []]),
-    );
-
-    // Hidden passages are shortcuts and should cross the primary layout rather
-    // than pulling distant rooms onto the same hierarchy level.
-    for (const edge of edges) {
-      if (
-        !roomIds.has(edge.source) ||
-        !roomIds.has(edge.target) ||
-        edge.data?.type === "hidden"
-      ) {
-        continue;
-      }
-      adjacency.get(edge.source)?.push(edge.target);
-      adjacency.get(edge.target)?.push(edge.source);
-    }
-
     const entrance =
       rooms.find(
         (room) => (room.data as DelveRoomNodeData).role === "entrance",
       ) ?? rooms[0];
-    const depth = new Map([[entrance.id, 0]]);
-    const pending = [entrance.id];
-    while (pending.length > 0) {
-      const current = pending.shift()!;
-      const currentDepth = depth.get(current) ?? 0;
-      for (const neighbor of adjacency.get(current) ?? []) {
-        if (depth.has(neighbor)) continue;
-        depth.set(neighbor, currentDepth + 1);
-        pending.push(neighbor);
-      }
-    }
-
-    let nextDisconnectedDepth = Math.max(0, ...depth.values()) + 1;
-    for (const room of rooms) {
-      if (!depth.has(room.id)) {
-        depth.set(room.id, nextDisconnectedDepth);
-        nextDisconnectedDepth += 1;
-      }
-    }
-
-    const levels: DelveCanvasNode[][] = [];
-    for (const room of rooms) {
-      const roomDepth = depth.get(room.id) ?? 0;
-      (levels[roomDepth] ??= []).push(room);
-    }
-    return levels;
+    return calculateGraphLevels({
+      nodes: rooms,
+      edges,
+      isRoot: (room) => room.id === entrance.id,
+      direction: "undirected",
+      // Hidden passages cross the primary layout as shortcuts.
+      includeEdge: (edge) => edge.data?.type !== "hidden",
+      disconnectedLevel: (_room, nextLevel) => nextLevel,
+    });
   }
 
   public applyLayout(doc: DelveCanvasDocument): DelveCanvasDocument {

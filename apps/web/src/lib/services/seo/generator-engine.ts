@@ -53,6 +53,10 @@ import {
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
   generateDungeonLocal,
+  buildAdventurePrompt,
+  buildAdventureRetryMessage,
+  parseAdventureResponseDetailed,
+  generateAdventureLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -70,6 +74,7 @@ import {
   type LanguageGeneratorOptions,
   type NewsSheetGeneratorOptions,
   type DungeonGeneratorOptions,
+  type AdventureGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -106,6 +111,7 @@ export { shipConfig } from "generator-engine";
 export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
 export { dungeonConfig, forDungeonGenre } from "generator-engine";
+export { adventureConfig, forAdventureGenre } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -530,6 +536,44 @@ export class DefaultGeneratorEngine {
         return first.output;
       },
       () => generateDungeonLocal(dungeonOptions),
+    );
+  }
+
+  /** Adventure Idea generation delegates to the generator-engine package. */
+  async generateAdventure(
+    options: AdventureGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...adventureOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildAdventurePrompt(adventureOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        const first = parseAdventureResponseDetailed(
+          text,
+          adventureOptions,
+          undefined,
+          resolved,
+        );
+        if (first.problems.length === 0) return first.output;
+
+        const retryText = await this.runModel(
+          systemInstruction,
+          buildAdventureRetryMessage(userMessage, first.problems),
+        );
+        const second = parseAdventureResponseDetailed(
+          retryText,
+          adventureOptions,
+          undefined,
+          resolved,
+        );
+        if (second.problems.length === 0) return second.output;
+
+        if (!second.rejected) return second.output;
+        return first.output;
+      },
+      () => generateAdventureLocal(adventureOptions),
     );
   }
 }

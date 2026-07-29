@@ -49,7 +49,7 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     summary:
       "A mid-sized kingdom held together by old oaths and a ruler who is running out of allies.",
     content:
-      "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses — three of which are quietly negotiating a change of leadership.",
+      "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses - three of which are quietly negotiating a change of leadership.",
     lore: "",
     labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
     status: "draft",
@@ -93,7 +93,7 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     summary:
       "An aristocratic bloodline that controls the city's banking houses from behind a veil of old money and older secrets.",
     content:
-      "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power — they avoid both with practised care.",
+      "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power - they avoid both with practised care.",
     lore: "",
     labels: ["rpg-faction", "vampire-clan", "imported-draft"],
     status: "draft",
@@ -104,28 +104,28 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     summary:
       "A fuel-scarce smuggler band running corporate contraband along closed highway corridors.",
     content:
-      "### Who they are\nDustborn Convoy is a tight-knit smuggler band running the sealed highway corridors between Arcology 7 and the outer settlements. They survive on reputation, route knowledge, and a code that outsiders rarely understand until it is enforced.\n\n### How they survive\nCargo runs, corporate contraband, and repair work at waystations. Nothing moves through their territory without them knowing — or taking a cut.",
+      "### Who they are\nDustborn Convoy is a tight-knit smuggler band running the sealed highway corridors between Arcology 7 and the outer settlements. They survive on reputation, route knowledge, and a code that outsiders rarely understand until it is enforced.\n\n### How they survive\nCargo runs, corporate contraband, and repair work at waystations. Nothing moves through their territory without them knowing - or taking a cut.",
     lore: "",
     labels: ["rpg-faction", "nomad-clan", "imported-draft"],
     status: "draft",
   },
   names: {
     type: "character",
-    title: "Generic Fantasy Names — Person",
+    title: "Generic Fantasy Names - Person",
     summary: "",
     content:
-      "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
-    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+      "These names blend rolling vowels with grounded, archaic surnames - built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
+    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants - elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
     labels: ["fantasy-name", "name-generator", "imported-draft"],
     status: "draft",
   },
   "fantasy-names": {
     type: "character",
-    title: "Generic Fantasy Names — Person",
+    title: "Generic Fantasy Names - Person",
     summary: "",
     content:
-      "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
-    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+      "These names blend rolling vowels with grounded, archaic surnames - built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
+    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants - elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
     labels: ["fantasy-name", "name-generator", "imported-draft"],
     status: "draft",
   },
@@ -134,7 +134,7 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     title: "Elowen Ashford",
     summary: "A half-elf rogue with a talent for leverage.",
     content:
-      "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine — mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
+      "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine - mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
     lore: "",
     labels: ["rpg-npc", "Rogue", "Half-Elf"],
     status: "draft",
@@ -165,18 +165,18 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     summary:
       "A worn freighter operating under a registry that does not quite hold up to scrutiny.",
     content:
-      "## Core Concept\nThe Meridian is a small crew freighter in worn condition — functional, lived-in, and carrying more history than its logbook admits. Independent in name, it earns its living on routes other captains decline.\n\n## First Look\nThe approach is all geometry — hard angles, running lights on slow rotation, hull plating scarred by re-entry or something worse. The docking bay smells of recycled air and machine oil.\n\n## History\nThe Meridian has served as a freighter long enough that its original documentation no longer tells the whole story. The current operator holds the registration, though how that arrangement came about is a matter of some discretion.",
-    lore: "### Ship Profile\n- **Class**: Freighter / Small crew ship\n- **Condition**: Worn — lived-in, functional but showing age\n- **Owner / Affiliation**: Independent operator\n- **Current Mission**: Cargo delivery — manifest details undisclosed\n- **Crew Complement**: Mixed-species crew\n- **Tone**: Tense\n\n### Key Zones\n- **🚀 Cargo Hold**: The real story is in here — if you know how to look\n- **🚀 Bridge**: Small, cluttered, with a pilot who watches the rear sensors\n- **🚀 Crew Quarters**: Three bunks for four people; someone is sleeping in shifts\n\n### Complication\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts. The crew is managing it, but the window is narrowing.\n\n### Secret\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\n\n### Adventure Hooks\n- The party learns the manifest is fiction — and they are the only ones who can act before the ship jumps\n- Someone on the docks knows the ship's real registration history and is selling that information\n- A faction needs something delivered to a location only the Meridian's captain knows how to reach",
+      "## Core Concept\nThe Meridian is a small crew freighter in worn condition - functional, lived-in, and carrying more history than its logbook admits. Independent in name, it earns its living on routes other captains decline.\n\n## First Look\nThe approach is all geometry - hard angles, running lights on slow rotation, hull plating scarred by re-entry or something worse. The docking bay smells of recycled air and machine oil.\n\n## History\nThe Meridian has served as a freighter long enough that its original documentation no longer tells the whole story. The current operator holds the registration, though how that arrangement came about is a matter of some discretion.",
+    lore: "### Ship Profile\n- **Class**: Freighter / Small crew ship\n- **Condition**: Worn - lived-in, functional but showing age\n- **Owner / Affiliation**: Independent operator\n- **Current Mission**: Cargo delivery - manifest details undisclosed\n- **Crew Complement**: Mixed-species crew\n- **Tone**: Tense\n\n### Key Zones\n- **🚀 Cargo Hold**: The real story is in here - if you know how to look\n- **🚀 Bridge**: Small, cluttered, with a pilot who watches the rear sensors\n- **🚀 Crew Quarters**: Three bunks for four people; someone is sleeping in shifts\n\n### Complication\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts. The crew is managing it, but the window is narrowing.\n\n### Secret\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\n\n### Adventure Hooks\n- The party learns the manifest is fiction - and they are the only ones who can act before the ship jumps\n- Someone on the docks knows the ship's real registration history and is selling that information\n- A faction needs something delivered to a location only the Meridian's captain knows how to reach",
     labels: ["rpg-ship", "rpg-location", "ship-generator", "imported-draft"],
     status: "draft",
   },
   "news-sheet-generator": {
     type: "note",
-    title: "The Gutter Signal — Issue 47",
+    title: "The Gutter Signal - Issue 47",
     summary:
       "A pirate-press street screamsheet whose lead story about a district blackout carefully avoids naming the corporation that caused it.",
     content:
-      "# The Gutter Signal\n*Read it before they deny it — Issue No. 47*\n\n## BLACKOUT HITS THE STACKS — GRID AUTHORITY BLAMES 'MAINTENANCE'\nFour blocks went dark at 0300 and stayed dark until the private towers came back online first. The Grid Authority calls it scheduled maintenance. Nobody in the Stacks was told about a schedule.\n\n### Notices & Classifieds\n- LOST: one courier bag, contents personal. Generous reward, no questions asked.\n\n### Word on the Street\n- Someone has been buying up debts around the old quarter — quietly, and at full price",
+      "# The Gutter Signal\n*Read it before they deny it - Issue No. 47*\n\n## BLACKOUT HITS THE STACKS - GRID AUTHORITY BLAMES 'MAINTENANCE'\nFour blocks went dark at 0300 and stayed dark until the private towers came back online first. The Grid Authority calls it scheduled maintenance. Nobody in the Stacks was told about a schedule.\n\n### Notices & Classifieds\n- LOST: one courier bag, contents personal. Generous reward, no questions asked.\n\n### Word on the Street\n- Someone has been buying up debts around the old quarter - quietly, and at full price",
     lore: "",
     labels: ["rpg-handout", "news-sheet-generator", "imported-draft"],
     status: "draft",
@@ -190,6 +190,28 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
       "## Overview\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\n\n## Signature Feature\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.",
     lore: "### Delve Overview\n- **Scale**: Medium Complex (3-4 Sectors)\n- **Genre**: Classic Fantasy\n- **Original Purpose**: Temple & Shrine\n- **Current State**: Active Monster Lair\n\n### Key Sectors\n- **📍 Sector 1: The Guarded Gateway**: Fortified entry halls with collapse traps.\n- **📍 Sector 2: The Deep Arcana Vault**: Sealed inner chamber housing warding circles.\n\n### Inhabitants & Factions\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\n\n### Hazards & Traps\nPressure-plate needle traps laced with paralyzing wyvern venom.\n\n### Secret\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.",
     labels: ["dungeon", "location", "dungeon-generator", "imported-draft"],
+    status: "draft",
+  },
+  "adventure-generator": {
+    type: "event",
+    title: "The Witness Who Came Back",
+    summary:
+      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
+    content:
+      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
+    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
+    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
+    status: "draft",
+  },
+  "adventure-idea-generator": {
+    type: "event",
+    title: "The Witness Who Came Back",
+    summary:
+      "A dying informant has surfaced with evidence that implicates the city's most powerful magistrate - and she has three days to live.",
+    content:
+      "## Initial Situation\nA street physician treated a woman who should be dead - she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\n\n## Primary Objective & Pressure\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her - the city gates close in 36 hours for the harvest festival.",
+    lore: "### Key Locations\n- **The Drowned Clinic**: A basement surgery below the harbour market.\n- **The Salt Gate**: The only land route out.\n\n### Important NPCs & Factions\n- **Mira Osal, the witness**: Survived by accident; wants to testify.\n- **Guard-Captain Deren**: Loyal to the magistrate.\n\n### Possible Outcomes\n- The witness reaches the capital and testifies; the magistrate is arrested.",
+    labels: ["adventure", "event", "adventure-generator", "imported-draft"],
     status: "draft",
   },
 };

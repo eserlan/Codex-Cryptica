@@ -27,7 +27,24 @@
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
   import { interactionSessions } from "@codex/ai-engine";
+  import { getThemeLoadingMessages } from "generator-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+
+  let loadingIndex = $state(0);
+  let activeLoadingMessages = $derived(
+    getThemeLoadingMessages(themeStore.worldThemeId),
+  );
+
+  $effect(() => {
+    if (stage !== "generating") {
+      loadingIndex = 0;
+      return;
+    }
+    const interval = setInterval(() => {
+      loadingIndex = (loadingIndex + 1) % activeLoadingMessages.length;
+    }, 4200);
+    return () => clearInterval(interval);
+  });
   import { searchService } from "@codex/search-orchestrator";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
@@ -390,7 +407,7 @@
         <span
           class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent"
         ></span>
-        Generating your content…
+        {activeLoadingMessages[loadingIndex] ?? "Generating your content…"}
       </div>
     {:else if (stage === "review" || stage === "saving") && draft}
       {#if errorMsg}

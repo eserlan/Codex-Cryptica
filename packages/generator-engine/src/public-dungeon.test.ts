@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildDungeonCoherencePrompt,
   buildDungeonPrompt,
   collectSessionNames,
   collectSessionTraits,
@@ -22,13 +23,38 @@ const NARRATIVE = {
   history: "h",
   currentState: "c",
   signatureFeature: "sf",
-  currentConflict: "cc",
-  inhabitants: "i",
+  factionSituation: "fs",
   secret: "sec",
   hazards: ["hz"],
   treasures: ["t"],
   hooks: ["hk"],
 };
+
+/**
+ * The fields a complete AI faction entry must supply beyond
+ * name/virtue/vice/goal/obstacle. `drive` is deliberately omitted so it falls
+ * back to the foundation's own distinct per-faction value instead of
+ * colliding between the two fixtures in a pair.
+ */
+const FACTION_FIELDS = {
+  identity: "i",
+  origin: "o",
+  belief: "bel",
+  territorySectorIds: [] as string[],
+  strength: "st",
+  leader: { name: "L", description: "ld" },
+  notable: { name: "N", description: "nd" },
+  relationship: "rel",
+};
+
+/**
+ * Matches one rendered faction section end to end, capturing every field in
+ * order: 1 name, 2 identity, 3 virtue, 4 vice, 5 goal, 6 drive, 7 obstacle,
+ * 8 origin, 9 belief, 10 territory, 11 strength, 12 leader, 13 notable,
+ * 14 relationship.
+ */
+const FACTION_BLOCK =
+  /### (.+)\n\n\*\*Identity:\*\* (.+)\n\n(\w+), but (\w+)\.\n\n\*\*Goal:\*\* (.+)\n\*\*Drive:\*\* (.+)\n\*\*Obstacle:\*\* (.+)\n\n\*\*Origin:\*\* (.+)\n\*\*Belief:\*\* (.+)\n\n\*\*Territory:\*\* (.+)\n\*\*Strength:\*\* (.+)\n\n\*\*Leader:\*\* (.+)\n\*\*Notable:\*\* (.+)\n\n\*\*Relationship:\*\* (.+)/g;
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -54,9 +80,8 @@ describe("generateDungeonLocal", () => {
     expect(out.content).toContain("## History & Original Purpose");
     expect(out.content).toContain("## Current State & Function");
     expect(out.content).toContain("## Signature Feature");
-    expect(out.content).toContain("## Current Conflict");
     expect(out.content).toContain("## Key Sectors & Layout");
-    expect(out.content).toContain("## Inhabitants & Factions");
+    expect(out.content).toContain("## Faction Situation");
     expect(out.lore).toContain("### Dungeon Layout");
     expect(out.lore).toContain("### Central Secret / Boss Mystery");
     expect(out.lore).toContain("### Hazards & Traps");
@@ -85,7 +110,7 @@ describe("generateDungeonLocal", () => {
     expect(out.labels).toContain("sci-fi-space-opera");
     expect(out.labels).toContain("research-facility");
     expect(out.content).toContain("## Signature Feature");
-    expect(out.content).toContain("## Current Conflict");
+    expect(out.content).toContain("## Faction Situation");
   });
 
   function sectorCount(content: string): number {
@@ -140,40 +165,64 @@ describe("generateDungeonLocal", () => {
     }
   });
 
-  it("derives inhabitants and current conflict from the same two named factions", () => {
+  it("derives the shared faction situation from the same two named factions", () => {
     const out = generateDungeonLocal({}, seededRng(7));
-    const factionsSection = out.content.split("## Inhabitants & Factions")[1];
-    const names = [...factionsSection.matchAll(/- \*\*(.+?)\*\* —/g)].map(
+    const factionsSection = out.content.split("## Faction Situation")[1];
+    const names = [...factionsSection.matchAll(/^### (.+)$/gm)].map(
       (m) => m[1],
     );
     expect(names).toHaveLength(2);
     expect(names[0]).not.toBe(names[1]);
 
-    const conflictSection = out.content
-      .split("## Current Conflict")[1]
-      .split("## Key Sectors & Layout")[0]
-      .toLowerCase();
+    const situation = factionsSection.split("### ")[0].toLowerCase();
     for (const name of names) {
-      expect(conflictSection).toContain(name.toLowerCase());
+      expect(situation).toContain(name.toLowerCase());
     }
   });
 
-  it("gives the two factions distinct virtue, vice, goal, and obstacle", () => {
+  it("gives the two factions distinct virtue, vice, drive, and obstacle", () => {
     // Sharing any one of the four makes the pair read as one faction written
     // twice — two "greedy" factions was showing up in ~12% of dungeons.
     for (let seed = 1; seed <= 40; seed++) {
       const out = generateDungeonLocal({}, seededRng(seed));
-      const bullets = [
-        ...out.content.matchAll(
-          /- \*\*(.+?)\*\* — (\w+), but (\w+)\. Seeks (.+?); held back by (.+?)\./g,
-        ),
-      ];
-      expect(bullets).toHaveLength(2);
-      for (const group of [1, 2, 3, 4, 5]) {
+      const factions = [...out.content.matchAll(FACTION_BLOCK)];
+      expect(factions).toHaveLength(2);
+      // Groups: 1 name, 3 virtue, 4 vice, 6 drive, 7 obstacle.
+      for (const group of [1, 3, 4, 6, 7]) {
         expect(
-          bullets[0][group],
+          factions[0][group],
           `factions share capture group ${group}`,
-        ).not.toBe(bullets[1][group]);
+        ).not.toBe(factions[1][group]);
+      }
+    }
+  });
+
+  it("gives each local faction a distinct goal, origin, belief, territory, leader, and notable NPC", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const out = generateDungeonLocal({}, seededRng(seed));
+      const factions = [...out.content.matchAll(FACTION_BLOCK)];
+      expect(factions).toHaveLength(2);
+      for (const f of factions) {
+        // Groups: 2 identity, 5 goal, 7 obstacle, 8 origin, 9 belief,
+        // 10 territory, 11 strength, 12 leader, 13 notable, 14 relationship.
+        for (const group of [2, 5, 7, 8, 9, 10, 11, 12, 13, 14]) {
+          expect(f[group].trim()).not.toBe("");
+        }
+      }
+    }
+  });
+
+  it("gives each local faction a strategy-shaped relationship, not a restated dependency", () => {
+    // Relationship must describe attitude/strategy/planned response — the
+    // shared mutual dependency is factionSituation's job, not this field's.
+    const STRATEGY_MARKERS =
+      /stalling|preparing to strike|negotiate|nuisance|gathering intelligence|written .* off|probe/i;
+    for (let seed = 1; seed <= 15; seed++) {
+      const out = generateDungeonLocal({}, seededRng(seed));
+      const factions = [...out.content.matchAll(FACTION_BLOCK)];
+      for (const f of factions) {
+        const relationship = f[14];
+        expect(relationship, `seed ${seed}`).toMatch(STRATEGY_MARKERS);
       }
     }
   });
@@ -259,10 +308,10 @@ describe("generateDungeonLocal", () => {
         );
       }
       // A Monster room holds a room-scale threat, not one of the two factions
-      // already named in Inhabitants & Factions.
-      const factionNames = [...out.content.matchAll(/- \*\*(.+?)\*\* —/g)].map(
-        (m) => m[1].replace(/^the /i, ""),
-      );
+      // already named in the Faction Situation.
+      const factionNames = [
+        ...out.content.matchAll(/^### (?!Sector \d+:)(.+)$/gm),
+      ].map((m) => m[1].replace(/^the /i, ""));
       for (const [, detail] of out.content.matchAll(/\*Monster — (.+?)\*/g)) {
         for (const name of factionNames) {
           expect(detail).not.toContain(name);
@@ -294,9 +343,9 @@ describe("generateDungeonLocal", () => {
     const seenNames = new Set<string>();
     for (let seed = 1; seed <= 30; seed++) {
       const out = generateDungeonLocal({}, seededRng(seed));
-      const names = [...out.content.matchAll(/- \*\*(.+?)\*\* — /g)].map(
-        (m) => m[1],
-      );
+      const names = [
+        ...out.content.matchAll(/^### (?!Sector \d+:)(.+)$/gm),
+      ].map((m) => m[1]);
       for (const name of names) seenNames.add(name);
     }
     expect(seenNames.size).toBeGreaterThanOrEqual(6);
@@ -304,13 +353,16 @@ describe("generateDungeonLocal", () => {
 
   it("does not repeat a stock detail within the same bucket type unless the pool is exhausted", () => {
     // INHABITANTS/HAZARDS/HOOKS/SIGNATURE_FEATURES_BY_GENRE all have 5 entries
-    // per genre; the global pick (hooks/hazards/signatureFeature) also
-    // occupies one Lore/Trap/Special slot before sectors are stocked.
+    // per genre. The global pick occupies some of that pool before sectors are
+    // stocked: hooks/hazards each draw 2-3 items (worst case 3), leaving as few
+    // as 2 free for Lore/Trap; signatureFeature always draws exactly 1, leaving
+    // 4 free for Special. Monster draws from a separate table untouched by any
+    // global pick.
     const POOL_SIZE: Record<string, number> = {
       Monster: 5,
-      Lore: 4,
+      Lore: 2,
       Special: 4,
-      Trap: 4,
+      Trap: 2,
     };
     for (let seed = 1; seed <= 20; seed++) {
       const out = generateDungeonLocal(
@@ -394,7 +446,7 @@ describe("buildDungeonPrompt", () => {
     });
     expect(prompt.userMessage).toContain("Cyberpunk / Corporate");
     expect(prompt.userMessage).toContain("signatureFeature");
-    expect(prompt.userMessage).toContain("currentConflict");
+    expect(prompt.userMessage).toContain("factionSituation");
     expect(prompt.userMessage).toContain("Include a rogue AI core");
     expect(prompt.userMessage).toContain("Required JSON schema");
   });
@@ -410,7 +462,7 @@ describe("buildDungeonPrompt", () => {
       currentState: "Occupied Stronghold",
     });
     expect(prompt.systemInstruction).toContain(
-      'Write the "throughline" field first',
+      'Write the "throughline" field before factionSituation',
     );
     expect(prompt.systemInstruction).toContain(
       "The Current State is a setting",
@@ -430,19 +482,355 @@ describe("buildDungeonPrompt", () => {
     expect(prompt.userMessage).toContain(prompt.resolved.cause);
     expect(prompt.userMessage).toContain(prompt.resolved.condition);
     // ...but the composed local prose is deliberately withheld, so the model
-    // writes its own rather than reproducing ours verbatim.
+    // writes its own rather than reproducing ours verbatim. The secret stays
+    // withheld too, since it's the AI's own twist to invent.
     expect(prompt.userMessage).not.toContain(prompt.resolved.history);
-    expect(prompt.userMessage).not.toContain(prompt.resolved.currentConflict);
+    expect(prompt.userMessage).not.toContain(prompt.resolved.factionSituation);
     expect(prompt.userMessage).not.toContain(prompt.resolved.secret);
-    for (const t of prompt.resolved.treasures) {
-      expect(prompt.userMessage).not.toContain(t);
-    }
-    expect(prompt.userMessage).not.toContain(prompt.resolved.signatureFeature);
     for (const faction of prompt.resolved.factions) {
       expect(prompt.userMessage).not.toContain(faction.name);
     }
     for (const sector of prompt.resolved.sectors) {
       expect(prompt.userMessage).not.toContain(sector.name);
+    }
+  });
+
+  it("locks in the signature feature, hazards, and treasures as facts factions must not contradict", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.userMessage).toContain("Already-established facts");
+    expect(prompt.userMessage).toContain(prompt.resolved.signatureFeature);
+    for (const t of prompt.resolved.treasures) {
+      expect(prompt.userMessage).toContain(t);
+    }
+    for (const h of prompt.resolved.hazards) {
+      expect(prompt.userMessage).toContain(h);
+    }
+  });
+
+  it("gives the model each sector's fixed id before it names any of them", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    for (const sector of prompt.resolved.sectors) {
+      expect(prompt.userMessage).toContain(sector.id);
+    }
+    expect(prompt.userMessage).toContain("territorySectorIds");
+  });
+
+  it("asks for secret, hazards, and treasures before the faction situation and factions", () => {
+    // The schema's field order is the model's write order — asking for
+    // hazards/treasures/secret after factions let a faction reference an
+    // artifact the model hadn't invented yet at that point in its own output.
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    const schema = prompt.userMessage;
+    const idx = (key: string) => schema.indexOf(`"${key}"`);
+    expect(idx("secret")).toBeGreaterThan(0);
+    expect(idx("hazards")).toBeGreaterThan(idx("secret"));
+    expect(idx("treasures")).toBeGreaterThan(idx("hazards"));
+    expect(idx("factionSituation")).toBeGreaterThan(idx("treasures"));
+    expect(idx("factions")).toBeGreaterThan(idx("factionSituation"));
+  });
+
+  it("tells the model treasures must fit who built the delve and obstacles must not invent a new mystery", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "Treasures must fit who built this delve",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "a second mystery competing with the one you already wrote",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "unless that people or craft is actually named somewhere in the history",
+    );
+  });
+
+  it("requires an entity-ownership/dependency check: no claiming what you're still trying to get", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    // Goal must not ask to acquire something Strength/Territory/situation already grants.
+    expect(prompt.systemInstruction).toContain(
+      'if Strength says they hold the strongbox, Goal cannot also be "secure the strongbox."',
+    );
+    // A faction shouldn't chase something already in its own territory unexplained.
+    expect(prompt.systemInstruction).toContain(
+      "a faction should not seek to acquire something already sitting inside its own Territory",
+    );
+    // Obstacle must actually block Goal from where Territory places the faction.
+    expect(prompt.systemInstruction).toContain(
+      "it must actually stand between this faction and its Goal from where its Territory places it",
+    );
+    // factionSituation must still hold once checked against the finished factions.
+    expect(prompt.systemInstruction).toContain(
+      "re-check factionSituation once more against their actual Territory, Goal, Strength, and Relationship",
+    );
+    // Relationship must not contradict Obstacle.
+    expect(prompt.systemInstruction).toContain(
+      "It also must not contradict Obstacle",
+    );
+    // factionSituation shouldn't force fake mutual symmetry.
+    expect(prompt.systemInstruction).toContain(
+      "do not force artificial symmetry",
+    );
+  });
+
+  it("requires Drive to naturally explain this faction's Identity and Goal, and Strength to not cancel its own Obstacle", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "Drive must naturally explain this faction's Identity and Goal",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "Test it by swapping the Drive for a different one",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "If Drive is Vengeance, the Identity, Goal, and Belief should all read as someone settling a score",
+    );
+    // Strength may ease its own Obstacle but must not cancel it outright.
+    expect(prompt.systemInstruction).toContain(
+      "Strength may take the edge off this faction's own Obstacle, but must not cancel it outright",
+    );
+    // factionSituation and Goal must agree on why an item is needed.
+    expect(prompt.systemInstruction).toContain(
+      'a scroll cache introduced as a weapon against a monster cannot become "research material for antidotes" once you reach that faction\'s Goal',
+    );
+  });
+
+  it("requires a treasure, hazard, or creature's claimed sector to match the sector that actually establishes it", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "is that the same sector whose own Lore/stockDetail/Monster entry actually establishes it?",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "Never relocate a treasure or hazard to a different sector, never invent a creature or threat for a sector beyond what its own entry establishes",
+    );
+  });
+
+  it("forbids inventing new capabilities for an item beyond its own established description", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "does every later mention of it stick to that same description, with no new power added on top?",
+    );
+  });
+
+  it("requires Drive to fit Identity as well as Goal", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "Does Drive explain why this faction wants its Goal, and fit its Identity too",
+    );
+  });
+
+  it("requires non-adjacent faction territory to have an established route or explanation", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    expect(prompt.systemInstruction).toContain(
+      "If this faction's own Territory spans two non-adjacent sectors, is there an established shortcut connecting them, or does the text explain how it holds both despite the gap?",
+    );
+  });
+
+  it("closes with a tight per-faction checklist covering ownership, situation-goal agreement, obstacle plausibility, and drive-vs-pressure", () => {
+    const prompt = buildDungeonPrompt({ themeId: "fantasy" });
+    // Already-controls-it check.
+    expect(prompt.systemInstruction).toContain(
+      "given this faction's Territory, and everything the sector(s) in it already establish",
+    );
+    expect(prompt.systemInstruction).toContain(
+      "Does Goal name something outside that list of already-controlled things?",
+    );
+    // factionSituation must match the faction's own Goal.
+    expect(prompt.systemInstruction).toContain(
+      "Does factionSituation actually describe this faction's own Goal",
+    );
+    // Relationship must involve the rival specifically.
+    expect(prompt.systemInstruction).toContain(
+      "Does Relationship describe a strategy or attitude toward the rival faction specifically",
+    );
+    // Obstacle must be logically possible.
+    expect(prompt.systemInstruction).toContain(
+      "or a restriction that could only ever be lifted by doing the very thing it forbids",
+    );
+    // Drive must be motivation, not restated pressure.
+    expect(prompt.systemInstruction).toContain(
+      "not just restate the danger or pressure that belongs in Obstacle",
+    );
+    expect(prompt.systemInstruction).toContain(
+      'A faction driven by Wealth or Ascension doesn\'t become "driven by Survival"',
+    );
+    // Earlier follow-up checks (spatial sense, provenance, item plausibility,
+    // goal-item fit, conflict sharpness) folded into the same checklist.
+    expect(prompt.systemInstruction).toContain(
+      "do not borrow a race or culture from the wider setting just because it's genre-typical",
+    );
+    expect(prompt.systemInstruction).toContain(
+      'Could this standoff be sharper than "both sides want the same treasure"',
+    );
+  });
+});
+
+describe("buildDungeonCoherencePrompt", () => {
+  it("frames the pass as a repair, not a new generation, and embeds the prior output", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Small Lair (2 Sectors)",
+    });
+    const local = generateDungeonLocal(
+      { themeId: "fantasy", scale: "Small Lair (2 Sectors)" },
+      seededRng(1),
+    );
+    const parsed = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: local.title,
+        summary: local.summary,
+        throughline: "T",
+        ...NARRATIVE,
+        sectors: prompt.resolved.sectors.map((s, i) => ({
+          name: `Room ${i + 1}`,
+          description: "d",
+          stockType: s.stockType,
+          stockDetail: `detail ${i + 1}`,
+        })),
+        factions: [
+          {
+            ...FACTION_FIELDS,
+            name: "the First",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+          },
+          {
+            ...FACTION_FIELDS,
+            name: "the Second",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(parsed.rejected).toBe(false);
+    expect(parsed.structured).toBeDefined();
+
+    const coherence = buildDungeonCoherencePrompt(
+      parsed.structured!,
+      prompt.resolved,
+    );
+    expect(coherence.systemInstruction).toContain("NOT a new generation");
+    expect(coherence.systemInstruction).toContain("placeholder faction name");
+    expect(coherence.systemInstruction).toContain(
+      "Never invent new major geography",
+    );
+    expect(coherence.userMessage).toContain("Previous output to repair");
+    expect(coherence.userMessage).toContain(parsed.structured!.title);
+    for (const sector of prompt.resolved.sectors) {
+      expect(coherence.systemInstruction).toContain(sector.id);
+    }
+    expect(coherence.userMessage).toContain("Required JSON schema");
+  });
+
+  it("asks the repair pass to check entity ownership/dependency and Drive-explains-Goal", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Small Lair (2 Sectors)",
+    });
+    const parsed = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "T",
+        summary: "S",
+        throughline: "T",
+        ...NARRATIVE,
+        sectors: prompt.resolved.sectors.map((s, i) => ({
+          name: `Room ${i + 1}`,
+          description: "d",
+          stockType: s.stockType,
+          stockDetail: `detail ${i + 1}`,
+        })),
+        factions: [
+          {
+            ...FACTION_FIELDS,
+            name: "the First",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+          },
+          {
+            ...FACTION_FIELDS,
+            name: "the Second",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(parsed.structured).toBeDefined();
+
+    const coherence = buildDungeonCoherencePrompt(
+      parsed.structured!,
+      prompt.resolved,
+    );
+    // Leads with a general contradiction-detection instruction, not just a checklist.
+    expect(coherence.systemInstruction).toContain(
+      "If any two claims can't both be true at once, that's a contradiction",
+    );
+    expect(coherence.systemInstruction).toContain(
+      "not an exhaustive checklist",
+    );
+    // Item location must match the sector that actually names it.
+    expect(coherence.systemInstruction).toContain(
+      "is that the same sector whose own Lore/stockDetail/Monster entry actually establishes it?",
+    );
+    // Already-controls-it check.
+    expect(coherence.systemInstruction).toContain(
+      "given this faction's Territory, and everything the sector(s) in it already establish",
+    );
+    expect(coherence.systemInstruction).toContain(
+      "Does Goal name something outside that already-controlled list?",
+    );
+    // factionSituation must match the faction's own Goal.
+    expect(coherence.systemInstruction).toContain(
+      "Does factionSituation actually describe this faction's own Goal",
+    );
+    // Relationship must involve the rival and not contradict Obstacle.
+    expect(coherence.systemInstruction).toContain(
+      "Does Relationship describe a strategy or attitude toward the rival faction specifically",
+    );
+    expect(coherence.systemInstruction).toContain(
+      "bound by an oath from entering a sector, then actively sweeping into that same sector",
+    );
+    // Obstacle must be logically possible.
+    expect(coherence.systemInstruction).toContain(
+      "or a restriction that could only ever be lifted by doing the very thing it forbids",
+    );
+    // Drive must be motivation, not restated pressure.
+    expect(coherence.systemInstruction).toContain(
+      "not just restate the danger or pressure that belongs in Obstacle",
+    );
+    // Strength vs Territory/Obstacle.
+    expect(coherence.systemInstruction).toContain(
+      "take the edge off this faction's Obstacle without cancelling it outright",
+    );
+    // Cultural provenance check.
+    expect(coherence.systemInstruction).toContain(
+      "trace to something the history actually names",
+    );
+    // No inventing new capabilities for an already-established item.
+    expect(coherence.systemInstruction).toContain(
+      "does every later mention of an item stick to that same description, with no new power added on top?",
+    );
+    // Drive must fit Identity as well as Goal.
+    expect(coherence.systemInstruction).toContain(
+      "Does Drive explain why this faction wants its Goal, and fit its Identity too",
+    );
+    // Non-contiguous territory needs an established route or explanation.
+    expect(coherence.systemInstruction).toContain(
+      "If this faction's own Territory spans two non-adjacent sectors, is there an established shortcut connecting them, or does the text explain how it holds both despite the gap?",
+    );
+    // Sector ids still enforced.
+    for (const sector of prompt.resolved.sectors) {
+      expect(coherence.systemInstruction).toContain(sector.id);
     }
   });
 });
@@ -455,7 +843,8 @@ describe("parseDungeonResponse", () => {
       history: "Built by Aegis Dynamics for black-budget neural testing.",
       currentState: "Currently locked down under legacy defense routines.",
       signatureFeature: "The Sub-Zero Server Monolith venting nitrogen vapor.",
-      currentConflict: "Net-scrapper squatters are battling corporate turrets.",
+      factionSituation:
+        "Net-scrapper squatters are battling corporate turrets.",
       sectors: [
         {
           name: "Decontamination Lock",
@@ -466,7 +855,6 @@ describe("parseDungeonResponse", () => {
           description: "Black server banks in liquid nitrogen.",
         },
       ],
-      inhabitants: "Automated defense turrets and rogue cyber-drones.",
       secret: "The AI possesses the master overrides to the planetary grid.",
       hazards: "High-voltage electrical arcs and laser grid traps.",
       treasures: "Encrypted memory crystal with 50,000 corporate credits.",
@@ -482,7 +870,7 @@ describe("parseDungeonResponse", () => {
     expect(out.content).toContain("Built by Aegis Dynamics");
     expect(out.content).toContain("## Signature Feature");
     expect(out.content).toContain("Sub-Zero Server Monolith");
-    expect(out.content).toContain("## Current Conflict");
+    expect(out.content).toContain("## Faction Situation");
     expect(out.content).toContain("Net-scrapper squatters");
     expect(out.content).toContain("### Sector 1: Decontamination Lock");
     expect(out.content).toContain("### Sector 2: Mainframe Core");
@@ -500,20 +888,58 @@ describe("parseDungeonResponse", () => {
       factions: [
         {
           name: "the Net-Scrapper Squatters",
+          identity: "A crew of surface scrappers turned corporate looters.",
           virtue: "Resourceful",
           vice: "Greedy",
-          goal: "Wealth",
-          obstacle: "corporate turrets",
+          goal: "Strip the mainframe of every credit chip before security reboots.",
+          drive: "Wealth",
+          obstacle: "corporate turrets guarding the only route to the vault.",
+          origin:
+            "Former Aegis contractors laid off after the black-budget program was buried.",
+          belief:
+            "They believe Aegis owes them for the work it erased along with them.",
+          territorySectorIds: ["sector-1"],
+          leader: {
+            name: "Reyes Vael",
+            description: "a scrapper-queen who trusts no corp promise",
+          },
+          strength: "Two dozen squatters and a jury-rigged turret network.",
+          notable: {
+            name: "Priya Okonkwo",
+            description: "the crew's only fluent Aegis systems hacker",
+          },
+          relationship:
+            "They need the Corporate Erasure Squad to breach the mainframe core first, since only its access codes still work.",
         },
         {
           name: "the Corporate Erasure Squad",
+          identity: "A corporate strike team sent to erase evidence.",
           virtue: "Disciplined",
           vice: "Cruel",
-          goal: "Destruction",
-          obstacle: "a rogue AI core",
+          goal: "Wipe every trace of the black-budget program from the mainframe core.",
+          drive: "Destruction",
+          obstacle:
+            "a rogue AI core that has locked them out of the deepest vaults.",
+          origin:
+            "A strike team sent by Aegis Dynamics to erase the evidence at any cost.",
+          belief:
+            "They believe leaving any trace of the program intact risks corporate liability.",
+          territorySectorIds: ["sector-1"],
+          leader: {
+            name: "Director Hask",
+            description: "sent to erase the evidence at any cost",
+          },
+          strength: "A six-person strike team with full corporate backing.",
+          notable: {
+            name: "Corporal Reyes",
+            description:
+              "the squad's demolitions specialist, quietly rattled by what she's seen down here",
+          },
+          relationship:
+            "They oppose the Net-Scrapper Squatters' looting, fearing a leak that would expose the program before it can be erased.",
         },
       ],
-      currentConflict:
+      factionSituation:
         "The Net-Scrapper Squatters are battling the Corporate Erasure Squad for the mainframe.",
       sectors: [
         {
@@ -523,7 +949,6 @@ describe("parseDungeonResponse", () => {
           stockDetail: "Laser grid tripwires.",
         },
       ],
-      inhabitants: "Both factions occupy opposite ends of the server row.",
       secret: "The AI possesses the master overrides to the planetary grid.",
       hazards: "High-voltage electrical arcs and laser grid traps.",
       treasures: "Encrypted memory crystal with 50,000 corporate credits.",
@@ -531,8 +956,20 @@ describe("parseDungeonResponse", () => {
     });
 
     const out = parseDungeonResponse(sampleJson, { themeId: "cyberpunk" });
-    expect(out.content).toContain("- **the Net-Scrapper Squatters**");
-    expect(out.content).toContain("- **the Corporate Erasure Squad**");
+    expect(out.content).toContain("### the Net-Scrapper Squatters");
+    expect(out.content).toContain("### the Corporate Erasure Squad");
+    expect(out.content).toContain(
+      "**Leader:** Reyes Vael — a scrapper-queen who trusts no corp promise.",
+    );
+    expect(out.content).toContain(
+      "**Strength:** A six-person strike team with full corporate backing.",
+    );
+    expect(out.content).toContain(
+      "**Notable:** Corporal Reyes — the squad's demolitions specialist, quietly rattled by what she's seen down here.",
+    );
+    expect(out.content).toContain(
+      "**Relationship:** They oppose the Net-Scrapper Squatters' looting, fearing a leak that would expose the program before it can be erased.",
+    );
     expect(out.content).toContain("*Trap — Laser grid tripwires.*");
     expect(out.lore).toContain("### Dungeon Layout");
   });
@@ -562,11 +999,11 @@ describe("parseDungeonResponse", () => {
 
     const out = parseDungeonResponse(sampleJson, {});
     expect(out.content).toContain(
-      "held back by a rival faction sharing these halls.",
+      "**Obstacle:** A rival faction sharing these halls.",
     );
-    expect(out.content).toContain("held back by an ancient guardian.");
-    expect(out.content).not.toMatch(/held back by held back by/i);
-    expect(out.content).not.toMatch(/held back by struggling against/i);
+    expect(out.content).toContain("**Obstacle:** An ancient guardian.");
+    expect(out.content).not.toMatch(/held back by/i);
+    expect(out.content).not.toMatch(/struggling against/i);
     expect(out.content).not.toContain("halls..");
   });
 
@@ -680,6 +1117,83 @@ describe("parseDungeonResponse", () => {
     ).toBe(prompt.resolved.title);
   });
 
+  it("rejects a schema-echoed placeholder faction name and ships the foundation", () => {
+    const prompt = buildDungeonPrompt({
+      themeId: "fantasy",
+      scale: "Medium Complex (3-4 Sectors)",
+    });
+    const sectors = prompt.resolved.sectors.map((s, i) => ({
+      name: `Room ${i + 1}`,
+      description: "d",
+      stockType: s.stockType,
+      stockDetail: `detail ${i + 1}`,
+    }));
+
+    for (const badName of ["Faction A", "First Faction", "Unnamed Faction"]) {
+      const result = parseDungeonResponseDetailed(
+        JSON.stringify({
+          title: "Model Title",
+          summary: "S",
+          sectors,
+          factions: [
+            {
+              name: badName,
+              virtue: "Bold",
+              vice: "Cruel",
+              goal: "Wealth",
+              obstacle: "o1",
+            },
+            {
+              name: "the Ashwrights",
+              virtue: "Wise",
+              vice: "Greedy",
+              goal: "Survival",
+              obstacle: "o2",
+            },
+          ],
+        }),
+        {},
+        seededRng(1),
+        prompt.resolved,
+      );
+      expect(result.rejected, badName).toBe(true);
+      expect(result.problems.join(" "), badName).toContain(
+        "placeholder faction name",
+      );
+      expect(result.output.title).toBe(prompt.resolved.title);
+    }
+
+    // A genuinely invented name is fine.
+    const clean = parseDungeonResponseDetailed(
+      JSON.stringify({
+        title: "Model Title",
+        summary: "S",
+        throughline: "T",
+        sectors,
+        factions: [
+          {
+            name: "the Ashwrights",
+            virtue: "Bold",
+            vice: "Cruel",
+            goal: "Wealth",
+            obstacle: "o1",
+          },
+          {
+            name: "the Gale Wardens",
+            virtue: "Wise",
+            vice: "Greedy",
+            goal: "Survival",
+            obstacle: "o2",
+          },
+        ],
+      }),
+      {},
+      seededRng(1),
+      prompt.resolved,
+    );
+    expect(clean.rejected).toBe(false);
+  });
+
   it("reports why a response was rejected so the caller can retry", () => {
     const prompt = buildDungeonPrompt({
       themeId: "fantasy",
@@ -760,6 +1274,8 @@ describe("parseDungeonResponse", () => {
       })),
       factions: [
         {
+          ...FACTION_FIELDS,
+          drive: "Dominion",
           name: "the First",
           virtue: "Bold",
           vice: "Cruel",
@@ -767,6 +1283,8 @@ describe("parseDungeonResponse", () => {
           obstacle: "o1",
         },
         {
+          ...FACTION_FIELDS,
+          drive: "Escape",
           name: "the Second",
           virtue: "Wise",
           vice: "Greedy",
@@ -848,6 +1366,8 @@ describe("parseDungeonResponse", () => {
         ...body,
         factions: [
           {
+            ...FACTION_FIELDS,
+            drive: "Dominion",
             name: "the First",
             virtue: "Patience",
             vice: "Spite",
@@ -855,6 +1375,8 @@ describe("parseDungeonResponse", () => {
             obstacle: "o1",
           },
           {
+            ...FACTION_FIELDS,
+            drive: "Escape",
             name: "the Second",
             virtue: "Resolve",
             vice: "Greed",
@@ -892,6 +1414,8 @@ describe("parseDungeonResponse", () => {
     }));
     const factions = [
       {
+        ...FACTION_FIELDS,
+        drive: "Dominion",
         name: "The Obsidian Directorate",
         virtue: "Bold",
         vice: "Cruel",
@@ -899,6 +1423,8 @@ describe("parseDungeonResponse", () => {
         obstacle: "o1",
       },
       {
+        ...FACTION_FIELDS,
+        drive: "Escape",
         name: "the Neon Sanctuary",
         virtue: "Wise",
         vice: "Greedy",
@@ -1142,6 +1668,8 @@ describe("parseDungeonResponse", () => {
         sectors,
         factions: [
           {
+            ...FACTION_FIELDS,
+            drive: "Dominion",
             name: "the First",
             virtue: "Bold",
             vice: "Cruel",
@@ -1149,6 +1677,8 @@ describe("parseDungeonResponse", () => {
             obstacle: "o1",
           },
           {
+            ...FACTION_FIELDS,
+            drive: "Escape",
             name: "the Second",
             virtue: "Wise",
             vice: "Greedy",
@@ -1238,6 +1768,8 @@ describe("parseDungeonResponse", () => {
     }));
     const factions = [
       {
+        ...FACTION_FIELDS,
+        drive: "Dominion",
         name: "the First",
         virtue: "Bold",
         vice: "Cruel",
@@ -1245,6 +1777,8 @@ describe("parseDungeonResponse", () => {
         obstacle: "o1",
       },
       {
+        ...FACTION_FIELDS,
+        drive: "Escape",
         name: "the Second",
         virtue: "Wise",
         vice: "Greedy",
@@ -1360,7 +1894,7 @@ describe("parseDungeonResponse", () => {
       history: "Model history.",
       currentState: "Model state.",
       signatureFeature: "Model feature.",
-      currentConflict: "Model conflict.",
+      factionSituation: "Model conflict.",
       sectors: prompt.resolved.sectors.map((s, i) => ({
         name: `Invented Room ${i + 1}`,
         description: `Invented description ${i + 1}.`,
@@ -1383,7 +1917,6 @@ describe("parseDungeonResponse", () => {
           obstacle: "o2",
         },
       ],
-      inhabitants: "Model inhabitants.",
       secret: "Model secret.",
       hazards: "Model hazards.",
       treasures: "Model treasures.",
@@ -1411,9 +1944,8 @@ describe("parseDungeonResponse", () => {
       "## History & Original Purpose",
       "## Current State & Function",
       "## Signature Feature",
-      "## Current Conflict",
       "## Key Sectors & Layout",
-      "## Inhabitants & Factions",
+      "## Faction Situation",
     ]) {
       expect(out.content, `missing ${heading}`).toContain(heading);
     }
@@ -1444,9 +1976,9 @@ describe("parseDungeonResponse", () => {
     for (const sector of prompt.resolved.sectors) {
       expect(prompt.userMessage).toContain(sector.stockType as string);
     }
-    // Both faction goals are fixed by the roll, not chosen by the model.
+    // Both factions' drives are fixed by the roll, not chosen by the model.
     for (const faction of prompt.resolved.factions) {
-      expect(prompt.userMessage).toContain(faction.goal);
+      expect(prompt.userMessage).toContain(faction.drive);
     }
   });
 
@@ -1472,10 +2004,7 @@ describe("parseDungeonResponse", () => {
     expect(out.lore).not.toMatch(/^\d+\. ["“]/m);
   });
 
-  it("lowercases an obstacle so it continues the 'held back by' sentence", () => {
-    // Every seed obstacle is written lowercase because the template reads
-    // "held back by X". A model asked "what stands in their way" answers with a
-    // capital, and the line renders as "held back by Deep-seated paranoia".
+  it("capitalizes the standalone Obstacle field regardless of the AI's casing", () => {
     const sampleJson = JSON.stringify({
       title: "T",
       summary: "S",
@@ -1501,12 +2030,13 @@ describe("parseDungeonResponse", () => {
     });
 
     const out = parseDungeonResponse(sampleJson, {});
-    expect(out.content).toContain("held back by deep-seated paranoia");
-    expect(out.content).toContain("held back by an unbreakable blood-oath");
-    expect(out.content).not.toMatch(/held back by [A-Z]/);
+    expect(out.content).toContain(
+      "**Obstacle:** Deep-seated paranoia among their captains.",
+    );
+    expect(out.content).toContain("**Obstacle:** An unbreakable blood-oath.");
   });
 
-  it("leaves a proper noun at the start of an obstacle capitalised", () => {
+  it("keeps a proper noun at the start of an obstacle capitalised", () => {
     const sampleJson = JSON.stringify({
       title: "T",
       summary: "S",
@@ -1532,8 +2062,12 @@ describe("parseDungeonResponse", () => {
     });
 
     const out = parseDungeonResponse(sampleJson, {});
-    expect(out.content).toContain("held back by Union Command");
-    expect(out.content).toContain("held back by NHP lockouts");
+    expect(out.content).toContain(
+      "**Obstacle:** Union Command already has the site flagged.",
+    );
+    expect(out.content).toContain(
+      "**Obstacle:** NHP lockouts they cannot clear.",
+    );
   });
 
   it("closes a stock detail the model left unterminated", () => {
@@ -1578,7 +2112,7 @@ describe("parseDungeonResponse", () => {
     expect(out.content).not.toMatch(/mercenaries \d\*/);
   });
 
-  it("strips a redundant 'Seeks' lead-in an AI adds to a goal", () => {
+  it("strips a redundant 'Seeks'/'to' lead-in an AI adds to a goal", () => {
     const sampleJson = JSON.stringify({
       title: "T",
       summary: "S",
@@ -1594,7 +2128,7 @@ describe("parseDungeonResponse", () => {
           name: "the Others",
           virtue: "Wise",
           vice: "Cruel",
-          goal: "Seeking Ascension.",
+          goal: "to reach Ascension.",
           obstacle: "an ancient guardian",
         },
       ],
@@ -1602,10 +2136,13 @@ describe("parseDungeonResponse", () => {
     });
 
     const out = parseDungeonResponse(sampleJson, {});
-    expect(out.content).toContain("Seeks Survival;");
-    expect(out.content).toContain("Seeks Ascension;");
-    expect(out.content).not.toMatch(/seeks seeks/i);
-    expect(out.content).not.toMatch(/seeks seeking/i);
+    expect(out.content).toContain("**Goal:** Survival.");
+    expect(out.content).toContain("**Goal:** Reach Ascension.");
+    expect(out.content).not.toMatch(/seeks/i);
+    // Only the Goal field itself must be clean of the lead-in — composed
+    // prose elsewhere (e.g. Relationship) may legitimately say "plan to
+    // reach X" once, which is not the doubled "to to reach" this guards against.
+    expect(out.content).not.toMatch(/\*\*Goal:\*\* to reach/i);
   });
 
   it("falls back to local generation on invalid JSON input", () => {
@@ -1619,15 +2156,13 @@ describe("parseDungeonResponse", () => {
 });
 
 describe("collectSessionTraits", () => {
-  it("extracts virtue/vice pairs from rendered faction bullets", () => {
+  it("extracts virtue/vice pairs from rendered faction sections", () => {
     const pairs = collectSessionTraits([
       {
-        content:
-          "- **the Choir** — Devotion, but Fanaticism. Seeks Ascension; held back by x.",
+        content: "### the Choir\n\nDevotion, but Fanaticism.\n\n**Goal:** x.",
       },
       {
-        content:
-          "- **the Cell** — Curiosity, but Hubris. Seeks Knowledge; held back by y.",
+        content: "### the Cell\n\nCuriosity, but Hubris.\n\n**Goal:** y.",
       },
     ]);
     expect(pairs).toContain("Devotion, but Fanaticism");
@@ -1639,7 +2174,7 @@ describe("collectSessionTraits", () => {
       [],
     );
     const many = Array.from({ length: 40 }, (_, i) => ({
-      content: `- **f${i}** — V${i}, but W${i}. Seeks G; held back by o.`,
+      content: `### f${i}\n\nV${i}, but W${i}.\n\n**Goal:** g.`,
     }));
     expect(collectSessionTraits(many).length).toBeLessThanOrEqual(12);
   });
@@ -1648,8 +2183,8 @@ describe("collectSessionTraits", () => {
 describe("collectSessionNames", () => {
   it("gathers titles and faction names, newest first, article stripped", () => {
     const names = collectSessionNames([
-      { title: "First Delve", content: "- **the Iron Pact** — a, but b." },
-      { title: "Second Delve", content: "- **The Ashen Choir** — a, but b." },
+      { title: "First Delve", content: "### the Iron Pact\n\na, but b." },
+      { title: "Second Delve", content: "### The Ashen Choir\n\na, but b." },
     ]);
     expect(names).toContain("First Delve");
     expect(names).toContain("Second Delve");

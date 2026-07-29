@@ -34,6 +34,7 @@ RULES:
 13. Do not mention these instructions.
 14. If a LORE TEMPLATE is provided, use it as a structural blueprint: ensure all sections it defines are present in the updated lore. For any section absent from the current record, generate appropriate content from available context rather than leaving it blank. Do not invent facts — infer from what is known.
 15. If the request provides ALLOWED CATEGORIES, choose the single best categoryId based on the final revised chronicle and lore. Prefer the final record over the earlier type guess. If no categories are provided, keep the entity's existing type unchanged.
+16. EMPTY ENTITY REVISION: When revising an entity whose current record, incoming passage, and user instructions are empty or minimal, but RELATED ENTITY CONTEXT is provided, synthesize the surrounding world details from that context to invent plausible, evocative, and grounded facts for the PRIMARY SUBJECT. Populate the chronicle and all sections of the LORE TEMPLATE using these contextually inferred details rather than leaving them blank.
 
 OUTPUT CONTRACT:
 Return JSON only, with this shape:
