@@ -128,12 +128,27 @@
     }
   }
 
-  function handleLaunchDungeon(nodeData: AdventureNodeData) {
+  async function handleLaunchDungeon(nodeData: AdventureNodeData) {
     if (onLaunchDungeon) {
       onLaunchDungeon(nodeData);
       return;
     }
-    void goto(resolve("/generators/dungeon_delve"));
+
+    let targetEntityId = nodeData.entityId;
+
+    if (!targetEntityId) {
+      await handleCreateOrViewEntity(nodeData);
+      targetEntityId = nodeData.entityId;
+    }
+
+    if (targetEntityId) {
+      modalUIStore.openGeneratorWorkflowForEntity(
+        targetEntityId,
+        "dungeon-generator",
+      );
+    } else {
+      void goto(resolve("/generators/dungeon-generator"));
+    }
   }
 </script>
 
