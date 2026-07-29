@@ -172,7 +172,7 @@
     </p>
   {/if}
 
-  {#if data.role || data.leverage || data.dilemma}
+  {#if data.role || data.wants || data.secret || data.leverage || data.dilemma}
     <div
       class="space-y-1 my-2 text-[9px] border-t border-theme-border/30 pt-1.5"
     >
@@ -180,6 +180,18 @@
         <div class="text-theme-muted line-clamp-1">
           <strong class="text-theme-text font-semibold">Role:</strong>
           {data.role}
+        </div>
+      {/if}
+      {#if data.wants}
+        <div class="text-theme-muted line-clamp-1">
+          <strong class="text-theme-text font-semibold">Wants:</strong>
+          {data.wants}
+        </div>
+      {/if}
+      {#if data.secret}
+        <div class="text-theme-muted line-clamp-1">
+          <strong class="text-theme-text font-semibold">Secret:</strong>
+          {data.secret}
         </div>
       {/if}
       {#if data.leverage}

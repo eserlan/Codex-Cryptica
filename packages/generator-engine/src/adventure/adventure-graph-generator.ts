@@ -135,6 +135,9 @@ export function generateAdventureGraphTopology(
     const leverageMatch = block.match(/-\s*\*\*Leverage:\*\*\s*(.*)/);
     const dilemmaMatch = block.match(/-\s*\*\*Dilemma:\*\*\s*(.*)/);
 
+    const lines = block.split("\n").map((l) => l.trim());
+    const descLine = lines[0].replace(/- \*\*.*?\*\*(?::| —)?\s*/, "");
+
     const npcNode: AdventureNode = {
       id: `node-npc-${idx}`,
       type: "npc",
@@ -142,6 +145,7 @@ export function generateAdventureGraphTopology(
       data: {
         title,
         type: "npc",
+        description: descLine || undefined,
         relation: relationMatch ? relationMatch[1].trim() : undefined,
         wants: wantsMatch ? wantsMatch[1].trim() : undefined,
         secret: secretMatch ? secretMatch[1].trim() : undefined,
