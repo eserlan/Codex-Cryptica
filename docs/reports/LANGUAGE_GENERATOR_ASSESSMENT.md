@@ -6,26 +6,48 @@
 
 ## Executive Summary
 
-The language generator is best understood as two systems behind one interface:
+The language generator is best understood as two paths behind one interface:
 
-- The **AI path** is a detailed conlang-profile prompt capable of producing useful phonology, culture, naming rules, vocabulary, phrases, and table-ready guidance.
-- The **local/offline path** is a lightweight pseudo-language word generator. It produces stylistically related names and words, but it does not currently model morphology, grammar, pronunciation, or most selected variations.
+- The **AI path** is the primary product experience. It generates campaign-ready fictional language profiles with phonology, cultural usage, naming rules, vocabulary, phrases, and GM-facing guidance.
+- The **local/offline path** is a lightweight fallback that produces stylistically related pseudo-language names and words when AI is unavailable.
 
-The UI advertises **700 preset combinations**—7 genres × 5 tones × 5 roles × 4 name structures—plus custom values and world context. In practice, the local engine has only **five substantive sound systems**. Genre, role, structure, and context have much less influence offline.
+The highest-value work is therefore not to turn the fallback into a full procedural conlang engine. It is to make the AI path more faithful to user choices, more internally consistent, structurally reusable, and easier for downstream generators to consume.
 
-The architecture is sound: the framework-free generator lives in the shared `generator-engine` package, the fallback remains client-side, generated languages can be saved and rediscovered, and AI failures degrade to local output. The main opportunity is to turn the local fallback from a tone-based word kit into a compact but genuine rule system.
+The current AI prompt is already strong, but validation is permissive and generated language profiles are stored primarily as readable Markdown. Saved languages can be rediscovered and injected into later AI prompts, but users cannot explicitly select which language should guide a generation and local downstream generators cannot consume language rules procedurally.
+
+The recommended direction is:
+
+1. Make genre, tone, role, name structure, and world context produce clearly observable differences in AI output.
+2. Introduce shared runtime validation and repair/retry behaviour for AI responses.
+3. Persist a compact structured language profile alongside readable content.
+4. Add explicit saved-language selection and use those profiles as reusable generative context for names, places, factions, ships, titles, and related generators.
+5. Keep the local generator as a reliable fallback with minimum contract quality, without expanding it into a full linguistic simulation.
+
+## Product Priority
+
+The **AI-generated language profile is the feature**. The local generator exists for graceful degradation.
+
+Success should therefore be measured primarily by whether an AI-generated language:
+
+- strongly reflects the selected controls and supplied world context;
+- remains internally consistent across phonology, names, glossary, and phrases;
+- can be validated before presentation;
+- can be saved as reusable structured worldbuilding context;
+- can guide later generation consistently across Codex Cryptica.
+
+The offline path only needs to remain coherent, usable, and compatible with the same public output contract where practical.
 
 ## Configuration and Variation Surface
 
-| Dimension                       |          Choices | AI effect                                                   | Local effect                                          |
-| ------------------------------- | ---------------: | ----------------------------------------------------------- | ----------------------------------------------------- |
-| Genre                           |                7 | Strong creative direction, vocabulary, and cultural flavour | Summary text plus one genre-specific glossary concept |
-| Tone                            |                5 | Directs phonology, rhythm, and sound                        | Fully controls character fragments and C/V patterns   |
-| Language role                   |                5 | Directs register, prestige, taboos, and usage               | Inserted into generic descriptive prose               |
-| Name structure                  |                4 | Directs morphology and name construction                    | Named in prose, but does not change construction      |
-| World context                   |        Free text | Incorporated into the prompt                                | Ignored                                               |
-| Custom tone, role, or structure |        Free text | Interpreted by AI                                           | Unknown tone falls back to generic CVC/CV rules       |
-| Custom genre                    | In-app generator | Interpreted by AI                                           | Uses the generic `wanderer` concept                   |
+| Dimension | Choices | AI effect today | Product expectation |
+| --- | ---: | --- | --- |
+| Genre | 7 | Strong creative direction and genre vocabulary | Strongly shape concepts, historical development, register, loanwords, and vocabulary |
+| Tone | 5 | Directs phonology, rhythm, and sound | Produce recognisably different sound systems and naming texture |
+| Language role | 5 | Directs register, prestige, taboos, and usage | Materially affect vocabulary, social rules, register, phrases, and naming conventions |
+| Name structure | 4 | Directs morphology and name construction | Produce visibly different name and word construction strategies |
+| World context | Free text | Incorporated into the prompt | Strongly ground language history, speakers, concepts, names, and terminology in the user's world |
+| Custom tone, role, or structure | Free text | Interpreted by AI | Preserve custom intent and validate that the output reflects it |
+| Custom genre | In-app generator | Interpreted by AI | Preserve custom setting vocabulary and cultural logic |
 
 ### Genres
 
@@ -60,11 +82,11 @@ The architecture is sound: the framework-free generator lives in the shared `gen
 - Prefix-heavy
 - Short & Monosyllabic
 
-The public form supports custom tone, role, and structure values, a 240-character world context, and “Surprise Me” randomization. Theme-hub launches preserve their supported genre.
+The public form also supports custom tone, role, and structure values, a 240-character world context, and “Surprise Me” randomization. Theme-hub launches preserve their supported genre.
 
 ## AI Generation Rules
 
-The AI is instructed to answer four questions:
+The AI is currently instructed to answer four useful questions:
 
 1. What does the language sound like?
 2. Who speaks it, and when?
@@ -107,64 +129,73 @@ It also instructs the model to:
 - Avoid generic fantasy-name clichés and supplied banned names.
 - Return only a valid JSON object.
 
-## Local and Offline Construction Rules
+This is a solid baseline. The primary weakness is not lack of prompt breadth; it is that the system does not yet verify that the model actually honoured the requested contract or persist the underlying language rules in a reusable form.
 
-A generated word consists of one randomly chosen pattern. Each `C` or `V` selects an entire fragment, which may contain several letters.
+## AI Path Gaps and Risks
 
-| Tone                   | Consonant fragments          | Vowel fragments         | Patterns        |
-| ---------------------- | ---------------------------- | ----------------------- | --------------- |
-| Harsh                  | `kr gr kh z x th br v d t r` | `a u o ur ok ak`        | `CVC CVCC CCVC` |
-| Lyrical                | `l m n s v y f r sh`         | `ae ia ea io ele ana i` | `CV CVCV VCV`   |
-| Ancient                | `ph th ae r s t n m k l`     | `ae o u aa ii or`       | `CVCV CVC VCCV` |
-| Technical              | `t k p d g b r n ts`         | `i e u ek in`           | `CVC VC CV`     |
-| Shadowy                | `sh th f s h z ph lh`        | `i o y uu is`           | `CVC CV VCV`    |
-| Unknown or custom tone | `k l m n s t r`              | `a e i o u`             | `CVC CV`        |
+1. **Control fidelity is prompt-driven but not verified.** The prompt mentions genre, tone, role, structure, and context, but the system does not test whether each produced a material difference.
+2. **World context is valuable but under-leveraged structurally.** It reaches the model, but there is no explicit requirement to derive culturally specific terminology, historical influences, loanwords, or naming rules from it.
+3. **Response validation is permissive.** Missing or malformed fields can fall through to generic defaults rather than triggering repair or regeneration.
+4. **Output shape is mostly presentation-oriented.** Phonology, morphology, naming rules, glossary entries, and register are embedded in Markdown rather than persisted as structured data.
+5. **Internal consistency is requested but not validated.** Names, glossary words, phrases, and stated rules may contradict each other without detection.
+6. **Banned-name enforcement is partial.** The in-app pipeline checks the title but not example names, roots, glossary words, phrases, or obvious derivatives.
+7. **Saved-language choice is implicit.** Up to five detected profiles are automatically added to generator context; users cannot explicitly select the language that should guide a particular generation.
+8. **Downstream reuse is prompt-only.** Other AI generators can receive saved language context, but there is no stable structured contract for consuming phonology, morphology, naming, glossary, or register data.
+9. **Marketing breadth exceeds supported presets.** The page mentions or the wider product supports themes such as cosmic horror, western, steampunk, Lancer, and optimistic exploration sci-fi that are not selectable here.
 
-The number of possible selection paths per word ranges from roughly 495 for Technical to 16,698 for Harsh. Actual distinct spellings are somewhat lower because fragments can overlap.
+## Structured Language Profile
 
-### Word and Name Assembly
+A generated language should become a reusable worldbuilding asset rather than only a formatted lore note.
 
-- The language title concatenates two generated words and capitalizes the result.
-- Each glossary entry receives one independently generated word.
-- Each example name concatenates two generated words.
-- No separators, affixes, grammatical particles, plural rules, case markers, or uniqueness checks are applied.
-- All four selected name structures currently use the same assembly process.
+The AI response should include, or be transformed into, a compact structured profile alongside the readable `content` and `lore` fields. The exact schema can evolve, but it should cover the concepts downstream generators actually need.
 
-### Fixed Glossary
+Illustrative shape:
 
-The local generator creates ten entries:
+```json
+{
+  "phonology": {
+    "sounds": [],
+    "rhythm": "",
+    "pronunciationRules": []
+  },
+  "morphology": {
+    "wordFormation": [],
+    "prefixes": [],
+    "suffixes": [],
+    "compounding": ""
+  },
+  "naming": {
+    "personalNames": [],
+    "placeNames": [],
+    "titles": [],
+    "lineages": []
+  },
+  "lexicon": [],
+  "grammar": {
+    "phrasePatterns": [],
+    "functionWords": []
+  },
+  "register": {
+    "role": "",
+    "formality": "",
+    "socialRules": []
+  }
+}
+```
 
-1. friend
-2. enemy
-3. water
-4. fire
-5. shadow
-6. light
-7. city
-8. journey
-9. one genre-specific concept
-10. leader
+The goal is not linguistic completeness. The goal is enough structured information for later generation to reliably sound like the same language.
 
-The genre-specific concepts are:
+For example, once a language is saved, CC should be able to use it when generating:
 
-| Genre                 | Added concept |
-| --------------------- | ------------- |
-| Classic Fantasy       | sword-oath    |
-| Cyberpunk / Corporate | network       |
-| Vampire / Gothic Noir | bloodline     |
-| Sci-Fi / Space Opera  | starship      |
-| Modern Conspiracy     | secret        |
-| Post-Apocalyptic      | ruin          |
-| Pirate                | crew-oath     |
-| Unknown genre         | wanderer      |
-
-### Fixed Phrase Templates
-
-- `friend + shadow` is translated as “A friend in shadows.”
-- `leader + city` is translated as “The leader of the city.”
-- `friend + light` is used as a greeting meaning “friend of light.”
-
-These translations assume unstated grammar such as articles, prepositions, possession, and plurals.
+- character names;
+- settlement and region names;
+- faction names;
+- dynasties and lineages;
+- ships and vehicles;
+- titles and offices;
+- religious terms;
+- organisations and institutions;
+- culturally specific vocabulary.
 
 ## Saving and Downstream Reuse
 
@@ -187,110 +218,131 @@ Saved languages are rediscovered when either:
 
 Up to five profiles are automatically added to generator context. Other AI generators are instructed to follow their naming structures, example names, and glossaries.
 
-There is no user-facing **Naming Language** selector as described in the original specification. The system automatically includes the first five detected profiles. This grounding affects AI prompts; local downstream generators do not procedurally consume saved language rules.
+The missing UX is an explicit **Naming Language / Language Profile** selector. Relevant generators should allow the user to choose the saved language that should guide generation rather than relying on whichever profiles happen to be detected first.
+
+Automatic suggestions can still exist, ideally ranked by source relationship, category, and recent use, but they should not replace explicit choice.
+
+## Local / Offline Fallback
+
+The local path currently uses five tone-based sound tables and combines spelling fragments through simple C/V patterns. Genre contributes one glossary concept, while role, structure, and context have little or no procedural effect.
+
+This is acceptable as a fallback provided expectations are clear.
+
+The fallback should **not** become a full conlang engine unless future product evidence justifies that investment. In particular, the project does not currently need a comprehensive local phonology, orthography, morphology, grammar, stress, inflection, and loanword simulation merely to match AI behaviour.
+
+Minimum fallback goals:
+
+- never crash when AI is unavailable;
+- produce coherent names and vocabulary with reasonable uniqueness;
+- satisfy the minimum public output shape;
+- avoid obviously broken sound-table classifications;
+- make selected structure/role visible where inexpensive and useful;
+- clearly communicate controls or context that are AI-only, where applicable;
+- preserve compatibility with saved `kind: language` entities.
+
+Local enhancements should be judged by fallback quality and implementation cost, not by parity with the AI path.
 
 ## Strengths
 
 - The AI prompt clearly defines useful, game-focused output.
 - Genre direction is concrete and avoids reducing genre to surface labels.
 - Content and compact GM-reference lore are separated for presentation and merged for vault storage.
-- AI failure and malformed output gracefully fall back to local generation.
+- AI failure and malformed output can degrade to local generation.
 - Generated profiles use the repository’s unified label terminology.
 - Saved profiles are automatically rediscovered and supplied to other AI generators.
 - The implementation follows the library-first and client-side principles in the project constitution.
 - The public Svelte form uses runes, semantic theme tokens, accessible labels, help text, and Iconify utility classes.
 
-## Gaps and Risks
-
-1. **Name structure is cosmetic offline.** Suffix-heavy, prefix-heavy, compound, and monosyllabic selections all use the same two-word concatenation algorithm.
-2. **Language role is cosmetic offline.** Sacred, imperial, cant, dead, and common variants use identical word construction and vocabulary.
-3. **World context is ignored offline.**
-4. **Genre has minimal offline influence.** Only one glossary meaning changes.
-5. **The local profile falls short of the AI contract.** It provides two phrases, three names, no real pronunciation column, generic cultural guidance, and no meaningful morphology.
-6. **The system is orthographic rather than phonological.** Fragments are spelling chunks rather than a phoneme inventory. Some are dubiously classified: `ae` appears as an Ancient consonant, while `ok`, `ak`, `ek`, and `in` are treated as vowels.
-7. **No grammar exists.** Phrase translations depend on invisible function words and rules.
-8. **No uniqueness enforcement exists.** Vocabulary entries and names may repeat.
-9. **Response validation is permissive.** Required headings, counts, pronunciations, glossary structure, and internal consistency are not validated.
-10. **Banned-name enforcement is partial.** The in-app pipeline checks the title but not example names, roots, glossary words, or phrases.
-11. **Custom values degrade offline.** A custom tone silently switches to the generic sound table.
-12. **Marketing breadth exceeds supported genres.** The page mentions cosmic horror, while cosmic horror, western, steampunk, and several theme-hub genres are not selectable.
-13. **Saved-language choice is implicit.** Users cannot select which detected language should guide a particular generation.
-
 ## Improvement Checklist
 
-### Priority 0 — Make Existing Controls Truthful
+### Priority 0 — Strengthen AI Control Fidelity
 
-- [ ] Implement distinct local name-structure rules:
-  - [ ] Compound roots with visible or configurable join rules.
-  - [ ] Reusable suffix inventories with defined meanings.
-  - [ ] Reusable prefix inventories with defined meanings.
-  - [ ] A genuinely monosyllabic path that does not concatenate two words.
-- [ ] Make language role affect local generation:
-  - [ ] Register and formality.
-  - [ ] Allowed speakers and social restrictions.
-  - [ ] Role-specific vocabulary and table-use guidance.
-- [ ] Make genre affect more than one glossary entry by adding small genre lexicons and loanword strategies.
-- [ ] Either make world context influence local output or clearly label it as AI-only when local generation is selected.
-- [ ] Give custom tones an explicit fallback notice instead of silently using the generic sound inventory.
+- [ ] Make each input dimension explicitly shape a distinct part of the generated language:
+  - [ ] Tone → sound inventory, rhythm, phonotactics, and pronunciation guidance.
+  - [ ] Genre → vocabulary domains, linguistic history, loanwords, metaphors, and culturally specific concepts.
+  - [ ] Role → register, formality, social restrictions, prestige/taboo, specialised vocabulary, and phrase usage.
+  - [ ] Name structure → morphology and visibly different personal/place/title construction rules.
+  - [ ] World context → named cultures, history, neighbouring peoples, institutions, technologies, religions, geography, and other supplied lore where relevant.
+- [ ] Explicitly tell the model to make the selected dimensions observable in examples, not merely describe them.
+- [ ] Require sample names, glossary words, and phrases to demonstrate the selected naming and morphology rules.
+- [ ] Preserve strong custom tone, role, structure, and genre intent rather than normalising it toward preset defaults.
 
-### Priority 0 — Validate the Output Contract
+### Priority 0 — Validate and Repair AI Output
 
-- [ ] Introduce a shared runtime schema for AI and local language output.
+- [ ] Introduce a shared runtime schema for language output.
 - [ ] Require non-empty `title`, `summary`, `content`, and `lore`.
-- [ ] Validate all required markdown sections.
-- [ ] Validate glossary row counts and required columns.
+- [ ] Validate all required sections.
+- [ ] Validate glossary row counts and required fields.
 - [ ] Validate example-name and phrase counts.
-- [ ] Reject or repair malformed AI output before presenting it.
+- [ ] Validate pronunciation presence where required.
+- [ ] Reject, repair, or regenerate malformed AI output before presenting it.
 - [ ] Use the same parser and validation rules in the public and in-app generation paths.
-- [ ] Check banned names across titles, example names, roots, glossary words, and direct derivatives.
+- [ ] Check banned names across titles, example names, roots, glossary words, phrases, and direct derivatives.
+- [ ] Add lightweight consistency checks where practical, especially for duplicate names/words and failure to demonstrate the selected name structure.
 
-### Priority 1 — Improve the Procedural Language Model
+### Priority 1 — Persist Structured Language Rules
 
-- [ ] Replace spelling-fragment labels with explicit onset, nucleus, and coda inventories.
-- [ ] Correct questionable consonant and vowel classifications.
-- [ ] Add syllable-boundary, cluster, and word-length constraints.
-- [ ] Define stress and pronunciation rules.
-- [ ] Add basic orthography rules for converting sound units into written forms.
-- [ ] Add a minimal morphology layer for number, possession, place names, personal names, and titles.
-- [ ] Add a small set of function morphemes so sample phrases are actually decomposable.
-- [ ] Generate phrase translations from grammar templates instead of assigning English meanings to bare word pairs.
-- [ ] Prevent duplicate glossary words and example names within a profile.
-- [ ] Support a seed so a language can be regenerated and extended consistently.
+- [ ] Define a compact structured language-profile schema covering phonology, morphology, naming, lexicon, phrase/grammar patterns, and register.
+- [ ] Have AI generation return structured data directly or derive it deterministically from a validated response.
+- [ ] Store structured language data alongside readable Markdown.
+- [ ] Keep the structured schema intentionally game-focused rather than attempting complete linguistic modelling.
+- [ ] Preserve backwards compatibility for existing `kind: language` notes that contain only readable content.
 
 ### Priority 1 — Improve Saved-Language Reuse
 
-- [ ] Add an explicit Naming Language selector to relevant generators.
-- [ ] Let users choose one or more profiles rather than automatically taking the first five.
+- [ ] Add an explicit Naming Language / Language Profile selector to relevant generators.
+- [ ] Let users choose one or more profiles instead of automatically relying on the first five detected profiles.
 - [ ] Rank automatic suggestions by source relationship, category, and recent use.
-- [ ] Allow saved language profiles to guide local name generation without AI.
-- [ ] Store structured sound, morphology, and glossary data alongside readable Markdown.
-- [ ] Preserve backwards compatibility for existing `kind: language` notes.
+- [ ] Feed structured naming, phonology, morphology, glossary, and register rules into downstream AI prompts.
+- [ ] Make downstream generators demonstrate adherence to the selected language profile in their output.
+- [ ] Define graceful behaviour for legacy saved languages without structured profile data.
 
-### Priority 2 — Expand Variations and UX
+### Priority 2 — UX and Coverage
 
-- [ ] Add supported language presets for cosmic horror, western, steampunk, Lancer, and optimistic exploration sci-fi, or narrow the marketing copy.
-- [ ] Explain which controls affect AI, local generation, or both.
-- [ ] Preview example sounds before generation.
-- [ ] Let users regenerate only names, vocabulary, or phrases while preserving the profile’s rules.
-- [ ] Add export and copy actions for the glossary and naming rules.
-- [ ] Surface the generated seed and selected rule set in the saved profile.
+- [ ] Align supported language presets with theme-hub genres and marketing claims, or narrow the copy.
+- [ ] Explain which controls affect AI generation and which, if any, are only approximated by the fallback.
+- [ ] Preview example sounds or example names before generation where useful.
+- [ ] Let users regenerate only names, vocabulary, or phrases while preserving the language profile.
+- [ ] Add export and copy actions for glossary and naming rules.
+- [ ] Surface the selected language profile in downstream generation context.
+
+### Fallback Maintenance — Keep It Reliable, Not Feature-Equivalent
+
+- [ ] Fix clearly incorrect consonant/vowel classifications and other obvious fallback defects.
+- [ ] Prevent duplicate glossary words and example names where inexpensive.
+- [ ] Ensure the fallback satisfies the minimum output contract.
+- [ ] Make AI-only behaviour explicit instead of silently implying full offline parity.
+- [ ] Do not expand the fallback into a comprehensive procedural conlang engine without separate product justification.
 
 ### Testing
 
-- [ ] Add deterministic tests for every tone inventory and pattern family.
-- [ ] Prove that every name-structure selection produces materially different construction.
-- [ ] Test role-specific and genre-specific local behaviour.
-- [ ] Test custom-tone fallback messaging.
-- [ ] Test vocabulary and name uniqueness.
-- [ ] Test seeded reproducibility.
-- [ ] Test runtime rejection or repair of missing sections and malformed glossary tables.
-- [ ] Test banned-name collisions in example names and vocabulary.
-- [ ] Test explicit saved-language selection and local downstream reuse.
+- [ ] Test that AI prompts encode genre, tone, role, structure, and world context distinctly.
+- [ ] Add fixture-based tests showing materially different prompt guidance across preset dimensions.
+- [ ] Test runtime rejection, repair, or regeneration of missing sections and malformed glossary data.
+- [ ] Test banned-name collisions in titles, example names, vocabulary, phrases, and derivatives.
+- [ ] Test duplicate-name and duplicate-word handling.
+- [ ] Test structured profile parsing/storage and backwards compatibility.
+- [ ] Test explicit saved-language selection and downstream context injection.
+- [ ] Test that legacy `kind: language` notes remain usable.
 - [ ] Add public-form integration tests for standard, custom, surprise, AI-fallback, and local-only flows.
+- [ ] Keep deterministic fallback tests focused on stability and minimum contract quality rather than exhaustive linguistic variation.
 
-## Verification
+## Definition of Done
 
-The assessment ran the relevant generator, registry, service, adapter, and vault-context tests:
+The AI-first improvement is complete when:
+
+- [ ] Tone, genre, role, name structure, and world context each materially influence AI generation and are visible in produced examples.
+- [ ] AI output is validated and malformed responses are repaired, regenerated, or rejected consistently across public and in-app paths.
+- [ ] Generated languages persist a reusable structured profile alongside readable lore.
+- [ ] Banned-name checks cover the title, examples, glossary roots/words, phrases, and direct derivatives.
+- [ ] Users can explicitly select which saved language profile guides relevant downstream generation.
+- [ ] Downstream AI generators can consume the selected profile's naming, sound, morphology, vocabulary, and register rules.
+- [ ] Existing `kind: language` notes remain compatible.
+- [ ] The local generator remains a reliable fallback without requiring feature parity with AI.
+
+## Verification Baseline
+
+The original assessment ran the relevant generator, registry, service, adapter, and vault-context tests:
 
 ```text
 103 tests passed
@@ -299,6 +351,10 @@ The assessment ran the relevant generator, registry, service, adapter, and vault
 
 The public `LanguageFormFields.svelte` component also passed the Svelte 5 autofixer without reported issues.
 
+This baseline should be preserved while the AI-first work is introduced.
+
 ## Conclusion
 
-The AI path is a strong RPG language-profile generator. The local path is currently a tone-based fantasy word kit rather than a compact conlang engine. The highest-value next step is to make structure, role, genre, and saved-language context produce real procedural differences, then enforce the advertised output contract through shared runtime validation.
+The current AI path is already a strong RPG language-profile generator. The best next step is to improve **fidelity, validation, structure, and reuse**, not to invest heavily in making the offline fallback linguistically complete.
+
+The strategic opportunity is to turn a generated language into a reusable part of the world's generative context: generate a language once, then let characters, settlements, factions, ships, dynasties, titles, and other entities consistently inherit its linguistic identity.
