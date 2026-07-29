@@ -21,6 +21,7 @@
   import EdgeAttributeModal from "$lib/components/canvas/EdgeAttributeModal.svelte";
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import RoomStockingDrawer from "$lib/components/canvas/RoomStockingDrawer.svelte";
+  import AdventureNodeDrawer from "$lib/components/canvas/AdventureNodeDrawer.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
@@ -46,7 +47,11 @@
     flowNodeToCanvasNode,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
-  import type { DelveCanvasEdge, DelveCanvasNode } from "generator-engine";
+  import type {
+    DelveCanvasEdge,
+    DelveCanvasNode,
+    AdventureNode as AdventureNodeGraph,
+  } from "generator-engine";
 
   let { engine }: { engine: CanvasStore } = $props();
 
@@ -91,6 +96,21 @@
         candidate.id === selectedRoomId && candidate.type === "delveRoom",
     );
     return (node?.data as unknown as DelveRoomNodeData | undefined) ?? null;
+  });
+
+  let selectedAdventureNodeId = $state<string | null>(null);
+  const selectedAdventureNode = $derived.by(() => {
+    if (!selectedAdventureNodeId) return null;
+    const found = logic.nodes.find(
+      (candidate) => candidate.id === selectedAdventureNodeId,
+    );
+    if (!found) return null;
+    return {
+      id: found.id,
+      type: found.type as any,
+      position: found.position,
+      data: (found.data as any) || {},
+    } as AdventureNodeGraph;
   });
 
   let edgeModal = $state<{
@@ -226,9 +246,19 @@
   }
 
   function onNodeClick({ node }: { node: any }) {
-    if (node.type !== "delveRoom") return;
-    roomEnhancementError = null;
-    selectedRoomId = node.id;
+    if (node.type === "delveRoom") {
+      roomEnhancementError = null;
+      selectedRoomId = node.id;
+      return;
+    }
+    if (
+      ["situation", "location", "npc", "clue", "threat", "outcome"].includes(
+        node.type,
+      )
+    ) {
+      selectedAdventureNodeId = node.id;
+      return;
+    }
   }
 
   function onNodeDragStop({
@@ -652,6 +682,19 @@
     onSave={saveRoomData}
     onRegenerateAi={enhanceRoom}
     onClose={() => (selectedRoomId = null)}
+  />
+  <AdventureNodeDrawer
+    isOpen={selectedAdventureNode !== null}
+    node={selectedAdventureNode}
+    onClose={() => (selectedAdventureNodeId = null)}
+    onSave={(updatedNode) => {
+      logic.nodes = logic.nodes.map((n) =>
+        n.id === updatedNode.id
+          ? { ...n, data: { ...(n.data as any), ...updatedNode.data } }
+          : n,
+      );
+      logic.flushSave();
+    }}
   />
 </div>
 

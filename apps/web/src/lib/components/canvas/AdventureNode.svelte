@@ -1,6 +1,11 @@
 <script lang="ts">
   import { Handle, Position } from "@xyflow/svelte";
   import type { AdventureNodeData, AdventureNodeType } from "generator-engine";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
 
   let {
     data,
@@ -56,6 +61,80 @@
   }
 
   const badge = $derived(getTypeBadge(data.type));
+
+  async function handleCreateOrViewEntity(nodeData: AdventureNodeData) {
+    if (onCreateEntity) {
+      onCreateEntity(nodeData);
+      return;
+    }
+
+    if (nodeData.entityId) {
+      modalUIStore.openZenMode(nodeData.entityId);
+      return;
+    }
+
+    try {
+      let entityType: any = "concept";
+      let entityKind = undefined;
+      switch (nodeData.type) {
+        case "situation":
+          entityType = "event";
+          entityKind = "adventure";
+          break;
+        case "location":
+          entityType = "location";
+          entityKind = "dungeon";
+          break;
+        case "npc":
+          entityType = "character";
+          break;
+        case "clue":
+          entityType = "concept";
+          break;
+        case "threat":
+          entityType = "threat";
+          break;
+        case "outcome":
+          entityType = "concept";
+          break;
+      }
+
+      const content = [
+        nodeData.description || nodeData.summary || "",
+        nodeData.role ? `\n\n**Role:** ${nodeData.role}` : "",
+        nodeData.leverage ? `\n\n**Leverage:** ${nodeData.leverage}` : "",
+        nodeData.dilemma ? `\n\n**Dilemma:** ${nodeData.dilemma}` : "",
+        nodeData.secret ? `\n\n**Secret:** ${nodeData.secret}` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+
+      const entityId = await vault.createEntity(
+        entityType,
+        nodeData.title || "Untitled Node",
+        {
+          content,
+          kind: entityKind,
+          labels: [nodeData.type, "adventure-canvas"],
+        },
+      );
+
+      nodeData.entityId = entityId;
+      notificationStore.notify(`Created entity "${nodeData.title}"`, "success");
+      modalUIStore.openZenMode(entityId);
+    } catch (err) {
+      console.error("Failed to create entity from adventure node:", err);
+      notificationStore.notify("Failed to create entity", "error");
+    }
+  }
+
+  function handleLaunchDungeon(nodeData: AdventureNodeData) {
+    if (onLaunchDungeon) {
+      onLaunchDungeon(nodeData);
+      return;
+    }
+    void goto(resolve("/generators/dungeon_delve"));
+  }
 </script>
 
 <div
@@ -121,10 +200,13 @@
   <div
     class="flex items-center justify-between gap-1 pt-1.5 mt-auto border-t border-theme-border/40"
   >
-    {#if data.canLaunchDungeon}
+    {#if data.canLaunchDungeon || data.type === "location"}
       <button
         type="button"
-        onclick={() => onLaunchDungeon?.(data)}
+        onclick={(e) => {
+          e.stopPropagation();
+          handleLaunchDungeon(data);
+        }}
         class="inline-flex items-center gap-1 text-[9px] font-semibold text-amber-400 hover:text-amber-300 transition-colors"
         title="Launch Dungeon Builder from this location"
       >
@@ -135,7 +217,10 @@
 
     <button
       type="button"
-      onclick={() => onCreateEntity?.(data)}
+      onclick={(e) => {
+        e.stopPropagation();
+        handleCreateOrViewEntity(data);
+      }}
       class="inline-flex items-center gap-1 text-[9px] font-semibold text-theme-primary hover:text-theme-primary/80 transition-colors ml-auto"
       title="Create or view linked vault entity"
     >
