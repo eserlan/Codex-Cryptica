@@ -88,13 +88,16 @@ export class VaultStore {
   // Delegated Getters
   get entities() {
     if (sessionModeStore.isGuestMode) {
-      return guestVault.entitiesMap;
+      return { ...guestVault.entitiesMap, ...this.entityStore.entities };
     }
     return this.entityStore.entities;
   }
   get allEntities() {
     if (sessionModeStore.isGuestMode) {
-      return guestVault.entities;
+      const extraEntities = Object.values(this.entityStore.entities).filter(
+        (e) => !guestVault.entitiesMap[e.id],
+      );
+      return [...guestVault.entities, ...extraEntities];
     }
     return this.entityStore.allEntities;
   }
@@ -539,7 +542,10 @@ export class VaultStore {
 
   // --- Entity Management (Delegated) ---
 
-  loadEntityContent(id: string) {
+  loadEntityContent(id: string): Promise<void> {
+    if (sessionModeStore.isGuestMode) {
+      return Promise.resolve();
+    }
     return this.entityStore.loadEntityContent(id);
   }
   createEntity(
