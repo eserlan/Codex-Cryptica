@@ -571,7 +571,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "language-generator",
     title: "Fictional Languages",
     content:
-      "Design custom language profiles (conlangs) detailing pronunciation guidelines, naming structures, example names, and glossary dictionaries. Other generators like NPC and Settlement will automatically respect these profiles to keep naming styles culturally and linguistically consistent.",
+      "Design structured language profiles (conlangs) with pronunciation guidance, naming structures, example names, phrases, and a glossary. When generating an NPC, faction, settlement, or ship, choose one saved Naming language to apply its rules. No language is applied automatically.",
     icon: "icon-[lucide--languages]",
   },
   "news-sheet-generator": {

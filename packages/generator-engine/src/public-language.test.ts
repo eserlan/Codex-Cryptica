@@ -4,6 +4,7 @@ import {
   parseLanguageResponse,
   generateLanguageLocal,
 } from "./public-language";
+import { validateFallbackLanguageQuality } from "./language-profile";
 import { NAME_BAN_PROMPT } from "./public-npc";
 
 test("buildLanguagePrompt includes key inputs", () => {
@@ -49,24 +50,70 @@ test("buildLanguagePrompt includes the shared name-ban prompt", () => {
   expect(prompt.userMessage).toContain(NAME_BAN_PROMPT);
 });
 
-test("buildLanguagePrompt requests separate content and lore", () => {
+test("buildLanguagePrompt requests the versioned structured profile", () => {
   const prompt = buildLanguagePrompt({});
 
-  expect(prompt.userMessage).toContain('"content"');
-  expect(prompt.userMessage).toContain('"lore"');
-  expect(prompt.userMessage).toContain("## Pronunciation & Phonology");
-  expect(prompt.userMessage).toContain("### At a Glance");
-  expect(prompt.userMessage).toContain("### Example Names");
+  expect(prompt.userMessage).toContain('"version": 1');
+  expect(prompt.userMessage).toContain('"profile"');
+  expect(prompt.userMessage).toContain('"phonology"');
+  expect(prompt.userMessage).toContain('"lexicon"');
+  expect(prompt.userMessage).toContain("Do not return pre-rendered markdown");
 });
 
-test("parseLanguageResponse parses content and lore separately", () => {
+test("buildLanguagePrompt maps every control to observable profile fields", () => {
+  const prompt = buildLanguagePrompt({});
+
+  expect(prompt.userMessage).toContain(
+    "Genre / Setting must materially shape culture.history",
+  );
+  expect(prompt.userMessage).toContain(
+    "Tone / Style must materially shape phonology",
+  );
+  expect(prompt.userMessage).toContain(
+    "Language Role must materially shape culture.usage",
+  );
+  expect(prompt.userMessage).toContain(
+    "Name Structure Style must materially shape morphology",
+  );
+  expect(prompt.userMessage).toContain(
+    "Preserve custom control values literally",
+  );
+});
+
+test("parseLanguageResponse validates structure and derives markdown", () => {
   const jsonStr = JSON.stringify({
+    version: 1,
     title: "Elvish",
     summary: "A flowing tongue.",
-    content:
-      "## Pronunciation & Phonology\nFlowing sounds.\n\n## Naming Conventions\nElegant suffixes.",
-    lore: "### At a Glance\n- **Tone**: Lyrical",
     labels: ["language", "elvish"],
+    profile: {
+      inputs: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Suffix-heavy",
+      },
+      phonology: {
+        consonants: ["l"],
+        vowels: ["e"],
+        phonotactics: ["CV"],
+      },
+      naming: {
+        examples: [{ name: "Ela", meaning: "light", use: "person" }],
+      },
+      lexicon: [{ word: "el", pronunciation: "ELL", meaning: "light" }],
+      grammar: {
+        examples: [
+          {
+            text: "El na.",
+            pronunciation: "ELL nah",
+            translation: "Light comes.",
+          },
+        ],
+      },
+      register: { role: "Common Speech" },
+      tableUseTips: ["Use open vowels."],
+    },
   });
 
   const parsed = parseLanguageResponse(jsonStr);
@@ -76,18 +123,21 @@ test("parseLanguageResponse parses content and lore separately", () => {
   expect(parsed.lore).toContain("### At a Glance");
   expect(parsed.content).not.toBe(parsed.lore);
   expect(parsed.labels).toContain("elvish");
+  expect(parsed.languageProfileVersion).toBe(1);
+  expect(parsed.languageProfile?.lexicon[0].word).toBe("el");
 });
 
-test("parseLanguageResponse falls back to lore when content is missing", () => {
-  const jsonStr = JSON.stringify({
-    title: "Elvish",
-    summary: "A flowing tongue.",
-    lore: "## Pronunciation & Phonology\nFlowing sounds.",
-    labels: ["language"],
-  });
-
-  const parsed = parseLanguageResponse(jsonStr);
-  expect(parsed.content).toContain("## Pronunciation & Phonology");
+test("parseLanguageResponse rejects legacy markdown-only output", () => {
+  expect(() =>
+    parseLanguageResponse(
+      JSON.stringify({
+        title: "Elvish",
+        summary: "A flowing tongue.",
+        lore: "## Pronunciation & Phonology\nFlowing sounds.",
+        labels: ["language"],
+      }),
+    ),
+  ).toThrow();
 });
 
 test("generateLanguageLocal splits narrative content from GM reference lore", () => {
@@ -102,7 +152,7 @@ test("generateLanguageLocal splits narrative content from GM reference lore", ()
   expect(generated.summary).toContain("spoken");
   expect(generated.content).toContain("## Pronunciation & Phonology");
   expect(generated.content).toContain("## Cultural Role & Usage");
-  expect(generated.content).toContain("## Naming Conventions");
+  expect(generated.content).toContain("## Word Formation & Naming Conventions");
   expect(generated.content).toContain("## Common Vocabulary & Word Bank");
   expect(generated.content).toContain("## Sample Phrases");
   expect(generated.lore).toContain("### At a Glance");
@@ -110,6 +160,16 @@ test("generateLanguageLocal splits narrative content from GM reference lore", ()
   expect(generated.lore).toContain("### At the Table");
   expect(generated.content).not.toBe(generated.lore);
   expect(generated.labels).toContain("language");
+  expect(generated.languageProfileVersion).toBe(1);
+  expect(
+    validateFallbackLanguageQuality({
+      version: 1,
+      title: generated.title,
+      summary: generated.summary ?? "",
+      labels: generated.labels,
+      profile: generated.languageProfile!,
+    }).valid,
+  ).toBe(true);
 });
 
 test("generateLanguageLocal includes a genre-specific vocabulary concept", () => {

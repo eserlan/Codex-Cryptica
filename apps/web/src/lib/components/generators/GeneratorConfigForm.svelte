@@ -13,19 +13,26 @@
   } from "generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
+  import type { DetectedVaultLanguage } from "$lib/services/generators/generator-vault-context";
 
   interface Props {
     generatorId: GeneratorId | null;
     onsubmit: (
       req: Pick<
         GeneratorRunRequest,
-        "generatorId" | "options" | "useAI" | "instructions"
+        | "generatorId"
+        | "options"
+        | "useAI"
+        | "instructions"
+        | "primaryLanguageId"
       >,
     ) => void;
     disabled?: boolean;
     aiPolicy?: AIPolicy;
     categoryLabels?: Array<{ id: string; label: string }>;
     themeId?: string;
+    languages?: DetectedVaultLanguage[];
+    suggestedLanguageId?: string;
   }
 
   let {
@@ -35,6 +42,8 @@
     aiPolicy,
     categoryLabels = [],
     themeId = "workspace",
+    languages = [],
+    suggestedLanguageId,
   }: Props = $props();
 
   function resolveLabel(gen: {
@@ -65,9 +74,16 @@
   let selectedId = $state<GeneratorId>(generators[0].id);
   let useAI = $state(true);
   let instructions = $state("");
+  let primaryLanguageId = $state("");
   let optionValues = $state<Record<string, unknown>>({});
   let lastOptionsGeneratorId = $state<GeneratorId | null>(null);
   const selectedGenerator = $derived(getGenerator(selectedId));
+  const supportsPrimaryLanguage = $derived(
+    ["npc", "faction", "settlement", "ship"].includes(selectedId),
+  );
+  const suggestedLanguage = $derived(
+    languages.find((language) => language.id === suggestedLanguageId),
+  );
   const dungeonGenre = $derived(themeIdToLabel[themeId] ?? "Classic Fantasy");
   const availableDungeonPurposes = $derived(
     forDungeonGenre(dungeonConfig.purposesByGenre, dungeonGenre),
@@ -159,6 +175,10 @@
       options: optionValues,
       useAI: aiAvailable && useAI,
       instructions: instructions.trim() || undefined,
+      primaryLanguageId:
+        supportsPrimaryLanguage && primaryLanguageId
+          ? primaryLanguageId
+          : undefined,
     });
   }
 </script>
@@ -294,6 +314,46 @@
         {/if}
       {/each}
     </fieldset>
+  {/if}
+
+  {#if supportsPrimaryLanguage && languages.length}
+    <div class="flex flex-col gap-1.5">
+      <label
+        for="generator-primary-language"
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Naming language
+      </label>
+      <select
+        id="generator-primary-language"
+        name="primaryLanguageId"
+        bind:value={primaryLanguageId}
+        aria-describedby="generator-primary-language-help"
+        {disabled}
+        class="min-h-12 w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-base leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+      >
+        <option value="">No saved language</option>
+        {#each languages as language (language.id)}
+          <option value={language.id}>
+            {language.title}{language.legacy ? " (legacy notes)" : ""}
+          </option>
+        {/each}
+      </select>
+      <p
+        id="generator-primary-language-help"
+        class="text-xs leading-relaxed text-chrome-muted"
+      >
+        {#if suggestedLanguage && !primaryLanguageId}
+          Suggested from the source relationship: {suggestedLanguage.title}.
+          Select it above to apply its rules.
+        {:else if primaryLanguageId}
+          Only this language supplies authoritative naming and terminology
+          rules.
+        {:else}
+          No saved language rules will be applied.
+        {/if}
+      </p>
+    </div>
   {/if}
 
   <div class="flex flex-col gap-1">

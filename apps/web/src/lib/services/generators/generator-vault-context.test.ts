@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   buildVaultContext,
+  detectVaultLanguages,
   latestTemporalYear,
+  suggestPrimaryLanguageId,
 } from "./generator-vault-context";
 import type { Entity } from "schema";
 
@@ -331,12 +333,41 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(sampleIds).toContain("o1");
   });
 
-  it("extracts languages from the vault by kind frontmatter and by Category ID or Label", () => {
+  it("detects structured and legacy languages without selecting either", () => {
     const lang1 = entity({
       id: "l1",
       title: "Elvish",
       type: "note",
       kind: "language",
+      languageProfileVersion: 1,
+      languageProfile: {
+        inputs: {
+          genre: "Fantasy",
+          tone: "Lyrical",
+          role: "Common Speech",
+          structure: "Suffix-heavy",
+        },
+        phonology: {
+          consonants: ["l"],
+          vowels: ["e"],
+          phonotactics: ["CV"],
+        },
+        naming: {
+          examples: [{ name: "Ela", meaning: "light", use: "person" }],
+        },
+        lexicon: [{ word: "el", pronunciation: "ELL", meaning: "light" }],
+        grammar: {
+          examples: [
+            {
+              text: "El na",
+              pronunciation: "ELL nah",
+              translation: "Light comes",
+            },
+          ],
+        },
+        register: { role: "Common Speech" },
+        tableUseTips: ["Use open vowels."],
+      },
     });
     const lang2 = entity({
       id: "l2",
@@ -345,19 +376,120 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     const other = entity({ id: "o1", title: "Commoner", type: "character" });
 
+    const languageCategories = [
+      ...categories,
+      { id: "custom-cat-id", label: "Language" },
+    ];
+    const languages = detectVaultLanguages(
+      { l1: lang1, l2: lang2, o1: other },
+      languageCategories,
+    );
     const ctx = buildVaultContext({
       themeId: "workspace",
-      categoryLabels: [
-        ...categories,
-        { id: "custom-cat-id", label: "Language" },
-      ],
+      categoryLabels: languageCategories,
       allEntities: { l1: lang1, l2: lang2, o1: other },
     });
 
-    const langIds = ctx.languages?.map((e) => e.id) ?? [];
-    expect(langIds).toContain("l1");
-    expect(langIds).toContain("l2");
-    expect(langIds).not.toContain("o1");
+    expect(languages).toEqual([
+      { id: "l2", title: "Dwarvish", structured: false, legacy: true },
+      { id: "l1", title: "Elvish", structured: true, legacy: false },
+    ]);
+    expect(ctx.selectedLanguage).toBeUndefined();
+    expect(ctx.includedContext).not.toContain("languages");
+  });
+
+  it("includes only the explicitly selected structured language", () => {
+    const selected = entity({
+      id: "l1",
+      title: "Elvish",
+      type: "note",
+      kind: "language",
+      languageProfileVersion: 1,
+      languageProfile: {
+        inputs: {
+          genre: "Fantasy",
+          tone: "Lyrical",
+          role: "Common Speech",
+          structure: "Suffix-heavy",
+        },
+        phonology: {
+          consonants: ["l"],
+          vowels: ["e"],
+          phonotactics: ["CV"],
+        },
+        naming: {
+          examples: [{ name: "Ela", meaning: "light", use: "person" }],
+        },
+        lexicon: [{ word: "el", pronunciation: "ELL", meaning: "light" }],
+        grammar: {
+          examples: [
+            {
+              text: "El na",
+              pronunciation: "ELL nah",
+              translation: "Light comes",
+            },
+          ],
+        },
+        register: { role: "Common Speech" },
+        tableUseTips: ["Use open vowels."],
+      },
+    });
+    const other = entity({
+      id: "l2",
+      title: "Dwarvish",
+      type: "note",
+      kind: "language",
+      lore: "Legacy naming notes.",
+    });
+
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities: { l1: selected, l2: other },
+      primaryLanguageId: "l1",
+    });
+
+    expect(ctx.selectedLanguage?.id).toBe("l1");
+    expect(ctx.selectedLanguage?.legacy).toBe(false);
+    expect(ctx.selectedLanguage?.languageProfile?.lexicon[0].word).toBe("el");
     expect(ctx.includedContext).toContain("languages");
+  });
+
+  it("keeps an explicitly selected legacy language readable-only", () => {
+    const legacy = entity({
+      id: "l1",
+      title: "Old Speech",
+      type: "note",
+      kind: "language",
+      lore: "Names end in -ar.",
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities: { l1: legacy },
+      primaryLanguageId: "l1",
+    });
+
+    expect(ctx.selectedLanguage?.legacy).toBe(true);
+    expect(ctx.selectedLanguage?.languageProfile).toBeUndefined();
+    expect(ctx.selectedLanguage?.loreExcerpt).toContain("Names end in -ar");
+  });
+
+  it("suggests a connected language without selecting it", () => {
+    const source = entity({
+      id: "c1",
+      title: "Hero",
+      type: "character",
+    });
+    const languages = [
+      { id: "l1", title: "Elvish", structured: true, legacy: false },
+    ];
+
+    expect(suggestPrimaryLanguageId(languages, source, new Set(["l1"]))).toBe(
+      "l1",
+    );
+    expect(
+      suggestPrimaryLanguageId(languages, source, new Set()),
+    ).toBeUndefined();
   });
 });

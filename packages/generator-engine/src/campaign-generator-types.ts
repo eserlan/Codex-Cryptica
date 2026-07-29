@@ -5,6 +5,7 @@
  * app builds the bounded {@link GeneratorVaultContext} and injects vault
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
+import type { LanguageProfileV1 } from "schema";
 
 export type GeneratorId =
   | "npc"
@@ -70,6 +71,9 @@ export interface GeneratorOutput {
   connections?: SuggestedConnection[];
   /** Generated details that do not map onto a known template heading. */
   unmappedDetails?: string;
+  /** Canonical rules for language generators; markdown fields are derived. */
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -81,6 +85,13 @@ export interface VaultContextEntityExcerpt {
   contentExcerpt: string;
   loreExcerpt?: string;
   labels?: string[];
+}
+
+/** One explicitly selected saved language, structured or legacy-readable. */
+export interface SelectedLanguageContext extends VaultContextEntityExcerpt {
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  legacy: boolean;
 }
 
 export type IncludedContextCategory =
@@ -118,7 +129,8 @@ export interface GeneratorVaultContext {
   bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
-  languages?: VaultContextEntityExcerpt[];
+  /** Authoritative only after an explicit user selection. */
+  selectedLanguage?: SelectedLanguageContext;
 }
 
 export type LaunchMode = "workspace" | "contextual";
@@ -138,6 +150,8 @@ export interface GeneratorRunRequest {
   launchMode?: LaunchMode;
   sourceEntityId?: string;
   relationshipLabel?: string;
+  /** Explicit primary language choice; absent means no authoritative profile. */
+  primaryLanguageId?: string;
   vaultContext?: GeneratorVaultContext;
   interaction?: GeneratorInteractionRequest;
 }
@@ -159,6 +173,11 @@ export interface GeneratedDraft {
   templateOutline?: string;
   templateApplied: boolean;
   unmappedDetails?: string;
+  /** Canonical language rules carried unchanged through review and save. */
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  primaryLanguageId?: string;
+  primaryLanguageTitle?: string;
 }
 
 /** The user's explicit decision to save a reviewed draft. */

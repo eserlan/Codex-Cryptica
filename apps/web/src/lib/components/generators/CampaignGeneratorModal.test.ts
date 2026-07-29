@@ -38,6 +38,7 @@ vi.mock("$lib/actions/focusTrap", () => ({
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
+    entities: {},
     createEntity: vi.fn(async () => "new-id"),
     addConnection: vi.fn(),
   },
