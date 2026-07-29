@@ -13,22 +13,28 @@ The language generator is best understood as two paths behind one interface:
 
 The highest-value work is therefore not to turn the fallback into a full procedural conlang engine. It is to make the AI path more faithful, more reliable, and structurally reusable.
 
-The central architectural decision is:
+The central architectural decisions are:
 
 > **`LanguageProfileV1` is the canonical definition of a generated language.**
+>
+> **Both AI and local generation produce the same versioned result contract.**
 
-The AI should return the structured profile directly. Human-readable `content` and `lore` are rendered from that validated structure. The system should never depend on parsing generated Markdown back into language rules.
+The AI should return the structured profile directly, while the local fallback
+constructs a minimum valid profile from its tables. Human-readable `content`
+and `lore` are rendered from the same validated structure. The system should
+never depend on parsing generated Markdown back into language rules.
 
 This gives Codex Cryptica one source of truth for validation, saving, presentation, and downstream generation.
 
 Recommended direction:
 
-1. Define and persist a compact, versioned `LanguageProfileV1`.
+1. Define and persist a compact, versioned `LanguageGenerationResultV1`.
 2. Make genre, tone, role, name structure, custom values, and world context materially shape that profile.
 3. Validate the structured response and use bounded repair/regeneration before fallback.
 4. Render readable language lore from the validated profile.
 5. Let users select one saved language profile as generative context for relevant downstream generators.
-6. Keep the local generator reliable and coherent without requiring AI feature parity.
+6. Make the local generator return a minimum valid `LanguageGenerationResultV1`
+   without requiring AI feature parity.
 
 ## Product Priority
 
@@ -51,15 +57,15 @@ The intended architecture is:
 ```text
 User inputs + world context
         ↓
-AI generation
+AI response JSON (unknown) OR local structured candidate
         ↓
-LanguageProfileV1
+parse candidate
         ↓
-Runtime validation
+validate against LanguageGenerationResultV1
         ↓
 repair / regenerate if needed
         ↓
-validated LanguageProfileV1
+validated LanguageGenerationResultV1
         ├── persist with entity
         ├── render content/lore
         └── feed downstream generators
@@ -153,19 +159,47 @@ A generated language should be a reusable worldbuilding asset, not merely a form
 
 ### Source of Truth
 
-`LanguageProfileV1` is the canonical representation.
+`LanguageGenerationResultV1` is the versioned generator boundary.
+`LanguageProfileV1` is the canonical representation of the language rules
+inside it.
 
-The AI generation contract should require the model to return this structure directly. After validation, Codex Cryptica should render human-readable language content from the structured profile.
+The AI generation contract should require the model to return this structure
+directly. The local generator should construct the same structure from its
+procedural tables. After validation, Codex Cryptica renders human-readable
+language content from the structured result.
 
 The system must not derive the canonical profile by parsing AI-generated Markdown. Doing so would create a brittle round-trip and two potential truths: what the prose says and what the structured data says.
 
 ### Proposed V1 Shape
 
 ```ts
+interface LanguageGenerationResultV1 {
+  version: 1;
+  title: string;
+  summary: string;
+  labels: string[];
+  profile: LanguageProfileV1;
+}
+
 interface LanguageProfileV1 {
+  inputs: {
+    genre: string;
+    tone: string;
+    role: string;
+    structure: string;
+  };
+  culture: {
+    speakers: string;
+    history: string;
+    usage: string;
+    influences: string[];
+  };
   phonology: {
-    sounds: string[];
+    consonants: string[];
+    vowels: string[];
+    phonotactics: string[];
     rhythm: string;
+    stress: string;
     pronunciationRules: string[];
   };
   morphology: {
@@ -179,6 +213,11 @@ interface LanguageProfileV1 {
     placeNamePatterns: string[];
     titlePatterns: string[];
     lineagePatterns: string[];
+    examples: Array<{
+      name: string;
+      meaning: string;
+      use: "person" | "place" | "title" | "lineage" | "other";
+    }>;
   };
   lexicon: Array<{
     word: string;
@@ -189,12 +228,19 @@ interface LanguageProfileV1 {
   grammar: {
     phrasePatterns: string[];
     functionWords: Array<{ word: string; meaning: string }>;
+    examples: Array<{
+      text: string;
+      pronunciation: string;
+      translation: string;
+      breakdown?: string;
+    }>;
   };
   register: {
     role: string;
     formality: string;
     socialRules: string[];
   };
+  tableUseTips: string[];
 }
 
 interface LanguageEntityFields {
@@ -203,7 +249,15 @@ interface LanguageEntityFields {
 }
 ```
 
-The exact schema may evolve, but it should remain deliberately game-focused. The goal is not linguistic completeness; it is enough structured information for later generation to reliably sound like the same language.
+The result wrapper carries presentation identity and metadata. The profile
+carries the reusable language rules. When saving, the entity title, summary,
+and labels derive from the validated result, while `languageProfile` persists
+the canonical rules.
+
+The exact schema may evolve, but it should remain deliberately game-focused.
+The goal is not linguistic completeness; it is enough structured information
+to render the promised profile and make later generation reliably sound like
+the same language.
 
 ### Presentation Model
 
@@ -256,7 +310,10 @@ The MVP selects **one primary language profile**.
 
 Multiple-profile blending is intentionally deferred until semantics such as loanword influence, bilingual naming, regional mixture, or creole formation are explicitly designed. Blindly combining several profiles risks contradictory sound and naming rules.
 
-Automatic suggestions may still exist, ideally ranked by source relationship, category, and recent use, but they should not replace explicit choice.
+With no selection, no saved language is authoritative and the generator must
+not silently inject the first detected profiles as naming rules. The UI may
+suggest a profile, ideally ranked by source relationship, category, and recent
+use, but the user must confirm it before it becomes authoritative context.
 
 ## Name Safety Policy
 
@@ -273,6 +330,11 @@ The local path currently uses tone-based sound tables and simple C/V fragment co
 This is acceptable as a fallback provided expectations are clear.
 
 The fallback should **not** become a full conlang engine unless future product evidence justifies that investment.
+
+The fallback must still construct a minimum valid
+`LanguageGenerationResultV1`. This keeps validation, rendering, persistence,
+and downstream reuse on one data path. Its profile may be simpler than an AI
+profile, but it must not create a second Markdown-first model.
 
 Minimum fallback goals:
 
@@ -316,6 +378,39 @@ Current assembly behaviour:
 
 These are fallback limitations, not the primary product roadmap.
 
+The fixed local glossary meanings are:
+
+1. friend
+2. enemy
+3. water
+4. fire
+5. shadow
+6. light
+7. city
+8. journey
+9. one genre-specific concept
+10. leader
+
+| Genre | Genre-specific concept |
+| --- | --- |
+| Classic Fantasy | sword-oath |
+| Cyberpunk / Corporate | network |
+| Vampire / Gothic Noir | bloodline |
+| Sci-Fi / Space Opera | starship |
+| Modern Conspiracy | secret |
+| Post-Apocalyptic | ruin |
+| Pirate | crew-oath |
+| Unknown/custom genre | wanderer |
+
+The fixed phrase templates are:
+
+- `friend + shadow` → “A friend in shadows.”
+- `leader + city` → “The leader of the city.”
+- `friend + light` → greeting meaning “friend of light.”
+
+These translations rely on unstated articles, prepositions, possession, and
+plural rules.
+
 ## AI Quality Evaluation Plan
 
 Unit tests can prove that prompts, schemas, renderers, and validators contain intended rules. They cannot prove that a nondeterministic model follows them.
@@ -343,7 +438,36 @@ Score each result on a documented rubric:
 | Reusability | The profile contains enough information to guide downstream generation |
 | Name safety | Generated titles and names follow the scoped collision policy |
 
-Prompt snapshot tests, schema tests, renderer tests, repair tests, and model evaluation serve different purposes and should remain visible separately.
+Use this repeatable scoring procedure:
+
+- Generate three results per evaluation case.
+- Score every criterion from `0` to `2`:
+  - `0` — absent, contradictory, or unusable;
+  - `1` — partially demonstrated or inconsistent;
+  - `2` — clearly demonstrated and internally consistent.
+- A case passes only when:
+  - all three results pass schema validation;
+  - no criterion receives `0`;
+  - the mean score across all criteria and samples is at least `1.5`.
+- Record the model ID, prompt/schema version, date, exact inputs, raw structured
+  results, evaluator, criterion scores, and failure notes.
+
+Prompt snapshot tests, schema tests, renderer tests, repair tests, and model
+evaluation serve different purposes and should remain visible separately.
+
+## Bounded Repair and Fallback Policy
+
+The AI path uses a fixed maximum sequence:
+
+1. Parse and validate the initial structured response.
+2. If invalid, make one targeted repair attempt using the validation errors.
+3. If still invalid, make one clean regeneration attempt.
+4. If still invalid or unavailable, generate the local structured fallback.
+5. Validate the fallback before rendering; if it fails, show a clear
+   user-facing error rather than presenting partial output.
+
+This policy bounds latency and model usage while giving recoverable schema
+errors a focused correction opportunity.
 
 ## Delivery Plan
 
@@ -369,6 +493,8 @@ The schema comes first because prompt output, validation, persistence, rendering
 - [ ] Persist it alongside the language entity.
 - [ ] Render readable `content` and `lore` from the profile.
 - [ ] Do not parse generated Markdown to reconstruct canonical rules.
+- [ ] Require both AI and local generators to return
+      `LanguageGenerationResultV1`.
 - [ ] Preserve a legacy compatibility path for existing readable-only language notes.
 
 ### Priority 0 — Strengthen AI Control Fidelity
@@ -387,7 +513,7 @@ The schema comes first because prompt output, validation, persistence, rendering
 - [ ] Validate required fields and minimum collection sizes.
 - [ ] Detect duplicates and obvious internal contradictions where practical.
 - [ ] Apply strict name safety to titles/example names and whole-collision-only policy to ordinary vocabulary.
-- [ ] Use bounded repair/regeneration before local fallback.
+- [ ] Use one targeted repair and one clean regeneration before local fallback.
 - [ ] Use the same validation and normalization path in public and in-app generation.
 - [ ] Never present a partially valid structured profile as successful AI output.
 
@@ -395,7 +521,9 @@ The schema comes first because prompt output, validation, persistence, rendering
 
 - [ ] Add an explicit Language Profile selector to relevant generators.
 - [ ] Let users choose one primary profile.
-- [ ] Rank automatic suggestions by source relationship, category, and recent use.
+- [ ] Make no selection mean no authoritative language profile.
+- [ ] Rank optional suggestions by source relationship, category, and recent
+      use, and require confirmation.
 - [ ] Feed structured naming, phonology, morphology, lexicon, phrase-pattern, and register rules into downstream AI prompts.
 - [ ] Make downstream generators demonstrate adherence to the selected profile.
 - [ ] Define graceful behaviour for legacy readable-only language notes.
@@ -415,6 +543,7 @@ The schema comes first because prompt output, validation, persistence, rendering
 - [ ] Fix clearly incorrect consonant/vowel classifications and obvious defects.
 - [ ] Prevent duplicate glossary words and example names where inexpensive.
 - [ ] Ensure fallback satisfies the minimum output contract.
+- [ ] Make fallback construct a minimum valid `LanguageGenerationResultV1`.
 - [ ] Make AI-only behaviour explicit.
 - [ ] Do not expand fallback into a comprehensive procedural conlang engine without separate product justification.
 
@@ -437,11 +566,14 @@ The schema comes first because prompt output, validation, persistence, rendering
 The AI-first improvement is complete when:
 
 - [ ] `LanguageProfileV1` is the canonical language definition and round-trips through save/reload.
+- [ ] AI and local generation both return a validated
+      `LanguageGenerationResultV1`.
 - [ ] Human-readable language content is rendered from the validated structured profile rather than parsed into it.
 - [ ] Tone, genre, role, name structure, custom values, and world context materially influence AI generation and are visible in structured rules and examples.
 - [ ] Malformed AI responses are repaired, regenerated, rejected, or locally replaced according to a documented bounded policy.
 - [ ] Strict name checks cover language titles, example names, and direct derivatives; ordinary vocabulary uses whole-name collision checks only.
 - [ ] Users can explicitly select one primary saved language profile for relevant downstream generation.
+- [ ] No selection injects no authoritative saved-language rules.
 - [ ] Downstream generators consume the selected profile and produce linguistically consistent names and terminology.
 - [ ] Existing `kind: language` notes remain compatible through a legacy path.
 - [ ] The local generator remains a reliable fallback without requiring AI feature parity.
