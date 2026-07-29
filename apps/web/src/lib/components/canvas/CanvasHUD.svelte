@@ -7,6 +7,8 @@
     canvasName,
     sourceEntityId,
     sourceEntityTitle,
+    sourceEntityType,
+    sourceEntityKind,
     dossierEntityId,
     isFinalizingDossier = false,
     onFinalizeDossier,
@@ -17,6 +19,8 @@
     canvasName: string;
     sourceEntityId?: string;
     sourceEntityTitle?: string;
+    sourceEntityType?: string;
+    sourceEntityKind?: string;
     dossierEntityId?: string;
     isFinalizingDossier?: boolean;
     onFinalizeDossier?: () => void;
@@ -25,7 +29,24 @@
     onClearCategories: () => void;
   }>();
 
-  const sourceLocationLabel = $derived(sourceEntityTitle || "Source Location");
+  const isAdventure = $derived(
+    sourceEntityType === "event" || sourceEntityKind === "adventure",
+  );
+  const sourceIcon = $derived(
+    isAdventure ? "icon-[lucide--scroll]" : "icon-[lucide--map-pin]",
+  );
+  const sourceLocationLabel = $derived(
+    sourceEntityTitle || (isAdventure ? "Source Adventure" : "Source Location"),
+  );
+  const ariaLabel = $derived(
+    isAdventure
+      ? `Open Adventure: ${sourceLocationLabel}`
+      : `Open Location: ${sourceLocationLabel}`,
+  );
+  const buttonText = $derived.by(() => {
+    if (sourceEntityTitle) return `Open ${sourceEntityTitle}`;
+    return isAdventure ? "Open Adventure Note" : "Open Location Note";
+  });
 </script>
 
 <div
@@ -52,18 +73,18 @@
       <button
         type="button"
         onclick={() => modalUIStore.openZenMode(sourceEntityId)}
-        aria-label={`Open Location: ${sourceLocationLabel}`}
-        title={`Open ${sourceLocationLabel}`}
+        aria-label={ariaLabel}
+        title={ariaLabel}
         class="group inline-flex min-w-0 items-center gap-2 border border-theme-border bg-theme-surface/85 px-3 py-1.5 text-left shadow-lg backdrop-blur-md transition-colors hover:border-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       >
         <span
-          class="icon-[lucide--map-pin] h-3.5 w-3.5 shrink-0 text-theme-primary"
+          class="{sourceIcon} h-3.5 w-3.5 shrink-0 text-theme-primary"
           aria-hidden="true"
         ></span>
         <span
           class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
         >
-          Open Location
+          {buttonText}
         </span>
         <span
           class="icon-[lucide--external-link] h-3 w-3 shrink-0 text-theme-muted group-hover:text-theme-primary"

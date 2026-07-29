@@ -76,6 +76,7 @@ export interface AdventureCanvasDocument {
   nodes: AdventureNode[];
   edges: AdventureEdge[];
   warnings?: AdventureGraphValidationWarning[];
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }

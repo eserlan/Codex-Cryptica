@@ -62,12 +62,21 @@ function prepareTransferredCanvas(
         ? canvas.title
         : undefined;
 
+  const rawNodes = Array.isArray(canvas.nodes) ? canvas.nodes : [];
+  const hasAdventureNodes = rawNodes.some(
+    (n: any) =>
+      n &&
+      typeof n === "object" &&
+      ["situation", "npc", "clue", "threat", "outcome"].includes(n.type),
+  );
+  const inferredKind = hasAdventureNodes ? "adventure" : "delve";
+
   const kind =
     typeof metadata.kind === "string"
       ? metadata.kind
       : typeof (canvas as Record<string, unknown>).kind === "string"
         ? (canvas as Record<string, unknown>).kind
-        : "delve";
+        : inferredKind;
 
   return CanvasSchema.parse({
     ...canvas,

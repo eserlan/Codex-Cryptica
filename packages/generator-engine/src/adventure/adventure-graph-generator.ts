@@ -282,6 +282,9 @@ export function generateAdventureGraphTopology(
     genre: output.lore || "Classic Fantasy",
     nodes,
     edges,
+    metadata: {
+      kind: "adventure",
+    },
     createdAt: now,
     updatedAt: now,
   };

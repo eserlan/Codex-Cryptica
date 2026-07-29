@@ -523,6 +523,10 @@
       canvasName={canvas?.name || ""}
       {sourceEntityId}
       {sourceEntityTitle}
+      sourceEntityType={sourceEntity?.type ||
+        (canvas?.metadata?.kind === "adventure" ? "event" : "location")}
+      sourceEntityKind={sourceEntity?.kind ||
+        (canvas?.metadata?.kind as string)}
       {dossierEntityId}
       {isFinalizingDossier}
       onFinalizeDossier={!vault.isGuest &&
