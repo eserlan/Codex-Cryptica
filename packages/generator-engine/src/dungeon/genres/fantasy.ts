@@ -126,8 +126,8 @@ export const fantasyTables: DungeonGenreTables = {
     "an old binding-oath none of them dare break",
     "their own internal discord and mistrust",
     "a wasting sickness moving through their number",
-    "something far older that watches and does not intervene",
-    "a debt owed to a power outside these walls",
+    "collapsing passages that grow more unstable each time they're used",
+    "a debt owed to the mercenaries guarding their only supply route",
     "a ritual calendar that leaves them almost out of time",
   ],
   loreFinds: [
@@ -163,10 +163,10 @@ export const fantasyTables: DungeonGenreTables = {
   ],
   treasures: [
     "A silver-hilted shortsword glowing with pale starlight near undead.",
-    "A pouch of 300 ancient dwarven gold sovereigns and a gemstone map scroll.",
+    "A pouch of 300 ancient gold sovereigns, stamped with a maker's mark no living smith recognizes, and a gemstone map scroll.",
     "A sealed potion flask containing liquid dragonfire.",
     "A warded strongbox of cut gemstones, each one etched with a different house sigil.",
-    "A set of dwarven master-keys that open every door in the complex, including the ones bricked over.",
+    "A set of master-keys, forged to a design no longer practiced, that open every lock still intact in the complex.",
     "A house banner thought extinct, worth a war of succession to the right claimant.",
     "A cache of spell-scribed vellum, each sheet good for exactly one casting.",
     "A smith's hammer that never needs re-hafting and rings a different note near true silver.",

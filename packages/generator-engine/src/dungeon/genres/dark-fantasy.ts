@@ -125,8 +125,8 @@ export const darkFantasyTables: DungeonGenreTables = {
     "a penance they are bound to complete first",
     "the rot spreading through their own ranks",
     "a saint's curse that takes one of them each month",
-    "something beneath the floor that stirs when they gather",
-    "a vow made to a thing that keeps its bargains",
+    "cracked foundations that groan a warning whenever they gather in numbers",
+    "a blood-price owed to the abbey that once sheltered their order",
     "a holy day approaching faster than their preparations",
   ],
   loreFinds: [

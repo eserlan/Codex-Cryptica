@@ -399,20 +399,58 @@ describe("AI policy (US2)", () => {
           factions: [
             {
               name: "The Rivet Oath",
+              identity: "Oath-bound smiths guarding the bells they cast.",
               virtue: "Patient",
               vice: "Possessive",
-              goal: "Recovery",
+              goal: "Recover the drowned bell-forge before the water claims it.",
+              drive: "Recovery",
               obstacle: "the flooded casting floor",
+              origin:
+                "Descendants of the rebel smiths who first cast the bells.",
+              belief: "They believe the bells must never leave the foundry.",
+              territorySectorIds: ["sector-1"],
+              strength:
+                "Total command of the only dry route through the works.",
+              leader: {
+                name: "Hask Rivet",
+                description:
+                  "the last smith who remembers the original casting rite",
+              },
+              notable: {
+                name: "Coen Bellwright",
+                description: "keeps the bell ledger no one else can read",
+              },
+              relationship:
+                "They need the Siltbound's diving engine to reach the lower works before the flood wins.",
             },
             {
               name: "The Siltbound",
+              identity:
+                "Salvagers who broke in through the flooded lower works.",
               virtue: "Resourceful",
               vice: "Vindictive",
-              goal: "Escape",
+              goal: "Escape with the bell-key before the tide rises again.",
+              drive: "Escape",
               obstacle: "their broken diving engine",
+              origin:
+                "Salvagers who came for scrap and got trapped by the flood.",
+              belief:
+                "They believe the Rivet Oath is hoarding the only way out.",
+              territorySectorIds: ["sector-2"],
+              strength: "Detailed knowledge of the flooded lower passages.",
+              leader: {
+                name: "Marrow Vex",
+                description: "the diver who first found the drowned belfry",
+              },
+              notable: {
+                name: "Ilsa Dray",
+                description: "the only one who can still repair the engine",
+              },
+              relationship:
+                "They need the Rivet Oath's bell-key to silence the alarm before they can leave.",
             },
           ],
-          currentConflict:
+          factionSituation:
             "The Rivet Oath needs the Siltbound engine, while the Siltbound need the Oath's bell-key.",
           sectors: [
             {
@@ -432,8 +470,6 @@ describe("AI policy (US2)", () => {
                 "Speaking above a whisper releases a suspended clapper.",
             },
           ],
-          inhabitants:
-            "The Rivet Oath controls the dry galleries while the Siltbound move through flooded service shafts.",
           secret:
             "The bells are a lock keeping the river beneath the foundry asleep.",
           hazards: ["Sudden floodgate releases", "Falling bronze moulds"],
@@ -462,9 +498,14 @@ describe("AI policy (US2)", () => {
       }),
     );
 
-    expect(aiGateway.complete).toHaveBeenCalledOnce();
+    // The coherence/repair pass now always runs once after a valid first
+    // pass, since hard validation alone doesn't catch semantic issues.
+    expect(aiGateway.complete).toHaveBeenCalledTimes(2);
     expect(aiGateway.complete.mock.calls[0][1]).toContain(
       "TTRPG dungeon designer",
+    );
+    expect(aiGateway.complete.mock.calls[1][1]).toContain(
+      "proofreading and repairing",
     );
     expect(generated.title).toBe("The Bellfound Depths");
     expect(generated.content).toContain("The Riveted Mouth");
@@ -480,7 +521,7 @@ describe("AI policy (US2)", () => {
       history: "The forge was sealed after its central bell cracked.",
       currentState: "Two rival crews occupy separate galleries.",
       signatureFeature: "A cracked bell vibrates above every doorway.",
-      currentConflict: "Each crew needs the mechanism held by the other.",
+      factionSituation: "Each crew needs the mechanism held by the other.",
       factions: [
         {
           name: "The Rivet Oath",
@@ -511,7 +552,6 @@ describe("AI policy (US2)", () => {
           stockDetail: "Loud speech releases a suspended clapper.",
         },
       ],
-      inhabitants: "The rivals patrol opposite sides of the forge.",
       secret: "The central bell restrains the river below.",
       hazards: ["Floodgate releases", "Falling bronze moulds"],
       treasures: ["The bell-key", "Rebel maker marks"],
@@ -549,6 +589,118 @@ describe("AI policy (US2)", () => {
     expect(generated.title).toBe("The Corrected Depths");
     expect(typeof generated.summary).toBe("string");
     expect(onInteractionResult).not.toHaveBeenCalled();
+  });
+
+  it("sends a targeted proofread pass, not a full regenerate, for an accepted response with lingering gaps", async () => {
+    // Structurally sound (right sector/faction count, distinct names/drives/
+    // goals), but each faction is missing several mandatory fields — a
+    // content gap, not a rejection. That should trigger the repair prompt,
+    // not the original "write a new dungeon" prompt again.
+    const sectors = [
+      {
+        name: "The Riveted Mouth",
+        description: "Flood doors shudder around a gallery of cracked bells.",
+        stockType: "Lore",
+        stockDetail: "Strike marks identify which bell opened each floodgate.",
+      },
+      {
+        name: "The Drowned Belfry",
+        description: "A tilted casting hall descends beneath black water.",
+        stockType: "Trap",
+        stockDetail: "Speaking above a whisper releases a suspended clapper.",
+      },
+    ];
+    const sparseFactions = [
+      {
+        name: "The Rivet Oath",
+        virtue: "Patient",
+        vice: "Possessive",
+        goal: "Recover the drowned bell-forge.",
+        drive: "Recovery",
+        obstacle: "the flooded casting floor",
+      },
+      {
+        name: "The Siltbound",
+        virtue: "Resourceful",
+        vice: "Vindictive",
+        goal: "Escape before the tide rises again.",
+        drive: "Escape",
+        obstacle: "their broken diving engine",
+      },
+    ];
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          title: "The Bellfound Depths",
+          summary: "A drowned signal foundry contested by rival salvagers.",
+          throughline: "Rebel smiths built it; a flood ruined it.",
+          history: "Rebel smiths cast warning bells here.",
+          currentState: "Rival crews occupy separate galleries.",
+          signatureFeature: "A suspended bronze bell rings when anyone lies.",
+          sectors,
+          factionSituation: "Each crew needs what the other holds.",
+          factions: sparseFactions,
+          secret: "The bells keep the river beneath the foundry asleep.",
+          hazards: ["Sudden floodgate releases"],
+          treasures: ["The bell-key"],
+          hooks: ["Recover a bell that rings with a missing heir's voice."],
+        }),
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          title: "The Bellfound Depths",
+          summary: "A drowned signal foundry contested by rival salvagers.",
+          throughline: "Rebel smiths built it; a flood ruined it.",
+          history: "Rebel smiths cast warning bells here.",
+          currentState: "Rival crews occupy separate galleries.",
+          signatureFeature: "A suspended bronze bell rings when anyone lies.",
+          sectors,
+          factionSituation: "Each crew needs what the other holds.",
+          factions: sparseFactions.map((f, i) => ({
+            ...f,
+            identity: "A crew of rival salvagers.",
+            origin: "Salvagers drawn in after the flood.",
+            belief: "They believe the other crew is stalling.",
+            territorySectorIds: [`sector-${i + 1}`],
+            strength: "Detailed knowledge of the flooded lower works.",
+            leader: {
+              name: "Hask Rivet",
+              description: "the last smith who remembers the rite",
+            },
+            notable: {
+              name: "Ilsa Dray",
+              description: "the only one who can repair the engine",
+            },
+            relationship:
+              "Watching the other crew for a sign they're about to break.",
+          })),
+          secret: "The bells keep the river beneath the foundry asleep.",
+          hazards: ["Sudden floodgate releases"],
+          treasures: ["The bell-key"],
+          hooks: ["Recover a bell that rings with a missing heir's voice."],
+        }),
+      );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("dungeon", {
+        useAI: true,
+        themeId: "fantasy",
+        options: { scale: "Small Lair (2 Sectors)" },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(2);
+    // The second call must be the proofread/repair prompt, not the original
+    // "write an original dungeon" prompt sent again.
+    expect(complete.mock.calls[1][1]).toContain("proofreading and repairing");
+    expect(complete.mock.calls[1][0]).toContain("Previous output to repair");
+    expect(generated.title).toBe("The Bellfound Depths");
+    expect(generated.content).toContain("Hask Rivet");
   });
 
   it("passes interaction request through to the AI gateway when present", async () => {
