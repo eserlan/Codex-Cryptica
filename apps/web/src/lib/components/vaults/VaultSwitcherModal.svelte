@@ -419,7 +419,7 @@
     >
       {#if showCreate}
         <form
-          class="flex gap-2 flex-1 animate-in fade-in slide-in-from-bottom-1"
+          class="flex flex-col sm:flex-row gap-2 flex-1 w-full animate-in fade-in slide-in-from-bottom-1"
           onsubmit={(e) => {
             e.preventDefault();
             handleCreate();
@@ -429,21 +429,21 @@
             bind:value={newVaultName}
             aria-label="New Vault Name"
             placeholder="Vault Name..."
-            class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
+            class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 min-w-0 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
           />
           {#if vault.errorMessage}
             <div
-              class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2"
+              class="p-2.5 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2 w-full"
             >
               <span class="icon-[lucide--alert-circle] w-4 h-4 shrink-0"></span>
               <p>{vault.errorMessage}</p>
             </div>
           {/if}
 
-          <div class="flex justify-end gap-3">
+          <div class="flex flex-wrap items-center justify-end gap-2 shrink-0">
             <button
               type="button"
-              class="px-4 py-2 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
+              class="px-3 py-1.5 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
               onclick={() => (showCreate = false)}
               disabled={isLoading}
             >
@@ -451,7 +451,7 @@
             </button>
             <button
               type="submit"
-              class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               disabled={isLoading || !newVaultName.trim()}
               aria-busy={isLoading}
             >
@@ -467,7 +467,7 @@
             </button>
             <button
               type="button"
-              class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-1.5 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               onclick={handleImport}
               disabled={isLoading || !newVaultName.trim()}
             >

@@ -92,17 +92,23 @@ describe("VaultSwitcherModal", () => {
     return { onClose };
   };
 
-  it("keeps the new vault flow in the original selector form", async () => {
+  it("keeps the new vault flow in the original selector form and prevents footer overflow", async () => {
     renderModal();
 
     await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
 
-    expect(screen.getByLabelText("New Vault Name")).toBeTruthy();
+    const input = screen.getByLabelText("New Vault Name");
+    expect(input).toBeTruthy();
+    expect(input.className).toContain("min-w-0");
     expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /^create$/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /import/i })).toBeTruthy();
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
     expect(screen.queryByText("World Theme")).toBeNull();
+
+    const createForm = input.closest("form");
+    expect(createForm?.className).toContain("flex-col");
+    expect(createForm?.className).toContain("sm:flex-row");
   });
 
   it("closes after creating a vault without prompting for theme", async () => {
