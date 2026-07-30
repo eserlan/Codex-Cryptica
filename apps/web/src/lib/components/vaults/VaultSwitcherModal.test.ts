@@ -111,6 +111,23 @@ describe("VaultSwitcherModal", () => {
     expect(createForm?.className).toContain("sm:flex-row");
   });
 
+  it("prevents the default footer actions from overflowing on narrow screens", () => {
+    renderModal();
+
+    const doneButton = screen.getByRole("button", { name: /^done$/i });
+    expect(doneButton.className).toContain("shrink-0");
+    expect(doneButton.className).toContain("ml-auto");
+
+    const footer = doneButton.parentElement;
+    expect(footer?.className).toContain("flex-wrap");
+
+    const actionGroup = screen.getByTestId(
+      "empty-workspace-button",
+    ).parentElement;
+    expect(actionGroup?.className).toContain("flex-wrap");
+    expect(actionGroup?.className).toContain("min-w-0");
+  });
+
   it("closes after creating a vault without prompting for theme", async () => {
     const { onClose } = renderModal();
 

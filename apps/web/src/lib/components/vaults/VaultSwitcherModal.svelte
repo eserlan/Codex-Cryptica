@@ -415,7 +415,7 @@
     </div>
 
     <div
-      class="p-4 border-t border-theme-border bg-theme-surface flex justify-between gap-2 items-center min-h-[4rem]"
+      class="p-4 border-t border-theme-border bg-theme-surface flex flex-wrap justify-between gap-x-4 gap-y-2 items-center min-h-[4rem]"
     >
       {#if showCreate}
         <form
@@ -483,31 +483,33 @@
           </div>
         </form>
       {:else}
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
+          <button
+            class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+            onclick={openCreate}
+            data-testid="empty-workspace-button"
+          >
+            <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
+          </button>
+          <button
+            type="button"
+            class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+            onclick={() => modalUIStore.openQuickStartModal()}
+            data-testid="quick-start-world-button"
+          >
+            <span class="icon-[lucide--sparkles] w-4 h-4"></span> QUICK START WORLD
+          </button>
+          <button
+            class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+            onclick={handleLoadFromFolder}
+            disabled={isLoading}
+            title="Open a local folder as a new vault"
+          >
+            <span class="icon-[lucide--folder-open] w-4 h-4"></span> OPEN FOLDER
+          </button>
+        </div>
         <button
-          class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={openCreate}
-          data-testid="empty-workspace-button"
-        >
-          <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
-        </button>
-        <button
-          type="button"
-          class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={() => modalUIStore.openQuickStartModal()}
-          data-testid="quick-start-world-button"
-        >
-          <span class="icon-[lucide--sparkles] w-4 h-4"></span> QUICK START WORLD
-        </button>
-        <button
-          class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={handleLoadFromFolder}
-          disabled={isLoading}
-          title="Open a local folder as a new vault"
-        >
-          <span class="icon-[lucide--folder-open] w-4 h-4"></span> OPEN FOLDER
-        </button>
-        <button
-          class="px-4 py-2 bg-theme-surface border border-theme-border rounded text-sm hover:text-theme-primary transition-colors"
+          class="px-4 py-2 bg-theme-surface border border-theme-border rounded text-sm hover:text-theme-primary transition-colors shrink-0 ml-auto"
           onclick={onClose}
         >
           DONE
