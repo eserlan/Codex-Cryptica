@@ -12,6 +12,10 @@ import {
   GuestHistorySchema,
   GuestBundleSchema,
 } from "./publishing";
+import {
+  LanguageGenerationResultV1Schema,
+  LanguageProfileV1Schema,
+} from "./language-profile";
 
 describe("Entity Schema Validation", () => {
   it("should validate a correct entity", () => {
@@ -113,6 +117,134 @@ describe("Entity Schema Validation", () => {
     if (result.success) {
       expect(result.data.connections[0].label).toBe("Father");
     }
+  });
+
+  it("should preserve a versioned language profile", () => {
+    const languageProfile = LanguageProfileV1Schema.parse({
+      inputs: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Suffix-heavy",
+      },
+      phonology: {
+        consonants: ["l", "m", "n"],
+        vowels: ["a", "e", "i"],
+        phonotactics: ["CV", "CVCV"],
+      },
+      naming: {
+        examples: [{ name: "Lemari", meaning: "river guide", use: "person" }],
+      },
+      lexicon: [{ word: "lema", pronunciation: "LEH-mah", meaning: "river" }],
+      grammar: {
+        examples: [
+          {
+            text: "Lema nai.",
+            pronunciation: "LEH-mah nye",
+            translation: "The river guides us.",
+          },
+        ],
+      },
+      register: { role: "Common Speech" },
+      tableUseTips: ["Keep vowels open and unstressed."],
+    });
+
+    const result = EntitySchema.parse({
+      id: "lemari",
+      type: "note",
+      title: "Lemari",
+      kind: "language",
+      languageProfileVersion: 1,
+      languageProfile,
+    });
+
+    expect(result.languageProfileVersion).toBe(1);
+    expect(result.languageProfile).toEqual(languageProfile);
+  });
+
+  it("should keep legacy language notes valid without a structured profile", () => {
+    const result = EntitySchema.safeParse({
+      id: "old-language",
+      type: "note",
+      title: "Old Language",
+      kind: "language",
+      lore: "Free-form legacy notes.",
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("Language Profile Schema", () => {
+  it("should validate a complete v1 generation result", () => {
+    const result = LanguageGenerationResultV1Schema.safeParse({
+      version: 1,
+      title: "Lemari",
+      summary: "A flowing river-trade language.",
+      labels: ["language", "conlang"],
+      profile: {
+        inputs: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Suffix-heavy",
+        },
+        culture: { speakers: "River merchants" },
+        phonology: {
+          consonants: ["l", "m", "n"],
+          vowels: ["a", "e", "i"],
+          phonotactics: ["CV", "CVCV"],
+          rhythm: "Even and flowing",
+        },
+        morphology: { suffixes: ["-ri marks a profession"] },
+        naming: {
+          examples: [{ name: "Lemari", meaning: "river guide", use: "person" }],
+        },
+        lexicon: [{ word: "lema", pronunciation: "LEH-mah", meaning: "river" }],
+        grammar: {
+          examples: [
+            {
+              text: "Lema nai.",
+              pronunciation: "LEH-mah nye",
+              translation: "The river guides us.",
+            },
+          ],
+        },
+        register: { role: "Common Speech" },
+        tableUseTips: ["Keep vowels open and unstressed."],
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject unsupported versions and empty structural collections", () => {
+    const result = LanguageGenerationResultV1Schema.safeParse({
+      version: 2,
+      title: "Broken",
+      summary: "Invalid profile.",
+      labels: [],
+      profile: {
+        inputs: {
+          genre: "Fantasy",
+          tone: "Harsh",
+          role: "Common",
+          structure: "Compound",
+        },
+        phonology: {
+          consonants: [],
+          vowels: [],
+          phonotactics: [],
+        },
+        naming: { examples: [] },
+        lexicon: [],
+        grammar: { examples: [] },
+        register: { role: "Common" },
+        tableUseTips: [],
+      },
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 
@@ -394,6 +526,36 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
             id: "entity-1",
             type: "note",
             title: "My Entity",
+            kind: "language",
+            languageProfileVersion: 1,
+            languageProfile: {
+              inputs: {
+                genre: "Fantasy",
+                tone: "Lyrical",
+                role: "Common Speech",
+                structure: "Suffix-heavy",
+              },
+              phonology: {
+                consonants: ["l"],
+                vowels: ["e"],
+                phonotactics: ["CV"],
+              },
+              naming: {
+                examples: [{ name: "Ela", meaning: "light", use: "person" }],
+              },
+              lexicon: [{ word: "el", pronunciation: "ELL", meaning: "light" }],
+              grammar: {
+                examples: [
+                  {
+                    text: "El na",
+                    pronunciation: "ELL nah",
+                    translation: "Light comes",
+                  },
+                ],
+              },
+              register: { role: "Common Speech" },
+              tableUseTips: ["Use open vowels."],
+            },
           },
         ],
         relationships: [
@@ -415,6 +577,9 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
       };
       const result = GuestBundleSchema.safeParse(bundle);
       expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.entities[0].languageProfileVersion).toBe(1);
+      }
     });
   });
 });

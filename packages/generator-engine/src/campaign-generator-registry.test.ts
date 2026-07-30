@@ -297,7 +297,7 @@ describe("buildPrompt cultural naming", () => {
     );
   });
 
-  it("points to fictional languages when language context is present", () => {
+  it("uses only an explicitly selected legacy language", () => {
     const prompt = getGenerator("npc").buildPrompt(
       run("npc", {
         vaultContext: {
@@ -308,20 +308,100 @@ describe("buildPrompt cultural naming", () => {
           existingTitles: [],
           labelSuggestions: [],
           includedContext: [],
-          languages: [
-            {
-              id: "l1",
-              title: "Elvish",
-              type: "note",
-              contentExcerpt: "Glossary: stars = elen",
-            },
-          ],
+          selectedLanguage: {
+            id: "l1",
+            title: "Elvish",
+            type: "note",
+            contentExcerpt: "Glossary: stars = elen",
+            legacy: true,
+          },
         },
       }),
     );
-    expect(prompt).toContain("Fictional Languages in this world:");
+    expect(prompt).toContain("Primary Language — Elvish:");
+    expect(prompt).toContain("Legacy readable notes");
     expect(prompt).toContain("Elvish");
-    expect(prompt).toContain("pay strict attention to the fictional languages");
+    expect(prompt).toContain("explicitly selected Primary Language");
+  });
+
+  it("renders populated structured language guidance without placeholders", () => {
+    const prompt = getGenerator("settlement").buildPrompt(
+      run("settlement", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: ["languages"],
+          selectedLanguage: {
+            id: "l1",
+            title: "Lemari",
+            type: "note",
+            contentExcerpt: "",
+            legacy: false,
+            languageProfileVersion: 1,
+            languageProfile: {
+              inputs: {
+                genre: "Fantasy",
+                tone: "Lyrical",
+                role: "Common Speech",
+                structure: "Suffix-heavy",
+              },
+              phonology: {
+                consonants: ["l", "m"],
+                vowels: ["a", "e"],
+                phonotactics: ["CV"],
+              },
+              naming: {
+                placeNamePatterns: ["River root + -a"],
+                examples: [
+                  { name: "Lema", meaning: "river town", use: "place" },
+                ],
+              },
+              lexicon: [
+                { word: "lem", pronunciation: "LEHM", meaning: "river" },
+              ],
+              grammar: {
+                examples: [
+                  {
+                    text: "Lem na",
+                    pronunciation: "LEHM nah",
+                    translation: "By the river",
+                  },
+                ],
+              },
+              register: { role: "Common Speech" },
+              tableUseTips: ["Use open vowels."],
+            },
+          },
+        },
+      }),
+    );
+
+    expect(prompt).toContain("Place-name patterns: River root + -a");
+    expect(prompt).toContain("lem = river");
+    expect(prompt).not.toContain("Not specified");
+    expect(prompt).toContain("must visibly follow the supplied rules");
+  });
+
+  it("injects no authoritative language guidance when none is selected", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+
+    expect(prompt).not.toContain("Primary Language");
   });
 });
 

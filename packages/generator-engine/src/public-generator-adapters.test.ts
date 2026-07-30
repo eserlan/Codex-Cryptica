@@ -79,6 +79,8 @@ describe("public generator adapters (T052)", () => {
     expect(result.type).toBe("note");
     expect(result.title.length).toBeGreaterThan(0);
     expect(result.lore.length).toBeGreaterThan(0);
+    expect(result.languageProfileVersion).toBe(1);
+    expect(result.languageProfile?.lexicon).toHaveLength(10);
   });
 
   it("content carries the rich body, never the empty string, for every adapter", () => {

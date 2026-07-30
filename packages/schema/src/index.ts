@@ -18,6 +18,7 @@ export * from "./art-direction-stature";
 export * from "./art-direction-subject";
 export * from "./migrations";
 export * from "./publishing";
+export * from "./language-profile";
 
 export * from "./theme-templates";
 export * from "./entity-templates";

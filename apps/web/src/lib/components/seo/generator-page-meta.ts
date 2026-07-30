@@ -375,13 +375,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Fictional Language Generator",
     eyebrow: "Language Generator",
     introText:
-      "Create a campaign-ready language profile for your world, culture, or species. Fantasy, sci-fi, cosmic horror, and more. Design naming conventions, syllables, and a starter dictionary.",
+      "Create a campaign-ready language profile for your world, culture, or species. Choose fantasy, cyberpunk, gothic noir, space opera, modern conspiracy, post-apocalyptic, or pirate foundations, then customize the result.",
     canonicalPath: "/generators/language-generator",
     faqs: [
       {
         question: "What does the fictional language generator create?",
         answer:
-          "It generates a complete fictional language profile — including pronunciation guidelines, naming structures, example names, and a starter vocabulary glossary. Perfect for building consistent naming conventions for your world's peoples and places.",
+          "It generates a fictional language profile with pronunciation guidance, naming structures, example names, phrases, and a starter glossary. AI generation adds richer cultural and linguistic detail; the offline fallback produces a smaller coherent profile from built-in tables.",
       },
       {
         question: "Does it work without an account?",

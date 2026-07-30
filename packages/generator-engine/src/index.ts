@@ -145,10 +145,31 @@ export {
   buildLanguagePrompt,
   parseLanguageResponse,
   generateLanguageLocal,
+  LANGUAGE_PROMPT_VERSION,
   languageConfig,
   type LanguageGeneratorOptions,
   type LanguagePrompt,
 } from "./public-language";
+export {
+  parseLanguageGenerationResult,
+  renderLanguageProfile,
+  renderLanguageProfilePrompt,
+  validateAILanguageQuality,
+  validateFallbackLanguageQuality,
+  validateLanguageInputFidelity,
+  validateLanguageConsistency,
+  validateLanguageNameBans,
+  type LanguageValidationResult,
+} from "./language-profile";
+export {
+  LANGUAGE_EVALUATION_CASES,
+  LANGUAGE_EVALUATION_CRITERIA,
+  validateLanguageEvaluation,
+  type LanguageEvaluationCase,
+  type LanguageEvaluationCriterion,
+  type LanguageEvaluationRecord,
+  type LanguageEvaluationValidation,
+} from "./language-evaluation";
 export {
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
@@ -180,9 +201,11 @@ export {
 } from "./dungeon/delve-dossier";
 export {
   CampaignGeneratorService,
+  assertValidLanguageFallback,
   campaignGeneratorService,
   composeDraftVaultFields,
   DraftSaveError,
+  LanguageGenerationError,
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,
 } from "./campaign-generator-service";

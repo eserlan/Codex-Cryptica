@@ -92,4 +92,24 @@ describe("GeneratorDraftReview", () => {
       screen.queryByRole("option", { name: "Location (Facility)" }),
     ).toBeNull();
   });
+
+  it("shows the explicitly selected naming language in review", () => {
+    render(GeneratorDraftReview, {
+      props: {
+        draft: dungeonDraft({
+          sourceGeneratorId: "settlement",
+          primaryLanguageId: "l1",
+          primaryLanguageTitle: "Lemari",
+        }),
+        categories,
+        saving: false,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByTestId("primary-language-context").textContent,
+    ).toContain("Naming language: Lemari");
+  });
 });
