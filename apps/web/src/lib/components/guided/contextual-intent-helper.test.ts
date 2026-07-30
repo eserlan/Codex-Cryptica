@@ -2,13 +2,13 @@ import { describe, it, expect } from "vitest";
 import { resolveIntentContext } from "./contextual-intent-helper";
 
 describe("resolveIntentContext", () => {
-  it("maps standard intent categories to their generator id and auto-generates", () => {
+  it("maps standard intent categories to their generator id without auto-generating", () => {
     expect(resolveIntentContext("character").generatorId).toBe("npc");
     expect(resolveIntentContext("place").generatorId).toBe("settlement");
     expect(resolveIntentContext("faction").generatorId).toBe("faction");
     expect(resolveIntentContext("event").generatorId).toBe("event");
     expect(resolveIntentContext("item").generatorId).toBe("magic-item");
-    expect(resolveIntentContext("character").autoGenerate).toBe(true);
+    expect(resolveIntentContext("character").autoGenerate).toBe(false);
   });
 
   it("leaves custom without a generator id and does not auto-generate", () => {

@@ -162,7 +162,7 @@ describe("ModalUIStore", () => {
     });
   });
 
-  it("openIntentGeneratorWorkflow auto-generates with contextual launch when a source entity is given", () => {
+  it("openIntentGeneratorWorkflow configures generator workflow without auto-generating", () => {
     const store = new ModalUIStore();
     store.openIntentGeneratorWorkflow("npc", "src-1");
     expect(store.generatorWorkflow).toEqual({
@@ -171,7 +171,7 @@ describe("ModalUIStore", () => {
       sourceEntityId: "src-1",
       generatorId: "npc",
       prefillDate: null,
-      autoGenerate: true,
+      autoGenerate: false,
     });
   });
 
@@ -179,7 +179,7 @@ describe("ModalUIStore", () => {
     const store = new ModalUIStore();
     store.openIntentGeneratorWorkflow("faction");
     expect(store.generatorWorkflow.launchMode).toBe("workspace");
-    expect(store.generatorWorkflow.autoGenerate).toBe(true);
+    expect(store.generatorWorkflow.autoGenerate).toBe(false);
   });
 
   it("openIntentCreateMenu and closeIntentCreateMenu toggle the intent menu", () => {

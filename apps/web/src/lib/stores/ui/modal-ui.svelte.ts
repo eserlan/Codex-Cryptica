@@ -255,7 +255,8 @@ export class ModalUIStore {
 
   /**
    * Open the generator workflow from the Guided Mode intent-first `+ Create`
-   * menu: generates immediately with inferred context and default options.
+   * menu: opens at the configure step pre-selected to the intent category
+   * so the user can enter optional initial input before creation.
    */
   openIntentGeneratorWorkflow(
     generatorId: string,
@@ -267,7 +268,7 @@ export class ModalUIStore {
       sourceEntityId,
       generatorId,
       prefillDate: null,
-      autoGenerate: true,
+      autoGenerate: false,
     };
   }
 
