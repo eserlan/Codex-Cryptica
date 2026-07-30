@@ -559,7 +559,7 @@
           body={vault.isGuest
             ? "Nothing has been shared with you yet."
             : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create your first character"}
+          cta={vault.isGuest ? undefined : "＋ Create"}
           ctaTestId={vault.isGuest ? undefined : "graph-empty-state-cta"}
           onCta={vault.isGuest
             ? undefined

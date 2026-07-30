@@ -406,7 +406,7 @@
               body={vault.isGuest
                 ? "Nothing has been shared with you yet."
                 : "Create your first entity to start building your vault."}
-              cta={vault.isGuest ? undefined : "＋ Create your first entity"}
+              cta={vault.isGuest ? undefined : "＋ Create"}
               onCta={vault.isGuest
                 ? undefined
                 : () => modalUIStore.openIntentCreateMenu()}
