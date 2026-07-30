@@ -17,7 +17,10 @@ test.describe("Advanced Draw Button", () => {
     await page.goto("/");
 
     // Create an entity to test sidepanel/zen mode
-    await page.getByTestId("new-entity-button").click();
+    await page.waitForFunction(() => !!(window as any).modalUIStore);
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByPlaceholder(/Title.../i).fill("Ancient Dragon");
     await page.getByRole("button", { name: "ADD" }).click();
 

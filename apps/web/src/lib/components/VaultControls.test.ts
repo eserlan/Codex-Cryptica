@@ -95,10 +95,9 @@ describe("VaultControls", () => {
     guidedModeStore.setGuidedMode(true);
   });
 
-  it("hides the create/import/save/generate/share cluster in Guided Mode", () => {
+  it("hides the import/save/generate/share cluster in Guided Mode", () => {
     render(VaultControls);
 
-    expect(screen.queryByTestId("new-entity-button")).toBeNull();
     expect(screen.queryByTestId("import-vault-button")).toBeNull();
     expect(screen.queryByTestId("open-generator-button")).toBeNull();
     expect(
@@ -112,11 +111,17 @@ describe("VaultControls", () => {
     guidedModeStore.setGuidedMode(false);
     render(VaultControls);
 
-    expect(screen.getByTestId("new-entity-button")).toBeTruthy();
     expect(screen.getByTestId("import-vault-button")).toBeTruthy();
     expect(screen.getByTestId("open-generator-button")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /share campaign/i }),
     ).toBeTruthy();
+  });
+
+  it("no longer exposes the standalone NEW ENTITY toggle (superseded by header + Create)", () => {
+    guidedModeStore.setGuidedMode(false);
+    render(VaultControls);
+
+    expect(screen.queryByTestId("new-entity-button")).toBeNull();
   });
 });

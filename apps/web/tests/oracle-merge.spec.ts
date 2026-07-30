@@ -72,7 +72,7 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // Final wait for UI to stabilize
-    await expect(page.getByTestId("new-entity-button")).toBeVisible({
+    await expect(page.getByTestId("header-create-button")).toBeVisible({
       timeout: 15000,
     });
   });

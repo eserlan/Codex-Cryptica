@@ -408,37 +408,12 @@
           EXIT GUEST MODE
         </button>
       {:else if !guidedModeStore.isGuidedMode}
-        <!-- Main Actions — made redundant by the Guided Mode "+ Create" flow,
-             so this whole cluster is Full Toolbox only. -->
-        <button
-          type="button"
-          class={isVertical
-            ? `${btnGhost} py-3 text-sm justify-center`
-            : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
-          onclick={() => {
-            showForm = !showForm;
-            if (showForm) {
-              createError = null;
-            } else {
-              draftContent = "";
-              newTitle = "";
-              prefillStartDate = null;
-            }
-          }}
-          data-testid="new-entity-button"
-          aria-expanded={showForm}
-        >
-          <span
-            class={showForm
-              ? "icon-[heroicons--x-mark] w-3 h-3"
-              : "icon-[heroicons--plus] w-3 h-3"}
-            aria-hidden="true"
-          ></span>
-          {showForm
-            ? "CANCEL"
-            : `NEW ${themeStore.jargon.entity.toUpperCase()}`}
-        </button>
-
+        <!-- Main Actions — Full Toolbox only. The old "NEW ENTITY" button
+             that toggled the form below was removed (#1915 follow-up): the
+             header's "+ Create" now covers that in both modes, so this
+             cluster was showing two ways to do the same thing. The inline
+             form itself stays — it's still opened via drafts
+             (proposerStore.draftEntity) and pendingCreateEntity. -->
         <div class="relative flex items-center">
           <button
             class={isVertical
@@ -651,6 +626,21 @@
         {:else}
           ADD
         {/if}
+      </button>
+      <button
+        type="button"
+        class="{btnGhost} {isVertical
+          ? 'py-3 text-sm justify-center'
+          : 'px-4 py-1.5 text-xs'}"
+        onclick={() => {
+          showForm = false;
+          draftContent = "";
+          newTitle = "";
+          prefillStartDate = null;
+        }}
+        data-testid="cancel-new-entity-button"
+      >
+        CANCEL
       </button>
       {#if createError}
         <div
