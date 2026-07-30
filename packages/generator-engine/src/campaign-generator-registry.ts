@@ -13,6 +13,7 @@ import {
   generateLanguageLocal,
   languageConfig,
 } from "./public-language";
+import { renderLanguageProfilePrompt } from "./language-profile";
 import { generateNewsSheetLocal, newsSheetConfig } from "./public-news-sheet";
 import {
   buildDungeonPrompt,
@@ -126,6 +127,10 @@ function mapOutputToDraft(
         request.vaultContext?.templateOutline,
       ),
       unmappedDetails: output.unmappedDetails,
+      languageProfile: output.languageProfile,
+      languageProfileVersion: output.languageProfileVersion,
+      primaryLanguageId: request.vaultContext?.selectedLanguage?.id,
+      primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
     };
   };
 }
@@ -181,15 +186,19 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
       );
     }
   }
-  if (ctx.languages && ctx.languages.length) {
-    lines.push("\nFictional Languages in this world:");
-    for (const lang of ctx.languages) {
-      // Prefer lore: saved language entities keep the naming rules and
-      // glossary there, while content holds only the one-line summary.
+  if (ctx.selectedLanguage) {
+    const language = ctx.selectedLanguage;
+    lines.push(`\nPrimary Language — ${language.title}:`);
+    if (language.languageProfile) {
+      lines.push(renderLanguageProfilePrompt(language.languageProfile));
+    } else {
       lines.push(
-        `- ${lang.title}: ${lang.loreExcerpt || lang.contentExcerpt || ""}`,
+        `Legacy readable notes: ${language.loreExcerpt || language.contentExcerpt || ""}`,
       );
     }
+    lines.push(
+      "Generated names and terminology must visibly follow the supplied rules and examples. Do not invent missing language rules.",
+    );
   }
   return lines.join("\n");
 }
@@ -272,9 +281,9 @@ function namingBlock(request: GeneratorRunRequest): string {
   let basis = hasExamples
     ? "Infer the naming style from the example entities and source context above"
     : "Use a consistent naming style appropriate to the world theme";
-  if (ctx?.languages && ctx.languages.length) {
+  if (ctx?.selectedLanguage) {
     basis +=
-      " and pay strict attention to the fictional languages, naming structures, example names, and glossary definitions provided under Fictional Languages";
+      " and treat the explicitly selected Primary Language as authoritative for names and terminology";
   }
   return `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`;
 }
@@ -640,6 +649,8 @@ function generateLanguage(request: GeneratorRunRequest): GeneratorOutput {
     lore: result.lore,
     content: result.content,
     labels: result.labels,
+    languageProfile: result.languageProfile,
+    languageProfileVersion: result.languageProfileVersion,
   };
 }
 

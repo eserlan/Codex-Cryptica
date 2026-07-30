@@ -7,7 +7,9 @@
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import {
     buildVaultContext,
+    detectVaultLanguages,
     latestTemporalYear,
+    suggestPrimaryLanguageId,
   } from "$lib/services/generators/generator-vault-context";
   import {
     CampaignGeneratorService,
@@ -58,6 +60,37 @@
   type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
   const workflow = $derived(modalUIStore.generatorWorkflow);
+  const languageChoices = $derived(
+    detectVaultLanguages(
+      vault.entities,
+      categories.list.map((category) => ({
+        id: category.id,
+        label: category.label,
+      })),
+    ),
+  );
+  const suggestedLanguageId = $derived.by(() => {
+    const sourceId = workflow.sourceEntityId;
+    const sourceEntity = sourceId ? vault.entities[sourceId] : undefined;
+    if (!sourceEntity) return undefined;
+    const connectedIds = new Set<string>();
+    for (const connection of sourceEntity.connections ?? []) {
+      connectedIds.add(connection.target);
+    }
+    for (const [id, entity] of Object.entries(vault.entities)) {
+      if (
+        id !== sourceId &&
+        entity.connections?.some((connection) => connection.target === sourceId)
+      ) {
+        connectedIds.add(id);
+      }
+    }
+    return suggestPrimaryLanguageId(
+      languageChoices,
+      sourceEntity,
+      connectedIds,
+    );
+  });
 
   let stage = $state<Stage>("configure");
   let draft = $state<GeneratedDraft | null>(null);
@@ -110,7 +143,7 @@
   async function onGenerate(
     req: Pick<
       GeneratorRunRequest,
-      "generatorId" | "options" | "useAI" | "instructions"
+      "generatorId" | "options" | "useAI" | "instructions" | "primaryLanguageId"
     >,
   ) {
     if (stage === "generating" || stage === "saving") return;
@@ -207,6 +240,7 @@
         templateOutline: templateOutline || undefined,
         applyTemplate: !!templateOutline,
         relevantIds,
+        primaryLanguageId: req.primaryLanguageId,
       });
       // When the user gives no instructions, fall back to the category's
       // default brief so the model always has direction.
@@ -401,6 +435,8 @@
           id: c.id,
           label: c.label,
         }))}
+        languages={languageChoices}
+        {suggestedLanguageId}
       />
     {:else if stage === "generating"}
       <div class="flex items-center gap-3 py-6 text-sm text-chrome-muted">

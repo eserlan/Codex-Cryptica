@@ -17,8 +17,8 @@ const MAX_EXCERPT_CHARS = 300;
  * user's instruction.
  */
 const MAX_SOURCE_CHARS = 1500;
-/** Cap on language profiles included as naming grounding in prompts. */
-const MAX_LANGUAGES = 5;
+/** Cap the selector list so unusually large vaults remain responsive. */
+const MAX_LANGUAGE_CHOICES = 50;
 /** Vault category id for events (included as grounding for any new entity). */
 const EVENT_TYPE = "event";
 /** Vault category id for notes (lowest-priority grounding). */
@@ -116,6 +116,72 @@ export interface BuildVaultContextOptions {
    * backfilling with same-type entities. Order is significant.
    */
   relevantIds?: string[];
+  /** Explicit user choice; absent means no authoritative saved language. */
+  primaryLanguageId?: string;
+}
+
+export interface DetectedVaultLanguage {
+  id: string;
+  title: string;
+  structured: boolean;
+  legacy: boolean;
+}
+
+function languageCategoryIds(
+  categoryLabels: Array<{ id: string; label: string }>,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const category of categoryLabels) {
+    if (
+      category.label.toLocaleLowerCase() === "language" ||
+      category.id.toLocaleLowerCase() === "language"
+    ) {
+      ids.add(category.id);
+    }
+  }
+  return ids;
+}
+
+function isLanguageEntity(entity: Entity, categoryIds: Set<string>): boolean {
+  return entity.kind === "language" || categoryIds.has(entity.type);
+}
+
+export function detectVaultLanguages(
+  allEntities: Record<string, Entity>,
+  categoryLabels: Array<{ id: string; label: string }>,
+): DetectedVaultLanguage[] {
+  const categoryIds = languageCategoryIds(categoryLabels);
+  const languages: DetectedVaultLanguage[] = [];
+  for (const id in allEntities) {
+    if (languages.length >= MAX_LANGUAGE_CHOICES) break;
+    if (!Object.hasOwn(allEntities, id)) continue;
+    const entity = allEntities[id];
+    if (!isLanguageEntity(entity, categoryIds)) continue;
+    const structured =
+      entity.languageProfileVersion === 1 && !!entity.languageProfile;
+    languages.push({
+      id: entity.id,
+      title: entity.title,
+      structured,
+      legacy: !structured,
+    });
+  }
+  return languages.sort((left, right) => left.title.localeCompare(right.title));
+}
+
+/** Suggest a related language without activating it; the UI must confirm it. */
+export function suggestPrimaryLanguageId(
+  languages: DetectedVaultLanguage[],
+  sourceEntity: Entity | undefined,
+  connectedIds: Set<string>,
+): string | undefined {
+  if (!sourceEntity) return undefined;
+  const available = new Set(languages.map((language) => language.id));
+  if (available.has(sourceEntity.id)) return sourceEntity.id;
+  for (const id of connectedIds) {
+    if (available.has(id)) return id;
+  }
+  return undefined;
 }
 
 /**
@@ -139,6 +205,7 @@ export function buildVaultContext(
     templateOutline,
     targetEntityType,
     relevantIds,
+    primaryLanguageId,
   } = opts;
 
   // Name ban list: only titles of the SAME type being generated. Banning a new
@@ -234,28 +301,22 @@ export function buildVaultContext(
     // ordered is already max bounded by consider logic
     .map((e) => entityToExcerpt(e));
 
-  const languages: VaultContextEntityExcerpt[] = [];
-  const languageCategoryIds = new Set<string>();
-  for (const c of categoryLabels) {
-    if (
-      c.label.toLowerCase() === "language" ||
-      c.id.toLowerCase() === "language"
-    ) {
-      languageCategoryIds.add(c.id);
-    }
-  }
-
-  for (const id in allEntities) {
-    if (languages.length >= MAX_LANGUAGES) break;
-    if (!Object.hasOwn(allEntities, id)) continue;
-    const e = allEntities[id];
-    if (e.kind === "language" || languageCategoryIds.has(e.type)) {
-      // Languages ground naming conventions across every other generator, so
-      // carry the generous excerpt — the 300-char clamp would cut the naming
-      // rules and glossary that make the grounding useful.
-      languages.push(entityToExcerpt(e, undefined, true));
-    }
-  }
+  const languageEntity = primaryLanguageId
+    ? allEntities[primaryLanguageId]
+    : undefined;
+  const languageCategories = languageCategoryIds(categoryLabels);
+  const selectedLanguage =
+    languageEntity && isLanguageEntity(languageEntity, languageCategories)
+      ? {
+          ...entityToExcerpt(languageEntity, undefined, true),
+          languageProfile: languageEntity.languageProfile,
+          languageProfileVersion: languageEntity.languageProfileVersion,
+          legacy: !(
+            languageEntity.languageProfileVersion === 1 &&
+            languageEntity.languageProfile
+          ),
+        }
+      : undefined;
 
   const includedContext: GeneratorVaultContext["includedContext"] = [
     "categories",
@@ -266,7 +327,7 @@ export function buildVaultContext(
   if (worldSample.length) includedContext.push("world");
   if (existingTitles.length) includedContext.push("titles");
   if (labelSuggestions.length) includedContext.push("labels");
-  if (languages.length) includedContext.push("languages");
+  if (selectedLanguage) includedContext.push("languages");
 
   return {
     themeId,
@@ -285,6 +346,6 @@ export function buildVaultContext(
     applyTemplate,
     templateOutline,
     includedContext,
-    languages,
+    selectedLanguage,
   };
 }

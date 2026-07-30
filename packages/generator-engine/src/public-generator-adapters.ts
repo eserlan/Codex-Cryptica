@@ -17,6 +17,7 @@ import type {
   GeneratedDraft,
   GeneratorRunRequest,
 } from "./campaign-generator-types";
+import type { LanguageProfileV1 } from "schema";
 
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
@@ -38,6 +39,8 @@ export interface PublicGeneratorOutput {
    * (#1494). Absent on ordinary AI or explicitly-local results.
    */
   aiFallback?: boolean;
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
 }
 
 /** First non-blank value, or the last one if all are blank. */
@@ -61,6 +64,8 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     lore: draft.lore,
     labels: [...(draft.labels ?? [])],
     status: "active",
+    languageProfile: draft.languageProfile,
+    languageProfileVersion: draft.languageProfileVersion,
   };
 }
 

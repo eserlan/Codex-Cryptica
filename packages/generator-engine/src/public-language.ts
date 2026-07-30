@@ -6,6 +6,12 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { NAME_BAN_PROMPT } from "./public-npc";
+import type { LanguageGenerationResultV1, LanguageProfileV1 } from "schema";
+import {
+  parseLanguageGenerationResult,
+  renderLanguageProfile,
+  validateFallbackLanguageQuality,
+} from "./language-profile";
 
 export const languageConfig = {
   genres: [
@@ -38,6 +44,8 @@ export const languageConfig = {
     "Short & Monosyllabic",
   ],
 };
+
+export const LANGUAGE_PROMPT_VERSION = "language-profile-v1";
 
 // Creative direction per genre so the LLM leans on setting-specific
 // vocabulary/loanword flavor instead of only the word "genre" itself.
@@ -116,16 +124,92 @@ Parameters:
 - Name Structure Style: ${resolved.structure}
 - Custom Context: ${resolved.context || "None"}${genreDirection}${banned}${session}
 
-Return a valid JSON object matching this structure exactly:
+Control-to-profile requirements:
+- Genre / Setting must materially shape culture.history, culture.influences, and setting-specific lexicon.
+- Tone / Style must materially shape phonology, rhythm, stress, pronunciation rules, and every generated example.
+- Language Role must materially shape culture.usage, register, formality, social rules, and phrase situations.
+- Name Structure Style must materially shape morphology, the relevant naming-pattern arrays, and all example names.
+- Custom Context and world context must ground speakers, institutions, technologies, religions, neighbours, geography, names, and terminology wherever those facts are supplied.
+- Preserve custom control values literally in profile.inputs; do not replace them with the nearest preset.
+
+Return a valid JSON object matching this structure exactly. Do not return pre-rendered markdown; every rule and example must be represented in the structured profile:
 {
+  "version": 1,
   "title": "string — a unique, evocative name for the language itself",
   "summary": "string — one sentence: who speaks it and what it sounds like",
-  "content": "Narrative prose (markdown). Include these sections:\\n## Pronunciation & Phonology\\n[The sound profile — dominant consonants and vowels, rhythm, what it evokes when heard]\\n\\n## Cultural Role & Usage\\n[Who speaks it, in which situations, and how its role (${resolved.role}) shapes register, taboos, or prestige]\\n\\n## Naming Conventions\\n[Rules for constructing character and place names, following the ${resolved.structure} style]\\n\\n## Common Vocabulary & Word Bank\\n[A markdown table of 10-15 key words: | Word | Pronunciation | English Meaning |]\\n\\n## Sample Phrases\\n[3-5 phrases, each with phonetic pronunciation and translation]",
-  "lore": "Compact GM reference (markdown). Use EXACTLY this structure:\\n### At a Glance\\n- **Genre / Setting**: ${resolved.genre}\\n- **Tone**: ${resolved.tone}\\n- **Role**: ${resolved.role}\\n- **Name Structure**: ${resolved.structure}\\n\\n### Example Names\\n- **[Name]** — [meaning, and whether it suits a person, place, or lineage] (4-5 names)\\n\\n### At the Table\\n- [2-3 one-line tips for evoking the language in play — a greeting or curse to drop into dialogue, an accent note, a verbal tic]",
-  "labels": ["string — short thematic tags, e.g. language, conlang"]
+  "labels": ["string — short thematic tags, e.g. language, conlang"],
+  "profile": {
+    "inputs": {
+      "genre": "${resolved.genre}",
+      "tone": "${resolved.tone}",
+      "role": "${resolved.role}",
+      "structure": "${resolved.structure}",
+      "worldContext": "string — omit only when no custom or world context was supplied"
+    },
+    "culture": {
+      "speakers": "string",
+      "history": "string",
+      "usage": "string",
+      "influences": "string"
+    },
+    "phonology": {
+      "consonants": ["string"],
+      "vowels": ["string"],
+      "phonotactics": ["string — allowed syllable or sound patterns"],
+      "rhythm": "string",
+      "stress": "string",
+      "pronunciationRules": ["string"]
+    },
+    "morphology": {
+      "wordFormation": "string",
+      "prefixes": ["string"],
+      "suffixes": ["string"],
+      "compounding": "string"
+    },
+    "naming": {
+      "personalNamePatterns": ["string"],
+      "placeNamePatterns": ["string"],
+      "titlePatterns": ["string"],
+      "lineagePatterns": ["string"],
+      "examples": [
+        {
+          "name": "string",
+          "meaning": "string",
+          "use": "person | place | title | lineage | other"
+        }
+      ]
+    },
+    "lexicon": [
+      {
+        "word": "string",
+        "pronunciation": "string",
+        "meaning": "string",
+        "partOfSpeech": "string — optional"
+      }
+    ],
+    "grammar": {
+      "phrasePatterns": ["string"],
+      "functionWords": ["string"],
+      "examples": [
+        {
+          "text": "string",
+          "pronunciation": "string",
+          "translation": "string",
+          "breakdown": "string — optional"
+        }
+      ]
+    },
+    "register": {
+      "role": "${resolved.role}",
+      "formality": "string",
+      "socialRules": ["string"]
+    },
+    "tableUseTips": ["string"]
+  }
 }
 
 Internal consistency is essential: every example name, vocabulary word, and sample phrase must follow the phonology and naming rules defined in the content. Sample phrases should be decomposable using words from the glossary where possible.
+Include 10-15 unique lexicon entries, 4-5 example names, 3-5 sample phrases, and 2-3 concrete table-use tips. Preserve the four resolved input values exactly in profile.inputs.
 The word bank must include at least one term that could only belong to a ${resolved.genre} setting — not a generic fantasy word repurposed with a new sound.
 ${NAME_BAN_PROMPT}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
@@ -140,23 +224,19 @@ Return only the JSON object. Do not include markdown code block formatting like 
 }
 
 export function parseLanguageResponse(response: string): PublicGeneratorOutput {
-  const parsed = parseFencedJson(response);
-  const content = String(
-    parsed.content ||
-      parsed.lore ||
-      "## Pronunciation & Phonology\n\nUnknown sounds.",
-  );
+  const result = parseLanguageGenerationResult(parseFencedJson(response));
+  const { content, lore } = renderLanguageProfile(result.profile);
   return {
     type: "note",
     kind: "language",
-    title: String(parsed.title || "Unnamed Language"),
-    summary: String(parsed.summary || "A newly generated fictional language."),
-    lore: String(parsed.lore || ""),
+    title: result.title,
+    summary: result.summary,
+    lore,
     content,
-    labels: Array.isArray(parsed.labels)
-      ? parsed.labels.map(String)
-      : ["language"],
+    labels: result.labels,
     status: "active",
+    languageProfile: result.profile,
+    languageProfileVersion: 1,
   };
 }
 
@@ -176,7 +256,7 @@ const TONE_SYLLABLES: Record<
     patterns: ["CV", "CVCV", "VCV"],
   },
   "Ancient & Formal": {
-    consonants: ["ph", "th", "ae", "r", "s", "t", "n", "m", "k", "l"],
+    consonants: ["ph", "th", "v", "r", "s", "t", "n", "m", "k", "l"],
     vowels: ["ae", "o", "u", "aa", "ii", "or"],
     patterns: ["CVCV", "CVC", "VCCV"],
   },
@@ -227,90 +307,142 @@ function generateWord(
   return word;
 }
 
+function generateUniqueWord(
+  syllableData: typeof DEFAULT_SYLLABLES,
+  rng: Rng,
+  used: Set<string>,
+): string {
+  let word = generateWord(syllableData, rng);
+  while (used.has(word.toLocaleLowerCase())) {
+    word += generateWord(syllableData, rng);
+  }
+  used.add(word.toLocaleLowerCase());
+  return word;
+}
+
 export function generateLanguageLocal(
   req: LanguageGeneratorOptions,
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const syllables = TONE_SYLLABLES[req.tone] || DEFAULT_SYLLABLES;
-
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-  // Generate a consistent language name
-  const name1 = generateWord(syllables, rng);
-  const name2 = generateWord(syllables, rng);
+  const usedWords = new Set<string>();
+  const name1 = generateUniqueWord(syllables, rng, usedWords);
+  const name2 = generateUniqueWord(syllables, rng, usedWords);
   const languageName = capitalize(name1 + name2);
-
   const genreConcept = GENRE_CONCEPT[req.genre] || "wanderer";
-
-  // Generate small word bank
-  const vocabulary = [
-    { key: "friend", word: generateWord(syllables, rng) },
-    { key: "enemy", word: generateWord(syllables, rng) },
-    { key: "water", word: generateWord(syllables, rng) },
-    { key: "fire", word: generateWord(syllables, rng) },
-    { key: "shadow", word: generateWord(syllables, rng) },
-    { key: "light", word: generateWord(syllables, rng) },
-    { key: "city", word: generateWord(syllables, rng) },
-    { key: "journey", word: generateWord(syllables, rng) },
-    { key: genreConcept, word: generateWord(syllables, rng) },
-    { key: "leader", word: generateWord(syllables, rng) },
+  const meanings = [
+    "friend",
+    "enemy",
+    "water",
+    "fire",
+    "shadow",
+    "light",
+    "city",
+    "journey",
+    genreConcept,
+    "leader",
   ];
-
-  const vocabTable = vocabulary
-    .map((v) => `| **${capitalize(v.word)}** | ${v.key} |`)
-    .join("\n");
-
-  const phrase1 = `${capitalize(vocabulary[0].word)} ${vocabulary[4].word}`;
-  const phrase2 = `${capitalize(vocabulary[9].word)} ${vocabulary[6].word}`;
-  const greeting = `${capitalize(vocabulary[0].word)} ${vocabulary[5].word}`;
-
-  const content = `## Pronunciation & Phonology
-This language is characterized by its **${req.tone}** sound profile. It favors sounds like:
-- Consonants: ${syllables.consonants.slice(0, 6).join(", ")}
-- Vowels: ${syllables.vowels.slice(0, 4).join(", ")}
-
-## Cultural Role & Usage
-${languageName} serves as a **${req.role}** in this ${req.genre} setting. Its register and social weight follow from that role — who may speak it, and in which company, says as much as the words themselves. Even its word for "${genreConcept}" carries the weight of that setting.
-
-## Naming Conventions
-Names are structured according to the **${req.structure}** convention. Common compound sounds are often integrated to denote status.
-
-## Common Vocabulary & Word Bank
-| Word | English Meaning |
-| --- | --- |
-${vocabTable}
-
-## Sample Phrases
-- *"${phrase1}"* — (Pronounced: *${phrase1}*) — Meaning: "A friend in shadows."
-- *"${phrase2}"* — (Pronounced: *${phrase2}*) — Meaning: "The leader of the city."`;
-
-  const lore = `### At a Glance
-- **Genre / Setting**: ${req.genre}
-- **Tone**: ${req.tone}
-- **Role**: ${req.role}
-- **Name Structure**: ${req.structure}
-
-### Example Names
-- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** — Defender (person)
-- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** — Moon Walker (person)
-- **${capitalize(generateWord(syllables, rng) + generateWord(syllables, rng))}** — Fire Seeker (person or lineage)
-
-### At the Table
-- Greet with *"${greeting}"* — literally "friend of light."
-- Lean on the ${req.tone.toLowerCase()} sound profile when voicing speakers.`;
-
-  return {
-    type: "note",
-    kind: "language",
+  const lexicon = meanings.map((meaning) => {
+    const word = generateUniqueWord(syllables, rng, usedWords);
+    return {
+      word,
+      pronunciation: word.toLocaleUpperCase(),
+      meaning,
+    };
+  });
+  const usedNames = new Set<string>();
+  const makeName = (): string => {
+    let name = capitalize(
+      generateWord(syllables, rng) + generateWord(syllables, rng),
+    );
+    while (usedNames.has(name.toLocaleLowerCase())) {
+      name += capitalize(generateWord(syllables, rng));
+    }
+    usedNames.add(name.toLocaleLowerCase());
+    return name;
+  };
+  const phrase = (first: number, second: number): string =>
+    `${capitalize(lexicon[first].word)} ${lexicon[second].word}`;
+  const profile: LanguageProfileV1 = {
+    inputs: {
+      genre: req.genre,
+      tone: req.tone,
+      role: req.role,
+      structure: req.structure,
+      ...(req.context?.trim() ? { worldContext: req.context.trim() } : {}),
+    },
+    phonology: {
+      consonants: syllables.consonants,
+      vowels: syllables.vowels,
+      phonotactics: syllables.patterns,
+    },
+    naming: {
+      examples: [
+        { name: makeName(), meaning: "defender", use: "person" },
+        { name: makeName(), meaning: "moon walker", use: "person" },
+        { name: makeName(), meaning: "fire seeker", use: "lineage" },
+      ],
+    },
+    lexicon,
+    grammar: {
+      phrasePatterns: ["Content word followed by a qualifying content word"],
+      examples: [
+        {
+          text: phrase(0, 4),
+          pronunciation: phrase(0, 4),
+          translation: "A friend in shadows.",
+          breakdown: "friend + shadow",
+        },
+        {
+          text: phrase(9, 6),
+          pronunciation: phrase(9, 6),
+          translation: "The leader of the city.",
+          breakdown: "leader + city",
+        },
+        {
+          text: phrase(0, 5),
+          pronunciation: phrase(0, 5),
+          translation: "Friend of light.",
+          breakdown: "friend + light",
+        },
+      ],
+    },
+    register: { role: req.role },
+    tableUseTips: [
+      `Use "${phrase(0, 5)}" as a greeting meaning "friend of light."`,
+      `Lean on the ${req.tone.toLocaleLowerCase()} sound profile when voicing speakers.`,
+    ],
+  };
+  const result: LanguageGenerationResultV1 = {
+    version: 1,
     title: languageName,
     summary: `A ${req.tone} ${req.role} spoken in the ${req.genre} setting.`,
-    lore,
-    content,
     labels: [
       "language",
       req.genre.toLowerCase().replace(/[^a-z0-9]/g, "-"),
       "conlang",
     ],
+    profile,
+  };
+  const validated = parseLanguageGenerationResult(result);
+  const quality = validateFallbackLanguageQuality(validated);
+  if (!quality.valid) {
+    throw new Error(
+      `Local language profile validation failed: ${quality.issues.join(" ")}`,
+    );
+  }
+  const { content, lore } = renderLanguageProfile(validated.profile);
+  return {
+    type: "note",
+    kind: "language",
+    title: result.title,
+    summary: result.summary,
+    lore,
+    content,
+    labels: result.labels,
     status: "active",
+    languageProfile: validated.profile,
+    languageProfileVersion: 1,
   };
 }

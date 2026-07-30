@@ -24,6 +24,18 @@ import {
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import {
+  parseLanguageResponse,
+  type LanguageGeneratorOptions,
+} from "./public-language";
+import {
+  parseLanguageGenerationResult,
+  validateAILanguageQuality,
+  validateFallbackLanguageQuality,
+  validateLanguageInputFidelity,
+  validateLanguageNameBans,
+} from "./language-profile";
+import type { LanguageGenerationResultV1 } from "schema";
 
 function completeText(result: string | AIGeneratorCompleteResult): string {
   return typeof result === "string" ? result : result.text;
@@ -149,6 +161,9 @@ export interface GeneratorVaultGateway {
       lore?: string;
       labels?: string[];
       kind?: string;
+      languageProfile?: LanguageGenerationResultV1["profile"];
+      languageProfileVersion?: 1;
+      start_date?: { year: number; month: number; day: number };
     },
   ): Promise<string>;
   /** Creates a relationship from source to target. */
@@ -186,6 +201,95 @@ export class DraftSaveError extends Error {
   }
 }
 
+/** User-readable error raised when neither AI nor local language output is safe. */
+export class LanguageGenerationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "LanguageGenerationError";
+  }
+}
+
+function languageResultFromOutput(
+  output: PublicGeneratorOutput,
+): LanguageGenerationResultV1 {
+  return parseLanguageGenerationResult({
+    version: output.languageProfileVersion,
+    title: output.title,
+    summary: output.summary,
+    labels: output.labels,
+    profile: output.languageProfile,
+  });
+}
+
+function languageGeneratorOutput(
+  output: PublicGeneratorOutput,
+): GeneratorOutput {
+  return {
+    title: output.title,
+    summary: output.summary ?? "",
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+    languageProfile: output.languageProfile,
+    languageProfileVersion: output.languageProfileVersion,
+  };
+}
+
+function languageOptions(
+  request: GeneratorRunRequest,
+): LanguageGeneratorOptions {
+  const option = (key: string, fallback: string): string => {
+    const value = request.options[key];
+    return typeof value === "string" && value.trim() ? value : fallback;
+  };
+  return {
+    genre: option("genre", "Classic Fantasy"),
+    tone: option("tone", "Lyrical & Vowel-rich"),
+    role: option("role", "Common Speech"),
+    structure: option("structure", "Compound Words"),
+  };
+}
+
+function languageRepairPrompt(raw: string, issues: string[]): string {
+  return `Repair the following language-generator response. Return one complete replacement JSON object matching LanguageGenerationResultV1, with no markdown fence or commentary.
+
+Validation problems:
+${issues.map((issue) => `- ${issue}`).join("\n")}
+
+Previous response:
+${raw}`;
+}
+
+export function assertValidLanguageFallback(
+  output: GeneratorOutput,
+  bannedNames: Iterable<string> = [],
+): LanguageGenerationResultV1 {
+  try {
+    const result = parseLanguageGenerationResult({
+      version: output.languageProfileVersion,
+      title: output.title,
+      summary: output.summary,
+      labels: output.labels,
+      profile: output.languageProfile,
+    });
+    const issues = [
+      ...validateFallbackLanguageQuality(result).issues,
+      ...validateLanguageNameBans(result, bannedNames).issues,
+    ];
+    if (issues.length) {
+      throw new LanguageGenerationError(
+        `The local language generator could not produce a safe, complete profile: ${issues.join(" ")}`,
+      );
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof LanguageGenerationError) throw error;
+    throw new LanguageGenerationError(
+      "The local language generator could not produce a valid profile. Please try again.",
+    );
+  }
+}
+
 /**
  * Orchestrates draft generation and save. Generation is pure and never mutates
  * vault data; only {@link saveDraft} writes, and only through the injected
@@ -211,6 +315,125 @@ export class CampaignGeneratorService {
     this.aiGateway = deps.aiGateway;
     this.onInteractionResult = deps.onInteractionResult;
     this.onPromptMetrics = deps.onPromptMetrics;
+  }
+
+  private assessLanguageResponse(
+    raw: string,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ):
+    | { output: GeneratorOutput; issues: [] }
+    | { output?: undefined; issues: string[] } {
+    try {
+      const publicOutput = parseLanguageResponse(raw);
+      const result = languageResultFromOutput(publicOutput);
+      const expected = languageOptions(request);
+      const issues = [
+        ...validateAILanguageQuality(result).issues,
+        ...validateLanguageInputFidelity(result, expected).issues,
+        ...validateLanguageNameBans(result, bannedNames).issues,
+      ];
+      if (issues.length) return { issues };
+      return { output: languageGeneratorOutput(publicOutput), issues: [] };
+    } catch (error) {
+      return {
+        issues: [
+          error instanceof Error
+            ? `Structural validation failed: ${error.message}`
+            : "Structural validation failed.",
+        ],
+      };
+    }
+  }
+
+  private async generateLanguageWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): Promise<GeneratedDraft | null> {
+    if (!this.aiGateway) return null;
+    const fullPrompt = generator.buildPrompt({
+      ...request,
+      interaction: undefined,
+    });
+    const prompt = request.interaction
+      ? generator.buildPrompt(request)
+      : fullPrompt;
+    const interaction = request.interaction
+      ? {
+          ...request.interaction,
+          input: withGeneratorRequest(request.interaction.input, prompt),
+          replayPrompt: request.interaction.replayPrompt ?? fullPrompt,
+        }
+      : undefined;
+
+    try {
+      const initial = await this.aiGateway.complete(
+        fullPrompt,
+        SYSTEM_INSTRUCTION,
+        { interaction },
+      );
+      const first = this.assessLanguageResponse(
+        completeText(initial),
+        request,
+        bannedNames,
+      );
+      if (first.output) {
+        if (typeof initial !== "string" && initial.usedInteraction) {
+          this.onInteractionResult?.(initial);
+        }
+        this.onPromptMetrics?.(
+          promptMetrics({
+            request,
+            fullPrompt,
+            sentPrompt:
+              typeof initial !== "string" && initial.replayed
+                ? (interaction?.replayPrompt ?? fullPrompt)
+                : (interaction?.input ?? fullPrompt),
+            usedInteraction:
+              typeof initial !== "string" && initial.usedInteraction,
+            replayed: typeof initial !== "string" && !!initial.replayed,
+          }),
+        );
+        return generator.mapOutputToDraft(first.output, request);
+      }
+
+      try {
+        const repair = await this.aiGateway.complete(
+          languageRepairPrompt(completeText(initial), first.issues),
+          SYSTEM_INSTRUCTION,
+        );
+        const repaired = this.assessLanguageResponse(
+          completeText(repair),
+          request,
+          bannedNames,
+        );
+        if (repaired.output) {
+          return generator.mapOutputToDraft(repaired.output, request);
+        }
+      } catch {
+        // A failed repair call still leaves the one clean regeneration attempt.
+      }
+
+      try {
+        const regeneration = await this.aiGateway.complete(
+          fullPrompt,
+          SYSTEM_INSTRUCTION,
+        );
+        const regenerated = this.assessLanguageResponse(
+          completeText(regeneration),
+          request,
+          bannedNames,
+        );
+        return regenerated.output
+          ? generator.mapOutputToDraft(regenerated.output, request)
+          : null;
+      } catch {
+        return null;
+      }
+    } catch {
+      return null;
+    }
   }
 
   private async generateDungeonWithAI(
@@ -363,7 +586,25 @@ export class CampaignGeneratorService {
       if (dungeonDraft) return dungeonDraft;
     }
 
-    if (canUseAI && this.aiGateway && mergedRequest.generatorId !== "dungeon") {
+    if (
+      canUseAI &&
+      this.aiGateway &&
+      mergedRequest.generatorId === "language"
+    ) {
+      const languageDraft = await this.generateLanguageWithAI(
+        generator,
+        mergedRequest,
+        bannedNames,
+      );
+      if (languageDraft) return languageDraft;
+    }
+
+    if (
+      canUseAI &&
+      this.aiGateway &&
+      mergedRequest.generatorId !== "dungeon" &&
+      mergedRequest.generatorId !== "language"
+    ) {
       const fullPrompt = generator.buildPrompt({
         ...mergedRequest,
         interaction: undefined,
@@ -435,7 +676,21 @@ export class CampaignGeneratorService {
       }
     }
 
-    let output = generator.generate(mergedRequest);
+    let output: GeneratorOutput;
+    try {
+      output = generator.generate(mergedRequest);
+    } catch (error) {
+      if (mergedRequest.generatorId === "language") {
+        throw new LanguageGenerationError(
+          "The local language generator could not produce a valid profile. Please try again.",
+        );
+      }
+      throw error;
+    }
+    if (mergedRequest.generatorId === "language") {
+      assertValidLanguageFallback(output, bannedNames);
+      return generator.mapOutputToDraft(output, mergedRequest);
+    }
     // Retry up to 5× if the generated title collides with a banned name.
     for (let i = 0; i < 5 && isTitleBanned(output.title, bannedNames); i++) {
       output = generator.generate(mergedRequest);
@@ -478,6 +733,8 @@ export class CampaignGeneratorService {
           draft.sourceGeneratorId === "dungeon"
             ? draft.sourceGeneratorId
             : undefined,
+        languageProfile: draft.languageProfile,
+        languageProfileVersion: draft.languageProfileVersion,
         ...(request.start_date ? { start_date: request.start_date } : {}),
       },
     );
