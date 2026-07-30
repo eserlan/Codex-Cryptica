@@ -86,6 +86,15 @@ export class GraphContextMenuController {
       this.contextMenuOpen = true;
     };
 
+    const backgroundContextMenuHandler = (evt: EventObject) => {
+      if (evt.target === this.getCy()) {
+        this.targetId = null;
+        this.selectedNodes = [];
+        this.position = evt.renderedPosition || { x: 0, y: 0 };
+        this.contextMenuOpen = true;
+      }
+    };
+
     const closeHandler = () => {
       this.clearPickerTimeout();
       this.contextMenuOpen = false;
@@ -95,13 +104,26 @@ export class GraphContextMenuController {
     };
 
     this.getCy().on("cxttap", "node", openHandler);
+    this.getCy().on("cxttap", backgroundContextMenuHandler);
     this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
       this.getCy().off("cxttap", "node", openHandler);
+      this.getCy().off("cxttap", backgroundContextMenuHandler);
       this.getCy().off("tap", closeHandler);
     };
+  };
+
+  handleCreateNewEntity = () => {
+    this.clearPickerTimeout();
+    this.contextMenuOpen = false;
+    this.canvasPickerOpen = false;
+    this.categoryPickerOpen = false;
+    this.imagePickerOpen = false;
+    if (!this.deps.vault.isGuest) {
+      this.deps.modalUIStore.openIntentCreateMenu();
+    }
   };
 
   clearPickerTimeout = () => {
