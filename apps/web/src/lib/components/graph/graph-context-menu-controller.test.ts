@@ -39,6 +39,7 @@ describe("GraphContextMenuController", () => {
         openCanvasSelection: vi.fn(),
         openLightbox: vi.fn(),
         openRevisionDialog: vi.fn(),
+        openIntentCreateMenu: vi.fn(),
       },
       connectionModeStore: { startSelectionConnection: vi.fn() },
       notificationStore: {
@@ -47,7 +48,7 @@ describe("GraphContextMenuController", () => {
       },
     };
 
-    controller = new GraphContextMenuController(cy, deps);
+    controller = new GraphContextMenuController(() => cy, deps);
   });
 
   it("should set central node and close menu", () => {
@@ -247,5 +248,44 @@ describe("GraphContextMenuController", () => {
 
     expect(deps.notificationStore.confirm).toHaveBeenCalled();
     expect(deps.vault.deleteEntity).toHaveBeenCalledWith("node-1");
+  });
+
+  it("should open context menu at cursor position when right clicking empty space", () => {
+    let bgHandler: any;
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "cxttap" && args.length === 1) {
+        bgHandler = args[0];
+      }
+    });
+
+    controller.setupEvents();
+
+    expect(bgHandler).toBeDefined();
+
+    bgHandler({ target: cy, renderedPosition: { x: 150, y: 250 } });
+
+    expect(controller.targetId).toBeNull();
+    expect(controller.selectedNodes).toEqual([]);
+    expect(controller.position).toEqual({ x: 150, y: 250 });
+    expect(controller.contextMenuOpen).toBe(true);
+  });
+
+  it("should handle handleCreateNewEntity by closing menu and opening create modal", () => {
+    controller.contextMenuOpen = true;
+
+    controller.handleCreateNewEntity();
+
+    expect(controller.contextMenuOpen).toBe(false);
+    expect(deps.modalUIStore.openIntentCreateMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not open create modal from handleCreateNewEntity in guest mode", () => {
+    deps.vault.isGuest = true;
+    controller.contextMenuOpen = true;
+
+    controller.handleCreateNewEntity();
+
+    expect(controller.contextMenuOpen).toBe(false);
+    expect(deps.modalUIStore.openIntentCreateMenu).not.toHaveBeenCalled();
   });
 });
