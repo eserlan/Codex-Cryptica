@@ -10,7 +10,6 @@
 	/>
 	<!-- Non-blocking Google Fonts: preconnect + preload/swap to avoid render-blocking -->
 	<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- First-paint fonts: workspace default theme only (Inter + Fraunces) -->
 	<!-- display=optional: skip the font swap if not in cache, eliminating FOUT-driven CLS on the landing heading -->
@@ -141,6 +140,31 @@
 
 <body data-sveltekit-preload-data="tap">
 	<div style="display: contents">%sveltekit.body%</div>
+	<script>
+		// Generator free-text fields need room for complete briefs, context, and constraints.
+		// Apply centrally so every current and future generator gets the same limit.
+		(function () {
+			const generatorTextareaMaxLength = 4000;
+
+			function expandGeneratorTextareas() {
+				document.querySelectorAll('#generate-button').forEach((button) => {
+					const form = button.closest('form');
+					if (!form) return;
+					form.querySelectorAll('textarea').forEach((textarea) => {
+						if (textarea.maxLength > 0 && textarea.maxLength < generatorTextareaMaxLength) {
+							textarea.maxLength = generatorTextareaMaxLength;
+						}
+					});
+				});
+			}
+
+			expandGeneratorTextareas();
+			new MutationObserver(expandGeneratorTextareas).observe(document.body, {
+				childList: true,
+				subtree: true
+			});
+		})();
+	</script>
 	<!-- Cloudflare Web Analytics -->
 	<script
 		defer
