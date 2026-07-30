@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.31.0",
+    "title": "The Guided Worldbuilding Update",
+    "date": "2026-07-30",
+    "type": "minor",
+    "highlights": [
+      "Guided Mode Assistance: Toggleable workflow assistant that dynamically analyzes your campaign vault to suggest structural next steps and lore connections.",
+      "Quick Start Wizard: Onboard new campaigns in seconds with theme selection, genre styling, and pre-seeded starter constellations.",
+      "Intent-Driven Entity Creation: Draft new characters, factions, locations, and lore based on narrative intent rather than bare category forms.",
+      "Starter Constellation Seeds: Pre-connected lore networks that give new worlds immediate depth and relationship links out of the box.",
+      "Contextual Structural Banners: Non-intrusive workspace banners highlighting missing connections and logical next steps for your active setting."
+    ]
+  },
+  {
     "version": "0.30.0",
     "title": "The Dungeon & Delve Update",
     "date": "2026-07-28",

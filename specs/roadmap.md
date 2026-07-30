@@ -34,6 +34,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.31.0 — The Guided Worldbuilding Update (2026-07-30)
+
+- **Highlights**: Guided Mode workflow assistance dynamically analyzing vault state for structural recommendations and lore gaps; Quick Start onboarding wizard for campaign theme selection and seed constellation generation; Intent-Driven Entity Creator drafting grounded entities based on narrative intent; pre-connected Starter Constellations providing instant world depth; and non-intrusive workspace banners with contextual recommendations.
+- **Associated Specifications**:
+  - [148-guided-mode-quickstart](./148-guided-mode-quickstart/spec.md) (Guided Mode & Quick Start, 2026-07-30)
+
 ### v0.30.0 — The Dungeon & Delve Update (2026-07-28)
 
 - **Highlights**: The Dungeon / Delve Idea Generator, building coherent explorable locations across all CC world themes around a purpose→history→current state→conflict→signature feature chain, with key areas, factions, hazards, a central secret, and hooks; the companion Dungeon & Delve Structural Builder turning a generated delve into a room-by-room map with connections, loops, and hidden routes on an interactive canvas; Layered Art Direction v2 (faction-inherited visual identity, a stature/scale axis, canon-preserving subject compression); a redesigned first-run onboarding tour and Getting Started hub; CIF Mechanical Importer Phase 2 (ZIP packages with image assets); Thread Weaver/Scabard import support with a migration guide; and mobile entity image uploads.
