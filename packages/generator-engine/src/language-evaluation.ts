@@ -9,12 +9,22 @@ import { LANGUAGE_PROMPT_VERSION } from "./public-language";
 
 export const LANGUAGE_EVALUATION_CRITERIA = [
   "controlFidelity",
+  "identitySensitivity",
   "consistency",
+  "compositionalConsistency",
+  "ruleDemonstration",
+  "phonologicalCompliance",
   "grounding",
   "completeness",
   "presentationFidelity",
   "reusability",
   "nameSafety",
+] as const;
+
+export const LANGUAGE_IDENTITY_ROLE_CASE_IDS = [
+  "identity-common",
+  "identity-ritual",
+  "identity-imperial",
 ] as const;
 
 export type LanguageEvaluationCriterion =
@@ -105,6 +115,45 @@ export const LANGUAGE_EVALUATION_CASES: readonly LanguageEvaluationCase[] = [
         "Floating orchards negotiate water rights with migratory machine reefs.",
     },
     bannedNames: ["Maris", "Coral"],
+  },
+  {
+    id: "identity-common",
+    description: "Identity sensitivity baseline for common speech.",
+    inputs: {
+      genre: "Classic Fantasy",
+      tone: "Lyrical & Vowel-rich",
+      role: "Common Speech",
+      structure: "Compound Words",
+      worldContext:
+        "The old kingdoms share a vowel-rich language around mossy river valleys.",
+    },
+    bannedNames: ["Vane"],
+  },
+  {
+    id: "identity-ritual",
+    description: "Identity sensitivity variant for ritual use.",
+    inputs: {
+      genre: "Classic Fantasy",
+      tone: "Lyrical & Vowel-rich",
+      role: "Sacred / Ritual Tongue",
+      structure: "Compound Words",
+      worldContext:
+        "The old kingdoms share a vowel-rich language around mossy river valleys.",
+    },
+    bannedNames: ["Vane"],
+  },
+  {
+    id: "identity-imperial",
+    description: "Identity sensitivity variant for imperial use.",
+    inputs: {
+      genre: "Classic Fantasy",
+      tone: "Lyrical & Vowel-rich",
+      role: "Imperial Standard",
+      structure: "Compound Words",
+      worldContext:
+        "The old kingdoms share a vowel-rich language around mossy river valleys.",
+    },
+    bannedNames: ["Vane"],
   },
 ] as const;
 
@@ -213,6 +262,38 @@ export function validateLanguageEvaluation(
       issues.push(
         `${record.caseId} sample ${record.sample} has mean score ${mean.toFixed(2)}; minimum is 1.50.`,
       );
+    }
+  }
+
+  for (const sample of [1, 2, 3]) {
+    const matrix = LANGUAGE_IDENTITY_ROLE_CASE_IDS.map((caseId) =>
+      records.find(
+        (record) => record.caseId === caseId && record.sample === sample,
+      ),
+    );
+    if (matrix.some((record) => !record)) continue;
+    try {
+      const identities = matrix.map((record) => {
+        const result = parseLanguageGenerationResult(
+          JSON.parse(record!.rawResult),
+        );
+        return {
+          title: result.title.trim().toLocaleLowerCase(),
+          summary: result.summary.trim().toLocaleLowerCase(),
+        };
+      });
+      if (
+        new Set(identities.map((identity) => identity.title)).size !==
+          identities.length ||
+        new Set(identities.map((identity) => identity.summary)).size !==
+          identities.length
+      ) {
+        issues.push(
+          `identity role matrix sample ${sample} reuses a title or summary across role variants.`,
+        );
+      }
+    } catch {
+      // Per-record structural validation already reports malformed raw output.
     }
   }
 

@@ -242,6 +242,12 @@ export interface GeneratorInteractionRequest {
 
 export interface AIGeneratorCompleteOptions {
   interaction?: GeneratorInteractionRequest;
+  generationConfig?: {
+    temperature?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+    responseMimeType?: string;
+  };
 }
 
 export interface AIGeneratorCompleteResult {

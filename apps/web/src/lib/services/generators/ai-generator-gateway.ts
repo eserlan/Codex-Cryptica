@@ -12,7 +12,7 @@ const GENERATOR_MODEL = "gemini-3.5-flash-lite";
 const GENERATOR_GENERATION_CONFIG = {
   temperature: 0.85,
   topP: 0.95,
-  maxOutputTokens: 2048,
+  maxOutputTokens: 4096,
   responseMimeType: "application/json",
 };
 
@@ -59,6 +59,10 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     options?: AIGeneratorCompleteOptions,
   ) {
     const interaction = options?.interaction;
+    const generationConfig = {
+      ...GENERATOR_GENERATION_CONFIG,
+      ...options?.generationConfig,
+    };
     if (interaction) {
       try {
         const result = await this.clientManager.sendInteraction({
@@ -67,7 +71,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
           systemInstruction,
           previousInteractionId: interaction.previousInteractionId,
           storeConversation: interaction.store ?? true,
-          generationConfig: GENERATOR_GENERATION_CONFIG,
+          generationConfig,
         });
         return {
           text: extractJsonObject(result.text),
@@ -82,7 +86,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
           systemInstruction,
           previousInteractionId: null,
           storeConversation: interaction.store ?? true,
-          generationConfig: GENERATOR_GENERATION_CONFIG,
+          generationConfig,
         });
         return {
           text: extractJsonObject(result.text),
@@ -104,9 +108,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     // object so generationConfig reaches both the proxy and direct-key paths.)
     const response = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        ...GENERATOR_GENERATION_CONFIG,
-      },
+      generationConfig,
     });
     // Salvage the JSON object even if the model appends trailing garbage (a
     // known degenerate-repetition failure mode) — JSON mode isn't reliably
