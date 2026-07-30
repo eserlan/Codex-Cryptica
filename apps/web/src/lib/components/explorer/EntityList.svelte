@@ -409,7 +409,7 @@
               cta={vault.isGuest ? undefined : "＋ Create your first entity"}
               onCta={vault.isGuest
                 ? undefined
-                : () => modalUIStore.requestCreateEntity()}
+                : () => modalUIStore.openIntentCreateMenu()}
             />
           {:else}
             <EmptyState
