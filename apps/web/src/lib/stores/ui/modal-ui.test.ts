@@ -136,6 +136,7 @@ describe("ModalUIStore", () => {
       generatorId: "npc",
       prefillDate: null,
       autoGenerate: false,
+      initialPrompt: null,
     });
     store.closeGeneratorWorkflow();
     expect(store.generatorWorkflow.open).toBe(false);
@@ -159,19 +160,21 @@ describe("ModalUIStore", () => {
       generatorId: "faction",
       prefillDate: null,
       autoGenerate: false,
+      initialPrompt: null,
     });
   });
 
-  it("openIntentGeneratorWorkflow configures generator workflow without auto-generating", () => {
+  it("openIntentGeneratorWorkflow auto-generates with contextual launch and initialPrompt when given", () => {
     const store = new ModalUIStore();
-    store.openIntentGeneratorWorkflow("npc", "src-1");
+    store.openIntentGeneratorWorkflow("npc", "src-1", "Cyberpunk hacker");
     expect(store.generatorWorkflow).toEqual({
       open: true,
       launchMode: "contextual",
       sourceEntityId: "src-1",
       generatorId: "npc",
       prefillDate: null,
-      autoGenerate: false,
+      autoGenerate: true,
+      initialPrompt: "Cyberpunk hacker",
     });
   });
 
@@ -179,7 +182,8 @@ describe("ModalUIStore", () => {
     const store = new ModalUIStore();
     store.openIntentGeneratorWorkflow("faction");
     expect(store.generatorWorkflow.launchMode).toBe("workspace");
-    expect(store.generatorWorkflow.autoGenerate).toBe(false);
+    expect(store.generatorWorkflow.autoGenerate).toBe(true);
+    expect(store.generatorWorkflow.initialPrompt).toBeNull();
   });
 
   it("openIntentCreateMenu and closeIntentCreateMenu toggle the intent menu", () => {

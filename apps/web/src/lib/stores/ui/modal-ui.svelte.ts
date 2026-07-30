@@ -208,12 +208,8 @@ export class ModalUIStore {
     sourceEntityId: string | null;
     generatorId: string | null;
     prefillDate?: { year: number; month: number; day: number } | null;
-    /**
-     * Guided Mode intent-first `+ Create` (#1909): skip the configure step and
-     * generate sensible defaults immediately. "Customize" (the review step's
-     * Back button) returns to configure without losing the inferred context.
-     */
     autoGenerate: boolean;
+    initialPrompt?: string | null;
   }>({
     open: false,
     launchMode: "workspace",
@@ -221,6 +217,7 @@ export class ModalUIStore {
     generatorId: null,
     prefillDate: null,
     autoGenerate: false,
+    initialPrompt: null,
   });
 
   /** Open the unified generator workflow from the campaign workspace. */
@@ -235,6 +232,7 @@ export class ModalUIStore {
       generatorId,
       prefillDate,
       autoGenerate: false,
+      initialPrompt: null,
     };
   }
 
@@ -250,17 +248,19 @@ export class ModalUIStore {
       generatorId,
       prefillDate: null,
       autoGenerate: false,
+      initialPrompt: null,
     };
   }
 
   /**
    * Open the generator workflow from the Guided Mode intent-first `+ Create`
-   * menu: opens at the configure step pre-selected to the intent category
-   * so the user can enter optional initial input before creation.
+   * menu: generates immediately with inferred context, default options, and
+   * optional initial prompt text from the user.
    */
   openIntentGeneratorWorkflow(
     generatorId: string,
     sourceEntityId: string | null = null,
+    initialPrompt: string | null = null,
   ) {
     this.generatorWorkflow = {
       open: true,
@@ -268,7 +268,8 @@ export class ModalUIStore {
       sourceEntityId,
       generatorId,
       prefillDate: null,
-      autoGenerate: false,
+      autoGenerate: true,
+      initialPrompt,
     };
   }
 
@@ -280,6 +281,7 @@ export class ModalUIStore {
       generatorId: null,
       prefillDate: null,
       autoGenerate: false,
+      initialPrompt: null,
     };
   }
 

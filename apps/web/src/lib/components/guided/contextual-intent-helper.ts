@@ -40,6 +40,6 @@ export function resolveIntentContext(
   return {
     generatorId,
     sourceEntityId: input.activeEntity?.id ?? null,
-    autoGenerate: false,
+    autoGenerate: generatorId !== null,
   };
 }
