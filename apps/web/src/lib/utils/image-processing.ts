@@ -45,12 +45,16 @@ async function encodeCanvasBlob(
   canvas: HTMLCanvasElement | OffscreenCanvas,
   quality: number,
 ): Promise<Blob> {
+  // OffscreenCanvas is the only one of the two with convertToBlob, so check
+  // for that first — some browsers (Firefox) also expose a deprecated toBlob
+  // on OffscreenCanvas, which would otherwise win this check and log a
+  // deprecation warning on every encode.
   const encode = (type: string): Promise<Blob | null> =>
-    "toBlob" in canvas
-      ? new Promise<Blob | null>((r) =>
+    "convertToBlob" in canvas
+      ? (canvas as OffscreenCanvas).convertToBlob({ type, quality })
+      : new Promise<Blob | null>((r) =>
           (canvas as HTMLCanvasElement).toBlob(r, type, quality),
-        )
-      : (canvas as OffscreenCanvas).convertToBlob({ type, quality });
+        );
 
   const webp = await encode("image/webp");
   if (webp) return webp;
