@@ -1,6 +1,8 @@
 /**
  * Starter Constellation & Intent Generator Contract
- * Location: packages/generator-engine/src/starter-constellation-types.ts
+ *
+ * Shapes for the Guided Mode / Quick Start experience (#1909). Framework-free:
+ * this file only declares data shapes, no AI or storage access.
  */
 
 export interface StarterConstellationConfig {
@@ -24,9 +26,12 @@ export interface ConstellationRelationship {
   targetId: string;
   relation: string;
   /**
-   * Accepted from local/AI generation but NOT acted on when saving: the web
-   * app always creates exactly one connection, sourceId → targetId. See
-   * data-model.md for why a duplicated reverse connection is wrong here.
+   * Accepted from local/AI generation but not acted on by the web app when
+   * saving: exactly one connection (sourceId → targetId) is always created,
+   * in the direction implied by `relation` (e.g. Settlement → located in →
+   * Region). A single connection already renders as one graph edge —
+   * creating the reverse direction too would draw a duplicate,
+   * backwards-reading edge.
    */
   bidirectional?: boolean;
 }

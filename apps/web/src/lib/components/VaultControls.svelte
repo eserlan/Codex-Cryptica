@@ -15,6 +15,7 @@
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -406,8 +407,9 @@
           ></span>
           EXIT GUEST MODE
         </button>
-      {:else}
-        <!-- Main Actions -->
+      {:else if !guidedModeStore.isGuidedMode}
+        <!-- Main Actions — made redundant by the Guided Mode "+ Create" flow,
+             so this whole cluster is Full Toolbox only. -->
         <button
           type="button"
           class={isVertical

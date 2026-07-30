@@ -1,9 +1,11 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultSwitcherModal from "./VaultSwitcherModal.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
   () => ({
@@ -48,18 +50,20 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
-  modalUIStore: {
-    vaultSwitcherIntent: null,
-    openVaultSwitcher: vi.fn(),
-  },
-}));
+vi.mock("$lib/stores/ui/modal-ui.svelte", async () => {
+  const actual = await vi.importActual<
+    typeof import("$lib/stores/ui/modal-ui.svelte")
+  >("$lib/stores/ui/modal-ui.svelte");
+  return { modalUIStore: actual.modalUIStore };
+});
 
 describe("VaultSwitcherModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vaultRegistry.availableVaults = [];
     vaultRegistry.activeVaultId = null;
+    modalUIStore.vaultSwitcherIntent = null;
+    modalUIStore.closeQuickStartModal();
     if (!Element.prototype.animate) {
       Element.prototype.animate = vi.fn(
         () =>
@@ -146,5 +150,24 @@ describe("VaultSwitcherModal", () => {
     renderModal();
 
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
+  });
+
+  it("triggers Quick Start (mounted once, globally) via the shared modalUIStore flag instead of a local duplicate", async () => {
+    const { onClose } = renderModal();
+
+    await fireEvent.click(screen.getByTestId("quick-start-world-button"));
+    expect(modalUIStore.showQuickStartModal).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes the switcher once Quick Start finishes/cancels", async () => {
+    const { onClose } = renderModal();
+
+    modalUIStore.openQuickStartModal();
+    await tick();
+    expect(onClose).not.toHaveBeenCalled();
+
+    modalUIStore.closeQuickStartModal();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 });

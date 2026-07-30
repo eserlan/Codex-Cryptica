@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
@@ -18,9 +19,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     isGuest: false,
     status: "idle",
   },
-}));
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
-  modalUIStore: { showSettings: false, showDiceModal: false },
 }));
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: { mainViewMode: "graph", focusedEntityId: null },
@@ -76,6 +74,9 @@ describe("root +page.svelte — front page overlay keydown", () => {
     onboardingStore.dismissedWorldPage = false;
     onboardingStore.skipWelcomeScreen = true;
     onboardingStore.dismissedLandingPage = true;
+    modalUIStore.showSettings = false;
+    modalUIStore.showDiceModal = false;
+    modalUIStore.closeQuickStartModal();
   });
 
   it("presents the root landing page as a private local-first RPG vault", () => {
@@ -102,7 +103,7 @@ describe("root +page.svelte — front page overlay keydown", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        /opens a prebuilt sample world instantly\. no setup required\./i,
+        /quick start generates a ready-to-explore world in seconds/i,
       ),
     ).toBeTruthy();
     expect(screen.getByText("Local-first vault")).toBeTruthy();
@@ -160,5 +161,32 @@ describe("root +page.svelte — front page overlay keydown", () => {
     render(RoutePage);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onboardingStore.dismissedWorldPage).toBe(true);
+  });
+
+  it("opens Quick Start (not the blank vault switcher) from the welcome page's primary create action", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(modalUIStore.showQuickStartModal).toBe(false);
+    await fireEvent.click(screen.getByTestId("welcome-quick-start-button"));
+
+    // Quick Start itself is mounted once, globally, via GlobalModalProvider —
+    // not by this page — so we assert the shared trigger flag here.
+    expect(modalUIStore.showQuickStartModal).toBe(true);
+    expect(onboardingStore.dismissedLandingPage).toBe(true);
+  });
+
+  it("opens Quick Start from the Living Lore Graph preview card too", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    await fireEvent.click(screen.getByTestId("welcome-preview-button"));
+
+    expect(modalUIStore.showQuickStartModal).toBe(true);
+    expect(onboardingStore.dismissedLandingPage).toBe(true);
   });
 });

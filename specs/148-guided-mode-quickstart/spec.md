@@ -16,6 +16,7 @@ This feature introduces a **Guided Mode / Quick Start experience** that progress
 ## Clarifications
 
 ### Session 2026-07-30
+
 - Q: How should the Quick Start experience be presented when creating or opening a world? → A: Display a prominent 'Quick Start World' card alongside 'Empty Workspace' on the New World creation modal.
 - Q: Should the Guided Mode setting be saved per-world or as a global browser preference? → A: Global browser preference (default ON for new users, persists until toggled off).
 - Q: Where should the primary intent-first '+ Create' button be located in Guided Mode? → A: Top app header button + floating action button on workspace view.
@@ -37,7 +38,7 @@ As a new user creating a world, I want to provide a genre/theme and an optional 
 
 1. **Given** the New World creation modal, **When** the user selects the prominent "Quick Start World" card (alongside "Empty Workspace"), **Then** the Quick Start prompt appears requesting a genre/theme selection and optional premise.
 2. **Given** a Space Opera theme, **When** generating a starter constellation, **Then** the generated entities automatically adapt to Space Opera archetypes (e.g., Star System, Planet, Faction, Character, Crisis) rather than standard fantasy defaults.
-3. **Given** the generated starter constellation, **When** inspecting the entities in the world explorer or graph, **Then** the entities contain automatic bidirectional references linking them together into a coherent scenario web.
+3. **Given** the generated starter constellation, **When** inspecting the entities in the world explorer or graph, **Then** every entity is linked by a correctly-directed connection (e.g. Settlement → located in → Region) into one coherent, fully-connected scenario web — a single connection per relationship, not a duplicated reverse edge.
 
 ---
 
@@ -103,13 +104,15 @@ As a Game Master, I want Codex Cryptica to display a subtle suggestion banner at
 ### Functional Requirements
 
 #### Quick Start & Starter Constellation
+
 - **FR-001**: System MUST provide a "Quick Start World" option alongside "Empty Workspace" on the New World creation modal.
 - **FR-002**: System MUST generate an interconnected starter constellation of 4–6 entities upon Quick Start completion.
 - **FR-003**: Starter constellation entity types MUST dynamically adapt to the selected theme (e.g. Region/Settlement/Faction/Character/Threat for Fantasy vs District/Corporation/Gang/Character/Conflict for Cyberpunk).
-- **FR-004**: System MUST automatically create bidirectional relationships between entities in the generated starter constellation.
+- **FR-004**: System MUST automatically create connections between entities in the generated starter constellation so every entity is linked into a single connected web. Each relationship MUST be saved as one correctly-directed connection (e.g. Settlement → located in → Region) — never duplicated in the reverse direction, which would render as a second, backwards-reading edge.
 - **FR-005**: Quick Start MUST support local deterministic generation fallback when AI generation is unavailable.
 
 #### Intent-First Context-Aware Creation
+
 - **FR-006**: System MUST provide an intent-first `+ Create` button in the top app header and floating on the workspace view.
 - **FR-007**: Intent choices MUST present simplified categories: Character, Place, Faction, Event, Item, or Custom.
 - **FR-008**: System MUST automatically infer theme, parent entity ID, location, and structural context when invoking `+ Create` from an entity view.
@@ -117,13 +120,19 @@ As a Game Master, I want Codex Cryptica to display a subtle suggestion banner at
 - **FR-010**: Users MUST be able to click "Customize" on any draft to reveal full generator parameters without losing current draft progress.
 
 #### Guided UI & Progressive Disclosure
+
 - **FR-011**: System MUST store Guided Mode as a global browser preference, defaulting to ON for new users and persisting across sessions until toggled.
 - **FR-012**: Guided Mode MUST simplify the interface surface by hiding advanced secondary panels and focusing on world content and primary creation actions.
 - **FR-013**: Toggling between Guided Mode and Full Toolbox mode MUST be instantaneous, non-destructive, and preserve all world data, open tabs, and draft state.
 
 #### Contextual Recommendations
+
 - **FR-014**: System MUST evaluate structural heuristics on entities (e.g. unlinked leaders, empty regions, unassigned threats) and display a subtle suggestion banner at the bottom of the entity detail panel.
 - **FR-015**: Clicking a next-step suggestion MUST trigger the context-aware `+ Create` workflow with the target parent context pre-attached.
+
+#### Graph Presentation
+
+- **FR-016**: Bulk entity/connection creation (Quick Start) and single-entity creation via the intent-first `+ Create` flow (including the "Add Leader"-style suggestion-banner action) MUST trigger a graph layout redraw once complete, so newly created entities are spread into a readable layout instead of piling on top of each other or their neighbor.
 
 ---
 
@@ -142,6 +151,6 @@ As a Game Master, I want Codex Cryptica to display a subtle suggestion banner at
 
 - **SC-001**: New users can generate a complete, playable 4–6 entity starter world in under 30 seconds from world creation.
 - **SC-002**: First-time creation flow (`+ Create` → draft review) requires 0 upfront form configuration steps for 80%+ of standard entity creations.
-- **SC-003**: 100% of starter constellation entities contain valid bidirectional cross-links in the world graph.
+- **SC-003**: 100% of starter constellation entities contain at least one valid, correctly-directed connection linking them into the world graph, with no duplicated reverse-direction edges.
 - **SC-004**: Toggling Guided ↔ Full mode executes in under 100ms with zero data loss or page reloads.
 - **SC-005**: Local offline fallback produces a valid starter constellation across all 15 supported themes without throwing runtime errors.

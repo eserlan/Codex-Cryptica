@@ -21,7 +21,7 @@ This feature implements a Guided Mode & Quick Start onboarding experience for Co
 **Project Type**: Monorepo Workspace (`packages/generator-engine`, `apps/web`)  
 **Performance Goals**: Starter constellation generation <30s (AI) / <1s (local); Guided Mode UI toggle <100ms  
 **Constraints**: Client-side local offline fallback required; zero state loss on mode toggle; adherence to `@docs/STYLE_GUIDE.md` (Svelte 5 Runes, Tailwind 4 semantic tokens, Iconify utility icons)  
-**Scale/Scope**: 15 themes supported in generator engine; 1 global Guided Mode preference; 4 intent types  
+**Scale/Scope**: 15 themes supported in generator engine; 1 global Guided Mode preference; 4 intent types
 
 ---
 
@@ -30,21 +30,21 @@ This feature implements a Guided Mode & Quick Start onboarding experience for Co
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 1. **Principle I (Library-First)**:  
-   *Pass*. Starter constellation generation service (`StarterConstellationService`) is implemented within `packages/generator-engine`. `apps/web` consumes this package without duplicating generator tables.
+   _Pass_. Starter constellation generation service (`StarterConstellationService`) is implemented within `packages/generator-engine`. `apps/web` consumes this package without duplicating generator tables.
 2. **Principle II (TDD)**:  
-   *Pass*. All new generator services, UI stores, and recommendation heuristics will have accompanying unit test suites (`.test.ts`).
+   _Pass_. All new generator services, UI stores, and recommendation heuristics will have accompanying unit test suites (`.test.ts`).
 3. **Principle III (Simplicity & YAGNI)**:  
-   *Pass*. Structural recommendation engine uses pure, deterministic rule checks rather than costly LLM calls. Reuses existing `GeneratorDraftReview` and vault entity saving flows.
+   _Pass_. Structural recommendation engine uses pure, deterministic rule checks rather than costly LLM calls. Reuses existing `GeneratorDraftReview` and vault entity saving flows.
 4. **Principle IV (AI-First Extraction)**:  
-   *Pass*. Starter constellations and intent generation produce clean JSON/Markdown output validated against schemas before rendering.
+   _Pass_. Starter constellations and intent generation produce clean JSON/Markdown output validated against schemas before rendering.
 5. **Principle V (Privacy & Client-Side Processing)**:  
-   *Pass*. Guided Mode toggle is stored locally in `localStorage`. Deterministic offline fallback works completely in-browser.
+   _Pass_. Guided Mode toggle is stored locally in `localStorage`. Deterministic offline fallback works completely in-browser.
 6. **Principle VI (Clean Implementation / Style Guide)**:  
-   *Pass*. Uses Svelte 5 Runes (`$state`, `$derived`), Tailwind 4 semantic tokens (`text-theme-primary`, `bg-theme-surface`), and Iconify classes (`icon-[lucide--...]`).
+   _Pass_. Uses Svelte 5 Runes (`$state`, `$derived`), Tailwind 4 semantic tokens (`text-theme-primary`, `bg-theme-surface`), and Iconify classes (`icon-[lucide--...]`).
 7. **Principle VII (User Documentation)**:  
-   *Pass*. Feature hint and help content entry will be added to `apps/web/src/lib/config/help-content.ts`.
+   _Pass_. Feature hint and help content entry will be added to `apps/web/src/lib/config/help-content.ts`.
 8. **Principle VIII (Dependency Injection)**:  
-   *Pass*. `StarterConstellationService` and `ContextualRecommendationsService` accept injected dependencies for testing.
+   _Pass_. `StarterConstellationService` and `ContextualRecommendationsService` accept injected dependencies for testing.
 
 ---
 
@@ -76,26 +76,61 @@ apps/web/src/
 ├── lib/
 │   ├── components/
 │   │   ├── guided/
-│   │   │   ├── QuickStartModal.svelte          # Quick Start World creation modal card & wizard
+│   │   │   ├── QuickStartModal.svelte          # Quick Start World creation modal & wizard
 │   │   │   ├── QuickStartModal.test.ts         # Modal tests
-│   │   │   ├── IntentCreateModal.svelte        # Intent-first + Create modal
+│   │   │   ├── IntentCreateModal.svelte        # Intent-first + Create category menu
 │   │   │   ├── IntentCreateModal.test.ts       # Intent modal tests
+│   │   │   ├── contextual-intent-helper.ts     # Intent category → generator id + context inference
+│   │   │   ├── contextual-intent-helper.test.ts
+│   │   │   ├── GuidedModeToggle.svelte         # Guided ↔ Full Toolbox switch
+│   │   │   ├── GuidedModeToggle.test.ts
 │   │   │   ├── StructuralSuggestionBanner.svelte # Next-step prompt banner
 │   │   │   └── StructuralSuggestionBanner.test.ts
+│   │   ├── layout/
+│   │   │   └── AppHeader.svelte                # + Create button, GuidedModeToggle; hides
+│   │   │                                        # advanced toolbar utilities in Guided Mode
 │   │   ├── canvas/
-│   │   │   └── CanvasHUD.svelte                # Integrated + Create & Guided toggle
+│   │   │   └── CanvasHUD.svelte                 # Floating + Create action button (FAB)
+│   │   ├── vaults/
+│   │   │   └── VaultSwitcherModal.svelte        # "QUICK START WORLD" entry point (real
+│   │   │                                        # New World/vault-creation modal)
+│   │   ├── modals/
+│   │   │   └── GlobalModalProvider.svelte       # Mounts IntentCreateModal & QuickStartModal
+│   │   │                                        # exactly once, globally
+│   │   ├── generators/
+│   │   │   ├── CampaignGeneratorModal.svelte    # autoGenerate mode (skip configure), redraw
+│   │   │   │                                    # request on save
+│   │   │   └── GeneratorDraftReview.svelte      # "Customize" back-button label
 │   │   └── entity-detail/
-│   │       └── DetailHeader.svelte             # Integrated suggestion banner
+│   │       └── DetailHeader.svelte              # Integrated suggestion banner
 │   ├── services/
 │   │   ├── contextual-recommendations.ts      # Heuristic recommendation engine
 │   │   └── contextual-recommendations.test.ts # Unit tests for recommendations
-│   └── stores/
-│       └── ui/
-│           ├── ui.svelte.ts                    # Guided Mode state & persistence
-│           └── ui.svelte.test.ts               # UI store tests
+│   ├── stores/
+│   │   ├── ui/
+│   │   │   ├── guided-mode.svelte.ts           # Guided Mode state & persistence (not
+│   │   │   │                                   # ui.svelte.ts — follows the repo's existing
+│   │   │   │                                   # per-concern store convention)
+│   │   │   ├── guided-mode.test.ts
+│   │   │   └── modal-ui.svelte.ts              # + showIntentCreateMenu, showQuickStartModal,
+│   │   │                                       #   generatorWorkflow.autoGenerate
+│   │   └── graph.svelte.ts                     # + layoutRequest / requestLayout() — external
+│   │                                            #   redraw signal GraphView reacts to
+│   └── config/
+│       └── help-content.ts                     # Guided Mode / Quick Start feature hints
+└── routes/(app)/
+    └── +page.svelte                            # Welcome page: Quick Start is the primary CTA
 ```
 
 **Structure Decision**: Standard SvelteKit monorepo structure. Engine logic in `packages/generator-engine`, UI components and stores in `apps/web`.
+
+**Deviations from the original plan** (see `research.md` for the reasoning driving each):
+
+- Quick Start's "New World creation modal" (FR-001) turned out to be `VaultSwitcherModal.svelte`, not a separate modal — the welcome page's "Create New Vault" button was also repointed at Quick Start directly.
+- `QuickStartModal` and `IntentCreateModal` are mounted exactly once, globally, via `GlobalModalProvider` (not duplicated inline per call site) — an early duplicate-inline-mount design caused a focus-trap race that broke keyboard input.
+- Entity content for Quick Start's generated entities is produced via `oracle.reviseNewEntityDraft` (the same AI content-revision pipeline used elsewhere), auto-applied without the manual diff-review step, rather than splicing the theme's raw entity template behind the generated text — the raw-splice approach left unfilled template placeholder prose in the saved entity.
+- `ConstellationRelationship.bidirectional` is accepted from local/AI generation but intentionally **not** acted on when saving: only a single, correctly-directed connection is created per relationship (e.g. `Settlement → located in → Region`). A single connection already renders as one graph edge; creating the reverse direction too produced duplicate and backwards-reading edges.
+- Bulk/incremental entity+connection creation (Quick Start, and the intent-first `+ Create` / "Add Leader" suggestion flow via `CampaignGeneratorModal`) explicitly requests a graph layout redraw (`graph.requestLayout()`) once done — the incremental graph sync only re-lays-out on new _nodes_, not on edges added afterward to already-synced nodes, so newly created constellations piled up at one point without this.
 
 ---
 

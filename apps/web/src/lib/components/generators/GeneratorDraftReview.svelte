@@ -13,6 +13,9 @@
     /** When true, show the relationship creation toggle (contextual launch). */
     showRelationshipToggle?: boolean;
     themeId?: string;
+    /** Label for the back button — "Customize" when the draft was generated
+     * immediately from a Guided Mode intent (#1909, FR-010). */
+    backLabel?: string;
   }
 
   let {
@@ -23,6 +26,7 @@
     onback,
     showRelationshipToggle = false,
     themeId = "workspace",
+    backLabel = "Back",
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -218,7 +222,7 @@
       {disabled}
       class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors disabled:opacity-50"
     >
-      Back
+      {backLabel}
     </button>
     <button
       type="submit"

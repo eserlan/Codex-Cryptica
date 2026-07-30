@@ -373,6 +373,12 @@ describe("GraphStore", () => {
     expect(graph.fitRequest).toBe(initial + 1);
   });
 
+  it("should handle layout redraw requests", () => {
+    const initial = graph.layoutRequest;
+    graph.requestLayout();
+    expect(graph.layoutRequest).toBe(initial + 1);
+  });
+
   it("should manage eras", async () => {
     const era = { id: "era-1", name: "New Era" } as any;
 

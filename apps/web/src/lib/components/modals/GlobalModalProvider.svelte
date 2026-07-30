@@ -224,6 +224,24 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.showIntentCreateMenu}
+      {#await loadModal(() => import("$lib/components/guided/IntentCreateModal.svelte"), "IntentCreateModal") then IntentCreateModal}
+        {#if IntentCreateModal}
+          <IntentCreateModal />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if modalUIStore.showQuickStartModal}
+      {#await loadModal(() => import("$lib/components/guided/QuickStartModal.svelte"), "QuickStartModal") then QuickStartModal}
+        {#if QuickStartModal}
+          <QuickStartModal
+            onClose={() => modalUIStore.closeQuickStartModal()}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
