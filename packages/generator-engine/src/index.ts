@@ -151,6 +151,8 @@ export {
   type LanguagePrompt,
 } from "./public-language";
 export {
+  buildLanguageRepairPrompt,
+  classifyAILanguageQuality,
   parseLanguageGenerationResult,
   renderLanguageProfile,
   renderLanguageProfilePrompt,
@@ -159,6 +161,7 @@ export {
   validateLanguageInputFidelity,
   validateLanguageConsistency,
   validateLanguageNameBans,
+  type LanguageQualityClassification,
   type LanguageValidationResult,
 } from "./language-profile";
 export {

@@ -1,7 +1,11 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
-import { BANNED_NAMES, NAME_BAN_PROMPT } from "generator-engine";
+import {
+  BANNED_NAMES,
+  NAME_BAN_PROMPT,
+  generateLanguageLocal,
+} from "generator-engine";
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 describe("DefaultGeneratorEngine", () => {
@@ -1316,6 +1320,80 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(res.type).toBe("character");
       expect(res.content).toContain("Deity Description");
+    });
+  });
+
+  describe("generateLanguage", () => {
+    it("keeps parseable AI output when only advisory quality issues remain", async () => {
+      const language = generateLanguageLocal(
+        {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+        () => 0.42,
+      );
+      const raw = JSON.stringify({
+        version: language.languageProfileVersion,
+        title: language.title,
+        summary: language.summary,
+        labels: language.labels,
+        profile: language.languageProfile,
+      });
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => raw },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const result = await engine.generateLanguage({
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
+      expect(result.title).toBe(language.title);
+      expect(result.aiFallback).toBeUndefined();
+    });
+
+    it("applies two targeted AI-quality repairs before local fallback", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => "{}" },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const result = await engine.generateLanguage({
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Sacred / Ritual Tongue",
+        structure: "Compound Words",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(3);
+      expect(mockModel.generateContent.mock.calls[0][0]).toMatchObject({
+        generationConfig: {
+          temperature: 0.35,
+          topP: 0.8,
+          maxOutputTokens: 8192,
+          responseMimeType: "application/json",
+        },
+      });
+      expect(
+        JSON.stringify(mockModel.generateContent.mock.calls[1][0]),
+      ).toContain("Repair the following language-generator response");
+      expect(
+        JSON.stringify(mockModel.generateContent.mock.calls[2][0]),
+      ).toContain("Repair the following language-generator response");
+      expect(result.content).toContain("## Pronunciation & Phonology");
+      expect(result.aiFallback).toBe(true);
     });
   });
 
