@@ -442,6 +442,28 @@
     }
   });
 
+  // Layout redraw request — e.g. from Quick Start after it bulk-creates
+  // entities and connections. See `graph.requestLayout` for why the
+  // incremental sync alone isn't enough here.
+  //
+  // reason MUST be exactly "UI Redraw Button": with Stable Layout on (the
+  // default), LayoutManager's force-randomize solve is gated on that literal
+  // string (see LayoutManager.applyForceLayout's `isManualRedraw` check) —
+  // anything else silently falls through to a fit-only pass that re-centers
+  // the camera without actually spreading piled-up nodes apart.
+  $effect(() => {
+    const currentCy = controller.cy;
+    if (currentCy && graph.layoutRequest > 0) {
+      untrack(() =>
+        controller.applyCurrentLayout({
+          reason: "UI Redraw Button",
+          isForced: true,
+          reseed: true,
+        }),
+      );
+    }
+  });
+
   // Image Sync
   $effect(() => {
     void graph.elements;

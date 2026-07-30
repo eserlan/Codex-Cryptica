@@ -13,6 +13,8 @@
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -74,19 +76,21 @@
         <span class="icon-[lucide--menu] w-6 h-6" aria-hidden="true"></span>
       </button>
 
-      <!-- Die Roller Toggle -->
-      <button
-        class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
-        onclick={() => (modalUIStore.showDiceModal = true)}
-        aria-label="Open Die Roller"
-        title="Open Die Roller"
-        data-testid="dice-roller-button"
-      >
-        <span
-          class="icon-[lucide--dices] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
-          aria-hidden="true"
-        ></span>
-      </button>
+      <!-- Die Roller Toggle — advanced RPG utility, hidden in Guided Mode -->
+      {#if !guidedModeStore.isGuidedMode}
+        <button
+          class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
+          onclick={() => (modalUIStore.showDiceModal = true)}
+          aria-label="Open Die Roller"
+          title="Open Die Roller"
+          data-testid="dice-roller-button"
+        >
+          <span
+            class="icon-[lucide--dices] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
+            aria-hidden="true"
+          ></span>
+        </button>
+      {/if}
 
       <h1
         class="text-lg md:text-xl font-bold text-chrome-text font-sans tracking-wide flex items-center gap-2 md:gap-3 shrink-0 transition-colors"
@@ -171,19 +175,35 @@
           Exit Guest Mode
         </button>
       {:else}
-        <DriveStatus />
-        <P2PStatus />
-        <VoiceChatControls />
-        <VaultControls />
-        <a
-          href="{base}/worlds"
-          class="w-8 h-8 flex items-center justify-center border border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent transition-all"
-          title="Explore public worlds"
-          aria-label="Explore public worlds"
+        <button
+          type="button"
+          class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+          onclick={() => modalUIStore.openIntentCreateMenu()}
+          data-testid="header-create-button"
+          aria-label="Create new entity"
+          title="Create"
         >
-          <span class="w-5 h-5 icon-[lucide--compass]" aria-hidden="true"
-          ></span>
-        </a>
+          <span class="icon-[lucide--plus] w-4 h-4" aria-hidden="true"></span>
+          Create
+        </button>
+        <GuidedModeToggle />
+        {#if !guidedModeStore.isGuidedMode}
+          <DriveStatus />
+          <P2PStatus />
+          <VoiceChatControls />
+        {/if}
+        <VaultControls />
+        {#if !guidedModeStore.isGuidedMode}
+          <a
+            href="{base}/worlds"
+            class="w-8 h-8 flex items-center justify-center border border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent transition-all"
+            title="Explore public worlds"
+            aria-label="Explore public worlds"
+          >
+            <span class="w-5 h-5 icon-[lucide--compass]" aria-hidden="true"
+            ></span>
+          </a>
+        {/if}
         <button
           class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
             ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'

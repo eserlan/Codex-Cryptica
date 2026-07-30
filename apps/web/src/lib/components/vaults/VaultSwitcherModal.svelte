@@ -12,6 +12,20 @@
   let isLoading = $state(false);
   let showCreate = $state(false);
 
+  // Quick Start is mounted once, globally, via GlobalModalProvider (not
+  // duplicated inline here) so only one instance ever exists. Close this
+  // switcher too once Quick Start finishes/cancels, matching the previous
+  // "close both together" behavior.
+  let wasQuickStartOpen = $state(false);
+  $effect(() => {
+    if (modalUIStore.showQuickStartModal) {
+      wasQuickStartOpen = true;
+    } else if (wasQuickStartOpen) {
+      wasQuickStartOpen = false;
+      onClose();
+    }
+  });
+
   // Honor the intent the switcher was opened with (e.g. from the welcome screen
   // "Create New Vault" action), then consume it so it doesn't re-fire.
   $effect(() => {
@@ -472,8 +486,17 @@
         <button
           class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
           onclick={openCreate}
+          data-testid="empty-workspace-button"
         >
           <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
+        </button>
+        <button
+          type="button"
+          class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+          onclick={() => modalUIStore.openQuickStartModal()}
+          data-testid="quick-start-world-button"
+        >
+          <span class="icon-[lucide--sparkles] w-4 h-4"></span> QUICK START WORLD
         </button>
         <button
           class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
