@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   evaluateEntityRecommendations,
   type RecommendableEntity,
@@ -120,5 +120,30 @@ describe("evaluateEntityRecommendations", () => {
   it("returns no recommendations for entity types with no structural rules", () => {
     const note = entity({ id: "n1", type: "note", title: "Random Note" });
     expect(evaluateEntityRecommendations(note, { n1: note })).toHaveLength(0);
+  });
+
+  it("avoids Object.values heap array allocations during recommendation evaluation across large entity sets", () => {
+    const region = entity({
+      id: "r1",
+      type: "location",
+      title: "The Silverwood Vale",
+    });
+    const all: Record<string, RecommendableEntity> = { r1: region };
+
+    // Populate 1000 simulated entities
+    for (let i = 0; i < 1000; i++) {
+      all[`loc_${i}`] = entity({
+        id: `loc_${i}`,
+        type: "location",
+        title: `Location ${i}`,
+      });
+    }
+
+    const spy = vi.spyOn(Object, "values");
+    const recs = evaluateEntityRecommendations(region, all);
+
+    expect(recs).toHaveLength(1);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

@@ -216,17 +216,21 @@ export class ExplorerUIStore {
 
   private parseStringArrayMap(raw: string, errorMessage: string) {
     const parsed = JSON.parse(raw);
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      !Array.isArray(parsed) &&
-      Object.values(parsed).every(
-        (value) =>
-          Array.isArray(value) &&
-          value.every((item) => typeof item === "string"),
-      )
-    ) {
-      return parsed as Record<string, string[]>;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      let isValid = true;
+      // ⚡ Bolt Optimization: Loop over keys instead of Object.values() to avoid array allocation
+      for (const key in parsed) {
+        if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+          const value = parsed[key];
+          if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+            isValid = false;
+            break;
+          }
+        }
+      }
+      if (isValid) {
+        return parsed as Record<string, string[]>;
+      }
     }
     throw new Error(errorMessage);
   }

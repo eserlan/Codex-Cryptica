@@ -182,4 +182,31 @@ describe("ExplorerUIStore", () => {
     store.toggleExplorerEntityCollapse("v1", "e1");
     expect(Array.from(store.getCollapsedEntities("v1"))).toEqual([]);
   });
+
+  it("avoids Object.values allocations when restoring collapsed label groups from persistence", () => {
+    const collapsedMap = JSON.stringify({
+      v1: ["group1", "group2"],
+      v2: ["group3"],
+    });
+    const mockStorage = {
+      getItem: vi.fn((key: string) => {
+        if (key === "codex_explorer_collapsed_label_groups")
+          return collapsedMap;
+        return null;
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+
+    const spy = vi.spyOn(Object, "values");
+    const persistence = new UIPersistence({ storage: mockStorage });
+    const store = new ExplorerUIStore(persistence);
+
+    expect(Array.from(store.getCollapsedLabelGroups("v1"))).toEqual([
+      "group1",
+      "group2",
+    ]);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });
