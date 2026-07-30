@@ -45,7 +45,7 @@ export const languageConfig = {
   ],
 };
 
-export const LANGUAGE_PROMPT_VERSION = "language-profile-v1";
+export const LANGUAGE_PROMPT_VERSION = "language-profile-v1.1-consistency";
 
 // Creative direction per genre so the LLM leans on setting-specific
 // vocabulary/loanword flavor instead of only the word "genre" itself.
@@ -125,6 +125,8 @@ Parameters:
 - Custom Context: ${resolved.context || "None"}${genreDirection}${banned}${session}
 
 Control-to-profile requirements:
+- The title and summary must identify this resolved language concept as a whole, using all four controls and supplied context where relevant. Do not preserve identity fields from a previous language request.
+- The summary must visibly distinguish ${resolved.role} from the other language-role choices by naming who uses it or the social situation in which it is used.
 - Genre / Setting must materially shape culture.history, culture.influences, and setting-specific lexicon.
 - Tone / Style must materially shape phonology, rhythm, stress, pronunciation rules, and every generated example.
 - Language Role must materially shape culture.usage, register, formality, social rules, and phrase situations.
@@ -153,38 +155,93 @@ Return a valid JSON object matching this structure exactly. Do not return pre-re
       "influences": "string"
     },
     "phonology": {
-      "consonants": ["string"],
-      "vowels": ["string"],
-      "phonotactics": ["string — allowed syllable or sound patterns"],
+      "consonants": ["string — orthographic consonant unit used in examples"],
+      "vowels": ["string — orthographic vowel unit used in examples"],
+      "phonotactics": ["string — human-readable constraint"],
+      "syllablePatterns": ["string — machine-readable C/V sequence such as CV or CVC; no prose or punctuation"],
       "rhythm": "string",
       "stress": "string",
       "pronunciationRules": ["string"]
     },
+    "rules": [
+      {
+        "id": "string — unique stable id",
+        "domain": "phonology | morphology | naming | grammar | register",
+        "description": "string — one major testable rule"
+      }
+    ],
     "morphology": {
       "wordFormation": "string",
-      "prefixes": ["string"],
-      "suffixes": ["string"],
-      "compounding": "string"
+      "prefixes": [
+        {
+          "sourceId": "string — id of a declared prefix morpheme",
+          "form": "string — exact morpheme form",
+          "meaning": "string — exact morpheme meaning or function"
+        }
+      ],
+      "suffixes": [
+        {
+          "sourceId": "string — id of a declared suffix morpheme",
+          "form": "string — exact morpheme form",
+          "meaning": "string — exact morpheme meaning or function"
+        }
+      ],
+      "compounding": "string",
+      "morphemes": [
+        {
+          "id": "string — unique stable source id",
+          "form": "string",
+          "pronunciation": "string",
+          "meaning": "string",
+          "kind": "root | prefix | suffix | function-word | marker",
+          "syllables": ["string — surface syllables that concatenate to form"]
+        }
+      ]
     },
     "naming": {
       "personalNamePatterns": ["string"],
       "placeNamePatterns": ["string"],
       "titlePatterns": ["string"],
       "lineagePatterns": ["string"],
+      "structuredPatterns": [
+        {
+          "id": "string — unique stable pattern id",
+          "use": "person | place | title | lineage | other",
+          "structure": "${resolved.structure}",
+          "slots": ["string — ordered slot names"]
+        }
+      ],
       "examples": [
         {
           "name": "string",
+          "pronunciation": "string",
           "meaning": "string",
-          "use": "person | place | title | lineage | other"
+          "use": "person | place | title | lineage | other",
+          "patternId": "string — id from structuredPatterns",
+          "components": [
+            {
+              "slot": "string — matching ordered pattern slot",
+              "surface": "string — exact visible part of the name",
+              "pronunciation": "string",
+              "meaning": "string",
+              "sourceId": "string — id from lexicon or morphemes",
+              "syllables": ["string — exact surface syllables"],
+              "appliedRuleIds": ["string — required only when surface changes from its source"]
+            }
+          ],
+          "demonstrates": ["string — rule id visibly demonstrated by this example"]
         }
       ]
     },
     "lexicon": [
       {
+        "id": "string — unique stable source id",
         "word": "string",
         "pronunciation": "string",
         "meaning": "string",
-        "partOfSpeech": "string — optional"
+        "partOfSpeech": "string — optional",
+        "syllables": ["string — surface syllables that concatenate to word"],
+        "demonstrates": ["string — rule id, optional"]
       }
     ],
     "grammar": {
@@ -195,7 +252,21 @@ Return a valid JSON object matching this structure exactly. Do not return pre-re
           "text": "string",
           "pronunciation": "string",
           "translation": "string",
-          "breakdown": "string — optional"
+          "breakdown": "string — readable summary of the component analysis",
+          "literalTranslation": "string — composition of component meanings",
+          "construction": "declarative | command | possession | predicate | question | ritual | other",
+          "components": [
+            {
+              "slot": "string — grammatical role such as subject, action, object, possessor, possessed, predicate, or ritual-marker",
+              "surface": "string — exact visible word or morpheme",
+              "pronunciation": "string",
+              "meaning": "string",
+              "sourceId": "string — id from lexicon or morphemes",
+              "syllables": ["string — exact surface syllables"],
+              "appliedRuleIds": ["string — required only when surface changes from its source"]
+            }
+          ],
+          "demonstrates": ["string — rule id visibly demonstrated by this example"]
         }
       ]
     },
@@ -208,7 +279,16 @@ Return a valid JSON object matching this structure exactly. Do not return pre-re
   }
 }
 
-Internal consistency is essential: every example name, vocabulary word, and sample phrase must follow the phonology and naming rules defined in the content. Sample phrases should be decomposable using words from the glossary where possible.
+Internal consistency is essential:
+- Fields named "demonstrates" and "appliedRuleIds" are always JSON arrays, even when they contain only one rule id.
+- profile.rules must declare major testable claims with stable ids, and every declared rule must be cited by an example that visibly demonstrates it. Do not invent a rule merely to fill every possible domain; remove decorative claims that no example demonstrates.
+- Every lexicon entry and morpheme has one stable pronunciation and meaning. Reuse those values exactly in components unless an applied, declared rule visibly accounts for a changed surface.
+- Every non-empty prefixes/suffixes entry is a structured reference to a declared morpheme of the matching prefix/suffix kind, reusing its form and meaning exactly. Use empty arrays instead of inventing affixes. A root and affix with the same form require separate declared morphemes and source ids. Do not declare affixes while claiming zero affixation.
+- Every name is the exact concatenation of its ordered components. Use one component and one sourceId per root or morpheme; never place a multi-root compound in one component. Component meanings compose to the name meaning, and slots exactly follow the structured pattern. Structured patterns must use the selected ${resolved.structure} structure.
+- Include the language title itself among naming.examples and derive it from declared components just like every other name.
+- Every phrase is fully accounted for by ordered components, again with one component and one sourceId per root or morpheme. Every component has a grammatical slot and every phrase declares a construction. At least three phrases must visibly demonstrate syntax such as subject/action/object, command, possession, predication, question, or ritual construction; noun compounds and noun strings do not count. Its literal translation is composed from component meanings. Its natural English translation may smooth wording but must not add semantic or grammatical information unsupported by components and demonstrated rules.
+- consonants and vowels are surface orthographic units. Derive syllablePatterns from the forms you actually generated: every lexicon and morpheme syllable must segment completely with that inventory and its exact observed C/V shape must be listed. Include V, VC, CVCC, or other patterns whenever the examples use them; do not declare an artificially narrow system after generating broader forms.
+- Repeated graphemes keep the same pronunciation across generated forms unless an explicitly declared and demonstrated contextual phonology rule explains the difference.
 Include 10-15 unique lexicon entries, 4-5 example names, 3-5 sample phrases, and 2-3 concrete table-use tips. Preserve the four resolved input values exactly in profile.inputs.
 The word bank must include at least one term that could only belong to a ${resolved.genre} setting — not a generic fantasy word repurposed with a new sound.
 ${NAME_BAN_PROMPT}

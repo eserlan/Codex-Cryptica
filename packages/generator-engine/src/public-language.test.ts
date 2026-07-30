@@ -80,6 +80,19 @@ test("buildLanguagePrompt maps every control to observable profile fields", () =
   );
 });
 
+test("buildLanguagePrompt makes identity depend on the complete resolved concept", () => {
+  const common = buildLanguagePrompt({ role: "Common Speech" });
+  const ritual = buildLanguagePrompt({ role: "Sacred / Ritual Tongue" });
+
+  expect(common.userMessage).not.toBe(ritual.userMessage);
+  expect(ritual.userMessage).toContain(
+    "title and summary must identify this resolved language concept",
+  );
+  expect(ritual.userMessage).toContain(
+    "The summary must visibly distinguish Sacred / Ritual Tongue",
+  );
+});
+
 test("parseLanguageResponse validates structure and derives markdown", () => {
   const jsonStr = JSON.stringify({
     version: 1,

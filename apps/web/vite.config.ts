@@ -54,12 +54,22 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      "@codex/events": resolve(__dirname, "../../packages/events/src/index.ts"),
+      "@codex/runtime": resolve(
+        __dirname,
+        "../../packages/runtime/src/index.ts",
+      ),
+      "@codex/vault-engine": resolve(
+        __dirname,
+        "../../packages/vault-engine/src/index.ts",
+      ),
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
       "generator-engine": resolve(
         __dirname,
         "../../packages/generator-engine/src",
       ),
       "map-engine": resolve(__dirname, "../../packages/map-engine/src"),
+      schema: resolve(__dirname, "../../packages/schema/src/index.ts"),
     },
     dedupe: ["svelte"],
   },

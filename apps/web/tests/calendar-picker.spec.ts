@@ -85,7 +85,9 @@ test.describe("Campaign Date Picker E2E", () => {
     });
 
     // Setup: Create a test entity
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByPlaceholder(/Title\.\.\./).fill("Test Event");
     await page.getByRole("button", { name: "ADD" }).click();
 

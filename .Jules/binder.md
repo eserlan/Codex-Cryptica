@@ -87,6 +87,9 @@
 
 **Learning:** Found hardcoded `window.localStorage` usage in `front-page-prefs.ts` within `apps/web`. SvelteKit files may execute on the server during SSR where `window` is undefined. The repository uses `browserStorage` from `$lib/utils/runtime-deps` which handles SSR safely.
 **Action:** Replaced direct `window.localStorage` usage with explicit dependency injection of `StorageLike`, defaulting to `browserStorage`. Updated tests to use a fully implemented mock `StorageLike` to avoid Vitest/Bun global pollution.
+## 2026-07-29 - Inject Clock into DungeonDelveService
+**Learning:** Found hardcoded `Date.now()` usage in `DungeonDelveService` within `apps/web/src/lib/services/dungeon-delve-service.ts`. This creates a hidden dependency on the global system clock that makes testing ID generation brittle.
+**Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Updated tests to pass a mock `Clock` in the constructor to avoid Vitest global pollution.
 ## 2024-07-28 - Injecting Clock into DelveAreaEnhancementService
 
 **Learning:** Found a hardcoded `Date.now()` in `DelveAreaEnhancementService` which hindered deterministic testing. We can easily inject a `Clock` interface through the constructor utilizing `systemClock` from `$lib/utils/runtime-deps` as a default. This allows tests to precisely assert on timestamps without resorting to global mocks.

@@ -3,10 +3,12 @@ import {
   DelveFlowLayout,
   type DelveCanvasDocument,
 } from "generator-engine";
+import { type Clock, systemClock } from "$lib/utils/runtime-deps";
 
 export interface DungeonDelveServiceDeps {
   topologyGenerator?: DelveTopologyGenerator;
   flowLayout?: DelveFlowLayout;
+  clock?: Clock;
 }
 
 function extractGeneratedSectorNames(narrative: string): string[] {
@@ -34,17 +36,19 @@ function extractGeneratedSectorNames(narrative: string): string[] {
 export class DungeonDelveService {
   private topologyGenerator: DelveTopologyGenerator;
   private flowLayout: DelveFlowLayout;
+  private clock: Clock;
 
   constructor(deps: DungeonDelveServiceDeps = {}) {
     this.topologyGenerator =
       deps.topologyGenerator || new DelveTopologyGenerator();
     this.flowLayout = deps.flowLayout || new DelveFlowLayout();
+    this.clock = deps.clock || systemClock;
   }
 
   public buildDelveCanvasFromConcept(
     entity: Record<string, any>,
   ): DelveCanvasDocument {
-    const conceptId = entity.id || entity.slug || `dungeon-${Date.now()}`;
+    const conceptId = entity.id || entity.slug || `dungeon-${this.clock.now()}`;
     const title = entity.title || entity.name || "Untitled Dungeon";
     const metadata = entity.metadata || {};
 

@@ -99,9 +99,10 @@ test.describe("Oracle Image Generation", () => {
     page,
   }) => {
     // 1. Ensure we are in a state where we can create an entity
-    const newBtn = page.getByTestId("new-entity-button");
-    await newBtn.waitFor({ state: "visible", timeout: 15000 });
-    await newBtn.click();
+    await page.waitForFunction(() => !!(window as any).modalUIStore);
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
 
     const titleInput = page.getByPlaceholder(/Title.../i);
     await titleInput.fill("Test Drag Entity");

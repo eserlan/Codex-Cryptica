@@ -29,13 +29,21 @@ import {
   type LanguageGeneratorOptions,
 } from "./public-language";
 import {
+  buildLanguageRepairPrompt,
+  classifyAILanguageQuality,
   parseLanguageGenerationResult,
-  validateAILanguageQuality,
   validateFallbackLanguageQuality,
   validateLanguageInputFidelity,
   validateLanguageNameBans,
 } from "./language-profile";
 import type { LanguageGenerationResultV1 } from "schema";
+
+const LANGUAGE_GENERATION_CONFIG = {
+  temperature: 0.35,
+  topP: 0.8,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json",
+} as const;
 
 function completeText(result: string | AIGeneratorCompleteResult): string {
   return typeof result === "string" ? result : result.text;
@@ -250,16 +258,6 @@ function languageOptions(
   };
 }
 
-function languageRepairPrompt(raw: string, issues: string[]): string {
-  return `Repair the following language-generator response. Return one complete replacement JSON object matching LanguageGenerationResultV1, with no markdown fence or commentary.
-
-Validation problems:
-${issues.map((issue) => `- ${issue}`).join("\n")}
-
-Previous response:
-${raw}`;
-}
-
 export function assertValidLanguageFallback(
   output: GeneratorOutput,
   bannedNames: Iterable<string> = [],
@@ -322,26 +320,45 @@ export class CampaignGeneratorService {
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
   ):
-    | { output: GeneratorOutput; issues: [] }
-    | { output?: undefined; issues: string[] } {
+    | {
+        output: GeneratorOutput;
+        blockingIssues: string[];
+        advisoryIssues: string[];
+        issues: string[];
+      }
+    | {
+        output?: undefined;
+        blockingIssues: string[];
+        advisoryIssues: string[];
+        issues: string[];
+      } {
     try {
       const publicOutput = parseLanguageResponse(raw);
       const result = languageResultFromOutput(publicOutput);
       const expected = languageOptions(request);
-      const issues = [
-        ...validateAILanguageQuality(result).issues,
+      const quality = classifyAILanguageQuality(result);
+      const blockingIssues = [
+        ...quality.blockingIssues,
         ...validateLanguageInputFidelity(result, expected).issues,
         ...validateLanguageNameBans(result, bannedNames).issues,
       ];
-      if (issues.length) return { issues };
-      return { output: languageGeneratorOutput(publicOutput), issues: [] };
-    } catch (error) {
+      const advisoryIssues = quality.advisoryIssues;
       return {
-        issues: [
-          error instanceof Error
-            ? `Structural validation failed: ${error.message}`
-            : "Structural validation failed.",
-        ],
+        output: languageGeneratorOutput(publicOutput),
+        blockingIssues,
+        advisoryIssues,
+        issues: [...blockingIssues, ...advisoryIssues],
+      };
+    } catch (error) {
+      const blockingIssues = [
+        error instanceof Error
+          ? `Structural validation failed: ${error.message}`
+          : "Structural validation failed.",
+      ];
+      return {
+        blockingIssues,
+        advisoryIssues: [],
+        issues: blockingIssues,
       };
     }
   }
@@ -352,85 +369,83 @@ export class CampaignGeneratorService {
     bannedNames: Set<string>,
   ): Promise<GeneratedDraft | null> {
     if (!this.aiGateway) return null;
+    // Language profiles are independent concepts, not conversational revisions.
+    // Passing the previous interaction id caused a changed-role request to keep
+    // the prior title and summary verbatim (#1910), so this path always sends
+    // the complete resolved request as a stateless call. Targeted repairs
+    // below are stateless for the same reason.
     const fullPrompt = generator.buildPrompt({
       ...request,
       interaction: undefined,
     });
-    const prompt = request.interaction
-      ? generator.buildPrompt(request)
-      : fullPrompt;
-    const interaction = request.interaction
-      ? {
-          ...request.interaction,
-          input: withGeneratorRequest(request.interaction.input, prompt),
-          replayPrompt: request.interaction.replayPrompt ?? fullPrompt,
-        }
-      : undefined;
 
     try {
       const initial = await this.aiGateway.complete(
         fullPrompt,
         SYSTEM_INSTRUCTION,
-        { interaction },
+        { generationConfig: LANGUAGE_GENERATION_CONFIG },
       );
       const first = this.assessLanguageResponse(
         completeText(initial),
         request,
         bannedNames,
       );
-      if (first.output) {
-        if (typeof initial !== "string" && initial.usedInteraction) {
-          this.onInteractionResult?.(initial);
-        }
+      if (first.output && first.issues.length === 0) {
         this.onPromptMetrics?.(
           promptMetrics({
             request,
             fullPrompt,
-            sentPrompt:
-              typeof initial !== "string" && initial.replayed
-                ? (interaction?.replayPrompt ?? fullPrompt)
-                : (interaction?.input ?? fullPrompt),
-            usedInteraction:
-              typeof initial !== "string" && initial.usedInteraction,
-            replayed: typeof initial !== "string" && !!initial.replayed,
+            sentPrompt: fullPrompt,
+            usedInteraction: false,
+            replayed: false,
           }),
         );
         return generator.mapOutputToDraft(first.output, request);
       }
 
-      try {
-        const repair = await this.aiGateway.complete(
-          languageRepairPrompt(completeText(initial), first.issues),
-          SYSTEM_INSTRUCTION,
-        );
-        const repaired = this.assessLanguageResponse(
-          completeText(repair),
-          request,
-          bannedNames,
-        );
-        if (repaired.output) {
-          return generator.mapOutputToDraft(repaired.output, request);
+      let candidateRaw = completeText(initial);
+      let candidate = first;
+      let lastAcceptableOutput =
+        first.output && first.blockingIssues.length === 0
+          ? first.output
+          : undefined;
+      const repairBudget = first.blockingIssues.length ? 2 : 1;
+      for (
+        let repairAttempt = 0;
+        repairAttempt < repairBudget;
+        repairAttempt += 1
+      ) {
+        try {
+          const repair = await this.aiGateway.complete(
+            buildLanguageRepairPrompt(
+              candidateRaw,
+              candidate.issues,
+              fullPrompt,
+            ),
+            SYSTEM_INSTRUCTION,
+            { generationConfig: LANGUAGE_GENERATION_CONFIG },
+          );
+          candidateRaw = completeText(repair);
+          candidate = this.assessLanguageResponse(
+            candidateRaw,
+            request,
+            bannedNames,
+          );
+          if (candidate.output && candidate.issues.length === 0) {
+            return generator.mapOutputToDraft(candidate.output, request);
+          }
+          if (candidate.output && candidate.blockingIssues.length === 0) {
+            lastAcceptableOutput = candidate.output;
+            break;
+          }
+        } catch {
+          // Preserve the last parseable candidate for the remaining repair.
         }
-      } catch {
-        // A failed repair call still leaves the one clean regeneration attempt.
       }
-
-      try {
-        const regeneration = await this.aiGateway.complete(
-          fullPrompt,
-          SYSTEM_INSTRUCTION,
-        );
-        const regenerated = this.assessLanguageResponse(
-          completeText(regeneration),
-          request,
-          bannedNames,
-        );
-        return regenerated.output
-          ? generator.mapOutputToDraft(regenerated.output, request)
-          : null;
-      } catch {
-        return null;
+      if (lastAcceptableOutput) {
+        return generator.mapOutputToDraft(lastAcceptableOutput, request);
       }
+      return null;
     } catch {
       return null;
     }

@@ -83,7 +83,7 @@ test.describe("Category Filter", () => {
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 20000,
     });
-    await expect(page.getByTestId("new-entity-button")).toBeVisible({
+    await expect(page.getByTestId("header-create-button")).toBeVisible({
       timeout: 10000,
     });
   });
