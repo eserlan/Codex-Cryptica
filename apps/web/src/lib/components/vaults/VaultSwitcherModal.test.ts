@@ -47,6 +47,7 @@ vi.mock("$lib/stores/vault-registry.svelte", () => ({
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     confirm: vi.fn(async () => false),
+    notify: vi.fn(),
   },
 }));
 
@@ -140,6 +141,30 @@ describe("VaultSwitcherModal", () => {
     expect(createVaultMock).toHaveBeenCalledWith("My Vault");
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("surfaces an error toast instead of silently doing nothing when vault creation fails", async () => {
+    const { notificationStore } =
+      await import("$lib/stores/ui/notification.svelte");
+    createVaultMock.mockRejectedValueOnce(
+      new Error("Storage access restricted by browser sandbox"),
+    );
+    const { onClose } = renderModal();
+
+    await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
+    await fireEvent.input(screen.getByLabelText("New Vault Name"), {
+      target: { value: "My Vault" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+
+    await waitFor(() =>
+      expect(notificationStore.notify).toHaveBeenCalledWith(
+        "Storage access restricted by browser sandbox",
+        "error",
+        true,
+      ),
+    );
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("closes after importing a new vault without prompting for theme", async () => {

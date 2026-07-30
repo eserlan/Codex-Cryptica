@@ -125,6 +125,11 @@
       onClose();
     } catch (e) {
       console.error(e);
+      const message =
+        e instanceof Error && e.message
+          ? e.message
+          : "Failed to create vault. Your browser may be blocking storage access.";
+      notificationStore.notify(message, "error", true);
     } finally {
       isLoading = false;
     }
