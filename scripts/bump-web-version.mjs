@@ -6,17 +6,47 @@ const webPackagePath = resolve(repoRoot, 'apps/web/package.json');
 const configPath = resolve(repoRoot, 'apps/web/src/lib/config/index.ts');
 const serviceWorkerPath = resolve(repoRoot, 'apps/web/src/service-worker.ts');
 
-const pkg = JSON.parse(readFileSync(webPackagePath, 'utf8'));
-const version = pkg.version;
+export function calculateNextVersion(currentVersion, bumpType, topChangelogVersion = null) {
+  const versionMatch = /^(\d+)\.(\d+)\.(\d+)$/.exec(currentVersion);
+  if (!versionMatch) {
+    throw new Error(`Unsupported version format: ${currentVersion}`);
+  }
 
-const versionMatch = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
-if (!versionMatch) {
-  throw new Error(`Unsupported version format: ${version}`);
+  let [, major, minor, patch] = versionMatch.map(Number);
+
+  if (bumpType === 'major') {
+    major += 1;
+    minor = 0;
+    patch = 0;
+  } else if (bumpType === 'minor') {
+    minor += 1;
+    patch = 0;
+  } else {
+    patch += 1;
+  }
+
+  let nextVersion = `${major}.${minor}.${patch}`;
+
+  if (topChangelogVersion) {
+    const parseSemver = (v) => {
+      const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v);
+      return m ? m.slice(1, 4).map(Number) : [0, 0, 0];
+    };
+    const [n1, n2, n3] = parseSemver(nextVersion);
+    const [c1, c2, c3] = parseSemver(topChangelogVersion);
+    const cmp = c1 !== n1 ? c1 - n1 : c2 !== n2 ? c2 - n2 : c3 - n3;
+    if (cmp > 0) {
+      nextVersion = topChangelogVersion;
+    }
+  }
+
+  return nextVersion;
 }
 
-let [, major, minor, patch] = versionMatch.map(Number);
-
 async function run() {
+  const pkg = JSON.parse(readFileSync(webPackagePath, 'utf8'));
+  const version = pkg.version;
+
   // Determine bump type
   let bumpType = 'patch';
   const prNumber = process.env.PR_NUMBER;
@@ -49,18 +79,19 @@ async function run() {
     }
   }
 
-  if (bumpType === 'major') {
-    major += 1;
-    minor = 0;
-    patch = 0;
-  } else if (bumpType === 'minor') {
-    minor += 1;
-    patch = 0;
-  } else {
-    patch += 1;
+  const changelogPath = resolve(repoRoot, 'apps/web/src/lib/content/changelog/releases.json');
+  let topChangelogVersion = null;
+  try {
+    const changelog = JSON.parse(readFileSync(changelogPath, 'utf8'));
+    if (Array.isArray(changelog) && changelog.length > 0 && changelog[0].version) {
+      topChangelogVersion = changelog[0].version;
+    }
+  } catch (e) {
+    console.warn('Could not read releases.json for version syncing:', e.message);
   }
 
-  const nextVersion = `${major}.${minor}.${patch}`;
+  const nextVersion = calculateNextVersion(version, bumpType, topChangelogVersion);
+
   pkg.version = nextVersion;
   writeFileSync(webPackagePath, `${JSON.stringify(pkg, null, 2)}\n`);
 
@@ -96,7 +127,11 @@ async function run() {
   console.log(`Bumped SW cache version ${swMatch[1]} -> ${nextCacheVersion}`);
 }
 
-run().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+import { pathToFileURL } from 'node:url';
+
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  run().catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+}
