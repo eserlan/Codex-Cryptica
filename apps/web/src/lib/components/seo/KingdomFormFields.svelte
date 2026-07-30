@@ -32,9 +32,12 @@
   id="kingdom-polity-select"
   label="Polity type"
   bind:value={polityType}
-  choices={kingdomConfig.polityTypes.map((t: string) => ({ value: t, label: t }))}
+  choices={kingdomConfig.polityTypes.map((t: string) => ({
+    value: t,
+    label: t,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom polity type"
 />
@@ -43,9 +46,12 @@
   id="kingdom-govt-select"
   label="Government style"
   bind:value={governmentStyle}
-  choices={kingdomConfig.governmentStyles.map((g: string) => ({ value: g, label: g }))}
+  choices={kingdomConfig.governmentStyles.map((g: string) => ({
+    value: g,
+    label: g,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom government style"
 />
@@ -54,9 +60,12 @@
   id="kingdom-geo-select"
   label="Geography"
   bind:value={geography}
-  choices={kingdomConfig.geographies.map((g: string) => ({ value: g, label: g }))}
+  choices={kingdomConfig.geographies.map((g: string) => ({
+    value: g,
+    label: g,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom geography"
 />
@@ -67,7 +76,7 @@
   bind:value={scale}
   choices={kingdomConfig.scales.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom scale"
 />
@@ -76,9 +85,12 @@
   id="kingdom-conflict-select"
   label="Conflict level"
   bind:value={conflictLevel}
-  choices={kingdomConfig.conflictLevels.map((c: string) => ({ value: c, label: c }))}
+  choices={kingdomConfig.conflictLevels.map((c: string) => ({
+    value: c,
+    label: c,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom conflict level"
 />
@@ -87,9 +99,12 @@
   id="kingdom-magic-select"
   label="Magic level"
   bind:value={magicLevel}
-  choices={kingdomConfig.magicLevels.map((m: string) => ({ value: m, label: m }))}
+  choices={kingdomConfig.magicLevels.map((m: string) => ({
+    value: m,
+    label: m,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom magic level"
 />
@@ -101,7 +116,7 @@
   <textarea
     id="kingdom-context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="kingdom-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

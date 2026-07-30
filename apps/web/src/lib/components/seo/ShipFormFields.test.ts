@@ -39,6 +39,24 @@ describe("ShipFormFields", () => {
     expect(screen.getByText("Merchant Galleon")).toBeTruthy();
   });
 
+  it("allows up to 4000 characters of campaign context", () => {
+    render(ShipFormFields, {
+      props: {
+        genre: "Sci-Fi",
+        role: "Warship",
+        scale: "Small crew ship",
+        condition: "Pristine",
+        tone: "Military",
+        campaignContext: "",
+      },
+    });
+
+    const context = screen.getByLabelText(
+      "Campaign context (optional)",
+    ) as HTMLTextAreaElement;
+    expect(context.maxLength).toBe(4000);
+  });
+
   it("notifies the page when the ship genre changes", async () => {
     const onGenreChange = vi.fn();
     render(ShipFormFields, {
