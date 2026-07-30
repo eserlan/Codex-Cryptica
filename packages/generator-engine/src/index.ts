@@ -145,10 +145,34 @@ export {
   buildLanguagePrompt,
   parseLanguageResponse,
   generateLanguageLocal,
+  LANGUAGE_PROMPT_VERSION,
   languageConfig,
   type LanguageGeneratorOptions,
   type LanguagePrompt,
 } from "./public-language";
+export {
+  buildLanguageRepairPrompt,
+  classifyAILanguageQuality,
+  parseLanguageGenerationResult,
+  renderLanguageProfile,
+  renderLanguageProfilePrompt,
+  validateAILanguageQuality,
+  validateFallbackLanguageQuality,
+  validateLanguageInputFidelity,
+  validateLanguageConsistency,
+  validateLanguageNameBans,
+  type LanguageQualityClassification,
+  type LanguageValidationResult,
+} from "./language-profile";
+export {
+  LANGUAGE_EVALUATION_CASES,
+  LANGUAGE_EVALUATION_CRITERIA,
+  validateLanguageEvaluation,
+  type LanguageEvaluationCase,
+  type LanguageEvaluationCriterion,
+  type LanguageEvaluationRecord,
+  type LanguageEvaluationValidation,
+} from "./language-evaluation";
 export {
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
@@ -180,9 +204,11 @@ export {
 } from "./dungeon/delve-dossier";
 export {
   CampaignGeneratorService,
+  assertValidLanguageFallback,
   campaignGeneratorService,
   composeDraftVaultFields,
   DraftSaveError,
+  LanguageGenerationError,
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,
 } from "./campaign-generator-service";
@@ -211,3 +237,11 @@ export {
 } from "./public-adventure";
 export * from "./dungeon";
 export * from "./adventure";
+export * from "./starter-constellation-types";
+export {
+  generateStarterConstellationLocal,
+  buildStarterConstellationPrompt,
+  parseStarterConstellationResponse,
+  STARTER_CONSTELLATION_THEME_IDS,
+  type StarterConstellationPrompt,
+} from "./starter-constellation";

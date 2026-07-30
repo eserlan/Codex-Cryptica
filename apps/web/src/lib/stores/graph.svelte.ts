@@ -153,6 +153,15 @@ export class GraphStore {
   });
 
   fitRequest = $state(0);
+  /**
+   * Bumped to request a full, reseeded layout re-solve from outside GraphView
+   * (e.g. after Quick Start bulk-creates entities and connections — the
+   * incremental sync only re-layouts on new *nodes*, not on edges added to
+   * already-synced nodes, so a batch of connections added after the fact
+   * needs an explicit redraw or the new entities stay piled up). See
+   * `requestFit` for the equivalent existing pattern.
+   */
+  layoutRequest = $state(0);
 
   // Labels state
   showLabels = $state(true);
@@ -353,6 +362,10 @@ export class GraphStore {
 
   requestFit() {
     this.fitRequest++;
+  }
+
+  requestLayout() {
+    this.layoutRequest++;
   }
 
   async init() {

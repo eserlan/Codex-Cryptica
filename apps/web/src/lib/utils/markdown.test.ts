@@ -7,6 +7,7 @@ import {
   deriveIdFromPath,
   upsertMarkdownSection,
 } from "./markdown";
+import { EntitySchema } from "schema";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -159,6 +160,57 @@ describe("markdown.ts utility", () => {
       const lines = result.split("\n");
       // Line 0 is ---, Line 1 should be updatedAt
       expect(lines[1]).toContain("updatedAt: 1000");
+    });
+
+    it("should round-trip a canonical language profile through frontmatter", () => {
+      const entity = EntitySchema.parse({
+        id: "lemari",
+        type: "note",
+        title: "Lemari",
+        kind: "language",
+        languageProfileVersion: 1,
+        languageProfile: {
+          inputs: {
+            genre: "Classic Fantasy",
+            tone: "Lyrical",
+            role: "Common Speech",
+            structure: "Suffix-heavy",
+          },
+          phonology: {
+            consonants: ["l", "m"],
+            vowels: ["a", "e"],
+            phonotactics: ["CV"],
+          },
+          naming: {
+            examples: [
+              { name: "Lemari", meaning: "river guide", use: "person" },
+            ],
+          },
+          lexicon: [
+            { word: "lema", pronunciation: "LEH-mah", meaning: "river" },
+          ],
+          grammar: {
+            examples: [
+              {
+                text: "Lema nai.",
+                pronunciation: "LEH-mah nye",
+                translation: "The river guides us.",
+              },
+            ],
+          },
+          register: { role: "Common Speech" },
+          tableUseTips: ["Keep vowels open."],
+        },
+      });
+
+      const parsed = parseMarkdown(stringifyEntity(entity));
+      const reloaded = EntitySchema.parse({
+        ...parsed.metadata,
+        content: parsed.content,
+      });
+
+      expect(reloaded.languageProfileVersion).toBe(1);
+      expect(reloaded.languageProfile).toEqual(entity.languageProfile);
     });
   });
 

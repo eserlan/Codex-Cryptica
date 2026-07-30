@@ -88,6 +88,8 @@ describe("DelveAreaEnhancementService", () => {
       vaultGateway as never,
       aiClient,
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
 
     const enhanced = await service.enhanceArea({
@@ -274,6 +276,8 @@ describe("DelveAreaEnhancementService", () => {
       vaultGateway as never,
       { getModel },
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
     const onProgress = vi.fn();
 
@@ -287,7 +291,7 @@ describe("DelveAreaEnhancementService", () => {
       stocking: {
         encounters: ["An Ember Compact inspector"],
       },
-      aiEnhancedAt: expect.any(Number),
+      aiEnhancedAt: 1234,
     });
     expect(
       (result.nodes[0].data as unknown as DelveRoomNodeData).stocking.hazards,
@@ -434,6 +438,8 @@ describe("DelveAreaEnhancementService", () => {
         getModel: vi.fn().mockResolvedValue({ generateContent }),
       },
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
 
     const result = await service.populateAllAreas(passageCanvas as Canvas);
@@ -442,7 +448,7 @@ describe("DelveAreaEnhancementService", () => {
     expect(result).toMatchObject({ completed: 0, total: 0, failed: 0 });
     expect(passage.description).toContain("brass sluice bridge");
     expect(passage.condition).not.toContain("Iron Key");
-    expect(passage.aiEnhancedAt).toEqual(expect.any(Number));
+    expect(passage.aiEnhancedAt).toEqual(1234);
     expect(
       generateContent.mock.calls[0][0].contents[0].parts[0].text,
     ).toContain("PASSAGES TO ENHANCE");
@@ -584,6 +590,8 @@ describe("DelveAreaEnhancementService", () => {
       } as never,
       { getModel: vi.fn().mockResolvedValue({ generateContent }) },
       { effectiveApiKey: null, modelName: "test-model" },
+      undefined,
+      { now: () => 1234 },
     );
 
     const result = await service.populateAllAreas({
@@ -606,7 +614,7 @@ describe("DelveAreaEnhancementService", () => {
       stocking: {
         encounters: ["An Ember Compact guard detail"],
       },
-      aiEnhancedAt: expect.any(Number),
+      aiEnhancedAt: 1234,
     });
   });
 });

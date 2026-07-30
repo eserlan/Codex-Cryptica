@@ -44,8 +44,13 @@ import {
   parseShipResponse,
   generateShipLocal,
   buildLanguagePrompt,
+  buildLanguageRepairPrompt,
+  classifyAILanguageQuality,
+  parseLanguageGenerationResult,
   parseLanguageResponse,
   generateLanguageLocal,
+  validateLanguageInputFidelity,
+  validateLanguageNameBans,
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
   generateNewsSheetLocal,
@@ -126,6 +131,12 @@ function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
 
 /** Single source of truth for the generator model id (#1494). */
 const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
+const LANGUAGE_GENERATION_CONFIG = {
+  temperature: 0.35,
+  topP: 0.8,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json",
+};
 
 export class DefaultGeneratorEngine {
   constructor(private clientManager = aiClientManager) {}
@@ -176,13 +187,21 @@ export class DefaultGeneratorEngine {
   private async runModel(
     systemInstruction: string,
     userMessage: string,
+    generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
       GENERATOR_MODEL_ID,
       systemInstruction,
     );
-    const response = await model.generateContent(userMessage);
+    const response = await model.generateContent(
+      generationConfig
+        ? {
+            contents: [{ role: "user", parts: [{ text: userMessage }] }],
+            generationConfig,
+          }
+        : userMessage,
+    );
     return response.response.text().trim();
   }
 
@@ -464,12 +483,112 @@ export class DefaultGeneratorEngine {
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage } = buildLanguagePrompt(
-          langOptions,
-          getSessionContext(),
+        const { systemInstruction, userMessage, resolved } =
+          buildLanguagePrompt(
+            langOptions,
+            getSessionContext({ excludeLanguageDrafts: true }),
+          );
+        const expected = {
+          genre: resolved.genre,
+          tone: resolved.tone,
+          role: resolved.role,
+          structure: resolved.structure,
+          ...(resolved.context ? { worldContext: resolved.context } : {}),
+        };
+        const assess = (
+          raw: string,
+        ): {
+          output?: PublicGeneratorOutput;
+          blockingIssues: string[];
+          advisoryIssues: string[];
+          issues: string[];
+        } => {
+          try {
+            const output = parseLanguageResponse(raw);
+            const result = parseLanguageGenerationResult({
+              version: output.languageProfileVersion,
+              title: output.title,
+              summary: output.summary,
+              labels: output.labels,
+              profile: output.languageProfile,
+            });
+            const quality = classifyAILanguageQuality(result);
+            const blockingIssues = [
+              ...quality.blockingIssues,
+              ...validateLanguageInputFidelity(result, expected).issues,
+              ...validateLanguageNameBans(result, resolved.bannedNames ?? [])
+                .issues,
+            ];
+            const advisoryIssues = quality.advisoryIssues;
+            return {
+              output,
+              blockingIssues,
+              advisoryIssues,
+              issues: [...blockingIssues, ...advisoryIssues],
+            };
+          } catch (error) {
+            const blockingIssues = [
+              error instanceof Error
+                ? `Structural validation failed: ${error.message}`
+                : "Structural validation failed.",
+            ];
+            return {
+              blockingIssues,
+              advisoryIssues: [],
+              issues: blockingIssues,
+            };
+          }
+        };
+
+        const initialRaw = await this.runModel(
+          systemInstruction,
+          userMessage,
+          LANGUAGE_GENERATION_CONFIG,
         );
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseLanguageResponse(text);
+        const initial = assess(initialRaw);
+        if (initial.output && initial.issues.length === 0) {
+          return initial.output;
+        }
+
+        let candidateRaw = initialRaw;
+        let candidate = initial;
+        let lastAcceptableOutput =
+          initial.output && initial.blockingIssues.length === 0
+            ? initial.output
+            : undefined;
+        const repairBudget = initial.blockingIssues.length ? 2 : 1;
+        for (
+          let repairAttempt = 0;
+          repairAttempt < repairBudget;
+          repairAttempt += 1
+        ) {
+          try {
+            const repairRaw = await this.runModel(
+              systemInstruction,
+              buildLanguageRepairPrompt(
+                candidateRaw,
+                candidate.issues,
+                userMessage,
+              ),
+              LANGUAGE_GENERATION_CONFIG,
+            );
+            candidateRaw = repairRaw;
+            candidate = assess(repairRaw);
+            if (candidate.output && candidate.issues.length === 0) {
+              return candidate.output;
+            }
+            if (candidate.output && candidate.blockingIssues.length === 0) {
+              lastAcceptableOutput = candidate.output;
+              break;
+            }
+          } catch {
+            // Preserve the last parseable candidate for the remaining repair.
+          }
+        }
+        if (lastAcceptableOutput) return lastAcceptableOutput;
+        throw new Error(
+          `AI language output failed validation: ${candidate.issues.join(" ")}`,
+        );
       },
       () => generateLanguageLocal(langOptions),
     );

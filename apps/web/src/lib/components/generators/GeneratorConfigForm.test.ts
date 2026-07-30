@@ -77,4 +77,51 @@ describe("GeneratorConfigForm", () => {
       screen.queryByRole("option", { name: "Temple & Shrine" }),
     ).toBeNull();
   });
+
+  it("requires explicit confirmation before applying a suggested language", async () => {
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        languages: [
+          { id: "l1", title: "Lemari", structured: true, legacy: false },
+          { id: "l2", title: "Old Speech", structured: false, legacy: true },
+        ],
+        suggestedLanguageId: "l1",
+      },
+    });
+
+    const selector = screen.getByLabelText("Naming language");
+    expect((selector as HTMLSelectElement).value).toBe("");
+    expect(
+      screen.getByText(/Suggested from the source relationship/),
+    ).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    expect(onsubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ primaryLanguageId: undefined }),
+    );
+
+    await fireEvent.change(selector, { target: { value: "l2" } });
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+    expect(onsubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ primaryLanguageId: "l2" }),
+    );
+  });
+
+  it("does not offer naming-language selection to unrelated generators", () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "magic-item",
+        onsubmit: vi.fn(),
+        languages: [
+          { id: "l1", title: "Lemari", structured: true, legacy: false },
+        ],
+      },
+    });
+
+    expect(screen.queryByLabelText("Naming language")).toBeNull();
+  });
 });

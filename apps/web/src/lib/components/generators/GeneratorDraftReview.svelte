@@ -13,6 +13,9 @@
     /** When true, show the relationship creation toggle (contextual launch). */
     showRelationshipToggle?: boolean;
     themeId?: string;
+    /** Label for the back button — "Customize" when the draft was generated
+     * immediately from a Guided Mode intent (#1909, FR-010). */
+    backLabel?: string;
   }
 
   let {
@@ -23,6 +26,7 @@
     onback,
     showRelationshipToggle = false,
     themeId = "workspace",
+    backLabel = "Back",
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -57,6 +61,20 @@
   <p class="text-xs text-chrome-muted">
     Review the draft below, then open in the editor to accept or discard.
   </p>
+
+  {#if draft.primaryLanguageTitle}
+    <div
+      class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
+      data-testid="primary-language-context"
+    >
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--languages] h-4 w-4 text-chrome-accent"
+      ></span>
+      <span class="text-chrome-muted">Naming language:</span>
+      <strong>{draft.primaryLanguageTitle}</strong>
+    </div>
+  {/if}
 
   <div class="flex flex-col gap-1">
     <label
@@ -204,7 +222,7 @@
       {disabled}
       class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors disabled:opacity-50"
     >
-      Back
+      {backLabel}
     </button>
     <button
       type="submit"

@@ -198,4 +198,30 @@ describe("buildEntityRevisionPrompt", () => {
     );
     expect(stripped).not.toContain(INJECTION);
   });
+
+  it("includes empty entity revision directive in system instructions", () => {
+    const prompt = buildEntityRevisionPrompt(
+      {
+        id: "empty-entity",
+        title: "Empty Entity",
+        type: "npc",
+        content: "",
+        lore: "",
+      } as any,
+      { chronicle: "", lore: "" },
+      [
+        {
+          id: "related-1",
+          title: "The Ember Fortress",
+          type: "location",
+          summary: "A sprawling volcanic fortress.",
+        },
+      ],
+    );
+
+    expect(prompt).toContain("EMPTY ENTITY REVISION:");
+    expect(prompt).toContain(
+      "synthesize the surrounding world details from that context to invent plausible, evocative, and grounded facts",
+    );
+  });
 });

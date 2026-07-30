@@ -153,7 +153,7 @@ describe("app-init", () => {
       );
     });
 
-    it("should ignore noisy script/link errors", () => {
+    it("should ignore noisy script/link errors unless they are immutable version assets", () => {
       const mockCalendarStore = { init: vi.fn() };
       const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
@@ -163,6 +163,23 @@ describe("app-init", () => {
         message: "Script error",
       });
       // Mock target to be script element
+      Object.defineProperty(errorEvent, "target", { value: scriptElement });
+
+      window.dispatchEvent(errorEvent);
+      expect(notificationStore.setGlobalError).not.toHaveBeenCalled();
+    });
+
+    it("should handle version skew error on immutable asset script load failure", () => {
+      const mockCalendarStore = { init: vi.fn() };
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
+      listenersCleanup.push(cleanup);
+
+      const scriptElement = document.createElement("script");
+      scriptElement.src =
+        "https://codexcryptica.com/_app/immutable/nodes/4.n_OyOYNg.js";
+      const errorEvent = new ErrorEvent("error", {
+        message: "Load failed",
+      });
       Object.defineProperty(errorEvent, "target", { value: scriptElement });
 
       window.dispatchEvent(errorEvent);
@@ -340,11 +357,9 @@ describe("app-init", () => {
           serviceWorker: {
             controller: {},
             register: registerSpy,
-            addEventListener: vi.fn(
-              (event: string, handler: EventListener) => {
-                serviceWorkerListeners.set(event, handler);
-              },
-            ),
+            addEventListener: vi.fn((event: string, handler: EventListener) => {
+              serviceWorkerListeners.set(event, handler);
+            }),
           },
         } as any,
         window: mockWindow,

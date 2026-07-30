@@ -51,7 +51,7 @@ describe("ProxyAIGeneratorGateway", () => {
             storeConversation: true,
             generationConfig: expect.objectContaining({
               responseMimeType: "application/json",
-              maxOutputTokens: 2048,
+              maxOutputTokens: 4096,
             }),
           }),
         );
@@ -119,5 +119,35 @@ describe("ProxyAIGeneratorGateway", () => {
       usedInteraction: true,
       replayed: true,
     });
+  });
+
+  it("applies per-request decoding overrides to stateless generation", async () => {
+    const generateContent = async (request: unknown) => {
+      expect(request).toEqual(
+        expect.objectContaining({
+          generationConfig: {
+            temperature: 0.35,
+            topP: 0.8,
+            maxOutputTokens: 8192,
+            responseMimeType: "application/json",
+          },
+        }),
+      );
+      return { response: { text: () => '{"title":"Stable"}' } };
+    };
+    const client = {
+      getModel: async () => ({ generateContent }),
+    };
+    const gateway = new ProxyAIGeneratorGateway(client as never);
+
+    await expect(
+      gateway.complete("full prompt", "system", {
+        generationConfig: {
+          temperature: 0.35,
+          topP: 0.8,
+          maxOutputTokens: 8192,
+        },
+      }),
+    ).resolves.toBe('{"title":"Stable"}');
   });
 });

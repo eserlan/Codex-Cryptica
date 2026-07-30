@@ -53,6 +53,7 @@
   import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -609,7 +610,7 @@
     <div
       class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
     >
-      {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      {#if !isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
         <ActivityBar />
         <SidebarPanelHost />
       {/if}

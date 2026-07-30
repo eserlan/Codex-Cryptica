@@ -479,7 +479,7 @@
             <div class="flex flex-wrap gap-3 mt-2">
               <button
                 class="inline-flex items-center gap-2 rounded-full bg-theme-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-bg hover:opacity-90 transition-opacity"
-                onclick={() => modalUIStore.requestCreateEntity()}
+                onclick={() => modalUIStore.openIntentCreateMenu()}
               >
                 <span class="icon-[lucide--plus] h-4 w-4"></span>
                 Create Entity

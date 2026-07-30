@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   CampaignGeneratorService,
+  assertValidLanguageFallback,
   composeDraftVaultFields,
   DraftSaveError,
+  LanguageGenerationError,
   type GeneratorVaultGateway,
 } from "./campaign-generator-service";
 import {
@@ -16,6 +18,7 @@ import {
   buildGeneratorLoreEntries,
   draftToAcceptedEntity,
 } from "./generator-session";
+import { generateLanguageLocal } from "./public-language";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -131,6 +134,152 @@ function aiJson(title: string): string {
   return JSON.stringify({ title, summary: "s", lore: "l", labels: [] });
 }
 
+function languageAiJson(mutate?: (value: Record<string, any>) => void): string {
+  const local = generateLanguageLocal(
+    {
+      genre: "Classic Fantasy",
+      tone: "Lyrical & Vowel-rich",
+      role: "Common Speech",
+      structure: "Compound Words",
+    },
+    () => 0.42,
+  );
+  const value: Record<string, any> = {
+    version: 1,
+    title: local.title,
+    summary: local.summary,
+    labels: local.labels,
+    profile: structuredClone(local.languageProfile),
+  };
+  value.profile.culture = {
+    speakers: "River traders",
+    usage: "Used for trade and navigation",
+  };
+  value.profile.lexicon = value.profile.lexicon.map(
+    (entry: Record<string, any>, index: number) => ({
+      ...entry,
+      id: `word-${index}`,
+      partOfSpeech: index === 0 ? "noun" : "verb",
+      syllables: [entry.word],
+      demonstrates: index === 0 ? ["sound-shape"] : undefined,
+    }),
+  );
+  value.profile.phonology = {
+    consonants: [
+      ...value.profile.lexicon.map((entry: Record<string, any>) => entry.word),
+      "qa",
+    ],
+    vowels: ["a"],
+    phonotactics: ["Each test source is one declared surface unit."],
+    syllablePatterns: ["C"],
+    rhythm: "Even, with open syllables",
+  };
+  value.profile.rules = [
+    {
+      id: "sound-shape",
+      domain: "phonology",
+      description: "Sources use one declared surface unit.",
+    },
+    {
+      id: "role-suffix",
+      domain: "morphology",
+      description: "The role suffix follows a lexical root.",
+    },
+    {
+      id: "name-pattern",
+      domain: "naming",
+      description: "Personal names combine a root and role suffix.",
+    },
+    {
+      id: "root-order",
+      domain: "grammar",
+      description: "Subjects precede actions in declarative clauses.",
+    },
+    {
+      id: "formal-use",
+      domain: "register",
+      description: "The first phrase demonstrates formal use.",
+    },
+  ];
+  value.profile.morphology = {
+    wordFormation: "Compound roots take a final role marker.",
+    suffixes: [{ sourceId: "keeper-suffix", form: "qa", meaning: "keeper" }],
+    morphemes: [
+      {
+        id: "keeper-suffix",
+        form: "qa",
+        pronunciation: "kah",
+        meaning: "keeper",
+        kind: "suffix",
+        syllables: ["qa"],
+      },
+    ],
+  };
+  value.profile.naming.personalNamePatterns = ["Root + role marker"];
+  value.profile.naming.structuredPatterns = [
+    {
+      id: "person-root-role",
+      use: "person",
+      structure: value.profile.inputs.structure,
+      slots: ["root", "role"],
+    },
+  ];
+  value.profile.naming.examples = value.profile.lexicon
+    .slice(0, 4)
+    .map((entry: Record<string, any>) => ({
+      name: `${entry.word}qa`,
+      pronunciation: `${entry.pronunciation} kah`,
+      meaning: `${entry.meaning} keeper`,
+      use: "person",
+      patternId: "person-root-role",
+      components: [
+        {
+          slot: "root",
+          surface: entry.word,
+          pronunciation: entry.pronunciation,
+          meaning: entry.meaning,
+          sourceId: entry.id,
+          syllables: entry.syllables,
+        },
+        {
+          slot: "role",
+          surface: "qa",
+          pronunciation: "kah",
+          meaning: "keeper",
+          sourceId: "keeper-suffix",
+          syllables: ["qa"],
+        },
+      ],
+      demonstrates: ["role-suffix", "name-pattern"],
+    }));
+  value.title = value.profile.naming.examples[0].name;
+  value.profile.grammar.examples = [0, 1, 2].map((index) => {
+    const first = value.profile.lexicon[index];
+    const second = value.profile.lexicon[index + 1];
+    const translation = `${first.meaning} ${second.meaning}`;
+    return {
+      text: `${first.word} ${second.word}`,
+      pronunciation: `${first.pronunciation} ${second.pronunciation}`,
+      translation,
+      literalTranslation: translation,
+      construction: "declarative",
+      components: [first, second].map(
+        (entry: Record<string, any>, componentIndex: number) => ({
+          slot: componentIndex === 0 ? "subject" : "action",
+          surface: entry.word,
+          pronunciation: entry.pronunciation,
+          meaning: entry.meaning,
+          sourceId: entry.id,
+          syllables: entry.syllables,
+        }),
+      ),
+      demonstrates: index === 0 ? ["root-order", "formal-use"] : ["root-order"],
+    };
+  });
+  mutate?.(value);
+  return JSON.stringify(value);
+}
+
 describe("generateDraft", () => {
   it("produces a draft for each supported generator with useAI false", async () => {
     const svc = new CampaignGeneratorService();
@@ -155,6 +304,17 @@ describe("generateDraft", () => {
     await svc.generateDraft(run("npc"));
     expect(vault.createEntity).not.toHaveBeenCalled();
     expect(vault.addConnection).not.toHaveBeenCalled();
+  });
+
+  it("raises a clear error instead of returning an invalid local language", () => {
+    expect(() =>
+      assertValidLanguageFallback({
+        title: "Broken",
+        summary: "Incomplete",
+        lore: "",
+        labels: ["language"],
+      }),
+    ).toThrow(LanguageGenerationError);
   });
 });
 
@@ -187,6 +347,27 @@ describe("saveDraft", () => {
       "note",
       "Kaeldar",
       expect.objectContaining({ kind: "language" }),
+    );
+  });
+
+  it("persists the canonical language profile with its version", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    const generated = await svc.generateDraft(run("language"));
+
+    await svc.saveDraft({
+      draft: generated,
+      createRelationship: false,
+    });
+
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "note",
+      generated.title,
+      expect.objectContaining({
+        kind: "language",
+        languageProfileVersion: 1,
+        languageProfile: generated.languageProfile,
+      }),
     );
   });
 
@@ -947,6 +1128,280 @@ describe("AI policy (US2)", () => {
     });
     const d = await svc.generateDraft(run("faction", { useAI: true }));
     expect(d.sourceGeneratorId).toBe("faction");
+  });
+
+  it("accepts a structurally valid, rich language result on the first AI call", async () => {
+    const complete = vi.fn(async () => languageAiJson());
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(generated.languageProfileVersion).toBe(1);
+    expect(generated.languageProfile?.culture?.speakers).toBe("River traders");
+  });
+
+  it("keeps language generation stateless instead of revising the previous interaction", async () => {
+    const complete = vi.fn(async () =>
+      languageAiJson((value) => {
+        value.profile.inputs.role = "Imperial Standard";
+        value.profile.register.role = "Imperial Standard";
+        value.summary = "A formal language used as the Imperial Standard.";
+      }),
+    );
+    const onInteractionResult = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onInteractionResult,
+    });
+
+    await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Imperial Standard",
+          structure: "Compound Words",
+        },
+        interaction: {
+          input: "Generate another language.",
+          previousInteractionId: "previous-language-response",
+          store: true,
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0][0]).toContain(
+      "- Language Role: Imperial Standard",
+    );
+    expect(complete.mock.calls[0][2]).toEqual({
+      generationConfig: {
+        temperature: 0.35,
+        topP: 0.8,
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+      },
+    });
+    expect(onInteractionResult).not.toHaveBeenCalled();
+  });
+
+  it("makes one targeted language repair after an AI quality failure", async () => {
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValueOnce(
+        languageAiJson((value) => {
+          value.profile.naming.examples = value.profile.naming.examples.slice(
+            0,
+            2,
+          );
+        }),
+      )
+      .mockResolvedValueOnce(languageAiJson());
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[1][0]).toContain(
+      "Include at least 4 example names.",
+    );
+    expect(complete.mock.calls[1][0]).toContain("Previous response:");
+    expect(complete.mock.calls[1][0]).toContain(
+      "Preserve the existing title and summary exactly",
+    );
+    expect(complete.mock.calls[1][0]).toContain(
+      "Make the smallest possible correction",
+    );
+    expect(complete.mock.calls[1][0]).toContain(
+      "Original resolved request (schema omitted):",
+    );
+    expect(complete.mock.calls[1][0]).not.toContain(
+      "Return a valid JSON object matching this structure exactly",
+    );
+    expect(generated.languageProfileVersion).toBe(1);
+  });
+
+  it("keeps a parseable AI language when advisory issues remain after repair", async () => {
+    const advisoryOnly = languageAiJson((value) => {
+      value.profile.phonology.syllablePatterns = ["CV"];
+    });
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValue(advisoryOnly);
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[1][0]).toContain(
+      "outside the declared sound inventory",
+    );
+    expect(generated.title).toBe(JSON.parse(advisoryOnly).title);
+  });
+
+  it("sends internal consistency failures through targeted repair", async () => {
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValueOnce(
+        languageAiJson((value) => {
+          value.profile.grammar.examples[0].components[0].pronunciation =
+            "changed";
+        }),
+      )
+      .mockResolvedValueOnce(languageAiJson());
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[1][0]).toContain("changes pronunciation");
+    expect(generated.languageProfileVersion).toBe(1);
+  });
+
+  it("accepts an advisory-only first repair without consuming another call", async () => {
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValueOnce(
+        languageAiJson((value) => {
+          value.profile.naming.examples = value.profile.naming.examples.slice(
+            0,
+            2,
+          );
+        }),
+      )
+      .mockResolvedValueOnce(
+        languageAiJson((value) => {
+          value.profile.grammar.examples = value.profile.grammar.examples.slice(
+            0,
+            1,
+          );
+        }),
+      )
+      .mockResolvedValueOnce(languageAiJson());
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[1][0]).toContain("Repair the following");
+    expect(complete.mock.calls[1][2]).toEqual({
+      generationConfig: {
+        temperature: 0.35,
+        topP: 0.8,
+        maxOutputTokens: 8192,
+        responseMimeType: "application/json",
+      },
+    });
+    expect(generated.languageProfileVersion).toBe(1);
+  });
+
+  it("keeps the second targeted repair when the first repair call fails", async () => {
+    const complete = vi
+      .fn<AIGeneratorGateway["complete"]>()
+      .mockResolvedValueOnce("{}")
+      .mockRejectedValueOnce(new Error("repair unavailable"))
+      .mockResolvedValueOnce(languageAiJson());
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("language", {
+        useAI: true,
+        options: {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+      }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(generated.languageProfileVersion).toBe(1);
+  });
+
+  it("uses the validated local profile after the fixed three-call AI budget", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => "{}");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(run("language", { useAI: true }));
+
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(generated.languageProfileVersion).toBe(1);
+    expect(generated.languageProfile?.lexicon).toHaveLength(10);
   });
 
   it("retries AI generation when it returns a banned name, then accepts a clean one", async () => {

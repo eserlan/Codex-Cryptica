@@ -90,3 +90,7 @@
 ## 2026-07-29 - Inject Clock into DungeonDelveService
 **Learning:** Found hardcoded `Date.now()` usage in `DungeonDelveService` within `apps/web/src/lib/services/dungeon-delve-service.ts`. This creates a hidden dependency on the global system clock that makes testing ID generation brittle.
 **Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Updated tests to pass a mock `Clock` in the constructor to avoid Vitest global pollution.
+## 2024-07-28 - Injecting Clock into DelveAreaEnhancementService
+
+**Learning:** Found a hardcoded `Date.now()` in `DelveAreaEnhancementService` which hindered deterministic testing. We can easily inject a `Clock` interface through the constructor utilizing `systemClock` from `$lib/utils/runtime-deps` as a default. This allows tests to precisely assert on timestamps without resorting to global mocks.
+**Action:** Use DI via constructor for ambient dependencies like `Clock` (and `IdGenerator`) using established patterns from `$lib/utils/runtime-deps`. Pass deterministic fake clocks in tests instead of global mocks.

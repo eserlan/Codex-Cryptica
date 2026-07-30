@@ -1,9 +1,11 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultSwitcherModal from "./VaultSwitcherModal.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
   () => ({
@@ -48,18 +50,20 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
-  modalUIStore: {
-    vaultSwitcherIntent: null,
-    openVaultSwitcher: vi.fn(),
-  },
-}));
+vi.mock("$lib/stores/ui/modal-ui.svelte", async () => {
+  const actual = await vi.importActual<
+    typeof import("$lib/stores/ui/modal-ui.svelte")
+  >("$lib/stores/ui/modal-ui.svelte");
+  return { modalUIStore: actual.modalUIStore };
+});
 
 describe("VaultSwitcherModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vaultRegistry.availableVaults = [];
     vaultRegistry.activeVaultId = null;
+    modalUIStore.vaultSwitcherIntent = null;
+    modalUIStore.closeQuickStartModal();
     if (!Element.prototype.animate) {
       Element.prototype.animate = vi.fn(
         () =>
@@ -88,17 +92,40 @@ describe("VaultSwitcherModal", () => {
     return { onClose };
   };
 
-  it("keeps the new vault flow in the original selector form", async () => {
+  it("keeps the new vault flow in the original selector form and prevents footer overflow", async () => {
     renderModal();
 
     await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
 
-    expect(screen.getByLabelText("New Vault Name")).toBeTruthy();
+    const input = screen.getByLabelText("New Vault Name");
+    expect(input).toBeTruthy();
+    expect(input.className).toContain("min-w-0");
     expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /^create$/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /import/i })).toBeTruthy();
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
     expect(screen.queryByText("World Theme")).toBeNull();
+
+    const createForm = input.closest("form");
+    expect(createForm?.className).toContain("flex-col");
+    expect(createForm?.className).toContain("sm:flex-row");
+  });
+
+  it("prevents the default footer actions from overflowing on narrow screens", () => {
+    renderModal();
+
+    const doneButton = screen.getByRole("button", { name: /^done$/i });
+    expect(doneButton.className).toContain("shrink-0");
+    expect(doneButton.className).toContain("ml-auto");
+
+    const footer = doneButton.parentElement;
+    expect(footer?.className).toContain("flex-wrap");
+
+    const actionGroup = screen.getByTestId(
+      "empty-workspace-button",
+    ).parentElement;
+    expect(actionGroup?.className).toContain("flex-wrap");
+    expect(actionGroup?.className).toContain("min-w-0");
   });
 
   it("closes after creating a vault without prompting for theme", async () => {
@@ -146,5 +173,24 @@ describe("VaultSwitcherModal", () => {
     renderModal();
 
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
+  });
+
+  it("triggers Quick Start (mounted once, globally) via the shared modalUIStore flag instead of a local duplicate", async () => {
+    const { onClose } = renderModal();
+
+    await fireEvent.click(screen.getByTestId("quick-start-world-button"));
+    expect(modalUIStore.showQuickStartModal).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes the switcher once Quick Start finishes/cancels", async () => {
+    const { onClose } = renderModal();
+
+    modalUIStore.openQuickStartModal();
+    await tick();
+    expect(onClose).not.toHaveBeenCalled();
+
+    modalUIStore.closeQuickStartModal();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 });

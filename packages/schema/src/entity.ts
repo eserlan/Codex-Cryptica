@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ConnectionSchema } from "./connection";
+import { LanguageProfileV1Schema } from "./language-profile";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -209,6 +210,8 @@ export const EntitySchema = z.object({
   guestChatConfig: GuestChatConfigSchema.optional(),
   visibility: z.enum(["visible", "hidden"]).optional(),
   kind: z.string().optional(),
+  languageProfileVersion: z.literal(1).optional(),
+  languageProfile: LanguageProfileV1Schema.optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

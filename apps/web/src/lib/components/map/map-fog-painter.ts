@@ -27,7 +27,9 @@ function copyCanvas(
   const canvas = createCanvas();
   canvas.width = source.width;
   canvas.height = source.height;
-  canvas.getContext("2d")?.drawImage(source, 0, 0);
+  if (source.width > 0 && source.height > 0) {
+    canvas.getContext("2d")?.drawImage(source, 0, 0);
+  }
   return canvas;
 }
 
@@ -138,7 +140,9 @@ export class MapFogPainter {
         const ctx = liveMaskCanvas.getContext("2d");
         if (ctx) {
           ctx.clearRect(0, 0, liveMaskCanvas.width, liveMaskCanvas.height);
-          ctx.drawImage(snapshot, 0, 0);
+          if (snapshot.width > 0 && snapshot.height > 0) {
+            ctx.drawImage(snapshot, 0, 0);
+          }
           await this.deps.mapStore.saveMask(liveMaskCanvas);
         }
       }
