@@ -38,7 +38,7 @@
   bind:value={type}
   choices={fantasyVenueTypes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom tavern type"
 />
@@ -47,9 +47,12 @@
   id="tavern-atmosphere-select"
   label="Atmosphere"
   bind:value={atmosphere}
-  choices={socialHubConfig.atmospheres.map((a: string) => ({ value: a, label: a }))}
+  choices={socialHubConfig.atmospheres.map((a: string) => ({
+    value: a,
+    label: a,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom atmosphere"
 />
@@ -58,9 +61,12 @@
   id="tavern-settlement-select"
   label="Settlement type"
   bind:value={settlementType}
-  choices={socialHubConfig.settlementTypes.map((s: string) => ({ value: s, label: s }))}
+  choices={socialHubConfig.settlementTypes.map((s: string) => ({
+    value: s,
+    label: s,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom settlement type"
 />
@@ -69,9 +75,12 @@
   id="tavern-wealth-select"
   label="Wealth level"
   bind:value={wealthLevel}
-  choices={socialHubConfig.wealthLevels.map((w: string) => ({ value: w, label: w }))}
+  choices={socialHubConfig.wealthLevels.map((w: string) => ({
+    value: w,
+    label: w,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom wealth level"
 />
@@ -82,7 +91,7 @@
   bind:value={clientele}
   choices={fantasyClienteles.map((c: string) => ({ value: c, label: c }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter custom primary clientele"
 />
@@ -94,7 +103,7 @@
   <textarea
     id="tavern-context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="tavern-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

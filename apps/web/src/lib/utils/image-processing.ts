@@ -38,6 +38,33 @@ export async function generateThumbnail(
   });
 }
 
+// Some browser/platform combinations (notably Firefox on certain Linux
+// distro builds) return a null blob for image/webp instead of throwing, so a
+// null result isn't necessarily fatal — retry with PNG before giving up.
+async function encodeCanvasBlob(
+  canvas: HTMLCanvasElement | OffscreenCanvas,
+  quality: number,
+): Promise<Blob> {
+  // OffscreenCanvas is the only one of the two with convertToBlob, so check
+  // for that first — some browsers (Firefox) also expose a deprecated toBlob
+  // on OffscreenCanvas, which would otherwise win this check and log a
+  // deprecation warning on every encode.
+  const encode = (type: string): Promise<Blob | null> =>
+    "convertToBlob" in canvas
+      ? (canvas as OffscreenCanvas).convertToBlob({ type, quality })
+      : new Promise<Blob | null>((r) =>
+          (canvas as HTMLCanvasElement).toBlob(r, type, quality),
+        );
+
+  const webp = await encode("image/webp");
+  if (webp) return webp;
+
+  const png = await encode("image/png");
+  if (png) return png;
+
+  throw new Error("Canvas toBlob failed for both image/webp and image/png");
+}
+
 function drawOnCanvas(
   img: HTMLImageElement,
   canvas: HTMLCanvasElement | OffscreenCanvas,
@@ -68,22 +95,7 @@ function drawOnCanvas(
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
 
-  const blobPromise =
-    "toBlob" in canvas
-      ? new Promise<Blob | null>((r) =>
-          (canvas as HTMLCanvasElement).toBlob(r, "image/webp", 0.75),
-        )
-      : (canvas as OffscreenCanvas).convertToBlob({
-          type: "image/webp",
-          quality: 0.75,
-        });
-
-  blobPromise
-    .then((result) => {
-      if (result) resolve(result);
-      else reject(new Error("Canvas toBlob failed"));
-    })
-    .catch(reject);
+  encodeCanvasBlob(canvas, 0.75).then(resolve).catch(reject);
 }
 
 export async function convertToWebP(
@@ -113,22 +125,7 @@ export async function convertToWebP(
       canvas.height = img.height;
       (ctx as CanvasRenderingContext2D).drawImage(img, 0, 0);
 
-      const blobPromise =
-        "toBlob" in canvas
-          ? new Promise<Blob | null>((r) =>
-              (canvas as HTMLCanvasElement).toBlob(r, "image/webp", quality),
-            )
-          : (canvas as OffscreenCanvas).convertToBlob({
-              type: "image/webp",
-              quality: quality,
-            });
-
-      blobPromise
-        .then((result) => {
-          if (result) resolve(result);
-          else reject(new Error("Canvas toBlob failed during WebP conversion"));
-        })
-        .catch(reject);
+      encodeCanvasBlob(canvas, quality).then(resolve).catch(reject);
     };
 
     img.onerror = (err) => {

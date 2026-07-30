@@ -47,6 +47,7 @@ describe("IntentCreateModal", () => {
     expect(modalUIStore.openIntentGeneratorWorkflow).toHaveBeenCalledWith(
       "npc",
       null,
+      null,
     );
     expect(modalUIStore.closeIntentCreateMenu).toHaveBeenCalled();
   });
@@ -67,6 +68,7 @@ describe("IntentCreateModal", () => {
     expect(modalUIStore.openIntentGeneratorWorkflow).toHaveBeenCalledWith(
       "npc",
       "faction-1",
+      null,
     );
   });
 
@@ -86,6 +88,19 @@ describe("IntentCreateModal", () => {
     expect(modalUIStore.openIntentGeneratorWorkflow).not.toHaveBeenCalled();
     expect(modalUIStore.openGeneratorWorkflowForEntity).toHaveBeenCalledWith(
       "faction-1",
+    );
+  });
+
+  it("passes typed initial prompt text to openIntentGeneratorWorkflow", async () => {
+    render(IntentCreateModal);
+    const input = screen.getByTestId("intent-prompt-input");
+    await fireEvent.input(input, { target: { value: "  Shadow Operative  " } });
+    await fireEvent.click(screen.getByTestId("intent-character"));
+
+    expect(modalUIStore.openIntentGeneratorWorkflow).toHaveBeenCalledWith(
+      "npc",
+      null,
+      "Shadow Operative",
     );
   });
 });

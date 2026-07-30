@@ -43,13 +43,24 @@ function hasChildSettlement(
   entity: RecommendableEntity,
   allEntities: Record<string, RecommendableEntity>,
 ): boolean {
-  return Object.values(allEntities).some((other) => {
-    if (other.id === entity.id || other.type !== "location") return false;
-    return other.connections.some(
-      (c) =>
-        c.target === entity.id && connectionMatchesAny(c, LOCATED_IN_KEYWORDS),
-    );
-  });
+  // ⚡ Bolt Optimization: Loop over keys instead of Object.values() to avoid array allocation
+  for (const key in allEntities) {
+    if (Object.prototype.hasOwnProperty.call(allEntities, key)) {
+      const other = allEntities[key];
+      if (other.id !== entity.id && other.type === "location") {
+        if (
+          other.connections.some(
+            (c) =>
+              c.target === entity.id &&
+              connectionMatchesAny(c, LOCATED_IN_KEYWORDS),
+          )
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /**

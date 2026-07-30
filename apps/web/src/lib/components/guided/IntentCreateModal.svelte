@@ -5,6 +5,8 @@
   import { resolveIntentContext } from "./contextual-intent-helper";
   import ModalShell from "$lib/components/ui/ModalShell.svelte";
 
+  let initialPrompt = $state("");
+
   const INTENTS: Array<{
     category: IntentCategory;
     label: string;
@@ -37,10 +39,13 @@
 
     close();
 
+    const promptText = initialPrompt.trim() || null;
+
     if (context.generatorId) {
       modalUIStore.openIntentGeneratorWorkflow(
         context.generatorId,
         context.sourceEntityId,
+        promptText,
       );
     } else if (context.sourceEntityId) {
       modalUIStore.openGeneratorWorkflowForEntity(context.sourceEntityId);
@@ -79,20 +84,43 @@
       </button>
     </div>
 
-    <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
-      {#each INTENTS as intent (intent.category)}
-        <button
-          type="button"
-          onclick={() => selectIntent(intent.category)}
-          data-testid={`intent-${intent.category}`}
-          class="flex flex-col items-center gap-2 p-4 rounded-xl border border-theme-border bg-theme-bg/40 hover:border-theme-primary hover:bg-theme-primary/10 transition-colors text-theme-text"
+    <div class="p-4 space-y-4">
+      <div>
+        <label for="intent-prompt-input" class="sr-only"
+          >Prompt or concept</label
         >
-          <span class="{intent.icon} w-6 h-6 text-theme-primary"></span>
-          <span class="text-xs font-bold uppercase tracking-wider"
-            >{intent.label}</span
+        <div class="relative">
+          <span
+            class="icon-[lucide--sparkles] w-4 h-4 text-theme-muted absolute left-3 top-1/2 -translate-y-1/2"
+            aria-hidden="true"
+          ></span>
+          <input
+            id="intent-prompt-input"
+            type="text"
+            bind:value={initialPrompt}
+            placeholder="Optional prompt, name, or keywords..."
+            data-testid="intent-prompt-input"
+            class="w-full pl-9 pr-3 py-2 text-sm bg-theme-bg border border-theme-border rounded-lg text-theme-text placeholder:text-theme-muted focus:outline-none focus:border-theme-primary transition-colors"
+            onkeydown={(e) => e.key === "Enter" && selectIntent("character")}
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {#each INTENTS as intent (intent.category)}
+          <button
+            type="button"
+            onclick={() => selectIntent(intent.category)}
+            data-testid={`intent-${intent.category}`}
+            class="flex flex-col items-center gap-2 p-4 rounded-xl border border-theme-border bg-theme-bg/40 hover:border-theme-primary hover:bg-theme-primary/10 transition-colors text-theme-text"
           >
-        </button>
-      {/each}
+            <span class="{intent.icon} w-6 h-6 text-theme-primary"></span>
+            <span class="text-xs font-bold uppercase tracking-wider"
+              >{intent.label}</span
+            >
+          </button>
+        {/each}
+      </div>
     </div>
   </div>
 </ModalShell>

@@ -1065,10 +1065,21 @@ export function validateAILanguageQuality(
   if (result.profile.tableUseTips.length < 2) {
     issues.push("Include at least 2 table-use tips.");
   }
-  if (
-    !result.profile.culture ||
-    !Object.values(result.profile.culture).some(Boolean)
-  ) {
+  let hasCulture = false;
+  if (result.profile.culture) {
+    for (const key in result.profile.culture) {
+      if (
+        Object.prototype.hasOwnProperty.call(result.profile.culture, key) &&
+        Boolean(
+          result.profile.culture[key as keyof typeof result.profile.culture],
+        )
+      ) {
+        hasCulture = true;
+        break;
+      }
+    }
+  }
+  if (!hasCulture) {
     issues.push("Include cultural context.");
   }
   if (!result.profile.phonology.rhythm) {
