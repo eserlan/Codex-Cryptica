@@ -17,24 +17,22 @@
   import { seoImportService } from "$lib/services/seo/import-handler";
   import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
 
-  // Secondary welcome actions (create / open) — both dismiss the landing page
-  // and open the vault switcher with the matching intent.
-  const openVaultFromWelcome = (intent: "create" | "open") => {
+  // "Open Existing Vault" dismisses the landing page and opens the vault
+  // switcher with the matching intent.
+  const openVaultFromWelcome = (intent: "open") => {
     onboardingStore.dismissLandingPage();
     modalUIStore.openVaultSwitcher(intent);
   };
-  const secondaryActions = [
-    {
-      intent: "create" as const,
-      label: "Create New Vault",
-      testid: "welcome-create-button",
-    },
-    {
-      intent: "open" as const,
-      label: "Open Existing Vault",
-      testid: "welcome-open-button",
-    },
-  ];
+
+  // Guided Mode (#1909): the primary "create" path leans into Quick Start
+  // rather than jumping straight to the vault switcher's blank-vault form. A
+  // fully empty vault is still reachable via "Open Existing Vault" → NEW VAULT.
+  // Tracked on modalUIStore (not local state) so the first-run orchestrator
+  // sees it and doesn't stack the onboarding tour on top of Quick Start.
+  const openQuickStartFromWelcome = () => {
+    onboardingStore.dismissLandingPage();
+    modalUIStore.openQuickStartModal();
+  };
 
   const isSpecialEnv =
     import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
@@ -379,8 +377,8 @@
           >
             <button
               type="button"
-              onclick={() => demoService.startDemo("fantasy")}
-              class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary/70 hover:shadow-theme-primary/20 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
+              onclick={openQuickStartFromWelcome}
+              class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-primary/50 bg-theme-surface/60 shadow-2xl shadow-theme-primary/10 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary hover:shadow-theme-primary/30 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
               aria-labelledby="living-lore-graph"
               aria-describedby="living-lore-graph-copy living-lore-graph-preview"
               data-testid="welcome-preview-button"
@@ -399,13 +397,14 @@
                     id="living-lore-graph-copy"
                     class="mt-1 text-[11px] text-theme-muted"
                   >
-                    See how characters, factions, secrets, and places connect.
+                    See how characters, factions, secrets, and places connect —
+                    Quick Start builds one like this for you in seconds.
                   </p>
                 </div>
                 <span
                   class="ml-auto flex shrink-0 items-center gap-1 text-[10px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
                 >
-                  Explore
+                  Quick Start
                   <span
                     class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
                   ></span>
@@ -423,29 +422,36 @@
             >
               <button
                 type="button"
+                onclick={openQuickStartFromWelcome}
+                class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
+                data-testid="welcome-quick-start-button"
+              >
+                <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+                Quick Start World
+              </button>
+              <button
+                type="button"
                 onclick={() => demoService.startDemo("fantasy")}
-                class="w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
                 data-testid="welcome-demo-button"
               >
                 Explore Demo Vault
               </button>
-              {#each secondaryActions as action (action.intent)}
-                <button
-                  type="button"
-                  onclick={() => openVaultFromWelcome(action.intent)}
-                  class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
-                  data-testid={action.testid}
-                >
-                  {action.label}
-                </button>
-              {/each}
+              <button
+                type="button"
+                onclick={() => openVaultFromWelcome("open")}
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                data-testid="welcome-open-button"
+              >
+                Open Existing Vault
+              </button>
             </div>
             <p
               class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center"
             >
-              Opens a prebuilt sample world instantly. No setup required.
-              Optional AI is available when you want it; your vault works fully
-              without it.
+              Quick Start generates a ready-to-explore world in seconds — pick a
+              theme, add an optional premise, done. Optional AI is available
+              when you want it; your vault works fully without it.
             </p>
           </section>
         </section>

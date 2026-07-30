@@ -208,12 +208,19 @@ export class ModalUIStore {
     sourceEntityId: string | null;
     generatorId: string | null;
     prefillDate?: { year: number; month: number; day: number } | null;
+    /**
+     * Guided Mode intent-first `+ Create` (#1909): skip the configure step and
+     * generate sensible defaults immediately. "Customize" (the review step's
+     * Back button) returns to configure without losing the inferred context.
+     */
+    autoGenerate: boolean;
   }>({
     open: false,
     launchMode: "workspace",
     sourceEntityId: null,
     generatorId: null,
     prefillDate: null,
+    autoGenerate: false,
   });
 
   /** Open the unified generator workflow from the campaign workspace. */
@@ -227,6 +234,7 @@ export class ModalUIStore {
       sourceEntityId: null,
       generatorId,
       prefillDate,
+      autoGenerate: false,
     };
   }
 
@@ -241,6 +249,25 @@ export class ModalUIStore {
       sourceEntityId,
       generatorId,
       prefillDate: null,
+      autoGenerate: false,
+    };
+  }
+
+  /**
+   * Open the generator workflow from the Guided Mode intent-first `+ Create`
+   * menu: generates immediately with inferred context and default options.
+   */
+  openIntentGeneratorWorkflow(
+    generatorId: string,
+    sourceEntityId: string | null = null,
+  ) {
+    this.generatorWorkflow = {
+      open: true,
+      launchMode: sourceEntityId ? "contextual" : "workspace",
+      sourceEntityId,
+      generatorId,
+      prefillDate: null,
+      autoGenerate: true,
     };
   }
 
@@ -251,7 +278,32 @@ export class ModalUIStore {
       sourceEntityId: null,
       generatorId: null,
       prefillDate: null,
+      autoGenerate: false,
     };
+  }
+
+  // Guided Mode intent-first `+ Create` menu (#1909).
+  showIntentCreateMenu = $state(false);
+
+  openIntentCreateMenu() {
+    this.showIntentCreateMenu = true;
+  }
+
+  closeIntentCreateMenu() {
+    this.showIntentCreateMenu = false;
+  }
+
+  // Guided Mode Quick Start (#1909). Tracked globally (not local component
+  // state) so the first-run orchestrator can see it via `isAnyModalOpen` and
+  // avoid stacking the "initial-onboarding" tour on top of it.
+  showQuickStartModal = $state(false);
+
+  openQuickStartModal() {
+    this.showQuickStartModal = true;
+  }
+
+  closeQuickStartModal() {
+    this.showQuickStartModal = false;
   }
 
   requestCreateEntity(
@@ -395,7 +447,9 @@ export class ModalUIStore {
       this.imagePromptReview.open ||
       this.lightbox.show ||
       this.soundBite.show ||
-      this.revisionDialog.open
+      this.revisionDialog.open ||
+      this.showIntentCreateMenu ||
+      this.showQuickStartModal
     );
   }
 }

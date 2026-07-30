@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -35,6 +36,7 @@ describe("AppHeader", () => {
   beforeEach(() => {
     sessionModeStore.isStaging = false;
     sessionModeStore.isGuestMode = false;
+    guidedModeStore.setGuidedMode(true);
   });
 
   it("renders a staging banner when the staging flag is enabled", () => {
@@ -69,5 +71,25 @@ describe("AppHeader", () => {
 
     expect(screen.getByTestId("search-input")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
+  });
+
+  it("hides advanced toolbar utilities in Guided Mode", () => {
+    render(AppHeader);
+
+    expect(screen.queryByTestId("dice-roller-button")).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Explore public worlds" }),
+    ).toBeNull();
+  });
+
+  it("restores advanced toolbar utilities in Full Toolbox mode", () => {
+    guidedModeStore.setGuidedMode(false);
+
+    render(AppHeader);
+
+    expect(screen.getByTestId("dice-roller-button")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Explore public worlds" }),
+    ).toBeTruthy();
   });
 });

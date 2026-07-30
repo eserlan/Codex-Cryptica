@@ -182,6 +182,34 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
     icon: "icon-[lucide--compass]",
   },
+  "guided-mode-quick-start": {
+    id: "guided-mode-quick-start",
+    title: "Quick Start a world",
+    content:
+      "Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation from a theme and optional premise — works fully offline.",
+    icon: "icon-[lucide--sparkles]",
+  },
+  "guided-mode-toggle": {
+    id: "guided-mode-toggle",
+    title: "Guided Mode",
+    content:
+      "Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header — nothing you've created is ever hidden or lost.",
+    icon: "icon-[lucide--compass]",
+  },
+  "guided-mode-intent-create": {
+    id: "guided-mode-intent-create",
+    title: "+ Create",
+    content:
+      "Pick Character, Place, Faction, Event, or Item and Codex Cryptica infers the current context and generates a draft immediately. Click Customize on the draft to reveal the full generator options.",
+    icon: "icon-[lucide--plus]",
+  },
+  "guided-mode-suggestions": {
+    id: "guided-mode-suggestions",
+    title: "Next-step suggestions",
+    content:
+      "A subtle banner at the bottom of an entity's detail panel suggests logical next steps, like adding a leader to a faction. Click the suggestion, or dismiss it if it doesn't apply.",
+    icon: "icon-[lucide--lightbulb]",
+  },
   "lore-oracle": {
     id: "lore-oracle",
     title: "AI Oracle",

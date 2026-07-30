@@ -28,6 +28,7 @@
   } from "$lib/services/dungeon-delve-service";
   import { goto } from "$app/navigation";
   import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
   import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let {
@@ -441,4 +442,8 @@
       <LabelInput entityId={entity.id} />
     {/if}
   </div>
+
+  {#if !vault.isGuest}
+    <StructuralSuggestionBanner entityId={entity.id} />
+  {/if}
 </div>

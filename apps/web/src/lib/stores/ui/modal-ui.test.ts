@@ -135,6 +135,7 @@ describe("ModalUIStore", () => {
       sourceEntityId: null,
       generatorId: "npc",
       prefillDate: null,
+      autoGenerate: false,
     });
     store.closeGeneratorWorkflow();
     expect(store.generatorWorkflow.open).toBe(false);
@@ -157,7 +158,61 @@ describe("ModalUIStore", () => {
       sourceEntityId: "src-42",
       generatorId: "faction",
       prefillDate: null,
+      autoGenerate: false,
     });
+  });
+
+  it("openIntentGeneratorWorkflow auto-generates with contextual launch when a source entity is given", () => {
+    const store = new ModalUIStore();
+    store.openIntentGeneratorWorkflow("npc", "src-1");
+    expect(store.generatorWorkflow).toEqual({
+      open: true,
+      launchMode: "contextual",
+      sourceEntityId: "src-1",
+      generatorId: "npc",
+      prefillDate: null,
+      autoGenerate: true,
+    });
+  });
+
+  it("openIntentGeneratorWorkflow uses workspace launch mode without a source entity", () => {
+    const store = new ModalUIStore();
+    store.openIntentGeneratorWorkflow("faction");
+    expect(store.generatorWorkflow.launchMode).toBe("workspace");
+    expect(store.generatorWorkflow.autoGenerate).toBe(true);
+  });
+
+  it("openIntentCreateMenu and closeIntentCreateMenu toggle the intent menu", () => {
+    const store = new ModalUIStore();
+    expect(store.showIntentCreateMenu).toBe(false);
+    store.openIntentCreateMenu();
+    expect(store.showIntentCreateMenu).toBe(true);
+    store.closeIntentCreateMenu();
+    expect(store.showIntentCreateMenu).toBe(false);
+  });
+
+  it("openQuickStartModal and closeQuickStartModal toggle Quick Start visibility", () => {
+    const store = new ModalUIStore();
+    expect(store.showQuickStartModal).toBe(false);
+    store.openQuickStartModal();
+    expect(store.showQuickStartModal).toBe(true);
+    store.closeQuickStartModal();
+    expect(store.showQuickStartModal).toBe(false);
+  });
+
+  it("isAnyModalOpen reports true while Quick Start or the intent menu is open, so the first-run tour doesn't stack on top", () => {
+    const store = new ModalUIStore();
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openQuickStartModal();
+    expect(store.isAnyModalOpen).toBe(true);
+    store.closeQuickStartModal();
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openIntentCreateMenu();
+    expect(store.isAnyModalOpen).toBe(true);
+    store.closeIntentCreateMenu();
+    expect(store.isAnyModalOpen).toBe(false);
   });
 
   it("requestCreateEntity sets pendingCreateEntity and clears date when none given", () => {

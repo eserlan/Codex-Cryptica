@@ -17,6 +17,8 @@ describe("UIPersistence", () => {
       "codex_explorer_sort_direction",
       "codex_explorer_sort_key",
       "codex_explorer_view_mode",
+      "codex_guided_mode_active",
+      "codex_guided_mode_dismissed_recommendations",
       "codex_last_connection_label",
       "codex_last_seen_version",
       "codex_left_sidebar_open",
