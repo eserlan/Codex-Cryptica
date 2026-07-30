@@ -37,9 +37,12 @@
   name="vampire_archetype"
   label="Choose their nature"
   bind:value={archetype}
-  choices={vampireConfig.archetypes.map((t: string) => ({ value: t, label: t }))}
+  choices={vampireConfig.archetypes.map((t: string) => ({
+    value: t,
+    label: t,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom nature"
 />
@@ -49,9 +52,12 @@
   name="vampire_bloodline"
   label="Choose their bloodline"
   bind:value={bloodline}
-  choices={vampireConfig.bloodlines.map((b: string) => ({ value: b, label: b }))}
+  choices={vampireConfig.bloodlines.map((b: string) => ({
+    value: b,
+    label: b,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom bloodline"
 />
@@ -62,9 +68,12 @@
     name="vampire_feeding"
     label="Choose how they feed"
     bind:value={feedingHabit}
-    choices={vampireConfig.feedingHabits.map((f: string) => ({ value: f, label: f }))}
+    choices={vampireConfig.feedingHabits.map((f: string) => ({
+      value: f,
+      label: f,
+    }))}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom feeding habit"
   />
@@ -79,9 +88,12 @@
     name="vampire_weakness"
     label="Choose their weakness"
     bind:value={weakness}
-    choices={vampireConfig.weaknesses.map((w: string) => ({ value: w, label: w }))}
+    choices={vampireConfig.weaknesses.map((w: string) => ({
+      value: w,
+      label: w,
+    }))}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom weakness"
   />
@@ -98,7 +110,7 @@
     id="vampire-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="vampire-campaign-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

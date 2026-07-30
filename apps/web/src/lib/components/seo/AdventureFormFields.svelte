@@ -109,7 +109,7 @@
   <textarea
     id="adventure-seed"
     bind:value={seed}
-    maxlength="240"
+    maxlength="4000"
     rows="3"
     placeholder="e.g. A dying courier surrenders a stolen ledger at the city gates..."
     class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm leading-6 text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
@@ -123,7 +123,7 @@
   <textarea
     id="adventure-context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="3"
     aria-describedby="adventure-context-help"
     class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm leading-6 text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

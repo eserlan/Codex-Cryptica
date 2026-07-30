@@ -29,7 +29,7 @@
   bind:value={race}
   choices={npcConfig.races.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom ancestry"
 />
@@ -41,7 +41,7 @@
   bind:value={role}
   choices={npcConfig.roles.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom role"
 />
@@ -53,7 +53,7 @@
   bind:value={alignment}
   choices={npcConfig.alignments.map((a: string) => ({ value: a, label: a }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom morality"
 />
@@ -66,7 +66,7 @@
     id="npc-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="4"
     aria-describedby="npc-campaign-context-help"
     class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

@@ -32,6 +32,23 @@ describe("LanguageFormFields", () => {
     expect(screen.getByText("Compound Words")).toBeTruthy();
   });
 
+  it("allows up to 4000 characters of world context", () => {
+    render(LanguageFormFields, {
+      props: {
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        campaignContext: "",
+      },
+    });
+
+    const context = screen.getByLabelText(
+      "World context (optional)",
+    ) as HTMLTextAreaElement;
+    expect(context.maxLength).toBe(4000);
+  });
+
   it("keeps the genre select enabled but skips it on Surprise Me when preserveGenreOnSurprise", async () => {
     const onSurprise = vi.fn();
     render(LanguageFormFields, {

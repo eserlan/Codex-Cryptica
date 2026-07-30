@@ -74,6 +74,23 @@ describe("DungeonFormFields theme selector", () => {
     expect(screen.getByLabelText("Complex Scale")).toBeTruthy();
   });
 
+  it("allows up to 4000 characters of campaign context", () => {
+    render(DungeonFormFields, {
+      props: {
+        theme: "Fantasy",
+        purpose: "Temple & Shrine",
+        currentState: "Active Monster Lair",
+        scale: "Medium Complex (3-4 Sectors)",
+        campaignContext: "",
+      },
+    });
+
+    const context = screen.getByLabelText(
+      "World context (optional)",
+    ) as HTMLTextAreaElement;
+    expect(context.maxLength).toBe(4000);
+  });
+
   it("updates the theme select's value when a different vibe is chosen", async () => {
     render(DungeonFormFields, {
       props: {

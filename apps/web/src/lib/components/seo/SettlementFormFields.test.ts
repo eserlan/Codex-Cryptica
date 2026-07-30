@@ -43,6 +43,25 @@ describe("SettlementFormFields", () => {
     expect(screen.getByText("Forest edge")).toBeTruthy();
   });
 
+  it("allows up to 4000 characters of campaign context", () => {
+    render(SettlementFormFields, {
+      props: {
+        genre: "Fantasy",
+        size: "Village",
+        environment: "Forest edge",
+        primaryFunction: "Trade hub",
+        tone: "Cosy and welcoming",
+        mainTension: "Succession crisis",
+        campaignContext: "",
+      },
+    });
+
+    const context = screen.getByLabelText(
+      "Campaign context (optional)",
+    ) as HTMLTextAreaElement;
+    expect(context.maxLength).toBe(4000);
+  });
+
   it("calls onSurprise when Surprise Me is clicked", async () => {
     const onSurprise = vi.fn();
     render(SettlementFormFields, {

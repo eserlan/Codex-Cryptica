@@ -77,7 +77,7 @@
   bind:value={theme}
   choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom vibe"
 />
@@ -88,7 +88,7 @@
   bind:value={tone}
   choices={activeTones.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom tone"
 />
@@ -99,7 +99,7 @@
   bind:value={scope}
   choices={activeScopes.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom scope"
 />
@@ -110,7 +110,7 @@
   bind:value={locationType}
   choices={activeLocationTypes.map((l: string) => ({ value: l, label: l }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom location type"
 />
@@ -121,7 +121,7 @@
   bind:value={threat}
   choices={activeThreats.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom main threat"
 />
@@ -132,7 +132,7 @@
   bind:value={twist}
   choices={questConfig.twists.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom twist"
 />
@@ -143,7 +143,7 @@
   bind:value={reward}
   choices={activeRewards.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom reward"
 />
@@ -176,7 +176,7 @@
     id="quest-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="3"
     aria-describedby="quest-campaign-context-help"
     class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
