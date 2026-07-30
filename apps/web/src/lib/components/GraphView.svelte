@@ -559,11 +559,11 @@
           body={vault.isGuest
             ? "Nothing has been shared with you yet."
             : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create your first character"}
+          cta={vault.isGuest ? undefined : "＋ Create"}
           ctaTestId={vault.isGuest ? undefined : "graph-empty-state-cta"}
           onCta={vault.isGuest
             ? undefined
-            : () => modalUIStore.requestCreateEntity()}
+            : () => modalUIStore.openIntentCreateMenu()}
           secondaryCta={vault.isGuest ? undefined : "Populate with a pack"}
           onSecondaryCta={vault.isGuest ? undefined : () => openImportWindow()}
         />
@@ -582,6 +582,23 @@
         <FeatureHint hintId="getting-started" />
       </div>
     {/if}
+  {/if}
+
+  {#if !vault.isGuest}
+    <!-- Mobile "+ Create" FAB — the header's own Create button (AppHeader,
+         `hidden lg:flex`) is desktop-only, so below lg this was previously
+         the only place in the primary Graph view without a route into the
+         Guided Mode intent-first create flow (mirrors CanvasHUD's FAB). -->
+    <button
+      type="button"
+      onclick={() => modalUIStore.openIntentCreateMenu()}
+      title="Create"
+      aria-label="Create new entity"
+      data-testid="graph-fab-create"
+      class="fixed bottom-6 right-6 z-40 flex lg:hidden items-center justify-center w-14 h-14 rounded-full bg-theme-primary text-theme-bg shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.4)] hover:brightness-110 transition-all"
+    >
+      <span class="icon-[lucide--plus] w-6 h-6" aria-hidden="true"></span>
+    </button>
   {/if}
 
   {#if showCoachMarks}

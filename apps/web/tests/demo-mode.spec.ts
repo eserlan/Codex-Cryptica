@@ -117,7 +117,9 @@ test.describe("Interactive Demo Mode", () => {
     );
 
     // Add a new entity
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     const input = page.locator('input[placeholder*="Title..."]');
     await expect(input).toBeVisible();
     await input.fill("New Transient Node");

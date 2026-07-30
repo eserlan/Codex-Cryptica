@@ -8,7 +8,9 @@ test.describe("Connect Mode", () => {
 
   test("toggles connect mode via keyboard", async ({ page }) => {
     // Need at least one node to connect
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByPlaceholder(/Title.../i).fill("Source Node");
     await page.getByRole("button", { name: "ADD" }).click();
 

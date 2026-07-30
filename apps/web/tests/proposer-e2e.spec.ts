@@ -93,14 +93,18 @@ test.describe("Connections Proposer E2E", () => {
     test.slow();
 
     // 1. Create two entities
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByTestId("new-entity-title-input").fill("Eldrin the Wise");
     await page.getByRole("button", { exact: true, name: "ADD" }).click();
 
     // Wait for form to close
     await expect(page.getByTestId("new-entity-title-input")).not.toBeVisible();
 
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByTestId("new-entity-title-input").fill("The Broken Tower");
     await page.getByRole("button", { exact: true, name: "ADD" }).click();
 
@@ -155,14 +159,18 @@ test.describe("Connections Proposer E2E", () => {
     test.slow();
 
     // Setup
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByTestId("new-entity-title-input").fill("Alaric");
     await page.getByRole("button", { exact: true, name: "ADD" }).click();
 
     // Wait for form to close
     await expect(page.getByTestId("new-entity-title-input")).not.toBeVisible();
 
-    await page.getByTestId("new-entity-button").click();
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.getByTestId("new-entity-title-input").fill("The Broken Tower");
     await page.getByRole("button", { exact: true, name: "ADD" }).click();
 

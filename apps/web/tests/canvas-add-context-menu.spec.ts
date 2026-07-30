@@ -44,7 +44,9 @@ test.describe("Add to Canvas - Context Menu", () => {
   }
 
   async function createEntity(page: any, title: string) {
-    await page.click('[data-testid="new-entity-button"]');
+    await page.evaluate(() =>
+      (window as any).modalUIStore.requestCreateEntity(),
+    );
     await page.fill('[data-testid="new-entity-title-input"]', title);
     await page.keyboard.press("Enter");
     await waitForEntityNodes(page, [title]);
