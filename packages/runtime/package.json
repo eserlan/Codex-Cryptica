@@ -15,8 +15,8 @@
     "typecheck": "tsc --noEmit --project tsconfig.test.json"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "eslint": "^10.7.0",
+    "typescript": "^7.0.2",
+    "eslint": "^10.8.0",
     "vitest": "^4.1.7"
   }
 }
