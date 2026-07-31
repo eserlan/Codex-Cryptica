@@ -1,10 +1,13 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-30
+Auto-generated from all feature plans. Last updated: 2026-07-31
 
 ## Active Technologies
+
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, `@codex/generator-engine`, `@google/generative-ai` (148-guided-mode-quickstart)
 - OPFS (Vault notes), IndexedDB (via vault stores), `localStorage` (`codex_guided_mode_active` preference) (148-guided-mode-quickstart)
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine` (145-dungeon-structural-builder)
 - OPFS & IndexedDB (via Vault Repository storing `.canvas` JSON documents and linked Concept notes) (145-dungeon-structural-builder)
@@ -220,10 +223,11 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+
+- 149-reusable-stat-sheets: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService`
 - 148-guided-mode-quickstart: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, `@codex/generator-engine`, `@google/generative-ai`
 
 - 145-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
-- 1843-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
 
 <!-- MANUAL ADDITIONS START -->
 
