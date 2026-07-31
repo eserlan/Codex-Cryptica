@@ -288,4 +288,70 @@ describe("GraphContextMenuController", () => {
     expect(controller.contextMenuOpen).toBe(false);
     expect(deps.modalUIStore.openIntentCreateMenu).not.toHaveBeenCalled();
   });
+
+  it("should open context menu for edge right-click with connection metadata", () => {
+    let edgeHandler: any;
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "cxttap" && args[0] === "edge") {
+        edgeHandler = args[1];
+      }
+    });
+
+    controller.setupEvents();
+    expect(edgeHandler).toBeDefined();
+
+    const mockEdge = {
+      data: () => ({
+        source: "node-a",
+        target: "node-b",
+        connectionType: "ally",
+      }),
+    };
+
+    edgeHandler({ target: mockEdge, renderedPosition: { x: 100, y: 200 } });
+
+    expect(controller.targetId).toBeNull();
+    expect(controller.targetEdge).toEqual({
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    });
+    expect(controller.position).toEqual({ x: 100, y: 200 });
+    expect(controller.contextMenuOpen).toBe(true);
+  });
+
+  it("should instantly delete edge connection via vault.removeConnection", async () => {
+    deps.vault.removeConnection = vi.fn().mockResolvedValue(true);
+    controller.targetEdge = {
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    };
+    controller.contextMenuOpen = true;
+
+    await controller.handleDeleteEdge();
+
+    expect(deps.vault.removeConnection).toHaveBeenCalledWith(
+      "node-a",
+      "node-b",
+      "ally",
+    );
+    expect(controller.targetEdge).toBeNull();
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not delete edge connection in guest mode", async () => {
+    deps.vault.isGuest = true;
+    deps.vault.removeConnection = vi.fn();
+    controller.targetEdge = {
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    };
+    controller.contextMenuOpen = true;
+
+    await controller.handleDeleteEdge();
+
+    expect(deps.vault.removeConnection).not.toHaveBeenCalled();
+  });
 });

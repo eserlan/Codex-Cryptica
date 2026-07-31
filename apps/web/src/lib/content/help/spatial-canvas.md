@@ -37,3 +37,7 @@ Click the **workspace name** in the top-left HUD to open the **Canvas Manager**.
 1. **Use Multiple Canvases**: Create separate boards for different regions, plot lines, or character groups to avoid clutter.
 2. **Drag from Explorer**: Open the Entity Explorer sidebar and drag lore directly onto the board for the fastest workflow.
 3. **Zen Integration**: Double-click any entity card to open it in **Zen Mode** (the full detail panel) for quick editing.
+
+### Related Blog Posts
+
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — How spatial layouts reduce cognitive load and reveal hidden lore connections.

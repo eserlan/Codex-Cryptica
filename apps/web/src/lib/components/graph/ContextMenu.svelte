@@ -76,14 +76,29 @@
   <div
     bind:this={menuEl}
     role="menu"
-    aria-label="Node actions"
+    aria-label={controller.targetEdge ? "Connection actions" : "Node actions"}
     tabindex="-1"
     class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col"
     style:top="{controller.position.y}px"
     style:left="{controller.position.x}px"
     onkeydown={handleMenuKeydown}
   >
-    {#if controller.targetId === null && controller.selectedNodes.length === 0}
+    {#if controller.targetEdge}
+      {#if !vault.isGuest}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-danger hover:bg-theme-danger/10 transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleDeleteEdge}
+          aria-label="Delete Connection"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--trash-2] h-3.5 w-3.5 opacity-70 text-theme-danger"
+          ></span>
+          <span>Delete Connection</span>
+        </button>
+      {/if}
+    {:else if controller.targetId === null && controller.selectedNodes.length === 0}
       {#if !vault.isGuest}
         <button
           role="menuitem"

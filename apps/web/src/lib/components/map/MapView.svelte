@@ -89,7 +89,7 @@
   const activeMapSignature = $derived.by(() => {
     const activeMap = mapStore.activeMap;
     if (!activeMap) return null;
-    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`;
+    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}:${vault.status}`;
   });
   let lastMapSignature: string | null = null;
   let loadedMaskPath = $state<string | null>(null);

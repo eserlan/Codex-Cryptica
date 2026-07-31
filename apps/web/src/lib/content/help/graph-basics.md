@@ -27,3 +27,9 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Stable Layout (Pin)**: Prevent nodes from moving automatically.
 - **Link (Chain icon)**: Quickly connect two selected nodes.
 - **Redraw (Refresh)**: Recalculate node positions.
+
+### Related Blog Posts
+
+- [Getting Started with Codex Cryptica](/blog/getting-started-guide) — Core workflows and knowledge graph navigation.
+- [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — Comparing interactive spatial graphs with text-only vaults.
+- [Supercharged Lore Discovery](/blog/supercharged-discovery) — Using graph connections to uncover hidden lore relationships.

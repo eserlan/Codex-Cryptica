@@ -17,3 +17,8 @@ Codex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps t
 ### Why do I need this?
 
 Using your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks.
+
+### Related Blog Posts
+
+- [Worldbuilding Tool Without Mandatory AI](/blog/worldbuilding-tool-without-ai) — How Codex Cryptica remains fully functional offline and without AI keys.
+- [Why AI Slop is a Context Failure](/blog/ai-slop-is-context-failure) — How structured vault retrieval ensures Gemini produces rich, setting-accurate lore.

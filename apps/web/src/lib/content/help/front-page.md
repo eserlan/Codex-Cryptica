@@ -21,3 +21,7 @@ The front page is the first thing you see when a vault opens. It gives you a wor
 - Keep the briefing short and useful. You can always expand it later.
 - If you add more than one `frontpage` tag, the most recently edited entity wins.
 - Recent cards update automatically from the vault’s latest edits, and any `frontpage` entity stays pinned at the top.
+
+### Related Blog Posts
+
+- [The Vault Front Page: Your Campaign Dashboard](/blog/front-page) — Why your setting needs a central command center and how to customize your world briefing.

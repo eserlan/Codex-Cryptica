@@ -44,7 +44,9 @@
   });
 </script>
 
-<div class="flex-1 flex flex-col bg-theme-bg overflow-hidden relative">
+<div
+  class="w-full h-full min-h-0 flex-1 flex flex-col bg-theme-bg overflow-hidden relative"
+>
   {#if mapStore.activeMap}
     <MapView
       onMapDragOver={(event) => controller.onDragOver(event)}

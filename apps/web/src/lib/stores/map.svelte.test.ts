@@ -61,6 +61,21 @@ describe("MapStore settings persistence", () => {
     });
   });
 
+  it("falls back to the first available map for host when no world map is designated", async () => {
+    vaultMock.maps = {
+      "map-a": makeMap("map-a"),
+      "map-b": makeMap("map-b"),
+    };
+    sessionModeStore.isGuestMode = false;
+    guestVault.publishId = null;
+
+    const store = new MapStore();
+
+    await waitFor(() => {
+      expect(store.activeMapId).toBe("map-a");
+    });
+  });
+
   it("does not auto-select a map for a live VTT guest without a publishId", async () => {
     vaultMock.maps = {
       "map-a": makeMap("map-a"),

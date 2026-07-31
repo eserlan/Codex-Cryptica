@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
+import { loadBlogArticles, loadHelpArticles } from "$lib/content/loader";
 
 // T061: in-app generators feature hint is registered (US5)
 describe("help-content feature hints", () => {
@@ -40,5 +41,24 @@ describe("help-content feature hints", () => {
     expect(FEATURE_HINTS["delve-structural-builder"].content).toContain(
       "spatial canvas",
     );
+  });
+
+  it("all blog links in help articles correspond to valid blog post slugs", () => {
+    const blogArticles = loadBlogArticles();
+    const validSlugs = new Set(blogArticles.map((b) => b.slug));
+    const helpArticles = loadHelpArticles();
+
+    const blogLinkRegex = /\/blog\/([a-z0-9-]+)/g;
+
+    for (const article of helpArticles) {
+      const matches = [...article.content.matchAll(blogLinkRegex)];
+      for (const match of matches) {
+        const slug = match[1];
+        expect(
+          validSlugs.has(slug),
+          `Help article '${article.id}' contains broken blog link '/blog/${slug}'`,
+        ).toBe(true);
+      }
+    }
   });
 });

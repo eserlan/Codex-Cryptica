@@ -134,3 +134,11 @@ Quickly populate your world with rich lore, even when offline.
   - Redacts all GM-only/Private nodes and maps.
   - Redacts the `Lore` and `Art Direction` fields.
   - Replaces links to secret files with `[Redacted]`.
+
+---
+
+## 9. Related Blog Posts
+
+- [Getting Started with Codex Cryptica](/blog/getting-started-guide) — Full walkthrough for GMs and worldbuilders.
+- [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — The spatial, local-first philosophy behind Codex Cryptica.
+- [Lore Oracle: Co-GM, Not the Author](/blog/lore-oracle-not-the-author) — Deep dive into AI worldbuilding memory and co-creation.

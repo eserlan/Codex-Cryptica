@@ -55,7 +55,7 @@ describe("MapViewAssetLoader", () => {
     expect(resolveImageUrl).toHaveBeenCalledWith("maps/map-1.webp");
     expect(createdImage).not.toBeNull();
     const image = createdImage as unknown as HTMLImageElement;
-    expect(image.crossOrigin).toBe("anonymous");
+    expect(image.crossOrigin).toBe("");
 
     await vi.waitFor(() => {
       expect(image.onload).toBeTypeOf("function");
@@ -73,6 +73,36 @@ describe("MapViewAssetLoader", () => {
     cleanup();
     expect(releaseImageUrl).toHaveBeenCalledWith("maps/map-1.webp");
     expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("sets crossOrigin to anonymous for external http/https image URLs", async () => {
+    let createdImage: HTMLImageElement | null = null;
+    const loader = new MapViewAssetLoader({
+      vault: {
+        resolveImageUrl: vi.fn(async () => "https://example.com/map.jpg"),
+        releaseImageUrl: vi.fn(),
+      },
+      mapStore: { loadMask: vi.fn() },
+      createImage: () => (createdImage = createImageMock()),
+      onClear: vi.fn(),
+      onImageLoaded: vi.fn(),
+      onMaskLoaded: vi.fn(),
+      onDimensionsLoaded: vi.fn(),
+      onError: vi.fn(),
+    });
+
+    loader.sync({
+      id: "map-1",
+      name: "Map 1",
+      assetPath: "https://example.com/map.jpg",
+      dimensions: { width: 100, height: 100 },
+      pins: [],
+      fogOfWar: { maskPath: "" },
+    });
+
+    await vi.waitFor(() => expect(createdImage).not.toBeNull());
+    const image = createdImage as unknown as HTMLImageElement;
+    expect(image.crossOrigin).toBe("anonymous");
   });
 
   it("reports the originally requested path when resolution resolves after edits", async () => {
