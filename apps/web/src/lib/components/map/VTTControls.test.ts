@@ -109,4 +109,12 @@ describe("VTTControls", () => {
     expect(screen.queryByRole("button", { name: "Encounters" })).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
   });
+
+  it("opens token placement at the centered map origin", async () => {
+    render(VTTControls);
+
+    await screen.getByRole("button", { name: "Add Token" }).click();
+
+    expect(mapSession.pendingTokenCoords).toEqual({ x: 0, y: 0 });
+  });
 });

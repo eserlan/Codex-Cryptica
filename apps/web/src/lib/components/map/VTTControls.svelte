@@ -15,8 +15,8 @@
     const activeMap = mapStore.activeMap;
     if (!activeMap) return;
     mapSession.pendingTokenCoords = {
-      x: activeMap.dimensions.width / 2,
-      y: activeMap.dimensions.height / 2,
+      x: 0,
+      y: 0,
     };
   }
 </script>

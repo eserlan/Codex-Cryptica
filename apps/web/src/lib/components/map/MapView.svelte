@@ -10,7 +10,7 @@
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
-  import { measureDistance } from "$lib/utils/vtt-helpers";
+  import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
 
   function hashToColor(input: string) {
@@ -164,11 +164,13 @@
     }
 
     const dimensions = activeMap.dimensions;
-    const valid =
-      preview.x >= 0 &&
-      preview.y >= 0 &&
-      preview.x <= dimensions.width &&
-      preview.y <= dimensions.height;
+    const tokenSize = mapStore.gridSize || 50;
+    const bounded = clampPointToBounds(
+      { x: preview.x, y: preview.y },
+      dimensions,
+      { width: tokenSize, height: tokenSize },
+    );
+    const valid = bounded.x === preview.x && bounded.y === preview.y;
 
     return {
       ...preview,
