@@ -32,3 +32,7 @@ Large documents can take time to process. The system automatically tracks your p
 ## Manual Restart
 
 If you want to re-analyze a file from scratch, click the **Restart** button in the import dialog to clear its saved progress.
+
+## Related Blog Posts
+
+- [How Import Works: Local-First Migration](/blog/how-import-works) — Comprehensive guide to converting notes into structured knowledge graphs.
