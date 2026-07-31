@@ -503,6 +503,8 @@ export class StatSheetTemplateStore {
   // Vault-scoped map of category id -> template id, applied automatically
   // when a new entity of that category is created.
   categoryDefaults = $state<Record<string, string>>({});
+  // Vault-scoped list of enabled template IDs for active vault, or null if all enabled.
+  enabledTemplateIds = $state<string[] | null>(null);
   // Caches the in-flight/completed init() *promise* (not just a started
   // flag), so any caller that mutates state before the constructor's
   // fire-and-forget init() has finished can await the same load and avoid
@@ -517,6 +519,17 @@ export class StatSheetTemplateStore {
 
   get allTemplates(): StatSheetTemplate[] {
     return [...BUILT_IN_STAT_SHEET_TEMPLATES, ...this.templates];
+  }
+
+  get availableTemplates(): StatSheetTemplate[] {
+    if (!this.enabledTemplateIds) return this.allTemplates;
+    const set = new Set(this.enabledTemplateIds);
+    return this.allTemplates.filter((t) => set.has(t.id));
+  }
+
+  isTemplateEnabled(templateId: string): boolean {
+    if (!this.enabledTemplateIds) return true;
+    return this.enabledTemplateIds.includes(templateId);
   }
 
   // Best-effort, constructor-time attempt: `vaultRegistry.activeVaultId` is
@@ -551,9 +564,46 @@ export class StatSheetTemplateStore {
         `statSheetCategoryDefaults_${vaultId}`,
       );
       this.categoryDefaults = defaults ?? {};
+      const enabled = await db.get(
+        "settings",
+        `statSheetEnabledTemplates_${vaultId}`,
+      );
+      this.enabledTemplateIds = enabled ?? null;
     } catch (e) {
       console.error("[StatSheetTemplateStore] Failed to load templates:", e);
     }
+  }
+
+  async toggleTemplateEnabled(templateId: string): Promise<void> {
+    await this.init();
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return;
+
+    const current =
+      this.enabledTemplateIds ?? this.allTemplates.map((t) => t.id);
+    const set = new Set(current);
+    if (set.has(templateId)) {
+      set.delete(templateId);
+    } else {
+      set.add(templateId);
+    }
+    const next = Array.from(set);
+    this.enabledTemplateIds = next;
+
+    const db = await getDB();
+    await db.put("settings", next, `statSheetEnabledTemplates_${vaultId}`);
+  }
+
+  async setAllTemplatesEnabled(enabled: boolean): Promise<void> {
+    await this.init();
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return;
+
+    const next = enabled ? this.allTemplates.map((t) => t.id) : [];
+    this.enabledTemplateIds = next;
+
+    const db = await getDB();
+    await db.put("settings", next, `statSheetEnabledTemplates_${vaultId}`);
   }
 
   async setDefaultTemplate(category: string, templateId: string | null) {
@@ -639,6 +689,34 @@ export class StatSheetTemplateStore {
       return true;
     } catch (e) {
       console.error("[StatSheetTemplateStore] Failed to rename template:", e);
+      return false;
+    }
+  }
+
+  async updateTemplateFields(
+    id: string,
+    fields: StatSheetField[],
+  ): Promise<boolean> {
+    const vaultId = vaultRegistry.activeVaultId;
+    const existing = this.templates.find((t) => t.id === id);
+    if (!vaultId || !existing) return false;
+
+    const updated: StatSheetTemplate = {
+      ...$state.snapshot(existing),
+      fields: fields.map(
+        ({ value: _value, collapsed: _collapsed, ...rest }) => rest,
+      ),
+    };
+    try {
+      const db = await getDB();
+      await db.put("stat_sheet_templates", { ...updated, vaultId });
+      this.templates = this.templates.map((t) => (t.id === id ? updated : t));
+      return true;
+    } catch (e) {
+      console.error(
+        "[StatSheetTemplateStore] Failed to update template fields:",
+        e,
+      );
       return false;
     }
   }

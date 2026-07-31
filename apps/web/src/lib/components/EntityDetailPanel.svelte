@@ -394,7 +394,7 @@
           <div
             in:fade={{ duration: 150, delay: 150 }}
             out:fade={{ duration: 150 }}
-            class="col-start-1 row-start-1 flex flex-col w-full h-full min-h-0"
+            class="col-start-1 row-start-1 flex flex-col w-full min-h-full"
           >
             {#if sessionModeStore.isDemoMode}
               <div

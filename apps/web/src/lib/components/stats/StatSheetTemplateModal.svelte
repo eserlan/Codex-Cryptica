@@ -11,6 +11,40 @@
 
   let saveAsName = $state("");
   let isSaving = $state(false);
+  let showAllTemplates = $state(false);
+
+  const currentTemplate = $derived(
+    entity.statSheet?.templateId
+      ? statSheetTemplates.allTemplates.find(
+          (t) => t.id === entity.statSheet?.templateId,
+        )
+      : null,
+  );
+  const hasActiveFields = $derived((entity.statSheet?.fields?.length ?? 0) > 0);
+  const displayedTemplates = $derived(
+    showAllTemplates
+      ? statSheetTemplates.allTemplates
+      : statSheetTemplates.availableTemplates,
+  );
+  const hasHiddenTemplates = $derived(
+    statSheetTemplates.allTemplates.length >
+      statSheetTemplates.availableTemplates.length,
+  );
+
+  async function clearStatSheet() {
+    const confirmed = await notificationStore.confirm({
+      title: "Clear Stat Sheet",
+      message: `Remove all stat fields and template assignment from "${entity.title}"?`,
+      confirmLabel: "Clear Stat Sheet",
+      isDangerous: true,
+    });
+    if (!confirmed) return;
+
+    await vault.updateEntity(entity.id, {
+      statSheet: { templateId: null, fields: [] },
+    });
+    onClose();
+  }
 
   async function applyTemplate(templateId: string) {
     const template = statSheetTemplates.allTemplates.find(
@@ -111,7 +145,35 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-      {#each statSheetTemplates.allTemplates as template (template.id)}
+      {#if hasActiveFields || currentTemplate}
+        <div
+          class="flex items-center justify-between gap-2 rounded border border-theme-primary/30 bg-theme-primary/10 p-2.5 mb-2"
+          data-testid="stat-sheet-active-template-banner"
+        >
+          <div class="flex flex-col min-w-0">
+            <span
+              class="text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+            >
+              Active Stat Sheet
+            </span>
+            <span class="text-xs font-semibold text-theme-text truncate">
+              {currentTemplate ? currentTemplate.name : "Custom Layout"} ({entity
+                .statSheet?.fields?.length ?? 0} fields)
+            </span>
+          </div>
+          <button
+            type="button"
+            class="flex items-center gap-1 rounded border border-red-500/50 bg-red-500/10 px-2 py-1 text-xs font-bold text-red-500 hover:bg-red-500/20 shrink-0"
+            onclick={clearStatSheet}
+            data-testid="stat-sheet-clear-template"
+          >
+            <span class="icon-[lucide--trash-2] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            Clear Sheet
+          </button>
+        </div>
+      {/if}
+      {#each displayedTemplates as template (template.id)}
         <button
           type="button"
           class="flex flex-col items-start gap-0.5 rounded border border-theme-border p-2 text-left hover:border-theme-primary"
@@ -126,6 +188,18 @@
           {/if}
         </button>
       {/each}
+      {#if hasHiddenTemplates}
+        <button
+          type="button"
+          class="mt-2 text-center text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+          onclick={() => (showAllTemplates = !showAllTemplates)}
+          data-testid="stat-sheet-toggle-show-all"
+        >
+          {showAllTemplates
+            ? "Show Vault-Applicable Templates Only"
+            : `Show All Templates (${statSheetTemplates.allTemplates.length - statSheetTemplates.availableTemplates.length} hidden)`}
+        </button>
+      {/if}
     </div>
 
     <div class="border-t border-theme-border p-4 flex items-center gap-2">

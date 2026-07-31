@@ -19,20 +19,24 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm, notify },
 }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
-  statSheetTemplates: {
-    allTemplates: [
-      {
-        id: "builtin-dnd-npc",
-        name: "D&D NPC",
-        description: "Quick stats",
-        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
-      },
-    ],
-    cloneTemplateFields: (t: any) => t.fields.map((f: any) => ({ ...f })),
-    saveAsTemplate,
-  },
-}));
+vi.mock("$lib/stores/stat-sheet-templates.svelte", () => {
+  const templates = [
+    {
+      id: "builtin-dnd-npc",
+      name: "D&D NPC",
+      description: "Quick stats",
+      fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+    },
+  ];
+  return {
+    statSheetTemplates: {
+      allTemplates: templates,
+      availableTemplates: templates,
+      cloneTemplateFields: (t: any) => t.fields.map((f: any) => ({ ...f })),
+      saveAsTemplate,
+    },
+  };
+});
 
 import StatSheetTemplateModal from "./StatSheetTemplateModal.svelte";
 
@@ -171,5 +175,32 @@ describe("StatSheetTemplateModal", () => {
       expect.stringContaining("Failed"),
       "error",
     );
+  });
+
+  it("clears the active stat sheet when user clicks clear template and confirms", async () => {
+    confirm.mockResolvedValueOnce(true);
+    const entity = buildEntity({
+      statSheet: {
+        templateId: "builtin-dnd-npc",
+        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+      },
+    });
+    render(StatSheetTemplateModal, { entity });
+
+    expect(
+      screen.getByTestId("stat-sheet-active-template-banner"),
+    ).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-clear-template"));
+
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Clear Stat Sheet",
+        isDangerous: true,
+      }),
+    );
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: { templateId: null, fields: [] },
+    });
   });
 });

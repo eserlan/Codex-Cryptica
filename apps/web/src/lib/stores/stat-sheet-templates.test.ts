@@ -364,4 +364,57 @@ describe("StatSheetTemplateStore", () => {
     await store.setDefaultTemplate("character", "template-deleted");
     expect(store.getDefaultFieldsForCategory("character")).toBeNull();
   });
+
+  it("toggles template applicability per vault and filters availableTemplates", async () => {
+    expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(true);
+    expect(store.availableTemplates.length).toBe(store.allTemplates.length);
+
+    await store.toggleTemplateEnabled("builtin-dnd-character");
+
+    expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(false);
+    expect(
+      store.availableTemplates.find((t) => t.id === "builtin-dnd-character"),
+    ).toBeUndefined();
+
+    const db = await getDB();
+    const persisted = await db.get(
+      "settings",
+      "statSheetEnabledTemplates_test-vault",
+    );
+    expect(persisted).not.toContain("builtin-dnd-character");
+
+    await store.toggleTemplateEnabled("builtin-dnd-character");
+    expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(true);
+  });
+
+  it("enables and disables all templates with setAllTemplatesEnabled", async () => {
+    await store.setAllTemplatesEnabled(false);
+
+    expect(store.enabledTemplateIds).toEqual([]);
+    expect(store.availableTemplates).toEqual([]);
+
+    await store.setAllTemplatesEnabled(true);
+
+    expect(store.availableTemplates.length).toBe(store.allTemplates.length);
+  });
+
+  it("updates fields of a saved template via updateTemplateFields", async () => {
+    const saved = await store.saveAsTemplate("My Sheet", [
+      { id: "a", label: "Alpha", type: "text" },
+      { id: "b", label: "Beta", type: "text" },
+    ]);
+
+    const nextFields = [
+      { id: "b", label: "Beta", type: "text" },
+      { id: "a", label: "Alpha", type: "text" },
+    ];
+
+    const ok = await store.updateTemplateFields(saved!.id, nextFields);
+
+    expect(ok).toBe(true);
+    expect(store.templates[0].fields).toEqual(nextFields);
+    const db = await getDB();
+    const persisted = await db.get("stat_sheet_templates", saved!.id);
+    expect(persisted?.fields).toEqual(nextFields);
+  });
 });

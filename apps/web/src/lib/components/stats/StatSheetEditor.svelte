@@ -48,12 +48,93 @@
     persist(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   }
 
+  let draggedIndex = $state<number | null>(null);
+  let dragOverIndex = $state<number | null>(null);
+  let selectedFieldId = $state<string | null>(null);
+
+  function handleDragStart(e: DragEvent, index: number) {
+    draggedIndex = index;
+    selectedFieldId = fields[index]?.id ?? null;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(index));
+    }
+  }
+
+  function handleDragOver(e: DragEvent, index: number) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
+    if (dragOverIndex !== index) {
+      dragOverIndex = index;
+    }
+  }
+
+  function handleDrop(e: DragEvent, targetIndex: number) {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      draggedIndex = null;
+      dragOverIndex = null;
+      return;
+    }
+
+    const next = [...fields];
+    const [moved] = next.splice(draggedIndex, 1);
+    next.splice(targetIndex, 0, moved);
+
+    draggedIndex = null;
+    dragOverIndex = null;
+    selectedFieldId = moved.id;
+    persist(next);
+  }
+
+  function handleDragEnd() {
+    draggedIndex = null;
+    dragOverIndex = null;
+  }
+
+  function handleFieldKeyDown(e: KeyboardEvent, index: number) {
+    if ((e.altKey || e.ctrlKey) && e.key === "ArrowUp") {
+      e.preventDefault();
+      e.stopPropagation();
+      moveField(index, -1);
+    } else if ((e.altKey || e.ctrlKey) && e.key === "ArrowDown") {
+      e.preventDefault();
+      e.stopPropagation();
+      moveField(index, 1);
+    }
+  }
+
+  function handleContainerKeyDown(e: KeyboardEvent) {
+    if (
+      (e.altKey || e.ctrlKey) &&
+      (e.key === "ArrowUp" || e.key === "ArrowDown")
+    ) {
+      if (!selectedFieldId) return;
+      const index = fields.findIndex((f) => f.id === selectedFieldId);
+      if (index === -1) return;
+      e.preventDefault();
+      e.stopPropagation();
+      moveField(index, e.key === "ArrowUp" ? -1 : 1);
+    }
+  }
+
   function moveField(index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= fields.length) return;
+    const movedId = fields[index].id;
+    selectedFieldId = movedId;
     const next = [...fields];
     [next[index], next[target]] = [next[target], next[index]];
     persist(next);
+
+    requestAnimationFrame(() => {
+      const handle = document.querySelector<HTMLElement>(
+        `[data-field-id="${movedId}"] [data-testid="stat-sheet-drag-handle"]`,
+      );
+      handle?.focus();
+    });
   }
 
   function hasNonDefaultValue(field: StatSheetField): boolean {
@@ -75,15 +156,67 @@
     }
     persist(fields.filter((f) => f.id !== field.id));
   }
+
+  async function clearAllFields() {
+    const confirmed = await notificationStore.confirm({
+      title: "Clear Stat Sheet",
+      message: `Remove all ${fields.length} stat fields and template assignment from "${entity.title}"?`,
+      confirmLabel: "Clear All",
+      isDangerous: true,
+    });
+    if (!confirmed) return;
+
+    persist([]);
+    vault.updateEntity(entity.id, {
+      statSheet: { templateId: null, fields: [] },
+    });
+  }
 </script>
 
-<div class="flex flex-col gap-3" data-testid="stat-sheet-editor">
-  {#each fields as field, index (`${field.id}-${index}`)}
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex flex-col gap-3 outline-none"
+  tabindex="0"
+  onkeydown={handleContainerKeyDown}
+  data-testid="stat-sheet-editor"
+>
+  {#each fields as field, index (field.id)}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="flex flex-col gap-2 rounded border border-theme-border p-2"
+      class="flex flex-col gap-2 rounded border p-2 transition-colors {draggedIndex ===
+      index
+        ? 'opacity-40 border-dashed border-theme-primary'
+        : dragOverIndex === index
+          ? 'border-theme-primary bg-theme-primary/10 ring-1 ring-theme-primary'
+          : selectedFieldId === field.id
+            ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-primary/40'
+            : 'border-theme-border'}"
+      draggable="true"
+      ondragstart={(e) => handleDragStart(e, index)}
+      ondragover={(e) => handleDragOver(e, index)}
+      ondragleave={() => (dragOverIndex = null)}
+      ondrop={(e) => handleDrop(e, index)}
+      ondragend={handleDragEnd}
+      onkeydown={(e) => handleFieldKeyDown(e, index)}
+      onfocusin={() => (selectedFieldId = field.id)}
+      onclick={() => (selectedFieldId = field.id)}
+      data-field-id={field.id}
+      data-selected={selectedFieldId === field.id ? "true" : "false"}
+      aria-selected={selectedFieldId === field.id}
       data-testid="stat-sheet-editor-field"
     >
       <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex items-center cursor-grab active:cursor-grabbing text-theme-muted hover:text-theme-primary p-0.5 shrink-0 rounded focus:outline-none focus:ring-1 focus:ring-theme-primary"
+          title="Drag or use Alt/Ctrl+Up/Down to reorder"
+          aria-label={`Drag or press Alt/Ctrl Up or Alt/Ctrl Down to reorder ${field.label}`}
+          data-testid="stat-sheet-drag-handle"
+        >
+          <span class="icon-[lucide--grip-vertical] h-4 w-4" aria-hidden="true"
+          ></span>
+        </button>
         <input
           type="text"
           class="flex-1 rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-xs text-theme-text"
@@ -205,14 +338,26 @@
   {/each}
 
   <div class="flex items-center justify-between">
-    <button
-      type="button"
-      class="rounded border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-      onclick={addField}
-      data-testid="stat-sheet-editor-add"
-    >
-      + Add Field
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        onclick={addField}
+        data-testid="stat-sheet-editor-add"
+      >
+        + Add Field
+      </button>
+      {#if fields.length > 0}
+        <button
+          type="button"
+          class="rounded border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
+          onclick={clearAllFields}
+          data-testid="stat-sheet-editor-clear-all"
+        >
+          Clear All
+        </button>
+      {/if}
+    </div>
     <button
       type="button"
       class="rounded border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"

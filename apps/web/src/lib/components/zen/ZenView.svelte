@@ -549,7 +549,7 @@
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
-            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+            class="max-w-4xl mx-auto min-h-full p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailStatsTab {entity} />
           </div>
