@@ -1,3 +1,4 @@
+# Smoke-test commit for the independent post-deployment coverage workflow.
 name: Deploy to Cloudflare Pages
 
 on:
