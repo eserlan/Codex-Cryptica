@@ -59,6 +59,9 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
+
 - TypeScript 6.0.3 + `schema` workspace types, existing `map-engine`, Svelte 5 (1661-extract-vtt-domain)
 - No storage changes; browser persistence remains in `apps/web` (1661-extract-vtt-domain)
 

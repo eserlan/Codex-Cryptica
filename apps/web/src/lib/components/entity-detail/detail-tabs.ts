@@ -4,6 +4,7 @@ export const entityDetailTabs = [
   "map",
   "chats",
   "family",
+  "stats",
   "timeline",
 ] as const;
 

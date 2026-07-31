@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-07-29
+Auto-generated from all feature plans. Last updated: 2026-07-31
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4 (134-entity-navigation-history)
 - N/A (In-memory session state) (134-entity-navigation-history)
@@ -37,6 +40,8 @@ bun run lint
 TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventions
 
 ## Recent Changes
+
+- 149-reusable-stat-sheets: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService`
 
 - 134-entity-navigation-history: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4
 

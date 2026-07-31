@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ConnectionSchema } from "./connection";
 import { LanguageProfileV1Schema } from "./language-profile";
+import { StatSheetSchema } from "./stat-sheet";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -212,6 +213,7 @@ export const EntitySchema = z.object({
   kind: z.string().optional(),
   languageProfileVersion: z.literal(1).optional(),
   languageProfile: LanguageProfileV1Schema.optional(),
+  statSheet: StatSheetSchema.optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;
