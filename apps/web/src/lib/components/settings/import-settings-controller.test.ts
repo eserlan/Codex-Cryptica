@@ -6,9 +6,9 @@ import { resolve } from "node:path";
 import { getPack } from "@codex/content-packs";
 import {
   ImportSettingsController,
-  mapThemeToGenre,
   type ImportSettingsControllerDeps,
 } from "./import-settings-controller.svelte";
+import { mapThemeToGenre } from "./theme-mapper";
 import { isScabardExport } from "@codex/importer";
 
 function baseDeps(
