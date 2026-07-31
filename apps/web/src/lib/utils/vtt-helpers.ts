@@ -40,11 +40,15 @@ export function clampPointToBounds(
   bounds: { width: number; height: number },
   tokenSize: { width: number; height: number } = { width: 0, height: 0 },
 ): Point {
-  const maxX = Math.max(0, bounds.width - tokenSize.width);
-  const maxY = Math.max(0, bounds.height - tokenSize.height);
+  // Map image coordinates use the image center as (0, 0), so the valid
+  // top-left range spans from the negative half-size to the positive edge.
+  const minX = -bounds.width / 2;
+  const minY = -bounds.height / 2;
+  const maxX = Math.max(minX, bounds.width / 2 - tokenSize.width);
+  const maxY = Math.max(minY, bounds.height / 2 - tokenSize.height);
   return {
-    x: Math.min(Math.max(0, point.x), maxX),
-    y: Math.min(Math.max(0, point.y), maxY),
+    x: Math.min(Math.max(minX, point.x), maxX),
+    y: Math.min(Math.max(minY, point.y), maxY),
   };
 }
 

@@ -14,7 +14,7 @@ vi.mock("./map.svelte", () => ({
     activeMapId: "map-1",
     activeMap: {
       id: "map-1",
-      dimensions: { width: 300, height: 300 },
+      dimensions: { width: 1000, height: 1000 },
     },
     gridSize: 50,
     showGrid: true,
@@ -121,6 +121,20 @@ describe("MapSessionStore", () => {
     const moved = store.moveToken(token!.id, 99, 101, true);
     expect(moved?.x).toBe(100);
     expect(moved?.y).toBe(100);
+  });
+
+  it("allows token movement across the centered map origin", () => {
+    const token = store.addToken({
+      name: "Centered Token",
+      x: 0,
+      y: 0,
+      width: 50,
+      height: 50,
+    });
+
+    const moved = store.moveToken(token!.id, -600, -600, true);
+
+    expect(moved).toMatchObject({ x: -500, y: -500 });
   });
 
   it("clones a token with an offset and preserved state", () => {
