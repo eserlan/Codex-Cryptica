@@ -36,7 +36,7 @@ Built-in templates cover several common systems out of the box:
 - **Pathfinder Character** — ability checks, the three saving throws, and skills.
 - **World of Darkness / Vampire** — Attributes, a generic d10 dice-pool roll, Willpower, Blood Pool/Hunger, and Disciplines.
 - **Cyberpunk** — core stats, weapon attack/damage, a generic skill check, Humanity, and cyberware.
-- **Mythras** — Characteristics, derived attributes (AP, LP, MP, DM), hit locations/armor, and d100 roll-under skill checks (roll, then compare the result to the skill's listed percentage yourself — Codex Cryptica doesn't judge pass/fail for you).
+- **Mythras Character** / **Mythras Creature / NPC** — Characteristics, derived attributes (AP, LP, MP, DM), hit locations/armor, natural attacks, creature traits, and d100 roll-under skill checks (roll, then compare the result to the skill's listed percentage yourself — Codex Cryptica doesn't judge pass/fail for you).
 - **Ship Systems** / **Settlement Overview** — for vessels and locations rather than characters.
 - **Generic Item** / **D&D Magic Item** / **Cyberpunk Gear** / **Mythras Gear** — quantity/weight/value, rarity/attunement/charges, cost/availability, or ENC/damage/reach/armor points for the Item category.
 

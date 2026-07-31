@@ -114,6 +114,19 @@ describe("StatSheetTemplateStore", () => {
       type: "text",
       label: "Reach / Range",
     });
+
+    const mythrasNpc = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (t) => t.id === "builtin-mythras-npc",
+    )!;
+    expect(mythrasNpc.category).toBe("npc");
+    expect(mythrasNpc.fields.find((f) => f.id === "attacks")).toMatchObject({
+      type: "longtext",
+      label: "Attacks & Combat Styles",
+    });
+    expect(mythrasNpc.fields.find((f) => f.id === "traits")).toMatchObject({
+      type: "longtext",
+      label: "Creature Traits & Special Abilities",
+    });
   });
 
   it("saves the current fields as a new vault-scoped template", async () => {
