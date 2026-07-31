@@ -28,6 +28,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: write
   contents: read
   deployments: write
   pull-requests: write
@@ -396,6 +397,18 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=staging
 
+      - name: Trigger independent staging coverage
+        if: github.ref_name == 'staging' && github.event_name == 'push' && success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run coverage-deploy.yml \
+            --ref staging \
+            -f source_run_id="${{ github.run_id }}" \
+            -f source_sha="${{ github.sha }}" \
+            -f source_branch=staging
+
       - name: Deploy Preview to Cloudflare Pages
         if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
         id: deploy_preview
@@ -438,88 +451,3 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"
-
-  coverage-deploy:
-    name: Coverage Deploy
-    needs: [select-validation, deploy]
-    if: |
-      always() &&
-      needs.deploy.result == 'success' &&
-      needs.select-validation.outputs.test_coverage != ''
-    runs-on: ubuntu-latest
-    env:
-      HUSKY: 0
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-
-      - name: Setup Bun cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install Dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Download Build
-        uses: actions/download-artifact@v8
-        with:
-          name: dist
-          path: dist/
-
-      - name: Run Coverage Tests
-        env:
-          WORKSPACES: ${{ needs.select-validation.outputs.test_coverage }}
-        run: |
-          for workspace in $WORKSPACES; do
-            bun run --filter "$workspace" test:coverage
-          done
-
-      - name: Copy web coverage into preview
-        run: |
-          if [ -d "apps/web/coverage" ]; then
-            cp -r apps/web/coverage dist/coverage
-          fi
-
-      - name: Upload Coverage Reports
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: coverage
-          path: |
-            apps/*/coverage/
-            packages/*/coverage/
-          retention-days: 7
-
-      - name: Update Staging Deployment with Coverage
-        if: github.ref_name == 'staging' && github.event_name == 'push'
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica --branch=staging
-
-      - name: Update Preview Deployment with Coverage
-        if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
