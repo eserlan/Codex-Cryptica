@@ -22,7 +22,13 @@
 
   const handleRename = async () => {
     if (editingId && renameValue.trim()) {
-      await statSheetTemplates.renameTemplate(editingId, renameValue.trim());
+      const ok = await statSheetTemplates.renameTemplate(
+        editingId,
+        renameValue.trim(),
+      );
+      if (!ok) {
+        notificationStore.notify("Failed to rename template.", "error");
+      }
     }
     editingId = null;
   };
@@ -35,7 +41,10 @@
       isDangerous: true,
     });
     if (confirmed) {
-      await statSheetTemplates.deleteTemplate(id);
+      const ok = await statSheetTemplates.deleteTemplate(id);
+      if (!ok) {
+        notificationStore.notify("Failed to delete template.", "error");
+      }
     }
   };
 

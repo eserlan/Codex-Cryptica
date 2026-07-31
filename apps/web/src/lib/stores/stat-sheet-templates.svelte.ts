@@ -403,27 +403,44 @@ export class StatSheetTemplateStore {
       ),
     };
 
-    const db = await getDB();
-    await db.put("stat_sheet_templates", { ...template, vaultId });
-    this.templates = [...this.templates, template];
-    return template;
+    try {
+      const db = await getDB();
+      await db.put("stat_sheet_templates", { ...template, vaultId });
+      this.templates = [...this.templates, template];
+      return template;
+    } catch (e) {
+      console.error("[StatSheetTemplateStore] Failed to save template:", e);
+      return null;
+    }
   }
 
-  async deleteTemplate(id: string) {
-    const db = await getDB();
-    await db.delete("stat_sheet_templates", id);
-    this.templates = this.templates.filter((t) => t.id !== id);
+  async deleteTemplate(id: string): Promise<boolean> {
+    try {
+      const db = await getDB();
+      await db.delete("stat_sheet_templates", id);
+      this.templates = this.templates.filter((t) => t.id !== id);
+      return true;
+    } catch (e) {
+      console.error("[StatSheetTemplateStore] Failed to delete template:", e);
+      return false;
+    }
   }
 
-  async renameTemplate(id: string, name: string) {
+  async renameTemplate(id: string, name: string): Promise<boolean> {
     const vaultId = vaultRegistry.activeVaultId;
     const existing = this.templates.find((t) => t.id === id);
-    if (!vaultId || !existing) return;
+    if (!vaultId || !existing) return false;
 
     const updated: StatSheetTemplate = { ...$state.snapshot(existing), name };
-    const db = await getDB();
-    await db.put("stat_sheet_templates", { ...updated, vaultId });
-    this.templates = this.templates.map((t) => (t.id === id ? updated : t));
+    try {
+      const db = await getDB();
+      await db.put("stat_sheet_templates", { ...updated, vaultId });
+      this.templates = this.templates.map((t) => (t.id === id ? updated : t));
+      return true;
+    } catch (e) {
+      console.error("[StatSheetTemplateStore] Failed to rename template:", e);
+      return false;
+    }
   }
 
   // Assigns fresh instance ids rather than reusing the template's own field

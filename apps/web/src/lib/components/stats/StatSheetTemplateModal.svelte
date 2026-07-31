@@ -57,12 +57,20 @@
     if (!saveAsName.trim()) return;
     isSaving = true;
     try {
-      await statSheetTemplates.saveAsTemplate(
+      const saved = await statSheetTemplates.saveAsTemplate(
         saveAsName.trim(),
-        entity.statSheet?.fields ?? [],
+        $state.snapshot(entity.statSheet?.fields ?? []),
         { category: entity.type },
       );
-      saveAsName = "";
+      if (saved) {
+        notificationStore.notify(`Saved template "${saved.name}"`, "success");
+        saveAsName = "";
+      } else {
+        notificationStore.notify("Failed to save template.", "error");
+      }
+    } catch (e) {
+      console.error("[StatSheetTemplateModal] Failed to save template:", e);
+      notificationStore.notify("Failed to save template.", "error");
     } finally {
       isSaving = false;
     }

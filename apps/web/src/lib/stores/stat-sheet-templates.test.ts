@@ -197,8 +197,45 @@ describe("StatSheetTemplateStore", () => {
   });
 
   it("does nothing when renaming a template that doesn't exist", async () => {
-    await store.renameTemplate("missing-id", "New Name");
+    const ok = await store.renameTemplate("missing-id", "New Name");
+    expect(ok).toBe(false);
     expect(store.templates).toHaveLength(0);
+  });
+
+  it("returns null and does not throw when saving a template fails (e.g. IDB error)", async () => {
+    const db = await getDB();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const putSpy = vi.spyOn(db, "put").mockRejectedValueOnce(new Error("boom"));
+
+    try {
+      const result = await store.saveAsTemplate("Broken", []);
+
+      expect(result).toBeNull();
+      expect(store.templates).toHaveLength(0);
+      expect(consoleSpy).toHaveBeenCalled();
+    } finally {
+      putSpy.mockRestore();
+      consoleSpy.mockRestore();
+    }
+  });
+
+  it("returns false and does not throw when deleting a template fails", async () => {
+    const saved = await store.saveAsTemplate("Temp", []);
+    const db = await getDB();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const deleteSpy = vi
+      .spyOn(db, "delete")
+      .mockRejectedValueOnce(new Error("boom"));
+
+    try {
+      const ok = await store.deleteTemplate(saved!.id);
+
+      expect(ok).toBe(false);
+      expect(store.templates).toHaveLength(1);
+    } finally {
+      deleteSpy.mockRestore();
+      consoleSpy.mockRestore();
+    }
   });
 
   it("sets and persists a default template for a category", async () => {

@@ -8,6 +8,7 @@ const {
   deleteTemplate,
   setDefaultTemplate,
   confirm,
+  notify,
   templatesState,
   BUILT_INS,
 } = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ const {
   deleteTemplate: vi.fn(),
   setDefaultTemplate: vi.fn(),
   confirm: vi.fn().mockResolvedValue(true),
+  notify: vi.fn(),
   templatesState: {
     templates: [{ id: "template-1", name: "My Custom Sheet", fields: [] }],
     categoryDefaults: {} as Record<string, string>,
@@ -61,7 +63,7 @@ vi.mock("$lib/stores/categories.svelte", () => ({
 }));
 
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
-  notificationStore: { confirm },
+  notificationStore: { confirm, notify },
 }));
 
 import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
@@ -69,10 +71,13 @@ import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
 describe("StatSheetTemplateSettings", () => {
   beforeEach(() => {
     renameTemplate.mockClear();
+    renameTemplate.mockResolvedValue(true);
     deleteTemplate.mockClear();
+    deleteTemplate.mockResolvedValue(true);
     setDefaultTemplate.mockClear();
     confirm.mockClear();
     confirm.mockResolvedValue(true);
+    notify.mockClear();
     templatesState.categoryDefaults = {};
   });
 
@@ -161,5 +166,36 @@ describe("StatSheetTemplateSettings", () => {
     );
 
     expect(deleteTemplate).not.toHaveBeenCalled();
+  });
+
+  it("notifies on failure when renaming a template fails", async () => {
+    renameTemplate.mockResolvedValueOnce(false);
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Rename My Custom Sheet template"),
+    );
+    const input = screen.getByDisplayValue("My Custom Sheet");
+    await fireEvent.input(input, { target: { value: "Renamed Sheet" } });
+    await fireEvent.click(screen.getByText("Save"));
+
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("Failed"),
+      "error",
+    );
+  });
+
+  it("notifies on failure when deleting a template fails", async () => {
+    deleteTemplate.mockResolvedValueOnce(false);
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Delete My Custom Sheet template"),
+    );
+
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("Failed"),
+      "error",
+    );
   });
 });
