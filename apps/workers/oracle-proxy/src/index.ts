@@ -28,6 +28,16 @@ import {
 } from "./directory";
 import { handleGetPublishedNotice, handlePutPublishedNotice } from "./notice";
 import { handleCopyrightReport } from "./reports";
+import {
+  handleCreateTemplateListing,
+  handleDeleteTemplateListing,
+  handleGetTemplateListing,
+  handleGetTemplatePackage,
+  handleListTemplateListings,
+  handleReportTemplateListing,
+  handleUpdateTemplateListing,
+  handleAdminSuspendTemplateListing,
+} from "./template-directory";
 
 interface Env {
   GEMINI_API_KEY: string;
@@ -42,6 +52,7 @@ interface Env {
   PUBLISH_WRITE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
+  TEMPLATE_ADMIN_TOKEN?: string;
 }
 
 // Allowed origins for CORS
@@ -115,11 +126,77 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    if (pathname.startsWith("/api/template-directory/")) {
+      const origin = request.headers.get("Origin") || "";
+      if (origin && !isOriginAllowed(origin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+      const rateLimitResponse = await enforcePublishRateLimit(
+        request,
+        env,
+        pathname,
+      );
+      if (rateLimitResponse) return rateLimitResponse;
+    }
+
     if (pathname === "/api/directory/listings") {
       if (request.method === "GET") {
         return handleListPublicListings(request, env);
       }
 
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: getCorsHeaders(request.headers, env),
+      });
+    }
+
+    if (
+      pathname === "/api/template-directory/admin/suspensions" &&
+      request.method === "POST"
+    ) {
+      return handleAdminSuspendTemplateListing(request, env);
+    }
+
+    if (pathname === "/api/template-directory/listings") {
+      if (request.method === "GET")
+        return handleListTemplateListings(request, env);
+      if (request.method === "POST")
+        return handleCreateTemplateListing(request, env);
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: getCorsHeaders(request.headers, env),
+      });
+    }
+
+    if (pathname.startsWith("/api/template-directory/listings/")) {
+      const parts = pathname.split("/");
+      const listingId = parts[4];
+      if (!listingId) return new Response("Not found", { status: 404 });
+      if (
+        parts.length === 6 &&
+        parts[5] === "package" &&
+        request.method === "GET"
+      ) {
+        return handleGetTemplatePackage(request, env, listingId);
+      }
+      if (
+        parts.length === 6 &&
+        parts[5] === "report" &&
+        request.method === "POST"
+      ) {
+        return handleReportTemplateListing(request, env, listingId);
+      }
+      if (parts.length === 5) {
+        if (request.method === "GET")
+          return handleGetTemplateListing(request, env, listingId);
+        if (request.method === "PUT")
+          return handleUpdateTemplateListing(request, env, listingId);
+        if (request.method === "DELETE")
+          return handleDeleteTemplateListing(request, env, listingId);
+      }
       return new Response("Method not allowed", {
         status: 405,
         headers: getCorsHeaders(request.headers, env),
@@ -791,15 +868,23 @@ async function enforcePublishRateLimit(
 ): Promise<Response | null> {
   if (request.method === "GET" || request.method === "OPTIONS") return null;
 
+  const isTemplateCreate =
+    pathname === "/api/template-directory/listings" &&
+    request.method === "POST";
   const limiter =
-    pathname === "/api/publish-vault"
+    pathname === "/api/publish-vault" || isTemplateCreate
       ? env.PUBLISH_CREATE_RATE_LIMITER
       : env.PUBLISH_WRITE_RATE_LIMITER;
   if (!limiter) return null;
 
   const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
-  const publishId = pathname.split("/")[3] || "new";
-  const key = pathname === "/api/publish-vault" ? ip : `${ip}:${publishId}`;
+  const publishId = pathname.startsWith("/api/template-directory/listings/")
+    ? pathname.split("/")[4] || "new"
+    : pathname.split("/")[3] || "new";
+  const key =
+    pathname === "/api/publish-vault" || isTemplateCreate
+      ? ip
+      : `${ip}:${publishId}`;
   const { success } = await limiter.limit({ key });
   if (success) return null;
 

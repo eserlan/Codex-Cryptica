@@ -6,6 +6,10 @@ import {
   getListingObjectKey,
   projectDirectoryResult,
 } from "../directory";
+import {
+  getTemplateListingKey,
+  getTemplatePackageKey,
+} from "../template-directory";
 
 class MockR2Bucket {
   store = new Map<
@@ -647,5 +651,160 @@ describe("directory routes", () => {
     expect(data.results).toHaveLength(1);
     expect(data.results[0].publishId).toBe("perf-999");
     expect(duration).toBeLessThan(500);
+  });
+});
+
+describe("template directory routes", () => {
+  it("publishes an independent value-free template and hides its owner token", async () => {
+    const bucket = new MockR2Bucket();
+    const env = { GEMINI_API_KEY: "test-key", BUCKET: bucket };
+    const request = new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/template-directory/listings",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://codex-cryptica.com",
+        },
+        body: JSON.stringify({
+          package: {
+            schemaVersion: 1,
+            template: {
+              name: "Watch",
+              description: "A watch layout",
+              system: "Homebrew",
+              labels: ["npc"],
+              fields: [{ id: "hp", label: "HP", type: "counter" }],
+            },
+          },
+          metadata: { rightsAcknowledged: true },
+        }),
+      },
+    );
+    const response = await worker.fetch(request, env, {} as ExecutionContext);
+    expect(response.status).toBe(201);
+    const result = (await response.json()) as {
+      listing: { listingId: string };
+      ownerToken: string;
+    };
+    expect(result.ownerToken).toBeTruthy();
+    const storedPackage = bucket.store.get(
+      getTemplatePackageKey(result.listing.listingId),
+    );
+    const packageText =
+      typeof storedPackage?.body === "string"
+        ? storedPackage.body
+        : new TextDecoder().decode(storedPackage?.body ?? new Uint8Array());
+    expect(packageText).not.toContain("ownerToken");
+    expect(
+      bucket.store.has(getTemplateListingKey(result.listing.listingId)),
+    ).toBe(true);
+  });
+
+  it("requires an owner token for template deletion", async () => {
+    const bucket = new MockR2Bucket();
+    const env = { GEMINI_API_KEY: "test-key", BUCKET: bucket };
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/template-directory/listings/missing",
+        { method: "DELETE" },
+      ),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it("rejects template-directory requests from disallowed origins", async () => {
+    const bucket = new MockR2Bucket();
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/template-directory/listings",
+        {
+          headers: { Origin: "https://evil.example" },
+        },
+      ),
+      { GEMINI_API_KEY: "test-key", BUCKET: bucket },
+      {} as ExecutionContext,
+    );
+    expect(response.status).toBe(403);
+  });
+
+  it("enforces operator suspension markers on template browse and download", async () => {
+    const bucket = new MockR2Bucket();
+    await bucket.put(
+      getTemplateListingKey("listing-1"),
+      JSON.stringify({
+        schemaVersion: 1,
+        listingId: "listing-1",
+        title: "Watch",
+        description: "A watch layout",
+        system: "Homebrew",
+        labels: [],
+        packageVersion: 1,
+        listingCreatedAt: "2026-07-31T00:00:00.000Z",
+        listingUpdatedAt: "2026-07-31T00:00:00.000Z",
+      }),
+    );
+    await bucket.put(
+      getTemplatePackageKey("listing-1"),
+      JSON.stringify({
+        schemaVersion: 1,
+        template: {
+          name: "Watch",
+          description: "A watch layout",
+          system: "Homebrew",
+          labels: [],
+          fields: [{ id: "hp", label: "HP", type: "counter" }],
+        },
+      }),
+    );
+    const env = {
+      GEMINI_API_KEY: "test-key",
+      BUCKET: bucket,
+      TEMPLATE_ADMIN_TOKEN: "operator-secret",
+    };
+    const suspended = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/template-directory/admin/suspensions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer operator-secret",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            publishId: "listing-1",
+            mode: "delist",
+            reason: "Policy violation",
+          }),
+        },
+      ),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(suspended.status).toBe(201);
+    expect(
+      (
+        await worker.fetch(
+          new Request(
+            "https://oracle-proxy.espen-erlandsen.workers.dev/api/template-directory/listings/listing-1",
+          ),
+          env,
+          {} as ExecutionContext,
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await worker.fetch(
+          new Request(
+            "https://oracle-proxy.espen-erlandsen.workers.dev/api/template-directory/listings/listing-1/package",
+          ),
+          env,
+          {} as ExecutionContext,
+        )
+      ).status,
+    ).toBe(404);
   });
 });

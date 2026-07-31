@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { EntitySchema } from "./entity";
 import { MapSchema } from "./map";
+import { StatSheetEntityCategorySchema } from "./stat-sheet";
 
 export const PUBLISH_LIMITS = {
   maxBundleBytes: 10 * 1024 * 1024,
@@ -300,3 +301,120 @@ export const SuspensionMarkerSchema = z
   .strict();
 
 export type SuspensionMarker = z.infer<typeof SuspensionMarkerSchema>;
+
+const TemplateLabelSchema = z.string().trim().min(1).max(40);
+const TemplateFieldSchema = z
+  .object({
+    id: z.string().trim().min(1).max(120),
+    label: z.string().trim().min(1).max(200),
+    type: z.enum(["counter", "number", "text", "longtext", "heading", "dice"]),
+    formula: z.string().trim().max(120).optional(),
+    min: z.number().finite().optional(),
+    max: z.number().finite().optional(),
+    step: z.number().finite().positive().optional(),
+  })
+  .strict();
+
+export const PublicTemplatePackageSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    template: z
+      .object({
+        name: z.string().trim().min(1).max(120),
+        description: z.string().trim().min(1).max(500),
+        system: z.string().trim().max(120).optional(),
+        category: StatSheetEntityCategorySchema.optional(),
+        labels: z.array(TemplateLabelSchema).max(8).default([]),
+        fields: z.array(TemplateFieldSchema).min(1).max(200),
+      })
+      .strict()
+      .superRefine((template, ctx) => {
+        if (!template.system && !template.category) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "A system or entity category is required",
+            path: ["system"],
+          });
+        }
+        for (const field of template.fields) {
+          if (
+            field.min !== undefined &&
+            field.max !== undefined &&
+            field.min > field.max
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Field minimum cannot exceed maximum",
+              path: ["fields"],
+            });
+          }
+        }
+      }),
+    publishedAt: z.string().datetime().optional(),
+  })
+  .strict();
+
+export type PublicTemplatePackage = z.infer<typeof PublicTemplatePackageSchema>;
+
+export const CommunityTemplateListingSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    listingId: z.string().trim().min(1),
+    title: z.string().trim().min(1).max(120),
+    description: z.string().trim().min(1).max(500),
+    system: z.string().trim().max(120).optional(),
+    category: StatSheetEntityCategorySchema.optional(),
+    labels: z.array(TemplateLabelSchema).max(8).default([]),
+    ownerDisplayName: z.string().trim().min(1).max(80).optional(),
+    packageVersion: z.number().int().positive(),
+    listingCreatedAt: z.string().datetime(),
+    listingUpdatedAt: z.string().datetime(),
+    importCount: z.number().int().min(0).optional(),
+  })
+  .strict()
+  .superRefine((listing, ctx) => {
+    if (!listing.system && !listing.category) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A system or entity category is required",
+        path: ["system"],
+      });
+    }
+  });
+
+export type CommunityTemplateListing = z.infer<
+  typeof CommunityTemplateListingSchema
+>;
+
+export const TemplateDirectoryQuerySchema = z
+  .object({
+    q: z.string().trim().max(120).optional(),
+    system: z.string().trim().max(120).optional(),
+    category: StatSheetEntityCategorySchema.optional(),
+    labels: z.array(TemplateLabelSchema).max(8).optional(),
+    cursor: z.string().trim().min(1).optional(),
+    limit: z.number().int().min(1).max(48).default(24),
+  })
+  .strict();
+
+export type TemplateDirectoryQuery = z.infer<
+  typeof TemplateDirectoryQuerySchema
+>;
+
+export const TemplateDirectoryResultSchema =
+  CommunityTemplateListingSchema.extend({
+    fieldPreview: z.array(TemplateFieldSchema).max(200),
+  }).strict();
+
+export type TemplateDirectoryResult = z.infer<
+  typeof TemplateDirectoryResultSchema
+>;
+
+export const TemplateDirectoryPageSchema = z
+  .object({
+    results: z.array(TemplateDirectoryResultSchema),
+    nextCursor: z.string().trim().min(1).optional(),
+  })
+  .strict();
+
+export type TemplateDirectoryPage = z.infer<typeof TemplateDirectoryPageSchema>;

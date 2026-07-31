@@ -6,6 +6,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 - The Speckit command definitions in [`.gemini/commands`](./.gemini/commands) are the canonical command source for this repo.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
+- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md) and [`.codex/skills/codex-review/SKILL.md`](./.codex/skills/codex-review/SKILL.md); the extended canonical review patterns remain in [`.agent/skills/codex-review`](./.agent/skills/codex-review).
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
@@ -53,11 +54,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/143-cif-importer/plan.md).
+shell commands, and other important information, read the [current plan](./specs/150-stat-sheet-marketplace/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
 
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
 - Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
