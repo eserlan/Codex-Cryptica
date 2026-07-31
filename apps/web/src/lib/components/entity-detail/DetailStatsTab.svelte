@@ -4,6 +4,7 @@
   import StatSheetView from "$lib/components/stats/StatSheetView.svelte";
   import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
   import StatSheetTemplateModal from "$lib/components/stats/StatSheetTemplateModal.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let { entity } = $props<{ entity: Entity }>();
 
@@ -11,9 +12,28 @@
   let showTemplateModal = $state(false);
 
   const readOnly = $derived(vault.isGuest);
+  const hasStats = $derived(
+    (entity.statSheet?.fields?.length ?? 0) > 0 ||
+      !!entity.statSheet?.templateId,
+  );
+
+  async function clearStatSheet() {
+    const confirmed = await notificationStore.confirm({
+      title: "Clear Stat Sheet",
+      message: `Remove all stat fields and template assignment from "${entity.title}"?`,
+      confirmLabel: "Clear Stat Sheet",
+      isDangerous: true,
+    });
+    if (!confirmed) return;
+
+    await vault.updateEntity(entity.id, {
+      statSheet: { templateId: null, fields: [] },
+    });
+    isEditingLayout = false;
+  }
 </script>
 
-<div class="flex flex-col gap-3" data-testid="detail-stats-tab">
+<div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
   <div class="flex items-center justify-between">
     <span
       class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
@@ -22,6 +42,16 @@
     </span>
     {#if !readOnly}
       <div class="flex items-center gap-2">
+        {#if hasStats}
+          <button
+            type="button"
+            class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
+            onclick={clearStatSheet}
+            data-testid="stat-sheet-clear-stats"
+          >
+            Clear
+          </button>
+        {/if}
         <button
           type="button"
           class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"

@@ -176,12 +176,19 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     id: "builtin-mythras-character",
     name: "Mythras",
     description:
-      "Characteristics and d100 roll-under skill checks for Mythras / BRP-style play.",
+      "Characteristics, derived attributes, hit locations, and d100 roll-under skills for Mythras / BRP-style play.",
     category: "character",
     isBuiltIn: true,
     fields: [
-      { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 30 },
-      { id: "ap", label: "Action Points", type: "counter", min: 0, max: 4 },
+      { id: "ap", label: "Action Points", type: "counter", min: 0, max: 5 },
+      { id: "lp", label: "Luck Points", type: "counter", min: 0, max: 10 },
+      { id: "mp", label: "Magic Points", type: "counter", min: 0, max: 30 },
+      { id: "hp", label: "Total Hit Points", type: "counter", min: 0, max: 50 },
+      { id: "damage_mod", label: "Damage Modifier", type: "text" },
+      { id: "initiative", label: "Initiative Bonus", type: "number" },
+      { id: "move", label: "Movement (m)", type: "number" },
+      { id: "healing_rate", label: "Healing Rate", type: "number" },
+      { id: "xp_mod", label: "Experience Modifier", type: "number" },
       { id: "sec_characteristics", label: "Characteristics", type: "heading" },
       { id: "str", label: "STR", type: "number" },
       { id: "con", label: "CON", type: "number" },
@@ -190,9 +197,77 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       { id: "int", label: "INT", type: "number" },
       { id: "pow", label: "POW", type: "number" },
       { id: "cha", label: "CHA", type: "number" },
-      { id: "sec_skills", label: "Skills", type: "heading" },
+      {
+        id: "sec_hit_locations",
+        label: "Hit Locations & Armor",
+        type: "heading",
+      },
+      { id: "loc_head_ap", label: "Head AP (Armor)", type: "number" },
+      { id: "loc_head_hp", label: "Head HP", type: "counter", min: 0, max: 20 },
+      { id: "loc_chest_ap", label: "Chest AP (Armor)", type: "number" },
+      {
+        id: "loc_chest_hp",
+        label: "Chest HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "loc_abdomen_ap", label: "Abdomen AP (Armor)", type: "number" },
+      {
+        id: "loc_abdomen_hp",
+        label: "Abdomen HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "loc_rarm_ap", label: "Right Arm AP (Armor)", type: "number" },
+      {
+        id: "loc_rarm_hp",
+        label: "Right Arm HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "loc_larm_ap", label: "Left Arm AP (Armor)", type: "number" },
+      {
+        id: "loc_larm_hp",
+        label: "Left Arm HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "loc_rleg_ap", label: "Right Leg AP (Armor)", type: "number" },
+      {
+        id: "loc_rleg_hp",
+        label: "Right Leg HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "loc_lleg_ap", label: "Left Leg AP (Armor)", type: "number" },
+      {
+        id: "loc_lleg_hp",
+        label: "Left Leg HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "sec_skills", label: "Skills & Combat", type: "heading" },
+      { id: "d100_check", label: "d100 Check", type: "dice", formula: "1d100" },
+      {
+        id: "athletics",
+        label: "Athletics (d100)",
+        type: "dice",
+        formula: "1d100",
+      },
+      { id: "brawn", label: "Brawn (d100)", type: "dice", formula: "1d100" },
       { id: "evade", label: "Evade (d100)", type: "dice", formula: "1d100" },
-      { id: "melee", label: "Melee (d100)", type: "dice", formula: "1d100" },
+      {
+        id: "insight",
+        label: "Insight (d100)",
+        type: "dice",
+        formula: "1d100",
+      },
       {
         id: "perception",
         label: "Perception (d100)",
@@ -200,12 +275,134 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
         formula: "1d100",
       },
       {
-        id: "skill_roll",
-        label: "Other Skill Roll (d100)",
+        id: "stealth",
+        label: "Stealth (d100)",
         type: "dice",
         formula: "1d100",
       },
-      { id: "skills", label: "Key Skills (%)", type: "text" },
+      {
+        id: "willpower",
+        label: "Willpower (d100)",
+        type: "dice",
+        formula: "1d100",
+      },
+      { id: "combat_styles", label: "Combat Styles", type: "longtext" },
+      {
+        id: "professional_skills",
+        label: "Professional & Magic Skills",
+        type: "longtext",
+      },
+      { id: "passions_cults", label: "Passions & Cults", type: "longtext" },
+    ],
+  },
+  {
+    id: "builtin-mythras-npc",
+    name: "Mythras Creature / NPC",
+    description:
+      "Stat block for Mythras NPCs, monsters, and creatures with action points, hit locations, attacks, and creature traits.",
+    category: "npc",
+    isBuiltIn: true,
+    fields: [
+      { id: "ap", label: "Action Points", type: "counter", min: 0, max: 5 },
+      { id: "mp", label: "Magic Points", type: "counter", min: 0, max: 30 },
+      { id: "hp", label: "Total Hit Points", type: "counter", min: 0, max: 50 },
+      { id: "damage_mod", label: "Damage Modifier", type: "text" },
+      { id: "initiative", label: "Initiative Bonus", type: "number" },
+      { id: "move", label: "Movement (m)", type: "number" },
+      { id: "sec_characteristics", label: "Characteristics", type: "heading" },
+      { id: "str", label: "STR", type: "number" },
+      { id: "con", label: "CON", type: "number" },
+      { id: "siz", label: "SIZ", type: "number" },
+      { id: "dex", label: "DEX", type: "number" },
+      { id: "int", label: "INT", type: "number" },
+      { id: "pow", label: "POW", type: "number" },
+      { id: "cha", label: "CHA", type: "number" },
+      {
+        id: "sec_hit_locations",
+        label: "Hit Locations & Armor",
+        type: "heading",
+      },
+      { id: "loc_head_ap", label: "Head AP (Armor)", type: "number" },
+      { id: "loc_head_hp", label: "Head HP", type: "counter", min: 0, max: 20 },
+      { id: "loc_chest_ap", label: "Chest AP (Armor)", type: "number" },
+      {
+        id: "loc_chest_hp",
+        label: "Chest HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "loc_abdomen_ap", label: "Abdomen AP (Armor)", type: "number" },
+      {
+        id: "loc_abdomen_hp",
+        label: "Abdomen HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      {
+        id: "loc_rarm_ap",
+        label: "Right Arm / Foreleg AP",
+        type: "number",
+      },
+      {
+        id: "loc_rarm_hp",
+        label: "Right Arm / Foreleg HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      {
+        id: "loc_larm_ap",
+        label: "Left Arm / Foreleg AP",
+        type: "number",
+      },
+      {
+        id: "loc_larm_hp",
+        label: "Left Arm / Foreleg HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      {
+        id: "loc_rleg_ap",
+        label: "Right Leg / Hindleg AP",
+        type: "number",
+      },
+      {
+        id: "loc_rleg_hp",
+        label: "Right Leg / Hindleg HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      {
+        id: "loc_lleg_ap",
+        label: "Left Leg / Hindleg AP",
+        type: "number",
+      },
+      {
+        id: "loc_lleg_hp",
+        label: "Left Leg / Hindleg HP",
+        type: "counter",
+        min: 0,
+        max: 20,
+      },
+      { id: "sec_combat", label: "Attacks & Creature Traits", type: "heading" },
+      { id: "d100_check", label: "d100 Check", type: "dice", formula: "1d100" },
+      { id: "evade", label: "Evade (d100)", type: "dice", formula: "1d100" },
+      {
+        id: "perception",
+        label: "Perception (d100)",
+        type: "dice",
+        formula: "1d100",
+      },
+      { id: "attacks", label: "Attacks & Combat Styles", type: "longtext" },
+      {
+        id: "traits",
+        label: "Creature Traits & Special Abilities",
+        type: "longtext",
+      },
     ],
   },
   {
@@ -286,14 +483,17 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     id: "builtin-item-mythras-gear",
     name: "Mythras Gear",
     description:
-      "Encumbrance, value, damage, and armor points for Mythras weapons, armor, and equipment.",
+      "Encumbrance, value, damage, reach, armor points, and traits for Mythras weapons, armor, and equipment.",
     category: "item",
     isBuiltIn: true,
     fields: [
       { id: "enc", label: "ENC", type: "number" },
-      { id: "value", label: "Value", type: "number" },
+      { id: "ap", label: "Armor Points (AP)", type: "number" },
+      { id: "item_hp", label: "Item HP", type: "counter", min: 0, max: 30 },
       { id: "damage", label: "Damage", type: "dice", formula: "1d8" },
-      { id: "ap", label: "Armor Points", type: "number" },
+      { id: "reach_range", label: "Reach / Range", type: "text" },
+      { id: "traits", label: "Traits / Qualities", type: "text" },
+      { id: "value", label: "Value (SP)", type: "number" },
     ],
   },
 ];
@@ -303,6 +503,8 @@ export class StatSheetTemplateStore {
   // Vault-scoped map of category id -> template id, applied automatically
   // when a new entity of that category is created.
   categoryDefaults = $state<Record<string, string>>({});
+  // Vault-scoped list of enabled template IDs for active vault, or null if all enabled.
+  enabledTemplateIds = $state<string[] | null>(null);
   // Caches the in-flight/completed init() *promise* (not just a started
   // flag), so any caller that mutates state before the constructor's
   // fire-and-forget init() has finished can await the same load and avoid
@@ -317,6 +519,17 @@ export class StatSheetTemplateStore {
 
   get allTemplates(): StatSheetTemplate[] {
     return [...BUILT_IN_STAT_SHEET_TEMPLATES, ...this.templates];
+  }
+
+  get availableTemplates(): StatSheetTemplate[] {
+    if (!this.enabledTemplateIds) return this.allTemplates;
+    const set = new Set(this.enabledTemplateIds);
+    return this.allTemplates.filter((t) => set.has(t.id));
+  }
+
+  isTemplateEnabled(templateId: string): boolean {
+    if (!this.enabledTemplateIds) return true;
+    return this.enabledTemplateIds.includes(templateId);
   }
 
   // Best-effort, constructor-time attempt: `vaultRegistry.activeVaultId` is
@@ -351,9 +564,46 @@ export class StatSheetTemplateStore {
         `statSheetCategoryDefaults_${vaultId}`,
       );
       this.categoryDefaults = defaults ?? {};
+      const enabled = await db.get(
+        "settings",
+        `statSheetEnabledTemplates_${vaultId}`,
+      );
+      this.enabledTemplateIds = enabled ?? null;
     } catch (e) {
       console.error("[StatSheetTemplateStore] Failed to load templates:", e);
     }
+  }
+
+  async toggleTemplateEnabled(templateId: string): Promise<void> {
+    await this.init();
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return;
+
+    const current =
+      this.enabledTemplateIds ?? this.allTemplates.map((t) => t.id);
+    const set = new Set(current);
+    if (set.has(templateId)) {
+      set.delete(templateId);
+    } else {
+      set.add(templateId);
+    }
+    const next = Array.from(set);
+    this.enabledTemplateIds = next;
+
+    const db = await getDB();
+    await db.put("settings", next, `statSheetEnabledTemplates_${vaultId}`);
+  }
+
+  async setAllTemplatesEnabled(enabled: boolean): Promise<void> {
+    await this.init();
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return;
+
+    const next = enabled ? this.allTemplates.map((t) => t.id) : [];
+    this.enabledTemplateIds = next;
+
+    const db = await getDB();
+    await db.put("settings", next, `statSheetEnabledTemplates_${vaultId}`);
   }
 
   async setDefaultTemplate(category: string, templateId: string | null) {
@@ -439,6 +689,34 @@ export class StatSheetTemplateStore {
       return true;
     } catch (e) {
       console.error("[StatSheetTemplateStore] Failed to rename template:", e);
+      return false;
+    }
+  }
+
+  async updateTemplateFields(
+    id: string,
+    fields: StatSheetField[],
+  ): Promise<boolean> {
+    const vaultId = vaultRegistry.activeVaultId;
+    const existing = this.templates.find((t) => t.id === id);
+    if (!vaultId || !existing) return false;
+
+    const updated: StatSheetTemplate = {
+      ...$state.snapshot(existing),
+      fields: fields.map(
+        ({ value: _value, collapsed: _collapsed, ...rest }) => rest,
+      ),
+    };
+    try {
+      const db = await getDB();
+      await db.put("stat_sheet_templates", { ...updated, vaultId });
+      this.templates = this.templates.map((t) => (t.id === id ? updated : t));
+      return true;
+    } catch (e) {
+      console.error(
+        "[StatSheetTemplateStore] Failed to update template fields:",
+        e,
+      );
       return false;
     }
   }
