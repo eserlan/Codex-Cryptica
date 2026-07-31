@@ -98,12 +98,17 @@ export class MapPageController {
     shouldShowInitiativePanel(this.mapSession.vttEnabled, this.mapSession.mode),
   );
   hasSelectedToken = $derived(Boolean(this.mapSession.selectedToken));
-  vttEntityCount = $derived.by(
-    () =>
-      this.vault.allEntities.filter((entity) =>
-        VTT_ENTITY_TYPES.includes(entity.type),
-      ).length,
-  );
+  vttEntityCount = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace .filter().length with an imperative loop
+    let count = 0;
+    const entities = this.vault.allEntities;
+    for (let i = 0; i < entities.length; i++) {
+      if (VTT_ENTITY_TYPES.includes(entities[i].type)) {
+        count++;
+      }
+    }
+    return count;
+  });
 
   constructor(deps: MapPageControllerDependencies = {}) {
     this.mapStore = deps.mapStore ?? defaultMapStore;
