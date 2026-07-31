@@ -1,6 +1,6 @@
 # Feature Specification: Lightweight Reusable Stat Sheets
 
-**Feature Branch**: `1945-reusable-stat-sheets`  
+**Feature Branch**: `149-reusable-stat-sheets`  
 **Created**: 2026-07-31  
 **Status**: Draft  
 **Input**: Issue #1945 (Add lightweight reusable Stat Sheets to entities)
@@ -8,6 +8,16 @@
 ## Executive Summary
 
 Add a lightweight, system-agnostic **Stat Sheet** capability that can be attached to entities (especially Characters/NPCs, Ships, Settlements) and used alongside VTT maps and entity navigation. The goal is to keep essential game state inside Codex Cryptica without introducing complex rules engines or automated character sheet formulas.
+
+---
+
+## Clarifications
+
+### Session 2026-07-31
+
+- Q: Where in the entity data structure should Stat Sheet data be stored and persisted? → A: Embedded in the entity note's YAML frontmatter header as `statSheet`.
+- Q: How and where should user-saved Stat Sheet layout templates be stored? → A: Vault-Scoped (Saved inside the local campaign vault registry).
+- Q: Where should the Stat Sheet be positioned in the entity inspector / viewer UI? → A: Dedicated Tab (Displayed in a dedicated "Stats" tab in the entity inspector/drawer navigation).
 
 ---
 
@@ -84,9 +94,10 @@ As a user running an active session, I want to group stat fields into collapsibl
 - **FR-004**: Users MUST be able to create, edit, reorder, and remove fields on an entity's Stat Sheet.
 - **FR-005**: Users MUST be able to save a Stat Sheet field layout as a named `StatSheetTemplate`.
 - **FR-006**: Users MUST be able to apply a saved `StatSheetTemplate` to any entity.
-- **FR-007**: Stat Sheet templates MUST store layout definitions (field labels, types, section groupings, constraints) without hardcoding entity instance values.
+- **FR-007**: Stat Sheet templates MUST be stored in the campaign vault registry (e.g., `.codex/templates/statsheets/` or vault store settings) to travel cleanly with campaign data.
 - **FR-008**: Section headings MUST be collapsible to optimize vertical space.
-- **FR-009**: Stat Sheet data MUST be persisted in the local vault data (e.g., entity frontmatter or associated document metadata) without requiring cloud or server connectivity.
+- **FR-009**: Stat Sheet data MUST be persisted directly inside the entity note's YAML frontmatter header under the `statSheet` property.
+- **FR-010**: The Stat Sheet MUST be rendered inside a dedicated "Stats" tab within the entity inspector / view panel navigation.
 
 ---
 
