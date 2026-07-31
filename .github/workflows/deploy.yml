@@ -357,6 +357,7 @@ jobs:
           done
 
   deploy:
+    # Deployment is independent from the test/coverage jobs; coverage follows it.
     if: |
       always() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') &&
