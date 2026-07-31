@@ -149,6 +149,7 @@
           label: token.name,
           image: tokenImageCache[token.id] ?? null,
           selected: mapSession.selection === token.id || selected.has(token.id),
+          primarySelected: mapSession.selection === token.id,
           active: mapSession.activeTokenId === token.id,
           visible: true,
         });

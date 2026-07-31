@@ -1,5 +1,9 @@
 import type { MapPin, ViewportTransform } from "schema";
 import { imageToViewport } from "./math";
+import {
+  getTokenRotationHandlePosition,
+  TOKEN_ROTATION_HANDLE_RADIUS,
+} from "./token-geometry";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const m = hex.replace("#", "").match(/.{2}/g);
@@ -36,10 +40,13 @@ export interface RenderToken {
   width: number;
   height: number;
   rotation: number;
+  baseShape?: "circle" | "square";
+  facingIndicator?: boolean;
   color: string;
   label: string;
   image?: HTMLImageElement | null;
   selected?: boolean;
+  primarySelected?: boolean;
   active?: boolean;
   visible?: boolean;
   statusEffects?: string[];
@@ -138,6 +145,101 @@ function drawRoundedRectPath(
   }
 
   ctx.rect(x, y, width, height);
+}
+
+function traceTokenShape(
+  ctx: CanvasRenderingContext2D,
+  shape: "circle" | "square",
+  width: number,
+  height: number,
+) {
+  ctx.beginPath();
+  if (shape === "square") {
+    ctx.rect(-width / 2, -height / 2, width, height);
+  } else {
+    ctx.arc(0, 0, Math.min(width, height) / 2, 0, TAU);
+  }
+  ctx.closePath();
+}
+
+function drawFacingIndicator(
+  ctx: CanvasRenderingContext2D,
+  radius: number,
+  rotation: number,
+) {
+  const front = "#22c55e";
+  const side = "#f59e0b";
+  const rear = "#ef4444";
+  const ringRadius = radius + 2;
+  const ringWidth = Math.max(3, radius * 0.1);
+  const north = -Math.PI / 2;
+
+  ctx.save();
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.lineWidth = ringWidth;
+  ctx.lineCap = "butt";
+  for (const [color, start, end] of [
+    [front, north - Math.PI / 4, north + Math.PI / 4],
+    [side, north + Math.PI / 4, north + (3 * Math.PI) / 4],
+    [rear, north + (3 * Math.PI) / 4, north + (5 * Math.PI) / 4],
+    [side, north + (5 * Math.PI) / 4, north + (7 * Math.PI) / 4],
+  ] as const) {
+    ctx.beginPath();
+    ctx.arc(0, 0, ringRadius, start, end);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = front;
+  ctx.beginPath();
+  ctx.moveTo(0, -radius * 0.92);
+  ctx.lineTo(-radius * 0.13, -radius * 0.62);
+  ctx.lineTo(radius * 0.13, -radius * 0.62);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawRotationHandle(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  width: number,
+  height: number,
+  rotation: number,
+  accentColor: string,
+) {
+  const position = getTokenRotationHandlePosition({
+    x: 0,
+    y: 0,
+    width,
+    height,
+  });
+  const handleX = centerX + position.x - width / 2;
+  const handleY = centerY + position.y - height / 2;
+
+  ctx.save();
+  ctx.strokeStyle = accentColor;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - Math.max(width, height) / 2);
+  ctx.lineTo(handleX, handleY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(handleX, handleY, TOKEN_ROTATION_HANDLE_RADIUS, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(handleX, handleY);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, -Math.PI / 2, Math.PI);
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  ctx.restore();
 }
 
 function getCache(canvas: HTMLCanvasElement): CanvasCache {
@@ -265,14 +367,13 @@ export function renderMap(options: RenderOptions) {
     center.y = minY + height / 2;
     const diameter = Math.max(1, Math.min(width, height));
     const radius = diameter / 2;
+    const shape = token.baseShape ?? "circle";
 
     ctx.save();
     ctx.translate(center.x, center.y);
     ctx.rotate((token.rotation * Math.PI) / 180);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, TAU);
-    ctx.closePath();
+    traceTokenShape(ctx, shape, width, height);
     ctx.clip();
 
     if (token.image && token.image.width > 0 && token.image.height > 0) {
@@ -305,10 +406,11 @@ export function renderMap(options: RenderOptions) {
       const borderWidth = token.active ? 8 : 5;
 
       ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
 
       // Outer drop shadow (outside only)
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, TAU);
+      traceTokenShape(ctx, shape, width + borderWidth, height + borderWidth);
       ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       ctx.lineWidth = borderWidth + 4;
       ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
@@ -316,8 +418,7 @@ export function renderMap(options: RenderOptions) {
       ctx.stroke();
 
       // Main thick border
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, TAU);
+      traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = accent;
       ctx.lineWidth = borderWidth;
       ctx.shadowColor = accent;
@@ -325,8 +426,7 @@ export function renderMap(options: RenderOptions) {
       ctx.stroke();
 
       // Thin bright highlight on top
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, TAU);
+      traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
       ctx.lineWidth = 2;
       ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
@@ -336,15 +436,32 @@ export function renderMap(options: RenderOptions) {
       ctx.restore();
     }
 
+    if (token.facingIndicator) {
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      drawFacingIndicator(ctx, radius, token.rotation);
+      ctx.restore();
+    }
+
+    if (token.primarySelected ?? token.selected) {
+      drawRotationHandle(
+        ctx,
+        center.x,
+        center.y,
+        width,
+        height,
+        token.rotation,
+        options.accentColor || "#3b82f6",
+      );
+    }
+
     // Draw dead status: red X ON the token + dark overlay
     if (token.statusEffects && token.statusEffects.includes("dead")) {
       ctx.save();
       // Dark overlay on token
       ctx.translate(center.x, center.y);
       ctx.rotate((token.rotation * Math.PI) / 180);
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, TAU);
-      ctx.closePath();
+      traceTokenShape(ctx, shape, width, height);
       ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.fill();
       // Red X

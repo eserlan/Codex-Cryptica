@@ -116,6 +116,10 @@ describe("MapSessionStore", () => {
 
     expect(token?.x).toBe(50);
     expect(token?.y).toBe(150);
+    expect(token).toMatchObject({
+      baseShape: "circle",
+      facingIndicator: true,
+    });
     expect(store.tokens[token!.id]).toBeDefined();
 
     const moved = store.moveToken(token!.id, 99, 101, true);
@@ -135,6 +139,14 @@ describe("MapSessionStore", () => {
     const moved = store.moveToken(token!.id, -600, -600, true);
 
     expect(moved).toMatchObject({ x: -500, y: -500 });
+  });
+
+  it("normalizes token rotation updates", () => {
+    const token = store.addToken({ name: "Facing Token", x: 0, y: 0 });
+
+    const updated = store.rotateToken(token!.id, -90, true);
+
+    expect(updated?.rotation).toBe(270);
   });
 
   it("clones a token with an offset and preserved state", () => {

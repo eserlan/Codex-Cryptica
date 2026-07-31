@@ -31,6 +31,16 @@ describe("VTT domain normalization", () => {
     expect(normalized.visibleTo).toBe("all");
     expect(normalized.ownerPeerId).toBeNull();
     expect(normalized.ownerGuestName).toBeNull();
+    expect(normalized.baseShape).toBe("circle");
+    expect(normalized.facingIndicator).toBe(false);
+
+    const invalid = normalizeToken({
+      ...token,
+      baseShape: "hex" as any,
+      facingIndicator: 1 as any,
+    });
+    expect(invalid.baseShape).toBe("circle");
+    expect(invalid.facingIndicator).toBe(false);
   });
 
   it("clones a session and repairs invalid selection and turn state", () => {

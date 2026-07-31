@@ -19,6 +19,7 @@ export class MapInteractionManager {
   getContainer: () => HTMLElement | null;
   tokenSelection!: MapInteractionHandlers["tokenSelection"];
   tokenDrag!: MapInteractionHandlers["tokenDrag"];
+  tokenRotation!: MapInteractionHandlers["tokenRotation"];
   pinInteractions!: MapInteractionHandlers["pinInteractions"];
   gridInteractions!: MapInteractionHandlers["gridInteractions"];
   measurementInteractions!: MapInteractionHandlers["measurementInteractions"];
@@ -92,6 +93,17 @@ export class MapInteractionManager {
 
     if (!viewport) return;
 
+    if (
+      altKey &&
+      (key === "ArrowLeft" || key === "ArrowRight") &&
+      this.tokenRotation.rotateByStep(key === "ArrowRight" ? 1 : -1)
+    ) {
+      this.mapAnnouncement = `Token rotated ${key === "ArrowRight" ? "clockwise" : "counterclockwise"}`;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     const update = getKeyboardViewportUpdate(key, viewport, {
       panStep: this.KEYBOARD_PAN_STEP,
       zoomStep: this.KEYBOARD_ZOOM_STEP,
@@ -143,6 +155,17 @@ export class MapInteractionManager {
     }
     this.mouseDownPos = { x: e.clientX, y: e.clientY };
     this.isAltPressed = e.altKey;
+
+    if (
+      e.button === 0 &&
+      mapSession.vttEnabled &&
+      this.cachedRect &&
+      this.tokenRotation.begin(this.lastMousePos)
+    ) {
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
 
     if (this.cachedRect && this.boxSelection.begin(this.lastMousePos, e)) {
       e.preventDefault();
@@ -218,6 +241,12 @@ export class MapInteractionManager {
       return;
     }
 
+    if (this.tokenRotation.rotationState) {
+      this.tokenRotation.move({ x: mouseX, y: mouseY });
+      this.lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
     if (this.pinDragState) {
       this.pinInteractions.move(
         { x: mouseX, y: mouseY },
@@ -274,6 +303,12 @@ export class MapInteractionManager {
 
     if (this.tokenDrag.dragState) {
       this.tokenDrag.end();
+      this.isPanning = false;
+      return;
+    }
+
+    if (this.tokenRotation.rotationState) {
+      this.tokenRotation.end();
       this.isPanning = false;
       return;
     }
