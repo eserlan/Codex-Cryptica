@@ -320,19 +320,37 @@
           </label>
         </div>
       {:else if field.type === "dice"}
-        <label class="flex items-center gap-2 text-[10px] text-theme-muted">
-          Formula
-          <input
-            type="text"
-            class="w-32 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
-            placeholder="1d20+5"
-            value={field.formula ?? ""}
-            oninput={(e) =>
-              updateField(field.id, {
-                formula: (e.target as HTMLInputElement).value,
-              })}
-          />
-        </label>
+        <div class="flex items-center gap-3 text-[10px] text-theme-muted">
+          <label class="flex items-center gap-1">
+            Target
+            <input
+              type="number"
+              class="w-20 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+              placeholder="e.g. 50"
+              value={typeof field.value === "number" ? field.value : ""}
+              oninput={(e) =>
+                updateField(field.id, {
+                  value:
+                    (e.target as HTMLInputElement).value === ""
+                      ? undefined
+                      : Number((e.target as HTMLInputElement).value),
+                })}
+            />
+          </label>
+          <label class="flex items-center gap-1">
+            Formula
+            <input
+              type="text"
+              class="w-32 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+              placeholder="1d100"
+              value={field.formula ?? ""}
+              oninput={(e) =>
+                updateField(field.id, {
+                  formula: (e.target as HTMLInputElement).value,
+                })}
+            />
+          </label>
+        </div>
       {/if}
     </div>
   {/each}

@@ -12,6 +12,7 @@
   import MapContextMenu from "./MapContextMenu.svelte";
   import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
+  import { resolveHealthBar } from "./map-view-helpers";
 
   function hashToColor(input: string) {
     let hash = 0;
@@ -89,7 +90,7 @@
   const activeMapSignature = $derived.by(() => {
     const activeMap = mapStore.activeMap;
     if (!activeMap) return null;
-    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}:${vault.status}`;
+    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`;
   });
   let lastMapSignature: string | null = null;
   let loadedMaskPath = $state<string | null>(null);
@@ -152,6 +153,11 @@
           primarySelected: mapSession.selection === token.id,
           active: mapSession.activeTokenId === token.id,
           visible: true,
+          healthBar: resolveHealthBar(
+            token.entityId
+              ? vault.entities[token.entityId]?.statSheet?.fields
+              : undefined,
+          ),
         });
       }
     }

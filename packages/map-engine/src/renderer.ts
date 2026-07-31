@@ -50,6 +50,7 @@ export interface RenderToken {
   active?: boolean;
   visible?: boolean;
   statusEffects?: string[];
+  healthBar?: { value: number; max: number } | null;
 }
 
 export interface RenderMeasurement {
@@ -198,6 +199,48 @@ function drawFacingIndicator(
   ctx.closePath();
   ctx.fill();
   ctx.restore();
+}
+
+// Returns the bar's height in image-space so callers can push other overlays
+// (e.g. the name label) below it and avoid overlapping.
+function drawHealthBar(
+  ctx: CanvasRenderingContext2D,
+  center: { x: number; y: number },
+  tokenWidth: number,
+  radius: number,
+  bar: { value: number; max: number },
+): number {
+  const ratio = Math.max(0, Math.min(1, bar.value / bar.max));
+  const fillColor =
+    ratio >= 0.5 ? "#22c55e" : ratio >= 0.25 ? "#facc15" : "#ef4444";
+  const barWidth = tokenWidth;
+  const barHeight = Math.max(4, Math.min(7, radius * 0.18));
+  const barX = center.x - barWidth / 2;
+  const barY = center.y + radius + 4;
+
+  ctx.save();
+  drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fill();
+  if (ratio > 0) {
+    drawRoundedRectPath(
+      ctx,
+      barX,
+      barY,
+      barWidth * ratio,
+      barHeight,
+      barHeight / 2,
+    );
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 1;
+  drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
+  ctx.stroke();
+  ctx.restore();
+
+  return barHeight;
 }
 
 function drawRotationHandle(
@@ -599,6 +642,17 @@ export function renderMap(options: RenderOptions) {
       }
     }
 
+    let healthBarHeight = 0;
+    if (token.healthBar && token.healthBar.max > 0) {
+      healthBarHeight = drawHealthBar(
+        ctx,
+        center,
+        width,
+        radius,
+        token.healthBar,
+      );
+    }
+
     if (token.label) {
       ctx.save();
       const font = "12px ui-sans-serif, system-ui, sans-serif";
@@ -606,7 +660,11 @@ export function renderMap(options: RenderOptions) {
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       const labelX = center.x;
-      const labelY = center.y + height / 2 + 6;
+      const labelY =
+        center.y +
+        height / 2 +
+        6 +
+        (healthBarHeight > 0 ? healthBarHeight + 4 : 0);
       const metrics = measureTextCached(ctx, token.label, font, cache);
       const paddingX = 8;
       const boxWidth = metrics.width + paddingX * 2;

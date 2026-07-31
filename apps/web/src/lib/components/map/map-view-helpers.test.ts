@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { MapPin } from "schema";
+import type { MapPin, StatSheetField } from "schema";
 import {
   findClickedPin,
   getKeyboardViewportUpdate,
   getZoomViewportUpdate,
   isClickGesture,
+  resolveHealthBar,
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
 
@@ -113,5 +114,72 @@ describe("map-view helpers", () => {
     });
 
     expect(locked.pan).toEqual({ x: 12, y: 34 });
+  });
+});
+
+describe("resolveHealthBar", () => {
+  function counterField(
+    overrides: Partial<StatSheetField> = {},
+  ): StatSheetField {
+    return {
+      id: "hp",
+      label: "Hit Points",
+      type: "counter",
+      value: 8,
+      max: 20,
+      barField: true,
+      ...overrides,
+    } as StatSheetField;
+  }
+
+  it("returns null when fields is undefined", () => {
+    expect(resolveHealthBar(undefined)).toBeNull();
+  });
+
+  it("returns null when no field is designated as the bar field", () => {
+    const fields = [counterField({ barField: false })];
+    expect(resolveHealthBar(fields)).toBeNull();
+  });
+
+  it("returns null for a non-counter field marked as the bar field", () => {
+    const fields = [
+      { id: "atk", label: "Attack", type: "dice", barField: true } as any,
+    ];
+    expect(resolveHealthBar(fields)).toBeNull();
+  });
+
+  it("returns null when the bar field's max is 0 or negative", () => {
+    expect(resolveHealthBar([counterField({ max: 0 })])).toBeNull();
+  });
+
+  it("defaults max to 1 when the field has no max set", () => {
+    expect(
+      resolveHealthBar([counterField({ max: undefined, value: 8 })]),
+    ).toEqual({ value: 8, max: 1 });
+  });
+
+  it("returns the value/max of the designated bar field", () => {
+    const fields = [
+      counterField({
+        id: "ap",
+        label: "AP",
+        value: 3,
+        max: 5,
+        barField: false,
+      }),
+      counterField({
+        id: "hp",
+        label: "HP",
+        value: 8,
+        max: 20,
+        barField: true,
+      }),
+    ];
+    expect(resolveHealthBar(fields)).toEqual({ value: 8, max: 20 });
+  });
+
+  it("treats a non-numeric value as 0", () => {
+    const fields = [counterField({ value: "unset" as any })];
+    expect(resolveHealthBar(fields)).toEqual({ value: 0, max: 20 });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { StatSheetField } from "schema";
+import type { StatSheetField, StatSheetTemplate } from "schema";
 import { getDB } from "../utils/idb";
 
 const { vaultRegistryState } = vi.hoisted(() => ({
@@ -194,6 +194,29 @@ describe("StatSheetTemplateStore", () => {
     expect(cloned).not.toBe(template.fields);
     cloned[0].label = "Mutated";
     expect(template.fields[0].label).not.toBe("Mutated");
+  });
+
+  it("initializes counter fields at their max value so a fresh character isn't shown as depleted", () => {
+    const template: StatSheetTemplate = {
+      id: "t1",
+      name: "Test",
+      fields: [
+        { id: "hp", label: "HP", type: "counter", min: 0, max: 30 },
+        { id: "ap", label: "AP", type: "counter", min: 0, max: 5 },
+        { id: "notes", label: "Notes", type: "text" },
+        { id: "misc", label: "Misc", type: "counter" },
+      ],
+    };
+
+    const cloned = store.cloneTemplateFields(template);
+
+    expect(cloned.find((f) => f.id !== "misc" && f.label === "HP")?.value).toBe(
+      30,
+    );
+    expect(cloned.find((f) => f.label === "AP")?.value).toBe(5);
+    expect(cloned.find((f) => f.label === "Notes")?.value).toBeUndefined();
+    // A counter with no max configured has nothing sensible to default to.
+    expect(cloned.find((f) => f.label === "Misc")?.value).toBeUndefined();
   });
 
   it("assigns fresh, non-colliding ids when cloning — so appending two templates that share field ids (e.g. two 'hp' fields) never produces duplicates", () => {
