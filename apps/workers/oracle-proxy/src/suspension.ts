@@ -7,6 +7,19 @@ export function getSuspensionMarkerKey(publishId: string): string {
   return `moderation/suspensions/${publishId}.json`;
 }
 
+export async function writeSuspensionMarker(
+  env: { BUCKET?: any },
+  marker: SuspensionMarker,
+): Promise<void> {
+  if (!env.BUCKET) throw new Error("R2 bucket is unavailable");
+  const parsed = SuspensionMarkerSchema.parse(marker);
+  await env.BUCKET.put(
+    getSuspensionMarkerKey(parsed.publishId),
+    JSON.stringify(parsed),
+    { httpMetadata: { contentType: "application/json" } },
+  );
+}
+
 export async function readSuspensionMarker(
   env: { BUCKET?: any },
   publishId: string,

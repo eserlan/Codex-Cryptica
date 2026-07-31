@@ -34,6 +34,39 @@ describe("StatSheetTemplateStore", () => {
     expect(store.allTemplates).toEqual(BUILT_IN_STAT_SHEET_TEMPLATES);
   });
 
+  it("imports a valid public template as a new local copy", async () => {
+    const imported = await store.importPublicTemplate({
+      schemaVersion: 1,
+      template: {
+        name: "Community Watch",
+        description: "Shared layout",
+        system: "Homebrew",
+        labels: [],
+        fields: [{ id: "hp", label: "HP", type: "counter" }],
+      },
+    });
+    expect(imported?.name).toBe("Community Watch");
+    expect(store.templates).toContainEqual(imported);
+  });
+
+  it("rejects a duplicate import without changing the existing template", async () => {
+    await store.saveAsTemplate("Community Watch", []);
+    const imported = await store.importPublicTemplate({
+      schemaVersion: 1,
+      template: {
+        name: "Community Watch",
+        description: "Shared layout",
+        system: "Homebrew",
+        labels: [],
+        fields: [{ id: "hp", label: "HP", type: "counter" }],
+      },
+    });
+    expect(imported).toBeNull();
+    expect(
+      store.templates.filter((template) => template.name === "Community Watch"),
+    ).toHaveLength(1);
+  });
+
   it("includes a built-in template for each supported system", () => {
     const ids = BUILT_IN_STAT_SHEET_TEMPLATES.map((t) => t.id);
     expect(ids).toEqual(

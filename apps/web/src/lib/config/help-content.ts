@@ -15,6 +15,11 @@ import { loadHelpArticles, type HelpArticle } from "$lib/content/loader";
 
 export type { HelpArticle };
 
+/** Help articles linked directly from feature entry points. */
+export const FEATURE_HELP_ARTICLES = {
+  COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
+} as const;
+
 export interface FeatureHint {
   id: string;
   title: string;

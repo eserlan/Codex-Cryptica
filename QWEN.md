@@ -272,6 +272,9 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
+
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
 - Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
 

@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-07-31
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
+
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, `@codex/generator-engine`, `@google/generative-ai` (148-guided-mode-quickstart)
 - OPFS (Vault notes), IndexedDB (via vault stores), `localStorage` (`codex_guided_mode_active` preference) (148-guided-mode-quickstart)
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
@@ -224,10 +227,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 150-stat-sheet-marketplace: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing
+
 - 149-reusable-stat-sheets: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService`
 - 148-guided-mode-quickstart: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, `@codex/generator-engine`, `@google/generative-ai`
-
-- 145-dungeon-structural-builder: Added TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine`
 
 <!-- MANUAL ADDITIONS START -->
 

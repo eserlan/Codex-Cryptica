@@ -51,3 +51,25 @@ export const StatSheetTemplateSchema = z.object({
 });
 
 export type StatSheetTemplate = z.infer<typeof StatSheetTemplateSchema>;
+
+/** Categories offered by the public template directory. */
+export const StatSheetEntityCategorySchema = z.enum([
+  "character",
+  "npc",
+  "location",
+  "settlement",
+  "faction",
+  "item",
+  "event",
+  "note",
+  "ship",
+  "threat",
+  "organization",
+  "other",
+]);
+
+export type StatSheetEntityCategory = z.infer<
+  typeof StatSheetEntityCategorySchema
+>;
+
+export const PUBLIC_STAT_SHEET_PACKAGE_VERSION = 1 as const;

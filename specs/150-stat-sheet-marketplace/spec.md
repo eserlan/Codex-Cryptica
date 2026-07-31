@@ -1,6 +1,6 @@
 # Feature Specification: Community Stat Sheet Template Directory
 
-**Feature Branch**: `1947-stat-sheet-marketplace`  
+**Feature Branch**: `150-stat-sheet-marketplace`
 **Created**: 2026-07-31  
 **Status**: Draft  
 **Input**: GitHub issue #1947 — Public Directory / Marketplace for Community Stat Sheet Templates
@@ -72,7 +72,7 @@ As a GM, I want to import a community template into my local vault with one clea
 ## Edge Cases
 
 - A creator attempts to publish an empty template, a template with no usable fields, or metadata exceeding the allowed limits.
-- A creator loses access to the local publish controls after clearing browser data; the public listing remains available until it is removed through the supported ownership recovery path.
+- A creator loses access to the local publish controls after clearing browser data; the public listing remains available, and the creator can recover owner controls by re-entering the owner token saved/exported at publication time.
 - Two creators publish templates with the same name; both remain distinct and are identified by their public listing identity.
 - A template is unpublished while a user is viewing its detail or importing it; the user receives a recoverable unavailable message and no incomplete template is saved.
 - A community template contains labels or text using disallowed private terminology or unsafe content; the package is rejected or sanitized according to the directory's validation rules without changing the creator's local template.
@@ -87,7 +87,7 @@ As a GM, I want to import a community template into my local vault with one clea
 - **FR-002**: The publishing flow MUST require a template name, a plain-language description, at least one free-form system name or controlled entity-category classification, and an explicit acknowledgment that the template will be publicly discoverable.
 - **FR-003**: The publishing preview MUST show the creator exactly which layout fields and public metadata will be shared before publication.
 - **FR-004**: The public package MUST contain only reusable template structure and intentionally provided public metadata; it MUST NOT contain entity values, entity content, campaign notes, vault identifiers, private asset data, or publish write credentials.
-- **FR-005**: Creators MUST be able to update or unpublish templates they previously published using that template listing's owner controls, and those actions MUST NOT delete or alter the local template.
+- **FR-005**: Creators MUST be able to update or unpublish templates they previously published using that template listing's owner controls, and those actions MUST NOT delete or alter the local template. The publish flow MUST let creators copy or export the owner token for recovery after browser data is cleared.
 - **FR-006**: The directory MUST support browsing published templates with pagination.
 - **FR-007**: The directory MUST support keyword search across public template name, description, system, category, and labels.
 - **FR-008**: The directory MUST support free-form system search and filtering by controlled entity category, with labels available as an additional filter when present.
@@ -99,7 +99,7 @@ As a GM, I want to import a community template into my local vault with one clea
 - **FR-014**: The directory and import flow MUST provide clear loading, empty, unavailable, validation-error, and network-error states.
 - **FR-015**: Public publishing and browsing MUST be opt-in and MUST NOT expose or upload a user's local campaign data.
 - **FR-016**: The feature MUST use the existing public-directory distribution and owner-token pattern for each template listing, without requiring a separate user account system or a published world for the first release.
-- **FR-017**: The first release MUST NOT include ratings, comments, social profiles, featured rankings, or automated moderation workflows; it MUST provide basic reporting and owner/admin takedown controls.
+- **FR-017**: The first release MUST NOT include ratings, comments, social profiles, featured rankings, or automated moderation workflows; it MUST provide basic reporting, owner takedown, and operator-authenticated admin takedown controls.
 - **FR-018**: The feature MUST include user-facing help explaining what is shared, how to unpublish a template, and how imported templates become local copies.
 
 ### Key Entities
@@ -118,8 +118,10 @@ As a GM, I want to import a community template into my local vault with one clea
 - Creator attribution is optional; a creator may publish without exposing a public display name.
 - A first release can use a simple newest/updated ordering; ratings and popularity ranking are intentionally deferred.
 - Community safety uses lightweight reporting and takedown controls rather than mandatory pre-approval or automated moderation.
+- Owner recovery is client-managed: publication shows the owner token with copy/export controls, and a recovery flow accepts that token after local browser data is cleared. The service does not infer ownership from a user account.
 - Imported templates are independent local copies. Later changes by the original creator do not silently modify imported templates.
 - Public template packages carry a format version; supported older versions have explicit migrations, while newer or unknown versions fail with an actionable import message.
+- In the current Stat Sheet model, `heading` fields are the supported representation of section structure; imports preserve their order and labels.
 
 ## Success Criteria _(mandatory)_
 
