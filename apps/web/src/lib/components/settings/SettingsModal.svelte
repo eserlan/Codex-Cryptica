@@ -6,6 +6,7 @@
   import ThemeSelector from "./ThemeSelector.svelte";
   import CategorySettings from "./CategorySettings.svelte";
   import LabelSettings from "./LabelSettings.svelte";
+  import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
   import HelpTab from "../help/HelpTab.svelte";
   import VaultSettings from "./VaultSettings.svelte";
   import PublishingSettings from "./PublishingSettings.svelte";
@@ -332,6 +333,18 @@
               label here will update all labeled files project-wide.
             </p>
             <LabelSettings />
+
+            <h3
+              class="text-sm font-bold text-chrome-accent uppercase font-header mt-8 mb-3 tracking-widest"
+            >
+              Stat Sheet Templates
+            </h3>
+            <p class="text-sm text-chrome-text/70 mb-4 leading-relaxed">
+              Reusable stat sheet layouts you can apply to any entity from its
+              Stats tab. Built-in templates are always available; templates you
+              save from an entity live here, scoped to this vault.
+            </p>
+            <StatSheetTemplateSettings />
           </div>
         {:else if modalUIStore.activeSettingsTab === "theme"}
           <div
