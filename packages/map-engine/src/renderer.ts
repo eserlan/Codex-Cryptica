@@ -1,7 +1,7 @@
 import type { MapPin, ViewportTransform } from "schema";
 import { imageToViewport } from "./math";
 import {
-  getTokenRotationHandlePosition,
+  TOKEN_ROTATION_HANDLE_DISTANCE,
   TOKEN_ROTATION_HANDLE_RADIUS,
 } from "./token-geometry";
 
@@ -208,15 +208,10 @@ function drawRotationHandle(
   height: number,
   rotation: number,
   accentColor: string,
+  handleDistance: number,
 ) {
-  const position = getTokenRotationHandlePosition({
-    x: 0,
-    y: 0,
-    width,
-    height,
-  });
-  const handleX = centerX + position.x - width / 2;
-  const handleY = centerY + position.y - height / 2;
+  const handleX = centerX;
+  const handleY = centerY - Math.max(width, height) / 2 - handleDistance;
 
   ctx.save();
   ctx.strokeStyle = accentColor;
@@ -452,6 +447,7 @@ export function renderMap(options: RenderOptions) {
         height,
         token.rotation,
         options.accentColor || "#3b82f6",
+        TOKEN_ROTATION_HANDLE_DISTANCE * transform.zoom,
       );
     }
 

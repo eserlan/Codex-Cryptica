@@ -5,6 +5,7 @@ import {
   getTokenRotationHandlePosition,
   rotationFromPoint,
   TOKEN_ROTATION_HANDLE_RADIUS,
+  TOKEN_FACING_INDICATOR_HIT_TOLERANCE,
   TOKEN_ROTATION_STEP,
   normalizeTokenRotation,
 } from "map-engine";
@@ -49,10 +50,31 @@ export class TokenRotationHandler {
     }
 
     const handle = this.deps.project(getTokenRotationHandlePosition(token));
-    if (
-      Math.hypot(viewportPoint.x - handle.x, viewportPoint.y - handle.y) >
-      TOKEN_ROTATION_HANDLE_RADIUS
-    ) {
+    const handleHit =
+      Math.hypot(viewportPoint.x - handle.x, viewportPoint.y - handle.y) <=
+      TOKEN_ROTATION_HANDLE_RADIUS;
+
+    const center = this.deps.project(getTokenCenter(token));
+    const topLeft = this.deps.project({ x: token.x, y: token.y });
+    const bottomRight = this.deps.project({
+      x: token.x + token.width,
+      y: token.y + token.height,
+    });
+    const tokenRadius =
+      Math.min(
+        Math.abs(bottomRight.x - topLeft.x),
+        Math.abs(bottomRight.y - topLeft.y),
+      ) / 2;
+    const distanceFromCenter = Math.hypot(
+      viewportPoint.x - center.x,
+      viewportPoint.y - center.y,
+    );
+    const facingIndicatorHit =
+      token.facingIndicator === true &&
+      Math.abs(distanceFromCenter - tokenRadius) <=
+        TOKEN_FACING_INDICATOR_HIT_TOLERANCE;
+
+    if (!handleHit && !facingIndicatorHit) {
       return false;
     }
 

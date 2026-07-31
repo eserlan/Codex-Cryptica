@@ -62,11 +62,16 @@ describe("TokenRotationHandler", () => {
   });
 
   it("does not begin for a non-handle point or unauthorized token", () => {
-    expect(handler.begin({ x: 100, y: 100 })).toBe(false);
+    expect(handler.begin({ x: 125, y: 125 })).toBe(false);
 
     deps.canMoveToken = () => false;
     const handle = getTokenRotationHandlePosition(token);
     expect(handler.begin(handle)).toBe(false);
+  });
+
+  it("also begins from the visible facing indicator ring", () => {
+    expect(handler.begin({ x: 125, y: 100 })).toBe(true);
+    expect(handler.end()).toBe(true);
   });
 
   it("rotates by fixed 45-degree keyboard steps", () => {

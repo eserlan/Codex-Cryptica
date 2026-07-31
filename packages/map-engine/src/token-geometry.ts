@@ -2,6 +2,7 @@ import type { Point } from "schema";
 
 export const TOKEN_ROTATION_HANDLE_DISTANCE = 18;
 export const TOKEN_ROTATION_HANDLE_RADIUS = 14;
+export const TOKEN_FACING_INDICATOR_HIT_TOLERANCE = 12;
 export const TOKEN_ROTATION_STEP = 45;
 
 export function normalizeTokenRotation(rotation: number): number {

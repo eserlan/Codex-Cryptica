@@ -479,6 +479,7 @@ describe("Map Engine Renderer", () => {
 
     expect(mockCtx.rect).toHaveBeenCalledWith(-32, -32, 64, 64);
     expect(mockCtx.rotate).toHaveBeenCalledWith((45 * Math.PI) / 180);
+    expect(mockCtx.arc).toHaveBeenCalledWith(632, 482, 14, 0, Math.PI * 2);
     expect(mockCtx.arc).toHaveBeenCalled();
     expect(mockCtx.stroke).toHaveBeenCalled();
   });
