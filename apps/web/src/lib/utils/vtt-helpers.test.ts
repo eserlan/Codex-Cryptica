@@ -14,14 +14,24 @@ describe("vtt-helpers", () => {
     expect(snapToGrid({ x: 73, y: 126 }, 50)).toEqual({ x: 50, y: 150 });
     expect(
       clampPointToBounds(
-        { x: -10, y: 500 },
+        { x: -160, y: 500 },
         { width: 200, height: 100 },
         { width: 40, height: 40 },
       ),
     ).toEqual({
-      x: 0,
-      y: 60,
+      x: -100,
+      y: 10,
     });
+  });
+
+  it("clamps centered image coordinates without blocking the negative half", () => {
+    expect(
+      clampPointToBounds(
+        { x: -25, y: -40 },
+        { width: 400, height: 300 },
+        { width: 50, height: 75 },
+      ),
+    ).toEqual({ x: -25, y: -40 });
   });
 
   it("measures distances and token centers", () => {

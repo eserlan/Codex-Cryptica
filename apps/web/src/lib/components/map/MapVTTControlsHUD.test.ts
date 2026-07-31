@@ -1,6 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import {
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mapStoreMock = vi.hoisted(() => ({
@@ -57,6 +62,7 @@ describe("MapVTTControlsHUD", () => {
     mapStoreMock.showGrid = false;
     mapStoreMock.showLabels = true;
     mapSessionMock.vttEnabled = true;
+    mapSessionMock.showGridSettings = false;
     mapSessionMock.measurement.active = false;
   });
 
@@ -83,6 +89,25 @@ describe("MapVTTControlsHUD", () => {
     await fireEvent.click(screen.getByRole("button", { name: "LABELS: ON" }));
 
     expect(mapStoreMock.showLabels).toBe(false);
+  });
+
+  it("opens grid settings without opening the map context menu", async () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const gridButton = screen.getByRole("button", { name: "GRID: OFF" });
+    const event = createEvent.contextMenu(gridButton);
+    const preventDefault = vi.spyOn(event, "preventDefault");
+    const stopPropagation = vi.spyOn(event, "stopPropagation");
+
+    await fireEvent(gridButton, event);
+
+    expect(mapSessionMock.showGridSettings).toBe(true);
+    expect(preventDefault).toHaveBeenCalled();
+    expect(stopPropagation).toHaveBeenCalled();
   });
 
   it("toggles the measurement tool", async () => {

@@ -4,6 +4,7 @@
   import MapView from "$lib/components/map/MapView.svelte";
   import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
   import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
+  import VTTGridSettings from "$lib/components/map/VTTGridSettings.svelte";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
   import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
   import {
@@ -78,6 +79,9 @@
     </MapView>
 
     <VTTGridColorMenu />
+    {#if !sessionModeStore.isGuestMode && mapSession.showGridSettings}
+      <VTTGridSettings close={() => (mapSession.showGridSettings = false)} />
+    {/if}
   {:else if isPublishedVaultReader}
     <div
       class="flex-1 flex flex-col items-center justify-center p-8 text-center"

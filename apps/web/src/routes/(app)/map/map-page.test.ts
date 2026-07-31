@@ -26,6 +26,8 @@ const controllerState = vi.hoisted(() => ({
   setVttChatSidebarCollapsed: vi.fn(),
 }));
 
+const gridSettingsMock = vi.hoisted(() => vi.fn(() => ({})));
+
 vi.mock("$lib/stores/map/map-page-controller.svelte", () => ({
   MapPageController: class MapPageControllerMock {
     activeMap = controllerState.activeMap;
@@ -81,6 +83,10 @@ vi.mock("$lib/components/map/VTTGridColorMenu.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/components/map/VTTGridSettings.svelte", () => ({
+  default: gridSettingsMock,
+}));
+
 vi.mock("$lib/components/vtt/TokenAddDialog.svelte", () => ({
   default: function TokenAddDialogMock() {
     return {};
@@ -106,10 +112,13 @@ vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: mapStoreMock,
 }));
 
+const mapSessionMock = vi.hoisted(() => ({
+  vttEnabled: true,
+  showGridSettings: false,
+}));
+
 vi.mock("$lib/stores/map-session.svelte", () => ({
-  mapSession: {
-    vttEnabled: true,
-  },
+  mapSession: mapSessionMock,
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -152,12 +161,27 @@ describe("map/+page", () => {
     mapStoreMock.activeMap = { id: "map-1" };
     sessionModeStoreMock.isGuestMode = false;
     guestVaultMock.publishId = null;
+    mapSessionMock.showGridSettings = false;
+    gridSettingsMock.mockClear();
   });
 
   it("does not mount ShareModal locally even if a controller-local share flag exists", () => {
     render(MapPage);
 
     expect(screen.queryByTestId("modal-stub")).toBeNull();
+  });
+
+  it("mounts grid settings independently of the VTT sidebar", () => {
+    mapSessionMock.showGridSettings = true;
+
+    render(MapPage);
+
+    expect(gridSettingsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        close: expect.any(Function),
+      }),
+    );
   });
 
   it("shows a 'no maps published' message for a published-vault reader with no maps", () => {
