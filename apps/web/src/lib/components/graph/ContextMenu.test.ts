@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, waitFor } from "@testing-library/svelte";
+import { render, screen, waitFor, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -77,6 +77,7 @@ vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
 
 describe("ContextMenu", () => {
   let cxttapHandler: ((event: any) => void) | undefined;
+  let edgeCxttapHandler: ((event: any) => void) | undefined;
 
   const createCy = () => ({
     on: vi.fn(
@@ -87,6 +88,8 @@ describe("ContextMenu", () => {
       ) => {
         if (event === "cxttap" && selectorOrHandler === "node") {
           cxttapHandler = handler as (event: any) => void;
+        } else if (event === "cxttap" && selectorOrHandler === "edge") {
+          edgeCxttapHandler = handler as (event: any) => void;
         }
       },
     ),
@@ -110,11 +113,32 @@ describe("ContextMenu", () => {
     );
   };
 
+  const openEdgeMenu = async () => {
+    edgeCxttapHandler?.({
+      target: {
+        data: () => ({
+          source: "node-a",
+          target: "node-b",
+          connectionType: "ally",
+        }),
+      },
+      renderedPosition: { x: 10, y: 20 },
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("menu", { name: "Connection actions" }),
+      ).toBeTruthy(),
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     cxttapHandler = undefined;
+    edgeCxttapHandler = undefined;
     (vault as any).isGuest = false;
     (vault as any).entities = {};
+    (vault as any).removeConnection = vi.fn().mockResolvedValue(true);
   });
 
   it("shows Mark Important for editable graph sessions", async () => {
@@ -135,6 +159,44 @@ describe("ContextMenu", () => {
 
     expect(
       screen.queryByRole("menuitem", { name: "Mark Important" }),
+    ).toBeNull();
+  });
+
+  it("shows Delete Connection when right-clicking an edge in editable sessions", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    expect(
+      screen.getByRole("menuitem", { name: "Delete Connection" }),
+    ).toBeTruthy();
+  });
+
+  it("deletes edge connection instantly when Delete Connection is clicked", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    const deleteBtn = screen.getByRole("menuitem", {
+      name: "Delete Connection",
+    });
+    await fireEvent.click(deleteBtn);
+
+    expect(vault.removeConnection).toHaveBeenCalledWith(
+      "node-a",
+      "node-b",
+      "ally",
+    );
+  });
+
+  it("hides Delete Connection when right-clicking an edge in guest sessions", async () => {
+    (vault as any).isGuest = true;
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete Connection" }),
     ).toBeNull();
   });
 });
