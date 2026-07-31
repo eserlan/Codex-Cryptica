@@ -6,10 +6,13 @@ import TokenDetail from "./TokenDetail.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { mapStore } from "$lib/stores/map.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
-    entities: {},
+    entities: {} as Record<string, any>,
+    isGuest: false,
+    updateEntity: vi.fn(),
   },
 }));
 
@@ -23,6 +26,7 @@ vi.mock("$lib/stores/map.svelte", () => ({
 describe("TokenDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (vault as any).entities = {};
     mapSession.clearSession();
     mapSession.bindToMap("map-1");
     mapSession.setVttEnabled(true);
@@ -64,6 +68,38 @@ describe("TokenDetail", () => {
     expect(screen.queryByText("Linked Entity")).toBeNull();
     expect(screen.queryByText("Owner")).toBeNull();
     expect(screen.queryByText("Read-only view for guests")).toBeNull();
+  });
+
+  it("shows the linked entity and its favorited quick stats to guests", async () => {
+    sessionModeStore.isGuestMode = true;
+    mapStore.isGMMode = false;
+    mapSession.tokens["token-1"].entityId = "entity-1";
+    (vault as any).entities = {
+      "entity-1": {
+        id: "entity-1",
+        title: "Goblin",
+        type: "npc",
+        statSheet: {
+          fields: [
+            {
+              id: "hp",
+              label: "Hit Points",
+              type: "counter",
+              value: 5,
+              favorite: true,
+            },
+          ],
+        },
+      },
+    };
+
+    render(TokenDetail);
+
+    await waitFor(() => expect(screen.getByText("Linked Entity")).toBeTruthy());
+    expect(screen.getByTestId("token-quick-stats")).toBeTruthy();
+    expect(screen.getByText("Hit Points")).toBeTruthy();
+    // Management controls stay GM-only even though the entity info is now shared.
+    expect(screen.queryByRole("button", { name: "Remove Token" })).toBeNull();
   });
 
   it("removes the token directly in GM mode", async () => {

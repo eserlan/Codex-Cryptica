@@ -1,10 +1,13 @@
 <script lang="ts">
   import PinLinker from "./PinLinker.svelte";
   import MapPinPopover from "./MapPinPopover.svelte";
+  import TokenHealthBarPopover from "./TokenHealthBarPopover.svelte";
   import { mapStore } from "../../stores/map.svelte";
+  import { mapSession } from "../../stores/map-session.svelte";
   import { vault } from "../../stores/vault.svelte";
   import type { MapInteractionManager } from "./map-interactions.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { computeAdjustedCounterValue } from "$lib/utils/stat-sheet-field-actions";
   import type { MapPin } from "schema";
 
   let { interactions }: { interactions: MapInteractionManager } = $props();
@@ -16,6 +19,20 @@
     selectedPin?.entityId
       ? mapStore.getEntitySubMap(selectedPin.entityId)
       : null,
+  );
+
+  let healthBarToken = $derived(
+    interactions.healthBarPopoverTokenId
+      ? mapSession.tokens[interactions.healthBarPopoverTokenId]
+      : null,
+  );
+  let healthBarEntity = $derived(
+    healthBarToken?.entityId ? vault.entities[healthBarToken.entityId] : null,
+  );
+  let healthBarField = $derived(
+    healthBarEntity?.statSheet?.fields?.find(
+      (f) => f.type === "counter" && f.barField,
+    ) ?? null,
   );
 </script>
 
@@ -48,6 +65,37 @@
       }
     }}
     onClose={() => (interactions.selectedPinId = null)}
+  />
+{/if}
+
+{#if healthBarToken && healthBarEntity && healthBarField}
+  {@const pos = mapStore.project({
+    x: healthBarToken.x + healthBarToken.width / 2,
+    y: healthBarToken.y,
+  })}
+  {@const barValue =
+    typeof healthBarField.value === "number" ? healthBarField.value : 0}
+  {@const barMax = healthBarField.max ?? 1}
+  <TokenHealthBarPopover
+    x={pos.x}
+    y={pos.y}
+    label={healthBarField.label}
+    value={barValue}
+    max={barMax}
+    readOnly={vault.isGuest}
+    onAdjust={(direction) => {
+      if (vault.isGuest || !healthBarEntity || !healthBarField) return;
+      const next = computeAdjustedCounterValue(healthBarField, direction);
+      vault.updateEntity(healthBarEntity.id, {
+        statSheet: {
+          templateId: healthBarEntity.statSheet?.templateId ?? null,
+          fields: (healthBarEntity.statSheet?.fields ?? []).map((f) =>
+            f.id === healthBarField.id ? { ...f, value: next } : f,
+          ),
+        },
+      });
+    }}
+    onClose={() => (interactions.healthBarPopoverTokenId = null)}
   />
 {/if}
 
