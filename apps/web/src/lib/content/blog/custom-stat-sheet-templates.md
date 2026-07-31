@@ -18,6 +18,10 @@ That is the idea behind **Stat Sheets** in Codex Cryptica. They give any entity 
 
 The same layout can then be saved as a reusable template, so the next NPC, vehicle, creature, or important location starts with the structure it actually needs.
 
+![Stat Sheet Templates manager showing vault availability and default templates by category](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png)
+
+The **Stat Sheet Templates** manager gives you one place to decide which templates are available in the vault and which template new entities should receive by default.
+
 ## Start with the decisions you make at the table
 
 Open an entity and switch to its **Stats** tab. Choose **Edit Layout** to shape the sheet around the way you play.
@@ -58,6 +62,8 @@ For the exact field-by-field walkthrough, see the [Stat Sheets help article](/he
 If every new NPC should start with the same combat layout, you do not need to apply the template manually each time.
 
 Go to **Settings → Schema → Stat Sheet Templates** and use **Default Template by Category** to associate a template with a category. For example:
+
+![Schema settings showing built-in and vault Stat Sheet templates](https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/schema-template-library.png)
 
 - **Character** → a player-facing character sheet
 - **NPC** → a compact combat sheet
