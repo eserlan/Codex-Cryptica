@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { StatSheetField } from "schema";
 import { getDB } from "../utils/idb";
 
 const { vaultRegistryState } = vi.hoisted(() => ({
@@ -404,7 +405,7 @@ describe("StatSheetTemplateStore", () => {
       { id: "b", label: "Beta", type: "text" },
     ]);
 
-    const nextFields = [
+    const nextFields: StatSheetField[] = [
       { id: "b", label: "Beta", type: "text" },
       { id: "a", label: "Alpha", type: "text" },
     ];
