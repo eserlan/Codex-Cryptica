@@ -7,6 +7,7 @@ import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
+import { mapThemeToGenre } from "./theme-mapper";
 import { listPacks, packToDiscoveredEntities } from "@codex/content-packs";
 import type { CreaturePack } from "@codex/content-packs";
 import {
@@ -56,26 +57,6 @@ type MarkdownFrontmatterValidator =
 
 export type ImportMode = "oracle" | "cc" | null;
 export type ImportStep = "upload" | "processing" | "review" | "report";
-
-export function mapThemeToGenre(themeId: string): string {
-  const rawId = (themeId || "").toLowerCase();
-  if (
-    [
-      "scifi",
-      "starwars",
-      "startrek",
-      "lancer",
-      "space-opera-resistance",
-    ].includes(rawId)
-  ) {
-    return "scifi";
-  }
-  if (["cyberpunk", "modern"].includes(rawId)) return "cyberpunk";
-  if (["apocalyptic", "fallout"].includes(rawId)) return "apocalyptic";
-  if (["horror"].includes(rawId)) return "horror";
-  if (["steampunk", "western"].includes(rawId)) return "steampunk";
-  return "fantasy";
-}
 
 export interface ImportSettingsControllerDeps {
   oracle: typeof oracle;
