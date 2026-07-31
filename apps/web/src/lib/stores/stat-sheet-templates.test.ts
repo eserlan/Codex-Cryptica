@@ -96,9 +96,13 @@ describe("StatSheetTemplateStore", () => {
       min: 0,
       max: 5,
     });
-    expect(mythras.fields.find((f) => f.id === "loc_head")).toMatchObject({
-      type: "text",
-      label: "Head (AP/HP)",
+    expect(mythras.fields.find((f) => f.id === "loc_head_ap")).toMatchObject({
+      type: "number",
+      label: "Head AP (Armor)",
+    });
+    expect(mythras.fields.find((f) => f.id === "loc_head_hp")).toMatchObject({
+      type: "counter",
+      label: "Head HP",
     });
 
     const mythrasGear = BUILT_IN_STAT_SHEET_TEMPLATES.find(
