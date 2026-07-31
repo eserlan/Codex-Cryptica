@@ -40,3 +40,7 @@ For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high f
 
 > [!TIP]
 > If you want to _always_ start completely blank for a specific type without untoggling the checkbox, create an empty file at `.cc/templates/{type}.md`. The system respects empty override files as valid, giving you a blank canvas.
+
+## Related Blog Posts
+
+- [Default Entity Templates & Custom Vault Overrides](/blog/default-entity-templates) — Deep dive into customizing domain structures and custom schema overrides.

@@ -48,3 +48,8 @@ Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode directly a
 
 - Click the **VTT ON** toggle button to return to standard map editing mode (**VTT OFF**).
 - All token coordinates, revealed fog regions, and encounter metadata automatically persist in your local vault data for your next session.
+
+### Related Blog Posts
+
+- [Introducing Tactical VTT Mode](/blog/vtt-introduction) — Overview of zero-overhead, Peer-to-Peer tactical map sessions.
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — Integrating geographic maps, pins, and spatial lore navigation.

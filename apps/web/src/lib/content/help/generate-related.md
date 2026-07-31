@@ -24,3 +24,8 @@ Once the draft is generated, you will see a preview screen displaying all genera
 - The system uses the term **Labels** for metadata categories (rather than tags).
 - You can also revise the draft with adjusted guidelines or cancel without making any changes.
 - Clicking **Create Entity** commits the new record to your vault and automatically creates a directed relationship connection from the source entity to your new creation.
+
+### Related Blog Posts
+
+- [Context-Aware Entity Generator](/blog/context-aware-entity-generator) — How Gemini uses neighboring graph nodes to generate connected lore.
+- [Worldbuilding AI Needs Your Lore](/blog/worldbuilding-ai-needs-your-lore) — Why context-aware retrieval prevents generic AI slop.
