@@ -63,3 +63,7 @@ Tap the roll button on a Dice field to roll it in Codex Cryptica's dice engine. 
 ## Where it's stored
 
 Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter), so it stays with the entity wherever it goes. Saved templates live in your campaign vault, so they're available across all entities in that vault.
+
+## Related reading
+
+- [Build Stat Sheets That Keep Your Table Moving](/blog/custom-stat-sheet-templates) — Design reusable layouts around the information you need during play.
