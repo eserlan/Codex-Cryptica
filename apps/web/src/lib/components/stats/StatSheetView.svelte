@@ -77,7 +77,10 @@
     });
   }
 
-  function updateFieldValue(fieldId: string, value: number | string | boolean) {
+  function updateFieldValue(
+    fieldId: string,
+    value: number | string | boolean | undefined,
+  ) {
     persistFields(
       fields.map((f: StatSheetField) =>
         f.id === fieldId ? { ...f, value } : f,
