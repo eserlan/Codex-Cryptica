@@ -19,6 +19,7 @@
     label: string;
     image: HTMLImageElement | null;
     selected: boolean;
+    primarySelected: boolean;
     active: boolean;
     visible: boolean;
   }

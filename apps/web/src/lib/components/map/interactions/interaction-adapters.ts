@@ -9,6 +9,7 @@ import type { GridInteractionDependencies } from "./grid-interaction-handler.sve
 import type { MeasurementInteractionDependencies } from "./measurement-interaction-handler";
 import type { PinInteractionDependencies } from "./pin-interaction-handler";
 import type { TokenDragDependencies } from "./token-drag-handler";
+import type { TokenRotationDependencies } from "./token-rotation-handler";
 import type { TokenSelectionDependencies } from "./token-selection-manager";
 
 export function createTokenSelectionDependencies(): TokenSelectionDependencies {
@@ -41,6 +42,25 @@ export function createTokenDragDependencies(): TokenDragDependencies {
     setDraggingTokenId: (tokenId) => {
       mapSession.draggingTokenId = tokenId;
     },
+  };
+}
+
+export function createTokenRotationDependencies(): TokenRotationDependencies {
+  return {
+    getSelectedToken: () => mapSession.selectedToken,
+    project: (point) => mapStore.project(point),
+    unproject: (point) => mapStore.unproject(point),
+    isHostMode: () => mapStore.isGMMode,
+    getPeerId: () => p2pGuestService.peerId,
+    canMoveToken: (tokenId, peerId, isHost) =>
+      mapSession.canMoveToken(tokenId, peerId, isHost),
+    rotateToken: (tokenId, rotation) =>
+      mapSession.rotateToken(tokenId, rotation),
+    requestTokenRotation: (tokenId, rotation, persistent) =>
+      mapSession.requestTokenRotation(tokenId, rotation, persistent),
+    sendTokenRotation: (tokenId, rotation) =>
+      p2pGuestService.requestTokenRotation(tokenId, rotation),
+    confirmTokenRotation: (tokenId) => mapSession.confirmTokenRotation(tokenId),
   };
 }
 

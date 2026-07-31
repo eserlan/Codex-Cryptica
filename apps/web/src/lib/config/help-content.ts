@@ -452,7 +452,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vtt-mode",
     title: "VTT Mode",
     content:
-      "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.",
+      "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map. Select a token and drag the handle above it or its facing indicator ring to rotate its facing; Alt+Left/Right rotates it in 45-degree steps. Right-click a token and open Appearance to show its facing indicator or switch between circle and square bases.",
     icon: "icon-[lucide--swords]",
   },
   "vtt-entity-list": {

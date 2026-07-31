@@ -140,6 +140,7 @@ export function isVTTMessage(message: any): message is VTTMessage {
       "PING",
       "TOKEN_ADD_REQUEST",
       "TOKEN_MOVE",
+      "TOKEN_ROTATE",
       "TOKEN_REMOVE",
       "TOKEN_SELECT",
       "SESSION_SAVE",
@@ -179,6 +180,7 @@ export function isGuestOnlyVTTMessage(message: VTTMessage): boolean {
   return [
     "TOKEN_ADD_REQUEST",
     "TOKEN_MOVE",
+    "TOKEN_ROTATE",
     "TOKEN_REMOVE",
     "TOKEN_SELECT",
     "PING",
