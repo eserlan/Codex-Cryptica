@@ -729,6 +729,11 @@ export class StatSheetTemplateStore {
     return template.fields.map((f) => ({
       ...f,
       id: `field-${this.idGenerator.uuid()}`,
+      // Counters (HP, MP, AP, etc.) start full rather than at the implicit
+      // zero default — a freshly-applied template shouldn't read as "dead".
+      ...(f.type === "counter" && f.max !== undefined
+        ? { value: f.max }
+        : null),
     }));
   }
 }

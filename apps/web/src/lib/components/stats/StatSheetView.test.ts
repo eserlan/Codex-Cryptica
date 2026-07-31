@@ -241,12 +241,11 @@ describe("StatSheetView", () => {
       "Attack: 1d20+5",
       expect.objectContaining({ total: 17 }),
     );
-    expect(screen.getByTestId("stat-sheet-dice-result").textContent).toContain(
-      "17",
-    );
+    // Roll results are shown only in VTT chat, not inline on the stat sheet.
+    expect(screen.queryByTestId("stat-sheet-dice-result")).toBeNull();
   });
 
-  it("shows a validation error for an invalid dice formula without crashing", async () => {
+  it("shows no inline error for an invalid dice formula (result goes to chat only)", async () => {
     const entity = buildEntity({
       statSheet: {
         fields: [
@@ -258,9 +257,8 @@ describe("StatSheetView", () => {
 
     await fireEvent.click(screen.getByLabelText("Roll Attack"));
 
-    expect(screen.getByTestId("stat-sheet-dice-result").textContent).toContain(
-      "Invalid formula",
-    );
+    // No inline result element — error is swallowed silently (formula errors reach chat if VTT is active).
+    expect(screen.queryByTestId("stat-sheet-dice-result")).toBeNull();
   });
 
   it("collapses and expands fields under a heading section", async () => {
@@ -347,6 +345,221 @@ describe("StatSheetView", () => {
     // is reassigned, so existing per-field state isn't churned unnecessarily.
     expect(payload.statSheet.fields[0].id).toBe("hp");
     expect(payload.statSheet.fields[2].id).not.toBe("hp");
+  });
+
+  it("toggles a counter field's favorite flag and persists it", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "hp", label: "Hit Points", type: "counter", value: 10 }],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    await fireEvent.click(
+      screen.getByLabelText("Pin Hit Points to token quick stats"),
+    );
+
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: null,
+        fields: [
+          {
+            id: "hp",
+            label: "Hit Points",
+            type: "counter",
+            value: 10,
+            favorite: true,
+          },
+        ],
+      },
+    });
+  });
+
+  it("toggles a dice field's favorite flag and persists it", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "atk", label: "Attack", type: "dice", formula: "1d20+5" },
+        ],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    await fireEvent.click(
+      screen.getByLabelText("Pin Attack to token quick stats"),
+    );
+
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: null,
+        fields: [
+          {
+            id: "atk",
+            label: "Attack",
+            type: "dice",
+            formula: "1d20+5",
+            favorite: true,
+          },
+        ],
+      },
+    });
+  });
+
+  it("sets a counter field as the token health bar", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "hp", label: "Hit Points", type: "counter", value: 10 }],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    await fireEvent.click(
+      screen.getByLabelText("Show Hit Points as the token health bar"),
+    );
+
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: null,
+        fields: [
+          {
+            id: "hp",
+            label: "Hit Points",
+            type: "counter",
+            value: 10,
+            barField: true,
+          },
+        ],
+      },
+    });
+  });
+
+  it("only allows one counter field to be the bar field at a time", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "hp",
+            label: "Hit Points",
+            type: "counter",
+            value: 10,
+            barField: true,
+          },
+          { id: "mp", label: "Magic Points", type: "counter", value: 5 },
+        ],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    await fireEvent.click(
+      screen.getByLabelText("Show Magic Points as the token health bar"),
+    );
+
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: null,
+        fields: [
+          {
+            id: "hp",
+            label: "Hit Points",
+            type: "counter",
+            value: 10,
+            barField: false,
+          },
+          {
+            id: "mp",
+            label: "Magic Points",
+            type: "counter",
+            value: 5,
+            barField: true,
+          },
+        ],
+      },
+    });
+  });
+
+  it("clears the bar field when toggling it off", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "hp",
+            label: "Hit Points",
+            type: "counter",
+            value: 10,
+            barField: true,
+          },
+        ],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    await fireEvent.click(
+      screen.getByLabelText("Stop showing Hit Points as the token health bar"),
+    );
+
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: null,
+        fields: [
+          {
+            id: "hp",
+            label: "Hit Points",
+            type: "counter",
+            value: 10,
+            barField: false,
+          },
+        ],
+      },
+    });
+  });
+
+  it("does not add a bar toggle to non-counter fields", () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "atk", label: "Attack", type: "dice", formula: "1d20+5" },
+        ],
+      },
+    });
+    render(StatSheetView, { entity });
+
+    expect(
+      screen.queryByLabelText("Show Attack as the token health bar"),
+    ).toBeNull();
+  });
+
+  it("hides the bar toggle in guest/read-only mode", () => {
+    vaultState.isGuest = true;
+    try {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            { id: "hp", label: "Hit Points", type: "counter", value: 10 },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+      expect(screen.queryByTestId("stat-sheet-bar-toggle")).toBeNull();
+    } finally {
+      vaultState.isGuest = false;
+    }
+  });
+
+  it("hides the favorite toggle in guest/read-only mode", () => {
+    vaultState.isGuest = true;
+    try {
+      const entity = buildEntity({
+        statSheet: {
+          fields: [
+            { id: "hp", label: "Hit Points", type: "counter", value: 10 },
+          ],
+        },
+      });
+      render(StatSheetView, { entity });
+      expect(screen.queryByTestId("stat-sheet-favorite-toggle")).toBeNull();
+    } finally {
+      vaultState.isGuest = false;
+    }
   });
 
   it("does not attempt to self-heal duplicate ids in guest/read-only mode", () => {

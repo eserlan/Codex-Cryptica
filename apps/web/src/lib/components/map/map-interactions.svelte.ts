@@ -56,6 +56,7 @@ export class MapInteractionManager {
     this.contextMenuInteractions.contextMenu = value;
   }
   selectedPinId = $state<string | null>(null);
+  healthBarPopoverTokenId = $state<string | null>(null);
   mapAnnouncement = $state("");
 
   cachedRect: DOMRect | null = null;
@@ -360,6 +361,7 @@ export class MapInteractionManager {
       }
 
       this.tokenSelection.clearSelection();
+      this.healthBarPopoverTokenId = null;
       this.measurementInteractions.handleClick({ x, y });
       return;
     }
@@ -378,11 +380,30 @@ export class MapInteractionManager {
     const el = this.getContainer();
     if (!el) return;
 
+    const target = e.target as HTMLElement | null;
+    if (
+      target &&
+      target.closest(
+        'button, input, select, textarea, a, [role="dialog"], [data-sidebar], .pointer-events-auto',
+      )
+    ) {
+      return;
+    }
+
     const rect = el.getBoundingClientRect();
-    this.creationInteractions.handleDoubleClick({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (mapSession.vttEnabled) {
+      const hitToken = this.tokenSelection.hitTest({ x, y });
+      if (hitToken) {
+        this.healthBarPopoverTokenId =
+          this.healthBarPopoverTokenId === hitToken.id ? null : hitToken.id;
+        return;
+      }
+    }
+
+    this.creationInteractions.handleDoubleClick({ x, y });
   };
 
   onContextMenu = (e: MouseEvent) => {

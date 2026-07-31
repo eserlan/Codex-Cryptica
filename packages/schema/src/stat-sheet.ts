@@ -21,6 +21,8 @@ export const StatSheetFieldSchema = z.object({
   max: z.number().optional(),
   step: z.number().optional(),
   collapsed: z.boolean().optional(),
+  favorite: z.boolean().optional(),
+  barField: z.boolean().optional(),
 });
 
 export type StatSheetField = z.infer<typeof StatSheetFieldSchema>;
@@ -35,6 +37,8 @@ export type StatSheet = z.infer<typeof StatSheetSchema>;
 export const StatSheetTemplateFieldSchema = StatSheetFieldSchema.omit({
   value: true,
   collapsed: true,
+  favorite: true,
+  barField: true,
 });
 
 export type StatSheetTemplateField = z.infer<

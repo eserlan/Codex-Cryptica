@@ -140,6 +140,68 @@ describe("MapInteractionManager", () => {
     expect(manager.isPanning).toBe(false);
   });
 
+  it("should open the health bar popover when double-clicking a token", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [
+      {
+        id: "token-1",
+        x: 100,
+        y: 100,
+        width: 50,
+        height: 50,
+        zIndex: 0,
+      } as any,
+    ];
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 110, clientY: 110 }),
+    );
+
+    expect(manager.healthBarPopoverTokenId).toBe("token-1");
+    (mapSession as any).allTokens = [];
+  });
+
+  it("should toggle the health bar popover closed on a second double-click of the same token", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [
+      {
+        id: "token-1",
+        x: 100,
+        y: 100,
+        width: 50,
+        height: 50,
+        zIndex: 0,
+      } as any,
+    ];
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 110, clientY: 110 }),
+    );
+    expect(manager.healthBarPopoverTokenId).toBe("token-1");
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 110, clientY: 110 }),
+    );
+    expect(manager.healthBarPopoverTokenId).toBeNull();
+    (mapSession as any).allTokens = [];
+  });
+
+  it("should fall through to token/pin creation when double-clicking empty space", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [];
+    (mapSession as any).pendingTokenCoords = null;
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 400, clientY: 400 }),
+    );
+
+    expect(manager.healthBarPopoverTokenId).toBeNull();
+    expect((mapSession as any).pendingTokenCoords).toEqual({
+      x: 400,
+      y: 400,
+    });
+  });
+
   it("should update pin coordinates on mouse move when dragging a pin", async () => {
     const { mapStore } = await import("../../stores/map.svelte");
     manager.onMouseDown(
@@ -206,5 +268,24 @@ describe("MapInteractionManager", () => {
 
     expect(manager.selectedPinId).toBe("pin-a");
     expect(vault.selectedEntityId).toBe("entity-123");
+  });
+
+  it("ignores double-clicks originating from interactive UI buttons or sidebar elements", () => {
+    const handleDoubleClickSpy = vi.spyOn(
+      manager.creationInteractions,
+      "handleDoubleClick",
+    );
+
+    const button = document.createElement("button");
+    const event = new MouseEvent("dblclick", {
+      clientX: 50,
+      clientY: 50,
+      bubbles: true,
+    });
+    Object.defineProperty(event, "target", { value: button });
+
+    manager.onDoubleClick(event);
+
+    expect(handleDoubleClickSpy).not.toHaveBeenCalled();
   });
 });

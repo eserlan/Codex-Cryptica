@@ -1,4 +1,4 @@
-import type { MapPin, Point, ViewportTransform } from "schema";
+import type { MapPin, Point, StatSheetField, ViewportTransform } from "schema";
 
 export interface PanZoomUpdate {
   pan: Point;
@@ -123,6 +123,21 @@ export function shouldIgnoreMapKeyboardEvent(target: EventTarget | null) {
 
   const tagName = target.tagName.toLowerCase();
   return tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
+// A token shows at most one health bar, driven by whichever counter field
+// on its linked entity has been designated via the stat sheet's bar toggle.
+export function resolveHealthBar(
+  fields: StatSheetField[] | undefined,
+): { value: number; max: number } | null {
+  const barField = fields?.find((f) => f.type === "counter" && f.barField);
+  if (!barField) return null;
+  const max = barField.max ?? 1;
+  if (max <= 0) return null;
+  return {
+    value: typeof barField.value === "number" ? barField.value : 0,
+    max,
+  };
 }
 
 export function getZoomViewportUpdate({

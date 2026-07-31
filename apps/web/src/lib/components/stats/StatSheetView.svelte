@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { Entity, StatSheetField } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { diceHistory } from "$lib/stores/dice-history.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
-  import { diceEngine, diceParser } from "dice-engine";
+  import {
+    computeAdjustedCounterValue,
+    rollStatSheetDiceField,
+  } from "$lib/utils/stat-sheet-field-actions";
 
   let { entity, onOpenEditor = () => {} } = $props<{
     entity: Entity;
@@ -66,12 +67,6 @@
     persistFields(deduped);
   });
 
-  // Rolling state per dice field id, keyed so multiple dice fields don't
-  // clobber each other's transient result/error display.
-  let rollResults = $state<Record<string, { text: string; isError: boolean }>>(
-    {},
-  );
-
   function persistFields(nextFields: StatSheetField[]) {
     if (readOnly) return;
     vault.updateEntity(entity.id, {
@@ -82,7 +77,10 @@
     });
   }
 
-  function updateFieldValue(fieldId: string, value: number | string | boolean) {
+  function updateFieldValue(
+    fieldId: string,
+    value: number | string | boolean | undefined,
+  ) {
     persistFields(
       fields.map((f: StatSheetField) =>
         f.id === fieldId ? { ...f, value } : f,
@@ -92,12 +90,7 @@
 
   function adjustCounter(field: StatSheetField, direction: 1 | -1) {
     if (readOnly) return;
-    const step = field.step ?? 1;
-    const current = typeof field.value === "number" ? field.value : 0;
-    let next = current + step * direction;
-    if (field.max !== undefined) next = Math.min(field.max, next);
-    if (field.min !== undefined) next = Math.max(field.min, next);
-    updateFieldValue(field.id, next);
+    updateFieldValue(field.id, computeAdjustedCounterValue(field, direction));
   }
 
   function toggleHeading(field: StatSheetField) {
@@ -105,6 +98,27 @@
     persistFields(
       fields.map((f: StatSheetField) =>
         f.id === field.id ? { ...f, collapsed: !f.collapsed } : f,
+      ),
+    );
+  }
+
+  function toggleFavorite(field: StatSheetField) {
+    if (readOnly) return;
+    persistFields(
+      fields.map((f: StatSheetField) =>
+        f.id === field.id ? { ...f, favorite: !f.favorite } : f,
+      ),
+    );
+  }
+
+  // Only one field can be the token's health bar at a time, so setting it
+  // on one field clears it from every other field in the same pass.
+  function setBarField(field: StatSheetField) {
+    if (readOnly) return;
+    const next = field.barField ? null : field.id;
+    persistFields(
+      fields.map((f: StatSheetField) =>
+        f.type === "counter" ? { ...f, barField: f.id === next } : f,
       ),
     );
   }
@@ -125,28 +139,9 @@
     return visible;
   });
 
-  async function rollDice(field: StatSheetField) {
+  function rollDice(field: StatSheetField) {
     if (!field.formula) return;
-    try {
-      const command = diceParser.parse(field.formula);
-      const result = diceEngine.execute(command);
-      rollResults = {
-        ...rollResults,
-        [field.id]: { text: `= ${result.total}`, isError: false },
-      };
-      await diceHistory.addResult(result, "modal");
-      if (mapSession.vttEnabled) {
-        mapSession.sendResolvedRollMessage(
-          `${field.label}: ${field.formula}`,
-          result,
-        );
-      }
-    } catch (e: any) {
-      rollResults = {
-        ...rollResults,
-        [field.id]: { text: e?.message ?? "Invalid formula", isError: true },
-      };
-    }
+    void rollStatSheetDiceField(field);
   }
 </script>
 
@@ -210,6 +205,44 @@
           >
             <span class="text-xs text-theme-text">{field.label}</span>
             <div class="flex items-center gap-2">
+              {#if !readOnly}
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => toggleFavorite(field)}
+                  aria-label={field.favorite
+                    ? `Unpin ${field.label} from token quick stats`
+                    : `Pin ${field.label} to token quick stats`}
+                  aria-pressed={!!field.favorite}
+                  data-testid="stat-sheet-favorite-toggle"
+                >
+                  <span
+                    class="icon-[lucide--star] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.favorite}
+                    aria-hidden="true"
+                  ></span>
+                </button>
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.barField
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => setBarField(field)}
+                  aria-label={field.barField
+                    ? `Stop showing ${field.label} as the token health bar`
+                    : `Show ${field.label} as the token health bar`}
+                  aria-pressed={!!field.barField}
+                  data-testid="stat-sheet-bar-toggle"
+                >
+                  <span
+                    class="icon-[lucide--heart] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.barField}
+                    aria-hidden="true"
+                  ></span>
+                </button>
+              {/if}
               <button
                 type="button"
                 class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
@@ -294,20 +327,49 @@
             class="flex items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
             data-testid="stat-sheet-dice"
           >
-            <div class="flex flex-col">
-              <span class="text-xs text-theme-text">{field.label}</span>
-              <span class="text-[10px] text-theme-muted">{field.formula}</span>
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+              <span class="text-xs text-theme-text font-medium truncate"
+                >{field.label}</span
+              >
+              <input
+                type="number"
+                class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs font-bold text-theme-text disabled:opacity-40"
+                value={typeof field.value === "number" ? field.value : ""}
+                disabled={readOnly}
+                placeholder="Target"
+                aria-label={`Target number for ${field.label}`}
+                oninput={(e) =>
+                  updateFieldValue(
+                    field.id,
+                    (e.target as HTMLInputElement).value === ""
+                      ? undefined
+                      : Number((e.target as HTMLInputElement).value),
+                  )}
+              />
+              <span class="text-xs text-theme-muted font-mono shrink-0"
+                >- {field.formula || "1d100"}</span
+              >
             </div>
             <div class="flex items-center gap-2">
-              {#if rollResults[field.id]}
-                <span
-                  class="text-xs font-bold {rollResults[field.id].isError
-                    ? 'text-red-500'
-                    : 'text-theme-primary'}"
-                  data-testid="stat-sheet-dice-result"
+              {#if !readOnly}
+                <button
+                  type="button"
+                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                  onclick={() => toggleFavorite(field)}
+                  aria-label={field.favorite
+                    ? `Unpin ${field.label} from token quick stats`
+                    : `Pin ${field.label} to token quick stats`}
+                  aria-pressed={!!field.favorite}
+                  data-testid="stat-sheet-favorite-toggle"
                 >
-                  {rollResults[field.id].text}
-                </span>
+                  <span
+                    class="icon-[lucide--star] h-3.5 w-3.5"
+                    class:fill-theme-primary={field.favorite}
+                    aria-hidden="true"
+                  ></span>
+                </button>
               {/if}
               <button
                 type="button"
