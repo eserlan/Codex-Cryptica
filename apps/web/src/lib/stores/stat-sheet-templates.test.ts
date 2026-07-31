@@ -91,6 +91,29 @@ describe("StatSheetTemplateStore", () => {
       type: "dice",
       formula: "1d100",
     });
+    expect(mythras.fields.find((f) => f.id === "ap")).toMatchObject({
+      type: "counter",
+      min: 0,
+      max: 5,
+    });
+    expect(mythras.fields.find((f) => f.id === "loc_head")).toMatchObject({
+      type: "text",
+      label: "Head (AP/HP)",
+    });
+
+    const mythrasGear = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (t) => t.id === "builtin-item-mythras-gear",
+    )!;
+    expect(mythrasGear.fields.find((f) => f.id === "damage")).toMatchObject({
+      type: "dice",
+      formula: "1d8",
+    });
+    expect(
+      mythrasGear.fields.find((f) => f.id === "reach_range"),
+    ).toMatchObject({
+      type: "text",
+      label: "Reach / Range",
+    });
   });
 
   it("saves the current fields as a new vault-scoped template", async () => {
