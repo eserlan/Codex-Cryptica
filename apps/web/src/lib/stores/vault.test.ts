@@ -177,6 +177,15 @@ vi.mock("./canvas-registry.svelte", () => ({
   },
 }));
 
+const mockGetDefaultFieldsForCategory = vi.fn().mockReturnValue(null);
+vi.mock("./stat-sheet-templates.svelte", () => ({
+  statSheetTemplates: {
+    getDefaultFieldsForCategory: (category: string) =>
+      mockGetDefaultFieldsForCategory(category),
+    loadForVault: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // Mock BroadcastChannel
 const mockPostMessage = vi.fn();
 class MockBroadcastChannel {
@@ -469,6 +478,53 @@ describe("VaultStore", () => {
 
       expect(testVault.entityStore.isContentLoaded(id)).toBe(true);
       expect(testVault.entityStore.isContentVerified(id)).toBe(true);
+    });
+
+    it("auto-applies the vault's configured default stat sheet template for the entity's category", async () => {
+      const defaultFields = [
+        { id: "hp", label: "Hit Points", type: "counter" },
+      ];
+      mockGetDefaultFieldsForCategory.mockReturnValueOnce(defaultFields);
+      const createSpy = vi
+        .spyOn(testVault.entityStore, "createEntity")
+        .mockResolvedValue("new-npc");
+
+      await testVault.createEntity("npc", "Goblin Scout");
+
+      expect(mockGetDefaultFieldsForCategory).toHaveBeenCalledWith("npc");
+      expect(createSpy).toHaveBeenCalledWith("npc", "Goblin Scout", {
+        statSheet: { templateId: null, fields: defaultFields },
+      });
+    });
+
+    it("does not inject a default stat sheet when the category has none configured", async () => {
+      mockGetDefaultFieldsForCategory.mockReturnValueOnce(null);
+      const createSpy = vi
+        .spyOn(testVault.entityStore, "createEntity")
+        .mockResolvedValue("new-note");
+
+      await testVault.createEntity("note", "Plain Note");
+
+      expect(createSpy).toHaveBeenCalledWith("note", "Plain Note", {});
+    });
+
+    it("does not override a statSheet already provided by the caller (e.g. duplicating an entity)", async () => {
+      const explicitStatSheet = {
+        templateId: null,
+        fields: [{ id: "custom", label: "Custom", type: "text" as const }],
+      };
+      const createSpy = vi
+        .spyOn(testVault.entityStore, "createEntity")
+        .mockResolvedValue("new-char");
+
+      await testVault.createEntity("character", "Copy", {
+        statSheet: explicitStatSheet,
+      });
+
+      expect(mockGetDefaultFieldsForCategory).not.toHaveBeenCalled();
+      expect(createSpy).toHaveBeenCalledWith("character", "Copy", {
+        statSheet: explicitStatSheet,
+      });
     });
 
     it("should handle entity deletion in normal mode", async () => {

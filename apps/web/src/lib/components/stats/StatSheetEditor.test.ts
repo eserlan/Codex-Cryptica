@@ -1,0 +1,153 @@
+/** @vitest-environment jsdom */
+
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Entity } from "schema";
+
+const { updateEntity, confirm } = vi.hoisted(() => ({
+  updateEntity: vi.fn(),
+  confirm: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: { updateEntity },
+}));
+
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: { confirm },
+}));
+
+import StatSheetEditor from "./StatSheetEditor.svelte";
+
+function buildEntity(overrides: Partial<Entity> = {}): Entity {
+  return {
+    id: "goblin-1",
+    type: "npc",
+    title: "Goblin",
+    tags: [],
+    labels: [],
+    aliases: [],
+    connections: [],
+    content: "",
+    statSheet: { fields: [] },
+    ...overrides,
+  } as Entity;
+}
+
+describe("StatSheetEditor", () => {
+  beforeEach(() => {
+    updateEntity.mockClear();
+    confirm.mockClear();
+    confirm.mockResolvedValue(true);
+  });
+
+  it("adds a new field", async () => {
+    render(StatSheetEditor, { entity: buildEntity() });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-add"));
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ label: "New Field" })],
+        }),
+      }),
+    );
+  });
+
+  it("edits a field label", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByDisplayValue("Hit Points"), {
+      target: { value: "HP" },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ label: "HP" })],
+        }),
+      }),
+    );
+  });
+
+  it("reorders fields with move up/down", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "a", label: "A", type: "text" },
+          { id: "b", label: "B", type: "text" },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    const [, downA] = screen.getAllByLabelText(/Move A/);
+    await fireEvent.click(downA);
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({ id: "b" }),
+            expect.objectContaining({ id: "a" }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("deletes a field without confirmation when it has no value", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-delete"));
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({ fields: [] }),
+      }),
+    );
+  });
+
+  it("prompts for confirmation before deleting a field with a non-default value", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "hp", label: "Hit Points", type: "counter", value: 12 }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-delete"));
+
+    expect(confirm).toHaveBeenCalled();
+  });
+
+  it("does not delete the field when the user cancels the confirmation", async () => {
+    confirm.mockResolvedValueOnce(false);
+    const entity = buildEntity({
+      statSheet: {
+        fields: [{ id: "hp", label: "Hit Points", type: "counter", value: 12 }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-delete"));
+
+    expect(updateEntity).not.toHaveBeenCalled();
+  });
+});

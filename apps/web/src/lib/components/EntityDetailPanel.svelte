@@ -14,6 +14,7 @@
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
   import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
+  import DetailStatsTab from "./entity-detail/DetailStatsTab.svelte";
   import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
@@ -529,6 +530,17 @@
               >
                 {#if activeTab === "family" && activeEntity.type === "character"}
                   <DetailFamilyTab entity={activeEntity} />
+                {/if}
+              </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.stats}
+                aria-labelledby={tabIds.stats}
+                hidden={activeTab !== "stats"}
+              >
+                {#if activeTab === "stats"}
+                  <DetailStatsTab entity={activeEntity} />
                 {/if}
               </div>
 

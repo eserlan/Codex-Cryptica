@@ -4,6 +4,7 @@ import type {
   LegacyTokenVisibility,
   SessionMode,
   Token,
+  TokenBaseShape,
 } from "map-engine";
 
 export type {
@@ -14,6 +15,7 @@ export type {
   PingState,
   SessionMode,
   Token,
+  TokenBaseShape,
   TokenVisibility,
 } from "map-engine";
 
@@ -52,6 +54,8 @@ export interface TokenCreationInput {
   width?: number;
   height?: number;
   rotation?: number;
+  baseShape?: TokenBaseShape;
+  facingIndicator?: boolean;
   zIndex?: number;
   ownerPeerId?: string | null;
   ownerGuestName?: string | null;
@@ -101,6 +105,8 @@ export interface TokenStateUpdateInput {
   width?: number;
   height?: number;
   rotation?: number;
+  baseShape?: TokenBaseShape;
+  facingIndicator?: boolean;
   visibleTo?: LegacyTokenVisibility;
   ownerPeerId?: string | null;
   ownerGuestName?: string | null;
@@ -218,6 +224,12 @@ export interface TokenMovePayload {
   y: number;
 }
 
+export interface TokenRotatePayload {
+  type: "TOKEN_ROTATE";
+  tokenId: string;
+  rotation: number;
+}
+
 export interface TokenRemoveRequestPayload {
   type: "TOKEN_REMOVE";
   tokenId: string;
@@ -264,6 +276,7 @@ export type VTTMessage =
   | MapMeasurementPayload
   | TokenAddRequestPayload
   | TokenMovePayload
+  | TokenRotatePayload
   | TokenRemoveRequestPayload
   | TokenSelectPayload
   | SessionSavePayload

@@ -27,10 +27,12 @@ describe("entity detail tab ids", () => {
     expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("family");
-    expect(getNextEntityDetailTab("family", "ArrowRight")).toBe("timeline");
+    expect(getNextEntityDetailTab("family", "ArrowRight")).toBe("stats");
+    expect(getNextEntityDetailTab("stats", "ArrowRight")).toBe("timeline");
     expect(getNextEntityDetailTab("timeline", "ArrowRight")).toBe("status");
     expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("timeline");
-    expect(getNextEntityDetailTab("timeline", "ArrowLeft")).toBe("family");
+    expect(getNextEntityDetailTab("timeline", "ArrowLeft")).toBe("stats");
+    expect(getNextEntityDetailTab("stats", "ArrowLeft")).toBe("family");
     expect(getNextEntityDetailTab("family", "ArrowLeft")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowLeft")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");

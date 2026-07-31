@@ -50,6 +50,7 @@ import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 
 export class VaultStore {
   // Reactive State
@@ -473,6 +474,7 @@ export class VaultStore {
 
       if (this.activeVaultId) {
         await themeStore.loadForVault(this.activeVaultId);
+        await statSheetTemplates.loadForVault(this.activeVaultId);
       }
 
       if (this.activeVaultId) {
@@ -553,6 +555,19 @@ export class VaultStore {
     title: string,
     initialData: Partial<Entity> = {},
   ) {
+    // Auto-apply the vault's configured default stat sheet template for this
+    // category, unless the caller already supplied one (e.g. duplicating an
+    // entity, or an import that carries its own statSheet).
+    if (!initialData.statSheet) {
+      const defaultFields =
+        statSheetTemplates.getDefaultFieldsForCategory(type);
+      if (defaultFields) {
+        initialData = {
+          ...initialData,
+          statSheet: { templateId: null, fields: defaultFields },
+        };
+      }
+    }
     return this.entityStore.createEntity(type, title, initialData);
   }
   updateEntity(id: string, updates: Partial<LocalEntity>) {

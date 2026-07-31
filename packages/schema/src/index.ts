@@ -22,3 +22,4 @@ export * from "./language-profile";
 
 export * from "./theme-templates";
 export * from "./entity-templates";
+export * from "./stat-sheet";

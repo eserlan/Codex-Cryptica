@@ -7,7 +7,11 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import type { Point } from "schema";
-import { normalizeToken, normalizeTokenVisibility } from "map-engine";
+import {
+  normalizeToken,
+  normalizeTokenRotation,
+  normalizeTokenVisibility,
+} from "map-engine";
 import {
   snapToGrid,
   clampPointToBounds,
@@ -52,6 +56,10 @@ export class VTTTokenManager {
     string,
     { previous: Token; timeoutId: number }
   >();
+  private pendingTokenRotations = new Map<
+    string,
+    { previous: Token; timeoutId: number }
+  >();
 
   allTokens = $derived.by(() => Object.values(this.tokens));
   selectedToken = $derived.by(() => {
@@ -75,6 +83,10 @@ export class VTTTokenManager {
       clearTimeout(pending.timeoutId);
     }
     this.pendingTokenMoves.clear();
+    for (const pending of this.pendingTokenRotations.values()) {
+      clearTimeout(pending.timeoutId);
+    }
+    this.pendingTokenRotations.clear();
   }
 
   setSnapshotData(
@@ -156,6 +168,8 @@ export class VTTTokenManager {
       width: input.width ?? mapGrid,
       height: input.height ?? mapGrid,
       rotation: input.rotation ?? 0,
+      baseShape: input.baseShape ?? "circle",
+      facingIndicator: input.facingIndicator ?? true,
       zIndex: input.zIndex ?? Object.keys(this.tokens).length,
       ownerPeerId: input.ownerPeerId ?? null,
       ownerGuestName: input.ownerGuestName ?? null,
@@ -312,6 +326,10 @@ export class VTTTokenManager {
           : current.visibleTo,
       x: snapped.x,
       y: snapped.y,
+      rotation:
+        updates.rotation !== undefined
+          ? normalizeTokenRotation(updates.rotation)
+          : current.rotation,
     };
 
     // Apply snapped size (always, not just when sizeChanged)
@@ -365,6 +383,10 @@ export class VTTTokenManager {
     return this.updateToken(tokenId, { x, y }, silent);
   }
 
+  rotateToken(tokenId: string, rotation: number, silent = false) {
+    return this.updateToken(tokenId, { rotation }, silent);
+  }
+
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
     const previous = this.tokens[tokenId];
     if (!previous) return null;
@@ -380,6 +402,13 @@ export class VTTTokenManager {
     if (!pending) return;
     clearTimeout(pending.timeoutId);
     this.pendingTokenMoves.delete(tokenId);
+  }
+
+  private clearPendingRotation(tokenId: string) {
+    const pending = this.pendingTokenRotations.get(tokenId);
+    if (!pending) return;
+    clearTimeout(pending.timeoutId);
+    this.pendingTokenRotations.delete(tokenId);
   }
 
   private scheduleMoveRevert(tokenId: string, previous: Token) {
@@ -404,6 +433,35 @@ export class VTTTokenManager {
 
   confirmTokenMove(tokenId: string) {
     this.clearPendingMove(tokenId);
+  }
+
+  requestTokenRotation(tokenId: string, rotation: number, persistent = false) {
+    const previous = this.tokens[tokenId];
+    if (!previous) return null;
+    const updated = this.updateToken(tokenId, { rotation }, true);
+    if (updated && !persistent) {
+      this.clearPendingRotation(tokenId);
+      const timeoutId = window.setTimeout(() => {
+        const current = this.tokens[tokenId];
+        if (current) {
+          this.tokens = {
+            ...this.tokens,
+            [tokenId]: { ...previous },
+          };
+          this.deps.persistDraft();
+        }
+        this.pendingTokenRotations.delete(tokenId);
+      }, 500);
+      this.pendingTokenRotations.set(tokenId, {
+        previous: { ...previous },
+        timeoutId,
+      });
+    }
+    return updated;
+  }
+
+  confirmTokenRotation(tokenId: string) {
+    this.clearPendingRotation(tokenId);
   }
 
   removeToken(tokenId: string, silent = false) {
@@ -580,6 +638,9 @@ export class VTTTokenManager {
     }
 
     this.clearPendingMove(tokenId);
+    if (delta.rotation !== undefined) {
+      this.clearPendingRotation(tokenId);
+    }
     this.updateToken(tokenId, delta, true);
   }
 
@@ -593,5 +654,9 @@ export class VTTTokenManager {
       clearTimeout(pending.timeoutId);
     }
     this.pendingTokenMoves.clear();
+    for (const pending of this.pendingTokenRotations.values()) {
+      clearTimeout(pending.timeoutId);
+    }
+    this.pendingTokenRotations.clear();
   }
 }

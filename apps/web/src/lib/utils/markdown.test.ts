@@ -214,6 +214,80 @@ describe("markdown.ts utility", () => {
     });
   });
 
+  describe("statSheet frontmatter", () => {
+    it("should serialize and re-parse a statSheet with full field fidelity", () => {
+      const entity = EntitySchema.parse({
+        id: "goblin-scout",
+        type: "npc",
+        title: "Goblin Scout",
+        statSheet: {
+          templateId: "dnd-5e-npc",
+          fields: [
+            {
+              id: "hp",
+              label: "Hit Points",
+              type: "counter",
+              value: 24,
+              min: 0,
+              max: 50,
+            },
+            { id: "ac", label: "Armor Class", type: "number", value: 15 },
+            {
+              id: "conditions",
+              label: "Conditions",
+              type: "text",
+              value: "Prone",
+            },
+            {
+              id: "notes",
+              label: "Notes",
+              type: "longtext",
+              value: "Skittish, flees at low HP.",
+            },
+            {
+              id: "atk",
+              label: "Shortbow Attack",
+              type: "dice",
+              formula: "1d20+4",
+            },
+            {
+              id: "sec_combat",
+              label: "Combat Stats",
+              type: "heading",
+              collapsed: false,
+            },
+          ],
+        },
+      });
+
+      const parsed = parseMarkdown(stringifyEntity(entity));
+      const reloaded = EntitySchema.parse({
+        ...parsed.metadata,
+        content: parsed.content,
+      });
+
+      expect(reloaded.statSheet).toEqual(entity.statSheet);
+    });
+
+    it("should omit statSheet from frontmatter when the entity has none", () => {
+      const entity = EntitySchema.parse({
+        id: "plain-note",
+        type: "note",
+        title: "Plain Note",
+      });
+
+      const serialized = stringifyEntity(entity);
+      expect(serialized).not.toContain("statSheet");
+    });
+
+    it("should gracefully report malformed statSheet data via safeParse rather than throwing", () => {
+      const raw = `---\nid: broken-npc\ntype: npc\ntitle: Broken NPC\nstatSheet:\n  fields: "not-an-array"\n---\n`;
+      const { metadata } = parseMarkdown(raw);
+      expect(() => EntitySchema.safeParse(metadata)).not.toThrow();
+      expect(EntitySchema.safeParse(metadata).success).toBe(false);
+    });
+  });
+
   describe("Vault Round-Trip Integration", () => {
     it("should serialize a fully populated entity and re-parse it with full fidelity", () => {
       const fullEntity = {

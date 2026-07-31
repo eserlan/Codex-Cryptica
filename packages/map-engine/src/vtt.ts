@@ -3,6 +3,7 @@ import type { Point } from "schema";
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
 export type LegacyTokenVisibility = TokenVisibility | "owner-only";
+export type TokenBaseShape = "circle" | "square";
 
 export interface PingState {
   x: number;
@@ -21,6 +22,8 @@ export interface Token {
   width: number;
   height: number;
   rotation: number;
+  baseShape?: TokenBaseShape;
+  facingIndicator?: boolean;
   zIndex: number;
   ownerPeerId: string | null;
   ownerGuestName: string | null;
@@ -86,13 +89,20 @@ export function normalizeTokenVisibility(
 
 export function normalizeToken(
   token:
-    Token | (Omit<Token, "visibleTo"> & { visibleTo?: LegacyTokenVisibility }),
+    | Token
+    | (Omit<Token, "visibleTo" | "baseShape" | "facingIndicator"> & {
+        visibleTo?: LegacyTokenVisibility;
+        baseShape?: TokenBaseShape;
+        facingIndicator?: boolean;
+      }),
 ): Token {
   return {
     ...token,
     ownerPeerId: token.ownerPeerId ?? null,
     ownerGuestName: token.ownerGuestName ?? null,
     visibleTo: normalizeTokenVisibility(token.visibleTo),
+    baseShape: token.baseShape === "square" ? "square" : "circle",
+    facingIndicator: token.facingIndicator === true,
     statusEffects: [...(token.statusEffects ?? [])],
   };
 }

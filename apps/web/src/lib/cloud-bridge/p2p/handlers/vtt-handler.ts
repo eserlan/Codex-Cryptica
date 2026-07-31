@@ -62,6 +62,24 @@ export class VTTHandler extends BaseHandler {
           connection.peer,
         );
       }
+    } else if (message.type === "TOKEN_ROTATE") {
+      if (
+        typeof message.tokenId !== "string" ||
+        typeof message.rotation !== "number" ||
+        !Number.isFinite(message.rotation)
+      )
+        return;
+      if (mapSession.canMoveToken(message.tokenId, connection.peer, false)) {
+        mapSession.rotateToken(message.tokenId, message.rotation, true);
+        transport.broadcast(
+          {
+            type: "TOKEN_STATE_UPDATE",
+            tokenId: message.tokenId,
+            delta: { rotation: mapSession.tokens[message.tokenId]?.rotation },
+          },
+          connection.peer,
+        );
+      }
     } else if (
       message.type === "TOKEN_REMOVE" ||
       message.type === "TOKEN_REMOVED"
