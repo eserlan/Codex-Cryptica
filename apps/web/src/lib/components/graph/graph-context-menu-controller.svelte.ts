@@ -35,6 +35,9 @@ export class GraphContextMenuController {
 
   targetId = $state<string | null>(null);
   selectedNodes = $state<string[]>([]);
+  targetEdge = $state<{ source: string; target: string; type: string } | null>(
+    null,
+  );
 
   pickerTimeout: number | null = null;
   categoryPickerTimeout: number | null = null;
@@ -74,6 +77,7 @@ export class GraphContextMenuController {
     const openHandler = (evt: EventObject) => {
       const node = evt.target;
       this.targetId = node.id();
+      this.targetEdge = null;
       this.position = evt.renderedPosition || { x: 0, y: 0 };
 
       const selection = this.getCy().$("node:selected");
@@ -86,10 +90,25 @@ export class GraphContextMenuController {
       this.contextMenuOpen = true;
     };
 
+    const edgeContextMenuHandler = (evt: EventObject) => {
+      const edge = evt.target;
+      const data = edge.data();
+      this.targetId = null;
+      this.selectedNodes = [];
+      this.targetEdge = {
+        source: data.source,
+        target: data.target,
+        type: data.connectionType || data.type || "neutral",
+      };
+      this.position = evt.renderedPosition || { x: 0, y: 0 };
+      this.contextMenuOpen = true;
+    };
+
     const backgroundContextMenuHandler = (evt: EventObject) => {
       if (evt.target === this.getCy()) {
         this.targetId = null;
         this.selectedNodes = [];
+        this.targetEdge = null;
         this.position = evt.renderedPosition || { x: 0, y: 0 };
         this.contextMenuOpen = true;
       }
@@ -101,15 +120,18 @@ export class GraphContextMenuController {
       this.canvasPickerOpen = false;
       this.categoryPickerOpen = false;
       this.imagePickerOpen = false;
+      this.targetEdge = null;
     };
 
     this.getCy().on("cxttap", "node", openHandler);
+    this.getCy().on("cxttap", "edge", edgeContextMenuHandler);
     this.getCy().on("cxttap", backgroundContextMenuHandler);
     this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
       this.getCy().off("cxttap", "node", openHandler);
+      this.getCy().off("cxttap", "edge", edgeContextMenuHandler);
       this.getCy().off("cxttap", backgroundContextMenuHandler);
       this.getCy().off("tap", closeHandler);
     };
@@ -124,6 +146,15 @@ export class GraphContextMenuController {
     if (!this.deps.vault.isGuest) {
       this.deps.modalUIStore.openIntentCreateMenu();
     }
+  };
+
+  handleDeleteEdge = async () => {
+    if (!this.targetEdge || this.deps.vault.isGuest) return;
+    const { source, target, type } = this.targetEdge;
+    this.clearPickerTimeout();
+    this.contextMenuOpen = false;
+    this.targetEdge = null;
+    await this.deps.vault.removeConnection(source, target, type);
   };
 
   clearPickerTimeout = () => {
