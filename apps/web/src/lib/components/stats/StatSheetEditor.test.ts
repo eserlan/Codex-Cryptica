@@ -150,4 +150,115 @@ describe("StatSheetEditor", () => {
 
     expect(updateEntity).not.toHaveBeenCalled();
   });
+
+  it("clears all fields and template assignment when user clicks Clear All and confirms", async () => {
+    confirm.mockResolvedValueOnce(true);
+    const entity = buildEntity({
+      statSheet: {
+        templateId: "builtin-dnd-npc",
+        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-clear-all"));
+
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Clear Stat Sheet",
+        isDangerous: true,
+      }),
+    );
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: { templateId: null, fields: [] },
+    });
+  });
+
+  it("reorders fields via drag and drop", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "a", label: "Alpha", type: "text" },
+          { id: "b", label: "Beta", type: "text" },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    const fieldRows = screen.getAllByTestId("stat-sheet-editor-field");
+    const dataTransfer = { setData: vi.fn(), effectAllowed: "" };
+
+    await fireEvent.dragStart(fieldRows[0], { dataTransfer });
+    await fireEvent.dragOver(fieldRows[1], { dataTransfer });
+    await fireEvent.drop(fieldRows[1], { dataTransfer });
+    await fireEvent.dragEnd(fieldRows[0]);
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({ id: "b" }),
+            expect.objectContaining({ id: "a" }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("reorders fields once via Alt+ArrowDown from the drag handle", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "a", label: "Alpha", type: "text" },
+          { id: "b", label: "Beta", type: "text" },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    const handles = screen.getAllByTestId("stat-sheet-drag-handle");
+    await fireEvent.keyDown(handles[0], { key: "ArrowDown", altKey: true });
+
+    expect(updateEntity).toHaveBeenCalledTimes(1);
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({ id: "b" }),
+            expect.objectContaining({ id: "a" }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("reorders fields via Ctrl+ArrowUp from the field row", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "a", label: "Alpha", type: "text" },
+          { id: "b", label: "Beta", type: "text" },
+        ],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    const rows = screen.getAllByTestId("stat-sheet-editor-field");
+    await fireEvent.keyDown(rows[1], { key: "ArrowUp", ctrlKey: true });
+
+    expect(updateEntity).toHaveBeenCalledTimes(1);
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [
+            expect.objectContaining({ id: "b" }),
+            expect.objectContaining({ id: "a" }),
+          ],
+        }),
+      }),
+    );
+  });
 });

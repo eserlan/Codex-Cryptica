@@ -7,6 +7,10 @@ const {
   renameTemplate,
   deleteTemplate,
   setDefaultTemplate,
+  toggleTemplateEnabled,
+  setAllTemplatesEnabled,
+  updateTemplateFields,
+  isTemplateEnabled,
   confirm,
   notify,
   templatesState,
@@ -15,10 +19,23 @@ const {
   renameTemplate: vi.fn(),
   deleteTemplate: vi.fn(),
   setDefaultTemplate: vi.fn(),
+  toggleTemplateEnabled: vi.fn(),
+  setAllTemplatesEnabled: vi.fn(),
+  updateTemplateFields: vi.fn(),
+  isTemplateEnabled: vi.fn().mockReturnValue(true),
   confirm: vi.fn().mockResolvedValue(true),
   notify: vi.fn(),
   templatesState: {
-    templates: [{ id: "template-1", name: "My Custom Sheet", fields: [] }],
+    templates: [
+      {
+        id: "template-1",
+        name: "My Custom Sheet",
+        fields: [
+          { id: "f1", label: "Field 1", type: "text" },
+          { id: "f2", label: "Field 2", type: "text" },
+        ],
+      },
+    ],
     categoryDefaults: {} as Record<string, string>,
   },
   BUILT_INS: [
@@ -47,9 +64,16 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
     get allTemplates() {
       return [...BUILT_INS, ...templatesState.templates];
     },
+    get availableTemplates() {
+      return [...BUILT_INS, ...templatesState.templates];
+    },
+    isTemplateEnabled,
+    toggleTemplateEnabled,
+    setAllTemplatesEnabled,
     renameTemplate,
     deleteTemplate,
     setDefaultTemplate,
+    updateTemplateFields,
   },
 }));
 
@@ -75,6 +99,9 @@ describe("StatSheetTemplateSettings", () => {
     deleteTemplate.mockClear();
     deleteTemplate.mockResolvedValue(true);
     setDefaultTemplate.mockClear();
+    toggleTemplateEnabled.mockClear();
+    setAllTemplatesEnabled.mockClear();
+    updateTemplateFields.mockClear();
     confirm.mockClear();
     confirm.mockResolvedValue(true);
     notify.mockClear();
@@ -117,11 +144,11 @@ describe("StatSheetTemplateSettings", () => {
     expect(setDefaultTemplate).toHaveBeenCalledWith("character", null);
   });
 
-  it("lists built-in templates as read-only", () => {
+  it("lists built-in templates with vault applicability toggle", () => {
     render(StatSheetTemplateSettings);
     const row = screen.getByTestId("stat-sheet-builtin-row");
     expect(row.textContent).toContain("D&D NPC");
-    expect(screen.getByText("Built-in")).toBeTruthy();
+    expect(row.textContent).toContain("Applicable");
   });
 
   it("lists vault-saved templates with rename/delete controls", () => {
@@ -197,5 +224,74 @@ describe("StatSheetTemplateSettings", () => {
       expect.stringContaining("Failed"),
       "error",
     );
+  });
+
+  it("calls toggleTemplateEnabled when template applicability button is clicked", async () => {
+    render(StatSheetTemplateSettings);
+
+    const toggleButtons = screen.getAllByTestId("stat-sheet-toggle-enabled");
+    await fireEvent.click(toggleButtons[0]);
+
+    expect(toggleTemplateEnabled).toHaveBeenCalledWith("builtin-dnd-npc");
+  });
+
+  it("calls setAllTemplatesEnabled when Enable All / Disable All buttons are clicked", async () => {
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-enable-all"));
+    expect(setAllTemplatesEnabled).toHaveBeenCalledWith(true);
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-disable-all"));
+    expect(setAllTemplatesEnabled).toHaveBeenCalledWith(false);
+  });
+
+  it("reorders template fields via drag and drop and move buttons in settings preview", async () => {
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Toggle preview of My Custom Sheet template"),
+    );
+
+    const downButtons = screen.getAllByLabelText("Move Field 1 down");
+    await fireEvent.click(downButtons[0]);
+
+    expect(updateTemplateFields).toHaveBeenCalledWith("template-1", [
+      { id: "f2", label: "Field 2", type: "text" },
+      { id: "f1", label: "Field 1", type: "text" },
+    ]);
+  });
+
+  it("reorders template fields once via Alt+ArrowDown from the drag handle", async () => {
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Toggle preview of My Custom Sheet template"),
+    );
+
+    const handles = screen.getAllByTestId("stat-sheet-template-drag-handle");
+    await fireEvent.keyDown(handles[0], { key: "ArrowDown", altKey: true });
+
+    expect(updateTemplateFields).toHaveBeenCalledTimes(1);
+    expect(updateTemplateFields).toHaveBeenCalledWith("template-1", [
+      { id: "f2", label: "Field 2", type: "text" },
+      { id: "f1", label: "Field 1", type: "text" },
+    ]);
+  });
+
+  it("reorders template fields via Ctrl+ArrowUp from the field row", async () => {
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Toggle preview of My Custom Sheet template"),
+    );
+
+    const rows = screen.getAllByTestId("stat-sheet-template-field-item");
+    await fireEvent.keyDown(rows[1], { key: "ArrowUp", ctrlKey: true });
+
+    expect(updateTemplateFields).toHaveBeenCalledTimes(1);
+    expect(updateTemplateFields).toHaveBeenCalledWith("template-1", [
+      { id: "f2", label: "Field 2", type: "text" },
+      { id: "f1", label: "Field 1", type: "text" },
+    ]);
   });
 });

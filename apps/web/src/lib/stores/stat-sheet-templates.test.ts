@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { StatSheetField } from "schema";
 import { getDB } from "../utils/idb";
 
 const { vaultRegistryState } = vi.hoisted(() => ({
@@ -90,6 +91,46 @@ describe("StatSheetTemplateStore", () => {
     expect(mythras.fields.find((f) => f.id === "evade")).toMatchObject({
       type: "dice",
       formula: "1d100",
+    });
+    expect(mythras.fields.find((f) => f.id === "ap")).toMatchObject({
+      type: "counter",
+      min: 0,
+      max: 5,
+    });
+    expect(mythras.fields.find((f) => f.id === "loc_head_ap")).toMatchObject({
+      type: "number",
+      label: "Head AP (Armor)",
+    });
+    expect(mythras.fields.find((f) => f.id === "loc_head_hp")).toMatchObject({
+      type: "counter",
+      label: "Head HP",
+    });
+
+    const mythrasGear = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (t) => t.id === "builtin-item-mythras-gear",
+    )!;
+    expect(mythrasGear.fields.find((f) => f.id === "damage")).toMatchObject({
+      type: "dice",
+      formula: "1d8",
+    });
+    expect(
+      mythrasGear.fields.find((f) => f.id === "reach_range"),
+    ).toMatchObject({
+      type: "text",
+      label: "Reach / Range",
+    });
+
+    const mythrasNpc = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (t) => t.id === "builtin-mythras-npc",
+    )!;
+    expect(mythrasNpc.category).toBe("npc");
+    expect(mythrasNpc.fields.find((f) => f.id === "attacks")).toMatchObject({
+      type: "longtext",
+      label: "Attacks & Combat Styles",
+    });
+    expect(mythrasNpc.fields.find((f) => f.id === "traits")).toMatchObject({
+      type: "longtext",
+      label: "Creature Traits & Special Abilities",
     });
   });
 
@@ -323,5 +364,58 @@ describe("StatSheetTemplateStore", () => {
   it("returns null when the configured default template no longer exists", async () => {
     await store.setDefaultTemplate("character", "template-deleted");
     expect(store.getDefaultFieldsForCategory("character")).toBeNull();
+  });
+
+  it("toggles template applicability per vault and filters availableTemplates", async () => {
+    expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(true);
+    expect(store.availableTemplates.length).toBe(store.allTemplates.length);
+
+    await store.toggleTemplateEnabled("builtin-dnd-character");
+
+    expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(false);
+    expect(
+      store.availableTemplates.find((t) => t.id === "builtin-dnd-character"),
+    ).toBeUndefined();
+
+    const db = await getDB();
+    const persisted = await db.get(
+      "settings",
+      "statSheetEnabledTemplates_test-vault",
+    );
+    expect(persisted).not.toContain("builtin-dnd-character");
+
+    await store.toggleTemplateEnabled("builtin-dnd-character");
+    expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(true);
+  });
+
+  it("enables and disables all templates with setAllTemplatesEnabled", async () => {
+    await store.setAllTemplatesEnabled(false);
+
+    expect(store.enabledTemplateIds).toEqual([]);
+    expect(store.availableTemplates).toEqual([]);
+
+    await store.setAllTemplatesEnabled(true);
+
+    expect(store.availableTemplates.length).toBe(store.allTemplates.length);
+  });
+
+  it("updates fields of a saved template via updateTemplateFields", async () => {
+    const saved = await store.saveAsTemplate("My Sheet", [
+      { id: "a", label: "Alpha", type: "text" },
+      { id: "b", label: "Beta", type: "text" },
+    ]);
+
+    const nextFields: StatSheetField[] = [
+      { id: "b", label: "Beta", type: "text" },
+      { id: "a", label: "Alpha", type: "text" },
+    ];
+
+    const ok = await store.updateTemplateFields(saved!.id, nextFields);
+
+    expect(ok).toBe(true);
+    expect(store.templates[0].fields).toEqual(nextFields);
+    const db = await getDB();
+    const persisted = await db.get("stat_sheet_templates", saved!.id);
+    expect(persisted?.fields).toEqual(nextFields);
   });
 });
