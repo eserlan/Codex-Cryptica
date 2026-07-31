@@ -156,12 +156,8 @@ export class MapStore {
               this.selectMap(this.worldMap.id);
             } else if (
               hasLoadedMaps &&
-              sessionModeStore.isGuestMode &&
-              guestVault.publishId
+              (!sessionModeStore.isGuestMode || guestVault.publishId)
             ) {
-              // Published-vault readers browse on their own — there's no
-              // live host to pick a map for them, so fall back to the first
-              // published map rather than leaving the view empty.
               this.selectMap(Object.keys(maps)[0]);
             }
           }

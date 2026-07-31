@@ -619,7 +619,7 @@
         class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         <div
-          class="min-h-0 min-w-0 flex-1 overflow-y-auto"
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||
             undefined}
