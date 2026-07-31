@@ -43,4 +43,4 @@ For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high f
 
 ## Related Blog Posts
 
-- [Default Entity Templates & Custom Vault Overrides](/blog/default-entity-templates) — Deep dive into customizing domain structures and custom schema overrides.
+- [Default Entity Templates & Custom Vault Overrides](/blog/default-templates-announcement) — Deep dive into customizing domain structures and custom schema overrides.
