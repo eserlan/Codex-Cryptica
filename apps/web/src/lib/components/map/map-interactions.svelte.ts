@@ -435,6 +435,7 @@ export class MapInteractionManager {
       this.activeTouches.delete(e.pointerId);
       if (wasPinching) {
         this.pinchLastDistance = null;
+        this.activePointerId = null;
         return;
       }
     }

@@ -200,11 +200,11 @@
           </button>
         {:else if field.type === "counter"}
           <div
-            class="flex items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
+            class="flex flex-wrap items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
             data-testid="stat-sheet-counter"
           >
             <span class="text-xs text-theme-text">{field.label}</span>
-            <div class="flex items-center gap-2">
+            <div class="ml-auto flex items-center gap-2">
               {#if !readOnly}
                 <button
                   type="button"
