@@ -224,6 +224,7 @@
                 categories.getCategory(result.type)?.icon,
               )} w-3.5 h-3.5 shrink-0"
               style="color: {categories.getColor(result.type)}"
+              aria-hidden="true"
             ></span>
           {/if}
           <span class="truncate text-xs">{result.title}</span>

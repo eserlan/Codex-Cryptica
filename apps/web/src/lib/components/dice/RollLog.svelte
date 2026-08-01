@@ -55,6 +55,14 @@
     >
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-2">
+          {#if roll.label}
+            <span
+              class="text-theme-text text-xs font-bold font-header tracking-wide"
+              data-testid="roll-label"
+            >
+              {roll.label}
+            </span>
+          {/if}
           <span
             class="text-theme-primary font-bold text-xs font-header tracking-wider bg-theme-primary/10 px-2 py-0.5 rounded uppercase"
             data-testid="roll-formula"

@@ -19,7 +19,7 @@ export async function rollStatSheetDiceField(
   try {
     const command = diceParser.parse(field.formula);
     const result = diceEngine.execute(command);
-    await diceHistory.addResult(result, "modal");
+    await diceHistory.addResult(result, "modal", { label: field.label });
 
     const targetNum = typeof field.value === "number" ? field.value : undefined;
 

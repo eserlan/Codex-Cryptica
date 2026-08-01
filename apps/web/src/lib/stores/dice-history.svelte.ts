@@ -5,6 +5,7 @@ import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 export interface ContextualRollResult extends RollResult {
   id: string;
   context: "chat" | "modal";
+  label?: string;
 }
 
 export class DiceHistoryStore {
@@ -40,12 +41,17 @@ export class DiceHistoryStore {
     }
   }
 
-  async addResult(result: RollResult, context: "chat" | "modal") {
+  async addResult(
+    result: RollResult,
+    context: "chat" | "modal",
+    metadata?: { label?: string },
+  ) {
     const id = this.idGenerator.uuid();
     const contextual: ContextualRollResult = {
       ...result,
       id,
       context,
+      ...metadata,
     };
 
     this.history.push(contextual);
