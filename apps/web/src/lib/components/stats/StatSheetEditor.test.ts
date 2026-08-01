@@ -41,6 +41,23 @@ describe("StatSheetEditor", () => {
     confirm.mockResolvedValue(true);
   });
 
+  it("uses provided idGenerator for deterministic field IDs", async () => {
+    const deterministicIdGenerator = { uuid: () => "test-id-123" };
+    render(StatSheetEditor, {
+      props: { entity: buildEntity(), idGenerator: deterministicIdGenerator },
+    });
+    const addBtn = screen.getByTestId("stat-sheet-editor-add");
+    await fireEvent.click(addBtn);
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ id: "field-test-id-123" })],
+        }),
+      }),
+    );
+  });
+
   it("adds a new field", async () => {
     render(StatSheetEditor, { entity: buildEntity() });
 
