@@ -1,13 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { StatSheetField } from "schema";
 
-const { addResult, sendResolvedRollMessage, mapSessionState } = vi.hoisted(
-  () => ({
+const { addResult, notify, sendResolvedRollMessage, mapSessionState } =
+  vi.hoisted(() => ({
     addResult: vi.fn().mockResolvedValue(undefined),
+    notify: vi.fn(),
     sendResolvedRollMessage: vi.fn(),
     mapSessionState: { vttEnabled: true },
-  }),
-);
+  }));
 
 vi.mock("$lib/stores/dice-history.svelte", () => ({
   diceHistory: { addResult },
@@ -20,6 +20,10 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
     },
     sendResolvedRollMessage,
   },
+}));
+
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: { notify },
 }));
 
 vi.mock("dice-engine", () => ({
@@ -92,6 +96,7 @@ describe("computeAdjustedCounterValue", () => {
 describe("rollStatSheetDiceField", () => {
   beforeEach(() => {
     addResult.mockClear();
+    notify.mockClear();
     sendResolvedRollMessage.mockClear();
     mapSessionState.vttEnabled = true;
   });
@@ -105,14 +110,20 @@ describe("rollStatSheetDiceField", () => {
       "Attack: 1d20+5",
       expect.objectContaining({ total: 17 }),
     );
+    expect(notify).not.toHaveBeenCalled();
   });
 
-  it("does not broadcast when no VTT session is live", async () => {
+  it("records history and shows a toast when no VTT session is live", async () => {
     mapSessionState.vttEnabled = false;
 
     await rollStatSheetDiceField(diceField());
 
+    expect(addResult).toHaveBeenCalledWith(
+      expect.objectContaining({ total: 17 }),
+      "modal",
+    );
     expect(sendResolvedRollMessage).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith("Attack: 1d20+5 = 17", "success");
   });
 
   it("returns an error display for an invalid formula without throwing", async () => {
@@ -122,6 +133,8 @@ describe("rollStatSheetDiceField", () => {
 
     expect(display.isError).toBe(true);
     expect(display.text).toContain("Invalid formula");
+    expect(addResult).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it("returns an error display when the field has no formula", async () => {
@@ -130,6 +143,8 @@ describe("rollStatSheetDiceField", () => {
     );
 
     expect(display.isError).toBe(true);
+    expect(addResult).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it("evaluates success vs target number when target number is set", async () => {
@@ -150,5 +165,27 @@ describe("rollStatSheetDiceField", () => {
     );
     expect(failDisplay.text).toBe("= 17 vs 10 (Failure)");
     expect(failDisplay.success).toBe(false);
+  });
+
+  it("shows the outcome in the non-VTT toast for target rolls", async () => {
+    mapSessionState.vttEnabled = false;
+
+    await rollStatSheetDiceField(diceField({ formula: "1d100", value: 50 }));
+
+    expect(notify).toHaveBeenCalledWith(
+      "Attack: 1d100 = 17 vs 50 (Success)",
+      "success",
+    );
+  });
+
+  it("uses an error toast for failed non-VTT target rolls", async () => {
+    mapSessionState.vttEnabled = false;
+
+    await rollStatSheetDiceField(diceField({ formula: "1d100", value: 10 }));
+
+    expect(notify).toHaveBeenCalledWith(
+      "Attack: 1d100 = 17 vs 10 (Failure)",
+      "error",
+    );
   });
 });

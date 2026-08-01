@@ -1,6 +1,7 @@
 import type { StatSheetField } from "schema";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { diceHistory } from "$lib/stores/dice-history.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { diceEngine, diceParser } from "dice-engine";
 
 export interface DiceRollDisplay {
@@ -52,6 +53,11 @@ export async function rollStatSheetDiceField(
           `${field.label} (${field.formula} vs ${targetNum} - ${outcome})`,
           result,
         );
+      } else {
+        notificationStore.notify(
+          `${field.label}: ${field.formula} = ${result.total} vs ${targetNum} (${outcome})`,
+          isSuccess ? "success" : "error",
+        );
       }
 
       return {
@@ -65,6 +71,11 @@ export async function rollStatSheetDiceField(
       mapSession.sendResolvedRollMessage(
         `${field.label}: ${field.formula}`,
         result,
+      );
+    } else {
+      notificationStore.notify(
+        `${field.label}: ${field.formula} = ${result.total}`,
+        "success",
       );
     }
     return { text: `= ${result.total}`, isError: false };
