@@ -225,6 +225,13 @@
       icon: "icon-[lucide--moon]",
     },
     {
+      href: "/generators/cosmic-horror",
+      label: "Cosmic Horror Hub",
+      summary:
+        "Impossible mysteries, remote outposts, unsettling investigators, and eldritch adventure hooks.",
+      icon: "icon-[lucide--brain]",
+    },
+    {
       href: "/generators/western",
       label: "Western Hub",
       summary:
