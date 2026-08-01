@@ -106,6 +106,11 @@ describe("rollStatSheetDiceField", () => {
 
     expect(display).toEqual({ text: "= 17", isError: false });
     expect(addResult).toHaveBeenCalled();
+    expect(addResult).toHaveBeenCalledWith(
+      expect.objectContaining({ total: 17 }),
+      "modal",
+      { label: "Attack" },
+    );
     expect(sendResolvedRollMessage).toHaveBeenCalledWith(
       "Attack: 1d20+5",
       expect.objectContaining({ total: 17 }),
@@ -121,6 +126,7 @@ describe("rollStatSheetDiceField", () => {
     expect(addResult).toHaveBeenCalledWith(
       expect.objectContaining({ total: 17 }),
       "modal",
+      { label: "Attack" },
     );
     expect(sendResolvedRollMessage).not.toHaveBeenCalled();
     expect(notify).toHaveBeenCalledWith("Attack: 1d20+5 = 17", "success");
