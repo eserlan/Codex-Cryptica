@@ -34,6 +34,7 @@ export const newsSheetConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
@@ -90,6 +91,13 @@ export const newsSheetConfig = {
       "Missing-persons digest",
       "Parish newsletter",
       "Anonymous chain letter",
+    ],
+    "Cosmic Horror": [
+      "Restricted field report",
+      "Observatory circular",
+      "Missing-expedition bulletin",
+      "University archive notice",
+      "Coastal quarantine dispatch",
     ],
     "Post-Apocalyptic": [
       "Bunker bulletin",

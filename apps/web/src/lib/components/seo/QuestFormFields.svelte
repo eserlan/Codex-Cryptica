@@ -45,6 +45,9 @@
   const activeThreats = $derived(
     questConfig.threatsByTheme[theme] ?? questConfig.threats,
   );
+  const activeTwists = $derived(
+    questConfig.twistsByTheme[theme] ?? questConfig.twists,
+  );
   const activeRewards = $derived(
     questConfig.rewardsByTheme[theme] ?? questConfig.rewards,
   );
@@ -52,6 +55,7 @@
   const builtInScopes = questConfig.scopes;
   const builtInLocationTypes = questConfig.locationTypes;
   const builtInThreats = questConfig.threats;
+  const builtInTwists = questConfig.twists;
   const builtInRewards = questConfig.rewards;
 
   $effect(() => {
@@ -66,6 +70,8 @@
       locationType = activeLocationTypes[0];
     if (builtInThreats.includes(threat) && !activeThreats.includes(threat))
       threat = activeThreats[0];
+    if (builtInTwists.includes(twist) && !activeTwists.includes(twist))
+      twist = activeTwists[0];
     if (builtInRewards.includes(reward) && !activeRewards.includes(reward))
       reward = activeRewards[0];
   });
@@ -130,7 +136,7 @@
   id="twist-select"
   label="Twist"
   bind:value={twist}
-  choices={questConfig.twists.map((t: string) => ({ value: t, label: t }))}
+  choices={activeTwists.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
@@ -156,7 +162,7 @@
       scope = pickFrom(activeScopes);
       locationType = pickFrom(activeLocationTypes);
       threat = pickFrom(activeThreats);
-      twist = pickFrom(questConfig.twists);
+      twist = pickFrom(activeTwists);
       reward = pickFrom(activeRewards);
       if (onSurprise) onSurprise();
     }}

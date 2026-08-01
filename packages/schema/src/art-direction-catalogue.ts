@@ -506,6 +506,29 @@ export const ART_THEMES: Record<string, ArtTheme> = {
       "tenebrist painting, single practical light source, deep unresolved shadow",
   },
 
+  cosmic_horror: {
+    id: "theme.cosmic_horror",
+    label: "Cosmic Horror",
+    aliases: ["cosmic-horror", "cosmic horror"],
+    medium:
+      "weathered scientific field illustration with precise observational detail interrupted by one physically impossible feature",
+    palette:
+      "sea-green ink, faded chart paper, deep indigo shadow, and a restrained violet anomaly",
+    lighting:
+      "overcast coastal daylight or a single practical research lamp, with the anomaly emitting no visible glow",
+    craftMaterials:
+      "salt-stained canvas, brass instruments, annotated paper, wool coats, cracked lens glass",
+    terrainMaterials:
+      "wet basalt, tidal rock, fog-softened timber, concrete observatories, exposed strata",
+    exaltedMaterials:
+      "unweathered black glass, impossible geometry in pale ceramic, star-map gold leaf, translucent mineral surfaces",
+    exaltedPalette:
+      "cold ivory and near-black blue with one sea-green and violet disruption",
+    styleReferences: ["early twentieth-century scientific field plate"],
+    nameFreeFallback:
+      "weathered scientific field illustration, coastal fog, careful survey detail, one subtle impossible geometry",
+  },
+
   steampunk: {
     id: "theme.steampunk",
     label: "Steampunk",
@@ -776,6 +799,16 @@ export const FACTION_BLUEPRINTS: Record<string, FactionBlueprint> = {
     ],
     signals:
       "cult regalia, ceremonial dress, or aristocratic decay; sacred objects handled with practised familiarity; hierarchy shown by who stands closest to the centre",
+  },
+  cosmic_horror: {
+    moments: [
+      "taking measurements at a restricted dig site",
+      "sealing a sample for transport",
+      "comparing contradictory field reports",
+      "holding a quiet quarantine cordon at the shoreline",
+    ],
+    signals:
+      "weatherproof field clothing and carefully labelled instruments; repeated survey marks and archive seals; authority shown by access to records, equipment, and the person trusted to record the result",
   },
   fallout: {
     moments: [

@@ -432,6 +432,13 @@ export const npcThemeConfig = {
       "Changed Mortal",
       "Witchblood",
     ],
+    "Cosmic Horror": [
+      "Human",
+      "Dream-Touched Human",
+      "Expedition-Born Survivor",
+      "Altered Witness",
+      "Unreliable Returnee",
+    ],
     "Sci-Fi / Space Opera": [
       "Human",
       "Android",
@@ -533,6 +540,16 @@ export const npcThemeConfig = {
       "Fallen Clergy",
       "Criminal Enforcer",
       "Asylum Keeper",
+    ],
+    "Cosmic Horror": [
+      "Investigator",
+      "Antiquarian",
+      "Field Researcher",
+      "Disgraced Academic",
+      "Expedition Guide",
+      "Dream Interpreter",
+      "Surviving Witness",
+      "Quarantine Officer",
     ],
     "Sci-Fi / Space Opera": [
       "Starship Pilot",
@@ -763,6 +780,38 @@ export const npcThemeConfig = {
         label: "Pragmatic Survivor",
         aiPromptDirective:
           "Write this NPC as highly defensive, paranoid, and survival-driven. Their speech is guarded, they avoid making definitive promises, and they prioritize exit strategies over loyalty.",
+      },
+    ],
+    "Cosmic Horror": [
+      {
+        id: "evidence_bound",
+        label: "Evidence-Bound",
+        aiPromptDirective:
+          "Write this NPC as a careful observer who records details, resists easy conclusions, and fears what the evidence may prove.",
+      },
+      {
+        id: "forbidden_curiosity",
+        label: "Forbidden Curiosity",
+        aiPromptDirective:
+          "Give this NPC an intelligent, self-aware fascination with knowledge they know is dangerous. Their curiosity should create hard choices, not cartoonish madness.",
+      },
+      {
+        id: "protective_skeptic",
+        label: "Protective Skeptic",
+        aiPromptDirective:
+          "Write this NPC as a rational defender of ordinary people who initially rejects the impossible but changes when proof becomes unavoidable.",
+      },
+      {
+        id: "contaminated_witness",
+        label: "Contaminated Witness",
+        aiPromptDirective:
+          "Write this NPC as someone changed by an encounter they cannot explain. They should remain human, specific, and unreliable in understandable ways.",
+      },
+      {
+        id: "merciful_containment",
+        label: "Merciful Containment",
+        aiPromptDirective:
+          "Write this NPC as willing to hide, destroy, or quarantine dangerous knowledge to protect others, while struggling with the ethical cost.",
       },
     ],
     "Sci-Fi / Space Opera": [

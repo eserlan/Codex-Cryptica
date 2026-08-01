@@ -126,6 +126,7 @@
     Pirate: "pirate",
     "Cyberpunk / Corporate": "cyberpunk",
     "Vampire / Gothic Noir": "horror",
+    "Cosmic Horror": "cosmic_horror",
     "Sci-Fi / Space Opera": "scifi",
     "Modern Conspiracy": "modern",
     "Post-Apocalyptic": "apocalyptic",
