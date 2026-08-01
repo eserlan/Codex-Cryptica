@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import type { StatSheetTemplate } from "schema";
   import {
     statSheetTemplates,
@@ -463,11 +464,22 @@
   </div>
 
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
-    <h4
-      class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
-    >
-      Vault Templates
-    </h4>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h4
+        class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+      >
+        Vault Templates
+      </h4>
+      <a
+        href={resolve("/templates")}
+        class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        data-testid="browse-community-stat-sheet-templates"
+      >
+        <span class="icon-[lucide--users-round] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
+        Browse community templates
+      </a>
+    </div>
 
     <div class="space-y-2">
       {#each statSheetTemplates.templates as template (template.id)}
