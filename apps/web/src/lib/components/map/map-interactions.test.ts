@@ -170,6 +170,31 @@ describe("MapInteractionManager", () => {
     expect(manager.isPanning).toBe(false);
   });
 
+  it("should pan again with one finger after a pinch ends", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const touch = (
+      type: string,
+      pointerId: number,
+      clientX: number,
+      clientY: number,
+    ) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId,
+        pointerType: "touch",
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(touch("pointerdown", 1, 300, 300));
+    manager.onPointerDown(touch("pointerdown", 2, 500, 300));
+    await manager.onPointerUp(touch("pointerup", 1, 300, 300));
+    await manager.onPointerUp(touch("pointerup", 2, 500, 300));
+    (mapStore.updateViewport as any).mockClear();
+
+    manager.onPointerDown(touch("pointerdown", 3, 200, 200));
+    manager.onPointerMove(touch("pointermove", 3, 220, 225));
+
+    expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 20, y: 25 }, 1);
+  });
+
   it("should start box selection when Ctrl is pressed on GM mode", () => {
     const event = new MouseEvent("mousedown", {
       clientX: 200,
