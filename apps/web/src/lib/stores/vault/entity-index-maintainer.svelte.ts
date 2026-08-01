@@ -31,11 +31,26 @@ export class EntityIndexMaintainer {
   titleAndAliasIndex = $state<TitleAndAliasIndexEntry[]>([]);
 
   rebuildIndexes(entities: Record<string, LocalEntity>) {
-    const all = Object.values(entities);
+    // ⚡ Bolt Optimization: Use a single imperative loop over keys instead of Object.values() and .filter()
+    // to avoid multiple large intermediate array allocations during index rebuilds.
+    const all: LocalEntity[] = [];
+    const active: LocalEntity[] = [];
+    const graph: LocalEntity[] = [];
+
+    for (const key in entities) {
+      if (Object.prototype.hasOwnProperty.call(entities, key)) {
+        const entity = entities[key];
+        all.push(entity);
+        graph.push(entity);
+        if (entity.status !== "draft") {
+          active.push(entity);
+        }
+      }
+    }
 
     this.allEntities = all;
-    this.allActiveEntities = all.filter((e) => e.status !== "draft");
-    this.graphEntities = [...all];
+    this.allActiveEntities = active;
+    this.graphEntities = graph;
     this.bumpGraphStructureVersion();
 
     const parentMap: Record<string, string[]> = {};
