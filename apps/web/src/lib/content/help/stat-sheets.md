@@ -54,15 +54,18 @@ Saved templates only capture structure (labels, types, dice formulas, counter bo
 
 ### Community templates
 
-You can choose to share a saved layout in the Community Templates directory.
-Before publishing, Codex Cryptica shows the fields and public description that
-will be shared. Entity values, notes, names, vault identifiers, and local asset
-paths stay in your vault.
+You can choose one or more saved layouts to share in the Community Templates
+directory. Before publishing, Codex Cryptica shows the fields and public details
+for every selected template and asks you to confirm how many will become public.
+Entity values, notes, names, vault identifiers, and local asset paths stay in
+your vault. Publishing never happens automatically.
 
-The owner token shown when you publish is the key for updating or unpublishing
-that listing. Copy or export it somewhere safe. If browser data is cleared,
-use the recovery action and enter the token again. Unpublishing removes the
-listing from new directory results but does not remove your local template.
+The management key shown for each published template is the key for updating or
+unpublishing that listing. Copy it somewhere safe: it is stored locally and
+shown during publication, but losing both copies means the listing can no longer
+be managed. If browser data is cleared, use the recovery action and enter the
+key again. Unpublishing removes the listing from new directory results but does
+not remove your local template.
 
 Importing a community template creates an independent local copy. It never
 updates the publisher's version and does not send your campaign data to them.

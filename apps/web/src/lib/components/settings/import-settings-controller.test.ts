@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getPack } from "@codex/content-packs";
@@ -10,6 +10,13 @@ import {
 } from "./import-settings-controller.svelte";
 import { mapThemeToGenre } from "./theme-mapper";
 import { isScabardExport } from "@codex/importer";
+import type { DroppedItem } from "@codex/importer";
+
+const fsMocks = vi.hoisted(() => ({
+  pickDirectory: vi.fn(),
+  isFileSystemAccessSupported: vi.fn(() => true),
+}));
+vi.mock("$lib/utils/fs", () => fsMocks);
 
 function baseDeps(
   overrides: Partial<ImportSettingsControllerDeps> = {},
@@ -688,5 +695,361 @@ describe("import-settings-controller — validateCifManifest warnings surface in
         (w) => w.code === "cif.unmapped-kind",
       ),
     ).toBe(true);
+  });
+});
+
+function vaultEntityFile(
+  overrides: Record<string, unknown> = {},
+  content = "Lore body.",
+): File {
+  const fields = {
+    id: "x",
+    type: "Character",
+    title: "Thistle",
+    tags: [],
+    ...overrides,
+  };
+  const yaml = Object.entries(fields)
+    .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
+    .join("\n");
+  return new File([`---\n${yaml}\n---\n\n${content}`], "entity.md", {
+    type: "text/markdown",
+  });
+}
+
+function createVaultStoreMock(seedEntities: Record<string, any> = {}) {
+  const entities: Record<string, any> = { ...seedEntities };
+  let counter = 0;
+  return {
+    entities,
+    createEntity: async (
+      type: string,
+      title: string,
+      initialData: Record<string, unknown> = {},
+    ) => {
+      const id = `e${++counter}`;
+      entities[id] = { id, type, title, ...initialData };
+      return id;
+    },
+    updateEntity: async (id: string, updates: Record<string, unknown>) => {
+      if (!entities[id]) return false;
+      entities[id] = { ...entities[id], ...updates };
+      return true;
+    },
+    addConnection: async () => true,
+    suspendSaving: () => {},
+    resumeSaving: () => {},
+    flushPendingSaves: async () => {},
+    saveImageToVault: async (
+      _blob: unknown,
+      _entityId: string,
+      name?: string,
+    ) => ({
+      image: `images/${name ?? "asset"}.webp`,
+      thumbnail: `images/${name ?? "asset"}_thumb.webp`,
+    }),
+    isGuest: false,
+  };
+}
+
+describe("import-settings-controller — Import Files (file-system drag/drop & upload)", () => {
+  it("prepares a review session that preserves the dropped file's real entity type", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    const items: DroppedItem[] = [
+      { relativePath: "entities/thistle.md", file: vaultEntityFile() },
+    ];
+
+    await controller.handleVaultFiles(items);
+
+    expect(controller.step).toBe("review");
+    expect(controller.ccSession?.sourceSystem).toBe("vault-files");
+    expect(controller.ccSession?.items[0].resolvedType).toBe("Character");
+    expect(controller.ccSession?.items[0].typeFallback).toBe(false);
+  });
+
+  it("preserves a custom (non-built-in) entity type just as faithfully", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    const items: DroppedItem[] = [
+      {
+        relativePath: "entities/relic.md",
+        file: vaultEntityFile({
+          id: "relic",
+          type: "Ancient Relic",
+          title: "The Shard",
+        }),
+      },
+    ];
+
+    await controller.handleVaultFiles(items);
+
+    expect(controller.ccSession?.items[0].resolvedType).toBe("Ancient Relic");
+  });
+
+  it("does not treat a same-titled but unrelated existing entity as a conflict (no title fallback)", async () => {
+    const deps = baseDeps({
+      vault: createVaultStoreMock({
+        existing1: { id: "existing1", type: "Character", title: "Thistle" },
+      }) as any,
+    });
+    const controller = new ImportSettingsController(deps);
+    const items: DroppedItem[] = [
+      { relativePath: "entities/thistle.md", file: vaultEntityFile() },
+    ];
+
+    await controller.handleVaultFiles(items);
+
+    expect(controller.ccSession?.items[0].match).toBeNull();
+  });
+
+  it("matches an exact re-drop of a previously-imported sourcePath as a conflict", async () => {
+    const deps = baseDeps({
+      vault: createVaultStoreMock({
+        existing1: {
+          id: "existing1",
+          type: "Character",
+          title: "Something Else",
+          discoverySource: "vault-files:path:entities/thistle.md",
+        },
+      }) as any,
+    });
+    const controller = new ImportSettingsController(deps);
+    const items: DroppedItem[] = [
+      { relativePath: "entities/thistle.md", file: vaultEntityFile() },
+    ];
+
+    await controller.handleVaultFiles(items);
+
+    expect(controller.ccSession?.items[0].match?.entityId).toBe("existing1");
+    expect(controller.ccSession?.items[0].matchDecision ?? "skip").toBe("skip");
+  });
+
+  it("rejects a caller trying to set matchDecision to update for a vault-files session (FR-006/FR-007)", async () => {
+    const deps = baseDeps({
+      vault: createVaultStoreMock({
+        existing1: {
+          id: "existing1",
+          type: "Character",
+          title: "Something Else",
+          discoverySource: "vault-files:path:entities/thistle.md",
+        },
+      }) as any,
+    });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      { relativePath: "entities/thistle.md", file: vaultEntityFile() },
+    ]);
+
+    const ref = controller.ccSession!.items[0].sourceRef;
+    controller.handleCCMatchDecisionChange(ref, "update");
+
+    expect(controller.ccSession?.items[0].matchDecision ?? "skip").toBe("skip");
+  });
+
+  it("surfaces a missing image reference instead of silently dropping it", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+    ]);
+
+    expect(controller.step).toBe("review");
+    expect(controller.missingImageRefs).toEqual([
+      {
+        path: "images/thistle.webp",
+        referencedBy: ["entities/thistle.md"],
+        resolution: "unresolved",
+      },
+    ]);
+  });
+
+  it("resolves a missing image by adding the file directly and re-prepares the session", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+    ]);
+    const ref = controller.missingImageRefs[0];
+
+    const imageFile = new File(["bytes"], "thistle.webp", {
+      type: "image/webp",
+    });
+    await controller.handleAddMissingImageFile(ref, imageFile);
+
+    expect(controller.missingImageRefs[0].resolution).toBe("added-directly");
+    expect(controller.ccSession?.assets.length).toBe(1);
+  });
+
+  it("preserves an in-progress ignore decision on another item when resolving a missing image", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+      {
+        relativePath: "entities/other.md",
+        file: vaultEntityFile({ id: "other", title: "Other" }),
+      },
+    ]);
+    const otherItem = controller.ccSession!.items.find(
+      (i) => i.draft.sourcePath === "entities/other.md",
+    )!;
+    controller.handleCCItemDecisionChange(
+      otherItem.draft.sourcePath!,
+      "ignore",
+    );
+    expect(
+      controller.ccSession!.items.find(
+        (i) => i.draft.sourcePath === "entities/other.md",
+      )!.decision,
+    ).toBe("ignore");
+
+    const ref = controller.missingImageRefs[0];
+    const imageFile = new File(["bytes"], "thistle.webp", {
+      type: "image/webp",
+    });
+    await controller.handleAddMissingImageFile(ref, imageFile);
+
+    expect(
+      controller.ccSession!.items.find(
+        (i) => i.draft.sourcePath === "entities/other.md",
+      )!.decision,
+    ).toBe("ignore");
+  });
+
+  it("ignores a second concurrent resolution attempt for the same missing image ref", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+    ]);
+    const ref = controller.missingImageRefs[0];
+    const imageFile = new File(["bytes"], "thistle.webp", {
+      type: "image/webp",
+    });
+
+    await Promise.all([
+      controller.handleAddMissingImageFile(ref, imageFile),
+      controller.handleAddMissingImageFile(ref, imageFile),
+    ]);
+
+    expect(controller.ccSession?.assets.length).toBe(1);
+  });
+
+  it("resolves a missing image via granted folder access", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+    ]);
+    const ref = controller.missingImageRefs[0];
+
+    const imageFile = new File(["bytes"], "thistle.webp", {
+      type: "image/webp",
+    });
+    fsMocks.isFileSystemAccessSupported.mockReturnValue(true);
+    fsMocks.pickDirectory.mockResolvedValue({
+      values: async function* () {
+        yield {
+          kind: "file",
+          name: "thistle.webp",
+          getFile: () => Promise.resolve(imageFile),
+        };
+      },
+    });
+
+    await controller.handleResolveMissingImageFromFolder(ref);
+
+    expect(controller.missingImageRefs[0].resolution).toBe(
+      "resolved-from-folder",
+    );
+    expect(controller.ccSession?.assets.length).toBe(1);
+  });
+
+  it("explains folder access isn't supported instead of attempting it", async () => {
+    const notify = vi.fn();
+    const controller = new ImportSettingsController(
+      baseDeps({
+        vault: createVaultStoreMock() as any,
+        notificationStore: { notify } as any,
+      }),
+    );
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+    ]);
+    const ref = controller.missingImageRefs[0];
+
+    fsMocks.isFileSystemAccessSupported.mockReturnValue(false);
+    fsMocks.pickDirectory.mockClear();
+
+    await controller.handleResolveMissingImageFromFolder(ref);
+
+    expect(notify).toHaveBeenCalled();
+    expect(fsMocks.pickDirectory).not.toHaveBeenCalled();
+    expect(controller.missingImageRefs[0].resolution).toBe("unresolved");
+  });
+
+  it("excludes an unrecognized dropped file and still imports the valid ones", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      { relativePath: "entities/thistle.md", file: vaultEntityFile() },
+      {
+        relativePath: "notes/readme.txt",
+        file: new File(["hi"], "readme.txt"),
+      },
+    ]);
+
+    expect(controller.step).toBe("review");
+    expect(controller.ccSession?.items.length).toBe(1);
+    expect(
+      controller.ccSession?.warnings.some((w) => w.ref === "notes/readme.txt"),
+    ).toBe(true);
+  });
+
+  it("returns to upload with a clear reason when nothing recognizable was dropped", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "notes/readme.txt",
+        file: new File(["hi"], "readme.txt"),
+      },
+    ]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles.length).toBeGreaterThan(0);
+  });
+
+  it("is unreachable in guest sessions", async () => {
+    const deps = baseDeps({ vault: { isGuest: true } as any });
+    const controller = new ImportSettingsController(deps);
+
+    await controller.handleVaultFiles([
+      { relativePath: "entities/thistle.md", file: vaultEntityFile() },
+    ]);
+
+    expect(controller.step).toBe("upload");
+    expect(controller.ccSession).toBeNull();
+    expect(controller.rejectedFiles.length).toBeGreaterThan(0);
   });
 });
