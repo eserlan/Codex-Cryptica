@@ -429,6 +429,30 @@
         surpriseMeCard,
       ],
     },
+    "cosmic-horror": {
+      label: "Cosmic Horror",
+      localStorageId: "cosmic_horror",
+      eyebrow: "The Unknown Beneath & Beyond",
+      intro:
+        "Build investigations shaped by impossible environments, forgotten expeditions, strange archaeology, and discoveries too large to explain away. These generators favour original eldritch mysteries, fragile certainty, and alien scale—not vampire courts or gothic-noir intrigue.",
+      metaTitle:
+        "Cosmic Horror RPG Generators — Investigators, Mysteries & More | Codex Cryptica",
+      metaDescription:
+        "Free cosmic-horror RPG generators for tabletop GMs. Create investigators, secret societies, remote outposts, impossible ruins, and unsettling adventure hooks. No login required.",
+      cards: [
+        ...sharedCards(
+          "Outpost Generator",
+          "Build remote stations, weather-beaten towns, and expedition camps with uneasy locals, evidence, and impossible surroundings.",
+        ),
+        socialHubCard,
+        newsSheetCard(
+          "Field Report Generator",
+          "Generate a field report — missing expeditions, astronomical anomalies, restricted notices, and unsettling leads, with GM-only hooks.",
+        ),
+        languageCard,
+        surpriseMeCard,
+      ],
+    },
     western: {
       label: "Western",
       localStorageId: "western",
