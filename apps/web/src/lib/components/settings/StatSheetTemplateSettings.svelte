@@ -64,7 +64,21 @@
   let draggedFieldKey = $state<string | null>(null);
   let dragOverFieldKey = $state<string | null>(null);
   let selectedTemplateFieldKey = $state<string | null>(null);
-  let publishingTemplate = $state<StatSheetTemplate | null>(null);
+  let selectedPublishTemplateIds = $state<string[]>([]);
+  let publishingTemplates = $state<StatSheetTemplate[]>([]);
+  const selectedPublishCount = $derived(selectedPublishTemplateIds.length);
+
+  function togglePublishSelection(templateId: string, selected: boolean) {
+    selectedPublishTemplateIds = selected
+      ? [...new Set([...selectedPublishTemplateIds, templateId])]
+      : selectedPublishTemplateIds.filter((id) => id !== templateId);
+  }
+
+  function openPublishSelection() {
+    publishingTemplates = statSheetTemplates.templates.filter((template) =>
+      selectedPublishTemplateIds.includes(template.id),
+    );
+  }
 
   function handleFieldDragStart(
     e: DragEvent,
@@ -479,6 +493,19 @@
         ></span>
         Browse community templates
       </a>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded bg-theme-primary px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-theme-bg transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={selectedPublishCount === 0}
+        onclick={openPublishSelection}
+        data-testid="publish-selected-stat-sheet-templates"
+      >
+        <span class="icon-[lucide--upload] h-3.5 w-3.5" aria-hidden="true"
+        ></span>
+        Publish selected{selectedPublishCount
+          ? ` (${selectedPublishCount})`
+          : ""}
+      </button>
     </div>
 
     <div class="space-y-2">
@@ -488,6 +515,22 @@
           data-testid="stat-sheet-template-settings-row"
         >
           <div class="flex items-center justify-between gap-3">
+            <label
+              class="flex shrink-0 items-center gap-2 text-xs text-theme-muted"
+            >
+              <input
+                type="checkbox"
+                checked={selectedPublishTemplateIds.includes(template.id)}
+                onchange={(event) =>
+                  togglePublishSelection(
+                    template.id,
+                    (event.currentTarget as HTMLInputElement).checked,
+                  )}
+                aria-label="Select {template.name} for community publishing"
+                data-testid="stat-sheet-publish-selection"
+              />
+              <span class="sr-only">Select for community publishing</span>
+            </label>
             <div class="flex-1 min-w-0">
               {#if editingId === template.id}
                 <div class="flex gap-2 mr-4">
@@ -531,18 +574,6 @@
                   <span class="text-xs font-bold text-theme-text truncate"
                     >{template.name}</span
                   >
-                </button>
-                <button
-                  type="button"
-                  onclick={() => (publishingTemplate = template)}
-                  class="p-2 text-theme-muted hover:text-theme-primary transition-colors"
-                  title="Share Template"
-                  aria-label="Share {template.name} template"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="icon-[lucide--share-2] w-4 h-4"
-                  ></span>
                 </button>
               {/if}
             </div>
@@ -633,10 +664,10 @@
   </div>
 </div>
 
-{#if publishingTemplate}
+{#if publishingTemplates.length > 0}
   <TemplatePublishModal
-    template={publishingTemplate}
-    onClose={() => (publishingTemplate = null)}
+    templates={publishingTemplates}
+    onClose={() => (publishingTemplates = [])}
     onPublished={() =>
       notificationStore.notify(
         "Template published to the community directory.",

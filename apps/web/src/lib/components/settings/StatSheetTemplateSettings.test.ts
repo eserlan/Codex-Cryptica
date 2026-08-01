@@ -175,6 +175,23 @@ describe("StatSheetTemplateSettings", () => {
     expect(link.getAttribute("href")).toBe("/app/templates");
   });
 
+  it("opens the shared publish flow for selected vault templates", async () => {
+    render(StatSheetTemplateSettings);
+
+    const publishButton = screen.getByTestId(
+      "publish-selected-stat-sheet-templates",
+    ) as HTMLButtonElement;
+    expect(publishButton.disabled).toBe(true);
+
+    await fireEvent.click(
+      screen.getByLabelText("Select My Custom Sheet for community publishing"),
+    );
+    expect(publishButton.disabled).toBe(false);
+    await fireEvent.click(publishButton);
+
+    expect(screen.getByText("Share template")).toBeTruthy();
+  });
+
   it("renames a vault template", async () => {
     render(StatSheetTemplateSettings);
 

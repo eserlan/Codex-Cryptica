@@ -51,6 +51,7 @@ export class PublicTemplateDirectoryService {
   async publishTemplate(input: {
     package: PublicTemplatePackage;
     ownerDisplayName?: string;
+    signal?: AbortSignal;
   }) {
     const response = await this.fetcher(
       `${this.baseUrl}/api/template-directory/listings`,
@@ -64,6 +65,7 @@ export class PublicTemplateDirectoryService {
             rightsAcknowledged: true,
           },
         }),
+        signal: input.signal,
       },
     );
     if (!response.ok) throw new Error("Could not publish the template.");

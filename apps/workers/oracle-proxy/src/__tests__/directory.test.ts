@@ -688,6 +688,16 @@ describe("template directory routes", () => {
       ownerToken: string;
     };
     expect(result.ownerToken).toBeTruthy();
+    const storedListing = bucket.store.get(
+      getTemplateListingKey(result.listing.listingId),
+    );
+    expect(storedListing?.customMetadata?.ownerToken).toBeUndefined();
+    expect(storedListing?.customMetadata?.ownerTokenHash).toMatch(
+      /^[a-f0-9]{64}$/,
+    );
+    expect(storedListing?.customMetadata?.ownerTokenHash).not.toBe(
+      result.ownerToken,
+    );
     const storedPackage = bucket.store.get(
       getTemplatePackageKey(result.listing.listingId),
     );

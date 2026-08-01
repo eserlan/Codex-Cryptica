@@ -46,6 +46,26 @@ describe("PublicTemplateDirectoryService", () => {
     expect(saveOwnerToken).toHaveBeenCalledWith("listing-1", "secret");
   });
 
+  it("forwards a cancellation signal without persisting a token", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const saveOwnerToken = vi.fn(async () => {});
+    const fetcher = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(init?.signal).toBe(controller.signal);
+      throw new DOMException("Aborted", "AbortError");
+    });
+    const service = new PublicTemplateDirectoryService({
+      fetch: fetcher as typeof fetch,
+      baseUrl: "https://proxy",
+      saveOwnerToken,
+    });
+
+    await expect(
+      service.publishTemplate({ package: pkg, signal: controller.signal }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(saveOwnerToken).not.toHaveBeenCalled();
+  });
+
   it("returns null for an unavailable listing", async () => {
     const service = new PublicTemplateDirectoryService({
       fetch: vi.fn(
