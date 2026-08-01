@@ -50,6 +50,18 @@ describe("generateNpcLocal", () => {
     expect(out.lore).toContain(`- **Moral Stance**: ${morality.label}`);
   });
 
+  it("offers dedicated Cosmic Horror NPC choices", () => {
+    expect(npcThemeConfig.ancestries["Cosmic Horror"]).toContain(
+      "Dream-Touched Human",
+    );
+    expect(npcThemeConfig.roles["Cosmic Horror"]).toContain("Investigator");
+    expect(npcThemeConfig.moralities["Cosmic Horror"]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "evidence_bound" }),
+      ]),
+    );
+  });
+
   it("injects D&D quick stats only when requested", () => {
     const without = generateNpcLocal({ role: "Mage" }, seededRng(3));
     expect(without.lore).not.toContain("Class / Archetype");

@@ -3,6 +3,7 @@ import {
   buildLanguagePrompt,
   parseLanguageResponse,
   generateLanguageLocal,
+  languageConfig,
 } from "./public-language";
 import { validateFallbackLanguageQuality } from "./language-profile";
 import { NAME_BAN_PROMPT } from "./public-npc";
@@ -42,6 +43,13 @@ test("buildLanguagePrompt gives Pirate languages a cultural direction", () => {
   expect(prompt.userMessage).toContain(
     "at least one term that could only belong to a Pirate setting",
   );
+});
+
+test("buildLanguagePrompt gives Cosmic Horror languages a distinct direction", () => {
+  const prompt = buildLanguagePrompt({ genre: "Cosmic Horror" });
+
+  expect(languageConfig.genres).toContain("Cosmic Horror");
+  expect(prompt.userMessage).toContain("untranslatable sounds");
 });
 
 test("buildLanguagePrompt includes the shared name-ban prompt", () => {

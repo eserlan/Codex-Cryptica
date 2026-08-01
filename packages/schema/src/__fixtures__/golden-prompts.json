@@ -229,6 +229,35 @@
       "truncated": false
     }
   },
+  "location / cosmic horror": {
+    "prompt": "weathered coastal observatory above black tidal rock, a survey tripod aimed at a fog-obscured horizon where the sea bends upward. establishing environment art with distinct foreground, midground, and background. Architecture or landforms show their construction method, wear, and repair. Weather and atmosphere carry the depth, lighting states the hour, and the composition offers a clear path into the scene. weathered scientific field illustration with precise observational detail interrupted by one physically impossible feature. Materials — wet basalt, tidal rock, fog-softened timber, concrete observatories, exposed strata. sea-green ink, faded chart paper, deep indigo shadow, and a restrained violet anomaly. overcast coastal daylight or a single practical research lamp, with the anomaly emitting no visible glow. extreme wide shot, 24mm wide-angle lens, f/11, deep focus, eye-level angle, horizon on a third, one human-scale element for reference, 3:2 landscape framing. in the tradition of early twentieth-century scientific field plate.",
+    "negativeTerms": [
+      "text",
+      "watermark",
+      "artist signature",
+      "logo",
+      "oversaturated HDR",
+      "lens dirt overlay",
+      "tiling",
+      "empty stage",
+      "flat lighting",
+      "uniform haze",
+      "fisheye distortion",
+      "unjustified centre symmetry"
+    ],
+    "metadata": {
+      "artDirectionVersion": 2,
+      "categoryId": "location",
+      "themeId": "cosmic_horror",
+      "cameraPresetId": "optics.location.default",
+      "styleReferenceMode": "named",
+      "styleOverridden": false,
+      "figureInFrame": false,
+      "aspectRatio": "3:2",
+      "removedNames": [],
+      "truncated": false
+    }
+  },
   "cover / steampunk": {
     "prompt": "airship silhouetted against a smoke-choked industrial skyline, mooring towers below. atmospheric cover art with one dominant focal point, layered depth, and genre-defining setting detail. The upper third is held clear as negative space for a title, with the focal point below it. gouache rendering with flat opaque colour. Materials — riveted brass plate, leather strapping, polished gauges, oiled linkages; soot-blackened brick, riveted iron spans, glazed tile, copper piping. warm amber and sepia. industrial forge light from below or behind, steam catching it. wide shot, 28mm wide-angle lens, f/8, sharp through the subject, eye-level angle, rim and kicker light separating the subject from the background, low horizon, backlit hero silhouette, quiet upper third, 2:3 portrait framing. in the tradition of Victorian industrial engraving.",
     "negativeTerms": [

@@ -1,3 +1,87 @@
+const COSMIC_HORROR_SETTLEMENT = {
+  sizes: [
+    { name: "Survey Camp", range: "12–60 residents", pointsOfInterestCount: 1 },
+    {
+      name: "Remote Village",
+      range: "60–500 residents",
+      pointsOfInterestCount: 2,
+    },
+    {
+      name: "Coastal Town",
+      range: "500–4,000 residents",
+      pointsOfInterestCount: 3,
+    },
+    {
+      name: "University District",
+      range: "4,000–18,000 residents",
+      pointsOfInterestCount: 4,
+    },
+  ],
+  environments: [
+    "Fog-bound coastline",
+    "Highland observatory plateau",
+    "Flooded river valley",
+    "Windswept island",
+    "Forest around an old excavation",
+    "Industrial university quarter",
+  ],
+  primaryFunctions: [
+    "Astronomical observation post",
+    "Expedition supply town",
+    "University research district",
+    "Quarantine checkpoint",
+    "Archive and rare-book centre",
+    "Deep-water fishing community",
+  ],
+  tones: [
+    "Methodical but uneasy",
+    "Outwardly ordinary, quietly strained",
+    "Fog-muted and watchful",
+    "Scholarly and secretive",
+    "Remote and underprepared",
+  ],
+  mainTensions: [
+    "A survey team returned with one member missing from every photograph",
+    "The town's tide tables now predict events on land",
+    "A sealed archive has begun issuing requests for materials",
+    "Residents disagree about whether last week's eclipse happened",
+    "A quarantine order is hiding an anomaly rather than an illness",
+  ],
+  authorityTypes: [
+    "University field director",
+    "Harbour and quarantine board",
+    "Inherited town council",
+    "Expedition sponsor's representative",
+    "Archive custodian with emergency powers",
+  ],
+  notableLocations: [
+    "The tidal observatory with its lenses covered at noon",
+    "A reading room whose catalogue omits one entire floor",
+    "The weather station that no longer records wind",
+    "A boarding house used by every expedition since the first survey",
+    "The sealed pier where unregistered boats arrive at dawn",
+    "A civic hall built over an excavation nobody discusses",
+  ],
+  factions: [
+    "The Miskatonic field office",
+    "The harbour quarantine committee",
+    "A discreet antiquarian society",
+    "The families who financed the first expedition",
+    "The volunteer coast-watch service",
+  ],
+  namePrefixes: ["Dun", "Inn", "Lorn", "Morrow", "Nant", "Orra", "Pel", "Rill"],
+  nameSuffixes: [
+    "mouth",
+    "reach",
+    "field",
+    "haven",
+    "point",
+    "mere",
+    "watch",
+    "cairn",
+  ],
+};
+
 export const settlementConfig = {
   genres: [
     "Fantasy",
@@ -8,6 +92,7 @@ export const settlementConfig = {
     "Post-Apocalyptic",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Western",
     "Steampunk",
     "Space Opera Resistance",
@@ -159,6 +244,7 @@ export const settlementConfig = {
         pointsOfInterestCount: 4,
       },
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.sizes,
     Western: [
       { name: "Homestead", range: "10–50 residents", pointsOfInterestCount: 1 },
       {
@@ -303,6 +389,7 @@ export const settlementConfig = {
       "Underground catacombs",
       "Decaying city district",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.environments,
     Western: [
       "Desert plains",
       "Canyon river crossing",
@@ -409,6 +496,7 @@ export const settlementConfig = {
       "Research facility",
       "Crumbling estate settlement",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.primaryFunctions,
     Western: [
       "Railroad depot",
       "Mining claim town",
@@ -501,6 +589,7 @@ export const settlementConfig = {
       "Desperate and hunted",
       "Ancient and unknowable",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.tones,
     Western: [
       "Lawless and dangerous",
       "Dusty and hardscrabble",
@@ -602,6 +691,7 @@ export const settlementConfig = {
       "Forbidden ritual",
       "Hidden monster in plain sight",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.mainTensions,
     Western: [
       "Range war",
       "Railroad company pressure",
@@ -700,6 +790,7 @@ export const settlementConfig = {
       "Corrupt official",
       "Religious authority",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.authorityTypes,
     Western: [
       "Sheriff",
       "Railroad company agent",
@@ -810,6 +901,7 @@ export const settlementConfig = {
       "Witchwood Gate",
       "Ruined Mill",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.notableLocations,
     Western: [
       "The Saloon",
       "Sheriff's Office",
@@ -908,6 +1000,7 @@ export const settlementConfig = {
       "The Whispering Circle",
       "The Fallen Church",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.factions,
     Western: [
       "The Railroad Company",
       "The Cattle Baron's Men",
@@ -1002,6 +1095,7 @@ export const settlementConfig = {
       "Dunmere",
       "Wraithgate",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.namePrefixes,
     Western: [
       "Dusty",
       "Rattler",
@@ -1114,6 +1208,7 @@ export const settlementConfig = {
       " Falls",
       " Vale",
     ],
+    "Cosmic Horror": COSMIC_HORROR_SETTLEMENT.nameSuffixes,
     Western: [
       " Creek",
       " Flats",

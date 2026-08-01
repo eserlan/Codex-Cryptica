@@ -135,6 +135,7 @@ export function mapHubGenreToShipGenre(hubGenre: string): string {
   if (hubGenre === "Steampunk") return "Steampunk";
   if (hubGenre === "Western") return "Western (River & Rail)";
   if (hubGenre === "Horror") return "Dark Fantasy";
+  if (hubGenre === "Cosmic Horror") return "Sci-Fi";
   return "Sci-Fi";
 }
 

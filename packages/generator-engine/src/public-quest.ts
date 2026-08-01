@@ -23,6 +23,7 @@ export const themeToQuestGenre: Record<string, string> = {
   Pirate: "Pirate",
   "Cyberpunk / Corporate": "Cyberpunk",
   "Vampire / Gothic Noir": "Dark Fantasy",
+  "Cosmic Horror": "Cosmic Horror",
   "Sci-Fi / Space Opera": "Sci-Fi",
   "Modern Conspiracy": "Political Intrigue",
   "Post-Apocalyptic": "Post-Apocalyptic",
@@ -40,6 +41,7 @@ export const questConfig = {
     "Dark Fantasy",
     "Political Intrigue",
     "Horror",
+    "Cosmic Horror",
     "Comedy",
     "Steampunk",
     "Lancer",
@@ -95,6 +97,13 @@ export const questConfig = {
       "Philosophical",
       "Tense",
       "Utopian",
+    ],
+    "Cosmic Horror": [
+      "Unsettling",
+      "Investigative",
+      "Dreamlike",
+      "Claustrophobic",
+      "Awe-struck",
     ],
   } as Record<string, string[]>,
   scopes: [
@@ -156,6 +165,12 @@ export const questConfig = {
       "Local (research outpost)",
       "System-wide (diplomatic dispute)",
       "Galaxy-spanning (precursor threat)",
+    ],
+    "Cosmic Horror": [
+      "Single town or outpost",
+      "Regional investigation",
+      "Continental pattern",
+      "Reality-threatening discovery",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -263,6 +278,14 @@ export const questConfig = {
       "Research Laboratory",
       "Terraforming Colony",
     ],
+    "Cosmic Horror": [
+      "Remote Observatory",
+      "Flooded Archive",
+      "Isolated Coastal Town",
+      "Abandoned Expedition Camp",
+      "University Collection",
+      "Impossible Ruin",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -369,6 +392,14 @@ export const questConfig = {
       "Ancient Planetary Defense System",
       "Temporal Distortion",
     ],
+    "Cosmic Horror": [
+      "Dream Contagion",
+      "Missing Expedition",
+      "Uncatalogued Artifact",
+      "Impossible Geometry",
+      "Secretive Research Society",
+      "Tide-Bound Entity",
+    ],
   } as Record<string, string[]>,
   hooks: [
     "A local official offers a reward to find a missing heir before a rival claims the title.",
@@ -394,6 +425,16 @@ export const questConfig = {
     "Party's own past caused this situation",
     "Two factions both claim the prize",
   ],
+  twistsByTheme: {
+    "Cosmic Horror": [
+      "The evidence was planted by the phenomenon, not the antagonist",
+      "The missing expedition returned before it left",
+      "The anomaly is contained by a routine nobody understands",
+      "The witness is accurate, but remembers a different version of the town",
+      "Destroying the artefact removes the only warning before the next event",
+      "The party's investigation is the final step in a long-running experiment",
+    ],
+  } as Record<string, string[]>,
   rewards: [
     "Coin plus a local power's favor",
     "Deed to a useful property",
@@ -434,6 +475,14 @@ export const questConfig = {
       "An artefact from the crypt",
       "Blackmail material on a noble",
       "Passage through enemy territory",
+    ],
+    "Cosmic Horror": [
+      "The unredacted field report and the right to decide who reads it",
+      "A calibrated instrument that detects the anomaly before it manifests",
+      "Safe passage through a quarantined district",
+      "Access to a sealed collection under strict custodial terms",
+      "A survivor's testimony that resolves one critical contradiction",
+      "A dependable contact in the archive or observatory",
     ],
     "Sci-Fi / Space Opera": [
       "Credits plus a nav contact",
@@ -527,40 +576,55 @@ export interface ResolvedQuest {
 
 function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
   const genre = options.genre || pickFrom(questConfig.genres, rng);
-  const pirate = genre === "Pirate";
+  const usesDedicatedPools = genre === "Pirate" || genre === "Cosmic Horror";
   return {
     genre,
     tone:
       options.tone ||
       pickFrom(
-        pirate ? questConfig.tonesByTheme.Pirate : questConfig.tones,
+        usesDedicatedPools
+          ? questConfig.tonesByTheme[genre]
+          : questConfig.tones,
         rng,
       ),
     scope:
       options.scope ||
       pickFrom(
-        pirate ? questConfig.scopesByTheme.Pirate : questConfig.scopes,
+        usesDedicatedPools
+          ? questConfig.scopesByTheme[genre]
+          : questConfig.scopes,
         rng,
       ),
     locationType:
       options.locationType ||
       pickFrom(
-        pirate
-          ? questConfig.locationTypesByTheme.Pirate
+        usesDedicatedPools
+          ? questConfig.locationTypesByTheme[genre]
           : questConfig.locationTypes,
         rng,
       ),
     threat:
       options.threat ||
       pickFrom(
-        pirate ? questConfig.threatsByTheme.Pirate : questConfig.threats,
+        usesDedicatedPools
+          ? questConfig.threatsByTheme[genre]
+          : questConfig.threats,
         rng,
       ),
-    twist: options.twist || pickFrom(questConfig.twists, rng),
+    twist:
+      options.twist ||
+      pickFrom(
+        usesDedicatedPools
+          ? (questConfig.twistsByTheme[genre] ?? questConfig.twists)
+          : questConfig.twists,
+        rng,
+      ),
     reward:
       options.reward ||
       pickFrom(
-        pirate ? questConfig.rewardsByTheme.Pirate : questConfig.rewards,
+        usesDedicatedPools
+          ? questConfig.rewardsByTheme[genre]
+          : questConfig.rewards,
         rng,
       ),
     campaignContext: options.campaignContext?.trim() || undefined,
