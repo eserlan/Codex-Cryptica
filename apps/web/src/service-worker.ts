@@ -6,7 +6,7 @@
 import { build, files, version } from "$service-worker";
 import { activateBuild, precacheBuild } from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "479";
+const CACHE_VERSION = "480";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
 const ASSETS = [
