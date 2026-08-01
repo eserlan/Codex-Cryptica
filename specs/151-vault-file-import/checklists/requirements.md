@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Import Vault Files into Current Vault
+# Specification Quality Checklist: Import Files from Another Vault
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-08-01
@@ -31,4 +31,5 @@
 
 ## Notes
 
-- Validated on 2026-08-01. The feature deliberately excludes overwriting and content-aware conflict merging to protect the current vault.
+- Revalidated on 2026-08-01 after the spec was redesigned from a `.codex.zip` backup round-trip to direct vault-to-vault file selection over OPFS, with automatic image-reference copying and post-import index rebuild added as first-class requirements (US3, FR-008–FR-011, FR-013).
+- The feature deliberately excludes overwriting and content-aware conflict merging to protect the current vault, consistent with the original design intent.
