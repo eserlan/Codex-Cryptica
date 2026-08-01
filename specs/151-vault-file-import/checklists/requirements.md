@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Import Files from Another Vault
+# Specification Quality Checklist: Import Files from the File System
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-08-01
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- Revalidated on 2026-08-01 after the spec was redesigned from a `.codex.zip` backup round-trip to direct vault-to-vault file selection over OPFS, with automatic image-reference copying and post-import index rebuild added as first-class requirements (US3, FR-008–FR-011, FR-013).
+- Revalidated on 2026-08-01 after the spec was redesigned a second time: from an in-app "pick another vault, browse it live over OPFS" flow to native drag-and-drop / traditional file upload from the user's actual file system, since a browser page cannot browse a vault folder on disk without an explicit user-granted drop or selection. Image auto-copy now only applies to images included in the same drop/selection (including a dropped folder); a new missing-image resolution step (US3 scenarios 3–4, FR-011–FR-013) covers the case where it wasn't.
 - The feature deliberately excludes overwriting and content-aware conflict merging to protect the current vault, consistent with the original design intent.

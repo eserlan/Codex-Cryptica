@@ -1,25 +1,20 @@
-# UI Contract: Import Files from Another Vault
+# UI Contract: Import Files from the File System
 
 ## Source selection
 
-- List every vault registered in this browser other than the current vault; if none exist, communicate there's nothing to import from instead of showing an empty picker.
-- Opening a source vault that fails to read shows a clear error and returns to source selection; the current vault is untouched.
-
-## File selection
-
-- Present the chosen source vault's files for individual, multi-, or select-all selection.
-- Selecting zero files disables the confirm action.
+- Accept files via drag-and-drop (including a dropped folder) and via a traditional file upload dialog (`<input type="file" multiple>`), from within the current vault, without switching the active vault.
+- Show exactly which files were picked up before any write happens; unreadable items are excluded and reported, not silently imported.
 
 ## Review
 
-- Identify the source vault by name.
-- State the number of files (and their images) that will be added, the number of conflicting paths that will be skipped, and the number of referenced images that could not be found in the source vault.
+- State the number of files (and images) that will be added, the number of conflicting paths that will be skipped, and the number of referenced images not present in the drop/selection.
+- When images are missing, offer to add the missing image file(s) directly or (where supported) grant access to the source folder to resolve them automatically; on unsupported browsers, only the "add directly" option is offered, with a clear explanation why.
 - Require an explicit confirmation to write.
 - Do not offer overwrite or delete controls.
-- Disable the confirm action when nothing would be added (all-conflict selection).
+- Disable the confirm action when nothing would be added (all-conflict or all-unreadable selection).
 
 ## Result
 
 - On success, keep the current vault active, report added/skipped/missing-image counts, and make imported files immediately visible/searchable (no manual reload).
-- On cancellation, source-read error, or all-conflict selection, do not write anything.
+- On cancellation or an all-conflict/all-unreadable selection, do not write anything.
 - On a partial write failure, report exactly what was and wasn't added; never claim a false success, and never leave an existing target file modified.
