@@ -14,6 +14,8 @@ import {
 } from "./interactions/map-interaction-handler-factory";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
+type MapInputEvent = MouseEvent | PointerEvent;
+
 export class MapInteractionManager {
   painter: MapFogPainter;
   getContainer: () => HTMLElement | null;
@@ -60,6 +62,7 @@ export class MapInteractionManager {
   mapAnnouncement = $state("");
 
   cachedRect: DOMRect | null = null;
+  private activePointerId: number | null = null;
   KEYBOARD_PAN_STEP = 50;
   KEYBOARD_ZOOM_STEP = 0.1;
 
@@ -145,7 +148,30 @@ export class MapInteractionManager {
     this.isAltPressed = event.altKey;
   };
 
-  onMouseDown = (e: MouseEvent) => {
+  private handlePointerDown = (e: MapInputEvent) => {
+    const target = e.target as Element | null;
+    if (
+      target?.closest(
+        'button, input, select, textarea, a, [role="dialog"], [data-sidebar], .pointer-events-auto',
+      )
+    ) {
+      return;
+    }
+
+    if ("pointerId" in e) {
+      if (
+        this.activePointerId !== null &&
+        this.activePointerId !== e.pointerId
+      ) {
+        return;
+      }
+      this.activePointerId = e.pointerId;
+      const container = this.getContainer();
+      if (container?.setPointerCapture) {
+        container.setPointerCapture(e.pointerId);
+      }
+    }
+
     this.contextMenuInteractions.clear();
     this.updateCachedRect();
     if (this.cachedRect) {
@@ -222,7 +248,18 @@ export class MapInteractionManager {
     }
   };
 
-  onMouseMove = (e: MouseEvent) => {
+  onPointerDown = (e: PointerEvent) => this.handlePointerDown(e);
+  onMouseDown = (e: MouseEvent) => this.handlePointerDown(e);
+
+  private handlePointerMove = (e: MapInputEvent) => {
+    if (
+      "pointerId" in e &&
+      this.activePointerId !== null &&
+      e.pointerId !== this.activePointerId
+    ) {
+      return;
+    }
+
     if (!this.cachedRect) this.updateCachedRect();
     if (!this.cachedRect) return;
 
@@ -276,6 +313,18 @@ export class MapInteractionManager {
       this.isPanning &&
       !this.isAltPressed
     ) {
+      // Keep a tap from nudging the map on touch screens. Once the pointer
+      // crosses the click threshold, use the original down position so the
+      // first real drag movement is preserved.
+      if (
+        isClickGesture(
+          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+          { x: mouseX, y: mouseY },
+        )
+      ) {
+        return;
+      }
+
       const dx = mouseX - this.lastMousePos.x;
       const dy = mouseY - this.lastMousePos.y;
       mapStore.updateViewport(
@@ -286,6 +335,9 @@ export class MapInteractionManager {
     this.lastMousePos = { x: mouseX, y: mouseY };
   };
 
+  onPointerMove = (e: PointerEvent) => this.handlePointerMove(e);
+  onMouseMove = (e: MouseEvent) => this.handlePointerMove(e);
+
   onMouseEnter = () => {
     this.isPointerOver = true;
     this.updateCachedRect();
@@ -295,54 +347,72 @@ export class MapInteractionManager {
     this.isPointerOver = false;
   };
 
-  onMouseUp = async (e: MouseEvent) => {
-    await this.fogInteractions.finish();
-
-    if (this.boxSelection.commit()) {
+  private handlePointerUp = async (e: MapInputEvent) => {
+    if (
+      "pointerId" in e &&
+      this.activePointerId !== null &&
+      e.pointerId !== this.activePointerId
+    ) {
       return;
     }
 
-    if (this.tokenDrag.dragState) {
-      this.tokenDrag.end();
-      this.isPanning = false;
-      return;
-    }
+    try {
+      await this.fogInteractions.finish();
 
-    if (this.tokenRotation.rotationState) {
-      this.tokenRotation.end();
-      this.isPanning = false;
-      return;
-    }
-
-    if (this.pinDragState) {
-      const result = await this.pinInteractions.end(
-        { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
-        { x: e.clientX, y: e.clientY },
-      );
-
-      if (result.type === "selected") {
-        this.selectedPinId = result.pinId;
+      if (this.boxSelection.commit()) {
+        return;
       }
-      this.isPanning = false;
-      return;
-    }
 
-    if (this.gridInteractions.commitGridFit()) {
-      return;
-    }
+      if (this.tokenDrag.dragState) {
+        this.tokenDrag.end();
+        this.isPanning = false;
+        return;
+      }
 
-    if (this.isPanning) {
-      if (
-        isClickGesture(
+      if (this.tokenRotation.rotationState) {
+        this.tokenRotation.end();
+        this.isPanning = false;
+        return;
+      }
+
+      if (this.pinDragState) {
+        const result = await this.pinInteractions.end(
           { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
           { x: e.clientX, y: e.clientY },
-        )
-      ) {
-        this.handleMapClick(e);
+        );
+
+        if (result.type === "selected") {
+          this.selectedPinId = result.pinId;
+        }
+        this.isPanning = false;
+        return;
+      }
+
+      if (this.gridInteractions.commitGridFit()) {
+        return;
+      }
+
+      if (this.isPanning) {
+        if (
+          isClickGesture(
+            { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+            { x: e.clientX, y: e.clientY },
+          )
+        ) {
+          this.handleMapClick(e);
+        }
+      }
+      this.isPanning = false;
+    } finally {
+      if ("pointerId" in e) {
+        this.activePointerId = null;
       }
     }
-    this.isPanning = false;
   };
+
+  onPointerUp = (e: PointerEvent) => this.handlePointerUp(e);
+  onPointerCancel = (e: PointerEvent) => this.handlePointerUp(e);
+  onMouseUp = (e: MouseEvent) => this.handlePointerUp(e);
 
   handleMapClick = (e: MouseEvent) => {
     const el = this.getContainer();
