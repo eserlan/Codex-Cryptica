@@ -23,8 +23,9 @@
   // Paths specific to the horror/vampire theme
   const HORROR_ONLY = new Set(["/generators/vampire-clan"]);
 
-  // Nomad clans are a cyberpunk road-faction concept, not a nautical one.
-  const PIRATE_EXCLUDED = new Set(["/generators/nomad-clan"]);
+  // Nomad clans are a cyberpunk road-faction concept, not a nautical or
+  // cosmic-horror one.
+  const NOMAD_CLAN_EXCLUDED_THEMES = new Set(["pirate", "cosmic_horror"]);
 
   const GENERATOR_GROUPS = [
     {
@@ -81,14 +82,18 @@
     const themeId = themeStore.worldThemeId;
     const isFantasy = themeId === "fantasy" || themeId === "workspace";
     const isHorror = themeId === "horror";
-    const isPirate = themeId === "pirate";
     return GENERATOR_GROUPS.map((group) => ({
       ...group,
       items: group.items.filter((item) => {
         if (isFantasy) return true;
         if (FANTASY_ONLY.has(item.path)) return false;
         if (HORROR_ONLY.has(item.path)) return isHorror;
-        if (PIRATE_EXCLUDED.has(item.path)) return !isPirate;
+        if (
+          item.path === "/generators/nomad-clan" &&
+          NOMAD_CLAN_EXCLUDED_THEMES.has(themeId)
+        ) {
+          return false;
+        }
         return true;
       }),
     })).filter((group) => group.items.length > 0);
