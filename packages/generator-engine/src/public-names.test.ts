@@ -67,6 +67,29 @@ describe("generateNamesLocal", () => {
     expect(output.content).toContain("Dockside Trade Name");
     expect(output.content).toContain("Anchor");
   });
+
+  it("uses dedicated Cosmic Horror cultures instead of a generic fallback", () => {
+    const styles = nameGeneratorConfig.culturesByTheme["Cosmic Horror"];
+
+    expect(styles).toEqual([
+      "Academic Register",
+      "Coastal Family Name",
+      "Dream Fragment",
+      "Expedition Call Sign",
+      "Archive Catalogue",
+    ]);
+    for (const style of styles) {
+      expect(nameGeneratorConfig.culturePrefixes[style]).toHaveLength(12);
+      expect(nameGeneratorConfig.cultureSuffixes[style]).toHaveLength(12);
+    }
+
+    const output = generateNamesLocal(
+      { theme: "Cosmic Horror", culture: "Archive Catalogue", count: "3" },
+      seededRng(12),
+    );
+    expect(output.content).toContain("Archive Catalogue");
+    expect(output.content).not.toContain("Generic Fantasy");
+  });
 });
 
 describe("buildNamesPrompt", () => {

@@ -51,6 +51,7 @@ const REQUIRED_THEMES = [
   "modern",
   "apocalyptic",
   "horror",
+  "cosmic_horror",
   "steampunk",
   "mythic",
   "pulp_adventure",
@@ -128,6 +129,8 @@ describe("catalogue", () => {
     expect(resolveThemeId("post_apocalyptic")).toBe("apocalyptic");
     expect(resolveThemeId("gothic-horror")).toBe("horror");
     expect(resolveThemeId("gothic_horror")).toBe("horror");
+    expect(resolveThemeId("cosmic-horror")).toBe("cosmic_horror");
+    expect(resolveThemeId("cosmic_horror_light")).toBe("cosmic_horror");
     expect(resolveThemeId("pulp-adventure")).toBe("pulp_adventure");
     expect(resolveThemeId("scifi_light")).toBe("scifi");
     expect(resolveThemeId("fantasy-dark")).toBe("fantasy");

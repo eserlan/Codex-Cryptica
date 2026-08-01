@@ -18,6 +18,7 @@ export const languageConfig = {
     "Classic Fantasy",
     "Cyberpunk / Corporate",
     "Vampire / Gothic Noir",
+    "Cosmic Horror",
     "Sci-Fi / Space Opera",
     "Modern Conspiracy",
     "Post-Apocalyptic",
@@ -56,6 +57,8 @@ const GENRE_HINTS: Record<string, string> = {
     "Blend clipped tech jargon, corporate acronyms, and brand-name loanwords into the vocabulary and naming conventions.",
   "Vampire / Gothic Noir":
     "Favor old-world, aristocratic, and ecclesiastical roots — words should sound centuries-old and faintly ominous.",
+  "Cosmic Horror":
+    "Favor precise scholarly language interrupted by untranslatable sounds, astronomical terms, and fragments that suggest an older, inhuman grammar.",
   "Sci-Fi / Space Opera":
     "Invent alien-feeling phonemes and terms for ships, factions, or star systems rather than earthbound roots.",
   "Modern Conspiracy":

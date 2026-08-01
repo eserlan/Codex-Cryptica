@@ -42,6 +42,19 @@ describe("generateFactionLocal", () => {
     expect(out.summary).toContain("single city");
   });
 
+  it("offers dedicated Cosmic Horror faction choices", () => {
+    expect(factionConfig.themes).toContain("Cosmic Horror");
+    expect(factionConfig.typesByTheme["Cosmic Horror"]).toContain(
+      "Research Society",
+    );
+    expect(factionConfig.scopesByTheme["Cosmic Horror"]).toContain(
+      "Remote coast or valley",
+    );
+    expect(factionConfig.goalsByTheme["Cosmic Horror"]).toContain(
+      "Contain an anomaly long enough to learn whether it can be moved safely.",
+    );
+  });
+
   it("is deterministic for a fixed seed", () => {
     expect(generateFactionLocal({}, seededRng(9))).toEqual(
       generateFactionLocal({}, seededRng(9)),

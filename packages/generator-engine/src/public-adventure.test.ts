@@ -127,6 +127,7 @@ describe("generateAdventureLocal", () => {
       "Space Opera Resistance",
       "Optimistic Exploration Sci-Fi",
       "Gothic Horror",
+      "Cosmic Horror",
     ];
     for (const genre of genreLabels) {
       const out = generateAdventureLocal({ genre }, seededRng(42));
@@ -134,6 +135,18 @@ describe("generateAdventureLocal", () => {
       expect(out.labels).toContain("adventure");
       expect(out.labels).toContain("event");
     }
+  });
+
+  it("uses dedicated Cosmic Horror tables instead of the Fantasy fallback", () => {
+    const out = generateAdventureLocal(
+      { genre: "Cosmic Horror" },
+      seededRng(12),
+    );
+    expect(out.labels).toContain("cosmic-horror");
+    expect(out.content).toMatch(
+      /university|harbour|archive|observatory|weather station|research vessel|boarding house/i,
+    );
+    expect(out.content).not.toContain("walled market city");
   });
 
   it("produces unique results with different seeds", () => {
