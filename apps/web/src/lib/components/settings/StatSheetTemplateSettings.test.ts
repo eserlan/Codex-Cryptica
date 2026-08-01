@@ -10,6 +10,7 @@ const {
   toggleTemplateEnabled,
   setAllTemplatesEnabled,
   updateTemplateFields,
+  saveAsTemplate,
   isTemplateEnabled,
   confirm,
   notify,
@@ -22,6 +23,7 @@ const {
   toggleTemplateEnabled: vi.fn(),
   setAllTemplatesEnabled: vi.fn(),
   updateTemplateFields: vi.fn(),
+  saveAsTemplate: vi.fn(),
   isTemplateEnabled: vi.fn().mockReturnValue(true),
   confirm: vi.fn().mockResolvedValue(true),
   notify: vi.fn(),
@@ -74,6 +76,7 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
     deleteTemplate,
     setDefaultTemplate,
     updateTemplateFields,
+    saveAsTemplate,
   },
 }));
 
@@ -106,6 +109,11 @@ describe("StatSheetTemplateSettings", () => {
     toggleTemplateEnabled.mockClear();
     setAllTemplatesEnabled.mockClear();
     updateTemplateFields.mockClear();
+    saveAsTemplate.mockClear();
+    saveAsTemplate.mockResolvedValue({
+      id: "template-copy",
+      name: "D&D NPC (Vault copy)",
+    });
     confirm.mockClear();
     confirm.mockResolvedValue(true);
     notify.mockClear();
@@ -153,6 +161,38 @@ describe("StatSheetTemplateSettings", () => {
     const row = screen.getByTestId("stat-sheet-builtin-row");
     expect(row.textContent).toContain("D&D NPC");
     expect(row.textContent).toContain("Applicable");
+  });
+
+  it("saves a built-in template as an editable vault copy", async () => {
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Save a vault copy of D&D NPC template"),
+    );
+
+    expect(saveAsTemplate).toHaveBeenCalledWith(
+      "D&D NPC (Vault copy)",
+      BUILT_INS[0].fields,
+      { description: "Quick stats", category: undefined },
+    );
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("You can now edit or publish it"),
+      "success",
+    );
+  });
+
+  it("notifies when saving a built-in template copy fails", async () => {
+    saveAsTemplate.mockResolvedValueOnce(null);
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Save a vault copy of D&D NPC template"),
+    );
+
+    expect(notify).toHaveBeenCalledWith(
+      "Failed to save a vault copy of this template.",
+      "error",
+    );
   });
 
   it("lists vault-saved templates with rename/delete controls", () => {
