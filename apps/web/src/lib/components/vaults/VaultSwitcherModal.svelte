@@ -440,7 +440,10 @@
             <div
               class="p-2.5 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2 w-full"
             >
-              <span class="icon-[lucide--alert-circle] w-4 h-4 shrink-0"></span>
+              <span
+                class="icon-[lucide--alert-circle] w-4 h-4 shrink-0"
+                aria-hidden="true"
+              ></span>
               <p>{vault.errorMessage}</p>
             </div>
           {/if}
@@ -477,11 +480,16 @@
               disabled={isLoading || !newVaultName.trim()}
             >
               {#if isLoading && vault.status === "loading"}
-                <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                <span
+                  class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                  aria-hidden="true"
                 ></span>
                 IMPORTING...
               {:else}
-                <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                <span
+                  class="icon-[lucide--folder-up] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
                 IMPORT
               {/if}
             </button>
@@ -490,11 +498,13 @@
       {:else}
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
           <button
+            type="button"
             class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
             onclick={openCreate}
             data-testid="empty-workspace-button"
           >
-            <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
+            <span class="icon-[lucide--plus] w-4 h-4" aria-hidden="true"></span> NEW
+            VAULT
           </button>
           <button
             type="button"
@@ -502,18 +512,22 @@
             onclick={() => modalUIStore.openQuickStartModal()}
             data-testid="quick-start-world-button"
           >
-            <span class="icon-[lucide--sparkles] w-4 h-4"></span> QUICK START WORLD
+            <span class="icon-[lucide--sparkles] w-4 h-4" aria-hidden="true"
+            ></span> QUICK START WORLD
           </button>
           <button
+            type="button"
             class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
             onclick={handleLoadFromFolder}
             disabled={isLoading}
             title="Open a local folder as a new vault"
           >
-            <span class="icon-[lucide--folder-open] w-4 h-4"></span> OPEN FOLDER
+            <span class="icon-[lucide--folder-open] w-4 h-4" aria-hidden="true"
+            ></span> OPEN FOLDER
           </button>
         </div>
         <button
+          type="button"
           class="px-4 py-2 bg-theme-surface border border-theme-border rounded text-sm hover:text-theme-primary transition-colors shrink-0 ml-auto"
           onclick={onClose}
         >
