@@ -104,3 +104,8 @@
 
 **Learning:** Found multiple icon-only buttons in `GraphToolbar.svelte` that relied on outer `aria-label` attributes but didn't hide their inner SVG-based span icons (`aria-hidden="true"`) and lacked explicit `type="button"` attributes. This can cause redundant screen reader announcements and risk accidental form submission if the toolbar is ever wrapped in a form.
 **Action:** Always add `aria-hidden="true"` to inner decorative icons within icon-only buttons, and ensure all toolbar buttons have `type="button"`.
+
+## 2026-07-21 - ARIA hidden on decorative icons inside components
+
+**Learning:** Found decorative icons (like `icon-[lucide--sparkles]` or category icons) used inside `Autocomplete.svelte` option buttons and `InlinePreviewOverlay.svelte` status indicators that lacked `aria-hidden="true"`. Without this, screen readers might announce these decorative spans redundantly.
+**Action:** Always add `aria-hidden="true"` to inner decorative icon spans, even if they are dynamically rendered (like category icons) or part of complex status overlays, to ensure a clean screen reader experience.
