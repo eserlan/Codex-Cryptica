@@ -119,6 +119,7 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="publish-template-title"
+    aria-busy={isPublishing}
   >
     <div class="flex items-center justify-between gap-4">
       <h2
@@ -146,6 +147,7 @@
     <div class="mt-5 space-y-4">
       {#each draftList as draft (draft.template.id)}
         {@const result = resultFor(draft.template.id)}
+        {@const templatePackage = packageFor(draft)}
         <section
           class="rounded-lg border border-theme-border p-4"
           data-testid="template-publish-draft"
@@ -218,11 +220,10 @@
           </div>
           <details class="mt-4 rounded border border-theme-border p-3">
             <summary class="cursor-pointer text-sm font-bold text-theme-text"
-              >Fields shared ({packageFor(draft).template.fields
-                .length})</summary
+              >Fields shared ({templatePackage.template.fields.length})</summary
             >
             <ul class="mt-2 grid gap-1 text-sm text-theme-muted sm:grid-cols-2">
-              {#each packageFor(draft).template.fields as field (field.id)}
+              {#each templatePackage.template.fields as field (field.id)}
                 <li>
                   {field.label} <span class="text-xs">({field.type})</span>
                 </li>

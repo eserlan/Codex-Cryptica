@@ -38,7 +38,6 @@ export async function publishBatch<TItem, TResult>(
       results.push(result);
       options.onResult?.(result);
     } catch (cause) {
-      if (options.signal?.aborted) break;
       const result: PublishBatchResult<TResult> = {
         id: item.id,
         status: "failed",
@@ -47,6 +46,7 @@ export async function publishBatch<TItem, TResult>(
       };
       results.push(result);
       options.onResult?.(result);
+      if (options.signal?.aborted) break;
     }
   }
 

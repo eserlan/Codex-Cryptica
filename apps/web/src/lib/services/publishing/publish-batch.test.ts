@@ -60,4 +60,29 @@ describe("publishBatch", () => {
     expect(publish).toHaveBeenCalledTimes(1);
     expect(results).toEqual([{ id: "one", status: "success", value: "one" }]);
   });
+
+  it("keeps an interrupted in-flight item retryable after cancellation", async () => {
+    const controller = new AbortController();
+    const publish = vi.fn(async () => {
+      controller.abort();
+      throw new Error("Request was aborted");
+    });
+
+    const results = await publishBatch(
+      [
+        { id: "one", value: "one" },
+        { id: "two", value: "two" },
+      ],
+      publish,
+      { signal: controller.signal },
+    );
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      id: "one",
+      status: "failed",
+      error: { message: "Request was aborted" },
+    });
+  });
 });
