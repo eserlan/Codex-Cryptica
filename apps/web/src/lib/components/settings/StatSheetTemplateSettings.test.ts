@@ -90,6 +90,10 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: { confirm, notify },
 }));
 
+vi.mock("$app/paths", () => ({
+  resolve: (path: string) => `/app${path}`,
+}));
+
 import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
 
 describe("StatSheetTemplateSettings", () => {
@@ -158,6 +162,17 @@ describe("StatSheetTemplateSettings", () => {
     expect(
       screen.getByLabelText("Rename My Custom Sheet template"),
     ).toBeTruthy();
+  });
+
+  it("links vault template settings to the community Stat Sheet directory", () => {
+    render(StatSheetTemplateSettings);
+
+    const link = screen.getByTestId(
+      "browse-community-stat-sheet-templates",
+    ) as HTMLAnchorElement;
+
+    expect(link.textContent).toContain("Browse community templates");
+    expect(link.getAttribute("href")).toBe("/app/templates");
   });
 
   it("renames a vault template", async () => {
