@@ -10,6 +10,7 @@ import {
   CYBERPUNK_LIGHT,
   APOCALYPTIC_LIGHT,
   HORROR_LIGHT,
+  COSMIC_HORROR_LIGHT,
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
@@ -109,6 +110,8 @@ export class ThemeStore {
           return APOCALYPTIC_LIGHT;
         case "horror":
           return HORROR_LIGHT;
+        case "cosmic_horror":
+          return COSMIC_HORROR_LIGHT;
         case "fallout":
           return FALLOUT_LIGHT;
         case "starwars":

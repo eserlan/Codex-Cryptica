@@ -54,8 +54,24 @@ describe("Generator Theme Hub Page", () => {
       name: /pirate ship generator/i,
     });
     expect(link).toBeTruthy();
-    expect(link.getAttribute("href")).toBe(
-      "/generators/pirate/ship-generator",
+    expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
+  });
+
+  it("renders a cosmic-horror hub without vampire generator content", () => {
+    render(Page, {
+      props: {
+        data: {
+          theme: "cosmic-horror",
+        },
+      },
+    });
+
+    expect(screen.getByRole("heading").textContent).toContain(
+      "Cosmic Horror RPG Generators",
     );
+    expect(screen.getByText(/impossible environments/i)).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /vampire clan generator/i }),
+    ).toBeNull();
   });
 });

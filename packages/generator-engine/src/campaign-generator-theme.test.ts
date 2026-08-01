@@ -12,6 +12,7 @@ describe("theme-to-generator defaults (US3, T039)", () => {
       "scifi",
       "modern",
       "horror",
+      "cosmic_horror",
       "cyberpunk",
     ];
     for (const theme of expectedThemes) {
@@ -36,6 +37,13 @@ describe("theme-to-generator defaults (US3, T039)", () => {
 
   it("horror faction is Cult", () => {
     expect(getThemeDefaults("horror", "faction").type).toBe("Cult");
+  });
+
+  it("cosmic horror defaults to investigation instead of vampire tropes", () => {
+    expect(getThemeDefaults("cosmic_horror", "npc").role).toBe("Investigator");
+    expect(getThemeDefaults("cosmic_horror", "faction").type).toBe(
+      "Research Society",
+    );
   });
 
   it("workspace returns empty defaults (neutral theme)", () => {

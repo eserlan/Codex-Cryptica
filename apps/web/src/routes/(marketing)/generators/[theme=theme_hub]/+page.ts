@@ -12,6 +12,7 @@ export type ThemeSlug =
   | "post-apocalyptic"
   | "modern"
   | "vampire"
+  | "cosmic-horror"
   | "western"
   | "steampunk"
   | "lancer"
@@ -32,6 +33,7 @@ export const entries: EntryGenerator = () => [
   { theme: "post-apocalyptic" },
   { theme: "modern" },
   { theme: "vampire" },
+  { theme: "cosmic-horror" },
   { theme: "western" },
   { theme: "steampunk" },
   { theme: "lancer" },

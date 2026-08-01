@@ -10,6 +10,7 @@ describe("resolveHubGeneratorGenre", () => {
   it("maps a known hub theme to its generator genre", () => {
     expect(resolveHubGeneratorGenre("cyberpunk")).toBe("Cyberpunk");
     expect(resolveHubGeneratorGenre("vampire")).toBe("Horror");
+    expect(resolveHubGeneratorGenre("cosmic-horror")).toBe("Cosmic Horror");
   });
 
   it("returns null for an unknown or missing theme", () => {
