@@ -54,11 +54,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/150-stat-sheet-marketplace/plan.md).
+shell commands, and other important information, read the [current plan](./specs/151-vault-file-import/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `fflate` archive parsing, `@codex/vault-engine`, Svelte 5, existing notification confirmation UI (1826-vault-file-import)
+- Browser-local OPFS vault directories and IndexedDB-backed vault registry; no new persistence format (1826-vault-file-import)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
 - R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)

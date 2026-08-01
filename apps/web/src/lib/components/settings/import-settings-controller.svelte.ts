@@ -41,6 +41,10 @@ import {
   CIF_MAPPING_RULES,
   isThreadWeaverExport,
   convertThreadWeaverJsonToCif,
+  droppedItemsToPackage,
+  buildVaultFilesMappingRules,
+  vaultFileSourceRefBuilder,
+  resolveMissingImage,
 } from "@codex/importer";
 import type {
   ChronicaExportDocument,
@@ -50,7 +54,11 @@ import type {
   ItemDecision,
   MappingRuleSet,
   MatchDecision,
+  DroppedItem,
+  MissingImageReference,
+  CCImportPackage,
 } from "@codex/importer";
+import { pickDirectory, isFileSystemAccessSupported } from "$lib/utils/fs";
 
 type MarkdownFrontmatterValidator =
   typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
@@ -94,6 +102,8 @@ export class ImportSettingsController {
   rejectedFiles = $state<{ name: string; reason: string }[]>([]);
   expandedPacks = $state<Record<string, boolean>>({});
   importProgress = $state<{ current: number; total: number } | null>(null);
+  missingImageRefs = $state<MissingImageReference[]>([]);
+  private vaultFilesPackage: CCImportPackage | null = null;
 
   processingSubtitle = $derived(
     this.importMode === "cc"
@@ -263,6 +273,28 @@ export class ImportSettingsController {
         mappingRules: CIF_MAPPING_RULES,
         sourceRefBuilder: cifSourceRefBuilder,
         updatePolicy: "cif",
+      },
+    );
+
+  /**
+   * This source also gets its own engine, mirroring createCifEngine: an
+   * exact, sourcePath-only sourceRefBuilder (never title-fuzzy — FR-006/
+   * FR-007 define "conflict" as an exact path match) and a mapping rule set
+   * derived per-batch from the actual dropped files' own types (entity
+   * types are free-form, not a fixed enum — see research.md). Takes
+   * mappingRules as a parameter since it must be built from that batch's
+   * entityDrafts before the engine can be constructed.
+   */
+  private createVaultFilesEngine = (mappingRules: MappingRuleSet) =>
+    new ImportEngine(
+      {
+        writer: createWebVaultWriter(this.deps.vault, {
+          titleFallback: false,
+        }),
+      },
+      {
+        mappingRules,
+        sourceRefBuilder: vaultFileSourceRefBuilder,
       },
     );
 
@@ -939,6 +971,207 @@ export class ImportSettingsController {
     this.step = "upload";
   };
 
+  /**
+   * Entry point for the "Import Files" drag-and-drop/upload source (FR-001–
+   * FR-003): mechanically (no Oracle) converts a drag-and-drop or file
+   * upload selection into a review session. Guests never reach the flow,
+   * consistent with the rest of this deterministic import surface. Only
+   * reachable while `step === "upload"` (the entry point is only rendered
+   * then), which is this feature's concurrency guard (FR-017) — no
+   * additional state is needed since a second call can't happen until this
+   * one reaches "review" or "upload" again.
+   */
+  handleVaultFiles = async (items: DroppedItem[]) => {
+    if (this.deps.vault.isGuest) {
+      this.rejectedFiles = [
+        { name: "Import Files", reason: "Guests cannot import into a vault." },
+      ];
+      this.step = "upload";
+      return;
+    }
+
+    this.step = "processing";
+    this.importMode = "cc";
+    this.statusMessage = "Preparing your files for review...";
+    this.discoveredEntities = [];
+    this.ccSession = null;
+    this.ccReport = null;
+    this.rejectedFiles = [];
+    this.missingImageRefs = [];
+    this.vaultFilesPackage = null;
+
+    if (items.length === 0) {
+      this.step = "upload";
+      this.importMode = null;
+      return;
+    }
+
+    const { pkg, missingImageRefs } = await droppedItemsToPackage(items);
+
+    if (pkg.entityDrafts.length === 0) {
+      this.rejectedFiles = pkg.warnings.map((w) => ({
+        name: w.ref ?? "Import Files",
+        reason: w.message,
+      }));
+      if (this.rejectedFiles.length === 0) {
+        this.rejectedFiles = [
+          {
+            name: "Import Files",
+            reason:
+              "None of the dropped files were recognized as vault content.",
+          },
+        ];
+      }
+      this.step = "upload";
+      this.importMode = null;
+      return;
+    }
+
+    this.vaultFilesPackage = pkg;
+    this.missingImageRefs = missingImageRefs;
+    await this.prepareVaultFilesSession();
+  };
+
+  private async prepareVaultFilesSession() {
+    if (!this.vaultFilesPackage) return;
+    const signal = this.deps.connectionModeStore.abortSignal;
+    const rules = buildVaultFilesMappingRules(
+      this.vaultFilesPackage.entityDrafts,
+    );
+    // A re-prepare (e.g. after resolving a missing image) must not silently
+    // reset decisions the user already made in review — ImportEngine.prepare
+    // always defaults every item to decision "include". setItemDecision
+    // matches on draft.sourceId/draft.sourcePath (not sourceRef), so key
+    // and re-apply using the same field.
+    const priorDecisions = new Map(
+      this.ccSession?.items
+        .map(
+          (item) =>
+            [
+              item.draft.sourceId ?? item.draft.sourcePath,
+              item.decision,
+            ] as const,
+        )
+        .filter(([draftRef]) => draftRef !== undefined) ?? [],
+    );
+
+    try {
+      let session = await wrapWithAbort(
+        this.createVaultFilesEngine(rules).prepare(this.vaultFilesPackage),
+        signal,
+      );
+      for (const item of session.items) {
+        const draftRef = item.draft.sourceId ?? item.draft.sourcePath;
+        const prior = draftRef ? priorDecisions.get(draftRef) : undefined;
+        if (prior) session = setItemDecision(session, draftRef!, prior);
+      }
+      this.ccSession = session;
+      this.step = "review";
+    } catch (error) {
+      if (
+        signal.aborted ||
+        (error instanceof Error && error.message === "Import aborted")
+      ) {
+        this.step = "upload";
+        this.ccSession = null;
+        this.ccReport = null;
+        this.importMode = null;
+        return;
+      }
+      this.rejectedFiles = [
+        {
+          name: "Import Files",
+          reason:
+            error instanceof Error
+              ? error.message
+              : "Could not prepare a review for these files.",
+        },
+      ];
+      this.step = "upload";
+      this.importMode = null;
+    }
+  }
+
+  /** Resolves a missing image by adding the file directly (US3). */
+  handleAddMissingImageFile = async (
+    ref: MissingImageReference,
+    file: File,
+  ) => {
+    await this.applyMissingImageResolution(ref, { addedFile: file });
+  };
+
+  /**
+   * Resolves a missing image by asking the user to grant access to the
+   * source folder, then searching it (US3). No-ops with a clear message on
+   * browsers without File System Access support (Firefox, Safari) — the
+   * "add file directly" option remains available there regardless.
+   */
+  handleResolveMissingImageFromFolder = async (ref: MissingImageReference) => {
+    if (!isFileSystemAccessSupported()) {
+      this.deps.notificationStore.notify(
+        "This browser can't grant folder access for locating missing images. Add the image file directly instead.",
+        "error",
+      );
+      return;
+    }
+
+    let folderHandle: FileSystemDirectoryHandle;
+    try {
+      folderHandle = await pickDirectory({ mode: "read" });
+    } catch {
+      return; // user cancelled the folder picker
+    }
+
+    await this.applyMissingImageResolution(ref, {
+      sourceFolderHandle: folderHandle,
+    });
+  };
+
+  private resolvingImagePaths = new Set<string>();
+
+  private async applyMissingImageResolution(
+    ref: MissingImageReference,
+    input: { addedFile?: File; sourceFolderHandle?: FileSystemDirectoryHandle },
+  ) {
+    if (!this.vaultFilesPackage) return;
+    // Guards against a rapid double-click (or clicking both "Add File" and
+    // "Use Folder" for the same ref) resolving it twice concurrently, which
+    // would otherwise append duplicate AssetDrafts before either call's
+    // state update lands.
+    if (this.resolvingImagePaths.has(ref.path)) return;
+    this.resolvingImagePaths.add(ref.path);
+
+    try {
+      const resolvedDrafts = await resolveMissingImage(ref, input);
+
+      this.missingImageRefs = this.missingImageRefs.map((r) =>
+        r.path === ref.path
+          ? {
+              ...r,
+              resolution: resolvedDrafts
+                ? input.addedFile
+                  ? "added-directly"
+                  : "resolved-from-folder"
+                : "still-missing",
+            }
+          : r,
+      );
+
+      if (!resolvedDrafts) return;
+
+      this.vaultFilesPackage = {
+        ...this.vaultFilesPackage,
+        assetDrafts: [...this.vaultFilesPackage.assetDrafts, ...resolvedDrafts],
+      };
+
+      // Re-run prepare with the augmented package so the review session
+      // reflects the newly-resolved image (FR-012).
+      await this.prepareVaultFilesSession();
+    } finally {
+      this.resolvingImagePaths.delete(ref.path);
+    }
+  }
+
   handleRestart = async () => {
     if (this.currentFileHash) {
       await clearRegistryEntry(this.currentFileHash);
@@ -950,6 +1183,8 @@ export class ImportSettingsController {
     this.ccReport = null;
     this.importMode = null;
     this.rejectedFiles = [];
+    this.missingImageRefs = [];
+    this.vaultFilesPackage = null;
   };
 
   handleCCItemDecisionChange = (draftRef: string, decision: ItemDecision) => {
@@ -959,6 +1194,16 @@ export class ImportSettingsController {
 
   handleCCMatchDecisionChange = (draftRef: string, decision: MatchDecision) => {
     if (!this.ccSession) return;
+    // Defense in depth for FR-006/FR-007: this source never overwrites an
+    // existing entity, so "update" is rejected here even though the review
+    // UI (CCImportReview) already never offers it for sourceSystem
+    // "vault-files".
+    if (
+      this.ccSession.sourceSystem === "vault-files" &&
+      decision === "update"
+    ) {
+      return;
+    }
     this.ccSession = setMatchDecision(this.ccSession, draftRef, decision);
   };
 
@@ -1031,6 +1276,8 @@ export class ImportSettingsController {
     this.rejectedFiles = [];
     this.statusMessage = "";
     this.importProgress = null;
+    this.missingImageRefs = [];
+    this.vaultFilesPackage = null;
   };
 }
 
