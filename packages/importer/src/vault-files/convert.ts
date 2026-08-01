@@ -5,7 +5,11 @@ import type {
   ImportWarning,
 } from "../cc/package";
 import { sha256Hex } from "../cif/zip";
-import { isVaultEntityFile, parseVaultFileFrontmatter } from "./detect";
+import {
+  hasEntityFileExtension,
+  isVaultEntityFile,
+  parseVaultFileFrontmatter,
+} from "./detect";
 
 /** A single file the user dragged in or chose via the file upload dialog. */
 export interface DroppedItem {
@@ -93,6 +97,8 @@ export async function droppedItemsToPackage(
   const wantedImages = new Map<string, Set<string>>();
 
   for (const item of items) {
+    if (!hasEntityFileExtension(item.relativePath)) continue;
+
     let raw: string;
     try {
       raw = await item.file.text();

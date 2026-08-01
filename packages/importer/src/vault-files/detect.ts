@@ -1,6 +1,16 @@
 import { load as yamlLoad } from "js-yaml";
 
 const FRONTMATTER_REGEX = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*/;
+const ENTITY_EXTENSION_REGEX = /\.(md|markdown)$/i;
+
+/**
+ * Cheap extension-only check, meant to short-circuit *before* reading a
+ * dropped item's content — e.g. so a batch conversion can skip decoding
+ * binary files (images) as text just to discard them.
+ */
+export function hasEntityFileExtension(relativePath: string): boolean {
+  return ENTITY_EXTENSION_REGEX.test(relativePath);
+}
 
 export interface ParsedVaultFile {
   metadata: Record<string, unknown>;
@@ -50,7 +60,7 @@ export function isVaultEntityFile(
   relativePath: string,
   content: string,
 ): boolean {
-  if (!/\.(md|markdown)$/i.test(relativePath)) return false;
+  if (!hasEntityFileExtension(relativePath)) return false;
 
   const { metadata } = parseVaultFileFrontmatter(content);
   return (

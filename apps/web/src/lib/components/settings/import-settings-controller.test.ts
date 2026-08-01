@@ -887,6 +887,67 @@ describe("import-settings-controller — Import Files (file-system drag/drop & u
     expect(controller.ccSession?.assets.length).toBe(1);
   });
 
+  it("preserves an in-progress ignore decision on another item when resolving a missing image", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+      {
+        relativePath: "entities/other.md",
+        file: vaultEntityFile({ id: "other", title: "Other" }),
+      },
+    ]);
+    const otherItem = controller.ccSession!.items.find(
+      (i) => i.draft.sourcePath === "entities/other.md",
+    )!;
+    controller.handleCCItemDecisionChange(
+      otherItem.draft.sourcePath!,
+      "ignore",
+    );
+    expect(
+      controller.ccSession!.items.find(
+        (i) => i.draft.sourcePath === "entities/other.md",
+      )!.decision,
+    ).toBe("ignore");
+
+    const ref = controller.missingImageRefs[0];
+    const imageFile = new File(["bytes"], "thistle.webp", {
+      type: "image/webp",
+    });
+    await controller.handleAddMissingImageFile(ref, imageFile);
+
+    expect(
+      controller.ccSession!.items.find(
+        (i) => i.draft.sourcePath === "entities/other.md",
+      )!.decision,
+    ).toBe("ignore");
+  });
+
+  it("ignores a second concurrent resolution attempt for the same missing image ref", async () => {
+    const deps = baseDeps({ vault: createVaultStoreMock() as any });
+    const controller = new ImportSettingsController(deps);
+    await controller.handleVaultFiles([
+      {
+        relativePath: "entities/thistle.md",
+        file: vaultEntityFile({ image: "images/thistle.webp" }),
+      },
+    ]);
+    const ref = controller.missingImageRefs[0];
+    const imageFile = new File(["bytes"], "thistle.webp", {
+      type: "image/webp",
+    });
+
+    await Promise.all([
+      controller.handleAddMissingImageFile(ref, imageFile),
+      controller.handleAddMissingImageFile(ref, imageFile),
+    ]);
+
+    expect(controller.ccSession?.assets.length).toBe(1);
+  });
+
   it("resolves a missing image via granted folder access", async () => {
     const deps = baseDeps({ vault: createVaultStoreMock() as any });
     const controller = new ImportSettingsController(deps);

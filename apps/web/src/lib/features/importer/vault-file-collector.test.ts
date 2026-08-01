@@ -100,6 +100,44 @@ describe("collectDroppedItems", () => {
     const paths = items.map((i) => i.relativePath).sort();
     expect(paths).toEqual(["vault/a.md", "vault/b.md"]);
   });
+
+  it("excludes a file entry that fails to read without dropping sibling files", async () => {
+    const goodFile = new File(["hi"], "thistle.md");
+    const brokenEntry = {
+      isFile: true,
+      isDirectory: false,
+      name: "broken.md",
+      file: (_resolve: (f: File) => void, reject: (e: unknown) => void) =>
+        reject(new Error("permission denied")),
+    } as unknown as FileSystemFileEntry;
+
+    const items = await collectDroppedItems(
+      dataTransferFromEntries([brokenEntry, fileEntry("thistle.md", goodFile)]),
+    );
+
+    expect(items).toEqual([{ relativePath: "thistle.md", file: goodFile }]);
+  });
+
+  it("excludes a directory that fails to read without dropping siblings collected elsewhere", async () => {
+    const goodFile = new File(["hi"], "thistle.md");
+    const brokenDir = {
+      isFile: false,
+      isDirectory: true,
+      name: "broken-folder",
+      createReader: () => ({
+        readEntries: (
+          _cb: (entries: FileSystemEntry[]) => void,
+          reject: (e: unknown) => void,
+        ) => reject(new Error("permission denied")),
+      }),
+    } as unknown as FileSystemDirectoryEntry;
+
+    const items = await collectDroppedItems(
+      dataTransferFromEntries([brokenDir, fileEntry("thistle.md", goodFile)]),
+    );
+
+    expect(items).toEqual([{ relativePath: "thistle.md", file: goodFile }]);
+  });
 });
 
 describe("collectUploadedItems", () => {

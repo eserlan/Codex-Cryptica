@@ -36,18 +36,26 @@ async function walkEntry(
   const path = prefix ? `${prefix}/${entry.name}` : entry.name;
 
   if (entry.isFile) {
-    const file = await new Promise<File>((resolve, reject) => {
-      (entry as FileSystemFileEntry).file(resolve, reject);
-    });
-    out.push({ relativePath: path, file });
+    try {
+      const file = await new Promise<File>((resolve, reject) => {
+        (entry as FileSystemFileEntry).file(resolve, reject);
+      });
+      out.push({ relativePath: path, file });
+    } catch {
+      // Unreadable entry — excluded, doesn't block the rest of the drop.
+    }
     return;
   }
 
   if (entry.isDirectory) {
     const dirEntry = entry as FileSystemDirectoryEntry;
     const reader = dirEntry.createReader();
-    const children = await readAllEntries(reader);
-    await Promise.all(children.map((child) => walkEntry(child, path, out)));
+    try {
+      const children = await readAllEntries(reader);
+      await Promise.all(children.map((child) => walkEntry(child, path, out)));
+    } catch {
+      // Unreadable directory — excluded, doesn't block the rest of the drop.
+    }
   }
 }
 

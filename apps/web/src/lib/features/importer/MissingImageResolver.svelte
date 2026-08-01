@@ -59,7 +59,7 @@
         <li
           class="flex flex-wrap items-center justify-between gap-2 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs"
         >
-          <span class="truncate text-theme-text" title={ref.path}
+          <span class="truncate min-w-0 flex-1 text-theme-text" title={ref.path}
             >{ref.path}</span
           >
           <div class="flex items-center gap-2 shrink-0">

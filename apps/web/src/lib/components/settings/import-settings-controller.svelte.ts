@@ -1038,12 +1038,34 @@ export class ImportSettingsController {
     const rules = buildVaultFilesMappingRules(
       this.vaultFilesPackage.entityDrafts,
     );
+    // A re-prepare (e.g. after resolving a missing image) must not silently
+    // reset decisions the user already made in review — ImportEngine.prepare
+    // always defaults every item to decision "include". setItemDecision
+    // matches on draft.sourceId/draft.sourcePath (not sourceRef), so key
+    // and re-apply using the same field.
+    const priorDecisions = new Map(
+      this.ccSession?.items
+        .map(
+          (item) =>
+            [
+              item.draft.sourceId ?? item.draft.sourcePath,
+              item.decision,
+            ] as const,
+        )
+        .filter(([draftRef]) => draftRef !== undefined) ?? [],
+    );
 
     try {
-      this.ccSession = await wrapWithAbort(
+      let session = await wrapWithAbort(
         this.createVaultFilesEngine(rules).prepare(this.vaultFilesPackage),
         signal,
       );
+      for (const item of session.items) {
+        const draftRef = item.draft.sourceId ?? item.draft.sourcePath;
+        const prior = draftRef ? priorDecisions.get(draftRef) : undefined;
+        if (prior) session = setItemDecision(session, draftRef!, prior);
+      }
+      this.ccSession = session;
       this.step = "review";
     } catch (error) {
       if (
@@ -1105,37 +1127,49 @@ export class ImportSettingsController {
     });
   };
 
+  private resolvingImagePaths = new Set<string>();
+
   private async applyMissingImageResolution(
     ref: MissingImageReference,
     input: { addedFile?: File; sourceFolderHandle?: FileSystemDirectoryHandle },
   ) {
     if (!this.vaultFilesPackage) return;
+    // Guards against a rapid double-click (or clicking both "Add File" and
+    // "Use Folder" for the same ref) resolving it twice concurrently, which
+    // would otherwise append duplicate AssetDrafts before either call's
+    // state update lands.
+    if (this.resolvingImagePaths.has(ref.path)) return;
+    this.resolvingImagePaths.add(ref.path);
 
-    const resolvedDrafts = await resolveMissingImage(ref, input);
+    try {
+      const resolvedDrafts = await resolveMissingImage(ref, input);
 
-    this.missingImageRefs = this.missingImageRefs.map((r) =>
-      r.path === ref.path
-        ? {
-            ...r,
-            resolution: resolvedDrafts
-              ? input.addedFile
-                ? "added-directly"
-                : "resolved-from-folder"
-              : "still-missing",
-          }
-        : r,
-    );
+      this.missingImageRefs = this.missingImageRefs.map((r) =>
+        r.path === ref.path
+          ? {
+              ...r,
+              resolution: resolvedDrafts
+                ? input.addedFile
+                  ? "added-directly"
+                  : "resolved-from-folder"
+                : "still-missing",
+            }
+          : r,
+      );
 
-    if (!resolvedDrafts) return;
+      if (!resolvedDrafts) return;
 
-    this.vaultFilesPackage = {
-      ...this.vaultFilesPackage,
-      assetDrafts: [...this.vaultFilesPackage.assetDrafts, ...resolvedDrafts],
-    };
+      this.vaultFilesPackage = {
+        ...this.vaultFilesPackage,
+        assetDrafts: [...this.vaultFilesPackage.assetDrafts, ...resolvedDrafts],
+      };
 
-    // Re-run prepare with the augmented package so the review session
-    // reflects the newly-resolved image (FR-012).
-    await this.prepareVaultFilesSession();
+      // Re-run prepare with the augmented package so the review session
+      // reflects the newly-resolved image (FR-012).
+      await this.prepareVaultFilesSession();
+    } finally {
+      this.resolvingImagePaths.delete(ref.path);
+    }
   }
 
   handleRestart = async () => {
