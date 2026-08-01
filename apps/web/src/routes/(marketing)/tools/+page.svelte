@@ -27,6 +27,18 @@
         "Generate campaign-ready drafts, then copy them or save them into a local Codex Cryptica vault.",
       groups: [
         {
+          title: "Browse by Theme",
+          links: [
+            {
+              href: "/generators/cosmic-horror",
+              label: "Cosmic Horror Hub",
+              summary:
+                "Find generators for unsettling investigations, remote outposts, impossible mysteries, and eldritch adventure hooks.",
+              icon: "icon-[lucide--brain]",
+            },
+          ],
+        },
+        {
           title: "Characters & NPCs",
           links: [
             {
