@@ -2,12 +2,21 @@
 
 ## Decision: Source is native drag-and-drop / file upload, not an in-app "other vault" browser
 
-**Rationale**: A browser page cannot list or browse a folder on disk unless the user explicitly grants access to it (drag-and-drop or a file/folder picker) — there is no ambient way to enumerate "vaults on this computer." An earlier design assumed picking a source vault from an in-app list and browsing it live over OPFS; that only works for vaults already loaded into *this browser's* OPFS storage, not a vault folder sitting on disk. The user's actual intent is "pick files from my file system," so the entry point must be the standard `<input type="file">` / drag-and-drop surface, matching the mental model of every other "attach a file" flow.
+**Rationale**: A browser page cannot list or browse a folder on disk unless the user explicitly grants access to it (drag-and-drop or a file/folder picker) — there is no ambient way to enumerate "vaults on this computer." The user's actual intent is "pick files from my file system," so the entry point must be the standard `<input type="file">` / drag-and-drop surface, matching the mental model of every other "attach a file" flow.
 
 **Alternatives considered**:
 
-- In-app source-vault picker over OPFS (the previous design for this branch): only covers vaults already registered in this browser's OPFS, not arbitrary files/folders on disk; superseded.
+- In-app source-vault picker over OPFS (an earlier design for this branch): only covers vaults already registered in this browser's OPFS, not arbitrary files/folders on disk; superseded.
 - `.codex.zip` backup upload (the original design for this branch): still a valid recovery mechanism, but adds an unnecessary export/download step when the user just wants specific files.
+
+## Decision: Build this as a new *mechanical* source in `packages/importer`, reusing the existing `ImportEngine`/`VaultWriter`/review pipeline — not a bespoke OPFS copy module
+
+**Rationale**: `packages/importer` already has a generic, source-agnostic import pipeline built for exactly this shape of problem: a `CCImportPackage` (`entityDrafts` + `relationshipDrafts` + `assetDrafts`, `packages/importer/src/cc/package.ts:67-76`) is validated, previewed (`ImportEngine.prepare`, matching against existing vault entities and letting the review UI choose skip/update/create per item), then committed (`ImportEngine.commit`, `packages/importer/src/cc/engine.ts:78-570`) through a `VaultWriter` port. Several other "mechanical" (deterministic, no-AI) sources already plug into this exact pipeline as thin converters: CIF (`packages/importer/src/cif/`), Scabard exports (`packages/importer/src/cc/scabard.ts`), and Chronica exports (`packages/importer/src/cc/chronica.ts`) — each is just a detector (`isXExport`) plus a function that maps the source's shape into `EntityDraft`/`AssetDraft`s. The app already wires all of these into one upload → processing → review → report flow (`apps/web/src/lib/components/settings/import-settings-controller.svelte.ts`), with `importMode: "cc"` being the deterministic (non-Oracle) path. Writing is already handled by `WebVaultWriter` (`apps/web/src/lib/features/importer/web-vault-writer.ts`), which creates/updates entities through the vault store's normal `createEntity`/`updateEntity` — the same path any in-app edit uses — so entities are live-indexed automatically; no manual `entityStore.rebuildIndexes()` step is needed (that was only a concern under the previously-considered raw-OPFS-write design).
+
+**Alternatives considered**:
+
+- A bespoke `packages/vault-engine/src/vault-import.ts` doing raw OPFS reads/writes (the previous plan for this branch): would duplicate conflict-detection, matching, and reporting logic that `ImportEngine` already provides, and would require a separate manual re-index step since it bypasses the normal entity-write path. Superseded.
+- Routing through the Oracle/AI analyzer (`packages/importer/src/oracle/analyzer.ts`): wrong tool — the dropped files are already valid, structured Codex Cryptica entity content; running them through AI extraction would be lossy and unnecessary. This feature explicitly needs the deterministic/"cc" path, not the Oracle path.
 
 ## Decision: Dropped/selected files never carry a real file-system path
 
@@ -24,31 +33,30 @@
 - Loose files only: simpler, but loses "drop the folder, get images automatically" for the common case where the user has the vault folder open already.
 - Require `showDirectoryPicker()` for any folder-level access: rejected as the default because it's unsupported in Firefox and Safari (see `apps/web/src/lib/utils/fs.ts:3-9,19-60`, which already documents and messages this gap for the existing "Load from Folder" flow); drag-and-drop folder support has no such gap.
 
-## Decision: Missing-image fallback offers "add the file" or "grant folder access", reusing existing File System Access helpers
+## Decision: Map dropped entity files into `EntityDraft`s with `sourcePath` identity, dropped images into `AssetDraft`s matched by declared image path
 
-**Rationale**: When a selected file references an image that wasn't part of the drop/selection, the app cannot locate it on its own (no path). The only two ways to close that gap are asking the user to add the specific missing file(s), or asking them to grant access to the containing folder so the app can search it — the second reuses `pickDirectory()` (`apps/web/src/lib/utils/fs.ts:67-85`) and the walking pattern in `walkDirectory()` (`fs.ts:123-177`, though that helper currently skips `images/` and only collects `.md` — the vault-import walk needs its own pass that includes `images/`). Where `pickDirectory()` throws `NotSupportedError` (Firefox/Safari), the existing `getFileSystemAccessUnsupportedMessage()` copy can inform the user that only the "add the file directly" option is available there.
+**Rationale**: `EntityDraftSchema` (`package.ts:19-40`) already models exactly what a parsed Codex Cryptica markdown file needs: `sourcePath`, `title`, `content`, `lore`, `tags`/`labels`, `image`/`thumbnail`, `startDate`/`endDate`. `AssetDraftSchema` (`package.ts:50-65`) models a dropped image with `placementRef` (which entity it belongs to) and an optional `contentHash` for dedupe — the same pattern CIF uses for content-addressed asset resolution (`resolveCifAssets`, `packages/importer/src/cif/assets.ts`). The new mechanical converter's job is: parse each dropped markdown file's frontmatter (existing frontmatter parsing conventions per `apps/web/src/lib/utils/markdown.ts`) into an `EntityDraft`, and for each `image`/`imageArtDirection` reference, look for a matching dropped file (by relative path) to become an `AssetDraft` with that entity's `placementRef`.
+
+**Alternatives considered**:
+
+- Custom `SourceVaultFile`/`CurrentVaultImportPlan` types (the previous plan's data model): reinvents `EntityDraft`/`AssetDraft`/`CCImportPackage`, which already cover the same fields. Superseded — see updated `data-model.md`.
+
+## Decision: Missing-image fallback offers "add the file" or "grant folder access", surfaced through the existing asset-review step
+
+**Rationale**: When an `EntityDraft`'s `image`/`thumbnail` reference has no matching dropped file, it becomes an `AssetDraft`-less reference the review step must flag (extending the existing `PreviewAsset.eligible`/`skipReason` shape used for CIF's size-limit rejections, `engine.ts:148-162`) rather than silently dropping the image. The only two ways to close that gap are asking the user to add the specific missing file(s), or asking them to grant access to the containing folder so the app can search it — the second reuses `pickDirectory()` (`apps/web/src/lib/utils/fs.ts:67-85`). Where `pickDirectory()` throws `NotSupportedError` (Firefox/Safari), the existing `getFileSystemAccessUnsupportedMessage()` copy can inform the user that only the "add the file directly" option is available there.
 
 **Alternatives considered**:
 
 - Silently import without the image and mark it missing, no resolution prompt: rejected — the user explicitly wants missing images actively resolved, not just reported.
 - Require the source folder upfront for every import: rejected — most imports won't need it since images are usually included in the same drop, and requiring it unconditionally adds friction and reintroduces the Firefox/Safari support gap as a hard blocker instead of an edge-case fallback.
 
-## Decision: Build the copy plan (added vs. conflicting) before writing, same principle as prior designs
+## Decision: Force `matchDecision: "skip"` for every matched entity — never expose "update" in this flow's review UI
 
-**Rationale**: A selected file (or resolved image) is safe to add only if its relative path does not already exist in the target vault. Calculating added/conflicting sets before confirmation keeps the review understandable and prevents accidental overwrites. This logic is path-comparison-only and is independent of how the source files were acquired.
-
-**Alternatives considered**:
-
-- Overwrite target paths after confirmation: risks losing current-vault work; out of scope per spec.
-- Auto-rename every conflict: would create duplicate entity/asset files without a meaningful user decision.
-
-## Decision: Rebuild the target vault's entity index after a successful copy, using the existing hook
-
-**Rationale**: Entities are dual-stored — as OPFS markdown files and as rows in an IndexedDB (Dexie) index (`graphEntities`, `entityContent`, `vaultMetadata`) used for search/list/graph queries. Writing OPFS files alone does not update that index. `entityStore.rebuildIndexes()` (`apps/web/src/lib/stores/vault.svelte.ts:423`) already exists for exactly this purpose and is called today after `importFromFolder`; the same call after a successful file-system import satisfies FR-015/SC-005.
+**Rationale**: `ImportEngine` already supports per-item skip/update/create decisions (`PreviewItem.matchDecision`, used by CIF's `"cif"` update policy for reimports). This feature's spec explicitly forbids overwriting existing target content (FR-006/FR-007) — unlike CIF, which is designed for repeatable reimport/sync. The review UI for this source simply never offers "update," so every path match is always skipped, satisfying the safety requirement using the engine's existing behavior rather than new logic.
 
 **Alternatives considered**:
 
-- Incrementally patch the index per imported file: more efficient but adds complexity for a bulk, infrequent, user-initiated action; `rebuildIndexes()` is already the established pattern for "files landed in OPFS from outside the normal edit flow."
+- Reuse CIF's `"cif"` update policy (union labels/aliases, replace scalars): rejected — this feature is a one-way additive import of specific hand-picked files, not a repeatable sync relationship with a source system.
 
 ## Decision: Keep the existing portable-backup restore and "Load from Folder" actions unchanged
 
