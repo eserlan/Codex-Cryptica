@@ -160,6 +160,17 @@ describe("StatSheetTemplateSettings", () => {
     ).toBeTruthy();
   });
 
+  it("links vault template settings to the community Stat Sheet directory", () => {
+    render(StatSheetTemplateSettings);
+
+    const link = screen.getByTestId(
+      "browse-community-stat-sheet-templates",
+    ) as HTMLAnchorElement;
+
+    expect(link.textContent).toContain("Browse community templates");
+    expect(link.getAttribute("href")).toBe("/templates");
+  });
+
   it("renames a vault template", async () => {
     render(StatSheetTemplateSettings);
 
