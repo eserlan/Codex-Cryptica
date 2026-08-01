@@ -15,6 +15,17 @@ describe("Tools directory", () => {
     expect(source).toContain('href: "/tools/vampire-clan-generator"');
   });
 
+  it("links the Cosmic Horror hub from the generator directory", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/routes/(marketing)/tools/+page.svelte"),
+      "utf8",
+    );
+
+    expect(source).toContain('title: "Browse by Theme"');
+    expect(source).toContain('href: "/generators/cosmic-horror"');
+    expect(source).not.toContain('href: "/tools/cosmic-horror"');
+  });
+
   it("lists a single consolidated migration section including the hub, scabard, and thread-weaver", () => {
     const source = readFileSync(
       join(process.cwd(), "src/routes/(marketing)/tools/+page.svelte"),
