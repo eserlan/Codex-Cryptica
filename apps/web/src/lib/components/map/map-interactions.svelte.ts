@@ -313,6 +313,18 @@ export class MapInteractionManager {
       this.isPanning &&
       !this.isAltPressed
     ) {
+      // Keep a tap from nudging the map on touch screens. Once the pointer
+      // crosses the click threshold, use the original down position so the
+      // first real drag movement is preserved.
+      if (
+        isClickGesture(
+          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+          { x: mouseX, y: mouseY },
+        )
+      ) {
+        return;
+      }
+
       const dx = mouseX - this.lastMousePos.x;
       const dy = mouseY - this.lastMousePos.y;
       mapStore.updateViewport(

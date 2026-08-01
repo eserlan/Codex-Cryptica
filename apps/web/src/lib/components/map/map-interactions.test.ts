@@ -101,6 +101,23 @@ describe("MapInteractionManager", () => {
     expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 14, y: 25 }, 1);
   });
 
+  it("should ignore touch jitter until the drag threshold is crossed", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId: 1,
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(pointer("pointerdown", 200, 200));
+    manager.onPointerMove(pointer("pointermove", 202, 203));
+
+    expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+    manager.onPointerMove(pointer("pointermove", 210, 210));
+
+    expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 10, y: 10 }, 1);
+  });
+
   it("should start box selection when Ctrl is pressed on GM mode", () => {
     const event = new MouseEvent("mousedown", {
       clientX: 200,
