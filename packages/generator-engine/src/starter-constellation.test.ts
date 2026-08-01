@@ -77,6 +77,9 @@ describe("generateStarterConstellationLocal", () => {
     expect(cosmicHorror.entities.map((entity) => entity.subtype)).toContain(
       "Anomaly",
     );
+    expect(JSON.stringify(cosmicHorror)).not.toMatch(
+      /cthulhu|arkham|innsmouth|necronomicon/i,
+    );
   });
 
   it("weaves an empty premise into a theme-only constellation without error", () => {

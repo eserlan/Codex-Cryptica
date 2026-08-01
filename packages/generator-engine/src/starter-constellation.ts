@@ -221,7 +221,7 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
     settlementLabel: "Outpost",
     settlementNames: [
       "Morrow Station",
-      "Innsmouth Point",
+      "Tidewatch Point",
       "The Pelagic Archive",
     ],
     factionLabel: "Society",
