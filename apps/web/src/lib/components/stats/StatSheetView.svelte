@@ -324,63 +324,65 @@
           </div>
         {:else if field.type === "dice"}
           <div
-            class="flex items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
+            class="flex flex-col gap-1 rounded border border-theme-border px-2 py-1.5"
             data-testid="stat-sheet-dice"
           >
-            <div class="flex items-center gap-1.5 flex-1 min-w-0">
-              <span class="text-xs text-theme-text font-medium truncate"
-                >{field.label}</span
-              >
-              <input
-                type="number"
-                class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs font-bold text-theme-text disabled:opacity-40"
-                value={typeof field.value === "number" ? field.value : ""}
-                disabled={readOnly}
-                placeholder="Target"
-                aria-label={`Target number for ${field.label}`}
-                oninput={(e) =>
-                  updateFieldValue(
-                    field.id,
-                    (e.target as HTMLInputElement).value === ""
-                      ? undefined
-                      : Number((e.target as HTMLInputElement).value),
-                  )}
-              />
-              <span class="text-xs text-theme-muted font-mono shrink-0"
-                >- {field.formula || "1d100"}</span
-              >
-            </div>
-            <div class="flex items-center gap-2">
-              {#if !readOnly}
+            <span class="text-xs text-theme-text font-medium truncate"
+              >{field.label}</span
+            >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <input
+                  type="number"
+                  class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs font-bold text-theme-text disabled:opacity-40"
+                  value={typeof field.value === "number" ? field.value : ""}
+                  disabled={readOnly}
+                  placeholder="Target"
+                  aria-label={`Target number for ${field.label}`}
+                  oninput={(e) =>
+                    updateFieldValue(
+                      field.id,
+                      (e.target as HTMLInputElement).value === ""
+                        ? undefined
+                        : Number((e.target as HTMLInputElement).value),
+                    )}
+                />
+                <span class="text-xs text-theme-muted font-mono shrink-0"
+                  >- {field.formula || "1d100"}</span
+                >
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                {#if !readOnly}
+                  <button
+                    type="button"
+                    class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+                      ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                      : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
+                    onclick={() => toggleFavorite(field)}
+                    aria-label={field.favorite
+                      ? `Unpin ${field.label} from token quick stats`
+                      : `Pin ${field.label} to token quick stats`}
+                    aria-pressed={!!field.favorite}
+                    data-testid="stat-sheet-favorite-toggle"
+                  >
+                    <span
+                      class="icon-[lucide--star] h-3.5 w-3.5"
+                      class:fill-theme-primary={field.favorite}
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                {/if}
                 <button
                   type="button"
-                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
-                  onclick={() => toggleFavorite(field)}
-                  aria-label={field.favorite
-                    ? `Unpin ${field.label} from token quick stats`
-                    : `Pin ${field.label} to token quick stats`}
-                  aria-pressed={!!field.favorite}
-                  data-testid="stat-sheet-favorite-toggle"
+                  class="flex h-7 w-7 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  onclick={() => rollDice(field)}
+                  aria-label={`Roll ${field.label}`}
+                  data-testid="stat-sheet-dice-roll"
                 >
-                  <span
-                    class="icon-[lucide--star] h-3.5 w-3.5"
-                    class:fill-theme-primary={field.favorite}
-                    aria-hidden="true"
+                  <span class="icon-[lucide--dices] h-4 w-4" aria-hidden="true"
                   ></span>
                 </button>
-              {/if}
-              <button
-                type="button"
-                class="flex h-7 w-7 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-                onclick={() => rollDice(field)}
-                aria-label={`Roll ${field.label}`}
-                data-testid="stat-sheet-dice-roll"
-              >
-                <span class="icon-[lucide--dices] h-4 w-4" aria-hidden="true"
-                ></span>
-              </button>
+              </div>
             </div>
           </div>
         {/if}
