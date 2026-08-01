@@ -41,6 +41,38 @@
 
 - Custom `SourceVaultFile`/`CurrentVaultImportPlan` types (the previous plan's data model): reinvents `EntityDraft`/`AssetDraft`/`CCImportPackage`, which already cover the same fields. Superseded — see updated `data-model.md`.
 
+## Decision: Give this source its own `MappingRuleSet` that preserves each file's real entity type
+
+**Rationale**: `packages/importer`'s generic `createEngine()` uses `DEFAULT_MAPPING_RULES` (`rules: [], defaultType: "note"`, `packages/importer/src/cc/mapping.ts:12-15`); `mapDraftToType` falls through to `defaultType` whenever no rule matches `draft.sourceType` (`mapping.ts:27-44`). Unlike CIF/Scabard/Chronica — foreign formats without a Codex Cryptica-native type — a dropped file *already has* a definitive, correct entity type in its own frontmatter (Character/Location/Item/Lore/Creature/etc., the app's real `Entity["type"]`). Without a dedicated rule set mapping each real type to itself, every imported entity would silently become `"note"`, which is not merely an edge case but a core data-fidelity defect. The converter sets `EntityDraft.sourceType` to the dropped file's actual frontmatter `type`, and `VAULT_FILES_MAPPING_RULES` contains one `{ when: { sourceType: X }, thenType: X }` rule per known entity type.
+
+**Alternatives considered**:
+
+- Leave the generic `DEFAULT_MAPPING_RULES` in place: rejected — silently downgrades every imported entity's type to "note," which is a data-fidelity defect, not an acceptable default.
+
+## Decision: Give this source its own `ImportEngine` instance with `titleFallback: false` and a `sourcePath`-only `sourceRefBuilder`
+
+**Rationale**: spec.md's FR-006/FR-007 and the "File conflict" key entity define conflict as "the path already exists in the current vault" — a literal, deterministic identity check. The generic `createEngine()` (used by Scabard/Chronica) constructs its `WebVaultWriter` with the default `titleFallback: true` (`web-vault-writer.ts:63`), which lets `findBySourceRef` fall back to matching by entity **title** when no exact `discoverySource` match exists (`web-vault-writer.ts:101-118`). That's the wrong semantics here: a dropped file could be treated as "already exists" purely because an unrelated existing entity happens to share its title, contradicting the spec's own definition of conflict and skewing FR-004's reported counts. CIF already solves exactly this problem for exactly this reason (`createCifEngine()`, `import-settings-controller.svelte.ts:255-267`: `titleFallback: false` plus its own `sourceRefBuilder`). This feature follows the same pattern: `vaultFileSourceRefBuilder(system, draft)` derives identity from `draft.sourcePath` alone (no `sourceId` branch, since dropped files have no other stable identity), and `createVaultFilesEngine()` passes `titleFallback: false` to `createWebVaultWriter`.
+
+**Alternatives considered**:
+
+- Reuse the generic `createEngine()`/default `titleFallback: true` (the original plan): rejected — makes "conflict" title-fuzzy instead of path-exact, contradicting FR-006 as written.
+
+## Decision: Compute a content hash for each matched image, mirroring CIF's asset dedupe
+
+**Rationale**: `AssetDraft.contentHash` (`package.ts:63`) is optional and is what `WebVaultWriter.saveAsset` uses for deterministic, content-addressed storage naming (`cif_${contentHash.slice(0,16)}` vs. falling back to `originalName`, `web-vault-writer.ts:346-349`). CIF computes this via `sha256Hex` (`packages/importer/src/cif/zip.ts`). Without it, two different dropped images that happen to share a filename (e.g. two entities each with their own `portrait.png`, dropped from different subfolders in the same batch) would not be reliably distinguished by the storage layer's naming. The new converter computes the same hash for every matched image `DroppedItem` before building its `AssetDraft`.
+
+**Alternatives considered**:
+
+- Rely on `originalName` fallback naming: rejected — reintroduces a same-filename collision risk this feature's own "images come along automatically, safely" promise (US3) shouldn't have, when CIF already demonstrates the fix is cheap to reuse.
+
+## Clarification: the missing-image list is a new, separate concept — not a reuse of `PreviewAsset`
+
+**Rationale**: `PreviewAsset` (`engine.ts:148-162`) is only ever built from `pkg.assetDrafts` that already exist; an image reference with **no** matching `AssetDraft` at all (because no dropped item matched it) never enters `session.assets` under the existing engine. `MissingImageReference` (see data-model.md) is therefore a genuinely new list the converter returns alongside `CCImportPackage`, rendered by its own review step (T014/T015) — not an "extension" of `PreviewAsset`'s existing `eligible: false` shape, despite the conceptual similarity. This is a documentation clarification, not a new decision; recorded here so the distinction stays explicit for implementers.
+
+## Clarification: help content registration needs no separate `help-content.ts` entry
+
+**Rationale**: Constitution Principle VII names `apps/web/src/lib/config/help-content.ts` as where help articles are "registered," which reads as if every article needs a manual entry there. In practice, long-form help articles are markdown files under `apps/web/src/lib/content/help/*.md`, auto-discovered via `import.meta.glob("./help/*.md", ...)` in `apps/web/src/lib/content/loader.ts:89-97` — `help-content.ts` itself holds a separate, unrelated catalog of short in-app `FeatureHint`/tooltip entries. Editing `offline-sync.md` (or adding a new markdown file under `content/help/`) is sufficient on its own to satisfy Principle VII for this feature; no `help-content.ts` edit is needed unless a `FeatureHint` tooltip is also desired for first-time use (optional per the constitution's "SHOULD").
+
 ## Decision: Missing-image fallback offers "add the file" or "grant folder access", surfaced through the existing asset-review step
 
 **Rationale**: When an `EntityDraft`'s `image`/`thumbnail` reference has no matching dropped file, it becomes an `AssetDraft`-less reference the review step must flag (extending the existing `PreviewAsset.eligible`/`skipReason` shape used for CIF's size-limit rejections, `engine.ts:148-162`) rather than silently dropping the image. The only two ways to close that gap are asking the user to add the specific missing file(s), or asking them to grant access to the containing folder so the app can search it — the second reuses `pickDirectory()` (`apps/web/src/lib/utils/fs.ts:67-85`). Where `pickDirectory()` throws `NotSupportedError` (Firefox/Safari), the existing `getFileSystemAccessUnsupportedMessage()` copy can inform the user that only the "add the file directly" option is available there.
@@ -57,6 +89,12 @@
 **Alternatives considered**:
 
 - Reuse CIF's `"cif"` update policy (union labels/aliases, replace scalars): rejected — this feature is a one-way additive import of specific hand-picked files, not a repeatable sync relationship with a source system.
+
+## Decision: Guard against starting a second import while one is in progress (FR-017)
+
+**Rationale**: `ImportSettingsController` is a single instance per open settings surface with an explicit `step` state (`"upload" | "processing" | "review" | "report"`); the entry point (drop zone / upload button) is only interactive while `step === "upload"`. This structurally satisfies FR-017 for the common case, but wasn't previously called out as an explicit task/test for this source — the guard is stated as a requirement here so it's verified, not just assumed to fall out of the existing controller shape.
+
+**Alternatives considered**: None — this reuses the controller's existing step machine rather than introducing new concurrency-control state.
 
 ## Decision: Keep the existing portable-backup restore and "Load from Folder" actions unchanged
 

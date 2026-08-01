@@ -22,15 +22,16 @@ The full set of items the user provided in one drop/selection.
 
 ## Mapping DroppedItem → CCImportPackage (new mechanical converter output)
 
-The converter (new, in `packages/importer`) walks `SourceSelection.items`, and for each recognized entity markdown file:
+The converter (new, in `packages/importer/src/vault-files/convert.ts`) walks `SourceSelection.items`, and for each recognized entity markdown file:
 
-- Produces one `EntityDraft` with `sourcePath` set to the file's `relativePath` (this is what `ImportEngine` uses, via `sourceRefBuilder`, as the match/dedupe identity — see `buildEntitySourceRef`, `packages/importer/src/cc/source-ref.ts`), and `image`/`thumbnail` populated from the entity's frontmatter references.
-- For each `image`/`thumbnail` reference, looks for a `DroppedItem` whose `relativePath` matches; if found, adds an `AssetDraft` with `placementRef` pointing at the entity's `sourcePath` (or its resolved `sourceRef`, per existing CIF asset-resolution conventions in `packages/importer/src/cif/assets.ts`).
+- Produces one `EntityDraft` with `sourcePath` set to the file's `relativePath`, and `sourceType` set to the file's real frontmatter `type` (Character/Location/Item/Lore/Creature/etc.) so `VAULT_FILES_MAPPING_RULES` (`packages/importer/src/vault-files/mapping.ts`) resolves it back to the same type instead of falling through to `DEFAULT_MAPPING_RULES`'s `"note"` default. `image`/`thumbnail` are populated from the entity's frontmatter references.
+- Match/dedupe identity uses `vaultFileSourceRefBuilder` (`packages/importer/src/vault-files/source-ref.ts`), derived from `sourcePath` only — no `sourceId` branch and no title-based fallback (the engine for this source is constructed with `titleFallback: false`), so "conflict" means an exact path match, matching spec.md's FR-006 literally.
+- For each `image`/`thumbnail` reference, looks for a `DroppedItem` whose `relativePath` matches; if found, computes a content hash (sha256) of its bytes and adds an `AssetDraft` with `placementRef` pointing at the entity's `sourcePath` and `contentHash` set, so `WebVaultWriter.saveAsset` uses content-addressed storage naming (matching CIF's convention) instead of falling back to the possibly-colliding original filename.
 - Files that aren't recognized as vault entity content are excluded and reported (`ImportWarning`), not silently imported as-is (per spec edge case).
 
 ## MissingImageReference
 
-An image path an `EntityDraft` references that had no matching `DroppedItem` — new to this feature, surfaced as an extension of the existing `PreviewAsset.eligible: false` shape (`engine.ts:148-162`) with a distinct `skipReason` so the review UI can offer resolution rather than just reporting a skip.
+An image path an `EntityDraft` references that had no matching `DroppedItem` — new to this feature. This is a **separate list returned alongside `CCImportPackage`**, not an extension of `PreviewAsset`: `PreviewAsset` (`engine.ts:148-162`) is only ever built from `pkg.assetDrafts` that already exist, so a reference with no matching dropped item never enters `session.assets` under the existing engine at all. The missing-image review step (T014/T015) renders this list directly, independent of the reused `PreviewAsset` UI.
 
 | Field          | Description                                                                 |
 | -------------- | ---------------------------------------------------------------------------- |
