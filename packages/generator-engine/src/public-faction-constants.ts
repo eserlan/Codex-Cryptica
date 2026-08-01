@@ -399,6 +399,8 @@ export const themeIdToLabel: Record<string, string> = {
   cyberpunk_light: "Cyberpunk / Corporate",
   horror: "Vampire / Gothic Noir",
   horror_light: "Vampire / Gothic Noir",
+  cosmic_horror: "Cosmic Horror",
+  cosmic_horror_light: "Cosmic Horror",
   scifi: "Sci-Fi / Space Opera",
   scifi_light: "Sci-Fi / Space Opera",
   modern: "Modern Conspiracy",

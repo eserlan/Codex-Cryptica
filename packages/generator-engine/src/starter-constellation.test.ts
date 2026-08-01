@@ -69,6 +69,14 @@ describe("generateStarterConstellationLocal", () => {
     expect(fantasySubtypes).toContain("Region");
     expect(cyberpunkSubtypes).toContain("District");
     expect(cyberpunkSubtypes).toContain("Corporation");
+
+    const cosmicHorror = generateStarterConstellationLocal(
+      { themeId: "cosmic_horror" },
+      seededRng(1),
+    );
+    expect(cosmicHorror.entities.map((entity) => entity.subtype)).toContain(
+      "Anomaly",
+    );
   });
 
   it("weaves an empty premise into a theme-only constellation without error", () => {

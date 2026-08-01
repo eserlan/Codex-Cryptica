@@ -214,6 +214,36 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
     ],
     flavor: "candlelight, dread, and secrets the fog won't give up",
   },
+  cosmic_horror: {
+    themeName: "Cosmic Horror",
+    regionLabel: "Expanse",
+    regionNames: ["The Abyssal Shelf", "The Hushed Meridian", "The Black Reef"],
+    settlementLabel: "Outpost",
+    settlementNames: [
+      "Morrow Station",
+      "Innsmouth Point",
+      "The Pelagic Archive",
+    ],
+    factionLabel: "Society",
+    factionNames: [
+      "The Meridian Society",
+      "The Lantern Archive",
+      "The Deep Survey",
+    ],
+    characterRoles: [
+      "field investigator",
+      "marine archaeologist",
+      "disgraced astronomer",
+    ],
+    threatLabel: "Anomaly",
+    threatNames: [
+      "a signal from beneath the seabed",
+      "an impossible tide",
+      "a geometry that changes overnight",
+    ],
+    flavor:
+      "forbidden research, alien scale, and the fragile limits of certainty",
+  },
   fallout: {
     themeName: "Retro-Futurist Wasteland",
     regionLabel: "Wasteland",

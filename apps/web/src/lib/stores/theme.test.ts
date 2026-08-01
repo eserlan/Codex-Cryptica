@@ -181,6 +181,7 @@ describe("ThemeStore", () => {
         "cyberpunk",
         "apocalyptic",
         "horror",
+        "cosmic_horror",
         "fallout",
         "starwars",
         "startrek",
@@ -189,6 +190,15 @@ describe("ThemeStore", () => {
         await store.setTheme(id);
         expect(store.activeTheme.id).toBe(`${id}_light`);
       }
+    });
+
+    it("keeps cosmic horror separate from the gothic-noir horror theme", async () => {
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("cosmic_horror");
+
+      expect(store.activeTheme.name).toBe("Cosmic Horror");
+      expect(store.activeTheme.description).toContain("impossible geometry");
+      expect(store.activeTheme.description).not.toContain("vampires");
     });
 
     it("should keep natively light themes as light in neutral-light, and natively dark as dark in neutral-dark", async () => {

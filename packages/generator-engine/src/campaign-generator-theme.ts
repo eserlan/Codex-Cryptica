@@ -45,6 +45,14 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     event: { type: "Ritual" },
     dungeon: { purpose: "Tomb & Catacomb", currentState: "Cursed Ruin" },
   },
+  cosmic_horror: {
+    npc: { race: "Human", role: "Investigator" },
+    settlement: { type: "Remote Outpost" },
+    faction: { type: "Research Society" },
+    "magic-item": { rarity: "Rare" },
+    event: { type: "Discovery" },
+    dungeon: { purpose: "Research Facility", currentState: "Sealed Vault" },
+  },
   cyberpunk: {
     npc: { race: "Human", role: "Runner" },
     settlement: { type: "City" },

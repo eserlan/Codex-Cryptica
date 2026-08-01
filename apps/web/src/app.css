@@ -270,6 +270,10 @@
     --color-text-muted: #9ca3af;
     --color-text-dim: #6b7280;
   }
+  [data-theme="cosmic_horror"] {
+    --color-text-muted: #9adbd2;
+    --color-text-dim: #69aaa1;
+  }
   [data-theme="fallout"] {
     --color-text-muted: #78c900;
     --color-text-dim: #4ade80;
@@ -322,6 +326,7 @@
   [data-theme="cyberpunk"],
   [data-theme="apocalyptic"],
   [data-theme="horror"],
+  [data-theme="cosmic_horror"],
   [data-theme="fallout"],
   [data-theme="starwars"],
   [data-theme="startrek"],

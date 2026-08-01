@@ -24,6 +24,7 @@ The changes will be applied instantly across the entire application, including t
 - **Ancient Parchment**: Our flagship fantasy theme, designed to feel like an enchanted magic tome with parchment textures and inked typography.
 - **Sci-Fi Terminal**: A high-contrast, neon-green terminal aesthetic for futuristic settings.
 - **Blood & Noir**: A dark, moody theme with crimson accents, ideal for horror or investigative campaigns.
+- **Cosmic Horror**: Sea-green ink, impossible geometry, and deep-sea unease for investigations into the unknown. Unlike Blood & Noir, it focuses on alien scale and forbidden knowledge—not vampires, bloodlines, or gothic-noir intrigue.
 - **Neon Night**: A vibrant, cyberpunk-inspired palette with high-energy colors.
 - **Wasteland**: A rugged, textured theme for post-apocalyptic or industrial worlds.
 - **Clean Modern**: A minimalist, distraction-free aesthetic for general-purpose world-building.
