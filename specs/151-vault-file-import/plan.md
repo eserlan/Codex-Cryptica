@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add an "Import Files" flow that accepts files via native drag-and-drop (including a dropped folder) and the traditional file upload dialog, then reuses `packages/importer`'s existing mechanical (non-AI) import pipeline end to end: a new converter maps the dropped files into a `CCImportPackage` (`EntityDraft`s with a mapping rule set that preserves each file's real Codex Cryptica entity type, `AssetDraft`s with content-hash-based dedupe, matching entity `image`/`thumbnail` references to dropped image files by path), a **dedicated engine instance** (mirroring `createCifEngine()`: `titleFallback: false`, a `sourcePath`-keyed `sourceRefBuilder`) handles matching/preview/write through the existing `WebVaultWriter`, and the existing `ImportSettingsController` upload → processing → review → report UI is extended with a new source type, a concurrency guard, and a missing-image resolution step (add file directly, or grant folder access via the existing `pickDirectory()` helper). Review always treats a matched entity as "skip" (never "update"), enforcing the never-overwrite requirement using the engine's existing behavior. No custom OPFS copy code and no in-app "other vault" browsing are needed.
+Add an "Import Files" flow that accepts files via native drag-and-drop (including a dropped folder) and the traditional file upload dialog, then reuses `packages/importer`'s existing mechanical (non-AI) import pipeline end to end: a new converter maps the dropped files into a `CCImportPackage` (`EntityDraft`s with a per-batch derived, passthrough mapping rule set that preserves each file's real (free-form) entity type, `AssetDraft`s with content-hash-based dedupe, matching entity `image`/`thumbnail` references to dropped image files by path), a **dedicated engine instance** (mirroring `createCifEngine()`: `titleFallback: false`, a `sourcePath`-keyed `sourceRefBuilder`) handles matching/preview/write through the existing `WebVaultWriter`, and the existing `ImportSettingsController` upload → processing → review → report UI is extended with a new source type, a concurrency guard, and a missing-image resolution step (add file directly, or grant folder access via the existing `pickDirectory()` helper). Review always treats a matched entity as "skip" (never "update"), enforcing the never-overwrite requirement using the engine's existing behavior. No custom OPFS copy code and no in-app "other vault" browsing are needed.
 
 ## Technical Context
 
@@ -51,9 +51,10 @@ packages/importer/src/
 ├── vault-files/
 │   ├── index.ts                     # NEW: barrel export
 │   ├── detect.ts                    # NEW: isVaultEntityFile(name, content) — recognizes existing CC frontmatter
-│   ├── mapping.ts                   # NEW: VAULT_FILES_MAPPING_RULES — one rule per real Codex Cryptica entity
-│   │                                 #      type (Character/Location/Item/Lore/Creature/...), so mapDraftToType
-│   │                                 #      never falls through to DEFAULT_MAPPING_RULES' "note" default
+│   ├── mapping.ts                   # NEW: buildVaultFilesMappingRules(drafts) — one passthrough rule per
+│   │                                 #      distinct sourceType actually present in the batch (entity types are
+│   │                                 #      free-form/user-defined, not a fixed enum — see research.md), so
+│   │                                 #      mapDraftToType never falls through to DEFAULT_MAPPING_RULES' "note"
 │   ├── source-ref.ts                # NEW: vaultFileSourceRefBuilder(system, draft) — sourcePath-only identity,
 │   │                                 #      no sourceId branch, so two different dropped files can never collide
 │   ├── convert.ts                   # NEW: droppedItemsToPackage(items: DroppedItem[]): { pkg: CCImportPackage;
@@ -75,14 +76,14 @@ apps/web/src/lib/
 ├── components/settings/import-settings-controller.svelte.ts  # updated: new createVaultFilesEngine() (mirrors
 │                                                               #          createCifEngine(): titleFallback: false,
 │                                                               #          vaultFileSourceRefBuilder,
-│                                                               #          VAULT_FILES_MAPPING_RULES), new
+│                                                               #          buildVaultFilesMappingRules), new
 │                                                               #          source-detection branch calling
 │                                                               #          droppedItemsToPackage, missing-image
 │                                                               #          resolution state, forced matchDecision
 │                                                               #          "skip", an in-progress guard (FR-017)
 ├── components/settings/ImportSettings.svelte          # updated: drop zone + upload button entry point,
 │                                                       #          missing-image resolution step in review
-└── content/help/offline-sync.md                       # updated: file-system import guidance (auto-registered via
+└── content/help/importing.md                       # updated: file-system import guidance (auto-registered via
 │                                                       #          content/loader.ts's import.meta.glob("./help/*.md")
 │                                                       #          — no separate help-content.ts entry needed)
 ```

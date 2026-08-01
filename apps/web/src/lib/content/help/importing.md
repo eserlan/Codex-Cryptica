@@ -15,6 +15,15 @@ Codex Cryptica can transform your unstructured notes into a structured Knowledge
 2. **Analysis**: The Oracle breaks your documents into chunks and analyzes them to find characters, locations, and items.
 3. **Review**: You review the discovered entities and their relationships before adding them to your vault.
 
+## Import Files
+
+If you already have Codex Cryptica files on your computer — from another vault, a folder you saved, or a portable backup you unzipped — you can bring specific ones straight in, no AI analysis needed:
+
+- **Drag and drop**: Drag individual files, or a whole folder, onto the **Import Files** area.
+- **Choose Files**: Use the button to pick files from the traditional file upload dialog instead.
+- **Review before anything is written**: You'll see exactly what was picked up, how many files will be added, and how many already exist in this vault (those are always skipped — this flow never overwrites, updates, or merges existing entities).
+- **Images come along automatically**: If a dropped file references an image, that image (and its thumbnail) is included automatically whenever it was part of the same drop — for example when you drag in a whole folder. If it wasn't, you'll be prompted to add the image file directly or, in browsers that support it, grant access to the source folder so it can be found there.
+
 ## Dedicated Importer
 
 For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window.
