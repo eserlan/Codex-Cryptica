@@ -103,6 +103,16 @@ function ownerToken(request: Request): string | null {
     : value?.trim() || null;
 }
 
+async function hashOwnerToken(token: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(token),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 async function authorize(
   request: Request,
   env: TemplateDirectoryEnv,
@@ -118,7 +128,7 @@ async function authorize(
       { error: { message: "Template listing not found" } },
       404,
     );
-  if (head.customMetadata?.ownerToken !== token) {
+  if (head.customMetadata?.ownerTokenHash !== (await hashOwnerToken(token))) {
     return json(request, { error: { message: "Invalid owner token" } }, 401);
   }
   return null;
@@ -183,7 +193,7 @@ export async function handleCreateTemplateListing(
           contentType: "application/json",
           cacheControl: CACHE_CONTROL,
         },
-        customMetadata: { ownerToken: token },
+        customMetadata: { ownerTokenHash: await hashOwnerToken(token) },
       },
     );
     await env.BUCKET.put(
