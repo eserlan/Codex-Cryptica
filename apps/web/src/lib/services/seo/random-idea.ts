@@ -28,6 +28,7 @@ export const themeToHubGenre: Record<string, string> = {
   Pirate: "Pirate",
   "Cyberpunk / Corporate": "Cyberpunk",
   "Vampire / Gothic Noir": "Horror",
+  "Cosmic Horror": "Cosmic Horror",
   "Sci-Fi / Space Opera": "Sci-Fi",
   "Modern Conspiracy": "Modern",
   "Post-Apocalyptic": "Post-Apocalyptic",
