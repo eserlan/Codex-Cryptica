@@ -56,7 +56,7 @@ export async function rollStatSheetDiceField(
       } else {
         notificationStore.notify(
           `${field.label}: ${field.formula} = ${result.total} vs ${targetNum} (${outcome})`,
-          "success",
+          isSuccess ? "success" : "error",
         );
       }
 

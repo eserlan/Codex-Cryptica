@@ -177,4 +177,15 @@ describe("rollStatSheetDiceField", () => {
       "success",
     );
   });
+
+  it("uses an error toast for failed non-VTT target rolls", async () => {
+    mapSessionState.vttEnabled = false;
+
+    await rollStatSheetDiceField(diceField({ formula: "1d100", value: 10 }));
+
+    expect(notify).toHaveBeenCalledWith(
+      "Attack: 1d100 = 17 vs 10 (Failure)",
+      "error",
+    );
+  });
 });
