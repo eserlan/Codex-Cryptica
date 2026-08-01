@@ -118,6 +118,58 @@ describe("MapInteractionManager", () => {
     expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 10, y: 10 }, 1);
   });
 
+  it("should pinch-zoom with two touch pointers", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const touch = (
+      type: string,
+      pointerId: number,
+      clientX: number,
+      clientY: number,
+    ) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId,
+        pointerType: "touch",
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(touch("pointerdown", 1, 300, 300));
+    manager.onPointerDown(touch("pointerdown", 2, 500, 300));
+    expect(manager.isPanning).toBe(false);
+
+    // Pinch distance doubles from 200 to 400 -> zoom doubles. A single move
+    // keeps this independent of the mocked store re-reading its own zoom,
+    // so we assert on the call args instead of mutating the store mock.
+    manager.onPointerMove(touch("pointermove", 2, 700, 300));
+
+    expect(mapStore.updateViewport).toHaveBeenCalled();
+    const [, zoom] = (mapStore.updateViewport as any).mock.calls.at(-1);
+    expect(zoom).toBeCloseTo(2, 5);
+  });
+
+  it("should not pan or click after lifting fingers from a pinch gesture", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const touch = (
+      type: string,
+      pointerId: number,
+      clientX: number,
+      clientY: number,
+    ) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId,
+        pointerType: "touch",
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(touch("pointerdown", 1, 300, 300));
+    manager.onPointerDown(touch("pointerdown", 2, 500, 300));
+    manager.onPointerMove(touch("pointermove", 1, 250, 300));
+    manager.onPointerMove(touch("pointermove", 2, 550, 300));
+    (mapStore.updateViewport as any).mockClear();
+
+    await manager.onPointerUp(touch("pointerup", 1, 250, 300));
+    await manager.onPointerUp(touch("pointerup", 2, 550, 300));
+
+    expect(manager.isPanning).toBe(false);
+  });
+
   it("should start box selection when Ctrl is pressed on GM mode", () => {
     const event = new MouseEvent("mousedown", {
       clientX: 200,
