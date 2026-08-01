@@ -11,6 +11,7 @@ import {
   CYBERPUNK_LIGHT,
   APOCALYPTIC_LIGHT,
   HORROR_LIGHT,
+  COSMIC_HORROR_LIGHT,
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
@@ -59,7 +60,7 @@ describe("Theme Schema & Definitions", () => {
     expect(() => StylingTemplateSchema.parse(PIRATE_DARK)).not.toThrow();
   });
 
-  it("defines light and dark counterparts for all 12 world themes", () => {
+  it("defines light and dark counterparts for all world themes", () => {
     const counterparts: Record<string, { light: any; dark: any }> = {
       workspace: { light: THEMES.workspace, dark: WORKSPACE_DARK },
       scifi: { light: SCIFI_LIGHT, dark: THEMES.scifi },
@@ -69,6 +70,10 @@ describe("Theme Schema & Definitions", () => {
       cyberpunk: { light: CYBERPUNK_LIGHT, dark: THEMES.cyberpunk },
       apocalyptic: { light: APOCALYPTIC_LIGHT, dark: THEMES.apocalyptic },
       horror: { light: HORROR_LIGHT, dark: THEMES.horror },
+      cosmic_horror: {
+        light: COSMIC_HORROR_LIGHT,
+        dark: THEMES.cosmic_horror,
+      },
       fallout: { light: FALLOUT_LIGHT, dark: THEMES.fallout },
       starwars: { light: STARWARS_LIGHT, dark: THEMES.starwars },
       startrek: { light: STARTREK_LIGHT, dark: THEMES.startrek },
@@ -129,6 +134,8 @@ describe("Theme Schema & Definitions", () => {
       "space-opera-resistance": "resistance_console.svg",
       "space-opera-resistance_dark": "resistance_console.svg",
       horror_light: "autopsy_smudge.svg",
+      cosmic_horror: "eldritch_cartography.svg",
+      cosmic_horror_light: "eldritch_cartography.svg",
       fallout_light: "vault_blueprint.svg",
     };
 
@@ -149,6 +156,8 @@ describe("Theme Schema & Definitions", () => {
       "space-opera-resistance": THEMES["space-opera-resistance"],
       "space-opera-resistance_dark": SPACE_OPERA_RESISTANCE_DARK,
       horror_light: HORROR_LIGHT,
+      cosmic_horror: THEMES.cosmic_horror,
+      cosmic_horror_light: COSMIC_HORROR_LIGHT,
       fallout_light: FALLOUT_LIGHT,
     };
 

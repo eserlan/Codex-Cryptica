@@ -11,6 +11,7 @@ describe("Generator Theme Hub Route", () => {
       "post-apocalyptic",
       "modern",
       "vampire",
+      "cosmic-horror",
       "western",
       "steampunk",
       "lancer",
@@ -33,7 +34,7 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 12 theme slugs", () => {
+    it("should return all theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([
         { theme: "fantasy" },
@@ -43,6 +44,7 @@ describe("Generator Theme Hub Route", () => {
         { theme: "post-apocalyptic" },
         { theme: "modern" },
         { theme: "vampire" },
+        { theme: "cosmic-horror" },
         { theme: "western" },
         { theme: "steampunk" },
         { theme: "lancer" },

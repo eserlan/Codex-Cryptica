@@ -375,24 +375,32 @@ export const ART_THEMES: Record<string, ArtTheme> = {
   fantasy: {
     id: "theme.fantasy",
     label: "Fantasy",
-    // No "magic as subtle material detail" clause: it is the one theme rule
-    // that can be flatly wrong for an in-theme subject — an arch-lich mid-cast
-    // or a rift opening — and the theme layer sits after the subject, so it
-    // would get the last word.
-    medium: "painterly oil rendering with visible brushwork",
+    // The medium states the genre outright ("high-fantasy world of magic and
+    // myth") rather than relying on palette and material alone — those proved
+    // indistinguishable from a plain historical genre painting on their own.
+    // Still no blanket "magic as subtle material detail" clause: that would be
+    // flatly wrong for an in-theme subject — an arch-lich mid-cast or a rift
+    // opening — and the theme layer sits after the subject, so it would get
+    // the last word.
+    medium:
+      "painterly oil rendering with visible brushwork, set in a high-fantasy world of magic, myth, and sword-and-sorcery adventure",
     palette:
       "warm earth palette of ochre, umber, and tarnished gold with occasional cool shadow",
     lighting: "natural or firelit key",
-    craftMaterials: "worn leather, hammered iron, stained wood, oiled cloth",
+    craftMaterials:
+      "worn leather, hammered iron, rune-etched steel, carved horn and bone, oiled cloth",
     terrainMaterials:
-      "hand-cut stone, weathered timber, thatch and slate, moss and lichen over old masonry",
+      "hand-cut stone circles, weathered timber, thatch and slate, moss over ivy-choked masonry, ancient ruins reclaimed by forest",
     exaltedMaterials:
       "spun gold thread, moonlit silver, living amber, crystal that holds its own light, cloth that never frays",
     exaltedPalette:
       "cool ivory and deep shadow with one saturated accent, the metals reading as light rather than colour",
-    styleReferences: ["nineteenth-century romantic oil painting"],
+    styleReferences: [
+      "nineteenth-century romantic oil painting",
+      "golden-age fantasy book illustration",
+    ],
     nameFreeFallback:
-      "traditional oil painting on canvas, layered glazes, warm varnished tone",
+      "traditional oil painting on canvas, layered glazes, warm varnished tone, high-fantasy subject matter with mythic and magical undertones",
   },
 
   scifi: {

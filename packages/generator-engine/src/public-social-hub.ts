@@ -91,6 +91,7 @@ export const socialHubConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
@@ -141,6 +142,13 @@ export const socialHubConfig = {
       "Speakeasy",
       "Blood Bar",
       "Private Lounge",
+    ],
+    "Cosmic Horror": [
+      "Expedition Mess Hall",
+      "Restricted Reading Room",
+      "Weather Station Canteen",
+      "Diving Bell Lounge",
+      "Museum Staff Common Room",
     ],
     "Post-Apocalyptic": [
       "Trade Shack",
@@ -251,6 +259,13 @@ export const socialHubConfig = {
       "Curious investigators",
       "Predators in disguise",
       "Frightened locals",
+    ],
+    "Cosmic Horror": [
+      "Field researchers and survey crews",
+      "Anxious locals with half-told stories",
+      "Archive staff and visiting scholars",
+      "Divers, sailors, and salvage teams",
+      "Investigators following an unsettling lead",
     ],
     "Post-Apocalyptic": [
       "Scavengers and traders",

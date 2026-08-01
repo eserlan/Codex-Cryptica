@@ -8,6 +8,7 @@ export const VALID_HUB_THEMES = new Set([
   "post-apocalyptic",
   "modern",
   "vampire",
+  "cosmic-horror",
   "western",
   "steampunk",
   "lancer",

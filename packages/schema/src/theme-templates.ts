@@ -372,6 +372,53 @@ export const THEMES = {
       graph_loading: "Awakening Memories...",
     },
   },
+  cosmic_horror: {
+    id: "cosmic_horror",
+    name: "Cosmic Horror",
+    description:
+      "Eldritch archaeology, impossible geometry, deep-sea dread, forbidden scholarship, and mysteries vast enough to unsettle the mind.",
+    tokens: {
+      primary: "#5eead4",
+      secondary: "#99f6e4",
+      background: "#07131a",
+      surface: "#10242b",
+      text: "#e2f3ef",
+      border: "rgba(94, 234, 212, 0.32)",
+      accent: "#a78bfa",
+      fontHeader: "'Spectral', serif",
+      fontBody: "'Spectral', serif",
+      texture: "eldritch_cartography.svg",
+      textureOverlayAlpha: "86",
+      borderRadius: "2px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "dotted",
+      nodeBorderWidth: 2,
+      edgeWidth: 1,
+      edgeColor: "#2f766f",
+    },
+    jargon: {
+      vault: "Archive",
+      entity: "Record",
+      entity_plural: "Records",
+      save: "Preserve",
+      delete: "Redact",
+      new: "Document",
+      syncing: "Cataloguing",
+      search: "Investigate",
+      lore_header: "Case Notes",
+      lore_secrets: "Restricted Findings",
+      chronicle_header: "Investigation Log",
+      connections_header: "Threads",
+      tab_status: "Condition",
+      tab_lore: "Findings",
+      tab_inventory: "Evidence",
+      blog_entry: "Field Report",
+      blog_action: "Read Field Report",
+      graph_loading: "Charting the unknown...",
+    },
+  },
   fallout: {
     id: "fallout",
     name: "Pip-Boy Terminal",
@@ -898,6 +945,34 @@ export const HORROR_LIGHT: StylingTemplate = {
     edgeColor: "#7f1d1d",
   },
   jargon: THEMES.horror.jargon,
+};
+
+export const COSMIC_HORROR_LIGHT: StylingTemplate = {
+  id: "cosmic_horror_light",
+  name: "Field Notes",
+  description:
+    "Cosmic-horror field notes in aged paper, sea-green ink, and violet anomaly marks.",
+  tokens: {
+    primary: "#0f766e",
+    secondary: "#115e59",
+    background: "#edf4f0",
+    surface: "#fafcf9",
+    text: "#102a2a",
+    border: "rgba(15, 118, 110, 0.3)",
+    accent: "#6d28d9",
+    texture: "eldritch_cartography.svg",
+    fontHeader: "'Spectral', serif",
+    fontBody: "'Spectral', serif",
+    borderRadius: "2px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "dotted",
+    nodeBorderWidth: 2,
+    edgeWidth: 1,
+    edgeColor: "#0f766e",
+  },
+  jargon: THEMES.cosmic_horror.jargon,
 };
 
 export const FALLOUT_LIGHT: StylingTemplate = {
