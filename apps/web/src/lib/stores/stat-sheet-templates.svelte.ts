@@ -2,6 +2,8 @@ import { getDB } from "../utils/idb";
 import type { StatSheetTemplate, StatSheetField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import { importTemplatePackage } from "@codex/stat-sheet-engine";
+import type { PublicTemplatePackage } from "schema";
 
 export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
   {
@@ -660,6 +662,42 @@ export class StatSheetTemplateStore {
       return template;
     } catch (e) {
       console.error("[StatSheetTemplateStore] Failed to save template:", e);
+      return null;
+    }
+  }
+
+  async importPublicTemplate(
+    pkg: PublicTemplatePackage,
+    options: { name?: string; replaceId?: string } = {},
+  ): Promise<StatSheetTemplate | null> {
+    await this.init();
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return null;
+    const name = options.name?.trim() || pkg.template.name;
+    const existing = this.templates.find(
+      (template) => template.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+    if (existing && !options.replaceId) return null;
+    const imported = importTemplatePackage(pkg, {
+      id: `template-${this.idGenerator.uuid()}`,
+      name,
+    });
+    try {
+      const db = await getDB();
+      const tx = db.transaction("stat_sheet_templates", "readwrite");
+      if (existing && options.replaceId === existing.id)
+        await tx.store.delete(existing.id);
+      await tx.store.put({ ...imported, vaultId });
+      await tx.done;
+      this.templates =
+        existing && options.replaceId === existing.id
+          ? this.templates.map((template) =>
+              template.id === existing.id ? imported : template,
+            )
+          : [...this.templates, imported];
+      return imported;
+    } catch (e) {
+      console.error("[StatSheetTemplateStore] Failed to import template:", e);
       return null;
     }
   }

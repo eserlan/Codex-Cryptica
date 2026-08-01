@@ -52,6 +52,23 @@ Templates are just a saved snapshot of a layout — there's no separate template
 
 Saved templates only capture structure (labels, types, dice formulas, counter bounds) — not the values you'd filled in — so applying one to a new entity always starts blank/default.
 
+### Community templates
+
+You can choose to share a saved layout in the Community Templates directory.
+Before publishing, Codex Cryptica shows the fields and public description that
+will be shared. Entity values, notes, names, vault identifiers, and local asset
+paths stay in your vault.
+
+The owner token shown when you publish is the key for updating or unpublishing
+that listing. Copy or export it somewhere safe. If browser data is cleared,
+use the recovery action and enter the token again. Unpublishing removes the
+listing from new directory results but does not remove your local template.
+
+Importing a community template creates an independent local copy. It never
+updates the publisher's version and does not send your campaign data to them.
+If a name is already in use, choose a new name or cancel; invalid or unavailable
+packages are rejected before anything is saved.
+
 ### Default template per category
 
 In **Settings → Schema → Stat Sheet Templates**, the **Default Template by Category** section lets you pick a template (built-in or saved) for each entity category — e.g. "Character" → D&D Character, "NPC" → D&D NPC. Every new entity of that category then starts with the template's fields already applied, no manual step needed. Leave a category set to "None" if it shouldn't get stats automatically.

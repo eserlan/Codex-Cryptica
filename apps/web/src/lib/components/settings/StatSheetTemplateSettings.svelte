@@ -7,6 +7,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import TemplatePublishModal from "$lib/components/stats/community-template/TemplatePublishModal.svelte";
 
   const handleDefaultChange = (categoryId: string, templateId: string) => {
     statSheetTemplates.setDefaultTemplate(categoryId, templateId || null);
@@ -62,6 +63,7 @@
   let draggedFieldKey = $state<string | null>(null);
   let dragOverFieldKey = $state<string | null>(null);
   let selectedTemplateFieldKey = $state<string | null>(null);
+  let publishingTemplate = $state<StatSheetTemplate | null>(null);
 
   function handleFieldDragStart(
     e: DragEvent,
@@ -518,6 +520,18 @@
                     >{template.name}</span
                   >
                 </button>
+                <button
+                  type="button"
+                  onclick={() => (publishingTemplate = template)}
+                  class="p-2 text-theme-muted hover:text-theme-primary transition-colors"
+                  title="Share Template"
+                  aria-label="Share {template.name} template"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--share-2] w-4 h-4"
+                  ></span>
+                </button>
               {/if}
             </div>
 
@@ -606,3 +620,15 @@
     </div>
   </div>
 </div>
+
+{#if publishingTemplate}
+  <TemplatePublishModal
+    template={publishingTemplate}
+    onClose={() => (publishingTemplate = null)}
+    onPublished={() =>
+      notificationStore.notify(
+        "Template published to the community directory.",
+        "success",
+      )}
+  />
+{/if}

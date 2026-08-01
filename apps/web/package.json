@@ -36,6 +36,7 @@
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/search-orchestrator": "workspace:*",
+    "@codex/stat-sheet-engine": "workspace:*",
     "@codex/sync-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",
     "@floating-ui/dom": "^1.7.6",
