@@ -28,6 +28,7 @@ export const nationConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
@@ -87,6 +88,13 @@ export const nationConfig = {
       "Isolated Community",
       "Shadow Government",
       "Quarantine Zone",
+    ],
+    "Cosmic Horror": [
+      "Restricted Research Territory",
+      "Quarantined Expedition Zone",
+      "Remote Survey Protectorate",
+      "Submerged Archive District",
+      "Astronomical Observation Enclave",
     ],
     "Post-Apocalyptic": [
       "Warlord Territory",
