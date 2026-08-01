@@ -2,6 +2,9 @@ import { mapStore } from "../../stores/map.svelte";
 import { mapSession } from "../../stores/map-session.svelte";
 import {
   getKeyboardViewportUpdate,
+  getPinchDistance,
+  getPinchMidpoint,
+  getZoomAtPointUpdate,
   getZoomViewportUpdate,
   isClickGesture,
   shouldIgnoreMapKeyboardEvent,
@@ -63,6 +66,8 @@ export class MapInteractionManager {
 
   cachedRect: DOMRect | null = null;
   private activePointerId: number | null = null;
+  private activeTouches = new Map<number, { x: number; y: number }>();
+  private pinchLastDistance: number | null = null;
   KEYBOARD_PAN_STEP = 50;
   KEYBOARD_ZOOM_STEP = 0.1;
 
@@ -148,6 +153,58 @@ export class MapInteractionManager {
     this.isAltPressed = event.altKey;
   };
 
+  private isTouchPointer(e: MapInputEvent): e is PointerEvent {
+    return "pointerType" in e && e.pointerType === "touch";
+  }
+
+  private getTouchPoint(e: PointerEvent) {
+    if (!this.cachedRect) this.updateCachedRect();
+    return {
+      x: e.clientX - (this.cachedRect?.left ?? 0),
+      y: e.clientY - (this.cachedRect?.top ?? 0),
+    };
+  }
+
+  private beginPinch() {
+    const points = [...this.activeTouches.values()];
+    if (points.length < 2) return;
+    this.pinchLastDistance = getPinchDistance(points[0], points[1]);
+
+    this.isPanning = false;
+    if (this.tokenDrag.dragState) this.tokenDrag.end();
+    if (this.tokenRotation.rotationState) this.tokenRotation.end();
+    if (this.pinDragState) {
+      void this.pinInteractions.end(this.mouseDownPos, this.mouseDownPos);
+    }
+    if (this.gridFitStart) this.gridInteractions.cancelGridFit();
+    if (this.boxSelectStart) this.boxSelection.clear();
+  }
+
+  private updatePinch() {
+    const points = [...this.activeTouches.values()];
+    if (points.length < 2 || this.pinchLastDistance === null) return;
+
+    const distance = getPinchDistance(points[0], points[1]);
+    if (this.pinchLastDistance <= 0) {
+      this.pinchLastDistance = distance;
+      return;
+    }
+
+    const midpoint = getPinchMidpoint(points[0], points[1]);
+    const nextZoom =
+      mapStore.viewport.zoom * (distance / this.pinchLastDistance);
+    const update = getZoomAtPointUpdate({
+      point: midpoint,
+      canvasSize: mapStore.canvasSize,
+      viewport: mapStore.viewport,
+      nextZoom,
+    });
+
+    mapStore.updateViewport(update.pan, update.zoom);
+    this.mapAnnouncement = update.announcement;
+    this.pinchLastDistance = distance;
+  }
+
   private handlePointerDown = (e: MapInputEvent) => {
     const target = e.target as Element | null;
     if (
@@ -156,6 +213,23 @@ export class MapInteractionManager {
       )
     ) {
       return;
+    }
+
+    if (this.isTouchPointer(e)) {
+      this.activeTouches.set(e.pointerId, this.getTouchPoint(e));
+      const container = this.getContainer();
+      if (container?.setPointerCapture) {
+        container.setPointerCapture(e.pointerId);
+      }
+      if (this.activeTouches.size === 2) {
+        this.beginPinch();
+        e.preventDefault();
+        return;
+      }
+      if (this.activeTouches.size > 2) {
+        e.preventDefault();
+        return;
+      }
     }
 
     if ("pointerId" in e) {
@@ -252,6 +326,14 @@ export class MapInteractionManager {
   onMouseDown = (e: MouseEvent) => this.handlePointerDown(e);
 
   private handlePointerMove = (e: MapInputEvent) => {
+    if (this.isTouchPointer(e) && this.activeTouches.has(e.pointerId)) {
+      this.activeTouches.set(e.pointerId, this.getTouchPoint(e));
+      if (this.activeTouches.size >= 2) {
+        this.updatePinch();
+        return;
+      }
+    }
+
     if (
       "pointerId" in e &&
       this.activePointerId !== null &&
@@ -348,6 +430,15 @@ export class MapInteractionManager {
   };
 
   private handlePointerUp = async (e: MapInputEvent) => {
+    if (this.isTouchPointer(e) && this.activeTouches.has(e.pointerId)) {
+      const wasPinching = this.activeTouches.size >= 2;
+      this.activeTouches.delete(e.pointerId);
+      if (wasPinching) {
+        this.pinchLastDistance = null;
+        return;
+      }
+    }
+
     if (
       "pointerId" in e &&
       this.activePointerId !== null &&

@@ -140,6 +140,45 @@ export function resolveHealthBar(
   };
 }
 
+export interface ZoomAtPointInput {
+  point: Point;
+  canvasSize: { width: number; height: number };
+  viewport: ViewportTransform;
+  nextZoom: number;
+  minZoom?: number;
+  maxZoom?: number;
+}
+
+// Zooms the viewport to `nextZoom` while keeping the image-space location
+// under `point` fixed on screen. Shared by wheel zoom and pinch-to-zoom so
+// both anchor the same way.
+export function getZoomAtPointUpdate({
+  point,
+  canvasSize,
+  viewport,
+  nextZoom,
+  minZoom = 0.1,
+  maxZoom = 10,
+}: ZoomAtPointInput): PanZoomUpdate {
+  const clampedZoom = Math.max(minZoom, Math.min(maxZoom, nextZoom));
+  const oldZoom = viewport.zoom;
+
+  const panX = point.x - canvasSize.width / 2;
+  const panY = point.y - canvasSize.height / 2;
+
+  const relX = (panX - viewport.pan.x) / oldZoom;
+  const relY = (panY - viewport.pan.y) / oldZoom;
+
+  return {
+    pan: {
+      x: panX - relX * clampedZoom,
+      y: panY - relY * clampedZoom,
+    },
+    zoom: clampedZoom,
+    announcement: `Zoom level ${clampedZoom.toFixed(2)}`,
+  };
+}
+
 export function getZoomViewportUpdate({
   mouse,
   canvasSize,
@@ -150,26 +189,31 @@ export function getZoomViewportUpdate({
   minZoom = 0.1,
   maxZoom = 10,
 }: ZoomViewportInput): PanZoomUpdate {
-  const delta = -deltaY * zoomSpeed;
-  const oldZoom = viewport.zoom;
-  const nextZoom = Math.max(minZoom, Math.min(maxZoom, oldZoom + delta));
+  const nextZoom = viewport.zoom - deltaY * zoomSpeed;
 
-  const panX = mouse.x - canvasSize.width / 2;
-  const panY = mouse.y - canvasSize.height / 2;
+  if (altHeld) {
+    const clampedZoom = Math.max(minZoom, Math.min(maxZoom, nextZoom));
+    return {
+      pan: viewport.pan,
+      zoom: clampedZoom,
+      announcement: `Zoom level ${clampedZoom.toFixed(2)}`,
+    };
+  }
 
-  const relX = (panX - viewport.pan.x) / oldZoom;
-  const relY = (panY - viewport.pan.y) / oldZoom;
+  return getZoomAtPointUpdate({
+    point: mouse,
+    canvasSize,
+    viewport,
+    nextZoom,
+    minZoom,
+    maxZoom,
+  });
+}
 
-  const nextPan = altHeld
-    ? viewport.pan
-    : {
-        x: panX - relX * nextZoom,
-        y: panY - relY * nextZoom,
-      };
+export function getPinchDistance(a: Point, b: Point): number {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
 
-  return {
-    pan: nextPan,
-    zoom: nextZoom,
-    announcement: `Zoom level ${nextZoom.toFixed(2)}`,
-  };
+export function getPinchMidpoint(a: Point, b: Point): Point {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
