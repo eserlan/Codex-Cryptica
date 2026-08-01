@@ -120,11 +120,6 @@ describe("MapInteractionManager", () => {
 
   it("should pinch-zoom with two touch pointers", async () => {
     const { mapStore } = await import("../../stores/map.svelte");
-    (mapStore.updateViewport as any).mockImplementation(
-      (pan: unknown, zoom: number) => {
-        mapStore.viewport = { pan, zoom } as any;
-      },
-    );
     const touch = (
       type: string,
       pointerId: number,
@@ -140,12 +135,14 @@ describe("MapInteractionManager", () => {
     manager.onPointerDown(touch("pointerdown", 2, 500, 300));
     expect(manager.isPanning).toBe(false);
 
-    // Fingers move apart: distance doubles from 200 to 400 -> zoom doubles.
-    manager.onPointerMove(touch("pointermove", 1, 200, 300));
-    manager.onPointerMove(touch("pointermove", 2, 600, 300));
+    // Pinch distance doubles from 200 to 400 -> zoom doubles. A single move
+    // keeps this independent of the mocked store re-reading its own zoom,
+    // so we assert on the call args instead of mutating the store mock.
+    manager.onPointerMove(touch("pointermove", 2, 700, 300));
 
     expect(mapStore.updateViewport).toHaveBeenCalled();
-    expect(mapStore.viewport.zoom).toBeCloseTo(2, 5);
+    const [, zoom] = (mapStore.updateViewport as any).mock.calls.at(-1);
+    expect(zoom).toBeCloseTo(2, 5);
   });
 
   it("should not pan or click after lifting fingers from a pinch gesture", async () => {
