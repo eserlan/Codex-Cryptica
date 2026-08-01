@@ -254,27 +254,54 @@ export async function resolveMissingImage(
   );
 }
 
+/**
+ * Searches a granted folder for `targetPath` (e.g. `images/thistle.webp`).
+ * Prefers a path match — the granted folder is the vault root itself
+ * (`path === targetPath`), or a parent of it (`path` ends with
+ * `/${targetPath}`) — over a bare filename match, since RPG vaults commonly
+ * have multiple assets with the same filename in different folders.
+ * Ambiguous results (more than one path match, or no path match and more
+ * than one filename match) resolve to `undefined` rather than guessing.
+ */
 async function findFileInFolder(
   dir: FileSystemDirectoryHandle,
   targetPath: string,
 ): Promise<File | undefined> {
   const targetName = fileNameOf(targetPath);
+  const targetSuffix = `/${targetPath}`;
 
   async function walk(
     handle: FileSystemDirectoryHandle,
-  ): Promise<File | undefined> {
+    prefix: string,
+  ): Promise<{
+    pathMatches: FileSystemFileHandle[];
+    nameMatches: FileSystemFileHandle[];
+  }> {
+    const pathMatches: FileSystemFileHandle[] = [];
+    const nameMatches: FileSystemFileHandle[] = [];
     for await (const entry of handle.values()) {
+      const path = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.kind === "file") {
-        if (entry.name === targetName) {
-          return (entry as FileSystemFileHandle).getFile();
+        const fileHandle = entry as FileSystemFileHandle;
+        if (path === targetPath || path.endsWith(targetSuffix)) {
+          pathMatches.push(fileHandle);
         }
+        if (entry.name === targetName) nameMatches.push(fileHandle);
       } else if (entry.kind === "directory") {
-        const found = await walk(entry as FileSystemDirectoryHandle);
-        if (found) return found;
+        const nested = await walk(entry as FileSystemDirectoryHandle, path);
+        pathMatches.push(...nested.pathMatches);
+        nameMatches.push(...nested.nameMatches);
       }
     }
-    return undefined;
+    return { pathMatches, nameMatches };
   }
 
-  return walk(dir);
+  const { pathMatches, nameMatches } = await walk(dir, "");
+  const winner =
+    pathMatches.length === 1
+      ? pathMatches[0]
+      : pathMatches.length === 0 && nameMatches.length === 1
+        ? nameMatches[0]
+        : undefined;
+  return winner ? winner.getFile() : undefined;
 }

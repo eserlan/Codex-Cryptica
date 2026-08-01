@@ -53,27 +53,30 @@ describe("collectDroppedItems", () => {
     expect(items).toEqual([{ relativePath: "thistle.md", file }]);
   });
 
-  it("walks a dropped folder recursively, building folder-relative paths", async () => {
+  it("treats a dropped folder as the vault root, stripping its own name from paths", async () => {
     const entityFile = new File(["hi"], "thistle.md");
     const imageFile = new File(["bytes"], "thistle.webp");
 
     const imagesDir = dirEntry("images", [
       fileEntry("thistle.webp", imageFile),
     ]);
-    const vaultDir = dirEntry("my-vault", [
+    const entitiesDir = dirEntry("entities", [
       fileEntry("thistle.md", entityFile),
-      imagesDir,
     ]);
+    const vaultDir = dirEntry("my-vault", [entitiesDir, imagesDir]);
 
     const dt = dataTransferFromEntries([vaultDir]);
     const items = await collectDroppedItems(dt);
 
+    // No "my-vault/" prefix — paths must match how an entity's frontmatter
+    // references its own content (e.g. `image: images/thistle.webp`),
+    // which is relative to the vault root, not the dragged folder's name.
     expect(items).toContainEqual({
-      relativePath: "my-vault/thistle.md",
+      relativePath: "entities/thistle.md",
       file: entityFile,
     });
     expect(items).toContainEqual({
-      relativePath: "my-vault/images/thistle.webp",
+      relativePath: "images/thistle.webp",
       file: imageFile,
     });
   });
@@ -98,7 +101,7 @@ describe("collectDroppedItems", () => {
 
     const items = await collectDroppedItems(dataTransferFromEntries([dir]));
     const paths = items.map((i) => i.relativePath).sort();
-    expect(paths).toEqual(["vault/a.md", "vault/b.md"]);
+    expect(paths).toEqual(["a.md", "b.md"]);
   });
 
   it("excludes a file entry that fails to read without dropping sibling files", async () => {

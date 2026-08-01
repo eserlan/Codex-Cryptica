@@ -263,6 +263,80 @@ describe("resolveMissingImage", () => {
     expect(drafts).toHaveLength(1);
   });
 
+  it("resolves via an exact path match when the granted folder contains a parent directory", async () => {
+    // The user selected a parent folder that itself contains the vault
+    // folder — the target should still resolve via its full relative path.
+    const file = imageFile("thistle.webp");
+    const leafHandle = {
+      kind: "file" as const,
+      name: "thistle.webp",
+      getFile: () => Promise.resolve(file),
+    };
+    const imagesDir = {
+      kind: "directory" as const,
+      name: "images",
+      values: async function* () {
+        yield leafHandle;
+      },
+    };
+    const vaultDir = {
+      kind: "directory" as const,
+      name: "my-vault",
+      values: async function* () {
+        yield imagesDir;
+      },
+    };
+    const rootHandle = {
+      values: async function* () {
+        yield vaultDir;
+      },
+    } as unknown as FileSystemDirectoryHandle;
+
+    const drafts = await resolveMissingImage(ref, {
+      sourceFolderHandle: rootHandle,
+    });
+    expect(drafts).toHaveLength(1);
+    expect(drafts![0].originalName).toBe("thistle.webp");
+  });
+
+  it("does not guess when multiple same-named files exist and none matches the full path", async () => {
+    const fileA = imageFile("thistle.webp");
+    const fileB = imageFile("thistle.webp");
+    const dirA = {
+      kind: "directory" as const,
+      name: "old-art",
+      values: async function* () {
+        yield {
+          kind: "file" as const,
+          name: "thistle.webp",
+          getFile: () => Promise.resolve(fileA),
+        };
+      },
+    };
+    const dirB = {
+      kind: "directory" as const,
+      name: "new-art",
+      values: async function* () {
+        yield {
+          kind: "file" as const,
+          name: "thistle.webp",
+          getFile: () => Promise.resolve(fileB),
+        };
+      },
+    };
+    const rootHandle = {
+      values: async function* () {
+        yield dirA;
+        yield dirB;
+      },
+    } as unknown as FileSystemDirectoryHandle;
+
+    const drafts = await resolveMissingImage(ref, {
+      sourceFolderHandle: rootHandle,
+    });
+    expect(drafts).toBeNull();
+  });
+
   it("returns null (still missing) when not found via either path", async () => {
     const rootHandle = {
       values: async function* () {

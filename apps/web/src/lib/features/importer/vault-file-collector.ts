@@ -2,11 +2,14 @@ import type { DroppedItem } from "@codex/importer";
 
 /**
  * Collects dropped files (and any dropped folder, walked recursively) from
- * a drag-and-drop DataTransfer into DroppedItems with folder-relative
- * paths. Uses `webkitGetAsEntry()` (broadly supported across Chrome,
- * Firefox, and Safari for drag-and-drop, unlike `showDirectoryPicker()`)
- * rather than `dataTransfer.files`, since the latter never exposes folder
- * contents at all.
+ * a drag-and-drop DataTransfer into DroppedItems. A dropped folder is
+ * treated as the vault root — its own name is stripped, so `relativePath`
+ * matches how vault entities reference their own content (e.g.
+ * `entities/x.md`, `images/x.webp`), not prefixed with the folder name the
+ * user happened to drag in. Uses `webkitGetAsEntry()` (broadly supported
+ * across Chrome, Firefox, and Safari for drag-and-drop, unlike
+ * `showDirectoryPicker()`) rather than `dataTransfer.files`, since the
+ * latter never exposes folder contents at all.
  */
 export async function collectDroppedItems(
   dataTransfer: DataTransfer,
@@ -24,8 +27,32 @@ export async function collectDroppedItems(
   }
 
   const items: DroppedItem[] = [];
-  await Promise.all(entries.map((entry) => walkEntry(entry, "", items)));
+  await Promise.all(entries.map((entry) => walkTopLevelEntry(entry, items)));
   return items;
+}
+
+/**
+ * A dropped top-level *folder* is treated as the vault root itself — its
+ * own name isn't part of any internal reference (an entity's `image:
+ * images/x.webp` is vault-root-relative), so its own name must not become
+ * a path prefix. A dropped top-level *file* has no such root to strip.
+ */
+async function walkTopLevelEntry(
+  entry: FileSystemEntry,
+  out: DroppedItem[],
+): Promise<void> {
+  if (!entry.isDirectory) {
+    await walkEntry(entry, "", out);
+    return;
+  }
+
+  const reader = (entry as FileSystemDirectoryEntry).createReader();
+  try {
+    const children = await readAllEntries(reader);
+    await Promise.all(children.map((child) => walkEntry(child, "", out)));
+  } catch {
+    // Unreadable directory — excluded, doesn't block the rest of the drop.
+  }
 }
 
 async function walkEntry(
