@@ -4,6 +4,7 @@ export * from "./queue";
 export * from "./repository.svelte";
 export * from "./sync-coordinator";
 export * from "./asset-manager";
+export * from "./file-manager";
 export * from "./services/WorldService";
 export * from "./services/ActivityService";
 export * from "./parser";

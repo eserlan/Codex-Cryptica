@@ -262,7 +262,11 @@ export class CanvasRegistryStore {
       return { canvasId, added: [], skipped: [], errors: [] };
     }
 
-    const existingEntityIds = new Set(canvas.nodes.map((n) => n.entityId));
+    const existingEntityIds = new Set(
+      canvas.nodes
+        .filter((node) => node.type === "entity")
+        .map((node) => node.entityId),
+    );
     const added: string[] = [];
     const skipped: string[] = [];
     const errors: Array<{ entityId: string; error: string }> = [];

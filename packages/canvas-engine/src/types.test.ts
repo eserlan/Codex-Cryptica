@@ -81,6 +81,38 @@ describe("CanvasSchema", () => {
     ).toThrow();
   });
 
+  it("accepts persisted file nodes but rejects a file without vault metadata", () => {
+    const canvas = {
+      nodes: [
+        {
+          id: "file-1",
+          type: "file",
+          position: { x: 10, y: 20 },
+          file: {
+            path: "files/id-map.pdf",
+            name: "map.pdf",
+            mimeType: "application/pdf",
+            size: 42,
+          },
+        },
+      ],
+      edges: [],
+    };
+
+    expect(CanvasSchema.parse(canvas).nodes[0]).toMatchObject(canvas.nodes[0]);
+    expect(() =>
+      CanvasSchema.parse({
+        ...canvas,
+        nodes: [
+          {
+            ...canvas.nodes[0],
+            file: { ...canvas.nodes[0].file, path: "map.pdf" },
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
   it("migrates legacy delve nodes whose payload lived at the node root", () => {
     const parsed = CanvasSchema.parse({
       id: "legacy-delve",
