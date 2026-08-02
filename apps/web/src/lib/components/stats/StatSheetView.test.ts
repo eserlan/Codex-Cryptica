@@ -347,6 +347,26 @@ describe("StatSheetView", () => {
     expect(payload.statSheet.fields[2].id).not.toBe("hp");
   });
 
+  it("uses the injected idGenerator to regenerate duplicate field ids", async () => {
+    const idGenerator = { uuid: vi.fn().mockReturnValue("fixed-id") };
+    const entity = buildEntity({
+      statSheet: {
+        fields: [
+          { id: "hp", label: "Hit Points", type: "counter", value: 10 },
+          { id: "hp", label: "Hit Points", type: "counter", value: 24 },
+        ],
+      },
+    });
+
+    render(StatSheetView, { entity, idGenerator });
+
+    await vi.waitFor(() => expect(updateEntity).toHaveBeenCalled());
+
+    expect(idGenerator.uuid).toHaveBeenCalled();
+    const [, payload] = updateEntity.mock.calls[0];
+    expect(payload.statSheet.fields[1].id).toBe("field-fixed-id");
+  });
+
   it("toggles a counter field's favorite flag and persists it", async () => {
     const entity = buildEntity({
       statSheet: {
