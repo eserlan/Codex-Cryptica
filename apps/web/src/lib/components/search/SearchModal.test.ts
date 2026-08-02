@@ -18,7 +18,12 @@ const {
     setQuery: vi.fn(),
     setSelectedIndex: vi.fn(),
     selectCurrent: vi.fn(),
-    close: vi.fn(),
+    // A plain method (not an arrow function) that relies on `this`, so a
+    // regression to an unbound `onclick={searchStore.close}` reference
+    // fails to flip `isOpen` here just as it did against the real store.
+    close: vi.fn(function (this: { isOpen: boolean }) {
+      this.isOpen = false;
+    }),
     retryIndexing: vi.fn(),
     indexProgress: {
       status: "idle",
@@ -93,7 +98,7 @@ describe("SearchModal", () => {
     mockSearchStore.setQuery.mockReset();
     mockSearchStore.setSelectedIndex.mockReset();
     mockSearchStore.selectCurrent.mockReset();
-    mockSearchStore.close.mockReset();
+    mockSearchStore.close.mockClear();
     mockSearchStore.retryIndexing.mockReset();
     mockSearchStore.indexProgress = {
       status: "idle",
@@ -278,8 +283,13 @@ describe("SearchModal", () => {
     await fireEvent.click(closeBtn);
 
     expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
+    // Guards against a regression to an unbound `onclick={searchStore.close}`
+    // reference: that would still register as "called" but would run with
+    // the wrong `this` and never actually flip `isOpen`.
+    expect(mockSearchStore.isOpen).toBe(false);
 
-    mockSearchStore.close.mockReset();
+    mockSearchStore.close.mockClear();
+    mockSearchStore.isOpen = true;
     const backdropBtn = container.querySelector(
       'button[aria-label="Close search"][tabindex="-1"]',
     ) as HTMLButtonElement | null;
@@ -288,5 +298,6 @@ describe("SearchModal", () => {
     await fireEvent.click(backdropBtn);
 
     expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
+    expect(mockSearchStore.isOpen).toBe(false);
   });
 });
