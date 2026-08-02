@@ -132,7 +132,7 @@
   {:else}
     <div
       bind:this={chatContainer}
-      class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 p-3 sm:max-h-none sm:flex-1"
+      class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 p-3 sm:min-h-0 sm:max-h-none sm:flex-1"
     >
       {#each transcript.messages as message (message.id)}
         <div
