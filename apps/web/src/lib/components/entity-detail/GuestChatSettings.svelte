@@ -22,6 +22,7 @@
   let isSavingAvailability = $state(false);
   let availabilityError = $state<string | null>(null);
   let pendingAvailability = $state<boolean | null>(null);
+  let showDetails = $state(true);
 
   const guestChatConfig = $derived(
     entity.guestChatConfig ?? {
@@ -99,16 +100,34 @@
   class="border border-theme-border rounded-xl p-4 bg-theme-surface/5 space-y-4"
 >
   <div
-    class="flex items-center justify-between border-b border-theme-border pb-2"
+    class="flex flex-col gap-2 border-b border-theme-border pb-2 sm:flex-row sm:items-center sm:justify-between"
   >
-    <h4
-      class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
-    >
-      <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
-      ></span>
-      Guest Character Chat
-    </h4>
-    {#if !isEditing}
+    {#if isEditing}
+      <h4
+        class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+      >
+        <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+        ></span>
+        Guest Character Chat
+      </h4>
+    {:else}
+      <button
+        type="button"
+        onclick={() => (showDetails = !showDetails)}
+        aria-expanded={showDetails}
+        aria-controls="guest-chat-details"
+        class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5 cursor-pointer"
+      >
+        <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+        ></span>
+        Guest Character Chat
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--chevron-down] w-3.5 h-3.5 text-theme-muted transition-transform {showDetails
+            ? 'rotate-180'
+            : ''}"
+        ></span>
+      </button>
       <label
         class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold uppercase tracking-wider"
       >
@@ -290,27 +309,31 @@
         </div>
       {/if}
     </div>
-  {:else if entity.guestChatConfig?.isEnabled}
-    <div class="grid grid-cols-2 gap-2 text-xs">
-      <div>
-        <span class="text-theme-muted block">Context Scope:</span>
-        <span class="font-bold text-theme-text capitalize"
-          >{entity.guestChatConfig.contextScope} Lore</span
-        >
-      </div>
-      <div>
-        <span class="text-theme-muted block">Synced Review:</span>
-        <span class="font-bold text-theme-text"
-          >{entity.guestChatConfig.isHostReviewable
-            ? "Active"
-            : "Disabled"}</span
-        >
-      </div>
-    </div>
   {:else}
-    <p class="text-xs text-theme-muted italic">
-      Guest Character Chat is disabled. Use the toggle above to let invited
-      players chat with this character.
-    </p>
+    <div id="guest-chat-details" hidden={!showDetails}>
+      {#if entity.guestChatConfig?.isEnabled}
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-theme-muted block">Context Scope:</span>
+            <span class="font-bold text-theme-text capitalize"
+              >{entity.guestChatConfig.contextScope} Lore</span
+            >
+          </div>
+          <div>
+            <span class="text-theme-muted block">Synced Review:</span>
+            <span class="font-bold text-theme-text"
+              >{entity.guestChatConfig.isHostReviewable
+                ? "Active"
+                : "Disabled"}</span
+            >
+          </div>
+        </div>
+      {:else}
+        <p class="text-xs text-theme-muted italic">
+          Guest Character Chat is disabled. Use the toggle above to let invited
+          players chat with this character.
+        </p>
+      {/if}
+    </div>
   {/if}
 </div>

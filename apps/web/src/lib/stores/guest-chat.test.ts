@@ -71,6 +71,20 @@ vi.mock("../utils/idb", () => {
         });
         return results;
       }),
+      getAllFromIndex: vi
+        .fn()
+        .mockImplementation(async (table, _indexName, characterId) => {
+          const results: any[] = [];
+          (globalThis as any).mockDbStore.forEach((value: any, k: string) => {
+            if (
+              k.startsWith(`${table}_`) &&
+              value.characterId === characterId
+            ) {
+              results.push(value);
+            }
+          });
+          return results;
+        }),
       put: vi.fn().mockImplementation(async (table, val, key) => {
         const storeKey = key ? `${table}_${key}` : `${table}_${val.id}`;
         (globalThis as any).mockDbStore.set(storeKey, val);
@@ -189,5 +203,85 @@ describe("GuestChatStore", () => {
       }),
       expect.anything(),
     );
+  });
+
+  it("startNewSession creates a fresh record without deleting prior sessions", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    const firstId = store.transcripts["char-1"].id;
+
+    const second = await store.startNewSession(
+      "char-1",
+      "Blacksmith Joe",
+      "char-2",
+    );
+
+    expect(second.id).not.toBe(firstId);
+    expect(store.transcripts["char-1"].id).toBe(second.id);
+    expect(store.transcripts["char-1"].speakerCharacterId).toBe("char-2");
+
+    const sessions = await store.listSessions("char-1");
+    expect(sessions.map((s) => s.id).sort()).toEqual(
+      [firstId, second.id].sort(),
+    );
+  });
+
+  it("listSessions orders sessions by lastUpdated, newest first", async () => {
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_older", {
+      id: "older",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      characterTitle: "Blacksmith Joe",
+      messages: [],
+      lastUpdated: 100,
+    });
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_newer", {
+      id: "newer",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      characterTitle: "Blacksmith Joe",
+      messages: [],
+      lastUpdated: 200,
+    });
+
+    const sessions = await store.listSessions("char-1");
+    expect(sessions.map((s) => s.id)).toEqual(["newer", "older"]);
+  });
+
+  it("resumeSession swaps in the requested transcript and sets it active", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    const original = await store.startNewSession(
+      "char-1",
+      "Blacksmith Joe",
+      "char-2",
+    );
+    const other = await store.startNewSession("char-1", "Blacksmith Joe");
+    expect(store.transcripts["char-1"].id).toBe(other.id);
+
+    await store.resumeSession("char-1", original.id);
+
+    expect(store.transcripts["char-1"].id).toBe(original.id);
+    expect(store.transcripts["char-1"].speakerCharacterId).toBe("char-2");
+    expect(store.activeCharacterId).toBe("char-1");
+  });
+
+  it("resumeSession ignores a transcript that belongs to a different character", async () => {
+    await store.startChat("char-1", "Blacksmith Joe");
+    const currentId = store.transcripts["char-1"].id;
+
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_foreign", {
+      id: "foreign",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-2",
+      characterTitle: "Tarin the Ranger",
+      messages: [],
+      lastUpdated: 999,
+    });
+
+    await store.resumeSession("char-1", "foreign");
+
+    expect(store.transcripts["char-1"].id).toBe(currentId);
   });
 });

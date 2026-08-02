@@ -351,7 +351,7 @@
                       </div>
                     {:else}
                       <p
-                        class="text-xs text-theme-text pl-2 border-l-2 border-theme-primary/30 py-1 whitespace-pre-wrap"
+                        class="text-xs text-theme-text pl-2 border-l-2 border-theme-primary/30 py-1 whitespace-pre-wrap break-words"
                       >
                         {msg.content}
                       </p>
@@ -366,10 +366,10 @@
     </div>
   {:else}
     <!-- GUEST VIEW: Active Chat Panel -->
-    <div class="space-y-4 flex flex-col h-[500px]">
+    <div class="space-y-4 flex flex-col sm:h-[500px]">
       {#if !entity.guestChatConfig?.isEnabled}
         <div
-          class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50"
+          class="min-h-52 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50 sm:flex-1"
         >
           <span class="icon-[lucide--messages-square] w-12 h-12 mb-3 opacity-30"
           ></span>
@@ -382,7 +382,7 @@
         </div>
       {:else if !guestTranscript}
         <div
-          class="flex-1 flex flex-col items-center justify-center text-center p-6 bg-theme-surface/10 rounded-xl border border-theme-border/50"
+          class="min-h-52 flex flex-col items-center justify-center text-center p-6 bg-theme-surface/10 rounded-xl border border-theme-border/50 sm:flex-1"
         >
           <span
             class="icon-[lucide--messages-square] w-12 h-12 mb-3 text-theme-primary opacity-50"
@@ -408,7 +408,7 @@
         <!-- Active Chat Window -->
         <div
           bind:this={chatContainer}
-          class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10"
+          class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 sm:min-h-0 sm:max-h-none sm:flex-1"
         >
           {#each guestTranscript.messages as msg (msg.id)}
             <div
@@ -478,7 +478,7 @@
                     ? 'bg-theme-primary/10 border-theme-primary/20 text-theme-text rounded-tr-none shadow-[0_2px_8px_rgba(var(--color-theme-primary-rgb),0.05)]'
                     : 'bg-theme-surface border-theme-border text-theme-text rounded-tl-none shadow-[0_2px_8px_rgba(0,0,0,0.02)]'}"
                 >
-                  <p class="whitespace-pre-wrap">{msg.content}</p>
+                  <p class="whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
               {/if}
 
@@ -520,7 +520,7 @@
             onkeydown={handleGuestKeydown}
             placeholder="Type a message to {entity.title}..."
             disabled={guestChatStore.isGenerating}
-            class="flex-1 text-xs bg-theme-surface/50 border border-theme-border focus:border-theme-primary rounded-xl px-3 py-2.5 outline-none resize-none custom-scrollbar text-theme-text"
+            class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
             rows="2"
           ></textarea>
           <button
@@ -529,7 +529,7 @@
             disabled={!messageInput.trim() ||
               guestChatStore.isGenerating ||
               isSending}
-            class="p-2.5 bg-theme-primary hover:bg-theme-secondary disabled:bg-theme-surface disabled:text-theme-muted disabled:border-theme-border text-theme-bg rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
+            class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
             aria-label="Send Message"
           >
             <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"
