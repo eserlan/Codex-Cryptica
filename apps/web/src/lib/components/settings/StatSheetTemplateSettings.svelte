@@ -366,7 +366,7 @@
 
 <div class="space-y-6">
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
-    <div class="flex items-center justify-between gap-3 mb-4">
+    <div class="mb-4">
       <div>
         <h4
           class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
@@ -377,24 +377,6 @@
           Select which stat sheet templates apply to this campaign/vault.
           Disabled templates will be hidden from entity template pickers.
         </p>
-      </div>
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-          onclick={() => statSheetTemplates.setAllTemplatesEnabled(true)}
-          data-testid="stat-sheet-enable-all"
-        >
-          Enable All
-        </button>
-        <button
-          type="button"
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-          onclick={() => statSheetTemplates.setAllTemplatesEnabled(false)}
-          data-testid="stat-sheet-disable-all"
-        >
-          Disable All
-        </button>
       </div>
     </div>
   </div>

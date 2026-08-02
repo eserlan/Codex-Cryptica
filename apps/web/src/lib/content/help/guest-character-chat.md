@@ -32,6 +32,14 @@ You can also choose whether the host can review chat logs and whether the charac
 
 Guests can only chat with Characters you have enabled and made visible to them. They can open the Character and choose **Chat with [Character]**, or use the Chats panel when it is available in their shared world.
 
+## Try it yourself as the host
+
+Once Guest Character Chat is enabled, the **Character Chat** panel below it lets you test the conversation as the host. This chat stays local to your browser and is never added to guest logs.
+
+- **Chat as**: Before connecting, choose whether you're speaking as **Yourself** or as one of your other Characters — this helps the character respond to your role and relationship.
+- **Switch who you're chatting as**: Once connected, use **Sessions** above the conversation to start a new chat as a different speaker. Your previous conversation is kept, not erased.
+- **Resume a previous conversation**: The same **Sessions** panel lists every past local conversation you've had with this character, showing who you were speaking as, how many messages, and when it was last updated. Click one to pick up where you left off.
+
 ## Review conversations
 
 Open the Character's **Chats** tab as the host to see synced guest conversation logs. You can edit or remove messages, delete a whole session, and promote a useful character response into a rumor draft.

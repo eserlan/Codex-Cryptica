@@ -64,7 +64,10 @@ export class GuestChatStore {
       const all = await db.getAll("guest_chat_transcripts");
       const recordMap: Record<string, GuestChatTranscript> = {};
       for (const transcript of all) {
-        recordMap[transcript.characterId] = transcript;
+        const existing = recordMap[transcript.characterId];
+        if (!existing || transcript.lastUpdated > existing.lastUpdated) {
+          recordMap[transcript.characterId] = transcript;
+        }
       }
       this.transcripts = recordMap;
     } catch (err) {
@@ -73,6 +76,59 @@ export class GuestChatStore {
         err,
       );
     }
+  }
+
+  // All locally-saved sessions for a character (host "try it yourself"
+  // chats), newest first, so a previous conversation can be resumed instead
+  // of always starting over.
+  async listSessions(characterId: string): Promise<GuestChatTranscript[]> {
+    const db = await getDB();
+    const sessions = await db.getAllFromIndex(
+      "guest_chat_transcripts",
+      "by-character",
+      characterId,
+    );
+    return sessions.sort((a, b) => b.lastUpdated - a.lastUpdated);
+  }
+
+  async resumeSession(characterId: string, transcriptId: string) {
+    const db = await getDB();
+    const transcript = await db.get("guest_chat_transcripts", transcriptId);
+    if (transcript && transcript.characterId === characterId) {
+      this.transcripts[characterId] = transcript;
+      this.activeCharacterId = characterId;
+    }
+  }
+
+  // Unlike startChat (which resumes the character's one "current" session
+  // if it exists), this always begins a fresh session and leaves any prior
+  // ones in place so they can be resumed later via listSessions/resumeSession.
+  async startNewSession(
+    characterId: string,
+    characterTitle: string,
+    speakerCharacterId?: string,
+  ) {
+    this.activeCharacterId = characterId;
+
+    const guestId = p2pGuestService.peerId || "guest-local";
+    const guestName = sessionModeStore.guestUsername || "Invited Guest";
+    const transcript: GuestChatTranscript = {
+      id: this.idGenerator.uuid(),
+      guestId,
+      guestName,
+      speakerCharacterId,
+      characterId,
+      characterTitle,
+      messages: [],
+      lastUpdated: systemClock.now(),
+    };
+
+    this.transcripts[characterId] = transcript;
+
+    const db = await getDB();
+    await db.put("guest_chat_transcripts", $state.snapshot(transcript));
+    this.syncTranscript(transcript);
+    return transcript;
   }
 
   async startChat(
@@ -374,11 +430,14 @@ export class GuestChatStore {
     }
   }
 
-  async clearTranscript(characterId: string) {
+  async clearTranscript(characterId: string, speakerCharacterId?: string) {
     const transcript = this.transcripts[characterId];
     if (!transcript) return;
 
     transcript.messages = [];
+    if (speakerCharacterId !== undefined) {
+      transcript.speakerCharacterId = speakerCharacterId || undefined;
+    }
     transcript.lastUpdated = systemClock.now();
 
     const db = await getDB();

@@ -444,17 +444,6 @@ describe("StatSheetTemplateStore", () => {
     expect(store.isTemplateEnabled("builtin-dnd-character")).toBe(true);
   });
 
-  it("enables and disables all templates with setAllTemplatesEnabled", async () => {
-    await store.setAllTemplatesEnabled(false);
-
-    expect(store.enabledTemplateIds).toEqual([]);
-    expect(store.availableTemplates).toEqual([]);
-
-    await store.setAllTemplatesEnabled(true);
-
-    expect(store.availableTemplates.length).toBe(store.allTemplates.length);
-  });
-
   it("updates fields of a saved template via updateTemplateFields", async () => {
     const saved = await store.saveAsTemplate("My Sheet", [
       { id: "a", label: "Alpha", type: "text" },

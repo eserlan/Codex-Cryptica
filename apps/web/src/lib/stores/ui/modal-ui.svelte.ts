@@ -4,6 +4,7 @@ export type SettingsTab =
   | "vault"
   | "intelligence"
   | "schema"
+  | "templates"
   | "theme"
   | "publishing"
   | "about"
