@@ -473,7 +473,7 @@
                 </div>
               {:else}
                 <div
-                  class="rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
+                  class="w-full rounded-2xl px-4 py-2.5 text-sm leading-relaxed border transition-all duration-200
                   {msg.role === 'user'
                     ? 'bg-theme-primary/10 border-theme-primary/20 text-theme-text rounded-tr-none shadow-[0_2px_8px_rgba(var(--color-theme-primary-rgb),0.05)]'
                     : 'bg-theme-surface border-theme-border text-theme-text rounded-tl-none shadow-[0_2px_8px_rgba(0,0,0,0.02)]'}"
