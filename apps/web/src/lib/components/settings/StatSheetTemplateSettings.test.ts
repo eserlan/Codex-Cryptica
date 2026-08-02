@@ -8,7 +8,6 @@ const {
   deleteTemplate,
   setDefaultTemplate,
   toggleTemplateEnabled,
-  setAllTemplatesEnabled,
   updateTemplateFields,
   saveAsTemplate,
   isTemplateEnabled,
@@ -21,7 +20,6 @@ const {
   deleteTemplate: vi.fn(),
   setDefaultTemplate: vi.fn(),
   toggleTemplateEnabled: vi.fn(),
-  setAllTemplatesEnabled: vi.fn(),
   updateTemplateFields: vi.fn(),
   saveAsTemplate: vi.fn(),
   isTemplateEnabled: vi.fn().mockReturnValue(true),
@@ -72,7 +70,6 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
     },
     isTemplateEnabled,
     toggleTemplateEnabled,
-    setAllTemplatesEnabled,
     renameTemplate,
     deleteTemplate,
     setDefaultTemplate,
@@ -108,7 +105,6 @@ describe("StatSheetTemplateSettings", () => {
     deleteTemplate.mockResolvedValue(true);
     setDefaultTemplate.mockClear();
     toggleTemplateEnabled.mockClear();
-    setAllTemplatesEnabled.mockClear();
     updateTemplateFields.mockClear();
     saveAsTemplate.mockClear();
     saveAsTemplate.mockResolvedValue({
@@ -331,14 +327,11 @@ describe("StatSheetTemplateSettings", () => {
     expect(toggleTemplateEnabled).toHaveBeenCalledWith("builtin-dnd-npc");
   });
 
-  it("calls setAllTemplatesEnabled when Enable All / Disable All buttons are clicked", async () => {
+  it("does not render redundant bulk template visibility controls", () => {
     render(StatSheetTemplateSettings);
 
-    await fireEvent.click(screen.getByTestId("stat-sheet-enable-all"));
-    expect(setAllTemplatesEnabled).toHaveBeenCalledWith(true);
-
-    await fireEvent.click(screen.getByTestId("stat-sheet-disable-all"));
-    expect(setAllTemplatesEnabled).toHaveBeenCalledWith(false);
+    expect(screen.queryByTestId("stat-sheet-enable-all")).toBeNull();
+    expect(screen.queryByTestId("stat-sheet-disable-all")).toBeNull();
   });
 
   it("reorders template fields via drag and drop and move buttons in settings preview", async () => {

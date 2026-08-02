@@ -30,6 +30,11 @@
     },
     { id: "schema", label: "Schema", icon: "icon-[lucide--tags]" },
     {
+      id: "templates",
+      label: "Templates",
+      icon: "icon-[lucide--layout-template]",
+    },
+    {
       id: "theme",
       label: "Theme",
       icon: "icon-[lucide--palette]",
@@ -333,16 +338,18 @@
               label here will update all labeled files project-wide.
             </p>
             <LabelSettings />
-
-            <h3
-              class="text-sm font-bold text-chrome-accent uppercase font-header mt-8 mb-3 tracking-widest"
-            >
-              Stat Sheet Templates
-            </h3>
-            <p class="text-sm text-chrome-text/70 mb-4 leading-relaxed">
-              Reusable stat sheet layouts you can apply to any entity from its
-              Stats tab. Built-in templates are always available; templates you
-              save from an entity live here, scoped to this vault.
+          </div>
+        {:else if modalUIStore.activeSettingsTab === "templates"}
+          <div
+            role="tabpanel"
+            id="settings-panel-templates"
+            aria-labelledby="settings-tab-templates"
+            class="space-y-6 max-w-3xl mx-auto"
+          >
+            <p class="text-sm text-chrome-text/70 leading-relaxed">
+              Manage reusable stat sheet layouts you can apply to any entity
+              from its Stats tab. Built-in templates are always available;
+              custom templates you save are scoped to this vault.
             </p>
             <StatSheetTemplateSettings />
           </div>
