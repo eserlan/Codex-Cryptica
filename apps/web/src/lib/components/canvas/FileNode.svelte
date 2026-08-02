@@ -40,8 +40,8 @@
     }
 
     let isCurrent = true;
-    vault
-      .resolveImageUrl(path)
+    const resolution = vault.resolveImageUrl(path);
+    resolution
       .then((url) => {
         if (isCurrent) imageUrl = url;
       })
@@ -51,7 +51,7 @@
 
     return () => {
       isCurrent = false;
-      vault.releaseImageUrl(path);
+      resolution.then(() => vault.releaseImageUrl(path)).catch(() => undefined);
     };
   });
 </script>

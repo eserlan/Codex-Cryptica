@@ -53,7 +53,7 @@ describe("FileNode", () => {
 
   it("renders a resolved image upload as a canvas preview", async () => {
     resolveImageUrl.mockResolvedValue("blob:uploaded-map");
-    render(FileNode, {
+    const { unmount } = render(FileNode, {
       props: {
         data: {
           file: {
@@ -72,6 +72,45 @@ describe("FileNode", () => {
     });
     expect(preview.getAttribute("src")).toBe("blob:uploaded-map");
     expect(resolveImageUrl).toHaveBeenCalledWith("files/map-id-map.png");
+
+    unmount();
+    await vi.waitFor(() =>
+      expect(releaseImageUrl).toHaveBeenCalledWith("files/map-id-map.png"),
+    );
+  });
+
+  it("releases an image URL after a pending resolution settles post-unmount", async () => {
+    let finishResolution: (url: string) => void;
+    resolveImageUrl.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishResolution = resolve;
+      }),
+    );
+    const { unmount } = render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.png",
+            name: "uploaded-map.png",
+            mimeType: "image/png",
+            size: 2048,
+          },
+        },
+        selected: false,
+      } as any,
+    });
+
+    await vi.waitFor(() =>
+      expect(resolveImageUrl).toHaveBeenCalledWith("files/map-id-map.png"),
+    );
+    unmount();
+
+    expect(releaseImageUrl).not.toHaveBeenCalled();
+    finishResolution!("blob:uploaded-map");
+
+    await vi.waitFor(() =>
+      expect(releaseImageUrl).toHaveBeenCalledWith("files/map-id-map.png"),
+    );
   });
 
   it("keeps the file card usable when an image preview cannot resolve", async () => {
