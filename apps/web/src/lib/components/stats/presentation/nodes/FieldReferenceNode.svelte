@@ -12,6 +12,10 @@
   const field = $derived(context.fields.find((f) => f.id === node.fieldId));
   const label = $derived(node.label ?? field?.label ?? node.fieldId);
   const mode = $derived(node.displayMode ?? "plain");
+  const isProminent = $derived(mode === "prominent");
+  const controlsDisabled = $derived(
+    context.readOnly || context.mode === "preview",
+  );
 </script>
 
 {#if !field}
@@ -79,24 +83,77 @@
       </span>
     {/each}
   </span>
-{:else if mode === "notes"}
-  <p
-    class="whitespace-pre-wrap text-xs text-theme-text"
-    data-testid="presentation-field-notes"
+{:else if field.type === "longtext"}
+  <div class="flex flex-col gap-1" data-testid="presentation-field-notes">
+    <span class="text-xs font-bold text-theme-text">{label}</span>
+    <textarea
+      class="w-full resize-y rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-xs text-theme-text disabled:opacity-40"
+      rows="3"
+      disabled={controlsDisabled}
+      value={typeof field.value === "string" ? field.value : ""}
+      oninput={(e) =>
+        context.onUpdateFieldValue(
+          field.id,
+          (e.target as HTMLTextAreaElement).value,
+        )}
+    ></textarea>
+  </div>
+{:else if field.type === "number"}
+  <label
+    class="inline-flex items-center gap-2"
+    data-testid="presentation-field-number"
   >
-    <span class="font-bold">{label}:</span>
-    {field.value ?? ""}
-  </p>
-{:else if mode === "prominent"}
-  <span
-    class="text-lg font-bold text-theme-primary"
-    data-testid="presentation-field-prominent"
+    <span
+      class={isProminent
+        ? "text-lg font-bold text-theme-primary"
+        : "text-xs text-theme-muted"}
+    >
+      {label}:
+    </span>
+    <input
+      type="number"
+      class="w-20 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
+      value={typeof field.value === "number" ? field.value : ""}
+      disabled={controlsDisabled}
+      oninput={(e) =>
+        context.onUpdateFieldValue(
+          field.id,
+          Number((e.target as HTMLInputElement).value) || 0,
+        )}
+    />
+  </label>
+{:else if field.type === "text"}
+  <label
+    class="inline-flex items-center gap-2"
+    data-testid="presentation-field-text"
   >
-    {field.value ?? ""}
-  </span>
+    <span
+      class={isProminent
+        ? "text-lg font-bold text-theme-primary"
+        : "text-xs text-theme-muted"}
+    >
+      {label}:
+    </span>
+    <input
+      type="text"
+      class="w-40 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40"
+      value={typeof field.value === "string" ? field.value : ""}
+      disabled={controlsDisabled}
+      oninput={(e) =>
+        context.onUpdateFieldValue(
+          field.id,
+          (e.target as HTMLInputElement).value,
+        )}
+    />
+  </label>
 {:else}
-  <span class="text-xs text-theme-text" data-testid="presentation-field-plain">
-    <span class="text-theme-muted">{label}:</span>
+  <span
+    class={isProminent
+      ? "text-lg font-bold text-theme-primary"
+      : "text-xs text-theme-text"}
+    data-testid="presentation-field-plain"
+  >
+    {#if !isProminent}<span class="text-theme-muted">{label}:</span>{/if}
     {field.value ?? ""}
   </span>
 {/if}

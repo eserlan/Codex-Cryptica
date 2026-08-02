@@ -32,7 +32,10 @@ export const StatSheetSchema = z.object({
   fields: z.array(StatSheetFieldSchema).default([]),
   // Per-entity override of the schema's default presentation template
   // (152-stat-sheet-templates). `null`/absent means "inherit the schema's
-  // StatSheetTemplate.defaultPresentationTemplateId".
+  // default", read via `StatSheetTemplateStore.getDefaultPresentationTemplateId()`
+  // (apps/web/src/lib/stores/stat-sheet-templates.svelte.ts) — a vault-scoped
+  // settings map, not a field on StatSheetTemplateSchema (built-in schema
+  // templates are hardcoded objects with no persisted record to attach one to).
   presentationTemplateId: z.string().nullable().optional(),
 });
 

@@ -28,7 +28,7 @@ Monorepo web app (per plan.md Project Structure): `packages/stat-sheet-engine/sr
 
 - [x] T001 Create `packages/stat-sheet-engine/src/presentation/` directory with empty `ast.ts`, `directives.ts`, `parse.ts`, `validate.ts`, `resolve.ts`, `package.ts`, `built-ins.ts`, `presentation.test.ts`, and export them from `packages/stat-sheet-engine/src/index.ts`
 - [x] T002 [P] Add `stat_sheet_presentation_templates` IndexedDB object store (keyPath `id`, indexes `by-vault` and `by-schema-template-id`) and bump `DB_VERSION` in `apps/web/src/lib/utils/idb.ts`, mirroring the existing `stat_sheet_templates` store
-- [x] T003 [P] Extend `packages/schema/src/stat-sheet.ts`: add optional `defaultPresentationTemplateId: string | null` to `StatSheetTemplateSchema`, and add optional `presentationTemplateId: string | null` to the entity `statSheet` association schema (per data-model.md)
+- [x] T003 [P] Extend `packages/schema/src/stat-sheet.ts`: add optional `presentationTemplateId: string | null` to the entity `statSheet` association schema. **Revised during implementation** (data-model.md `SchemaPresentationDefault`): the schema default is _not_ a `defaultPresentationTemplateId` field on `StatSheetTemplateSchema` — built-in schema templates are hardcoded objects with no persisted record to attach a field to. It's instead a vault-scoped settings map (`StatSheetTemplateStore.presentationDefaults`, key `statSheetPresentationDefaults_${vaultId}`), which works uniformly for built-in and vault-owned schemas.
 
 **Checkpoint**: Directory/store/schema scaffolding exists; no behavior yet.
 

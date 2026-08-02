@@ -23,7 +23,7 @@ function builtIn(
   };
 }
 
-const STANDARD_FORM_SOURCE = `# {{stat.hp label="Name"}}
+const STANDARD_FORM_SOURCE = `## Stats
 
 :::stat-group columns=2
 {{stat.hp display="current-max" label="Hit Points"}}

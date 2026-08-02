@@ -11,10 +11,12 @@
     parseTemplate,
     validateAst,
     exportPresentationTemplate,
+    sanitizeSource,
   } from "@codex/stat-sheet-engine";
   import type {
     MissingFieldNode,
     UnknownDirectiveNode,
+    FieldReferenceNode,
   } from "@codex/stat-sheet-engine";
   import PresentationRenderer from "./PresentationRenderer.svelte";
   import type { PresentationRenderContext } from "./types";
@@ -94,9 +96,11 @@
   function collectDiagnostics(nodes: unknown[]): {
     missing: MissingFieldNode[];
     unknown: UnknownDirectiveNode[];
+    mismatched: FieldReferenceNode[];
   } {
     const missing: MissingFieldNode[] = [];
     const unknown: UnknownDirectiveNode[] = [];
+    const mismatched: FieldReferenceNode[] = [];
     function walk(list: unknown[]) {
       for (const n of list) {
         const node = n as Record<string, unknown>;
@@ -104,6 +108,8 @@
           missing.push(node as unknown as MissingFieldNode);
         if (node.type === "unknown-directive")
           unknown.push(node as unknown as UnknownDirectiveNode);
+        if (node.type === "field-reference" && node.requestedDisplayMode)
+          mismatched.push(node as unknown as FieldReferenceNode);
         for (const key of ["children", "items", "header", "rows"]) {
           const val = node[key];
           if (Array.isArray(val)) {
@@ -113,11 +119,13 @@
       }
     }
     walk(nodes);
-    return { missing, unknown };
+    return { missing, unknown, mismatched };
   }
 
   const diagnostics = $derived(
-    previewAst ? collectDiagnostics(previewAst) : { missing: [], unknown: [] },
+    previewAst
+      ? collectDiagnostics(previewAst)
+      : { missing: [], unknown: [], mismatched: [] },
   );
 
   const previewContext: PresentationRenderContext = {
@@ -162,19 +170,30 @@
     isSaving = true;
     saveError = "";
     try {
+      // FR-004: strip disallowed content (raw HTML/script/executable
+      // expressions) from the durable source on save, not just at
+      // render/import time, so nothing unsafe can be persisted or exported.
+      const { source: sanitized, removed } = sanitizeSource(source);
       const saved = await presentationTemplates.saveTemplate({
         id: isNewRecord ? undefined : template?.id,
         schemaTemplateId: schema.id,
         name: name.trim(),
         description: description.trim() || null,
-        source,
+        source: sanitized,
         formatVersion: PRESENTATION_TEMPLATE_FORMAT_VERSION,
       });
       if (!saved) {
         saveError = "Failed to save template.";
         return;
       }
-      notificationStore.notify(`Saved template "${saved.name}"`, "success");
+      const notice =
+        removed.length > 0
+          ? ` (${removed.length} disallowed item${removed.length === 1 ? "" : "s"} removed)`
+          : "";
+      notificationStore.notify(
+        `Saved template "${saved.name}"${notice}`,
+        "success",
+      );
       onSaved(saved);
       onClose();
     } catch (e) {
@@ -195,7 +214,10 @@
     a.href = url;
     a.download = `${template.name.replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.presentation.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    // Defer revocation past the current tick: revoking immediately after
+    // click() can race the browser's download/navigation handoff in some
+    // browsers and produce a broken/empty download.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 </script>
 
@@ -318,7 +340,7 @@
             data-testid="presentation-editor-source"
           ></textarea>
 
-          {#if diagnostics.missing.length > 0 || diagnostics.unknown.length > 0}
+          {#if diagnostics.missing.length > 0 || diagnostics.unknown.length > 0 || diagnostics.mismatched.length > 0}
             <ul
               class="flex flex-col gap-1"
               data-testid="presentation-editor-diagnostics"
@@ -336,6 +358,14 @@
                   class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400"
                 >
                   Unsupported layout section: "{u.name}"
+                </li>
+              {/each}
+              {#each diagnostics.mismatched as f, i (i)}
+                <li
+                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400"
+                >
+                  "{f.requestedDisplayMode}" isn't a supported display for "{f.fieldId}"
+                  — showing "{f.displayMode}" instead.
                 </li>
               {/each}
             </ul>

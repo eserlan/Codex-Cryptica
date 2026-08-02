@@ -24,13 +24,17 @@ function validateFieldRef(
     return missing;
   }
   const requested = node.displayMode ?? node.requestedDisplayMode;
-  const { mode } = resolveDisplayMode(field.type, requested);
+  const { mode, wasIncompatible } = resolveDisplayMode(field.type, requested);
   const resolved: FieldReferenceNode = {
     type: "field-reference",
     fieldId: node.fieldId,
     displayMode: mode,
   };
   if (node.label) resolved.label = node.label;
+  // Keep the originally requested mode for editor diagnostics (contract:
+  // "for editor diagnostics only, never used for rendering") when it was
+  // incompatible with the field's type and got overridden above.
+  if (wasIncompatible && requested) resolved.requestedDisplayMode = requested;
   return resolved;
 }
 

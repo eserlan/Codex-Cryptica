@@ -97,4 +97,27 @@ describe("PresentationTemplateEditor", () => {
       expect.objectContaining({ id: "presentation-mine" }),
     );
   });
+
+  it("strips disallowed content from the source before saving (FR-004)", async () => {
+    saveTemplate.mockResolvedValueOnce({
+      ...builtIn,
+      id: "presentation-mine",
+      isBuiltIn: false,
+    });
+    render(PresentationTemplateEditor, {
+      schema,
+      template: { ...builtIn, id: "presentation-mine", isBuiltIn: false },
+      duplicate: false,
+    });
+
+    const textarea = screen.getByTestId("presentation-editor-source");
+    await fireEvent.input(textarea, {
+      target: { value: "<script>alert(1)</script>{{stat.hp}}" },
+    });
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "{{stat.hp}}" }),
+    );
+  });
 });

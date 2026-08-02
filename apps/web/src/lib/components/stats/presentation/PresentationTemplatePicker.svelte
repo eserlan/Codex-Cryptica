@@ -56,6 +56,7 @@
     <select
       class="rounded border border-theme-border bg-theme-surface px-2 py-1 text-xs text-theme-text"
       value={effectiveId ?? ""}
+      aria-label="Presentation template"
       onchange={(e) => {
         const value = (e.target as HTMLSelectElement).value;
         void setEntityOverride(value || null);

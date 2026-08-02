@@ -80,11 +80,19 @@ export class PresentationTemplateStore {
     const existing = input.id
       ? this.templates.find((t) => t.id === input.id)
       : undefined;
+    // Per-schema name uniqueness (data-model.md Validation Rules): a save
+    // that collides with another template's name auto-suffixes rather than
+    // silently producing two identically-named templates for the schema.
+    const uniqueName = this.uniqueNameForSchema(
+      input.name,
+      input.schemaTemplateId,
+      existing?.id,
+    );
     const template: PresentationTemplate = {
       id: input.id ?? `presentation-${this.idGenerator.uuid()}`,
       vaultId,
       schemaTemplateId: input.schemaTemplateId,
-      name: input.name,
+      name: uniqueName,
       description: input.description ?? null,
       source: input.source,
       formatVersion: input.formatVersion,
@@ -106,11 +114,19 @@ export class PresentationTemplateStore {
   }
 
   /** Per-schema name uniqueness (Clarifications): appends " (2)", " (3)",
-   * etc. until the name is free within `(vaultId, schemaTemplateId)`. */
-  uniqueNameForSchema(desiredName: string, schemaTemplateId: string): string {
+   * etc. until the name is free within `(vaultId, schemaTemplateId)`.
+   * `excludeId` lets a rename check against every *other* template without
+   * flagging a collision against its own current name. */
+  uniqueNameForSchema(
+    desiredName: string,
+    schemaTemplateId: string,
+    excludeId?: string,
+  ): string {
     const existingNames = new Set(
       this.templates
-        .filter((t) => t.schemaTemplateId === schemaTemplateId)
+        .filter(
+          (t) => t.schemaTemplateId === schemaTemplateId && t.id !== excludeId,
+        )
         .map((t) => t.name),
     );
     if (!existingNames.has(desiredName)) return desiredName;

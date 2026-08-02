@@ -151,6 +151,18 @@ describe("validateAst / isTemplateUsable", () => {
     const ref = para.children[0] as FieldReferenceNode;
     expect(ref.type).toBe("field-reference");
     expect(ref.displayMode).toBe("plain"); // text field default
+    expect(ref.requestedDisplayMode).toBe("counter"); // preserved for editor diagnostics
+  });
+
+  it("does not set requestedDisplayMode when the requested mode is compatible", () => {
+    const parsed = parseTemplate('{{stat.hp display="counter"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("counter");
+    expect(ref.requestedDisplayMode).toBeUndefined();
   });
 
   it("isTemplateUsable is false when schema is undefined", () => {
