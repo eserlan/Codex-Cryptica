@@ -12,6 +12,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
+  import FileNode from "$lib/components/canvas/FileNode.svelte";
   import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
   import DelveSectorNode from "$lib/components/canvas/DelveSectorNode.svelte";
   import AdventureNode from "$lib/components/canvas/AdventureNode.svelte";
@@ -43,6 +44,7 @@
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
     autoArrangeCanvasNodes,
+    createFlowFileNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodeToCanvasNode,
@@ -166,6 +168,7 @@
 
   const nodeTypes = {
     entity: EntityNode,
+    file: FileNode,
     delveRoom: DelveRoomNode,
     delveSectorGroup: DelveSectorNode,
     adventureNode: AdventureNode,
@@ -548,13 +551,23 @@
     if (vault.isGuest) return;
     event.preventDefault();
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = "move";
+      event.dataTransfer.dropEffect = event.dataTransfer.files.length
+        ? "copy"
+        : "move";
     }
   }
 
-  function onDrop(event: DragEvent) {
+  async function onDrop(event: DragEvent) {
     if (vault.isGuest) return;
     event.preventDefault();
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length > 0) {
+      await handleExternalFiles(files, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      return;
+    }
     const entityId = event.dataTransfer?.getData("application/codex-entity");
     if (!entityId) return;
 
@@ -563,6 +576,58 @@
       y: event.clientY,
     });
     logic.handleQuickSpawn(entityId, position);
+  }
+
+  function formatFileFailure(file: File, reason: string) {
+    const descriptions: Record<string, string> = {
+      empty: "is empty",
+      too_large: "is larger than 10 MB",
+      vault_unavailable: "could not be saved because the vault is unavailable",
+      write_failed: "could not be saved to the vault",
+    };
+    return `${file.name || "A file"} ${descriptions[reason] || "could not be added"}.`;
+  }
+
+  async function handleExternalFiles(
+    files: File[],
+    screenPosition?: { x: number; y: number },
+  ) {
+    if (vault.isGuest || files.length === 0) return;
+    const start = screenPosition
+      ? logic.screenToFlowPosition(screenPosition)
+      : { x: 80 + logic.nodes.length * 24, y: 80 + logic.nodes.length * 24 };
+    const failures: string[] = [];
+    let added = 0;
+
+    for (const file of files) {
+      const result = await vault.importFileToVault(file);
+      if (!result.ok) {
+        failures.push(formatFileFailure(file, result.reason));
+        continue;
+      }
+      const position = { x: start.x + added * 28, y: start.y + added * 28 };
+      const nodeId = engine.addFileNode(result.file, position);
+      logic.nodes = [
+        ...logic.nodes,
+        createFlowFileNode(result.file, position, nodeId),
+      ];
+      added++;
+    }
+
+    if (added > 0 && failures.length > 0) {
+      logic.saveNow();
+      notificationStore.notify(
+        `${added} file${added === 1 ? "" : "s"} added. ${failures.join(" ")}`,
+        "info",
+      );
+    } else if (added > 0) {
+      logic.saveNow();
+      notificationStore.notify(
+        `${added} file${added === 1 ? "" : "s"} added to the vault and canvas.`,
+        "success",
+      );
+    } else if (failures.length)
+      notificationStore.notify(failures.join(" "), "error");
   }
 
   async function handleOpenOrCreateSourceEntity() {
@@ -772,6 +837,7 @@
         : undefined}
       onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
+      onUploadFiles={!vault.isGuest ? handleExternalFiles : undefined}
       onAddAdventureNode={canvas?.metadata?.kind === "adventure" ||
       sourceEntity?.kind === "adventure" ||
       logic.nodes.some((n) => n.type === "adventureNode")

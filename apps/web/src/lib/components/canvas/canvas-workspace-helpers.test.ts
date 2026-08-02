@@ -6,6 +6,7 @@ import {
   canvasNodeToFlowNode,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  createFlowFileNode,
   autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
   flowNodeToCanvasNode,
@@ -227,6 +228,22 @@ describe("canvas-workspace-helpers", () => {
       type: "entity",
       position: { x: 10, y: 20 },
       data: { entityId: "entity-1" },
+    });
+
+    const fileNode = createFlowFileNode(
+      {
+        path: "files/map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 42,
+      },
+      { x: 30, y: 40 },
+      "file-1",
+    );
+    expect(flowNodeToCanvasNode(fileNode)).toMatchObject({
+      id: "file-1",
+      type: "file",
+      file: { path: "files/map.pdf", name: "map.pdf" },
     });
 
     expect(

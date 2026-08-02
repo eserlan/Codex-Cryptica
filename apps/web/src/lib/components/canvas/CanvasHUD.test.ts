@@ -66,6 +66,28 @@ describe("CanvasHUD", () => {
     expect(screen.queryByRole("button", { name: /Open Location/ })).toBeNull();
   });
 
+  it("forwards selected files through the accessible upload control", async () => {
+    const onUploadFiles = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Loose Notes",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        onUploadFiles,
+      },
+    });
+
+    const input = screen.getByLabelText("Choose files to upload to canvas");
+    const file = new File(["map"], "map.pdf", { type: "application/pdf" });
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await fireEvent.change(input);
+
+    expect(onUploadFiles).toHaveBeenCalledWith([file]);
+    expect((input as HTMLInputElement).value).toBe("");
+  });
+
   it("finalizes a linked delve dossier", async () => {
     const onFinalizeDossier = vi.fn();
     render(CanvasHUD, {

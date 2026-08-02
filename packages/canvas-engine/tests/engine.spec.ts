@@ -14,6 +14,27 @@ describe("CanvasStore", () => {
     });
   });
 
+  it("adds a vault file node with its storage metadata", () => {
+    const store = new CanvasStore(undefined, {
+      idGenerator: { uuid: () => "file-id" },
+    });
+
+    const nodeId = store.addFileNode(
+      {
+        path: "files/file-id-map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 100,
+      },
+      { x: 8, y: 9 },
+    );
+
+    expect(nodeId).toBe("file-file-id");
+    expect(store.nodes).toMatchObject([
+      { id: nodeId, type: "file", file: { path: "files/file-id-map.pdf" } },
+    ]);
+  });
+
   it("should remove a node and its edges", () => {
     const store = new CanvasStore();
     const n1 = store.addNode("e1", { x: 0, y: 0 });

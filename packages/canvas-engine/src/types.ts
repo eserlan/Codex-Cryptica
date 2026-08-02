@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const CanvasFileSchema = z.object({
+  path: z.string().startsWith("files/"),
+  name: z.string().min(1),
+  mimeType: z.string(),
+  size: z.number().int().positive(),
+});
+
 const CanvasNodeBaseSchema = z.object({
   id: z.string(),
   position: z.object({
@@ -67,6 +74,11 @@ export const CanvasNodeSchema = z.preprocess(
       data: z.unknown().optional(),
     }),
     CanvasNodeBaseSchema.extend({
+      type: z.literal("file"),
+      file: CanvasFileSchema,
+      data: z.unknown().optional(),
+    }),
+    CanvasNodeBaseSchema.extend({
       type: z.enum([
         "delveRoom",
         "delveSectorGroup",
@@ -114,5 +126,6 @@ export const CanvasSchema = z.object({
 });
 
 export type CanvasNode = z.infer<typeof CanvasNodeSchema>;
+export type CanvasFile = z.infer<typeof CanvasFileSchema>;
 export type CanvasEdge = z.infer<typeof CanvasEdgeSchema>;
 export type Canvas = z.infer<typeof CanvasSchema>;

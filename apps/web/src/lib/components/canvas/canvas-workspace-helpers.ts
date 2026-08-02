@@ -54,7 +54,8 @@ export function canvasNodeToFlowNode(node: CanvasNode): Node {
     extent: isDelveRoom ? null : ((node as any).extent ?? undefined),
     zIndex: isSectorGroup ? 0 : undefined,
     data: {
-      entityId: node.entityId,
+      entityId: node.type === "entity" ? node.entityId : undefined,
+      file: node.type === "file" ? node.file : undefined,
       width: node.width,
       height: node.height,
       ...((node as any).data || {}),
@@ -78,18 +79,30 @@ export function canvasEdgeToFlowEdge(edge: CanvasEdge): Edge {
 
 export function flowNodeToCanvasNode(node: Node): CanvasNode {
   const data = (node.data ?? {}) as Record<string, unknown>;
-  return {
+  const base = {
     id: node.id,
     type: (node.type ?? "entity") as CanvasNode["type"],
     position: node.position,
-    entityId: typeof data.entityId === "string" ? data.entityId : undefined,
     width: node.width ?? (data.width as number | undefined),
     height: node.height ?? (data.height as number | undefined),
     parentId: node.parentId,
     extent: typeof node.extent === "string" ? node.extent : undefined,
     style: node.style,
     data,
+  };
+  if (node.type === "file") return { ...base, file: data.file } as CanvasNode;
+  return {
+    ...base,
+    entityId: typeof data.entityId === "string" ? data.entityId : undefined,
   } as CanvasNode;
+}
+
+export function createFlowFileNode(
+  file: import("@codex/canvas-engine").CanvasFile,
+  position: CanvasWorkspacePoint,
+  nodeId: string,
+): Node {
+  return { id: nodeId, type: "file", position, data: { file } };
 }
 
 function nodeWidth(node: Node): number {

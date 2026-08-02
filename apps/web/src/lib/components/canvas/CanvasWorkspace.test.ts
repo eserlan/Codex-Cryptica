@@ -1,7 +1,31 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { canvasLogic, importFileToVault } = vi.hoisted(() => ({
+  canvasLogic: {
+    handleQuickSpawn: vi.fn(),
+    labelModal: { isOpen: false, edgeId: "", currentLabel: "" },
+    flushSave: vi.fn(),
+    saveNow: vi.fn(),
+    activeCategories: new Set(),
+    nodes: [] as any[],
+    edges: [],
+    initializeCanvas: vi.fn(),
+    pruneNodes: vi.fn(),
+    syncEngine: vi.fn(),
+    handleBatchSpawn: vi.fn(),
+    onConnect: vi.fn(),
+    isConnecting: false,
+    contextMenu: null,
+    handleDelete: vi.fn(),
+    handleCreateEntity: vi.fn(),
+    saveLabelModal: vi.fn(),
+    screenToFlowPosition: vi.fn((p) => p),
+  },
+  importFileToVault: vi.fn(),
+}));
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
@@ -30,6 +54,7 @@ vi.mock("@xyflow/svelte", () => ({
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
+    importFileToVault,
   },
 }));
 
@@ -61,29 +86,7 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
 }));
 
 vi.mock("./use-canvas-logic.svelte", () => ({
-  createCanvasLogic: vi.fn(() => ({
-    handleQuickSpawn: vi.fn(),
-    labelModal: {
-      isOpen: false,
-      edgeId: "",
-      currentLabel: "",
-    },
-    flushSave: vi.fn(),
-    activeCategories: new Set(),
-    nodes: [],
-    edges: [],
-    initializeCanvas: vi.fn(),
-    pruneNodes: vi.fn(),
-    syncEngine: vi.fn(),
-    handleBatchSpawn: vi.fn(),
-    onConnect: vi.fn(),
-    isConnecting: false,
-    contextMenu: null,
-    handleDelete: vi.fn(),
-    handleCreateEntity: vi.fn(),
-    saveLabelModal: vi.fn(),
-    screenToFlowPosition: vi.fn((p) => p),
-  })),
+  createCanvasLogic: vi.fn(() => canvasLogic),
 }));
 
 vi.mock("./use-canvas-events.svelte", () => ({
@@ -143,6 +146,7 @@ import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 describe("CanvasWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    canvasLogic.nodes = [];
     modalUIStore.showCanvasSelector = false;
   });
 
@@ -159,5 +163,62 @@ describe("CanvasWorkspace", () => {
       screen.getByRole("region", { name: "Canvas Workspace" }),
     ).toBeTruthy();
     expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
+  });
+
+  it("imports externally dropped files and adds matching file nodes", async () => {
+    importFileToVault.mockResolvedValue({
+      ok: true,
+      file: {
+        path: "files/map-id-map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 42,
+      },
+    });
+    const addFileNode = vi.fn().mockReturnValue("file-node-1");
+    render(CanvasWorkspace, { props: { engine: { addFileNode } as any } });
+    const file = new File(["map"], "map.pdf", { type: "application/pdf" });
+
+    const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperties(dropEvent, {
+      clientX: { value: 100 },
+      clientY: { value: 200 },
+      dataTransfer: { value: { files: [file], getData: vi.fn() } },
+    });
+    await fireEvent(
+      screen.getByRole("region", { name: "Canvas Workspace" }),
+      dropEvent,
+    );
+
+    await vi.waitFor(() =>
+      expect(importFileToVault).toHaveBeenCalledWith(file),
+    );
+    expect(addFileNode).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "files/map-id-map.pdf" }),
+      { x: 100, y: 200 },
+    );
+    expect(canvasLogic.nodes).toMatchObject([
+      { id: "file-node-1", type: "file", data: { file: { name: "map.pdf" } } },
+    ]);
+    expect(canvasLogic.saveNow).toHaveBeenCalledOnce();
+  });
+
+  it("does not create a canvas node when an external file is rejected", async () => {
+    importFileToVault.mockResolvedValue({ ok: false, reason: "too_large" });
+    const addFileNode = vi.fn();
+    render(CanvasWorkspace, { props: { engine: { addFileNode } as any } });
+    const file = new File(["map"], "map.pdf", { type: "application/pdf" });
+
+    await fireEvent.drop(
+      screen.getByRole("region", { name: "Canvas Workspace" }),
+      { dataTransfer: { files: [file], getData: vi.fn() } },
+    );
+
+    await vi.waitFor(() =>
+      expect(importFileToVault).toHaveBeenCalledWith(file),
+    );
+    expect(addFileNode).not.toHaveBeenCalled();
+    expect(canvasLogic.nodes).toEqual([]);
+    expect(canvasLogic.saveNow).not.toHaveBeenCalled();
   });
 });
