@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -45,6 +45,7 @@ const {
       id: "builtin-dnd-npc",
       name: "D&D NPC",
       description: "Quick stats",
+      category: "npc",
       isBuiltIn: true,
       fields: [
         { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 20 },
@@ -173,7 +174,7 @@ describe("StatSheetTemplateSettings", () => {
     expect(saveAsTemplate).toHaveBeenCalledWith(
       "D&D NPC (Vault copy)",
       BUILT_INS[0].fields,
-      { description: "Quick stats", category: undefined },
+      { description: "Quick stats", category: "npc" },
     );
     expect(notify).toHaveBeenCalledWith(
       expect.stringContaining("You can now edit or publish it"),
@@ -193,6 +194,29 @@ describe("StatSheetTemplateSettings", () => {
       "Failed to save a vault copy of this template.",
       "error",
     );
+  });
+
+  it("prevents duplicate saves while a built-in template copy is in progress", async () => {
+    let resolveSave: (value: { id: string; name: string }) => void;
+    saveAsTemplate.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    render(StatSheetTemplateSettings);
+
+    const button = screen.getByLabelText(
+      "Save a vault copy of D&D NPC template",
+    ) as HTMLButtonElement;
+    await fireEvent.click(button);
+
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    await fireEvent.click(button);
+    expect(saveAsTemplate).toHaveBeenCalledTimes(1);
+
+    resolveSave!({ id: "template-copy", name: "D&D NPC (Vault copy)" });
+    await waitFor(() => expect(button.disabled).toBe(false));
   });
 
   it("lists vault-saved templates with rename/delete controls", () => {

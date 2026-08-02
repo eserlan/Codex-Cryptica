@@ -52,23 +52,40 @@
   };
 
   const saveBuiltInAsVaultTemplate = async (template: StatSheetTemplate) => {
-    const saved = await statSheetTemplates.saveAsTemplate(
-      `${template.name} (Vault copy)`,
-      template.fields,
-      {
-        description: template.description,
-        category: template.category,
-      },
-    );
-    if (saved) {
-      notificationStore.notify(
-        `Saved "${saved.name}" to this vault. You can now edit or publish it from Vault Templates.`,
-        "success",
+    if (savingBuiltInTemplateIds.includes(template.id)) return;
+    savingBuiltInTemplateIds = [...savingBuiltInTemplateIds, template.id];
+    try {
+      const saved = await statSheetTemplates.saveAsTemplate(
+        `${template.name} (Vault copy)`,
+        template.fields,
+        {
+          description: template.description,
+          category: template.category,
+        },
       );
-    } else {
+      if (saved) {
+        notificationStore.notify(
+          `Saved "${saved.name}" to this vault. You can now edit or publish it from Vault Templates.`,
+          "success",
+        );
+      } else {
+        notificationStore.notify(
+          "Failed to save a vault copy of this template.",
+          "error",
+        );
+      }
+    } catch (error) {
+      console.error(
+        "[StatSheetTemplateSettings] Failed to save built-in template copy:",
+        error,
+      );
       notificationStore.notify(
         "Failed to save a vault copy of this template.",
         "error",
+      );
+    } finally {
+      savingBuiltInTemplateIds = savingBuiltInTemplateIds.filter(
+        (id) => id !== template.id,
       );
     }
   };
@@ -88,6 +105,7 @@
   let selectedTemplateFieldKey = $state<string | null>(null);
   let selectedPublishTemplateIds = $state<string[]>([]);
   let publishingTemplates = $state<StatSheetTemplate[]>([]);
+  let savingBuiltInTemplateIds = $state<string[]>([]);
   const selectedPublishCount = $derived(selectedPublishTemplateIds.length);
 
   function togglePublishSelection(templateId: string, selected: boolean) {
@@ -429,6 +447,9 @@
     </h4>
     <div class="space-y-2">
       {#each BUILT_IN_STAT_SHEET_TEMPLATES as template (template.id)}
+        {@const isSavingVaultCopy = savingBuiltInTemplateIds.includes(
+          template.id,
+        )}
         <div
           class="p-3 bg-theme-surface border border-theme-border rounded"
           data-testid="stat-sheet-builtin-row"
@@ -496,13 +517,15 @@
               onclick={() => saveBuiltInAsVaultTemplate(template)}
               title="Save an editable vault copy of this template"
               aria-label="Save a vault copy of {template.name} template"
+              aria-busy={isSavingVaultCopy}
+              disabled={isSavingVaultCopy}
               data-testid="save-builtin-stat-sheet-template-copy"
             >
               <span
                 class="icon-[lucide--copy-plus] h-3.5 w-3.5"
                 aria-hidden="true"
               ></span>
-              Save copy to Vault
+              {isSavingVaultCopy ? "Saving copy..." : "Save copy to Vault"}
             </button>
           </div>
           {#if expandedIds.has(template.id)}
