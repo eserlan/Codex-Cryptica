@@ -62,6 +62,7 @@ describe("DetailChatsTab", () => {
     expect(guestChatStore.startChat).toHaveBeenCalledWith(
       "char-1",
       "Mara the Blacksmith",
+      undefined,
     );
   });
 });
