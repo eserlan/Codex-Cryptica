@@ -503,7 +503,7 @@
           role="tabpanel"
           id="panel-map"
           aria-labelledby="tab-map"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
@@ -517,11 +517,11 @@
           role="tabpanel"
           id="panel-chats"
           aria-labelledby="tab-chats"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
-            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+            class="max-w-4xl mx-auto h-full p-3 sm:p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailChatsTab {entity} />
           </div>
@@ -531,11 +531,11 @@
           role="tabpanel"
           id="panel-family"
           aria-labelledby="tab-family"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
-            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+            class="max-w-4xl mx-auto h-full p-3 sm:p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailFamilyTab {entity} onNavigate={navigateTo} />
           </div>
@@ -545,11 +545,11 @@
           role="tabpanel"
           id="panel-stats"
           aria-labelledby="tab-stats"
-          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          class="flex-1 w-full h-full p-3 sm:p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
           style="background-image: var(--bg-texture-overlay)"
         >
           <div
-            class="max-w-4xl mx-auto min-h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+            class="max-w-4xl mx-auto min-h-full p-3 sm:p-6 border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailStatsTab {entity} />
           </div>
