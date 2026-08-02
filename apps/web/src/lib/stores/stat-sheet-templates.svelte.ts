@@ -596,18 +596,6 @@ export class StatSheetTemplateStore {
     await db.put("settings", next, `statSheetEnabledTemplates_${vaultId}`);
   }
 
-  async setAllTemplatesEnabled(enabled: boolean): Promise<void> {
-    await this.init();
-    const vaultId = vaultRegistry.activeVaultId;
-    if (!vaultId) return;
-
-    const next = enabled ? this.allTemplates.map((t) => t.id) : [];
-    this.enabledTemplateIds = next;
-
-    const db = await getDB();
-    await db.put("settings", next, `statSheetEnabledTemplates_${vaultId}`);
-  }
-
   async setDefaultTemplate(category: string, templateId: string | null) {
     await this.init();
     const vaultId = vaultRegistry.activeVaultId;
