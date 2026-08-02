@@ -32,7 +32,6 @@ Tree of typed nodes produced by the Parse → Validate stage (see research.md §
 - `Section(title?, block[])`
 - `Group(columns, block[])` (`:::stat-group`)
 - `Card(block[])` / `Row(block[])` — sibling containers to `Group`
-- `ListRegion(fieldId, itemTemplate: block[])` — repeats `itemTemplate` once per element of a list-typed field (`:::list-region`); `itemTemplate` placeholders bind via `{{item.*}}`, scoped to the current element only (no loop/index/conditional constructs)
 - `FieldReference(fieldId, displayMode?, label?)` — inline node bound to a schema field
 - `UnknownDirective(name, raw)` — anything not in the allowlisted directive set; always rendered as a visible flagged placeholder (FR-011), never executed or silently dropped
 - `MissingField(fieldId)` — a `FieldReference` whose `fieldId` failed validation against the schema (FR-009); replaces the `FieldReference` node at validation time so the renderer doesn't need to re-check
@@ -84,7 +83,6 @@ Modeled on `@codex/stat-sheet-engine`'s existing `PublicTemplatePackage` pattern
 - Deleting a `PresentationTemplate` that is a schema's `defaultPresentationTemplateId` MUST reset that field to `null` (FR-017).
 - Deleting a `PresentationTemplate` that is referenced by any `EntityPresentationOverride` MUST NOT block the delete; affected entities fall back per FR-010 on next render (no data migration needed since the override is just an id reference that becomes dangling → treated as invalid → fallback).
 - Import MUST strip disallowed content and proceed with the remainder (Clarifications), never reject the whole file outright.
-- `ListRegion.fieldId` MUST reference a list-typed field on the declared schema; if it references a non-list field, the node is treated as an incompatible/flagged directive (rendered non-fatally, per FR-011/FR-009) rather than a parse error.
 
 ## State / Lifecycle
 
