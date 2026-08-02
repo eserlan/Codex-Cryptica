@@ -374,11 +374,14 @@ export class GuestChatStore {
     }
   }
 
-  async clearTranscript(characterId: string) {
+  async clearTranscript(characterId: string, speakerCharacterId?: string) {
     const transcript = this.transcripts[characterId];
     if (!transcript) return;
 
     transcript.messages = [];
+    if (speakerCharacterId !== undefined) {
+      transcript.speakerCharacterId = speakerCharacterId || undefined;
+    }
     transcript.lastUpdated = systemClock.now();
 
     const db = await getDB();

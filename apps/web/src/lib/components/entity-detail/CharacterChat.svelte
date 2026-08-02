@@ -13,6 +13,9 @@
   let isStarting = $state(false);
   let isSending = $state(false);
   let speakerCharacterId = $state("");
+  let showSpeakerSwitcher = $state(false);
+  let pendingSpeakerId = $state("");
+  let isSwitchingSpeaker = $state(false);
 
   const transcript = $derived(guestChatStore.transcripts[entity.id] || null);
   const speakerCharacters = $derived(
@@ -40,6 +43,26 @@
       await scrollToBottom();
     } finally {
       isStarting = false;
+    }
+  }
+
+  function openSpeakerSwitcher() {
+    pendingSpeakerId = transcript?.speakerCharacterId ?? "";
+    showSpeakerSwitcher = true;
+  }
+
+  async function confirmSpeakerSwitch() {
+    if (isSwitchingSpeaker) return;
+    isSwitchingSpeaker = true;
+    try {
+      speakerCharacterId = pendingSpeakerId;
+      await guestChatStore.clearTranscript(
+        entity.id,
+        pendingSpeakerId || undefined,
+      );
+      showSpeakerSwitcher = false;
+    } finally {
+      isSwitchingSpeaker = false;
     }
   }
 
@@ -169,10 +192,68 @@
       </button>
     </div>
   {:else}
-    {#if speakerName}
+    <div
+      class="flex items-center justify-between gap-2 rounded-lg border border-theme-border/50 bg-theme-surface/30 px-3 py-2"
+    >
       <p class="text-xs text-theme-muted">
-        Chatting as <span class="font-bold text-theme-text">{speakerName}</span>
+        Chatting as
+        <span class="font-bold text-theme-text"
+          >{speakerName ?? "Yourself"}</span
+        >
       </p>
+      <button
+        type="button"
+        onclick={openSpeakerSwitcher}
+        class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+      >
+        <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
+        ></span>
+        Change
+      </button>
+    </div>
+
+    {#if showSpeakerSwitcher}
+      <div
+        class="flex flex-col gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/5 p-3"
+      >
+        <label
+          for="character-chat-speaker-switch"
+          class="text-xs font-bold uppercase tracking-wider text-theme-muted"
+        >
+          Chat as
+        </label>
+        <select
+          id="character-chat-speaker-switch"
+          name="character-chat-speaker-switch"
+          bind:value={pendingSpeakerId}
+          class="min-h-12 w-full rounded-lg border border-theme-border bg-theme-surface px-3 text-base text-theme-text outline-none focus:border-theme-primary sm:min-h-0 sm:text-xs"
+        >
+          <option value="">Yourself</option>
+          {#each speakerCharacters as speaker (speaker.id)}
+            <option value={speaker.id}>{speaker.title}</option>
+          {/each}
+        </select>
+        <p class="text-[10px] italic text-theme-muted">
+          Starting as a different character clears this conversation with {entity.title}.
+        </p>
+        <div class="flex justify-end gap-2">
+          <button
+            type="button"
+            onclick={() => (showSpeakerSwitcher = false)}
+            class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onclick={confirmSpeakerSwitch}
+            disabled={isSwitchingSpeaker}
+            class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-3 py-1.5 hover:bg-theme-secondary transition cursor-pointer disabled:opacity-50"
+          >
+            {isSwitchingSpeaker ? "Starting..." : "Start New Chat"}
+          </button>
+        </div>
+      </div>
     {/if}
     <div
       bind:this={chatContainer}
@@ -253,7 +334,7 @@
                 ? 'bg-theme-primary/10 border-theme-primary/20 text-theme-text rounded-tr-none shadow-[0_2px_8px_rgba(var(--color-theme-primary-rgb),0.05)]'
                 : 'bg-theme-surface border-theme-border text-theme-text rounded-tl-none shadow-[0_2px_8px_rgba(0,0,0,0.02)]'}"
             >
-              <p class="whitespace-pre-wrap">{message.content}</p>
+              <p class="whitespace-pre-wrap break-words">{message.content}</p>
             </div>
           {/if}
 
