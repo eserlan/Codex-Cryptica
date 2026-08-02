@@ -6,8 +6,10 @@ import {
   canvasNodeToFlowNode,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  createFlowFileNode,
   autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
+  flowNodesToCanvasNodes,
   flowNodeToCanvasNode,
   fitDelveSectorFrames,
   hydrateCanvasGraph,
@@ -228,6 +230,43 @@ describe("canvas-workspace-helpers", () => {
       position: { x: 10, y: 20 },
       data: { entityId: "entity-1" },
     });
+
+    const fileNode = createFlowFileNode(
+      {
+        path: "files/map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 42,
+      },
+      { x: 30, y: 40 },
+      "file-1",
+    );
+    expect(flowNodeToCanvasNode(fileNode)).toMatchObject({
+      id: "file-1",
+      type: "file",
+      file: { path: "files/map.pdf", name: "map.pdf" },
+    });
+
+    expect(
+      flowNodeToCanvasNode({
+        id: "invalid-file",
+        type: "file",
+        position: { x: 0, y: 0 },
+        data: { file: { name: "missing metadata" } },
+      }),
+    ).toBeUndefined();
+    expect(flowNodesToCanvasNodes([fileNode])).toHaveLength(1);
+    expect(
+      flowNodesToCanvasNodes([
+        fileNode,
+        {
+          id: "invalid-file",
+          type: "file",
+          position: { x: 0, y: 0 },
+          data: { file: { name: "missing metadata" } },
+        },
+      ]),
+    ).toHaveLength(1);
 
     expect(
       createFlowEdgeFromConnection(

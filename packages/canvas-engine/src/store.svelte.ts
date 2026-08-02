@@ -1,4 +1,9 @@
-import { type CanvasNode, type CanvasEdge, type Canvas } from "./types";
+import {
+  type CanvasNode,
+  type CanvasEdge,
+  type Canvas,
+  type CanvasFile,
+} from "./types";
 import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 
 export class CanvasStore {
@@ -32,6 +37,17 @@ export class CanvasStore {
       id: `node-${this.idGenerator.uuid()}`,
       type: "entity",
       entityId,
+      position,
+    };
+    this.nodes = [...this.nodes, newNode];
+    return newNode.id;
+  }
+
+  addFileNode(file: CanvasFile, position: { x: number; y: number }) {
+    const newNode: CanvasNode = {
+      id: `file-${this.idGenerator.uuid()}`,
+      type: "file",
+      file,
       position,
     };
     this.nodes = [...this.nodes, newNode];

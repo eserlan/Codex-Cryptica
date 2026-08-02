@@ -27,12 +27,14 @@ import {
 } from "@codex/family-engine";
 import { SyncStore } from "./vault/sync-store.svelte";
 import { AssetStore } from "./vault/asset-store.svelte";
+import { FileStore } from "./vault/file-store.svelte";
 import { ServiceRegistry } from "./vault/service-registry";
 import { SearchStore } from "./vault/search-store.svelte";
 import {
   VaultRepository,
   SyncCoordinator,
   AssetManager,
+  FileManager,
 } from "@codex/vault-engine";
 import {
   fileIOAdapter,
@@ -80,6 +82,7 @@ export class VaultStore {
   public entityStore: EntityStore;
   public syncStore: SyncStore;
   public assetStore: AssetStore;
+  public fileStore: FileStore;
   public serviceRegistry: ServiceRegistry;
   public searchStore: SearchStore;
   private lifecycleManager: VaultLifecycleManager;
@@ -307,6 +310,7 @@ export class VaultStore {
   constructor(
     public repository = new VaultRepository(fileIOAdapter),
     private assetManager = new AssetManager(assetIOAdapter, imageProcessor),
+    private fileManager = new FileManager({ ioAdapter: assetIOAdapter }),
     public syncCoordinator: SyncCoordinator | null = null,
   ) {
     this.serviceRegistry = new ServiceRegistry();
@@ -400,6 +404,11 @@ export class VaultStore {
       assetManager: this.assetManager,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
       getActiveFolderHandle: () => this.getActiveFolderHandle(),
+      isGuest: () => this.isGuest,
+    });
+    this.fileStore = new FileStore({
+      fileManager: this.fileManager,
+      getActiveVaultHandle: () => this.getActiveVaultHandle(),
       isGuest: () => this.isGuest,
     });
 
@@ -693,6 +702,9 @@ export class VaultStore {
   }
   saveImageToVault(blob: Blob | File, entityId: string, name?: string) {
     return this.assetStore.saveImageToVault(blob, entityId, name);
+  }
+  importFileToVault(file: File) {
+    return this.fileStore.importFile(file);
   }
   ensureAssetPersisted(path: string, handle: FileSystemDirectoryHandle) {
     return this.assetStore.ensureAssetPersisted(path, handle);

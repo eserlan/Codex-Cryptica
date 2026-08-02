@@ -17,6 +17,14 @@ The fastest way to add a single entity is to drag it directly from the **Entity 
 2. **Find your entity**: Use the search bar or browse the list.
 3. **Drag onto the canvas**: Click and drag the entity card onto the board. It will be placed wherever you drop it.
 
+### Add Files from Your Device
+
+You can also keep supporting material beside your entities. Drag files from your computer directly onto the canvas, or select **Upload files to canvas** in the canvas header.
+
+- Each file is stored privately in the active vault and shown as a file card where you dropped it.
+- Select **Open file** on a file card to view it in a new tab.
+- Files must be larger than 0 bytes and no more than 10 MB. If you select several files, valid files are still added when another one cannot be saved.
+
 ### Right-Click to Add
 
 The most direct way to add entities to a canvas is via the **Context Menu** on the Knowledge Graph.
