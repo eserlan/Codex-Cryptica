@@ -6,6 +6,8 @@
   let { data, selected }: NodeProps = $props();
 
   const file = $derived(data?.file as CanvasFile | undefined);
+  const isImage = $derived(file?.mimeType.startsWith("image/") ?? false);
+  let imageUrl = $state("");
   const sizeLabel = $derived.by(() => {
     if (!file) return "Unknown size";
     if (file.size < 1024) return `${file.size} B`;
@@ -13,7 +15,7 @@
     return `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
   });
   const iconClass = $derived(
-    file?.mimeType.startsWith("image/")
+    isImage
       ? "icon-[lucide--image]"
       : file?.mimeType === "application/pdf"
         ? "icon-[lucide--file-text]"
@@ -25,6 +27,33 @@
     const url = await vault.resolveImageUrl(file.path);
     if (url) window.open(url, "_blank", "noopener");
   }
+
+  function hideImagePreview() {
+    imageUrl = "";
+  }
+
+  $effect(() => {
+    const path = file?.path;
+    if (!isImage || !path) {
+      imageUrl = "";
+      return;
+    }
+
+    let isCurrent = true;
+    vault
+      .resolveImageUrl(path)
+      .then((url) => {
+        if (isCurrent) imageUrl = url;
+      })
+      .catch(() => {
+        if (isCurrent) imageUrl = "";
+      });
+
+    return () => {
+      isCurrent = false;
+      vault.releaseImageUrl(path);
+    };
+  });
 </script>
 
 <article
@@ -33,6 +62,20 @@
     : 'border-theme-border'}"
   aria-label={file ? `File: ${file.name}` : "Stored file"}
 >
+  {#if imageUrl}
+    <div
+      class="h-36 overflow-hidden rounded-md border border-theme-border bg-theme-bg/50"
+    >
+      <img
+        src={imageUrl}
+        alt={file?.name || "Uploaded image"}
+        loading="lazy"
+        decoding="async"
+        class="h-full w-full object-cover"
+        onerror={hideImagePreview}
+      />
+    </div>
+  {/if}
   <div class="flex items-start gap-2">
     <span
       class="{iconClass} mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
