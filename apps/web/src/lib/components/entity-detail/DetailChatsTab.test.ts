@@ -20,6 +20,9 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
     sendMessage: vi.fn(),
     saveMessageEdit: vi.fn(),
     deleteMessage: vi.fn(),
+    listSessions: vi.fn().mockResolvedValue([]),
+    resumeSession: vi.fn(),
+    startNewSession: vi.fn(),
   },
 }));
 
