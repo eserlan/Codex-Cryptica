@@ -518,7 +518,8 @@
           <textarea
             bind:value={messageInput}
             onkeydown={handleGuestKeydown}
-            placeholder="Type a message to {entity.title}..."
+            placeholder="Type a message..."
+            aria-label="Message {entity.title}"
             disabled={guestChatStore.isGenerating}
             class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
             rows="2"
