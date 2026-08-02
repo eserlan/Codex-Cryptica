@@ -9,13 +9,21 @@
   let messageEditContent = $state("");
   let messageInput = $state("");
   let chatContainer = $state<HTMLElement | null>(null);
+  let isStarting = $state(false);
   let isSending = $state(false);
 
   const transcript = $derived(guestChatStore.transcripts[entity.id] || null);
 
   async function startChat() {
-    await guestChatStore.startChat(entity.id, entity.title);
-    await scrollToBottom();
+    if (isStarting) return;
+
+    isStarting = true;
+    try {
+      await guestChatStore.startChat(entity.id, entity.title);
+      await scrollToBottom();
+    } finally {
+      isStarting = false;
+    }
   }
 
   async function sendMessage() {
@@ -114,9 +122,11 @@
       <button
         type="button"
         onclick={startChat}
+        disabled={isStarting}
+        aria-busy={isStarting}
         class="px-4 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-theme-secondary transition cursor-pointer"
       >
-        Connect
+        {isStarting ? "Connecting..." : "Connect"}
       </button>
     </div>
   {:else}

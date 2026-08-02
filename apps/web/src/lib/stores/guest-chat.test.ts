@@ -6,6 +6,7 @@ import { vi } from "vitest";
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("./vault.svelte", () => ({
   vault: {
+    isGuest: true,
     entities: {
       "char-1": {
         id: "char-1",
@@ -85,6 +86,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GuestChatStore } from "./guest-chat.svelte";
 import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
 import { oracle } from "./oracle.svelte";
+import { vault } from "./vault.svelte";
 
 describe("GuestChatStore", () => {
   let store: GuestChatStore;
@@ -92,6 +94,7 @@ describe("GuestChatStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (globalThis as any).mockDbStore.clear();
+    (vault as { isGuest: boolean }).isGuest = true;
     store = new GuestChatStore();
   });
 
@@ -147,5 +150,22 @@ describe("GuestChatStore", () => {
 
     await store.clearTranscript("char-1");
     expect(store.transcripts["char-1"].messages.length).toBe(0);
+  });
+
+  it("keeps host conversations local even when a guest connection is active", async () => {
+    (vault as { isGuest: boolean }).isGuest = false;
+
+    await store.startChat("char-1", "Blacksmith Joe");
+    await store.sendMessage("char-1", "Hello there!");
+
+    expect(p2pGuestService.sendToHost).not.toHaveBeenCalled();
+    expect(oracle.executor.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "guest-chat",
+        entityId: "char-1",
+        query: "Hello there!",
+      }),
+      expect.anything(),
+    );
   });
 });

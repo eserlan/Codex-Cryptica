@@ -3,7 +3,6 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DetailChatsTab from "./DetailChatsTab.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
@@ -45,7 +44,6 @@ describe("DetailChatsTab", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vault.isGuest = false;
     guestChatStore.transcripts = {};
   });
 

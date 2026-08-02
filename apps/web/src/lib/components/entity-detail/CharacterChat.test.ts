@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CharacterChat from "./CharacterChat.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
@@ -38,6 +38,30 @@ describe("CharacterChat", () => {
       "char-1",
       "Mara the Blacksmith",
     );
+  });
+
+  it("ignores repeated Connect clicks while starting a chat", async () => {
+    let resolveStart!: () => void;
+    vi.mocked(guestChatStore.startChat).mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveStart = resolve;
+      }),
+    );
+    render(CharacterChat, { entity: character });
+
+    const connectButton = screen.getByRole("button", { name: "Connect" });
+    await fireEvent.click(connectButton);
+
+    expect((connectButton as HTMLButtonElement).disabled).toBe(true);
+    expect(guestChatStore.startChat).toHaveBeenCalledOnce();
+
+    await fireEvent.click(connectButton);
+    expect(guestChatStore.startChat).toHaveBeenCalledOnce();
+
+    resolveStart();
+    await waitFor(() => {
+      expect((connectButton as HTMLButtonElement).disabled).toBe(false);
+    });
   });
 
   it("does not offer a chat connection while the character is disabled", () => {

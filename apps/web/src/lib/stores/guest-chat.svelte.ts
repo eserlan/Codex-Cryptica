@@ -127,7 +127,7 @@ export class GuestChatStore {
 
     this.isGenerating = true;
 
-    if (p2pGuestService.connected) {
+    if (vault.isGuest && p2pGuestService.connected) {
       await this.sendMessageViaHost(characterId, content.trim(), transcript);
     } else {
       await this.sendMessageLocally(characterId, content.trim(), transcript);
@@ -408,6 +408,7 @@ export class GuestChatStore {
 
   syncTranscript(transcript: GuestChatTranscript) {
     if (
+      vault.isGuest &&
       p2pGuestService.connected &&
       transcript.messages.length > 0 &&
       p2pGuestService.sendToHost
