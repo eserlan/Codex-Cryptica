@@ -309,8 +309,8 @@
         </div>
       {/if}
     </div>
-  {:else if showDetails}
-    <div id="guest-chat-details">
+  {:else}
+    <div id="guest-chat-details" hidden={!showDetails}>
       {#if entity.guestChatConfig?.isEnabled}
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div>

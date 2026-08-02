@@ -94,7 +94,7 @@ export class GuestChatStore {
   async resumeSession(characterId: string, transcriptId: string) {
     const db = await getDB();
     const transcript = await db.get("guest_chat_transcripts", transcriptId);
-    if (transcript) {
+    if (transcript && transcript.characterId === characterId) {
       this.transcripts[characterId] = transcript;
       this.activeCharacterId = characterId;
     }

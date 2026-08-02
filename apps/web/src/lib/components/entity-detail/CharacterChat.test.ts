@@ -111,4 +111,77 @@ describe("CharacterChat", () => {
     expect(screen.getByText("Chat Disabled")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Connect" })).toBeNull();
   });
+
+  describe("with an active conversation", () => {
+    const activeTranscript = {
+      id: "transcript-active",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      characterTitle: "Mara the Blacksmith",
+      messages: [],
+      lastUpdated: 200,
+    };
+    const otherSession = {
+      id: "transcript-other",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      characterTitle: "Mara the Blacksmith",
+      speakerCharacterId: "char-2",
+      messages: [{ id: "m1", role: "user", content: "hi", timestamp: 1 }],
+      lastUpdated: 100,
+    };
+
+    beforeEach(() => {
+      guestChatStore.transcripts = { "char-1": activeTranscript as any };
+    });
+
+    it("opening Sessions renders the switcher panel", async () => {
+      render(CharacterChat, { entity: character });
+
+      await fireEvent.click(screen.getByRole("button", { name: /Sessions/ }));
+
+      expect(screen.getByText("Start a New Chat as")).toBeTruthy();
+    });
+
+    it("starting a new chat calls guestChatStore.startNewSession with the selected speaker", async () => {
+      render(CharacterChat, { entity: character });
+
+      await fireEvent.click(screen.getByRole("button", { name: /Sessions/ }));
+      await fireEvent.change(screen.getByLabelText("Start a New Chat as"), {
+        target: { value: "char-2" },
+      });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Start New Chat" }),
+      );
+
+      expect(guestChatStore.startNewSession).toHaveBeenCalledWith(
+        "char-1",
+        "Mara the Blacksmith",
+        "char-2",
+      );
+    });
+
+    it("resuming a previous session calls guestChatStore.resumeSession with its id", async () => {
+      vi.mocked(guestChatStore.listSessions).mockResolvedValueOnce([
+        activeTranscript,
+        otherSession,
+      ] as any);
+      render(CharacterChat, { entity: character });
+
+      await fireEvent.click(screen.getByRole("button", { name: /Sessions/ }));
+      await waitFor(() => {
+        expect(screen.getByText("Resume a Previous Conversation")).toBeTruthy();
+      });
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Tarin the Ranger/ }),
+      );
+
+      expect(guestChatStore.resumeSession).toHaveBeenCalledWith(
+        "char-1",
+        "transcript-other",
+      );
+    });
+  });
 });

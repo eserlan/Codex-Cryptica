@@ -40,12 +40,20 @@
     return vault.entities[forSpeakerId]?.title ?? "Unknown character";
   }
 
-  async function refreshSessions() {
-    sessions = await guestChatStore.listSessions(entity.id);
+  async function refreshSessions(characterId: string) {
+    try {
+      const result = await guestChatStore.listSessions(characterId);
+      // Guard against a stale response landing after the entity changed.
+      if (characterId === entity.id) {
+        sessions = result;
+      }
+    } catch (err) {
+      console.error("[CharacterChat] Failed to load chat sessions:", err);
+    }
   }
 
   $effect(() => {
-    if (entity.id) void refreshSessions();
+    if (entity.id) void refreshSessions(entity.id);
   });
 
   async function startChat() {
@@ -58,7 +66,7 @@
         entity.title,
         speakerCharacterId || undefined,
       );
-      await refreshSessions();
+      await refreshSessions(entity.id);
       await scrollToBottom();
     } finally {
       isStarting = false;
@@ -92,7 +100,7 @@
         entity.title,
         pendingSpeakerId || undefined,
       );
-      await refreshSessions();
+      await refreshSessions(entity.id);
       showSpeakerSwitcher = false;
     } finally {
       isSwitchingSpeaker = false;
