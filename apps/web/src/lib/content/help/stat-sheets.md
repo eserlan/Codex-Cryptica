@@ -86,6 +86,11 @@ Tap the roll button on a Dice field to roll it in Codex Cryptica's dice engine. 
 
 Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter), so it stays with the entity wherever it goes. Saved templates live in your campaign vault, so they're available across all entities in that vault.
 
+## Presentation Templates
+
+Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or create a Markdown-based view with a live preview. Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
+
 ## Related reading
 
 - [Build Stat Sheets That Keep Your Table Moving](/blog/custom-stat-sheet-templates) — Design reusable layouts around the information you need during play.
+- [Present Your Stat Sheets Your Way](/blog/presentation-templates) — Build, preview, and share Markdown-based Presentation Templates.
