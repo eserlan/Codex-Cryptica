@@ -39,6 +39,14 @@ describe("ModalUIStore", () => {
     store.closeSettings();
     expect(store.showSettings).toBe(false);
 
+    store.openSettings("templates");
+    expect(store.showSettings).toBe(true);
+    expect(store.activeSettingsTab).toBe("templates");
+
+    // Toggling the active Templates tab closes the settings modal.
+    store.toggleSettings("templates");
+    expect(store.showSettings).toBe(false);
+
     store.toggleSettings("theme");
     expect(store.showSettings).toBe(true);
     expect(store.activeSettingsTab).toBe("theme");
