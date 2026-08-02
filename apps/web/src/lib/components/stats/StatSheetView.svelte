@@ -6,10 +6,16 @@
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
+  import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
-  let { entity, onOpenEditor = () => {} } = $props<{
+  let {
+    entity,
+    onOpenEditor = () => {},
+    idGenerator = systemIdGenerator,
+  } = $props<{
     entity: Entity;
     onOpenEditor?: () => void;
+    idGenerator?: IdGenerator;
   }>();
 
   const readOnly = $derived(vault.isGuest);
@@ -60,7 +66,7 @@
         usedIds.add(field.id);
         return field;
       }
-      const newId = `field-${crypto.randomUUID()}`;
+      const newId = `field-${idGenerator.uuid()}`;
       usedIds.add(newId);
       return { ...field, id: newId };
     });
