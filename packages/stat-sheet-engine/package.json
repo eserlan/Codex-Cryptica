@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "schema": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "marked": "^18.0.4"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.7",
