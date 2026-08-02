@@ -106,7 +106,7 @@
         onclick={() => fileInput?.click()}
         title="Upload files to canvas"
         aria-label="Upload files to canvas"
-        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
+        class="hidden sm:flex bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--upload] w-4 h-4" aria-hidden="true"></span>
       </button>
@@ -327,6 +327,20 @@
     </div>
   {/if}
 </div>
+
+{#if onUploadFiles}
+  <button
+    type="button"
+    onclick={() => fileInput?.click()}
+    title="Upload files from your device"
+    aria-label="Upload files from device"
+    data-testid="canvas-fab-upload"
+    class="absolute bottom-6 right-24 z-40 flex h-14 items-center gap-2 rounded-full border border-theme-primary/30 bg-theme-surface px-4 text-sm font-semibold text-theme-text shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.25)] transition-all hover:border-theme-primary hover:text-theme-primary pointer-events-auto sm:hidden"
+  >
+    <span class="icon-[lucide--upload] h-5 w-5" aria-hidden="true"></span>
+    Upload
+  </button>
+{/if}
 
 <!-- Guided Mode floating action button (#1909, FR-006). -->
 <button

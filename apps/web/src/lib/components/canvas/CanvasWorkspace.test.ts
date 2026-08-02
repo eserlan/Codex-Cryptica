@@ -142,11 +142,20 @@ vi.mock("./CanvasHUD.svelte", () => ({
 
 import CanvasWorkspace from "./CanvasWorkspace.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+
+function setGuestMode(isGuest: boolean) {
+  Object.defineProperty(vault, "isGuest", {
+    configurable: true,
+    value: isGuest,
+  });
+}
 
 describe("CanvasWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     canvasLogic.nodes = [];
+    setGuestMode(false);
     modalUIStore.showCanvasSelector = false;
   });
 
@@ -220,5 +229,81 @@ describe("CanvasWorkspace", () => {
     expect(addFileNode).not.toHaveBeenCalled();
     expect(canvasLogic.nodes).toEqual([]);
     expect(canvasLogic.saveNow).not.toHaveBeenCalled();
+  });
+
+  it("does not start a second import while a file upload is in progress", async () => {
+    let finishImport: (value: unknown) => void;
+    importFileToVault.mockReturnValue(
+      new Promise((resolve) => {
+        finishImport = resolve;
+      }),
+    );
+    const addFileNode = vi.fn().mockReturnValue("file-node-1");
+    render(CanvasWorkspace, { props: { engine: { addFileNode } as any } });
+    const canvas = screen.getByRole("region", { name: "Canvas Workspace" });
+    const file = new File(["map"], "map.pdf", { type: "application/pdf" });
+    const dropData = { dataTransfer: { files: [file], getData: vi.fn() } };
+
+    await fireEvent.drop(canvas, dropData);
+    await fireEvent.drop(canvas, dropData);
+
+    await vi.waitFor(() => expect(importFileToVault).toHaveBeenCalledTimes(1));
+    finishImport!({
+      ok: true,
+      file: {
+        path: "files/map-id-map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 42,
+      },
+    });
+    await vi.waitFor(() => expect(addFileNode).toHaveBeenCalledOnce());
+    expect(canvasLogic.saveNow).toHaveBeenCalledOnce();
+  });
+
+  it("allows another upload after an import throws", async () => {
+    importFileToVault
+      .mockRejectedValueOnce(new Error("OPFS unavailable"))
+      .mockResolvedValueOnce({
+        ok: true,
+        file: {
+          path: "files/map-id-map.pdf",
+          name: "map.pdf",
+          mimeType: "application/pdf",
+          size: 42,
+        },
+      });
+    const addFileNode = vi.fn().mockReturnValue("file-node-1");
+    render(CanvasWorkspace, { props: { engine: { addFileNode } as any } });
+    const canvas = screen.getByRole("region", { name: "Canvas Workspace" });
+    const file = new File(["map"], "map.pdf", { type: "application/pdf" });
+    const dropData = { dataTransfer: { files: [file], getData: vi.fn() } };
+
+    await fireEvent.drop(canvas, dropData);
+    await vi.waitFor(() => expect(importFileToVault).toHaveBeenCalledTimes(1));
+    await fireEvent.drop(canvas, dropData);
+
+    await vi.waitFor(() => expect(addFileNode).toHaveBeenCalledOnce());
+    expect(importFileToVault).toHaveBeenCalledTimes(2);
+  });
+
+  it("blocks guest file drops without importing or navigating away", async () => {
+    setGuestMode(true);
+    const addFileNode = vi.fn();
+    render(CanvasWorkspace, { props: { engine: { addFileNode } as any } });
+    const file = new File(["map"], "map.pdf", { type: "application/pdf" });
+    const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperties(dropEvent, {
+      dataTransfer: { value: { files: [file], getData: vi.fn() } },
+    });
+
+    await fireEvent(
+      screen.getByRole("region", { name: "Canvas Workspace" }),
+      dropEvent,
+    );
+
+    expect(dropEvent.defaultPrevented).toBe(true);
+    expect(importFileToVault).not.toHaveBeenCalled();
+    expect(addFileNode).not.toHaveBeenCalled();
   });
 });

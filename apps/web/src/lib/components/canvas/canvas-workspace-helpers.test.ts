@@ -9,6 +9,7 @@ import {
   createFlowFileNode,
   autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
+  flowNodesToCanvasNodes,
   flowNodeToCanvasNode,
   fitDelveSectorFrames,
   hydrateCanvasGraph,
@@ -245,6 +246,27 @@ describe("canvas-workspace-helpers", () => {
       type: "file",
       file: { path: "files/map.pdf", name: "map.pdf" },
     });
+
+    expect(
+      flowNodeToCanvasNode({
+        id: "invalid-file",
+        type: "file",
+        position: { x: 0, y: 0 },
+        data: { file: { name: "missing metadata" } },
+      }),
+    ).toBeUndefined();
+    expect(flowNodesToCanvasNodes([fileNode])).toHaveLength(1);
+    expect(
+      flowNodesToCanvasNodes([
+        fileNode,
+        {
+          id: "invalid-file",
+          type: "file",
+          position: { x: 0, y: 0 },
+          data: { file: { name: "missing metadata" } },
+        },
+      ]),
+    ).toHaveLength(1);
 
     expect(
       createFlowEdgeFromConnection(

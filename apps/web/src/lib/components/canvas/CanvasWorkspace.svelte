@@ -9,6 +9,7 @@
     type Node,
   } from "@xyflow/svelte";
   import { CanvasStore, type Canvas } from "@codex/canvas-engine";
+  import type { FileImportFailureReason } from "@codex/vault-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
@@ -47,7 +48,7 @@
     createFlowFileNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
-    flowNodeToCanvasNode,
+    flowNodesToCanvasNodes,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
   import type {
@@ -65,6 +66,7 @@
     ) as Canvas | undefined,
   );
   const canvasId = $derived(canvas?.id || canvasSlug);
+  let isImportingExternalFiles = $state(false);
   const sourceEntityId = $derived.by(() => {
     const id = canvas?.metadata?.sourceEntityId;
     return typeof id === "string" && id ? id : undefined;
@@ -343,8 +345,8 @@
         canvas,
         sourceEntity: loadedSourceEntity,
         dossierTerm: getDelveTerm(themeStore.activeTheme.id),
-        nodes: logic.nodes.map(
-          flowNodeToCanvasNode,
+        nodes: flowNodesToCanvasNodes(
+          logic.nodes,
         ) as unknown as DelveCanvasNode[],
         edges: logic.edges.map((edge) =>
           flowEdgeToCanvasEdge(edge),
@@ -473,7 +475,7 @@
       };
       const updatedCanvas = {
         ...targetCanvas,
-        nodes: logic.nodes.map(flowNodeToCanvasNode),
+        nodes: flowNodesToCanvasNodes(logic.nodes),
         edges: logic.edges.map((edge) => flowEdgeToCanvasEdge(edge)),
         metadata,
       };
@@ -548,19 +550,30 @@
   }
 
   function onDragOver(event: DragEvent) {
-    if (vault.isGuest) return;
+    const hasFiles = (event.dataTransfer?.files.length ?? 0) > 0;
+    if (vault.isGuest) {
+      if (hasFiles) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
     event.preventDefault();
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = event.dataTransfer.files.length
-        ? "copy"
-        : "move";
+      event.dataTransfer.dropEffect = hasFiles ? "copy" : "move";
     }
   }
 
   async function onDrop(event: DragEvent) {
-    if (vault.isGuest) return;
-    event.preventDefault();
     const files = Array.from(event.dataTransfer?.files || []);
+    if (vault.isGuest) {
+      if (files.length > 0) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
+    event.preventDefault();
     if (files.length > 0) {
       await handleExternalFiles(files, {
         x: event.clientX,
@@ -578,8 +591,8 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
-  function formatFileFailure(file: File, reason: string) {
-    const descriptions: Record<string, string> = {
+  function formatFileFailure(file: File, reason: FileImportFailureReason) {
+    const descriptions: Record<FileImportFailureReason, string> = {
       empty: "is empty",
       too_large: "is larger than 10 MB",
       vault_unavailable: "could not be saved because the vault is unavailable",
@@ -592,42 +605,56 @@
     files: File[],
     screenPosition?: { x: number; y: number },
   ) {
-    if (vault.isGuest || files.length === 0) return;
-    const start = screenPosition
-      ? logic.screenToFlowPosition(screenPosition)
-      : { x: 80 + logic.nodes.length * 24, y: 80 + logic.nodes.length * 24 };
-    const failures: string[] = [];
-    let added = 0;
+    if (vault.isGuest || files.length === 0 || isImportingExternalFiles) return;
+    isImportingExternalFiles = true;
+    try {
+      const start = screenPosition
+        ? logic.screenToFlowPosition(screenPosition)
+        : {
+            x: 80 + logic.nodes.length * 24,
+            y: 80 + logic.nodes.length * 24,
+          };
+      const failures: string[] = [];
+      let added = 0;
 
-    for (const file of files) {
-      const result = await vault.importFileToVault(file);
-      if (!result.ok) {
-        failures.push(formatFileFailure(file, result.reason));
-        continue;
+      for (const file of files) {
+        const result = await vault.importFileToVault(file);
+        if (!result.ok) {
+          failures.push(formatFileFailure(file, result.reason));
+          continue;
+        }
+        const position = { x: start.x + added * 28, y: start.y + added * 28 };
+        const nodeId = engine.addFileNode(result.file, position);
+        logic.nodes = [
+          ...logic.nodes,
+          createFlowFileNode(result.file, position, nodeId),
+        ];
+        added++;
       }
-      const position = { x: start.x + added * 28, y: start.y + added * 28 };
-      const nodeId = engine.addFileNode(result.file, position);
-      logic.nodes = [
-        ...logic.nodes,
-        createFlowFileNode(result.file, position, nodeId),
-      ];
-      added++;
-    }
 
-    if (added > 0 && failures.length > 0) {
-      logic.saveNow();
+      if (added > 0 && failures.length > 0) {
+        logic.saveNow();
+        notificationStore.notify(
+          `${added} file${added === 1 ? "" : "s"} added. ${failures.join(" ")}`,
+          "info",
+        );
+      } else if (added > 0) {
+        logic.saveNow();
+        notificationStore.notify(
+          `${added} file${added === 1 ? "" : "s"} added to the vault and canvas.`,
+          "success",
+        );
+      } else if (failures.length) {
+        notificationStore.notify(failures.join(" "), "error");
+      }
+    } catch {
       notificationStore.notify(
-        `${added} file${added === 1 ? "" : "s"} added. ${failures.join(" ")}`,
-        "info",
+        "Files could not be added. Please try again.",
+        "error",
       );
-    } else if (added > 0) {
-      logic.saveNow();
-      notificationStore.notify(
-        `${added} file${added === 1 ? "" : "s"} added to the vault and canvas.`,
-        "success",
-      );
-    } else if (failures.length)
-      notificationStore.notify(failures.join(" "), "error");
+    } finally {
+      isImportingExternalFiles = false;
+    }
   }
 
   async function handleOpenOrCreateSourceEntity() {

@@ -88,6 +88,38 @@ describe("CanvasHUD", () => {
     expect((input as HTMLInputElement).value).toBe("");
   });
 
+  it("opens the native picker from the mobile upload action", async () => {
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Loose Notes",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        onUploadFiles: vi.fn(),
+      },
+    });
+
+    const input = screen.getByLabelText("Choose files to upload to canvas");
+    const openPicker = vi.spyOn(input, "click");
+
+    await fireEvent.click(screen.getByTestId("canvas-fab-upload"));
+
+    expect(openPicker).toHaveBeenCalledOnce();
+  });
+
+  it("does not show the mobile upload action when uploading is unavailable", () => {
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Guest Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+      },
+    });
+
+    expect(screen.queryByTestId("canvas-fab-upload")).toBeNull();
+  });
+
   it("finalizes a linked delve dossier", async () => {
     const onFinalizeDossier = vi.fn();
     render(CanvasHUD, {

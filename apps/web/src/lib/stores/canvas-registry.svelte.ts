@@ -263,9 +263,9 @@ export class CanvasRegistryStore {
     }
 
     const existingEntityIds = new Set(
-      canvas.nodes.map((node) =>
-        node.type === "entity" ? node.entityId : undefined,
-      ),
+      canvas.nodes
+        .filter((node) => node.type === "entity")
+        .map((node) => node.entityId),
     );
     const added: string[] = [];
     const skipped: string[] = [];

@@ -15,7 +15,7 @@ import {
   createFlowEdgeFromConnection,
   createFlowEntityNode,
   flowEdgeToCanvasEdge,
-  flowNodeToCanvasNode,
+  flowNodesToCanvasNodes,
   hydrateCanvasGraph,
   pruneCanvasGraph,
   reconnectFlowEdge,
@@ -123,7 +123,7 @@ export function createCanvasLogic(
       return;
     }
 
-    const canvasNodes = currentNodes.map(flowNodeToCanvasNode);
+    const canvasNodes = flowNodesToCanvasNodes(currentNodes);
     const canvasEdges = currentEdges.map((e) =>
       flowEdgeToCanvasEdge(e, () => `edge-${idGenerator.uuid()}`),
     );
@@ -372,7 +372,7 @@ export function createCanvasLogic(
           edges = graph.edges;
 
           try {
-            getEngine().nodes = graph.nodes.map(flowNodeToCanvasNode);
+            getEngine().nodes = flowNodesToCanvasNodes(graph.nodes);
             getEngine().edges = graph.edges.map((e) =>
               flowEdgeToCanvasEdge(e, () => `edge-${idGenerator.uuid()}`),
             );
@@ -417,7 +417,7 @@ export function createCanvasLogic(
 
     // Sync nodes
     const currentNodes = nodes;
-    getEngine().nodes = currentNodes.map(flowNodeToCanvasNode);
+    getEngine().nodes = flowNodesToCanvasNodes(currentNodes);
 
     debouncedSave();
   }

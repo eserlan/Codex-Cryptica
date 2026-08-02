@@ -1,5 +1,10 @@
 import type { Connection, Edge, Node } from "@xyflow/svelte";
-import type { Canvas, CanvasEdge, CanvasNode } from "@codex/canvas-engine";
+import {
+  CanvasFileSchema,
+  type Canvas,
+  type CanvasEdge,
+  type CanvasNode,
+} from "@codex/canvas-engine";
 import {
   AdventureFlowLayout,
   DelveFlowLayout,
@@ -77,7 +82,7 @@ export function canvasEdgeToFlowEdge(edge: CanvasEdge): Edge {
   };
 }
 
-export function flowNodeToCanvasNode(node: Node): CanvasNode {
+export function flowNodeToCanvasNode(node: Node): CanvasNode | undefined {
   const data = (node.data ?? {}) as Record<string, unknown>;
   const base = {
     id: node.id,
@@ -90,11 +95,23 @@ export function flowNodeToCanvasNode(node: Node): CanvasNode {
     style: node.style,
     data,
   };
-  if (node.type === "file") return { ...base, file: data.file } as CanvasNode;
+  if (node.type === "file") {
+    const file = CanvasFileSchema.safeParse(data.file);
+    return file.success
+      ? ({ ...base, file: file.data } as CanvasNode)
+      : undefined;
+  }
   return {
     ...base,
     entityId: typeof data.entityId === "string" ? data.entityId : undefined,
   } as CanvasNode;
+}
+
+export function flowNodesToCanvasNodes(nodes: Node[]): CanvasNode[] {
+  return nodes.flatMap((node) => {
+    const canvasNode = flowNodeToCanvasNode(node);
+    return canvasNode ? [canvasNode] : [];
+  });
 }
 
 export function createFlowFileNode(
