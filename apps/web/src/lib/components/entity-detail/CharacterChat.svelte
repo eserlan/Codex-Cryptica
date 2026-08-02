@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entity, GuestChatMessage } from "schema";
+  import type { Entity, GuestChatMessage, GuestChatTranscript } from "schema";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { tick } from "svelte";
@@ -16,6 +16,8 @@
   let showSpeakerSwitcher = $state(false);
   let pendingSpeakerId = $state("");
   let isSwitchingSpeaker = $state(false);
+  let sessions = $state<GuestChatTranscript[]>([]);
+  let isResuming = $state<string | null>(null);
 
   const transcript = $derived(guestChatStore.transcripts[entity.id] || null);
   const speakerCharacters = $derived(
@@ -29,6 +31,22 @@
       ? vault.entities[transcript.speakerCharacterId]?.title
       : null,
   );
+  const otherSessions = $derived(
+    sessions.filter((session) => session.id !== transcript?.id),
+  );
+
+  function speakerLabel(forSpeakerId?: string) {
+    if (!forSpeakerId) return "Yourself";
+    return vault.entities[forSpeakerId]?.title ?? "Unknown character";
+  }
+
+  async function refreshSessions() {
+    sessions = await guestChatStore.listSessions(entity.id);
+  }
+
+  $effect(() => {
+    if (entity.id) void refreshSessions();
+  });
 
   async function startChat() {
     if (isStarting) return;
@@ -40,9 +58,22 @@
         entity.title,
         speakerCharacterId || undefined,
       );
+      await refreshSessions();
       await scrollToBottom();
     } finally {
       isStarting = false;
+    }
+  }
+
+  async function resumeSession(transcriptId: string) {
+    if (isResuming) return;
+    isResuming = transcriptId;
+    try {
+      await guestChatStore.resumeSession(entity.id, transcriptId);
+      showSpeakerSwitcher = false;
+      await scrollToBottom();
+    } finally {
+      isResuming = null;
     }
   }
 
@@ -56,10 +87,12 @@
     isSwitchingSpeaker = true;
     try {
       speakerCharacterId = pendingSpeakerId;
-      await guestChatStore.clearTranscript(
+      await guestChatStore.startNewSession(
         entity.id,
+        entity.title,
         pendingSpeakerId || undefined,
       );
+      await refreshSessions();
       showSpeakerSwitcher = false;
     } finally {
       isSwitchingSpeaker = false;
@@ -208,50 +241,93 @@
       >
         <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
         ></span>
-        Change
+        Sessions
+        {#if otherSessions.length > 0}
+          <span
+            class="rounded-full bg-theme-primary/20 px-1.5 text-theme-primary"
+          >
+            {otherSessions.length}
+          </span>
+        {/if}
       </button>
     </div>
 
     {#if showSpeakerSwitcher}
       <div
-        class="flex flex-col gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/5 p-3"
+        class="flex flex-col gap-3 rounded-lg border border-theme-primary/30 bg-theme-primary/5 p-3"
       >
-        <label
-          for="character-chat-speaker-switch"
-          class="text-xs font-bold uppercase tracking-wider text-theme-muted"
-        >
-          Chat as
-        </label>
-        <select
-          id="character-chat-speaker-switch"
-          name="character-chat-speaker-switch"
-          bind:value={pendingSpeakerId}
-          class="min-h-12 w-full rounded-lg border border-theme-border bg-theme-surface px-3 text-base text-theme-text outline-none focus:border-theme-primary sm:min-h-0 sm:text-xs"
-        >
-          <option value="">Yourself</option>
-          {#each speakerCharacters as speaker (speaker.id)}
-            <option value={speaker.id}>{speaker.title}</option>
-          {/each}
-        </select>
-        <p class="text-[10px] italic text-theme-muted">
-          Starting as a different character clears this conversation with {entity.title}.
-        </p>
-        <div class="flex justify-end gap-2">
-          <button
-            type="button"
-            onclick={() => (showSpeakerSwitcher = false)}
-            class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1 cursor-pointer"
+        {#if otherSessions.length > 0}
+          <div class="flex flex-col gap-1.5">
+            <span
+              class="text-xs font-bold uppercase tracking-wider text-theme-muted"
+            >
+              Resume a Previous Conversation
+            </span>
+            {#each otherSessions as session (session.id)}
+              <button
+                type="button"
+                onclick={() => resumeSession(session.id)}
+                disabled={isResuming === session.id}
+                class="flex items-center justify-between gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-left transition hover:border-theme-primary cursor-pointer disabled:opacity-50"
+              >
+                <span class="min-w-0">
+                  <span class="block text-xs font-bold text-theme-text"
+                    >{speakerLabel(session.speakerCharacterId)}</span
+                  >
+                  <span class="block text-[10px] text-theme-muted">
+                    {session.messages.length} message{session.messages
+                      .length === 1
+                      ? ""
+                      : "s"} · {new Date(
+                      session.lastUpdated,
+                    ).toLocaleDateString()}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--chevron-right] w-4 h-4 shrink-0 text-theme-muted"
+                ></span>
+              </button>
+            {/each}
+          </div>
+          <div class="border-t border-theme-border/40"></div>
+        {/if}
+
+        <div class="flex flex-col gap-2">
+          <label
+            for="character-chat-speaker-switch"
+            class="text-xs font-bold uppercase tracking-wider text-theme-muted"
           >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onclick={confirmSpeakerSwitch}
-            disabled={isSwitchingSpeaker}
-            class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-3 py-1.5 hover:bg-theme-secondary transition cursor-pointer disabled:opacity-50"
+            Start a New Chat as
+          </label>
+          <select
+            id="character-chat-speaker-switch"
+            name="character-chat-speaker-switch"
+            bind:value={pendingSpeakerId}
+            class="min-h-12 w-full rounded-lg border border-theme-border bg-theme-surface px-3 text-base text-theme-text outline-none focus:border-theme-primary sm:min-h-0 sm:text-xs"
           >
-            {isSwitchingSpeaker ? "Starting..." : "Start New Chat"}
-          </button>
+            <option value="">Yourself</option>
+            {#each speakerCharacters as speaker (speaker.id)}
+              <option value={speaker.id}>{speaker.title}</option>
+            {/each}
+          </select>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              onclick={() => (showSpeakerSwitcher = false)}
+              class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onclick={confirmSpeakerSwitch}
+              disabled={isSwitchingSpeaker}
+              class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-3 py-1.5 hover:bg-theme-secondary transition cursor-pointer disabled:opacity-50"
+            >
+              {isSwitchingSpeaker ? "Starting..." : "Start New Chat"}
+            </button>
+          </div>
         </div>
       </div>
     {/if}
