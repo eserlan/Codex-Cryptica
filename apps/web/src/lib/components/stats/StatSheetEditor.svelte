@@ -3,10 +3,16 @@
   import { untrack } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
-  let { entity, onClose = () => {} } = $props<{
+  let {
+    entity,
+    onClose = () => {},
+    idGenerator = systemIdGenerator,
+  } = $props<{
     entity: Entity;
     onClose?: () => void;
+    idGenerator?: IdGenerator;
   }>();
 
   const FIELD_TYPES: { value: StatSheetFieldType; label: string }[] = [
@@ -37,7 +43,7 @@
   }
 
   function addField() {
-    const id = `field-${crypto.randomUUID()}`;
+    const id = `field-${idGenerator.uuid()}`;
     persist([
       ...fields,
       { id, label: "New Field", type: "text" as StatSheetFieldType },
