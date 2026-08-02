@@ -79,6 +79,42 @@ describe("GuestChatSettings", () => {
     expect(
       await screen.findByText("Could not update guest chat. Try again."),
     ).toBeTruthy();
+    expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(
+      true,
+    );
+  });
+
+  it("keeps the availability toggle stable while its save is in progress", async () => {
+    let resolveSave!: (value: boolean) => void;
+    vi.mocked(vault.updateEntity).mockReturnValueOnce(
+      new Promise<boolean>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    render(GuestChatSettings, {
+      entity: {
+        ...character,
+        guestChatConfig: { ...character.guestChatConfig, isEnabled: false },
+      },
+      isEditing: false,
+      editContent: "",
+    });
+
+    const checkbox = screen.getByRole("checkbox") as HTMLInputElement;
+    await fireEvent.click(checkbox);
+
+    expect(checkbox.checked).toBe(true);
+    expect(checkbox.disabled).toBe(true);
+    expect(vault.updateEntity).toHaveBeenCalledTimes(1);
+
+    await fireEvent.change(checkbox, { target: { checked: false } });
+    expect(checkbox.checked).toBe(true);
+    expect(vault.updateEntity).toHaveBeenCalledTimes(1);
+
+    resolveSave(true);
+    await waitFor(() => {
+      expect(checkbox.disabled).toBe(false);
+    });
   });
 
   it("enables guest chat from the Chats tab and reveals its configuration", async () => {

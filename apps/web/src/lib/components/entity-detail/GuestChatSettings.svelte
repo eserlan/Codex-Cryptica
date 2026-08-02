@@ -21,6 +21,7 @@
   let personalityError = $state<string | null>(null);
   let isSavingAvailability = $state(false);
   let availabilityError = $state<string | null>(null);
+  let pendingAvailability = $state<boolean | null>(null);
 
   const guestChatConfig = $derived(
     entity.guestChatConfig ?? {
@@ -29,6 +30,9 @@
       isHostReviewable: true,
       keepMemory: true,
     },
+  );
+  const isGuestChatEnabled = $derived(
+    pendingAvailability ?? guestChatConfig.isEnabled,
   );
 
   const hasPersonalitySection = $derived.by(() => {
@@ -55,13 +59,20 @@
   }
 
   async function handleAvailabilityChange(event: Event) {
-    const isEnabled = (event.currentTarget as HTMLInputElement).checked;
+    const input = event.currentTarget as HTMLInputElement;
+    if (isSavingAvailability) {
+      input.checked = isGuestChatEnabled;
+      return;
+    }
+
+    const isEnabled = input.checked;
     const nextConfig: GuestChatConfig = {
       ...guestChatConfig,
       isEnabled,
     };
 
     isSavingAvailability = true;
+    pendingAvailability = isEnabled;
     availabilityError = null;
     try {
       const wasUpdated = await vault.updateEntity(entity.id, {
@@ -70,11 +81,13 @@
       if (!wasUpdated) {
         throw new Error("The character could not be updated.");
       }
+      pendingAvailability = null;
     } catch (error) {
       console.error(
         "[GuestChatSettings] Failed to update availability:",
         error,
       );
+      pendingAvailability = null;
       availabilityError = "Could not update guest chat. Try again.";
     } finally {
       isSavingAvailability = false;
@@ -101,18 +114,16 @@
       >
         <input
           type="checkbox"
-          checked={guestChatConfig.isEnabled}
+          checked={isGuestChatEnabled}
           onchange={handleAvailabilityChange}
           disabled={isSavingAvailability}
           aria-busy={isSavingAvailability}
           class="w-4 h-4 accent-theme-primary rounded border-theme-border bg-theme-bg"
         />
         <span
-          class={guestChatConfig.isEnabled
-            ? "text-emerald-500"
-            : "text-theme-muted"}
+          class={isGuestChatEnabled ? "text-emerald-500" : "text-theme-muted"}
         >
-          {guestChatConfig.isEnabled ? "Enabled" : "Disabled"}
+          {isGuestChatEnabled ? "Enabled" : "Disabled"}
         </span>
       </label>
     {/if}
