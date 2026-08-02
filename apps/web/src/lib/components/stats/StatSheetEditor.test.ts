@@ -56,6 +56,23 @@ describe("StatSheetEditor", () => {
     );
   });
 
+  it("uses the injected idGenerator to id a new field", async () => {
+    const idGenerator = { uuid: vi.fn().mockReturnValue("fixed-id") };
+    render(StatSheetEditor, { entity: buildEntity(), idGenerator });
+
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-add"));
+
+    expect(idGenerator.uuid).toHaveBeenCalled();
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ id: "field-fixed-id" })],
+        }),
+      }),
+    );
+  });
+
   it("edits a field label", async () => {
     const entity = buildEntity({
       statSheet: {
