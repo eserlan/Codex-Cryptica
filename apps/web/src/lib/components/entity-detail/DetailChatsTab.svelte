@@ -1,13 +1,29 @@
 <script lang="ts">
-  import type { Entity, GuestChatTranscript, GuestChatMessage } from "schema";
+  import type {
+    Entity,
+    GuestChatConfig,
+    GuestChatTranscript,
+    GuestChatMessage,
+  } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { systemClock } from "$lib/utils/runtime-deps";
+  import GuestChatSettings from "./GuestChatSettings.svelte";
 
-  let { entity } = $props<{
+  let {
+    entity,
+    isEditing = false,
+    editContent = "",
+    editLore = $bindable(),
+    editGuestChatConfig = $bindable(),
+  } = $props<{
     entity: Entity;
+    isEditing?: boolean;
+    editContent?: string;
+    editLore?: string;
+    editGuestChatConfig?: GuestChatConfig;
   }>();
 
   // Host state
@@ -16,7 +32,7 @@
 
   // Editing state (shared for both host and guest view)
   let editingMessageId = $state<string | null>(null);
-  let editContent = $state("");
+  let messageEditContent = $state("");
 
   // Guest Chat State
   let messageInput = $state("");
@@ -93,7 +109,7 @@
   // Message Actions: Edit & Delete (Host)
   function startEditMessage(msg: GuestChatMessage) {
     editingMessageId = msg.id;
-    editContent = msg.content;
+    messageEditContent = msg.content;
   }
 
   async function saveHostMessageEdit(
@@ -102,7 +118,7 @@
   ) {
     const msg = transcript.messages.find((m) => m.id === messageId);
     if (msg) {
-      msg.content = editContent.trim();
+      msg.content = messageEditContent.trim();
       transcript.lastUpdated = systemClock.now();
       await vault.saveTranscript(transcript);
       await loadHostTranscripts();
@@ -137,7 +153,11 @@
 
   // Message Actions: Edit & Delete (Guest)
   async function saveGuestMessageEdit(messageId: string) {
-    await guestChatStore.saveMessageEdit(entity.id, messageId, editContent);
+    await guestChatStore.saveMessageEdit(
+      entity.id,
+      messageId,
+      messageEditContent,
+    );
     editingMessageId = null;
   }
 
@@ -156,6 +176,14 @@
   {#if !vault.isGuest}
     <!-- HOST VIEW: Synced Guest Transcripts -->
     <div class="space-y-4">
+      <GuestChatSettings
+        {entity}
+        {isEditing}
+        {editContent}
+        bind:editLore
+        bind:editGuestChatConfig
+      />
+
       <div
         class="flex items-center justify-between border-b border-theme-border pb-2"
       >
@@ -277,7 +305,7 @@
                         class="space-y-1.5 pl-2 border-l-2 border-theme-primary/50 py-1"
                       >
                         <textarea
-                          bind:value={editContent}
+                          bind:value={messageEditContent}
                           class="w-full text-xs bg-theme-bg border border-theme-border rounded p-1.5 text-theme-text focus:ring-1 focus:ring-theme-primary outline-none"
                           rows="2"
                         ></textarea>
@@ -400,7 +428,7 @@
                   class="w-full space-y-1.5 p-2 rounded-xl border border-theme-border bg-theme-surface"
                 >
                   <textarea
-                    bind:value={editContent}
+                    bind:value={messageEditContent}
                     class="w-full text-xs bg-theme-bg border border-theme-border rounded p-1.5 text-theme-text focus:ring-1 focus:ring-theme-primary outline-none"
                     rows="2"
                   ></textarea>

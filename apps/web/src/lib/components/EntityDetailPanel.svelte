@@ -475,10 +475,8 @@
                     {isEditing}
                     {editType}
                     bind:editContent
-                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
-                    bind:editGuestChatConfig
                   />
                 {/if}
               </div>
@@ -517,7 +515,13 @@
                   activeEntity.type !== "character"}
               >
                 {#if activeTab === "chats" && activeEntity.type === "character"}
-                  <DetailChatsTab entity={activeEntity} />
+                  <DetailChatsTab
+                    entity={activeEntity}
+                    {isEditing}
+                    {editContent}
+                    bind:editLore
+                    bind:editGuestChatConfig
+                  />
                 {/if}
               </div>
 

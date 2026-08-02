@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -10,6 +10,7 @@ const {
   toggleTemplateEnabled,
   setAllTemplatesEnabled,
   updateTemplateFields,
+  saveAsTemplate,
   isTemplateEnabled,
   confirm,
   notify,
@@ -22,6 +23,7 @@ const {
   toggleTemplateEnabled: vi.fn(),
   setAllTemplatesEnabled: vi.fn(),
   updateTemplateFields: vi.fn(),
+  saveAsTemplate: vi.fn(),
   isTemplateEnabled: vi.fn().mockReturnValue(true),
   confirm: vi.fn().mockResolvedValue(true),
   notify: vi.fn(),
@@ -43,6 +45,7 @@ const {
       id: "builtin-dnd-npc",
       name: "D&D NPC",
       description: "Quick stats",
+      category: "npc",
       isBuiltIn: true,
       fields: [
         { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 20 },
@@ -74,6 +77,7 @@ vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
     deleteTemplate,
     setDefaultTemplate,
     updateTemplateFields,
+    saveAsTemplate,
   },
 }));
 
@@ -106,6 +110,11 @@ describe("StatSheetTemplateSettings", () => {
     toggleTemplateEnabled.mockClear();
     setAllTemplatesEnabled.mockClear();
     updateTemplateFields.mockClear();
+    saveAsTemplate.mockClear();
+    saveAsTemplate.mockResolvedValue({
+      id: "template-copy",
+      name: "D&D NPC (Vault copy)",
+    });
     confirm.mockClear();
     confirm.mockResolvedValue(true);
     notify.mockClear();
@@ -153,6 +162,61 @@ describe("StatSheetTemplateSettings", () => {
     const row = screen.getByTestId("stat-sheet-builtin-row");
     expect(row.textContent).toContain("D&D NPC");
     expect(row.textContent).toContain("Applicable");
+  });
+
+  it("saves a built-in template as an editable vault copy", async () => {
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Save a vault copy of D&D NPC template"),
+    );
+
+    expect(saveAsTemplate).toHaveBeenCalledWith(
+      "D&D NPC (Vault copy)",
+      BUILT_INS[0].fields,
+      { description: "Quick stats", category: "npc" },
+    );
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("You can now edit or publish it"),
+      "success",
+    );
+  });
+
+  it("notifies when saving a built-in template copy fails", async () => {
+    saveAsTemplate.mockResolvedValueOnce(null);
+    render(StatSheetTemplateSettings);
+
+    await fireEvent.click(
+      screen.getByLabelText("Save a vault copy of D&D NPC template"),
+    );
+
+    expect(notify).toHaveBeenCalledWith(
+      "Failed to save a vault copy of this template.",
+      "error",
+    );
+  });
+
+  it("prevents duplicate saves while a built-in template copy is in progress", async () => {
+    let resolveSave: (value: { id: string; name: string }) => void;
+    saveAsTemplate.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    render(StatSheetTemplateSettings);
+
+    const button = screen.getByLabelText(
+      "Save a vault copy of D&D NPC template",
+    ) as HTMLButtonElement;
+    await fireEvent.click(button);
+
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    await fireEvent.click(button);
+    expect(saveAsTemplate).toHaveBeenCalledTimes(1);
+
+    resolveSave!({ id: "template-copy", name: "D&D NPC (Vault copy)" });
+    await waitFor(() => expect(button.disabled).toBe(false));
   });
 
   it("lists vault-saved templates with rename/delete controls", () => {

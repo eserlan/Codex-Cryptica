@@ -50,6 +50,8 @@ Templates are just a saved snapshot of a layout — there's no separate template
 2. Open **Templates** and use the **Save current layout as...** box at the bottom to name and save it.
 3. It's now available from the Templates list on every entity in this vault, and can be renamed or deleted later from **Settings → Schema → Stat Sheet Templates** (where you can also preview any built-in or saved template's fields before applying it).
 
+To customize or share a built-in layout without first applying it to an entity, choose **Save copy to Vault** beside it in **Settings → Schema → Stat Sheet Templates**. The new vault copy can then be selected, edited, and published like any other saved template.
+
 Saved templates only capture structure (labels, types, dice formulas, counter bounds) — not the values you'd filled in — so applying one to a new entity always starts blank/default.
 
 ### Community templates

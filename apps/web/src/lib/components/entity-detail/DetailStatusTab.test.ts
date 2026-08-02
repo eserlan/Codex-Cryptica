@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import DetailStatusTab from "./DetailStatusTab.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -358,24 +358,7 @@ describe("DetailStatusTab", () => {
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 
-  const mockCharacterEntity = {
-    id: "char-1",
-    title: "Character 1",
-    type: "character",
-    content: "He is a blacksmith.",
-    lore: "Secretly related to the king.",
-    connections: [],
-    tags: [],
-    guestChatConfig: {
-      isEnabled: true,
-      contextScope: "hybrid",
-      extraInstructions: "Speaks with a lisp.",
-      isHostReviewable: true,
-      keepMemory: true,
-    },
-  } as any;
-
-  it("does not render Guest Character Chat for non-character entities", () => {
+  it("does not render Guest Character Chat settings in the status tab", () => {
     render(DetailStatusTab, {
       entity: mockEntity,
       isEditing: false,
@@ -383,187 +366,8 @@ describe("DetailStatusTab", () => {
       editContent: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
-      editGuestChatConfig: undefined,
     });
+
     expect(screen.queryByText("Guest Character Chat")).toBeNull();
-  });
-
-  it("renders Guest Character Chat read-only config for character entities when not editing", () => {
-    render(DetailStatusTab, {
-      entity: mockCharacterEntity,
-      isEditing: false,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: undefined,
-    });
-    expect(screen.getByText("Guest Character Chat")).toBeDefined();
-    expect(screen.getByText(/hybrid lore/i)).toBeDefined();
-    expect(screen.queryByText("Personality Rules:")).toBeNull();
-    expect(screen.queryByText("Speaks with a lisp.")).toBeNull();
-  });
-
-  it("renders Guest Character Chat edit panel when editing a character entity", async () => {
-    const mockConfig = {
-      isEnabled: true,
-      contextScope: "hybrid" as const,
-      extraInstructions: "Speaks with a lisp.",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-    render(DetailStatusTab, {
-      entity: mockCharacterEntity,
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editLore: "## Secrets\nSecretly related to the king.",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    expect(screen.getByText("Guest Character Chat")).toBeDefined();
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    expect(checkbox.checked).toBe(true);
-
-    // Toggle check
-    await fireEvent.click(checkbox);
-    expect(mockConfig.isEnabled).toBe(false);
-  });
-
-  it("calls generatedPersonality logic when chat is enabled without rules", async () => {
-    const { generatePersonality } = await import("./generate-personality");
-    vi.mocked(generatePersonality).mockImplementationOnce(
-      async ({ setEditLore }) => {
-        setEditLore("## Personality & Voice\n- Mocked rule");
-        return true;
-      },
-    );
-
-    const mockConfig = {
-      isEnabled: false,
-      contextScope: "public" as const,
-      extraInstructions: "",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-
-    render(DetailStatusTab, {
-      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    await fireEvent.click(checkbox);
-
-    expect(mockConfig.isEnabled).toBe(true);
-    await waitFor(() => {
-      expect(screen.getByText("Found in character lore")).toBeTruthy();
-    });
-    expect(generatePersonality).toHaveBeenCalledOnce();
-  });
-
-  it("marks the Generate button busy while personality generation is pending", async () => {
-    const { generatePersonality } = await import("./generate-personality");
-    let releaseGeneration!: () => void;
-    vi.mocked(generatePersonality).mockImplementationOnce(
-      async ({ setGenerating }) => {
-        setGenerating(true);
-        await new Promise<void>((resolve) => {
-          releaseGeneration = resolve;
-        });
-        setGenerating(false);
-        return true;
-      },
-    );
-
-    const mockConfig = {
-      isEnabled: false,
-      contextScope: "public" as const,
-      extraInstructions: "",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-
-    render(DetailStatusTab, {
-      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    await fireEvent.click(checkbox);
-
-    const busyBtn = await waitFor(() => {
-      const btn = screen
-        .getByText("Generating...")
-        .closest("button") as HTMLButtonElement;
-      expect(btn).toBeTruthy();
-      return btn;
-    });
-    expect(busyBtn.getAttribute("aria-busy")).toBe("true");
-    expect(busyBtn.disabled).toBe(true);
-
-    releaseGeneration();
-    await waitFor(() => {
-      const idleBtn = screen
-        .getByText("Generate")
-        .closest("button") as HTMLButtonElement;
-      expect(idleBtn.getAttribute("aria-busy")).not.toBe("true");
-      expect(idleBtn.disabled).toBe(false);
-    });
-  });
-
-  it("keeps prompting for manual personality rules when AI generation fails", async () => {
-    const { generatePersonality } = await import("./generate-personality");
-    vi.mocked(generatePersonality).mockImplementationOnce(
-      async ({ setError }) => {
-        setError("AI generation failed.");
-        return false;
-      },
-    );
-    const mockConfig = {
-      isEnabled: false,
-      contextScope: "public" as const,
-      extraInstructions: "",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-
-    render(DetailStatusTab, {
-      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    await fireEvent.click(checkbox);
-
-    expect(mockConfig.isEnabled).toBe(true);
-    await waitFor(() => {
-      expect(screen.getByText(/AI generation failed/i)).toBeTruthy();
-    });
   });
 });
