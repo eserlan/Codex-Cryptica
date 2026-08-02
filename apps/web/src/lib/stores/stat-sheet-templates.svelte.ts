@@ -507,6 +507,13 @@ export class StatSheetTemplateStore {
   categoryDefaults = $state<Record<string, string>>({});
   // Vault-scoped list of enabled template IDs for active vault, or null if all enabled.
   enabledTemplateIds = $state<string[] | null>(null);
+  // Vault-scoped map of schema-template id -> default presentation-template
+  // id (152-stat-sheet-templates). Stored the same way as categoryDefaults
+  // rather than as a field on the StatSheetTemplate record itself, since
+  // built-in schema templates (BUILT_IN_STAT_SHEET_TEMPLATES) are plain
+  // hardcoded objects, not IDB records, and this way works uniformly for
+  // both built-in and vault-owned schema templates.
+  presentationDefaults = $state<Record<string, string>>({});
   // Caches the in-flight/completed init() *promise* (not just a started
   // flag), so any caller that mutates state before the constructor's
   // fire-and-forget init() has finished can await the same load and avoid
@@ -571,6 +578,11 @@ export class StatSheetTemplateStore {
         `statSheetEnabledTemplates_${vaultId}`,
       );
       this.enabledTemplateIds = enabled ?? null;
+      const presentationDefaults = await db.get(
+        "settings",
+        `statSheetPresentationDefaults_${vaultId}`,
+      );
+      this.presentationDefaults = presentationDefaults ?? {};
     } catch (e) {
       console.error("[StatSheetTemplateStore] Failed to load templates:", e);
     }
@@ -623,6 +635,30 @@ export class StatSheetTemplateStore {
 
     const db = await getDB();
     await db.put("settings", next, `statSheetCategoryDefaults_${vaultId}`);
+  }
+
+  getDefaultPresentationTemplateId(schemaTemplateId: string): string | null {
+    return this.presentationDefaults[schemaTemplateId] ?? null;
+  }
+
+  async setDefaultPresentationTemplate(
+    schemaTemplateId: string,
+    presentationTemplateId: string | null,
+  ): Promise<void> {
+    await this.init();
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return;
+
+    const next = { ...this.presentationDefaults };
+    if (presentationTemplateId) {
+      next[schemaTemplateId] = presentationTemplateId;
+    } else {
+      delete next[schemaTemplateId];
+    }
+    this.presentationDefaults = next;
+
+    const db = await getDB();
+    await db.put("settings", next, `statSheetPresentationDefaults_${vaultId}`);
   }
 
   // Structural fields for the category's default template, or null if the

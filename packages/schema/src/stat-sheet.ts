@@ -30,6 +30,10 @@ export type StatSheetField = z.infer<typeof StatSheetFieldSchema>;
 export const StatSheetSchema = z.object({
   templateId: z.string().nullable().optional(),
   fields: z.array(StatSheetFieldSchema).default([]),
+  // Per-entity override of the schema's default presentation template
+  // (152-stat-sheet-templates). `null`/absent means "inherit the schema's
+  // StatSheetTemplate.defaultPresentationTemplateId".
+  presentationTemplateId: z.string().nullable().optional(),
 });
 
 export type StatSheet = z.infer<typeof StatSheetSchema>;
@@ -77,3 +81,44 @@ export type StatSheetEntityCategory = z.infer<
 >;
 
 export const PUBLIC_STAT_SHEET_PACKAGE_VERSION = 1 as const;
+
+/**
+ * 152-stat-sheet-templates: Markdown-based presentation templates.
+ *
+ * `formatVersion` is the extended-Markdown directive syntax version
+ * (contracts/directive-syntax.md), independent of
+ * PUBLIC_STAT_SHEET_PACKAGE_VERSION above (which versions the *schema*
+ * template package format, not the presentation directive grammar).
+ */
+export const PRESENTATION_TEMPLATE_FORMAT_VERSION = 1 as const;
+
+export const PresentationTemplateSchema = z.object({
+  id: z.string().min(1),
+  // `null` for built-ins; owning vault id for vault-owned templates.
+  vaultId: z.string().nullable(),
+  // The StatSheetTemplate.id this presentation targets (V1: exactly one).
+  schemaTemplateId: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  // Raw extended-Markdown source — the authoritative, durable representation.
+  source: z.string(),
+  formatVersion: z.number().int().positive(),
+  isBuiltIn: z.boolean().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type PresentationTemplate = z.infer<typeof PresentationTemplateSchema>;
+
+/** Value-free export/import envelope (FR-015/FR-016). */
+export const PresentationTemplatePackageSchema = z.object({
+  formatVersion: z.number().int().positive(),
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  schemaTemplateId: z.string().min(1),
+  source: z.string(),
+});
+
+export type PresentationTemplatePackage = z.infer<
+  typeof PresentationTemplatePackageSchema
+>;

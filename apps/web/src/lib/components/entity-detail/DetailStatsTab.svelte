@@ -1,21 +1,105 @@
 <script lang="ts">
-  import type { Entity } from "schema";
+  import type { Entity, StatSheetField } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import StatSheetView from "$lib/components/stats/StatSheetView.svelte";
   import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
   import StatSheetTemplateModal from "$lib/components/stats/StatSheetTemplateModal.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
+  import PresentationRenderer from "$lib/components/stats/presentation/PresentationRenderer.svelte";
+  import PresentationTemplatePicker from "$lib/components/stats/presentation/PresentationTemplatePicker.svelte";
+  import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
+  import type { PresentationRenderContext } from "$lib/components/stats/presentation/types";
+  import {
+    isTemplateUsable,
+    parseTemplate,
+    resolvePresentationTemplate,
+    validateAst,
+  } from "@codex/stat-sheet-engine";
+  import { computeAdjustedCounterValue } from "$lib/utils/stat-sheet-field-actions";
 
   let { entity } = $props<{ entity: Entity }>();
 
   let isEditingLayout = $state(false);
   let showTemplateModal = $state(false);
+  let showPresentationManager = $state(false);
 
   const readOnly = $derived(vault.isGuest);
   const hasStats = $derived(
     (entity.statSheet?.fields?.length ?? 0) > 0 ||
       !!entity.statSheet?.templateId,
   );
+
+  // FR-010: decide render-via-presentation-template vs. fall back to the
+  // standard StatSheetView renderer, unchanged, whenever the resolved
+  // template is missing, invalid, or its schema no longer exists.
+  const schema = $derived(
+    statSheetTemplates.allTemplates.find(
+      (t) => t.id === entity.statSheet?.templateId,
+    ),
+  );
+  const resolvedTemplate = $derived(
+    schema
+      ? resolvePresentationTemplate(
+          entity.statSheet,
+          statSheetTemplates.getDefaultPresentationTemplateId(schema.id),
+          presentationTemplates.availableTemplatesForSchema(schema.id),
+        )
+      : null,
+  );
+  const usable = $derived(
+    resolvedTemplate && schema
+      ? isTemplateUsable(resolvedTemplate, schema)
+      : false,
+  );
+  const presentationAst = $derived.by(() => {
+    if (!usable || !resolvedTemplate || !schema) return null;
+    const parsed = parseTemplate(
+      resolvedTemplate.source,
+      resolvedTemplate.formatVersion,
+    );
+    if (!parsed.ok) return null;
+    return validateAst(parsed.ast, schema);
+  });
+
+  function persistFields(nextFields: StatSheetField[]) {
+    if (readOnly) return;
+    vault.updateEntity(entity.id, {
+      statSheet: {
+        templateId: entity.statSheet?.templateId ?? null,
+        fields: nextFields,
+        presentationTemplateId:
+          entity.statSheet?.presentationTemplateId ?? null,
+      },
+    });
+  }
+
+  const renderContext: PresentationRenderContext = {
+    get fields() {
+      return entity.statSheet?.fields ?? [];
+    },
+    get readOnly() {
+      return readOnly;
+    },
+    mode: "view",
+    onUpdateFieldValue: (fieldId, value) => {
+      persistFields(
+        (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>
+          f.id === fieldId ? { ...f, value } : f,
+        ),
+      );
+    },
+    onAdjustCounter: (field, direction) => {
+      persistFields(
+        (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>
+          f.id === field.id
+            ? { ...f, value: computeAdjustedCounterValue(field, direction) }
+            : f,
+        ),
+      );
+    },
+  };
 
   async function clearStatSheet() {
     const confirmed = await notificationStore.confirm({
@@ -27,7 +111,7 @@
     if (!confirmed) return;
 
     await vault.updateEntity(entity.id, {
-      statSheet: { templateId: null, fields: [] },
+      statSheet: { templateId: null, fields: [], presentationTemplateId: null },
     });
     isEditingLayout = false;
   }
@@ -60,6 +144,16 @@
         >
           Templates
         </button>
+        {#if schema}
+          <button
+            type="button"
+            class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            onclick={() => (showPresentationManager = true)}
+            data-testid="stat-sheet-open-presentation-templates"
+          >
+            Presentations
+          </button>
+        {/if}
         <button
           type="button"
           class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
@@ -75,7 +169,14 @@
   {#if isEditingLayout}
     <StatSheetEditor {entity} onClose={() => (isEditingLayout = false)} />
   {:else}
-    <StatSheetView {entity} onOpenEditor={() => (isEditingLayout = true)} />
+    {#if schema && hasStats}
+      <PresentationTemplatePicker {entity} {schema} />
+    {/if}
+    {#if usable && presentationAst}
+      <PresentationRenderer nodes={presentationAst} context={renderContext} />
+    {:else}
+      <StatSheetView {entity} onOpenEditor={() => (isEditingLayout = true)} />
+    {/if}
   {/if}
 </div>
 
@@ -83,5 +184,12 @@
   <StatSheetTemplateModal
     {entity}
     onClose={() => (showTemplateModal = false)}
+  />
+{/if}
+
+{#if showPresentationManager && schema}
+  <PresentationTemplateManager
+    {schema}
+    onClose={() => (showPresentationManager = false)}
   />
 {/if}
