@@ -239,6 +239,13 @@ export * from "./dungeon";
 export * from "./adventure";
 export * from "./starter-constellation-types";
 export {
+  buildWorldPrompt,
+  generateWorldLocal,
+  worldConfig,
+  type WorldGeneratorOptions,
+  type WorldPrompt,
+} from "./public-world";
+export {
   generateStarterConstellationLocal,
   buildStarterConstellationPrompt,
   parseStarterConstellationResponse,

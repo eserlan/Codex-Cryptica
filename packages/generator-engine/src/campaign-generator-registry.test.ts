@@ -47,6 +47,7 @@ describe("registry lookup", () => {
       "news-sheet",
       "dungeon",
       "adventure",
+      "world",
     ]);
   });
 
@@ -60,6 +61,15 @@ describe("registry lookup", () => {
     expect(prompt).toContain("Generate a campaign event");
     const draft = getGenerator("event").generate(run("event"));
     expect(draft.title.length).toBeGreaterThan(0);
+  });
+
+  it("builds a system-aware prompt and maps worlds to locations", () => {
+    const prompt = getGenerator("world").buildPrompt(run("world"));
+    expect(prompt).toContain("Star-system context");
+    expect(GENERATOR_ENTITY_TYPE.world).toBe("location");
+    expect(getGenerator("world").generate(run("world")).lore).toContain(
+      "## Adventure Hooks",
+    );
   });
 
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
@@ -542,6 +552,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "news-sheet": "note",
       dungeon: "location",
       adventure: "note",
+      world: "location",
     });
   });
 

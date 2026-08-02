@@ -628,6 +628,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
     icon: "icon-[lucide--map]",
   },
+  "world-generator": {
+    id: "world-generator",
+    title: "Sci-Fi World Generator",
+    content:
+      "Create campaign-ready planets, moons, and artificial worlds with a clear physical identity, societies shaped by their environment, resources, dangers, notable locations, mysteries, conflicts, and adventure hooks. Start it from Campaign Generators for a standalone world, or open it with existing system context to develop a world that fits the star, orbit, factions, and conflicts already in your campaign. Drafts remain local until you choose to save them.",
+    icon: "icon-[lucide--earth]",
+  },
   "delve-structural-builder": {
     id: "delve-structural-builder",
     title: "Delve Spatial Canvas Builder",

@@ -27,6 +27,12 @@ import {
   adventureConfig,
   type AdventureGeneratorOptions,
 } from "./public-adventure";
+import {
+  buildWorldPrompt,
+  generateWorldLocal,
+  type WorldGeneratorOptions,
+  worldConfig,
+} from "./public-world";
 
 /**
  * Generator id -> default vault category id.
@@ -45,6 +51,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "news-sheet": "note",
   dungeon: "location",
   adventure: "note",
+  world: "location",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -343,6 +350,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","content":"## Pronunciation & Phonology\\nLow-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n\\n## Cultural Role & Usage\\nSpoken in the deep galleries where torchlight is rationed; surface-folk who use it mark themselves as tunnel-kin.\\n\\n## Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n\\n## Common Vocabulary & Word Bank\\n| Word | Pronunciation | English Meaning |\\n| --- | --- | --- |\\n| Vur | VOOR | Iron |\\n| Lith | LITH | Stone |\\n\\n## Sample Phrases\\n- *\\"Vur-Lith-Garon\\"* — (VOOR-lith-GAH-ron) — \\"Solid as iron\\"","lore":"### At a Glance\\n- **Genre / Setting**: Classic Fantasy\\n- **Tone**: Harsh & Consonant-heavy\\n- **Role**: Common Speech\\n- **Name Structure**: Compound Words\\n\\n### Example Names\\n- **Garon-Vur** — Iron Seeker (person)\\n- **Kael-Lith** — Stone Speaker (person)\\n\\n### At the Table\\n- Greet with a short falling whistle before speaking; skipping it reads as a threat.","labels":["dialect","underdark","conlang"],"connections":[]}`,
   dungeon: `{"title":"The Submerged Vault of Sunken Runes","summary":"An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.","lore":"## History & Original Purpose\\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\\n## Current State & Function\\nCurrently overrun by a desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Signature Feature\\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.\\n## Current Conflict\\nAn invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.\\n## Key Sectors & Layout\\n### Sector 1: The Guarded Gateway\\nFortified entry halls with collapse traps.\\n### Sector 2: The Deep Arcana Vault\\nSealed inner chamber housing warding circles.\\n## Inhabitants & Factions\\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Central Secret / Boss Mystery\\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.\\n## Hazards & Traps\\nPressure-plate needle traps laced with paralyzing wyvern venom.\\n## Treasures & Artifacts\\nA silver-hilted shortsword glowing with pale starlight near undead.\\n## Adventure Hooks & Rumours\\nA local scholar hires the party to retrieve an ancient astrological tablet from the ruins.","labels":["dungeon","location","fantasy","temple-shrine"],"connections":[]}`,
   adventure: `{"title":"The Witness Who Came Back","summary":"A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.","lore":"## Initial Situation\\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\\n## Primary Objective & Pressure\\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.\\n## Key Locations\\n- **The Drowned Clinic** — A basement surgery below the harbour market; currently off the magistrate's map, but her colleagues will tell the wrong people.\\n- **The Salt Gate** — The only land route out; controlled by a guard captain who owes the magistrate a significant favour.\\n## Important NPCs & Factions\\n- **Mira Osal, the witness** — Survived by accident; wants to testify but is terrified of dying before she can.\\n- **Guard-Captain Deren** — Loyal to the magistrate, but only because the magistrate has his brother.\\n## Threats & Antagonists\\n- The magistrate's investigation office has already been tipped off; two plainclothes agents are watching the harbour market.\\n## Clues, Secrets & Discoveries\\n- The ledger names not just the magistrate but three provincial judges — the testimony is worth more than a conviction, which is why the magistrate wants it destroyed rather than suppressed.\\n## Complications & Escalating Pressures\\n- The physician who treated Mira has been taken in for questioning.\\n- The party's own credentials are in the magistrate's files from a prior interaction.\\n## Possible Outcomes\\n- The witness reaches the capital and testifies; the magistrate is arrested but the provincial judges are not named in the hearing.\\n- The ledger is lost or destroyed; Mira survives and her testimony alone changes nothing.\\n## Adventure Hooks\\n- The street physician sends word through a mutual contact: a patient is asking for people who handle difficult situations.\\n- A reward notice is posted for information on the whereabouts of a woman matching Mira's description.","labels":["adventure","event","investigation","fantasy"],"connections":[]}`,
+  world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -729,6 +737,35 @@ function adventurePrompt(request: GeneratorRunRequest): string {
   return buildCampaignAdventurePrompt(request).userMessage;
 }
 
+function worldOptions(request: GeneratorRunRequest): WorldGeneratorOptions {
+  return {
+    worldType: optionString(request, "worldType", ""),
+    habitability: optionString(request, "habitability", ""),
+    civilisation: optionString(request, "civilisation", ""),
+    genre: optionString(request, "genre", ""),
+    dominantFeature: optionString(request, "dominantFeature", ""),
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateWorld(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateWorldLocal(worldOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+  };
+}
+
+function worldPrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}\n\n${buildWorldPrompt(worldOptions(request)).userMessage}`;
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   npc: {
     id: "npc",
@@ -1098,6 +1135,71 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateAdventure,
     mapOutputToDraft: mapOutputToDraft("adventure"),
     buildPrompt: adventurePrompt,
+  },
+  world: {
+    id: "world",
+    label: "World",
+    description:
+      "Generate a detailed sci-fi planet, moon, or artificial world with places, people, tensions, and adventure hooks.",
+    entityType: GENERATOR_ENTITY_TYPE.world,
+    defaultInstruction:
+      "A sci-fi world with a clear environmental identity, societies shaped by that environment, active conflicts, notable locations, and playable adventure hooks.",
+    icon: "lucide:earth",
+    options: [
+      {
+        id: "worldType",
+        label: "World Type",
+        control: "select",
+        choices: worldConfig.worldTypes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "habitability",
+        label: "Habitability",
+        control: "select",
+        choices: worldConfig.habitability.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "civilisation",
+        label: "Civilisation",
+        control: "select",
+        choices: worldConfig.civilisations.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "genre",
+        label: "Genre / Tone",
+        control: "select",
+        choices: worldConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "dominantFeature",
+        label: "Dominant Feature",
+        description:
+          "Optional: a defining physical feature, mystery, or condition.",
+        control: "text",
+      },
+    ],
+    defaults: {
+      worldType: "Terrestrial World",
+      habitability: "Earthlike",
+      civilisation: "Colony",
+      genre: "Hard Sci-Fi",
+      dominantFeature: "",
+    },
+    generate: generateWorld,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("world")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+    }),
+    buildPrompt: worldPrompt,
   },
 };
 
