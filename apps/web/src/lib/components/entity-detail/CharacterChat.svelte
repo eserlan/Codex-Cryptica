@@ -86,10 +86,10 @@
   });
 </script>
 
-<div class="space-y-4 flex flex-col h-[500px]">
+<div class="flex flex-col gap-4 sm:h-[500px]">
   {#if !entity.guestChatConfig?.isEnabled}
     <div
-      class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50"
+      class="min-h-52 flex flex-col items-center justify-center rounded-xl border border-theme-border/50 bg-theme-surface/10 p-6 text-center text-theme-muted sm:flex-1"
     >
       <span
         aria-hidden="true"
@@ -104,7 +104,7 @@
     </div>
   {:else if !transcript}
     <div
-      class="flex-1 flex flex-col items-center justify-center text-center p-6 bg-theme-surface/10 rounded-xl border border-theme-border/50"
+      class="min-h-52 flex flex-col items-center justify-center rounded-xl border border-theme-border/50 bg-theme-surface/10 p-6 text-center sm:flex-1"
     >
       <span
         aria-hidden="true"
@@ -132,7 +132,7 @@
   {:else}
     <div
       bind:this={chatContainer}
-      class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10"
+      class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 p-3 sm:max-h-none sm:flex-1"
     >
       {#each transcript.messages as message (message.id)}
         <div
@@ -255,7 +255,7 @@
         onkeydown={handleKeydown}
         placeholder="Type a message to {entity.title}..."
         disabled={guestChatStore.isGenerating}
-        class="flex-1 text-xs bg-theme-surface/50 border border-theme-border focus:border-theme-primary rounded-xl px-3 py-2.5 outline-none resize-none custom-scrollbar text-theme-text"
+        class="flex-1 resize-none rounded-xl border border-theme-border bg-theme-surface/50 px-3 py-2.5 text-base text-theme-text outline-none focus:border-theme-primary custom-scrollbar sm:text-xs"
         rows="2"
       ></textarea>
       <button
@@ -264,7 +264,7 @@
         disabled={!messageInput.trim() ||
           guestChatStore.isGenerating ||
           isSending}
-        class="p-2.5 bg-theme-primary hover:bg-theme-secondary disabled:bg-theme-surface disabled:text-theme-muted disabled:border-theme-border text-theme-bg rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
+        class="flex min-h-12 min-w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-theme-primary p-2.5 text-theme-bg transition hover:bg-theme-secondary disabled:border-theme-border disabled:bg-theme-surface disabled:text-theme-muted"
         aria-label="Send message to {entity.title}"
       >
         <span aria-hidden="true" class="icon-[lucide--send] w-4.5 h-4.5"></span>
