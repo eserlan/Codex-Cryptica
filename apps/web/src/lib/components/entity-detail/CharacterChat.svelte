@@ -20,12 +20,21 @@
   let isResuming = $state<string | null>(null);
 
   const transcript = $derived(guestChatStore.transcripts[entity.id] || null);
-  const speakerCharacters = $derived(
-    Object.values(vault.entities ?? {}).filter(
-      (candidate) =>
-        candidate.type === "character" && candidate.id !== entity.id,
-    ),
-  );
+  // ⚡ Bolt Optimization: Replace Object.values().filter() with an imperative
+  // for...in loop over vault.entities to prevent array allocation on every update.
+  const speakerCharacters = $derived.by(() => {
+    const results = [];
+    const entities = vault.entities ?? {};
+    for (const key in entities) {
+      if (Object.prototype.hasOwnProperty.call(entities, key)) {
+        const candidate = entities[key];
+        if (candidate.type === "character" && candidate.id !== entity.id) {
+          results.push(candidate);
+        }
+      }
+    }
+    return results;
+  });
   const speakerName = $derived(
     transcript?.speakerCharacterId
       ? vault.entities[transcript.speakerCharacterId]?.title
