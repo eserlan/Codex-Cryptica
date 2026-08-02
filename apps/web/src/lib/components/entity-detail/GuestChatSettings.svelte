@@ -104,11 +104,13 @@
   >
     {#if isEditing}
       <h4
-        class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+        class="font-header text-sm uppercase tracking-wide sm:tracking-widest font-bold text-theme-secondary flex items-center gap-1.5 whitespace-nowrap"
       >
-        <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+        <span
+          class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary shrink-0"
         ></span>
-        Guest Character Chat
+        <span class="sm:hidden">Guest Chat</span>
+        <span class="hidden sm:inline">Guest Character Chat</span>
       </h4>
     {:else}
       <button
@@ -116,11 +118,13 @@
         onclick={() => (showDetails = !showDetails)}
         aria-expanded={showDetails}
         aria-controls="guest-chat-details"
-        class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5 cursor-pointer"
+        class="font-header text-sm uppercase tracking-wide sm:tracking-widest font-bold text-theme-secondary flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
       >
-        <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+        <span
+          class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary shrink-0"
         ></span>
-        Guest Character Chat
+        <span class="sm:hidden">Guest Chat</span>
+        <span class="hidden sm:inline">Guest Character Chat</span>
         <span
           aria-hidden="true"
           class="icon-[lucide--chevron-down] w-3.5 h-3.5 text-theme-muted transition-transform {showDetails
