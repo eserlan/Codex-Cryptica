@@ -16,7 +16,7 @@
 
   const transcript = $derived(guestChatStore.transcripts[entity.id] || null);
   const speakerCharacters = $derived(
-    Object.values(vault.entities).filter(
+    Object.values(vault.entities ?? {}).filter(
       (candidate) =>
         candidate.type === "character" && candidate.id !== entity.id,
     ),
