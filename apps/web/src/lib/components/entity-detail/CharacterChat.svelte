@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entity, GuestChatMessage } from "schema";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { tick } from "svelte";
 
   let { entity } = $props<{ entity: Entity }>();
@@ -11,15 +12,31 @@
   let chatContainer = $state<HTMLElement | null>(null);
   let isStarting = $state(false);
   let isSending = $state(false);
+  let speakerCharacterId = $state("");
 
   const transcript = $derived(guestChatStore.transcripts[entity.id] || null);
+  const speakerCharacters = $derived(
+    Object.values(vault.entities).filter(
+      (candidate) =>
+        candidate.type === "character" && candidate.id !== entity.id,
+    ),
+  );
+  const speakerName = $derived(
+    transcript?.speakerCharacterId
+      ? vault.entities[transcript.speakerCharacterId]?.title
+      : null,
+  );
 
   async function startChat() {
     if (isStarting) return;
 
     isStarting = true;
     try {
-      await guestChatStore.startChat(entity.id, entity.title);
+      await guestChatStore.startChat(
+        entity.id,
+        entity.title,
+        speakerCharacterId || undefined,
+      );
       await scrollToBottom();
     } finally {
       isStarting = false;
@@ -119,6 +136,28 @@
         Chat with {entity.title}. The AI will respond in character using the
         configured scope.
       </p>
+      <div class="mb-4 w-full max-w-sm text-left">
+        <label
+          for="character-chat-speaker"
+          class="mb-1 block text-xs font-bold uppercase tracking-wider text-theme-muted"
+        >
+          Chat as
+        </label>
+        <select
+          id="character-chat-speaker"
+          name="character-chat-speaker"
+          bind:value={speakerCharacterId}
+          class="min-h-12 w-full rounded-lg border border-theme-border bg-theme-surface px-3 text-base text-theme-text outline-none focus:border-theme-primary sm:min-h-0 sm:text-xs"
+        >
+          <option value="">Yourself</option>
+          {#each speakerCharacters as speaker (speaker.id)}
+            <option value={speaker.id}>{speaker.title}</option>
+          {/each}
+        </select>
+        <p class="mt-1 text-xs text-theme-muted">
+          This helps {entity.title} respond to your role and relationship.
+        </p>
+      </div>
       <button
         type="button"
         onclick={startChat}
@@ -130,6 +169,11 @@
       </button>
     </div>
   {:else}
+    {#if speakerName}
+      <p class="text-xs text-theme-muted">
+        Chatting as <span class="font-bold text-theme-text">{speakerName}</span>
+      </p>
+    {/if}
     <div
       bind:this={chatContainer}
       class="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10"

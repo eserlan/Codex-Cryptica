@@ -129,6 +129,7 @@ export const GuestChatTranscriptSchema = z.object({
   id: z.string(),
   guestId: z.string(),
   guestName: z.string(),
+  speakerCharacterId: z.string().optional(),
   characterId: z.string(),
   characterTitle: z.string(),
   messages: z.array(GuestChatMessageSchema),

@@ -576,7 +576,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "guest-character-chat",
     title: "Guest Character Chat",
     content:
-      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.",
+      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship.",
     icon: "icon-[lucide--messages-square]",
   },
   "in-app-generators": {
