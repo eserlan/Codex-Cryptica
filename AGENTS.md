@@ -54,7 +54,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/151-vault-file-import/plan.md).
+shell commands, and other important information, read the [current plan](./specs/152-stat-sheet-templates/plan.md).
 
 <!-- SPECKIT END -->
 
@@ -71,6 +71,10 @@ shell commands, and other important information, read the [current plan](./specs
 
 - TypeScript 6.0.3 + `schema` workspace types, existing `map-engine`, Svelte 5 (1661-extract-vtt-domain)
 - No storage changes; browser persistence remains in `apps/web` (1661-extract-vtt-domain)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + `marked` (extended with custom directive/field-ref tokenizers), `zod`, `@codex/stat-sheet-engine` (152-stat-sheet-templates)
+- New IndexedDB store `stat_sheet_presentation_templates`; schema default + entity override stored alongside existing Stat Sheet association (152-stat-sheet-templates)
+- Diverged from plan.md: no `DOMPurify` dependency — safety comes from the parser only ever emitting an allowlisted `PresentationAst` (never raw HTML/`{@html}`), not from sanitizing HTML strings (152-stat-sheet-templates)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing Cloudflare Worker runtime/wrangler, Cloudflare R2, Svelte 5, Tailwind 4 semantic tokens, Iconify utility classes, existing `schema` and `@codex/vault-engine` packages (139-public-world-directory)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for public listing records; existing R2 guest snapshot bundle/assets from `135-guest-vault-r2`; browser IndexedDB for local publish registry (139-public-world-directory)

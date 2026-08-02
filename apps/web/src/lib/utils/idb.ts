@@ -5,6 +5,7 @@ import type {
   GuestChatTranscript,
   PublishRegistry,
   StatSheetTemplate,
+  PresentationTemplate,
 } from "schema";
 // ... (rest of imports unchanged)
 export interface VaultRecord {
@@ -133,6 +134,14 @@ interface CodexDB extends DBSchema {
       "by-vault": string;
     };
   };
+  stat_sheet_presentation_templates: {
+    key: string; // id
+    value: PresentationTemplate;
+    indexes: {
+      "by-vault": string;
+      "by-schema-template-id": string;
+    };
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
@@ -140,7 +149,8 @@ export const DB_NAME = "CodexCryptica";
 // during local dev/testing before the stat_sheet_templates store existed in
 // the upgrade() callback below, so 20 was a consumed no-op for them and the
 // store never got created) to support vault-scoped stat sheet templates.
-export const DB_VERSION = 21;
+// Bumped to 22 to add stat_sheet_presentation_templates (152-stat-sheet-templates).
+export const DB_VERSION = 22;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -252,6 +262,17 @@ export function getDB() {
             keyPath: "id",
           });
           store.createIndex("by-vault", "vaultId");
+        }
+
+        if (
+          !db.objectStoreNames.contains("stat_sheet_presentation_templates")
+        ) {
+          const store = db.createObjectStore(
+            "stat_sheet_presentation_templates",
+            { keyPath: "id" },
+          );
+          store.createIndex("by-vault", "vaultId");
+          store.createIndex("by-schema-template-id", "schemaTemplateId");
         }
       },
       blocked() {

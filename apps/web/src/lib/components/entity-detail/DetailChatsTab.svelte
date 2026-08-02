@@ -10,6 +10,7 @@
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { systemClock } from "$lib/utils/runtime-deps";
+  import CharacterChat from "./CharacterChat.svelte";
   import GuestChatSettings from "./GuestChatSettings.svelte";
 
   let {
@@ -30,7 +31,7 @@
   let transcripts = $state<GuestChatTranscript[]>([]);
   let isLoadingTranscripts = $state(false);
 
-  // Editing state (shared for both host and guest view)
+  // Editing state for synced guest transcript logs.
   let editingMessageId = $state<string | null>(null);
   let messageEditContent = $state("");
 
@@ -59,7 +60,6 @@
     }
   });
 
-  // Guest Chat transcript access
   let guestTranscript = $derived(
     vault.isGuest ? guestChatStore.transcripts[entity.id] || null : null,
   );
@@ -99,7 +99,6 @@
     }
   }
 
-  // Scroll to bottom when guest messages arrive
   $effect(() => {
     if (guestTranscript?.messages?.length) {
       void scrollToBottom();
@@ -151,7 +150,6 @@
     }
   }
 
-  // Message Actions: Edit & Delete (Guest)
   async function saveGuestMessageEdit(messageId: string) {
     await guestChatStore.saveMessageEdit(
       entity.id,
@@ -183,6 +181,30 @@
         bind:editLore
         bind:editGuestChatConfig
       />
+
+      <section class="space-y-2" aria-labelledby="host-character-chat-title">
+        <div
+          class="flex items-center justify-between border-b border-theme-border pb-2"
+        >
+          <div>
+            <h4
+              id="host-character-chat-title"
+              class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--message-circle] w-4 h-4 text-theme-primary"
+              ></span>
+              Character Chat
+            </h4>
+            <p class="mt-1 text-xs text-theme-muted">
+              Try this character yourself. Your conversation stays in this
+              browser and is not added to guest logs.
+            </p>
+          </div>
+        </div>
+        <CharacterChat {entity} />
+      </section>
 
       <div
         class="flex items-center justify-between border-b border-theme-border pb-2"
