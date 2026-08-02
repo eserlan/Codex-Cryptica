@@ -90,7 +90,7 @@ A user who authored a useful layout wants to export it as a portable file (e.g. 
 - What happens when a user deletes a custom presentation template that one or more entities currently have selected? Those entities must fall back to the standard renderer (or another explicit default) rather than erroring.
 - What happens when a template's `stat-group columns=N` requests more columns than fit at the current viewport? Layout must degrade to fewer columns responsively, never overflow or become unreadable.
 - What happens when a built-in template is "edited" by a user? Built-ins remain read-only; edits must go through duplication, producing a separate vault-owned template.
-- What happens when a repeated/list-region directive is used against a field that isn't a list-typed field? Directive is treated as incompatible/invalid for that field and is surfaced as such, not silently rendered empty.
+- What happens when the `list-region` directive (see FR-003) is used against a field that isn't a list-typed field? Directive is treated as incompatible/invalid for that field and is surfaced as such, not silently rendered empty.
 - What happens when a template is imported that was authored for a newer template-syntax version than the current app supports? Unknown directives from the newer version are skipped visibly per Story 3; the rest of the template still renders.
 
 ## Requirements _(mandatory)_
@@ -99,7 +99,7 @@ A user who authored a useful layout wants to export it as a portable file (e.g. 
 
 - **FR-001**: System MUST store a Stat Sheet's presentation template separately from its schema/data, such that selecting or changing a presentation never modifies, duplicates, or removes stat values.
 - **FR-002**: System MUST support an extended Markdown syntax as the primary format for authoring, storing, and exchanging presentation templates, including standard headings, paragraphs, emphasis, links, lists, tables, blockquotes, separators, and safely-scoped images.
-- **FR-003**: System MUST support a small, explicitly allowlisted set of CC-specific directives for binding typed Stat Sheet fields (e.g. `{{stat.fieldname}}` with optional display/label parameters) and for responsive layout grouping (e.g. sections, rows/columns, cards, field groups).
+- **FR-003**: System MUST support a small, explicitly allowlisted set of CC-specific directives for binding typed Stat Sheet fields (e.g. `{{stat.fieldname}}` with optional display/label parameters), for responsive layout grouping (e.g. sections, rows/columns, cards, field groups), and for repeating a fixed item template once per element of a list-typed field (`list-region`).
 - **FR-004**: System MUST safely strip arbitrary HTML tags, CSS, JavaScript, executable expressions, and any other user-authored script content from template source on both authoring/save and import, importing the remaining valid content and informing the user which parts were removed, rather than rejecting the whole file.
 - **FR-005**: System MUST parse template Markdown into a validated internal presentation representation before rendering, and MUST validate that referenced schema fields and directives are recognized and compatible before treating the template as usable.
 - **FR-006**: System MUST provide a presentation-template editor within the Stat Sheet template management area, supporting: creating a template from scratch, duplicating a built-in or existing template, selecting a compatible schema, editing Markdown with field-reference assistance (autocomplete or picker), and previewing with representative sample values.
@@ -123,7 +123,7 @@ A user who authored a useful layout wants to export it as a portable file (e.g. 
 - **Stat Sheet Schema**: Existing entity (out of scope to redefine here) describing which typed fields exist for a category of entity, their types, and validation. Presentation templates reference this by identifier.
 - **Presentation Template**: A named, versioned unit of extended-Markdown source plus parsed/validated layout and field-reference metadata. Declares the single schema and fields it expects (V1). Is either built-in (read-only, duplicable) or vault-owned (editable, deletable). Value-free — contains no entity data.
 - **Schema Presentation Default**: The presentation template designated as the default for all entities of a given schema, used whenever an entity has no explicit override.
-- **Entity Stat Sheet Selection**: An optional per-entity override of its schema's default presentation template. When absent, the entity uses the Schema Presentation Default. Independent of both the schema and the template's other consumers.
+- **Entity Presentation Override**: An optional per-entity override of its schema's default presentation template. When absent, the entity uses the Schema Presentation Default. Independent of both the schema and the template's other consumers.
 - **Field Reference**: A binding within a template from a placeholder (e.g. `{{stat.fieldname}}`) to a specific schema field, including an optional display mode and label override. Validated for existence/compatibility against the declared schema.
 - **Presentation AST / Validated Model**: The internal, parsed representation of a template after Markdown + directive parsing and validation, used by the renderer instead of re-parsing raw source each time it's known to be unchanged.
 

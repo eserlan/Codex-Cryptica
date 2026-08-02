@@ -29,7 +29,20 @@ Headings (`#`…`######`), paragraphs, emphasis/strong, links (safe-scoped URIs 
 :::
 ```
 
-Allowlisted directive names (V1, closed set): `stat-group`, `section`, `card`, `row`.
+Allowlisted directive names (V1, closed set): `stat-group`, `section`, `card`, `row`, `list-region`.
+
+### `list-region` (repeated field group)
+
+```text
+:::list-region field="<fieldId>"
+{{item.name}}
+{{item.value display="counter"}}
+:::
+```
+
+- `field` — REQUIRED, MUST reference a list-typed field on the declared schema (e.g. an inventory or conditions array). Referencing a non-list-typed field is an incompatible-directive condition (flagged like any other `MissingField`/type-mismatch, never a parse error).
+- The block content is a fixed item template rendered once per element currently in the referenced field's list; inline placeholders inside it use `{{item.<subfieldId>}}` (not `{{stat....}}`) to bind to the current list item's own sub-fields, scoped only to that item — this is still a flat, declarative binding, not a loop/expression construct (no counters, indices, conditionals, or arbitrary iteration logic are exposed).
+- Renders read-only in V1 (FR-014); no add/remove/reorder controls are introduced by this directive.
 
 - `columns=N` — integer attribute, valid on `stat-group` and `row`; N MUST be a positive integer. Layout MUST degrade responsively below N columns at narrow viewports (FR-018) — this is a rendering contract, not a syntax one.
 - Directives may nest (e.g. a `section` containing a `stat-group`), to a reasonable depth; the parser MUST NOT infinite-loop or stack-overflow on malformed/unterminated fences — an unterminated `:::` block is a parse error for that block only (contained, not fatal to the whole template).
