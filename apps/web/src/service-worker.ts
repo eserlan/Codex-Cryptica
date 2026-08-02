@@ -3,15 +3,16 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
-import { build, files, version } from "$service-worker";
+import { build, files, prerendered, version } from "$service-worker";
 import { activateBuild, precacheBuild } from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "486";
+const CACHE_VERSION = "487";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
 const ASSETS = [
   ...build, // the app itself
   ...files, // everything in `static`
+  ...prerendered, // prerendered routes, including "/" (the app shell)
 ];
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
