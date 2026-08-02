@@ -17,6 +17,11 @@ vi.mock("./vault.svelte", () => ({
           contextScope: "public",
         },
       },
+      "char-2": {
+        id: "char-2",
+        title: "Tarin the Ranger",
+        type: "character",
+      },
     },
   },
 }));
@@ -164,6 +169,23 @@ describe("GuestChatStore", () => {
         type: "guest-chat",
         entityId: "char-1",
         query: "Hello there!",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("passes the selected host identity to local character-chat generation", async () => {
+    (vault as { isGuest: boolean }).isGuest = false;
+
+    await store.startChat("char-1", "Blacksmith Joe", "char-2");
+    await store.sendMessage("char-1", "Hello there!");
+
+    expect(store.transcripts["char-1"].speakerCharacterId).toBe("char-2");
+    expect(oracle.executor.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "guest-chat",
+        entityId: "char-1",
+        data: { guestCharacterId: "char-2" },
       }),
       expect.anything(),
     );

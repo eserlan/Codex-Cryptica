@@ -674,6 +674,7 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
         id: "guest1_char1",
         guestId: "guest1",
         guestName: "Player 1",
+        speakerCharacterId: "char2",
         characterId: "char1",
         characterTitle: "Mira",
         messages: [
@@ -689,6 +690,21 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
       };
       const result = GuestChatTranscriptSchema.safeParse(transcript);
       expect(result.success).toBe(true);
+    });
+
+    it("rejects a transcript with a non-string speaker identity", () => {
+      const result = GuestChatTranscriptSchema.safeParse({
+        id: "guest1_char1",
+        guestId: "guest1",
+        guestName: "Player 1",
+        speakerCharacterId: 42,
+        characterId: "char1",
+        characterTitle: "Mira",
+        messages: [],
+        lastUpdated: 12346,
+      });
+
+      expect(result.success).toBe(false);
     });
 
     it("should validate an entity with GuestChatConfig", () => {

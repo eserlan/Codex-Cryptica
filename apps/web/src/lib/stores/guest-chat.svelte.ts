@@ -75,7 +75,11 @@ export class GuestChatStore {
     }
   }
 
-  async startChat(characterId: string, characterTitle: string) {
+  async startChat(
+    characterId: string,
+    characterTitle: string,
+    speakerCharacterId?: string,
+  ) {
     this.activeCharacterId = characterId;
 
     if (!this.transcripts[characterId]) {
@@ -85,6 +89,7 @@ export class GuestChatStore {
         id: this.idGenerator.uuid(),
         guestId,
         guestName,
+        speakerCharacterId,
         characterId,
         characterTitle,
         messages: [],
@@ -345,10 +350,12 @@ export class GuestChatStore {
         },
       } as any;
 
-      const guestCharacterId = resolveGuestCharacterId(
-        sessionModeStore.guestUsername,
-        vault.entities,
-      );
+      const guestCharacterId = vault.isGuest
+        ? resolveGuestCharacterId(
+            sessionModeStore.guestUsername,
+            vault.entities,
+          )
+        : transcript.speakerCharacterId;
 
       await oracle.executor.execute(
         {

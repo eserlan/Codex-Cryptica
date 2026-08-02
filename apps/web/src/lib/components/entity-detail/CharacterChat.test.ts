@@ -4,6 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import CharacterChat from "./CharacterChat.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: {
+    entities: {
+      "char-1": {
+        id: "char-1",
+        title: "Mara the Blacksmith",
+        type: "character",
+      },
+      "char-2": {
+        id: "char-2",
+        title: "Tarin the Ranger",
+        type: "character",
+      },
+    },
+  },
+}));
+
 vi.mock("$lib/stores/guest-chat.svelte", () => ({
   guestChatStore: {
     transcripts: {},
@@ -37,6 +54,22 @@ describe("CharacterChat", () => {
     expect(guestChatStore.startChat).toHaveBeenCalledWith(
       "char-1",
       "Mara the Blacksmith",
+      undefined,
+    );
+  });
+
+  it("starts a host conversation as the selected campaign character", async () => {
+    render(CharacterChat, { entity: character });
+
+    await fireEvent.change(screen.getByLabelText("Chat as"), {
+      target: { value: "char-2" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    expect(guestChatStore.startChat).toHaveBeenCalledWith(
+      "char-1",
+      "Mara the Blacksmith",
+      "char-2",
     );
   });
 
