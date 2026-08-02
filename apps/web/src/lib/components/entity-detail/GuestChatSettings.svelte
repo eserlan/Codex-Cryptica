@@ -309,8 +309,8 @@
     </div>
   {:else}
     <p class="text-xs text-theme-muted italic">
-      Guest Character Chat is disabled. Click EDIT below to enable it and let
-      invited players chat with this character.
+      Guest Character Chat is disabled. Use the toggle above to let invited
+      players chat with this character.
     </p>
   {/if}
 </div>
