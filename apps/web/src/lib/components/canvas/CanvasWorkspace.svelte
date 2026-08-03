@@ -160,12 +160,62 @@
     };
   });
 
-  const filteredNodes = $derived.by(() => {
-    if (isExportingCanvas) return logic.nodes;
-    if (logic.activeCategories.size === 0) return logic.nodes;
-    return logic.nodes.filter((n) =>
-      logic.activeCategories.has(n.data?.type as string),
+  function updateFileNodeData(
+    nodeId: string,
+    updates: Record<string, unknown>,
+  ) {
+    const { width, height, ...dataUpdates } = updates;
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? {
+            ...node,
+            ...(width !== undefined ? { width: width as number } : null),
+            ...(height !== undefined ? { height: height as number } : null),
+            data: { ...node.data, ...dataUpdates },
+          }
+        : node,
     );
+  }
+
+  function toggleNodeLock(nodeId: string) {
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? {
+            ...node,
+            data: { ...node.data, locked: !(node.data as any)?.locked },
+          }
+        : node,
+    );
+  }
+
+  const contextMenuNodeLocked = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return false;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return Boolean((node?.data as any)?.locked);
+  });
+
+  const filteredNodes = $derived.by(() => {
+    const base = (() => {
+      if (isExportingCanvas) return logic.nodes;
+      if (logic.activeCategories.size === 0) return logic.nodes;
+      return logic.nodes.filter((n) =>
+        logic.activeCategories.has(n.data?.type as string),
+      );
+    })();
+    return base.map((node) => {
+      const locked = Boolean((node.data as any)?.locked);
+      const withLock = { ...node, draggable: !locked };
+      return node.type === "file"
+        ? {
+            ...withLock,
+            data: {
+              ...node.data,
+              onUpdateFile: (updates: Record<string, unknown>) =>
+                updateFileNodeData(node.id, updates),
+            },
+          }
+        : withLock;
+    });
   });
 
   const nodeTypes = {
@@ -949,6 +999,10 @@
       isAdventure={canvas?.metadata?.kind === "adventure" ||
         sourceEntity?.kind === "adventure" ||
         logic.nodes.some((n) => n.type === "adventureNode")}
+      isLocked={contextMenuNodeLocked}
+      onToggleLock={logic.contextMenu?.type === "node" && logic.contextMenu.id
+        ? () => toggleNodeLock(logic.contextMenu!.id)
+        : undefined}
       onDelete={logic.handleDelete}
       onRename={() => {
         const edge = logic.edges.find((e) => e.id === logic.contextMenu?.id);
