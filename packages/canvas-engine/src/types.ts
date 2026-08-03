@@ -7,6 +7,48 @@ export const CanvasFileSchema = z.object({
   size: z.number().int().positive(),
 });
 
+export const CanvasDrawingPointSchema = z.object({
+  x: z.number().finite(),
+  y: z.number().finite(),
+});
+
+export const CanvasDrawingSchema = z.object({
+  id: z.string().min(1),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  width: z.number().finite().positive().max(64),
+  points: z.array(CanvasDrawingPointSchema).min(1),
+});
+
+export type CanvasDrawingPoint = z.infer<typeof CanvasDrawingPointSchema>;
+export type CanvasDrawing = z.infer<typeof CanvasDrawingSchema>;
+
+export const DEFAULT_CANVAS_DRAWING_COLOR = "#f97316";
+
+export function normalizeCanvasDrawingColor(
+  value: string,
+  fallback = DEFAULT_CANVAS_DRAWING_COLOR,
+) {
+  return /^#[0-9a-fA-F]{6}$/.test(value) ? value.toLowerCase() : fallback;
+}
+
+export function appendCanvasDrawingPoint(
+  drawing: CanvasDrawing,
+  point: CanvasDrawingPoint,
+  minimumDistance = 0.5,
+): CanvasDrawing {
+  if (!CanvasDrawingPointSchema.safeParse(point).success) return drawing;
+
+  const previous = drawing.points[drawing.points.length - 1];
+  if (
+    previous &&
+    Math.hypot(point.x - previous.x, point.y - previous.y) < minimumDistance
+  ) {
+    return drawing;
+  }
+
+  return { ...drawing, points: [...drawing.points, point] };
+}
+
 const CanvasNodeBaseSchema = z.object({
   id: z.string(),
   position: z.object({
@@ -120,6 +162,7 @@ export const CanvasSchema = z.object({
   slug: z.string().optional(),
   nodes: z.array(CanvasNodeSchema),
   edges: z.array(CanvasEdgeSchema),
+  drawings: z.array(CanvasDrawingSchema).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
   lastModified: z.number().optional(),
   playerVisible: z.boolean().optional(),

@@ -5,10 +5,19 @@
     Background,
     Controls,
     MiniMap,
+    ViewportPortal,
     ConnectionMode,
     type Node,
   } from "@xyflow/svelte";
-  import { CanvasStore, type Canvas } from "@codex/canvas-engine";
+  import {
+    appendCanvasDrawingPoint,
+    DEFAULT_CANVAS_DRAWING_COLOR,
+    normalizeCanvasDrawingColor,
+    type CanvasDrawing,
+    type CanvasDrawingPoint,
+    CanvasStore,
+    type Canvas,
+  } from "@codex/canvas-engine";
   import type { FileImportFailureReason } from "@codex/vault-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
@@ -51,6 +60,7 @@
     flowNodesToCanvasNodes,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
+  import { systemIdGenerator } from "$lib/utils/runtime-deps";
   import type {
     DelveCanvasEdge,
     DelveCanvasNode,
@@ -93,6 +103,10 @@
   let isFinalizingDossier = $state(false);
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
+  let isDrawingMode = $state(false);
+  let drawingColor = $state(DEFAULT_CANVAS_DRAWING_COLOR);
+  let activeDrawing = $state<CanvasDrawing | null>(null);
+  let activeDrawingPointerId = $state<number | null>(null);
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -241,6 +255,101 @@
     threatens: CustomEdge,
     resolves_to: CustomEdge,
   };
+
+  function drawingPointFromPointer(event: PointerEvent): CanvasDrawingPoint {
+    const point = logic.screenToFlowPosition?.({
+      x: event.clientX,
+      y: event.clientY,
+    }) ?? { x: event.clientX, y: event.clientY };
+    return { x: point.x, y: point.y };
+  }
+
+  function drawingPath(drawing: CanvasDrawing) {
+    const [first, ...rest] = drawing.points;
+    if (!first) return "";
+    const points = rest.length > 0 ? rest : [{ x: first.x + 0.01, y: first.y }];
+    return `M ${first.x} ${first.y} ${points.map((point) => `L ${point.x} ${point.y}`).join(" ")}`;
+  }
+
+  function cancelActiveDrawing() {
+    activeDrawing = null;
+    activeDrawingPointerId = null;
+  }
+
+  function toggleDrawingMode() {
+    isDrawingMode = !isDrawingMode;
+    if (!isDrawingMode) cancelActiveDrawing();
+  }
+
+  function handleDrawingColorChange(color: string) {
+    drawingColor = normalizeCanvasDrawingColor(color);
+  }
+
+  function handleDrawingPointerDown(event: PointerEvent) {
+    if (
+      !isDrawingMode ||
+      vault.isGuest ||
+      event.button !== 0 ||
+      activeDrawingPointerId !== null
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    activeDrawingPointerId = event.pointerId;
+    (event.currentTarget as SVGSVGElement).setPointerCapture(event.pointerId);
+    activeDrawing = {
+      id: `drawing-${systemIdGenerator.uuid()}`,
+      color: drawingColor,
+      width: 4,
+      points: [drawingPointFromPointer(event)],
+    };
+  }
+
+  function handleDrawingPointerMove(event: PointerEvent) {
+    if (
+      !activeDrawing ||
+      activeDrawingPointerId === null ||
+      event.pointerId !== activeDrawingPointerId
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    activeDrawing = appendCanvasDrawingPoint(
+      activeDrawing,
+      drawingPointFromPointer(event),
+    );
+  }
+
+  function finishDrawing(event: PointerEvent, cancelled = false) {
+    if (
+      !activeDrawing ||
+      activeDrawingPointerId === null ||
+      event.pointerId !== activeDrawingPointerId
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const target = event.currentTarget as SVGSVGElement;
+    if (target.hasPointerCapture(event.pointerId)) {
+      target.releasePointerCapture(event.pointerId);
+    }
+    const completedDrawing = activeDrawing;
+    cancelActiveDrawing();
+    if (!cancelled) logic.addDrawing(completedDrawing);
+  }
+
+  function handleDrawingKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape" && activeDrawing) {
+      event.preventDefault();
+      cancelActiveDrawing();
+    }
+  }
 
   let arrangedCanvasId = $state<string | null>(null);
 
@@ -885,6 +994,8 @@
   });
 </script>
 
+<svelte:window onkeydown={handleDrawingKeydown} />
+
 <div
   class="canvas-container {logic.isConnecting
     ? 'is-connecting'
@@ -915,6 +1026,12 @@
       onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
       onUploadFiles={!vault.isGuest ? handleExternalFiles : undefined}
+      {isDrawingMode}
+      {drawingColor}
+      onToggleDrawing={!vault.isGuest ? toggleDrawingMode : undefined}
+      onDrawingColorChange={!vault.isGuest
+        ? handleDrawingColorChange
+        : undefined}
       onAddAdventureNode={canvas?.metadata?.kind === "adventure" ||
       sourceEntity?.kind === "adventure" ||
       logic.nodes.some((n) => n.type === "adventureNode")
@@ -958,6 +1075,44 @@
         fitView
       >
         <Background gap={20} />
+        <ViewportPortal target="front">
+          <svg
+            class="canvas-drawing-layer"
+            data-testid="canvas-drawing-layer"
+            role="img"
+            aria-label="Canvas drawing surface"
+            style:pointer-events={isDrawingMode ? "auto" : "none"}
+            onpointerdown={handleDrawingPointerDown}
+            onpointermove={handleDrawingPointerMove}
+            onpointerup={(event) => finishDrawing(event)}
+            onpointercancel={(event) => finishDrawing(event, true)}
+          >
+            {#each logic.drawings as drawing (drawing.id)}
+              <path
+                d={drawingPath(drawing)}
+                fill="none"
+                stroke={drawing.color}
+                stroke-width={drawing.width}
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+                pointer-events="none"
+              />
+            {/each}
+            {#if activeDrawing}
+              <path
+                d={drawingPath(activeDrawing)}
+                fill="none"
+                stroke={activeDrawing.color}
+                stroke-width={activeDrawing.width}
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+                pointer-events="none"
+              />
+            {/if}
+          </svg>
+        </ViewportPortal>
         {#if !sessionModeStore.isGuestMode}
           <Controls />
         {/if}
@@ -1183,6 +1338,24 @@
   }
   :global(.svelte-flow__connectionline) {
     z-index: 20 !important;
+  }
+
+  :global(.svelte-flow__viewport-front) {
+    z-index: 30;
+  }
+
+  :global(.svelte-flow__panel) {
+    z-index: 40 !important;
+  }
+
+  .canvas-drawing-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    touch-action: none;
+    user-select: none;
   }
 
   @keyframes svelte-flow__dashdraw {

@@ -1,7 +1,77 @@
 import { describe, expect, it } from "vitest";
-import { CanvasSchema } from "./types";
+import {
+  appendCanvasDrawingPoint,
+  CanvasDrawingSchema,
+  CanvasSchema,
+  normalizeCanvasDrawingColor,
+} from "./types";
 
 describe("CanvasSchema", () => {
+  it("accepts persisted drawings and preserves their flow coordinates", () => {
+    const drawing = {
+      id: "drawing-1",
+      color: "#ff00aa",
+      width: 4,
+      points: [
+        { x: -20, y: 10 },
+        { x: 50, y: 80 },
+      ],
+    };
+
+    const parsed = CanvasSchema.parse({
+      nodes: [],
+      edges: [],
+      drawings: [drawing],
+    });
+
+    expect(parsed.drawings).toEqual([drawing]);
+  });
+
+  it("rejects malformed drawings instead of allowing unsafe stroke data", () => {
+    expect(() =>
+      CanvasDrawingSchema.parse({
+        id: "drawing-1",
+        color: "red",
+        width: 4,
+        points: [{ x: 0, y: 0 }],
+      }),
+    ).toThrow();
+    expect(() =>
+      CanvasDrawingSchema.parse({
+        id: "drawing-1",
+        color: "#ff00aa",
+        width: 4,
+        points: [],
+      }),
+    ).toThrow();
+  });
+
+  it("normalizes valid colors and falls back for invalid color input", () => {
+    expect(normalizeCanvasDrawingColor("#AABBCC")).toBe("#aabbcc");
+    expect(normalizeCanvasDrawingColor("url(javascript:alert(1))")).toBe(
+      "#f97316",
+    );
+  });
+
+  it("ignores pointer samples that are too close or invalid", () => {
+    const drawing = CanvasDrawingSchema.parse({
+      id: "drawing-1",
+      color: "#ff00aa",
+      width: 4,
+      points: [{ x: 0, y: 0 }],
+    });
+
+    expect(
+      appendCanvasDrawingPoint(drawing, { x: 0.1, y: 0.1 }).points,
+    ).toHaveLength(1);
+    expect(
+      appendCanvasDrawingPoint(drawing, { x: 20, y: 30 }).points,
+    ).toHaveLength(2);
+    expect(
+      appendCanvasDrawingPoint(drawing, { x: Number.NaN, y: 1 }).points,
+    ).toHaveLength(1);
+  });
+
   it("round-trips persisted Delve nodes and edge data", () => {
     const persisted = {
       id: "delve-canvas-bruneth",

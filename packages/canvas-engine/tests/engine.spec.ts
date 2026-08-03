@@ -58,6 +58,33 @@ describe("CanvasStore", () => {
     expect(data.nodes[0].entityId).toBe("e1");
   });
 
+  it("adds, loads, and exports drawings with the canvas snapshot", () => {
+    const drawing = {
+      id: "drawing-1",
+      color: "#ff00aa",
+      width: 4,
+      points: [{ x: 10, y: 20 }],
+    } as const;
+    const store = new CanvasStore({
+      nodes: [],
+      edges: [],
+      drawings: [drawing],
+    });
+
+    expect(store.drawings).toEqual([drawing]);
+    store.addDrawing({
+      ...drawing,
+      id: "drawing-2",
+      points: [{ x: 30, y: 40 }],
+    });
+    expect(store.export().drawings).toHaveLength(2);
+
+    store.removeDrawing("drawing-1");
+    expect(store.drawings).toHaveLength(1);
+    store.clearDrawings();
+    expect(store.export().drawings).toEqual([]);
+  });
+
   it("should update a node's position using updateNode", () => {
     const store = new CanvasStore();
     const nodeId = store.addNode("entity-1", { x: 0, y: 0 });

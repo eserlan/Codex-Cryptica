@@ -11,6 +11,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
     showCanvasSelector: false,
     openZenMode,
+    openIntentCreateMenu: vi.fn(),
   },
 }));
 
@@ -161,5 +162,54 @@ describe("CanvasHUD", () => {
       screen.getByRole("button", { name: "Update delve dossier" }),
     );
     expect(onFinalizeDossier).toHaveBeenCalledOnce();
+  });
+
+  it("exposes a drawing toggle and color picker", async () => {
+    const onToggleDrawing = vi.fn();
+    const onDrawingColorChange = vi.fn();
+
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        onToggleDrawing,
+        onDrawingColorChange,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Draw on canvas" }),
+    );
+    expect(onToggleDrawing).toHaveBeenCalledOnce();
+
+    const colorInput = screen.getByLabelText("Drawing color");
+    await fireEvent.input(colorInput, { target: { value: "#00ff00" } });
+    expect(onDrawingColorChange).toHaveBeenCalledWith("#00ff00");
+  });
+
+  it("communicates active mode and keeps the color input keyboard reachable", () => {
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        isDrawingMode: true,
+        drawingColor: "#123456",
+        onToggleDrawing: vi.fn(),
+        onDrawingColorChange: vi.fn(),
+      },
+    });
+
+    expect(
+      screen
+        .getByRole("button", { name: "Exit drawing mode" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      (screen.getByLabelText("Drawing color") as HTMLInputElement).value,
+    ).toBe("#123456");
   });
 });

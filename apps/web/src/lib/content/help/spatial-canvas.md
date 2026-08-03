@@ -13,6 +13,7 @@ The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intent
 
 - **Infinite Workspace**: Pan and zoom across an unlimited board to organize your narrative.
 - **Persistent Layouts**: Your card coordinates and custom links are saved directly to `.canvas` files in your vault.
+- **Freehand Annotations**: Select **Draw on canvas**, choose a color, and sketch notes, routes, or highlights directly on the board. Drawings stay aligned while you pan and zoom and are saved with the canvas.
 - **Themed Components**: The **MiniMap** and all UI elements adapt to your active theme (Fantasy, Sci-Fi, etc.), ensuring a cohesive aesthetic.
 - **Readable URLs**: Each canvas uses a name-based **slug** in its URL (e.g., `/canvas/battle-at-the-docks`), making it easy to bookmark and identify specific workspaces.
 
@@ -31,6 +32,13 @@ Click the **workspace name** in the top-left HUD to open the **Canvas Manager**.
 - **Custom Labels**: Double-click any connection (edge) to open a themed modal and enter a name for the relationship.
 - **Hidden Labels**: To hide a label, simply clear the text in the modal. Empty labels are not rendered, keeping your canvas clean.
 - **Visual Links**: Create lines between any two entities to map out conspiracy boards, family trees, or quest flowcharts.
+
+### Drawing on the Canvas
+
+1. Select the pencil button in the canvas toolbar.
+2. Choose a color with the color picker next to it.
+3. Draw with a mouse, stylus, or touch pointer. Existing node and canvas controls are paused while drawing mode is active.
+4. Select the pencil button again, or press **Escape**, to leave drawing mode. Completed strokes are saved automatically.
 
 ### Locking Cards in Place
 
