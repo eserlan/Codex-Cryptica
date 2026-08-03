@@ -16,13 +16,56 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     fields: [
       { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 100 },
       { id: "ac", label: "Armor Class", type: "number" },
+      { id: "sec_scores", label: "Ability Scores", type: "heading" },
+      { id: "str_score", label: "STR", type: "number" },
+      { id: "dex_score", label: "DEX", type: "number" },
+      { id: "con_score", label: "CON", type: "number" },
+      { id: "int_score", label: "INT", type: "number" },
+      { id: "wis_score", label: "WIS", type: "number" },
+      { id: "cha_score", label: "CHA", type: "number" },
       { id: "sec_abilities", label: "Ability Checks", type: "heading" },
-      { id: "str", label: "STR Check", type: "dice", formula: "1d20+0" },
-      { id: "dex", label: "DEX Check", type: "dice", formula: "1d20+0" },
-      { id: "con", label: "CON Check", type: "dice", formula: "1d20+0" },
-      { id: "int", label: "INT Check", type: "dice", formula: "1d20+0" },
-      { id: "wis", label: "WIS Check", type: "dice", formula: "1d20+0" },
-      { id: "cha", label: "CHA Check", type: "dice", formula: "1d20+0" },
+      {
+        id: "str",
+        label: "STR Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "str_score",
+      },
+      {
+        id: "dex",
+        label: "DEX Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "dex_score",
+      },
+      {
+        id: "con",
+        label: "CON Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "con_score",
+      },
+      {
+        id: "int",
+        label: "INT Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "int_score",
+      },
+      {
+        id: "wis",
+        label: "WIS Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "wis_score",
+      },
+      {
+        id: "cha",
+        label: "CHA Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "cha_score",
+      },
       { id: "sec_combat", label: "Combat", type: "heading" },
       { id: "atk", label: "Attack Roll", type: "dice", formula: "1d20+5" },
       { id: "conditions", label: "Conditions", type: "text" },
@@ -32,19 +75,28 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
         label: "Perception",
         type: "dice",
         formula: "1d20+0",
+        modifierSource: "wis_score",
       },
-      { id: "stealth", label: "Stealth", type: "dice", formula: "1d20+0" },
+      {
+        id: "stealth",
+        label: "Stealth",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "dex_score",
+      },
       {
         id: "athletics",
         label: "Athletics",
         type: "dice",
         formula: "1d20+0",
+        modifierSource: "str_score",
       },
       {
         id: "persuasion",
         label: "Persuasion",
         type: "dice",
         formula: "1d20+0",
+        modifierSource: "cha_score",
       },
     ],
   },
@@ -70,17 +122,78 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     fields: [
       { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 100 },
       { id: "ac", label: "Armor Class", type: "number" },
+      { id: "sec_scores", label: "Ability Scores", type: "heading" },
+      { id: "str_score", label: "STR", type: "number" },
+      { id: "dex_score", label: "DEX", type: "number" },
+      { id: "con_score", label: "CON", type: "number" },
+      { id: "int_score", label: "INT", type: "number" },
+      { id: "wis_score", label: "WIS", type: "number" },
+      { id: "cha_score", label: "CHA", type: "number" },
       { id: "sec_abilities", label: "Ability Checks", type: "heading" },
-      { id: "str", label: "STR Check", type: "dice", formula: "1d20+0" },
-      { id: "dex", label: "DEX Check", type: "dice", formula: "1d20+0" },
-      { id: "con", label: "CON Check", type: "dice", formula: "1d20+0" },
-      { id: "int", label: "INT Check", type: "dice", formula: "1d20+0" },
-      { id: "wis", label: "WIS Check", type: "dice", formula: "1d20+0" },
-      { id: "cha", label: "CHA Check", type: "dice", formula: "1d20+0" },
+      {
+        id: "str",
+        label: "STR Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "str_score",
+      },
+      {
+        id: "dex",
+        label: "DEX Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "dex_score",
+      },
+      {
+        id: "con",
+        label: "CON Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "con_score",
+      },
+      {
+        id: "int",
+        label: "INT Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "int_score",
+      },
+      {
+        id: "wis",
+        label: "WIS Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "wis_score",
+      },
+      {
+        id: "cha",
+        label: "CHA Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "cha_score",
+      },
       { id: "sec_saves", label: "Saving Throws", type: "heading" },
-      { id: "fort", label: "Fortitude", type: "dice", formula: "1d20+2" },
-      { id: "reflex", label: "Reflex", type: "dice", formula: "1d20+2" },
-      { id: "will", label: "Will", type: "dice", formula: "1d20+2" },
+      {
+        id: "fort",
+        label: "Fortitude",
+        type: "dice",
+        formula: "1d20+2",
+        modifierSource: "con_score",
+      },
+      {
+        id: "reflex",
+        label: "Reflex",
+        type: "dice",
+        formula: "1d20+2",
+        modifierSource: "dex_score",
+      },
+      {
+        id: "will",
+        label: "Will",
+        type: "dice",
+        formula: "1d20+2",
+        modifierSource: "wis_score",
+      },
       { id: "sec_combat", label: "Combat", type: "heading" },
       { id: "atk", label: "Attack Roll", type: "dice", formula: "1d20+5" },
       { id: "conditions", label: "Conditions", type: "text" },
@@ -90,13 +203,21 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
         label: "Perception",
         type: "dice",
         formula: "1d20+0",
+        modifierSource: "wis_score",
       },
-      { id: "stealth", label: "Stealth", type: "dice", formula: "1d20+0" },
+      {
+        id: "stealth",
+        label: "Stealth",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "dex_score",
+      },
       {
         id: "athletics",
         label: "Athletics",
         type: "dice",
         formula: "1d20+0",
+        modifierSource: "str_score",
       },
       { id: "feats", label: "Feats & Abilities", type: "longtext" },
     ],
@@ -783,20 +904,29 @@ export class StatSheetTemplateStore {
     }
   }
 
-  // Assigns fresh instance ids rather than reusing the template's own field
-  // ids, since those are only unique *within* one template — applying two
-  // templates to the same entity (or the same template twice) would
-  // otherwise collide and duplicate `id`s in the entity's field list.
-  cloneTemplateFields(template: StatSheetTemplate): StatSheetField[] {
-    return template.fields.map((f) => ({
-      ...f,
-      id: `field-${this.idGenerator.uuid()}`,
-      // Counters (HP, MP, AP, etc.) start full rather than at the implicit
-      // zero default — a freshly-applied template shouldn't read as "dead".
-      ...(f.type === "counter" && f.max !== undefined
-        ? { value: f.max }
-        : null),
-    }));
+  // Preserves each field's template-defined id (e.g. "hp", "ac") so
+  // presentation templates that reference those ids keep resolving after
+  // the template is applied to an entity. Only regenerates an id if it
+  // would collide with one already present on the target entity (relevant
+  // when appending onto an existing stat sheet).
+  cloneTemplateFields(
+    template: StatSheetTemplate,
+    existingFields: StatSheetField[] = [],
+  ): StatSheetField[] {
+    const usedIds = new Set(existingFields.map((f) => f.id));
+    return template.fields.map((f) => {
+      const id = usedIds.has(f.id) ? `field-${this.idGenerator.uuid()}` : f.id;
+      usedIds.add(id);
+      return {
+        ...f,
+        id,
+        // Counters (HP, MP, AP, etc.) start full rather than at the implicit
+        // zero default — a freshly-applied template shouldn't read as "dead".
+        ...(f.type === "counter" && f.max !== undefined
+          ? { value: f.max }
+          : null),
+      };
+    });
   }
 }
 

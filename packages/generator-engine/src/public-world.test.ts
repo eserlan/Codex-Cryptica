@@ -183,6 +183,48 @@ describe("World Generator", () => {
     );
   });
 
+  it("includes campaign pressure guidance for every sci-fi genre", () => {
+    const prompt = buildWorldPrompt({
+      genre: "Hard Sci-Fi",
+      campaignPressure: "Labour Rights and Working Conditions",
+    });
+
+    expect(prompt.userMessage).toContain("Campaign pressure:");
+    expect(prompt.userMessage).toContain(
+      "Labour Rights and Working Conditions",
+    );
+    expect(prompt.userMessage).toContain(
+      "survival, settlement design, culture, economy",
+    );
+  });
+
+  it("builds a Lancer brief from the selected world parameters", () => {
+    const prompt = buildWorldPrompt({
+      genre: "Lancer",
+      lancerWorldFrame: "Long Rim Frontier",
+      campaignPressure: "Colonial Ownership and Labour",
+    });
+
+    expect(prompt.userMessage).toContain("Lancer world parameters");
+    expect(prompt.userMessage).toContain("Long Rim Frontier");
+    expect(prompt.userMessage).toContain("Colonial Ownership and Labour");
+    expect(prompt.userMessage).toContain(
+      "military, political, and logistical institution",
+    );
+    expect(prompt.userMessage).toContain("civilian society");
+  });
+
+  it("makes local Lancer worlds reflect their selected campaign frame", () => {
+    const output = generateWorldLocal({
+      genre: "Lancer",
+      lancerWorldFrame: "Long Rim Frontier",
+      campaignPressure: "Colonial Ownership and Labour",
+    });
+
+    expect(output.content).toContain("Long Rim Frontier");
+    expect(output.lore).toContain("Colonial Ownership and Labour");
+  });
+
   it("parses an AI world response into a location draft", () => {
     const output = parseWorldResponse(
       JSON.stringify({

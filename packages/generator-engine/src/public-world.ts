@@ -149,7 +149,41 @@ export const worldConfig = {
     "Zombies",
   ],
   defaultWorldTags: ["Colonized Population", "Local Specialty"],
-  genres: ["Hard Sci-Fi", "Space Opera", "Cyberpunk", "Hopeful Sci-Fi"],
+  genres: [
+    "Hard Sci-Fi",
+    "Space Opera",
+    "Cyberpunk",
+    "Hopeful Sci-Fi",
+    "Lancer",
+  ],
+  campaignPressures: [
+    "Resource Access and Rationing",
+    "Political Legitimacy and Succession",
+    "Labour Rights and Working Conditions",
+    "Migration and Belonging",
+    "Scientific Ethics and Public Safety",
+    "Autonomy and External Rule",
+    "Security and Demobilization",
+    "Trade Dependence and Local Control",
+    "Environmental Adaptation and Settlement",
+    "Knowledge Access and Cultural Change",
+  ],
+  lancerWorldFrames: [
+    "Union Core World",
+    "Long Rim Frontier",
+    "Contested Border",
+    "Karrakin Territory",
+    "Corporate Concession",
+    "Independent Colony",
+  ],
+  lancerConflicts: [
+    "Autonomy and Union Legitimacy",
+    "Colonial Ownership and Labour",
+    "Succession or Noble Rivalry",
+    "Ceasefire and Demobilization",
+    "Migration and Resource Allocation",
+    "NHP Rights and Oversight",
+  ],
   names: [
     "Aster Vale",
     "Khepri IV",
@@ -434,6 +468,8 @@ export interface WorldGeneratorOptions {
   worldTagOne?: string;
   worldTagTwo?: string;
   genre?: string;
+  lancerWorldFrame?: string;
+  campaignPressure?: string;
   dominantFeature?: string;
   /** Existing titles to avoid when making a local fallback. */
   avoidNames?: string[];
@@ -543,6 +579,17 @@ export function generateWorldLocal(
   const worldTagTwoThing = pickFrom(worldTagTwoProfile.things, rng);
   const worldTagTwoPlace = pickFrom(worldTagTwoProfile.places, rng);
   const genre = choose(options.genre, worldConfig.genres, rng);
+  const lancerWorldFrame =
+    genre === "Lancer"
+      ? choose(options.lancerWorldFrame, worldConfig.lancerWorldFrames, rng)
+      : "";
+  const campaignPressure = choose(
+    options.campaignPressure,
+    genre === "Lancer"
+      ? worldConfig.lancerConflicts
+      : worldConfig.campaignPressures,
+    rng,
+  );
   const dominantFeature =
     options.dominantFeature?.trim() ||
     pickFrom(
@@ -569,10 +616,21 @@ export function generateWorldLocal(
         : civilisation === "Fallen Civilisation"
           ? "Successor communities occupy fragments of an older planetary order, each claiming a different inheritance."
           : `${civilisation} communities have adapted their institutions, trade, and daily life to the planet's hard limits.`;
+  const lancerDetails = lancerWorldFrame
+    ? ` The Lancer campaign frame is ${lancerWorldFrame}. The selected world tags and civilian institutions determine its authority, mech presence, and logistics.`
+    : "";
+  const societalModelDetail =
+    genre === "Lancer"
+      ? "Its civilian social structure is derived from the Lancer world frame and the world's material pressures."
+      : `Its primary societal model is a ${societalModel.toLowerCase()}.`;
+  const cultureDriver =
+    genre === "Lancer"
+      ? "the Lancer world frame and its civilian institutions"
+      : `the ${societalModel.toLowerCase()}`;
 
   const content = [
     "## Core Concept",
-    `${title} is a ${worldType.toLowerCase()} in a ${genre.toLowerCase()} setting, defined by ${dominantFeature}. Its primary societal model is a ${societalModel.toLowerCase()}. Its two world tags are ${worldTagOne} and ${worldTagTwo}; together they create the setting's main pressure rather than serving as decorative labels.`,
+    `${title} is a ${worldType.toLowerCase()} in a ${genre.toLowerCase()} setting, defined by ${dominantFeature}. ${societalModelDetail} Its campaign pressure is ${campaignPressure}. Its two world tags are ${worldTagOne} and ${worldTagTwo}; together they create the setting's main pressure rather than serving as decorative labels.${lancerDetails}`,
     "",
     "## World Profile",
     `A ${civilisation.toLowerCase()} world whose settlements, institutions, and rivalries are shaped by its difficult physical reality. The tags ${worldTagOne} and ${worldTagTwo} describe the social and material pressures that make it worth visiting.`,
@@ -582,7 +640,7 @@ export function generateWorldLocal(
     "",
     "## How People Survive",
     atmosphere,
-    "Life clusters where water, heat, and shelter can be controlled, making reliable infrastructure as important as territory.",
+    `Life clusters where water, heat, and shelter can be controlled, making reliable infrastructure as important as territory.${lancerWorldFrame ? " Mech deployment follows the world's actual repair, transport, and communications capacity, so pilots cannot treat every conflict as a self-supplied sortie." : ""}`,
     "",
     "## Settlements & Factions",
     civilisationDetail,
@@ -591,10 +649,10 @@ export function generateWorldLocal(
     "The largest settlement controls access to the safest routes and life-support infrastructure, while a rival network profits from those left outside it.",
     "",
     "## Culture & Everyday Life",
-    `The ${societalModel.toLowerCase()} shapes who sets the rhythms of work, travel, celebration, and mutual obligation, while ordinary people negotiate access to protected space and reliable infrastructure.`,
+    `${cultureDriver} shapes who sets the rhythms of work, travel, celebration, and mutual obligation, while ordinary people negotiate access to protected space and reliable infrastructure.`,
     "",
     "## Economy & Technology",
-    `The world exports a resource made accessible by ${dominantFeature}, while importing the technology and expertise needed to keep its population secure.`,
+    `The world exports a resource made accessible by ${dominantFeature}, while importing the technology and expertise needed to keep its population secure.${lancerWorldFrame ? " Frame maintenance, ammunition, printer access, and pilot contracts make mech power a material institution rather than a decorative combat style." : ""}`,
     "",
     "## Locations",
     `- **The Terminator Exchange** — a neutral market where rival settlements trade power, water, and information. It is also ${worldTagOnePlace.toLowerCase()}.`,
@@ -606,7 +664,7 @@ export function generateWorldLocal(
     `The same conditions that made ${title} valuable have repeatedly stranded expeditions and reshaped local borders. Its history is still argued over because every surviving record serves someone's claim.`,
     "",
     "## Current Conflicts",
-    `Control of the planet's safest routes and life-support infrastructure is becoming more contested as established agreements fail. ${worldTagOneComplication}.`,
+    `Control of the planet's safest routes and life-support infrastructure is becoming more contested as established agreements fail. ${worldTagOneComplication} The campaign pressure is ${campaignPressure}, and its costs fall on ordinary people as well as the powerful.${lancerWorldFrame ? " In Lancer terms, pilots and civilians experience the same dispute through different risks and responsibilities." : ""}`,
     "",
     "## Mysteries",
     `A buried system connected to ${dominantFeature} is beginning to behave differently. The people who can explain it disagree on whether it is a warning, a weapon, or an opportunity. ${worldTagTwoThing}.`,
@@ -628,7 +686,10 @@ export function generateWorldLocal(
       genreLabel(worldType),
       genreLabel(habitability),
       genreLabel(civilisation),
-      genreLabel(societalModel),
+      ...(genre === "Lancer"
+        ? [genreLabel(lancerWorldFrame)]
+        : [genreLabel(societalModel)]),
+      genreLabel(campaignPressure),
       genreLabel(worldTagOne),
       genreLabel(worldTagTwo),
       genreLabel(genre),
@@ -680,20 +741,35 @@ Places: ${profile.places.join("; ")}`;
     })
     .join("\n\n");
   const normalizedGenre = genre.toLowerCase();
+  const campaignPressure =
+    options.campaignPressure?.trim() || "choose one that fits the premise";
+  const lancerParameters =
+    normalizedGenre === "lancer"
+      ? `
+Lancer world parameters:
+- World frame: ${options.lancerWorldFrame?.trim() || "choose one that fits the premise"}
+- Primary campaign pressure: ${campaignPressure}
+Treat these as connected constraints, not a checklist. Derive the civilian social model, political authority, mech presence, repair capacity, travel, printer access, and communications from them and from the existing world inputs. Explain who deploys pilots, who maintains frames, and what civilians gain or lose.`
+      : `
+Campaign pressure:
+- Primary campaign pressure: ${campaignPressure}
+Make this pressure materially shape survival, settlement design, culture, economy, political power, conflicts, and adventure opportunities. Do not treat it as a decorative theme.`;
   const genreGuidance =
     normalizedGenre === "hard sci-fi"
       ? "For Hard Sci-Fi, use restrained speculative technology and broadly plausible engineering with clear causality. Track only the practical consequences that matter for the story, including gravity, atmosphere, energy, maintenance, travel time, and communication delay. Keep the result grounded in defensible physics and engineering, but remember that approximate plausibility is enough; do not turn the setting into an astrophysics lecture or make it feel scientific merely by adding numbers, units, and technical vocabulary. Do not use unexplained faster-than-light travel, explicit gravity control, reactionless drives, mystical technology, impossible ecology, or convenient technology that solves a problem without a cost."
-      : normalizedGenre === "grounded sci-fi"
-        ? "For Grounded Sci-Fi, allow some generous assumptions, but keep technology costly, legible, and constrained. Avoid casual miracle technology and make major social and environmental consequences follow from the assumptions you establish."
-        : normalizedGenre === "space opera" ||
-            normalizedGenre === "advanced sci-fi"
-          ? `For ${genre}, highly speculative technology such as gravity manipulation, exotic materials, and advanced neuroscience is acceptable when it is established clearly and used consistently. Keep it from making every problem effortless; preserve meaningful costs, limits, and social consequences.`
-          : `For ${genre}, keep the setting's speculative elements internally consistent. Establish clear rules for what technology, ecology, institutions, and travel can do, then make every major consequence follow those rules.`;
+      : normalizedGenre === "lancer"
+        ? "For Lancer, treat mechs and pilots as a military, political, and logistical institution inside a lived-in post-scarcity setting, not as a replacement for civilian society. Make the selected world frame and campaign pressure, together with the existing world type and tags, causally shape the derived civilian social model, political authority, infrastructure, why pilots are deployed, who funds and repairs their frames, how printers and blink-gate or Omninet access affect operations, and how mech violence changes ordinary life. Keep civilian factions, labour, migration, local governance, and material interests visible. Avoid reducing every problem to a mech duel, a generic corporation-versus-rebels plot, or a battlefield with no supply chain. Canon terms may inform the tone, but create original places, factions, and conflicts unless the user asks for a specific canon location."
+        : normalizedGenre === "grounded sci-fi"
+          ? "For Grounded Sci-Fi, allow some generous assumptions, but keep technology costly, legible, and constrained. Avoid casual miracle technology and make major social and environmental consequences follow from the assumptions you establish."
+          : normalizedGenre === "space opera" ||
+              normalizedGenre === "advanced sci-fi"
+            ? `For ${genre}, highly speculative technology such as gravity manipulation, exotic materials, and advanced neuroscience is acceptable when it is established clearly and used consistently. Keep it from making every problem effortless; preserve meaningful costs, limits, and social consequences.`
+            : `For ${genre}, keep the setting's speculative elements internally consistent. Establish clear rules for what technology, ecology, institutions, and travel can do, then make every major consequence follow those rules.`;
 
   return {
     systemInstruction:
       "You are a science-fiction worldbuilder creating evocative, coherent, immediately gameable material for a GM. Prioritise a few memorable connected ideas, understandable conflicts, useful locations, and playable hooks while keeping the setting internally consistent. Return only one valid JSON object.",
-    userMessage: `Create a ${genre} ${worldType} with ${habitability} conditions, ${civilisation}, and a primary societal model of ${societalModel}. Treat the societal model as an independent variable: do not infer or replace it from the civilisation level. Its dominant feature is: ${dominantFeature}. Its two Stars Without Number world tags are: ${worldTagOne} and ${worldTagTwo}.
+    userMessage: `Create a ${genre} ${worldType} with ${habitability} conditions, ${civilisation}, and ${normalizedGenre === "lancer" ? "a civilian social model derived from the selected Lancer world frame" : `a primary societal model of ${societalModel}`}. ${normalizedGenre === "lancer" ? "For Lancer, derive the civilian social model from the selected world frame, world type, and tags; do not let the civilisation level determine it by itself." : "Treat the societal model as an independent variable: do not infer or replace it from the civilisation level."} Its dominant feature is: ${dominantFeature}. Its two Stars Without Number world tags are: ${worldTagOne} and ${worldTagTwo}.${lancerParameters}
 
 Star-system context may be provided before this brief. When it is, develop this world as part of that system: respect its parent star, orbit, neighbouring bodies, existing factions, and active conflicts. Do not regenerate or contradict the supplied system.
 

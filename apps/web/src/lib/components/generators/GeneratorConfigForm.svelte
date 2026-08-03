@@ -5,6 +5,7 @@
     getGenerator,
     listGenerators,
     themeIdToLabel,
+    worldConfig,
   } from "generator-engine";
   import type {
     AIPolicy,
@@ -91,11 +92,32 @@
   const availableDungeonStates = $derived(
     forDungeonGenre(dungeonConfig.currentStatesByGenre, dungeonGenre),
   );
+  const visibleOptions = $derived(
+    selectedGenerator.options.filter((option) => {
+      if (!option.visibleWhen) return true;
+      const currentValue = stringValue(option.visibleWhen.optionId);
+      if (
+        option.visibleWhen.values &&
+        !option.visibleWhen.values.includes(currentValue)
+      ) {
+        return false;
+      }
+      if (option.visibleWhen.notValues?.includes(currentValue)) return false;
+      return true;
+    }),
+  );
 
   function choicesForOption(option: {
     id: string;
     choices?: Array<{ value: string; label: string }>;
   }): Array<{ value: string; label: string }> {
+    if (selectedId === "world" && option.id === "campaignPressure") {
+      const values =
+        stringValue("genre") === "Lancer"
+          ? worldConfig.lancerConflicts
+          : worldConfig.campaignPressures;
+      return values.map((value) => ({ value, label: value }));
+    }
     if (selectedId !== "dungeon") return option.choices ?? [];
     if (option.id === "purpose") {
       return availableDungeonPurposes.map((value) => ({ value, label: value }));
@@ -149,12 +171,30 @@
     }
     if (changed) optionValues = nextValues;
   });
-
   function updateOptionValue(optionId: string, value: unknown) {
-    optionValues = {
+    const nextValues = {
       ...optionValues,
       [optionId]: value,
     };
+    if (selectedId === "world" && optionId === "genre") {
+      const availablePressures: readonly string[] =
+        value === "Lancer"
+          ? worldConfig.lancerConflicts
+          : worldConfig.campaignPressures;
+      const currentPressure = optionValues.campaignPressure;
+      const knownPressures: readonly string[] = [
+        ...worldConfig.campaignPressures,
+        ...worldConfig.lancerConflicts,
+      ];
+      if (
+        typeof currentPressure !== "string" ||
+        (knownPressures.includes(currentPressure) &&
+          !availablePressures.includes(currentPressure))
+      ) {
+        nextValues.campaignPressure = availablePressures[0] ?? "";
+      }
+    }
+    optionValues = nextValues;
   }
 
   function stringValue(optionId: string): string {
@@ -205,14 +245,14 @@
     {/each}
   </fieldset>
 
-  {#if selectedGenerator.options.length > 0}
+  {#if visibleOptions.length > 0}
     <fieldset class="flex flex-col gap-3">
       <legend
         class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
       >
         Generator options
       </legend>
-      {#each selectedGenerator.options as option (option.id)}
+      {#each visibleOptions as option (option.id)}
         {@const inputId = `generator-option-${option.id}`}
         {#if option.control === "select" && option.choices}
           <SelectWithCustomOption

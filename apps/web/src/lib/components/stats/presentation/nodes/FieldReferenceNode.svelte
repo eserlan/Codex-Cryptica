@@ -9,7 +9,18 @@
   }: { node: FieldReferenceNodeType; context: PresentationRenderContext } =
     $props();
 
-  const field = $derived(context.fields.find((f) => f.id === node.fieldId));
+  // Falls back to a label match when the id lookup misses. Entities whose
+  // stat sheet was applied before templates preserved their canonical field
+  // ids (e.g. "hp"/"ac") have fields under randomly generated ids instead —
+  // the label is the only thing still tying them back to this reference.
+  const field = $derived(
+    context.fields.find((f) => f.id === node.fieldId) ??
+      (node.label
+        ? context.fields.find(
+            (f) => f.label.toLowerCase() === node.label!.toLowerCase(),
+          )
+        : undefined),
+  );
   const label = $derived(node.label ?? field?.label ?? node.fieldId);
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
