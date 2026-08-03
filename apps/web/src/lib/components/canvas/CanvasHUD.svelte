@@ -2,6 +2,10 @@
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import {
+    CANVAS_DRAWING_WIDTH_PRESETS,
+    DEFAULT_CANVAS_DRAWING_WIDTH,
+  } from "@codex/canvas-engine";
 
   let {
     canvasName,
@@ -15,16 +19,21 @@
     onOpenOrCreateSourceEntity,
     onAutoArrange,
     onUploadFiles,
+    onAddTextNode,
     isDrawingMode = false,
     isErasingMode = false,
     drawingColor = "#f97316",
+    drawingWidth = DEFAULT_CANVAS_DRAWING_WIDTH,
     onToggleDrawing,
     onToggleErasing,
     onDrawingColorChange,
+    onDrawingWidthChange,
     onAddAdventureNode,
     activeCategories,
     onToggleCategory,
     onClearCategories,
+    showMinimap = true,
+    onToggleMinimap,
   } = $props<{
     canvasName: string;
     sourceEntityId?: string;
@@ -37,22 +46,57 @@
     onOpenOrCreateSourceEntity?: () => void;
     onAutoArrange?: () => void;
     onUploadFiles?: (files: File[]) => void | Promise<void>;
+    onAddTextNode?: () => void;
     isDrawingMode?: boolean;
     isErasingMode?: boolean;
     drawingColor?: string;
+    drawingWidth?: number;
     onToggleDrawing?: () => void;
     onToggleErasing?: () => void;
     onDrawingColorChange?: (color: string) => void;
+    onDrawingWidthChange?: (width: number) => void;
     onAddAdventureNode?: (
       type: "location" | "npc" | "clue" | "threat" | "outcome" | "situation",
     ) => void;
     activeCategories: Set<string>;
     onToggleCategory: (categoryId: string) => void;
     onClearCategories: () => void;
+    showMinimap?: boolean;
+    onToggleMinimap?: () => void;
   }>();
 
   let isAddMenuOpen = $state(false);
+  let isStrokeWidthMenuOpen = $state(false);
+  let strokeWidthMenuEl = $state<HTMLDivElement>();
   let fileInput = $state<HTMLInputElement>();
+
+  function openStrokeWidthMenu(event: MouseEvent) {
+    if (!onDrawingWidthChange) return;
+    event.preventDefault();
+    isStrokeWidthMenuOpen = true;
+  }
+
+  $effect(() => {
+    if (!isStrokeWidthMenuOpen) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        strokeWidthMenuEl &&
+        !strokeWidthMenuEl.contains(event.target as Node)
+      ) {
+        isStrokeWidthMenuOpen = false;
+      }
+    };
+    const timer = setTimeout(() => {
+      window.addEventListener("click", handleOutsideClick);
+      window.addEventListener("contextmenu", handleOutsideClick);
+    }, 10);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("click", handleOutsideClick);
+      window.removeEventListener("contextmenu", handleOutsideClick);
+    };
+  });
 
   async function handleFileSelection(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -112,6 +156,21 @@
       </button>
     {/if}
 
+    {#if onToggleMinimap}
+      <button
+        type="button"
+        onclick={onToggleMinimap}
+        title={showMinimap ? "Hide minimap" : "Show minimap"}
+        aria-label={showMinimap ? "Hide minimap" : "Show minimap"}
+        aria-pressed={showMinimap}
+        class="hidden sm:flex bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {showMinimap
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+          : ''}"
+      >
+        <span class="icon-[lucide--map] w-4 h-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+
     {#if onUploadFiles}
       <button
         type="button"
@@ -132,19 +191,70 @@
       />
     {/if}
 
-    {#if onToggleDrawing}
+    {#if onAddTextNode}
       <button
         type="button"
-        onclick={onToggleDrawing}
-        title={isDrawingMode ? "Exit drawing mode" : "Draw on canvas"}
-        aria-label={isDrawingMode ? "Exit drawing mode" : "Draw on canvas"}
-        aria-pressed={isDrawingMode}
-        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isDrawingMode
-          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
-          : ''}"
+        onclick={onAddTextNode}
+        title="Add a text note to canvas"
+        aria-label="Add a text note to canvas"
+        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
-        <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
+        <span class="icon-[lucide--sticky-note] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
+    {/if}
+
+    {#if onToggleDrawing}
+      <div class="relative pointer-events-auto">
+        <button
+          type="button"
+          onclick={onToggleDrawing}
+          oncontextmenu={openStrokeWidthMenu}
+          title={isDrawingMode
+            ? "Exit drawing mode"
+            : "Draw on canvas (right-click or long-press for stroke width)"}
+          aria-label={isDrawingMode ? "Exit drawing mode" : "Draw on canvas"}
+          aria-pressed={isDrawingMode}
+          class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isDrawingMode
+            ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+            : ''}"
+        >
+          <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
+        </button>
+
+        {#if isStrokeWidthMenuOpen && onDrawingWidthChange}
+          <div
+            bind:this={strokeWidthMenuEl}
+            role="menu"
+            aria-label="Stroke width"
+            class="absolute top-full left-0 mt-1 z-50 flex items-center gap-1 bg-theme-surface border border-theme-border shadow-xl rounded-lg p-1.5 pointer-events-auto"
+          >
+            {#each CANVAS_DRAWING_WIDTH_PRESETS as width (width)}
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={drawingWidth === width}
+                title={`${width}px stroke`}
+                onclick={() => {
+                  onDrawingWidthChange(width);
+                  isStrokeWidthMenuOpen = false;
+                }}
+                class="flex h-8 w-8 items-center justify-center rounded transition-colors hover:bg-theme-primary/10 {drawingWidth ===
+                width
+                  ? 'bg-theme-primary/15 ring-1 ring-theme-primary'
+                  : ''}"
+              >
+                <span
+                  class="rounded-full bg-theme-primary"
+                  style:width="{Math.min(width, 16)}px"
+                  style:height="{Math.min(width, 16)}px"
+                  aria-hidden="true"
+                ></span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
       {#if onToggleErasing}
         <button
           type="button"

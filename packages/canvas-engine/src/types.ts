@@ -23,12 +23,55 @@ export type CanvasDrawingPoint = z.infer<typeof CanvasDrawingPointSchema>;
 export type CanvasDrawing = z.infer<typeof CanvasDrawingSchema>;
 
 export const DEFAULT_CANVAS_DRAWING_COLOR = "#f97316";
+export const DEFAULT_CANVAS_DRAWING_WIDTH = 4;
+export const CANVAS_DRAWING_WIDTH_PRESETS = [2, 4, 8, 14] as const;
 
 export function normalizeCanvasDrawingColor(
   value: string,
   fallback = DEFAULT_CANVAS_DRAWING_COLOR,
 ) {
   return /^#[0-9a-fA-F]{6}$/.test(value) ? value.toLowerCase() : fallback;
+}
+
+export function normalizeCanvasDrawingWidth(
+  value: number,
+  fallback = DEFAULT_CANVAS_DRAWING_WIDTH,
+) {
+  return Number.isFinite(value) && value > 0 && value <= 64 ? value : fallback;
+}
+
+// Semantic keys, not raw colors: the app resolves each to a themed CSS value
+// (see canvasTextBackgroundStyle in canvas-workspace-helpers.ts) so a note's
+// background stays in step with whichever theme the vault has active,
+// instead of a hardcoded palette that could clash with e.g. horror/cyberpunk.
+export const DEFAULT_CANVAS_TEXT_BACKGROUND = "default";
+export const CANVAS_TEXT_BACKGROUND_PRESETS = [
+  "default",
+  "primary",
+  "accent",
+  "secondary",
+  "warning",
+] as const;
+export type CanvasTextBackground =
+  (typeof CANVAS_TEXT_BACKGROUND_PRESETS)[number];
+
+export function normalizeCanvasTextBackground(
+  value: string,
+  fallback: CanvasTextBackground = DEFAULT_CANVAS_TEXT_BACKGROUND,
+): CanvasTextBackground {
+  return (CANVAS_TEXT_BACKGROUND_PRESETS as readonly string[]).includes(value)
+    ? (value as CanvasTextBackground)
+    : fallback;
+}
+
+export const DEFAULT_CANVAS_TEXT_FONT_SIZE = 14;
+export const CANVAS_TEXT_FONT_SIZE_PRESETS = [12, 14, 18, 24, 32] as const;
+
+export function normalizeCanvasTextFontSize(
+  value: number,
+  fallback = DEFAULT_CANVAS_TEXT_FONT_SIZE,
+) {
+  return Number.isFinite(value) && value >= 8 && value <= 96 ? value : fallback;
 }
 
 export function appendCanvasDrawingPoint(
@@ -131,6 +174,7 @@ export const CanvasNodeSchema = z.preprocess(
         "clue",
         "threat",
         "outcome",
+        "text",
       ]),
       entityId: z.string().optional(),
       data: z.unknown(),

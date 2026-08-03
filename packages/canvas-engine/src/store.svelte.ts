@@ -57,6 +57,17 @@ export class CanvasStore {
     return newNode.id;
   }
 
+  addTextNode(text: string, position: { x: number; y: number }) {
+    const newNode: CanvasNode = {
+      id: `text-${this.idGenerator.uuid()}`,
+      type: "text",
+      position,
+      data: { text },
+    };
+    this.nodes = [...this.nodes, newNode];
+    return newNode.id;
+  }
+
   removeNode(nodeId: string) {
     this.nodes = this.nodes.filter((n) => n.id !== nodeId);
     this.edges = this.edges.filter(

@@ -14,7 +14,13 @@
   import {
     appendCanvasDrawingPoint,
     DEFAULT_CANVAS_DRAWING_COLOR,
+    DEFAULT_CANVAS_DRAWING_WIDTH,
+    DEFAULT_CANVAS_TEXT_BACKGROUND,
+    DEFAULT_CANVAS_TEXT_FONT_SIZE,
     normalizeCanvasDrawingColor,
+    normalizeCanvasDrawingWidth,
+    normalizeCanvasTextBackground,
+    normalizeCanvasTextFontSize,
     type CanvasDrawing,
     type CanvasDrawingPoint,
     CanvasStore,
@@ -25,6 +31,7 @@
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import FileNode from "$lib/components/canvas/FileNode.svelte";
+  import TextNode from "$lib/components/canvas/TextNode.svelte";
   import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
   import DelveSectorNode from "$lib/components/canvas/DelveSectorNode.svelte";
   import AdventureNode from "$lib/components/canvas/AdventureNode.svelte";
@@ -60,7 +67,9 @@
     accumulateRotationDegrees,
     canvasNodeRotation,
     canvasNodeStyle,
+    canvasNodeZIndex,
     createFlowFileNode,
+    createFlowTextNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodesToCanvasNodes,
@@ -113,8 +122,10 @@
   let isDrawingMode = $state(false);
   let isErasingMode = $state(false);
   let drawingColor = $state(DEFAULT_CANVAS_DRAWING_COLOR);
+  let drawingWidth = $state(DEFAULT_CANVAS_DRAWING_WIDTH);
   let activeDrawing = $state<CanvasDrawing | null>(null);
   let activeDrawingPointerId = $state<number | null>(null);
+  let showMinimap = $state(true);
   let selectedRotationNodeId = $state<string | null>(null);
   let isRotatingNode = $state(false);
   const touchRotationPointers = new SvelteMap<
@@ -204,10 +215,7 @@
     };
   });
 
-  function updateFileNodeData(
-    nodeId: string,
-    updates: Record<string, unknown>,
-  ) {
+  function updateNodeData(nodeId: string, updates: Record<string, unknown>) {
     const { width, height, ...dataUpdates } = updates;
     logic.nodes = logic.nodes.map((node) =>
       node.id === nodeId
@@ -232,10 +240,52 @@
     );
   }
 
+  function stackableNodeZIndexBounds() {
+    let min = 0;
+    let max = 0;
+    for (const node of logic.nodes) {
+      if (node.type === "delveSectorGroup") continue;
+      const z = canvasNodeZIndex(node);
+      if (z > max) max = z;
+      if (z < min) min = z;
+    }
+    return { min, max };
+  }
+
+  function bringNodeToFront(nodeId: string) {
+    const { max } = stackableNodeZIndexBounds();
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? { ...node, data: { ...node.data, zIndex: max + 1 } }
+        : node,
+    );
+  }
+
+  function sendNodeToBack(nodeId: string) {
+    const { min } = stackableNodeZIndexBounds();
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? { ...node, data: { ...node.data, zIndex: min - 1 } }
+        : node,
+    );
+  }
+
   const contextMenuNodeLocked = $derived.by(() => {
     if (logic.contextMenu?.type !== "node") return false;
     const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
     return Boolean((node?.data as any)?.locked);
+  });
+
+  const contextMenuNodeStackable = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return false;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return Boolean(node) && node?.type !== "delveSectorGroup";
+  });
+
+  const contextMenuTextNode = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return undefined;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return node?.type === "text" ? node : undefined;
   });
 
   const filteredNodes = $derived.by(() => {
@@ -252,23 +302,36 @@
         ...node,
         draggable: !locked,
         style: canvasNodeStyle(node),
+        zIndex: node.type === "delveSectorGroup" ? 0 : canvasNodeZIndex(node),
       };
-      return node.type === "file"
-        ? {
-            ...withLock,
-            data: {
-              ...node.data,
-              onUpdateFile: (updates: Record<string, unknown>) =>
-                updateFileNodeData(node.id, updates),
-            },
-          }
-        : withLock;
+      if (node.type === "file") {
+        return {
+          ...withLock,
+          data: {
+            ...node.data,
+            onUpdateFile: (updates: Record<string, unknown>) =>
+              updateNodeData(node.id, updates),
+          },
+        };
+      }
+      if (node.type === "text") {
+        return {
+          ...withLock,
+          data: {
+            ...node.data,
+            onUpdateText: (updates: Record<string, unknown>) =>
+              updateNodeData(node.id, updates),
+          },
+        };
+      }
+      return withLock;
     });
   });
 
   const nodeTypes = {
     entity: EntityNode,
     file: FileNode,
+    text: TextNode,
     delveRoom: DelveRoomNode,
     delveSectorGroup: DelveSectorNode,
     adventureNode: AdventureNode,
@@ -331,21 +394,21 @@
     logic.removeDrawing(drawingId);
   }
 
-  function handleDrawingLayerPointerDown(event: PointerEvent) {
-    if (isErasingMode) {
-      const drawingId =
-        event.target instanceof Element
-          ? event.target.closest<SVGPathElement>("[data-drawing-id]")?.dataset
-              .drawingId
-          : undefined;
-      if (drawingId) eraseDrawing(event, drawingId);
-      return;
-    }
-    handleDrawingPointerDown(event);
+  function handleEraseLayerPointerDown(event: PointerEvent) {
+    const drawingId =
+      event.target instanceof Element
+        ? event.target.closest<SVGPathElement>("[data-drawing-id]")?.dataset
+            .drawingId
+        : undefined;
+    if (drawingId) eraseDrawing(event, drawingId);
   }
 
   function handleDrawingColorChange(color: string) {
     drawingColor = normalizeCanvasDrawingColor(color);
+  }
+
+  function handleDrawingWidthChange(width: number) {
+    drawingWidth = normalizeCanvasDrawingWidth(width);
   }
 
   function handleDrawingPointerDown(event: PointerEvent) {
@@ -361,11 +424,11 @@
     event.preventDefault();
     event.stopPropagation();
     activeDrawingPointerId = event.pointerId;
-    (event.currentTarget as SVGSVGElement).setPointerCapture(event.pointerId);
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     activeDrawing = {
       id: `drawing-${systemIdGenerator.uuid()}`,
       color: drawingColor,
-      width: 4,
+      width: drawingWidth,
       points: [drawingPointFromPointer(event)],
     };
   }
@@ -398,7 +461,7 @@
 
     event.preventDefault();
     event.stopPropagation();
-    const target = event.currentTarget as SVGSVGElement;
+    const target = event.currentTarget as HTMLElement;
     if (target.hasPointerCapture(event.pointerId)) {
       target.releasePointerCapture(event.pointerId);
     }
@@ -407,10 +470,38 @@
     if (!cancelled) logic.addDrawing(completedDrawing);
   }
 
+  function isEditableTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLElement)) return false;
+    return (
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable
+    );
+  }
+
+  function undoLastDrawing() {
+    const last = logic.drawings[logic.drawings.length - 1];
+    if (!last) return false;
+    logic.removeDrawing(last.id);
+    return true;
+  }
+
   function handleDrawingKeydown(event: KeyboardEvent) {
     if (event.key === "Escape" && activeDrawing) {
       event.preventDefault();
       cancelActiveDrawing();
+      return;
+    }
+    if (
+      (event.key === "z" || event.key === "Z") &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.shiftKey &&
+      !vault.isGuest &&
+      !isEditableTarget(event.target)
+    ) {
+      if (undoLastDrawing()) {
+        event.preventDefault();
+      }
     }
   }
 
@@ -1067,6 +1158,88 @@
     }
   }
 
+  function imageFileFromBlob(blob: Blob, mimeType: string) {
+    const extension = mimeType.split("/")[1]?.split("+")[0] || "png";
+    return new File([blob], `pasted-image-${Date.now()}.${extension}`, {
+      type: mimeType,
+    });
+  }
+
+  function extractImageFilesFromClipboardData(
+    clipboardData: DataTransfer | null,
+  ) {
+    if (!clipboardData) return [];
+    return Array.from(clipboardData.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+  }
+
+  async function extractImageFilesFromClipboardItems(items: ClipboardItem[]) {
+    const files: File[] = [];
+    for (const item of items) {
+      const imageType = item.types.find((type) => type.startsWith("image/"));
+      if (!imageType) continue;
+      const blob = await item.getType(imageType);
+      files.push(imageFileFromBlob(blob, imageType));
+    }
+    return files;
+  }
+
+  function centerScreenPosition() {
+    return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  }
+
+  function handleAddTextNode(screenPosition?: { x: number; y: number }) {
+    if (vault.isGuest) return;
+    const position = logic.screenToFlowPosition(
+      screenPosition ?? centerScreenPosition(),
+    );
+    const nodeId = engine.addTextNode("", position);
+    const { max } = stackableNodeZIndexBounds();
+    const node = createFlowTextNode("", position, nodeId);
+    logic.nodes = [
+      ...logic.nodes,
+      { ...node, data: { ...node.data, zIndex: max + 1 } },
+    ];
+    logic.saveNow();
+  }
+
+  async function handleCanvasPaste(event: ClipboardEvent) {
+    if (vault.isGuest || isEditableTarget(event.target)) return;
+    const files = extractImageFilesFromClipboardData(event.clipboardData);
+    if (files.length === 0) return;
+    event.preventDefault();
+    await handleExternalFiles(files, centerScreenPosition());
+  }
+
+  async function handlePasteFromClipboard(screenPosition: {
+    x: number;
+    y: number;
+  }) {
+    if (vault.isGuest) return;
+    if (!navigator.clipboard?.read) {
+      notificationStore.notify(
+        "Pasting from the clipboard isn't supported in this browser.",
+        "error",
+      );
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      const files = await extractImageFilesFromClipboardItems(items);
+      if (files.length === 0) {
+        notificationStore.notify("No image found in clipboard.", "info");
+        return;
+      }
+      await handleExternalFiles(files, screenPosition);
+    } catch {
+      notificationStore.notify(
+        "Couldn't read the clipboard. Your browser may need permission.",
+        "error",
+      );
+    }
+  }
+
   async function handleOpenOrCreateSourceEntity() {
     if (sourceEntityId && vault.entities[sourceEntityId]) {
       modalUIStore.openZenMode(sourceEntityId);
@@ -1247,6 +1420,7 @@
 
 <svelte:window
   onkeydown={handleDrawingKeydown}
+  onpaste={handleCanvasPaste}
   onpointermove={handleRotationPointerMove}
   onpointerup={finishNodeRotation}
   onpointercancel={finishNodeRotation}
@@ -1282,14 +1456,21 @@
         : undefined}
       onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
+      {showMinimap}
+      onToggleMinimap={() => (showMinimap = !showMinimap)}
       onUploadFiles={!vault.isGuest ? handleExternalFiles : undefined}
+      onAddTextNode={!vault.isGuest ? () => handleAddTextNode() : undefined}
       {isDrawingMode}
       {isErasingMode}
       {drawingColor}
+      {drawingWidth}
       onToggleDrawing={!vault.isGuest ? toggleDrawingMode : undefined}
       onToggleErasing={!vault.isGuest ? toggleErasingMode : undefined}
       onDrawingColorChange={!vault.isGuest
         ? handleDrawingColorChange
+        : undefined}
+      onDrawingWidthChange={!vault.isGuest
+        ? handleDrawingWidthChange
         : undefined}
       onAddAdventureNode={canvas?.metadata?.kind === "adventure" ||
       sourceEntity?.kind === "adventure" ||
@@ -1361,24 +1542,38 @@
             </button>
           </NodeToolbar>
         {/if}
+        <!--
+          Freehand drawing input lives here, outside ViewportPortal, so it
+          always covers the full visible pane regardless of zoom. Content
+          inside ViewportPortal is scaled/translated together with the flow
+          viewport for rendering, which means its own layout box (the thing
+          a background pointerdown needs to land inside) shrinks well below
+          the visible pane at any zoom other than 100% - fitView rarely lands
+          on exactly 100%, so drawing would only "activate" near the flow's
+          transform origin, i.e. wherever the canvas happened to be anchored
+          on screen (in practice, near the top-left HUD).
+        -->
+        <div
+          class="canvas-draw-input-layer"
+          data-testid="canvas-draw-input-layer"
+          role="img"
+          aria-label="Canvas drawing surface"
+          style:pointer-events={isDrawingMode ? "auto" : "none"}
+          style:cursor={isDrawingMode ? "crosshair" : undefined}
+          onpointerdown={handleDrawingPointerDown}
+          onpointermove={handleDrawingPointerMove}
+          onpointerup={(event) => finishDrawing(event)}
+          onpointercancel={(event) => finishDrawing(event, true)}
+        ></div>
         <ViewportPortal target="front">
           <svg
             class="canvas-drawing-layer"
             data-testid="canvas-drawing-layer"
             role="img"
-            aria-label="Canvas drawing surface"
-            style:pointer-events={isDrawingMode || isErasingMode
-              ? "auto"
-              : "none"}
-            style:cursor={isDrawingMode
-              ? "crosshair"
-              : isErasingMode
-                ? "pointer"
-                : undefined}
-            onpointerdown={handleDrawingLayerPointerDown}
-            onpointermove={handleDrawingPointerMove}
-            onpointerup={(event) => finishDrawing(event)}
-            onpointercancel={(event) => finishDrawing(event, true)}
+            aria-label="Canvas drawing strokes"
+            style:pointer-events={isErasingMode ? "auto" : "none"}
+            style:cursor={isErasingMode ? "pointer" : undefined}
+            onpointerdown={handleEraseLayerPointerDown}
           >
             {#each logic.drawings as drawing (drawing.id)}
               {#if isErasingMode}
@@ -1423,7 +1618,12 @@
         {#if !sessionModeStore.isGuestMode}
           <Controls />
         {/if}
-        <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
+        {#if showMinimap}
+          <MiniMap
+            position="top-right"
+            nodeColor="var(--color-theme-primary)"
+          />
+        {/if}
       </SvelteFlow>
     </div>
 
@@ -1465,6 +1665,12 @@
       onToggleLock={logic.contextMenu?.type === "node" && logic.contextMenu.id
         ? () => toggleNodeLock(logic.contextMenu!.id)
         : undefined}
+      onBringToFront={contextMenuNodeStackable
+        ? () => bringNodeToFront(logic.contextMenu!.id)
+        : undefined}
+      onSendToBack={contextMenuNodeStackable
+        ? () => sendNodeToBack(logic.contextMenu!.id)
+        : undefined}
       onDelete={logic.handleDelete}
       onRename={() => {
         const edge = logic.edges.find((e) => e.id === logic.contextMenu?.id);
@@ -1481,6 +1687,41 @@
           x: logic.contextMenu?.x || 0,
           y: logic.contextMenu?.y || 0,
         })}
+      onPaste={!vault.isGuest
+        ? () =>
+            handlePasteFromClipboard({
+              x: logic.contextMenu?.x || 0,
+              y: logic.contextMenu?.y || 0,
+            })
+        : undefined}
+      onAddTextNode={!vault.isGuest
+        ? () =>
+            handleAddTextNode({
+              x: logic.contextMenu?.x || 0,
+              y: logic.contextMenu?.y || 0,
+            })
+        : undefined}
+      textNodeBackground={normalizeCanvasTextBackground(
+        (contextMenuTextNode?.data as any)?.background ?? "",
+        DEFAULT_CANVAS_TEXT_BACKGROUND,
+      )}
+      textNodeFontSize={normalizeCanvasTextFontSize(
+        (contextMenuTextNode?.data as any)?.fontSize,
+        DEFAULT_CANVAS_TEXT_FONT_SIZE,
+      )}
+      onTextNodeBackgroundChange={contextMenuTextNode && !vault.isGuest
+        ? (background: string) =>
+            updateNodeData(contextMenuTextNode!.id, {
+              background: normalizeCanvasTextBackground(
+                background,
+                DEFAULT_CANVAS_TEXT_BACKGROUND,
+              ),
+            })
+        : undefined}
+      onTextNodeFontSizeChange={contextMenuTextNode && !vault.isGuest
+        ? (fontSize: number) =>
+            updateNodeData(contextMenuTextNode!.id, { fontSize })
+        : undefined}
       onClose={() => (logic.contextMenu = null)}
     />
   {/if}
@@ -1639,6 +1880,11 @@
     border: 1px solid var(--color-border-primary) !important;
     border-radius: 8px !important;
   }
+  @media (max-width: 639px) {
+    :global(.svelte-flow__minimap) {
+      display: none !important;
+    }
+  }
   :global(.svelte-flow__minimap-mask) {
     fill: var(--color-theme-primary) !important;
     fill-opacity: 0.1 !important;
@@ -1651,6 +1897,28 @@
     z-index: 30;
   }
 
+  /*
+   * Without this, the browser treats a single-finger drag on the pane or a
+   * node as a native scroll/zoom gesture instead of handing it to SvelteFlow's
+   * own pointer-driven pan/drag, so touch dragging never starts. Same fix
+   * already applied to MapView and the family-tree PanZoomContainer.
+   */
+  :global(.svelte-flow) {
+    touch-action: none;
+  }
+
+  /*
+   * Rotation is applied here, to the node's content element, rather than to
+   * `.svelte-flow__node` itself. SvelteFlow positions that wrapper with
+   * `transform: translate(...)`, and combining that with a standalone
+   * `rotate` property on the same element breaks their shared
+   * transform-origin, making the node visually jump instead of spinning in
+   * place around its own center.
+   */
+  :global(.svelte-flow__node > *) {
+    rotate: var(--canvas-node-rotate, 0deg);
+  }
+
   :global(.svelte-flow__panel) {
     z-index: 40 !important;
   }
@@ -1661,6 +1929,22 @@
     width: 100%;
     height: 100%;
     overflow: visible;
+    touch-action: none;
+    user-select: none;
+  }
+
+  /*
+   * Unlike .canvas-drawing-layer (inside ViewportPortal, scaled/panned with
+   * the flow viewport), this sits outside it as a plain SvelteFlow child, so
+   * it's never transformed and always spans the full visible pane. See the
+   * comment above its markup for why that matters.
+   */
+  .canvas-draw-input-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 25;
     touch-action: none;
     user-select: none;
   }
