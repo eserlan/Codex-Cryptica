@@ -746,6 +746,8 @@ function worldOptions(request: GeneratorRunRequest): WorldGeneratorOptions {
     worldTagOne: optionString(request, "worldTagOne", ""),
     worldTagTwo: optionString(request, "worldTagTwo", ""),
     genre: optionString(request, "genre", ""),
+    lancerWorldFrame: optionString(request, "lancerWorldFrame", ""),
+    campaignPressure: optionString(request, "campaignPressure", ""),
     dominantFeature: optionString(request, "dominantFeature", ""),
     avoidNames: [
       ...(request.vaultContext?.bannedNames ?? []),
@@ -1190,6 +1192,10 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         id: "societalModel",
         label: "Primary Societal Model",
         control: "select",
+        visibleWhen: {
+          optionId: "genre",
+          notValues: ["Lancer"],
+        },
         choices: worldConfig.societalModels.map((value) => ({
           value,
           label: value,
@@ -1197,7 +1203,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       },
       {
         id: "worldTagOne",
-        label: "World Tag 1 (SWN)",
+        label: "World Tag 1",
         description:
           "First Stars Without Number world tag shaping the setting.",
         control: "select",
@@ -1208,7 +1214,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       },
       {
         id: "worldTagTwo",
-        label: "World Tag 2 (SWN)",
+        label: "World Tag 2",
         description:
           "Second tag to combine with the first; choose a different pressure.",
         control: "select",
@@ -1222,6 +1228,28 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         label: "Genre / Tone",
         control: "select",
         choices: worldConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "lancerWorldFrame",
+        label: "Lancer World Frame",
+        description:
+          "Political and geographic frame for a Lancer campaign world.",
+        control: "select",
+        visibleWhen: { optionId: "genre", values: ["Lancer"] },
+        choices: worldConfig.lancerWorldFrames.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "campaignPressure",
+        label: "Campaign Pressure",
+        description: "The central political or social conflict for the world.",
+        control: "select",
+        choices: worldConfig.campaignPressures.map((value) => ({
+          value,
+          label: value,
+        })),
       },
       {
         id: "dominantFeature",
@@ -1239,6 +1267,8 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       worldTagOne: "Colonized Population",
       worldTagTwo: "Local Specialty",
       genre: "Hard Sci-Fi",
+      lancerWorldFrame: "Union Core World",
+      campaignPressure: "Resource Access and Rationing",
       dominantFeature: "",
     },
     generate: generateWorld,
