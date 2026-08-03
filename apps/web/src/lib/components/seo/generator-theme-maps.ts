@@ -23,6 +23,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "ship-generator",
   "language-generator",
   "news-sheet-generator",
+  "world",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
@@ -44,6 +45,7 @@ export const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   western: "Western",
   steampunk: "Steampunk",
   lancer: "Lancer",
+  "space-opera-resistance": "Space Opera Resistance",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
 };
 
@@ -69,6 +71,7 @@ export const HUB_LABELS: Record<string, string> = {
   western: "Western Hub",
   steampunk: "Steampunk Hub",
   lancer: "Lancer Hub",
+  "space-opera-resistance": "Space Opera Resistance Hub",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi Hub",
 };
 
@@ -103,6 +106,7 @@ export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
   western: "western",
   steampunk: "steampunk",
   lancer: "lancer",
+  "space-opera-resistance": "space-opera-resistance",
   "optimistic-exploration-sci-fi": "startrek",
 };
 
@@ -158,4 +162,11 @@ export function mapShipGenreToTheme(genre: string): string | null {
   };
 
   return themeByGenre[genre] ?? null;
+}
+
+export function mapWorldGenreToTheme(genre: string): string {
+  if (genre === "Space Opera") return "Star Wars";
+  if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
+  if (genre === "Hopeful Sci-Fi") return "Optimistic Exploration Sci-Fi";
+  return "Sci-Fi / Space Opera";
 }

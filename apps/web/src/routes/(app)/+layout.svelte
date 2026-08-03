@@ -45,6 +45,7 @@
     setupWindowGlobals,
     registerServiceWorker,
   } from "$lib/app/init/app-init";
+  import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
   import {
     decideFirstRunAction,
@@ -139,6 +140,11 @@
     if (browser && !globalListenersCleanup) {
       globalListenersCleanup = initializeGlobalListeners();
     }
+  });
+
+  onMount(() => {
+    if (!browser) return;
+    return initFullscreenOnFirstInteraction();
   });
 
   $effect(() => {

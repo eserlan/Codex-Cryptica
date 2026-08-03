@@ -3,6 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
+import type { ThemeSlug } from "./+page";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -56,6 +57,22 @@ describe("Generator Theme Hub Page", () => {
     expect(link).toBeTruthy();
     expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
   });
+
+  it.each([
+    ["sci-fi", "Sci-Fi"],
+    ["cyberpunk", "Cyberpunk"],
+    ["lancer", "Lancer"],
+    ["space-opera-resistance", "Space Opera Resistance"],
+    ["optimistic-exploration-sci-fi", "Optimistic Sci-Fi"],
+  ] satisfies readonly [ThemeSlug, string][])(
+    "shows the World Generator on the %s hub",
+    (theme, _label) => {
+      render(Page, { props: { data: { theme } } });
+
+      const link = screen.getByRole("link", { name: /world generator/i });
+      expect(link.getAttribute("href")).toBe(`/generators/${theme}/world`);
+    },
+  );
 
   it("renders a cosmic-horror hub without vampire generator content", () => {
     render(Page, {

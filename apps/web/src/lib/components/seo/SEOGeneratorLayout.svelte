@@ -128,6 +128,7 @@
     "Vampire / Gothic Noir": "horror",
     "Cosmic Horror": "cosmic_horror",
     "Sci-Fi / Space Opera": "scifi",
+    "Star Wars": "starwars",
     "Modern Conspiracy": "modern",
     "Post-Apocalyptic": "apocalyptic",
     "Western / Frontier": "western",

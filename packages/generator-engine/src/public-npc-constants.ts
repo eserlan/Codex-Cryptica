@@ -1,5 +1,6 @@
 export const BANNED_NAMES = [
   "Aethel",
+  "Aethelgard",
   "Vance",
   "Vane",
   "Elara",
