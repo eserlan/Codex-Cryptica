@@ -6,7 +6,11 @@ import {
   type Edge,
   type Connection,
 } from "@xyflow/svelte";
-import { CanvasStore, type Canvas } from "@codex/canvas-engine";
+import {
+  CanvasStore,
+  type Canvas,
+  type CanvasDrawing,
+} from "@codex/canvas-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
@@ -36,6 +40,7 @@ export function createCanvasLogic(
 
   let nodes = $state<Node[]>([]);
   let edges = $state<Edge[]>([]);
+  let drawings = $state<CanvasDrawing[]>([]);
   let activeCategories = $state(new Set<string>());
   let isConnecting = $state(false);
   let hasInitialized = $state(false);
@@ -105,6 +110,7 @@ export function createCanvasLogic(
     const currentCanvasId = explicitCanvasId || targetCanvasId;
     const currentNodes = untrack(() => nodes);
     const currentEdges = untrack(() => edges);
+    const currentDrawings = untrack(() => drawings);
 
     await tick();
 
@@ -138,6 +144,7 @@ export function createCanvasLogic(
       id: currentCanvasId,
       nodes: canvasNodes,
       edges: canvasEdges,
+      drawings: currentDrawings,
       metadata: {
         ...(existing.metadata || {}),
       },
@@ -280,6 +287,12 @@ export function createCanvasLogic(
     saveCanvas();
   }
 
+  function addDrawing(drawing: CanvasDrawing) {
+    drawings = [...drawings, drawing];
+    getEngine().drawings = drawings;
+    untrack(() => saveCanvas());
+  }
+
   function handleQuickSpawn(
     entityId: string,
     eventPosition?: { x: number; y: number },
@@ -370,21 +383,25 @@ export function createCanvasLogic(
 
           nodes = graph.nodes;
           edges = graph.edges;
+          drawings = data.drawings ?? [];
 
           try {
             getEngine().nodes = flowNodesToCanvasNodes(graph.nodes);
             getEngine().edges = graph.edges.map((e) =>
               flowEdgeToCanvasEdge(e, () => `edge-${idGenerator.uuid()}`),
             );
+            getEngine().drawings = drawings;
           } catch {
             // Ignore engine sync errors if facade not loaded
           }
         } else {
           nodes = [];
           edges = [];
+          drawings = [];
           try {
             getEngine().nodes = [];
             getEngine().edges = [];
+            getEngine().drawings = [];
           } catch {
             // Ignore engine sync errors if facade not loaded
           }
@@ -419,6 +436,8 @@ export function createCanvasLogic(
     const currentNodes = nodes;
     getEngine().nodes = flowNodesToCanvasNodes(currentNodes);
 
+    getEngine().drawings = drawings;
+
     debouncedSave();
   }
 
@@ -449,6 +468,12 @@ export function createCanvasLogic(
     },
     set edges(val) {
       edges = val;
+    },
+    get drawings() {
+      return drawings;
+    },
+    set drawings(val) {
+      drawings = val;
     },
     get activeCategories() {
       return activeCategories;
@@ -494,6 +519,7 @@ export function createCanvasLogic(
     handleCreateEntity,
     handleDelete,
     saveLabelModal,
+    addDrawing,
     handleQuickSpawn,
     handleBatchSpawn,
     initializeCanvas,
