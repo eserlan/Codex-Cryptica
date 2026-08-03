@@ -15,6 +15,10 @@
     onOpenOrCreateSourceEntity,
     onAutoArrange,
     onUploadFiles,
+    isDrawingMode = false,
+    drawingColor = "#f97316",
+    onToggleDrawing,
+    onDrawingColorChange,
     onAddAdventureNode,
     activeCategories,
     onToggleCategory,
@@ -31,6 +35,10 @@
     onOpenOrCreateSourceEntity?: () => void;
     onAutoArrange?: () => void;
     onUploadFiles?: (files: File[]) => void | Promise<void>;
+    isDrawingMode?: boolean;
+    drawingColor?: string;
+    onToggleDrawing?: () => void;
+    onDrawingColorChange?: (color: string) => void;
     onAddAdventureNode?: (
       type: "location" | "npc" | "clue" | "threat" | "outcome" | "situation",
     ) => void;
@@ -118,6 +126,37 @@
         aria-label="Choose files to upload to canvas"
         onchange={handleFileSelection}
       />
+    {/if}
+
+    {#if onToggleDrawing}
+      <button
+        type="button"
+        onclick={onToggleDrawing}
+        title={isDrawingMode ? "Exit drawing mode" : "Draw on canvas"}
+        aria-label={isDrawingMode ? "Exit drawing mode" : "Draw on canvas"}
+        aria-pressed={isDrawingMode}
+        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isDrawingMode
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+          : ''}"
+      >
+        <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
+      </button>
+      <label
+        class="flex h-8 items-center gap-1 border border-theme-primary/30 bg-theme-surface/80 px-1.5 shadow-sm backdrop-blur-md"
+        title="Drawing color"
+      >
+        <span class="sr-only">Drawing color</span>
+        <input
+          type="color"
+          value={drawingColor}
+          aria-label="Drawing color"
+          class="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+          oninput={(event) =>
+            onDrawingColorChange?.(
+              (event.currentTarget as HTMLInputElement).value,
+            )}
+        />
+      </label>
     {/if}
 
     {#if onAddAdventureNode}

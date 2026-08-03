@@ -76,6 +76,47 @@ describe("createCanvasLogic idGenerator dependency injection", () => {
     expect(logic.edges[0].id).toBe("edge-fake-uuid-1");
   });
 
+  it("loads and persists drawings without changing node or edge state", async () => {
+    const canvas = {
+      id: "canvas-drawing",
+      name: "Drawing Canvas",
+      slug: "drawing-canvas",
+      nodes: [],
+      edges: [],
+      drawings: [
+        {
+          id: "drawing-existing",
+          color: "#ff00aa",
+          width: 4,
+          points: [{ x: 10, y: 20 }],
+        },
+      ],
+    };
+    (vault as any).canvases = { "canvas-drawing": canvas };
+    (canvasRegistry as any).allCanvases = [canvas];
+
+    const logic = createCanvasLogic(() => mockEngine as CanvasStore);
+    logic.initializeCanvas("drawing-canvas");
+
+    expect(logic.drawings).toHaveLength(1);
+    logic.addDrawing({
+      id: "drawing-new",
+      color: "#00ffaa",
+      width: 4,
+      points: [{ x: 30, y: 40 }],
+    });
+
+    await vi.waitFor(() =>
+      expect(vault.saveCanvas).toHaveBeenCalledWith("canvas-drawing", {
+        explicitVaultId: "vault-1",
+      }),
+    );
+    expect((vault as any).canvases["canvas-drawing"].drawings).toHaveLength(2);
+    expect(mockEngine.drawings).toHaveLength(2);
+    expect(logic.nodes).toEqual([]);
+    expect(logic.edges).toEqual([]);
+  });
+
   it("creates and reconnects Delve passages with synchronized metadata", () => {
     const logic = createCanvasLogic(() => mockEngine as CanvasStore, {
       uuid: () => "passage-uuid",
