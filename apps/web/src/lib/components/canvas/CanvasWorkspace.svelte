@@ -6,7 +6,9 @@
     Controls,
     MiniMap,
     ViewportPortal,
+    NodeToolbar,
     ConnectionMode,
+    Position,
     type Node,
   } from "@xyflow/svelte";
   import {
@@ -37,6 +39,7 @@
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
   import { tick, untrack } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
 
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
@@ -54,10 +57,14 @@
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
     autoArrangeCanvasNodes,
+    accumulateRotationDegrees,
+    canvasNodeRotation,
+    canvasNodeStyle,
     createFlowFileNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodesToCanvasNodes,
+    pointerAngleDegrees,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
   import { systemIdGenerator } from "$lib/utils/runtime-deps";
@@ -104,9 +111,32 @@
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
   let isDrawingMode = $state(false);
+  let isErasingMode = $state(false);
   let drawingColor = $state(DEFAULT_CANVAS_DRAWING_COLOR);
   let activeDrawing = $state<CanvasDrawing | null>(null);
   let activeDrawingPointerId = $state<number | null>(null);
+  let selectedRotationNodeId = $state<string | null>(null);
+  let isRotatingNode = $state(false);
+  const touchRotationPointers = new SvelteMap<
+    number,
+    { nodeId: string; x: number; y: number }
+  >();
+  let touchRotationGesture: {
+    nodeId: string;
+    pointerIds: [number, number];
+    previousAngle: number;
+    rotation: number;
+  } | null = null;
+  let desktopRotationGesture: {
+    nodeId: string;
+    pointerId: number;
+    center: CanvasDrawingPoint;
+    previousAngle: number;
+    rotation: number;
+  } | null = null;
+  const isCanvasToolActive = $derived(
+    isDrawingMode || isErasingMode || isRotatingNode,
+  );
   let autoPopulationCanvasId: string | null = null;
   const selectedRoomData = $derived.by(() => {
     if (!selectedRoomId) return null;
@@ -218,7 +248,11 @@
     })();
     return base.map((node) => {
       const locked = Boolean((node.data as any)?.locked);
-      const withLock = { ...node, draggable: !locked };
+      const withLock = {
+        ...node,
+        draggable: !locked,
+        style: canvasNodeStyle(node),
+      };
       return node.type === "file"
         ? {
             ...withLock,
@@ -278,7 +312,36 @@
 
   function toggleDrawingMode() {
     isDrawingMode = !isDrawingMode;
+    if (isDrawingMode) isErasingMode = false;
     if (!isDrawingMode) cancelActiveDrawing();
+  }
+
+  function toggleErasingMode() {
+    isErasingMode = !isErasingMode;
+    if (isErasingMode) {
+      isDrawingMode = false;
+      cancelActiveDrawing();
+    }
+  }
+
+  function eraseDrawing(event: PointerEvent, drawingId: string) {
+    if (!isErasingMode || vault.isGuest) return;
+    event.preventDefault();
+    event.stopPropagation();
+    logic.removeDrawing(drawingId);
+  }
+
+  function handleDrawingLayerPointerDown(event: PointerEvent) {
+    if (isErasingMode) {
+      const drawingId =
+        event.target instanceof Element
+          ? event.target.closest<SVGPathElement>("[data-drawing-id]")?.dataset
+              .drawingId
+          : undefined;
+      if (drawingId) eraseDrawing(event, drawingId);
+      return;
+    }
+    handleDrawingPointerDown(event);
   }
 
   function handleDrawingColorChange(color: string) {
@@ -349,6 +412,187 @@
       event.preventDefault();
       cancelActiveDrawing();
     }
+  }
+
+  function nodeIdFromPointerTarget(target: EventTarget | null) {
+    if (!(target instanceof Element)) return null;
+    return (
+      target.closest<HTMLElement>(".svelte-flow__node")?.dataset.id ?? null
+    );
+  }
+
+  function canRotateNode(nodeId: string) {
+    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
+    return Boolean(
+      node &&
+      node.type !== "delveSectorGroup" &&
+      !(node.data as Record<string, unknown> | undefined)?.locked,
+    );
+  }
+
+  function beginTouchRotation(event: PointerEvent) {
+    if (
+      event.pointerType !== "touch" ||
+      vault.isGuest ||
+      isDrawingMode ||
+      isErasingMode
+    ) {
+      return;
+    }
+    const nodeId = nodeIdFromPointerTarget(event.target);
+    if (!nodeId || !canRotateNode(nodeId)) return;
+
+    touchRotationPointers.set(event.pointerId, {
+      nodeId,
+      x: event.clientX,
+      y: event.clientY,
+    });
+    const matching = [...touchRotationPointers.entries()].filter(
+      ([, pointer]) => pointer.nodeId === nodeId,
+    );
+    if (matching.length !== 2 || touchRotationGesture) return;
+
+    const [[firstId, first], [secondId, second]] = matching;
+    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
+    touchRotationGesture = {
+      nodeId,
+      pointerIds: [firstId, secondId],
+      previousAngle: pointerAngleDegrees(first, second),
+      rotation: canvasNodeRotation(node),
+    };
+    selectedRotationNodeId = nodeId;
+    isRotatingNode = true;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function beginDesktopRotation(event: PointerEvent) {
+    const nodeId = selectedRotationNodeId;
+    if (
+      !nodeId ||
+      vault.isGuest ||
+      event.pointerType === "touch" ||
+      event.button !== 0 ||
+      !canRotateNode(nodeId)
+    ) {
+      return;
+    }
+    const nodeElement = [
+      ...document.querySelectorAll<HTMLElement>(".svelte-flow__node"),
+    ].find((element) => element.dataset.id === nodeId);
+    if (!nodeElement) return;
+    const bounds = nodeElement.getBoundingClientRect();
+    const center = {
+      x: bounds.left + bounds.width / 2,
+      y: bounds.top + bounds.height / 2,
+    };
+    const node = logic.nodes.find((candidate) => candidate.id === nodeId);
+    desktopRotationGesture = {
+      nodeId,
+      pointerId: event.pointerId,
+      center,
+      previousAngle: pointerAngleDegrees(center, {
+        x: event.clientX,
+        y: event.clientY,
+      }),
+      rotation: canvasNodeRotation(node),
+    };
+    isRotatingNode = true;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function rotateSelectedNodeWithKeyboard(event: KeyboardEvent) {
+    if (
+      !selectedRotationNodeId ||
+      (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
+    ) {
+      return;
+    }
+    const node = logic.nodes.find(
+      (candidate) => candidate.id === selectedRotationNodeId,
+    );
+    if (!node || !canRotateNode(node.id)) return;
+    const step = event.shiftKey ? 45 : 15;
+    const rotation =
+      canvasNodeRotation(node) + (event.key === "ArrowRight" ? step : -step);
+    logic.updateNodeRotation(node.id, rotation);
+    logic.saveNow();
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleRotationPointerMove(event: PointerEvent) {
+    if (touchRotationPointers.has(event.pointerId)) {
+      const current = touchRotationPointers.get(event.pointerId)!;
+      touchRotationPointers.set(event.pointerId, {
+        ...current,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }
+
+    if (touchRotationGesture) {
+      const [firstId, secondId] = touchRotationGesture.pointerIds;
+      const first = touchRotationPointers.get(firstId);
+      const second = touchRotationPointers.get(secondId);
+      if (
+        first &&
+        second &&
+        touchRotationGesture.pointerIds.includes(event.pointerId)
+      ) {
+        const angle = pointerAngleDegrees(first, second);
+        const rotation = accumulateRotationDegrees(
+          touchRotationGesture.rotation,
+          touchRotationGesture.previousAngle,
+          angle,
+        );
+        touchRotationGesture.rotation = rotation;
+        touchRotationGesture.previousAngle = angle;
+        logic.updateNodeRotation(touchRotationGesture.nodeId, rotation);
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+
+    if (
+      desktopRotationGesture &&
+      desktopRotationGesture.pointerId === event.pointerId
+    ) {
+      const angle = pointerAngleDegrees(desktopRotationGesture.center, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const rotation = accumulateRotationDegrees(
+        desktopRotationGesture.rotation,
+        desktopRotationGesture.previousAngle,
+        angle,
+      );
+      desktopRotationGesture.rotation = rotation;
+      desktopRotationGesture.previousAngle = angle;
+      logic.updateNodeRotation(desktopRotationGesture.nodeId, rotation);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  function finishNodeRotation(event: PointerEvent) {
+    const completedTouchGesture = Boolean(
+      touchRotationGesture?.pointerIds.includes(event.pointerId),
+    );
+    const completedDesktopGesture =
+      desktopRotationGesture?.pointerId === event.pointerId;
+    touchRotationPointers.delete(event.pointerId);
+    if (!completedTouchGesture && !completedDesktopGesture) return;
+
+    touchRotationGesture = null;
+    desktopRotationGesture = null;
+    isRotatingNode = false;
+    logic.saveNow();
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   let arrangedCanvasId = $state<string | null>(null);
@@ -435,6 +679,9 @@
   }
 
   function onNodeClick({ node }: { node: any }) {
+    if (!vault.isGuest && canRotateNode(node.id)) {
+      selectedRotationNodeId = node.id;
+    }
     if (node.type === "delveRoom") {
       roomEnhancementError = null;
       selectedRoomId = node.id;
@@ -448,6 +695,10 @@
       selectedAdventureNodeId = node.id;
       return;
     }
+  }
+
+  function onPaneClick() {
+    selectedRotationNodeId = null;
   }
 
   function onNodeDragStop({
@@ -994,7 +1245,12 @@
   });
 </script>
 
-<svelte:window onkeydown={handleDrawingKeydown} />
+<svelte:window
+  onkeydown={handleDrawingKeydown}
+  onpointermove={handleRotationPointerMove}
+  onpointerup={finishNodeRotation}
+  onpointercancel={finishNodeRotation}
+/>
 
 <div
   class="canvas-container {logic.isConnecting
@@ -1005,6 +1261,7 @@
     class="flex-1 relative"
     ondragover={onDragOver}
     ondrop={onDrop}
+    onpointerdowncapture={beginTouchRotation}
     role="region"
     aria-label="Canvas Workspace"
   >
@@ -1027,8 +1284,10 @@
       onAutoArrange={handleAutoArrange}
       onUploadFiles={!vault.isGuest ? handleExternalFiles : undefined}
       {isDrawingMode}
+      {isErasingMode}
       {drawingColor}
       onToggleDrawing={!vault.isGuest ? toggleDrawingMode : undefined}
+      onToggleErasing={!vault.isGuest ? toggleErasingMode : undefined}
       onDrawingColorChange={!vault.isGuest
         ? handleDrawingColorChange
         : undefined}
@@ -1061,6 +1320,7 @@
         }}
         onnodecontextmenu={onNodeContextMenu}
         onnodeclick={onNodeClick}
+        onpaneclick={onPaneClick}
         onnodedragstop={onNodeDragStop}
         onedgecontextmenu={onEdgeContextMenu}
         onedgeclick={onEdgeClick}
@@ -1070,24 +1330,71 @@
         zoomOnDoubleClick={false}
         proOptions={{ hideAttribution: true }}
         connectionLineComponent={ConnectionLine}
+        panOnDrag={!isCanvasToolActive}
+        nodesDraggable={!isCanvasToolActive}
+        nodesConnectable={!isCanvasToolActive}
+        elementsSelectable={!isCanvasToolActive}
+        zoomOnScroll={!isCanvasToolActive}
+        zoomOnPinch={!isCanvasToolActive}
         minZoom={0.01}
         maxZoom={9}
         fitView
       >
         <Background gap={20} />
+        {#if selectedRotationNodeId && canRotateNode(selectedRotationNodeId)}
+          <NodeToolbar
+            nodeId={selectedRotationNodeId}
+            position={Position.Top}
+            offset={18}
+            isVisible
+          >
+            <button
+              type="button"
+              class="nodrag nopan touch-none flex h-9 w-9 cursor-grab items-center justify-center rounded-full border border-theme-primary/50 bg-theme-surface text-theme-primary shadow-lg transition-colors hover:bg-theme-primary/15 active:cursor-grabbing"
+              title="Drag to rotate card; use arrow keys for precise rotation"
+              aria-label="Rotate selected card"
+              onpointerdown={beginDesktopRotation}
+              onkeydown={rotateSelectedNodeWithKeyboard}
+            >
+              <span class="icon-[lucide--rotate-cw] h-4 w-4" aria-hidden="true"
+              ></span>
+            </button>
+          </NodeToolbar>
+        {/if}
         <ViewportPortal target="front">
           <svg
             class="canvas-drawing-layer"
             data-testid="canvas-drawing-layer"
             role="img"
             aria-label="Canvas drawing surface"
-            style:pointer-events={isDrawingMode ? "auto" : "none"}
-            onpointerdown={handleDrawingPointerDown}
+            style:pointer-events={isDrawingMode || isErasingMode
+              ? "auto"
+              : "none"}
+            style:cursor={isDrawingMode
+              ? "crosshair"
+              : isErasingMode
+                ? "pointer"
+                : undefined}
+            onpointerdown={handleDrawingLayerPointerDown}
             onpointermove={handleDrawingPointerMove}
             onpointerup={(event) => finishDrawing(event)}
             onpointercancel={(event) => finishDrawing(event, true)}
           >
             {#each logic.drawings as drawing (drawing.id)}
+              {#if isErasingMode}
+                <path
+                  data-testid={`eraser-target-${drawing.id}`}
+                  data-drawing-id={drawing.id}
+                  d={drawingPath(drawing)}
+                  fill="none"
+                  stroke="transparent"
+                  stroke-width={Math.max(drawing.width + 12, 16)}
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  vector-effect="non-scaling-stroke"
+                  pointer-events="stroke"
+                />
+              {/if}
               <path
                 d={drawingPath(drawing)}
                 fill="none"

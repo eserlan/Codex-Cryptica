@@ -16,8 +16,10 @@
     onAutoArrange,
     onUploadFiles,
     isDrawingMode = false,
+    isErasingMode = false,
     drawingColor = "#f97316",
     onToggleDrawing,
+    onToggleErasing,
     onDrawingColorChange,
     onAddAdventureNode,
     activeCategories,
@@ -36,8 +38,10 @@
     onAutoArrange?: () => void;
     onUploadFiles?: (files: File[]) => void | Promise<void>;
     isDrawingMode?: boolean;
+    isErasingMode?: boolean;
     drawingColor?: string;
     onToggleDrawing?: () => void;
+    onToggleErasing?: () => void;
     onDrawingColorChange?: (color: string) => void;
     onAddAdventureNode?: (
       type: "location" | "npc" | "clue" | "threat" | "outcome" | "situation",
@@ -141,6 +145,22 @@
       >
         <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
       </button>
+      {#if onToggleErasing}
+        <button
+          type="button"
+          onclick={onToggleErasing}
+          title={isErasingMode ? "Exit eraser mode" : "Erase a drawing stroke"}
+          aria-label={isErasingMode
+            ? "Exit eraser mode"
+            : "Erase a drawing stroke"}
+          aria-pressed={isErasingMode}
+          class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isErasingMode
+            ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+            : ''}"
+        >
+          <span class="icon-[lucide--eraser] h-4 w-4" aria-hidden="true"></span>
+        </button>
+      {/if}
       <label
         class="flex h-8 items-center gap-1 border border-theme-primary/30 bg-theme-surface/80 px-1.5 shadow-sm backdrop-blur-md"
         title="Drawing color"
