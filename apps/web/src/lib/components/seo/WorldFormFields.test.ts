@@ -48,12 +48,8 @@ describe("WorldFormFields", () => {
     expect(screen.getByLabelText("Civilisation")).toBeTruthy();
     expect(screen.getByLabelText("Genre / Tone")).toBeTruthy();
     expect(screen.getByLabelText("Primary Societal Model")).toBeTruthy();
-    expect(
-      screen.getByLabelText("World Tag 1 (Stars Without Number)"),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText("World Tag 2 (Stars Without Number)"),
-    ).toBeTruthy();
+    expect(screen.getByLabelText("World Tag 1")).toBeTruthy();
+    expect(screen.getByLabelText("World Tag 2")).toBeTruthy();
     expect(screen.getByLabelText("Dominant feature (optional)")).toBeTruthy();
   });
 
@@ -94,26 +90,15 @@ describe("WorldFormFields", () => {
   it("keeps the two world tags distinct", async () => {
     render(WorldFormFields, { props });
 
-    await fireEvent.change(
-      screen.getByLabelText("World Tag 1 (Stars Without Number)"),
-      {
-        target: { value: "Local Specialty" },
-      },
-    );
+    await fireEvent.change(screen.getByLabelText("World Tag 1"), {
+      target: { value: "Local Specialty" },
+    });
 
     expect(
-      (
-        screen.getByLabelText(
-          "World Tag 1 (Stars Without Number)",
-        ) as HTMLSelectElement
-      ).value,
+      (screen.getByLabelText("World Tag 1") as HTMLSelectElement).value,
     ).toBe("Local Specialty");
     expect(
-      (
-        screen.getByLabelText(
-          "World Tag 2 (Stars Without Number)",
-        ) as HTMLSelectElement
-      ).value,
+      (screen.getByLabelText("World Tag 2") as HTMLSelectElement).value,
     ).not.toBe("Local Specialty");
   });
 

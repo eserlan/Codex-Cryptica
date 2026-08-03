@@ -1203,7 +1203,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       },
       {
         id: "worldTagOne",
-        label: "World Tag 1 (SWN)",
+        label: "World Tag 1",
         description:
           "First Stars Without Number world tag shaping the setting.",
         control: "select",
@@ -1214,7 +1214,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       },
       {
         id: "worldTagTwo",
-        label: "World Tag 2 (SWN)",
+        label: "World Tag 2",
         description:
           "Second tag to combine with the first; choose a different pressure.",
         control: "select",

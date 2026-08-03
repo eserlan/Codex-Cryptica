@@ -130,7 +130,7 @@
 
 <SelectWithCustomOption
   id="world-tag-one-select"
-  label="World Tag 1 (Stars Without Number)"
+  label="World Tag 1"
   bind:value={worldTagOne}
   choices={worldConfig.worldTags.map((value) => ({ value, label: value }))}
   className="flex flex-col gap-1.5"
@@ -142,7 +142,7 @@
 
 <SelectWithCustomOption
   id="world-tag-two-select"
-  label="World Tag 2 (Stars Without Number)"
+  label="World Tag 2"
   bind:value={worldTagTwo}
   choices={worldConfig.worldTags.map((value) => ({ value, label: value }))}
   className="flex flex-col gap-1.5"
