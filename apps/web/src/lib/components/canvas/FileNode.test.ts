@@ -175,6 +175,8 @@ describe("FileNode", () => {
     expect(preview.className).toContain("object-contain");
     expect(preview.className).not.toContain("object-cover");
     expect(screen.queryByText("uploaded-map.png")).toBeNull();
+    expect(screen.queryByText("2 KB")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open file" })).toBeNull();
     expect(
       screen.getByRole("checkbox", { name: "Show full image" }),
     ).toHaveProperty("checked", true);

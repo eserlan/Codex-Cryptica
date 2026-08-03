@@ -73,30 +73,22 @@
   });
 </script>
 
-<article
-  class="rounded-lg border bg-theme-surface p-3 shadow-lg {selected
-    ? 'border-theme-primary ring-2 ring-theme-primary/40'
-    : 'border-theme-border'} {hasCustomSize
-    ? 'flex h-full w-full flex-col'
-    : 'min-w-52 max-w-72'}"
-  aria-label={file ? `File: ${file.name}` : "Stored file"}
->
-  {#if canResize && selected}
-    <NodeResizer
-      minWidth={120}
-      minHeight={90}
-      keepAspectRatio
-      onResizeEnd={handleResizeEnd}
-    />
-  {/if}
-  {#if imageUrl}
-    <div
-      class="overflow-hidden rounded-md border border-theme-border bg-theme-bg/50 {hasCustomSize
-        ? 'min-h-0 flex-1'
-        : showFullImage
-          ? ''
-          : 'h-36'}"
-    >
+{#if showFullImage}
+  <article
+    class="relative overflow-hidden rounded-lg border bg-theme-surface shadow-lg {selected
+      ? 'border-theme-primary ring-2 ring-theme-primary/40'
+      : 'border-theme-border'} {hasCustomSize ? 'h-full w-full' : 'w-fit'}"
+    aria-label={file ? `File: ${file.name}` : "Stored file"}
+  >
+    {#if canResize && selected}
+      <NodeResizer
+        minWidth={120}
+        minHeight={90}
+        keepAspectRatio
+        onResizeEnd={handleResizeEnd}
+      />
+    {/if}
+    {#if imageUrl}
       <img
         src={imageUrl}
         alt={file?.name || "Uploaded image"}
@@ -104,52 +96,84 @@
         decoding="async"
         class={hasCustomSize
           ? "h-full w-full object-contain"
-          : showFullImage
-            ? "max-h-96 w-full object-contain"
-            : "h-full w-full object-cover"}
+          : "max-h-96 w-auto object-contain"}
         onerror={hideImagePreview}
       />
-    </div>
-  {/if}
-  <div class="flex items-start gap-2">
-    <span
-      class="{iconClass} mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
-      aria-hidden="true"
-    ></span>
-    <div class="min-w-0 flex-1">
-      {#if !showFullImage}
+    {/if}
+    <label
+      class="nodrag absolute top-1.5 right-1.5 flex cursor-pointer items-center rounded-md bg-theme-bg/80 p-1 backdrop-blur-sm"
+      title="Show full image"
+    >
+      <input
+        type="checkbox"
+        checked={showFullImage}
+        onchange={(e) => toggleShowFullImage(e.currentTarget.checked)}
+        aria-label="Show full image"
+        class="accent-theme-primary rounded"
+      />
+    </label>
+  </article>
+{:else}
+  <article
+    class="min-w-52 max-w-72 rounded-lg border bg-theme-surface p-3 shadow-lg {selected
+      ? 'border-theme-primary ring-2 ring-theme-primary/40'
+      : 'border-theme-border'}"
+    aria-label={file ? `File: ${file.name}` : "Stored file"}
+  >
+    {#if imageUrl}
+      <div
+        class="h-36 overflow-hidden rounded-md border border-theme-border bg-theme-bg/50"
+      >
+        <img
+          src={imageUrl}
+          alt={file?.name || "Uploaded image"}
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover"
+          onerror={hideImagePreview}
+        />
+      </div>
+    {/if}
+    <div class="flex items-start gap-2">
+      <span
+        class="{iconClass} mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
+        aria-hidden="true"
+      ></span>
+      <div class="min-w-0 flex-1">
         <p
           class="truncate text-sm font-semibold text-theme-text"
           title={file?.name}
         >
           {file?.name || "Stored file"}
         </p>
-      {/if}
-      <p class="mt-0.5 text-xs text-theme-muted">{sizeLabel}</p>
+        <p class="mt-0.5 text-xs text-theme-muted">{sizeLabel}</p>
+      </div>
     </div>
-  </div>
-  {#if isImage}
-    <label
-      class="nodrag mt-2 flex cursor-pointer items-center gap-1.5 text-xs text-theme-muted select-none"
-    >
-      <input
-        type="checkbox"
-        checked={showFullImage}
-        onchange={(e) => toggleShowFullImage(e.currentTarget.checked)}
-        class="accent-theme-primary rounded"
-      />
-      Show full image
-    </label>
-  {/if}
-  {#if file}
-    <button
-      type="button"
-      class="nodrag mt-3 inline-flex items-center gap-1 text-xs font-semibold text-theme-primary hover:text-theme-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-      onclick={openFile}
-    >
-      <span class="icon-[lucide--external-link] h-3.5 w-3.5" aria-hidden="true"
-      ></span>
-      Open file
-    </button>
-  {/if}
-</article>
+    {#if isImage}
+      <label
+        class="nodrag mt-2 flex cursor-pointer items-center gap-1.5 text-xs text-theme-muted select-none"
+      >
+        <input
+          type="checkbox"
+          checked={showFullImage}
+          onchange={(e) => toggleShowFullImage(e.currentTarget.checked)}
+          class="accent-theme-primary rounded"
+        />
+        Show full image
+      </label>
+    {/if}
+    {#if file}
+      <button
+        type="button"
+        class="nodrag mt-3 inline-flex items-center gap-1 text-xs font-semibold text-theme-primary hover:text-theme-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        onclick={openFile}
+      >
+        <span
+          class="icon-[lucide--external-link] h-3.5 w-3.5"
+          aria-hidden="true"
+        ></span>
+        Open file
+      </button>
+    {/if}
+  </article>
+{/if}
