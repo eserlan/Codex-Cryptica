@@ -8,11 +8,13 @@
     targetId,
     targetType = "node",
     isAdventure = false,
+    isLocked = false,
     onDelete,
     onRename,
     onRevise,
     onCreateEntity,
     onAddAdventureNode,
+    onToggleLock,
     onClose,
   } = $props<{
     x: number;
@@ -20,6 +22,7 @@
     targetId?: string;
     targetType?: "node" | "edge" | "pane";
     isAdventure?: boolean;
+    isLocked?: boolean;
     onDelete: () => void;
     onRename?: () => void;
     onRevise?: () => void;
@@ -27,6 +30,7 @@
     onAddAdventureNode?: (
       type: "location" | "npc" | "clue" | "threat" | "outcome" | "situation",
     ) => void;
+    onToggleLock?: () => void;
     onClose: () => void;
   }>();
 
@@ -221,6 +225,25 @@
       >
         <span class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"></span>
         Revise Content
+      </button>
+      <div class="border-t border-theme-border/30 my-1"></div>
+    {/if}
+
+    {#if targetType === "node" && onToggleLock}
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+        onclick={() => {
+          onToggleLock();
+          onClose();
+        }}
+      >
+        <span
+          class="{isLocked
+            ? 'icon-[lucide--lock-open]'
+            : 'icon-[lucide--lock]'} w-3.5 h-3.5"
+        ></span>
+        {isLocked ? "Unlock" : "Lock in Place"}
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
