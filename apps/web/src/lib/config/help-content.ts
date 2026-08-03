@@ -478,7 +478,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "spatial-canvas",
     title: "Spatial Canvas",
     content:
-      "Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, or use the pencil tool and color picker for freehand annotations. Drawings stay aligned while you pan and zoom, persist with the canvas, and work with mouse, stylus, or touch input.",
+      "Design custom layouts like conspiracy boards or quest flowcharts. Sketch with the pencil, remove individual strokes with the eraser, and rotate cards with a two-finger twist or the desktop rotation handle. Drawings and card angles persist with the canvas.",
     icon: "icon-[lucide--layout-dashboard]",
   },
   "the-archive": {

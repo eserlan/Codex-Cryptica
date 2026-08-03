@@ -12,8 +12,10 @@ const { canvasLogic, importFileToVault } = vi.hoisted(() => ({
     activeCategories: new Set(),
     nodes: [] as any[],
     edges: [],
-    drawings: [],
+    drawings: [] as any[],
     addDrawing: vi.fn(),
+    removeDrawing: vi.fn(),
+    updateNodeRotation: vi.fn(),
     initializeCanvas: vi.fn(),
     pruneNodes: vi.fn(),
     syncEngine: vi.fn(),
@@ -50,8 +52,13 @@ vi.mock("@xyflow/svelte", async () => ({
   ViewportPortal: (
     await import("./test-fixtures/SnippetPassthroughStub.svelte")
   ).default,
+  NodeToolbar: (await import("./test-fixtures/SnippetPassthroughStub.svelte"))
+    .default,
   ConnectionMode: {
     Loose: "Loose",
+  },
+  Position: {
+    Top: "top",
   },
 }));
 
@@ -158,6 +165,7 @@ describe("CanvasWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     canvasLogic.nodes = [];
+    canvasLogic.drawings = [];
     setGuestMode(false);
     modalUIStore.showCanvasSelector = false;
   });
@@ -213,6 +221,45 @@ describe("CanvasWorkspace", () => {
     expect(flow.dataset.elementsSelectable).toBe("true");
     expect(flow.dataset.zoomOnScroll).toBe("true");
     expect(flow.dataset.zoomOnPinch).toBe("true");
+  });
+
+  it("keeps draw and erase modes exclusive and locks viewport gestures while erasing", async () => {
+    canvasLogic.drawings = [
+      {
+        id: "stroke-1",
+        color: "#f97316",
+        width: 4,
+        points: [
+          { x: 10, y: 10 },
+          { x: 30, y: 30 },
+        ],
+      },
+    ];
+    render(CanvasWorkspace, { props: { engine: {} as any } });
+    const flow = screen.getByTestId("svelte-flow-interaction-stub");
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Draw on canvas" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Erase a drawing stroke" }),
+    );
+
+    expect(screen.getByRole("button", { name: "Draw on canvas" })).toBeTruthy();
+    expect(flow.dataset.panOnDrag).toBe("false");
+    expect(flow.dataset.zoomOnPinch).toBe("false");
+
+    await fireEvent.pointerDown(screen.getByTestId("eraser-target-stroke-1"), {
+      pointerId: 7,
+      pointerType: "mouse",
+      button: 0,
+    });
+    expect(canvasLogic.removeDrawing).toHaveBeenCalledWith("stroke-1");
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Exit eraser mode" }),
+    );
+    expect(flow.dataset.panOnDrag).toBe("true");
   });
 
   it("imports externally dropped files and adds matching file nodes", async () => {

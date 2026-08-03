@@ -117,6 +117,50 @@ describe("createCanvasLogic idGenerator dependency injection", () => {
     expect(logic.edges).toEqual([]);
   });
 
+  it("removes a clicked drawing and leaves an unknown drawing unchanged", async () => {
+    const canvas = {
+      id: "canvas-drawing",
+      slug: "drawing-canvas",
+      nodes: [],
+      edges: [],
+      drawings: [
+        {
+          id: "drawing-1",
+          color: "#ff00aa",
+          width: 4,
+          points: [{ x: 10, y: 20 }],
+        },
+      ],
+    };
+    (vault as any).canvases = { "canvas-drawing": canvas };
+    (canvasRegistry as any).allCanvases = [canvas];
+    const logic = createCanvasLogic(() => mockEngine as CanvasStore);
+    logic.initializeCanvas("drawing-canvas");
+
+    expect(logic.removeDrawing("missing")).toBe(false);
+    expect(logic.drawings).toHaveLength(1);
+    expect(logic.removeDrawing("drawing-1")).toBe(true);
+    expect(logic.drawings).toEqual([]);
+    expect(mockEngine.drawings).toEqual([]);
+    await vi.waitFor(() =>
+      expect(vault.saveCanvas).toHaveBeenCalledWith("canvas-drawing", {
+        explicitVaultId: "vault-1",
+      }),
+    );
+  });
+
+  it("updates arbitrary node rotation but rejects missing nodes and invalid values", () => {
+    const logic = createCanvasLogic(() => mockEngine as CanvasStore);
+    logic.nodes = [
+      { id: "node-1", position: { x: 0, y: 0 }, data: { title: "Card" } },
+    ] as any;
+
+    expect(logic.updateNodeRotation("missing", 45)).toBe(false);
+    expect(logic.updateNodeRotation("node-1", Number.NaN)).toBe(false);
+    expect(logic.updateNodeRotation("node-1", 765)).toBe(true);
+    expect(logic.nodes[0].data).toMatchObject({ title: "Card", rotation: 765 });
+  });
+
   it("creates and reconnects Delve passages with synchronized metadata", () => {
     const logic = createCanvasLogic(() => mockEngine as CanvasStore, {
       uuid: () => "passage-uuid",
