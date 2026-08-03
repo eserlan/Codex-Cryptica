@@ -106,6 +106,14 @@
     icon: "icon-[lucide--rocket]",
   };
 
+  const worldCard: GeneratorCard = {
+    slug: "world",
+    label: "Sci-Fi World Generator",
+    summary:
+      "Generate a planet, moon, or artificial world shaped by its environment, societies, conflicts, and adventure hooks.",
+    icon: "icon-[lucide--earth]",
+  };
+
   const pirateShipCard: GeneratorCard = {
     slug: "ship-generator",
     label: "Pirate Ship Generator",
@@ -264,6 +272,7 @@
           "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
         ),
         nomadClanCard,
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
@@ -290,6 +299,7 @@
           "Colony Generator",
           "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
         ),
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
@@ -366,6 +376,7 @@
           "Settlement Generator",
           "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
         ),
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
@@ -494,6 +505,7 @@
           "Settlement Generator",
           "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
         ),
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,
@@ -520,6 +532,7 @@
           "Settlement Generator",
           "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
+        worldCard,
         shipCard,
         socialHubCard,
         nationCard,

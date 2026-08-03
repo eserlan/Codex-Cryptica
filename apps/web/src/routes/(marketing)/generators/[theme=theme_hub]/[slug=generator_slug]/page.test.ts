@@ -13,6 +13,14 @@ describe("Themed Generator Route", () => {
       expect(res.slug).toBe("npc");
     });
 
+    it("loads the World Generator from a sci-fi hub", () => {
+      const res = load({
+        params: { theme: "sci-fi", slug: "world" },
+      } as any) as any;
+
+      expect(res).toEqual({ theme: "sci-fi", slug: "world" });
+    });
+
     it("throws 404 for an unknown theme", () => {
       expect(() =>
         load({ params: { theme: "unknown-theme", slug: "npc" } } as any),

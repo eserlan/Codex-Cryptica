@@ -11,6 +11,9 @@ describe("resolveHubGeneratorGenre", () => {
     expect(resolveHubGeneratorGenre("cyberpunk")).toBe("Cyberpunk");
     expect(resolveHubGeneratorGenre("vampire")).toBe("Horror");
     expect(resolveHubGeneratorGenre("cosmic-horror")).toBe("Cosmic Horror");
+    expect(resolveHubGeneratorGenre("space-opera-resistance")).toBe(
+      "Space Opera Resistance",
+    );
   });
 
   it("returns null for an unknown or missing theme", () => {

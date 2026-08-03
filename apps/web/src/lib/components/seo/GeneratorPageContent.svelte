@@ -24,6 +24,7 @@
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
+  import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -44,6 +45,7 @@
     newsSheetConfig,
     dungeonConfig,
     adventureConfig,
+    worldConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -83,6 +85,13 @@
     (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
   );
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
+
+  function worldGenreForHub(hubGenre: string | null): string {
+    if (hubGenre === "Cyberpunk") return "Cyberpunk";
+    if (hubGenre === "Optimistic Exploration Sci-Fi") return "Hopeful Sci-Fi";
+    if (hubGenre === "Space Opera Resistance") return "Space Opera";
+    return "Hard Sci-Fi";
+  }
 
   const meta = $derived(slugMeta[slug]);
 
@@ -289,6 +298,14 @@
     campaignContext: "",
   });
 
+  let world = $state({
+    worldType: worldConfig.worldTypes[0],
+    habitability: worldConfig.habitability[0],
+    civilisation: worldConfig.civilisations[0],
+    genre: worldGenreForHub(initialHubGenre),
+    dominantFeature: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -296,9 +313,15 @@
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
       ? localStorage.getItem("codex-cryptica-active-theme")
       : null);
+  const _worldInitialTheme = _initialUrlHubTheme
+    ? (SOCIAL_HUB_GENRE_TO_THEME[
+        resolveHubGeneratorGenre(_initialUrlHubTheme) ?? ""
+      ] ?? null)
+    : null;
 
   let activeTheme = $state(
-    (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
+    _worldInitialTheme ||
+      (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
       factionConfig.themes[0],
   );
   let lastSlug = $state(_initialSlug);
@@ -329,6 +352,11 @@
     else if (slug === "news-sheet-generator")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+    else if (slug === "world")
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[
+          resolveHubGeneratorGenre(hubContext.theme) ?? ""
+        ] ?? "Sci-Fi / Space Opera";
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
     else if (
       slug === "adventure-generator" ||
@@ -407,6 +435,14 @@
         ship.role = (shipConfig.rolesByGenre[mapped] ??
           shipConfig.rolesByGenre["Sci-Fi"])[0];
       }
+      activeTheme =
+        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
+        "Sci-Fi / Space Opera";
+      return;
+    }
+    if (slug === "world") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      world.genre = worldGenreForHub(hubGenre);
       activeTheme =
         (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
         "Sci-Fi / Space Opera";
@@ -517,6 +553,7 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
+    world: (useAI) => generatorEngine.generateWorld({ ...world, useAI }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -743,6 +780,15 @@
         bind:tone={adventure.tone}
         bind:seed={adventure.seed}
         bind:campaignContext={adventure.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "world"}
+      <WorldFormFields
+        bind:worldType={world.worldType}
+        bind:habitability={world.habitability}
+        bind:civilisation={world.civilisation}
+        bind:genre={world.genre}
+        bind:dominantFeature={world.dominantFeature}
         onSurprise={trigger}
       />
     {/if}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildWorldPrompt,
   generateWorldLocal,
+  parseWorldResponse,
   worldConfig,
 } from "./public-world";
 
@@ -56,5 +57,24 @@ describe("World Generator", () => {
     expect(prompt.userMessage).toContain("Star-system context");
     expect(prompt.userMessage).toContain("Climate & Geography");
     expect(prompt.userMessage).toContain("Adventure Hooks");
+  });
+
+  it("parses an AI world response into a location draft", () => {
+    const output = parseWorldResponse(
+      JSON.stringify({
+        title: "Meridian",
+        summary: "A world split by a permanent storm belt.",
+        lore: "## World Profile\nMeridian is a contested colony world.",
+        labels: ["world", "hard-sci-fi"],
+      }),
+    );
+
+    expect(output.type).toBe("location");
+    expect(output.content).toContain("## World Profile");
+    expect(output.labels).toEqual(["world", "hard-sci-fi"]);
+  });
+
+  it("rejects malformed AI world responses instead of accepting an unusable draft", () => {
+    expect(() => parseWorldResponse("not JSON")).toThrow();
   });
 });

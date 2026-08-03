@@ -62,6 +62,9 @@ import {
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
   generateAdventureLocal,
+  buildWorldPrompt,
+  parseWorldResponse,
+  generateWorldLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -80,6 +83,7 @@ import {
   type NewsSheetGeneratorOptions,
   type DungeonGeneratorOptions,
   type AdventureGeneratorOptions,
+  type WorldGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -117,6 +121,7 @@ export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
 export { dungeonConfig, forDungeonGenre } from "generator-engine";
 export { adventureConfig, forAdventureGenre } from "generator-engine";
+export { worldConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -693,6 +698,23 @@ export class DefaultGeneratorEngine {
         return first.output;
       },
       () => generateAdventureLocal(adventureOptions),
+    );
+  }
+
+  /** World generation delegates to the shared offline-first generator package. */
+  async generateWorld(
+    options: WorldGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...worldOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildWorldPrompt(worldOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseWorldResponse(text);
+      },
+      () => generateWorldLocal(worldOptions),
     );
   }
 }

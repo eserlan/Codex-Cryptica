@@ -57,6 +57,19 @@ describe("Generator Theme Hub Page", () => {
     expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
   });
 
+  it.each([
+    ["sci-fi", "Sci-Fi"],
+    ["cyberpunk", "Cyberpunk"],
+    ["lancer", "Lancer"],
+    ["space-opera-resistance", "Space Opera Resistance"],
+    ["optimistic-exploration-sci-fi", "Optimistic Sci-Fi"],
+  ])("shows the World Generator on the %s hub", (theme, _label) => {
+    render(Page, { props: { data: { theme } } });
+
+    const link = screen.getByRole("link", { name: /world generator/i });
+    expect(link.getAttribute("href")).toBe(`/generators/${theme}/world`);
+  });
+
   it("renders a cosmic-horror hub without vampire generator content", () => {
     render(Page, {
       props: {

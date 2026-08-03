@@ -5,6 +5,7 @@
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 
 export const worldConfig = {
@@ -208,5 +209,36 @@ Return JSON with "title", "summary", "labels", "connections", and a markdown "lo
 ## Adventure Hooks
 
 Make the output a coherent place, not a disconnected list of planetary traits. Include at least two named settlements or factions, three notable locations, one secret or unresolved mystery, and three playable adventure hooks.`,
+  };
+}
+
+/** Parse an AI world draft into the public generator output contract. */
+export function parseWorldResponse(text: string): PublicGeneratorOutput {
+  const data = parseFencedJson<{
+    title?: unknown;
+    summary?: unknown;
+    lore?: unknown;
+    labels?: unknown;
+  }>(text);
+
+  if (typeof data.title !== "string" || !data.title.trim()) {
+    throw new Error("World response is missing a title.");
+  }
+  if (typeof data.lore !== "string" || !data.lore.trim()) {
+    throw new Error("World response is missing lore.");
+  }
+
+  return {
+    type: "location",
+    title: data.title.trim(),
+    summary: typeof data.summary === "string" ? data.summary.trim() : "",
+    content: data.lore.trim(),
+    lore: data.lore.trim(),
+    labels: Array.isArray(data.labels)
+      ? data.labels.filter(
+          (label): label is string => typeof label === "string",
+        )
+      : ["world", "sci-fi", "imported-draft"],
+    status: "active",
   };
 }
