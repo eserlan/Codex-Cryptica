@@ -20,6 +20,45 @@ import {
 
 export type CanvasWorkspacePoint = { x: number; y: number };
 
+export function pointerAngleDegrees(
+  first: CanvasWorkspacePoint,
+  second: CanvasWorkspacePoint,
+) {
+  return (Math.atan2(second.y - first.y, second.x - first.x) * 180) / Math.PI;
+}
+
+export function accumulateRotationDegrees(
+  rotation: number,
+  previousPointerAngle: number,
+  pointerAngle: number,
+) {
+  if (
+    !Number.isFinite(rotation) ||
+    !Number.isFinite(previousPointerAngle) ||
+    !Number.isFinite(pointerAngle)
+  ) {
+    return rotation;
+  }
+
+  let delta = pointerAngle - previousPointerAngle;
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  return rotation + delta;
+}
+
+export function canvasNodeRotation(node: Node | undefined) {
+  const rotation = node?.data?.rotation;
+  return typeof rotation === "number" && Number.isFinite(rotation)
+    ? rotation
+    : 0;
+}
+
+export function canvasNodeStyle(node: Node) {
+  const rotation = canvasNodeRotation(node);
+  const existing = node.style?.trim();
+  return `${existing ? `${existing.replace(/;?$/, ";")}` : ""}rotate:${rotation}deg;`;
+}
+
 const DELVE_ROOM_WIDTH = 220;
 const DELVE_ROOM_HEIGHT = 120;
 const SECTOR_PADDING_X = 40;

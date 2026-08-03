@@ -293,6 +293,26 @@ export function createCanvasLogic(
     untrack(() => saveCanvas());
   }
 
+  function removeDrawing(drawingId: string) {
+    if (!drawings.some((drawing) => drawing.id === drawingId)) return false;
+    drawings = drawings.filter((drawing) => drawing.id !== drawingId);
+    getEngine().drawings = drawings;
+    untrack(() => saveCanvas());
+    return true;
+  }
+
+  function updateNodeRotation(nodeId: string, rotation: number) {
+    if (!Number.isFinite(rotation)) return false;
+    const node = nodes.find((candidate) => candidate.id === nodeId);
+    if (!node) return false;
+    nodes = nodes.map((candidate) =>
+      candidate.id === nodeId
+        ? { ...candidate, data: { ...candidate.data, rotation } }
+        : candidate,
+    );
+    return true;
+  }
+
   function handleQuickSpawn(
     entityId: string,
     eventPosition?: { x: number; y: number },
@@ -520,6 +540,8 @@ export function createCanvasLogic(
     handleDelete,
     saveLabelModal,
     addDrawing,
+    removeDrawing,
+    updateNodeRotation,
     handleQuickSpawn,
     handleBatchSpawn,
     initializeCanvas,

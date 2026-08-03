@@ -212,4 +212,24 @@ describe("CanvasHUD", () => {
       (screen.getByLabelText("Drawing color") as HTMLInputElement).value,
     ).toBe("#123456");
   });
+
+  it("exposes an exclusive eraser control with active-state semantics", async () => {
+    const onToggleErasing = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        onToggleDrawing: vi.fn(),
+        onToggleErasing,
+        isErasingMode: true,
+      },
+    });
+
+    const eraser = screen.getByRole("button", { name: "Exit eraser mode" });
+    expect(eraser.getAttribute("aria-pressed")).toBe("true");
+    await fireEvent.click(eraser);
+    expect(onToggleErasing).toHaveBeenCalledOnce();
+  });
 });

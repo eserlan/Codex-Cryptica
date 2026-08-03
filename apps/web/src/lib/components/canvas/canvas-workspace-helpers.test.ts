@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { Canvas } from "@codex/canvas-engine";
 import {
   buildCanvasSavePayload,
+  accumulateRotationDegrees,
   canvasEdgeToFlowEdge,
+  canvasNodeRotation,
+  canvasNodeStyle,
   canvasNodeToFlowNode,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
@@ -14,6 +17,7 @@ import {
   fitDelveSectorFrames,
   hydrateCanvasGraph,
   isGenericCanvasName,
+  pointerAngleDegrees,
   pruneCanvasGraph,
   reconnectFlowEdge,
   resolveBatchSpawnPosition,
@@ -21,6 +25,26 @@ import {
 } from "./canvas-workspace-helpers";
 
 describe("canvas-workspace-helpers", () => {
+  it("accumulates unlimited rotation without snapping at angle wraparound", () => {
+    expect(pointerAngleDegrees({ x: 0, y: 0 }, { x: 0, y: 10 })).toBe(90);
+    expect(accumulateRotationDegrees(710, 179, -179)).toBe(712);
+    expect(accumulateRotationDegrees(-710, -179, 179)).toBe(-712);
+  });
+
+  it("ignores invalid rotation data and composes rotation with node styles", () => {
+    const rotated = {
+      id: "node-1",
+      position: { x: 0, y: 0 },
+      style: "opacity:0.8",
+      data: { rotation: 405 },
+    } as any;
+    expect(canvasNodeRotation(rotated)).toBe(405);
+    expect(canvasNodeStyle(rotated)).toBe("opacity:0.8;rotate:405deg;");
+    expect(
+      canvasNodeRotation({ ...rotated, data: { rotation: Number.NaN } }),
+    ).toBe(0);
+  });
+
   it("hydrates canvas data into flow nodes and edges", () => {
     const graph = hydrateCanvasGraph({
       nodes: [
