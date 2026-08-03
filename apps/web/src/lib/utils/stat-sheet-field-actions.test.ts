@@ -39,6 +39,8 @@ vi.mock("dice-engine", () => ({
 }));
 
 import {
+  abilityModifier,
+  applyDerivedModifiers,
   computeAdjustedCounterValue,
   rollStatSheetDiceField,
 } from "./stat-sheet-field-actions";
@@ -52,6 +54,92 @@ function diceField(overrides: Partial<StatSheetField> = {}): StatSheetField {
     ...overrides,
   } as StatSheetField;
 }
+
+describe("abilityModifier", () => {
+  it("follows the standard D&D table", () => {
+    expect(abilityModifier(10)).toBe(0);
+    expect(abilityModifier(11)).toBe(0);
+    expect(abilityModifier(14)).toBe(2);
+    expect(abilityModifier(15)).toBe(2);
+    expect(abilityModifier(8)).toBe(-1);
+    expect(abilityModifier(1)).toBe(-5);
+  });
+});
+
+describe("applyDerivedModifiers", () => {
+  function scoreField(id: string, value: number): StatSheetField {
+    return {
+      id,
+      label: id.toUpperCase(),
+      type: "number",
+      value,
+    } as StatSheetField;
+  }
+
+  it("rewrites a dice field's flat modifier from its source score", () => {
+    const fields: StatSheetField[] = [
+      scoreField("str_score", 14),
+      {
+        id: "str",
+        label: "STR Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "str_score",
+      } as StatSheetField,
+    ];
+
+    const result = applyDerivedModifiers(fields);
+
+    expect(result.find((f) => f.id === "str")?.formula).toBe("1d20+2");
+  });
+
+  it("preserves a customized dice base, only rewriting the trailing modifier", () => {
+    const fields: StatSheetField[] = [
+      scoreField("dex_score", 8),
+      {
+        id: "dex",
+        label: "DEX Check",
+        type: "dice",
+        formula: "2d20kh1+0",
+        modifierSource: "dex_score",
+      } as StatSheetField,
+    ];
+
+    const result = applyDerivedModifiers(fields);
+
+    expect(result.find((f) => f.id === "dex")?.formula).toBe("2d20kh1-1");
+  });
+
+  it("leaves the field untouched when the source score has no value yet", () => {
+    const fields: StatSheetField[] = [
+      { id: "wis_score", label: "WIS", type: "number" } as StatSheetField,
+      {
+        id: "wis",
+        label: "WIS Check",
+        type: "dice",
+        formula: "1d20+0",
+        modifierSource: "wis_score",
+      } as StatSheetField,
+    ];
+
+    const result = applyDerivedModifiers(fields);
+
+    expect(result.find((f) => f.id === "wis")?.formula).toBe("1d20+0");
+  });
+
+  it("leaves fields without a modifierSource unchanged", () => {
+    const fields: StatSheetField[] = [
+      {
+        id: "atk",
+        label: "Attack",
+        type: "dice",
+        formula: "1d20+5",
+      } as StatSheetField,
+    ];
+
+    expect(applyDerivedModifiers(fields)).toEqual(fields);
+  });
+});
 
 describe("computeAdjustedCounterValue", () => {
   it("increments by the field's step", () => {

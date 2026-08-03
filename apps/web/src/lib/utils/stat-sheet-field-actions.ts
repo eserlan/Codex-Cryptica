@@ -95,3 +95,32 @@ export function computeAdjustedCounterValue(
   if (field.min !== undefined) next = Math.max(field.min, next);
   return next;
 }
+
+/** Standard D&D-style ability modifier: floor((score - 10) / 2). */
+export function abilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
+// Recomputes the flat modifier on every dice field that declares a
+// `modifierSource` (e.g. "STR Check" sourced from a "STR" score field),
+// keeping it in sync whenever the sheet's fields are persisted. The dice
+// notation ahead of the first +/- is preserved as-is (so a customized base
+// like "2d20kh1" survives), only the trailing modifier is rewritten.
+export function applyDerivedModifiers(
+  fields: StatSheetField[],
+): StatSheetField[] {
+  const byId = new Map(fields.map((f) => [f.id, f]));
+  return fields.map((field) => {
+    if (field.type !== "dice" || !field.modifierSource) return field;
+    const source = byId.get(field.modifierSource);
+    if (!source || typeof source.value !== "number") return field;
+
+    const mod = abilityModifier(source.value);
+    const base = field.formula?.match(/^[^+-]+/)?.[0] ?? "1d20";
+    const nextFormula = `${base}${mod >= 0 ? "+" : "-"}${Math.abs(mod)}`;
+
+    return nextFormula === field.formula
+      ? field
+      : { ...field, formula: nextFormula };
+  });
+}

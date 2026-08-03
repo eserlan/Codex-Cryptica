@@ -3,6 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import {
+    applyDerivedModifiers,
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
@@ -78,7 +79,7 @@
     vault.updateEntity(entity.id, {
       statSheet: {
         templateId: entity.statSheet?.templateId ?? null,
-        fields: nextFields,
+        fields: applyDerivedModifiers(nextFields),
       },
     });
   }

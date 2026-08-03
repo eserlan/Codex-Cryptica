@@ -75,7 +75,10 @@
     }
 
     const templateFields: StatSheetField[] =
-      statSheetTemplates.cloneTemplateFields(template);
+      statSheetTemplates.cloneTemplateFields(
+        template,
+        mode === "append" ? existingFields : [],
+      );
     const nextFields =
       mode === "append"
         ? [...existingFields, ...templateFields]

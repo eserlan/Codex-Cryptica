@@ -23,6 +23,13 @@ export const StatSheetFieldSchema = z.object({
   collapsed: z.boolean().optional(),
   favorite: z.boolean().optional(),
   barField: z.boolean().optional(),
+  // Id of another field on the same sheet (typically a "number" ability
+  // score) whose value drives this field's dice modifier — e.g. a "STR
+  // Check" dice field derives its flat bonus from a "STR" score field via
+  // the standard ability-modifier formula. Recomputed by
+  // applyDerivedModifiers (apps/web/.../stat-sheet-field-actions.ts)
+  // whenever the sheet's fields are persisted.
+  modifierSource: z.string().optional(),
 });
 
 export type StatSheetField = z.infer<typeof StatSheetFieldSchema>;

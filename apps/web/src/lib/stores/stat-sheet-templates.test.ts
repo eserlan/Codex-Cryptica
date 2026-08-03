@@ -252,7 +252,17 @@ describe("StatSheetTemplateStore", () => {
     expect(cloned.find((f) => f.label === "Misc")?.value).toBeUndefined();
   });
 
-  it("assigns fresh, non-colliding ids when cloning — so appending two templates that share field ids (e.g. two 'hp' fields) never produces duplicates", () => {
+  it("preserves the template's own field ids when cloning — so presentation templates referencing e.g. 'hp'/'ac' keep resolving after the template is applied", () => {
+    const dnd = BUILT_IN_STAT_SHEET_TEMPLATES.find(
+      (t) => t.id === "builtin-dnd-character",
+    )!;
+
+    const cloned = store.cloneTemplateFields(dnd);
+
+    expect(cloned.map((f) => f.id)).toEqual(dnd.fields.map((f) => f.id));
+  });
+
+  it("assigns a fresh id only when appending would otherwise collide with an existing field — so appending two templates that share field ids (e.g. two 'hp' fields) never produces duplicates", () => {
     const dnd = BUILT_IN_STAT_SHEET_TEMPLATES.find(
       (t) => t.id === "builtin-dnd-character",
     )!;
@@ -263,9 +273,10 @@ describe("StatSheetTemplateStore", () => {
     expect(dnd.fields.some((f) => f.id === "hp")).toBe(true);
     expect(npc.fields.some((f) => f.id === "hp")).toBe(true);
 
+    const dndFields = store.cloneTemplateFields(dnd);
     const appended = [
-      ...store.cloneTemplateFields(dnd),
-      ...store.cloneTemplateFields(npc),
+      ...dndFields,
+      ...store.cloneTemplateFields(npc, dndFields),
     ];
     const ids = appended.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
