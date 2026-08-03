@@ -12,6 +12,8 @@ const { canvasLogic, importFileToVault } = vi.hoisted(() => ({
     activeCategories: new Set(),
     nodes: [] as any[],
     edges: [],
+    drawings: [],
+    addDrawing: vi.fn(),
     initializeCanvas: vi.fn(),
     pruneNodes: vi.fn(),
     syncEngine: vi.fn(),
@@ -33,10 +35,9 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   },
 }));
 
-vi.mock("@xyflow/svelte", () => ({
-  SvelteFlow: function SvelteFlowMock() {
-    return {};
-  },
+vi.mock("@xyflow/svelte", async () => ({
+  SvelteFlow: (await import("./test-fixtures/SvelteFlowInteractionStub.svelte"))
+    .default,
   Background: function BackgroundMock() {
     return {};
   },
@@ -46,6 +47,9 @@ vi.mock("@xyflow/svelte", () => ({
   MiniMap: function MiniMapMock() {
     return {};
   },
+  ViewportPortal: (
+    await import("./test-fixtures/SnippetPassthroughStub.svelte")
+  ).default,
   ConnectionMode: {
     Loose: "Loose",
   },
@@ -134,10 +138,9 @@ vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
     .default,
 }));
 
-vi.mock("./CanvasHUD.svelte", () => ({
-  default: function CanvasHUDMock() {
-    return {};
-  },
+vi.mock("./CanvasHUD.svelte", async () => ({
+  default: (await import("./test-fixtures/CanvasHUDDrawingStub.svelte"))
+    .default,
 }));
 
 import CanvasWorkspace from "./CanvasWorkspace.svelte";
@@ -172,6 +175,44 @@ describe("CanvasWorkspace", () => {
       screen.getByRole("region", { name: "Canvas Workspace" }),
     ).toBeTruthy();
     expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
+  });
+
+  it("disables viewport gestures while drawing mode is active", async () => {
+    render(CanvasWorkspace, {
+      props: {
+        engine: {} as any,
+      },
+    });
+
+    const flow = screen.getByTestId("svelte-flow-interaction-stub");
+    expect(flow.dataset.panOnDrag).toBe("true");
+    expect(flow.dataset.nodesDraggable).toBe("true");
+    expect(flow.dataset.nodesConnectable).toBe("true");
+    expect(flow.dataset.elementsSelectable).toBe("true");
+    expect(flow.dataset.zoomOnScroll).toBe("true");
+    expect(flow.dataset.zoomOnPinch).toBe("true");
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Draw on canvas" }),
+    );
+
+    expect(flow.dataset.panOnDrag).toBe("false");
+    expect(flow.dataset.nodesDraggable).toBe("false");
+    expect(flow.dataset.nodesConnectable).toBe("false");
+    expect(flow.dataset.elementsSelectable).toBe("false");
+    expect(flow.dataset.zoomOnScroll).toBe("false");
+    expect(flow.dataset.zoomOnPinch).toBe("false");
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Exit drawing mode" }),
+    );
+
+    expect(flow.dataset.panOnDrag).toBe("true");
+    expect(flow.dataset.nodesDraggable).toBe("true");
+    expect(flow.dataset.nodesConnectable).toBe("true");
+    expect(flow.dataset.elementsSelectable).toBe("true");
+    expect(flow.dataset.zoomOnScroll).toBe("true");
+    expect(flow.dataset.zoomOnPinch).toBe("true");
   });
 
   it("imports externally dropped files and adds matching file nodes", async () => {

@@ -1070,6 +1070,12 @@
         zoomOnDoubleClick={false}
         proOptions={{ hideAttribution: true }}
         connectionLineComponent={ConnectionLine}
+        panOnDrag={!isDrawingMode}
+        nodesDraggable={!isDrawingMode}
+        nodesConnectable={!isDrawingMode}
+        elementsSelectable={!isDrawingMode}
+        zoomOnScroll={!isDrawingMode}
+        zoomOnPinch={!isDrawingMode}
         minZoom={0.01}
         maxZoom={9}
         fitView
