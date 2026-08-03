@@ -3,6 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
 
   let { entity, onClose = () => {} } = $props<{
     entity: Entity;
@@ -75,11 +76,15 @@
     }
 
     const templateFields: StatSheetField[] =
-      statSheetTemplates.cloneTemplateFields(template);
-    const nextFields =
+      statSheetTemplates.cloneTemplateFields(
+        template,
+        mode === "append" ? existingFields : [],
+      );
+    const nextFields = applyDerivedModifiers(
       mode === "append"
         ? [...existingFields, ...templateFields]
-        : templateFields;
+        : templateFields,
+    );
 
     await vault.updateEntity(entity.id, {
       statSheet: { templateId: template.id, fields: nextFields },

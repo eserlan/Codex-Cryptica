@@ -17,7 +17,10 @@
     resolvePresentationTemplate,
     validateAst,
   } from "@codex/stat-sheet-engine";
-  import { computeAdjustedCounterValue } from "$lib/utils/stat-sheet-field-actions";
+  import {
+    applyDerivedModifiers,
+    computeAdjustedCounterValue,
+  } from "$lib/utils/stat-sheet-field-actions";
 
   let { entity } = $props<{ entity: Entity }>();
 
@@ -68,7 +71,7 @@
     vault.updateEntity(entity.id, {
       statSheet: {
         templateId: entity.statSheet?.templateId ?? null,
-        fields: nextFields,
+        fields: applyDerivedModifiers(nextFields),
         presentationTemplateId:
           entity.statSheet?.presentationTemplateId ?? null,
       },
