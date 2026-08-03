@@ -301,7 +301,15 @@
                 key
                   ? 'border-theme-primary ring-2 ring-theme-primary/40 scale-110'
                   : 'border-theme-border/50'}"
-                style:background-color={canvasTextBackgroundStyle(key)}
+                style:background-color={key === "transparent"
+                  ? undefined
+                  : canvasTextBackgroundStyle(key)}
+                style:background-image={key === "transparent"
+                  ? "repeating-conic-gradient(#9ca3af 0% 25%, transparent 0% 50%)"
+                  : undefined}
+                style:background-size={key === "transparent"
+                  ? "6px 6px"
+                  : undefined}
               ></button>
             {/each}
           </div>

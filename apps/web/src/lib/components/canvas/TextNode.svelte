@@ -15,14 +15,14 @@
   const text = $derived((data?.text as string) ?? "");
   const locked = $derived(Boolean(data?.locked));
   const canEdit = $derived(!locked && !vault.isGuest);
-  const backgroundColor = $derived(
-    canvasTextBackgroundStyle(
-      normalizeCanvasTextBackground(
-        (data?.background as string) ?? "",
-        DEFAULT_CANVAS_TEXT_BACKGROUND,
-      ),
+  const backgroundKey = $derived(
+    normalizeCanvasTextBackground(
+      (data?.background as string) ?? "",
+      DEFAULT_CANVAS_TEXT_BACKGROUND,
     ),
   );
+  const backgroundColor = $derived(canvasTextBackgroundStyle(backgroundKey));
+  const isTransparent = $derived(backgroundKey === "transparent");
   const fontSize = $derived(
     normalizeCanvasTextFontSize(
       data?.fontSize as number,
@@ -50,9 +50,13 @@
 </script>
 
 <div
-  class="relative h-full w-full min-h-[80px] min-w-[140px] rounded-lg border p-3 shadow-lg {selected
+  class="relative h-full w-full min-h-[80px] min-w-[140px] rounded-lg border p-3 {isTransparent
+    ? ''
+    : 'shadow-lg'} {selected
     ? 'border-theme-primary ring-2 ring-theme-primary/40'
-    : 'border-theme-border'}"
+    : isTransparent
+      ? 'border-theme-border/40 border-dashed'
+      : 'border-theme-border'}"
   style:width={width ? `${width}px` : "200px"}
   style:height={height ? `${height}px` : "120px"}
   style:background-color={backgroundColor}

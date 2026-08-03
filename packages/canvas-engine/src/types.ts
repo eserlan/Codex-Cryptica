@@ -51,6 +51,7 @@ export const CANVAS_TEXT_BACKGROUND_PRESETS = [
   "accent",
   "secondary",
   "warning",
+  "transparent",
 ] as const;
 export type CanvasTextBackground =
   (typeof CANVAS_TEXT_BACKGROUND_PRESETS)[number];

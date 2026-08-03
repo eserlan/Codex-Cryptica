@@ -132,7 +132,7 @@
       type="button"
       onclick={() => (modalUIStore.showCanvasSelector = true)}
       title="Manage canvases"
-      class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 py-2 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group flex items-center gap-2"
+      class="h-8 bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group flex items-center gap-2"
     >
       <span
         class="text-xs font-black text-theme-primary uppercase tracking-[0.4em] group-hover:text-theme-accent transition-colors"
@@ -150,7 +150,7 @@
         onclick={onAutoArrange}
         title="Auto-arrange spatial node layout"
         aria-label="Auto-arrange spatial node layout"
-        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--wand-2] w-4 h-4" aria-hidden="true"></span>
       </button>
@@ -163,7 +163,7 @@
         title={showMinimap ? "Hide minimap" : "Show minimap"}
         aria-label={showMinimap ? "Hide minimap" : "Show minimap"}
         aria-pressed={showMinimap}
-        class="hidden sm:flex bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {showMinimap
+        class="hidden sm:flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {showMinimap
           ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
           : ''}"
       >
@@ -177,7 +177,7 @@
         onclick={() => fileInput?.click()}
         title="Upload files to canvas"
         aria-label="Upload files to canvas"
-        class="hidden sm:flex bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
+        class="hidden sm:flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--upload] w-4 h-4" aria-hidden="true"></span>
       </button>
@@ -197,7 +197,7 @@
         onclick={onAddTextNode}
         title="Add a text note to canvas"
         aria-label="Add a text note to canvas"
-        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--sticky-note] w-4 h-4" aria-hidden="true"
         ></span>
@@ -215,7 +215,7 @@
             : "Draw on canvas (right-click or long-press for stroke width)"}
           aria-label={isDrawingMode ? "Exit drawing mode" : "Draw on canvas"}
           aria-pressed={isDrawingMode}
-          class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isDrawingMode
+          class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isDrawingMode
             ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
             : ''}"
         >
@@ -264,7 +264,7 @@
             ? "Exit eraser mode"
             : "Erase a drawing stroke"}
           aria-pressed={isErasingMode}
-          class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 p-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isErasingMode
+          class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isErasingMode
             ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
             : ''}"
         >
@@ -272,7 +272,7 @@
         </button>
       {/if}
       <label
-        class="flex h-8 items-center gap-1 border border-theme-primary/30 bg-theme-surface/80 px-1.5 shadow-sm backdrop-blur-md"
+        class="flex h-8 w-8 items-center justify-center overflow-hidden border border-theme-primary/30 bg-theme-surface/80 shadow-sm backdrop-blur-md"
         title="Drawing color"
       >
         <span class="sr-only">Drawing color</span>
@@ -295,7 +295,7 @@
           type="button"
           onclick={() => (isAddMenuOpen = !isAddMenuOpen)}
           title="Add element to canvas"
-          class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-3 py-2 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-primary flex items-center gap-1.5 text-xs font-semibold"
+          class="h-8 bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-3 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-primary flex items-center gap-1.5 text-xs font-semibold"
         >
           <span class="icon-[lucide--plus] w-4 h-4" aria-hidden="true"></span>
           Add Element

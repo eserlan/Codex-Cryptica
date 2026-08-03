@@ -80,6 +80,7 @@ const CANVAS_TEXT_BACKGROUND_STYLES: Record<string, string> = {
     "color-mix(in srgb, var(--color-theme-secondary) 20%, var(--color-theme-surface))",
   warning:
     "color-mix(in srgb, var(--color-theme-warning) 25%, var(--color-theme-surface))",
+  transparent: "transparent",
 };
 
 // Resolves a semantic background key (see CANVAS_TEXT_BACKGROUND_PRESETS) to
