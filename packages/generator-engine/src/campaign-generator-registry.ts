@@ -763,7 +763,17 @@ function generateWorld(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 function worldPrompt(request: GeneratorRunRequest): string {
-  return `${contextChain(request)}\n\n${buildWorldPrompt(worldOptions(request)).userMessage}`;
+  return `${contextChain(request)}
+
+${buildWorldPrompt(worldOptions(request)).userMessage}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock("world")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  "the world profile; climate, geography, gravity, atmosphere, and biosphere; settlements, cultures, factions, economy, resources, technology, hazards, history, notable locations, mysteries, conflicts, and adventure hooks",
+)}`;
 }
 
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {

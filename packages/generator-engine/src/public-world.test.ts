@@ -22,7 +22,12 @@ describe("World Generator", () => {
     expect(output.title).toBeTruthy();
     expect(output.summary).toContain("artificial world");
     expect(output.labels).toEqual(
-      expect.arrayContaining(["world", "Artificial World", "Ecumenopolis"]),
+      expect.arrayContaining([
+        "world",
+        "artificial-world",
+        "habitable-with-technology",
+        "ecumenopolis",
+      ]),
     );
     expect(output.content).toContain("## Climate & Geography");
     expect(output.content).toContain("## Settlements, Cultures & Factions");

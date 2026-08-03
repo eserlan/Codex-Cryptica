@@ -139,6 +139,7 @@ describe("GeneratorConfigForm", () => {
     });
     expect(screen.getByLabelText("Habitability")).toBeTruthy();
     expect(screen.getByLabelText("Civilisation")).toBeTruthy();
+    expect(screen.getByLabelText("Genre / Tone")).toBeTruthy();
     expect(screen.getByLabelText("Dominant Feature")).toBeTruthy();
   });
 });

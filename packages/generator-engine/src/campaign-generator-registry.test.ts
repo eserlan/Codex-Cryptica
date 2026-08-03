@@ -66,6 +66,9 @@ describe("registry lookup", () => {
   it("builds a system-aware prompt and maps worlds to locations", () => {
     const prompt = getGenerator("world").buildPrompt(run("world"));
     expect(prompt).toContain("Star-system context");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+    expect(prompt).toContain('leave "connections" as an empty array');
     expect(GENERATOR_ENTITY_TYPE.world).toBe("location");
     expect(getGenerator("world").generate(run("world")).lore).toContain(
       "## Adventure Hooks",

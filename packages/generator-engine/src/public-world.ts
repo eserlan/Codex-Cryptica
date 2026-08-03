@@ -165,7 +165,13 @@ export function generateWorldLocal(
     summary: `${title} is a ${worldType.toLowerCase()} defined by ${dominantFeature}.`,
     content,
     lore,
-    labels: ["world", worldType, habitability, civilisation, genreLabel(genre)],
+    labels: [
+      "world",
+      genreLabel(worldType),
+      genreLabel(habitability),
+      genreLabel(civilisation),
+      genreLabel(genre),
+    ],
     status: "active",
   };
 }
@@ -174,7 +180,7 @@ export function generateWorldLocal(
 export function buildWorldPrompt(
   options: WorldGeneratorOptions = {},
 ): WorldPrompt {
-  const worldType = options.worldType?.trim() || "a sci-fi world";
+  const worldType = options.worldType?.trim() || "world";
   const habitability =
     options.habitability?.trim() || "appropriate habitability";
   const civilisation =
