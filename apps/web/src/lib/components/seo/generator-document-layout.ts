@@ -134,6 +134,15 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Controlling Factions",
     ]),
   },
+  {
+    label: "world",
+    railSections: new Set([
+      "History",
+      "Current Conflicts",
+      "Mysteries",
+      "Adventure Hooks",
+    ]),
+  },
 ];
 
 interface MarkdownSection {
@@ -145,7 +154,7 @@ function splitMarkdownSections(markdown: string): MarkdownSection[] {
   const normalized = markdown.trim();
   if (!normalized) return [];
 
-  const matches = Array.from(normalized.matchAll(/^###\s+(.+)$/gm));
+  const matches = Array.from(normalized.matchAll(/^#{2,3}\s+(.+)$/gm));
   if (matches.length === 0) {
     return [];
   }

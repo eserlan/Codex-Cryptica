@@ -60,6 +60,7 @@
     SOCIAL_HUB_GENRE_TO_THEME,
     mapHubGenreToShipGenre,
     mapShipGenreToTheme,
+    mapWorldGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -302,6 +303,9 @@
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
     civilisation: worldConfig.civilisations[0],
+    societalModel: worldConfig.societalModels[0],
+    worldTagOne: worldConfig.defaultWorldTags[0],
+    worldTagTwo: worldConfig.defaultWorldTags[1],
     genre: worldGenreForHub(initialHubGenre),
     dominantFeature: "",
   });
@@ -352,11 +356,7 @@
     else if (slug === "news-sheet-generator")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
-    else if (slug === "world")
-      activeTheme =
-        SOCIAL_HUB_GENRE_TO_THEME[
-          resolveHubGeneratorGenre(hubContext.theme) ?? ""
-        ] ?? "Sci-Fi / Space Opera";
+    else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
     else if (
       slug === "adventure-generator" ||
@@ -443,9 +443,7 @@
     if (slug === "world") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       world.genre = worldGenreForHub(hubGenre);
-      activeTheme =
-        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
-        "Sci-Fi / Space Opera";
+      activeTheme = mapWorldGenreToTheme(world.genre);
       return;
     }
     if (slug === "news-sheet-generator") {
@@ -553,7 +551,13 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
-    world: (useAI) => generatorEngine.generateWorld({ ...world, useAI }),
+    world: (useAI) =>
+      generatorEngine.generateWorld({
+        ...world,
+        useAI,
+        // Keep world titles and named factions varied within the current session.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -787,8 +791,14 @@
         bind:worldType={world.worldType}
         bind:habitability={world.habitability}
         bind:civilisation={world.civilisation}
+        bind:societalModel={world.societalModel}
+        bind:worldTagOne={world.worldTagOne}
+        bind:worldTagTwo={world.worldTagTwo}
         bind:genre={world.genre}
         bind:dominantFeature={world.dominantFeature}
+        onGenreChange={(genre) => {
+          activeTheme = mapWorldGenreToTheme(genre);
+        }}
         onSurprise={trigger}
       />
     {/if}

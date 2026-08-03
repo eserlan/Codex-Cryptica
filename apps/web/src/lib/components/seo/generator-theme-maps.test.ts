@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,
   mapShipGenreToTheme,
+  mapWorldGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
 } from "./generator-theme-maps";
@@ -27,6 +28,7 @@ describe("shouldSyncGeneratorTheme", () => {
     expect(shouldSyncGeneratorTheme("faction")).toBe(true);
     expect(shouldSyncGeneratorTheme("ship-generator")).toBe(true);
     expect(shouldSyncGeneratorTheme("language-generator")).toBe(true);
+    expect(shouldSyncGeneratorTheme("world")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {
@@ -60,5 +62,19 @@ describe("mapShipGenreToTheme", () => {
 
   it("leaves custom ship genres unchanged", () => {
     expect(mapShipGenreToTheme("Custom Private Vessel")).toBeNull();
+  });
+});
+
+describe("mapWorldGenreToTheme", () => {
+  it("uses the dedicated Star Wars skin for Space Opera", () => {
+    expect(mapWorldGenreToTheme("Space Opera")).toBe("Star Wars");
+  });
+
+  it("preserves the existing World Generator genre skins", () => {
+    expect(mapWorldGenreToTheme("Hard Sci-Fi")).toBe("Sci-Fi / Space Opera");
+    expect(mapWorldGenreToTheme("Cyberpunk")).toBe("Cyberpunk / Corporate");
+    expect(mapWorldGenreToTheme("Hopeful Sci-Fi")).toBe(
+      "Optimistic Exploration Sci-Fi",
+    );
   });
 });

@@ -64,8 +64,16 @@ describe("registry lookup", () => {
   });
 
   it("builds a system-aware prompt and maps worlds to locations", () => {
-    const prompt = getGenerator("world").buildPrompt(run("world"));
+    const prompt = getGenerator("world").buildPrompt(
+      run("world", {
+        options: {
+          worldTagOne: "Trade Hub",
+          worldTagTwo: "Refugees",
+        },
+      }),
+    );
     expect(prompt).toContain("Star-system context");
+    expect(prompt).toContain("Trade Hub and Refugees");
     expect(prompt).toContain('"connections"');
     expect(prompt).toContain("Example (illustrative only");
     expect(prompt).toContain('leave "connections" as an empty array');

@@ -65,6 +65,7 @@ import {
   buildWorldPrompt,
   parseWorldResponse,
   generateWorldLocal,
+  BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -712,9 +713,16 @@ export class DefaultGeneratorEngine {
         const { systemInstruction, userMessage } =
           buildWorldPrompt(worldOptions);
         const text = await this.runModel(systemInstruction, userMessage);
-        return parseWorldResponse(text);
+        return parseWorldResponse(text, [
+          ...BANNED_NAMES,
+          ...(worldOptions.avoidNames ?? []),
+        ]);
       },
-      () => generateWorldLocal(worldOptions),
+      () =>
+        generateWorldLocal({
+          ...worldOptions,
+          avoidNames: [...BANNED_NAMES, ...(worldOptions.avoidNames ?? [])],
+        }),
     );
   }
 }

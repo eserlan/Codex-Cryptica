@@ -742,6 +742,9 @@ function worldOptions(request: GeneratorRunRequest): WorldGeneratorOptions {
     worldType: optionString(request, "worldType", ""),
     habitability: optionString(request, "habitability", ""),
     civilisation: optionString(request, "civilisation", ""),
+    societalModel: optionString(request, "societalModel", ""),
+    worldTagOne: optionString(request, "worldTagOne", ""),
+    worldTagTwo: optionString(request, "worldTagTwo", ""),
     genre: optionString(request, "genre", ""),
     dominantFeature: optionString(request, "dominantFeature", ""),
     avoidNames: [
@@ -1184,6 +1187,37 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         })),
       },
       {
+        id: "societalModel",
+        label: "Primary Societal Model",
+        control: "select",
+        choices: worldConfig.societalModels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "worldTagOne",
+        label: "World Tag 1 (SWN)",
+        description:
+          "First Stars Without Number world tag shaping the setting.",
+        control: "select",
+        choices: worldConfig.worldTags.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "worldTagTwo",
+        label: "World Tag 2 (SWN)",
+        description:
+          "Second tag to combine with the first; choose a different pressure.",
+        control: "select",
+        choices: worldConfig.worldTags.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
         id: "genre",
         label: "Genre / Tone",
         control: "select",
@@ -1201,6 +1235,9 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       worldType: "Terrestrial World",
       habitability: "Earthlike",
       civilisation: "Colony",
+      societalModel: "Scientific Expedition",
+      worldTagOne: "Colonized Population",
+      worldTagTwo: "Local Specialty",
       genre: "Hard Sci-Fi",
       dominantFeature: "",
     },

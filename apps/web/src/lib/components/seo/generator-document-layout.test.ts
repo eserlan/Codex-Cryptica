@@ -2,6 +2,42 @@ import { describe, expect, it } from "vitest";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
 
 describe("getGeneratorDocumentLayout", () => {
+  it("splits world narrative from GM reference without duplicating either column", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "location",
+      title: "Meridian",
+      content: "",
+      lore: `## World Profile
+Meridian is a storm-wrapped colony world.
+
+## Environment
+The habitable belt shifts with the season.
+
+## History
+A failed weather engine still controls the storms.
+
+## Current Conflicts
+A mining guild is hiding who reactivated it.
+
+## Mysteries
+The weather engine may be receiving off-world commands.
+
+## Adventure Hooks
+- Find the lost weather-engine controls.`,
+      labels: ["world", "hard-sci-fi"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## World Profile");
+    expect(layout.content).toContain("## Environment");
+    expect(layout.content).not.toContain("## History");
+    expect(layout.lore).toContain("## History");
+    expect(layout.lore).toContain("## Current Conflicts");
+    expect(layout.lore).toContain("## Mysteries");
+    expect(layout.lore).toContain("## Adventure Hooks");
+    expect(layout.lore).not.toContain("## World Profile");
+  });
+
   it("moves vampire clan prose sections into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "faction",
