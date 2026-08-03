@@ -110,6 +110,23 @@ describe("applyDerivedModifiers", () => {
     expect(result.find((f) => f.id === "dex")?.formula).toBe("2d20kh1-1");
   });
 
+  it("preserves a manually-added extra modifier term, only rewriting the last", () => {
+    const fields: StatSheetField[] = [
+      scoreField("str_score", 14),
+      {
+        id: "str",
+        label: "STR Check",
+        type: "dice",
+        formula: "1d20+2+0",
+        modifierSource: "str_score",
+      } as StatSheetField,
+    ];
+
+    const result = applyDerivedModifiers(fields);
+
+    expect(result.find((f) => f.id === "str")?.formula).toBe("1d20+2+2");
+  });
+
   it("leaves the field untouched when the source score has no value yet", () => {
     const fields: StatSheetField[] = [
       { id: "wis_score", label: "WIS", type: "number" } as StatSheetField,

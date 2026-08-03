@@ -904,10 +904,6 @@ export class StatSheetTemplateStore {
     }
   }
 
-  // Assigns fresh instance ids rather than reusing the template's own field
-  // ids, since those are only unique *within* one template — applying two
-  // templates to the same entity (or the same template twice) would
-  // otherwise collide and duplicate `id`s in the entity's field list.
   // Preserves each field's template-defined id (e.g. "hp", "ac") so
   // presentation templates that reference those ids keep resolving after
   // the template is applied to an entity. Only regenerates an id if it

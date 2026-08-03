@@ -103,9 +103,10 @@ export function abilityModifier(score: number): number {
 
 // Recomputes the flat modifier on every dice field that declares a
 // `modifierSource` (e.g. "STR Check" sourced from a "STR" score field),
-// keeping it in sync whenever the sheet's fields are persisted. The dice
-// notation ahead of the first +/- is preserved as-is (so a customized base
-// like "2d20kh1" survives), only the trailing modifier is rewritten.
+// keeping it in sync whenever the sheet's fields are persisted. Everything
+// ahead of the *last* +/- is preserved as-is (so a customized base like
+// "2d20kh1" or extra hand-added terms like "1d20+2" survive), only the
+// trailing term is rewritten with the derived modifier.
 export function applyDerivedModifiers(
   fields: StatSheetField[],
 ): StatSheetField[] {
@@ -116,7 +117,12 @@ export function applyDerivedModifiers(
     if (!source || typeof source.value !== "number") return field;
 
     const mod = abilityModifier(source.value);
-    const base = field.formula?.match(/^[^+-]+/)?.[0] ?? "1d20";
+    const formula = field.formula ?? "1d20";
+    const lastOpIndex = Math.max(
+      formula.lastIndexOf("+"),
+      formula.lastIndexOf("-"),
+    );
+    const base = lastOpIndex > 0 ? formula.slice(0, lastOpIndex) : formula;
     const nextFormula = `${base}${mod >= 0 ? "+" : "-"}${Math.abs(mod)}`;
 
     return nextFormula === field.formula
