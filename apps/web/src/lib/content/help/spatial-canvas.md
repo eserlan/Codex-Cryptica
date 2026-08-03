@@ -32,6 +32,10 @@ Click the **workspace name** in the top-left HUD to open the **Canvas Manager**.
 - **Hidden Labels**: To hide a label, simply clear the text in the modal. Empty labels are not rendered, keeping your canvas clean.
 - **Visual Links**: Create lines between any two entities to map out conspiracy boards, family trees, or quest flowcharts.
 
+### Locking Cards in Place
+
+Once a layout is just how you want it, right-click any card (entity, file, or otherwise) and choose **Lock in Place** to prevent it from being accidentally dragged or resized. Right-click again and choose **Unlock** to move it later.
+
 ### Tips for Organization
 
 1. **Use Multiple Canvases**: Create separate boards for different regions, plot lines, or character groups to avoid clutter.
