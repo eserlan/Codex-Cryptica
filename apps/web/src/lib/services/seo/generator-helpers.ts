@@ -469,12 +469,12 @@ export interface GeneratorOutput {
 export type Rng = () => number;
 export const defaultRng: Rng = () => Math.random();
 
-export function pickFrom<T>(arr: T[], rng: Rng = defaultRng): T {
+export function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
   return arr[Math.floor(rng() * arr.length)];
 }
 
 export function getRandomItems<T>(
-  arr: T[],
+  arr: readonly T[],
   count: number,
   rng: Rng = defaultRng,
 ): T[] {
