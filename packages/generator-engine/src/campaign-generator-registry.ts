@@ -1194,7 +1194,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         control: "select",
         visibleWhen: {
           optionId: "genre",
-          values: worldConfig.genres.filter((value) => value !== "Lancer"),
+          notValues: ["Lancer"],
         },
         choices: worldConfig.societalModels.map((value) => ({
           value,

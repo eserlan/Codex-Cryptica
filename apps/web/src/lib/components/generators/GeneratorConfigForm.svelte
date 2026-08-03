@@ -95,9 +95,15 @@
   const visibleOptions = $derived(
     selectedGenerator.options.filter((option) => {
       if (!option.visibleWhen) return true;
-      return option.visibleWhen.values.includes(
-        stringValue(option.visibleWhen.optionId),
-      );
+      const currentValue = stringValue(option.visibleWhen.optionId);
+      if (
+        option.visibleWhen.values &&
+        !option.visibleWhen.values.includes(currentValue)
+      ) {
+        return false;
+      }
+      if (option.visibleWhen.notValues?.includes(currentValue)) return false;
+      return true;
     }),
   );
 
@@ -165,27 +171,30 @@
     }
     if (changed) optionValues = nextValues;
   });
-  $effect(() => {
-    if (selectedId !== "world") return;
-    const currentPressure = optionValues.campaignPressure;
-    if (typeof currentPressure !== "string") return;
-    const availablePressures: readonly string[] =
-      stringValue("genre") === "Lancer"
-        ? worldConfig.lancerConflicts
-        : worldConfig.campaignPressures;
-    if (!availablePressures.includes(currentPressure)) {
-      optionValues = {
-        ...optionValues,
-        campaignPressure: availablePressures[0] ?? "",
-      };
-    }
-  });
-
   function updateOptionValue(optionId: string, value: unknown) {
-    optionValues = {
+    const nextValues = {
       ...optionValues,
       [optionId]: value,
     };
+    if (selectedId === "world" && optionId === "genre") {
+      const availablePressures: readonly string[] =
+        value === "Lancer"
+          ? worldConfig.lancerConflicts
+          : worldConfig.campaignPressures;
+      const currentPressure = optionValues.campaignPressure;
+      const knownPressures: readonly string[] = [
+        ...worldConfig.campaignPressures,
+        ...worldConfig.lancerConflicts,
+      ];
+      if (
+        typeof currentPressure !== "string" ||
+        (knownPressures.includes(currentPressure) &&
+          !availablePressures.includes(currentPressure))
+      ) {
+        nextValues.campaignPressure = availablePressures[0] ?? "";
+      }
+    }
+    optionValues = nextValues;
   }
 
   function stringValue(optionId: string): string {

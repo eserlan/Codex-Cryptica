@@ -617,7 +617,7 @@ export function generateWorldLocal(
           ? "Successor communities occupy fragments of an older planetary order, each claiming a different inheritance."
           : `${civilisation} communities have adapted their institutions, trade, and daily life to the planet's hard limits.`;
   const lancerDetails = lancerWorldFrame
-    ? ` The Lancer campaign frame is ${lancerWorldFrame}. The selected world tags and civilian institutions determine its authority, mech presence, and logistics; its campaign pressure is ${campaignPressure}.`
+    ? ` The Lancer campaign frame is ${lancerWorldFrame}. The selected world tags and civilian institutions determine its authority, mech presence, and logistics.`
     : "";
   const societalModelDetail =
     genre === "Lancer"
@@ -643,7 +643,7 @@ export function generateWorldLocal(
     `Life clusters where water, heat, and shelter can be controlled, making reliable infrastructure as important as territory.${lancerWorldFrame ? " Mech deployment follows the world's actual repair, transport, and communications capacity, so pilots cannot treat every conflict as a self-supplied sortie." : ""}`,
     "",
     "## Settlements & Factions",
-    `${civilisationDetail}${lancerDetails}`,
+    civilisationDetail,
     `${worldTagOne} creates one set of obligations and opportunities, while ${worldTagTwo} creates another; the largest settlement and its rival network disagree about which pressure should shape the future.`,
     `Friends: ${worldTagOneFriend}. Enemies: ${worldTagTwoEnemy}.`,
     "The largest settlement controls access to the safest routes and life-support infrastructure, while a rival network profits from those left outside it.",
@@ -758,7 +758,7 @@ Make this pressure materially shape survival, settlement design, culture, econom
     normalizedGenre === "hard sci-fi"
       ? "For Hard Sci-Fi, use restrained speculative technology and broadly plausible engineering with clear causality. Track only the practical consequences that matter for the story, including gravity, atmosphere, energy, maintenance, travel time, and communication delay. Keep the result grounded in defensible physics and engineering, but remember that approximate plausibility is enough; do not turn the setting into an astrophysics lecture or make it feel scientific merely by adding numbers, units, and technical vocabulary. Do not use unexplained faster-than-light travel, explicit gravity control, reactionless drives, mystical technology, impossible ecology, or convenient technology that solves a problem without a cost."
       : normalizedGenre === "lancer"
-        ? "For Lancer, treat mechs and pilots as a military, political, and logistical institution inside a lived-in post-scarcity setting, not as a replacement for civilian society. Make the selected world frame and campaign pressure, together with the existing world type, societal model, and tags, causally shape political authority, infrastructure, why pilots are deployed, who funds and repairs their frames, how printers and blink-gate or Omninet access affect operations, and how mech violence changes ordinary life. Keep civilian factions, labour, migration, local governance, and material interests visible. Avoid reducing every problem to a mech duel, a generic corporation-versus-rebels plot, or a battlefield with no supply chain. Canon terms may inform the tone, but create original places, factions, and conflicts unless the user asks for a specific canon location."
+        ? "For Lancer, treat mechs and pilots as a military, political, and logistical institution inside a lived-in post-scarcity setting, not as a replacement for civilian society. Make the selected world frame and campaign pressure, together with the existing world type and tags, causally shape the derived civilian social model, political authority, infrastructure, why pilots are deployed, who funds and repairs their frames, how printers and blink-gate or Omninet access affect operations, and how mech violence changes ordinary life. Keep civilian factions, labour, migration, local governance, and material interests visible. Avoid reducing every problem to a mech duel, a generic corporation-versus-rebels plot, or a battlefield with no supply chain. Canon terms may inform the tone, but create original places, factions, and conflicts unless the user asks for a specific canon location."
         : normalizedGenre === "grounded sci-fi"
           ? "For Grounded Sci-Fi, allow some generous assumptions, but keep technology costly, legible, and constrained. Avoid casual miracle technology and make major social and environmental consequences follow from the assumptions you establish."
           : normalizedGenre === "space opera" ||

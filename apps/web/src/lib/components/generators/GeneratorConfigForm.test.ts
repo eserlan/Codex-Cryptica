@@ -173,4 +173,42 @@ describe("GeneratorConfigForm", () => {
       }),
     ).toBeTruthy();
   });
+
+  it("preserves custom pressure and societal model for custom genres", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "world",
+        onsubmit: vi.fn(),
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Campaign Pressure")).toBeTruthy();
+    });
+    await fireEvent.change(screen.getByLabelText("Campaign Pressure"), {
+      target: { value: "__custom__" },
+    });
+    await fireEvent.input(
+      screen.getByLabelText("Campaign Pressure (Own option)"),
+      {
+        target: { value: "Custody of the orbital elevator" },
+      },
+    );
+    await fireEvent.change(screen.getByLabelText("Genre / Tone"), {
+      target: { value: "__custom__" },
+    });
+    await fireEvent.input(screen.getByLabelText("Genre / Tone (Own option)"), {
+      target: { value: "Orbitpunk" },
+    });
+
+    expect(screen.getByLabelText("Primary Societal Model")).toBeTruthy();
+    expect(screen.queryByLabelText("Lancer World Frame")).toBeNull();
+    expect(
+      (
+        screen.getByLabelText(
+          "Campaign Pressure (Own option)",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("Custody of the orbital elevator");
+  });
 });

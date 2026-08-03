@@ -45,7 +45,8 @@ export interface GeneratorOptionDefinition {
   defaultValue?: unknown;
   visibleWhen?: {
     optionId: string;
-    values: string[];
+    values?: string[];
+    notValues?: string[];
   };
 }
 
