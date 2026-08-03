@@ -1,13 +1,17 @@
 <script lang="ts">
   import type { CanvasFile } from "@codex/canvas-engine";
-  import type { NodeProps } from "@xyflow/svelte";
+  import { NodeResizer, type NodeProps } from "@xyflow/svelte";
+  import type { ResizeParams } from "@xyflow/system";
   import { vault } from "$lib/stores/vault.svelte";
 
-  let { data, selected }: NodeProps = $props();
+  let { data, selected, width, height }: NodeProps = $props();
 
   const file = $derived(data?.file as CanvasFile | undefined);
   const isImage = $derived(file?.mimeType.startsWith("image/") ?? false);
   const showFullImage = $derived(Boolean(data?.showFullImage));
+  const locked = $derived(Boolean(data?.locked));
+  const canResize = $derived(isImage && showFullImage && !locked);
+  const hasCustomSize = $derived(Boolean(width && height));
   let imageUrl = $state("");
   const sizeLabel = $derived.by(() => {
     if (!file) return "Unknown size";
@@ -39,6 +43,12 @@
     )?.onUpdateFile?.({ showFullImage: next });
   }
 
+  function handleResizeEnd(_event: unknown, params: ResizeParams) {
+    (
+      data as { onUpdateFile?: (updates: Record<string, unknown>) => void }
+    )?.onUpdateFile?.({ width: params.width, height: params.height });
+  }
+
   $effect(() => {
     const path = file?.path;
     if (!isImage || !path) {
@@ -64,25 +74,39 @@
 </script>
 
 <article
-  class="min-w-52 max-w-72 rounded-lg border bg-theme-surface p-3 shadow-lg {selected
+  class="rounded-lg border bg-theme-surface p-3 shadow-lg {selected
     ? 'border-theme-primary ring-2 ring-theme-primary/40'
-    : 'border-theme-border'}"
+    : 'border-theme-border'} {hasCustomSize
+    ? 'flex h-full w-full flex-col'
+    : 'min-w-52 max-w-72'}"
   aria-label={file ? `File: ${file.name}` : "Stored file"}
 >
+  {#if canResize && selected}
+    <NodeResizer
+      minWidth={120}
+      minHeight={90}
+      keepAspectRatio
+      onResizeEnd={handleResizeEnd}
+    />
+  {/if}
   {#if imageUrl}
     <div
-      class="overflow-hidden rounded-md border border-theme-border bg-theme-bg/50 {showFullImage
-        ? ''
-        : 'h-36'}"
+      class="overflow-hidden rounded-md border border-theme-border bg-theme-bg/50 {hasCustomSize
+        ? 'min-h-0 flex-1'
+        : showFullImage
+          ? ''
+          : 'h-36'}"
     >
       <img
         src={imageUrl}
         alt={file?.name || "Uploaded image"}
         loading="lazy"
         decoding="async"
-        class={showFullImage
-          ? "max-h-96 w-full object-contain"
-          : "h-full w-full object-cover"}
+        class={hasCustomSize
+          ? "h-full w-full object-contain"
+          : showFullImage
+            ? "max-h-96 w-full object-contain"
+            : "h-full w-full object-cover"}
         onerror={hideImagePreview}
       />
     </div>
