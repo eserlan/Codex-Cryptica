@@ -113,6 +113,98 @@ describe("FileNode", () => {
     );
   });
 
+  it("shows a 'Show full image' checkbox only for image files", async () => {
+    render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.png",
+            name: "uploaded-map.png",
+            mimeType: "image/png",
+            size: 2048,
+          },
+        },
+        selected: false,
+      } as any,
+    });
+
+    expect(
+      screen.getByRole("checkbox", { name: "Show full image" }),
+    ).toBeTruthy();
+  });
+
+  it("does not show the full-image checkbox for non-image files", () => {
+    render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.pdf",
+            name: "map.pdf",
+            mimeType: "application/pdf",
+            size: 2048,
+          },
+        },
+        selected: false,
+      } as any,
+    });
+
+    expect(
+      screen.queryByRole("checkbox", { name: "Show full image" }),
+    ).toBeNull();
+  });
+
+  it("renders the full, uncropped image and hides the filename when showFullImage is set", async () => {
+    render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.png",
+            name: "uploaded-map.png",
+            mimeType: "image/png",
+            size: 2048,
+          },
+          showFullImage: true,
+        },
+        selected: false,
+      } as any,
+    });
+
+    const preview = await screen.findByRole("img", {
+      name: "uploaded-map.png",
+    });
+    expect(preview.className).toContain("object-contain");
+    expect(preview.className).not.toContain("object-cover");
+    expect(screen.queryByText("uploaded-map.png")).toBeNull();
+    expect(screen.queryByText("2 KB")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open file" })).toBeNull();
+    expect(
+      screen.getByRole("checkbox", { name: "Show full image" }),
+    ).toHaveProperty("checked", true);
+  });
+
+  it("calls the onUpdateFile callback with the toggled value", async () => {
+    const onUpdateFile = vi.fn();
+    render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.png",
+            name: "uploaded-map.png",
+            mimeType: "image/png",
+            size: 2048,
+          },
+          onUpdateFile,
+        },
+        selected: false,
+      } as any,
+    });
+
+    const checkbox = screen.getByRole("checkbox", { name: "Show full image" });
+    await fireEvent.click(checkbox);
+
+    expect(onUpdateFile).toHaveBeenCalledWith({ showFullImage: true });
+  });
+
   it("keeps the file card usable when an image preview cannot resolve", async () => {
     resolveImageUrl.mockResolvedValue("");
     render(FileNode, {
@@ -134,5 +226,29 @@ describe("FileNode", () => {
     );
     expect(screen.queryByRole("img", { name: "uploaded-map.png" })).toBeNull();
     expect(screen.getByRole("button", { name: "Open file" })).toBeTruthy();
+  });
+
+  it("falls back to showing the filename in full-image mode when the preview cannot resolve", async () => {
+    resolveImageUrl.mockResolvedValue("");
+    render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.png",
+            name: "uploaded-map.png",
+            mimeType: "image/png",
+            size: 2048,
+          },
+          showFullImage: true,
+        },
+        selected: false,
+      } as any,
+    });
+
+    await vi.waitFor(() =>
+      expect(resolveImageUrl).toHaveBeenCalledWith("files/map-id-map.png"),
+    );
+    expect(screen.queryByRole("img", { name: "uploaded-map.png" })).toBeNull();
+    expect(screen.getByText("uploaded-map.png")).toBeTruthy();
   });
 });

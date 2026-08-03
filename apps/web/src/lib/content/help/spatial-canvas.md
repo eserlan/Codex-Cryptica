@@ -40,6 +40,10 @@ Click the **workspace name** in the top-left HUD to open the **Canvas Manager**.
 3. Draw with a mouse, stylus, or touch pointer. Existing node and canvas controls are paused while drawing mode is active.
 4. Select the pencil button again, or press **Escape**, to leave drawing mode. Completed strokes are saved automatically.
 
+### Locking Cards in Place
+
+Once a layout is just how you want it, right-click any card (entity, file, or otherwise) and choose **Lock in Place** to prevent it from being accidentally dragged or resized. Right-click again and choose **Unlock** to move it later.
+
 ### Tips for Organization
 
 1. **Use Multiple Canvases**: Create separate boards for different regions, plot lines, or character groups to avoid clutter.
