@@ -24,6 +24,7 @@ You can also keep supporting material beside your entities. Drag files from your
 - Each file is stored privately in the active vault and shown as a file card where you dropped it.
 - Select **Open file** on a file card to view it in a new tab.
 - Files must be larger than 0 bytes and no more than 10 MB. If you select several files, valid files are still added when another one cannot be saved.
+- For images, check **Show full image** on the card to switch from a cropped thumbnail to the full, uncropped picture, handy for maps and handouts you want to read directly on the board. In this mode, select the card and drag its corner to resize it while keeping its aspect ratio.
 
 ### Right-Click to Add
 
