@@ -160,11 +160,36 @@
     };
   });
 
+  function updateFileNodeData(
+    nodeId: string,
+    updates: Record<string, unknown>,
+  ) {
+    logic.nodes = logic.nodes.map((node) =>
+      node.id === nodeId
+        ? { ...node, data: { ...node.data, ...updates } }
+        : node,
+    );
+  }
+
   const filteredNodes = $derived.by(() => {
-    if (isExportingCanvas) return logic.nodes;
-    if (logic.activeCategories.size === 0) return logic.nodes;
-    return logic.nodes.filter((n) =>
-      logic.activeCategories.has(n.data?.type as string),
+    const base = (() => {
+      if (isExportingCanvas) return logic.nodes;
+      if (logic.activeCategories.size === 0) return logic.nodes;
+      return logic.nodes.filter((n) =>
+        logic.activeCategories.has(n.data?.type as string),
+      );
+    })();
+    return base.map((node) =>
+      node.type === "file"
+        ? {
+            ...node,
+            data: {
+              ...node.data,
+              onUpdateFile: (updates: Record<string, unknown>) =>
+                updateFileNodeData(node.id, updates),
+            },
+          }
+        : node,
     );
   });
 

@@ -7,6 +7,7 @@
 
   const file = $derived(data?.file as CanvasFile | undefined);
   const isImage = $derived(file?.mimeType.startsWith("image/") ?? false);
+  const showFullImage = $derived(Boolean(data?.showFullImage));
   let imageUrl = $state("");
   const sizeLabel = $derived.by(() => {
     if (!file) return "Unknown size";
@@ -30,6 +31,12 @@
 
   function hideImagePreview() {
     imageUrl = "";
+  }
+
+  function toggleShowFullImage(next: boolean) {
+    (
+      data as { onUpdateFile?: (updates: Record<string, unknown>) => void }
+    )?.onUpdateFile?.({ showFullImage: next });
   }
 
   $effect(() => {
@@ -64,14 +71,18 @@
 >
   {#if imageUrl}
     <div
-      class="h-36 overflow-hidden rounded-md border border-theme-border bg-theme-bg/50"
+      class="overflow-hidden rounded-md border border-theme-border bg-theme-bg/50 {showFullImage
+        ? ''
+        : 'h-36'}"
     >
       <img
         src={imageUrl}
         alt={file?.name || "Uploaded image"}
         loading="lazy"
         decoding="async"
-        class="h-full w-full object-cover"
+        class={showFullImage
+          ? "max-h-96 w-full object-contain"
+          : "h-full w-full object-cover"}
         onerror={hideImagePreview}
       />
     </div>
@@ -82,15 +93,30 @@
       aria-hidden="true"
     ></span>
     <div class="min-w-0 flex-1">
-      <p
-        class="truncate text-sm font-semibold text-theme-text"
-        title={file?.name}
-      >
-        {file?.name || "Stored file"}
-      </p>
+      {#if !showFullImage}
+        <p
+          class="truncate text-sm font-semibold text-theme-text"
+          title={file?.name}
+        >
+          {file?.name || "Stored file"}
+        </p>
+      {/if}
       <p class="mt-0.5 text-xs text-theme-muted">{sizeLabel}</p>
     </div>
   </div>
+  {#if isImage}
+    <label
+      class="nodrag mt-2 flex cursor-pointer items-center gap-1.5 text-xs text-theme-muted select-none"
+    >
+      <input
+        type="checkbox"
+        checked={showFullImage}
+        onchange={(e) => toggleShowFullImage(e.currentTarget.checked)}
+        class="accent-theme-primary rounded"
+      />
+      Show full image
+    </label>
+  {/if}
   {#if file}
     <button
       type="button"
