@@ -23,7 +23,7 @@ export function initFullscreenOnFirstInteraction(
 
   const cleanup = () => {
     events.forEach((event) =>
-      doc.removeEventListener(event, requestFullscreen),
+      doc.removeEventListener(event, requestFullscreen, { capture: true }),
     );
   };
 
