@@ -99,6 +99,19 @@
           : "max-h-96 w-auto object-contain"}
         onerror={hideImagePreview}
       />
+    {:else}
+      <div class="flex min-w-52 items-center gap-2 p-3">
+        <span
+          class="{iconClass} h-5 w-5 shrink-0 text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        <p
+          class="min-w-0 flex-1 truncate text-sm font-semibold text-theme-text"
+          title={file?.name}
+        >
+          {file?.name || "Stored file"}
+        </p>
+      </div>
     {/if}
     <label
       class="nodrag absolute top-1.5 right-1.5 flex cursor-pointer items-center rounded-md bg-theme-bg/80 p-1 backdrop-blur-sm"

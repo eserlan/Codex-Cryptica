@@ -227,4 +227,28 @@ describe("FileNode", () => {
     expect(screen.queryByRole("img", { name: "uploaded-map.png" })).toBeNull();
     expect(screen.getByRole("button", { name: "Open file" })).toBeTruthy();
   });
+
+  it("falls back to showing the filename in full-image mode when the preview cannot resolve", async () => {
+    resolveImageUrl.mockResolvedValue("");
+    render(FileNode, {
+      props: {
+        data: {
+          file: {
+            path: "files/map-id-map.png",
+            name: "uploaded-map.png",
+            mimeType: "image/png",
+            size: 2048,
+          },
+          showFullImage: true,
+        },
+        selected: false,
+      } as any,
+    });
+
+    await vi.waitFor(() =>
+      expect(resolveImageUrl).toHaveBeenCalledWith("files/map-id-map.png"),
+    );
+    expect(screen.queryByRole("img", { name: "uploaded-map.png" })).toBeNull();
+    expect(screen.getByText("uploaded-map.png")).toBeTruthy();
+  });
 });
