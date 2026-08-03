@@ -21,7 +21,8 @@ export type ValidSlug =
   | "news-sheet-generator"
   | "dungeon-generator"
   | "adventure-generator"
-  | "adventure-idea-generator";
+  | "adventure-idea-generator"
+  | "world";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -191,6 +192,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
     canonicalPath: "/generators/social-hub",
+  },
+  world: {
+    pageTitle:
+      "Sci-Fi World Generator | RPG Planet & Moon Creator | Codex Cryptica",
+    metaDescription:
+      "Generate campaign-ready sci-fi planets, moons, and artificial worlds with environments, societies, conflicts, notable locations, and adventure hooks.",
+    introTitle: "Sci-Fi World Generator",
+    eyebrow: "Sci-Fi World Generator",
+    introText:
+      "Create a detailed sci-fi world for your campaign. Choose its environment, habitability, civilisation, and defining feature, then generate a place with conflicts, locations, and playable hooks.",
+    canonicalPath: "/generators/world",
   },
   kingdom: {
     pageTitle:

@@ -124,4 +124,22 @@ describe("GeneratorConfigForm", () => {
 
     expect(screen.queryByLabelText("Naming language")).toBeNull();
   });
+
+  it("shows the World Generator's sci-fi world-building controls", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "world",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("World Type")).toBeTruthy();
+    });
+    expect(screen.getByLabelText("Habitability")).toBeTruthy();
+    expect(screen.getByLabelText("Civilisation")).toBeTruthy();
+    expect(screen.getByLabelText("Genre / Tone")).toBeTruthy();
+    expect(screen.getByLabelText("Dominant Feature")).toBeTruthy();
+  });
 });

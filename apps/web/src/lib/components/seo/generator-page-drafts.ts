@@ -76,6 +76,17 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
     labels: ["rpg-location", "social-hub-generator", "imported-draft"],
     status: "draft",
   },
+  world: {
+    type: "location",
+    title: "Khepri IV",
+    summary:
+      "A tidally locked desert world whose twilight colonies compete for water and power.",
+    content:
+      "## World Profile\nKhepri IV is a frontier world where settlements follow the narrow belt between a molten dayside and a frozen nightside.\n\n## Climate & Geography\nA migrating terminator divides the world into habitable routes, glass deserts, and ice-bound exclusion zones.",
+    lore: "",
+    labels: ["world", "hard-sci-fi", "imported-draft"],
+    status: "draft",
+  },
   tavern: {
     type: "location",
     title: "The Copper Boar",
