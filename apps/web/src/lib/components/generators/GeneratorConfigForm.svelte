@@ -5,6 +5,7 @@
     getGenerator,
     listGenerators,
     themeIdToLabel,
+    worldConfig,
   } from "generator-engine";
   import type {
     AIPolicy,
@@ -91,11 +92,26 @@
   const availableDungeonStates = $derived(
     forDungeonGenre(dungeonConfig.currentStatesByGenre, dungeonGenre),
   );
+  const visibleOptions = $derived(
+    selectedGenerator.options.filter((option) => {
+      if (!option.visibleWhen) return true;
+      return option.visibleWhen.values.includes(
+        stringValue(option.visibleWhen.optionId),
+      );
+    }),
+  );
 
   function choicesForOption(option: {
     id: string;
     choices?: Array<{ value: string; label: string }>;
   }): Array<{ value: string; label: string }> {
+    if (selectedId === "world" && option.id === "campaignPressure") {
+      const values =
+        stringValue("genre") === "Lancer"
+          ? worldConfig.lancerConflicts
+          : worldConfig.campaignPressures;
+      return values.map((value) => ({ value, label: value }));
+    }
     if (selectedId !== "dungeon") return option.choices ?? [];
     if (option.id === "purpose") {
       return availableDungeonPurposes.map((value) => ({ value, label: value }));
@@ -148,6 +164,21 @@
       changed = true;
     }
     if (changed) optionValues = nextValues;
+  });
+  $effect(() => {
+    if (selectedId !== "world") return;
+    const currentPressure = optionValues.campaignPressure;
+    if (typeof currentPressure !== "string") return;
+    const availablePressures: readonly string[] =
+      stringValue("genre") === "Lancer"
+        ? worldConfig.lancerConflicts
+        : worldConfig.campaignPressures;
+    if (!availablePressures.includes(currentPressure)) {
+      optionValues = {
+        ...optionValues,
+        campaignPressure: availablePressures[0] ?? "",
+      };
+    }
   });
 
   function updateOptionValue(optionId: string, value: unknown) {
@@ -205,14 +236,14 @@
     {/each}
   </fieldset>
 
-  {#if selectedGenerator.options.length > 0}
+  {#if visibleOptions.length > 0}
     <fieldset class="flex flex-col gap-3">
       <legend
         class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
       >
         Generator options
       </legend>
-      {#each selectedGenerator.options as option (option.id)}
+      {#each visibleOptions as option (option.id)}
         {@const inputId = `generator-option-${option.id}`}
         {#if option.control === "select" && option.choices}
           <SelectWithCustomOption

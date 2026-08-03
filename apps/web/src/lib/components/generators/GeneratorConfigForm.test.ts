@@ -142,4 +142,35 @@ describe("GeneratorConfigForm", () => {
     expect(screen.getByLabelText("Genre / Tone")).toBeTruthy();
     expect(screen.getByLabelText("Dominant Feature")).toBeTruthy();
   });
+
+  it("swaps societal model for Lancer framing and adapts campaign pressure", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "world",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Genre / Tone")).toBeTruthy();
+    });
+    expect(screen.getByLabelText("Primary Societal Model")).toBeTruthy();
+    expect(screen.queryByLabelText("Lancer World Frame")).toBeNull();
+    expect(screen.getByLabelText("Campaign Pressure")).toBeTruthy();
+
+    await fireEvent.change(screen.getByLabelText("Genre / Tone"), {
+      target: { value: "Lancer" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Lancer World Frame")).toBeTruthy();
+    });
+    expect(screen.queryByLabelText("Primary Societal Model")).toBeNull();
+    expect(
+      screen.getByRole("option", {
+        name: "Autonomy and Union Legitimacy",
+      }),
+    ).toBeTruthy();
+  });
 });

@@ -91,8 +91,11 @@
     if (hubGenre === "Cyberpunk") return "Cyberpunk";
     if (hubGenre === "Optimistic Exploration Sci-Fi") return "Hopeful Sci-Fi";
     if (hubGenre === "Space Opera Resistance") return "Space Opera";
+    if (hubGenre === "Lancer") return "Lancer";
     return "Hard Sci-Fi";
   }
+
+  const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
   const meta = $derived(slugMeta[slug]);
 
@@ -306,7 +309,12 @@
     societalModel: worldConfig.societalModels[0],
     worldTagOne: worldConfig.defaultWorldTags[0],
     worldTagTwo: worldConfig.defaultWorldTags[1],
-    genre: worldGenreForHub(initialHubGenre),
+    genre: initialWorldGenre,
+    lancerWorldFrame: worldConfig.lancerWorldFrames[0],
+    campaignPressure:
+      initialWorldGenre === "Lancer"
+        ? worldConfig.lancerConflicts[0]
+        : worldConfig.campaignPressures[0],
     dominantFeature: "",
   });
 
@@ -795,6 +803,8 @@
         bind:worldTagOne={world.worldTagOne}
         bind:worldTagTwo={world.worldTagTwo}
         bind:genre={world.genre}
+        bind:lancerWorldFrame={world.lancerWorldFrame}
+        bind:campaignPressure={world.campaignPressure}
         bind:dominantFeature={world.dominantFeature}
         onGenreChange={(genre) => {
           activeTheme = mapWorldGenreToTheme(genre);

@@ -12,7 +12,16 @@ vi.mock("$lib/services/seo/generator-engine", () => ({
     societalModels: ["Scientific Expedition", "Prison Society"],
     worldTags: ["Colonized Population", "Local Specialty", "Trade Hub"],
     defaultWorldTags: ["Colonized Population", "Local Specialty"],
-    genres: ["Hard Sci-Fi", "Cyberpunk"],
+    genres: ["Hard Sci-Fi", "Cyberpunk", "Lancer"],
+    campaignPressures: [
+      "Resource Access and Rationing",
+      "Labour Rights and Working Conditions",
+    ],
+    lancerWorldFrames: ["Union Core World", "Long Rim Frontier"],
+    lancerConflicts: [
+      "Autonomy and Union Legitimacy",
+      "Colonial Ownership and Labour",
+    ],
   },
   pickFrom: <T>(items: readonly T[]) => items[0],
 }));
@@ -26,6 +35,8 @@ describe("WorldFormFields", () => {
     worldTagOne: "Colonized Population",
     worldTagTwo: "Local Specialty",
     genre: "Hard Sci-Fi",
+    lancerWorldFrame: "Union Core World",
+    campaignPressure: "Resource Access and Rationing",
     dominantFeature: "a migrating twilight belt",
   };
 
@@ -64,6 +75,20 @@ describe("WorldFormFields", () => {
       (screen.getByLabelText("Primary Societal Model") as HTMLSelectElement)
         .value,
     ).toBe("Prison Society");
+  });
+
+  it("replaces the societal model with Lancer framing and keeps campaign pressure universal", async () => {
+    const { rerender } = render(WorldFormFields, { props });
+
+    expect(screen.queryByLabelText("Lancer World Frame")).toBeNull();
+    expect(screen.getByLabelText("Primary Societal Model")).toBeTruthy();
+    expect(screen.getByLabelText("Campaign Pressure")).toBeTruthy();
+
+    await rerender({ ...props, genre: "Lancer" });
+
+    expect(screen.getByLabelText("Lancer World Frame")).toBeTruthy();
+    expect(screen.getByLabelText("Campaign Pressure")).toBeTruthy();
+    expect(screen.queryByLabelText("Primary Societal Model")).toBeNull();
   });
 
   it("keeps the two world tags distinct", async () => {

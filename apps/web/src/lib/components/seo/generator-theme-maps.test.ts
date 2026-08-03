@@ -76,5 +76,6 @@ describe("mapWorldGenreToTheme", () => {
     expect(mapWorldGenreToTheme("Hopeful Sci-Fi")).toBe(
       "Optimistic Exploration Sci-Fi",
     );
+    expect(mapWorldGenreToTheme("Lancer")).toBe("Lancer");
   });
 });

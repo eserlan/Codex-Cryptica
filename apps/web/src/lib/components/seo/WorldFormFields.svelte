@@ -10,6 +10,8 @@
     worldTagOne = $bindable(worldConfig.defaultWorldTags[0]),
     worldTagTwo = $bindable(worldConfig.defaultWorldTags[1]),
     genre = $bindable(worldConfig.genres[0]),
+    lancerWorldFrame = $bindable(worldConfig.lancerWorldFrames[0]),
+    campaignPressure = $bindable(worldConfig.campaignPressures[0]),
     dominantFeature = $bindable(""),
     onGenreChange = undefined,
     onSurprise = undefined,
@@ -21,6 +23,8 @@
     worldTagOne: string;
     worldTagTwo: string;
     genre: string;
+    lancerWorldFrame: string;
+    campaignPressure: string;
     dominantFeature: string;
     onGenreChange?: (genre: string) => void;
     onSurprise?: () => void;
@@ -45,6 +49,17 @@
   function handleWorldTagTwoChange(value: string): void {
     if (value === worldTagOne) worldTagTwo = chooseDifferentTag(value);
   }
+
+  function handleGenreChange(value: string): void {
+    const choices: readonly string[] =
+      value === "Lancer"
+        ? worldConfig.lancerConflicts
+        : worldConfig.campaignPressures;
+    if (!choices.includes(campaignPressure)) {
+      campaignPressure = choices[0] ?? "";
+    }
+    onGenreChange?.(value);
+  }
 </script>
 
 <SelectWithCustomOption
@@ -56,18 +71,50 @@
   {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom genre or tone"
-  onvaluechange={onGenreChange}
+  onvaluechange={handleGenreChange}
 />
 
+{#if genre === "Lancer"}
+  <SelectWithCustomOption
+    id="lancer-world-frame-select"
+    label="Lancer World Frame"
+    bind:value={lancerWorldFrame}
+    choices={worldConfig.lancerWorldFrames.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+  />
+{:else}
+  <SelectWithCustomOption
+    id="world-societal-model-select"
+    label="Primary Societal Model"
+    bind:value={societalModel}
+    choices={worldConfig.societalModels.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom societal model"
+  />
+{/if}
+
 <SelectWithCustomOption
-  id="world-societal-model-select"
-  label="Primary Societal Model"
-  bind:value={societalModel}
-  choices={worldConfig.societalModels.map((value) => ({ value, label: value }))}
+  id="campaign-pressure-select"
+  label="Campaign Pressure"
+  bind:value={campaignPressure}
+  choices={(genre === "Lancer"
+    ? worldConfig.lancerConflicts
+    : worldConfig.campaignPressures
+  ).map((value) => ({ value, label: value }))}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
-  customPlaceholder="Enter a custom societal model"
+  customPlaceholder="Enter a custom campaign pressure"
 />
 
 <SelectWithCustomOption
@@ -159,6 +206,12 @@
       worldTagTwo = pickFrom(
         worldConfig.worldTags.filter((value) => value !== worldTagOne),
       );
+      if (genre === "Lancer") {
+        lancerWorldFrame = pickFrom(worldConfig.lancerWorldFrames);
+        campaignPressure = pickFrom(worldConfig.lancerConflicts);
+      } else {
+        campaignPressure = pickFrom(worldConfig.campaignPressures);
+      }
       dominantFeature = "";
       onSurprise?.();
     }}

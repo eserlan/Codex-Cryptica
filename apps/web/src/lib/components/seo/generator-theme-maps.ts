@@ -168,5 +168,6 @@ export function mapWorldGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Hopeful Sci-Fi") return "Optimistic Exploration Sci-Fi";
+  if (genre === "Lancer") return "Lancer";
   return "Sci-Fi / Space Opera";
 }

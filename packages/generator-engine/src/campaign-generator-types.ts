@@ -43,6 +43,10 @@ export interface GeneratorOptionDefinition {
   choices?: Array<{ value: string; label: string }>;
   required?: boolean;
   defaultValue?: unknown;
+  visibleWhen?: {
+    optionId: string;
+    values: string[];
+  };
 }
 
 /**
