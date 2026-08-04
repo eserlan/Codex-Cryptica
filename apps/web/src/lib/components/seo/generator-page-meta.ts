@@ -22,7 +22,8 @@ export type ValidSlug =
   | "dungeon-generator"
   | "adventure-generator"
   | "adventure-idea-generator"
-  | "world";
+  | "world"
+  | "council-vote";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -560,6 +561,41 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       },
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/quest", label: "Quest Hook Generator" },
+    ],
+  },
+  "council-vote": {
+    pageTitle:
+      "Council Vote Generator | RPG Political Quest Creator | Codex Cryptica",
+    metaDescription:
+      "Generate a political vote quest: a named council of voters with distinct agendas that the party must sway before a deadline decision. Works for any RPG genre.",
+    introTitle: "Council Vote Generator",
+    eyebrow: "Political Quest Generator",
+    introText:
+      "Create a campaign-ready political vote — a council of named voters with different motives, alliances, secrets, and demands, plus a deadline and a voting threshold. Works without login, then imports into your local vault.",
+    canonicalPath: "/generators/council-vote",
+    faqs: [
+      {
+        question: "What does the council vote generator create?",
+        answer:
+          "It creates a complete political vote quest: the proposal being voted on, the deadline and voting procedure, and a named council where every voter has a public position, a true agenda, an initial stance, relationships to other voters, what would persuade them, and a secret or piece of leverage.",
+      },
+      {
+        question:
+          "Does the party always have a guaranteed way to win the vote?",
+        answer:
+          "No — by design, the generator never hands the party a single guaranteed majority. It aims for at least two viable voting coalitions, so players have to build a path from persuasion, evidence, leverage, and favours rather than following one prescribed solution.",
+      },
+      {
+        question: "Can I use it for genres other than fantasy?",
+        answer:
+          "Yes. Town councils, noble courts, senates, clan moots, war councils, corporate boards, revolutionary committees, interstellar assemblies, criminal syndicates, and religious conclaves are all supported governing-body types.",
+      },
+      ADVENTURE_CANVAS_FAQ,
+    ],
+    relatedLinks: [
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/kingdom", label: "Kingdom Generator" },
     ],
   },
 };

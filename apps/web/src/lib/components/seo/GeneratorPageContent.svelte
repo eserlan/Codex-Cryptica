@@ -8,6 +8,7 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
@@ -33,6 +34,7 @@
     magicItemConfig,
     factionConfig,
     questConfig,
+    councilVoteConfig,
     socialHubConfig,
     kingdomConfig,
     nationConfig,
@@ -150,6 +152,18 @@
     threat: questConfig.threats[0],
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+
+  let councilVote = $state({
+    proposal: "",
+    governingBodyType: councilVoteConfig.bodyTypes[0],
+    councilSize: councilVoteConfig.sizes[1],
+    votingRule: councilVoteConfig.votingRules[0],
+    deadline: "",
+    scope: councilVoteConfig.scopes[0],
+    tone: councilVoteConfig.tones[0],
+    antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
     campaignContext: "",
   });
 
@@ -501,6 +515,8 @@
     item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
     faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
+    "council-vote": (useAI) =>
+      generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
     tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
     kingdom: (useAI) => generatorEngine.generateKingdom({ ...kingdom, useAI }),
     nation: (useAI) => generatorEngine.generateNation({ ...nation, useAI }),
@@ -639,6 +655,19 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "council-vote"}
+      <CouncilVoteFormFields
+        bind:proposal={councilVote.proposal}
+        bind:governingBodyType={councilVote.governingBodyType}
+        bind:councilSize={councilVote.councilSize}
+        bind:votingRule={councilVote.votingRule}
+        bind:deadline={councilVote.deadline}
+        bind:scope={councilVote.scope}
+        bind:tone={councilVote.tone}
+        bind:antagonistInfluence={councilVote.antagonistInfluence}
+        bind:campaignContext={councilVote.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "kingdom"}

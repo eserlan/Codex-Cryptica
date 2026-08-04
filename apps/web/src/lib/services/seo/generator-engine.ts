@@ -25,6 +25,9 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildCouncilVotePrompt,
+  parseCouncilVoteResponse,
+  generateCouncilVoteLocal,
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
@@ -74,6 +77,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type CouncilVoteGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
   type NationGeneratorOptions,
@@ -112,6 +116,7 @@ export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { councilVoteConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
@@ -343,6 +348,22 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generateCouncilVote(
+    options: CouncilVoteGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...councilVoteOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildCouncilVotePrompt(councilVoteOptions, getSessionContext());
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseCouncilVoteResponse(text, resolved);
+      },
+      () => generateCouncilVoteLocal(councilVoteOptions),
     );
   }
 
