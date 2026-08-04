@@ -85,9 +85,9 @@
 
     // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
     // to avoid intermediate array allocations during reactive updates.
-    const result = [];
+    const result: typeof GENERATOR_GROUPS = [];
     for (const group of GENERATOR_GROUPS) {
-      const filteredItems = [];
+      const filteredItems: (typeof GENERATOR_GROUPS)[number]["items"] = [];
       for (const item of group.items) {
         let keep = true;
         if (!isFantasy) {
