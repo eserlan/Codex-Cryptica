@@ -71,6 +71,21 @@ describe("generateCouncilVoteLocal", () => {
       expect(out.lore.match(/^- \*\*/gm)?.length).toBe(5);
     }
   });
+
+  it("gives each councillor an archetype-specific persuasion hint instead of one shared line", () => {
+    const out = generateCouncilVoteLocal({ councilSize: "7" }, seededRng(11));
+    const archetypesSeen = Object.keys(
+      councilVoteConfig.persuasionHints,
+    ).filter((archetype) => out.lore.includes(`(${archetype})`));
+    expect(archetypesSeen.length).toBeGreaterThan(0);
+    for (const archetype of archetypesSeen) {
+      const hint = councilVoteConfig.persuasionHints[archetype];
+      expect(out.lore).toContain(`${hint[0].toUpperCase()}${hint.slice(1)}.`);
+    }
+    expect(out.lore).not.toContain(
+      "Persuadable through the right blend of evidence, favours, or leverage",
+    );
+  });
 });
 
 describe("buildCouncilVoteFoundationPrompt", () => {
@@ -225,7 +240,9 @@ describe("buildCouncilVoteFoundationRepairPrompt", () => {
   });
 
   it("checks names fit the requested genre and asks for a consistent rename if not", () => {
-    const prompt = buildCouncilVoteFoundationRepairPrompt("Cyberpunk / Corporate");
+    const prompt = buildCouncilVoteFoundationRepairPrompt(
+      "Cyberpunk / Corporate",
+    );
     expect(prompt).toContain(
       "Every councillor's name must fit the Cyberpunk / Corporate setting",
     );

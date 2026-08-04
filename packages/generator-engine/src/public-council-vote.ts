@@ -144,6 +144,22 @@ export const councilVoteConfig = {
     "Wildcard",
   ],
   stances: ["Support", "Oppose", "Leaning", "Unknown"],
+  persuasionHints: {
+    "Beleaguered Ally":
+      "already sympathetic, but needs political cover: a face-saving concession or public reassurance would lock in this vote",
+    "Villain's Toady":
+      "loyal only as long as it pays: a better offer, or exposing what they owe their patron, could flip this vote",
+    "Greedy Broker":
+      "purely transactional: the right bribe, contract, or cut of the outcome moves this vote",
+    "Loyal Shadow":
+      "votes however their patron directs: change the patron's mind, or sever that loyalty, and the vote follows",
+    Traditionalist:
+      "distrusts anything that breaks precedent: frame the proposal as continuity, or cite an old precedent, to bring them around",
+    Idealist:
+      "genuinely persuadable by principle: a compelling moral argument or proof of who truly benefits could win this vote",
+    Wildcard:
+      "unpredictable and hard to read: something personal, not political, is what will actually move this vote",
+  } as Record<string, string>,
 };
 
 export interface CouncilVoteGeneratorOptions {
@@ -486,10 +502,12 @@ export function generateCouncilVoteLocal(
   const resolved = resolveCouncilVote(options, rng);
 
   const memberLines = resolved.members
-    .map(
-      (m) =>
-        `- **${m.name}** (${m.archetype}) — Initial stance: ${m.stance}. Persuadable through the right blend of evidence, favours, or leverage — exactly which is for the table to discover.`,
-    )
+    .map((m) => {
+      const hint =
+        councilVoteConfig.persuasionHints[m.archetype] ??
+        "persuadable through the right blend of evidence, favours, or leverage: exactly which is for the table to discover";
+      return `- **${m.name}** (${m.archetype}) — Initial stance: ${m.stance}. ${hint[0].toUpperCase()}${hint.slice(1)}.`;
+    })
     .join("\n");
 
   const content = `### The Proposal
