@@ -145,6 +145,30 @@ describe("council-vote generator", () => {
     expect(draft.labels).toContain("Unanimous");
   });
 
+  it("reflects the requested scope and tone in the local fallback, not just AI prompts", () => {
+    const draft = getGenerator("council-vote").generate(
+      run("council-vote", {
+        options: {
+          scope: "Distributed Across Settlements/Regions",
+          tone: "Farcical",
+        },
+      }),
+    );
+    expect(draft.lore).toContain("## Scope");
+    expect(draft.lore).toContain("Distributed Across Settlements/Regions");
+    expect(draft.summary).toContain("farcical");
+    expect(draft.labels).toContain("Farcical");
+  });
+
+  it("only ever generates one of the supported council sizes, even for out-of-range input", () => {
+    for (const size of ["2", "4", "10", "-1", "0"]) {
+      const draft = getGenerator("council-vote").generate(
+        run("council-vote", { options: { councilSize: size } }),
+      );
+      expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(5);
+    }
+  });
+
   it("falls back to a valid council size when given garbage input", () => {
     const draft = getGenerator("council-vote").generate(
       run("council-vote", { options: { councilSize: "not-a-number" } }),

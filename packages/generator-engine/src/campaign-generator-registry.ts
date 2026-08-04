@@ -837,8 +837,8 @@ ${loreGuidance(
 // ---------------------------------------------------------------------------
 
 function councilVoteSize(request: GeneratorRunRequest): number {
-  const raw = Number(optionString(request, "councilSize", "5"));
-  return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 5;
+  const raw = optionString(request, "councilSize", "5");
+  return COUNCIL_VOTE_SIZES.includes(raw) ? Number(raw) : 5;
 }
 
 function generateCouncilVote(request: GeneratorRunRequest): GeneratorOutput {
@@ -860,6 +860,8 @@ function generateCouncilVote(request: GeneratorRunRequest): GeneratorOutput {
     "antagonistInfluence",
     pick(COUNCIL_VOTE_ANTAGONIST_INFLUENCE),
   );
+  const scope = optionString(request, "scope", pick(COUNCIL_VOTE_SCOPES));
+  const tone = optionString(request, "tone", pick(COUNCIL_VOTE_TONES));
 
   const members = Array.from({ length: size }, () => ({
     name: generateName(),
@@ -873,13 +875,15 @@ function generateCouncilVote(request: GeneratorRunRequest): GeneratorOutput {
     .join("\n");
 
   const title = `The Vote of the ${bodyType}`;
-  const summary = `A ${size}-seat ${bodyType.toLowerCase()} must decide on ${proposal} ${deadline}.`;
+  const summary = `A ${tone.toLowerCase()} ${size}-seat ${bodyType.toLowerCase()} must decide on ${proposal} ${deadline}.`;
   const lore = `## The Proposal
 ${proposal}
 ## Deadline & Stakes
 The vote must be called ${deadline}. Failure leaves the party's aims unresolved and cedes ground to their rivals.
 ## Voting Rule
 ${rule}, ${size} seats.
+## Scope
+${scope}.
 ## Council Members
 ${memberLines}
 ## Antagonist Influence
@@ -897,7 +901,7 @@ At least two coalitions of votes can carry the proposal — persuasion and evide
     title,
     summary,
     lore,
-    labels: [bodyType, rule, `${size}-seat`],
+    labels: [bodyType, rule, `${size}-seat`, tone],
   };
 }
 
