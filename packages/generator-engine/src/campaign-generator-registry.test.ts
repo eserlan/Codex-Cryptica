@@ -118,6 +118,8 @@ describe("council-vote generator", () => {
     expect(prompt).toContain("initial voting stance");
     expect(prompt).toContain("at least two viable paths to victory");
     expect(prompt).toContain("costly best solution");
+    expect(prompt).toContain("run a consistency pass");
+    expect(prompt).toContain("mathematically correct for 7 seats");
     expect(prompt).toContain('"connections"');
     expect(prompt).toContain("Example (illustrative only");
   });

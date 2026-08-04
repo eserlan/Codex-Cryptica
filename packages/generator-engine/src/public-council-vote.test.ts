@@ -93,10 +93,13 @@ describe("buildCouncilVotePrompt", () => {
       "",
       seededRng(4),
     );
-    expect(userMessage).toContain("Before returning, verify");
-    expect(userMessage).toContain("exactly 7 named council members");
-    expect(userMessage).toContain("at least two distinct viable coalitions");
-    expect(userMessage).toContain("internally consistent");
+    expect(userMessage).toContain("run a consistency pass");
+    expect(userMessage).toContain("mathematically achievable with 7 seats");
+    expect(userMessage).toContain(
+      "every councillor's stance is identical everywhere",
+    );
+    expect(userMessage).toContain("resolve both sides of the central dilemma");
+    expect(userMessage).toContain("state that dependency explicitly");
   });
 
   it("defaults genre to Classic Fantasy when unset", () => {
