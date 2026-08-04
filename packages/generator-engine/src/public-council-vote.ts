@@ -253,7 +253,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative name for this vote (3-6 words)",
   "content": "A player-facing multi-paragraph hook (markdown formatted) describing the proposal, the deadline, and why the party has been drawn into the vote.",
-  "lore": "GM-only details (markdown formatted) with these sections: '### Voting Procedure' (the threshold and any exploitable procedural rules), '### Current Vote Estimate', '### Council Members' (one bullet per member, each named '**Name** (Archetype)', giving their public position, true agenda, initial stance, what would genuinely persuade them, and a secret or piece of leverage), '### Antagonist Influence', '### Investigation Leads', '### Possible Paths' (at least two viable voting coalitions), '### Follow-Up Hooks'.",
+  "lore": "GM-only details (markdown formatted) with these sections: '### Voting Procedure' (the threshold and any exploitable procedural rules), '### Current Vote Estimate', '### Council Members' (one bullet per member, each named '**Name** (Archetype)', giving their public position, true agenda, initial stance, what would genuinely persuade them, and a secret or piece of leverage), '### Antagonist Influence', '### Investigation Leads', '### Possible Paths' (at least two viable voting coalitions, PLUS one distinct 'costly best solution' path where the party wins every seat and every concession but the way they got there burns a bridge, destabilises an ally, or creates a powerful new enemy — spell out exactly what that cost is), '### Follow-Up Hooks'.",
   "labels": ["council-vote", "political-intrigue"]
 }
 Exactly ${resolved.councilSize} named council members are required. Use these names and starting archetypes as inspiration — invent a full personality, agenda, and secret for each rather than just restating the archetype: ${resolved.members.map((m) => `${m.name} (${m.archetype}, initial stance: ${m.stance})`).join(", ")}.
@@ -261,7 +261,7 @@ This is a political puzzle, not a sequence of mandatory fetch quests: give most 
 Set the vote firmly within the ${resolved.genre} genre — the governing body, council members, and stakes should feel native to that setting.
 ${NAME_BAN_PROMPT}
 ${sessionContext}
-Before returning, verify: exactly ${resolved.councilSize} named council members appear in "Council Members" and nowhere else are members added or dropped; "Possible Paths" names at least two distinct viable coalitions; and every section is internally consistent — the vote estimate, member stances, and antagonist influence all agree with each other and with the proposal and deadline described in "content". Fix any mismatch before responding.
+Before returning, verify: exactly ${resolved.councilSize} named council members appear in "Council Members" and nowhere else are members added or dropped; "Possible Paths" names at least two distinct viable coalitions plus the costly best solution; and every section is internally consistent — the vote estimate, member stances, and antagonist influence all agree with each other and with the proposal and deadline described in "content". Fix any mismatch before responding.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   return {
@@ -343,7 +343,7 @@ ${
 Each councillor's public reputation hides a private agenda; asking around the ${resolved.governingBodyType.toLowerCase()}'s usual haunts is the fastest way to learn who can be swayed and how.
 
 ### Possible Paths
-At least two coalitions of votes can carry the proposal — persuasion and evidence for the cautious, leverage and favours for the desperate.
+At least two coalitions of votes can carry the proposal — persuasion and evidence for the cautious, leverage and favours for the desperate. The costly best solution: win every seat outright, but only by spending every favour and secret in hand — the vote passes clean, and the party leaves owing debts, and making enemies, they cannot yet see the price of.
 
 ### Follow-Up Hooks
 However the vote resolves, whichever councillors were crossed or courted will remember it long after the ballots are counted.`;

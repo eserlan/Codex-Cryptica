@@ -117,6 +117,7 @@ describe("council-vote generator", () => {
     expect(prompt).toContain("exactly 7 named council members");
     expect(prompt).toContain("initial voting stance");
     expect(prompt).toContain("at least two viable paths to victory");
+    expect(prompt).toContain("costly best solution");
     expect(prompt).toContain('"connections"');
     expect(prompt).toContain("Example (illustrative only");
   });
@@ -141,6 +142,7 @@ describe("council-vote generator", () => {
     expect(draft.title.length).toBeGreaterThan(0);
     expect(draft.lore).toContain("## Council Members");
     expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(3);
+    expect(draft.lore).toContain("costly best solution");
     expect(draft.labels).toContain("Senate");
     expect(draft.labels).toContain("Unanimous");
   });

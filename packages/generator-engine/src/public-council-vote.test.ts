@@ -23,6 +23,7 @@ describe("generateCouncilVoteLocal", () => {
     expect(out.content).toContain("### The Deadline");
     expect(out.lore).toContain("### Council Members");
     expect(out.lore.match(/^- \*\*/gm)?.length).toBe(3);
+    expect(out.lore).toContain("costly best solution");
     expect(out.labels).toContain("council-vote");
   });
 
@@ -80,6 +81,7 @@ describe("buildCouncilVotePrompt", () => {
     expect(userMessage).toContain(NAME_BAN_PROMPT);
     expect(userMessage).toContain("The Neon Compact");
     expect(userMessage).toContain("at least two viable voting coalitions");
+    expect(userMessage).toContain("costly best solution");
     expect(resolved.governingBodyType).toBe("Corporate Board");
     expect(resolved.councilSize).toBe(7);
     expect(resolved.genre).toBe("Cyberpunk");
