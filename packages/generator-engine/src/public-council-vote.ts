@@ -271,26 +271,34 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+// The only labels this generator's own schema asks for. "council-vote"
+// drives the main/rail content split in generator-document-layout.ts
+// (LAYOUT_RULES), matched by `labels.includes(rule.label)` in rule-array
+// order — so a stray foreign label like "quest-generator" (present earlier
+// in that array) would win the match even with "council-vote" also present.
+// Whitelisting to this generator's own known labels, rather than just
+// appending "council-vote", closes that off regardless of what the model
+// echoes back or invents.
+const KNOWN_LABELS = ["council-vote", "political-intrigue"];
+
 export function parseCouncilVoteResponse(
   text: string,
   resolved: ResolvedCouncilVote,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
-  const labels = Array.isArray(data.labels)
-    ? data.labels
-    : ["council-vote", "political-intrigue"];
+  const rawLabels = Array.isArray(data.labels) ? data.labels : [];
+  const labels = rawLabels.filter(
+    (label: unknown): label is string =>
+      typeof label === "string" && KNOWN_LABELS.includes(label),
+  );
+  if (!labels.includes("council-vote")) labels.unshift("council-vote");
   return {
     type: "event",
     title: data.title || resolved.title,
     summary: data.summary || "",
     content: data.content || "",
     lore: data.lore || "",
-    // "council-vote" drives the main/rail content split in
-    // generator-document-layout.ts (LAYOUT_RULES) — keep it present
-    // regardless of what the model echoes back.
-    labels: labels.includes("council-vote")
-      ? labels
-      : ["council-vote", ...labels],
+    labels,
     status: "active",
   };
 }

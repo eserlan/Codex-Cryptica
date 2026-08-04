@@ -14,7 +14,7 @@ There are **two separate, non-interoperating generator systems** in this repo. C
 | Core files   | `packages/generator-engine/src/campaign-generator-registry.ts` + `campaign-generator-types.ts` | `packages/generator-engine/src/public-<name>.ts` + a pile of `apps/web` files |
 | Output shape | `GeneratorOutput` (title/summary/lore/labels/connections)                                      | `PublicGeneratorOutput` (adds `type`/`status`/`kind`)                         |
 
-They can share _content design_ (pools of options, per-councillor/per-NPC structure) but not code — each has its own prompt builder and local fallback. Building one does not expose the generator anywhere the other system reads from.
+They always share _content design_ (pools of options, per-councillor/per-NPC structure). Code sharing is tier-dependent: **simple**-tier in-app generators have their own inline prompt builder and local fallback, no shared code; **rich**-tier in-app generators (see Part A step 1) deliberately import `generateXLocal`/`buildXPrompt` from the matching `public-x.ts` file. Either way, building one does not expose the generator anywhere the other system reads from — that wiring is separate (Part A vs Part B below).
 
 **Ask the user which surface(s) they want** if it's not obvious from the request ("add it to /generators too" after an in-app-only generator means build Part B on top of Part A).
 

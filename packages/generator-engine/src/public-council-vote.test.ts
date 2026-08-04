@@ -141,4 +141,13 @@ describe("parseCouncilVoteResponse", () => {
     );
     expect(missingLabelsField.labels).toContain("council-vote");
   });
+
+  it("strips foreign labels the model may echo back, like quest-generator", () => {
+    const out = parseCouncilVoteResponse(
+      '{"title":"X","content":"c","lore":"l","labels":["quest-generator","council-vote"]}',
+      resolved,
+    );
+    expect(out.labels).not.toContain("quest-generator");
+    expect(out.labels).toContain("council-vote");
+  });
 });
