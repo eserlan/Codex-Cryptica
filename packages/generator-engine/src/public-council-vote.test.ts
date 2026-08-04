@@ -102,6 +102,23 @@ describe("buildCouncilVotePrompt", () => {
     expect(userMessage).toContain("state that dependency explicitly");
   });
 
+  it("treats initial stances as fixed and forbids spending effort on already-secured votes", () => {
+    const { userMessage } = buildCouncilVotePrompt(
+      { councilSize: "7" },
+      "",
+      seededRng(4),
+    );
+    expect(userMessage).toContain(
+      "Treat each councillor's initial stance as fixed source data",
+    );
+    expect(userMessage).toContain(
+      "do not describe the party spending effort or resources on councillors whose vote is already secured",
+    );
+    expect(userMessage).toContain(
+      "must improve on or replace the original proposal",
+    );
+  });
+
   it("defaults genre to Classic Fantasy when unset", () => {
     const { resolved } = buildCouncilVotePrompt({}, "", seededRng(1));
     expect(resolved.genre).toBe("Classic Fantasy");

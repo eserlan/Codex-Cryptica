@@ -120,6 +120,12 @@ describe("council-vote generator", () => {
     expect(prompt).toContain("costly best solution");
     expect(prompt).toContain("run a consistency pass");
     expect(prompt).toContain("mathematically correct for 7 seats");
+    expect(prompt).toContain(
+      "Treat each councillor's initial voting stance as fixed source data",
+    );
+    expect(prompt).toContain(
+      "do not describe the party spending effort or resources on councillors whose vote is already secured",
+    );
     expect(prompt).toContain('"connections"');
     expect(prompt).toContain("Example (illustrative only");
   });
