@@ -36,6 +36,20 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+
+  const activeBodyTypes = $derived(
+    councilVoteConfig.bodyTypesByTheme[theme] ?? councilVoteConfig.bodyTypes,
+  );
+  const builtInBodyTypes = councilVoteConfig.bodyTypes;
+
+  $effect(() => {
+    if (
+      builtInBodyTypes.includes(governingBodyType) &&
+      !activeBodyTypes.includes(governingBodyType)
+    ) {
+      governingBodyType = activeBodyTypes[0];
+    }
+  });
 </script>
 
 <SelectWithCustomOption
@@ -67,7 +81,7 @@
   id="council-vote-body-select"
   label="Governing Body"
   bind:value={governingBodyType}
-  choices={councilVoteConfig.bodyTypes.map((t: string) => ({
+  choices={activeBodyTypes.map((t: string) => ({
     value: t,
     label: t,
   }))}
@@ -162,7 +176,7 @@
   <button
     type="button"
     onclick={() => {
-      governingBodyType = pickFrom(councilVoteConfig.bodyTypes);
+      governingBodyType = pickFrom(activeBodyTypes);
       councilSize = pickFrom(councilVoteConfig.sizes);
       votingRule = pickFrom(councilVoteConfig.votingRules);
       scope = pickFrom(councilVoteConfig.scopes);

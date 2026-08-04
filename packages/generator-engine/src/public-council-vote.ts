@@ -34,6 +34,84 @@ export const councilVoteConfig = {
     "Criminal Syndicate",
     "Religious Conclave",
   ],
+  // Which governing bodies feel native to each world theme/genre — mirrors
+  // public-quest.ts's per-genre location/threat pools. Falls back to the
+  // full bodyTypes list above for any theme not listed here.
+  bodyTypesByTheme: {
+    "Classic Fantasy": [
+      "Town Council",
+      "Noble Court",
+      "Senate",
+      "Religious Conclave",
+    ],
+    Pirate: ["Clan Moot", "Criminal Syndicate", "War Council", "Noble Court"],
+    "Cyberpunk / Corporate": [
+      "Corporate Board",
+      "Revolutionary Committee",
+      "Criminal Syndicate",
+      "Senate",
+    ],
+    "Vampire / Gothic Noir": [
+      "Noble Court",
+      "Religious Conclave",
+      "Criminal Syndicate",
+      "Clan Moot",
+    ],
+    "Cosmic Horror": [
+      "Religious Conclave",
+      "Senate",
+      "Town Council",
+      "Noble Court",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Interstellar Assembly",
+      "Senate",
+      "Corporate Board",
+      "War Council",
+    ],
+    "Modern Conspiracy": [
+      "Senate",
+      "Corporate Board",
+      "Revolutionary Committee",
+      "Criminal Syndicate",
+    ],
+    "Post-Apocalyptic": [
+      "War Council",
+      "Clan Moot",
+      "Criminal Syndicate",
+      "Town Council",
+    ],
+    "Western / Frontier": [
+      "Town Council",
+      "War Council",
+      "Criminal Syndicate",
+      "Noble Court",
+    ],
+    Steampunk: [
+      "Corporate Board",
+      "Senate",
+      "Noble Court",
+      "Revolutionary Committee",
+    ],
+    Lancer: [
+      "Interstellar Assembly",
+      "War Council",
+      "Corporate Board",
+      "Senate",
+    ],
+    "Space Opera Resistance": [
+      "Revolutionary Committee",
+      "War Council",
+      "Interstellar Assembly",
+      "Clan Moot",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Interstellar Assembly",
+      "Senate",
+      "Corporate Board",
+      "Town Council",
+    ],
+  } as Record<string, string[]>,
   sizes: ["3", "5", "7", "9"],
   votingRules: [
     "Simple Majority",
@@ -97,7 +175,11 @@ function resolveCouncilVote(
 ): ResolvedCouncilVote {
   const genre = options.genre?.trim() || "Classic Fantasy";
   const governingBodyType =
-    options.governingBodyType || pickFrom(councilVoteConfig.bodyTypes, rng);
+    options.governingBodyType ||
+    pickFrom(
+      councilVoteConfig.bodyTypesByTheme[genre] ?? councilVoteConfig.bodyTypes,
+      rng,
+    );
   const councilSize = councilVoteConfig.sizes.includes(
     options.councilSize ?? "",
   )

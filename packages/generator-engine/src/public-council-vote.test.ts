@@ -90,6 +90,17 @@ describe("buildCouncilVotePrompt", () => {
     expect(resolved.genre).toBe("Classic Fantasy");
   });
 
+  it("picks a theme-appropriate governing body when none is specified", () => {
+    const { resolved } = buildCouncilVotePrompt(
+      { genre: "Cyberpunk / Corporate" },
+      "",
+      seededRng(6),
+    );
+    expect(
+      councilVoteConfig.bodyTypesByTheme["Cyberpunk / Corporate"],
+    ).toContain(resolved.governingBodyType);
+  });
+
   it("exposes the shared config lists", () => {
     expect(councilVoteConfig.sizes).toEqual(["3", "5", "7", "9"]);
     expect(councilVoteConfig.bodyTypes).toContain("Criminal Syndicate");
