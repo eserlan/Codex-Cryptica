@@ -58,6 +58,7 @@ export const councilVoteConfig = {
 };
 
 export interface CouncilVoteGeneratorOptions {
+  genre?: string;
   proposal?: string;
   governingBodyType?: string;
   councilSize?: string;
@@ -76,6 +77,7 @@ interface CouncilVoteMember {
 }
 
 interface ResolvedCouncilVote {
+  genre: string;
   proposal: string;
   governingBodyType: string;
   councilSize: number;
@@ -93,6 +95,7 @@ function resolveCouncilVote(
   options: CouncilVoteGeneratorOptions,
   rng: Rng,
 ): ResolvedCouncilVote {
+  const genre = options.genre?.trim() || "Classic Fantasy";
   const governingBodyType =
     options.governingBodyType || pickFrom(councilVoteConfig.bodyTypes, rng);
   const councilSize = councilVoteConfig.sizes.includes(
@@ -123,6 +126,7 @@ function resolveCouncilVote(
   );
 
   return {
+    genre,
     proposal,
     governingBodyType,
     councilSize,
@@ -152,6 +156,7 @@ export function buildCouncilVotePrompt(
 
   const userMessage = `Generate a Council Vote political RPG quest in JSON format: the party must secure enough votes on a council before an urgent decision is made, instead of persuading a single ruler.
 Options:
+- Genre: ${resolved.genre}
 - Proposal: ${resolved.proposal}
 - Governing Body: ${resolved.governingBodyType}
 - Council Size: ${resolved.councilSize} seats
@@ -171,6 +176,7 @@ You must return a valid JSON object matching the following structure exactly:
 }
 Exactly ${resolved.councilSize} named council members are required. Use these names and starting archetypes as inspiration — invent a full personality, agenda, and secret for each rather than just restating the archetype: ${resolved.members.map((m) => `${m.name} (${m.archetype}, initial stance: ${m.stance})`).join(", ")}.
 This is a political puzzle, not a sequence of mandatory fetch quests: give most voters multiple viable approaches with different costs, ensure at least one easy solution creates a future complication, and never let a single action guarantee a majority.
+Set the vote firmly within the ${resolved.genre} genre — the governing body, council members, and stakes should feel native to that setting.
 ${NAME_BAN_PROMPT}
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
@@ -218,7 +224,7 @@ export function generateCouncilVoteLocal(
 ${resolved.proposal}
 
 ${resolved.campaignContext ? `### Campaign Fit\nThis vote ties into ${resolved.campaignContext}.\n\n` : ""}### The Deadline
-The ${resolved.governingBodyType} must call the vote ${resolved.deadline}. Under a ${resolved.votingRule.toLowerCase()} rule across ${resolved.councilSize} seats, the party needs to shift the room before then.`;
+The ${resolved.governingBodyType} — a body shaped by the conventions of a ${resolved.genre.toLowerCase()} setting — must call the vote ${resolved.deadline}. Under a ${resolved.votingRule.toLowerCase()} rule across ${resolved.councilSize} seats, the party needs to shift the room before then.`;
 
   const lore = `### Voting Procedure
 ${resolved.votingRule}, ${resolved.councilSize} seats. Scope: ${resolved.scope}.

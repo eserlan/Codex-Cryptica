@@ -156,6 +156,7 @@
   });
 
   let councilVote = $state({
+    genre: factionConfig.themes[0],
     proposal: "",
     governingBodyType: councilVoteConfig.bodyTypes[0],
     councilSize: councilVoteConfig.sizes[1],
@@ -364,6 +365,7 @@
     else if (slug === "faction") faction.theme = activeTheme;
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
+    else if (slug === "council-vote") councilVote.genre = activeTheme;
     else if (slug === "social-hub")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
@@ -659,6 +661,7 @@
       />
     {:else if slug === "council-vote"}
       <CouncilVoteFormFields
+        bind:theme={activeTheme}
         bind:proposal={councilVote.proposal}
         bind:governingBodyType={councilVote.governingBodyType}
         bind:councilSize={councilVote.councilSize}

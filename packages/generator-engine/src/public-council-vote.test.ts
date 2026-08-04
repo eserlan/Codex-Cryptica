@@ -63,6 +63,7 @@ describe("buildCouncilVotePrompt", () => {
   it("embeds options, ban prompt, and session context", () => {
     const { userMessage, resolved } = buildCouncilVotePrompt(
       {
+        genre: "Cyberpunk",
         proposal: "fund the harbour militia",
         governingBodyType: "Corporate Board",
         councilSize: "7",
@@ -71,6 +72,7 @@ describe("buildCouncilVotePrompt", () => {
       "- Existing: The Neon Compact (faction)",
       seededRng(4),
     );
+    expect(userMessage).toContain("- Genre: Cyberpunk");
     expect(userMessage).toContain("- Proposal: fund the harbour militia");
     expect(userMessage).toContain("- Governing Body: Corporate Board");
     expect(userMessage).toContain("Exactly 7 named council members");
@@ -80,6 +82,12 @@ describe("buildCouncilVotePrompt", () => {
     expect(userMessage).toContain("at least two viable voting coalitions");
     expect(resolved.governingBodyType).toBe("Corporate Board");
     expect(resolved.councilSize).toBe(7);
+    expect(resolved.genre).toBe("Cyberpunk");
+  });
+
+  it("defaults genre to Classic Fantasy when unset", () => {
+    const { resolved } = buildCouncilVotePrompt({}, "", seededRng(1));
+    expect(resolved.genre).toBe("Classic Fantasy");
   });
 
   it("exposes the shared config lists", () => {

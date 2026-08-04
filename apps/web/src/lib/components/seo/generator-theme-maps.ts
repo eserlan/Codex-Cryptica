@@ -114,6 +114,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "npc",
   "faction",
   "quest",
+  "council-vote",
   "settlement",
   "magic-item",
   "item",

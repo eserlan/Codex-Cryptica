@@ -1,11 +1,13 @@
 <script lang="ts">
   import {
     councilVoteConfig,
+    factionConfig,
     pickFrom,
   } from "$lib/services/seo/generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
+    theme = $bindable(factionConfig.themes[0]),
     proposal = $bindable(""),
     governingBodyType = $bindable(councilVoteConfig.bodyTypes[0]),
     councilSize = $bindable(councilVoteConfig.sizes[1]),
@@ -17,6 +19,7 @@
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
+    theme: string;
     proposal: string;
     governingBodyType: string;
     councilSize: string;
@@ -34,6 +37,17 @@
   const labelClass =
     "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
 </script>
+
+<SelectWithCustomOption
+  id="council-vote-theme-select"
+  label="Choose a vibe"
+  bind:value={theme}
+  choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  {inputClass}
+  customPlaceholder="Enter a custom vibe"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="council-vote-proposal" class={labelClass}
