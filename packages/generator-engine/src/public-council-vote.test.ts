@@ -127,4 +127,18 @@ describe("parseCouncilVoteResponse", () => {
     expect(out.title).toBe(resolved.title);
     expect(() => parseCouncilVoteResponse("nope", resolved)).toThrow();
   });
+
+  it("always includes the council-vote label, even if the model omits it", () => {
+    const withoutLabel = parseCouncilVoteResponse(
+      '{"title":"X","content":"c","lore":"l","labels":["political-intrigue"]}',
+      resolved,
+    );
+    expect(withoutLabel.labels).toContain("council-vote");
+
+    const missingLabelsField = parseCouncilVoteResponse(
+      '{"title":"X","content":"c","lore":"l"}',
+      resolved,
+    );
+    expect(missingLabelsField.labels).toContain("council-vote");
+  });
 });

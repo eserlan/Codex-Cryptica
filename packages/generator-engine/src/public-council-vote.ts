@@ -254,7 +254,7 @@ You must return a valid JSON object matching the following structure exactly:
   "title": "A single evocative name for this vote (3-6 words)",
   "content": "A player-facing multi-paragraph hook (markdown formatted) describing the proposal, the deadline, and why the party has been drawn into the vote.",
   "lore": "GM-only details (markdown formatted) with these sections: '### Voting Procedure' (the threshold and any exploitable procedural rules), '### Current Vote Estimate', '### Council Members' (one bullet per member, each named '**Name** (Archetype)', giving their public position, true agenda, initial stance, what would genuinely persuade them, and a secret or piece of leverage), '### Antagonist Influence', '### Investigation Leads', '### Possible Paths' (at least two viable voting coalitions), '### Follow-Up Hooks'.",
-  "labels": ["council-vote", "political-intrigue", "quest-generator"]
+  "labels": ["council-vote", "political-intrigue"]
 }
 Exactly ${resolved.councilSize} named council members are required. Use these names and starting archetypes as inspiration — invent a full personality, agenda, and secret for each rather than just restating the archetype: ${resolved.members.map((m) => `${m.name} (${m.archetype}, initial stance: ${m.stance})`).join(", ")}.
 This is a political puzzle, not a sequence of mandatory fetch quests: give most voters multiple viable approaches with different costs, ensure at least one easy solution creates a future complication, and never let a single action guarantee a majority.
@@ -276,15 +276,21 @@ export function parseCouncilVoteResponse(
   resolved: ResolvedCouncilVote,
 ): PublicGeneratorOutput {
   const data = parseFencedJson(text);
+  const labels = Array.isArray(data.labels)
+    ? data.labels
+    : ["council-vote", "political-intrigue"];
   return {
     type: "event",
     title: data.title || resolved.title,
     summary: data.summary || "",
     content: data.content || "",
     lore: data.lore || "",
-    labels: Array.isArray(data.labels)
-      ? data.labels
-      : ["council-vote", "political-intrigue", "quest-generator"],
+    // "council-vote" drives the main/rail content split in
+    // generator-document-layout.ts (LAYOUT_RULES) — keep it present
+    // regardless of what the model echoes back.
+    labels: labels.includes("council-vote")
+      ? labels
+      : ["council-vote", ...labels],
     status: "active",
   };
 }

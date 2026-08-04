@@ -143,6 +143,15 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Adventure Hooks",
     ]),
   },
+  {
+    label: "council-vote",
+    railSections: new Set([
+      "Voting Procedure",
+      "Current Vote Estimate",
+      "Council Members",
+      "Antagonist Influence",
+    ]),
+  },
 ];
 
 interface MarkdownSection {
