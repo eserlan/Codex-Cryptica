@@ -48,6 +48,7 @@ describe("registry lookup", () => {
       "dungeon",
       "adventure",
       "world",
+      "council-vote",
     ]);
   });
 
@@ -100,6 +101,55 @@ describe("registry lookup", () => {
   it("isSupportedGenerator narrows known ids", () => {
     expect(isSupportedGenerator("npc")).toBe(true);
     expect(isSupportedGenerator("dragon")).toBe(false);
+  });
+});
+
+describe("council-vote generator", () => {
+  it("maps to the note vault category", () => {
+    expect(GENERATOR_ENTITY_TYPE["council-vote"]).toBe("note");
+    expect(getGenerator("council-vote").entityType).toBe("note");
+  });
+
+  it("builds a prompt that names the requested council size and covers the political-puzzle requirements", () => {
+    const prompt = getGenerator("council-vote").buildPrompt(
+      run("council-vote", { options: { councilSize: "7" } }),
+    );
+    expect(prompt).toContain("exactly 7 named council members");
+    expect(prompt).toContain("initial voting stance");
+    expect(prompt).toContain("at least two viable paths to victory");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+  });
+
+  it("defaults to a 5-seat council when no size is given", () => {
+    const prompt = getGenerator("council-vote").buildPrompt(
+      run("council-vote"),
+    );
+    expect(prompt).toContain("exactly 5 named council members");
+  });
+
+  it("generates a local fallback with one council member per requested seat", () => {
+    const draft = getGenerator("council-vote").generate(
+      run("council-vote", {
+        options: {
+          councilSize: "3",
+          governingBodyType: "Senate",
+          votingRule: "Unanimous",
+        },
+      }),
+    );
+    expect(draft.title.length).toBeGreaterThan(0);
+    expect(draft.lore).toContain("## Council Members");
+    expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(3);
+    expect(draft.labels).toContain("Senate");
+    expect(draft.labels).toContain("Unanimous");
+  });
+
+  it("falls back to a valid council size when given garbage input", () => {
+    const draft = getGenerator("council-vote").generate(
+      run("council-vote", { options: { councilSize: "not-a-number" } }),
+    );
+    expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(5);
   });
 });
 
@@ -564,6 +614,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       dungeon: "location",
       adventure: "note",
       world: "location",
+      "council-vote": "note",
     });
   });
 

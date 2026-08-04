@@ -18,7 +18,8 @@ export type GeneratorId =
   | "news-sheet"
   | "dungeon"
   | "adventure"
-  | "world";
+  | "world"
+  | "council-vote";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -32,6 +33,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "dungeon",
   "adventure",
   "world",
+  "council-vote",
 ] as const;
 
 /** A user-configurable field for a generator. */
