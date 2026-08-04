@@ -1,4 +1,5 @@
 import type {
+  AIGeneratorChatSession,
   AIGeneratorCompleteOptions,
   AIGeneratorGateway,
 } from "generator-engine";
@@ -114,6 +115,25 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     // known degenerate-repetition failure mode) — JSON mode isn't reliably
     // enforced through the proxy.
     return extractJsonObject(response.response.text());
+  }
+
+  async startChat(systemInstruction: string): Promise<AIGeneratorChatSession> {
+    const model = await this.clientManager.getModel(
+      "",
+      GENERATOR_MODEL,
+      systemInstruction,
+    );
+    const chat = model.startChat({ history: [] });
+    return {
+      async send(userMessage: string): Promise<string> {
+        const result = await chat.sendMessageStream(userMessage);
+        let text = "";
+        for await (const chunk of result.stream) {
+          text += chunk.text();
+        }
+        return extractJsonObject(text.trim());
+      },
+    };
   }
 }
 

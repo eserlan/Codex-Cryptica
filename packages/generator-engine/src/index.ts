@@ -94,12 +94,20 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
-  buildCouncilVotePrompt,
-  parseCouncilVoteResponse,
+  buildCouncilVoteFoundationPrompt,
+  buildCouncilVoteFoundationRepairPrompt,
+  parseCouncilVoteFoundation,
+  buildCouncilVotePathsPrompt,
+  buildCouncilVotePathsRepairPrompt,
+  parseCouncilVotePathsResponse,
+  mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
   councilVoteConfig,
   type CouncilVoteGeneratorOptions,
-  type CouncilVotePrompt,
+  type CouncilVoteFoundationPrompt,
+  type CouncilVoteFoundation,
+  type CouncilVotePathsPrompt,
+  type CouncilVotePaths,
 } from "./public-council-vote";
 export {
   buildSettlementPrompt,

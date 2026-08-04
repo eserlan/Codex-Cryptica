@@ -524,6 +524,146 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateCouncilVote", () => {
+    it("should generate council vote details locally when useAI is false", async () => {
+      const res = await engine.generateCouncilVote({
+        councilSize: "3",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("event");
+      expect(res.content).toContain("### The Proposal");
+      expect(res.lore).toContain("### Council Members");
+      expect(res.labels).toContain("council-vote");
+    });
+
+    it("should run four chat turns on the same session (foundation, repair, paths, paths-repair) and merge the repaired outputs", async () => {
+      const foundationJson = JSON.stringify({
+        title: "The Salt Road Levy",
+        content: "### The Proposal\nfoundation content (unrepaired)",
+        lore: "### Voting Procedure\nSimple majority.",
+        labels: ["council-vote", "political-intrigue"],
+      });
+      const repairedJson = JSON.stringify({
+        title: "The Salt Road Levy",
+        content: "### The Proposal\nfoundation content",
+        lore: "### Voting Procedure\nSimple majority.",
+        labels: ["council-vote", "political-intrigue"],
+      });
+      const pathsJson = JSON.stringify({
+        possiblePaths:
+          "### Possible Paths\nsmallest coalition first (unrepaired)",
+        followUpHooks: "### Follow-Up Hooks\nthey remember (unrepaired)",
+      });
+      const pathsRepairedJson = JSON.stringify({
+        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        followUpHooks: "### Follow-Up Hooks\nthey remember",
+      });
+
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(foundationJson))
+          .mockResolvedValueOnce(stream(repairedJson))
+          .mockResolvedValueOnce(stream(pathsJson))
+          .mockResolvedValueOnce(stream(pathsRepairedJson)),
+      };
+      const mockModel = { startChat: vi.fn().mockReturnValue(mockChat) };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "5",
+        useAI: true,
+      });
+
+      expect(mockModel.startChat).toHaveBeenCalledTimes(1);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(4);
+      // The foundation repair turn must ask for a fix, not a fresh generation.
+      expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
+        "proofread and repair the scenario you just wrote above",
+      );
+      // The paths turn must not re-embed the roster/procedure — it relies
+      // on the chat session's own history for that (#2033).
+      expect(mockChat.sendMessageStream.mock.calls[2][0]).toContain(
+        "Treat everything already established there",
+      );
+      // The paths repair turn must ask for a fix, not new paths.
+      expect(mockChat.sendMessageStream.mock.calls[3][0]).toContain(
+        'proofread and repair the "Possible Paths" and "Follow-Up Hooks" you just wrote above',
+      );
+      // The merged output uses the REPAIRED foundation and REPAIRED paths.
+      expect(res.title).toBe("The Salt Road Levy");
+      expect(res.content).toBe("### The Proposal\nfoundation content");
+      expect(res.lore).toBe(
+        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+      );
+      expect(res.labels).toContain("council-vote");
+      expect(res.aiFallback).toBeUndefined();
+    });
+
+    it("should fall back to local tables if the chat session fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "3",
+        useAI: true,
+      });
+
+      expect(res.aiFallback).toBe(true);
+      expect(res.lore).toContain("### Council Members");
+    });
+
+    it("should keep the unrepaired foundation and paths when a repair reply is syntactically valid but empty", async () => {
+      const foundationJson = JSON.stringify({
+        title: "The Salt Road Levy",
+        content: "### The Proposal\nfoundation content",
+        lore: "### Voting Procedure\nSimple majority.",
+        labels: ["council-vote", "political-intrigue"],
+      });
+      const pathsJson = JSON.stringify({
+        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        followUpHooks: "### Follow-Up Hooks\nthey remember",
+      });
+      // Valid JSON, but empty of content — parseCouncilVoteFoundation and
+      // parseCouncilVotePathsResponse don't throw on this; they'd normally
+      // default every field to "", silently blanking a good generation if
+      // adopted without a content-presence gate.
+      const emptyRepair = JSON.stringify({});
+
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(foundationJson))
+          .mockResolvedValueOnce(stream(emptyRepair))
+          .mockResolvedValueOnce(stream(pathsJson))
+          .mockResolvedValueOnce(stream(emptyRepair)),
+      };
+      const mockModel = { startChat: vi.fn().mockReturnValue(mockChat) };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "5",
+        useAI: true,
+      });
+
+      expect(res.title).toBe("The Salt Road Levy");
+      expect(res.content).toBe("### The Proposal\nfoundation content");
+      expect(res.lore).toBe(
+        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+      );
+    });
+  });
+
   describe("generateSocialHub", () => {
     it("should generate a venue using local fallback when useAI is false", async () => {
       const res = await engine.generateSocialHub({

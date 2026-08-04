@@ -392,4 +392,47 @@ The mayor is skimming grain taxes and the harvest is already short.
     expect(layout.lore).toContain("### Complications & Escalating Pressures");
     expect(layout.lore).toContain("### Possible Outcomes");
   });
+
+  it("keeps council-vote's quick-reference sections in the rail and moves the narrative payoff to the main document", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "event",
+      title: "The Vote for the Salt Road Levy",
+      content: "### The Proposal\nApprove the harbour levy.",
+      lore: `### Voting Procedure
+Simple majority, 5 seats.
+
+### Current Vote Estimate
+Two in favour, one opposed, two undecided.
+
+### Council Members
+- **Ossian Thale** (Traditionalist) — wants an audit first.
+
+### Antagonist Influence
+Entrenched — a rival power has bought one seat outright.
+
+### Investigation Leads
+The harbourmaster's manifest shows unusual payments.
+
+### Possible Paths
+Win Ossian and Brant for a clean majority, or expose Devrin instead.
+
+### Follow-Up Hooks
+Yeva will remember who paid better.`,
+      labels: ["council-vote", "political-intrigue"],
+      status: "active",
+    });
+
+    expect(layout.lore).toContain("### Voting Procedure");
+    expect(layout.lore).toContain("### Current Vote Estimate");
+    expect(layout.lore).toContain("### Antagonist Influence");
+    expect(layout.lore).not.toContain("### Council Members");
+    expect(layout.lore).not.toContain("### Investigation Leads");
+    expect(layout.lore).not.toContain("### Possible Paths");
+    expect(layout.lore).not.toContain("### Follow-Up Hooks");
+
+    expect(layout.content).toContain("### Council Members");
+    expect(layout.content).toContain("### Investigation Leads");
+    expect(layout.content).toContain("### Possible Paths");
+    expect(layout.content).toContain("### Follow-Up Hooks");
+  });
 });

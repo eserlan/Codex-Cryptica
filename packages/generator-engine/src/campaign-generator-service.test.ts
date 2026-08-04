@@ -693,6 +693,187 @@ describe("AI policy (US2)", () => {
     expect(generated.lore).toContain("The bells are a lock");
   });
 
+  it("runs council-vote as four turns on one chat session (foundation, repair, paths, paths-repair) and merges the repaired outputs", async () => {
+    const foundationJson = JSON.stringify({
+      title: "The Salt Road Levy",
+      summary: "A five-seat council must approve emergency funding.",
+      lore: "## Voting Procedure\nSimple majority (unrepaired).",
+      labels: ["council-vote", "political-intrigue"],
+      connections: [],
+    });
+    const repairedJson = JSON.stringify({
+      title: "The Salt Road Levy",
+      summary: "A five-seat council must approve emergency funding.",
+      lore: "## Voting Procedure\nSimple majority.",
+      labels: ["council-vote", "political-intrigue"],
+      connections: [],
+    });
+    const pathsJson = JSON.stringify({
+      possiblePaths: "## Possible Paths\nsmallest coalition first (unrepaired)",
+      followUpHooks: "## Follow-Up Hooks\nthey remember (unrepaired)",
+    });
+    const pathsRepairedJson = JSON.stringify({
+      possiblePaths: "## Possible Paths\nsmallest coalition first",
+      followUpHooks: "## Follow-Up Hooks\nthey remember",
+    });
+
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson)
+      .mockResolvedValueOnce(repairedJson)
+      .mockResolvedValueOnce(pathsJson)
+      .mockResolvedValueOnce(pathsRepairedJson);
+    const startChat = vi.fn(async () => ({ send }));
+    const aiGateway = { complete: vi.fn(), startChat };
+
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(
+      run("council-vote", {
+        useAI: true,
+        options: { councilSize: "7" },
+      }),
+    );
+
+    expect(startChat).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(send.mock.calls[0][0]).toContain("This is step one of two");
+    expect(send.mock.calls[1][0]).toContain(
+      "proofread and repair the scenario you just wrote above",
+    );
+    expect(send.mock.calls[2][0]).toContain(
+      "Treat everything already established there",
+    );
+    expect(send.mock.calls[3][0]).toContain(
+      'proofread and repair the "Possible Paths" and "Follow-Up Hooks" you just wrote above',
+    );
+    expect(aiGateway.complete).not.toHaveBeenCalled();
+    expect(generated.title).toBe("The Salt Road Levy");
+    // Uses the REPAIRED foundation lore and REPAIRED paths, not the
+    // unrepaired first-pass versions.
+    expect(generated.lore).toBe(
+      "## Voting Procedure\nSimple majority.\n\n## Possible Paths\nsmallest coalition first\n\n## Follow-Up Hooks\nthey remember",
+    );
+    expect(generated.labels).toContain("council-vote");
+  });
+
+  it("keeps the unrepaired foundation and unrepaired paths when their repair turns return an unusable shape", async () => {
+    const foundationJson = JSON.stringify({
+      title: "The Salt Road Levy",
+      summary: "A five-seat council must approve emergency funding.",
+      lore: "## Voting Procedure\nSimple majority.",
+      labels: ["council-vote"],
+      connections: [],
+    });
+    const pathsJson = JSON.stringify({
+      possiblePaths: "## Possible Paths\nx",
+      followUpHooks: "## Follow-Up Hooks\ny",
+    });
+
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson)
+      .mockResolvedValueOnce(JSON.stringify({ foo: "bar" }))
+      .mockResolvedValueOnce(pathsJson)
+      .mockResolvedValueOnce(JSON.stringify({ foo: "bar" }));
+    const startChat = vi.fn(async () => ({ send }));
+    const aiGateway = { complete: vi.fn(), startChat };
+
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(
+      run("council-vote", { useAI: true, options: { councilSize: "7" } }),
+    );
+
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(generated.title).toBe("The Salt Road Levy");
+    expect(generated.lore).toContain("## Voting Procedure\nSimple majority.");
+    expect(generated.lore).toContain("## Possible Paths\nx");
+  });
+
+  it("keeps the unrepaired paths when the paths-repair reply is missing one required field", async () => {
+    const foundationJson = JSON.stringify({
+      title: "The Salt Road Levy",
+      summary: "A five-seat council must approve emergency funding.",
+      lore: "## Voting Procedure\nSimple majority.",
+      labels: ["council-vote"],
+      connections: [],
+    });
+    const pathsJson = JSON.stringify({
+      possiblePaths: "## Possible Paths\nx",
+      followUpHooks: "## Follow-Up Hooks\ny",
+    });
+    // Only possiblePaths present — a real defect this catches: an isUsable
+    // check using || instead of && would accept this and silently drop the
+    // original followUpHooks.
+    const partialPathsRepair = JSON.stringify({
+      possiblePaths: "## Possible Paths\nz",
+    });
+
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce(foundationJson)
+      .mockResolvedValueOnce(foundationJson)
+      .mockResolvedValueOnce(pathsJson)
+      .mockResolvedValueOnce(partialPathsRepair);
+    const startChat = vi.fn(async () => ({ send }));
+    const aiGateway = { complete: vi.fn(), startChat };
+
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(
+      run("council-vote", { useAI: true, options: { councilSize: "7" } }),
+    );
+
+    // The partial repair must be rejected wholesale, keeping BOTH original
+    // fields — not just possiblePaths with followUpHooks blanked out.
+    expect(generated.lore).toContain("## Possible Paths\nx");
+    expect(generated.lore).toContain("## Follow-Up Hooks\ny");
+    expect(generated.lore).not.toContain("## Possible Paths\nz");
+  });
+
+  it("falls back to local council-vote generation when the gateway has no startChat", async () => {
+    const aiGateway = { complete: vi.fn() };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(
+      run("council-vote", { useAI: true, options: { councilSize: "3" } }),
+    );
+
+    expect(aiGateway.complete).not.toHaveBeenCalled();
+    expect(generated.lore).toContain("## Council Members");
+  });
+
+  it("falls back to local council-vote generation when the foundation pass returns an unusable shape", async () => {
+    const send = vi.fn().mockResolvedValueOnce(JSON.stringify({ foo: "bar" }));
+    const startChat = vi.fn(async () => ({ send }));
+    const aiGateway = { complete: vi.fn(), startChat };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(
+      run("council-vote", { useAI: true, options: { councilSize: "3" } }),
+    );
+
+    // Only the foundation turn should have been attempted before bailing.
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(generated.lore).toContain("## Council Members");
+  });
+
   it("does not commit a rejected dungeon interaction replaced by a stateless retry", async () => {
     const corrected = {
       title: "The Corrected Depths",

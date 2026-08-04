@@ -150,4 +150,37 @@ describe("ProxyAIGeneratorGateway", () => {
       }),
     ).resolves.toBe('{"title":"Stable"}');
   });
+
+  describe("startChat", () => {
+    it("opens one session and lets multiple turns share it, extracting JSON from each reply", async () => {
+      const responses = [
+        '{"title":"Foundation"} trailing garbage',
+        '{"possiblePaths":"paths"}',
+      ];
+      let call = 0;
+      const sendMessageStream = async (message: string) => {
+        expect(message).toBeTruthy();
+        const text = responses[call++];
+        return {
+          stream: (async function* () {
+            yield { text: () => text };
+          })(),
+        };
+      };
+      const chatSession = { sendMessageStream };
+      const client = {
+        getModel: async () => ({
+          startChat: () => chatSession,
+        }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+
+      const chat = await gateway.startChat("system instruction");
+      const first = await chat.send("foundation turn");
+      const second = await chat.send("paths turn");
+
+      expect(JSON.parse(first)).toEqual({ title: "Foundation" });
+      expect(JSON.parse(second)).toEqual({ possiblePaths: "paths" });
+    });
+  });
 });

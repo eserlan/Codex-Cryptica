@@ -590,7 +590,6 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         answer:
           "Yes. Town councils, noble courts, senates, clan moots, war councils, corporate boards, revolutionary committees, interstellar assemblies, criminal syndicates, and religious conclaves are all supported governing-body types.",
       },
-      ADVENTURE_CANVAS_FAQ,
     ],
     relatedLinks: [
       { href: "/generators/quest", label: "Quest Hook Generator" },

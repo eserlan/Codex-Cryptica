@@ -370,5 +370,42 @@ describe("DefaultAIClientManager", () => {
       const streamResult = await result.stream.next();
       expect(streamResult.value.text()).toBe("Coherent response");
     });
+
+    it("should accumulate prior turns across multiple sendMessageStream calls on the same session", async () => {
+      const responses = ["First reply", "Second reply"];
+      let call = 0;
+      (fetch as any).mockImplementation(async () => ({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [{ content: { parts: [{ text: responses[call++] }] } }],
+        }),
+      }));
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const chat = (model as any).startChat({ history: [] });
+
+      await chat.sendMessageStream("First message");
+      await chat.sendMessageStream("Second message");
+
+      const secondCallBody = JSON.parse(
+        ((fetch as any).mock.calls[1][1] as RequestInit).body as string,
+      );
+
+      // The second call must see the first user message AND the first
+      // model reply, not just the freshly sent second message.
+      expect(secondCallBody.contents).toHaveLength(3);
+      expect(secondCallBody.contents[0]).toEqual({
+        role: "user",
+        parts: [{ text: "First message" }],
+      });
+      expect(secondCallBody.contents[1]).toEqual({
+        role: "model",
+        parts: [{ text: "First reply" }],
+      });
+      expect(secondCallBody.contents[2]).toEqual({
+        role: "user",
+        parts: [{ text: "Second message" }],
+      });
+    });
   });
 });

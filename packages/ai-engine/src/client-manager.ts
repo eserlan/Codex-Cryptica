@@ -156,7 +156,10 @@ export class DefaultAIClientManager {
       systemInstruction,
 
       startChat: (options: any = {}) => {
-        const history = options.history || [];
+        // Mutated in place as turns are sent, mirroring the real SDK's
+        // ChatSession: each call on the same session sees every prior
+        // exchange, not just what was passed to startChat() itself.
+        const history = [...(options.history || [])];
         const model = this.createProxyModel(modelName, systemInstruction);
 
         return {
@@ -170,10 +173,16 @@ export class DefaultAIClientManager {
               contents,
             });
 
+            const responseText = result.response.text();
+            history.push(
+              { role: "user", parts: [{ text: query }] },
+              { role: "model", parts: [{ text: responseText }] },
+            );
+
             return {
               stream: (async function* () {
                 yield {
-                  text: () => result.response.text(),
+                  text: () => responseText,
                 };
               })(),
             };
