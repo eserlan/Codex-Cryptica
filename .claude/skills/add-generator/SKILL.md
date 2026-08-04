@@ -53,7 +53,7 @@ Only needed if the user wants the no-login web tool too. This is genuinely ~13 f
    - `<name>Config` object (option pools).
    - `<Name>GeneratorOptions` interface.
    - `resolve<Name>()` — picks defaults for unset options.
-   - `build<Name>Prompt(options, sessionContext, rng)` → `{ systemInstruction, userMessage, resolved }`.
+   - `build<Name>Prompt(options, sessionContext, rng)` → `{ systemInstruction, userMessage, resolved }`. If the generator has cross-section constraints the model could violate without noticing (counts that must match a stated number, claims in one section that must agree with another, "at least N distinct X" requirements), end the prompt with an explicit self-verification instruction — e.g. "Before returning, verify: exactly N members appear, at least two distinct coalitions are named, and all sections are internally consistent with each other. Fix any mismatch before responding." — right before the "return only JSON" formatting line. Assert the instruction's presence in the prompt test.
    - `parse<Name>Response(text, resolved)` → `PublicGeneratorOutput` (via `parseFencedJson`).
    - `generate<Name>Local(options, rng)` → `PublicGeneratorOutput`.
    - Include a `genre?: string` option from the start if the content should vary by world theme (see Part C) — cheaper to add now than retrofit.

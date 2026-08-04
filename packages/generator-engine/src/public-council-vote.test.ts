@@ -85,6 +85,18 @@ describe("buildCouncilVotePrompt", () => {
     expect(resolved.genre).toBe("Cyberpunk");
   });
 
+  it("asks the model to self-verify member count, coalitions, and internal consistency", () => {
+    const { userMessage } = buildCouncilVotePrompt(
+      { councilSize: "7" },
+      "",
+      seededRng(4),
+    );
+    expect(userMessage).toContain("Before returning, verify");
+    expect(userMessage).toContain("exactly 7 named council members");
+    expect(userMessage).toContain("at least two distinct viable coalitions");
+    expect(userMessage).toContain("internally consistent");
+  });
+
   it("defaults genre to Classic Fantasy when unset", () => {
     const { resolved } = buildCouncilVotePrompt({}, "", seededRng(1));
     expect(resolved.genre).toBe("Classic Fantasy");

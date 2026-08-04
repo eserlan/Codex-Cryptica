@@ -261,6 +261,7 @@ This is a political puzzle, not a sequence of mandatory fetch quests: give most 
 Set the vote firmly within the ${resolved.genre} genre — the governing body, council members, and stakes should feel native to that setting.
 ${NAME_BAN_PROMPT}
 ${sessionContext}
+Before returning, verify: exactly ${resolved.councilSize} named council members appear in "Council Members" and nowhere else are members added or dropped; "Possible Paths" names at least two distinct viable coalitions; and every section is internally consistent — the vote estimate, member stances, and antagonist influence all agree with each other and with the proposal and deadline described in "content". Fix any mismatch before responding.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   return {
