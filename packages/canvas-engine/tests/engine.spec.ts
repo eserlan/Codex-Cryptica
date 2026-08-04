@@ -35,6 +35,24 @@ describe("CanvasStore", () => {
     ]);
   });
 
+  it("adds a text node with its content", () => {
+    const store = new CanvasStore(undefined, {
+      idGenerator: { uuid: () => "text-id" },
+    });
+
+    const nodeId = store.addTextNode("hello world", { x: 3, y: 4 });
+
+    expect(nodeId).toBe("text-text-id");
+    expect(store.nodes).toMatchObject([
+      {
+        id: nodeId,
+        type: "text",
+        position: { x: 3, y: 4 },
+        data: { text: "hello world" },
+      },
+    ]);
+  });
+
   it("should remove a node and its edges", () => {
     const store = new CanvasStore();
     const n1 = store.addNode("e1", { x: 0, y: 0 });

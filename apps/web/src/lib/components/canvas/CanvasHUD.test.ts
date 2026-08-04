@@ -232,4 +232,81 @@ describe("CanvasHUD", () => {
     await fireEvent.click(eraser);
     expect(onToggleErasing).toHaveBeenCalledOnce();
   });
+
+  it("toggles the minimap and reflects its visibility", async () => {
+    const onToggleMinimap = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        showMinimap: true,
+        onToggleMinimap,
+      },
+    });
+
+    const button = screen.getByRole("button", { name: "Hide minimap" });
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+    await fireEvent.click(button);
+    expect(onToggleMinimap).toHaveBeenCalledOnce();
+  });
+
+  it("does not show the minimap toggle when unavailable", () => {
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+      },
+    });
+
+    expect(screen.queryByRole("button", { name: /minimap/i })).toBeNull();
+  });
+
+  it("adds a text note to the canvas", async () => {
+    const onAddTextNode = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        onAddTextNode,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add a text note to canvas" }),
+    );
+    expect(onAddTextNode).toHaveBeenCalledOnce();
+  });
+
+  it("opens a stroke width picker on right-click and reports the chosen width", async () => {
+    const onDrawingWidthChange = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        onToggleDrawing: vi.fn(),
+        drawingWidth: 4,
+        onDrawingWidthChange,
+      },
+    });
+
+    const drawButton = screen.getByRole("button", { name: "Draw on canvas" });
+    expect(screen.queryByRole("menu", { name: "Stroke width" })).toBeNull();
+
+    await fireEvent.contextMenu(drawButton);
+    const menu = screen.getByRole("menu", { name: "Stroke width" });
+    expect(menu).toBeTruthy();
+
+    await fireEvent.click(
+      screen.getByRole("menuitemradio", { name: "8px stroke" }),
+    );
+    expect(onDrawingWidthChange).toHaveBeenCalledWith(8);
+  });
 });

@@ -7,9 +7,12 @@ import {
   canvasNodeRotation,
   canvasNodeStyle,
   canvasNodeToFlowNode,
+  canvasNodeZIndex,
+  canvasTextBackgroundStyle,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
   createFlowFileNode,
+  createFlowTextNode,
   autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,
@@ -39,10 +42,45 @@ describe("canvas-workspace-helpers", () => {
       data: { rotation: 405 },
     } as any;
     expect(canvasNodeRotation(rotated)).toBe(405);
-    expect(canvasNodeStyle(rotated)).toBe("opacity:0.8;rotate:405deg;");
+    expect(canvasNodeStyle(rotated)).toBe(
+      "opacity:0.8;--canvas-node-rotate:405deg;",
+    );
     expect(
       canvasNodeRotation({ ...rotated, data: { rotation: Number.NaN } }),
     ).toBe(0);
+  });
+
+  it("ignores invalid z-index data and defaults to 0", () => {
+    expect(canvasNodeZIndex({ data: { zIndex: 4 } } as any)).toBe(4);
+    expect(canvasNodeZIndex({ data: { zIndex: -2 } } as any)).toBe(-2);
+    expect(canvasNodeZIndex({ data: {} } as any)).toBe(0);
+    expect(canvasNodeZIndex({ data: { zIndex: Number.NaN } } as any)).toBe(0);
+    expect(canvasNodeZIndex(undefined)).toBe(0);
+  });
+
+  it("creates a text flow node with default size and given content", () => {
+    const node = createFlowTextNode("hello", { x: 5, y: 10 }, "text-1");
+    expect(node).toMatchObject({
+      id: "text-1",
+      type: "text",
+      position: { x: 5, y: 10 },
+      width: 200,
+      height: 120,
+      data: { text: "hello" },
+    });
+  });
+
+  it("resolves text note background keys to theme-derived CSS values", () => {
+    expect(canvasTextBackgroundStyle("default")).toBe(
+      "var(--color-theme-surface)",
+    );
+    expect(canvasTextBackgroundStyle("transparent")).toBe("transparent");
+    expect(canvasTextBackgroundStyle("primary")).toContain(
+      "var(--color-theme-primary)",
+    );
+    expect(canvasTextBackgroundStyle("not-a-real-key")).toBe(
+      canvasTextBackgroundStyle("default"),
+    );
   });
 
   it("hydrates canvas data into flow nodes and edges", () => {
@@ -270,6 +308,19 @@ describe("canvas-workspace-helpers", () => {
       type: "file",
       file: { path: "files/map.pdf", name: "map.pdf" },
     });
+    expect(fileNode.data?.showFullImage).toBe(false);
+
+    const imageFileNode = createFlowFileNode(
+      {
+        path: "files/portrait.png",
+        name: "portrait.png",
+        mimeType: "image/png",
+        size: 42,
+      },
+      { x: 30, y: 40 },
+      "file-2",
+    );
+    expect(imageFileNode.data?.showFullImage).toBe(true);
 
     expect(
       flowNodeToCanvasNode({

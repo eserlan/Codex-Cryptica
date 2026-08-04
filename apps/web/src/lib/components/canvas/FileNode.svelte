@@ -85,6 +85,8 @@
         minWidth={120}
         minHeight={90}
         keepAspectRatio
+        lineClass="canvas-resize-line"
+        handleClass="canvas-resize-handle"
         onResizeEnd={handleResizeEnd}
       />
     {/if}
@@ -190,3 +192,56 @@
     {/if}
   </article>
 {/if}
+
+<style>
+  /*
+   * The library's default resize line is a 1px hitbox, too thin to reliably
+   * grab. Widen it into an invisible strip centered on the true edge, and
+   * draw a thin accent line at its center (which lands back on the edge)
+   * that only appears on hover so the resting UI stays clean.
+   */
+  :global(.svelte-flow__resize-control.line.canvas-resize-line) {
+    background: transparent;
+    border-width: 0 !important;
+  }
+  :global(.svelte-flow__resize-control.line.left.canvas-resize-line),
+  :global(.svelte-flow__resize-control.line.right.canvas-resize-line) {
+    width: 12px;
+  }
+  :global(.svelte-flow__resize-control.line.top.canvas-resize-line),
+  :global(.svelte-flow__resize-control.line.bottom.canvas-resize-line) {
+    height: 12px;
+  }
+  :global(.svelte-flow__resize-control.line.canvas-resize-line::after) {
+    content: "";
+    position: absolute;
+    background: var(--color-theme-primary);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  :global(.svelte-flow__resize-control.line.left.canvas-resize-line::after),
+  :global(.svelte-flow__resize-control.line.right.canvas-resize-line::after) {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+  }
+  :global(.svelte-flow__resize-control.line.top.canvas-resize-line::after),
+  :global(.svelte-flow__resize-control.line.bottom.canvas-resize-line::after) {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+  :global(.svelte-flow__resize-control.line.canvas-resize-line:hover::after) {
+    opacity: 1;
+  }
+
+  /* Slightly larger corner handles for an easier grab target. */
+  :global(.svelte-flow__resize-control.handle.canvas-resize-handle) {
+    width: 9px;
+    height: 9px;
+  }
+</style>
