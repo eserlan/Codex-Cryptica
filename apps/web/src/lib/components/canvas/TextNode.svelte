@@ -57,8 +57,8 @@
     : isTransparent
       ? 'border-theme-border/40 border-dashed'
       : 'border-theme-border'}"
-  style:width={width ? `${width}px` : "200px"}
-  style:height={height ? `${height}px` : "120px"}
+  style:width={typeof width === "number" ? `${width}px` : "200px"}
+  style:height={typeof height === "number" ? `${height}px` : "120px"}
   style:background-color={backgroundColor}
 >
   {#if selected && !locked}

@@ -1169,9 +1169,16 @@
     clipboardData: DataTransfer | null,
   ) {
     if (!clipboardData) return [];
-    return Array.from(clipboardData.files).filter((file) =>
+    const fromFiles = Array.from(clipboardData.files).filter((file) =>
       file.type.startsWith("image/"),
     );
+    if (fromFiles.length > 0) return fromFiles;
+    // Some browsers only populate `items` (with getAsFile()) for pasted
+    // images, leaving `files` empty.
+    return Array.from(clipboardData.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
   }
 
   async function extractImageFilesFromClipboardItems(items: ClipboardItem[]) {
@@ -1556,8 +1563,7 @@
         <div
           class="canvas-draw-input-layer"
           data-testid="canvas-draw-input-layer"
-          role="img"
-          aria-label="Canvas drawing surface"
+          aria-hidden="true"
           style:pointer-events={isDrawingMode ? "auto" : "none"}
           style:cursor={isDrawingMode ? "crosshair" : undefined}
           onpointerdown={handleDrawingPointerDown}
