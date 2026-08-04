@@ -52,6 +52,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   world: "location",
+  "council-vote": "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -351,6 +352,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   dungeon: `{"title":"The Submerged Vault of Sunken Runes","summary":"An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.","lore":"## History & Original Purpose\\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\\n## Current State & Function\\nCurrently overrun by a desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Signature Feature\\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.\\n## Current Conflict\\nAn invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.\\n## Key Sectors & Layout\\n### Sector 1: The Guarded Gateway\\nFortified entry halls with collapse traps.\\n### Sector 2: The Deep Arcana Vault\\nSealed inner chamber housing warding circles.\\n## Inhabitants & Factions\\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Central Secret / Boss Mystery\\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.\\n## Hazards & Traps\\nPressure-plate needle traps laced with paralyzing wyvern venom.\\n## Treasures & Artifacts\\nA silver-hilted shortsword glowing with pale starlight near undead.\\n## Adventure Hooks & Rumours\\nA local scholar hires the party to retrieve an ancient astrological tablet from the ruins.","labels":["dungeon","location","fantasy","temple-shrine"],"connections":[]}`,
   adventure: `{"title":"The Witness Who Came Back","summary":"A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.","lore":"## Initial Situation\\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\\n## Primary Objective & Pressure\\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.\\n## Key Locations\\n- **The Drowned Clinic** — A basement surgery below the harbour market; currently off the magistrate's map, but her colleagues will tell the wrong people.\\n- **The Salt Gate** — The only land route out; controlled by a guard captain who owes the magistrate a significant favour.\\n## Important NPCs & Factions\\n- **Mira Osal, the witness** — Survived by accident; wants to testify but is terrified of dying before she can.\\n- **Guard-Captain Deren** — Loyal to the magistrate, but only because the magistrate has his brother.\\n## Threats & Antagonists\\n- The magistrate's investigation office has already been tipped off; two plainclothes agents are watching the harbour market.\\n## Clues, Secrets & Discoveries\\n- The ledger names not just the magistrate but three provincial judges — the testimony is worth more than a conviction, which is why the magistrate wants it destroyed rather than suppressed.\\n## Complications & Escalating Pressures\\n- The physician who treated Mira has been taken in for questioning.\\n- The party's own credentials are in the magistrate's files from a prior interaction.\\n## Possible Outcomes\\n- The witness reaches the capital and testifies; the magistrate is arrested but the provincial judges are not named in the hearing.\\n- The ledger is lost or destroyed; Mira survives and her testimony alone changes nothing.\\n## Adventure Hooks\\n- The street physician sends word through a mutual contact: a patient is asking for people who handle difficult situations.\\n- A reward notice is posted for information on the whereabouts of a woman matching Mira's description.","labels":["adventure","event","investigation","fantasy"],"connections":[]}`,
   world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
+  "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -530,6 +532,55 @@ const EVENT_OUTCOMES = [
   "forged an uneasy alliance between former enemies",
   "uncovered a secret that should have stayed buried",
 ];
+
+const COUNCIL_VOTE_BODY_TYPES = [
+  "Town Council",
+  "Noble Court",
+  "Senate",
+  "Clan Moot",
+  "War Council",
+  "Corporate Board",
+  "Revolutionary Committee",
+  "Interstellar Assembly",
+  "Criminal Syndicate",
+  "Religious Conclave",
+];
+const COUNCIL_VOTE_SIZES = ["3", "5", "7", "9"];
+const COUNCIL_VOTE_RULES = [
+  "Simple Majority",
+  "Supermajority (Two-Thirds)",
+  "Unanimous",
+  "Veto Power",
+  "Secret Ballot",
+];
+const COUNCIL_VOTE_SCOPES = [
+  "Single Location",
+  "Distributed Across Settlements/Regions",
+];
+const COUNCIL_VOTE_TONES = [
+  "Political",
+  "Tense",
+  "Desperate",
+  "Farcical",
+  "Somber",
+  "Hopeful",
+];
+const COUNCIL_VOTE_ANTAGONIST_INFLUENCE = [
+  "None",
+  "Subtle",
+  "Entrenched",
+  "Dominant",
+];
+const COUNCIL_VOTE_ARCHETYPES = [
+  "Beleaguered Ally",
+  "Villain's Toady",
+  "Greedy Broker",
+  "Loyal Shadow",
+  "Traditionalist",
+  "Idealist",
+  "Wildcard",
+];
+const COUNCIL_VOTE_STANCES = ["Support", "Oppose", "Leaning", "Unknown"];
 
 function generateName(): string {
   const prefixes = [
@@ -778,6 +829,92 @@ ${exemplarBlock("world")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the world profile; climate, geography, gravity, atmosphere, and biosphere; settlements, cultures, factions, economy, resources, technology, hazards, history, notable locations, mysteries, conflicts, and adventure hooks",
+)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Council Vote generator helpers
+// ---------------------------------------------------------------------------
+
+function councilVoteSize(request: GeneratorRunRequest): number {
+  const raw = optionString(request, "councilSize", "5");
+  return COUNCIL_VOTE_SIZES.includes(raw) ? Number(raw) : 5;
+}
+
+function generateCouncilVote(request: GeneratorRunRequest): GeneratorOutput {
+  const bodyType = optionString(
+    request,
+    "governingBodyType",
+    pick(COUNCIL_VOTE_BODY_TYPES),
+  );
+  const size = councilVoteSize(request);
+  const rule = optionString(request, "votingRule", pick(COUNCIL_VOTE_RULES));
+  const deadline = optionString(request, "deadline", "before the week is out");
+  const proposal = optionString(
+    request,
+    "proposal",
+    "a contested proposal that will reshape the region",
+  );
+  const antagonistInfluence = optionString(
+    request,
+    "antagonistInfluence",
+    pick(COUNCIL_VOTE_ANTAGONIST_INFLUENCE),
+  );
+  const scope = optionString(request, "scope", pick(COUNCIL_VOTE_SCOPES));
+  const tone = optionString(request, "tone", pick(COUNCIL_VOTE_TONES));
+
+  const members = Array.from({ length: size }, () => ({
+    name: generateName(),
+    archetype: pick(COUNCIL_VOTE_ARCHETYPES),
+    stance: pick(COUNCIL_VOTE_STANCES),
+  }));
+  const memberLines = members
+    .map(
+      (m) => `- **${m.name}** (${m.archetype}) — Initial stance: ${m.stance}.`,
+    )
+    .join("\n");
+
+  const title = `The Vote of the ${bodyType}`;
+  const summary = `A ${tone.toLowerCase()} ${size}-seat ${bodyType.toLowerCase()} must decide on ${proposal} ${deadline}.`;
+  const lore = `## The Proposal
+${proposal}
+## Deadline & Stakes
+The vote must be called ${deadline}. Failure leaves the party's aims unresolved and cedes ground to their rivals.
+## Voting Rule
+${rule}, ${size} seats.
+## Scope
+${scope}.
+## Council Members
+${memberLines}
+## Antagonist Influence
+${
+  antagonistInfluence === "None"
+    ? "No hostile hand is on the scale — yet."
+    : `Antagonist influence over the council is ${antagonistInfluence.toLowerCase()}.`
+}
+## Investigation Leads
+Each councillor's public reputation hides a private agenda; asking around the ${bodyType.toLowerCase()}'s usual haunts is the fastest way to learn who can be swayed and how.
+## Possible Paths
+At least two coalitions of votes can carry the proposal — persuasion and evidence for the cautious, leverage and favours for the desperate.`;
+
+  return {
+    title,
+    summary,
+    lore,
+    labels: [bodyType, rule, `${size}-seat`, tone],
+  };
+}
+
+function councilVotePrompt(request: GeneratorRunRequest): string {
+  const size = councilVoteSize(request);
+  return `${contextChain(request)}
+
+Generate a Council Vote political quest: the party must secure enough votes on a council before an urgent decision is made. Instead of persuading a single ruler, the objective is divided among ${size} named voters with different motives, alliances, secrets, and demands. Return ONLY a JSON object matching this schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock("council-vote")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  `the proposal being voted on and why the party needs it to pass; the deadline and reason for urgency; the voting procedure, threshold, and any exploitable procedural rules; the current best estimate of the vote; exactly ${size} named council members — each with a role, personality, and public reputation; their public position on the proposal; their true priorities, fears, and political agenda; an initial voting stance (support, oppose, leaning, or unknown); relationships and dependencies with other councillors; what could genuinely persuade them; a related investigation, favour, quest, or problem; secrets, leverage, or corruption that may be uncovered; several possible approaches where appropriate (persuasion, evidence, negotiation, service, exposure, procedural manoeuvring, deception, or intimidation); and the moral or political cost of securing their vote; initial leads for learning how each councillor may vote; dependencies that let one action affect several votes; likely antagonist countermeasures before voting day; a final vote scene with complications and outcome branches; and follow-up hooks created by bargains, enemies, exposed secrets, and unpaid political debts. This is a political puzzle, not a sequence of mandatory fetch quests: players should begin with incomplete information, most voters should support multiple approaches with different costs, at least one apparently easy solution should create a meaningful future complication, and the council must NOT guarantee so many friendly votes that the central challenge disappears — ensure at least two viable paths to victory exist.`,
 )}`;
 }
 
@@ -1277,6 +1414,87 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
     }),
     buildPrompt: worldPrompt,
+  },
+  "council-vote": {
+    id: "council-vote",
+    label: "Council Vote",
+    description:
+      "Generate a political vote quest: a council of named voters, each with a distinct agenda, that the party must sway before a deadline decision.",
+    entityType: GENERATOR_ENTITY_TYPE["council-vote"],
+    defaultInstruction:
+      "A council-vote adventure with a clear proposal, deadline, voting threshold, and a named council of voters with individual stances, leverage, and investigation hooks — a political puzzle, not a fetch-quest chain.",
+    icon: "lucide:gavel",
+    options: [
+      {
+        id: "proposal",
+        label: "Proposal / Desired Outcome",
+        description:
+          "What is being voted on, e.g. raise an army, appoint an official, open a vault, declare war.",
+        control: "textarea",
+      },
+      {
+        id: "governingBodyType",
+        label: "Governing Body",
+        control: "select",
+        choices: COUNCIL_VOTE_BODY_TYPES.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "councilSize",
+        label: "Council Size",
+        control: "select",
+        choices: COUNCIL_VOTE_SIZES.map((s) => ({
+          value: s,
+          label: `${s} seats`,
+        })),
+      },
+      {
+        id: "votingRule",
+        label: "Voting Rule",
+        control: "select",
+        choices: COUNCIL_VOTE_RULES.map((r) => ({ value: r, label: r })),
+      },
+      {
+        id: "deadline",
+        label: "Deadline / Time Pressure",
+        description: "Optional: when the vote is called and why it can't wait.",
+        control: "text",
+      },
+      {
+        id: "scope",
+        label: "Scope",
+        control: "radio",
+        choices: COUNCIL_VOTE_SCOPES.map((s) => ({ value: s, label: s })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: COUNCIL_VOTE_TONES.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "antagonistInfluence",
+        label: "Antagonist Influence",
+        description: "How much a hostile power already controls the vote.",
+        control: "select",
+        choices: COUNCIL_VOTE_ANTAGONIST_INFLUENCE.map((a) => ({
+          value: a,
+          label: a,
+        })),
+      },
+    ],
+    defaults: {
+      proposal: "",
+      governingBodyType: "",
+      councilSize: "5",
+      votingRule: "",
+      deadline: "",
+      scope: "",
+      tone: "",
+      antagonistInfluence: "",
+    },
+    generate: generateCouncilVote,
+    mapOutputToDraft: mapOutputToDraft("council-vote"),
+    buildPrompt: councilVotePrompt,
   },
 };
 

@@ -67,6 +67,7 @@
           path: "/generators/adventure-generator",
         },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Council Vote Generator", path: "/generators/council-vote" },
         { label: "Magic Item Generator", path: "/generators/magic-item" },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },

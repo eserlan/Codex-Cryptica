@@ -48,6 +48,7 @@ describe("registry lookup", () => {
       "dungeon",
       "adventure",
       "world",
+      "council-vote",
     ]);
   });
 
@@ -100,6 +101,79 @@ describe("registry lookup", () => {
   it("isSupportedGenerator narrows known ids", () => {
     expect(isSupportedGenerator("npc")).toBe(true);
     expect(isSupportedGenerator("dragon")).toBe(false);
+  });
+});
+
+describe("council-vote generator", () => {
+  it("maps to the note vault category", () => {
+    expect(GENERATOR_ENTITY_TYPE["council-vote"]).toBe("note");
+    expect(getGenerator("council-vote").entityType).toBe("note");
+  });
+
+  it("builds a prompt that names the requested council size and covers the political-puzzle requirements", () => {
+    const prompt = getGenerator("council-vote").buildPrompt(
+      run("council-vote", { options: { councilSize: "7" } }),
+    );
+    expect(prompt).toContain("exactly 7 named council members");
+    expect(prompt).toContain("initial voting stance");
+    expect(prompt).toContain("at least two viable paths to victory");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+  });
+
+  it("defaults to a 5-seat council when no size is given", () => {
+    const prompt = getGenerator("council-vote").buildPrompt(
+      run("council-vote"),
+    );
+    expect(prompt).toContain("exactly 5 named council members");
+  });
+
+  it("generates a local fallback with one council member per requested seat", () => {
+    const draft = getGenerator("council-vote").generate(
+      run("council-vote", {
+        options: {
+          councilSize: "3",
+          governingBodyType: "Senate",
+          votingRule: "Unanimous",
+        },
+      }),
+    );
+    expect(draft.title.length).toBeGreaterThan(0);
+    expect(draft.lore).toContain("## Council Members");
+    expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(3);
+    expect(draft.labels).toContain("Senate");
+    expect(draft.labels).toContain("Unanimous");
+  });
+
+  it("reflects the requested scope and tone in the local fallback, not just AI prompts", () => {
+    const draft = getGenerator("council-vote").generate(
+      run("council-vote", {
+        options: {
+          scope: "Distributed Across Settlements/Regions",
+          tone: "Farcical",
+        },
+      }),
+    );
+    expect(draft.lore).toContain("## Scope");
+    expect(draft.lore).toContain("Distributed Across Settlements/Regions");
+    expect(draft.summary).toContain("farcical");
+    expect(draft.labels).toContain("Farcical");
+  });
+
+  it("only ever generates one of the supported council sizes, even for out-of-range input", () => {
+    for (const size of ["2", "4", "10", "-1", "0"]) {
+      const draft = getGenerator("council-vote").generate(
+        run("council-vote", { options: { councilSize: size } }),
+      );
+      expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(5);
+    }
+  });
+
+  it("falls back to a valid council size when given garbage input", () => {
+    const draft = getGenerator("council-vote").generate(
+      run("council-vote", { options: { councilSize: "not-a-number" } }),
+    );
+    expect(draft.lore.match(/^- \*\*/gm)?.length).toBe(5);
   });
 });
 
@@ -564,6 +638,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       dungeon: "location",
       adventure: "note",
       world: "location",
+      "council-vote": "note",
     });
   });
 

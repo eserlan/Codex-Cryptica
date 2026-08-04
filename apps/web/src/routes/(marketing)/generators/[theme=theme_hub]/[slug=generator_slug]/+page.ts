@@ -29,6 +29,7 @@ const validSlugs = new Set([
   "adventure-generator",
   "adventure-idea-generator",
   "world",
+  "council-vote",
 ]);
 
 export const load: PageLoad = ({ params }) => {

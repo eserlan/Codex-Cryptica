@@ -54,6 +54,13 @@
       icon: "icon-[lucide--scroll]",
     },
     {
+      slug: "council-vote",
+      label: "Council Vote Generator",
+      summary:
+        "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+      icon: "icon-[lucide--gavel]",
+    },
+    {
       slug: "names",
       label: "Name Generator",
       summary:

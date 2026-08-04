@@ -94,6 +94,14 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  buildCouncilVotePrompt,
+  parseCouncilVoteResponse,
+  generateCouncilVoteLocal,
+  councilVoteConfig,
+  type CouncilVoteGeneratorOptions,
+  type CouncilVotePrompt,
+} from "./public-council-vote";
+export {
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
