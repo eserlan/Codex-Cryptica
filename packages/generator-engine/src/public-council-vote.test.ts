@@ -119,6 +119,20 @@ describe("buildCouncilVotePrompt", () => {
     );
   });
 
+  it("requires each coalition path to obey the voting procedure and resolve each councillor's true motive", () => {
+    const { userMessage } = buildCouncilVotePrompt(
+      { councilSize: "7" },
+      "",
+      seededRng(4),
+    );
+    expect(userMessage).toContain(
+      'every coalition path in "Possible Paths", including the costly best solution, obeys the stated "Voting Procedure"',
+    );
+    expect(userMessage).toContain(
+      "must directly resolve, reward, or override that councillor's true agenda",
+    );
+  });
+
   it("defaults genre to Classic Fantasy when unset", () => {
     const { resolved } = buildCouncilVotePrompt({}, "", seededRng(1));
     expect(resolved.genre).toBe("Classic Fantasy");

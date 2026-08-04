@@ -126,6 +126,12 @@ describe("council-vote generator", () => {
     expect(prompt).toContain(
       "do not describe the party spending effort or resources on councillors whose vote is already secured",
     );
+    expect(prompt).toContain(
+      "every coalition path obeys the stated voting procedure",
+    );
+    expect(prompt).toContain(
+      "must directly resolve, reward, or override that councillor's true motive",
+    );
     expect(prompt).toContain('"connections"');
     expect(prompt).toContain("Example (illustrative only");
   });
