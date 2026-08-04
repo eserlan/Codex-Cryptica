@@ -67,7 +67,10 @@
         usedIds.add(field.id);
         return field;
       }
-      const newId = `field-${idGenerator.uuid()}`;
+      let newId = `field-${idGenerator.uuid()}`;
+      while (usedIds.has(newId)) {
+        newId = `field-${idGenerator.uuid()}`;
+      }
       usedIds.add(newId);
       return { ...field, id: newId };
     });

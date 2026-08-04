@@ -18,7 +18,8 @@ export type GeneratorId =
   | "news-sheet"
   | "dungeon"
   | "adventure"
-  | "world";
+  | "world"
+  | "council-vote";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -32,6 +33,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "dungeon",
   "adventure",
   "world",
+  "council-vote",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -234,6 +236,25 @@ export interface AIGeneratorGateway {
     systemInstruction: string,
     options?: AIGeneratorCompleteOptions,
   ): Promise<string | AIGeneratorCompleteResult>;
+  /**
+   * Opens a real multi-turn chat session (#2033/#2034/#2035): each `send()`
+   * on the returned session is a turn on the same underlying conversation, so
+   * a later pass sees an earlier pass's actual output as history rather than
+   * a hand-summarized re-injection of it. Distinct from `complete()`'s
+   * `interaction`/`previousInteractionId` option, which is server-side state
+   * scoped to continuity across separate `generateDraft()` calls (e.g. UI
+   * re-rolls) — this is in-process state for chaining passes within a single
+   * generation, and the two should not be mixed. Optional so existing
+   * `complete()`-only gateway implementations and test doubles keep working;
+   * generators requiring a chat session should treat its absence the same as
+   * `aiGateway` being unset (AI path unavailable, fall back to local tables).
+   */
+  startChat?(systemInstruction: string): Promise<AIGeneratorChatSession>;
+}
+
+export interface AIGeneratorChatSession {
+  /** Sends one turn and returns its text, awaiting the full response. */
+  send(userMessage: string): Promise<string>;
 }
 
 export interface GeneratorInteractionRequest {

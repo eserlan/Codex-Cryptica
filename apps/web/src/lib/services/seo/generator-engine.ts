@@ -25,6 +25,14 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildCouncilVoteFoundationPrompt,
+  buildCouncilVoteFoundationRepairPrompt,
+  parseCouncilVoteFoundation,
+  buildCouncilVotePathsPrompt,
+  buildCouncilVotePathsRepairPrompt,
+  parseCouncilVotePathsResponse,
+  mergeCouncilVoteOutput,
+  generateCouncilVoteLocal,
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
@@ -74,6 +82,7 @@ import {
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type CouncilVoteGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
   type NationGeneratorOptions,
@@ -112,6 +121,7 @@ export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { councilVoteConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
@@ -209,6 +219,35 @@ export class DefaultGeneratorEngine {
         : userMessage,
     );
     return response.response.text().trim();
+  }
+
+  /**
+   * Multi-pass AI call over a single real chat session (#2033). Unlike
+   * runModel's one-shot call, each turn sent on the returned session sees
+   * every prior turn's actual text as conversation history — the model reads
+   * its own earlier output instead of us hand-summarizing it back in. Used
+   * where a single long generation has repeatedly contradicted its own
+   * earlier sections (council-vote's paths vs. its own roster).
+   */
+  private async startChat(systemInstruction: string) {
+    const model = await this.clientManager.getModel(
+      "",
+      GENERATOR_MODEL_ID,
+      systemInstruction,
+    );
+    return model.startChat({ history: [] });
+  }
+
+  private async sendChatMessage(
+    chat: Awaited<ReturnType<DefaultGeneratorEngine["startChat"]>>,
+    userMessage: string,
+  ): Promise<string> {
+    const result = await chat.sendMessageStream(userMessage);
+    let text = "";
+    for await (const chunk of result.stream) {
+      text += chunk.text();
+    }
+    return text.trim();
   }
 
   generateName(): string {
@@ -343,6 +382,73 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generateCouncilVote(
+    options: CouncilVoteGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...councilVoteOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const {
+          systemInstruction,
+          userMessage: foundationMessage,
+          resolved,
+        } = buildCouncilVoteFoundationPrompt(
+          councilVoteOptions,
+          getSessionContext(),
+        );
+        const chat = await this.startChat(systemInstruction);
+
+        const foundationText = await this.sendChatMessage(
+          chat,
+          foundationMessage,
+        );
+        // A malformed repair reply keeps the pre-repair foundation/paths
+        // rather than discarding an otherwise-good generation over a
+        // cleanup step (mirrors the in-app service's same fallback).
+        // parseCouncilVoteFoundation/parseCouncilVotePathsResponse default
+        // missing fields to "" instead of throwing, so a syntactically valid
+        // but empty repair reply must be rejected explicitly here — the
+        // try/catch alone only catches genuinely unparseable JSON.
+        let foundation = parseCouncilVoteFoundation(foundationText, resolved);
+        try {
+          const repairText = await this.sendChatMessage(
+            chat,
+            buildCouncilVoteFoundationRepairPrompt(resolved.genre),
+          );
+          const repaired = parseCouncilVoteFoundation(repairText, resolved);
+          if (repaired.content.trim() && repaired.lore.trim()) {
+            foundation = repaired;
+          }
+        } catch {
+          // Keep the unrepaired foundation.
+        }
+
+        const { userMessage: pathsMessage } = buildCouncilVotePathsPrompt();
+        const pathsText = await this.sendChatMessage(chat, pathsMessage);
+        let paths = parseCouncilVotePathsResponse(pathsText);
+        try {
+          const pathsRepairText = await this.sendChatMessage(
+            chat,
+            buildCouncilVotePathsRepairPrompt(),
+          );
+          const pathsRepaired = parseCouncilVotePathsResponse(pathsRepairText);
+          if (
+            pathsRepaired.possiblePaths.trim() &&
+            pathsRepaired.followUpHooks.trim()
+          ) {
+            paths = pathsRepaired;
+          }
+        } catch {
+          // Keep the unrepaired paths.
+        }
+
+        return mergeCouncilVoteOutput(foundation, paths);
+      },
+      () => generateCouncilVoteLocal(councilVoteOptions),
     );
   }
 

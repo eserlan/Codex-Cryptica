@@ -10,6 +10,7 @@ export interface RandomIdeaCategory {
     | "nation"
     | "npc"
     | "quest"
+    | "council-vote"
     | "social-hub"
     | "pantheon"
     | "deity";
@@ -82,6 +83,11 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Quest Hook",
     generate: (engine, useAI, theme) =>
       engine.generateQuestHook({ genre: themeToQuestGenre[theme], useAI }),
+  },
+  {
+    key: "council-vote",
+    label: "Council Vote",
+    generate: (engine, useAI) => engine.generateCouncilVote({ useAI }),
   },
   {
     key: "social-hub",

@@ -52,6 +52,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   dungeon: "location",
   adventure: "note",
   world: "location",
+  "council-vote": "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -351,6 +352,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   dungeon: `{"title":"The Submerged Vault of Sunken Runes","summary":"An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.","lore":"## History & Original Purpose\\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\\n## Current State & Function\\nCurrently overrun by a desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Signature Feature\\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.\\n## Current Conflict\\nAn invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.\\n## Key Sectors & Layout\\n### Sector 1: The Guarded Gateway\\nFortified entry halls with collapse traps.\\n### Sector 2: The Deep Arcana Vault\\nSealed inner chamber housing warding circles.\\n## Inhabitants & Factions\\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Central Secret / Boss Mystery\\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.\\n## Hazards & Traps\\nPressure-plate needle traps laced with paralyzing wyvern venom.\\n## Treasures & Artifacts\\nA silver-hilted shortsword glowing with pale starlight near undead.\\n## Adventure Hooks & Rumours\\nA local scholar hires the party to retrieve an ancient astrological tablet from the ruins.","labels":["dungeon","location","fantasy","temple-shrine"],"connections":[]}`,
   adventure: `{"title":"The Witness Who Came Back","summary":"A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.","lore":"## Initial Situation\\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\\n## Primary Objective & Pressure\\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.\\n## Key Locations\\n- **The Drowned Clinic** — A basement surgery below the harbour market; currently off the magistrate's map, but her colleagues will tell the wrong people.\\n- **The Salt Gate** — The only land route out; controlled by a guard captain who owes the magistrate a significant favour.\\n## Important NPCs & Factions\\n- **Mira Osal, the witness** — Survived by accident; wants to testify but is terrified of dying before she can.\\n- **Guard-Captain Deren** — Loyal to the magistrate, but only because the magistrate has his brother.\\n## Threats & Antagonists\\n- The magistrate's investigation office has already been tipped off; two plainclothes agents are watching the harbour market.\\n## Clues, Secrets & Discoveries\\n- The ledger names not just the magistrate but three provincial judges — the testimony is worth more than a conviction, which is why the magistrate wants it destroyed rather than suppressed.\\n## Complications & Escalating Pressures\\n- The physician who treated Mira has been taken in for questioning.\\n- The party's own credentials are in the magistrate's files from a prior interaction.\\n## Possible Outcomes\\n- The witness reaches the capital and testifies; the magistrate is arrested but the provincial judges are not named in the hearing.\\n- The ledger is lost or destroyed; Mira survives and her testimony alone changes nothing.\\n## Adventure Hooks\\n- The street physician sends word through a mutual contact: a patient is asking for people who handle difficult situations.\\n- A reward notice is posted for information on the whereabouts of a woman matching Mira's description.","labels":["adventure","event","investigation","fantasy"],"connections":[]}`,
   world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
+  "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -530,6 +532,55 @@ const EVENT_OUTCOMES = [
   "forged an uneasy alliance between former enemies",
   "uncovered a secret that should have stayed buried",
 ];
+
+const COUNCIL_VOTE_BODY_TYPES = [
+  "Town Council",
+  "Noble Court",
+  "Senate",
+  "Clan Moot",
+  "War Council",
+  "Corporate Board",
+  "Revolutionary Committee",
+  "Interstellar Assembly",
+  "Criminal Syndicate",
+  "Religious Conclave",
+];
+const COUNCIL_VOTE_SIZES = ["3", "5", "7", "9"];
+const COUNCIL_VOTE_RULES = [
+  "Simple Majority",
+  "Supermajority (Two-Thirds)",
+  "Unanimous",
+  "Veto Power",
+  "Secret Ballot",
+];
+const COUNCIL_VOTE_SCOPES = [
+  "Single Location",
+  "Distributed Across Settlements/Regions",
+];
+const COUNCIL_VOTE_TONES = [
+  "Political",
+  "Tense",
+  "Desperate",
+  "Farcical",
+  "Somber",
+  "Hopeful",
+];
+const COUNCIL_VOTE_ANTAGONIST_INFLUENCE = [
+  "None",
+  "Subtle",
+  "Entrenched",
+  "Dominant",
+];
+const COUNCIL_VOTE_ARCHETYPES = [
+  "Beleaguered Ally",
+  "Villain's Toady",
+  "Greedy Broker",
+  "Loyal Shadow",
+  "Traditionalist",
+  "Idealist",
+  "Wildcard",
+];
+const COUNCIL_VOTE_STANCES = ["Support", "Oppose", "Leaning", "Unknown"];
 
 function generateName(): string {
   const prefixes = [
@@ -779,6 +830,169 @@ ${loreGuidance(
   request,
   "the world profile; climate, geography, gravity, atmosphere, and biosphere; settlements, cultures, factions, economy, resources, technology, hazards, history, notable locations, mysteries, conflicts, and adventure hooks",
 )}`;
+}
+
+// ---------------------------------------------------------------------------
+// Council Vote generator helpers
+// ---------------------------------------------------------------------------
+
+function councilVoteSize(request: GeneratorRunRequest): number {
+  const raw = optionString(request, "councilSize", "5");
+  return COUNCIL_VOTE_SIZES.includes(raw) ? Number(raw) : 5;
+}
+
+function generateCouncilVote(request: GeneratorRunRequest): GeneratorOutput {
+  const bodyType = optionString(
+    request,
+    "governingBodyType",
+    pick(COUNCIL_VOTE_BODY_TYPES),
+  );
+  const size = councilVoteSize(request);
+  const rule = optionString(request, "votingRule", pick(COUNCIL_VOTE_RULES));
+  const deadline = optionString(request, "deadline", "before the week is out");
+  const proposal = optionString(
+    request,
+    "proposal",
+    "a contested proposal that will reshape the region",
+  );
+  const antagonistInfluence = optionString(
+    request,
+    "antagonistInfluence",
+    pick(COUNCIL_VOTE_ANTAGONIST_INFLUENCE),
+  );
+  const scope = optionString(request, "scope", pick(COUNCIL_VOTE_SCOPES));
+  const tone = optionString(request, "tone", pick(COUNCIL_VOTE_TONES));
+
+  const members = Array.from({ length: size }, () => ({
+    name: generateName(),
+    archetype: pick(COUNCIL_VOTE_ARCHETYPES),
+    stance: pick(COUNCIL_VOTE_STANCES),
+  }));
+  const memberLines = members
+    .map(
+      (m) => `- **${m.name}** (${m.archetype}) — Initial stance: ${m.stance}.`,
+    )
+    .join("\n");
+
+  const title = `The Vote of the ${bodyType}`;
+  const summary = `A ${tone.toLowerCase()} ${size}-seat ${bodyType.toLowerCase()} must decide on ${proposal} ${deadline}.`;
+  const lore = `## The Proposal
+${proposal}
+## Deadline & Stakes
+The vote must be called ${deadline}. Failure leaves the party's aims unresolved and cedes ground to their rivals.
+## Voting Rule
+${rule}, ${size} seats.
+## Scope
+${scope}.
+## Council Members
+${memberLines}
+## Antagonist Influence
+${
+  antagonistInfluence === "None"
+    ? "No hostile hand is on the scale — yet."
+    : `Antagonist influence over the council is ${antagonistInfluence.toLowerCase()}.`
+}
+## Investigation Leads
+Each councillor's public reputation hides a private agenda; asking around the ${bodyType.toLowerCase()}'s usual haunts is the fastest way to learn who can be swayed and how.
+## Possible Paths
+At least two coalitions of votes can carry the proposal — persuasion and evidence for the cautious, leverage and favours for the desperate. The costly best solution: win every seat outright, but only by spending every favour and secret in hand — the vote passes clean, and the party leaves owing debts, and making enemies, they cannot yet see the price of.`;
+
+  return {
+    title,
+    summary,
+    lore,
+    labels: [bodyType, rule, `${size}-seat`, tone],
+  };
+}
+
+// Four-pass AI generation (#2033/#2034): foundation, foundation-repair,
+// paths, paths-repair — each a turn on the same chat session. The two repair
+// turns exist because two different real samples caught defects a later
+// pass couldn't see coming: pass 1 once established a persuasion condition
+// that was itself an amendment for an objective requiring the proposal
+// unchanged, and pass 2 (correctly, per its own rules) used that exact
+// condition and inherited the defect; separately, pass 2 once invented a
+// dependency link between two councillors that was never established. Each
+// repair proofreads the pass immediately before it, before the next pass
+// ever builds on it — fixing after the fact would let the next pass inherit
+// whatever the repair fixed. See generateCouncilVoteWithAI() in
+// campaign-generator-service.ts for the orchestration and
+// public-council-vote.ts for the sibling public-surface version this
+// mirrors.
+
+const COUNCIL_VOTE_FOUNDATION_SCHEMA = `{
+  "title": "string — the entity's name",
+  "summary": "string — one vivid sentence",
+  "lore": "string — markdown using EXACTLY the section headings requested below, in that order, and no others",
+  "labels": ["string — short thematic tags"],
+  "connections": [
+    { "targetTitle": "string — EXACT title of an entity from the world context above", "relationship": "string — short label, e.g. ally, rival, member of, located in, caused by" }
+  ]
+}`;
+
+export function councilVoteFoundationPrompt(
+  request: GeneratorRunRequest,
+): string {
+  const size = councilVoteSize(request);
+  return `${contextChain(request)}
+
+Generate the FOUNDATION of a Council Vote political quest: the party must secure enough votes on a council before an urgent decision is made. Instead of persuading a single ruler, the objective is divided among ${size} named voters with different motives, alliances, secrets, and demands. This is step one of two — a second step will build the possible paths to victory afterward, treating everything you establish here as fixed, unchangeable fact. Do NOT write "Possible Paths" or "Follow-Up Hooks" yet; those come later. Return ONLY a JSON object matching this schema:
+${COUNCIL_VOTE_FOUNDATION_SCHEMA}
+${exemplarBlock("council-vote")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  `these sections, in this order, and no others: the proposal being voted on and why the party needs it to pass; the deadline and reason for urgency; the voting procedure, threshold, and any exploitable procedural rules (if a veto, recusal, abstention, verification, or amendment mechanism exists, state it explicitly); the current best estimate of the vote, arithmetically consistent with the stances given below; exactly ${size} named council members — each with a role, personality, and public reputation; their public position on the proposal; their true priorities, fears, and political agenda; an initial voting stance (support, oppose, leaning, or unknown) identical everywhere it appears; relationships and dependencies with other councillors, each naming a real fellow councillor and stated in only one direction; what could genuinely persuade them; a related investigation, favour, quest, or problem; secrets, leverage, or corruption that may be uncovered; the moral or political cost of securing their vote; initial leads for learning how each councillor may vote; any faction actively bribing, coercing, monitoring, or retaliating against the party (only say there is no antagonist if none is described anywhere else in this content). The archetype implied by each councillor's role must be consistent with their actual described behavior — do not describe a councillor who follows no one and has no dependency as a loyal follower type. This is a political puzzle, not a sequence of mandatory fetch quests: give most voters multiple viable approaches with different costs, and never let the roster alone guarantee a majority.`,
+)}
+Before drafting anything else, fix the party's exact objective — the specific proposal outcome that would satisfy the party — and hold it immutable: state it clearly, since step two must never contradict it or introduce an amendment if it requires the proposal to pass unchanged.
+Write every section as scene-appropriate prose. Do not restate the wording of these instructions verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated.
+Before returning, double-check: every councillor's stance is identical everywhere it appears; the vote estimate tally is arithmetically correct for ${size} seats; every dependency names a real councillor from this same roster in only one direction; and the antagonist section does not contradict any antagonist action described elsewhere in this content. Fix any mismatch before responding.`;
+}
+
+export function councilVoteFoundationRepairPrompt(): string {
+  return `Before continuing, proofread and repair the scenario you just wrote above — do not write a new one, only fix what's broken, and return the complete corrected JSON object in the exact same schema, with every field present, not just the parts you changed.
+Check specifically:
+1. If the objective established above requires the proposal to pass strictly unchanged, no councillor's persuasion condition may itself function as an amendment, exemption, rider, sunset clause, or substitute proposal. If any councillor's persuasion condition is shaped this way (grants an exemption, alters an implementation term, carves out a special treatment), rewrite it to something that persuades without altering the proposal's terms — a bribe, evidence, a favour, a threat, a service, or exposing a secret.
+2. The antagonist section must name any faction actively bribing, coercing, monitoring, or retaliating against the party that is described anywhere else in this content — including inside a councillor's true agenda or secret/leverage. If such a faction exists and the antagonist section says "None" or doesn't name it, correct that section to name it.
+3. Re-confirm every councillor's stance is identical everywhere it appears, the vote estimate tally is arithmetically correct, and every dependency names a real councillor from the roster in only one direction.
+4. If the voting procedure establishes an absence or recusal mechanism that lowers the threshold, verify the resulting threshold is stated and mathematically correct. Explicitly define whether ballots are secret, public, or convert to a recorded division under a stated procedure — do not leave the ballot type ambiguous.
+5. Ensure every persuasion condition that requires evidence has a corresponding investigation lead describing how to obtain it. Ensure the stated objective does not claim to resolve a harm that is inherent to the proposal itself passing unchanged — if the proposal still causes that harm even when it passes exactly as written, the objective must not claim the harm is resolved.
+6. Every councillor's name must fit this world's established genre and setting — do not use a name whose style clashes with it (e.g. a modern surname in a fantasy world, or a medieval-fantasy name in a sci-fi or cyberpunk world). If any name doesn't fit, rename that entity, keeping the change consistent everywhere the name appears in this content.
+If nothing needs fixing, return the scenario exactly as it was.
+Return ONLY the JSON object.`;
+}
+
+const COUNCIL_VOTE_PATHS_SCHEMA = `{
+  "possiblePaths": "string — '### Possible Paths' markdown, ordered smallest to largest: the smallest viable coalition that clears the threshold, then at least one broader or riskier alternative, then a distinct costly best solution last.",
+  "followUpHooks": "string — '### Follow-Up Hooks' markdown."
+}`;
+
+export function councilVotePathsPrompt(): string {
+  return `Now write ONLY the "### Possible Paths" and "### Follow-Up Hooks" sections that build on the Council Vote scenario you generated above. Treat everything already established there — the objective, the voting procedure, every councillor's stance, motive, secret, and dependency, the current vote estimate, and the antagonist influence — as fixed, unchangeable fact. Do not invent a new roster, restate the scenario, or write anything else. Return ONLY a JSON object matching this schema:
+${COUNCIL_VOTE_PATHS_SCHEMA}
+Follow these rules when writing the paths:
+1. Treat each councillor's initial stance, motive, and dependency exactly as established above — do not alter, invent, or omit any of it. Every path must explain exactly how a specific councillor's vote changes from that stance, and the tally must be recalculated from those changes under the established voting procedure. Never describe the party spending effort on, or in any way endangering or risking, a councillor whose vote is already secured. If the current vote estimate already projects enough votes to clear the threshold, the smallest viable coalition must stabilize the fragile or leaning supporters already in place, or secure one backup vote against defection — not construct an entirely new coalition or target councillors whose support isn't needed to win. Within every path, clearly distinguish the votes actually required to clear the threshold from any extra "insurance" vote pursued purely as a hedge against defection — never present an insurance vote as required.
+2. No path may describe a veto-holder as simply outvoted, and no path may invent or use a recusal, abstention, verification, amendment, threshold, removal, arrest, or absence mechanism that the established voting procedure does not itself explicitly define.
+3. Account for ballot secrecy: persuasion, bribery, or coercion yields only an expected vote unless the voting procedure states an explicit verification mechanism — under a secret or unverified ballot, present every path's outcome as a projection, distinct from the actual final ballot, in every path equally, not only some, and never describe a projected vote as "locked in."
+4. If the established objective requires the proposal to pass unchanged, no path — including the costly best solution — may introduce an amendment, sunset clause, substitute proposal, rider, exemption, or altered implementation term, even one framed as a separate programme that functionally changes how the proposal applies. Any councillor whose demand requires such a change stays unavailable for genuine persuasion in every path.
+5. Only use dependencies exactly as established above — never invent a dependency link between councillors that wasn't stated, never reverse the direction of one that was, and never let its effect exceed exactly what it describes (a dependency that says a councillor's price or stance "shifts" is not license to assume they copy another councillor's vote outright). If a path changes the vote of a councillor another one depends on, it must state what that dependent councillor does as a result — none left dangling. If any investigation lead described in a path could plausibly trigger a procedural rule from the established voting procedure (such as a delay or a point of order), account for that risk explicitly.
+6. The costly best solution is the least harmful viable route that fully resolves the central dilemma — not simply the largest coalition or the most votes. It must persuade each targeted councillor only through the exact condition already established for them (never a substitute condition or unrelated evidence), and its cost must be a genuine, lasting political, moral, financial, or strategic consequence required to fully resolve the dilemma — not a manufactured one and not merely time or resources spent investigating. Do not sacrifice an uninvolved party's interests, force unanimity, or endanger an already-secured vote beyond what the objective actually requires.
+7. Write every section as scene-appropriate prose. Do not restate the wording of these rules verbatim in the output, and never include prompt instructions, placeholder-name mapping notes, or any other meta-commentary about how the piece was generated.
+Before returning, simulate the vote from start to finish and check every path against the rules above: list the final vote of every councillor per path, seat by seat, including councillors the path did not target — an untargeted councillor's vote carries over unchanged from their established stance unless the path explains why it moved — then recalculate the tally against the established threshold and double-check the arithmetic; confirm no path relies on an unexplained vote change, ignores an opposing or abstaining councillor, endangers an already-secured vote, violates ballot secrecy in any path, or invents or uses a procedural mechanism not established above; confirm every dependency used is one that was actually established above, in the direction it was defined, with an effect no larger than what it describes; confirm the smallest viable coalition targets only councillors whose support is actually needed to clear the threshold, and that any extra vote is clearly marked as insurance, not required; confirm no path — including the costly best solution — alters the proposal itself if the objective requires it to pass unchanged; confirm the costly best solution persuades each targeted councillor only through their exact established condition and that its cost is a lasting consequence, not merely time or resources spent; confirm "Possible Paths" is ordered smallest viable coalition, then broader/riskier alternative, then the costly best solution; confirm "Antagonist Influence" is not contradicted by anything described in these new sections; and confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary. Fix any mismatch before responding.`;
+}
+
+export function councilVotePathsRepairPrompt(): string {
+  return `Before continuing, proofread and repair the "Possible Paths" and "Follow-Up Hooks" you just wrote above — do not write new paths, only fix what's broken, and return the complete corrected JSON object in the exact same schema, with every field present, not just the parts you changed.
+Check specifically:
+1. Every dependency used across the paths is one that was actually established in the scenario above, used in the direction it was defined, with an effect no larger than what it describes. If any path invented a dependency link that was never stated, or reversed one that was, remove or correct it — including removing any vote change that only happened because of the invented dependency. If a councillor has their own specific persuasion condition stated in the scenario above, a path must use that condition directly to flip their vote rather than defaulting to a looser dependency-based trigger — a dependency may substitute for a councillor's own condition only if the path explains why their own condition is unavailable or impractical in that path.
+2. No path uses a recusal, abstention, verification, amendment, threshold, removal, arrest, or absence mechanism that the established voting procedure does not itself explicitly define — including a hedge like "or abstains" presented as a live possibility.
+3. Each targeted councillor is persuaded only through their exact established condition or their established secret/leverage — never a substitute condition or unrelated evidence.
+4. No path — including the costly best solution — alters the proposal itself if the objective established above requires it to pass unchanged.
+5. Recount exactly how many additional votes are needed beyond the current baseline to clear the threshold (threshold minus the votes already secured on the required side of the estimate). The smallest viable coalition must target exactly that many councillors — no more. Delete any additional target beyond that count, and delete all insurance votes from the smallest viable coalition entirely; an insurance/backup vote belongs only in the broader alternative, never the smallest coalition.
+6. The costly best solution must pursue the least coercive coalition sufficient to fully resolve the dilemma, not the largest, most coercive, or most unanimous one available — it may not seek unanimity unless unanimity itself produces a concrete benefit unavailable from a simple majority (state that benefit explicitly if unanimity is used). It may not target more councillors than the recounted minimum from rule 5 without a stated reason specific to fully resolving the dilemma (not just "extra margin," which belongs in the broader alternative instead) — and it specifically may not target a councillor whose vote is already secured just to manufacture the appearance of a cost; padding an otherwise-identical coalition with a needless action on an already-secured councillor is exactly the "manufactured" cost this rule already forbids. If removing such padding would leave this path identical to another path in targets and outcome, delete the padding rather than keep it as filler, and see rule 8. If the proposal itself causes an unavoidable harm even when it passes exactly as written, the best solution must mitigate that harm through a separate, lawful action described in the path — not by implying the vote itself resolves it.
+7. Every path's stated tally summary (however many are Support/Oppose/Abstain/etc.) must exactly equal the literal sum of that same path's own seat-by-seat breakdown — recount the breakdown digit by digit and correct the summary line if it doesn't match, even if the mismatch is just a stale total left over from a different path. Separately, no path may count an "Unknown" or otherwise unconfirmed councillor toward the required total, even if a dependency nudges their disposition — a dependency altering someone's mood is not the same as securing their vote. If a path's own recounted breakdown doesn't actually clear the threshold, either add a direct action that secures the additional vote or rewrite the path's conclusion to match what the breakdown actually shows.
+8. The three paths must be materially different from each other in their targeted councillors or their methodology. If the costly best solution (or any other path) targets the identical councillors through identical actions as another path, with only a cost paragraph appended, rewrite it with a genuinely distinct approach or targets — or, if the same targets truly are the least coercive option available, make the cost and methodology description reflect something the smallest coalition's own narration doesn't already say.
+If nothing needs fixing, return the paths exactly as they were.
+Return ONLY the JSON object.`;
 }
 
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
@@ -1277,6 +1491,87 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
     }),
     buildPrompt: worldPrompt,
+  },
+  "council-vote": {
+    id: "council-vote",
+    label: "Council Vote",
+    description:
+      "Generate a political vote quest: a council of named voters, each with a distinct agenda, that the party must sway before a deadline decision.",
+    entityType: GENERATOR_ENTITY_TYPE["council-vote"],
+    defaultInstruction:
+      "A council-vote adventure with a clear proposal, deadline, voting threshold, and a named council of voters with individual stances, leverage, and investigation hooks — a political puzzle, not a fetch-quest chain.",
+    icon: "lucide:gavel",
+    options: [
+      {
+        id: "proposal",
+        label: "Proposal / Desired Outcome",
+        description:
+          "What is being voted on, e.g. raise an army, appoint an official, open a vault, declare war.",
+        control: "textarea",
+      },
+      {
+        id: "governingBodyType",
+        label: "Governing Body",
+        control: "select",
+        choices: COUNCIL_VOTE_BODY_TYPES.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "councilSize",
+        label: "Council Size",
+        control: "select",
+        choices: COUNCIL_VOTE_SIZES.map((s) => ({
+          value: s,
+          label: `${s} seats`,
+        })),
+      },
+      {
+        id: "votingRule",
+        label: "Voting Rule",
+        control: "select",
+        choices: COUNCIL_VOTE_RULES.map((r) => ({ value: r, label: r })),
+      },
+      {
+        id: "deadline",
+        label: "Deadline / Time Pressure",
+        description: "Optional: when the vote is called and why it can't wait.",
+        control: "text",
+      },
+      {
+        id: "scope",
+        label: "Scope",
+        control: "radio",
+        choices: COUNCIL_VOTE_SCOPES.map((s) => ({ value: s, label: s })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: COUNCIL_VOTE_TONES.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "antagonistInfluence",
+        label: "Antagonist Influence",
+        description: "How much a hostile power already controls the vote.",
+        control: "select",
+        choices: COUNCIL_VOTE_ANTAGONIST_INFLUENCE.map((a) => ({
+          value: a,
+          label: a,
+        })),
+      },
+    ],
+    defaults: {
+      proposal: "",
+      governingBodyType: "",
+      councilSize: "5",
+      votingRule: "",
+      deadline: "",
+      scope: "",
+      tone: "",
+      antagonistInfluence: "",
+    },
+    generate: generateCouncilVote,
+    mapOutputToDraft: mapOutputToDraft("council-vote"),
+    buildPrompt: councilVoteFoundationPrompt,
   },
 };
 

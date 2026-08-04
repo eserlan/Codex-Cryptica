@@ -29,6 +29,7 @@ describe("shouldSyncGeneratorTheme", () => {
     expect(shouldSyncGeneratorTheme("ship-generator")).toBe(true);
     expect(shouldSyncGeneratorTheme("language-generator")).toBe(true);
     expect(shouldSyncGeneratorTheme("world")).toBe(true);
+    expect(shouldSyncGeneratorTheme("council-vote")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {
