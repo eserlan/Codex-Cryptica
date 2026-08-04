@@ -424,12 +424,13 @@ Yeva will remember who paid better.`,
 
     expect(layout.lore).toContain("### Voting Procedure");
     expect(layout.lore).toContain("### Current Vote Estimate");
-    expect(layout.lore).toContain("### Council Members");
     expect(layout.lore).toContain("### Antagonist Influence");
+    expect(layout.lore).not.toContain("### Council Members");
     expect(layout.lore).not.toContain("### Investigation Leads");
     expect(layout.lore).not.toContain("### Possible Paths");
     expect(layout.lore).not.toContain("### Follow-Up Hooks");
 
+    expect(layout.content).toContain("### Council Members");
     expect(layout.content).toContain("### Investigation Leads");
     expect(layout.content).toContain("### Possible Paths");
     expect(layout.content).toContain("### Follow-Up Hooks");

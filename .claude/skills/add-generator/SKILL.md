@@ -132,6 +132,7 @@ Match is by **exact string** against the generator's actual output `labels` arra
 
 - If your prompt schema's example `labels` (or your local fallback's `labels`) happens to reuse **another generator's** label string (e.g. copying `"quest-generator"` into a new generator's exemplar because it was a handy template), you'll silently inherit _that_ generator's `railSections` rule against your own, differently-headed lore — sections you expected in the rail move to main (or vice versa) with no error. Grep `LAYOUT_RULES` for your chosen labels before finalizing them.
 - `railSections` matches on the exact markdown heading text your prompt/fallback produces. If the AI phrases a heading slightly differently than the schema asked for, that section falls through to "moves to main" by default (safe default, but check real output).
+- **Judge rail-worthiness by actual generated density, not the section's name.** A section can sound compact ("Council Members") while the model actually writes a full paragraph per entry — that's narrative payoff, not a quick lookup, and belongs in main even though it looked like reference material on paper. Generate a real draft and look at it before finalizing `railSections`; don't decide purely from the prompt schema's description.
 
 ---
 

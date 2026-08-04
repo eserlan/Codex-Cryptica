@@ -145,10 +145,13 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "council-vote",
+    // Council Members is deliberately NOT in the rail: each entry is a full
+    // paragraph (public position, true agenda, persuasion angle, secret),
+    // not a compact bullet — it's the generator's narrative payoff, not a
+    // quick-lookup reference, so it belongs in the main column.
     railSections: new Set([
       "Voting Procedure",
       "Current Vote Estimate",
-      "Council Members",
       "Antagonist Influence",
     ]),
   },
