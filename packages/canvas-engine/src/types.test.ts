@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   appendCanvasDrawingPoint,
   CanvasDrawingSchema,
+  CanvasNodeSchema,
   CanvasSchema,
   normalizeCanvasDrawingColor,
+  normalizeCanvasDrawingWidth,
+  normalizeCanvasTextBackground,
+  normalizeCanvasTextFontSize,
 } from "./types";
 
 describe("CanvasSchema", () => {
@@ -51,6 +55,45 @@ describe("CanvasSchema", () => {
     expect(normalizeCanvasDrawingColor("url(javascript:alert(1))")).toBe(
       "#f97316",
     );
+  });
+
+  it("normalizes drawing stroke width and falls back for out-of-range input", () => {
+    expect(normalizeCanvasDrawingWidth(8)).toBe(8);
+    expect(normalizeCanvasDrawingWidth(0)).toBe(4);
+    expect(normalizeCanvasDrawingWidth(-1)).toBe(4);
+    expect(normalizeCanvasDrawingWidth(65)).toBe(4);
+    expect(normalizeCanvasDrawingWidth(Number.NaN)).toBe(4);
+  });
+
+  it("normalizes text note background presets and falls back for unknown keys", () => {
+    expect(normalizeCanvasTextBackground("accent")).toBe("accent");
+    expect(normalizeCanvasTextBackground("transparent")).toBe("transparent");
+    expect(normalizeCanvasTextBackground("not-a-real-key")).toBe("default");
+    expect(normalizeCanvasTextBackground("")).toBe("default");
+  });
+
+  it("normalizes text note font size and falls back for out-of-range input", () => {
+    expect(normalizeCanvasTextFontSize(24)).toBe(24);
+    expect(normalizeCanvasTextFontSize(4)).toBe(14);
+    expect(normalizeCanvasTextFontSize(200)).toBe(14);
+    expect(normalizeCanvasTextFontSize(Number.NaN)).toBe(14);
+  });
+
+  it("accepts a text node with its data payload", () => {
+    const parsed = CanvasNodeSchema.parse({
+      id: "note-1",
+      type: "text",
+      position: { x: 5, y: 10 },
+      width: 200,
+      height: 120,
+      data: { text: "hello", background: "accent", fontSize: 18 },
+    });
+
+    expect(parsed).toMatchObject({
+      id: "note-1",
+      type: "text",
+      data: { text: "hello", background: "accent", fontSize: 18 },
+    });
   });
 
   it("ignores pointer samples that are too close or invalid", () => {

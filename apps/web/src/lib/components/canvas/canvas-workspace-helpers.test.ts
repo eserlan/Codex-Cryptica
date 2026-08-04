@@ -8,9 +8,11 @@ import {
   canvasNodeStyle,
   canvasNodeToFlowNode,
   canvasNodeZIndex,
+  canvasTextBackgroundStyle,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
   createFlowFileNode,
+  createFlowTextNode,
   autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,
@@ -54,6 +56,31 @@ describe("canvas-workspace-helpers", () => {
     expect(canvasNodeZIndex({ data: {} } as any)).toBe(0);
     expect(canvasNodeZIndex({ data: { zIndex: Number.NaN } } as any)).toBe(0);
     expect(canvasNodeZIndex(undefined)).toBe(0);
+  });
+
+  it("creates a text flow node with default size and given content", () => {
+    const node = createFlowTextNode("hello", { x: 5, y: 10 }, "text-1");
+    expect(node).toMatchObject({
+      id: "text-1",
+      type: "text",
+      position: { x: 5, y: 10 },
+      width: 200,
+      height: 120,
+      data: { text: "hello" },
+    });
+  });
+
+  it("resolves text note background keys to theme-derived CSS values", () => {
+    expect(canvasTextBackgroundStyle("default")).toBe(
+      "var(--color-theme-surface)",
+    );
+    expect(canvasTextBackgroundStyle("transparent")).toBe("transparent");
+    expect(canvasTextBackgroundStyle("primary")).toContain(
+      "var(--color-theme-primary)",
+    );
+    expect(canvasTextBackgroundStyle("not-a-real-key")).toBe(
+      canvasTextBackgroundStyle("default"),
+    );
   });
 
   it("hydrates canvas data into flow nodes and edges", () => {
