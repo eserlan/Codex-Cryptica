@@ -494,6 +494,7 @@ describe("canvas-workspace-helpers", () => {
           },
         },
       ] as any,
+      clock: { now: () => 1234567890 },
     });
 
     expect(arranged).not.toBeNull();
@@ -522,6 +523,7 @@ describe("canvas-workspace-helpers", () => {
           },
         ] as any,
         edges: [],
+        clock: { now: () => 1234567890 },
       }),
     ).toBeNull();
   });
