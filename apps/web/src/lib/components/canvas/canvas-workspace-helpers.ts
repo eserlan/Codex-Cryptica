@@ -53,10 +53,43 @@ export function canvasNodeRotation(node: Node | undefined) {
     : 0;
 }
 
+export function canvasNodeZIndex(node: Node | undefined) {
+  const zIndex = node?.data?.zIndex;
+  return typeof zIndex === "number" && Number.isFinite(zIndex) ? zIndex : 0;
+}
+
 export function canvasNodeStyle(node: Node) {
   const rotation = canvasNodeRotation(node);
   const existing = node.style?.trim();
-  return `${existing ? `${existing.replace(/;?$/, ";")}` : ""}rotate:${rotation}deg;`;
+  // Rotation is applied via a CSS variable consumed by the node's content
+  // element (see `.svelte-flow__node > *` below), not the `rotate` property
+  // directly: SvelteFlow positions nodes with `transform: translate(...)` on
+  // this same wrapper, and mixing that with a standalone `rotate` property on
+  // one element breaks their shared transform-origin, causing the node to
+  // visually swing away from its true position instead of spinning in place.
+  return `${existing ? `${existing.replace(/;?$/, ";")}` : ""}--canvas-node-rotate:${rotation}deg;`;
+}
+
+const CANVAS_TEXT_BACKGROUND_STYLES: Record<string, string> = {
+  default: "var(--color-theme-surface)",
+  primary:
+    "color-mix(in srgb, var(--color-theme-primary) 20%, var(--color-theme-surface))",
+  accent:
+    "color-mix(in srgb, var(--color-theme-accent) 20%, var(--color-theme-surface))",
+  secondary:
+    "color-mix(in srgb, var(--color-theme-secondary) 20%, var(--color-theme-surface))",
+  warning:
+    "color-mix(in srgb, var(--color-theme-warning) 25%, var(--color-theme-surface))",
+  transparent: "transparent",
+};
+
+// Resolves a semantic background key (see CANVAS_TEXT_BACKGROUND_PRESETS) to
+// a CSS value derived from the active theme's own variables, so text notes
+// stay visually consistent with whichever theme the vault is using.
+export function canvasTextBackgroundStyle(key: string) {
+  return (
+    CANVAS_TEXT_BACKGROUND_STYLES[key] ?? CANVAS_TEXT_BACKGROUND_STYLES.default
+  );
 }
 
 const DELVE_ROOM_WIDTH = 220;
@@ -158,7 +191,23 @@ export function createFlowFileNode(
   position: CanvasWorkspacePoint,
   nodeId: string,
 ): Node {
-  return { id: nodeId, type: "file", position, data: { file } };
+  const showFullImage = file.mimeType.startsWith("image/");
+  return { id: nodeId, type: "file", position, data: { file, showFullImage } };
+}
+
+export function createFlowTextNode(
+  text: string,
+  position: CanvasWorkspacePoint,
+  nodeId: string,
+): Node {
+  return {
+    id: nodeId,
+    type: "text",
+    position,
+    width: 200,
+    height: 120,
+    data: { text },
+  };
 }
 
 function nodeWidth(node: Node): number {

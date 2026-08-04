@@ -394,4 +394,65 @@ describe("CanvasWorkspace", () => {
     expect(importFileToVault).not.toHaveBeenCalled();
     expect(addFileNode).not.toHaveBeenCalled();
   });
+
+  it("imports a pasted clipboard image and adds a matching file node", async () => {
+    importFileToVault.mockResolvedValue({
+      ok: true,
+      file: {
+        path: "files/pasted-id-pasted-image.png",
+        name: "pasted-image.png",
+        mimeType: "image/png",
+        size: 42,
+      },
+    });
+    const addFileNode = vi.fn().mockReturnValue("file-node-1");
+    render(CanvasWorkspace, { props: { engine: { addFileNode } as any } });
+    const file = new File(["img"], "pasted-image.png", { type: "image/png" });
+
+    const pasteEvent = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvent, "clipboardData", {
+      value: { files: [file], items: [] },
+    });
+    await fireEvent(window, pasteEvent);
+
+    await vi.waitFor(() =>
+      expect(importFileToVault).toHaveBeenCalledWith(file),
+    );
+    expect(addFileNode).toHaveBeenCalledOnce();
+    expect(canvasLogic.nodes).toMatchObject([
+      { id: "file-node-1", type: "file" },
+    ]);
+  });
+
+  it("ignores paste events without an image on the clipboard", async () => {
+    render(CanvasWorkspace, { props: { engine: {} as any } });
+
+    const pasteEvent = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvent, "clipboardData", {
+      value: { files: [], items: [] },
+    });
+    await fireEvent(window, pasteEvent);
+
+    expect(importFileToVault).not.toHaveBeenCalled();
+  });
+
+  it("undoes the last drawing stroke on Ctrl+Z", async () => {
+    canvasLogic.drawings = [
+      { id: "stroke-1", color: "#f97316", width: 4, points: [{ x: 0, y: 0 }] },
+      { id: "stroke-2", color: "#f97316", width: 4, points: [{ x: 1, y: 1 }] },
+    ];
+    render(CanvasWorkspace, { props: { engine: {} as any } });
+
+    await fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+
+    expect(canvasLogic.removeDrawing).toHaveBeenCalledWith("stroke-2");
+  });
+
+  it("does not undo a drawing stroke when nothing has been drawn", async () => {
+    render(CanvasWorkspace, { props: { engine: {} as any } });
+
+    await fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+
+    expect(canvasLogic.removeDrawing).not.toHaveBeenCalled();
+  });
 });
