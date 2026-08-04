@@ -109,3 +109,8 @@
 
 **Learning:** Found decorative icons (like `icon-[lucide--sparkles]` or category icons) used inside `Autocomplete.svelte` option buttons and `InlinePreviewOverlay.svelte` status indicators that lacked `aria-hidden="true"`. Without this, screen readers might announce these decorative spans redundantly.
 **Action:** Always add `aria-hidden="true"` to inner decorative icon spans, even if they are dynamically rendered (like category icons) or part of complex status overlays, to ensure a clean screen reader experience.
+
+## 2026-07-22 - Missing aria-hidden on contextual chat actions
+
+**Learning:** Found multiple icon-only contextual action buttons in chat transcripts (like `startEditMessage` and `deleteHostTranscript`) that lacked both explicit `aria-label` attributes (relying solely on `title` which is insufficient for screen readers) and `aria-hidden="true"` on their inner decorative icons.
+**Action:** Always add explicit `aria-label`s to icon-only action buttons (even if they have `title` tooltips) and add `aria-hidden="true"` to inner icon elements, especially inside complex, repetitive lists like chat transcripts.
