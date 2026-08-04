@@ -8,6 +8,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "magic-item",
   "faction",
   "quest",
+  "council-vote",
   "item",
   "tavern",
   "social-hub",
