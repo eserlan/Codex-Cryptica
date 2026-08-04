@@ -417,7 +417,7 @@ export class DefaultGeneratorEngine {
         try {
           const repairText = await this.sendChatMessage(
             chat,
-            buildCouncilVoteFoundationRepairPrompt(),
+            buildCouncilVoteFoundationRepairPrompt(resolved.genre),
           );
           const repaired = parseCouncilVoteFoundation(repairText, resolved);
           if (repaired.content.trim() && repaired.lore.trim()) {

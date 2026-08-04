@@ -193,6 +193,19 @@ describe("council-vote generator", () => {
     );
   });
 
+  it("repair prompt checks names fit the world's genre and asks for a consistent rename if not", () => {
+    const prompt = councilVoteFoundationRepairPrompt();
+    expect(prompt).toContain(
+      "Every councillor's name must fit this world's established genre and setting",
+    );
+    expect(prompt).toContain(
+      "do not use a name whose style clashes with it (e.g. a modern surname in a fantasy world, or a medieval-fantasy name in a sci-fi or cyberpunk world)",
+    );
+    expect(prompt).toContain(
+      "rename that entity, keeping the change consistent everywhere the name appears",
+    );
+  });
+
   it("paths prompt states the seven rules covering stances, veto, ballot secrecy, amendments, dependencies, and the costly best solution", () => {
     const prompt = councilVotePathsPrompt();
     expect(prompt).toContain("Treat everything already established there");

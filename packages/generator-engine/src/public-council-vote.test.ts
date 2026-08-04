@@ -193,7 +193,7 @@ describe("buildCouncilVoteFoundationPrompt", () => {
 
 describe("buildCouncilVoteFoundationRepairPrompt", () => {
   it("asks to fix, not regenerate, amendment-shaped persuasion conditions and antagonist contradictions", () => {
-    const prompt = buildCouncilVoteFoundationRepairPrompt();
+    const prompt = buildCouncilVoteFoundationRepairPrompt("Classic Fantasy");
     expect(prompt).toContain(
       "proofread and repair the scenario you just wrote above — do not write a new one, only fix what's broken",
     );
@@ -209,7 +209,7 @@ describe("buildCouncilVoteFoundationRepairPrompt", () => {
   });
 
   it("verifies recusal-adjusted thresholds and ballot-type clarity, and bans claiming the objective resolves inherent harms", () => {
-    const prompt = buildCouncilVoteFoundationRepairPrompt();
+    const prompt = buildCouncilVoteFoundationRepairPrompt("Classic Fantasy");
     expect(prompt).toContain(
       "verify the resulting threshold is stated and mathematically correct",
     );
@@ -221,6 +221,19 @@ describe("buildCouncilVoteFoundationRepairPrompt", () => {
     );
     expect(prompt).toContain(
       "the objective must not claim the harm is resolved",
+    );
+  });
+
+  it("checks names fit the requested genre and asks for a consistent rename if not", () => {
+    const prompt = buildCouncilVoteFoundationRepairPrompt("Cyberpunk / Corporate");
+    expect(prompt).toContain(
+      "Every councillor's name must fit the Cyberpunk / Corporate setting",
+    );
+    expect(prompt).toContain(
+      "do not use a name whose style clashes with the genre (e.g. a modern surname in a Classic Fantasy setting, or a medieval-fantasy name in a Cyberpunk or Sci-Fi setting)",
+    );
+    expect(prompt).toContain(
+      "rename that entity, keeping the change consistent everywhere the name appears",
     );
   });
 });

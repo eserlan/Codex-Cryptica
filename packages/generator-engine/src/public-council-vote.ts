@@ -339,7 +339,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 // ever sees the foundation, so it can't inherit a defect that's fixed here.
 // Mirrors public-dungeon.ts's coherence-repair pass: proofread and fix, not
 // regenerate.
-export function buildCouncilVoteFoundationRepairPrompt(): string {
+export function buildCouncilVoteFoundationRepairPrompt(genre: string): string {
   return `Before continuing, proofread and repair the scenario you just wrote above — do not write a new one, only fix what's broken, and return the complete corrected JSON object in the exact same schema, with every field present, not just the parts you changed.
 Check specifically:
 1. If the objective established above requires the proposal to pass strictly unchanged, no councillor's persuasion condition may itself function as an amendment, exemption, rider, sunset clause, or substitute proposal. If any councillor's persuasion condition is shaped this way (grants an exemption, alters an implementation term, carves out a special treatment), rewrite it to something that persuades without altering the proposal's terms — a bribe, evidence, a favour, a threat, a service, or exposing a secret.
@@ -347,6 +347,7 @@ Check specifically:
 3. Re-confirm every councillor's stance is identical everywhere it appears, the vote estimate tally is arithmetically correct, and every dependency names a real councillor from the roster in only one direction.
 4. If "### Voting Procedure" establishes an absence or recusal mechanism that lowers the threshold, verify the resulting threshold is stated and mathematically correct. Explicitly define whether ballots are secret, public, or convert to a recorded division under a stated procedure — do not leave the ballot type ambiguous.
 5. Ensure every persuasion condition that requires evidence has a corresponding entry in "### Investigation Leads" describing how to obtain it. Ensure the stated objective does not claim to resolve a harm that is inherent to the proposal itself passing unchanged — if the proposal still causes that harm even when it passes exactly as written, the objective must not claim the harm is resolved.
+6. Every councillor's name must fit the ${genre} setting — do not use a name whose style clashes with the genre (e.g. a modern surname in a Classic Fantasy setting, or a medieval-fantasy name in a Cyberpunk or Sci-Fi setting). If any name doesn't fit, rename that entity, keeping the change consistent everywhere the name appears in this content.
 If nothing needs fixing, return the scenario exactly as it was.
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 }

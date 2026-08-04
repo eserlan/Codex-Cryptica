@@ -956,6 +956,7 @@ Check specifically:
 3. Re-confirm every councillor's stance is identical everywhere it appears, the vote estimate tally is arithmetically correct, and every dependency names a real councillor from the roster in only one direction.
 4. If the voting procedure establishes an absence or recusal mechanism that lowers the threshold, verify the resulting threshold is stated and mathematically correct. Explicitly define whether ballots are secret, public, or convert to a recorded division under a stated procedure — do not leave the ballot type ambiguous.
 5. Ensure every persuasion condition that requires evidence has a corresponding investigation lead describing how to obtain it. Ensure the stated objective does not claim to resolve a harm that is inherent to the proposal itself passing unchanged — if the proposal still causes that harm even when it passes exactly as written, the objective must not claim the harm is resolved.
+6. Every councillor's name must fit this world's established genre and setting — do not use a name whose style clashes with it (e.g. a modern surname in a fantasy world, or a medieval-fantasy name in a sci-fi or cyberpunk world). If any name doesn't fit, rename that entity, keeping the change consistent everywhere the name appears in this content.
 If nothing needs fixing, return the scenario exactly as it was.
 Return ONLY the JSON object.`;
 }
