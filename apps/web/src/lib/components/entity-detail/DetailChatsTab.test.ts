@@ -68,4 +68,68 @@ describe("DetailChatsTab", () => {
       undefined,
     );
   });
+
+  describe("a11y: chat action button labels", () => {
+    const transcriptWithMessages = {
+      id: "t-1",
+      guestId: "guest-abc123",
+      guestName: "Alice",
+      lastUpdated: Date.now(),
+      messages: [
+        { id: "m-1", role: "user", content: "Hello there" },
+        { id: "m-2", role: "assistant", content: "Hi! How can I help?" },
+      ],
+    };
+
+    beforeEach(async () => {
+      const { vault } = await import("$lib/stores/vault.svelte");
+      vi.mocked(vault.loadTranscriptsForCharacter).mockResolvedValue([
+        transcriptWithMessages,
+      ] as any);
+    });
+
+    it("delete-session button has an accessible aria-label and its icon is aria-hidden", async () => {
+      render(DetailChatsTab, { entity: character });
+      await vi.waitFor(() =>
+        screen.getByRole("button", { name: "Delete entire session logs" }),
+      );
+
+      const deleteSessionBtn = screen.getByRole("button", {
+        name: "Delete entire session logs",
+      });
+      expect(deleteSessionBtn).toBeTruthy();
+      const icon = deleteSessionBtn.querySelector("[aria-hidden]");
+      expect(icon?.getAttribute("aria-hidden")).toBe("true");
+    });
+
+    it("edit-message buttons have an accessible aria-label and their icons are aria-hidden", async () => {
+      render(DetailChatsTab, { entity: character });
+      await vi.waitFor(() =>
+        screen.getAllByRole("button", { name: "Edit message" }),
+      );
+
+      const editBtns = screen.getAllByRole("button", { name: "Edit message" });
+      expect(editBtns.length).toBeGreaterThan(0);
+      for (const btn of editBtns) {
+        const icon = btn.querySelector("[aria-hidden]");
+        expect(icon?.getAttribute("aria-hidden")).toBe("true");
+      }
+    });
+
+    it("delete-message buttons have an accessible aria-label and their icons are aria-hidden", async () => {
+      render(DetailChatsTab, { entity: character });
+      await vi.waitFor(() =>
+        screen.getAllByRole("button", { name: "Delete message" }),
+      );
+
+      const deleteBtns = screen.getAllByRole("button", {
+        name: "Delete message",
+      });
+      expect(deleteBtns.length).toBeGreaterThan(0);
+      for (const btn of deleteBtns) {
+        const icon = btn.querySelector("[aria-hidden]");
+        expect(icon?.getAttribute("aria-hidden")).toBe("true");
+      }
+    });
+  });
 });
