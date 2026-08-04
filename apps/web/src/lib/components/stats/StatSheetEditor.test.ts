@@ -44,7 +44,8 @@ describe("StatSheetEditor", () => {
   it("uses provided idGenerator for deterministic field IDs", async () => {
     const deterministicIdGenerator = { uuid: () => "test-id-123" };
     render(StatSheetEditor, {
-      props: { entity: buildEntity(), idGenerator: deterministicIdGenerator },
+      entity: buildEntity(),
+      idGenerator: deterministicIdGenerator,
     });
     const addBtn = screen.getByTestId("stat-sheet-editor-add");
     await fireEvent.click(addBtn);
