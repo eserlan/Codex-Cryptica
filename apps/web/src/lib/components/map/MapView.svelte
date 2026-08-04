@@ -161,7 +161,7 @@
         });
       }
     }
-    return result;
+    return result.sort((first, second) => first.zIndex - second.zIndex);
   });
   const vttDragPreview = $derived.by(() => {
     const preview = mapSession.dragPreview;
@@ -185,6 +185,16 @@
       valid,
     };
   });
+  const tilePlacementPreview = $derived(
+    mapSession.tileDeckManager.pendingPlacement,
+  );
+  let tilePlacementImage = $state<HTMLImageElement | null>(null);
+  let tilePlacementImagePath = $state<string | null>(null);
+  const enrichedTilePlacementPreview = $derived.by(() =>
+    tilePlacementPreview
+      ? { ...tilePlacementPreview, image: tilePlacementImage }
+      : null,
+  );
 
   $effect(() => {
     const currentTokens = mapSession.allTokens;
@@ -220,6 +230,32 @@
           tokenImageCache[token.id] = null;
         });
     }
+  });
+
+  $effect(() => {
+    const path = tilePlacementPreview?.tile.imagePath;
+    if (!path || path === tilePlacementImagePath) return;
+    tilePlacementImagePath = path;
+    tilePlacementImage = null;
+    let cancelled = false;
+    void vault
+      .resolveImageUrl(path)
+      .then((source) => {
+        const image = new Image();
+        image.onload = () => {
+          if (!cancelled) tilePlacementImage = image;
+        };
+        image.onerror = () => {
+          if (!cancelled) tilePlacementImage = null;
+        };
+        image.src = source;
+      })
+      .catch(() => {
+        if (!cancelled) tilePlacementImage = null;
+      });
+    return () => {
+      cancelled = true;
+    };
   });
 
   $effect(() => {
@@ -291,6 +327,7 @@
     {remoteMeasurement}
     {vttPings}
     {vttDragPreview}
+    tilePlacementPreview={enrichedTilePlacementPreview}
     {interactions}
   />
 

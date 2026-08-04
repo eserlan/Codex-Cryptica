@@ -132,6 +132,11 @@ export class MapInteractionManager {
       return;
     }
     if (event.key === "Escape") {
+      if (mapSession.tileDeckManager.pendingPlacement) {
+        mapSession.cancelPendingTilePlacement();
+        this.mapAnnouncement = "Tile placement cancelled";
+        return;
+      }
       if (this.gridInteractions.cancelGridMove()) {
         return;
       }
@@ -257,6 +262,18 @@ export class MapInteractionManager {
     this.mouseDownPos = { x: e.clientX, y: e.clientY };
     this.isAltPressed = e.altKey;
 
+    if (e.button === 0 && mapSession.tileDeckManager.pendingPlacement) {
+      const point = mapStore.unproject(this.lastMousePos);
+      mapSession.updatePendingTilePlacement(point.x, point.y);
+      const placed = mapSession.placePendingTile();
+      this.mapAnnouncement = placed
+        ? `Placed ${placed.name}`
+        : "Tile cannot overlap another tile";
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
+
     if (
       e.button === 0 &&
       mapSession.vttEnabled &&
@@ -348,6 +365,13 @@ export class MapInteractionManager {
     const mouseX = e.clientX - this.cachedRect.left;
     const mouseY = e.clientY - this.cachedRect.top;
     this.isAltPressed = e.altKey;
+
+    if (mapSession.tileDeckManager.pendingPlacement) {
+      const point = mapStore.unproject({ x: mouseX, y: mouseY });
+      mapSession.updatePendingTilePlacement(point.x, point.y);
+      this.lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
 
     if (this.boxSelectStart) {
       this.boxSelection.update({ x: mouseX, y: mouseY });

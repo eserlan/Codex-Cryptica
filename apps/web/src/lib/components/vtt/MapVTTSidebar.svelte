@@ -4,6 +4,7 @@
   import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
   import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
   import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
+  import TileDeckPanel from "$lib/components/vtt/TileDeckPanel.svelte";
   import { VTT_ENTITY_TYPES } from "$lib/stores/map/map-page-controller.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -124,6 +125,8 @@
         {/if}
 
         {#if !sessionModeStore.isGuestMode}
+          <TileDeckPanel />
+
           <section
             class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
             data-testid="vtt-entity-list-section"

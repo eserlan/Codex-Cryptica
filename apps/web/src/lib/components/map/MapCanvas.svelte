@@ -55,6 +55,7 @@
     remoteMeasurement,
     vttPings,
     vttDragPreview,
+    tilePlacementPreview,
     interactions,
   }: {
     mapImage: HTMLImageElement | null;
@@ -64,6 +65,14 @@
     remoteMeasurement: RemoteEnrichedMeasurement | null;
     vttPings: PingState[];
     vttDragPreview: EnrichedDragPreview | null;
+    tilePlacementPreview: {
+      x: number;
+      y: number;
+      size: number;
+      valid: boolean;
+      tile: { name: string };
+      image: HTMLImageElement | null;
+    } | null;
     interactions: MapInteractionManager;
   } = $props();
 
@@ -168,6 +177,43 @@
         ctx.textBaseline = "bottom";
         ctx.fillStyle = stroke;
         ctx.fillText(vttDragPreview.label, 0, -radius - 8);
+        ctx.restore();
+      }
+    }
+
+    if (tilePlacementPreview) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const topLeft = mapStore.project({
+          x: tilePlacementPreview.x,
+          y: tilePlacementPreview.y,
+        });
+        const size = tilePlacementPreview.size * mapStore.viewport.zoom;
+        ctx.save();
+        ctx.globalAlpha = 0.65;
+        ctx.setLineDash([8, 4]);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = tilePlacementPreview.valid
+          ? themeStore.activeTheme.tokens.primary
+          : "#ef4444";
+        ctx.fillStyle = tilePlacementPreview.valid
+          ? "rgba(16, 185, 129, 0.18)"
+          : "rgba(239, 68, 68, 0.18)";
+        if (tilePlacementPreview.image) {
+          ctx.drawImage(
+            tilePlacementPreview.image,
+            topLeft.x,
+            topLeft.y,
+            size,
+            size,
+          );
+        }
+        ctx.fillRect(topLeft.x, topLeft.y, size, size);
+        ctx.strokeRect(topLeft.x, topLeft.y, size, size);
+        ctx.setLineDash([]);
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.font = "600 12px sans-serif";
+        ctx.fillText(tilePlacementPreview.tile.name, topLeft.x, topLeft.y - 8);
         ctx.restore();
       }
     }
