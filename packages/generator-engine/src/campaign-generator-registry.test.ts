@@ -8,6 +8,9 @@ import {
   resolveEntityType,
   GENERATOR_ENTITY_TYPE,
   SYSTEM_INSTRUCTION,
+  councilVotePathsPrompt,
+  councilVoteFoundationRepairPrompt,
+  councilVotePathsRepairPrompt,
 } from "./campaign-generator-registry";
 import {
   type GeneratorRunRequest,
@@ -110,30 +113,45 @@ describe("council-vote generator", () => {
     expect(getGenerator("council-vote").entityType).toBe("note");
   });
 
-  it("builds a prompt that names the requested council size and covers the political-puzzle requirements", () => {
+  it("builds a foundation prompt that names the requested council size, defers Possible Paths to step two, and covers the schema requirements", () => {
     const prompt = getGenerator("council-vote").buildPrompt(
       run("council-vote", { options: { councilSize: "7" } }),
     );
     expect(prompt).toContain("exactly 7 named council members");
     expect(prompt).toContain("initial voting stance");
-    expect(prompt).toContain("at least two viable paths to victory");
-    expect(prompt).toContain("costly best solution");
-    expect(prompt).toContain("run a consistency pass");
-    expect(prompt).toContain("mathematically correct for 7 seats");
     expect(prompt).toContain(
-      "Treat each councillor's initial voting stance as fixed source data",
+      'Do NOT write "Possible Paths" or "Follow-Up Hooks" yet',
     );
     expect(prompt).toContain(
-      "do not describe the party spending effort or resources on councillors whose vote is already secured",
+      "This is step one of two — a second step will build the possible paths to victory afterward",
     );
-    expect(prompt).toContain(
-      "every coalition path obeys the stated voting procedure",
-    );
-    expect(prompt).toContain(
-      "must directly resolve, reward, or override that councillor's true motive",
-    );
+    expect(prompt).toContain("fix the party's exact objective");
     expect(prompt).toContain('"connections"');
     expect(prompt).toContain("Example (illustrative only");
+  });
+
+  it("requires the archetype to match the councillor's actual dependency and estimate arithmetic to check out", () => {
+    const prompt = getGenerator("council-vote").buildPrompt(
+      run("council-vote", { options: { councilSize: "7" } }),
+    );
+    expect(prompt).toContain(
+      "do not describe a councillor who follows no one and has no dependency as a loyal follower type",
+    );
+    expect(prompt).toContain(
+      "the vote estimate tally is arithmetically correct for 7 seats",
+    );
+    expect(prompt).toContain(
+      "every dependency names a real councillor from this same roster in only one direction",
+    );
+  });
+
+  it("requires the foundation's antagonist section to name any faction bribing, coercing, monitoring, or retaliating", () => {
+    const prompt = getGenerator("council-vote").buildPrompt(
+      run("council-vote", { options: { councilSize: "7" } }),
+    );
+    expect(prompt).toContain(
+      "any faction actively bribing, coercing, monitoring, or retaliating against the party (only say there is no antagonist if none is described anywhere else in this content)",
+    );
   });
 
   it("defaults to a 5-seat council when no size is given", () => {
@@ -141,6 +159,215 @@ describe("council-vote generator", () => {
       run("council-vote"),
     );
     expect(prompt).toContain("exactly 5 named council members");
+  });
+
+  it("repair prompt asks to fix (not regenerate) amendment-shaped persuasion conditions and antagonist contradictions", () => {
+    const prompt = councilVoteFoundationRepairPrompt();
+    expect(prompt).toContain(
+      "proofread and repair the scenario you just wrote above — do not write a new one, only fix what's broken",
+    );
+    expect(prompt).toContain(
+      "no councillor's persuasion condition may itself function as an amendment, exemption, rider, sunset clause, or substitute proposal",
+    );
+    expect(prompt).toContain(
+      'If such a faction exists and the antagonist section says "None" or doesn\'t name it, correct that section to name it',
+    );
+    expect(prompt).toContain(
+      "If nothing needs fixing, return the scenario exactly as it was.",
+    );
+  });
+
+  it("repair prompt verifies recusal-adjusted thresholds and ballot-type clarity, and bans claiming the objective resolves inherent harms", () => {
+    const prompt = councilVoteFoundationRepairPrompt();
+    expect(prompt).toContain(
+      "verify the resulting threshold is stated and mathematically correct",
+    );
+    expect(prompt).toContain(
+      "Explicitly define whether ballots are secret, public, or convert to a recorded division under a stated procedure — do not leave the ballot type ambiguous",
+    );
+    expect(prompt).toContain(
+      "Ensure every persuasion condition that requires evidence has a corresponding investigation lead describing how to obtain it",
+    );
+    expect(prompt).toContain(
+      "the objective must not claim the harm is resolved",
+    );
+  });
+
+  it("paths prompt states the seven rules covering stances, veto, ballot secrecy, amendments, dependencies, and the costly best solution", () => {
+    const prompt = councilVotePathsPrompt();
+    expect(prompt).toContain("Treat everything already established there");
+    expect(prompt).toContain("Follow these rules when writing the paths:");
+    expect(prompt).toContain(
+      "1. Treat each councillor's initial stance, motive, and dependency exactly as established above",
+    );
+    expect(prompt).toContain(
+      "Never describe the party spending effort on, or in any way endangering or risking, a councillor whose vote is already secured.",
+    );
+    expect(prompt).toContain(
+      "No path may describe a veto-holder as simply outvoted",
+    );
+    expect(prompt).toContain(
+      "persuasion, bribery, or coercion yields only an expected vote unless",
+    );
+    expect(prompt).toContain(
+      "The costly best solution is the least harmful viable route that fully resolves the central dilemma",
+    );
+    expect(prompt).toContain(
+      "Do not sacrifice an uninvolved party's interests, force unanimity, or endanger an already-secured vote",
+    );
+    expect(prompt).toContain(
+      "Write every section as scene-appropriate prose. Do not restate the wording of these rules verbatim in the output",
+    );
+  });
+
+  it("paths prompt requires stabilizing an existing majority and distinguishing required votes from insurance votes", () => {
+    const prompt = councilVotePathsPrompt();
+    expect(prompt).toContain(
+      "If the current vote estimate already projects enough votes to clear the threshold, the smallest viable coalition must stabilize the fragile or leaning supporters already in place, or secure one backup vote against defection",
+    );
+    expect(prompt).toContain(
+      'clearly distinguish the votes actually required to clear the threshold from any extra "insurance" vote pursued purely as a hedge against defection',
+    );
+  });
+
+  it("paths prompt bans inventing/reversing dependencies, amendments even as a separate programme, and unestablished procedural mechanisms", () => {
+    const prompt = councilVotePathsPrompt();
+    expect(prompt).toContain(
+      "never invent a dependency link between councillors that wasn't stated, never reverse the direction of one that was",
+    );
+    expect(prompt).toContain(
+      "even one framed as a separate programme that functionally changes how the proposal applies",
+    );
+    expect(prompt).toContain(
+      "no path may invent or use a recusal, abstention, verification, amendment, threshold, removal, arrest, or absence mechanism that the established voting procedure does not itself explicitly define",
+    );
+  });
+
+  it("paths prompt requires the costly best solution to use established persuasion and a lasting cost", () => {
+    const prompt = councilVotePathsPrompt();
+    expect(prompt).toContain(
+      "It must persuade each targeted councillor only through the exact condition already established for them (never a substitute condition or unrelated evidence)",
+    );
+    expect(prompt).toContain(
+      "not a manufactured one and not merely time or resources spent investigating",
+    );
+    expect(prompt).toContain(
+      "confirm the costly best solution persuades each targeted councillor only through their exact established condition and that its cost is a lasting consequence",
+    );
+  });
+
+  it("paths prompt simulates the vote seat by seat and checks paths against the established foundation before returning", () => {
+    const prompt = councilVotePathsPrompt();
+    expect(prompt).toContain(
+      "Before returning, simulate the vote from start to finish and check every path against the rules above",
+    );
+    expect(prompt).toContain(
+      "list the final vote of every councillor per path, seat by seat, including councillors the path did not target",
+    );
+    expect(prompt).toContain("double-check the arithmetic");
+    expect(prompt).toContain(
+      "confirm every dependency used is one that was actually established above, in the direction it was defined, with an effect no larger than what it describes",
+    );
+    expect(prompt).toContain(
+      'confirm "Possible Paths" is ordered smallest viable coalition, then broader/riskier alternative, then the costly best solution',
+    );
+    expect(prompt).toContain(
+      'confirm "Antagonist Influence" is not contradicted by anything described in these new sections',
+    );
+    expect(prompt).toContain(
+      "confirm the output contains no prompt instructions, placeholder-name notes, or generation commentary",
+    );
+  });
+
+  it("paths-repair prompt asks to fix invented dependencies and unestablished mechanisms in the paths, not write new ones", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      'proofread and repair the "Possible Paths" and "Follow-Up Hooks" you just wrote above — do not write new paths, only fix what\'s broken',
+    );
+    expect(prompt).toContain(
+      "If any path invented a dependency link that was never stated, or reversed one that was, remove or correct it",
+    );
+    expect(prompt).toContain(
+      'including a hedge like "or abstains" presented as a live possibility',
+    );
+    expect(prompt).toContain(
+      "If nothing needs fixing, return the paths exactly as they were.",
+    );
+  });
+
+  it("paths-repair prompt recounts the true minimum vote count, deletes insurance/overshoot votes from the smallest coalition, and forbids unnecessary unanimity in the best solution", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "Recount exactly how many additional votes are needed beyond the current baseline to clear the threshold",
+    );
+    expect(prompt).toContain(
+      "The smallest viable coalition must target exactly that many councillors — no more.",
+    );
+    expect(prompt).toContain(
+      "an insurance/backup vote belongs only in the broader alternative, never the smallest coalition",
+    );
+    expect(prompt).toContain(
+      "The costly best solution must pursue the least coercive coalition sufficient to fully resolve the dilemma",
+    );
+    expect(prompt).toContain(
+      "it may not seek unanimity unless unanimity itself produces a concrete benefit unavailable from a simple majority",
+    );
+    expect(prompt).toContain(
+      'It may not target more councillors than the recounted minimum from rule 5 without a stated reason specific to fully resolving the dilemma (not just "extra margin," which belongs in the broader alternative instead)',
+    );
+    expect(prompt).toContain(
+      "the best solution must mitigate that harm through a separate, lawful action described in the path",
+    );
+  });
+
+  it("paths-repair prompt bans manufacturing the best solution's cost by padding it with an action on an already-secured councillor", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "it specifically may not target a councillor whose vote is already secured just to manufacture the appearance of a cost",
+    );
+    expect(prompt).toContain(
+      "If removing such padding would leave this path identical to another path in targets and outcome, delete the padding rather than keep it as filler, and see rule 8.",
+    );
+  });
+
+  it("paths-repair prompt requires a path to use a councillor's own persuasion condition rather than defaulting to a looser dependency", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "If a councillor has their own specific persuasion condition stated in the scenario above, a path must use that condition directly to flip their vote rather than defaulting to a looser dependency-based trigger",
+    );
+    expect(prompt).toContain(
+      "a dependency may substitute for a councillor's own condition only if the path explains why their own condition is unavailable or impractical in that path",
+    );
+  });
+
+  it("paths-repair prompt requires the three paths to be materially different in targets or methodology", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "The three paths must be materially different from each other in their targeted councillors or their methodology.",
+    );
+    expect(prompt).toContain(
+      "If the costly best solution (or any other path) targets the identical councillors through identical actions as another path, with only a cost paragraph appended, rewrite it with a genuinely distinct approach or targets",
+    );
+  });
+
+  it("paths-repair prompt requires each path's tally summary to equal the literal sum of its own breakdown, including stale totals left over from another path", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      "must exactly equal the literal sum of that same path's own seat-by-seat breakdown — recount the breakdown digit by digit",
+    );
+    expect(prompt).toContain(
+      "even if the mismatch is just a stale total left over from a different path",
+    );
+  });
+
+  it("paths-repair prompt bans counting an unconfirmed councillor toward the threshold", () => {
+    const prompt = councilVotePathsRepairPrompt();
+    expect(prompt).toContain(
+      'no path may count an "Unknown" or otherwise unconfirmed councillor toward the required total, even if a dependency nudges their disposition',
+    );
+    expect(prompt).toContain(
+      "a dependency altering someone's mood is not the same as securing their vote",
+    );
   });
 
   it("generates a local fallback with one council member per requested seat", () => {

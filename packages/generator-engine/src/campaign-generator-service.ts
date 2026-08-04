@@ -1,5 +1,9 @@
 import {
   buildCampaignDungeonPrompt,
+  councilVoteFoundationPrompt,
+  councilVoteFoundationRepairPrompt,
+  councilVotePathsPrompt,
+  councilVotePathsRepairPrompt,
   getGenerator,
   isTitleBanned,
 } from "./campaign-generator-registry";
@@ -562,6 +566,111 @@ export class CampaignGeneratorService {
   }
 
   /**
+   * Four-pass AI generation for council-vote (#2033/#2034): foundation,
+   * foundation-repair, paths, paths-repair, run as four turns on one real
+   * chat session so each pass sees every prior pass's actual output as
+   * conversation history rather than a hand-summarized re-injection of it —
+   * this is what fixed the repeated contradictions (reversed/invented
+   * dependencies, persuasion conditions swapped for unrelated evidence,
+   * amendments introduced despite an immutable objective) that kept
+   * surviving single-shot prompt tightening. Each repair turn proofreads the
+   * pass immediately before it — before the next pass builds on it — since a
+   * defect in an earlier pass otherwise gets faithfully inherited by a later
+   * one that's correctly following its own rules. Requires
+   * `aiGateway.startChat` (optional on the interface); if the injected
+   * gateway doesn't implement it, falls through to local generation the same
+   * as `aiGateway` being unset.
+   */
+  private async generateCouncilVoteWithAI(
+    generator: CampaignGeneratorDefinition,
+    request: GeneratorRunRequest,
+  ): Promise<GeneratedDraft | null> {
+    if (!this.aiGateway?.startChat) return null;
+
+    try {
+      const chat = await this.aiGateway.startChat(SYSTEM_INSTRUCTION);
+
+      const isUsableFoundation = (
+        value: Partial<GeneratorOutput>,
+      ): value is Partial<GeneratorOutput> & {
+        title: string;
+        summary: string;
+        lore: string;
+      } =>
+        typeof value.title === "string" &&
+        typeof value.summary === "string" &&
+        typeof value.lore === "string";
+
+      const foundationRaw = await chat.send(
+        councilVoteFoundationPrompt(request),
+      );
+      const foundationParsed = JSON.parse(
+        foundationRaw,
+      ) as Partial<GeneratorOutput>;
+      if (!isUsableFoundation(foundationParsed)) return null;
+      let foundation = foundationParsed;
+
+      // Proofread/repair before the paths pass ever sees the foundation —
+      // fixing it after would let paths inherit whatever the repair fixed.
+      // A malformed repair reply keeps the original, unrepaired foundation
+      // rather than failing the whole generation over a cleanup step.
+      try {
+        const repairedRaw = await chat.send(
+          councilVoteFoundationRepairPrompt(),
+        );
+        const repaired = JSON.parse(repairedRaw) as Partial<GeneratorOutput>;
+        if (isUsableFoundation(repaired)) foundation = repaired;
+      } catch {
+        // Keep the unrepaired foundation.
+      }
+
+      type ParsedPaths = { possiblePaths?: unknown; followUpHooks?: unknown };
+      const isUsablePaths = (value: ParsedPaths): boolean =>
+        typeof value.possiblePaths === "string" &&
+        typeof value.followUpHooks === "string";
+
+      const pathsRaw = await chat.send(councilVotePathsPrompt());
+      let paths = JSON.parse(pathsRaw) as ParsedPaths;
+
+      // Same rationale as the foundation repair above, one pass later: fix
+      // the paths before they're used, and keep the unrepaired paths if the
+      // repair reply itself is unusable.
+      try {
+        const pathsRepairedRaw = await chat.send(
+          councilVotePathsRepairPrompt(),
+        );
+        const pathsRepaired = JSON.parse(pathsRepairedRaw) as ParsedPaths;
+        if (isUsablePaths(pathsRepaired)) paths = pathsRepaired;
+      } catch {
+        // Keep the unrepaired paths.
+      }
+
+      const lore = [
+        foundation.lore,
+        typeof paths.possiblePaths === "string" ? paths.possiblePaths : "",
+        typeof paths.followUpHooks === "string" ? paths.followUpHooks : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const output: GeneratorOutput = {
+        title: foundation.title,
+        summary: foundation.summary,
+        lore,
+        content:
+          typeof foundation.content === "string"
+            ? foundation.content
+            : undefined,
+        labels: Array.isArray(foundation.labels) ? foundation.labels : [],
+        connections: parseConnections(foundation.connections),
+      };
+      return generator.mapOutputToDraft(output, request);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Produce a transient draft. When `useAI` is true and both AI policy and
    * gateway are available, calls the AI gateway and parses JSON output.
    * Falls back to local table generation on any AI failure.
@@ -617,8 +726,21 @@ export class CampaignGeneratorService {
     if (
       canUseAI &&
       this.aiGateway &&
+      mergedRequest.generatorId === "council-vote"
+    ) {
+      const councilVoteDraft = await this.generateCouncilVoteWithAI(
+        generator,
+        mergedRequest,
+      );
+      if (councilVoteDraft) return councilVoteDraft;
+    }
+
+    if (
+      canUseAI &&
+      this.aiGateway &&
       mergedRequest.generatorId !== "dungeon" &&
-      mergedRequest.generatorId !== "language"
+      mergedRequest.generatorId !== "language" &&
+      mergedRequest.generatorId !== "council-vote"
     ) {
       const fullPrompt = generator.buildPrompt({
         ...mergedRequest,
