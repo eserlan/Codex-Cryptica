@@ -334,7 +334,8 @@ describe("StatSheetView", () => {
       },
     });
 
-    render(StatSheetView, { entity });
+    const deterministicIdGenerator = { uuid: () => "healed-id-123" };
+    render(StatSheetView, { entity, idGenerator: deterministicIdGenerator });
 
     await vi.waitFor(() => expect(updateEntity).toHaveBeenCalled());
 
