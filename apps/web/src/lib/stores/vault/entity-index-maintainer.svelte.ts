@@ -31,8 +31,9 @@ export class EntityIndexMaintainer {
   titleAndAliasIndex = $state<TitleAndAliasIndexEntry[]>([]);
 
   rebuildIndexes(entities: Record<string, LocalEntity>) {
-    // ⚡ Bolt Optimization: Use a single imperative loop over keys instead of Object.values() and .filter()
-    // to avoid multiple large intermediate array allocations during index rebuilds.
+    // ⚡ Bolt Optimization: Use a single imperative loop over keys instead of Object.values() + .filter()
+    // to populate all three derived arrays (all, active, graph) in one O(n) pass rather than multiple
+    // separate iteration passes over the entity map.
     const all: LocalEntity[] = [];
     const active: LocalEntity[] = [];
     const graph: LocalEntity[] = [];
