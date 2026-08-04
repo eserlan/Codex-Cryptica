@@ -58,9 +58,12 @@ export function canPlaceSpatialImage(
   candidate: SpatialImagePlacement,
   occupied: Iterable<SpatialImagePlacement>,
 ) {
-  return !Array.from(occupied).some((item) =>
-    spatialImagesOverlap(candidate, item),
-  );
+  for (const item of occupied) {
+    if (spatialImagesOverlap(candidate, item)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function nextSpatialImageZIndex(

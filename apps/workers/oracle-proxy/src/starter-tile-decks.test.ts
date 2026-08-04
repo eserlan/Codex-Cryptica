@@ -21,7 +21,28 @@ describe("starter tile deck R2 reads", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/png");
-    expect(response.headers.get("Cache-Control")).toContain("immutable");
+    expect(response.headers.get("Cache-Control")).toBe(
+      "public, max-age=86400, immutable",
+    );
+  });
+
+  it("returns manifest with standard max-age and no immutable directive", async () => {
+    const get = async (key: string) =>
+      key === "starter-tile-decks/kenney-scribble-dungeons/manifest.json"
+        ? {
+            body: new Response("{}").body!,
+            httpMetadata: { contentType: "application/json; charset=utf-8" },
+            etag: "manifest-etag",
+          }
+        : null;
+
+    const response = await handleGetStarterTileDeck(
+      { BUCKET: { get } },
+      "kenney-scribble-dungeons",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("public, max-age=3600");
   });
 
   it("rejects traversal paths before accessing R2", async () => {

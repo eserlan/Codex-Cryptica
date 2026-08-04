@@ -32,7 +32,9 @@ export async function handleGetStarterTileDeck(
       "Content-Type": assetPath
         ? object.httpMetadata?.contentType || "image/png"
         : "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=86400, immutable",
+      "Cache-Control": assetPath
+        ? "public, max-age=86400, immutable"
+        : "public, max-age=3600",
       ETag: object.etag,
     },
   });

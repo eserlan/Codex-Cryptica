@@ -23,16 +23,20 @@
     Room details
   </h4>
   {#each [["description", "Description"], ["encounter", "Encounter"], ["contents", "Contents"], ["notes", "Notes"]] as [field, label] (field)}
+    {@const key = field as keyof TileDetails}
     <label class="block space-y-1.5">
       <span
         class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
         >{label}</span
       >
       <textarea
-        value={details[field as keyof TileDetails]}
+        value={details[key]}
         {disabled}
-        rows={field === "notes" ? 3 : 2}
-        oninput={(event) => onChange({ [field]: event.currentTarget.value })}
+        rows={key === "notes" ? 3 : 2}
+        oninput={(event) =>
+          onChange({
+            [key]: (event.currentTarget as HTMLTextAreaElement).value,
+          })}
         class="w-full resize-y rounded-lg border border-theme-border bg-theme-surface px-2.5 py-2 text-sm text-theme-text outline-none focus:border-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
       ></textarea>
     </label>

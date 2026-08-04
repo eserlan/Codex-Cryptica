@@ -133,6 +133,7 @@ export default {
         for (const [name, value] of Object.entries(headers)) {
           response.headers.set(name, value);
         }
+        response.headers.append("Vary", "Origin");
         return response;
       };
       if (request.method !== "GET")
