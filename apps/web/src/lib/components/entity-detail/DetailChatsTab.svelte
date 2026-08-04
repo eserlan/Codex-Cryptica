@@ -263,8 +263,9 @@
                     onclick={() => deleteHostTranscript(transcript)}
                     class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100"
                     title="Delete entire session logs"
+                    aria-label="Delete entire session logs"
                   >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
                   </button>
                 </div>
               </div>
@@ -293,8 +294,9 @@
                             onclick={() => startEditMessage(msg)}
                             class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition"
                             title="Edit message"
+                            aria-label="Edit message"
                           >
-                            <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                            <span class="icon-[lucide--pencil] w-3 h-3" aria-hidden="true"></span>
                           </button>
                           <button
                             type="button"
@@ -302,8 +304,9 @@
                               deleteHostMessage(transcript, msg.id)}
                             class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition"
                             title="Delete message"
+                            aria-label="Delete message"
                           >
-                            <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                            <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
                           </button>
                         {/if}
                         {#if msg.role === "assistant"}
@@ -314,7 +317,7 @@
                             class="text-[9px] font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
                             title="Promote this response to a rumor draft"
                           >
-                            <span class="icon-[lucide--sparkles] w-3 h-3"
+                            <span class="icon-[lucide--sparkles] w-3 h-3" aria-hidden="true"
                             ></span>
                             Promote
                           </button>
@@ -430,16 +433,18 @@
                       onclick={() => startEditMessage(msg)}
                       class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition"
                       title="Edit message"
+                      aria-label="Edit message"
                     >
-                      <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                      <span class="icon-[lucide--pencil] w-3 h-3" aria-hidden="true"></span>
                     </button>
                     <button
                       type="button"
                       onclick={() => deleteGuestMessage(msg.id)}
                       class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition"
                       title="Delete message"
+                      aria-label="Delete message"
                     >
-                      <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                      <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
                     </button>
                   </div>
                 {/if}
