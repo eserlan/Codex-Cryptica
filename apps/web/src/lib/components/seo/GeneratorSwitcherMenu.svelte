@@ -83,21 +83,31 @@
     const themeId = themeStore.worldThemeId;
     const isFantasy = themeId === "fantasy" || themeId === "workspace";
     const isHorror = themeId === "horror";
-    return GENERATOR_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        if (isFantasy) return true;
-        if (FANTASY_ONLY.has(item.path)) return false;
-        if (HORROR_ONLY.has(item.path)) return isHorror;
-        if (
-          item.path === "/generators/nomad-clan" &&
-          NOMAD_CLAN_EXCLUDED_THEMES.has(themeId)
-        ) {
-          return false;
+
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
+    // to avoid intermediate array allocations during reactive updates.
+    const result: typeof GENERATOR_GROUPS = [];
+    for (const group of GENERATOR_GROUPS) {
+      const filteredItems: (typeof GENERATOR_GROUPS)[number]["items"] = [];
+      for (const item of group.items) {
+        let keep = true;
+        if (!isFantasy) {
+          if (FANTASY_ONLY.has(item.path)) keep = false;
+          else if (HORROR_ONLY.has(item.path)) keep = isHorror;
+          else if (
+            item.path === "/generators/nomad-clan" &&
+            NOMAD_CLAN_EXCLUDED_THEMES.has(themeId)
+          ) {
+            keep = false;
+          }
         }
-        return true;
-      }),
-    })).filter((group) => group.items.length > 0);
+        if (keep) filteredItems.push(item);
+      }
+      if (filteredItems.length > 0) {
+        result.push({ ...group, items: filteredItems });
+      }
+    }
+    return result;
   });
 
   let showGeneratorMenu = $state(false);
