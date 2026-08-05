@@ -159,6 +159,20 @@ If the generator's content should flavor itself to the picked world theme (fanta
 
 ---
 
+## Part D — Structured visual data + linking a rasterized image to the saved entity (optional)
+
+Only relevant if a generator's output includes a client-rendered visual (a diagram, chart, or map, like star-system's SVG orbital diagram) that should become part of the saved entity — e.g. auto-populating the entity's **Map tab** (every entity has one, `apps/web/src/lib/components/entity-detail/DetailMapTab.svelte`) with an image derived from the generator's own output, not a user upload.
+
+1. Carry the structured data (not just markdown) through the whole pipeline as an optional field on `PublicGeneratorOutput` (`public-generator-adapters.ts`) **and** on `GeneratorOutput`/`GeneratedDraft` (`campaign-generator-types.ts`) — the in-app AI path silently drops any field not explicitly whitelisted in `campaign-generator-service.ts`'s generic JSON-parse block (around `const output: GeneratorOutput = {...}`), so a field only added to the public type never reaches the in-app surface. Add it there too, and to the REGISTRY entry's custom `mapOutputToDraft` override if the generator has one.
+2. Make the diagram component export a `bind:this`-reachable `exportPng(): Promise<Blob | null>` (see `StarSystemDiagram.svelte`) built on the shared `svgToPngBlob()` util (`apps/web/src/lib/utils/svg-export.ts`) — don't hand-roll SVG-to-canvas rasterization per component.
+3. Use `EntityMapLinkingService` (`apps/web/src/lib/services/entity-map-linking.ts`) to upload the rasterized image and set `parentEntityId` on the resulting `vault.maps` entry — this is the same mechanism `DetailMapTab.svelte`'s manual "Upload Map" uses, so the result is indistinguishable from a manual upload.
+4. Wire the linking at **both** save paths if the generator supports both surfaces, since they diverge structurally:
+   - **In-app** (`CampaignGeneratorModal.svelte`): render the diagram off-screen (`class="absolute h-px w-px overflow-hidden opacity-0"`) whenever the reviewed draft carries the structured data, bind its ref, and call `exportPng()` + `entityMapLinkingService.linkImageToEntity()` right after `svc.saveDraft(...)` resolves (the entity id is available immediately, even though its content/lore populate later via the pending-revision flow).
+   - **Public SEO surface** (`SEOGeneratorLayout.svelte` + `import-handler.ts`): the public page has no live vault, so rasterize at "Save to Codex" time, base64-encode via `blobToDataUrl()`, and stash it on the `__codex_pending_import` payload (extend `ImportDraftSchema` with the new optional field). Decode it back with `dataUrlToFile()` and call `EntityMapLinkingService` only after `checkAndHandlePendingImport()` actually creates the entity.
+5. Every step here must be best-effort and wrapped in its own try/catch — a rasterization or upload failure must never block saving the entity itself, which already succeeded by the time linking runs.
+
+---
+
 ## Verification
 
 Run these **from the correct directory** — `svelte-check`/`vitest` silently pick up the wrong project's config (and a much smaller file count) if run from the repo root or the other package by mistake:

@@ -81,6 +81,79 @@ describe("SeoImportService", () => {
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
   });
 
+  it("should link a rasterized diagram image to the created entity when present", async () => {
+    const mockMapLinker = {
+      linkImageToEntity: vi.fn().mockResolvedValue("map1"),
+    };
+    const linkingService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      mockMapLinker as any,
+    );
+
+    const draft = {
+      type: "location",
+      title: "Kesh-9",
+      content: "A binary star system.",
+      mapImageDataUrl:
+        "data:image/png;base64," + btoa("fake-png-bytes-for-test"),
+    };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    await linkingService.checkAndHandlePendingImport();
+
+    expect(mockMapLinker.linkImageToEntity).toHaveBeenCalledOnce();
+    const [file, mapName, entityId] =
+      mockMapLinker.linkImageToEntity.mock.calls[0];
+    expect(file).toBeInstanceOf(File);
+    expect(file.type).toBe("image/png");
+    expect(mapName).toBe("Kesh-9 Map");
+    expect(entityId).toBe("e1");
+  });
+
+  it("should not attempt to link a map when mapImageDataUrl is absent", async () => {
+    const mockMapLinker = { linkImageToEntity: vi.fn() };
+    const linkingService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      mockMapLinker as any,
+    );
+
+    const draft = { type: "location", title: "Plain System", content: "" };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    await linkingService.checkAndHandlePendingImport();
+
+    expect(mockMapLinker.linkImageToEntity).not.toHaveBeenCalled();
+  });
+
+  it("should not fail the import if linking the map image throws", async () => {
+    const mockMapLinker = {
+      linkImageToEntity: vi.fn().mockRejectedValue(new Error("upload failed")),
+    };
+    const linkingService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      undefined,
+      mockMapLinker as any,
+    );
+
+    const draft = {
+      type: "location",
+      title: "Kesh-9",
+      content: "",
+      mapImageDataUrl:
+        "data:image/png;base64," + btoa("fake-png-bytes-for-test"),
+    };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    const res = await linkingService.checkAndHandlePendingImport();
+
+    expect(res).toBe("e1");
+  });
+
   it("should create a new vault if no vault is active", async () => {
     mockVaultStore.activeVaultId = null;
     mockRegistryStore.availableVaults = [];

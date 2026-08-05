@@ -5,6 +5,7 @@
     STAR_TYPE_COLORS,
   } from "generator-engine";
   import type { StarSystemBody } from "generator-engine";
+  import { svgToPngBlob } from "$lib/utils/svg-export";
 
   let {
     bodies,
@@ -118,72 +119,22 @@
   }
 
   /**
-   * Rasterizes the live SVG to a PNG blob. A bare `data:image/svg+xml` has no
-   * access to the page's Tailwind stylesheet, so every element's computed
-   * fill/stroke is inlined onto a clone first — otherwise the exported image
-   * would render with no colors at all.
+   * Rasterizes the live diagram to a PNG blob, or `null` if there is no SVG
+   * to export yet. Exposed so a parent can grab the diagram image at
+   * "Save to Codex" time (via `bind:this`) and link it as the new Location
+   * entity's map (#1935 follow-up).
    */
-  async function svgToPngBlob(svg: SVGSVGElement, scale = 2): Promise<Blob> {
-    const clone = svg.cloneNode(true) as SVGSVGElement;
-    const liveNodes = svg.querySelectorAll("*");
-    const cloneNodes = clone.querySelectorAll("*");
-    liveNodes.forEach((liveNode, i) => {
-      const cloneNode = cloneNodes[i];
-      if (
-        !(liveNode instanceof SVGElement) ||
-        !(cloneNode instanceof SVGElement)
-      )
-        return;
-      const computed = getComputedStyle(liveNode);
-      if (computed.fill && computed.fill !== "none") {
-        cloneNode.setAttribute("fill", computed.fill);
-      }
-      if (computed.stroke && computed.stroke !== "none") {
-        cloneNode.setAttribute("stroke", computed.stroke);
-      }
-    });
-    clone.setAttribute(
-      "style",
-      `background:${getComputedStyle(svg.parentElement ?? svg).backgroundColor}`,
-    );
-
-    const svgString = new XMLSerializer().serializeToString(clone);
-    const svgBlob = new Blob([svgString], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(svgBlob);
-    try {
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Failed to load SVG as image"));
-        img.src = url;
-      });
-      const width = layout.width;
-      const height = layout.height;
-      const canvas = document.createElement("canvas");
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas 2D context unavailable");
-      ctx.scale(scale, scale);
-      ctx.drawImage(image, 0, 0, width, height);
-      return await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject(new Error("toBlob failed"))),
-          "image/png",
-        );
-      });
-    } finally {
-      URL.revokeObjectURL(url);
-    }
+  export async function exportPng(scale = 2): Promise<Blob | null> {
+    if (!inlineSvgEl) return null;
+    return svgToPngBlob(inlineSvgEl, layout.width, layout.height, scale);
   }
 
   async function handleCopyImage() {
     if (!inlineSvgEl) return;
     clearTimeout(copyTimeout);
     try {
-      const blob = await svgToPngBlob(inlineSvgEl);
+      const blob = await exportPng();
+      if (!blob) return;
       const filename = `${(title || "star-system").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-diagram.png`;
       if (
         typeof ClipboardItem !== "undefined" &&

@@ -6,6 +6,7 @@
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
 import type { LanguageProfileV1 } from "schema";
+import type { StarSystemBody } from "./public-star-system";
 
 export type GeneratorId =
   | "npc"
@@ -85,6 +86,13 @@ export interface GeneratorOutput {
   /** Canonical rules for language generators; markdown fields are derived. */
   languageProfile?: LanguageProfileV1;
   languageProfileVersion?: 1;
+  /**
+   * Structured major-body data for the star-system generator, driving its
+   * orbital diagram. Absent for every other generator.
+   */
+  bodies?: StarSystemBody[];
+  /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
+  starType?: string;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -189,6 +197,10 @@ export interface GeneratedDraft {
   languageProfileVersion?: 1;
   primaryLanguageId?: string;
   primaryLanguageTitle?: string;
+  /** Carried through from {@link GeneratorOutput.bodies} for the star-system generator's orbital diagram. */
+  bodies?: StarSystemBody[];
+  /** Carried through from {@link GeneratorOutput.starType}. */
+  starType?: string;
 }
 
 /** The user's explicit decision to save a reviewed draft. */

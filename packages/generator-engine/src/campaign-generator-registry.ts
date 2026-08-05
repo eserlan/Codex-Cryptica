@@ -868,6 +868,8 @@ function generateStarSystem(request: GeneratorRunRequest): GeneratorOutput {
     content: result.content,
     lore: result.lore,
     labels: result.labels,
+    bodies: result.bodies,
+    starType: result.starType,
   };
 }
 
@@ -1612,6 +1614,8 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     mapOutputToDraft: (output, request) => ({
       ...mapOutputToDraft("star-system")(output, request),
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+      bodies: output.bodies,
+      starType: output.starType,
     }),
     buildPrompt: starSystemPrompt,
   },
