@@ -24,6 +24,7 @@ vi.mock("../../config", () => ({
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     setGlobalError: vi.fn(),
+    confirm: vi.fn(),
   },
 }));
 
@@ -335,7 +336,7 @@ describe("app-init", () => {
       expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
     });
 
-    it("should reload once when a new worker takes control", () => {
+    it("should prompt user and reload once when a new worker takes control and user confirms", async () => {
       const registerSpy = vi.fn().mockResolvedValue(undefined);
       const serviceWorkerListeners = new Map<string, EventListener>();
       const reloadSpy = vi.fn();
@@ -350,6 +351,10 @@ describe("app-init", () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
       } as any;
+
+      const confirmSpy = vi
+        .spyOn(notificationStore, "confirm")
+        .mockResolvedValue(true);
 
       registerServiceWorker({
         document: mockDocument,
@@ -372,7 +377,64 @@ describe("app-init", () => {
       controllerChange?.(new Event("controllerchange"));
       controllerChange?.(new Event("controllerchange"));
 
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(confirmSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "App Update Available",
+          confirmLabel: "Reload Now",
+        }),
+      );
       expect(reloadSpy).toHaveBeenCalledOnce();
+      confirmSpy.mockRestore();
+    });
+
+    it("should not reload when the user cancels the update prompt", async () => {
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      const serviceWorkerListeners = new Map<string, EventListener>();
+      const reloadSpy = vi.fn();
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        location: { reload: reloadSpy },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      const confirmSpy = vi
+        .spyOn(notificationStore, "confirm")
+        .mockResolvedValue(false);
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            controller: {},
+            register: registerSpy,
+            addEventListener: vi.fn((event: string, handler: EventListener) => {
+              serviceWorkerListeners.set(event, handler);
+            }),
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      const controllerChange = serviceWorkerListeners.get("controllerchange");
+      expect(controllerChange).toBeDefined();
+
+      controllerChange?.(new Event("controllerchange"));
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(reloadSpy).not.toHaveBeenCalled();
+      confirmSpy.mockRestore();
     });
 
     it("should not reload when the first worker takes control", () => {
