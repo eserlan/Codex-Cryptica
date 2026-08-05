@@ -102,12 +102,12 @@
 </script>
 
 <div
-  class="fixed inset-0 z-[105] flex items-center justify-center bg-theme-bg/80 p-4"
+  class="fixed inset-0 z-[105] flex items-center justify-center bg-theme-bg/80 p-3 sm:p-6"
   role="presentation"
   onclick={(event) => event.target === event.currentTarget && onClose()}
 >
   <div
-    class="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface"
+    class="flex max-h-[90vh] w-full max-w-2xl xl:max-w-3xl flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
     role="dialog"
     aria-modal="true"
     aria-labelledby="presentation-manager-title"

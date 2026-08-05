@@ -79,4 +79,28 @@ describe("FieldReferenceNode", () => {
 
     expect(screen.getByText(/hit points.*missing field/i)).toBeTruthy();
   });
+
+  it("renders dice field roll button in view mode and static preview in preview mode", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "atk",
+      label: "Attack Roll",
+    };
+    const context = makeContext([
+      { id: "atk", label: "Attack Roll", type: "dice", formula: "1d20+5" },
+    ]);
+
+    const { unmount } = render(FieldReferenceNode, {
+      props: { node, context },
+    });
+    expect(screen.getByTestId("presentation-field-dice-roll")).toBeTruthy();
+    expect(
+      screen.getByTestId("presentation-field-dice-roll").textContent,
+    ).toContain("1d20+5");
+    unmount();
+
+    const previewContext = { ...context, mode: "preview" as const };
+    render(FieldReferenceNode, { props: { node, context: previewContext } });
+    expect(screen.getByTestId("presentation-field-dice-preview")).toBeTruthy();
+  });
 });
