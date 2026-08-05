@@ -160,9 +160,12 @@ async function main() {
   console.log(`Affected workspaces: ${names.join(", ") || "none"}`);
   for (const name of names) console.log(`- ${name}: ${result.reasons[name]}`);
 
+  const skipTests = process.argv.includes("--skip-tests");
+
   if (runValidation) {
     for (const workspace of result.workspaces) {
-      for (const script of ["lint", "test"]) {
+      const scriptsToRun = skipTests ? ["lint"] : ["lint", "test"];
+      for (const script of scriptsToRun) {
         if (!workspace.scripts[script]) continue;
         console.log(`Running ${script} for ${workspace.name}`);
         execFileSync("bun", ["run", "--filter", workspace.name, script], {
