@@ -643,6 +643,7 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
     category: "item",
     isBuiltIn: true,
     fields: [
+      { id: "item_name", label: "Item Name", type: "text" },
       { id: "enc", label: "ENC", type: "number" },
       { id: "ap", label: "Armor Points (AP)", type: "number" },
       { id: "item_hp", label: "Item HP", type: "counter", min: 0, max: 30 },
