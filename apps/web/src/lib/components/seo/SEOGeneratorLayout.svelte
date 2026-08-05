@@ -21,6 +21,7 @@
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
   import {
@@ -653,6 +654,15 @@
       class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
+      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
+        <div class="mb-6">
+          <StarSystemDiagram
+            bodies={generatedData.bodies}
+            starType={generatedData.starType}
+            title={generatedData.title}
+          />
+        </div>
+      {/if}
       <GeneratorOutputCard
         {generatedData}
         {aiFallbackDismissed}

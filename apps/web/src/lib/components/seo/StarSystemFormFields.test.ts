@@ -65,7 +65,7 @@ describe("StarSystemFormFields", () => {
     expect(onSurprise).toHaveBeenCalledOnce();
   });
 
-  it("re-syncs the theme selector when Surprise Me rolls a new genre", async () => {
+  it("leaves genre untouched when Surprise Me randomizes the other fields", async () => {
     const onGenreChange = vi.fn();
     render(StarSystemFormFields, {
       props: { ...props, genre: "Cyberpunk", onGenreChange },
@@ -73,12 +73,11 @@ describe("StarSystemFormFields", () => {
 
     await fireEvent.click(screen.getByText("Surprise Me"));
 
-    // Surprise Me must report the freshly-rolled genre, not the value the
-    // component started with, so the page's theme skin (activeTheme) stays
-    // in sync with the genre it actually generates from (#1935 follow-up).
-    expect(onGenreChange).toHaveBeenCalledOnce();
-    expect(onGenreChange).toHaveBeenCalledWith(
-      (screen.getByLabelText("Genre") as HTMLSelectElement).value,
+    // Genre is a user-controlled axis Surprise Me must not override (feedback
+    // 2026-08-05); only the select's own onvaluechange should ever report it.
+    expect(onGenreChange).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Genre") as HTMLSelectElement).value).toBe(
+      "Cyberpunk",
     );
   });
 });

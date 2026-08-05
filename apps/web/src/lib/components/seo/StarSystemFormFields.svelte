@@ -104,11 +104,9 @@
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
       systemType = pickFrom(starSystemConfig.systemTypes);
-      genre = pickFrom(starSystemConfig.genres);
       civilisationLevel = pickFrom(starSystemConfig.civilisationLevels);
       systemCharacter = pickFrom(starSystemConfig.systemCharacters);
       scientificRealism = pickFrom(starSystemConfig.scientificRealism);
-      onGenreChange?.(genre);
       onSurprise?.();
     }}
   >

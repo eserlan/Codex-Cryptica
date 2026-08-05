@@ -267,10 +267,18 @@ export {
   generateStarSystemLocal,
   parseStarSystemResponse,
   starSystemConfig,
+  STAR_TYPE_COLORS,
   type StarSystemGeneratorOptions,
   type StarSystemPrompt,
   type StarSystemBody,
 } from "./public-star-system";
+export {
+  buildStarSystemDiagram,
+  colorForBodyType,
+  type StarSystemDiagramLayout,
+  type StarSystemDiagramNode,
+  type StarSystemDiagramGridline,
+} from "./star-system-diagram";
 export {
   generateStarterConstellationLocal,
   buildStarterConstellationPrompt,
