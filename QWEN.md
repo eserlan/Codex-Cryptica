@@ -272,8 +272,8 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
-- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (2034-llm-model-registry)
-- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (2034-llm-model-registry)
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
 - R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)

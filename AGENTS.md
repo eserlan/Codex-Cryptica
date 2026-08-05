@@ -54,14 +54,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/2034-llm-model-registry/plan.md).
+shell commands, and other important information, read the [current plan](./specs/153-llm-model-registry/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
 
-- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (2034-llm-model-registry)
-- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (2034-llm-model-registry)
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `fflate` archive parsing, `@codex/vault-engine`, Svelte 5, existing notification confirmation UI (1826-vault-file-import)
 - Browser-local OPFS vault directories and IndexedDB-backed vault registry; no new persistence format (1826-vault-file-import)

@@ -1,7 +1,7 @@
 # Implementation Plan: LLM Model Registry & Provider Resolver (oracle-proxy)
 
-**Branch**: `2034-llm-model-registry` | **Date**: 2026-08-05 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/2034-llm-model-registry/spec.md`
+**Branch**: `153-llm-model-registry` | **Date**: 2026-08-05 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/153-llm-model-registry/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
@@ -47,7 +47,7 @@ No violations requiring justification; Complexity Tracking table is empty.
 ### Documentation (this feature)
 
 ```text
-specs/2034-llm-model-registry/
+specs/153-llm-model-registry/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)

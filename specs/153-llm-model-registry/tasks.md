@@ -1,6 +1,6 @@
 # Tasks: LLM Model Registry & Provider Resolver (oracle-proxy)
 
-**Input**: Design documents from `/specs/2034-llm-model-registry/`
+**Input**: Design documents from `/specs/153-llm-model-registry/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
 **Tests**: Included. The project constitution (Principle II, TDD) requires unit tests for all new logic regardless of whether the spec explicitly requests them, and the constitution's Constitution Check gate in plan.md commits to this.

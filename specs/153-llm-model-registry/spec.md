@@ -1,6 +1,6 @@
 # Feature Specification: LLM Model Registry & Provider Resolver (oracle-proxy)
 
-**Feature Branch**: `2034-llm-model-registry`
+**Feature Branch**: `153-llm-model-registry`
 **Created**: 2026-08-05
 **Status**: Draft
 **Input**: User description: "Add a central LLM model registry and provider-adaptor/resolver layer to the existing oracle-proxy Cloudflare Worker, and add GPT-5.6 Luna as a supported model. This is the backend-plumbing slice of GitHub issue #2049 — the follow-up slice (user-facing tier selector, persistence, admin UI) is intentionally out of scope and will be a separate spec."
