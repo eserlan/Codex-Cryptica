@@ -27,9 +27,8 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
       longContext: true,
     },
     costTier: "low",
-    // Placeholder — set from actual published Gemini pricing before this
-    // model is relied on for real cost estimates.
-    pricing: { inputPer1kTokens: 0, outputPer1kTokens: 0 },
+    // $0.30 / 1M input tokens, $2.50 / 1M output tokens (standard paid tier).
+    pricing: { inputPer1kTokens: 0.0003, outputPer1kTokens: 0.0025 },
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
     defaultParameters: { temperature: 0.85, maxOutputTokens: 4096 },
@@ -37,8 +36,8 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
   {
     key: "luna-fast",
     provider: "openai",
-    // Exact API identifier per OpenAI's docs at integration time; verify
-    // before relying on this in production (research.md R2).
+    // Confirmed against OpenAI's docs — do not use the "gpt-5.6" alias,
+    // which routes to a different model (Sol) in the same family.
     modelId: "gpt-5.6-luna",
     displayName: "GPT-5.6 Luna",
     capabilities: {
@@ -47,9 +46,8 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
       revision: false,
     },
     costTier: "low",
-    // Placeholder — set from actual published OpenAI pricing before this
-    // model is relied on for real cost estimates.
-    pricing: { inputPer1kTokens: 0, outputPer1kTokens: 0 },
+    // $1 / 1M input tokens, $6 / 1M output tokens (standard short-context rate).
+    pricing: { inputPer1kTokens: 0.001, outputPer1kTokens: 0.006 },
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
   },

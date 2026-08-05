@@ -104,10 +104,9 @@ describe("US5 Scenario 2 — token usage and estimated cost are logged when avai
 
     const entry = JSON.parse(logs[logs.length - 1]);
     expect(entry.usage).toEqual({ promptTokens: 100, completionTokens: 50 });
-    // gemini-flash-lite's placeholder pricing is currently 0/0, so cost is 0
-    // when present — the important assertion is that the field is computed
-    // from usage × registry pricing, not omitted just because usage exists.
-    expect(entry.estimatedCostUsd).toBe(0);
+    // gemini-flash-lite's registry pricing: $0.30/$2.50 per 1M tokens ->
+    // 0.0003/0.0025 per 1k. (100/1000)*0.0003 + (50/1000)*0.0025 = 0.000155.
+    expect(entry.estimatedCostUsd).toBeCloseTo(0.000155);
   });
 });
 

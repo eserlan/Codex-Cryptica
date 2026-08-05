@@ -16,7 +16,7 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
       longContext: true,
     },
     costTier: "low",
-    pricing: { inputPer1kTokens: 0, outputPer1kTokens: 0 }, // filled from actual published pricing at implementation time
+    pricing: { inputPer1kTokens: 0.0003, outputPer1kTokens: 0.0025 }, // $0.30 / $2.50 per 1M tokens
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
     defaultParameters: { temperature: 0.85, maxOutputTokens: 4096 },
@@ -32,7 +32,7 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
       revision: false,
     },
     costTier: "low",
-    pricing: { inputPer1kTokens: 0, outputPer1kTokens: 0 }, // filled from actual published pricing
+    pricing: { inputPer1kTokens: 0.001, outputPer1kTokens: 0.006 }, // $1 / $6 per 1M tokens
     availability: { public: true, authenticated: true, admin: true },
     enabled: true,
   },
