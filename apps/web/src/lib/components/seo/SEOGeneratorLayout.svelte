@@ -21,6 +21,8 @@
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import StarSystemDiagram from "./StarSystemDiagram.svelte";
+  import { blobToDataUrl } from "$lib/utils/svg-export";
   import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
   import {
@@ -105,6 +107,9 @@
   });
 
   let outputCard = $state<HTMLElement | null>(null);
+  let starSystemDiagramRef = $state<ReturnType<
+    typeof StarSystemDiagram
+  > | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let copiedSectionId = $state<string | null>(null);
@@ -351,7 +356,7 @@
     }
   }
 
-  function handleSaveToCodex() {
+  async function handleSaveToCodex() {
     if (!generatedData) return;
 
     try {
@@ -373,6 +378,18 @@
             .join("\n\n")
         : documentLayout.lore;
 
+      // Best-effort: a rasterization failure must never block saving the
+      // draft itself, so this is caught separately from the payload write.
+      let mapImageDataUrl: string | undefined;
+      if (starSystemDiagramRef) {
+        try {
+          const blob = await starSystemDiagramRef.exportPng();
+          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
+        } catch (err) {
+          console.error("Failed to rasterize star system diagram:", err);
+        }
+      }
+
       const payload = {
         type: isAdventure ? "note" : generatedData.type,
         kind: generatedData.kind,
@@ -381,6 +398,7 @@
         lore,
         labels: generatedData.labels,
         status: generatedData.status,
+        ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
@@ -653,6 +671,16 @@
       class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
+      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
+        <div class="mb-6">
+          <StarSystemDiagram
+            bind:this={starSystemDiagramRef}
+            bodies={generatedData.bodies}
+            starType={generatedData.starType}
+            title={generatedData.title}
+          />
+        </div>
+      {/if}
       <GeneratorOutputCard
         {generatedData}
         {aiFallbackDismissed}

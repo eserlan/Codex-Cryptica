@@ -144,6 +144,14 @@ const LAYOUT_RULES: LayoutRule[] = [
     ]),
   },
   {
+    label: "star-system",
+    railSections: new Set([
+      "History",
+      "System-Wide Conflict or Mystery",
+      "Adventure Hooks",
+    ]),
+  },
+  {
     label: "council-vote",
     // Council Members is deliberately NOT in the rail: each entry is a full
     // paragraph (public position, true agenda, persuasion angle, secret),

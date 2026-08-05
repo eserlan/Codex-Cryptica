@@ -121,6 +121,14 @@
     icon: "icon-[lucide--earth]",
   };
 
+  const starSystemCard: GeneratorCard = {
+    slug: "star-system",
+    label: "Star System Generator",
+    summary:
+      "Generate a coherent star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+    icon: "icon-[lucide--orbit]",
+  };
+
   const pirateShipCard: GeneratorCard = {
     slug: "ship-generator",
     label: "Pirate Ship Generator",
@@ -279,6 +287,7 @@
           "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
         ),
         nomadClanCard,
+        starSystemCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -306,6 +315,7 @@
           "Colony Generator",
           "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
         ),
+        starSystemCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -383,6 +393,7 @@
           "Settlement Generator",
           "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
         ),
+        starSystemCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -512,6 +523,7 @@
           "Settlement Generator",
           "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
         ),
+        starSystemCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -539,6 +551,7 @@
           "Settlement Generator",
           "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
+        starSystemCard,
         worldCard,
         shipCard,
         socialHubCard,

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { collectSessionNames, collectSessionTraits } from "generator-engine";
@@ -26,6 +28,7 @@
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
+  import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -48,6 +51,7 @@
     dungeonConfig,
     adventureConfig,
     worldConfig,
+    starSystemConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -63,6 +67,7 @@
     mapHubGenreToShipGenre,
     mapShipGenreToTheme,
     mapWorldGenreToTheme,
+    mapStarSystemGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -333,6 +338,20 @@
     dominantFeature: "",
   });
 
+  let starSystem = $state<{
+    systemType: string;
+    genre: string;
+    civilisationLevel: string;
+    systemCharacter: string;
+    scientificRealism: string;
+  }>({
+    systemType: starSystemConfig.systemTypes[0],
+    genre: starSystemConfig.genres[0],
+    civilisationLevel: starSystemConfig.civilisationLevels[0],
+    systemCharacter: starSystemConfig.systemCharacters[0],
+    scientificRealism: starSystemConfig.scientificRealism[0],
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -381,6 +400,8 @@
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
     else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
+    else if (slug === "star-system")
+      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
     else if (
       slug === "adventure-generator" ||
@@ -388,6 +409,33 @@
     )
       adventure.genre = activeTheme;
   });
+
+  // Consumes the "Develop this world" handoff from a generated star system
+  // (#1935): a linked major body opens this page with its name, type, and
+  // system context in the query string so the World Generator draft starts
+  // pre-populated instead of blank. Cleans the URL after reading it.
+  function applyPendingDevelopWorld(): void {
+    const params = page.url.searchParams;
+    const systemTitle = params.get("developSystem");
+    const bodyName = params.get("developBody");
+    if (!systemTitle && !bodyName) return;
+    const bodyType = params.get("developBodyType");
+    const context = params.get("developContext");
+    world.dominantFeature = bodyName
+      ? `${bodyName}${bodyType ? ` (${bodyType})` : ""} — ${context || `part of the ${systemTitle} system.`}`
+      : (context ?? "");
+
+    const cleanUrl = new URL(page.url);
+    for (const key of [
+      "developSystem",
+      "developBody",
+      "developBodyType",
+      "developContext",
+    ]) {
+      cleanUrl.searchParams.delete(key);
+    }
+    goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
+  }
 
   onMount(() => {
     if (slug === "nation") {
@@ -468,6 +516,18 @@
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       world.genre = worldGenreForHub(hubGenre);
       activeTheme = mapWorldGenreToTheme(world.genre);
+      applyPendingDevelopWorld();
+      return;
+    }
+    if (slug === "star-system") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (starSystemConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        starSystem.genre = hubGenre;
+      }
+      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
       return;
     }
     if (slug === "news-sheet-generator") {
@@ -582,6 +642,12 @@
         ...world,
         useAI,
         // Keep world titles and named factions varied within the current session.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "star-system": (useAI) =>
+      generatorEngine.generateStarSystem({
+        ...starSystem,
+        useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
   };
@@ -840,6 +906,18 @@
         bind:dominantFeature={world.dominantFeature}
         onGenreChange={(genre) => {
           activeTheme = mapWorldGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "star-system"}
+      <StarSystemFormFields
+        bind:systemType={starSystem.systemType}
+        bind:genre={starSystem.genre}
+        bind:civilisationLevel={starSystem.civilisationLevel}
+        bind:systemCharacter={starSystem.systemCharacter}
+        bind:scientificRealism={starSystem.scientificRealism}
+        onGenreChange={(genre) => {
+          activeTheme = mapStarSystemGenreToTheme(genre);
         }}
         onSurprise={trigger}
       />
