@@ -42,8 +42,8 @@ export const OPERATION_DEFAULTS: OperationDefaults[] = [
   {
     operation: "structured-generation",
     context: "public",
-    defaultModelKey: "gemini-flash-lite",
-    fallbackModelKey: "luna-fast",
+    defaultModelKey: "luna-fast", // deliberate default, verified live 2026-08-05
+    fallbackModelKey: "gemini-flash-lite",
   },
   {
     operation: "freeform-generation",

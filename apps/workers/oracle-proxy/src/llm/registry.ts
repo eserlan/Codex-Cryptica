@@ -55,10 +55,13 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
 
 export const OPERATION_DEFAULTS: OperationDefaults[] = [
   {
+    // Luna as the primary default for structured-generation (2026-08-05,
+    // verified live against real app traffic) — deliberate choice, not a
+    // leftover from testing. Gemini is the fallback.
     operation: "structured-generation",
     context: "public",
-    defaultModelKey: "gemini-flash-lite",
-    fallbackModelKey: "luna-fast",
+    defaultModelKey: "luna-fast",
+    fallbackModelKey: "gemini-flash-lite",
   },
   {
     operation: "freeform-generation",

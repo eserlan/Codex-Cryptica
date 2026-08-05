@@ -60,7 +60,7 @@ describe("getModel", () => {
 
 describe("getOperationDefaults", () => {
   it("returns the matching operation/context pair", () => {
-    const defaults = getOperationDefaults("structured-generation", "public");
+    const defaults = getOperationDefaults("freeform-generation", "public");
     expect(defaults?.defaultModelKey).toBe("gemini-flash-lite");
   });
 
