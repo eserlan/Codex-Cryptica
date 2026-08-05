@@ -135,9 +135,8 @@ const fieldRefExtension = {
       };
       return token;
     }
-    const bracketMatch = /^\[([a-zA-Z0-9_-]+)(?::([a-zA-Z0-9_-]+))?\]/.exec(
-      src,
-    );
+    const bracketMatch =
+      /^\[([a-zA-Z0-9_-]+)(?::([a-zA-Z0-9_-]+))?\](?!\s*\(.*\))/.exec(src);
     if (bracketMatch) {
       const [raw, fieldId, displayMode] = bracketMatch;
       const token: FieldRefToken = {

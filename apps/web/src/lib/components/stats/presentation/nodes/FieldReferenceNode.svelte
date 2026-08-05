@@ -190,7 +190,10 @@
       onclick={handleRoll}
       data-testid="presentation-field-dice-roll"
     >
-      <i class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"></i>
+      <span
+        class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"
+        aria-hidden="true"
+      ></span>
       <span class="font-medium">{label}:</span>
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
@@ -214,7 +217,10 @@
       class="inline-flex items-center gap-1.5 text-xs text-theme-text opacity-75"
       data-testid="presentation-field-dice-preview"
     >
-      <i class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-muted"></i>
+      <span
+        class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-muted"
+        aria-hidden="true"
+      ></span>
       <span class="font-medium">{label}:</span>
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}

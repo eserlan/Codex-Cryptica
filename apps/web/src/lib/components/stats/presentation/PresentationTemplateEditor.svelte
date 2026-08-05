@@ -90,14 +90,14 @@
         }
       } else if (node.type === "table") {
         const rows: string[][] = [];
-        const headers = node.header.map((cell) => {
-          const t = cell.children?.find((c) => c.type === "text");
+        const headers = node.header.map((cellNodes) => {
+          const t = cellNodes.find((c) => c.type === "text");
           return t && "text" in t ? t.text : "Col";
         });
         for (const rowCells of node.rows) {
           const rFields: string[] = [];
-          for (const cell of rowCells) {
-            for (const c of cell.children ?? []) {
+          for (const cellNodes of rowCells) {
+            for (const c of cellNodes) {
               if (c.type === "field-reference") {
                 rFields.push(c.fieldId);
               }
@@ -712,7 +712,12 @@
                 class={editorMode === "visual"
                   ? "rounded bg-theme-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-bg"
                   : "rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
-                onclick={() => (editorMode = "visual")}
+                onclick={() => {
+                  if (editorMode !== "visual") {
+                    visualCards = parseCardsFromSource(source);
+                    editorMode = "visual";
+                  }
+                }}
                 data-testid="presentation-editor-tab-visual"
               >
                 Visual Builder
