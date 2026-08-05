@@ -66,6 +66,7 @@ export interface LlmRequest {
   messages: LlmMessage[];
   schema?: Record<string, unknown>;
   temperature?: number;
+  topP?: number;
   maxOutputTokens?: number;
   modelKeyOverride?: string;
 }

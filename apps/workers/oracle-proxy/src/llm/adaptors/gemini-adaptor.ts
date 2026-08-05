@@ -250,6 +250,7 @@ export async function callGemini(
   if (maxOutputTokens !== undefined) {
     generation_config.max_output_tokens = maxOutputTokens;
   }
+  if (request.topP !== undefined) generation_config.top_p = request.topP;
   if (wantsStructuredOutput(request)) {
     // Gemini's JSON mode is schema-less by nature — asking for it doesn't
     // require `request.schema` to be present.

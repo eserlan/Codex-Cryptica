@@ -226,6 +226,24 @@ describe("callGemini (new provider-neutral adaptor)", () => {
     }
   });
 
+  it("forwards topP to generation_config.top_p", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+
+    await callGemini(
+      { ...request, topP: 0.8 },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.generation_config.top_p).toBe(0.8);
+  });
+
   it("uses schema-less JSON mode for structured-generation without a schema", async () => {
     const fetcher = vi.fn(
       async () =>

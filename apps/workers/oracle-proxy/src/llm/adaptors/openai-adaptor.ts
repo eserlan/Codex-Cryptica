@@ -54,6 +54,7 @@ export async function callOpenAi(
   const maxOutputTokens =
     request.maxOutputTokens ?? model.defaultParameters?.maxOutputTokens;
   if (maxOutputTokens !== undefined) body.max_tokens = maxOutputTokens;
+  if (request.topP !== undefined) body.top_p = request.topP;
 
   if (wantsStructuredOutput(request)) {
     if (request.schema) {

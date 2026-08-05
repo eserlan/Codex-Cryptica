@@ -54,6 +54,27 @@ describe("callOpenAi", () => {
     ]);
   });
 
+  it("forwards topP to top_p", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(
+      { ...request, topP: 0.8 },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.top_p).toBe(0.8);
+  });
+
   it("sends response_format for structured-generation requests", async () => {
     const fetcher = vi.fn(
       async () =>
