@@ -71,7 +71,7 @@ Single Cloudflare Worker: `apps/workers/oracle-proxy/src/`, new code under `apps
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Wire the `operation`-present branch in `apps/workers/oracle-proxy/src/index.ts` (stubbed in T012) to call `resolver.ts` → the resolved adaptor → `observability.ts` for logging, returning the normalized response per `contracts/llm-operation-request.md`. The `context` passed into `resolver.ts` is hardcoded to `"public"` for every request in this slice (FR-003) — do not add any header/token inspection or other caller-identity detection here; real authenticated-context detection is deferred to #2050 (depends on: T008, T010, T012)
+- [ ] T015 [US2] Wire the `operation`-present branch in `apps/workers/oracle-proxy/src/index.ts` (stubbed in T012) to call `resolver.ts` → the resolved adaptor → `observability.ts` for logging, returning the normalized response per `contracts/llm-operation-request.md`. Emit the resulting `ResolutionLogEntry` with `console.log(JSON.stringify(entry))` so it's captured by Cloudflare Workers Logs/`wrangler tail` — this is the **only** thing ever logged for a request; never `console.log` the raw request body, `messages`, or response `content` anywhere in this branch (FR-012/SC-006 — metadata only, e.g. operation type, model key, latency, outcome; never the user's actual input or the model's output). The `context` passed into `resolver.ts` is hardcoded to `"public"` for every request in this slice (FR-003) — do not add any header/token inspection or other caller-identity detection here; real authenticated-context detection is deferred to #2050 (depends on: T008, T010, T012)
 - [ ] T016 [P] [US2] Create `apps/workers/oracle-proxy/src/llm/request-validation.ts`: reject request bodies containing `apiKey`, `provider`, `providerUrl`, or `modelId` with HTTP 400, and require `schema` when `operation === "structured-generation"` (depends on: T001)
 - [ ] T017 [P] [US2] Create `apps/workers/oracle-proxy/src/llm/request-validation.test.ts` covering the field-rejection rules and the required-schema rule (depends on: T016)
 - [ ] T018 [US2] Wire `request-validation.ts` into the `index.ts` operation branch, before resolution (depends on: T015, T016)
@@ -132,8 +132,10 @@ Single Cloudflare Worker: `apps/workers/oracle-proxy/src/`, new code under `apps
 - [ ] T032 [P] [US5] Add a test asserting that when token usage is available, the log entry includes `usage` and an `estimatedCostUsd` computed from the resolved model's registry pricing rate (Acceptance Scenario 2) (depends on: T010)
 - [ ] T033 [P] [US5] Add a test asserting a structured-output validation failure produces a log entry with `structuredOutputValidationFailed: true` and does not include the invalid content itself (Acceptance Scenario 3) (depends on: T010, T009)
 - [ ] T034 [P] [US5] Add a full-flow fixture test (extending T011's unit-level check) that runs a mixed batch of requests through the wired pipeline and asserts no emitted log entry contains any substring of the fixture prompts/responses used (Acceptance Scenario 4) (depends on: T023)
+- [x] T034a Flip `[observability] enabled` from `false` to `true` in `apps/workers/oracle-proxy/wrangler.toml` — the master switch for Cloudflare's persisted Workers Logs; without it, `[observability.logs] enabled = true` alone only surfaces log lines through live `wrangler tail`, not the queryable historical Logs dashboard SC-005 depends on. Config-only change; not covered by a test (no CI/deploy check exercises actual Cloudflare log persistence, and per user instruction this is not verified via `wrangler` in this workflow)
+- [ ] T034b [P] [US5] Update `apps/workers/oracle-proxy/README.md`/`DEPLOYMENT.md`'s existing "View Logs" section (`wrangler tail`) to also document the Cloudflare dashboard → Workers & Pages → oracle-proxy → **Logs** tab for querying historical `ResolutionLogEntry` data (filter by `outcome`, `modelKey`, etc.), and explicitly note for operators that entries are metadata-only by design — no prompt/response content is ever logged, so the Logs tab is safe to share/screenshot without redaction
 
-**Checkpoint**: Observability is sufficient to determine model/provider usage, cost, and failure patterns from logs alone, with zero content leakage.
+**Checkpoint**: Observability is sufficient to determine model/provider usage, cost, and failure patterns from logs alone, with zero content leakage, and those logs are actually visible/queryable in the Cloudflare dashboard, not just via live tail.
 
 ---
 
@@ -166,7 +168,7 @@ Single Cloudflare Worker: `apps/workers/oracle-proxy/src/`, new code under `apps
 - Within US2: T016+T017 (request-validation), T019+T020 (OpenAI adaptor) are two parallel tracks; T021 (docs) is parallel to everything; T023a runs parallel to T023 once T015 lands
 - Within US3: T025 and T026 are parallel once T024 lands
 - Within US4: T027, T028, T029 are parallel once their dependencies land; T030a follows T030 directly (same file/topic, not parallel)
-- Within US5: T031–T034 are all parallel once their dependencies land
+- Within US5: T031–T034 are all parallel once their dependencies land; T034a is a standalone config change (no dependency, already applied); T034b (docs) is parallel to everything
 
 ---
 

@@ -53,3 +53,11 @@ Point an `OPERATION_DEFAULTS` entry at `luna-fast` (see `contracts/model-registr
 ## Verify fallback (Story 4)
 
 Set `luna-fast.enabled = false` in the registry, point `structured-generation`'s default at it, restart, repeat the curl — the request should still succeed (`200`) via whichever model is configured as fallback, and the Worker's console/log output should show a fallback entry (per `data-model.md`'s `ResolutionLogEntry`, `outcome: "fallback"`).
+
+## View observability logs (Story 5)
+
+- **Local dev**: `ResolutionLogEntry` JSON lines print directly to the `wrangler dev` terminal.
+- **Deployed, live**: `wrangler tail` streams each request's log entry in real time.
+- **Deployed, historical/queryable**: Cloudflare dashboard → Workers & Pages → `oracle-proxy` → **Logs** tab. Requires `[observability] enabled = true` in `wrangler.toml` (flipped on as part of this feature — see T034a) to persist logs beyond the live tail window.
+
+Every entry is metadata only — model key, provider, operation type, latency, outcome, token usage/cost, retry/fallback info — never the request's `messages` or the response `content` (FR-012/SC-006). The Logs tab is safe to view or screenshot without redacting anything.
