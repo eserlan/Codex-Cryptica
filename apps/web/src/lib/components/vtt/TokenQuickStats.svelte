@@ -11,10 +11,7 @@
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);
   const favorited = $derived(
-    fields.filter(
-      (f: StatSheetField) =>
-        f.favorite && (f.type === "counter" || f.type === "dice"),
-    ),
+    fields.filter((f: StatSheetField) => f.favorite && f.type !== "heading"),
   );
 
   function persistFields(nextFields: StatSheetField[]) {
@@ -132,6 +129,36 @@
               ></span>
             </button>
           </div>
+        </div>
+      {:else if field.type === "number"}
+        <div
+          class="flex items-center justify-between gap-2 text-xs"
+          data-testid="token-quick-stats-number"
+        >
+          <span class="text-theme-text">{field.label}</span>
+          <input
+            type="number"
+            class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-right font-mono text-xs text-theme-text disabled:opacity-40"
+            value={typeof field.value === "number" ? field.value : 0}
+            disabled={readOnly}
+            oninput={(e) => {
+              if (readOnly) return;
+              const val = Number((e.target as HTMLInputElement).value) || 0;
+              persistFields(
+                fields.map((f: StatSheetField) =>
+                  f.id === field.id ? { ...f, value: val } : f,
+                ),
+              );
+            }}
+          />
+        </div>
+      {:else if field.type === "text" || field.type === "longtext"}
+        <div
+          class="flex items-center justify-between gap-2 text-xs"
+          data-testid="token-quick-stats-text"
+        >
+          <span class="text-theme-text">{field.label}</span>
+          <span class="font-medium text-theme-text">{field.value ?? "—"}</span>
         </div>
       {/if}
     {/each}
