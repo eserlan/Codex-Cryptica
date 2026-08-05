@@ -64,4 +64,21 @@ describe("StarSystemFormFields", () => {
 
     expect(onSurprise).toHaveBeenCalledOnce();
   });
+
+  it("re-syncs the theme selector when Surprise Me rolls a new genre", async () => {
+    const onGenreChange = vi.fn();
+    render(StarSystemFormFields, {
+      props: { ...props, genre: "Cyberpunk", onGenreChange },
+    });
+
+    await fireEvent.click(screen.getByText("Surprise Me"));
+
+    // Surprise Me must report the freshly-rolled genre, not the value the
+    // component started with, so the page's theme skin (activeTheme) stays
+    // in sync with the genre it actually generates from (#1935 follow-up).
+    expect(onGenreChange).toHaveBeenCalledOnce();
+    expect(onGenreChange).toHaveBeenCalledWith(
+      (screen.getByLabelText("Genre") as HTMLSelectElement).value,
+    );
+  });
 });
