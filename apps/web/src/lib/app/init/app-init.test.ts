@@ -380,10 +380,12 @@ describe("app-init", () => {
       await Promise.resolve();
       await Promise.resolve();
 
+      expect(confirmSpy).toHaveBeenCalledOnce();
       expect(confirmSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "App Update Available",
           confirmLabel: "Reload Now",
+          cancelLabel: "Not Now",
         }),
       );
       expect(reloadSpy).toHaveBeenCalledOnce();
@@ -433,6 +435,7 @@ describe("app-init", () => {
       await Promise.resolve();
       await Promise.resolve();
 
+      expect(confirmSpy).toHaveBeenCalledOnce();
       expect(reloadSpy).not.toHaveBeenCalled();
       confirmSpy.mockRestore();
     });
