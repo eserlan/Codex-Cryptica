@@ -1,3 +1,22 @@
+// Cloudflare Pages' own deploy-time config files — consumed by the platform
+// to set headers/redirects, never served back as downloadable assets. Since
+// SvelteKit's `$service-worker` `files` list includes everything under
+// `static/`, these otherwise end up in the precache list and always fail.
+const UNCACHEABLE_STATIC_FILES = new Set(["/_headers", "/_redirects"]);
+
+/** Combines the build/static/prerendered asset lists into the final precache list, dropping files that can never be fetched back (e.g. Cloudflare Pages config). */
+export function getPrecacheAssets(sources: {
+  build: readonly string[];
+  files: readonly string[];
+  prerendered: readonly string[];
+}): string[] {
+  return [
+    ...sources.build,
+    ...sources.files.filter((file) => !UNCACHEABLE_STATIC_FILES.has(file)),
+    ...sources.prerendered,
+  ];
+}
+
 interface PrecacheStorage {
   open(cacheName: string): Promise<{
     add(asset: string): Promise<unknown>;

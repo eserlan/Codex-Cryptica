@@ -1,5 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
-import { activateBuild, precacheBuild } from "./lifecycle";
+import { activateBuild, getPrecacheAssets, precacheBuild } from "./lifecycle";
+
+describe("getPrecacheAssets", () => {
+  it("drops Cloudflare Pages' _headers and _redirects from the static files list", () => {
+    const assets = getPrecacheAssets({
+      build: ["/_app/immutable/entry.js"],
+      files: ["/_headers", "/_redirects", "/favicon.png", "/robots.txt"],
+      prerendered: ["/"],
+    });
+
+    expect(assets).not.toContain("/_headers");
+    expect(assets).not.toContain("/_redirects");
+  });
+
+  it("keeps every other static file, plus the build and prerendered assets", () => {
+    const assets = getPrecacheAssets({
+      build: ["/_app/immutable/entry.js"],
+      files: ["/_headers", "/_redirects", "/favicon.png", "/robots.txt"],
+      prerendered: ["/"],
+    });
+
+    expect(assets).toEqual([
+      "/_app/immutable/entry.js",
+      "/favicon.png",
+      "/robots.txt",
+      "/",
+    ]);
+  });
+});
 
 describe("service worker lifecycle", () => {
   it("precaches the current build and activates the worker immediately", async () => {
