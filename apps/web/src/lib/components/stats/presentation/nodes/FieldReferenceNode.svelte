@@ -47,7 +47,11 @@
         : undefined),
   );
   const label = $derived(
-    node.label !== undefined ? node.label : (field?.label ?? node.fieldId),
+    node.hideLabel
+      ? ""
+      : node.label !== undefined
+        ? node.label
+        : (field?.label ?? node.fieldId),
   );
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
@@ -149,12 +153,14 @@
           ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
           : "w-14 shrink-0 text-xs text-theme-muted"}
       >
-        {label}:
+        {label}
       </span>
     {/if}
     <input
       type="number"
-      class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"
+      class={isProminent
+        ? "w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-sm font-bold text-theme-primary disabled:opacity-40"
+        : "w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"}
       value={typeof field.value === "number" ? field.value : ""}
       disabled={controlsDisabled}
       oninput={(e) =>
@@ -175,7 +181,7 @@
           ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
           : "w-14 shrink-0 text-xs text-theme-muted"}
       >
-        {label}:
+        {label}
       </span>
     {/if}
     <input
@@ -203,7 +209,7 @@
         class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"
         aria-hidden="true"
       ></span>
-      {#if label}<span class="font-medium">{label}:</span>{/if}
+      {#if label}<span class="font-medium">{label}</span>{/if}
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
@@ -230,7 +236,7 @@
         class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-muted"
         aria-hidden="true"
       ></span>
-      {#if label}<span class="font-medium">{label}:</span>{/if}
+      {#if label}<span class="font-medium">{label}</span>{/if}
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
@@ -243,7 +249,7 @@
       : "text-xs text-theme-text"}
     data-testid="presentation-field-plain"
   >
-    {#if !isProminent && label}<span class="text-theme-muted">{label}:</span
+    {#if !isProminent && label}<span class="text-theme-muted">{label}</span
       >{/if}
     {field.value ?? ""}
   </span>

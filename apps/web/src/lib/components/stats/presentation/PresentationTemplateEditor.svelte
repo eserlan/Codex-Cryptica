@@ -1075,6 +1075,9 @@
           <textarea
             bind:this={textareaEl}
             bind:value={source}
+            oninput={() => {
+              source = source;
+            }}
             rows="14"
             class={editorMode === "code"
               ? "w-full flex-1 resize-none rounded border border-theme-border bg-theme-bg p-2 font-mono text-xs text-theme-text"

@@ -59,12 +59,34 @@ describe("parseTemplate", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const para = result.ast[0] as ParagraphNode;
-    expect(para.children[0]).toEqual({
+    expect(para.children[0]).toMatchObject({
       type: "field-reference",
       fieldId: "hp",
       displayMode: "counter",
       label: "HP",
     });
+  });
+
+  it("parses hide-label boolean and attribute forms on mustache tokens", () => {
+    const res1 = parseTemplate("{{stat.dex hide-label}}", 1);
+    expect(res1.ok).toBe(true);
+    if (res1.ok) {
+      expect((res1.ast[0] as ParagraphNode).children[0]).toMatchObject({
+        type: "field-reference",
+        fieldId: "dex",
+        hideLabel: true,
+      });
+    }
+
+    const res2 = parseTemplate('{{stat.dex hide-label="true"}}', 1);
+    expect(res2.ok).toBe(true);
+    if (res2.ok) {
+      expect((res2.ast[0] as ParagraphNode).children[0]).toMatchObject({
+        type: "field-reference",
+        fieldId: "dex",
+        hideLabel: true,
+      });
+    }
   });
 
   it("parses bracket field reference tokens [field] and [field:mode] without breaking standard Markdown links", () => {
