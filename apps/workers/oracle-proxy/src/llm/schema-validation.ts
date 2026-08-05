@@ -9,7 +9,20 @@
  * policy that FR-010a depends on.
  */
 
+import type { LlmRequest } from "./types";
+
 type JsonSchema = Record<string, unknown>;
+
+/**
+ * True when a request wants JSON-mode/structured output from the provider:
+ * either it explicitly carries a `schema` (any operation), or its
+ * `operation` is "structured-generation" (schema-less JSON mode). Shared
+ * by both adaptors so the two stay in sync on what triggers JSON mode,
+ * parsing, and optional schema validation.
+ */
+export function wantsStructuredOutput(request: LlmRequest): boolean {
+  return !!request.schema || request.operation === "structured-generation";
+}
 
 function typeOf(value: unknown): string {
   if (value === null) return "null";

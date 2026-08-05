@@ -9,7 +9,10 @@ import type {
   LlmModelDefinition,
   LlmRequest,
 } from "../types";
-import { validateAgainstSchema } from "../schema-validation";
+import {
+  validateAgainstSchema,
+  wantsStructuredOutput,
+} from "../schema-validation";
 
 const PROVIDER_TIMEOUT_MS = 15_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
@@ -52,18 +55,29 @@ export async function callOpenAi(
     request.maxOutputTokens ?? model.defaultParameters?.maxOutputTokens;
   if (maxOutputTokens !== undefined) body.max_tokens = maxOutputTokens;
 
-  if (request.schema) {
-    // OpenAI's `strict: true` structured-output mode rejects any schema
-    // that doesn't set `additionalProperties: false` on every object level
-    // and list every property as `required` — callers of this pipeline
-    // aren't expected to know or satisfy that OpenAI-specific constraint.
-    // Non-strict json_schema mode is more lenient, and schema-validation.ts
-    // already re-validates the parsed response against `request.schema`
-    // afterward, so correctness doesn't depend on OpenAI's strict enforcement.
-    body.response_format = {
-      type: "json_schema",
-      json_schema: { name: "response", schema: request.schema },
-    };
+  if (wantsStructuredOutput(request)) {
+    if (request.schema) {
+      // OpenAI's `strict: true` structured-output mode rejects any schema
+      // that doesn't set `additionalProperties: false` on every object level
+      // and list every property as `required` — callers of this pipeline
+      // aren't expected to know or satisfy that OpenAI-specific constraint.
+      // Non-strict json_schema mode is more lenient, and schema-validation.ts
+      // already re-validates the parsed response against `request.schema`
+      // afterward, so correctness doesn't depend on OpenAI's strict enforcement.
+      body.response_format = {
+        type: "json_schema",
+        json_schema: { name: "response", schema: request.schema },
+      };
+    } else {
+      // Schema-less structured-generation: OpenAI's dedicated "give me
+      // valid JSON, no schema" mode — mirrors Gemini's schema-less
+      // response_mime_type: "application/json". Note: OpenAI requires the
+      // word "json" to appear somewhere in the messages when using this
+      // mode, or the API rejects the request — callers should ensure their
+      // prompt mentions JSON when requesting structured-generation without
+      // a schema.
+      body.response_format = { type: "json_object" };
+    }
   }
 
   const controller = new AbortController();
@@ -110,7 +124,7 @@ export async function callOpenAi(
       }
     : undefined;
 
-  if (request.schema) {
+  if (wantsStructuredOutput(request)) {
     let parsed: any;
     try {
       parsed = JSON.parse(text);
@@ -121,7 +135,7 @@ export async function callOpenAi(
         structuredOutputValidationFailed: true,
       };
     }
-    if (!validateAgainstSchema(parsed, request.schema)) {
+    if (request.schema && !validateAgainstSchema(parsed, request.schema)) {
       return {
         ok: false,
         reason: "structured-output-schema-mismatch",

@@ -20,7 +20,10 @@ import type {
   LlmModelDefinition,
   LlmRequest,
 } from "../types";
-import { validateAgainstSchema } from "../schema-validation";
+import {
+  validateAgainstSchema,
+  wantsStructuredOutput,
+} from "../schema-validation";
 
 const PROVIDER_TIMEOUT_MS = 15_000;
 
@@ -247,7 +250,9 @@ export async function callGemini(
   if (maxOutputTokens !== undefined) {
     generation_config.max_output_tokens = maxOutputTokens;
   }
-  if (request.schema) {
+  if (wantsStructuredOutput(request)) {
+    // Gemini's JSON mode is schema-less by nature — asking for it doesn't
+    // require `request.schema` to be present.
     generation_config.response_mime_type = "application/json";
   }
 
@@ -307,7 +312,7 @@ export async function callGemini(
       }
     : undefined;
 
-  if (request.schema) {
+  if (wantsStructuredOutput(request)) {
     let parsed: any;
     try {
       parsed = JSON.parse(text);
@@ -318,7 +323,9 @@ export async function callGemini(
         structuredOutputValidationFailed: true,
       };
     }
-    if (!validateAgainstSchema(parsed, request.schema)) {
+    // Only validate against a schema when one was actually supplied —
+    // a schema-less structured-generation request just wants valid JSON.
+    if (request.schema && !validateAgainstSchema(parsed, request.schema)) {
       return {
         ok: false,
         reason: "structured-output-schema-mismatch",

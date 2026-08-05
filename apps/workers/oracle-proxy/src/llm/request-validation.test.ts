@@ -21,13 +21,12 @@ describe("validateOperationRequestBody", () => {
     ).toBe(true);
   });
 
-  it("rejects a structured-generation request missing schema", () => {
+  it("accepts a structured-generation request without a schema (schema-less JSON mode)", () => {
     const result = validateOperationRequestBody({
       operation: "structured-generation",
       messages: validBody.messages,
     });
-    expect(result.valid).toBe(false);
-    expect(result.error?.code).toBe("LLM_SCHEMA_REQUIRED");
+    expect(result.valid).toBe(true);
   });
 
   for (const field of ["apiKey", "provider", "providerUrl", "modelId"]) {

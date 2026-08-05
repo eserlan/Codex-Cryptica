@@ -2,8 +2,12 @@
  * Validates an incoming provider-neutral operation request body before it
  * reaches the resolver. Rejects any field that would let a client name a
  * concrete provider, provider URL, provider model identifier, or
- * credential directly (FR-003), and requires a JSON Schema for
- * structured-generation requests.
+ * credential directly (FR-003).
+ *
+ * `schema` is optional even for `structured-generation`: a caller can ask
+ * for JSON-mode output without supplying (or wanting) real JSON Schema
+ * validation — adaptors fall back to each provider's schema-less JSON mode
+ * in that case (research.md R2 addendum).
  */
 
 const DISALLOWED_CLIENT_FIELDS = [
@@ -37,17 +41,6 @@ export function validateOperationRequestBody(body: any): ValidationResult {
       error: {
         code: "LLM_INVALID_REQUEST",
         message: "Invalid request format. Required: messages (non-empty array)",
-      },
-    };
-  }
-
-  if (body.operation === "structured-generation" && !body.schema) {
-    return {
-      valid: false,
-      error: {
-        code: "LLM_SCHEMA_REQUIRED",
-        message:
-          "A JSON schema is required when operation is structured-generation",
       },
     };
   }

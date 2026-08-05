@@ -87,6 +87,60 @@ describe("callOpenAi", () => {
     }
   });
 
+  it("uses schema-less json_object mode for structured-generation without a schema", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"label":"lore"}' } }],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callOpenAi(
+      { ...request, operation: "structured-generation" },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.response_format).toEqual({ type: "json_object" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.response.content).toEqual({ label: "lore" });
+      expect(result.response.structuredOutputValid).toBe(true);
+    }
+  });
+
+  it("also enables JSON mode when a schema is present on a non-structured-generation operation", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"label":"lore"}' } }],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callOpenAi(
+      { ...request, operation: "classification", schema: { type: "object" } },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.response_format.type).toBe("json_schema");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.response.structuredOutputValid).toBe(true);
+  });
+
   it("normalizes usage from prompt_tokens/completion_tokens", async () => {
     const fetcher = vi.fn(
       async () =>

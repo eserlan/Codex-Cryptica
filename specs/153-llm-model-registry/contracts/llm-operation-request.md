@@ -18,7 +18,10 @@ Content-Type: application/json
     { "role": "system", "content": "..." },
     { "role": "user", "content": "..." }
   ],
-  "schema": { /* JSON Schema object — required when operation is "structured-generation" */ },
+  "schema": { /* optional JSON Schema object. Enables JSON mode + response validation
+                 on any operation, not just "structured-generation". A "structured-generation"
+                 request with no schema still gets provider-native JSON mode (schema-less) —
+                 the response is parsed as JSON but not validated against anything. */ },
   "temperature": 0.85,          // optional
   "maxOutputTokens": 4096,      // optional
   "modelKeyOverride": "luna-fast" // optional; still subject to capability/availability checks
@@ -37,7 +40,8 @@ Content-Type: application/json
   "content": "...",                 // string, or parsed structured object when schema was supplied
   "modelKey": "gemini-flash-lite",  // registry key that actually served the request
   "usage": { "promptTokens": 812, "completionTokens": 340 }, // when available
-  "structuredOutputValid": true     // present only for structured-generation requests
+  "structuredOutputValid": true     // present only when the request wanted structured output
+                                     // (operation "structured-generation", or any operation with a schema)
 }
 ```
 
@@ -75,7 +79,7 @@ No raw provider error body, status text, or provider identifier is ever forwarde
 
 ## Behavioral notes (traceable to spec acceptance scenarios)
 
-- **Story 2, Scenario 1**: a `structured-generation` request without `schema` is a 400 (schema is required for that operation).
+- **Story 2, Scenario 1**: a `structured-generation` request without `schema` is accepted — the resolver still requires a `structuredOutput`-capable model, and the adaptor uses the provider's schema-less JSON mode (Gemini's `response_mime_type: "application/json"`, OpenAI's `response_format: { type: "json_object" }`) rather than rejecting the request.
 - **Story 2, Scenario 4**: any of the rejected fields above present in the body → 400, request never reaches a provider.
 - **Story 4, Scenario 1–2**: on primary-model unavailability/capability mismatch, the response is still a 200 from the fallback model — the caller cannot distinguish "primary succeeded" from "fallback succeeded" from the response body alone (that distinction lives only in the server-side `ResolutionLogEntry`, not in the client-visible response, since exposing it isn't required by any FR and keeps the response contract minimal).
 - **Edge case — timeout**: a provider call exceeding 15s is treated as unavailable for that attempt (research.md R4); the client only ever sees the final 200/502/503 outcome, never a raw timeout error.
