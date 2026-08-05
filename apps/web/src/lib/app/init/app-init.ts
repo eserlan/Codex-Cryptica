@@ -518,7 +518,22 @@ export function registerServiceWorker(deps?: {
     }
     if (isRefreshing) return;
     isRefreshing = true;
-    win.location.reload();
+
+    void notificationStore
+      .confirm({
+        title: "App Update Available",
+        message:
+          "A new version of Codex Cryptica has been installed. Would you like to reload the page now to use the update?",
+        confirmLabel: "Reload Now",
+        cancelLabel: "Not Now",
+      })
+      .then((shouldReload) => {
+        if (shouldReload) {
+          win.location.reload();
+        } else {
+          isRefreshing = false;
+        }
+      });
   });
 
   const cleanup = () => {
