@@ -32,6 +32,22 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ---
 
+### [DRAFT] LLM Model Registry & Provider Resolver
+
+- **Target Area**: `oracle-proxy` Cloudflare Worker (`apps/workers/oracle-proxy/`)
+- **Objective**: Replace the Worker's hardcoded, Gemini-only forwarding with a central model registry, a provider-neutral resolver, and provider adaptors (Gemini + OpenAI-compatible), adding GPT-5.6 Luna as a selectable low-cost model.
+- **Details**: Backend-plumbing slice of issue [#2049](https://github.com/eserlan/Codex-Cryptica/issues/2049). Spec drafted in [2034-llm-model-registry](./2034-llm-model-registry/spec.md); implementation not started. Deliberately excludes any UI, persistence, or admin config — see the follow-up entry below.
+
+---
+
+### [PROPOSED] LLM Model Selection UI & Admin Config
+
+- **Target Area**: Generator/editor UI (`apps/web/src/lib/`) and `oracle-proxy` admin config
+- **Objective**: Let authenticated users pick a model tier (Fast/Creative/Deep) for generators and content revision, persist the choice, and let admins configure defaults and availability per tier.
+- **Details**: Follow-up slice of issue [#2049](https://github.com/eserlan/Codex-Cryptica/issues/2049), building on [2034-llm-model-registry](./2034-llm-model-registry/spec.md). No spec drafted yet — depends on the registry/resolver landing first.
+
+---
+
 ## 🏛️ Historical Roadmap & Release Timeline
 
 ### v0.31.0 — The Guided Worldbuilding Update (2026-07-30)
