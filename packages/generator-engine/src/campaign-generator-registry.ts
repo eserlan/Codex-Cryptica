@@ -33,6 +33,12 @@ import {
   type WorldGeneratorOptions,
   worldConfig,
 } from "./public-world";
+import {
+  buildStarSystemPrompt,
+  generateStarSystemLocal,
+  type StarSystemGeneratorOptions,
+  starSystemConfig,
+} from "./public-star-system";
 
 /**
  * Generator id -> default vault category id.
@@ -53,6 +59,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   adventure: "note",
   world: "location",
   "council-vote": "note",
+  "star-system": "location",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -352,6 +359,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   dungeon: `{"title":"The Submerged Vault of Sunken Runes","summary":"An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.","lore":"## History & Original Purpose\\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\\n## Current State & Function\\nCurrently overrun by a desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Signature Feature\\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.\\n## Current Conflict\\nAn invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.\\n## Key Sectors & Layout\\n### Sector 1: The Guarded Gateway\\nFortified entry halls with collapse traps.\\n### Sector 2: The Deep Arcana Vault\\nSealed inner chamber housing warding circles.\\n## Inhabitants & Factions\\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Central Secret / Boss Mystery\\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.\\n## Hazards & Traps\\nPressure-plate needle traps laced with paralyzing wyvern venom.\\n## Treasures & Artifacts\\nA silver-hilted shortsword glowing with pale starlight near undead.\\n## Adventure Hooks & Rumours\\nA local scholar hires the party to retrieve an ancient astrological tablet from the ruins.","labels":["dungeon","location","fantasy","temple-shrine"],"connections":[]}`,
   adventure: `{"title":"The Witness Who Came Back","summary":"A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.","lore":"## Initial Situation\\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\\n## Primary Objective & Pressure\\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.\\n## Key Locations\\n- **The Drowned Clinic** — A basement surgery below the harbour market; currently off the magistrate's map, but her colleagues will tell the wrong people.\\n- **The Salt Gate** — The only land route out; controlled by a guard captain who owes the magistrate a significant favour.\\n## Important NPCs & Factions\\n- **Mira Osal, the witness** — Survived by accident; wants to testify but is terrified of dying before she can.\\n- **Guard-Captain Deren** — Loyal to the magistrate, but only because the magistrate has his brother.\\n## Threats & Antagonists\\n- The magistrate's investigation office has already been tipped off; two plainclothes agents are watching the harbour market.\\n## Clues, Secrets & Discoveries\\n- The ledger names not just the magistrate but three provincial judges — the testimony is worth more than a conviction, which is why the magistrate wants it destroyed rather than suppressed.\\n## Complications & Escalating Pressures\\n- The physician who treated Mira has been taken in for questioning.\\n- The party's own credentials are in the magistrate's files from a prior interaction.\\n## Possible Outcomes\\n- The witness reaches the capital and testifies; the magistrate is arrested but the provincial judges are not named in the hearing.\\n- The ledger is lost or destroyed; Mira survives and her testimony alone changes nothing.\\n## Adventure Hooks\\n- The street physician sends word through a mutual contact: a patient is asking for people who handle difficult situations.\\n- A reward notice is posted for information on the whereabouts of a woman matching Mira's description.","labels":["adventure","event","investigation","fantasy"],"connections":[]}`,
   world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
+  "star-system": `{"title":"Kesh-9","summary":"A contested binary system whose fragile water compact is the only thing keeping two mining powers from open war.","lore":"## Core Concept\\nKesh-9 is a hard sci-fi binary system, contested in character and frontier in reach, valued for a rare isotope deposit found nowhere else on the charted lanes.\\n## The Star(s)\\nA close binary pair locks the system into overlapping shadows and unstable seasons.\\n## Major Bodies\\n- **Kesh-9 II** (Temperate World) — the system's one habitable body, and its most fought-over resource.\\n- **Kesh-9 III** (Asteroid Belt) — worked by independent crews who answer to no single authority.\\n- **New Halden** (Derelict Station) — abandoned mid-construction, its original purpose still disputed.\\n- **Kesh-9 IV** (Ice Giant) — its atmosphere mined for volatiles by orbital skimmers.\\n## Settlements & Factions\\nA handful of independent outposts hold the system together. The Kesh Compact favours the current water-sharing treaty; the Vantage Drilling Concern wants to break it for exclusive isotope rights.\\n## Resources & Strategic Importance\\nThe isotope deposit on Kesh-9 III is the system's leverage — whoever controls extraction rights controls the system's politics.\\n## Travel Hazards\\nGravitational tides between the twin stars scramble navigation near closest approach.\\n## History\\nThe current balance dates to the last treaty renegotiation, when the isotope deposit was first confirmed.\\n## System-Wide Conflict or Mystery\\nNew Halden was abandoned mid-construction for reasons neither faction will discuss, and its dormant systems have recently begun drawing power again.\\n## Adventure Hooks\\n- The Kesh Compact needs outside investigators to learn why New Halden woke up before the Concern finds out first.\\n- A supply convoy vanishes during a gravitational tide event, and both factions blame the other.\\n- Someone on Kesh-9 II is quietly negotiating to sell isotope rights out from under the Compact.","labels":["star-system","binary-system","hard-sci-fi","contested","frontier"],"connections":[]}`,
   "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
 };
 
@@ -829,6 +837,51 @@ ${exemplarBlock("world")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the world profile; climate, geography, gravity, atmosphere, and biosphere; settlements, cultures, factions, economy, resources, technology, hazards, history, notable locations, mysteries, conflicts, and adventure hooks",
+)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Star System generator helpers
+// ---------------------------------------------------------------------------
+
+function starSystemOptions(
+  request: GeneratorRunRequest,
+): StarSystemGeneratorOptions {
+  return {
+    systemType: optionString(request, "systemType", ""),
+    genre: optionString(request, "genre", ""),
+    civilisationLevel: optionString(request, "civilisationLevel", ""),
+    systemCharacter: optionString(request, "systemCharacter", ""),
+    scientificRealism: optionString(request, "scientificRealism", ""),
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateStarSystem(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateStarSystemLocal(starSystemOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+  };
+}
+
+function starSystemPrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+${buildStarSystemPrompt(starSystemOptions(request)).userMessage}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock("star-system")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  "the core concept; the star(s); 3-12 major bodies; settlements and factions; resources and strategic importance; travel hazards; history; the system-wide conflict or mystery; and adventure hooks",
 )}`;
 }
 
@@ -1491,6 +1544,76 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
     }),
     buildPrompt: worldPrompt,
+  },
+  "star-system": {
+    id: "star-system",
+    label: "Star System",
+    description:
+      "Generate a coherent sci-fi star system: star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+    entityType: GENERATOR_ENTITY_TYPE["star-system"],
+    defaultInstruction:
+      "A sci-fi star system that answers why anyone cares about it — clear stakes, competing factions, a strategic resource, and a system-wide conflict or mystery with playable hooks.",
+    icon: "lucide:orbit",
+    options: [
+      {
+        id: "systemType",
+        label: "System Type",
+        control: "select",
+        choices: starSystemConfig.systemTypes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: starSystemConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "civilisationLevel",
+        label: "Civilisation Level",
+        control: "select",
+        choices: starSystemConfig.civilisationLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "systemCharacter",
+        label: "System Character",
+        control: "select",
+        choices: starSystemConfig.systemCharacters.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "scientificRealism",
+        label: "Scientific Realism",
+        control: "select",
+        choices: starSystemConfig.scientificRealism.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      systemType: "Single Star",
+      genre: "Hard Sci-Fi",
+      civilisationLevel: "Frontier",
+      systemCharacter: "Contested",
+      scientificRealism: "Grounded",
+    },
+    generate: generateStarSystem,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("star-system")(output, request),
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+    }),
+    buildPrompt: starSystemPrompt,
   },
   "council-vote": {
     id: "council-vote",

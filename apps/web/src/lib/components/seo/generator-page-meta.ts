@@ -23,7 +23,8 @@ export type ValidSlug =
   | "adventure-generator"
   | "adventure-idea-generator"
   | "world"
-  | "council-vote";
+  | "council-vote"
+  | "star-system";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -595,6 +596,45 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/quest", label: "Quest Hook Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/kingdom", label: "Kingdom Generator" },
+    ],
+  },
+  "star-system": {
+    pageTitle:
+      "Star System Generator | Sci-Fi RPG Solar System Creator | Codex Cryptica",
+    metaDescription:
+      "Generate campaign-ready sci-fi star systems — star(s), 3-12 major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
+    introTitle: "Star System Generator",
+    eyebrow: "Star System Generator",
+    introText:
+      "Create a coherent sci-fi star system for your campaign — not just an astronomical inventory. Choose its system type, genre, civilisation level, character, and scientific realism, then generate a star (or stars), major bodies, factions, resources, hazards, and a system-wide conflict or mystery worth building a campaign around.",
+    canonicalPath: "/generators/star-system",
+    faqs: [
+      {
+        question: "What does the star system generator create?",
+        answer:
+          "It generates a complete sci-fi star system: the star or stars, 3-12 named major bodies (planets, moons, asteroid belts, stations, or anomalies), the factions competing for influence, the system's strategic resource, a named travel hazard, and a system-wide conflict or mystery with playable adventure hooks.",
+      },
+      {
+        question: "Is this just a list of planets?",
+        answer:
+          "No. The generator is built to answer why anyone cares about the system, not just what orbits the star — every major body, faction, and hazard ties back to the system's central stakes.",
+      },
+      {
+        question:
+          "Can I turn a generated planet or moon into a full World Generator entry?",
+        answer:
+          "Yes — select Develop This World on any named body in the result to open the Sci-Fi World Generator with that body's context pre-filled, so the world you build fits the system it came from.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy star systems on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/world", label: "Sci-Fi World Generator" },
+      { href: "/generators/ship-generator", label: "Ship Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
     ],
   },
 };

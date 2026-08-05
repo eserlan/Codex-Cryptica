@@ -101,6 +101,13 @@
           title: "Adventure & Worldbuilding",
           links: [
             {
+              href: "/generators/star-system",
+              label: "Star System Generator",
+              summary:
+                "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
+              icon: "icon-[lucide--orbit]",
+            },
+            {
               href: "/generators/world",
               label: "Sci-Fi World Generator",
               summary:

@@ -73,6 +73,9 @@ import {
   buildWorldPrompt,
   parseWorldResponse,
   generateWorldLocal,
+  buildStarSystemPrompt,
+  parseStarSystemResponse,
+  generateStarSystemLocal,
   BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
@@ -94,6 +97,7 @@ import {
   type DungeonGeneratorOptions,
   type AdventureGeneratorOptions,
   type WorldGeneratorOptions,
+  type StarSystemGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -133,6 +137,7 @@ export { newsSheetConfig } from "generator-engine";
 export { dungeonConfig, forDungeonGenre } from "generator-engine";
 export { adventureConfig, forAdventureGenre } from "generator-engine";
 export { worldConfig } from "generator-engine";
+export { starSystemConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -828,6 +833,33 @@ export class DefaultGeneratorEngine {
         generateWorldLocal({
           ...worldOptions,
           avoidNames: [...BANNED_NAMES, ...(worldOptions.avoidNames ?? [])],
+        }),
+    );
+  }
+
+  /** Star system generation delegates to the shared offline-first generator package. */
+  async generateStarSystem(
+    options: StarSystemGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...starSystemOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildStarSystemPrompt(starSystemOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseStarSystemResponse(text, [
+          ...BANNED_NAMES,
+          ...(starSystemOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateStarSystemLocal({
+          ...starSystemOptions,
+          avoidNames: [
+            ...BANNED_NAMES,
+            ...(starSystemOptions.avoidNames ?? []),
+          ],
         }),
     );
   }

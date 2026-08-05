@@ -19,7 +19,8 @@ export type GeneratorId =
   | "dungeon"
   | "adventure"
   | "world"
-  | "council-vote";
+  | "council-vote"
+  | "star-system";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -34,6 +35,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "adventure",
   "world",
   "council-vote",
+  "star-system",
 ] as const;
 
 /** A user-configurable field for a generator. */

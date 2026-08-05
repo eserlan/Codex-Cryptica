@@ -29,6 +29,7 @@ const validSlugs = new Set([
   "adventure-idea-generator",
   "world",
   "council-vote",
+  "star-system",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -61,7 +62,8 @@ export const load: PageLoad = ({ params }) => {
       | "adventure-generator"
       | "adventure-idea-generator"
       | "world"
-      | "council-vote",
+      | "council-vote"
+      | "star-system",
   };
 };
 
@@ -92,5 +94,6 @@ export const entries: EntryGenerator = () => {
     { slug: "adventure-idea-generator" },
     { slug: "world" },
     { slug: "council-vote" },
+    { slug: "star-system" },
   ];
 };
