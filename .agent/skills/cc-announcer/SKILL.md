@@ -108,6 +108,27 @@ LLM-generated posts often share a recognizable rhythm: paragraphs of similar len
 
 ---
 
+## Image & Asset Workflow (Cloudflare R2)
+
+When preparing screenshots and visual assets for announcements, devlogs, or discussions:
+
+1. **Bucket Name**: `codex-cryptica-statics`
+2. **Public CDN Domain / Path**: `https://static.codexcryptica.com/discussions/<feature-name>/...` (or `blog/assets/...` / `announcements/...`).
+3. **Capture via Chrome DevTools MCP or Playwright**:
+   - Drive the browser using Chrome DevTools MCP tools (`navigate_page`, `resize_page`, `take_screenshot`) or Playwright E2E automation (`--reporter=list`).
+   - Capture clean, high-resolution desktop and mobile viewport screenshots of the live feature or local dev server (`http://localhost:5173`).
+4. **Upload via Wrangler to Cloudflare R2**:
+   - Use `bunx wrangler r2 object put` to upload captured image assets directly to the R2 bucket:
+     ```bash
+     bunx wrangler r2 object put codex-cryptica-statics/discussions/<feature-name>/<image-file>.png --file <local-path> --remote
+     ```
+   - Alternatively, place images in the appropriate directory and execute an upload helper script using `bunx wrangler r2 object put`.
+5. **Reference in Drafts**:
+   - Insert direct markdown image links pointing to the R2 CDN or relative repo assets:
+     `![Feature Title](https://static.codexcryptica.com/discussions/<feature-name>/<image-file>.png)`
+
+---
+
 ## Title Guidance
 
 Avoid default launch-style titles:
