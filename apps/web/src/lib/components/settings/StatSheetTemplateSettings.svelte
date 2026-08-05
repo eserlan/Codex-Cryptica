@@ -9,6 +9,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import TemplatePublishModal from "$lib/components/stats/community-template/TemplatePublishModal.svelte";
+  import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
 
   const handleDefaultChange = (categoryId: string, templateId: string) => {
     statSheetTemplates.setDefaultTemplate(categoryId, templateId || null);
@@ -17,6 +18,14 @@
   let editingId = $state<string | null>(null);
   let renameValue = $state("");
   let expandedIds = $state(new Set<string>());
+  let activePresentationManagerSchema = $state<StatSheetTemplate | null>(null);
+  let selectedPresentationSchemaId = $state<string>("");
+
+  const selectedPresentationSchema = $derived(
+    statSheetTemplates.availableTemplates.find(
+      (t) => t.id === selectedPresentationSchemaId,
+    ) ?? statSheetTemplates.availableTemplates[0],
+  );
 
   const startRename = (id: string, currentName: string) => {
     editingId = id;
@@ -703,7 +712,60 @@
       {/each}
     </div>
   </div>
+
+  <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
+    <div class="flex items-center justify-between gap-3 mb-2">
+      <div>
+        <h4
+          class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+        >
+          Presentation Layout Templates
+        </h4>
+        <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
+          Custom card, grid, and table layouts for stat sheets. Manage
+          presentation templates per stat sheet schema.
+        </p>
+      </div>
+      {#if selectedPresentationSchema}
+        <button
+          type="button"
+          class="rounded bg-theme-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-bg hover:opacity-90 shrink-0"
+          onclick={() =>
+            (activePresentationManagerSchema = selectedPresentationSchema)}
+          data-testid="settings-manage-presentations-btn"
+        >
+          Manage Layouts
+        </button>
+      {/if}
+    </div>
+    <div
+      class="flex items-center gap-3 p-3 bg-theme-surface border border-theme-border rounded"
+    >
+      <span class="text-xs font-bold text-theme-text truncate"
+        >Select Stat Schema:</span
+      >
+      <select
+        class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-xs text-theme-text flex-1"
+        aria-label="Select schema to manage presentation templates"
+        value={selectedPresentationSchemaId}
+        onchange={(e) => {
+          selectedPresentationSchemaId = (e.target as HTMLSelectElement).value;
+        }}
+      >
+        {#each statSheetTemplates.availableTemplates as schema (schema.id)}
+          <option value={schema.id}>{schema.name}</option>
+        {/each}
+      </select>
+    </div>
+  </div>
 </div>
+
+{#if activePresentationManagerSchema}
+  <PresentationTemplateManager
+    schema={activePresentationManagerSchema}
+    onClose={() => (activePresentationManagerSchema = null)}
+  />
+{/if}
 
 {#if publishingTemplates.length > 0}
   <TemplatePublishModal

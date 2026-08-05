@@ -114,23 +114,41 @@ const fieldRefExtension = {
   name: "fieldRef",
   level: "inline" as const,
   start(src: string): number | undefined {
-    const idx = src.indexOf("{{stat.");
-    return idx === -1 ? undefined : idx;
+    const idx1 = src.indexOf("{{stat.");
+    const idx2 = src.indexOf("[");
+    if (idx1 === -1) return idx2 === -1 ? undefined : idx2;
+    if (idx2 === -1) return idx1;
+    return Math.min(idx1, idx2);
   },
   tokenizer(src: string) {
-    const match =
+    const mustacheMatch =
       /^\{\{stat\.([a-zA-Z0-9_-]+)((?:\s+[a-zA-Z]+="[^"]*")*)\s*\}\}/.exec(src);
-    if (!match) return undefined;
-    const [raw, fieldId, attrsRaw] = match;
-    const attrs = parseAttrs(attrsRaw);
-    const token: FieldRefToken = {
-      type: "fieldRef",
-      raw,
-      fieldId,
-      displayMode: attrs.display,
-      label: attrs.label,
-    };
-    return token;
+    if (mustacheMatch) {
+      const [raw, fieldId, attrsRaw] = mustacheMatch;
+      const attrs = parseAttrs(attrsRaw);
+      const token: FieldRefToken = {
+        type: "fieldRef",
+        raw,
+        fieldId,
+        displayMode: attrs.display,
+        label: attrs.label,
+      };
+      return token;
+    }
+    const bracketMatch = /^\[([a-zA-Z0-9_-]+)(?::([a-zA-Z0-9_-]+))?\]/.exec(
+      src,
+    );
+    if (bracketMatch) {
+      const [raw, fieldId, displayMode] = bracketMatch;
+      const token: FieldRefToken = {
+        type: "fieldRef",
+        raw,
+        fieldId,
+        displayMode,
+      };
+      return token;
+    }
+    return undefined;
   },
 };
 

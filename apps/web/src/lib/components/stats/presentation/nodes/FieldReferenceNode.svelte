@@ -3,11 +3,35 @@
   import type { PresentationRenderContext } from "../types";
   import MissingFieldNode from "./MissingFieldNode.svelte";
 
+  import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
+
   let {
     node,
     context,
   }: { node: FieldReferenceNodeType; context: PresentationRenderContext } =
     $props();
+
+  let rollState = $state<{
+    rolling: boolean;
+    text: string | null;
+    isError?: boolean;
+    success?: boolean;
+  }>({
+    rolling: false,
+    text: null,
+  });
+
+  async function handleRoll() {
+    if (!field || field.type !== "dice" || rollState.rolling) return;
+    rollState.rolling = true;
+    const res = await rollStatSheetDiceField(field);
+    rollState = {
+      rolling: false,
+      text: res.text,
+      isError: res.isError,
+      success: res.success,
+    };
+  }
 
   // Falls back to a label match when the id lookup misses. Entities whose
   // stat sheet was applied before templates preserved their canonical field
@@ -116,14 +140,14 @@
   >
     <span
       class={isProminent
-        ? "text-lg font-bold text-theme-primary"
-        : "text-xs text-theme-muted"}
+        ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
+        : "w-14 shrink-0 text-xs text-theme-muted"}
     >
       {label}:
     </span>
     <input
       type="number"
-      class="w-20 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-right text-xs text-theme-text disabled:opacity-40"
+      class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"
       value={typeof field.value === "number" ? field.value : ""}
       disabled={controlsDisabled}
       oninput={(e) =>
@@ -140,14 +164,14 @@
   >
     <span
       class={isProminent
-        ? "text-lg font-bold text-theme-primary"
-        : "text-xs text-theme-muted"}
+        ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
+        : "w-14 shrink-0 text-xs text-theme-muted"}
     >
       {label}:
     </span>
     <input
       type="text"
-      class="w-40 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40"
+      class="w-36 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40"
       value={typeof field.value === "string" ? field.value : ""}
       disabled={controlsDisabled}
       oninput={(e) =>
@@ -157,6 +181,46 @@
         )}
     />
   </label>
+{:else if field.type === "dice"}
+  {#if context.mode === "view"}
+    <button
+      type="button"
+      class="inline-flex items-center gap-1.5 rounded border border-theme-border bg-theme-bg/50 px-2 py-0.5 text-xs text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
+      disabled={rollState.rolling}
+      onclick={handleRoll}
+      data-testid="presentation-field-dice-roll"
+    >
+      <i class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"></i>
+      <span class="font-medium">{label}:</span>
+      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+        {field.formula ?? "1d20"}
+      </span>
+      {#if rollState.text}
+        <span
+          class={rollState.isError
+            ? "text-red-400 font-bold"
+            : rollState.success === true
+              ? "text-green-400 font-bold"
+              : rollState.success === false
+                ? "text-red-400 font-bold"
+                : "text-theme-primary font-bold"}
+        >
+          {rollState.text}
+        </span>
+      {/if}
+    </button>
+  {:else}
+    <span
+      class="inline-flex items-center gap-1.5 text-xs text-theme-text opacity-75"
+      data-testid="presentation-field-dice-preview"
+    >
+      <i class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-muted"></i>
+      <span class="font-medium">{label}:</span>
+      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+        {field.formula ?? "1d20"}
+      </span>
+    </span>
+  {/if}
 {:else}
   <span
     class={isProminent
