@@ -17,6 +17,119 @@ export class InteractionExpiredError extends Error {
 }
 
 /**
+ * Sends a plain-text generateContent request through oracle-proxy's
+ * provider-neutral operation pipeline (specs/153-llm-model-registry)
+ * instead of the legacy Gemini-only `contents`/`generationConfig` shape.
+ * The Worker resolves the actual model (Gemini today, potentially Luna or
+ * another provider later) via its registry — no model name is sent, per
+ * that pipeline's contract. Returns a response shaped like the Google SDK's
+ * `GenerativeModel.generateContent()` result so callers see no interface
+ * change.
+ */
+async function sendViaOperationPipeline(params: {
+  proxyUrl: string;
+  doFetch: typeof fetch;
+  contents: any[];
+  generationConfig: any;
+  finalSysInst?: string;
+  modelName: string;
+}) {
+  const {
+    proxyUrl,
+    doFetch,
+    contents,
+    generationConfig,
+    finalSysInst,
+    modelName,
+  } = params;
+
+  const messages: Array<{ role: string; content: string }> = [];
+  if (finalSysInst) {
+    messages.push({ role: "system", content: finalSysInst });
+  }
+  for (const c of contents) {
+    const text = (c.parts || [])
+      .map((p: any) => (typeof p?.text === "string" ? p.text : ""))
+      .join("");
+    messages.push({
+      role: c.role === "model" ? "assistant" : "user",
+      content: text,
+    });
+  }
+
+  const wantsJson =
+    generationConfig?.responseMimeType === "application/json" ||
+    generationConfig?.response_mime_type === "application/json";
+
+  const body: Record<string, unknown> = {
+    operation: wantsJson ? "structured-generation" : "freeform-generation",
+    messages,
+  };
+  if (generationConfig?.temperature !== undefined) {
+    body.temperature = generationConfig.temperature;
+  }
+  const topP = generationConfig?.topP ?? generationConfig?.top_p;
+  if (topP !== undefined) body.topP = topP;
+  const maxOutputTokens =
+    generationConfig?.maxOutputTokens ?? generationConfig?.max_output_tokens;
+  if (maxOutputTokens !== undefined) body.maxOutputTokens = maxOutputTokens;
+
+  console.log(
+    `[OracleProxy] Fetching from: ${proxyUrl} (operation pipeline; legacy model hint was: ${modelName})`,
+  );
+  const response = await doFetch(proxyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  console.log(
+    `[OracleProxy] Response status: ${response.status} ${response.statusText}`,
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({
+      error: { message: "Proxy request failed" },
+    }));
+    console.error("[OracleProxy] Request failed:", error);
+    throw new Error(
+      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+    );
+  }
+
+  const data = await response.json();
+  if (import.meta.env.DEV) {
+    console.log("[OracleProxy] Received raw data (operation pipeline):", data);
+  }
+
+  const extractedText =
+    typeof data.content === "string"
+      ? data.content
+      : data.content !== undefined
+        ? JSON.stringify(data.content)
+        : "";
+
+  if (import.meta.env.DEV) {
+    console.log(
+      `[OracleProxy] Extracted text (${extractedText.length} chars):`,
+      extractedText.substring(0, 50) + "...",
+    );
+  }
+
+  // Reconstruct a Gemini-SDK-shaped candidates array so callers reading
+  // `response.candidates` directly (not just `response.text()`) keep working.
+  const candidates = [{ content: { parts: [{ text: extractedText }] } }];
+
+  return {
+    response: {
+      text: () => extractedText,
+      candidates,
+    },
+    rawResponse: data,
+  };
+}
+
+/**
  * DefaultAIClientManager manages connections to Google's Generative AI service.
  */
 export class DefaultAIClientManager {
@@ -254,7 +367,37 @@ export class DefaultAIClientManager {
             ? requestSysInst
             : requestSysInst?.parts?.[0]?.text);
 
+        // Non-text response modalities (e.g. inline image generation via
+        // Gemini's multimodal endpoint) and non-text input parts (e.g. an
+        // inlineData image sent as part of the prompt) have no equivalent
+        // in the new operation-based pipeline, which only ever deals in
+        // plain text messages both directions. Those requests keep using
+        // today's exact legacy passthrough; only plain-text requests route
+        // through the registry/resolver pipeline.
+        const modalities: string[] =
+          generationConfig?.responseModalities ??
+          generationConfig?.response_modalities ??
+          [];
+        const wantsNonTextOutput =
+          modalities.length > 0 &&
+          !(modalities.length === 1 && modalities[0] === "TEXT");
+        const hasNonTextInput = contents.some((c) =>
+          (c.parts || []).some((p: any) => !p || typeof p.text !== "string"),
+        );
+        const isPlainTextRequest = !wantsNonTextOutput && !hasNonTextInput;
+
         try {
+          if (isPlainTextRequest) {
+            return await sendViaOperationPipeline({
+              proxyUrl,
+              doFetch,
+              contents,
+              generationConfig,
+              finalSysInst,
+              modelName,
+            });
+          }
+
           const body = {
             model: modelName,
             contents,

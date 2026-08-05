@@ -29,6 +29,14 @@ import {
 import { handleGetPublishedNotice, handlePutPublishedNotice } from "./notice";
 import { handleCopyrightReport } from "./reports";
 import {
+  forwardToGemini,
+  forwardInteractionToGemini,
+} from "./llm/adaptors/gemini-adaptor";
+import {
+  isLlmOperationRequest,
+  handleLlmOperationRequest,
+} from "./llm/handle-operation-request";
+import {
   handleCreateTemplateListing,
   handleDeleteTemplateListing,
   handleGetTemplateListing,
@@ -41,6 +49,7 @@ import {
 
 interface Env {
   GEMINI_API_KEY: string;
+  OPENAI_API_KEY?: string;
   ALLOWED_ORIGINS?: string;
   ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
   AI?: any;
@@ -524,6 +533,18 @@ export default {
       // Parse the incoming request body
       const body = (await request.json()) as any;
 
+      // Provider-neutral operation pipeline: selected when the client sends
+      // a recognized `operation` field. Requests without it fall through to
+      // the two legacy branches below completely unchanged (FR-007,
+      // research.md R1).
+      if (isLlmOperationRequest(body)) {
+        return await handleLlmOperationRequest(
+          body,
+          getCorsHeaders(request.headers, env),
+          env,
+        );
+      }
+
       // Interactions API path: server-side conversation state. Selected when the
       // client sends an `input` field (instead of full `contents`). Keeps the
       // stateless generateContent path below intact as the retention fallback.
@@ -549,118 +570,10 @@ export default {
         );
       }
 
-      // 1. Determine Model
-      const targetModel = body.model || "gemini-3.5-flash-lite";
+      const { status, data, parseError } = await forwardToGemini(body, env);
 
-      // 2. Map and clean up configuration for Google REST API (which expects snake_case)
-      const rawConfig = {
-        ...(body.generation_config || body.generationConfig || {}),
-      } as any;
-      const generation_config: any = {};
-
-      const safety_settings = body.safety_settings || body.safetySettings;
-      let system_instruction =
-        body.system_instruction || body.systemInstruction;
-
-      // Map supported fields explicitly to prevent prototype pollution and ensure snake_case
-      const mapping: Record<string, string> = {
-        stopSequences: "stop_sequences",
-        stop_sequences: "stop_sequences",
-        maxOutputTokens: "max_output_tokens",
-        max_output_tokens: "max_output_tokens",
-        responseMimeType: "response_mime_type",
-        response_mime_type: "response_mime_type",
-        responseModalities: "response_modalities",
-        response_modalities: "response_modalities",
-        candidateCount: "candidate_count",
-        candidate_count: "candidate_count",
-        temperature: "temperature",
-        topP: "top_p",
-        top_p: "top_p",
-        topK: "top_k",
-        top_k: "top_k",
-      };
-
-      for (const [inputKey, snakeKey] of Object.entries(mapping)) {
-        if (rawConfig[inputKey] !== undefined) {
-          generation_config[snakeKey] = rawConfig[inputKey];
-        }
-      }
-
-      // Map speechConfig → speech_config (required for TTS voice selection)
-      // The Google REST API uses deeply-nested snake_case names that differ from
-      // the camelCase SDK, so we have to translate each level explicitly.
-      // Only written to generation_config when a valid voice_name is present —
-      // sending an empty speech_config object causes a 400 from Google.
-      const rawSpeechConfig = rawConfig.speechConfig ?? rawConfig.speech_config;
-      if (rawSpeechConfig) {
-        const rawVoiceConfig =
-          rawSpeechConfig.voiceConfig ?? rawSpeechConfig.voice_config;
-        if (rawVoiceConfig) {
-          const rawPrebuilt =
-            rawVoiceConfig.prebuiltVoiceConfig ??
-            rawVoiceConfig.prebuilt_voice_config;
-          const voiceName = rawPrebuilt?.voiceName ?? rawPrebuilt?.voice_name;
-          if (voiceName) {
-            // Only assign when we have a concrete voice name — an empty or
-            // absent name would cause a 400 INVALID_ARGUMENT from Google.
-            generation_config.speech_config = {
-              voice_config: {
-                prebuilt_voice_config: { voice_name: voiceName },
-              },
-            };
-          }
-        }
-      }
-
-      // CRITICAL: Google REST API throws 400 if system_instruction is found inside generation_config
-      const systemKeys = [
-        "systemInstruction",
-        "system_instruction",
-        "system-instruction",
-      ];
-      for (const key of systemKeys) {
-        if (rawConfig[key]) {
-          system_instruction = system_instruction || rawConfig[key];
-        }
-      }
-
-      // Format system_instruction if it's a simple string
-      const formattedSystemInstruction =
-        typeof system_instruction === "string"
-          ? { parts: [{ text: system_instruction }] }
-          : system_instruction;
-
-      const outgoingPayload = {
-        contents: body.contents,
-        generation_config,
-        system_instruction: formattedSystemInstruction,
-        safety_settings,
-      };
-
-      console.log(`[Oracle Proxy] Forwarding to Google model: ${targetModel}`);
-
-      // Forward to Google Gemini API
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${env.GEMINI_API_KEY}`;
-
-      const geminiResponse = await fetch(geminiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(outgoingPayload),
-      });
-
-      // Read the response from Google
-      const responseText = await geminiResponse.text();
-      let responseData;
-      try {
-        responseData = responseText ? JSON.parse(responseText) : {};
-      } catch {
-        console.error(
-          "[Oracle Proxy] Non-JSON from Gemini. Status:",
-          geminiResponse.status,
-        );
+      if (parseError) {
+        console.error("[Oracle Proxy] Non-JSON from Gemini. Status:", status);
         return new Response(
           JSON.stringify({
             error: {
@@ -679,8 +592,8 @@ export default {
       }
 
       // Return the response to the client
-      return new Response(JSON.stringify(responseData), {
-        status: geminiResponse.status,
+      return new Response(JSON.stringify(data), {
+        status,
         headers: {
           ...getCorsHeaders(request.headers, env),
           "Content-Type": "application/json",
@@ -731,56 +644,15 @@ async function handleInteraction(
       headers: { ...cors, "Content-Type": "application/json" },
     });
 
-  // Align with the stateless :generateContent default so a follow-up that omits
-  // `model` cannot silently switch models mid-conversation.
-  const targetModel = body.model || "gemini-3.5-flash-lite";
+  const result = await forwardInteractionToGemini(body, env);
 
-  // Interactions API expects system_instruction as a plain string, not the
-  // { parts: [...] } object format used by generateContent.
-  const systemInstruction: string | undefined =
-    typeof body.system_instruction === "string"
-      ? body.system_instruction
-      : typeof body.systemInstruction === "string"
-        ? body.systemInstruction
-        : body.system_instruction?.parts?.[0]?.text;
-
-  const payload: Record<string, unknown> = {
-    model: targetModel,
-    input: body.input,
-    store: body.store ?? true,
-  };
-  if (body.previous_interaction_id) {
-    payload.previous_interaction_id = body.previous_interaction_id;
-  }
-  if (systemInstruction) {
-    payload.system_instruction = systemInstruction;
-  }
-  if (body.generation_config || body.generationConfig) {
-    payload.generation_config = body.generation_config || body.generationConfig;
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${env.GEMINI_API_KEY}`;
-
-  let upstream: Response;
-  try {
-    upstream = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch (err) {
-    console.error("[Oracle Proxy] Interactions fetch error:", err);
+  if (result.transportError) {
     return json(
       { error: { message: "Failed to reach Interactions API" } },
       502,
     );
   }
-
-  const text = await upstream.text();
-  let data: any;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
+  if (result.parseError) {
     return json(
       {
         error: {
@@ -792,20 +664,22 @@ async function handleInteraction(
     );
   }
 
-  if (!upstream.ok) {
+  const data = result.data as any;
+
+  if (!result.ok) {
     const message: string =
       data?.error?.message || "Interaction request failed";
     // An expired or unknown previous_interaction_id (retention window elapsed)
     // is recoverable: the client should drop the id and replay full history.
     const isStaleId =
       body.previous_interaction_id &&
-      (upstream.status === 404 ||
-        upstream.status === 400 ||
+      (result.status === 404 ||
+        result.status === 400 ||
         /previous_interaction_id|interaction.*not found/i.test(message));
     if (isStaleId) {
       return json({ error: { message, code: "INTERACTION_NOT_FOUND" } }, 409);
     }
-    return json({ error: { message } }, upstream.status);
+    return json({ error: { message } }, result.status);
   }
 
   // Output text lives at steps[].content[].text (model_output steps).
