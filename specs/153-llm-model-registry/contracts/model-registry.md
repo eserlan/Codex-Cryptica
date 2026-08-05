@@ -60,7 +60,7 @@ export const OPERATION_DEFAULTS: OperationDefaults[] = [
   {
     operation: "utility",
     context: "public",
-    defaultModelKey: "luna-fast",
+    defaultModelKey: "gemini-flash-lite",
     fallbackModelKey: "gemini-flash-lite",
   },
   // "revision" intentionally has no default yet — no caller uses it this slice (spec Scope §4 out of scope).

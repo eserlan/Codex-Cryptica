@@ -64,6 +64,12 @@ describe("getOperationDefaults", () => {
     expect(defaults?.defaultModelKey).toBe("gemini-flash-lite");
   });
 
+  it("returns luna-fast as structured-generation's current default (2026-08-05, verified live)", () => {
+    const defaults = getOperationDefaults("structured-generation", "public");
+    expect(defaults?.defaultModelKey).toBe("luna-fast");
+    expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
+  });
+
   it("returns undefined for an operation with no configured defaults (e.g. revision)", () => {
     expect(getOperationDefaults("revision", "public")).toBeUndefined();
   });

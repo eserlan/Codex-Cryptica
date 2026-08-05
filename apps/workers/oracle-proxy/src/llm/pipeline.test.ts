@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import worker from "../index";
+import { getModel } from "./registry";
 
 const env = {
   GEMINI_API_KEY: "test-gemini-key",
@@ -53,10 +54,12 @@ describe("LLM operation pipeline: end-to-end", () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    // luna-fast is structured-generation's current default; both registry
-    // entries declare structuredOutput, so either would satisfy the
-    // capability requirement this scenario is actually testing.
-    expect(body.modelKey).toBe("luna-fast");
+    // Assert the capability, not a specific model key: this scenario tests
+    // that structured-generation only ever selects a structuredOutput-capable
+    // model, and both current registry entries qualify — hardcoding one key
+    // here would make the test brittle to a future default change while
+    // silently stopping to exercise the thing it's actually meant to check.
+    expect(getModel(body.modelKey)?.capabilities.structuredOutput).toBe(true);
     expect(body.structuredOutputValid).toBe(true);
   });
 
