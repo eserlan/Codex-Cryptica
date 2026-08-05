@@ -46,7 +46,9 @@
           )
         : undefined),
   );
-  const label = $derived(node.label ?? field?.label ?? node.fieldId);
+  const label = $derived(
+    node.label !== undefined ? node.label : (field?.label ?? node.fieldId),
+  );
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
   const controlsDisabled = $derived(
@@ -141,13 +143,15 @@
     class="inline-flex items-center gap-2"
     data-testid="presentation-field-number"
   >
-    <span
-      class={isProminent
-        ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
-        : "w-14 shrink-0 text-xs text-theme-muted"}
-    >
-      {label}:
-    </span>
+    {#if label}
+      <span
+        class={isProminent
+          ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
+          : "w-14 shrink-0 text-xs text-theme-muted"}
+      >
+        {label}:
+      </span>
+    {/if}
     <input
       type="number"
       class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"
@@ -165,13 +169,15 @@
     class="inline-flex items-center gap-2"
     data-testid="presentation-field-text"
   >
-    <span
-      class={isProminent
-        ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
-        : "w-14 shrink-0 text-xs text-theme-muted"}
-    >
-      {label}:
-    </span>
+    {#if label}
+      <span
+        class={isProminent
+          ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
+          : "w-14 shrink-0 text-xs text-theme-muted"}
+      >
+        {label}:
+      </span>
+    {/if}
     <input
       type="text"
       class="w-36 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40"
@@ -197,7 +203,7 @@
         class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"
         aria-hidden="true"
       ></span>
-      <span class="font-medium">{label}:</span>
+      {#if label}<span class="font-medium">{label}:</span>{/if}
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
@@ -224,7 +230,7 @@
         class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-muted"
         aria-hidden="true"
       ></span>
-      <span class="font-medium">{label}:</span>
+      {#if label}<span class="font-medium">{label}:</span>{/if}
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
