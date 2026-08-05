@@ -1,6 +1,6 @@
 ---
-name: reddit-post
-description: Drafts and polishes authentic Reddit posts about Codex Cryptica — devlogs, release notes, feature updates, technical write-ups, and lessons-learned posts. Subreddit-aware (r/codexcryptica, r/rpg, r/worldbuilding, r/SvelteJS), anti-hype, grounded in actual repo material, and rule-aware about self-promotion. Use this skill whenever the user mentions writing, drafting, polishing, or "making less marketing-ish" any Reddit post, comment, devlog, release announcement, or community update related to Codex Cryptica — even when they don't explicitly name a target subreddit.
+name: cc-announcer
+description: Drafts and polishes authentic Reddit posts, devlogs, release notes, feature updates, technical write-ups, and lessons-learned posts about Codex Cryptica. Subreddit-aware (r/codexcryptica, r/rpg, r/worldbuilding, r/SvelteJS), anti-hype, grounded in actual repo material, and rule-aware about self-promotion. Use this skill whenever the user mentions writing, drafting, polishing, or "making less marketing-ish" any Reddit post, comment, devlog, release announcement, or community update related to Codex Cryptica — even when they don't explicitly name a target subreddit.
 ---
 
 # Reddit Post Generation & Polishing Skill
