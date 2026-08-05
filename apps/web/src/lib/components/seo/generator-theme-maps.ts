@@ -25,6 +25,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "language-generator",
   "news-sheet-generator",
   "world",
+  "star-system",
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
@@ -171,5 +172,12 @@ export function mapWorldGenreToTheme(genre: string): string {
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Hopeful Sci-Fi") return "Optimistic Exploration Sci-Fi";
   if (genre === "Lancer") return "Lancer";
+  return "Sci-Fi / Space Opera";
+}
+
+export function mapStarSystemGenreToTheme(genre: string): string {
+  if (genre === "Space Opera") return "Star Wars";
+  if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
+  if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
   return "Sci-Fi / Space Opera";
 }

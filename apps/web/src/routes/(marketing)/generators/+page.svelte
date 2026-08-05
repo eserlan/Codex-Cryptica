@@ -108,6 +108,13 @@
           icon: "icon-[lucide--landmark]",
         },
         {
+          href: "/generators/star-system",
+          label: "Star System Generator",
+          summary:
+            "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+          icon: "icon-[lucide--orbit]",
+        },
+        {
           href: "/generators/dungeon-generator",
           label: "Dungeon & Delve Generator",
           summary:

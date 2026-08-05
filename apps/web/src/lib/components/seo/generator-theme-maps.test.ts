@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,
   mapShipGenreToTheme,
+  mapStarSystemGenreToTheme,
   mapWorldGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
@@ -78,5 +79,23 @@ describe("mapWorldGenreToTheme", () => {
       "Optimistic Exploration Sci-Fi",
     );
     expect(mapWorldGenreToTheme("Lancer")).toBe("Lancer");
+  });
+});
+
+describe("mapStarSystemGenreToTheme", () => {
+  it("uses the dedicated Star Wars skin for Space Opera", () => {
+    expect(mapStarSystemGenreToTheme("Space Opera")).toBe("Star Wars");
+  });
+
+  it("maps every star system genre to a real theme skin", () => {
+    expect(mapStarSystemGenreToTheme("Hard Sci-Fi")).toBe(
+      "Sci-Fi / Space Opera",
+    );
+    expect(mapStarSystemGenreToTheme("Cyberpunk")).toBe(
+      "Cyberpunk / Corporate",
+    );
+    expect(mapStarSystemGenreToTheme("Post-Apocalyptic")).toBe(
+      "Post-Apocalyptic",
+    );
   });
 });

@@ -106,6 +106,13 @@
     margin: 1rem 0 0.5rem;
     color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
   }
+  .seo-md :global(h4) {
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin: 0.85rem 0 0.35rem;
+    color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
+  }
   .seo-md :global(ul) {
     list-style: disc;
     margin-left: 1rem;

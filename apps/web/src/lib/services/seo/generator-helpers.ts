@@ -1,3 +1,5 @@
+import type { StarSystemBody } from "generator-engine";
+
 export const nameTable = {
   prefixes: [
     "Ael",
@@ -459,6 +461,10 @@ export interface GeneratorOutput {
    * local tables, so the layout can show a friendly notice (#1494).
    */
   aiFallback?: boolean;
+  /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
+  bodies?: StarSystemBody[];
+  /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
+  starType?: string;
 }
 
 /**

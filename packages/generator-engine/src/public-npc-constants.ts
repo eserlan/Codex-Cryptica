@@ -29,6 +29,8 @@ export const BANNED_NAMES = [
   "Oakhollow",
   "Millbrook",
   "Riverdale",
+  "Verdant",
+  "Verdant Reach",
   "Silas",
   "Vesper",
   "Sterling",

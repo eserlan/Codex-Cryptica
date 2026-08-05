@@ -31,6 +31,9 @@
   import { interactionSessions } from "@codex/ai-engine";
   import { getThemeLoadingMessages } from "generator-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import StarSystemDiagram from "$lib/components/seo/StarSystemDiagram.svelte";
+  import { blobToFile } from "$lib/utils/svg-export";
+  import { entityMapLinkingService } from "$lib/services/entity-map-linking";
 
   let loadingIndex = $state(0);
   let activeLoadingMessages = $derived(
@@ -94,6 +97,9 @@
 
   let stage = $state<Stage>("configure");
   let draft = $state<GeneratedDraft | null>(null);
+  let starSystemDiagramRef = $state<ReturnType<
+    typeof StarSystemDiagram
+  > | null>(null);
   let errorMsg = $state<string | null>(null);
   let generatorId = $state<GeneratorId | null>(null);
   $effect(() => {
@@ -321,6 +327,24 @@
         createRelationship,
         ...(workflow.prefillDate ? { start_date: workflow.prefillDate } : {}),
       });
+      // Link the star-system generator's rasterized orbital diagram to the
+      // new entity's Map tab (#1935 follow-up). Best-effort: a rasterization
+      // or upload failure must never block the save that already succeeded.
+      if (reviewed.bodies?.length && starSystemDiagramRef) {
+        try {
+          const blob = await starSystemDiagramRef.exportPng();
+          if (blob) {
+            const file = blobToFile(blob, `${reviewed.title}.png`);
+            await entityMapLinkingService.linkImageToEntity(
+              file,
+              `${reviewed.title} Map`,
+              result.entityId,
+            );
+          }
+        } catch (err) {
+          console.error("Failed to link generated map image:", err);
+        }
+      }
       // Auto-wire the AI's suggested connections to existing entities (matched
       // by exact, case-insensitive title). These live on the skeleton, so they
       // are removed too if the user discards the draft.
@@ -476,6 +500,23 @@
         >
           {errorMsg}
         </p>
+      {/if}
+      {#if draft.bodies?.length}
+        <!-- Rendered off-screen and not otherwise shown in this review UI —
+             its only purpose here is to give exportPng() a live <svg> to
+             rasterize into the entity's linked map when the draft is saved
+             (#1935 follow-up). -->
+        <div
+          class="absolute h-px w-px overflow-hidden opacity-0"
+          aria-hidden="true"
+        >
+          <StarSystemDiagram
+            bind:this={starSystemDiagramRef}
+            bodies={draft.bodies}
+            starType={draft.starType}
+            title={draft.title}
+          />
+        </div>
       {/if}
       <GeneratorDraftReview
         bind:draft

@@ -52,6 +52,7 @@ describe("registry lookup", () => {
       "adventure",
       "world",
       "council-vote",
+      "star-system",
     ]);
   });
 
@@ -85,6 +86,25 @@ describe("registry lookup", () => {
     expect(getGenerator("world").generate(run("world")).lore).toContain(
       "## Adventure Hooks",
     );
+  });
+
+  it("builds a system-aware star-system prompt and maps systems to locations", () => {
+    const prompt = getGenerator("star-system").buildPrompt(
+      run("star-system", {
+        options: {
+          systemType: "Binary System",
+          genre: "Cyberpunk",
+        },
+      }),
+    );
+    expect(prompt).toContain("Binary System");
+    expect(prompt).toContain("Cyberpunk");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+    expect(GENERATOR_ENTITY_TYPE["star-system"]).toBe("location");
+    const draft = getGenerator("star-system").generate(run("star-system"));
+    expect(draft.lore).toContain("## Adventure Hooks");
+    expect(draft.lore).toContain("## System-Wide Conflict or Mystery");
   });
 
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
@@ -895,6 +915,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       adventure: "note",
       world: "location",
       "council-vote": "note",
+      "star-system": "location",
     });
   });
 

@@ -30,6 +30,7 @@ const validSlugs = new Set([
   "adventure-idea-generator",
   "world",
   "council-vote",
+  "star-system",
 ]);
 
 export const load: PageLoad = ({ params }) => {
