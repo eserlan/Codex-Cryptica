@@ -237,7 +237,8 @@
       : "text-xs text-theme-text"}
     data-testid="presentation-field-plain"
   >
-    {#if !isProminent}<span class="text-theme-muted">{label}:</span>{/if}
+    {#if !isProminent && label}<span class="text-theme-muted">{label}:</span
+      >{/if}
     {field.value ?? ""}
   </span>
 {/if}
