@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import worker from "../index";
+import { getModel } from "./registry";
 
 const env = {
   GEMINI_API_KEY: "test-gemini-key",
@@ -23,16 +24,23 @@ const post = (body: Record<string, unknown>) =>
 
 describe("LLM operation pipeline: end-to-end", () => {
   it("Scenario 1 — only selects a model whose registry entry declares structuredOutput for structured-generation", async () => {
-    const fetchMock = vi.fn(
-      async () =>
-        new Response(
+    const fetchMock = vi.fn(async (url: string) => {
+      if (String(url).includes("chat/completions")) {
+        return new Response(
           JSON.stringify({
-            candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }],
+            choices: [{ message: { content: '{"ok":true}' } }],
           }),
           { status: 200 },
-        ),
-    );
-    globalThis.fetch = fetchMock as typeof fetch;
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }],
+        }),
+        { status: 200 },
+      );
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const response = await worker.fetch(
       post({
@@ -46,7 +54,12 @@ describe("LLM operation pipeline: end-to-end", () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.modelKey).toBe("gemini-flash-lite");
+    // Assert the capability, not a specific model key: this scenario tests
+    // that structured-generation only ever selects a structuredOutput-capable
+    // model, and both current registry entries qualify — hardcoding one key
+    // here would make the test brittle to a future default change while
+    // silently stopping to exercise the thing it's actually meant to check.
+    expect(getModel(body.modelKey)?.capabilities.structuredOutput).toBe(true);
     expect(body.structuredOutputValid).toBe(true);
   });
 
@@ -174,19 +187,21 @@ describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'impr
     let calls = 0;
     const fetchMock = vi.fn(async (url: string) => {
       calls++;
-      if (String(url).includes("generativelanguage")) {
-        // Primary (Gemini) always returns invalid JSON for a structured
-        // request, so it should be retried once, then the pipeline falls
-        // back to the OpenAI-served default.
+      if (String(url).includes("chat/completions")) {
+        // Primary (Luna, the structured-generation default) always returns
+        // invalid JSON, so it should be retried once, then the pipeline
+        // falls back to the Gemini-served fallback.
         return new Response(
           JSON.stringify({
-            candidates: [{ content: { parts: [{ text: "not valid json" }] } }],
+            choices: [{ message: { content: "not valid json" } }],
           }),
           { status: 200 },
         );
       }
       return new Response(
-        JSON.stringify({ choices: [{ message: { content: '{"ok":true}' } }] }),
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }],
+        }),
         { status: 200 },
       );
     });
@@ -204,7 +219,7 @@ describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'impr
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.modelKey).toBe("luna-fast");
+    expect(body.modelKey).toBe("gemini-flash-lite");
     // 2 calls to the failing primary (initial + retry) + 1 to the fallback = 3.
     expect(calls).toBe(3);
     // Never a 4th call — no silent "improve the result" pass after a model

@@ -75,6 +75,49 @@ describe("callOpenAi", () => {
     expect(sent.top_p).toBe(0.8);
   });
 
+  it("sends maxOutputTokens as max_completion_tokens, never max_tokens", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(
+      { ...request, maxOutputTokens: 512 },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.max_completion_tokens).toBe(512);
+    expect(sent.max_tokens).toBeUndefined();
+  });
+
+  it("never forwards temperature (GPT-5.6-family rejects it)", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(
+      { ...request, temperature: 0.85 },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.temperature).toBeUndefined();
+  });
+
   it("sends response_format for structured-generation requests", async () => {
     const fetcher = vi.fn(
       async () =>
