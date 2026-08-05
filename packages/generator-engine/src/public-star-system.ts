@@ -21,13 +21,7 @@ import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 
 export const starSystemConfig = {
   systemTypes: ["Single Star", "Binary System", "Trinary System", "Exotic"],
-  genres: [
-    "Hard Sci-Fi",
-    "Space Opera",
-    "Cyberpunk",
-    "Post-Collapse",
-    "Weird Sci-Fi",
-  ],
+  genres: ["Hard Sci-Fi", "Space Opera", "Cyberpunk", "Post-Apocalyptic"],
   civilisationLevels: ["Unexplored", "Frontier", "Settled", "Core System"],
   systemCharacters: [
     "Prosperous",

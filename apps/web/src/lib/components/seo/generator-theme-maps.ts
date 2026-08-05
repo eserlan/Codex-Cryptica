@@ -178,7 +178,6 @@ export function mapWorldGenreToTheme(genre: string): string {
 export function mapStarSystemGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
-  if (genre === "Post-Collapse") return "Post-Apocalyptic";
-  if (genre === "Weird Sci-Fi") return "Cosmic Horror";
+  if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
   return "Sci-Fi / Space Opera";
 }
