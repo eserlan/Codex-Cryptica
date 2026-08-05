@@ -53,6 +53,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
+import { presentationTemplates } from "./presentation-templates.svelte";
 
 export class VaultStore {
   // Reactive State
@@ -484,6 +485,7 @@ export class VaultStore {
       if (this.activeVaultId) {
         await themeStore.loadForVault(this.activeVaultId);
         await statSheetTemplates.loadForVault(this.activeVaultId);
+        await presentationTemplates.loadForVault(this.activeVaultId);
       }
 
       if (this.activeVaultId) {

@@ -59,11 +59,35 @@ describe("parseTemplate", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const para = result.ast[0] as ParagraphNode;
-    const ref = para.children[0] as FieldReferenceNode;
-    expect(ref.type).toBe("field-reference");
-    expect(ref.fieldId).toBe("hp");
-    expect(ref.displayMode).toBe("counter");
-    expect(ref.label).toBe("HP");
+    expect(para.children[0]).toEqual({
+      type: "field-reference",
+      fieldId: "hp",
+      displayMode: "counter",
+      label: "HP",
+    });
+  });
+
+  it("parses bracket field reference tokens [field] and [field:mode] without breaking standard Markdown links", () => {
+    const result = parseTemplate(
+      "[hp] and [ac:prominent] and [Google](https://google.com)",
+      1,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const para = result.ast[0] as ParagraphNode;
+    expect(para.children[0]).toEqual({
+      type: "field-reference",
+      fieldId: "hp",
+    });
+    expect(para.children[2]).toEqual({
+      type: "field-reference",
+      fieldId: "ac",
+      displayMode: "prominent",
+    });
+    expect(para.children[4]).toMatchObject({
+      type: "link",
+      href: "https://google.com",
+    });
   });
 
   it("parses :::stat-group columns=N ... ::: fenced tokens", () => {

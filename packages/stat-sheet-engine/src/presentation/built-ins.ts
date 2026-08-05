@@ -51,8 +51,145 @@ const MOBILE_QUICK_REFERENCE_SOURCE = `{{stat.hp display="current-max" label="HP
 {{stat.ac display="plain" label="AC"}}
 `;
 
+const DND_CHARACTER_SHEET_SOURCE = `:::row
+:::card
+### Vital Stats
+:::stat-group columns=2
+{{stat.hp display="current-max" label="Hit Points"}}
+{{stat.ac display="prominent" label="Armor Class"}}
+:::
+:::
+:::
+
+### Ability Scores & Checks
+:::stat-group columns=3
+:::card
+{{stat.str_score display="prominent" label="STR"}}
+{{stat.str display="plain" label="Check"}}
+:::
+:::card
+{{stat.dex_score display="prominent" label="DEX"}}
+{{stat.dex display="plain" label="Check"}}
+:::
+:::card
+{{stat.con_score display="prominent" label="CON"}}
+{{stat.con display="plain" label="Check"}}
+:::
+:::card
+{{stat.int_score display="prominent" label="INT"}}
+{{stat.int display="plain" label="Check"}}
+:::
+:::card
+{{stat.wis_score display="prominent" label="WIS"}}
+{{stat.wis display="plain" label="Check"}}
+:::
+:::card
+{{stat.cha_score display="prominent" label="CHA"}}
+{{stat.cha display="plain" label="Check"}}
+:::
+:::
+
+:::row
+:::card
+### Combat
+:::stat-group columns=2
+{{stat.atk display="prominent" label="Attack Roll"}}
+{{stat.conditions display="plain" label="Conditions"}}
+:::
+:::
+
+:::card
+### Skills
+:::stat-group columns=1
+{{stat.perception display="plain" label="Perception"}}
+{{stat.stealth display="plain" label="Stealth"}}
+{{stat.athletics display="plain" label="Athletics"}}
+{{stat.persuasion display="plain" label="Persuasion"}}
+:::
+:::
+:::
+`;
+
+const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
+:::card
+### Pools & Derived Attributes
+:::stat-group columns=4
+{{stat.ap display="counter" label="AP"}}
+{{stat.lp display="counter" label="Luck"}}
+{{stat.mp display="counter" label="MP"}}
+{{stat.hp display="counter" label="Total HP"}}
+:::
+:::stat-group columns=3
+{{stat.damage_mod display="plain" label="Damage Mod"}}
+{{stat.initiative display="prominent" label="Initiative"}}
+{{stat.move display="plain" label="Movement"}}
+:::
+:::
+:::
+
+### Characteristics (d100 / BRP)
+:::stat-group columns=4
+:::card
+{{stat.str display="prominent" label="STR"}}
+:::
+:::card
+{{stat.con display="prominent" label="CON"}}
+:::
+:::card
+{{stat.siz display="prominent" label="SIZ"}}
+:::
+:::card
+{{stat.dex display="prominent" label="DEX"}}
+:::
+:::card
+{{stat.int display="prominent" label="INT"}}
+:::
+:::card
+{{stat.pow display="prominent" label="POW"}}
+:::
+:::card
+{{stat.cha display="prominent" label="CHA"}}
+:::
+:::
+
+:::card
+### Hit Locations & Armor
+| Location | Armor AP | Current HP |
+| --- | --- | --- |
+| Head | [loc_head_ap] | [loc_head_hp:counter] |
+| Chest | [loc_chest_ap] | [loc_chest_hp:counter] |
+| Abdomen | [loc_abdomen_ap] | [loc_abdomen_hp:counter] |
+| Right Arm | [loc_rarm_ap] | [loc_rarm_hp:counter] |
+| Left Arm | [loc_larm_ap] | [loc_larm_hp:counter] |
+| Right Leg | [loc_rleg_ap] | [loc_rleg_hp:counter] |
+| Left Leg | [loc_lleg_ap] | [loc_lleg_hp:counter] |
+:::
+
+:::row
+:::card
+### Standard Skills & Rolls
+:::stat-group columns=2
+{{stat.d100_check display="plain" label="d100 Roll"}}
+{{stat.athletics display="plain" label="Athletics"}}
+{{stat.brawn display="plain" label="Brawn"}}
+{{stat.evade display="plain" label="Evade"}}
+{{stat.insight display="plain" label="Insight"}}
+{{stat.perception display="plain" label="Perception"}}
+{{stat.stealth display="plain" label="Stealth"}}
+{{stat.willpower display="plain" label="Willpower"}}
+:::
+:::
+:::card
+### Combat & Specializations
+{{stat.combat_styles display="plain" label="Combat Styles"}}
+{{stat.professional_skills display="plain" label="Professional Skills"}}
+{{stat.passions_cults display="plain" label="Passions & Cults"}}
+:::
+:::
+`;
+
 /**
- * The four built-in presentation templates required by FR-012/SC-007.
+ * The built-in presentation templates required by FR-012/SC-007.
  * Read-only (never editable in place — see spec.md Edge Cases); duplicating
  * one via the editor (T026) produces a separate vault-owned copy.
  *
@@ -67,6 +204,20 @@ export function getBuiltInPresentationTemplates(
   schemaTemplateId: string,
 ): PresentationTemplate[] {
   return [
+    builtIn(
+      `builtin-presentation-mythras-character-sheet-${schemaTemplateId}`,
+      schemaTemplateId,
+      "Mythras Character Sheet",
+      "Full Mythras layout with AP/Luck/MP pools, Characteristics grid, Hit Location AP/HP table, and d100 Skills.",
+      MYTHRAS_CHARACTER_SHEET_SOURCE,
+    ),
+    builtIn(
+      `builtin-presentation-dnd-character-sheet-${schemaTemplateId}`,
+      schemaTemplateId,
+      "D&D Character Sheet",
+      "A multi-column D&D 5e styled layout featuring Vital Stats, Ability Scores grid, Checks, and Skills.",
+      DND_CHARACTER_SHEET_SOURCE,
+    ),
     builtIn(
       `builtin-presentation-standard-form-${schemaTemplateId}`,
       schemaTemplateId,
