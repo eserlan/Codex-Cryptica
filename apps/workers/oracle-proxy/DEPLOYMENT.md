@@ -169,6 +169,16 @@ Then update the URL in all references.
 wrangler tail
 ```
 
+### View Historical/Queryable Logs
+
+Cloudflare dashboard → Workers & Pages → `oracle-proxy` → **Logs** tab.
+This is where the LLM pipeline's `ResolutionLogEntry` metadata (model key,
+provider, operation type, latency, outcome, token usage/cost, retry/fallback
+info) is queryable after the fact — filter by `outcome`, `modelKey`,
+`operation`, etc. Entries are metadata only; no prompt or response content
+is ever logged, so this tab is safe to view or share without redaction.
+Requires `[observability] enabled = true` in `wrangler.toml` (already set).
+
 ### Check Worker Status
 
 ```bash

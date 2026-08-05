@@ -529,3 +529,138 @@ describe("Oracle Proxy Worker Interactions API", () => {
     );
   });
 });
+
+describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", () => {
+  const env = { GEMINI_API_KEY: "test-key" };
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const post = (body: Record<string, unknown>) =>
+    new Request("https://oracle-proxy.espen-erlandsen.workers.dev/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://codex-cryptica.com",
+      },
+      body: JSON.stringify(body),
+    });
+
+  it("routes a body.input request through the legacy Interactions branch unchanged when no operation field is present", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "v1_x", steps: [] }), {
+          status: 200,
+        }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({ input: "hello" }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ id: "v1_x", text: "" }),
+    );
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "/v1beta/interactions",
+    );
+  });
+
+  it("routes a plain contents request through the legacy generateContent branch unchanged when no operation field is present", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({ contents: [{ role: "user", parts: [{ text: "hi" }] }] }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ candidates: [] });
+    expect(String(fetchMock.mock.calls[0][0])).toContain(":generateContent");
+  });
+
+  it("does not route through the new pipeline when operation is an unrecognized value", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ candidates: [] }), { status: 200 }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "not-a-real-operation",
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(String(fetchMock.mock.calls[0][0])).toContain(":generateContent");
+  });
+
+  it("replays the full pre-existing request-shape matrix with no client-visible change (Story 1 Scenario 2)", async () => {
+    // Interactions shape
+    const interactionsFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_a",
+            steps: [{ content: [{ text: "reply" }] }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = interactionsFetch as typeof fetch;
+    const interactionsResponse = await worker.fetch(
+      post({ input: "hi" }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(interactionsResponse.status).toBe(200);
+    expect(await interactionsResponse.json()).toEqual({
+      id: "v1_a",
+      text: "reply",
+    });
+
+    // generateContent shape
+    const generateFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "ok" }] } }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = generateFetch as typeof fetch;
+    const generateResponse = await worker.fetch(
+      post({ contents: [{ role: "user", parts: [{ text: "hi" }] }] }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(generateResponse.status).toBe(200);
+    expect(await generateResponse.json()).toEqual({
+      candidates: [{ content: { parts: [{ text: "ok" }] } }],
+    });
+
+    // Malformed generateContent shape (missing contents) still 400s exactly as before
+    const invalidResponse = await worker.fetch(
+      post({ notContents: true }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(invalidResponse.status).toBe(400);
+  });
+});

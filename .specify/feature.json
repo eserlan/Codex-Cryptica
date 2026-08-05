@@ -1,1 +1,3 @@
-{ "feature_directory": "specs/152-stat-sheet-templates" }
+{
+  "feature_directory": "specs/153-llm-model-registry"
+}

@@ -21,6 +21,9 @@ ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 
 # Secrets (must be set via `wrangler secret put`)
 # - GEMINI_API_KEY: Your Google Gemini API key
+# - OPENAI_API_KEY: OpenAI API key, used by the OpenAI-compatible LLM adaptor
+#   (src/llm/adaptors/openai-adaptor.ts) for GPT-5.6 Luna and any other
+#   OpenAI-family models registered in src/llm/registry.ts
 # - TURNSTILE_SECRET_KEY: Server-side secret for publish verification
 
 # Development configuration
@@ -33,7 +36,7 @@ local_protocol = "http"
 command = ""  # No build step needed for TypeScript
 
 [observability]
-enabled = false
+enabled = true
 head_sampling_rate = 1
 
 [observability.logs]
