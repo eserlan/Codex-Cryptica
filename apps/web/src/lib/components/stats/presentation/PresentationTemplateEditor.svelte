@@ -81,20 +81,33 @@
     const res = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
     if (!res.ok) return cards;
 
-    let currentTitle = "";
-    for (const node of res.ast) {
+    function extractFieldIdsFromNode(node: any): string[] {
+      const fieldIds: string[] = [];
+      if (!node) return fieldIds;
+      if (node.type === "field-reference") {
+        fieldIds.push(node.fieldId);
+      } else if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          fieldIds.push(...extractFieldIdsFromNode(child));
+        }
+      }
+      return fieldIds;
+    }
+
+    function processBlockNode(node: any, currentHeadingTitle: string): string {
+      let activeTitle = currentHeadingTitle;
       if (node.type === "heading") {
-        const textNode = node.children.find((c) => c.type === "text");
+        const textNode = node.children?.find((c: any) => c.type === "text");
         if (textNode && "text" in textNode) {
-          currentTitle = textNode.text;
+          activeTitle = textNode.text;
         }
       } else if (node.type === "table") {
         const rows: string[][] = [];
-        const headers = node.header.map((cellNodes) => {
+        const headers = (node.header ?? []).map((cellNodes: any[]) => {
           const t = cellNodes.find((c) => c.type === "text");
           return t && "text" in t ? t.text : "Col";
         });
-        for (const rowCells of node.rows) {
+        for (const rowCells of node.rows ?? []) {
           const rFields: string[] = [];
           for (const cellNodes of rowCells) {
             for (const c of cellNodes) {
@@ -107,81 +120,69 @@
         }
         cards.push({
           id: Math.random().toString(36).slice(2, 9),
-          title: currentTitle || `Table ${cards.length + 1}`,
+          title: activeTitle || `Table ${cards.length + 1}`,
           columns: headers.length || 2,
           mode: "table",
           tableHeaders: headers.length > 0 ? headers : ["Field", "Value"],
           rows: rows.length > 0 ? rows : [[]],
         });
-        currentTitle = "";
+        activeTitle = "";
       } else if (node.type === "card") {
         const rows: string[][] = [];
         for (const child of node.children ?? []) {
-          if (child.type === "group") {
-            const fieldIds: string[] = [];
-            for (const gChild of child.children ?? []) {
-              if (gChild.type === "paragraph") {
-                for (const c of gChild.children ?? []) {
-                  if (c.type === "field-reference") {
-                    fieldIds.push(c.fieldId);
-                  }
-                }
-              }
-            }
-            if (fieldIds.length > 0) rows.push(fieldIds);
-          } else if (child.type === "paragraph") {
-            const fieldIds: string[] = [];
-            for (const c of child.children ?? []) {
-              if (c.type === "field-reference") {
-                fieldIds.push(c.fieldId);
-              }
-            }
-            if (fieldIds.length > 0) rows.push(fieldIds);
-          }
+          const fIds = extractFieldIdsFromNode(child);
+          if (fIds.length > 0) rows.push(fIds);
         }
         cards.push({
           id: Math.random().toString(36).slice(2, 9),
-          title: currentTitle || `Card ${cards.length + 1}`,
+          title: activeTitle || `Card ${cards.length + 1}`,
           columns: 2,
           mode: "grid",
           rows: rows.length > 0 ? rows : [[]],
         });
-        currentTitle = "";
+        activeTitle = "";
       } else if (node.type === "group") {
         const cols = node.columns ?? 2;
         for (const child of node.children ?? []) {
           if (child.type === "card") {
             const rows: string[][] = [];
             for (const cNode of child.children ?? []) {
-              if (cNode.type === "group") {
-                const fIds: string[] = [];
-                for (const gChild of cNode.children ?? []) {
-                  if (gChild.type === "paragraph") {
-                    for (const c of gChild.children ?? []) {
-                      if (c.type === "field-reference") fIds.push(c.fieldId);
-                    }
-                  }
-                }
-                if (fIds.length > 0) rows.push(fIds);
-              } else if (cNode.type === "paragraph") {
-                const fIds: string[] = [];
-                for (const c of cNode.children ?? []) {
-                  if (c.type === "field-reference") fIds.push(c.fieldId);
-                }
-                if (fIds.length > 0) rows.push(fIds);
-              }
+              const fIds = extractFieldIdsFromNode(cNode);
+              if (fIds.length > 0) rows.push(fIds);
             }
             cards.push({
               id: Math.random().toString(36).slice(2, 9),
-              title: currentTitle || `Card ${cards.length + 1}`,
+              title: activeTitle || `Card ${cards.length + 1}`,
               columns: cols,
               mode: "grid",
               rows: rows.length > 0 ? rows : [[]],
             });
-            currentTitle = "";
+            activeTitle = "";
+          } else {
+            const fIds = extractFieldIdsFromNode(child);
+            if (fIds.length > 0) {
+              cards.push({
+                id: Math.random().toString(36).slice(2, 9),
+                title: activeTitle || `Group ${cards.length + 1}`,
+                columns: cols,
+                mode: "grid",
+                rows: [fIds],
+              });
+              activeTitle = "";
+            }
           }
         }
+      } else if (node.type === "section" || node.type === "row") {
+        for (const child of node.children ?? []) {
+          activeTitle = processBlockNode(child, activeTitle);
+        }
       }
+      return activeTitle;
+    }
+
+    let titleState = "";
+    for (const node of res.ast) {
+      titleState = processBlockNode(node, titleState);
     }
     const fields = schema?.fields ?? [];
     if (cards.length === 0 && fields.length > 0) {
@@ -631,7 +632,7 @@
   onclick={(event) => event.target === event.currentTarget && onClose()}
 >
   <div
-    class="flex h-[92vh] max-h-[95vh] w-full max-w-6xl 2xl:max-w-7xl flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
+    class="flex h-[94vh] max-h-[96vh] w-full max-w-[96vw] 2xl:max-w-[94vw] flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
     role="dialog"
     aria-modal="true"
     aria-labelledby="presentation-editor-title"
@@ -1114,13 +1115,13 @@
           {/if}
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-1.5 min-h-0">
           <span
             class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
             >Preview</span
           >
           <div
-            class="flex-1 rounded border border-theme-border bg-theme-bg/50 p-3"
+            class="flex-1 overflow-y-auto rounded border border-theme-border bg-theme-bg/50 p-3"
             data-testid="presentation-editor-preview"
           >
             {#if previewAst}
