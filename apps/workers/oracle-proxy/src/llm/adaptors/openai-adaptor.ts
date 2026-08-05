@@ -53,9 +53,16 @@ export async function callOpenAi(
   if (maxOutputTokens !== undefined) body.max_tokens = maxOutputTokens;
 
   if (request.schema) {
+    // OpenAI's `strict: true` structured-output mode rejects any schema
+    // that doesn't set `additionalProperties: false` on every object level
+    // and list every property as `required` — callers of this pipeline
+    // aren't expected to know or satisfy that OpenAI-specific constraint.
+    // Non-strict json_schema mode is more lenient, and schema-validation.ts
+    // already re-validates the parsed response against `request.schema`
+    // afterward, so correctness doesn't depend on OpenAI's strict enforcement.
     body.response_format = {
       type: "json_schema",
-      json_schema: { name: "response", schema: request.schema, strict: true },
+      json_schema: { name: "response", schema: request.schema },
     };
   }
 
