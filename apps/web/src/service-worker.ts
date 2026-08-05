@@ -6,12 +6,17 @@
 import { build, files, prerendered, version } from "$service-worker";
 import { activateBuild, precacheBuild } from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "507";
+const CACHE_VERSION = "508";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
+
+// Cloudflare Pages' own config files — consumed by the platform at deploy
+// time to set headers/redirects, never served back as downloadable assets,
+// so precaching them always fails and just logs noise.
+const UNCACHEABLE_STATIC_FILES = new Set(["/_headers", "/_redirects"]);
 
 const ASSETS = [
   ...build, // the app itself
-  ...files, // everything in `static`
+  ...files.filter((file) => !UNCACHEABLE_STATIC_FILES.has(file)), // everything in `static`, minus platform config files
   ...prerendered, // prerendered routes, including "/" (the app shell)
 ];
 
