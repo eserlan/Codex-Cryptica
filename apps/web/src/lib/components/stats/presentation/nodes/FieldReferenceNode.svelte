@@ -2,6 +2,7 @@
   import type { FieldReferenceNode as FieldReferenceNodeType } from "@codex/stat-sheet-engine";
   import type { PresentationRenderContext } from "../types";
   import MissingFieldNode from "./MissingFieldNode.svelte";
+  import ItemTableNode from "./ItemTableNode.svelte";
 
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
 
@@ -57,6 +58,8 @@
   <MissingFieldNode
     node={{ type: "missing-field", fieldId: node.fieldId, label: node.label }}
   />
+{:else if field.type === "item-table"}
+  <ItemTableNode {field} {context} />
 {:else if mode === "counter" || mode === "current-max" || mode === "progress"}
   <div
     class="inline-flex items-center gap-2 rounded border border-theme-border px-2 py-1"
