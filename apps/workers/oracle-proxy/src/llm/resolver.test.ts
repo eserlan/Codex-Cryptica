@@ -316,4 +316,144 @@ describe("resolver: no model available", () => {
     const outcome = await resolver.resolve(baseRequest, "public");
     expect(outcome.outcome).toBe("failure");
   });
+
+  it("preserves the primary's actual failure reason when no distinct fallback is configured, rather than masking it as no-model-available", async () => {
+    const primary = makeModel({ key: "primary" });
+    const adaptorCall = vi.fn(async () => ({
+      ok: false as const,
+      reason: "timeout",
+    }));
+
+    const resolver = createResolver({
+      getModel: () => primary,
+      getOperationDefaults: () => ({
+        operation: "freeform-generation",
+        context: "public",
+        // Self-fallback (no distinct second model configured yet) —
+        // matches registry.ts's Foundational-phase shape.
+        defaultModelKey: "primary",
+        fallbackModelKey: "primary",
+      }),
+      adaptors: { gemini: adaptorCall },
+    });
+
+    const outcome = await resolver.resolve(baseRequest, "public");
+    expect(outcome.outcome).toBe("failure");
+    expect(outcome.result.ok).toBe(false);
+    if (!outcome.result.ok) {
+      // A real provider was actually tried and failed — this must surface
+      // as a provider failure, not "no model configured at all".
+      expect(outcome.result.reason).toBe("timeout");
+      expect(outcome.result.reason).not.toBe("no-model-available");
+    }
+  });
+
+  it("only reports no-model-available when the primary itself was never callable (a true registry/config gap)", async () => {
+    const disabledPrimary = makeModel({ key: "primary", enabled: false });
+    const adaptorCall = vi.fn();
+
+    const resolver = createResolver({
+      getModel: () => disabledPrimary,
+      getOperationDefaults: () => ({
+        operation: "freeform-generation",
+        context: "public",
+        defaultModelKey: "primary",
+        fallbackModelKey: "primary",
+      }),
+      adaptors: { gemini: adaptorCall },
+    });
+
+    const outcome = await resolver.resolve(baseRequest, "public");
+    expect(outcome.result.ok).toBe(false);
+    if (!outcome.result.ok) {
+      expect(outcome.result.reason).toBe("no-model-available");
+    }
+    expect(adaptorCall).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolver: schema presence implies structuredOutput capability", () => {
+  it("does not route a schema-bearing request to a model lacking structuredOutput, even for an operation whose base capability is satisfied", async () => {
+    const noStructured = makeModel({
+      key: "freeform-only",
+      capabilities: {
+        structuredOutput: false,
+        freeformGeneration: true,
+        revision: false,
+      },
+    });
+    const structuredOk = makeModel({ key: "structured-ok" });
+    const models: Record<string, LlmModelDefinition> = {
+      "freeform-only": noStructured,
+      "structured-ok": structuredOk,
+    };
+    const adaptorCall = vi.fn(async (_req, m: LlmModelDefinition) => ({
+      ok: true as const,
+      response: { content: { ok: true }, modelKey: m.key },
+    }));
+
+    const resolver = createResolver({
+      getModel: (k) => models[k],
+      getOperationDefaults: () => ({
+        // freeform-generation's base capability is satisfied by
+        // "freeform-only", but the request also carries a schema.
+        operation: "freeform-generation",
+        context: "public",
+        defaultModelKey: "freeform-only",
+        fallbackModelKey: "structured-ok",
+      }),
+      adaptors: { gemini: adaptorCall },
+    });
+
+    const outcome = await resolver.resolve(
+      { ...baseRequest, schema: { type: "object" } },
+      "public",
+    );
+
+    expect(outcome.modelKey).toBe("structured-ok");
+  });
+
+  it("rejects a modelKeyOverride lacking structuredOutput when the request carries a schema", async () => {
+    const noStructured = makeModel({
+      key: "override-no-structured",
+      capabilities: {
+        structuredOutput: false,
+        freeformGeneration: true,
+        revision: false,
+      },
+    });
+    const fallbackModel = makeModel({ key: "fallback-ok" });
+    const models: Record<string, LlmModelDefinition> = {
+      "override-no-structured": noStructured,
+      "fallback-ok": fallbackModel,
+    };
+    const adaptorCall = vi.fn(async (_req, m: LlmModelDefinition) => ({
+      ok: true as const,
+      response: { content: { ok: true }, modelKey: m.key },
+    }));
+
+    const resolver = createResolver({
+      getModel: (k) => models[k],
+      getOperationDefaults: () => ({
+        operation: "freeform-generation",
+        context: "public",
+        defaultModelKey: "fallback-ok",
+        fallbackModelKey: "fallback-ok",
+      }),
+      adaptors: { gemini: adaptorCall },
+    });
+
+    const outcome = await resolver.resolve(
+      {
+        ...baseRequest,
+        schema: { type: "object" },
+        modelKeyOverride: "override-no-structured",
+      },
+      "public",
+    );
+
+    // Falls through to the configured default rather than using the
+    // schema-incapable override.
+    expect(outcome.modelKey).toBe("fallback-ok");
+  });
 });

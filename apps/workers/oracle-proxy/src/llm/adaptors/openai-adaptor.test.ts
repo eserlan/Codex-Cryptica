@@ -135,6 +135,25 @@ describe("callOpenAi", () => {
     if (!result.ok) expect(result.reason).toBe("timeout");
   });
 
+  it("still classifies the abort as a timeout when it rejects with a non-Error (e.g. DOMException-like) abort reason", async () => {
+    const realFetcher = (async (_url: any, init: any) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init.signal.addEventListener("abort", () => {
+          reject({ name: "AbortError", message: "The operation was aborted" });
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    vi.useFakeTimers();
+    const resultPromise = callOpenAi(request, model, env, realFetcher);
+    await vi.advanceTimersByTimeAsync(15_001);
+    const result = await resultPromise;
+    vi.useRealTimers();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("timeout");
+  });
+
   it("reports structured-output validation failure without throwing", async () => {
     const fetcher = vi.fn(
       async () =>
@@ -157,6 +176,40 @@ describe("callOpenAi", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.structuredOutputValidationFailed).toBe(true);
+  });
+
+  it("reports a validation failure when the parsed JSON does not match the requested schema", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            // Valid JSON, but missing the schema's required "ok" property.
+            choices: [{ message: { content: '{"unexpected":true}' } }],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callOpenAi(
+      {
+        ...request,
+        operation: "structured-generation",
+        schema: {
+          type: "object",
+          required: ["ok"],
+          properties: { ok: { type: "boolean" } },
+        },
+      },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.structuredOutputValidationFailed).toBe(true);
+      expect(result.reason).toBe("structured-output-schema-mismatch");
+    }
   });
 
   it("fails clearly when the API key is missing rather than sending an unauthenticated request", async () => {

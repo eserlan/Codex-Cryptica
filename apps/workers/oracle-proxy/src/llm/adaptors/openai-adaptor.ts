@@ -9,6 +9,7 @@ import type {
   LlmModelDefinition,
   LlmRequest,
 } from "../types";
+import { validateAgainstSchema } from "../schema-validation";
 
 const PROVIDER_TIMEOUT_MS = 15_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
@@ -73,7 +74,11 @@ export async function callOpenAi(
       signal: controller.signal,
     });
   } catch (err) {
-    const isTimeout = err instanceof Error && err.name === "AbortError";
+    // In Workers, an aborted fetch typically rejects with a DOMException,
+    // not an Error, so check `.name` directly rather than gating on
+    // `instanceof Error` first.
+    const isTimeout =
+      (err as { name?: string } | undefined)?.name === "AbortError";
     return { ok: false, reason: isTimeout ? "timeout" : "transport-error" };
   } finally {
     clearTimeout(timeout);
@@ -99,17 +104,9 @@ export async function callOpenAi(
     : undefined;
 
   if (request.schema) {
+    let parsed: any;
     try {
-      const parsed = JSON.parse(text);
-      return {
-        ok: true,
-        response: {
-          content: parsed,
-          modelKey: model.key,
-          usage,
-          structuredOutputValid: true,
-        },
-      };
+      parsed = JSON.parse(text);
     } catch {
       return {
         ok: false,
@@ -117,6 +114,22 @@ export async function callOpenAi(
         structuredOutputValidationFailed: true,
       };
     }
+    if (!validateAgainstSchema(parsed, request.schema)) {
+      return {
+        ok: false,
+        reason: "structured-output-schema-mismatch",
+        structuredOutputValidationFailed: true,
+      };
+    }
+    return {
+      ok: true,
+      response: {
+        content: parsed,
+        modelKey: model.key,
+        usage,
+        structuredOutputValid: true,
+      },
+    };
   }
 
   return { ok: true, response: { content: text, modelKey: model.key, usage } };

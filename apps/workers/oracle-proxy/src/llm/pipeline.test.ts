@@ -170,7 +170,7 @@ describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'impr
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("never makes more than two upstream calls, even across the retry-then-fallback path", async () => {
+  it("never makes more than three upstream calls (primary + retry + fallback), even across the retry-then-fallback path", async () => {
     let calls = 0;
     const fetchMock = vi.fn(async (url: string) => {
       calls++;

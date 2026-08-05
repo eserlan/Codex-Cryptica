@@ -251,6 +251,30 @@ describe("callGemini (new provider-neutral adaptor)", () => {
     }
   });
 
+  it("still classifies the abort as a timeout when it rejects with a non-Error (e.g. DOMException-like) abort reason", async () => {
+    // Workers' fetch typically rejects an aborted request with a
+    // DOMException, which is not guaranteed to satisfy `instanceof Error`
+    // — the classification must key off `.name` alone.
+    const realFetcher = (async (_url: any, init: any) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init.signal.addEventListener("abort", () => {
+          reject({ name: "AbortError", message: "The operation was aborted" });
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    vi.useFakeTimers();
+    const resultPromise = callGemini(request, model, env, realFetcher);
+    await vi.advanceTimersByTimeAsync(15_001);
+    const result = await resultPromise;
+    vi.useRealTimers();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("timeout");
+    }
+  });
+
   it("reports structured-output validation failure without throwing", async () => {
     const fetcher = vi.fn(
       async () =>
@@ -276,6 +300,42 @@ describe("callGemini (new provider-neutral adaptor)", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.structuredOutputValidationFailed).toBe(true);
+    }
+  });
+
+  it("reports a validation failure when the parsed JSON does not match the requested schema", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            // Valid JSON, but missing the schema's required "ok" property.
+            candidates: [
+              { content: { parts: [{ text: '{"unexpected":true}' }] } },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callGemini(
+      {
+        ...request,
+        operation: "structured-generation",
+        schema: {
+          type: "object",
+          required: ["ok"],
+          properties: { ok: { type: "boolean" } },
+        },
+      },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.structuredOutputValidationFailed).toBe(true);
+      expect(result.reason).toBe("structured-output-schema-mismatch");
     }
   });
 });

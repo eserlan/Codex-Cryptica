@@ -34,7 +34,7 @@
 
 ## R4: How is the retry-then-fallback policy (Q1, Q5 from clarification) implemented within a single Worker invocation?
 
-**Decision**: `resolver.ts` owns a `resolve(request) → {model, attempt}` loop with a hard cap: (1) resolve primary model, call its adaptor; (2) on structured-output validation failure, call the _same_ adaptor/model exactly once more; (3) on a second failure (validation, timeout at 15s, or transport error), re-resolve against the fallback model and call once (no further retries on the fallback). This bounds every request to at most 2 upstream provider calls, keeping latency predictable within the Workers CPU/wall-time budget.
+**Decision**: `resolver.ts` owns a `resolve(request) → {model, attempt}` loop with a hard cap: (1) resolve primary model, call its adaptor; (2) on structured-output validation failure, call the _same_ adaptor/model exactly once more; (3) on a second failure (validation, timeout at 15s, or transport error), re-resolve against the fallback model and call once (no further retries on the fallback). This bounds every request to at most 3 upstream provider calls (primary + one same-model retry + one fallback call), keeping latency predictable within the Workers CPU/wall-time budget.
 
 **Rationale**: Directly implements the clarified FR-010a (retry-then-fallback) and FR-008 (fallback on unavailability) without open-ended retry loops, which the spec explicitly disallows conflating with "silently run a second model to improve a result" (FR-009) — this retry is _error recovery_, not quality improvement, and is capped and logged (FR-012).
 

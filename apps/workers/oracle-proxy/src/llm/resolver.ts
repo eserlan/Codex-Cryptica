@@ -62,12 +62,20 @@ function capabilityForOperation(
 
 function isViable(
   model: LlmModelDefinition | undefined,
-  operation: LlmOperation,
+  request: LlmRequest,
   context: LlmContext,
 ): model is LlmModelDefinition {
   if (!model || !model.enabled) return false;
   if (!model.availability[context]) return false;
-  return !!model.capabilities[capabilityForOperation(operation)];
+  if (!model.capabilities[capabilityForOperation(request.operation)])
+    return false;
+  // A `schema` implies a structured-output requirement regardless of the
+  // operation's own base capability (e.g. a schema-bearing "classification"
+  // request still needs a model that can reliably produce structured
+  // output) — both adaptors treat any `schema` presence as a structured
+  // request, so the resolver must gate on it too.
+  if (request.schema && !model.capabilities.structuredOutput) return false;
+  return true;
 }
 
 export function createResolver(deps: ResolverDeps) {
@@ -90,6 +98,16 @@ export function createResolver(deps: ResolverDeps) {
     reason: string,
     retryCount: number,
     structuredOutputValidationFailed: boolean,
+    /**
+     * True only when the primary was never actually callable (missing,
+     * disabled, or incapable at selection time) — a registry/config gap.
+     * False when the primary was called and a provider genuinely failed
+     * (timeout, transport error, invalid output). In the false case, if no
+     * fallback is viable either, the original failure `reason` is preserved
+     * so the caller reports "provider unavailable" (502) rather than
+     * masking a real provider failure as "no model configured" (503).
+     */
+    isCapabilityGap: boolean,
   ): Promise<ResolveOutcome> {
     const fallbackKey = defaults?.fallbackModelKey;
     const fallbackModel =
@@ -97,9 +115,12 @@ export function createResolver(deps: ResolverDeps) {
         ? deps.getModel(fallbackKey)
         : undefined;
 
-    if (!isViable(fallbackModel, request.operation, context)) {
+    if (!isViable(fallbackModel, request, context)) {
       return {
-        result: { ok: false, reason: "no-model-available" },
+        result: {
+          ok: false,
+          reason: isCapabilityGap ? "no-model-available" : reason,
+        },
         intendedModelKey,
         retryCount,
         outcome: "failure",
@@ -143,7 +164,7 @@ export function createResolver(deps: ResolverDeps) {
     let primaryKey: string | undefined;
     if (request.modelKeyOverride) {
       const overrideModel = deps.getModel(request.modelKeyOverride);
-      if (isViable(overrideModel, request.operation, context)) {
+      if (isViable(overrideModel, request, context)) {
         primaryKey = request.modelKeyOverride;
       }
     }
@@ -153,7 +174,7 @@ export function createResolver(deps: ResolverDeps) {
 
     const primaryModel = primaryKey ? deps.getModel(primaryKey) : undefined;
 
-    if (!isViable(primaryModel, request.operation, context)) {
+    if (!isViable(primaryModel, request, context)) {
       if (!primaryKey) {
         // No override, and no configured default for this operation/context
         // at all (e.g. "revision" this slice, or an unwired context).
@@ -171,6 +192,7 @@ export function createResolver(deps: ResolverDeps) {
         "primary-unavailable-or-incapable",
         0,
         false,
+        true,
       );
     }
 
@@ -200,6 +222,7 @@ export function createResolver(deps: ResolverDeps) {
       result.reason,
       retryCount,
       !!result.structuredOutputValidationFailed,
+      false,
     );
   }
 

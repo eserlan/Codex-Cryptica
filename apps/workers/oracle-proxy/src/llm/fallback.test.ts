@@ -155,4 +155,26 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
     const body = await response.json();
     expect(body.error.code).toBe("LLM_NO_MODEL_AVAILABLE");
   });
+
+  it("reports LLM_PROVIDER_UNAVAILABLE (502), not LLM_NO_MODEL_AVAILABLE (503), when a real primary and fallback both genuinely fail", async () => {
+    // Both gemini-flash-lite and luna-fast are configured and viable for
+    // freeform-generation — they just both fail at the transport level.
+    // This must not be reported as "no model configured".
+    globalThis.fetch = vi.fn(async () => {
+      throw new Error("network down");
+    }) as typeof fetch;
+
+    const response = await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body.error.code).toBe("LLM_PROVIDER_UNAVAILABLE");
+  });
 });
