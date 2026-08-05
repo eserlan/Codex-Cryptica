@@ -628,6 +628,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
     icon: "icon-[lucide--map]",
   },
+  "star-system-generator": {
+    id: "star-system-generator",
+    title: "Star System Generator",
+    content:
+      "Generate a coherent sci-fi star system — its star(s), 3-12 major bodies, factions, resources and strategic importance, travel hazards, and a system-wide conflict or mystery — rather than a bare list of orbiting objects. Select 'Develop this world' on any named body in the result to open the Sci-Fi World Generator with that body's name, type, and system context pre-populated, so the world you build fits the system it came from. Drafts remain local until you choose to save them.",
+    icon: "icon-[lucide--orbit]",
+  },
   "world-generator": {
     id: "world-generator",
     title: "Sci-Fi World Generator",

@@ -9,8 +9,9 @@
  * vault-grounded sibling (#1935).
  *
  * A generated body can be handed to the World Generator via
- * "Develop this world" (see star-system-develop-world.ts) to open a fresh
- * World Generator draft pre-populated with this system's context.
+ * "Develop this world" (see developWorldLink()/linkifyMajorBodies() below)
+ * to open a fresh World Generator draft pre-populated with this system's
+ * context.
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
@@ -110,11 +111,24 @@ export interface StarSystemBody {
   description: string;
 }
 
+/** Longest developContext query param value before truncation (#1935 review). */
+const DEVELOP_CONTEXT_MAX_LENGTH = 220;
+
+/**
+ * Collapses whitespace and caps length so a verbose AI-authored body
+ * description can't blow up the query string (repeated once per body).
+ */
+function normalizeDevelopContext(text: string): string {
+  const collapsed = text.replace(/\s+/g, " ").trim();
+  if (collapsed.length <= DEVELOP_CONTEXT_MAX_LENGTH) return collapsed;
+  return `${collapsed.slice(0, DEVELOP_CONTEXT_MAX_LENGTH - 1).trimEnd()}…`;
+}
+
 /**
  * Builds the "Develop this world" URL for a major body (#1935): opens the
  * World Generator with this body's name, type, and system context
  * pre-populated via query params. Read back on the World Generator page by
- * consumeDevelopWorldParams() in the web app.
+ * applyPendingDevelopWorld() in apps/web's GeneratorPageContent.svelte.
  */
 function developWorldLink(
   systemTitle: string,
@@ -124,7 +138,9 @@ function developWorldLink(
     developSystem: systemTitle,
     developBody: body.name,
     developBodyType: body.type,
-    developContext: `${body.description}. Part of the ${systemTitle} system.`,
+    developContext: normalizeDevelopContext(
+      `${body.description}. Part of the ${systemTitle} system.`,
+    ),
   });
   return `/generators/world?${params.toString()}`;
 }
@@ -178,6 +194,7 @@ function generateBodies(
   rng: Rng,
 ): StarSystemBody[] {
   const usedTypes = new Set<string>();
+  const usedNames = new Set<string>();
   return Array.from({ length: count }, (_, index) => {
     let type = pickFrom(starSystemConfig.bodyTypes, rng);
     // Prefer variety across a small system; repeats become acceptable once
@@ -191,10 +208,21 @@ function generateBodies(
     }
     usedTypes.add(type);
     const designation = ROMAN_NUMERALS[index] ?? `${index + 1}`;
-    const useLocalName = rng() < 0.35;
-    const name = useLocalName
-      ? `${pickFrom(["New", "Port", "Old", "Fort"], rng)} ${pickFrom(["Halden", "Kestrel", "Varga", "Solace", "Ember"], rng)}`
-      : `${systemName} ${designation}`;
+    const fallbackName = `${systemName} ${designation}`;
+    let name = fallbackName;
+    if (rng() < 0.35) {
+      let attempts = 0;
+      let candidate: string;
+      do {
+        candidate = `${pickFrom(["New", "Port", "Old", "Fort"], rng)} ${pickFrom(["Halden", "Kestrel", "Varga", "Solace", "Ember"], rng)}`;
+        attempts += 1;
+      } while (usedNames.has(candidate) && attempts < 6);
+      // Every fallback designation is unique by construction (distinct
+      // Roman numeral / index per body), so falling back to it always
+      // resolves a collision instead of just reducing its odds.
+      name = usedNames.has(candidate) ? fallbackName : candidate;
+    }
+    usedNames.add(name);
     return { name, type, description: bodyDescription(type, rng) };
   });
 }

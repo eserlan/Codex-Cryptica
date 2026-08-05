@@ -46,6 +46,16 @@ describe("public-star-system", () => {
       expect(bodyLines.length).toBeLessThanOrEqual(7);
     });
 
+    it("gives every major body a unique name across many seeds", () => {
+      for (let seed = 0; seed < 200; seed++) {
+        const result = generateStarSystemLocal({}, seededRng(seed));
+        const names = Array.from(
+          result.content.matchAll(/^- \*\*\[?([^*[\]]+)\]?/gm),
+        ).map((m) => m[1]);
+        expect(new Set(names).size).toBe(names.length);
+      }
+    });
+
     it("links each major body to a pre-populated World Generator draft", () => {
       const result = generateStarSystemLocal({}, seededRng(9));
       const bodyLines = result.content
@@ -162,6 +172,22 @@ describe("public-star-system", () => {
       expect(result.lore).toContain("[Halyard's Reach II](/generators/world?");
       expect(result.lore).toContain("developSystem=Halyard%27s+Reach");
       expect(result.lore).toContain("## History");
+    });
+
+    it("normalizes and truncates a very long AI-authored body description in the link", () => {
+      const longDescription = `a body whose survey report goes on at extraordinary length ${"about local geology ".repeat(20)}and never quite gets to the point`;
+      const text = JSON.stringify({
+        title: "Halyard's Reach",
+        lore: `## Major Bodies\n- **Halyard's Reach II** (Temperate World) — ${longDescription}.\n\n## History\nDetails.`,
+      });
+      const result = parseStarSystemResponse(text);
+      const match = result.lore.match(/developContext=([^)&]+)/);
+      expect(match).not.toBeNull();
+      const contextValue = decodeURIComponent(
+        (match?.[1] ?? "").replace(/\+/g, " "),
+      );
+      expect(contextValue.length).toBeLessThanOrEqual(220);
+      expect(contextValue).not.toContain("\n");
     });
 
     it("strips a ```json fence before parsing", () => {
