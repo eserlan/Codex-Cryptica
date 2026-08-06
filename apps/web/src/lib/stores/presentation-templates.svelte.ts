@@ -21,6 +21,12 @@ function entityLocalDefaultPresentation(
     normalizedEntityType ?? "",
   );
   const isCharacter = normalizedEntityType === "character";
+  const title = isNpcOrMonster
+    ? "NPC / Monster Sheet"
+    : isCharacter
+      ? "Character Sheet"
+      : "Custom Stat Sheet";
+  const columns = isNpcOrMonster ? 2 : 3;
   return {
     id: `builtin-presentation-custom-${schemaTemplateId}`,
     vaultId: null,
@@ -35,7 +41,12 @@ function entityLocalDefaultPresentation(
       : isCharacter
         ? "A simple character presentation generated from this sheet's fields."
         : "A simple presentation generated from this sheet's fields.",
-    source: `## Stats\n\n${references}`,
+    source: `:::card
+### ${title}
+:::stat-group columns=${columns}
+${references}
+:::
+:::`,
     formatVersion: 1,
     isBuiltIn: true,
     createdAt: "2026-08-06T00:00:00.000Z",

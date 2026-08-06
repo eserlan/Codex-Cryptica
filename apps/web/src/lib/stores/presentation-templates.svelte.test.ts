@@ -53,8 +53,9 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     expect(available[0]).toMatchObject({
       name: "Standard NPC / Monster Sheet",
       isBuiltIn: true,
-      source: expect.stringContaining("{{stat.hp}}"),
+      source: expect.stringContaining("### NPC / Monster Sheet"),
     });
+    expect(available[0]?.source).toContain(":::stat-group columns=2");
   });
 
   it("provides character sheets with both character and NPC presentation options", () => {
@@ -71,7 +72,7 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
         expect.objectContaining({
           name: "Standard Character Sheet",
           isBuiltIn: true,
-          source: expect.stringContaining("{{stat.hp}}"),
+          source: expect.stringContaining("### Character Sheet"),
         }),
         expect.objectContaining({
           name: "Standard NPC / Monster Sheet",
@@ -80,6 +81,7 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
         }),
       ]),
     );
+    expect(available[0]?.source).toContain(":::stat-group columns=3");
   });
 
   it("auto-suffixes a new template whose name collides with an existing one for the same schema", async () => {
