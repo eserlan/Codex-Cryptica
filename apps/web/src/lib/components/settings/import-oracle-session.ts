@@ -1,5 +1,6 @@
 import type { DiscoveredEntity, CCImportSession } from "@codex/importer";
 import { discoveredEntitiesToPackage } from "@codex/importer";
+import { wrapWithAbort } from "./import-abort-utils";
 
 export interface OracleImportSessionDeps {
   saveImageToVault: (
@@ -68,30 +69,4 @@ export async function buildOracleSession(
       };
     }),
   };
-}
-
-function wrapWithAbort<T>(
-  promise: Promise<T>,
-  signal?: AbortSignal,
-): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(new Error("Import aborted"));
-
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = () => {
-      signal.removeEventListener("abort", onAbort);
-      reject(new Error("Import aborted"));
-    };
-    signal.addEventListener("abort", onAbort);
-
-    promise
-      .then((val) => {
-        signal.removeEventListener("abort", onAbort);
-        resolve(val);
-      })
-      .catch((err) => {
-        signal.removeEventListener("abort", onAbort);
-        reject(err);
-      });
-  });
 }

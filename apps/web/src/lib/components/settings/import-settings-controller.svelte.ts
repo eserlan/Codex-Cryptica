@@ -49,6 +49,7 @@ import { processScabardFile } from "./import-scabard-processor";
 import { runOracleFileAnalysis } from "./import-oracle-analyzer";
 import { ImportPackManager } from "./import-pack-manager";
 import { VaultFilesProcessor } from "./import-vault-files-processor";
+import { wrapWithAbort } from "./import-abort-utils";
 
 export type ImportMode = "oracle" | "cc" | null;
 export type ImportStep = "upload" | "processing" | "review" | "report";
@@ -604,30 +605,4 @@ export class ImportSettingsController {
   handleCCCommit = () => this.reviewManager.handleCCCommit();
 
   handleCCReportDone = () => this.reviewManager.handleCCReportDone();
-}
-
-function wrapWithAbort<T>(
-  promise: Promise<T>,
-  signal?: AbortSignal,
-): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(new Error("Import aborted"));
-
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = () => {
-      signal.removeEventListener("abort", onAbort);
-      reject(new Error("Import aborted"));
-    };
-    signal.addEventListener("abort", onAbort);
-
-    promise
-      .then((val) => {
-        signal.removeEventListener("abort", onAbort);
-        resolve(val);
-      })
-      .catch((err) => {
-        signal.removeEventListener("abort", onAbort);
-        reject(err);
-      });
-  });
 }
