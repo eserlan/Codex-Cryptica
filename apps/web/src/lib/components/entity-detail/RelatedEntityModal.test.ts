@@ -75,6 +75,15 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: mockOracle,
 }));
 
+const mockThemeStore = vi.hoisted(() => ({
+  worldThemeId: "scifi",
+  activeTheme: { name: "Sci-Fi Terminal" },
+}));
+
+vi.mock("$lib/stores/theme.svelte", () => ({
+  themeStore: mockThemeStore,
+}));
+
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
@@ -157,7 +166,10 @@ describe("RelatedEntityModal", () => {
       expect.any(Array),
       expect.any(Array),
       expect.any(String),
-      expect.objectContaining({ aiDisabled: false }),
+      expect.objectContaining({
+        aiDisabled: false,
+        worldThemeName: "Sci-Fi Terminal",
+      }),
     );
 
     await waitFor(() => {
@@ -186,6 +198,34 @@ describe("RelatedEntityModal", () => {
       ) as HTMLInputElement;
       expect(relationBackInput.value).toBe("rival");
     });
+  });
+
+  it("omits worldThemeName when the vault has no world theme set", async () => {
+    mockThemeStore.worldThemeId = "workspace";
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    const generateBtn = screen.getByText("Generate");
+    await fireEvent.click(generateBtn);
+
+    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+      "test-api-key",
+      expect.any(String),
+      expect.any(Object),
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      expect.any(Array),
+      expect.any(Array),
+      expect.any(String),
+      expect.objectContaining({ worldThemeName: undefined }),
+    );
+
+    mockThemeStore.worldThemeId = "scifi";
   });
 
   it("does not call generation and shows settings prompt when AI is disabled", async () => {
@@ -239,7 +279,10 @@ describe("RelatedEntityModal", () => {
       expect.any(Array),
       expect.any(Array),
       expect.any(String),
-      expect.objectContaining({ aiDisabled: false }),
+      expect.objectContaining({
+        aiDisabled: false,
+        worldThemeName: "Sci-Fi Terminal",
+      }),
     );
   });
 

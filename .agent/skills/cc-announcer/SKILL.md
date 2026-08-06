@@ -1,6 +1,6 @@
 ---
-name: reddit-post
-description: Drafts and polishes authentic Reddit posts about Codex Cryptica — devlogs, release notes, feature updates, technical write-ups, and lessons-learned posts. Subreddit-aware (r/codexcryptica, r/rpg, r/worldbuilding, r/SvelteJS), anti-hype, grounded in actual repo material, and rule-aware about self-promotion. Use this skill whenever the user mentions writing, drafting, polishing, or "making less marketing-ish" any Reddit post, comment, devlog, release announcement, or community update related to Codex Cryptica — even when they don't explicitly name a target subreddit.
+name: cc-announcer
+description: Drafts and polishes authentic Reddit posts, devlogs, release notes, feature updates, technical write-ups, and lessons-learned posts about Codex Cryptica. Subreddit-aware (r/codexcryptica, r/rpg, r/worldbuilding, r/SvelteJS), anti-hype, grounded in actual repo material, and rule-aware about self-promotion. Use this skill whenever the user mentions writing, drafting, polishing, or "making less marketing-ish" any Reddit post, comment, devlog, release announcement, or community update related to Codex Cryptica — even when they don't explicitly name a target subreddit.
 ---
 
 # Reddit Post Generation & Polishing Skill
@@ -86,22 +86,51 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 
 ## Core Style Rules
 
-- **Lead with value.** Open with what changed and why it matters before explaining how it works.
-- **Solo Dev Framing.** Always write in the first-person singular (**"I built"**, **"I changed"**, **"I'm trying to solve"**). Never use "we", "our", or corporate collective voice. This is a passion project built by a single developer (Espen), and the text should reflect that personal craft.
-- **Espen's Authentic Voice.** Keep prose casual, incredibly direct, concise, and highly practical. Avoid wrapping paragraphs in fluffy transitions, generic LLM summary paragraphs, or textbook introductions. Speak plainly, as if talking directly to another developer or GM over a chat window.
+- **Espen's Authentic Voice (Solo Dev Framing).** Write as a solo developer showing off a tool built for their own table (**"I wanted something that felt more like..."**, **"I built a..."**, **"I'd love to know whether..."**). Keep prose loose, natural, and low-adjective.
+- **Banned Product-Copy Rhythms (Hard Rule).** Avoid marketing phrases like:
+  - _"Instead of a bare astronomical inventory..."_
+  - _"system-wide stakes making the system worth visiting"_
+  - _"It supports several genres, from..."_
+  - _"integrates into the in-app Campaign Generator to pull context directly..."_
+    Instead, state what it does plainly (_"It generates the system itself..."_, _"It can generate..."_, _"There are several genre options..."_, _"It is also available inside Codex Cryptica..."_).
+- **Human List Rhythms.** Keep feature lists loose and unadorned without heavy adjective pairing on every bullet point. Use simple bullet points under clear introductory headers (`It can generate:`).
+- **No Emojis or Em Dashes (Hard Rule).** NEVER use emojis (e.g. ✨, 🪐, 🚀) or em dashes (`—`). They look artificial and overly polished/AI-generated. Use plain punctuation (hyphens `-`, colons `:`, or parentheticals) instead.
 - **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
-- **Scannable but not over-formatted.** Short paragraphs, light bullets, occasional bold lead-ins. Avoid horizontal rules unless the post is genuinely long. No emoji unless the user or sub specifically supports it.
+- **Scannable but clean formatting.** Short paragraphs, light bullet points, and clean bold lead-ins (e.g., `### What's improved`, `### Where to find it`, `### What you can create`).
+- **Visuals and Image Support.** Include image placeholders or embedded screenshots where relevant (e.g. `![Character Chat Mobile View](...)` or `[Image: Cosmic Horror Hub Theme preview]`). Show direct interface/visual proof of changes.
 - **Concrete over abstract.** A specific example or screenshot beats a paragraph of adjectives every time.
 - **One question at the end.** A genuine question that invites discussion. Not a CTA, not "what do you think?" — something the reader could actually answer.
-- **Links: one or two in the post body, max.** Everything else goes in the first comment.
+- **Links: one or two in the post body, max.** Everything else goes in the first comment (or direct link with `👉` omitted; use plain text/links like `Explore the Cosmic Horror Hub: codexcryptica.com/...`).
 
-### Phrases to avoid
+### Phrases and formatting to avoid
 
-Banned by default: _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
+- **Banned punctuation/formatting:** Emojis (✨, 🪐, 👉, 🚀, etc.) and em-dashes (`—`).
+- **Banned buzzwords:** _game-changing, revolutionary, next-gen, ultimate, seamlessly, unlocks, harness, leverage, empower, supercharge, level up, in the realm of, dive into, journey, robust, cutting-edge, transform._
 
 ### Cadence to avoid
 
 LLM-generated posts often share a recognizable rhythm: paragraphs of similar length, every section opening with a transition word, a closing paragraph that restates the post. Break the cadence — vary paragraph lengths, let some sentences run short, and don't write a conclusion that summarizes what was just said.
+
+---
+
+## Image & Asset Workflow (Cloudflare R2)
+
+When preparing screenshots and visual assets for announcements, devlogs, or discussions:
+
+1. **Bucket Name**: `codex-cryptica-statics`
+2. **Public CDN Domain / Path**: `https://static.codexcryptica.com/discussions/<feature-name>/...` (or `blog/assets/...` / `announcements/...`).
+3. **Capture via Chrome DevTools MCP or Playwright**:
+   - Drive the browser using Chrome DevTools MCP tools (`navigate_page`, `resize_page`, `take_screenshot`) or Playwright E2E automation (`--reporter=list`).
+   - Capture clean, high-resolution desktop and mobile viewport screenshots of the live feature or local dev server (`http://localhost:5173`).
+4. **Upload via Wrangler to Cloudflare R2**:
+   - Use `bunx wrangler r2 object put` to upload captured image assets directly to the R2 bucket:
+     ```bash
+     bunx wrangler r2 object put codex-cryptica-statics/discussions/<feature-name>/<image-file>.png --file <local-path> --remote
+     ```
+   - Alternatively, place images in the appropriate directory and execute an upload helper script using `bunx wrangler r2 object put`.
+5. **Reference in Drafts**:
+   - Insert direct markdown image links pointing to the R2 CDN or relative repo assets:
+     `![Feature Title](https://static.codexcryptica.com/discussions/<feature-name>/<image-file>.png)`
 
 ---
 
@@ -133,32 +162,50 @@ Prefer titles that sound native to Reddit. Mix patterns rather than defaulting t
 
 ## Post Structure Template
 
-### Opening (2 to 4 sentences)
+Derived from top-performing GitHub Discussions (#2016, #1987) and Reddit announcements. Always keep formatting clean and direct.
 
-Direct hook. What changed, who it's for, why it matters. Disclosure of affiliation belongs here for posts outside r/codexcryptica.
+### Title
 
-### What changed
+Clean, punchy summary of what changed or what was added. Do NOT use emojis in the title.
 
-Bulleted or short-section form. For each change, cover:
+- Preferred format: `[Feature / Area Name]: [Primary benefit or action phrase]`
+- Example: `Better Character Chat: switch speakers, keep sessions, chat comfortably on mobile`
+- Example: `New: Cosmic Horror Hub and Theme`
 
-- What it does (one line)
-- Why it matters (one line)
-- An interesting implementation detail (only if relevant to the sub)
+### Opening (1 to 3 sentences)
 
-### Under the hood (optional)
+Immediate summary hook. What's new, what problem it solves for the host/GM/player, and why it was updated. Disclosure of affiliation belongs here for posts outside r/codexcryptica.
 
-For r/SvelteJS, expand this section — it's the whole point. For r/rpg and r/worldbuilding, keep it to one or two lines or move it to the first comment.
+- Example: `Character Chat has received a focused usability upgrade for hosts. It is now much easier to test and roleplay conversations with the characters in your world.`
 
-Relevant topics: Svelte 5 runes (`$state`, `$derived`, `$effect`), Svelte stores, local-first data flow, OPFS, IndexedDB / Dexie, graph state management, Cytoscape integration, Tiptap extensions, performance work, privacy-first architecture, optional user-controlled AI.
+### Hero Image / Visual Screenshot
 
-### Closing
+Embed or place an image directly after the intro paragraph showing the feature in action:
 
-End with one real question. Examples that work:
+- `![Feature Preview](path/to/screenshot.png)`
 
-- For tool builders: `How do you balance tactical features with keeping a GM tool lightweight?`
-- For worldbuilders: `Would you rather have deeper graph exploration, better maps, or stronger timeline tools next?`
-- For Svelte folks: `How are others handling local-first persistence with OPFS vs IndexedDB?`
-- For GMs: `Does an integrated map layer actually solve session friction, or do you prefer keeping notes and maps separate?`
+### Key Breakdown Sections (Pick 1 or 2 clear subheadings)
+
+Use clear H3 subheadings matching the feature type (e.g. `### What's improved`, `### What you can create`, `### Where to find it`):
+
+- **Bullet lists with bold lead-ins**: Each bullet starts with a short 2-5 word bold phrase summarizing the benefit, followed by 1-2 concise sentences.
+- **No emojis or em dashes anywhere in bullets**. Use standard hyphens and colons.
+
+Example (`### What's improved`):
+
+- **Choose who you chat as**: Start a conversation as yourself or as one of your campaign characters, so the reply can reflect that character's role and relationships.
+- **Switch speakers without losing history**: Change the speaking character or return to any previous conversation with that character without overwriting existing logs.
+- **Smoother mobile experience**: The chat layout, message bubbles, controls, and settings now use space more effectively on small screens.
+
+Example (`### Where to find it`):
+
+- Open a Character, select the Chats tab, enable Guest Character Chat, then use the Character Chat panel to begin. Host Character Chat stays local to your browser and separate from guest logs.
+
+### Closing & Discussion Question
+
+Wrap up with a short invitation to test in a session and ask one concrete question (no emojis, no hyphens/em-dashes as dividers).
+
+- Example: `Try it in your next session and let me know how the conversation flow feels!`
 
 ---
 
@@ -228,7 +275,8 @@ Before returning a draft, verify:
 - Would the post still be useful if the reader never clicked a link?
 - Are all technical claims grounded in provided changelogs, specs, code, or repo material?
 - Has the post been adapted to the target subreddit, not just dropped into a generic template?
-- Have any banned phrases or LLM-cadence patterns slipped in?
+- Have any banned phrases, emojis, em dashes (`—`), or LLM-cadence patterns slipped in?
+- Are image/screenshot placeholders included right after the opening summary?
 
 If any answer is "no" or "unsure," revise before returning.
 

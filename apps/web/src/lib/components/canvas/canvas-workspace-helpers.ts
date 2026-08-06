@@ -17,6 +17,7 @@ import {
   type DelveCanvasNode,
   type DelveRoomNodeData,
 } from "generator-engine";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export type CanvasWorkspacePoint = { x: number; y: number };
 
@@ -493,10 +494,12 @@ export function autoArrangeCanvasNodes(params: {
   title: string;
   nodes: Node[];
   edges: Edge[];
+  clock?: Clock;
 }): Node[] | null {
+  const clock = params.clock ?? systemClock;
   const delveRooms = params.nodes.filter((node) => node.type === "delveRoom");
   if (delveRooms.length > 0) {
-    const now = Date.now();
+    const now = clock.now();
     const rawDoc: DelveCanvasDocument = {
       id: params.canvasId,
       conceptId: params.canvasId,
@@ -558,7 +561,7 @@ export function autoArrangeCanvasNodes(params: {
   if (adventureNodes.length === 0) return null;
 
   const adventureNodeIds = new Set(adventureNodes.map((node) => node.id));
-  const now = new Date().toISOString();
+  const now = new Date(clock.now()).toISOString();
   const rawDoc: AdventureCanvasDocument = {
     id: params.canvasId,
     title: params.title,

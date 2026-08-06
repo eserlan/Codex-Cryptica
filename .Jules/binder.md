@@ -102,8 +102,13 @@
 
 **Learning:** Found hardcoded `crypto.randomUUID()` usage within the logic for adding and deduping fields in Svelte stat sheet components (`StatSheetEditor` and `StatSheetView`). While these are UI components, the logic for generating IDs makes testing these interactions brittle and dependent on global browser APIs.
 **Action:** Injected `idGenerator: IdGenerator` as an optional prop with a default of `systemIdGenerator` from `$lib/utils/runtime-deps`. This pattern allows Svelte components to seamlessly use the production default while enabling easy mocking in component tests without global overrides.
-## 2024-10-24 - Injecting `Date.now` for timer-based testing
 
-**Learning:** Testing debounce or interval logic (e.g. `handleVersionSkewReload` in `hooks.client.ts`) often fails deterministically if it relies on the global `Date.now()`. Bypassing this with `vi.spyOn(Date, 'now')` or `vi.useFakeTimers()` can cause widespread, subtle test pollution if not cleaned up properly, especially in concurrent runners like Vitest.
+## 2026-08-04 - Inject Clock into Canvas Workspace Helpers
 
+**Learning:** Found hardcoded `Date.now()` usage in `autoArrangeCanvasNodes` within `apps/web/src/lib/components/canvas/canvas-workspace-helpers.ts`. This creates a hidden dependency on the global system clock that makes testing timestamp generation brittle.
+**Action:** Replaced direct `Date.now()` and `new Date().toISOString()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Updated tests to pass a mock `Clock` in the `params` to avoid Vitest global pollution.
+
+## 2026-08-05 - Injecting Date.now for timer-based testing
+
+**Learning:** Testing debounce or interval logic (e.g. `handleVersionSkewReload` in `hooks.client.ts`) can fail non-deterministically if it relies on the global `Date.now()`. Bypassing this with `vi.spyOn(Date, 'now')` or `vi.useFakeTimers()` can cause widespread, subtle test pollution if not cleaned up properly, especially in concurrent runners like Vitest.
 **Action:** Extract the temporal dependency `Date.now` into an injectable function parameter (e.g. `getNow: () => number = Date.now`). This creates a clean boundary for tests to supply mock timestamp sequences without touching the global environment.

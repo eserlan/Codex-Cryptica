@@ -107,13 +107,8 @@ describe("DefaultAIClientManager", () => {
       const mockResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
-          candidates: [
-            {
-              content: {
-                parts: [{ text: "Test response" }],
-              },
-            },
-          ],
+          content: "Test response",
+          modelKey: "gemini-flash-lite",
         }),
       };
 
@@ -132,15 +127,145 @@ describe("DefaultAIClientManager", () => {
         }),
       );
 
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      expect(body.operation).toBe("freeform-generation");
+      expect(body.messages).toEqual([
+        { role: "user", content: "Test message" },
+      ]);
+
       expect(result.response.text()).toBe("Test response");
+    });
+
+    it("maps responseMimeType application/json to the structured-generation operation", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ content: { ok: true } }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: "Return JSON" }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      expect(body.operation).toBe("structured-generation");
+
+      // Structured content comes back as a parsed object server-side;
+      // callers doing their own JSON.parse(text()) must still see a string.
+      expect(result.response.text()).toBe('{"ok":true}');
+    });
+
+    it("forwards responseSchema as the request body's schema field", async () => {
+      // Regression: without a schema, oracle-proxy has nothing to validate
+      // the parsed response against, so structuredOutputValid defaults to
+      // true even for a malformed/wrong-shaped response. Forwarding the
+      // schema also lets OpenAI-family models return a JSON array at the
+      // root (json_object mode can only return an object).
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ content: [] }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const schema = { type: "array", items: { type: "string" } };
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: "Return JSON" }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: schema as any,
+        },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      expect(body.schema).toEqual(schema);
+    });
+
+    it("logs the model the registry actually resolved, not just the legacy model-name hint", async () => {
+      // Regression: a stale "gemini-3.5-flash-lite" model hint could read as
+      // the model that served the request even when the registry actually
+      // picked luna-fast — the resolved model must be logged explicitly.
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          content: { ok: true },
+          modelKey: "luna-fast",
+        }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      const model = await manager.getModel("", "gemini-3.5-flash-lite");
+      await model.generateContent("Test message");
+
+      expect(logSpy).toHaveBeenCalledWith(
+        "[OracleProxy] Resolved model: luna-fast",
+      );
+      logSpy.mockRestore();
+    });
+
+    it("forwards temperature, topP, and maxOutputTokens from generationConfig", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ content: "ok" }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+        generationConfig: {
+          temperature: 0.85,
+          topP: 0.95,
+          maxOutputTokens: 4096,
+        },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      expect(body.temperature).toBe(0.85);
+      expect(body.topP).toBe(0.95);
+      expect(body.maxOutputTokens).toBe(4096);
+    });
+
+    it("falls back to the legacy request shape for non-text response modalities", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [{ inlineData: { data: "b64", mimeType: "image/png" } }],
+              },
+            },
+          ],
+        }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const request: any = {
+        contents: [{ role: "user", parts: [{ text: "draw a cat" }] }],
+        generationConfig: { response_modalities: ["IMAGE"] },
+      };
+      await model.generateContent(request);
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      // Legacy shape, not the operation pipeline's messages/operation shape.
+      expect(body.operation).toBeUndefined();
+      expect(body.contents).toBeDefined();
     });
 
     it("should handle empty response structure gracefully", async () => {
       const mockResponse = {
         ok: true,
-        json: vi.fn().mockResolvedValue({
-          candidates: [{}], // Missing content.parts[0].text
-        }),
+        json: vi.fn().mockResolvedValue({}), // Missing content
       };
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
@@ -188,13 +313,7 @@ describe("DefaultAIClientManager", () => {
       const mockResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
-          candidates: [
-            {
-              content: {
-                parts: [{ text: "Response with system instruction" }],
-              },
-            },
-          ],
+          content: "Response with system instruction",
         }),
       };
 
@@ -210,8 +329,9 @@ describe("DefaultAIClientManager", () => {
       const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
       const body = JSON.parse(callArgs.body as string);
 
-      expect(body.system_instruction).toEqual({
-        parts: [{ text: "You are a helpful assistant" }],
+      expect(body.messages[0]).toEqual({
+        role: "system",
+        content: "You are a helpful assistant",
       });
     });
 
@@ -338,13 +458,7 @@ describe("DefaultAIClientManager", () => {
       const mockResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
-          candidates: [
-            {
-              content: {
-                parts: [{ text: "Coherent response" }],
-              },
-            },
-          ],
+          content: "Coherent response",
         }),
       };
 
@@ -362,10 +476,16 @@ describe("DefaultAIClientManager", () => {
       const callArgs = (fetch as any).mock.calls[0][1] as RequestInit;
       const body = JSON.parse(callArgs.body as string);
 
-      expect(body.contents).toHaveLength(3);
-      expect(body.contents[0].parts[0].text).toBe("Hello");
-      expect(body.contents[1].role).toBe("model");
-      expect(body.contents[2].parts[0].text).toBe("What is my name?");
+      expect(body.messages).toHaveLength(3);
+      expect(body.messages[0]).toEqual({ role: "user", content: "Hello" });
+      expect(body.messages[1]).toEqual({
+        role: "assistant",
+        content: "Hi there",
+      });
+      expect(body.messages[2]).toEqual({
+        role: "user",
+        content: "What is my name?",
+      });
 
       const streamResult = await result.stream.next();
       expect(streamResult.value.text()).toBe("Coherent response");
@@ -376,9 +496,7 @@ describe("DefaultAIClientManager", () => {
       let call = 0;
       (fetch as any).mockImplementation(async () => ({
         ok: true,
-        json: vi.fn().mockResolvedValue({
-          candidates: [{ content: { parts: [{ text: responses[call++] }] } }],
-        }),
+        json: vi.fn().mockResolvedValue({ content: responses[call++] }),
       }));
 
       const model = await manager.getModel("", "gemini-1.5-pro");
@@ -393,18 +511,18 @@ describe("DefaultAIClientManager", () => {
 
       // The second call must see the first user message AND the first
       // model reply, not just the freshly sent second message.
-      expect(secondCallBody.contents).toHaveLength(3);
-      expect(secondCallBody.contents[0]).toEqual({
+      expect(secondCallBody.messages).toHaveLength(3);
+      expect(secondCallBody.messages[0]).toEqual({
         role: "user",
-        parts: [{ text: "First message" }],
+        content: "First message",
       });
-      expect(secondCallBody.contents[1]).toEqual({
-        role: "model",
-        parts: [{ text: "First reply" }],
+      expect(secondCallBody.messages[1]).toEqual({
+        role: "assistant",
+        content: "First reply",
       });
-      expect(secondCallBody.contents[2]).toEqual({
+      expect(secondCallBody.messages[2]).toEqual({
         role: "user",
-        parts: [{ text: "Second message" }],
+        content: "Second message",
       });
     });
   });

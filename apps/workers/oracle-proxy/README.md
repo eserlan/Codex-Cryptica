@@ -1,12 +1,35 @@
 # Oracle Proxy Worker
 
-Cloudflare Worker that proxies requests from Codex Cryptica clients to Google's Gemini API.
+Cloudflare Worker that proxies requests from Codex Cryptica clients to Google's Gemini API, and — via the LLM model registry/resolver — to any other configured provider (currently also OpenAI-compatible, including GPT-5.6 Luna).
 
 ## Purpose
 
 - **System Proxy Mode**: Allows users to access the Oracle without providing their own API key
 - **Security**: System API key never exposed to client-side code
 - **CORS**: Restricts access to authorized Codex Cryptica domains only
+
+## LLM Operation Pipeline (`src/llm/`)
+
+Alongside the legacy Gemini-only request shapes below, the Worker accepts a provider-neutral operation request — the entry point for the model registry/resolver added in [specs/153-llm-model-registry](../../../specs/153-llm-model-registry/). A request is routed through this pipeline when its JSON body has a top-level `operation` field:
+
+```bash
+curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://codex-cryptica.com" \
+  -d '{
+    "operation": "structured-generation",
+    "messages": [{ "role": "user", "content": "Return {\"ok\": true} as JSON." }],
+    "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } }, "required": ["ok"] }
+  }'
+```
+
+Key points:
+
+- **Operations**: `structured-generation`, `freeform-generation`, `revision` (not yet wired to a default), `classification`, `utility`.
+- **No provider details from the client**: the request never carries a provider name, provider URL, credential, or concrete model identifier — those live only in `src/llm/registry.ts`. An optional `modelKeyOverride` may name an internal registry key (not a provider model id).
+- **Model registry**: `src/llm/registry.ts` — the single place mapping an internal model key to a provider, API model identifier, capabilities, and pricing. Add `OPENAI_API_KEY` (see below) before enabling any OpenAI-family model, including Luna.
+- **Response shape**: identical regardless of which provider served the request — see `specs/153-llm-model-registry/contracts/llm-operation-request.md`.
+- Requests without an `operation` field are handled by the pre-existing branches below, completely unchanged.
 
 ## Deployment
 
@@ -171,6 +194,14 @@ Creating a new guest snapshot requires a server-validated Cloudflare Turnstile t
 ```bash
 wrangler tail
 ```
+
+For historical/queryable logs (not just live tail), use the Cloudflare
+dashboard → Workers & Pages → `oracle-proxy` → **Logs** tab. This is where
+the LLM pipeline's `ResolutionLogEntry` metadata lands — filterable by
+`outcome`, `modelKey`, `operation`, etc. Every entry is metadata only
+(model key, provider, operation type, latency, outcome, token usage/cost,
+retry/fallback info) — **no prompt or response content is ever logged**, so
+the Logs tab is safe to view or screenshot without redacting anything.
 
 ### Check Worker Status
 
