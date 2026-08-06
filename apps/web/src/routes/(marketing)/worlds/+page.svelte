@@ -7,6 +7,8 @@
   import WorldsProvenanceNotice from "$lib/components/publishing/WorldsProvenanceNotice.svelte";
   import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
 
+  const VIEW_MODE_KEY = "cc_directory_view_mode";
+
   interface DirectoryResult {
     publishId: string;
     guestUrl: string;
@@ -35,7 +37,7 @@
   let showReportModal = $state(false);
 
   $effect(() => {
-    const saved = browserStorage.getItem("cc_directory_view_mode");
+    const saved = browserStorage.getItem(VIEW_MODE_KEY);
     if (saved === "grid" || saved === "list") {
       viewMode = saved;
     }
@@ -43,7 +45,7 @@
 
   function setViewMode(mode: "grid" | "list") {
     viewMode = mode;
-    browserStorage.setItem("cc_directory_view_mode", mode);
+    browserStorage.setItem(VIEW_MODE_KEY, mode);
   }
 
   function renderInlineMarkdown(text: string): string {
