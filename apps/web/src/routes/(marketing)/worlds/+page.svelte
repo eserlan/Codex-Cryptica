@@ -3,6 +3,7 @@
   import { marked } from "marked";
   import DOMPurify from "dompurify";
   import { browser } from "$app/environment";
+  import { browserStorage } from "$lib/utils/runtime-deps";
   import WorldsProvenanceNotice from "$lib/components/publishing/WorldsProvenanceNotice.svelte";
   import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
 
@@ -34,19 +35,15 @@
   let showReportModal = $state(false);
 
   $effect(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("cc_directory_view_mode");
-      if (saved === "grid" || saved === "list") {
-        viewMode = saved;
-      }
+    const saved = browserStorage.getItem("cc_directory_view_mode");
+    if (saved === "grid" || saved === "list") {
+      viewMode = saved;
     }
   });
 
   function setViewMode(mode: "grid" | "list") {
     viewMode = mode;
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("cc_directory_view_mode", mode);
-    }
+    browserStorage.setItem("cc_directory_view_mode", mode);
   }
 
   function renderInlineMarkdown(text: string): string {
