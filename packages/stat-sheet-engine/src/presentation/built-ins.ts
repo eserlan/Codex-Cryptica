@@ -127,32 +127,9 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::
 
 ### Characteristics & Luck Points
-:::stat-group columns=8
-:::card
-{{stat.str label="STR"}}
-:::
-:::card
-{{stat.con label="CON"}}
-:::
-:::card
-{{stat.siz label="SIZ"}}
-:::
-:::card
-{{stat.dex label="DEX"}}
-:::
-:::card
-{{stat.int label="INT"}}
-:::
-:::card
-{{stat.pow label="POW"}}
-:::
-:::card
-{{stat.cha label="CHA"}}
-:::
-:::card
-{{stat.lp label="Luck"}}
-:::
-:::
+| STR | CON | SIZ | DEX | INT | POW | CHA | Luck |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| {{stat.str hide-label}} | {{stat.con hide-label}} | {{stat.siz hide-label}} | {{stat.dex hide-label}} | {{stat.int hide-label}} | {{stat.pow hide-label}} | {{stat.cha hide-label}} | {{stat.lp display="counter" hide-label}} |
 
 :::card
 ### Hit Locations & Armor

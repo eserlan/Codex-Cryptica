@@ -44,13 +44,17 @@ const schema: StatSheetTemplate = {
 };
 
 describe("getBuiltInPresentationTemplates", () => {
-  it("keeps Mythras combat styles and professional skills in the character sheet", () => {
+  it("keeps Mythras attributes, combat styles, and professional skills in the character sheet", () => {
     const mythrasTemplate = getBuiltInPresentationTemplates(
       "builtin-mythras-character",
     ).find((template) => template.name === "Mythras Character Sheet");
 
     expect(mythrasTemplate?.source).toContain("{{stat.combat_styles");
     expect(mythrasTemplate?.source).toContain("{{stat.professional_skills");
+    expect(mythrasTemplate?.source).toContain(
+      "| STR | CON | SIZ | DEX | INT | POW | CHA | Luck |",
+    );
+    expect(mythrasTemplate?.source).toContain("{{stat.str hide-label}}");
   });
 });
 
