@@ -56,6 +56,17 @@ describe("ActivityBar", () => {
     expect(screen.getByTestId("activity-bar-quicknote")).toBeDefined();
   });
 
+  it("absorbs the mobile bottom safe area into the activity bar", () => {
+    render(ActivityBar);
+
+    const activityBar = screen.getByRole("navigation", {
+      name: "Activity Bar",
+    });
+    expect(activityBar.className).toContain(
+      "pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]",
+    );
+  });
+
   it("opens the Oracle sidebar when the Oracle shortcut is clicked", async () => {
     render(ActivityBar);
 
