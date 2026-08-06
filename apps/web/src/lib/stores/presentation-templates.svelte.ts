@@ -121,14 +121,11 @@ export class PresentationTemplateStore {
     // local too: generic built-ins would reference fields it does not have.
     if (schemaTemplateId.startsWith(ENTITY_LOCAL_SCHEMA_PREFIX)) {
       if (!fields) return vaultTemplates;
-      const builtIns = [
-        entityLocalDefaultPresentation(schemaTemplateId, fields, entityType),
-      ];
-      // CC treats player characters and NPCs as the same broad entity kind;
-      // offer character sheets the NPC/monster layout as an alternative.
-      if (entityType?.toLowerCase() === "character") {
-        builtIns.push(entityLocalNpcPresentation(schemaTemplateId, fields));
-      }
+      const builtIns = this.generatedLayoutsForSchema(
+        schemaTemplateId,
+        fields,
+        entityType,
+      );
       const generalLayouts = getBuiltInPresentationTemplates(
         schemaTemplateId,
       ).filter((template) =>
@@ -140,6 +137,24 @@ export class PresentationTemplateStore {
       ...getBuiltInPresentationTemplates(schemaTemplateId),
       ...vaultTemplates,
     ];
+  }
+
+  /** Field-aware built-ins for a schema. They use the schema's real field
+   * ids, so they are safe for both reusable templates and manually assembled
+   * sheets. Character layouts also expose the NPC/monster stat-block option. */
+  generatedLayoutsForSchema(
+    schemaTemplateId: string,
+    fields: StatSheetTemplateField[],
+    entityType = "character",
+  ): PresentationTemplate[] {
+    const primary = entityLocalDefaultPresentation(
+      schemaTemplateId,
+      fields,
+      entityType,
+    );
+    return entityType.toLowerCase() === "character"
+      ? [primary, entityLocalNpcPresentation(schemaTemplateId, fields)]
+      : [primary];
   }
 
   findById(id: string): PresentationTemplate | null {

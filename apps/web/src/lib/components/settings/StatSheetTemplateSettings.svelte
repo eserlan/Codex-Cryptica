@@ -32,9 +32,15 @@
 
   const availablePresentations = $derived(
     selectedPresentationSchema
-      ? presentationTemplates.availableTemplatesForSchema(
-          selectedPresentationSchema.id,
-        )
+      ? [
+          ...presentationTemplates.availableTemplatesForSchema(
+            selectedPresentationSchema.id,
+          ),
+          ...presentationTemplates.generatedLayoutsForSchema(
+            selectedPresentationSchema.id,
+            selectedPresentationSchema.fields,
+          ),
+        ]
       : [],
   );
 

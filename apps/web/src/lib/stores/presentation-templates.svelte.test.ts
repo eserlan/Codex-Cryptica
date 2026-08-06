@@ -89,6 +89,19 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     expect(available[0]?.source).toContain(":::stat-group columns=3");
   });
 
+  it("generates both reusable character and NPC layouts for a stat schema", () => {
+    const store = makeStore();
+
+    const layouts = store.generatedLayoutsForSchema("schema-1", [
+      { id: "hp", label: "Hit Points", type: "counter" },
+    ]);
+
+    expect(layouts.map((layout) => layout.name)).toEqual([
+      "Standard Character Sheet",
+      "Standard NPC / Monster Sheet",
+    ]);
+  });
+
   it("auto-suffixes a new template whose name collides with an existing one for the same schema", async () => {
     const store = makeStore();
     const first = await store.saveTemplate({
