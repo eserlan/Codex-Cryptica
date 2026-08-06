@@ -1,7 +1,7 @@
 ---
 id: gdrive-cloud-sync
 title: Google Drive Cloud Sync
-tags: [sync, cloud, vault, google-drive, co-gm]
+tags: [sync, cloud, vault, google-drive]
 rank: 17
 ---
 
@@ -37,5 +37,5 @@ Click **Disconnect** in the connected state to remove the Drive link from this v
 
 ## Related Blog Posts
 
-- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and co-GM collaboration.
+- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and restore.
 - [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and private cloud backups keep your campaign notes safe.
