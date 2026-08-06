@@ -124,7 +124,13 @@ describe("StatSheetTemplateStore", () => {
     expect(mythras.fields.find((f) => f.id === "evade")).toMatchObject({
       type: "dice",
       formula: "1d100",
+      label: "Evade",
     });
+    expect(
+      mythras.fields
+        .filter((field) => field.type === "dice")
+        .some((field) => field.label.includes("(d100)")),
+    ).toBe(false);
     expect(mythras.fields.find((f) => f.id === "ap")).toMatchObject({
       type: "counter",
       min: 0,
@@ -175,6 +181,11 @@ describe("StatSheetTemplateStore", () => {
       type: "longtext",
       label: "Creature Traits & Special Abilities",
     });
+    expect(
+      mythrasNpc.fields
+        .filter((field) => field.type === "dice")
+        .some((field) => field.label.includes("(d100)")),
+    ).toBe(false);
   });
 
   it("saves the current fields as a new vault-scoped template", async () => {
