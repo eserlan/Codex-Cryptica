@@ -444,6 +444,7 @@ describe("canvas-workspace-helpers", () => {
   });
 
   it("auto-arranges Delve rooms through the shared canvas layout entry point", () => {
+    const clockSpy = vi.fn().mockReturnValue(1234567890);
     const nodes = [
       {
         id: "sector-1",
@@ -494,9 +495,10 @@ describe("canvas-workspace-helpers", () => {
           },
         },
       ] as any,
-      clock: { now: () => 1234567890 },
+      clock: { now: clockSpy },
     });
 
+    expect(clockSpy).toHaveBeenCalled();
     expect(arranged).not.toBeNull();
     expect(arranged?.find((node) => node.id === "sector-1")).toMatchObject({
       width: expect.any(Number),
@@ -510,6 +512,7 @@ describe("canvas-workspace-helpers", () => {
   });
 
   it("does not auto-arrange an ordinary entity canvas", () => {
+    const clockSpy = vi.fn().mockReturnValue(1234567890);
     expect(
       autoArrangeCanvasNodes({
         canvasId: "canvas-1",
@@ -523,9 +526,10 @@ describe("canvas-workspace-helpers", () => {
           },
         ] as any,
         edges: [],
-        clock: { now: () => 1234567890 },
+        clock: { now: clockSpy },
       }),
     ).toBeNull();
+    expect(clockSpy).not.toHaveBeenCalled();
   });
 
   it("hydrates sector frames with a dedicated drag handle", () => {
