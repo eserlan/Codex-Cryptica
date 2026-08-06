@@ -17,6 +17,14 @@ export class InteractionExpiredError extends Error {
 }
 
 /**
+ * Registry key used for server-side turn state (Interactions path).
+ * oracle-proxy's `handleInteraction` resolves this via the model registry, so
+ * it's provider-neutral on the wire — chat/revision/generator sessions all
+ * thread this same key regardless of the caller's Gemini model-tier setting.
+ */
+export const INTERACTION_MODEL_KEY = "luna-fast";
+
+/**
  * Sends a plain-text generateContent request through oracle-proxy's
  * provider-neutral operation pipeline (specs/153-llm-model-registry)
  * instead of the legacy Gemini-only `contents`/`generationConfig` shape.

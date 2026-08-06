@@ -21,7 +21,8 @@ You may choose to synchronize your campaign with a folder on your computer.
 If you use the AI features (Lore Oracle, Image Generation), your data is processed as follows:
 
 - **Google Gemini:** Snippets of your current campaign context (entities and chronicles) are sent to Google's Gemini API to provide reasoning and generation.
-- **Data Usage:** According to Google's standard API terms, data sent via their paid/tier-based APIs is typically not used to train their global models.
+- **OpenAI:** For some requests — including Lore Oracle chat, entity revisions, and generator sessions — your campaign context and conversation is instead sent to OpenAI's API, retained server-side for the duration of that conversation so follow-up turns don't need to resend it.
+- **Data Usage:** According to Google's and OpenAI's standard API terms, data sent via their paid/tier-based APIs is typically not used to train their global models.
 - **Opt-out:** You can disable all AI features by enabling "AI Disabled" in the settings.
 
 ## 4. Analytics and Telemetry

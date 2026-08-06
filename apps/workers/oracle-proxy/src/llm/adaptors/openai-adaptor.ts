@@ -17,6 +17,7 @@ import {
 const PROVIDER_TIMEOUT_MS = 15_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
   "https://api.openai.com/v1/chat/completions";
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 
 interface OpenAiEnv {
   OPENAI_API_KEY?: string;
@@ -161,4 +162,127 @@ export async function callOpenAi(
   }
 
   return { ok: true, response: { content: text, modelKey: model.key, usage } };
+}
+
+export interface OpenAiInteractionResult {
+  ok: boolean;
+  status: number;
+  data: unknown;
+  parseError?: boolean;
+  transportError?: boolean;
+}
+
+/**
+ * Forward an Interactions-API-shaped request body (the proxy's provider-neutral
+ * wire contract: `input`, `previous_interaction_id`, `store`) to OpenAI's
+ * Responses API, translating it into that API's own turn-continuation shape
+ * (`input`, `previous_response_id`). Lets `handleInteraction` in index.ts treat
+ * every provider identically — same request/response shape as
+ * `forwardInteractionToGemini` — so chat/revision/generator sessions that
+ * already thread a `previousInteractionId` through get server-side turn state
+ * on OpenAI models for free, just by naming an OpenAI registry key as `model`.
+ */
+export async function forwardInteractionToOpenAi(
+  body: Record<string, any>,
+  modelId: string,
+  env: OpenAiEnv,
+  fetcher: typeof fetch = fetch,
+): Promise<OpenAiInteractionResult> {
+  if (!env.OPENAI_API_KEY) {
+    return {
+      ok: false,
+      status: 500,
+      data: { error: { message: "missing-openai-api-key" } },
+    };
+  }
+
+  const instructions: string | undefined =
+    typeof body.system_instruction === "string"
+      ? body.system_instruction
+      : typeof body.systemInstruction === "string"
+        ? body.systemInstruction
+        : body.system_instruction?.parts?.[0]?.text;
+
+  const payload: Record<string, unknown> = {
+    model: modelId,
+    input: body.input,
+    store: body.store ?? true,
+  };
+  if (body.previous_interaction_id) {
+    payload.previous_response_id = body.previous_interaction_id;
+  }
+  if (instructions) {
+    payload.instructions = instructions;
+  }
+
+  const genConfig = body.generation_config || body.generationConfig;
+  if (genConfig) {
+    // Schema-less "give me valid JSON" mode — the Responses API's structured
+    // output config moved from chat/completions' `response_format` to
+    // `text.format` (mirrors the json_object/json_schema modes callOpenAi
+    // already uses for the operation pipeline). Only json_object is needed
+    // here: none of today's Interactions-path callers (chat/revision/
+    // generator sessions) pass an explicit schema through generationConfig.
+    const mimeType = genConfig.responseMimeType ?? genConfig.response_mime_type;
+    if (mimeType === "application/json") {
+      payload.text = { format: { type: "json_object" } };
+      // OpenAI's schema-less json_object mode 400s unless "json" appears
+      // somewhere in the instructions/input (same constraint callOpenAi
+      // documents for chat/completions' json_object mode). Guarantee it here
+      // rather than trusting every Interactions-path caller's system
+      // instruction to happen to mention it.
+      payload.instructions = payload.instructions
+        ? `${payload.instructions}\n\nRespond with valid JSON.`
+        : "Respond with valid JSON.";
+    }
+    const maxOutputTokens =
+      genConfig.maxOutputTokens ?? genConfig.max_output_tokens;
+    if (maxOutputTokens !== undefined) {
+      payload.max_output_tokens = maxOutputTokens;
+    }
+    const topP = genConfig.topP ?? genConfig.top_p;
+    if (topP !== undefined) payload.top_p = topP;
+    // `temperature` intentionally omitted: GPT-5.6-family models reject an
+    // explicit value (see callOpenAi above) and every OpenAI registry entry
+    // today is in that family.
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await fetcher(OPENAI_RESPONSES_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error("[Oracle Proxy] OpenAI Responses fetch error:", err);
+    return { ok: false, status: 502, data: null, transportError: true };
+  }
+
+  const text = await upstream.text();
+  try {
+    const data = text ? JSON.parse(text) : {};
+    return { ok: upstream.ok, status: upstream.status, data };
+  } catch {
+    return { ok: false, status: 502, data: null, parseError: true };
+  }
+}
+
+/**
+ * Extract assistant text from a Responses API payload: `output` is a list of
+ * items, of which `message`-typed ones carry `content` blocks of type
+ * `output_text`.
+ */
+export function extractOpenAiResponseText(data: any): string {
+  const output: any[] = Array.isArray(data?.output) ? data.output : [];
+  return output
+    .filter((item) => item?.type === "message")
+    .flatMap((item) => (Array.isArray(item?.content) ? item.content : []))
+    .filter((c: any) => c?.type === "output_text")
+    .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
+    .filter(Boolean)
+    .join("");
 }

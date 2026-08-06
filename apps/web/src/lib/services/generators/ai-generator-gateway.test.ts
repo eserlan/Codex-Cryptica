@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { InteractionExpiredError } from "@codex/ai-engine";
+import {
+  InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
+} from "@codex/ai-engine";
 import {
   ProxyAIGeneratorGateway,
   extractJsonObject,
@@ -46,6 +49,7 @@ describe("ProxyAIGeneratorGateway", () => {
       sendInteraction: async (params: unknown) => {
         expect(params).toEqual(
           expect.objectContaining({
+            model: INTERACTION_MODEL_KEY,
             input: "delta request",
             previousInteractionId: "interaction-1",
             storeConversation: true,
@@ -106,6 +110,7 @@ describe("ProxyAIGeneratorGateway", () => {
     expect(calls).toHaveLength(2);
     expect(calls[1]).toEqual(
       expect.objectContaining({
+        model: INTERACTION_MODEL_KEY,
         input: "full replay",
         previousInteractionId: null,
         generationConfig: expect.objectContaining({
