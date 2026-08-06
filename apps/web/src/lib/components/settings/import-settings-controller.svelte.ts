@@ -7,47 +7,24 @@ import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { createWebVaultWriter } from "$lib/features/importer/web-vault-writer";
-import { mapThemeToGenre } from "./theme-mapper";
-import { listPacks, packToDiscoveredEntities } from "@codex/content-packs";
 import type { CreaturePack } from "@codex/content-packs";
 import {
   TextParser,
   DocxParser,
   JsonParser,
   PdfParser,
-  OracleAnalyzer,
   calculateFileHash,
-  getRegistry,
-  markChunkComplete,
-  clearRegistryEntry,
-  splitTextIntoChunks,
   mergeEntities,
+  clearRegistryEntry,
   getFileExtension,
   isScabardExport,
   validateImportFile,
-  parseScabardExport,
-  detectChronicaExport,
-  parseChronicaExports,
-  discoveredEntitiesToPackage,
   ImportEngine,
-  setItemDecision,
-  setMatchDecision,
-  setItemType,
-  parseCifPackage,
-  resolveCifAssets,
-  validateCifManifest,
-  normalizeCifPackage,
   cifSourceRefBuilder,
   CIF_MAPPING_RULES,
-  isThreadWeaverExport,
-  convertThreadWeaverJsonToCif,
-  droppedItemsToPackage,
-  buildVaultFilesMappingRules,
   vaultFileSourceRefBuilder,
-  resolveMissingImage,
 } from "@codex/importer";
 import type {
-  ChronicaExportDocument,
   CCImportSession,
   DiscoveredEntity,
   ImportReport,
@@ -58,7 +35,22 @@ import type {
   MissingImageReference,
   CCImportPackage,
 } from "@codex/importer";
-import { pickDirectory, isFileSystemAccessSupported } from "$lib/utils/fs";
+import { ImportMissingImagesHandler } from "./import-missing-images.svelte";
+import {
+  looksLikeCifFile,
+  looksLikeThreadWeaverFile,
+  processCifFile,
+  processThreadWeaverFile,
+  type CifProcessorCallbacks,
+} from "./import-cif-processor";
+import { buildOracleSession } from "./import-oracle-session";
+import { ImportReviewManager } from "./import-review-manager";
+import { processChronicaFiles } from "./import-chronica-processor";
+import { processScabardFile } from "./import-scabard-processor";
+import { runOracleFileAnalysis } from "./import-oracle-analyzer";
+import { ImportPackManager } from "./import-pack-manager";
+import { VaultFilesProcessor } from "./import-vault-files-processor";
+import { wrapWithAbort } from "./import-abort-utils";
 
 type MarkdownFrontmatterValidator =
   typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
@@ -100,10 +92,11 @@ export class ImportSettingsController {
   showResumeToast = $state(false);
   currentFileHash = $state("");
   rejectedFiles = $state<{ name: string; reason: string }[]>([]);
-  expandedPacks = $state<Record<string, boolean>>({});
   importProgress = $state<{ current: number; total: number } | null>(null);
   missingImageRefs = $state<MissingImageReference[]>([]);
   private vaultFilesPackage: CCImportPackage | null = null;
+  private markdownFrontmatterValidator: MarkdownFrontmatterValidator | null =
+    null;
 
   processingSubtitle = $derived(
     this.importMode === "cc"
@@ -111,36 +104,74 @@ export class ImportSettingsController {
       : "Oracle is interpreting your notes",
   );
   oracleEnabled = $derived.by(() => this.deps.oracle.isEnabled);
-
-  availablePacks = listPacks();
-  targetGenre = $derived.by(() =>
-    mapThemeToGenre(
-      this.deps.themeStore?.worldThemeId ||
-        this.deps.themeStore?.activeTheme?.id ||
-        "",
-    ),
-  );
-  masterPacks = $derived.by(() =>
-    this.availablePacks.filter(
-      (p) => !p.parentPackId && (p.genre || "fantasy") === this.targetGenre,
-    ),
-  );
-  existingEntitySlugs = $derived.by(() => {
-    const slugs = new Set<string>();
-    for (const entity of this.deps.vault.allEntities) {
-      slugs.add(this.toTitleSlug(entity.title));
-    }
-    return slugs;
-  });
-
-  private markdownFrontmatterValidator: MarkdownFrontmatterValidator | null =
-    null;
   private readonly parsers = [
     new TextParser(),
     new DocxParser(),
     new JsonParser(),
     new PdfParser(),
   ];
+
+  constructor(private deps: ImportSettingsControllerDeps = defaultDeps) {}
+
+  syncModalImportState = () => {
+    this.deps.modalUIStore.isImporting =
+      this.step === "processing" ||
+      this.step === "review" ||
+      this.step === "report";
+  };
+
+  resetModalImportState = () => {
+    this.deps.modalUIStore.isImporting = false;
+  };
+
+  private _packManager: ImportPackManager | null = null;
+  private get packManager(): ImportPackManager {
+    return (this._packManager ??= new ImportPackManager({
+      getThemeId: () =>
+        this.deps.themeStore?.worldThemeId ||
+        this.deps.themeStore?.activeTheme?.id ||
+        "",
+      getVaultEntities: () => this.deps.vault.allEntities,
+      buildOracleSession: (entities, label, signal) =>
+        this.buildOracleSession(entities, label, signal),
+      getAbortSignal: () => this.deps.connectionModeStore.abortSignal,
+      setImportMode: (mode) => (this.importMode = mode),
+      setStep: (step) => (this.step = step),
+      setStatusMessage: (msg) => (this.statusMessage = msg),
+      clearStateForPack: () => {
+        this.rejectedFiles = [];
+        this.ccReport = null;
+        this.discoveredEntities = [];
+      },
+      setSession: (session) => (this.ccSession = session),
+      rejectFile: (name, reason) => this.rejectedFiles.push({ name, reason }),
+    }));
+  }
+
+  get availablePacks() {
+    return this.packManager.availablePacks;
+  }
+  get targetGenre() {
+    return this.packManager.targetGenre;
+  }
+  get masterPacks() {
+    return this.packManager.masterPacks;
+  }
+  get existingEntitySlugs() {
+    return this.packManager.existingEntitySlugs;
+  }
+  get expandedPacks() {
+    return this.packManager.expandedPacks;
+  }
+
+  getSubpacks = (masterId: string) => this.packManager.getSubpacks(masterId);
+  togglePackExpanded = (packId: string) =>
+    this.packManager.togglePackExpanded(packId);
+  getPackImportStatus = (pack: CreaturePack) =>
+    this.packManager.getPackImportStatus(pack);
+  handlePackSelect = (pack: CreaturePack) =>
+    this.packManager.handlePackSelect(pack);
+
   private readonly ccMappingRules: MappingRuleSet = {
     rules: [
       { when: { sourceType: "Character" }, thenType: "character" },
@@ -165,82 +196,6 @@ export class ImportSettingsController {
       { when: { sourceType: "lore" }, thenType: "note" },
     ],
     defaultType: "note",
-  };
-
-  constructor(private deps: ImportSettingsControllerDeps = defaultDeps) {}
-
-  private toTitleSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  }
-
-  syncModalImportState = () => {
-    this.deps.modalUIStore.isImporting =
-      this.step === "processing" ||
-      this.step === "review" ||
-      this.step === "report";
-  };
-
-  resetModalImportState = () => {
-    this.deps.modalUIStore.isImporting = false;
-  };
-
-  getSubpacks = (masterId: string) =>
-    this.availablePacks.filter((p) => p.parentPackId === masterId);
-
-  togglePackExpanded = (packId: string) => {
-    this.expandedPacks[packId] = !this.expandedPacks[packId];
-  };
-
-  getPackImportStatus = (pack: CreaturePack) => {
-    let importedCount = 0;
-    for (const entry of pack.entries) {
-      const slug = this.toTitleSlug(entry.title);
-      if (this.existingEntitySlugs.has(slug)) importedCount++;
-    }
-    return {
-      importedCount,
-      total: pack.entries.length,
-      isFullyImported:
-        pack.entries.length > 0 && importedCount === pack.entries.length,
-      isPartiallyImported:
-        importedCount > 0 && importedCount < pack.entries.length,
-    };
-  };
-
-  handlePackSelect = async (pack: CreaturePack) => {
-    const knownTitleToId = new Map<string, string>();
-    for (const e of this.deps.vault.allEntities) {
-      knownTitleToId.set(this.toTitleSlug(e.title), e.id);
-    }
-    const entities = packToDiscoveredEntities(pack, knownTitleToId);
-
-    this.importMode = "oracle";
-    this.step = "processing";
-    this.statusMessage = `Preparing ${pack.name} for review...`;
-    this.rejectedFiles = [];
-    this.ccReport = null;
-    this.discoveredEntities = [];
-
-    try {
-      this.ccSession = await this.buildOracleSession(
-        entities,
-        pack.name,
-        this.deps.connectionModeStore.abortSignal,
-      );
-      this.step = "review";
-    } catch (error) {
-      this.rejectedFiles.push({
-        name: pack.name,
-        reason:
-          error instanceof Error
-            ? error.message
-            : "Could not prepare this pack for review.",
-      });
-      this.step = "upload";
-    }
   };
 
   private getMarkdownFrontmatterValidator = async () => {
@@ -304,288 +259,59 @@ export class ImportSettingsController {
    * also recognised, so this errs toward routing genuine CIF packages to
    * their dedicated (safer) validation path rather than the generic parsers.
    */
-  private async looksLikeCifFile(file: File): Promise<boolean> {
-    if (/\.cif\.(json|zip)$/i.test(file.name)) return true;
-    if (!file.name.toLowerCase().endsWith(".json")) return false;
-    try {
-      const parsed = JSON.parse(await file.text());
-      return (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        (parsed as Record<string, unknown>).format === "codex-world-interchange"
-      );
-    } catch {
-      return false;
-    }
+  private _missingImagesHandler: ImportMissingImagesHandler | null = null;
+  private get missingImagesHandler(): ImportMissingImagesHandler {
+    return (this._missingImagesHandler ??= new ImportMissingImagesHandler({
+      notificationStore: this.deps.notificationStore,
+      getVaultFilesPackage: () => this.vaultFilesPackage,
+      setVaultFilesPackage: (pkg) => (this.vaultFilesPackage = pkg),
+      getMissingImageRefs: () => this.missingImageRefs,
+      setMissingImageRefs: (refs) => (this.missingImageRefs = refs),
+      reprepareVaultFilesSession: () => this.prepareVaultFilesSession(),
+    }));
   }
 
-  /**
-   * A raw Thread Weaver campaign export (not yet converted to CIF). Detected
-   * separately from — and after — `looksLikeCifFile`, so a real `.cif.json`
-   * always takes that dedicated path first.
-   */
-  private async looksLikeThreadWeaverFile(file: File): Promise<boolean> {
-    if (!file.name.toLowerCase().endsWith(".json")) return false;
-    try {
-      const parsed = JSON.parse(await file.text());
-      return isThreadWeaverExport(parsed);
-    } catch {
-      return false;
-    }
+  handleAddMissingImageFile = (ref: MissingImageReference, file: File) =>
+    this.missingImagesHandler.handleAddMissingImageFile(ref, file);
+
+  handleResolveMissingImageFromFolder = (ref: MissingImageReference) =>
+    this.missingImagesHandler.handleResolveMissingImageFromFolder(ref);
+
+  private looksLikeCifFile = looksLikeCifFile;
+  private looksLikeThreadWeaverFile = looksLikeThreadWeaverFile;
+
+  private handleCifFile(file: File, signal: AbortSignal) {
+    return processCifFile(file, signal, this.getCifCallbacks());
   }
 
-  /**
-   * CIF is a single self-contained package (FR-001): parse + validate fully
-   * before opening review (FR-003), never mutating the vault on failure or
-   * cancellation (FR-009). Guests never reach the flow (FR-019).
-   */
-  private async handleCifFile(file: File, signal: AbortSignal) {
-    await this.handleCifSource(
-      {
-        fileName: file.name,
-        size: file.size,
-        text: () => file.text(),
-        bytes: async () => new Uint8Array(await file.arrayBuffer()),
-      },
-      file.name,
-      signal,
-    );
+  private handleThreadWeaverFile(file: File, signal: AbortSignal) {
+    return processThreadWeaverFile(file, signal, this.getCifCallbacks());
   }
 
-  /**
-   * Users shouldn't need to run the conversion script themselves: a raw
-   * Thread Weaver export is converted to a CIF package in-browser (the same
-   * pure `convertThreadWeaverJsonToCif` the CLI script wraps), then handed
-   * to the exact same parse/validate/review pipeline as a real `.cif.json`.
-   */
-  private async handleThreadWeaverFile(file: File, signal: AbortSignal) {
-    if (this.deps.vault.isGuest) {
-      this.rejectedFiles.push({
-        name: file.name,
-        reason: "Guests cannot import into a vault.",
-      });
-      this.step = "upload";
-      return;
-    }
-
-    this.importMode = "cc";
-    this.statusMessage = "Converting Thread Weaver export...";
-
-    let convertedText: string;
-    try {
-      const raw = JSON.parse(await file.text());
-      convertedText = JSON.stringify(convertThreadWeaverJsonToCif(raw));
-    } catch (error) {
-      this.rejectedFiles.push({
-        name: file.name,
-        reason:
-          error instanceof Error
-            ? error.message
-            : "Failed to convert Thread Weaver export",
-      });
-      this.step = "upload";
-      this.importMode = null;
-      return;
-    }
-
-    const bytes = new TextEncoder().encode(convertedText);
-    await this.handleCifSource(
-      {
-        fileName: file.name.replace(/\.json$/i, ".cif.json"),
-        size: bytes.byteLength,
-        text: async () => convertedText,
-        bytes: async () => bytes,
-      },
-      file.name,
-      signal,
-    );
+  private getCifCallbacks(): CifProcessorCallbacks {
+    return {
+      isGuest: this.deps.vault.isGuest,
+      rejectFile: (name, reason) => this.rejectedFiles.push({ name, reason }),
+      setImportMode: (mode) => (this.importMode = mode),
+      setStatusMessage: (msg) => (this.statusMessage = msg),
+      setStep: (step) => (this.step = step),
+      createCifEngine: () => this.createCifEngine(),
+      setSession: (session) => (this.ccSession = session),
+      setReport: (report) => (this.ccReport = report),
+    };
   }
 
-  private async handleCifSource(
-    source: Parameters<typeof parseCifPackage>[0],
-    displayName: string,
-    signal: AbortSignal,
-  ) {
-    if (this.deps.vault.isGuest) {
-      this.rejectedFiles.push({
-        name: displayName,
-        reason: "Guests cannot import into a vault.",
-      });
-      this.step = "upload";
-      return;
-    }
-
-    this.importMode = "cc";
-    this.statusMessage = "Preparing CIF import review...";
-
-    const parseResult = await parseCifPackage(source);
-
-    if (!parseResult.ok) {
-      this.rejectedFiles.push({
-        name: displayName,
-        reason: parseResult.errors.map((e) => e.message).join(" "),
-      });
-      this.step = "upload";
-      this.importMode = null;
-      return;
-    }
-
-    // Cross-record validation (FR-002/FR-003): a schema-valid manifest can
-    // still be structurally broken (duplicate keys, unresolved references,
-    // hierarchy cycles, unsupported version) — never open a review session
-    // for one of those.
-    const validation = validateCifManifest(parseResult.manifest);
-    if (!validation.ok) {
-      this.rejectedFiles.push({
-        name: displayName,
-        reason: validation.errors.map((e) => e.message).join(" "),
-      });
-      this.step = "upload";
-      this.importMode = null;
-      return;
-    }
-
-    // ZIP packages: verify and resolve binary assets before review. Integrity
-    // failures (missing files, digest mismatches, unsafe paths) block the
-    // package the same way cross-record validation errors do.
-    let resolvedAssets: Awaited<ReturnType<typeof resolveCifAssets>> | null =
-      null;
-    if (parseResult.zip) {
-      resolvedAssets = await resolveCifAssets(
-        parseResult.manifest,
-        parseResult.zip.files,
-      );
-      if (resolvedAssets.errors.length > 0) {
-        this.rejectedFiles.push({
-          name: displayName,
-          reason: resolvedAssets.errors.map((e) => e.message).join(" "),
-        });
-        this.step = "upload";
-        this.importMode = null;
-        return;
-      }
-    }
-
-    const { pkg } = normalizeCifPackage(parseResult.manifest, {
-      assets: resolvedAssets?.assets,
-      zipIgnoredPaths: parseResult.zip?.ignoredPaths,
-    });
-
-    // validateCifManifest's own warnings (e.g. cif.unmapped-kind, which
-    // normalizeCifPackage doesn't separately compute) must still reach the
-    // review/report — merge in anything not already present, deduped by
-    // code+ref+message so categories both functions independently compute
-    // (no-world-key, unknown-extension, assets-not-imported) don't double up.
-    const seenWarnings = new Set(
-      pkg.warnings.map((w) => `${w.code}:${w.ref ?? ""}:${w.message}`),
-    );
-    for (const warning of [
-      ...validation.warnings,
-      ...(resolvedAssets?.warnings ?? []),
-    ]) {
-      const key = `${warning.code}:${warning.ref ?? ""}:${warning.message}`;
-      if (!seenWarnings.has(key)) {
-        pkg.warnings.push(warning);
-        seenWarnings.add(key);
-      }
-    }
-
-    try {
-      this.ccSession = await wrapWithAbort(
-        this.createCifEngine().prepare(pkg),
-        signal,
-      );
-    } catch (error) {
-      if (
-        signal.aborted ||
-        (error instanceof Error && error.message === "Import aborted")
-      ) {
-        this.step = "upload";
-        this.ccSession = null;
-        this.ccReport = null;
-        this.importMode = null;
-        return;
-      }
-      this.rejectedFiles.push({
-        name: displayName,
-        reason:
-          error instanceof Error ? error.message : "Invalid CIF import package",
-      });
-    }
-
-    this.step = this.ccSession ? "review" : "upload";
-    if (!this.ccSession && this.rejectedFiles.length === 0) {
-      this.statusMessage = "No CIF package was prepared.";
-    }
-  }
-
-  /**
-   * Converts AI-discovered entities (Oracle analysis, creature packs) into a
-   * CCImportPackage and runs it through the same generic engine as Scabard/
-   * Chronica, so they share one preview/decision/commit/report pipeline.
-   * Local blob images are resolved to real vault paths first since the
-   * converter itself stays a pure, side-effect-free function.
-   */
-  private buildOracleSession = async (
+  private buildOracleSession = (
     entities: DiscoveredEntity[],
     sourceLabel: string,
     signal: AbortSignal,
-  ): Promise<CCImportSession> => {
-    const resolvedEntities = await Promise.all(
-      entities.map(async (entity) => {
-        const imgRef = entity.frontmatter?.image;
-        if (!imgRef || !this.extractedAssets.has(imgRef)) return entity;
-
-        const asset = this.extractedAssets.get(imgRef);
-        try {
-          const saved = await this.deps.vault.saveImageToVault(
-            asset.blob,
-            entity.id,
-            asset.originalName,
-          );
-          return {
-            ...entity,
-            frontmatter: {
-              ...entity.frontmatter,
-              image: saved.image,
-              thumbnail: saved.thumbnail,
-              width: entity.frontmatter.width ?? asset.width,
-              height: entity.frontmatter.height ?? asset.height,
-            },
-          };
-        } catch {
-          return entity;
-        }
-      }),
-    );
-
-    const pkg = discoveredEntitiesToPackage(resolvedEntities, sourceLabel);
-    const session = await wrapWithAbort(
-      this.createEngine().prepare(pkg),
-      signal,
-    );
-
-    const matchedById = new Map(
-      resolvedEntities
-        .filter((e) => e.matchedEntityId)
-        .map((e) => [e.id, e.matchedEntityId as string]),
-    );
-
-    return {
-      ...session,
-      items: session.items.map((item) => {
-        const matchedEntityId = item.draft.sourceId
-          ? matchedById.get(item.draft.sourceId)
-          : undefined;
-        if (!matchedEntityId) return item;
-        return {
-          ...item,
-          match: { entityId: matchedEntityId },
-          matchDecision: "update" as const,
-        };
-      }),
-    };
-  };
+  ): Promise<CCImportSession> =>
+    buildOracleSession(entities, sourceLabel, signal, {
+      saveImageToVault: (blob, id, name) =>
+        this.deps.vault.saveImageToVault(blob, id, name),
+      extractedAssets: this.extractedAssets,
+      createEngine: () => this.createEngine(),
+    });
 
   handleFiles = async (files: File[]) => {
     this.step = "processing";
@@ -601,7 +327,6 @@ export class ImportSettingsController {
 
     const signal = this.deps.connectionModeStore.abortSignal;
     const apiKey = this.deps.oracle.effectiveApiKey || "";
-    let analyzer: OracleAnalyzer | null = null;
     let lockedMode: ImportMode = null;
 
     // CIF: a single self-contained package, detected before chronica/scabard
@@ -623,118 +348,21 @@ export class ImportSettingsController {
       return;
     }
 
-    const chronicaDocuments: ChronicaExportDocument[] = [];
-    const chronicaMixedRejections: { name: string; reason: string }[] = [];
-
-    for (const file of files) {
-      const fileValidation = validateImportFile(file);
-      if (!fileValidation.success) continue;
-
-      const parser = this.parsers.find((p) => p.accepts(file));
-      if (!(parser instanceof JsonParser)) continue;
-
-      try {
-        const result = await parser.parse(file);
-        const parsedJson = JSON.parse(result.text);
-        if (detectChronicaExport(parsedJson)) {
-          chronicaDocuments.push({ fileName: file.name, json: parsedJson });
-          continue;
-        }
-
-        chronicaMixedRejections.push({
-          name: file.name,
-          reason: "Chronica imports cannot be mixed with other import types",
-        });
-      } catch {
-        // Invalid JSON is handled in the main pass.
-      }
-    }
-
-    if (chronicaDocuments.length > 0) {
-      this.importMode = "cc";
-      this.statusMessage = "Preparing Chronica import review...";
-
-      for (const rejection of chronicaMixedRejections) {
-        this.rejectedFiles.push(rejection);
-      }
-
-      for (const file of files) {
-        if (chronicaDocuments.some((doc) => doc.fileName === file.name)) {
-          continue;
-        }
-        if (chronicaMixedRejections.some((entry) => entry.name === file.name)) {
-          continue;
-        }
-
-        const fileValidation = validateImportFile(file);
-        if (!fileValidation.success) {
-          this.rejectedFiles.push({
-            name: file.name,
-            reason: fileValidation.reason,
-          });
-          continue;
-        }
-
-        const parser = this.parsers.find((p) => p.accepts(file));
-        if (!parser) {
-          this.rejectedFiles.push({
-            name: file.name,
-            reason: "Unsupported file type",
-          });
-          continue;
-        }
-
-        if (parser instanceof JsonParser) {
-          try {
-            const result = await parser.parse(file);
-            JSON.parse(result.text);
-          } catch {
-            this.rejectedFiles.push({
-              name: file.name,
-              reason: "Invalid JSON",
-            });
-          }
-          continue;
-        }
-
-        this.rejectedFiles.push({
-          name: file.name,
-          reason: "Chronica imports cannot be mixed with other import types",
-        });
-      }
-
-      try {
-        const chronicaPackage = parseChronicaExports(chronicaDocuments);
-        this.ccSession = await wrapWithAbort(
-          this.createEngine().prepare(chronicaPackage),
-          signal,
-        );
-      } catch (error) {
-        if (
-          signal.aborted ||
-          (error instanceof Error && error.message === "Import aborted")
-        ) {
-          this.step = "upload";
-          this.ccSession = null;
-          this.ccReport = null;
-          this.importMode = null;
-          return;
-        }
-        this.rejectedFiles.push({
-          name: chronicaDocuments.map((doc) => doc.fileName).join(", "),
-          reason:
-            error instanceof Error
-              ? error.message
-              : "Invalid Chronica import package",
-        });
-      }
-
-      this.step = this.ccSession ? "review" : "upload";
-      if (!this.ccSession && this.rejectedFiles.length === 0) {
-        this.statusMessage = "No Chronica package was prepared.";
-      }
-      return;
-    }
+    const processedChronica = await processChronicaFiles(
+      files,
+      this.parsers,
+      signal,
+      {
+        rejectFile: (name, reason) => this.rejectedFiles.push({ name, reason }),
+        setImportMode: (mode) => (this.importMode = mode),
+        setStatusMessage: (msg) => (this.statusMessage = msg),
+        setStep: (step) => (this.step = step),
+        createEngine: () => this.createEngine(),
+        setSession: (session) => (this.ccSession = session),
+        setReport: (report) => (this.ccReport = report),
+      },
+    );
+    if (processedChronica) return;
 
     for (const file of files) {
       if (signal.aborted) break;
@@ -792,104 +420,43 @@ export class ImportSettingsController {
         }
 
         if (scabard) {
-          this.importMode = "cc";
           lockedMode = "cc";
-          this.statusMessage = "Preparing Scabard import review...";
-          try {
-            const scabardPackage = parseScabardExport(result.text);
-            this.ccSession = await wrapWithAbort(
-              this.createEngine().prepare(scabardPackage),
-              signal,
-            );
-          } catch (error) {
-            if (
-              signal.aborted ||
-              (error instanceof Error && error.message === "Import aborted")
-            ) {
-              this.step = "upload";
-              this.ccSession = null;
-              this.ccReport = null;
-              this.importMode = null;
-              return;
-            }
-            this.rejectedFiles.push({
-              name: file.name,
-              reason:
-                error instanceof Error
-                  ? error.message
-                  : "Invalid Scabard import package",
-            });
-          }
+          await processScabardFile(file, result.text, signal, {
+            rejectFile: (name, reason) =>
+              this.rejectedFiles.push({ name, reason }),
+            setImportMode: (mode) => (this.importMode = mode),
+            setStatusMessage: (msg) => (this.statusMessage = msg),
+            setStep: (step) => (this.step = step),
+            createEngine: () => this.createEngine(),
+            setSession: (session) => (this.ccSession = session),
+            setReport: (report) => (this.ccReport = report),
+          });
           continue;
         }
 
         this.importMode = "oracle";
         lockedMode = "oracle";
 
-        analyzer ??= new OracleAnalyzer((modelName: string) =>
-          this.deps.aiClientManager.getModel(apiKey, modelName),
-        );
-
-        if (isMarkdown) {
-          const validateMarkdownFrontmatter =
-            await this.getMarkdownFrontmatterValidator();
-          const validation = validateMarkdownFrontmatter(result.text);
-          if (!validation.success) {
-            this.rejectedFiles.push({
-              name: file.name,
-              reason: "Invalid YAML frontmatter",
-            });
-            continue;
-          }
-        }
-
-        result.assets.forEach((asset) => {
-          this.extractedAssets.set(asset.placementRef, asset);
-        });
-
-        const knownEntities: Record<string, string> = {};
-        // ⚡ Bolt Optimization: Replace inline Object.values().forEach() with an imperative loop on cached allEntities
-        for (const e of this.deps.vault.allEntities) {
-          knownEntities[e.title] = e.id;
-        }
-
-        const chunks = splitTextIntoChunks(result.text);
-        this.totalChunks = chunks.length;
-        const registry = await getRegistry(hash, file.name, this.totalChunks);
-
-        if (registry.completedIndices.length > 0) {
-          if (registry.completedIndices.length === this.totalChunks) {
-            this.statusMessage = `Already processed: ${file.name}.`;
-            continue;
-          }
-          this.showResumeToast = true;
-          setTimeout(() => (this.showResumeToast = false), 5000);
-        }
-
-        this.deps.importQueue.activeItemChunks = {};
-        registry.completedIndices.forEach((idx) => {
-          this.deps.importQueue.updateChunkStatus(idx, "skipped");
-        });
-
-        if (signal.aborted) break;
-
-        this.statusMessage = `Analyzing ${file.name} with Oracle...`;
-        await analyzer.analyze(result.text, {
-          signal,
-          knownEntities,
-          completedIndices: registry.completedIndices,
-          onChunkActive: (idx) => {
-            this.deps.importQueue.updateChunkStatus(idx, "active");
-            this.statusMessage = `Analyzing chunk ${idx + 1}/${this.totalChunks}...`;
-          },
-          onChunkProcessed: async (idx, res) => {
-            await markChunkComplete(hash, idx);
-            this.deps.importQueue.updateChunkStatus(idx, "completed");
+        await runOracleFileAnalysis(file, result, hash, isMarkdown, signal, {
+          aiClientManager: this.deps.aiClientManager,
+          apiKey,
+          vaultAllEntities: this.deps.vault.allEntities,
+          importQueue: this.deps.importQueue,
+          setStatusMessage: (msg) => (this.statusMessage = msg),
+          setShowResumeToast: (show) => (this.showResumeToast = show),
+          setTotalChunks: (total) => (this.totalChunks = total),
+          setCurrentFileHash: (h) => (this.currentFileHash = h),
+          extractedAssets: this.extractedAssets,
+          addDiscoveredEntities: (entities) => {
             this.discoveredEntities = mergeEntities([
               ...this.discoveredEntities,
-              ...res.entities,
+              ...entities,
             ]);
           },
+          rejectFile: (name, reason) =>
+            this.rejectedFiles.push({ name, reason }),
+          getMarkdownFrontmatterValidator: () =>
+            this.getMarkdownFrontmatterValidator(),
         });
       } catch (err: any) {
         if (
@@ -926,7 +493,7 @@ export class ImportSettingsController {
       return;
     }
 
-    if (this.importMode === "cc") {
+    if ((this.importMode as ImportMode) === "cc") {
       this.step = this.ccSession ? "review" : "upload";
       if (!this.ccSession && this.rejectedFiles.length === 0) {
         this.statusMessage = "No import package was prepared.";
@@ -971,206 +538,31 @@ export class ImportSettingsController {
     this.step = "upload";
   };
 
-  /**
-   * Entry point for the "Import Files" drag-and-drop/upload source (FR-001–
-   * FR-003): mechanically (no Oracle) converts a drag-and-drop or file
-   * upload selection into a review session. Guests never reach the flow,
-   * consistent with the rest of this deterministic import surface. Only
-   * reachable while `step === "upload"` (the entry point is only rendered
-   * then), which is this feature's concurrency guard (FR-017) — no
-   * additional state is needed since a second call can't happen until this
-   * one reaches "review" or "upload" again.
-   */
-  handleVaultFiles = async (items: DroppedItem[]) => {
-    if (this.deps.vault.isGuest) {
-      this.rejectedFiles = [
-        { name: "Import Files", reason: "Guests cannot import into a vault." },
-      ];
-      this.step = "upload";
-      return;
-    }
-
-    this.step = "processing";
-    this.importMode = "cc";
-    this.statusMessage = "Preparing your files for review...";
-    this.discoveredEntities = [];
-    this.ccSession = null;
-    this.ccReport = null;
-    this.rejectedFiles = [];
-    this.missingImageRefs = [];
-    this.vaultFilesPackage = null;
-
-    if (items.length === 0) {
-      this.step = "upload";
-      this.importMode = null;
-      return;
-    }
-
-    const { pkg, missingImageRefs } = await droppedItemsToPackage(items);
-
-    if (pkg.entityDrafts.length === 0) {
-      this.rejectedFiles = pkg.warnings.map((w) => ({
-        name: w.ref ?? "Import Files",
-        reason: w.message,
-      }));
-      if (this.rejectedFiles.length === 0) {
-        this.rejectedFiles = [
-          {
-            name: "Import Files",
-            reason:
-              "None of the dropped files were recognized as vault content.",
-          },
-        ];
-      }
-      this.step = "upload";
-      this.importMode = null;
-      return;
-    }
-
-    this.vaultFilesPackage = pkg;
-    this.missingImageRefs = missingImageRefs;
-    await this.prepareVaultFilesSession();
-  };
-
-  private async prepareVaultFilesSession() {
-    if (!this.vaultFilesPackage) return;
-    const signal = this.deps.connectionModeStore.abortSignal;
-    const rules = buildVaultFilesMappingRules(
-      this.vaultFilesPackage.entityDrafts,
-    );
-    // A re-prepare (e.g. after resolving a missing image) must not silently
-    // reset decisions the user already made in review — ImportEngine.prepare
-    // always defaults every item to decision "include". setItemDecision
-    // matches on draft.sourceId/draft.sourcePath (not sourceRef), so key
-    // and re-apply using the same field.
-    const priorDecisions = new Map(
-      this.ccSession?.items
-        .map(
-          (item) =>
-            [
-              item.draft.sourceId ?? item.draft.sourcePath,
-              item.decision,
-            ] as const,
-        )
-        .filter(([draftRef]) => draftRef !== undefined) ?? [],
-    );
-
-    try {
-      let session = await wrapWithAbort(
-        this.createVaultFilesEngine(rules).prepare(this.vaultFilesPackage),
-        signal,
-      );
-      for (const item of session.items) {
-        const draftRef = item.draft.sourceId ?? item.draft.sourcePath;
-        const prior = draftRef ? priorDecisions.get(draftRef) : undefined;
-        if (prior) session = setItemDecision(session, draftRef!, prior);
-      }
-      this.ccSession = session;
-      this.step = "review";
-    } catch (error) {
-      if (
-        signal.aborted ||
-        (error instanceof Error && error.message === "Import aborted")
-      ) {
-        this.step = "upload";
-        this.ccSession = null;
-        this.ccReport = null;
-        this.importMode = null;
-        return;
-      }
-      this.rejectedFiles = [
-        {
-          name: "Import Files",
-          reason:
-            error instanceof Error
-              ? error.message
-              : "Could not prepare a review for these files.",
-        },
-      ];
-      this.step = "upload";
-      this.importMode = null;
-    }
+  private _vaultFilesProcessor: VaultFilesProcessor | null = null;
+  private get vaultFilesProcessor(): VaultFilesProcessor {
+    return (this._vaultFilesProcessor ??= new VaultFilesProcessor({
+      isGuest: this.deps.vault.isGuest,
+      getAbortSignal: () => this.deps.connectionModeStore.abortSignal,
+      getVault: () => this.deps.vault,
+      getSession: () => this.ccSession,
+      setSession: (session) => (this.ccSession = session),
+      setReport: (report) => (this.ccReport = report),
+      setStep: (step) => (this.step = step),
+      setImportMode: (mode) => (this.importMode = mode),
+      setStatusMessage: (msg) => (this.statusMessage = msg),
+      setDiscoveredEntities: (entities) => (this.discoveredEntities = entities),
+      setRejectedFiles: (files) => (this.rejectedFiles = files),
+      setMissingImageRefs: (refs) => (this.missingImageRefs = refs),
+      getVaultFilesPackage: () => this.vaultFilesPackage,
+      setVaultFilesPackage: (pkg) => (this.vaultFilesPackage = pkg),
+    }));
   }
 
-  /** Resolves a missing image by adding the file directly (US3). */
-  handleAddMissingImageFile = async (
-    ref: MissingImageReference,
-    file: File,
-  ) => {
-    await this.applyMissingImageResolution(ref, { addedFile: file });
-  };
+  handleVaultFiles = (items: DroppedItem[]) =>
+    this.vaultFilesProcessor.handleVaultFiles(items);
 
-  /**
-   * Resolves a missing image by asking the user to grant access to the
-   * source folder, then searching it (US3). No-ops with a clear message on
-   * browsers without File System Access support (Firefox, Safari) — the
-   * "add file directly" option remains available there regardless.
-   */
-  handleResolveMissingImageFromFolder = async (ref: MissingImageReference) => {
-    if (!isFileSystemAccessSupported()) {
-      this.deps.notificationStore.notify(
-        "This browser can't grant folder access for locating missing images. Add the image file directly instead.",
-        "error",
-      );
-      return;
-    }
-
-    let folderHandle: FileSystemDirectoryHandle;
-    try {
-      folderHandle = await pickDirectory({ mode: "read" });
-    } catch {
-      return; // user cancelled the folder picker
-    }
-
-    await this.applyMissingImageResolution(ref, {
-      sourceFolderHandle: folderHandle,
-    });
-  };
-
-  private resolvingImagePaths = new Set<string>();
-
-  private async applyMissingImageResolution(
-    ref: MissingImageReference,
-    input: { addedFile?: File; sourceFolderHandle?: FileSystemDirectoryHandle },
-  ) {
-    if (!this.vaultFilesPackage) return;
-    // Guards against a rapid double-click (or clicking both "Add File" and
-    // "Use Folder" for the same ref) resolving it twice concurrently, which
-    // would otherwise append duplicate AssetDrafts before either call's
-    // state update lands.
-    if (this.resolvingImagePaths.has(ref.path)) return;
-    this.resolvingImagePaths.add(ref.path);
-
-    try {
-      const resolvedDrafts = await resolveMissingImage(ref, input);
-
-      this.missingImageRefs = this.missingImageRefs.map((r) =>
-        r.path === ref.path
-          ? {
-              ...r,
-              resolution: resolvedDrafts
-                ? input.addedFile
-                  ? "added-directly"
-                  : "resolved-from-folder"
-                : "still-missing",
-            }
-          : r,
-      );
-
-      if (!resolvedDrafts) return;
-
-      this.vaultFilesPackage = {
-        ...this.vaultFilesPackage,
-        assetDrafts: [...this.vaultFilesPackage.assetDrafts, ...resolvedDrafts],
-      };
-
-      // Re-run prepare with the augmented package so the review session
-      // reflects the newly-resolved image (FR-012).
-      await this.prepareVaultFilesSession();
-    } finally {
-      this.resolvingImagePaths.delete(ref.path);
-    }
-  }
+  private prepareVaultFilesSession = () =>
+    this.vaultFilesProcessor.prepareVaultFilesSession();
 
   handleRestart = async () => {
     if (this.currentFileHash) {
@@ -1187,122 +579,47 @@ export class ImportSettingsController {
     this.vaultFilesPackage = null;
   };
 
-  handleCCItemDecisionChange = (draftRef: string, decision: ItemDecision) => {
-    if (!this.ccSession) return;
-    this.ccSession = setItemDecision(this.ccSession, draftRef, decision);
-  };
+  private _reviewManager: ImportReviewManager | null = null;
+  private get reviewManager(): ImportReviewManager {
+    return (this._reviewManager ??= new ImportReviewManager({
+      getSession: () => this.ccSession,
+      setSession: (session) => (this.ccSession = session),
+      setStep: (step) => (this.step = step),
+      setImportMode: (mode) => (this.importMode = mode),
+      setStatusMessage: (msg) => (this.statusMessage = msg),
+      setImportProgress: (progress) => (this.importProgress = progress),
+      setReport: (report) => (this.ccReport = report),
+      getAbortSignal: () => this.deps.connectionModeStore.abortSignal,
+      suspendSaving: () => this.deps.vault.suspendSaving(),
+      resumeSaving: () => this.deps.vault.resumeSaving(),
+      flushPendingSaves: () => this.deps.vault.flushPendingSaves(),
+      notifyError: (msg) => this.deps.notificationStore.notify(msg, "error"),
+      createEngine: () => this.createEngine(),
+      resetState: () => {
+        this.step = "upload";
+        this.importMode = null;
+        this.discoveredEntities = [];
+        this.ccSession = null;
+        this.ccReport = null;
+        this.rejectedFiles = [];
+        this.statusMessage = "";
+        this.importProgress = null;
+        this.missingImageRefs = [];
+        this.vaultFilesPackage = null;
+      },
+    }));
+  }
 
-  handleCCMatchDecisionChange = (draftRef: string, decision: MatchDecision) => {
-    if (!this.ccSession) return;
-    // Defense in depth for FR-006/FR-007: this source never overwrites an
-    // existing entity, so "update" is rejected here even though the review
-    // UI (CCImportReview) already never offers it for sourceSystem
-    // "vault-files".
-    if (
-      this.ccSession.sourceSystem === "vault-files" &&
-      decision === "update"
-    ) {
-      return;
-    }
-    this.ccSession = setMatchDecision(this.ccSession, draftRef, decision);
-  };
+  handleCCItemDecisionChange = (draftRef: string, decision: ItemDecision) =>
+    this.reviewManager.handleCCItemDecisionChange(draftRef, decision);
 
-  handleCCItemTypeChange = (draftRef: string, type: string) => {
-    if (!this.ccSession) return;
-    this.ccSession = setItemType(this.ccSession, draftRef, type);
-  };
+  handleCCMatchDecisionChange = (draftRef: string, decision: MatchDecision) =>
+    this.reviewManager.handleCCMatchDecisionChange(draftRef, decision);
 
-  handleCCCommit = async () => {
-    if (!this.ccSession) return;
+  handleCCItemTypeChange = (draftRef: string, type: string) =>
+    this.reviewManager.handleCCItemTypeChange(draftRef, type);
 
-    this.step = "processing";
-    this.importMode = "cc";
-    this.statusMessage = `Importing ${this.ccSession.sourceLabel}...`;
-    this.importProgress = null;
+  handleCCCommit = () => this.reviewManager.handleCCCommit();
 
-    const signal = this.deps.connectionModeStore.abortSignal;
-
-    this.deps.vault.suspendSaving();
-    try {
-      this.ccReport = await wrapWithAbort(
-        this.createEngine().commit(
-          this.ccSession,
-          (stage, current, total) => {
-            this.importProgress = { current, total };
-            if (stage === "entity") {
-              this.statusMessage = `Importing entities (${current}/${total})...`;
-            } else if (stage === "connection") {
-              this.statusMessage = `Importing connections (${current}/${total})...`;
-            } else if (stage === "asset") {
-              this.statusMessage = `Importing assets (${current}/${total})...`;
-            }
-          },
-          signal,
-        ),
-        signal,
-      );
-      if (signal.aborted) {
-        throw new Error("Import aborted");
-      }
-      this.statusMessage = "Finalizing and saving to vault...";
-      await this.deps.vault.flushPendingSaves();
-      this.step = "report";
-    } catch (error) {
-      if (
-        signal.aborted ||
-        (error instanceof Error && error.message === "Import aborted")
-      ) {
-        this.step = "review";
-      } else {
-        this.deps.notificationStore.notify(
-          error instanceof Error
-            ? error.message
-            : "Import failed before the report could be created.",
-          "error",
-        );
-        this.step = "review";
-      }
-    } finally {
-      this.deps.vault.resumeSaving();
-    }
-  };
-
-  handleCCReportDone = () => {
-    this.step = "upload";
-    this.importMode = null;
-    this.discoveredEntities = [];
-    this.ccSession = null;
-    this.ccReport = null;
-    this.rejectedFiles = [];
-    this.statusMessage = "";
-    this.importProgress = null;
-    this.missingImageRefs = [];
-    this.vaultFilesPackage = null;
-  };
-}
-
-function wrapWithAbort<T>(
-  promise: Promise<T>,
-  signal?: AbortSignal,
-): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(new Error("Import aborted"));
-
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = () => {
-      signal.removeEventListener("abort", onAbort);
-      reject(new Error("Import aborted"));
-    };
-    signal.addEventListener("abort", onAbort);
-
-    promise
-      .then((val) => {
-        signal.removeEventListener("abort", onAbort);
-        resolve(val);
-      })
-      .catch((err) => {
-        signal.removeEventListener("abort", onAbort);
-        reject(err);
-      });
-  });
+  handleCCReportDone = () => this.reviewManager.handleCCReportDone();
 }
