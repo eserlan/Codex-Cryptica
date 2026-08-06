@@ -58,7 +58,7 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("BANNED NAMES");
       expect(result).toContain("hard constraint, not a preference");
       expect(result).toContain("Vance");
-      expect(result).toContain("hyphenated or compound variations");
+      expect(result).toContain("hyphenated/compound variation");
       // The ban must appear before the drafting requirements, not buried
       // after them, so the model reads it before it starts drafting a name.
       expect(result.indexOf("BANNED NAMES")).toBeLessThan(

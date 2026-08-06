@@ -24,6 +24,7 @@ import {
 import { forGenre } from "./public-dungeon-constants";
 import { themeIdToLabel, factionConfig } from "./public-faction-constants";
 import { npcThemeConfig } from "./public-npc-constants";
+import { isTitleBanned, bannedNamesInstruction } from "./naming-policy";
 import { settlementConfig } from "./public-settlement-constants";
 import {
   buildAdventurePrompt,
@@ -282,32 +283,14 @@ function bannedNamesBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
-  if (!all.length) return "";
-  return `\nThis ban applies only to the "title" of the entity you are generating now — do NOT title it any of these names, or a hyphenated/compound variation of one (e.g. if "Vane" is listed, do not title it "Vane-Smithe"): ${all.join(", ")}. These are existing entities and may still be referenced normally elsewhere (in "lore", "summary", or "connections") whenever they belong in the content — the ban is on reusing the name as this new entity's own title, not on mentioning them.`;
+  const instruction = bannedNamesInstruction(all);
+  return instruction ? `\n${instruction}` : "";
 }
 
-/**
- * True when a generated title collides with a banned name. Matches whole tokens
- * case-insensitively (splitting on spaces, hyphens, punctuation, and accents
- * preserved) so derivatives like "Vane-Smithe" are caught for a banned "Vane",
- * while substrings inside a larger word ("Vanessa") are not.
- */
-export function isTitleBanned(
-  title: string,
-  banned: Iterable<string>,
-): boolean {
-  const normalize = (s: string) =>
-    ` ${s
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]+/gu, " ")
-      .trim()} `;
-  const haystack = normalize(title);
-  for (const name of banned) {
-    const needle = normalize(name).trim();
-    if (needle && haystack.includes(` ${needle} `)) return true;
-  }
-  return false;
-}
+// Re-exported for existing callers/tests that import isTitleBanned from this
+// module — the implementation now lives in naming-policy.ts (see its header
+// for why), shared with Oracle chat's /create command.
+export { isTitleBanned };
 
 /**
  * Instruct the model to keep the generated name culturally consistent with the

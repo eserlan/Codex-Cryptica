@@ -1,5 +1,5 @@
 import { u } from "./user-content";
-import { BANNED_NAMES } from "generator-engine";
+import { BANNED_NAMES, bannedNamesInstruction } from "generator-engine";
 
 export function buildCreationLoreSynthesisPrompt(
   query: string,
@@ -39,7 +39,7 @@ export function buildStructuredDraftingPrompt(
   return `You are a Structured Lore Drafter. Your task is to generate a formal world-building record based on a Canonical Synthesis Summary and a user request.
 
 BANNED NAMES — read first, this is a hard constraint, not a preference:
-Never title the entity, or name any secondary figure it mentions, any of: ${BANNED_NAMES.join(", ")}. This also bans hyphenated or compound variations of these (e.g. if "Vane" is banned, do not use "Vane-Smithe" either). These are generic fantasy clichés — invent something distinct and setting-appropriate instead.
+${bannedNamesInstruction(BANNED_NAMES)} These are generic fantasy clichés — invent something distinct and setting-appropriate instead.
 
 CANONICAL SYNTHESIS SUMMARY:
 ${synthesisSummary}
