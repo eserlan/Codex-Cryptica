@@ -259,9 +259,7 @@
           <span class="font-bold text-theme-danger">{rollState.text}</span>
         {:else if rollState.success !== undefined}
           <span
-            class={rollState.success
-              ? "text-theme-primary"
-              : "text-theme-danger"}
+            class={rollState.success ? "text-emerald-400" : "text-theme-danger"}
             role="status"
             aria-label={`${displayRollTotal ?? "Roll"}: ${rollState.success ? "Success" : "Failure"}`}
             data-testid="presentation-field-dice-outcome"

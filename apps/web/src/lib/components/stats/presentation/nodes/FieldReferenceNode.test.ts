@@ -148,7 +148,7 @@ describe("FieldReferenceNode", () => {
     expect(screen.getByRole("status", { name: "17: Success" })).toBeTruthy();
     expect(
       screen.getByTestId("presentation-field-dice-outcome").className,
-    ).toContain("text-theme-primary");
+    ).toContain("text-emerald-400");
     expect(roll.textContent).not.toContain("= 17 vs 50");
     expect(roll.textContent).toContain("17");
     expect(roll.textContent).not.toContain("Success");
