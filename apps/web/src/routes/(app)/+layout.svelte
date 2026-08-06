@@ -161,7 +161,10 @@
     const root = document.documentElement;
     const vv = window.visualViewport;
 
+    let lastHeight: number | null = null;
     const setViewportHeight = () => {
+      if (lastHeight === vv.height) return;
+      lastHeight = vv.height;
       root.style.setProperty("--app-viewport-height", `${vv.height}px`);
     };
 
