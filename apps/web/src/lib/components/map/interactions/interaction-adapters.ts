@@ -3,6 +3,7 @@ import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { mapStore } from "$lib/stores/map.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import type { GridInteractionDependencies } from "./grid-interaction-handler.svelte";
@@ -73,7 +74,8 @@ export function createPinInteractionDependencies(): PinInteractionDependencies {
     updatePinCoordinates: (pinId, point) =>
       mapStore.updatePinCoordinatesInMemory(pinId, point),
     saveMaps: () => vault.saveMaps(),
-    selectEntity: (entityId) => {
+    selectEntity: (entityId, selectionPoint) => {
+      layoutUIStore.setLastSelectedNodePosition(selectionPoint);
       vault.selectedEntityId = entityId;
     },
   };

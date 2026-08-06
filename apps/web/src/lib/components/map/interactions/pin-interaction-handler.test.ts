@@ -46,7 +46,7 @@ describe("PinInteractionHandler", () => {
     const result = await handler.end({ x: 100, y: 100 }, { x: 102, y: 102 });
 
     expect(result).toEqual({ type: "selected", pinId: "pin-a" });
-    expect(selectEntity).toHaveBeenCalledWith("entity-a");
+    expect(selectEntity).toHaveBeenCalledWith("entity-a", { x: 102, y: 102 });
     expect(saveMaps).not.toHaveBeenCalled();
   });
 
@@ -54,7 +54,7 @@ describe("PinInteractionHandler", () => {
     const selected = handler.selectAt({ x: 100, y: 100 });
 
     expect(selected?.id).toBe("pin-a");
-    expect(selectEntity).toHaveBeenCalledWith("entity-a");
+    expect(selectEntity).toHaveBeenCalledWith("entity-a", { x: 100, y: 100 });
     expect(handler.dragState).toBeNull();
   });
 
