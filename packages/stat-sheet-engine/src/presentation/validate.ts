@@ -31,6 +31,7 @@ function validateFieldRef(
     displayMode: mode,
   };
   if (node.label) resolved.label = node.label;
+  if (node.hideLabel) resolved.hideLabel = true;
   // Keep the originally requested mode for editor diagnostics (contract:
   // "for editor diagnostics only, never used for rendering") when it was
   // incompatible with the field's type and got overridden above.

@@ -49,10 +49,10 @@ interface FieldRefToken extends Tokens.Generic {
 
 function parseAttrs(raw: string): Record<string, string> {
   const attrs: Record<string, string> = {};
-  const re = /([a-zA-Z][\w-]*)=(?:"([^"]*)"|(\S+))/g;
+  const re = /([a-zA-Z][\w-]*)(?:=(?:"([^"]*)"|(\S+)))?/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(raw))) {
-    attrs[m[1]] = m[2] ?? m[3] ?? "";
+    attrs[m[1]] = m[2] ?? m[3] ?? "true";
   }
   return attrs;
 }
@@ -122,7 +122,9 @@ const fieldRefExtension = {
   },
   tokenizer(src: string) {
     const mustacheMatch =
-      /^\{\{stat\.([a-zA-Z0-9_-]+)((?:\s+[a-zA-Z]+="[^"]*")*)\s*\}\}/.exec(src);
+      /^\{\{stat\.([a-zA-Z0-9_-]+)((?:\s+[a-zA-Z0-9_-]+(?:="[^"]*"|=\S+)?)*)\s*\}\}/.exec(
+        src,
+      );
     if (mustacheMatch) {
       const [raw, fieldId, attrsRaw] = mustacheMatch;
       const attrs = parseAttrs(attrsRaw);
@@ -132,6 +134,10 @@ const fieldRefExtension = {
         fieldId,
         displayMode: attrs.display,
         label: attrs.label,
+        hideLabel:
+          attrs["hide-label"] === "true" ||
+          attrs["hidelabel"] === "true" ||
+          attrs["hide_label"] === "true",
       };
       return token;
     }
@@ -203,6 +209,7 @@ function walkInline(tokens: Token[] | undefined): InlineNode[] {
           fieldId: ref.fieldId,
         };
         if (ref.label) node.label = ref.label;
+        if (ref.hideLabel) node.hideLabel = true;
         if (ref.displayMode && isPresentationDisplayMode(ref.displayMode)) {
           node.displayMode = ref.displayMode;
         } else if (ref.displayMode) {

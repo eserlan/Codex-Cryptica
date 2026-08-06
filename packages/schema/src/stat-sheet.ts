@@ -7,6 +7,7 @@ export const StatSheetFieldTypeSchema = z.enum([
   "longtext",
   "heading",
   "dice",
+  "item-table",
 ]);
 
 export type StatSheetFieldType = z.infer<typeof StatSheetFieldTypeSchema>;
@@ -23,6 +24,29 @@ export const StatSheetFieldSchema = z.object({
   collapsed: z.boolean().optional(),
   favorite: z.boolean().optional(),
   barField: z.boolean().optional(),
+  // For "item-table" type fields: column definitions and row items array.
+  columns: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        type: z.enum(["text", "number", "dice", "counter"]),
+      }),
+    )
+    .optional(),
+  rows: z
+    .array(
+      z.record(
+        z.string(),
+        z.union([
+          z.string(),
+          z.number(),
+          z.boolean(),
+          z.object({ value: z.number(), max: z.number().optional() }),
+        ]),
+      ),
+    )
+    .optional(),
   // Id of another field on the same sheet (typically a "number" ability
   // score) whose value drives this field's dice modifier — e.g. a "STR
   // Check" dice field derives its flat bonus from a "STR" score field via

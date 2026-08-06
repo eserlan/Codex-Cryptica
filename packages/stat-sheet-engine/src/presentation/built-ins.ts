@@ -180,9 +180,11 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::
 :::
 :::card
-### Combat & Specializations
-{{stat.combat_styles display="plain" label="Combat Styles"}}
-{{stat.professional_skills display="plain" label="Professional Skills"}}
+### Combat & Weapons
+[weapons_table]
+:::
+:::card
+### Passions & Cults
 {{stat.passions_cults display="plain" label="Passions & Cults"}}
 :::
 :::
