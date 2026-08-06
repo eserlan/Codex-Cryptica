@@ -25,7 +25,15 @@ export function formatDirectDateInput(
     : "";
 }
 
-export function parsePickerDateInput(input: string, config: WorldCalendar) {
+export interface PickerDateInputResult {
+  selection?: DateSelection;
+  error?: string;
+}
+
+export function parsePickerDateInput(
+  input: string,
+  config: WorldCalendar,
+): PickerDateInputResult {
   if (!input.trim()) return {};
   const parsed = parseDirectDateInput(input, config);
   if (!parsed) {
@@ -34,7 +42,7 @@ export function parsePickerDateInput(input: string, config: WorldCalendar) {
         "Use a year (such as 45 or -594), DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.",
     };
   }
-  const revision = config.revision || 1;
+  const revision = config.revision ?? 1;
   if (parsed.day === undefined || parsed.month === undefined) {
     return {
       selection: {
@@ -73,7 +81,7 @@ export function precisionPatch(
 ): Partial<DateSelection> {
   const patch: Partial<DateSelection> = { precision };
   if ((precision === "unit" || precision === "day") && !selection.unitId) {
-    patch.unitId = config.months[0]?.id;
+    patch.unitId = calendarEngine.getMonths(config)[0]?.id;
   }
   if (precision === "day" && selection.day === undefined) patch.day = 1;
   if (precision === "anchor" && !selection.anchorId)

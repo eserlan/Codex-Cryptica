@@ -4,7 +4,7 @@
     name: string;
     start_year: number;
     end_year?: number | null;
-    color: string;
+    color?: string;
   };
 
   let {
@@ -36,7 +36,7 @@
       </div>
       <div class="text-[9px] text-theme-muted ml-3 font-header">
         Year {era.start_year}
-        {era.end_year ? `→ ${era.end_year}` : "→ Present"}
+        {era.end_year != null ? `→ ${era.end_year}` : "→ Present"}
       </div>
     </button>
   {:else}

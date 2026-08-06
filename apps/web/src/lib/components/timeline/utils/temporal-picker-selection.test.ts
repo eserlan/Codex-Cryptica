@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatDirectDateInput,
   normalizedSelectionForSave,
+  optionPatch,
   parsePickerDateInput,
   precisionPatch,
 } from "./temporal-picker-selection";
@@ -46,6 +48,37 @@ describe("temporal picker selection helpers", () => {
         config,
       ),
     ).toEqual({ precision: "day", unitId: "alpha", day: 1 });
+  });
+
+  it("uses Gregorian months when adding a precision default", () => {
+    expect(
+      precisionPatch(
+        "day",
+        { precision: "year", year: 12, calendarRevision: 4 },
+        { ...config, useGregorian: true },
+      ),
+    ).toEqual({ precision: "day", unitId: "january", day: 1 });
+  });
+
+  it("formats day selections and patches picker options", () => {
+    expect(
+      formatDirectDateInput(
+        {
+          precision: "day",
+          year: 120,
+          unitId: "beta",
+          day: 5,
+          calendarRevision: 4,
+        },
+        config,
+      ),
+    ).toBe("0502120");
+    expect(optionPatch("year", "42")).toEqual({ year: 42 });
+    expect(optionPatch("unit", "alpha")).toEqual({ unitId: "alpha" });
+    expect(optionPatch("day", "3")).toEqual({ day: 3 });
+    expect(optionPatch("anchor", "solstice")).toEqual({
+      anchorId: "solstice",
+    });
   });
 
   it("removes day-only fields when saving a year selection", () => {
