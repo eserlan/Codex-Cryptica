@@ -191,7 +191,11 @@ export class TextGenerationCreationService {
     connectedEntities: ConnectedEntityPromptContext[] = [],
     categories: { id: string; label?: string }[] = [],
     templateOutline = "",
-    options?: { isGuest?: boolean; aiDisabled?: boolean },
+    options?: {
+      isGuest?: boolean;
+      aiDisabled?: boolean;
+      worldThemeName?: string;
+    },
   ): Promise<{
     name: string;
     type: string;
@@ -226,6 +230,7 @@ export class TextGenerationCreationService {
       cleanConnected,
       cleanCategories,
       templateOutline,
+      options?.worldThemeName || "",
     );
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);

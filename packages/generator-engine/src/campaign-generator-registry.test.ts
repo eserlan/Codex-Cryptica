@@ -580,6 +580,22 @@ describe("buildPrompt template injection", () => {
     );
     expect(withoutTpl).toContain('The "lore" field should include:');
   });
+
+  it("omits the stock exemplar's conflicting lore headings once a template is applied", () => {
+    const withTpl = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: ctxWithTemplate(true) }),
+    );
+    // The stock NPC exemplar's own headings ("## Who She Is", "## Secret",
+    // "## Hook") must not appear once a template supplies a different set —
+    // showing both would give the model two competing heading sets.
+    expect(withTpl).not.toContain("## Who She Is");
+    expect(withTpl).not.toContain("Ottavia Brenn");
+
+    const withoutTpl = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: ctxWithTemplate(false) }),
+    );
+    expect(withoutTpl).toContain("Ottavia Brenn");
+  });
 });
 
 describe("buildPrompt quality + schema", () => {
@@ -632,6 +648,38 @@ describe("buildPrompt quality + schema", () => {
 
     const empty = getGenerator("npc").buildPrompt(run("npc"));
     expect(empty).toContain('leave "connections" as an empty array');
+  });
+
+  it("surfaces Preferences (explicit dropdown selections) right after the instructions, ahead of the generic world context", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        instructions: "helper utility unit",
+        options: { race: "Robot", role: "Utility unit" },
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [
+            {
+              id: "w1",
+              title: "Aranyvér",
+              type: "faction",
+              contentExcerpt: "x",
+            },
+          ],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    const preferencesIndex = prompt.indexOf("Preferences:");
+    const worldGroundingIndex = prompt.indexOf(
+      "Existing entities in this world",
+    );
+    expect(preferencesIndex).toBeGreaterThan(-1);
+    expect(worldGroundingIndex).toBeGreaterThan(-1);
+    expect(preferencesIndex).toBeLessThan(worldGroundingIndex);
   });
 });
 
@@ -833,6 +881,68 @@ describe("buildPrompt source entity", () => {
         "Lore: Secretly bankrupt and beholden to a smuggling ring.",
       );
     }
+  });
+
+  it("requires a mandatory connection and lore mention of the source entity, and resolves unnamed relational terms to it", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        instructions: "helper utility unit that is slaved to its master",
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+          sourceEntity: {
+            id: "s1",
+            title: "Unit Seven (Archivist)",
+            type: "character",
+            contentExcerpt: "A deteriorating synthetic consciousness.",
+          },
+        },
+      }),
+    );
+    expect(prompt).toContain(
+      'mention "Unit Seven (Archivist)" by its exact name at least once in "lore"',
+    );
+    expect(prompt).toContain('"targetTitle": "Unit Seven (Archivist)"');
+    expect(prompt).toContain("clearly distinct from");
+    expect(prompt).toContain(
+      'that relationship is with the Source Entity below, "Unit Seven (Archivist)"',
+    );
+  });
+
+  it("clarifies the banned-name list only restricts the new entity's title, not references to existing entities", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: ["Unit Seven (Archivist)"],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(prompt).toContain('applies only to the "title"');
+    expect(prompt).toContain("may still be referenced normally elsewhere");
+  });
+
+  it("adapts biological lore categories for a synthetic/robot character", () => {
+    const withRobot = getGenerator("npc").buildPrompt(
+      run("npc", { options: { race: "Robot" } }),
+    );
+    expect(withRobot).toContain("synthetic/mechanical being");
+    expect(withRobot).toContain("chassis or frame model");
+
+    const withHuman = getGenerator("npc").buildPrompt(
+      run("npc", { options: { race: "Human" } }),
+    );
+    expect(withHuman).not.toContain("synthetic/mechanical being");
   });
 });
 
