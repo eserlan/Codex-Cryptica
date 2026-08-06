@@ -8,7 +8,7 @@ import type {
 } from "./types";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
-import type { AspectRatio } from "schema";
+import { ASPECT_RATIO_DIMENSIONS, type AspectRatio } from "schema";
 
 export class OracleActionManager {
   constructor(private store: IOracleStore) {}
@@ -53,11 +53,23 @@ export class OracleActionManager {
       // recompute when the entity's lore/category/camera has actually changed.
       const saved = entity.imageArtDirection;
       if (saved?.prompt) {
+        const negativeTerms = saved.negativePrompt
+          ? saved.negativePrompt
+              .split(/[\n,]+/)
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+          : [];
+
+        const validAspectRatio: AspectRatio | undefined =
+          saved.aspectRatio && saved.aspectRatio in ASPECT_RATIO_DIMENSIONS
+            ? (saved.aspectRatio as AspectRatio)
+            : undefined;
+
         modalUIStore.openImagePromptReview(
           { kind: "entity", id: entityId, title: entity.title },
           saved.prompt,
-          saved.negativePrompt ? saved.negativePrompt.split(", ") : [],
-          saved.aspectRatio as AspectRatio | undefined,
+          negativeTerms,
+          validAspectRatio,
         );
         return;
       }
