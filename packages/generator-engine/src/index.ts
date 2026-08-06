@@ -10,7 +10,6 @@ export {
 export {
   getGenerator,
   getDefaultInstruction,
-  isTitleBanned,
   isSupportedGenerator,
   listGenerators,
   resolveEntityType,
@@ -21,6 +20,7 @@ export {
   GENERATOR_ENTITY_TYPE,
   FALLBACK_CATEGORY,
 } from "./campaign-generator-registry";
+export { isTitleBanned, bannedNamesInstruction } from "./naming-policy";
 export {
   adaptNPC,
   adaptFaction,
