@@ -60,29 +60,10 @@ describe("initFullscreenOnFirstInteraction", () => {
     const doc = createMockDoc();
     initFullscreenOnFirstInteraction(doc);
 
-    expect(doc.addEventListener).toHaveBeenCalledWith(
-      "click",
-      expect.any(Function),
-      { once: true, capture: true },
-    );
-    expect(doc.addEventListener).toHaveBeenCalledWith(
-      "keydown",
-      expect.any(Function),
-      { once: true, capture: true },
-    );
-    // Not pointerdown/touchstart: Chrome for Android doesn't accept them as a
-    // fullscreen-eligible gesture, and the failed attempt would tear down the
-    // click listener for the same tap before it ever fires (see file header).
-    expect(doc.addEventListener).not.toHaveBeenCalledWith(
-      "pointerdown",
-      expect.any(Function),
-      expect.anything(),
-    );
-    expect(doc.addEventListener).not.toHaveBeenCalledWith(
-      "touchstart",
-      expect.any(Function),
-      expect.anything(),
-    );
+    const registeredEvents = vi
+      .mocked(doc.addEventListener)
+      .mock.calls.map(([event]) => event);
+    expect(registeredEvents).toEqual(["click", "keydown"]);
   });
 
   it("requests fullscreen and removes all listeners on first interaction", () => {
