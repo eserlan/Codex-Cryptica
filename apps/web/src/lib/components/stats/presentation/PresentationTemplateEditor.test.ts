@@ -174,4 +174,34 @@ describe("PresentationTemplateEditor", () => {
       }),
     );
   });
+
+  it("adds a literal value to a visual table row without creating a stat field", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-table",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    await fireEvent.click(
+      screen.getByTestId("presentation-editor-add-table-value"),
+    );
+    const valueInput = screen.getByRole("textbox", {
+      name: "Value for table row 1",
+    });
+    await fireEvent.input(valueInput, { target: { value: "Steel" } });
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("Steel"),
+      }),
+    );
+  });
 });
