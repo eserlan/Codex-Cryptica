@@ -4,6 +4,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ContextMenu from "./ContextMenu.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {
@@ -157,9 +158,14 @@ describe("ContextMenu", () => {
 
     await openNodeMenu();
 
-    expect(
+    await fireEvent.click(
       screen.getByRole("menuitem", { name: "Open in Zen Mode" }),
-    ).toBeTruthy();
+    );
+
+    expect(modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+    await waitFor(() =>
+      expect(screen.queryByRole("menu", { name: "Node actions" })).toBeNull(),
+    );
   });
 
   it("hides Mark Important for guest graph sessions", async () => {
