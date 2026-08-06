@@ -40,6 +40,7 @@ describe("GraphContextMenuController", () => {
         openLightbox: vi.fn(),
         openRevisionDialog: vi.fn(),
         openIntentCreateMenu: vi.fn(),
+        openZenMode: vi.fn(),
       },
       connectionModeStore: { startSelectionConnection: vi.fn() },
       notificationStore: {
@@ -59,6 +60,26 @@ describe("GraphContextMenuController", () => {
 
     expect(deps.graph.setCentralNode).toHaveBeenCalledWith("node-1");
     expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should open a single node in Zen Mode and close the menu", () => {
+    controller.selectedNodes = ["node-1"];
+    controller.contextMenuOpen = true;
+
+    controller.handleOpenZenMode();
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not open Zen Mode for multiple selected nodes", () => {
+    controller.selectedNodes = ["node-1", "node-2"];
+    controller.contextMenuOpen = true;
+
+    controller.handleOpenZenMode();
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+    expect(controller.contextMenuOpen).toBe(true);
   });
 
   it("should open merge dialog for multiple nodes", () => {

@@ -52,6 +52,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     openBulkLabelDialog: vi.fn(),
     openCanvasSelection: vi.fn(),
     openLightbox: vi.fn(),
+    openZenMode: vi.fn(),
     openRevisionDialog: vi.fn(),
   },
 }));
@@ -148,6 +149,16 @@ describe("ContextMenu", () => {
 
     expect(
       screen.getByRole("menuitem", { name: "Mark Important" }),
+    ).toBeTruthy();
+  });
+
+  it("shows Open in Zen Mode for a single node", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openNodeMenu();
+
+    expect(
+      screen.getByRole("menuitem", { name: "Open in Zen Mode" }),
     ).toBeTruthy();
   });
 
