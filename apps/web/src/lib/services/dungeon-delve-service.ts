@@ -12,9 +12,10 @@ export interface DungeonDelveServiceDeps {
 }
 
 function extractGeneratedSectorNames(narrative: string): string[] {
-  // ⚡ Bolt Optimization: Replace Array.from().map().filter() with an imperative loop
   const explicitSectors: string[] = [];
-  for (const match of narrative.matchAll(/^###\s+Sector\s+\d+\s*:\s*(.+?)\s*$/gim)) {
+  for (const match of narrative.matchAll(
+    /^###\s+Sector\s+\d+\s*:\s*(.+?)\s*$/gim,
+  )) {
     const name = match[1]?.trim();
     if (name) {
       explicitSectors.push(name);
@@ -27,10 +28,14 @@ function extractGeneratedSectorNames(narrative: string): string[] {
   )?.[1];
   if (!layoutSection) return [];
 
-  // ⚡ Bolt Optimization: Replace Array.from().map().filter() with an imperative loop
   const layoutSectors: string[] = [];
   for (const match of layoutSection.matchAll(/^\s*\d+[.)]\s+(.+?)\s*$/gm)) {
-    const name = match[1]?.trim().replace(/^(\*\*|__)/, "").replace(/(\*\*|__)$/, "");
+    const rawName = match[1];
+    if (!rawName) continue;
+    const name = rawName
+      .trim()
+      .replace(/^(\*\*|__)/, "")
+      .replace(/(\*\*|__)$/, "");
     if (name) {
       layoutSectors.push(name);
     }

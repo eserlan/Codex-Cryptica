@@ -100,7 +100,7 @@ export class VaultStore {
   get allEntities() {
     if (sessionModeStore.isGuestMode) {
       const allEnts = this.entityStore.allEntities;
-      const extraEntities = [];
+      const extraEntities: typeof allEnts = [];
       for (let i = 0; i < allEnts.length; i++) {
         const e = allEnts[i];
         if (!guestVault.entitiesMap[e.id]) extraEntities.push(e);
