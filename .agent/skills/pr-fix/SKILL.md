@@ -1,6 +1,6 @@
 ---
 name: pr-fix
-description: Specialized PR review comment & merge conflict resolver. Fetches review comments, checks out PR branches, merges staging, resolves merge conflicts, implements code/docs/test fixes, runs targeted unit tests and type-checks, and pushes gitmoji commits.
+description: Specialized PR review comment, check failure, and merge conflict resolver. Fetches review comments and PR checks, identifies and fixes actionable failures, checks out PR branches, merges staging, resolves conflicts, implements code/docs/test fixes, runs targeted tests and type-checks, and pushes gitmoji commits.
 metadata:
   type: workflow
 ---
@@ -33,7 +33,30 @@ gh pr view <number> --json comments,reviews
 > gh pr edit <number> --base staging
 > ```
 
-### 2. Checkout Branch & Merge Staging
+### 2. Inspect PR Checks Before Editing
+
+Always inspect the complete check state before changing code. Do not treat a cancelled, queued, or missing check as a code failure without evidence.
+
+```bash
+gh pr checks <number> --json name,state,bucket,link,startedAt,completedAt,workflow
+```
+
+For every failed or cancelled GitHub Actions check, inspect the associated run and job:
+
+```bash
+gh run view <run-id> --json status,conclusion,event,headSha,jobs,url
+gh run view <run-id> --log
+gh api repos/{owner}/{repo}/actions/jobs/<job-id> \
+  --jq '{name,status,conclusion,started_at,completed_at,steps}'
+```
+
+- Identify the concrete failure from the job setup, step output, annotations, or test log.
+- If logs are unavailable, report that explicitly and inspect job metadata before guessing.
+- If the failure is infrastructure-only (for example a runner/setup failure) and the code is unaffected, rerun the failed workflow or failed jobs when authorized, then recheck the result.
+- If the failure is caused by the PR, fix it as part of this workflow, add or update tests where appropriate, and re-run the affected checks.
+- External-provider checks are not actionable through GitHub Actions; report their details URL and do not attempt provider-specific repair.
+
+### 3. Checkout Branch & Merge Staging
 
 Fetch the remote PR branch and check out a local tracking branch:
 
@@ -48,7 +71,7 @@ Merge `staging` to catch up and detect any merge conflicts:
 GIT_EDITOR=true git merge staging --no-edit
 ```
 
-### 3. Resolve Merge Conflicts
+### 4. Resolve Merge Conflicts
 
 If `git merge staging` reports conflicts (`git status` shows unmerged paths):
 
@@ -63,7 +86,7 @@ If `git merge staging` reports conflicts (`git status` shows unmerged paths):
    - `git add <resolved-files>`
    - Finish merge commit: `git commit -m ":twisted_right_wards_arrows: merge: resolve merge conflicts with staging"`
 
-### 4. Analyze & Implement Review Comment Fixes
+### 5. Analyze & Implement Review Comment Fixes
 
 For each review comment:
 
@@ -74,7 +97,7 @@ For each review comment:
    - Update stale docs/guides/LLM context (`.md`, `llms-full.txt`) when features are modified or removed.
    - Run `node scripts/generate-llms-full.mjs` if help/blog docs change.
 
-### 5. Verification
+### 6. Verification
 
 Run targeted unit tests and workspace type checks to verify fixes and conflict resolutions:
 
@@ -84,9 +107,14 @@ bun --filter web test <path/to/affected.test.ts>
 
 # Run workspace type-check
 bun --filter web check
+
+# Recheck PR status after fixes or reruns
+gh pr checks <number> --watch
 ```
 
-### 6. Commit with Gitmoji & Push
+Do not declare the PR fixed while actionable failures remain. Summarize any unresolved or unavailable checks and their details URLs.
+
+### 7. Commit with Gitmoji & Push
 
 Commit changes using gitmoji syntax to satisfy repo `commitlint` rules:
 
@@ -103,10 +131,11 @@ Recommended gitmojis:
 - `:memo:` (`docs:`) - Updating documentation or LLM context files
 - `:bug:` (`fix:`) - Bug fixes
 
-### 7. Notify Completion
+### 8. Notify Completion
 
 Report back to the user with a concise summary of:
 
+- Check failures found, their root causes, and any reruns performed
 - Resolved merge conflicts (if any)
 - Addressed review comments
 - Passed unit test counts
