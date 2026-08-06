@@ -37,6 +37,9 @@ export function buildStructuredDraftingPrompt(
 
   return `You are a Structured Lore Drafter. Your task is to generate a formal world-building record based on a Canonical Synthesis Summary and a user request.
 
+BANNED NAMES — read first, this is a hard constraint, not a preference:
+Never title the entity, or name any secondary figure it mentions, any of: ${BANNED_NAMES.join(", ")}. This also bans hyphenated or compound variations of these (e.g. if "Vane" is banned, do not use "Vane-Smithe" either). These are generic fantasy clichés — invent something distinct and setting-appropriate instead.
+
 CANONICAL SYNTHESIS SUMMARY:
 ${synthesisSummary}
 
@@ -57,6 +60,11 @@ GUIDELINES:
 - For character, npc, or person records, the Lore section MUST include a "## Personality & Voice" heading with concise markdown bullets covering temperament, conversational habits, speech rhythm, word choice, and in-character behavior rules.
 - For character, npc, or person records, the Lore section MUST also include a "## Knowledge & Expertise" heading listing the specific domains, skills, and information this character plausibly knows, and their explicit knowledge limits or blind spots.
 - Preserve specific developments, relationships, and historical context.
-- Naming rules: Names for the entity or any secondary figures MUST NEVER include generic fantasy cliché placeholders: ${BANNED_NAMES.join(", ")}.
-- Output ONLY the structured fields.`;
+- Output ONLY the structured fields — no draft notes, no verification notes, no text before **Name:** or after the Lore section.
+
+BEFORE YOU OUTPUT — silently verify, then correct if needed:
+1. Banned names: does the Name, or any secondary figure named in Chronicle/Lore, match or contain (as a hyphenated/compound part) any entry in the BANNED NAMES list above? If so, rename before outputting.
+2. Internal consistency: do Name, Type, Chronicle, and Lore agree with each other and with the Canonical Synthesis Summary — no contradictions in role, relationships, timeline, or established facts?
+3. Format: does the output match the exact **Name:**/**Type:**/**Chronicle:**/**Lore:** structure above, with nothing else around it?
+Fix anything that fails these checks before producing your final answer. Only the corrected, final structured record should appear in your output — never show your verification work.`;
 }

@@ -44,7 +44,29 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("## Personality & Voice");
       expect(result).toContain("temperament");
       expect(result).toContain("speech rhythm");
-      expect(result).toContain("generic fantasy cliché placeholders");
+      expect(result).toContain("generic fantasy clichés");
+    });
+
+    it("states the banned-names rule as a hard constraint before the format spec", () => {
+      const result = buildStructuredDraftingPrompt("Syn", "Req");
+      expect(result).toContain("BANNED NAMES");
+      expect(result).toContain("hard constraint, not a preference");
+      expect(result).toContain("Vance");
+      expect(result).toContain("hyphenated or compound variations");
+      // The ban must appear before the drafting requirements, not buried
+      // after them, so the model reads it before it starts drafting a name.
+      expect(result.indexOf("BANNED NAMES")).toBeLessThan(
+        result.indexOf("DRAFTING REQUIREMENTS"),
+      );
+    });
+
+    it("instructs the model to self-verify and correct before outputting", () => {
+      const result = buildStructuredDraftingPrompt("Syn", "Req");
+      expect(result).toContain("BEFORE YOU OUTPUT");
+      expect(result).toContain("Banned names:");
+      expect(result).toContain("Internal consistency:");
+      expect(result).toContain("Fix anything that fails these checks");
+      expect(result).toContain("never show your verification work");
     });
 
     it("should handle custom categories correctly", () => {
