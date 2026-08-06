@@ -24,6 +24,7 @@ export interface FieldReferenceNode {
    * type; kept only for editor diagnostics, never used for rendering. */
   requestedDisplayMode?: PresentationDisplayMode;
   label?: string;
+  hideLabel?: boolean;
 }
 
 /** A `FieldReference` whose `fieldId` does not resolve against the

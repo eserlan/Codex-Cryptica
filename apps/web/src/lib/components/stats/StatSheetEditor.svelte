@@ -22,6 +22,7 @@
     { value: "longtext", label: "Long Text" },
     { value: "heading", label: "Section Heading" },
     { value: "dice", label: "Dice Roll" },
+    { value: "item-table", label: "Item / Equipment Table" },
   ];
 
   let fields = $state<StatSheetField[]>(

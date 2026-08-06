@@ -48,12 +48,18 @@ export async function callOpenAi(
     messages,
   };
 
-  const temperature =
-    request.temperature ?? model.defaultParameters?.temperature;
-  if (temperature !== undefined) body.temperature = temperature;
+  // GPT-5.6-family models (confirmed live against gpt-5.6-luna) reject an
+  // explicit `temperature` — they only support the fixed default — and use
+  // `max_completion_tokens` rather than the legacy `max_tokens` parameter,
+  // matching OpenAI's newer reasoning-tier model convention. Since every
+  // OpenAI-provider registry entry today is in that family, `temperature`
+  // is intentionally never forwarded; revisit if a non-reasoning
+  // OpenAI-compatible model is ever added to the registry.
   const maxOutputTokens =
     request.maxOutputTokens ?? model.defaultParameters?.maxOutputTokens;
-  if (maxOutputTokens !== undefined) body.max_tokens = maxOutputTokens;
+  if (maxOutputTokens !== undefined) {
+    body.max_completion_tokens = maxOutputTokens;
+  }
   if (request.topP !== undefined) body.top_p = request.topP;
 
   if (wantsStructuredOutput(request)) {

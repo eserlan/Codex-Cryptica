@@ -74,33 +74,53 @@ describe("TokenQuickStats", () => {
     expect(screen.queryByTestId("token-quick-stats")).toBeNull();
   });
 
-  it("renders only favorited counter and dice fields, ignoring others", () => {
+  it("renders favorited counter, dice, number, and text fields", () => {
     const entity = buildEntity({
       statSheet: {
         fields: [
-          {
-            id: "hp",
-            label: "Hit Points",
-            type: "counter",
-            value: 10,
-            favorite: true,
-          },
-          { id: "ac", label: "Armor Class", type: "number", value: 15 },
+          { id: "hp", label: "HP", type: "counter", value: 12, favorite: true },
           {
             id: "atk",
             label: "Attack",
             type: "dice",
-            formula: "1d20+5",
+            formula: "1d20+3",
             favorite: true,
+          },
+          {
+            id: "ac",
+            label: "Armor Class",
+            type: "number",
+            value: 16,
+            favorite: true,
+          },
+          {
+            id: "align",
+            label: "Alignment",
+            type: "text",
+            value: "Chaotic Evil",
+            favorite: true,
+          },
+          {
+            id: "unfav",
+            label: "Unfavored",
+            type: "number",
+            value: 5,
+            favorite: false,
           },
         ],
       },
     });
-    render(TokenQuickStats, { entity });
 
-    expect(screen.getByText("Hit Points")).toBeTruthy();
-    expect(screen.getByText("Attack")).toBeTruthy();
-    expect(screen.queryByText("Armor Class")).toBeNull();
+    render(TokenQuickStats, { props: { entity } });
+
+    expect(screen.getByTestId("token-quick-stats-counter")).toBeTruthy();
+    expect(screen.getByTestId("token-quick-stats-dice")).toBeTruthy();
+    expect(screen.getByTestId("token-quick-stats-number")).toBeTruthy();
+    expect(screen.getByTestId("token-quick-stats-text")).toBeTruthy();
+    expect(screen.getByText("Armor Class")).toBeTruthy();
+    expect(screen.getByText("Alignment")).toBeTruthy();
+    expect(screen.getByText("Chaotic Evil")).toBeTruthy();
+    expect(screen.queryByText("Unfavored")).toBeNull();
   });
 
   it("increments a favorited counter and persists the change", async () => {

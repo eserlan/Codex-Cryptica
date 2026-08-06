@@ -68,6 +68,10 @@ export const DISPLAY_MODES_BY_FIELD_TYPE: Record<
     default: "plain",
     allowed: ["plain", "prominent"],
   },
+  "item-table": {
+    default: "table",
+    allowed: ["table", "plain"],
+  },
 };
 
 /** Resolves the effective display mode for a field reference: the

@@ -2,6 +2,7 @@
   import type { FieldReferenceNode as FieldReferenceNodeType } from "@codex/stat-sheet-engine";
   import type { PresentationRenderContext } from "../types";
   import MissingFieldNode from "./MissingFieldNode.svelte";
+  import ItemTableNode from "./ItemTableNode.svelte";
 
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
 
@@ -45,7 +46,13 @@
           )
         : undefined),
   );
-  const label = $derived(node.label ?? field?.label ?? node.fieldId);
+  const label = $derived(
+    node.hideLabel
+      ? ""
+      : node.label !== undefined
+        ? node.label
+        : (field?.label ?? node.fieldId),
+  );
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
   const controlsDisabled = $derived(
@@ -57,6 +64,8 @@
   <MissingFieldNode
     node={{ type: "missing-field", fieldId: node.fieldId, label: node.label }}
   />
+{:else if field.type === "item-table"}
+  <ItemTableNode {field} {context} />
 {:else if mode === "counter" || mode === "current-max" || mode === "progress"}
   <div
     class="inline-flex items-center gap-2 rounded border border-theme-border px-2 py-1"
@@ -138,16 +147,20 @@
     class="inline-flex items-center gap-2"
     data-testid="presentation-field-number"
   >
-    <span
-      class={isProminent
-        ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
-        : "w-14 shrink-0 text-xs text-theme-muted"}
-    >
-      {label}:
-    </span>
+    {#if label}
+      <span
+        class={isProminent
+          ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
+          : "w-14 shrink-0 text-xs text-theme-muted"}
+      >
+        {label}
+      </span>
+    {/if}
     <input
       type="number"
-      class="w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"
+      class={isProminent
+        ? "w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-sm font-bold text-theme-primary disabled:opacity-40"
+        : "w-16 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text disabled:opacity-40"}
       value={typeof field.value === "number" ? field.value : ""}
       disabled={controlsDisabled}
       oninput={(e) =>
@@ -162,13 +175,15 @@
     class="inline-flex items-center gap-2"
     data-testid="presentation-field-text"
   >
-    <span
-      class={isProminent
-        ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
-        : "w-14 shrink-0 text-xs text-theme-muted"}
-    >
-      {label}:
-    </span>
+    {#if label}
+      <span
+        class={isProminent
+          ? "w-14 shrink-0 text-lg font-bold text-theme-primary"
+          : "w-14 shrink-0 text-xs text-theme-muted"}
+      >
+        {label}
+      </span>
+    {/if}
     <input
       type="text"
       class="w-36 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40"
@@ -194,7 +209,7 @@
         class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"
         aria-hidden="true"
       ></span>
-      <span class="font-medium">{label}:</span>
+      {#if label}<span class="font-medium">{label}</span>{/if}
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
@@ -221,7 +236,7 @@
         class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-muted"
         aria-hidden="true"
       ></span>
-      <span class="font-medium">{label}:</span>
+      {#if label}<span class="font-medium">{label}</span>{/if}
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
@@ -234,7 +249,8 @@
       : "text-xs text-theme-text"}
     data-testid="presentation-field-plain"
   >
-    {#if !isProminent}<span class="text-theme-muted">{label}:</span>{/if}
+    {#if !isProminent && label}<span class="text-theme-muted">{label}</span
+      >{/if}
     {field.value ?? ""}
   </span>
 {/if}
