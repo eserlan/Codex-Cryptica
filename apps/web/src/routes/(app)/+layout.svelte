@@ -147,6 +147,34 @@
     return initFullscreenOnFirstInteraction();
   });
 
+  // `100dvh` (app.css's --app-viewport-height fallback) is supposed to track
+  // the real visible viewport as mobile browser chrome (address bar, toolbar)
+  // shows/hides, but its live-recalculation is inconsistently timed across
+  // Android browsers — it can report a taller height than what's actually
+  // visible right after the chrome expands, leaving a blank gap below the
+  // app between it and the browser UI. VisualViewport is older, more
+  // consistently supported, and reports the actual visible height directly,
+  // so once mounted we override the CSS unit with a measured pixel value.
+  onMount(() => {
+    if (!browser || !window.visualViewport) return;
+
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+
+    const setViewportHeight = () => {
+      root.style.setProperty("--app-viewport-height", `${vv.height}px`);
+    };
+
+    setViewportHeight();
+    vv.addEventListener("resize", setViewportHeight);
+    vv.addEventListener("scroll", setViewportHeight);
+
+    return () => {
+      vv.removeEventListener("resize", setViewportHeight);
+      vv.removeEventListener("scroll", setViewportHeight);
+    };
+  });
+
   $effect(() => {
     if (!browser) return;
 

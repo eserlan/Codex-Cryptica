@@ -286,6 +286,50 @@ describe("+layout.svelte", () => {
     expect(screen.getByTestId("layout-children")).toBeTruthy();
   });
 
+  it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {
+    const listeners = new Map<string, () => void>();
+    const originalVisualViewport = window.visualViewport;
+    (window as any).visualViewport = {
+      height: 742,
+      addEventListener: (type: string, listener: () => void) =>
+        listeners.set(type, listener),
+      removeEventListener: (type: string) => listeners.delete(type),
+    };
+
+    const { unmount } = render(LayoutTestHost);
+
+    expect(
+      document.documentElement.style.getPropertyValue("--app-viewport-height"),
+    ).toBe("742px");
+
+    // Simulate the mobile browser's toolbar collapsing/expanding, changing
+    // the actually-visible height without a full window resize.
+    (window.visualViewport as any).height = 690;
+    listeners.get("resize")?.();
+
+    expect(
+      document.documentElement.style.getPropertyValue("--app-viewport-height"),
+    ).toBe("690px");
+
+    unmount();
+    (window as any).visualViewport = originalVisualViewport;
+  });
+
+  it("leaves --app-viewport-height alone when the browser has no visualViewport", () => {
+    const originalVisualViewport = window.visualViewport;
+    (window as any).visualViewport = undefined;
+    document.documentElement.style.removeProperty("--app-viewport-height");
+
+    const { unmount } = render(LayoutTestHost);
+
+    expect(
+      document.documentElement.style.getPropertyValue("--app-viewport-height"),
+    ).toBe("");
+
+    unmount();
+    (window as any).visualViewport = originalVisualViewport;
+  });
+
   it("does not open the in-app Help modal for standalone Help hashes", async () => {
     vi.useFakeTimers();
     helpStore.isInitialized = true;
