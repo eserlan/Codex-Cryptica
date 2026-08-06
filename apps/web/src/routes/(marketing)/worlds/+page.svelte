@@ -3,8 +3,11 @@
   import { marked } from "marked";
   import DOMPurify from "dompurify";
   import { browser } from "$app/environment";
+  import { browserStorage } from "$lib/utils/runtime-deps";
   import WorldsProvenanceNotice from "$lib/components/publishing/WorldsProvenanceNotice.svelte";
   import CopyrightReportModal from "$lib/components/publishing/CopyrightReportModal.svelte";
+
+  const VIEW_MODE_KEY = "cc_directory_view_mode";
 
   interface DirectoryResult {
     publishId: string;
@@ -34,19 +37,15 @@
   let showReportModal = $state(false);
 
   $effect(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("cc_directory_view_mode");
-      if (saved === "grid" || saved === "list") {
-        viewMode = saved;
-      }
+    const saved = browserStorage.getItem(VIEW_MODE_KEY);
+    if (saved === "grid" || saved === "list") {
+      viewMode = saved;
     }
   });
 
   function setViewMode(mode: "grid" | "list") {
     viewMode = mode;
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("cc_directory_view_mode", mode);
-    }
+    browserStorage.setItem(VIEW_MODE_KEY, mode);
   }
 
   function renderInlineMarkdown(text: string): string {

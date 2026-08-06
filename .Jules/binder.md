@@ -112,3 +112,6 @@
 
 **Learning:** Testing debounce or interval logic (e.g. `handleVersionSkewReload` in `hooks.client.ts`) can fail non-deterministically if it relies on the global `Date.now()`. Bypassing this with `vi.spyOn(Date, 'now')` or `vi.useFakeTimers()` can cause widespread, subtle test pollution if not cleaned up properly, especially in concurrent runners like Vitest.
 **Action:** Extract the temporal dependency `Date.now` into an injectable function parameter (e.g. `getNow: () => number = Date.now`). This creates a clean boundary for tests to supply mock timestamp sequences without touching the global environment.
+## 2026-08-06 - Replace raw localStorage with browserStorage in marketing world directory
+**Learning:** The application provides a wrapper `browserStorage` from `$lib/utils/runtime-deps` that encapsulates `localStorage` access safely, handling SSR rendering and unavailable storage scenarios transparently. This removes the need for ad-hoc `typeof localStorage !== 'undefined'` checks in the UI.
+**Action:** Always use `browserStorage` or inject it as a dependency using the `StorageLike` interface in place of raw `localStorage`.
