@@ -48,15 +48,33 @@
   );
   let activeController: AbortController | undefined;
 
-  const failedIds = $derived(
-    Object.values(results)
-      .filter((result) => result.status === "failed")
-      .map((result) => result.id),
-  );
-  const successCount = $derived(
-    Object.values(results).filter((result) => result.status === "success")
-      .length,
-  );
+  const failedIds = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace Object.values().filter().map() with an imperative loop
+    const ids: string[] = [];
+    for (const key in results) {
+      if (
+        Object.prototype.hasOwnProperty.call(results, key) &&
+        results[key].status === "failed"
+      ) {
+        ids.push(results[key].id);
+      }
+    }
+    return ids;
+  });
+
+  const successCount = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace Object.values().filter().length with an imperative loop
+    let count = 0;
+    for (const key in results) {
+      if (
+        Object.prototype.hasOwnProperty.call(results, key) &&
+        results[key].status === "success"
+      ) {
+        count++;
+      }
+    }
+    return count;
+  });
 
   function packageFor(draft: PublishDraft) {
     return projectTemplatePackage(draft.template, {

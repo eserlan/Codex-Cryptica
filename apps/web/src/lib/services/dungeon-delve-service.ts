@@ -12,10 +12,14 @@ export interface DungeonDelveServiceDeps {
 }
 
 function extractGeneratedSectorNames(narrative: string): string[] {
-  const explicitSectors = Array.from(
-    narrative.matchAll(/^###\s+Sector\s+\d+\s*:\s*(.+?)\s*$/gim),
-    (match) => match[1]?.trim(),
-  ).filter((name): name is string => Boolean(name));
+  // ⚡ Bolt Optimization: Replace Array.from().map().filter() with an imperative loop
+  const explicitSectors: string[] = [];
+  for (const match of narrative.matchAll(/^###\s+Sector\s+\d+\s*:\s*(.+?)\s*$/gim)) {
+    const name = match[1]?.trim();
+    if (name) {
+      explicitSectors.push(name);
+    }
+  }
   if (explicitSectors.length > 0) return explicitSectors;
 
   const layoutSection = narrative.match(
@@ -23,14 +27,15 @@ function extractGeneratedSectorNames(narrative: string): string[] {
   )?.[1];
   if (!layoutSection) return [];
 
-  return Array.from(
-    layoutSection.matchAll(/^\s*\d+[.)]\s+(.+?)\s*$/gm),
-    (match) =>
-      match[1]
-        ?.trim()
-        .replace(/^(\*\*|__)/, "")
-        .replace(/(\*\*|__)$/, ""),
-  ).filter((name): name is string => Boolean(name));
+  // ⚡ Bolt Optimization: Replace Array.from().map().filter() with an imperative loop
+  const layoutSectors: string[] = [];
+  for (const match of layoutSection.matchAll(/^\s*\d+[.)]\s+(.+?)\s*$/gm)) {
+    const name = match[1]?.trim().replace(/^(\*\*|__)/, "").replace(/(\*\*|__)$/, "");
+    if (name) {
+      layoutSectors.push(name);
+    }
+  }
+  return layoutSectors;
 }
 
 export class DungeonDelveService {
