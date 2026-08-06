@@ -280,25 +280,19 @@ describe("rollStatSheetDiceField", () => {
     expect(failDisplay.total).toBe(17);
   });
 
-  it("shows the outcome in the non-VTT toast for target rolls", async () => {
+  it("shows just the rolled number in the non-VTT toast for target rolls", async () => {
     mapSessionState.vttEnabled = false;
 
     await rollStatSheetDiceField(diceField({ formula: "1d100", value: 50 }));
 
-    expect(notify).toHaveBeenCalledWith(
-      "Attack: 1d100 = 17 vs 50 (Success)",
-      "success",
-    );
+    expect(notify).toHaveBeenCalledWith("Attack: 1d100 = 17", "info");
   });
 
-  it("uses an error toast for failed non-VTT target rolls", async () => {
+  it("keeps a failed target-roll toast neutral", async () => {
     mapSessionState.vttEnabled = false;
 
     await rollStatSheetDiceField(diceField({ formula: "1d100", value: 10 }));
 
-    expect(notify).toHaveBeenCalledWith(
-      "Attack: 1d100 = 17 vs 10 (Failure)",
-      "error",
-    );
+    expect(notify).toHaveBeenCalledWith("Attack: 1d100 = 17", "info");
   });
 });
