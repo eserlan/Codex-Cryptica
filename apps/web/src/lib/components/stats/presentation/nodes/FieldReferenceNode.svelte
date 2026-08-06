@@ -53,6 +53,7 @@
   );
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
+  const isNameTargetDice = $derived(mode === "name-target");
   const controlsDisabled = $derived(
     context.readOnly || context.mode === "preview",
   );
@@ -60,6 +61,11 @@
     field?.type === "dice" && typeof field.value === "number"
       ? field.value
       : null,
+  );
+  const formattedTargetScore = $derived(
+    targetScore === null
+      ? null
+      : `${targetScore}${/d100\b/i.test(field?.formula ?? "1d20") ? "%" : ""}`,
   );
   const displayRollText = $derived(
     rollState.text?.replace(
@@ -219,16 +225,27 @@
         aria-hidden="true"
       ></span>
       {#if label}<span class="font-medium">{label}</span>{/if}
-      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
-        {field.formula ?? "1d20"}
-      </span>
-      {#if targetScore !== null}
-        <span
-          class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
-          data-testid="presentation-field-dice-target"
-        >
-          Target: {targetScore}
+      {#if isNameTargetDice}
+        {#if targetScore !== null}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+            data-testid="presentation-field-dice-target"
+          >
+            {formattedTargetScore}
+          </span>
+        {/if}
+      {:else}
+        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+          {field.formula ?? "1d20"}
         </span>
+        {#if targetScore !== null}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+            data-testid="presentation-field-dice-target"
+          >
+            Target: {targetScore}
+          </span>
+        {/if}
       {/if}
       {#if rollState.text}
         <span
@@ -250,9 +267,19 @@
         aria-hidden="true"
       ></span>
       {#if label}<span class="font-medium">{label}</span>{/if}
-      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
-        {field.formula ?? "1d20"}
-      </span>
+      {#if isNameTargetDice}
+        {#if targetScore !== null}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+          >
+            {formattedTargetScore}
+          </span>
+        {/if}
+      {:else}
+        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+          {field.formula ?? "1d20"}
+        </span>
+      {/if}
     </span>
   {/if}
 {:else}

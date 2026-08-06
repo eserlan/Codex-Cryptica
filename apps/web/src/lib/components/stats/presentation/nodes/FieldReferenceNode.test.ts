@@ -147,4 +147,30 @@ describe("FieldReferenceNode", () => {
     expect(roll.textContent).toContain("= 17 vs 50");
     expect(roll.textContent).not.toContain("Success");
   });
+
+  it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "perception",
+      label: "Perception",
+      displayMode: "name-target",
+    };
+    const context = makeContext([
+      {
+        id: "perception",
+        label: "Perception",
+        type: "dice",
+        formula: "1d100",
+        value: 45,
+      },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    const roll = screen.getByTestId("presentation-field-dice-roll");
+    expect(roll.textContent).toContain("Perception");
+    expect(roll.textContent).toContain("45%");
+    expect(roll.textContent).not.toContain("1d100");
+    expect(roll.textContent).not.toContain("Target:");
+  });
 });

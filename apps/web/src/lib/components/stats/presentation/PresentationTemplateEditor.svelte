@@ -32,6 +32,7 @@
     { mode: "tag-list", label: "Tag List" },
     { mode: "notes", label: "Notes Area" },
     { mode: "table", label: "Item Table" },
+    { mode: "name-target", label: "Name & Target" },
   ] as const;
 
   let {
@@ -74,8 +75,7 @@
 
   // Visual layout builder state derived from AST or built interactively
   type VisualCell =
-    | { kind: "field"; fieldId: string }
-    | { kind: "value"; value: string };
+    { kind: "field"; fieldId: string } | { kind: "value"; value: string };
 
   interface VisualCard {
     id: string;
@@ -135,7 +135,9 @@
         for (const rowCells of node.rows ?? []) {
           const row: VisualCell[] = [];
           for (const cellNodes of rowCells) {
-            const field = cellNodes.find((cell: any) => cell.type === "field-reference");
+            const field = cellNodes.find(
+              (cell: any) => cell.type === "field-reference",
+            );
             const text = cellNodes
               .filter((cell: any) => cell.type === "text")
               .map((cell: any) => cell.text)
@@ -181,9 +183,7 @@
             for (const cNode of child.children ?? []) {
               const fIds = extractFieldIdsFromNode(cNode);
               if (fIds.length > 0) {
-                rows.push(
-                  fIds.map((fieldId) => ({ kind: "field", fieldId })),
-                );
+                rows.push(fIds.map((fieldId) => ({ kind: "field", fieldId })));
               }
             }
             cards.push({
@@ -693,7 +693,7 @@
       case "longtext":
         return "Sample notes go here.";
       case "dice":
-        return undefined;
+        return 45;
       default:
         return undefined;
     }
@@ -1230,8 +1230,12 @@
                     </div>
 
                     {#if card.mode === "table"}
-                      <div class="flex flex-wrap items-center gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 p-1.5">
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-theme-muted">
+                      <div
+                        class="flex flex-wrap items-center gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 p-1.5"
+                      >
+                        <span
+                          class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+                        >
                           Headers
                         </span>
                         {#each card.tableHeaders ?? [] as header, headerIndex (`${card.id}-header-${headerIndex}`)}
@@ -1281,9 +1285,19 @@
                                     type="button"
                                     draggable="true"
                                     ondragstart={(e) =>
-                                      handleFieldDragStart(e, card.id, rIdx, fid)}
+                                      handleFieldDragStart(
+                                        e,
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
                                     oncontextmenu={(e) =>
-                                      openChipContextMenu(e, card.id, rIdx, fid)}
+                                      openChipContextMenu(
+                                        e,
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
                                     onkeydown={(e) =>
                                       openChipContextMenuFromKeyboard(
                                         e,
@@ -1320,14 +1334,20 @@
                                     type="button"
                                     class="ml-0.5 text-[10px] text-theme-muted hover:text-red-400"
                                     onclick={() =>
-                                      removeFieldFromCardRow(card.id, rIdx, fid)}
+                                      removeFieldFromCardRow(
+                                        card.id,
+                                        rIdx,
+                                        fid,
+                                      )}
                                     title="Remove field"
                                   >
                                     ✕
                                   </button>
                                 </div>
                               {:else}
-                                <div class="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5">
+                                <div
+                                  class="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5"
+                                >
                                   <input
                                     type="text"
                                     class="w-24 bg-transparent text-xs text-theme-text outline-none placeholder:text-theme-muted"
@@ -1339,14 +1359,19 @@
                                         card.id,
                                         rIdx,
                                         cIdx,
-                                        (event.target as HTMLInputElement).value,
+                                        (event.target as HTMLInputElement)
+                                          .value,
                                       )}
                                   />
                                   <button
                                     type="button"
                                     class="text-[10px] text-theme-muted hover:text-red-400"
                                     onclick={() =>
-                                      removeValueFromTableRow(card.id, rIdx, cIdx)}
+                                      removeValueFromTableRow(
+                                        card.id,
+                                        rIdx,
+                                        cIdx,
+                                      )}
                                     aria-label={`Remove value from table row ${rIdx + 1}`}
                                   >
                                     ✕
@@ -1378,7 +1403,8 @@
                               <button
                                 type="button"
                                 class="rounded border border-dashed border-amber-500/40 px-1.5 py-0.5 text-xs text-amber-700 hover:border-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
-                                onclick={() => addValueToTableRow(card.id, rIdx)}
+                                onclick={() =>
+                                  addValueToTableRow(card.id, rIdx)}
                                 data-testid="presentation-editor-add-table-value"
                               >
                                 + Add Value

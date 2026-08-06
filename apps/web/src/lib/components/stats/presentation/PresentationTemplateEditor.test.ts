@@ -45,6 +45,15 @@ const longTextSchema: StatSheetTemplate = {
   fields: [{ id: "notes", label: "Notes", type: "longtext" }],
 };
 
+const diceSchema: StatSheetTemplate = {
+  id: "schema-dice",
+  name: "Dice Schema",
+  isBuiltIn: true,
+  fields: [
+    { id: "perception", label: "Perception", type: "dice", formula: "1d100" },
+  ],
+};
+
 describe("PresentationTemplateEditor", () => {
   it("explains the visual-builder field options in Syntax Help", async () => {
     render(PresentationTemplateEditor, { schema });
@@ -175,13 +184,48 @@ describe("PresentationTemplateEditor", () => {
     );
   });
 
+  it("offers the compact name-and-target mode for dice rolls", async () => {
+    const saved = {
+      ...builtIn,
+      id: "presentation-dice",
+      schemaTemplateId: diceSchema.id,
+      isBuiltIn: false,
+    };
+    saveTemplate.mockResolvedValueOnce(saved);
+    render(PresentationTemplateEditor, {
+      schema: diceSchema,
+      template: { ...saved, source: "[perception]" },
+    });
+
+    await fireEvent.contextMenu(
+      screen.getByTitle("Right-click for display options"),
+    );
+
+    expect(
+      screen.getByRole("menuitem", { name: "Name & Target" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Notes Area" })).toBeNull();
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Name & Target" }),
+    );
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining(
+          '{{stat.perception display="name-target"}}',
+        ),
+      }),
+    );
+  });
+
   it("adds a literal value to a visual table row without creating a stat field", async () => {
     const tableTemplate = {
       ...builtIn,
       id: "presentation-table",
       isBuiltIn: false,
-      source:
-        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | |",
+      source: "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | |",
     };
     saveTemplate.mockResolvedValueOnce(tableTemplate);
     render(PresentationTemplateEditor, {

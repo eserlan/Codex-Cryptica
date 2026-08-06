@@ -39,6 +39,7 @@ const schema: StatSheetTemplate = {
     { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 10 },
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "name_field", label: "Name", type: "text" },
+    { id: "attack", label: "Attack", type: "dice", formula: "1d100" },
   ],
 };
 
@@ -220,6 +221,17 @@ describe("validateAst / isTemplateUsable", () => {
     const para = validated[0] as ParagraphNode;
     const ref = para.children[0] as FieldReferenceNode;
     expect(ref.displayMode).toBe("counter");
+    expect(ref.requestedDisplayMode).toBeUndefined();
+  });
+
+  it("accepts the compact name-target display mode for dice fields", () => {
+    const parsed = parseTemplate('{{stat.attack display="name-target"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("name-target");
     expect(ref.requestedDisplayMode).toBeUndefined();
   });
 
