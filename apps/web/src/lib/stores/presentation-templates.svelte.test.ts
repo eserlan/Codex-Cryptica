@@ -57,7 +57,7 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     });
   });
 
-  it("provides a generated character presentation for custom character sheets", () => {
+  it("provides character sheets with both character and NPC presentation options", () => {
     const store = makeStore();
 
     const available = store.availableTemplatesForSchema(
@@ -66,11 +66,20 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
       "character",
     );
 
-    expect(available[0]).toMatchObject({
-      name: "Standard Character Sheet",
-      isBuiltIn: true,
-      source: expect.stringContaining("{{stat.hp}}"),
-    });
+    expect(available).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Standard Character Sheet",
+          isBuiltIn: true,
+          source: expect.stringContaining("{{stat.hp}}"),
+        }),
+        expect.objectContaining({
+          name: "Standard NPC / Monster Sheet",
+          isBuiltIn: true,
+          source: expect.stringContaining("{{stat.hp}}"),
+        }),
+      ]),
+    );
   });
 
   it("auto-suffixes a new template whose name collides with an existing one for the same schema", async () => {

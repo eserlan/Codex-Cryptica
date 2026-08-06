@@ -43,6 +43,17 @@ function entityLocalDefaultPresentation(
   };
 }
 
+function entityLocalNpcPresentation(
+  schemaTemplateId: string,
+  fields: StatSheetTemplateField[],
+): PresentationTemplate {
+  const base = entityLocalDefaultPresentation(schemaTemplateId, fields, "npc");
+  return {
+    ...base,
+    id: `builtin-presentation-custom-npc-${schemaTemplateId}`,
+  };
+}
+
 /**
  * Vault-scoped store for Markdown presentation templates
  * (152-stat-sheet-templates), mirroring StatSheetTemplateStore's
@@ -98,16 +109,16 @@ export class PresentationTemplateStore {
     // than a reusable Stat Sheet template. Its presentations must stay
     // local too: generic built-ins would reference fields it does not have.
     if (schemaTemplateId.startsWith(ENTITY_LOCAL_SCHEMA_PREFIX)) {
-      return fields
-        ? [
-            entityLocalDefaultPresentation(
-              schemaTemplateId,
-              fields,
-              entityType,
-            ),
-            ...vaultTemplates,
-          ]
-        : vaultTemplates;
+      if (!fields) return vaultTemplates;
+      const builtIns = [
+        entityLocalDefaultPresentation(schemaTemplateId, fields, entityType),
+      ];
+      // CC treats player characters and NPCs as the same broad entity kind;
+      // offer character sheets the NPC/monster layout as an alternative.
+      if (entityType?.toLowerCase() === "character") {
+        builtIns.push(entityLocalNpcPresentation(schemaTemplateId, fields));
+      }
+      return [...builtIns, ...vaultTemplates];
     }
     return [
       ...getBuiltInPresentationTemplates(schemaTemplateId),
