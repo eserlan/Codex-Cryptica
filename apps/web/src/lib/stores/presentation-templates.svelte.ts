@@ -1,11 +1,39 @@
 import { getDB } from "../utils/idb";
-import type { PresentationTemplate } from "schema";
+import type { PresentationTemplate, StatSheetTemplateField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import { getBuiltInPresentationTemplates } from "@codex/stat-sheet-engine";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 
 const ENTITY_LOCAL_SCHEMA_PREFIX = "entity-local-stat-sheet:";
+
+function entityLocalDefaultPresentation(
+  schemaTemplateId: string,
+  fields: StatSheetTemplateField[],
+  entityType?: string,
+): PresentationTemplate {
+  const references = fields
+    .filter((field) => field.type !== "heading")
+    .map((field) => `{{stat.${field.id}}}`)
+    .join("\n\n");
+  const isNpcOrMonster = entityType === "npc" || entityType === "monster";
+  return {
+    id: `builtin-presentation-custom-${schemaTemplateId}`,
+    vaultId: null,
+    schemaTemplateId,
+    name: isNpcOrMonster
+      ? "Standard NPC / Monster Sheet"
+      : "Standard Custom Sheet",
+    description: isNpcOrMonster
+      ? "A simple NPC or monster presentation generated from this sheet's fields."
+      : "A simple presentation generated from this sheet's fields.",
+    source: `## Stats\n\n${references}`,
+    formatVersion: 1,
+    isBuiltIn: true,
+    createdAt: "2026-08-06T00:00:00.000Z",
+    updatedAt: "2026-08-06T00:00:00.000Z",
+  };
+}
 
 /**
  * Vault-scoped store for Markdown presentation templates
@@ -52,6 +80,8 @@ export class PresentationTemplateStore {
    * reuse in V1). */
   availableTemplatesForSchema(
     schemaTemplateId: string,
+    fields?: StatSheetTemplateField[],
+    entityType?: string,
   ): PresentationTemplate[] {
     const vaultTemplates = this.templates.filter(
       (t) => t.schemaTemplateId === schemaTemplateId,
@@ -60,7 +90,16 @@ export class PresentationTemplateStore {
     // than a reusable Stat Sheet template. Its presentations must stay
     // local too: generic built-ins would reference fields it does not have.
     if (schemaTemplateId.startsWith(ENTITY_LOCAL_SCHEMA_PREFIX)) {
-      return vaultTemplates;
+      return fields
+        ? [
+            entityLocalDefaultPresentation(
+              schemaTemplateId,
+              fields,
+              entityType,
+            ),
+            ...vaultTemplates,
+          ]
+        : vaultTemplates;
     }
     return [
       ...getBuiltInPresentationTemplates(schemaTemplateId),

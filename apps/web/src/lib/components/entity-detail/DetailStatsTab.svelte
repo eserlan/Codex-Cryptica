@@ -73,7 +73,11 @@
       ? resolvePresentationTemplate(
           entity.statSheet,
           statSheetTemplates.getDefaultPresentationTemplateId(schema.id),
-          presentationTemplates.availableTemplatesForSchema(schema.id),
+          presentationTemplates.availableTemplatesForSchema(
+            schema.id,
+            schema.fields,
+            entity.type,
+          ),
         )
       : null,
   );
@@ -226,6 +230,7 @@
 {#if showPresentationManager && schema}
   <PresentationTemplateManager
     {schema}
+    entityType={entity.type}
     onClose={() => (showPresentationManager = false)}
   />
 {/if}

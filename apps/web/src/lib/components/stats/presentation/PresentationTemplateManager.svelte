@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StatSheetTemplate, PresentationTemplate } from "schema";
+  import type { Entity, StatSheetTemplate, PresentationTemplate } from "schema";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -8,14 +8,23 @@
 
   let {
     schema,
+    entityType,
     onClose = () => {},
-  }: { schema: StatSheetTemplate; onClose?: () => void } = $props();
+  }: {
+    schema: StatSheetTemplate;
+    entityType?: Entity["type"];
+    onClose?: () => void;
+  } = $props();
 
   let importError = $state("");
   let fileInput: HTMLInputElement | undefined = $state();
 
   const available = $derived(
-    presentationTemplates.availableTemplatesForSchema(schema.id),
+    presentationTemplates.availableTemplatesForSchema(
+      schema.id,
+      schema.fields,
+      entityType,
+    ),
   );
   const schemaDefaultId = $derived(
     statSheetTemplates.getDefaultPresentationTemplateId(schema.id),
