@@ -22,6 +22,7 @@ import {
   ImportEngine,
   cifSourceRefBuilder,
   CIF_MAPPING_RULES,
+  vaultFileSourceRefBuilder,
 } from "@codex/importer";
 import type {
   CCImportSession,
@@ -50,6 +51,9 @@ import { runOracleFileAnalysis } from "./import-oracle-analyzer";
 import { ImportPackManager } from "./import-pack-manager";
 import { VaultFilesProcessor } from "./import-vault-files-processor";
 import { wrapWithAbort } from "./import-abort-utils";
+
+type MarkdownFrontmatterValidator =
+  typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
 
 export type ImportMode = "oracle" | "cc" | null;
 export type ImportStep = "upload" | "processing" | "review" | "report";
@@ -91,6 +95,8 @@ export class ImportSettingsController {
   importProgress = $state<{ current: number; total: number } | null>(null);
   missingImageRefs = $state<MissingImageReference[]>([]);
   private vaultFilesPackage: CCImportPackage | null = null;
+  private markdownFrontmatterValidator: MarkdownFrontmatterValidator | null =
+    null;
 
   processingSubtitle = $derived(
     this.importMode === "cc"
@@ -106,6 +112,17 @@ export class ImportSettingsController {
   ];
 
   constructor(private deps: ImportSettingsControllerDeps = defaultDeps) {}
+
+  syncModalImportState = () => {
+    this.deps.modalUIStore.isImporting =
+      this.step === "processing" ||
+      this.step === "review" ||
+      this.step === "report";
+  };
+
+  resetModalImportState = () => {
+    this.deps.modalUIStore.isImporting = false;
+  };
 
   private _packManager: ImportPackManager | null = null;
   private get packManager(): ImportPackManager {
@@ -476,7 +493,7 @@ export class ImportSettingsController {
       return;
     }
 
-    if (this.importMode === "cc") {
+    if ((this.importMode as ImportMode) === "cc") {
       this.step = this.ccSession ? "review" : "upload";
       if (!this.ccSession && this.rejectedFiles.length === 0) {
         this.statusMessage = "No import package was prepared.";

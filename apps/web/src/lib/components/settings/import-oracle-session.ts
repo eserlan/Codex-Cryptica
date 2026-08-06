@@ -1,4 +1,8 @@
-import type { DiscoveredEntity, CCImportSession } from "@codex/importer";
+import type {
+  DiscoveredEntity,
+  CCImportSession,
+  ImportEngine,
+} from "@codex/importer";
 import { discoveredEntitiesToPackage } from "@codex/importer";
 import { wrapWithAbort } from "./import-abort-utils";
 
@@ -9,7 +13,7 @@ export interface OracleImportSessionDeps {
     originalName: string,
   ) => Promise<{ image: string; thumbnail?: string }>;
   extractedAssets: Map<string, any>;
-  createEngine: () => any;
+  createEngine: () => ImportEngine;
 }
 
 export async function buildOracleSession(

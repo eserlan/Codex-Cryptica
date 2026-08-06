@@ -3,6 +3,7 @@ import type {
   ItemDecision,
   MatchDecision,
   ImportReport,
+  ImportEngine,
 } from "@codex/importer";
 import {
   setItemDecision,
@@ -26,7 +27,7 @@ export interface ReviewSessionCallbacks {
   resumeSaving: () => void;
   flushPendingSaves: () => Promise<void>;
   notifyError: (msg: string) => void;
-  createEngine: () => any;
+  createEngine: () => ImportEngine;
   resetState: () => void;
 }
 
