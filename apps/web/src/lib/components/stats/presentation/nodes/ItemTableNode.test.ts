@@ -5,12 +5,34 @@ import { describe, expect, it, vi } from "vitest";
 import type { StatSheetField } from "schema";
 import type { PresentationRenderContext } from "../types";
 
-const { rollStatSheetDiceField } = vi.hoisted(() => ({
+const { rollStatSheetDiceField, vaultState } = vi.hoisted(() => ({
   rollStatSheetDiceField: vi.fn(),
+  vaultState: {
+    entities: {
+      "steel-sword": {
+        id: "steel-sword",
+        type: "item",
+        title: "Steel Sword",
+        statSheet: {
+          fields: [
+            { id: "size", label: "Size/Force", type: "text", value: "M" },
+          ],
+        },
+      },
+    },
+  },
 }));
 
 vi.mock("$lib/utils/stat-sheet-field-actions", () => ({
   rollStatSheetDiceField,
+}));
+
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: {
+    get entities() {
+      return vaultState.entities;
+    },
+  },
 }));
 
 import ItemTableNode from "./ItemTableNode.svelte";
@@ -81,6 +103,32 @@ describe("ItemTableNode", () => {
         ]),
       }),
     );
+  });
+
+  it("links a vault item and renders its title and matching stats live", async () => {
+    const field = { ...itemTableField, rows: [] };
+    const context = makeContext([field]);
+    const { unmount } = render(ItemTableNode, { props: { field, context } });
+
+    await fireEvent.click(screen.getByTestId("item-table-link-item"));
+    await fireEvent.change(screen.getByTestId("item-table-link-select"), {
+      target: { value: "steel-sword" },
+    });
+
+    expect(context.onUpdateField).toHaveBeenCalledWith(
+      "weapons_table",
+      expect.objectContaining({ rows: [{ entityId: "steel-sword" }] }),
+    );
+
+    unmount();
+    render(ItemTableNode, {
+      props: {
+        field: { ...field, rows: [{ entityId: "steel-sword" }] },
+        context,
+      },
+    });
+    expect(screen.getByText("Steel Sword")).toBeTruthy();
+    expect(screen.getByText("M")).toBeTruthy();
   });
 
   it("persists cell edits and labels editable cells", async () => {

@@ -2,6 +2,7 @@
   import type { StatSheetField } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
+  import { vault } from "$lib/stores/vault.svelte";
 
   let {
     field,
@@ -31,6 +32,30 @@
       { rolling: boolean; text?: string; success?: boolean; isError?: boolean }
     >
   >({});
+  let showItemPicker = $state(false);
+
+  const linkableItems = $derived(
+    Object.values(vault.entities).filter((entity) =>
+      ["item", "weapon", "gear", "artifact", "object"].some((type) =>
+        entity.type.toLowerCase().includes(type),
+      ),
+    ),
+  );
+
+  function linkedEntity(row: Record<string, any>) {
+    const entityId = row.entityId;
+    return typeof entityId === "string" ? vault.entities[entityId] : undefined;
+  }
+
+  function linkedValue(row: Record<string, any>, columnId: string) {
+    const entity = linkedEntity(row);
+    if (!entity) return undefined;
+    if (columnId === "name") return entity.title;
+    const sourceField = entity.statSheet?.fields?.find(
+      (candidate) => candidate.id === columnId,
+    );
+    return sourceField?.value ?? sourceField?.formula;
+  }
 
   function updateRows(nextRows: Record<string, any>[]) {
     context.onUpdateField(field.id, { rows: nextRows });
@@ -50,6 +75,12 @@
       }
     }
     updateRows([...rows, newRow]);
+  }
+
+  function handleLinkItem(entityId: string) {
+    if (!entityId) return;
+    updateRows([...rows, { entityId }]);
+    showItemPicker = false;
   }
 
   function handleRemoveRow(index: number) {
@@ -136,17 +167,53 @@
       {field.label}
     </span>
     {#if !context.readOnly}
-      <button
-        type="button"
-        class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
-        onclick={handleAddRow}
-        data-testid="item-table-add-row"
-      >
-        <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>
-        Add Item
-      </button>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+          onclick={() => (showItemPicker = !showItemPicker)}
+          data-testid="item-table-link-item"
+        >
+          <span class="icon-[lucide--link] h-3 w-3" aria-hidden="true"></span>
+          Link Vault Item
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+          onclick={handleAddRow}
+          data-testid="item-table-add-row"
+        >
+          <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>
+          Add Item
+        </button>
+      </div>
     {/if}
   </div>
+
+  {#if showItemPicker && !context.readOnly}
+    <div
+      class="flex items-center gap-2 border-b border-theme-border/60 bg-theme-surface/20 px-3 py-2"
+    >
+      <label
+        class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+        for="item-table-link-select"
+      >
+        Vault item
+      </label>
+      <select
+        id="item-table-link-select"
+        class="min-w-0 flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1 text-xs text-theme-text"
+        onchange={(event) =>
+          handleLinkItem((event.target as HTMLSelectElement).value)}
+        data-testid="item-table-link-select"
+      >
+        <option value="">Choose an item…</option>
+        {#each linkableItems as item (item.id)}
+          <option value={item.id}>{item.title}</option>
+        {/each}
+      </select>
+    </div>
+  {/if}
 
   <div class="overflow-x-auto">
     <table class="w-full border-collapse text-xs text-theme-text">
@@ -180,6 +247,7 @@
           </tr>
         {:else}
           {#each rows as row, rIdx (rIdx)}
+            {@const linked = linkedEntity(row)}
             <tr
               class="border-b border-theme-border/40 transition-colors hover:bg-theme-surface/10"
             >
@@ -188,7 +256,11 @@
                   {#if col.type === "text"}
                     {#if context.readOnly}
                       <span class="font-medium text-theme-text"
-                        >{row[col.id] ?? "—"}</span
+                        >{linkedValue(row, col.id) ?? row[col.id] ?? "—"}</span
+                      >
+                    {:else if linked && linkedValue(row, col.id) !== undefined}
+                      <span class="font-medium text-theme-text"
+                        >{linkedValue(row, col.id)}</span
                       >
                     {:else}
                       <input
@@ -207,7 +279,11 @@
                   {:else if col.type === "number"}
                     {#if context.readOnly}
                       <span class="font-mono text-theme-text"
-                        >{row[col.id] ?? "—"}</span
+                        >{linkedValue(row, col.id) ?? row[col.id] ?? "—"}</span
+                      >
+                    {:else if linked && linkedValue(row, col.id) !== undefined}
+                      <span class="font-mono text-theme-text"
+                        >{linkedValue(row, col.id)}</span
                       >
                     {:else}
                       <input
