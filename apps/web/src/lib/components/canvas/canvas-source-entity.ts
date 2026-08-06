@@ -1,6 +1,29 @@
 import type { Node } from "@xyflow/svelte";
 import type { Canvas } from "@codex/canvas-engine";
 
+export interface SourceEntityVault {
+  entities: Record<string, unknown>;
+  allEntities: Array<{ id: string; title: string; type: string }>;
+  createEntity: (
+    type: string,
+    title: string,
+    options: {
+      content?: string;
+      lore?: string;
+      kind?: string;
+      labels?: string[];
+    },
+  ) => Promise<string>;
+}
+
+export interface SourceEntityCanvasRegistry {
+  saveCanvas: (id: string) => Promise<void>;
+}
+
+export interface SourceEntityModalUIStore {
+  openZenMode: (id: string) => void;
+}
+
 export async function openOrCreateSourceEntity({
   sourceEntityId,
   canvas,
@@ -11,9 +34,9 @@ export async function openOrCreateSourceEntity({
 }: {
   sourceEntityId: string | undefined;
   canvas: Canvas | undefined;
-  vault: any;
-  canvasRegistry: any;
-  modalUIStore: any;
+  vault: SourceEntityVault;
+  canvasRegistry: SourceEntityCanvasRegistry;
+  modalUIStore: SourceEntityModalUIStore;
   nodes: Node[];
 }) {
   if (sourceEntityId && vault.entities[sourceEntityId]) {
@@ -23,9 +46,9 @@ export async function openOrCreateSourceEntity({
 
   const title = canvas?.name || "Untitled Adventure";
   const existing = vault.allEntities.find(
-    (e: any) =>
+    (e) =>
       e.title.trim().toLowerCase() === title.trim().toLowerCase() &&
-      e.type === "event",
+      e.type === "note",
   );
 
   let targetId = existing?.id;

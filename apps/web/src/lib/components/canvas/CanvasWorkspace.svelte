@@ -1248,15 +1248,22 @@
     }
   }
 
+  let isCreatingSourceEntity = false;
   async function handleOpenOrCreateSourceEntity() {
-    await openOrCreateSourceEntity({
-      sourceEntityId,
-      canvas,
-      vault,
-      canvasRegistry,
-      modalUIStore,
-      nodes: logic.nodes,
-    });
+    if (isCreatingSourceEntity) return;
+    isCreatingSourceEntity = true;
+    try {
+      await openOrCreateSourceEntity({
+        sourceEntityId,
+        canvas,
+        vault,
+        canvasRegistry,
+        modalUIStore,
+        nodes: logic.nodes,
+      });
+    } finally {
+      isCreatingSourceEntity = false;
+    }
   }
 
   function handleAutoArrange() {
