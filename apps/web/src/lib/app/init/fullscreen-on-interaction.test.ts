@@ -56,12 +56,12 @@ function createMockDoc(overrides: Partial<Document> = {}) {
 }
 
 describe("initFullscreenOnFirstInteraction", () => {
-  it("registers listeners for pointerdown, keydown, and touchstart", () => {
+  it("registers listeners for click and keydown only", () => {
     const doc = createMockDoc();
     initFullscreenOnFirstInteraction(doc);
 
     expect(doc.addEventListener).toHaveBeenCalledWith(
-      "pointerdown",
+      "click",
       expect.any(Function),
       { once: true, capture: true },
     );
@@ -70,10 +70,18 @@ describe("initFullscreenOnFirstInteraction", () => {
       expect.any(Function),
       { once: true, capture: true },
     );
-    expect(doc.addEventListener).toHaveBeenCalledWith(
+    // Not pointerdown/touchstart: Chrome for Android doesn't accept them as a
+    // fullscreen-eligible gesture, and the failed attempt would tear down the
+    // click listener for the same tap before it ever fires (see file header).
+    expect(doc.addEventListener).not.toHaveBeenCalledWith(
+      "pointerdown",
+      expect.any(Function),
+      expect.anything(),
+    );
+    expect(doc.addEventListener).not.toHaveBeenCalledWith(
       "touchstart",
       expect.any(Function),
-      { once: true, capture: true },
+      expect.anything(),
     );
   });
 
@@ -91,7 +99,7 @@ describe("initFullscreenOnFirstInteraction", () => {
     const doc = createMockDoc({ fullscreenElement: {} as Element });
     initFullscreenOnFirstInteraction(doc);
 
-    doc.dispatch("pointerdown");
+    doc.dispatch("click");
 
     expect(doc.documentElement.requestFullscreen).not.toHaveBeenCalled();
   });
@@ -103,8 +111,23 @@ describe("initFullscreenOnFirstInteraction", () => {
     );
     initFullscreenOnFirstInteraction(doc);
 
-    expect(() => doc.dispatch("touchstart")).not.toThrow();
+    expect(() => doc.dispatch("click")).not.toThrow();
     await Promise.resolve();
+  });
+
+  it("requests fullscreen on the click that follows a mobile tap's touchstart", () => {
+    // Regression: a mobile tap fires touchstart before click. Since this
+    // module no longer listens for touchstart, that first touchstart is a
+    // no-op, and the click that follows in the same tap sequence is what
+    // successfully triggers fullscreen.
+    const doc = createMockDoc();
+    initFullscreenOnFirstInteraction(doc);
+
+    doc.dispatch("touchstart");
+    expect(doc.documentElement.requestFullscreen).not.toHaveBeenCalled();
+
+    doc.dispatch("click");
+    expect(doc.documentElement.requestFullscreen).toHaveBeenCalledTimes(1);
   });
 
   it("returned cleanup removes all listeners without requiring an interaction", () => {
