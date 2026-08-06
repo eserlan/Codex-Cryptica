@@ -115,7 +115,7 @@ describe("FieldReferenceNode", () => {
     expect(screen.queryByTestId("presentation-field-dice-target")).toBeNull();
   });
 
-  it("shows a dice field's target before rolling and hides outcome labels after rolling", async () => {
+  it("shows a dice field's target before rolling and a compact success indicator after rolling", async () => {
     rollStatSheetDiceField.mockResolvedValueOnce({
       text: "= 17 vs 50 (Success)",
       isError: false,
@@ -144,8 +144,42 @@ describe("FieldReferenceNode", () => {
     await fireEvent.click(screen.getByTestId("presentation-field-dice-roll"));
 
     const roll = screen.getByTestId("presentation-field-dice-roll");
-    expect(roll.textContent).toContain("= 17 vs 50");
+    expect(screen.getByRole("img", { name: "Success" })).toBeTruthy();
+    expect(
+      screen.getByTestId("presentation-field-dice-outcome").className,
+    ).toContain("text-theme-primary");
+    expect(roll.textContent).not.toContain("= 17 vs 50");
     expect(roll.textContent).not.toContain("Success");
+  });
+
+  it("uses the semantic danger color for a failed target roll", async () => {
+    rollStatSheetDiceField.mockResolvedValueOnce({
+      text: "= 73 vs 50 (Failure)",
+      isError: false,
+      success: false,
+    });
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "evade",
+      label: "Evade",
+    };
+    const context = makeContext([
+      {
+        id: "evade",
+        label: "Evade",
+        type: "dice",
+        formula: "1d100",
+        value: 50,
+      },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+    await fireEvent.click(screen.getByTestId("presentation-field-dice-roll"));
+
+    expect(screen.getByRole("img", { name: "Failure" })).toBeTruthy();
+    const outcome = screen.getByTestId("presentation-field-dice-outcome");
+    expect(outcome.className).toContain("text-theme-danger");
+    expect(outcome.textContent).not.toContain("73");
   });
 
   it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {

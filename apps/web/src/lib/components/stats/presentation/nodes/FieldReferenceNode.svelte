@@ -16,6 +16,7 @@
     rolling: boolean;
     text: string | null;
     isError?: boolean;
+    success?: boolean;
   }>({
     rolling: false,
     text: null,
@@ -29,6 +30,7 @@
       rolling: false,
       text: res.text,
       isError: res.isError,
+      success: res.success,
     };
   }
 
@@ -248,13 +250,27 @@
         {/if}
       {/if}
       {#if rollState.text}
-        <span
-          class={rollState.isError
-            ? "text-red-400 font-bold"
-            : "text-theme-primary font-bold"}
-        >
-          {displayRollText}
-        </span>
+        {#if rollState.isError}
+          <span class="font-bold text-theme-danger">{rollState.text}</span>
+        {:else if rollState.success !== undefined}
+          <span
+            class={rollState.success
+              ? "text-theme-primary"
+              : "text-theme-danger"}
+            role="img"
+            aria-label={rollState.success ? "Success" : "Failure"}
+            data-testid="presentation-field-dice-outcome"
+          >
+            <span
+              class={rollState.success
+                ? "icon-[lucide--circle-check] h-4 w-4"
+                : "icon-[lucide--circle-x] h-4 w-4"}
+              aria-hidden="true"
+            ></span>
+          </span>
+        {:else}
+          <span class="font-bold text-theme-primary">{displayRollText}</span>
+        {/if}
       {/if}
     </button>
   {:else}
