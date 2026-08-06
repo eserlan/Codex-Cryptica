@@ -14,6 +14,10 @@ export {
   isSupportedGenerator,
   listGenerators,
   resolveEntityType,
+  npcRacesForTheme,
+  npcRolesForTheme,
+  factionTypesForTheme,
+  settlementTypesForTheme,
   GENERATOR_ENTITY_TYPE,
   FALLBACK_CATEGORY,
 } from "./campaign-generator-registry";

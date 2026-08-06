@@ -752,6 +752,7 @@ describe("DefaultTextGenerationService", () => {
         ],
         [{ id: "NPC", label: "Non-Player Character" }],
         "Outline",
+        "",
       );
     });
 
@@ -795,6 +796,7 @@ describe("DefaultTextGenerationService", () => {
         "",
         [],
         [],
+        "",
         "",
       );
     });

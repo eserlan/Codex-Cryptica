@@ -15,8 +15,12 @@ export function buildRelatedEntityGenerationPrompt(
   connectedEntities: ConnectedEntityPromptContext[] = [],
   categories: { id: string; label?: string }[] = [],
   templateOutline: string = "",
+  worldThemeName: string = "",
 ): string {
   const allowedCategoriesStr = categories.map((c) => c.id).join(", ");
+  const worldThemeStr = worldThemeName.trim()
+    ? `\nWorld Theme: ${worldThemeName.trim()} — the new entity's tone, naming, technology, and culture MUST fit this setting.\n`
+    : "";
   const isSurpriseMe =
     targetType.toLowerCase() === "surprise me" ||
     targetType.toLowerCase() === "surprise_me";
@@ -47,7 +51,7 @@ export function buildRelatedEntityGenerationPrompt(
     : "";
 
   return `You are a Master Archivist and Lore Synthesizer. Your task is to generate a new, grounded, context-aware entity based on a source entity and its surrounding world context.
-
+${worldThemeStr}
 ${customInstructionsStr}SOURCE ENTITY (Origin):
 - Title: ${sourceEntity.title}
 - Type: ${sourceEntity.type}

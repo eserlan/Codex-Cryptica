@@ -78,6 +78,55 @@ describe("GeneratorConfigForm", () => {
     ).toBeNull();
   });
 
+  it("only offers theme-appropriate NPC race and role choices", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        themeId: "western",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const raceSelect = screen.getByLabelText("Race");
+    expect(screen.getByRole("option", { name: "Human" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Elf" })).toBeNull();
+
+    const roleSelect = screen.getByLabelText("Role");
+    expect(screen.getByRole("option", { name: "Gunslinger" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Mage" })).toBeNull();
+
+    expect(raceSelect).toBeTruthy();
+    expect(roleSelect).toBeTruthy();
+  });
+
+  it("only offers theme-appropriate faction and settlement type choices", async () => {
+    const { unmount } = render(GeneratorConfigForm, {
+      props: {
+        generatorId: "faction",
+        themeId: "western",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    expect(screen.getByRole("option", { name: "Outlaw Gang" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Arcane Circle" })).toBeNull();
+    unmount();
+
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "settlement",
+        themeId: "western",
+        onsubmit: vi.fn(),
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    expect(screen.getByRole("option", { name: "Boom Town" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Fortress" })).toBeNull();
+  });
+
   it("requires explicit confirmation before applying a suggested language", async () => {
     const onsubmit = vi.fn();
     render(GeneratorConfigForm, {

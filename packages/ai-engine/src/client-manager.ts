@@ -65,6 +65,18 @@ async function sendViaOperationPipeline(params: {
     operation: wantsJson ? "structured-generation" : "freeform-generation",
     messages,
   };
+  const responseSchema =
+    generationConfig?.responseSchema ?? generationConfig?.response_schema;
+  if (responseSchema !== undefined) {
+    // Forwarding a schema does double duty: it lets oracle-proxy actually
+    // validate the parsed response shape (structuredOutputValid otherwise
+    // defaults to true with nothing to check), and for OpenAI-family models
+    // it switches them from json_object mode — which can only ever return a
+    // JSON *object* at the root, never a bare array — to json_schema mode,
+    // which can. Callers requesting a top-level array without a schema will
+    // silently get an object-shaped refusal from those providers.
+    body.schema = responseSchema;
+  }
   if (generationConfig?.temperature !== undefined) {
     body.temperature = generationConfig.temperature;
   }
@@ -74,9 +86,16 @@ async function sendViaOperationPipeline(params: {
     generationConfig?.maxOutputTokens ?? generationConfig?.max_output_tokens;
   if (maxOutputTokens !== undefined) body.maxOutputTokens = maxOutputTokens;
 
-  console.log(
-    `[OracleProxy] Fetching from: ${proxyUrl} (operation pipeline; legacy model hint was: ${modelName})`,
-  );
+  console.log(`[OracleProxy] Fetching from: ${proxyUrl} (operation pipeline)`);
+  if (import.meta.env.DEV) {
+    // The legacy `modelName` hint is never the model that actually serves
+    // this request (the registry decides that server-side) — keep it out of
+    // the always-on log so it can't read as a claim about which model ran;
+    // it's only useful in DEV as a "what did the caller ask for" trace.
+    console.log(
+      `[OracleProxy] Legacy model hint (ignored by pipeline): ${modelName}`,
+    );
+  }
   const response = await doFetch(proxyUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -98,6 +117,11 @@ async function sendViaOperationPipeline(params: {
   }
 
   const data = await response.json();
+  // The registry — not the legacy `modelName` hint logged above — decides
+  // the real model for this request; always log which one it actually
+  // picked (not just in DEV) so this doesn't require reading the raw
+  // response to answer "which model served this?".
+  console.log(`[OracleProxy] Resolved model: ${data.modelKey ?? "unknown"}`);
   if (import.meta.env.DEV) {
     console.log("[OracleProxy] Received raw data (operation pipeline):", data);
   }
@@ -306,7 +330,12 @@ export class DefaultAIClientManager {
       async generateContent(
         request: string | Array<GenerativeContentBlob | string> | any,
       ) {
-        console.log(`[OracleProxy] Request for model: ${modelName}`);
+        // Model logging happens further down, once we know which path this
+        // request takes: the operation pipeline (the common case) resolves
+        // its own model server-side via the registry and only ever treats
+        // `modelName` as a legacy hint (see sendViaOperationPipeline's own
+        // log) — logging it here unqualified, before that's known, reads as
+        // the actual model in use when it may not be.
 
         // 1. Deep clone request data so any reactive proxies are removed
         // before the payload is normalized and serialized.
@@ -407,7 +436,12 @@ export class DefaultAIClientManager {
             generationConfig,
           };
 
-          console.log(`[OracleProxy] Fetching from: ${proxyUrl}`);
+          // Legacy passthrough (non-text content/output — the operation
+          // pipeline only handles plain text): `modelName` genuinely is the
+          // model that will serve this request, unlike the pipeline path.
+          console.log(
+            `[OracleProxy] Fetching from: ${proxyUrl} (legacy passthrough, model: ${modelName})`,
+          );
           const response = await doFetch(proxyUrl, {
             method: "POST",
             headers: {

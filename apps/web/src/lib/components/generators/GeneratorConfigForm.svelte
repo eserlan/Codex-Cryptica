@@ -1,9 +1,13 @@
 <script lang="ts">
   import {
     dungeonConfig,
+    factionTypesForTheme,
     forDungeonGenre,
     getGenerator,
     listGenerators,
+    npcRacesForTheme,
+    npcRolesForTheme,
+    settlementTypesForTheme,
     themeIdToLabel,
     worldConfig,
   } from "generator-engine";
@@ -117,6 +121,30 @@
           ? worldConfig.lancerConflicts
           : worldConfig.campaignPressures;
       return values.map((value) => ({ value, label: value }));
+    }
+    if (selectedId === "npc" && option.id === "race") {
+      return npcRacesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "npc" && option.id === "role") {
+      return npcRolesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "faction" && option.id === "type") {
+      return factionTypesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "settlement" && option.id === "type") {
+      return settlementTypesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
     }
     if (selectedId !== "dungeon") return option.choices ?? [];
     if (option.id === "purpose") {
