@@ -359,6 +359,26 @@
     syncSourceFromVisualCards(visualCards);
   }
 
+  function updateCardColumns(cardId: string, value: number) {
+    const columns = Math.max(1, Math.min(6, Math.round(value) || 1));
+    visualCards = visualCards.map((card) => {
+      if (card.id !== cardId) return card;
+      if (card.mode !== "table") return { ...card, columns };
+
+      const existingHeaders = card.tableHeaders ?? [];
+      return {
+        ...card,
+        columns,
+        tableHeaders: Array.from(
+          { length: columns },
+          (_, index) => existingHeaders[index] ?? `Column ${index + 1}`,
+        ),
+        rows: card.rows.map((row) => row.slice(0, columns)),
+      };
+    });
+    syncSourceFromVisualCards(visualCards);
+  }
+
   function removeVisualCard(cardId: string) {
     visualCards = visualCards.filter((c) => c.id !== cardId);
     syncSourceFromVisualCards(visualCards);
@@ -388,7 +408,9 @@
     visualCards = visualCards.map((c) => {
       if (c.id !== cardId) return c;
       const nextRows = c.rows.map((r, idx) =>
-        idx === rowIndex ? [...r, { kind: "field", fieldId }] : r,
+        idx === rowIndex && (c.mode !== "table" || r.length < c.columns)
+          ? [...r, { kind: "field", fieldId }]
+          : r,
       );
       return { ...c, rows: nextRows };
     });
@@ -401,7 +423,9 @@
       return {
         ...card,
         rows: card.rows.map((row, index) =>
-          index === rowIndex ? [...row, { kind: "value", value: "" }] : row,
+          index === rowIndex && row.length < card.columns
+            ? [...row, { kind: "value", value: "" }]
+            : row,
         ),
       };
     });
@@ -553,7 +577,9 @@
       }
       if (c.id === targetCardId) {
         nextRows = nextRows.map((r, idx) =>
-          idx === targetRowIndex ? [...r, { kind: "field", fieldId }] : r,
+          idx === targetRowIndex && (c.mode !== "table" || r.length < c.columns)
+            ? [...r, { kind: "field", fieldId }]
+            : r,
         );
       }
       return { ...c, rows: nextRows };
@@ -1138,23 +1164,24 @@
                           class="flex items-center gap-1 text-[10px] text-theme-muted"
                         >
                           Cols:
-                          <select
-                            class="rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+                          <input
+                            type="number"
+                            min="1"
+                            max="6"
+                            step="1"
+                            inputmode="numeric"
+                            aria-label={`Columns for ${card.title || (card.mode === "table" ? "table" : "card")}`}
+                            class="w-12 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
                             value={card.columns}
-                            onchange={(e) => {
-                              card.columns = Number(
-                                (e.target as HTMLSelectElement).value,
+                            oninput={(event) => {
+                              updateCardColumns(
+                                card.id,
+                                Number(
+                                  (event.target as HTMLInputElement).value,
+                                ),
                               );
-                              syncSourceFromVisualCards(visualCards);
                             }}
-                          >
-                            <option value={1}>1</option>
-                            <option value={2}>2</option>
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                            <option value={5}>5</option>
-                            <option value={6}>6</option>
-                          </select>
+                          />
                         </label>
                         <button
                           type="button"
@@ -1187,6 +1214,9 @@
 
                     <div class="flex flex-col gap-2">
                       {#each card.rows as rowFields, rIdx (rIdx)}
+                        {@const hasTableCapacity =
+                          card.mode !== "table" ||
+                          rowFields.length < card.columns}
                         <div class="flex items-center gap-1.5">
                           <span
                             class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
@@ -1284,7 +1314,7 @@
                                 </div>
                               {/if}
                             {/each}
-                            {#if getUnusedFields(visualCards).length > 0}
+                            {#if hasTableCapacity && getUnusedFields(visualCards).length > 0}
                               <select
                                 class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-muted hover:text-theme-text"
                                 value=""
@@ -1304,7 +1334,7 @@
                                 {/each}
                               </select>
                             {/if}
-                            {#if card.mode === "table"}
+                            {#if card.mode === "table" && hasTableCapacity}
                               <button
                                 type="button"
                                 class="rounded border border-dashed border-amber-500/40 px-1.5 py-0.5 text-xs text-amber-700 hover:border-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"

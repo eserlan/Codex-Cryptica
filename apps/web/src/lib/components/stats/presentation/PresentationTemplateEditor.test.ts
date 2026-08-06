@@ -204,4 +204,39 @@ describe("PresentationTemplateEditor", () => {
       }),
     );
   });
+
+  it("uses the column stepper to resize table headers and cells", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-table-columns",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    await fireEvent.input(
+      screen.getByRole("spinbutton", { name: "Columns for Equipment" }),
+      { target: { value: "1" } },
+    );
+
+    expect(
+      screen.queryByTestId("presentation-editor-add-table-value"),
+    ).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("| Item |"),
+      }),
+    );
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ source: expect.not.stringContaining("Steel") }),
+    );
+  });
 });
