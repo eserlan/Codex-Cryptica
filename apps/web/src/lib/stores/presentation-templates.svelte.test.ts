@@ -40,6 +40,23 @@ function makeStore() {
 }
 
 describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
+  it("provides a generated NPC or monster presentation for creature sheets", () => {
+    const store = makeStore();
+
+    const available = store.availableTemplatesForSchema(
+      "entity-local-stat-sheet:dire-wolf",
+      [{ id: "hp", label: "Hit Points", type: "counter" }],
+      "creature",
+    );
+
+    expect(available).toHaveLength(1);
+    expect(available[0]).toMatchObject({
+      name: "Standard NPC / Monster Sheet",
+      isBuiltIn: true,
+      source: expect.stringContaining("{{stat.hp}}"),
+    });
+  });
+
   it("auto-suffixes a new template whose name collides with an existing one for the same schema", async () => {
     const store = makeStore();
     const first = await store.saveTemplate({

@@ -16,7 +16,10 @@ function entityLocalDefaultPresentation(
     .filter((field) => field.type !== "heading")
     .map((field) => `{{stat.${field.id}}}`)
     .join("\n\n");
-  const isNpcOrMonster = entityType === "npc" || entityType === "monster";
+  const normalizedEntityType = entityType?.toLowerCase();
+  const isNpcOrMonster = ["npc", "monster", "creature"].includes(
+    normalizedEntityType ?? "",
+  );
   return {
     id: `builtin-presentation-custom-${schemaTemplateId}`,
     vaultId: null,
