@@ -130,8 +130,8 @@
 
 <nav
   class="bg-chrome-surface border-chrome-border flex shrink-0 z-[80]
-    flex-row md:flex-col items-center justify-center md:justify-start py-2 md:py-4 gap-2 md:gap-4
-    w-full md:w-14 h-14 md:h-full border-t md:border-t-0 md:border-r"
+    flex-row md:flex-col items-center justify-center md:justify-start pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] md:py-4 gap-2 md:gap-4
+    w-full md:w-14 min-h-14 h-auto md:h-full border-t md:border-t-0 md:border-r"
   aria-label="Activity Bar"
   data-testid="activity-bar"
 >
