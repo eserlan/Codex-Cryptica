@@ -12,6 +12,7 @@
     validateAst,
     exportPresentationTemplate,
     sanitizeSource,
+    DISPLAY_MODES_BY_FIELD_TYPE,
   } from "@codex/stat-sheet-engine";
   import type {
     MissingFieldNode,
@@ -20,6 +21,18 @@
   } from "@codex/stat-sheet-engine";
   import PresentationRenderer from "./PresentationRenderer.svelte";
   import type { PresentationRenderContext } from "./types";
+
+  const DISPLAY_MODE_OPTIONS = [
+    { mode: undefined, label: "Default" },
+    { mode: "plain", label: "Plain Inline" },
+    { mode: "prominent", label: "Prominent Badge" },
+    { mode: "current-max", label: "Current / Max Counter" },
+    { mode: "counter", label: "Interactive Stepper" },
+    { mode: "progress", label: "Progress Bar" },
+    { mode: "tag-list", label: "Tag List" },
+    { mode: "notes", label: "Notes Area" },
+    { mode: "table", label: "Item Table" },
+  ] as const;
 
   let {
     schema,
@@ -236,9 +249,24 @@
           if (row.length === 0) continue;
           const cells = row.map((fid) => {
             const f = fields.find((x) => x.id === fid);
-            if (!f) return `[${fid}]`;
-            if (f.type === "counter") return `[${fid}:current-max]`;
-            if (f.type === "number") return `[${fid}:prominent]`;
+            const override = fieldDisplayOverrides[fid];
+            const mode =
+              override?.displayMode ??
+              (f?.type === "counter" ? "current-max" : undefined);
+            const hideLabel = override?.hideLabel;
+            if (
+              hideLabel ||
+              (override?.displayMode &&
+                override.displayMode !== "plain" &&
+                override.displayMode !==
+                  (f?.type === "counter" ? "current-max" : undefined))
+            ) {
+              let attrs = [];
+              if (mode) attrs.push(`display="${mode}"`);
+              if (hideLabel) attrs.push("hide-label");
+              return `{{stat.${fid}${attrs.length > 0 ? " " + attrs.join(" ") : ""}}}`;
+            }
+            if (mode && mode !== "plain") return `[${fid}:${mode}]`;
             return `[${fid}]`;
           });
           while (cells.length < headers.length) {
@@ -255,10 +283,24 @@
           for (const fid of row) {
             const f = fields.find((x) => x.id === fid);
             if (f) {
-              if (f.type === "counter") {
-                out += `[${fid}:current-max]\n`;
-              } else if (f.type === "number") {
-                out += `[${fid}:prominent]\n`;
+              const override = fieldDisplayOverrides[fid];
+              const mode =
+                override?.displayMode ??
+                (f.type === "counter" ? "current-max" : undefined);
+              const hideLabel = override?.hideLabel;
+              if (
+                hideLabel ||
+                (override?.displayMode &&
+                  override.displayMode !== "plain" &&
+                  override.displayMode !==
+                    (f.type === "counter" ? "current-max" : undefined))
+              ) {
+                let attrs = [];
+                if (mode) attrs.push(`display="${mode}"`);
+                if (hideLabel) attrs.push("hide-label");
+                out += `{{stat.${fid}${attrs.length > 0 ? " " + attrs.join(" ") : ""}}}\n`;
+              } else if (mode && mode !== "plain") {
+                out += `[${fid}:${mode}]\n`;
               } else {
                 out += `[${fid}]\n`;
               }
@@ -432,6 +474,75 @@
   let autocompleteFilter = $state("");
   let textareaEl: HTMLTextAreaElement | undefined = $state();
 
+  let fieldDisplayOverrides = $state<
+    Record<string, { displayMode?: string; hideLabel?: boolean }>
+  >({});
+  let chipContextMenu = $state<{
+    x: number;
+    y: number;
+    cardId: string;
+    rowIndex: number;
+    fieldId: string;
+  } | null>(null);
+
+  function openChipContextMenu(
+    e: MouseEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    chipContextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      cardId,
+      rowIndex,
+      fieldId,
+    };
+  }
+
+  function openChipContextMenuFromKeyboard(
+    e: KeyboardEvent,
+    cardId: string,
+    rowIndex: number,
+    fieldId: string,
+  ) {
+    if (e.key !== "ContextMenu" && !(e.shiftKey && e.key === "F10")) return;
+    e.preventDefault();
+    const bounds = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    chipContextMenu = {
+      x: bounds.left,
+      y: bounds.bottom,
+      cardId,
+      rowIndex,
+      fieldId,
+    };
+  }
+
+  function closeChipContextMenu() {
+    chipContextMenu = null;
+  }
+
+  function setFieldDisplayMode(fieldId: string, displayMode?: string) {
+    fieldDisplayOverrides[fieldId] = {
+      ...fieldDisplayOverrides[fieldId],
+      displayMode,
+    };
+    syncSourceFromVisualCards(visualCards);
+    closeChipContextMenu();
+  }
+
+  function toggleFieldHideLabel(fieldId: string) {
+    const current = fieldDisplayOverrides[fieldId]?.hideLabel ?? false;
+    fieldDisplayOverrides[fieldId] = {
+      ...fieldDisplayOverrides[fieldId],
+      hideLabel: !current,
+    };
+    syncSourceFromVisualCards(visualCards);
+    closeChipContextMenu();
+  }
+
   // Sample values for live preview (contract: preview mode reads through
   // the same field-value accessor as real rendering, just backed by
   // representative data instead of an entity — spec.md Assumptions).
@@ -504,6 +615,7 @@
     readOnly: true,
     mode: "preview",
     onUpdateFieldValue: () => {},
+    onUpdateField: () => {},
     onAdjustCounter: () => {},
   };
 
@@ -627,12 +739,11 @@
 </script>
 
 <div
-  class="fixed inset-0 z-[110] flex items-center justify-center bg-theme-bg/80 p-3 sm:p-6"
+  class="fixed inset-0 z-[200] flex flex-col bg-theme-bg font-body overflow-hidden"
   role="presentation"
-  onclick={(event) => event.target === event.currentTarget && onClose()}
 >
   <div
-    class="flex h-[94vh] max-h-[96vh] w-full max-w-[96vw] 2xl:max-w-[94vw] flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
+    class="flex h-full w-full flex-col overflow-hidden bg-theme-surface shadow-2xl"
     role="dialog"
     aria-modal="true"
     aria-labelledby="presentation-editor-title"
@@ -673,8 +784,8 @@
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-4">
-      <div class="grid gap-3 sm:grid-cols-2">
+    <div class="flex-1 min-h-0 flex flex-col p-4 overflow-hidden">
+      <div class="grid shrink-0 gap-3 sm:grid-cols-2">
         <div>
           <label
             class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
@@ -704,8 +815,8 @@
         </div>
       </div>
 
-      <div class="mt-4 grid gap-4 lg:grid-cols-2">
-        <div class="flex flex-col gap-1.5">
+      <div class="mt-4 flex-1 min-h-0 grid gap-4 lg:grid-cols-2">
+        <div class="flex flex-1 min-h-0 flex-col gap-1.5">
           <div class="flex flex-wrap items-center justify-between gap-1.5">
             <div class="flex items-center gap-1">
               <button
@@ -840,7 +951,7 @@
             >
               <!-- Left Sidebar: Available Schema Fields Palette -->
               <div
-                class="flex w-52 shrink-0 flex-col gap-2 overflow-y-auto rounded border border-theme-border bg-theme-surface/80 p-2.5 shadow-inner"
+                class="flex w-64 md:w-72 shrink-0 flex-col gap-2 overflow-y-auto rounded border border-theme-border bg-theme-surface/80 p-2.5 shadow-inner"
               >
                 <div
                   class="flex items-center justify-between border-b border-theme-border pb-1.5"
@@ -903,14 +1014,26 @@
                           aria-hidden="true"
                         ></span>
                         <span
-                          class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
-                          >Card</span
+                          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider {card.mode ===
+                          'table'
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                            : 'bg-theme-primary/15 text-theme-primary border border-theme-primary/30'}"
                         >
+                          <span
+                            class="{card.mode === 'table'
+                              ? 'icon-[lucide--table]'
+                              : 'icon-[lucide--layout-grid]'} h-3 w-3"
+                            aria-hidden="true"
+                          ></span>
+                          {card.mode === "table" ? "Table" : "Card"}
+                        </span>
                         <input
                           type="text"
                           class="rounded border border-theme-border bg-theme-bg px-2 py-0.5 text-xs font-bold text-theme-text"
                           value={card.title}
-                          placeholder="Card Title"
+                          placeholder={card.mode === "table"
+                            ? "Table Title"
+                            : "Card Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
                             syncSourceFromVisualCards(visualCards);
@@ -981,21 +1104,53 @@
                             ondragover={(e) => e.preventDefault()}
                             ondrop={(e) => handleFieldDropRow(e, card.id, rIdx)}
                           >
-                            {#each rowFields as fid (fid)}
+                            {#each rowFields as fid, cIdx (fid + "_" + cIdx)}
                               {@const f = schema?.fields?.find(
                                 (x) => x.id === fid,
                               )}
-                              <span
-                                draggable="true"
-                                ondragstart={(e) =>
-                                  handleFieldDragStart(e, card.id, rIdx, fid)}
-                                class="inline-flex items-center gap-1 rounded bg-theme-primary/10 border border-theme-primary/20 px-2 py-0.5 text-xs text-theme-text font-medium cursor-grab active:cursor-grabbing hover:border-theme-primary"
+                              {@const override = fieldDisplayOverrides[fid]}
+                              <div
+                                class="inline-flex items-center gap-1 rounded bg-theme-primary/10 border border-theme-primary/20 px-2 py-0.5 text-xs text-theme-text font-medium hover:border-theme-primary transition-colors select-none"
                               >
-                                <span
-                                  class="icon-[lucide--grip-vertical] h-3 w-3 text-theme-muted"
-                                  aria-hidden="true"
-                                ></span>
-                                {f?.label ?? fid}
+                                <button
+                                  type="button"
+                                  draggable="true"
+                                  ondragstart={(e) =>
+                                    handleFieldDragStart(e, card.id, rIdx, fid)}
+                                  oncontextmenu={(e) =>
+                                    openChipContextMenu(e, card.id, rIdx, fid)}
+                                  onkeydown={(e) =>
+                                    openChipContextMenuFromKeyboard(
+                                      e,
+                                      card.id,
+                                      rIdx,
+                                      fid,
+                                    )}
+                                  class="inline-flex items-center gap-1 cursor-grab active:cursor-grabbing"
+                                  aria-label={`${f?.label ?? fid} field options`}
+                                  title="Right-click for display options"
+                                >
+                                  <span
+                                    class="icon-[lucide--grip-vertical] h-3 w-3 text-theme-muted"
+                                    aria-hidden="true"
+                                  ></span>
+                                  {f?.label ?? fid}
+                                  {#if override?.displayMode && override.displayMode !== "plain"}
+                                    <span
+                                      class="rounded bg-theme-primary/20 px-1 py-0.2 text-[9px] font-mono text-theme-primary font-bold"
+                                    >
+                                      {override.displayMode}
+                                    </span>
+                                  {/if}
+                                  {#if override?.hideLabel}
+                                    <span
+                                      class="rounded bg-theme-muted/20 px-1 py-0.2 text-[9px] font-mono text-theme-muted"
+                                      title="Label hidden"
+                                    >
+                                      no-lbl
+                                    </span>
+                                  {/if}
+                                </button>
                                 <button
                                   type="button"
                                   class="ml-0.5 text-[10px] text-theme-muted hover:text-red-400"
@@ -1005,7 +1160,7 @@
                                 >
                                   ✕
                                 </button>
-                              </span>
+                              </div>
                             {/each}
                             {#if getUnusedFields(visualCards).length > 0}
                               <select
@@ -1045,7 +1200,7 @@
                         class="self-start rounded border border-theme-border/60 px-2 py-0.5 text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                         onclick={() => addRowToCard(card.id)}
                       >
-                        + Add Row to Card
+                        + Add Row to {card.mode === "table" ? "Table" : "Card"}
                       </button>
                     </div>
                   </div>
@@ -1118,7 +1273,7 @@
           {/if}
         </div>
 
-        <div class="flex flex-col gap-1.5 min-h-0">
+        <div class="flex flex-1 flex-col gap-1.5 min-h-0">
           <span
             class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
             >Preview</span
@@ -1181,7 +1336,7 @@
 
 {#if showSyntaxHelp}
   <div
-    class="fixed inset-0 z-[120] flex items-center justify-center bg-theme-bg/85 p-4 backdrop-blur-xs"
+    class="fixed inset-0 z-[210] flex items-center justify-center bg-theme-bg/85 p-4 backdrop-blur-xs"
     role="presentation"
     onclick={(e) => e.target === e.currentTarget && (showSyntaxHelp = false)}
   >
@@ -1236,6 +1391,10 @@
               >&#123;&#123;stat.field_id&#125;&#125;</code
             >.
           </p>
+          <p class="text-theme-muted text-[11px]">
+            In the Visual Builder, right-click a field chip to choose a
+            compatible display mode or hide its label.
+          </p>
           <div
             class="font-mono text-[11px] space-y-1 bg-theme-bg p-2 rounded border border-theme-border"
           >
@@ -1255,10 +1414,18 @@
             </div>
             <div>
               <span class="text-theme-primary"
+                >&#123;&#123;stat.speed hide-label&#125;&#125;</span
+              >
+              <span class="text-theme-muted"
+                >→ Hide field label (boolean syntax)</span
+              >
+            </div>
+            <div>
+              <span class="text-theme-primary"
                 >&#123;&#123;stat.speed label=""&#125;&#125;</span
               >
               <span class="text-theme-muted"
-                >→ Hide field label (value only)</span
+                >→ Hide field label (empty label string)</span
               >
             </div>
             <div>
@@ -1438,6 +1605,81 @@
           Got it
         </button>
       </div>
+    </div>
+  </div>
+{/if}
+
+{#if chipContextMenu}
+  {@const targetField = schema?.fields?.find(
+    (field) => field.id === chipContextMenu?.fieldId,
+  )}
+  {@const currentOverride = fieldDisplayOverrides[chipContextMenu.fieldId]}
+  <button
+    type="button"
+    class="fixed inset-0 z-[220]"
+    onclick={closeChipContextMenu}
+    oncontextmenu={(e) => {
+      e.preventDefault();
+      closeChipContextMenu();
+    }}
+    aria-label="Close field display options"
+  ></button>
+  <div
+    class="fixed z-[230] min-w-[180px] rounded-lg border border-theme-border bg-theme-surface p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+    style:left="{chipContextMenu.x}px"
+    style:top="{chipContextMenu.y}px"
+    role="menu"
+    tabindex="0"
+    aria-label="Field Display Options"
+    onclick={(e) => e.stopPropagation()}
+    onkeydown={(e) => e.key === "Escape" && closeChipContextMenu()}
+  >
+    <div
+      class="border-b border-theme-border/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+    >
+      Display Options — {targetField?.label ?? chipContextMenu.fieldId}
+    </div>
+
+    <div class="py-1">
+      <div
+        class="px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary"
+      >
+        Display Mode
+      </div>
+      {#each DISPLAY_MODE_OPTIONS.filter((option) => option.mode === undefined || !targetField || DISPLAY_MODES_BY_FIELD_TYPE[targetField.type].allowed.includes(option.mode)) as opt (opt.mode ?? "default")}
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center justify-between rounded px-2.5 py-1 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition-colors text-left"
+          onclick={() =>
+            setFieldDisplayMode(chipContextMenu!.fieldId, opt.mode)}
+        >
+          <span>{opt.label}</span>
+          {#if currentOverride?.displayMode === opt.mode || (!currentOverride?.displayMode && opt.mode === undefined)}
+            <span
+              class="icon-[lucide--check] h-3.5 w-3.5 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+
+    <div class="border-t border-theme-border/40 pt-1">
+      <button
+        type="button"
+        role="menuitem"
+        class="flex w-full items-center justify-between rounded px-2.5 py-1 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition-colors text-left"
+        onclick={() => toggleFieldHideLabel(chipContextMenu!.fieldId)}
+      >
+        <span>Hide Label</span>
+        {#if currentOverride?.hideLabel}
+          <span
+            class="icon-[lucide--check] h-3.5 w-3.5 text-theme-primary"
+            aria-hidden="true"
+          ></span>
+        {/if}
+      </button>
     </div>
   </div>
 {/if}

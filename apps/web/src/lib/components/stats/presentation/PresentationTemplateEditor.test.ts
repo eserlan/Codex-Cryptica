@@ -38,7 +38,26 @@ const builtIn = {
   updatedAt: "2026-01-01",
 };
 
+const longTextSchema: StatSheetTemplate = {
+  id: "schema-notes",
+  name: "Notes Schema",
+  isBuiltIn: true,
+  fields: [{ id: "notes", label: "Notes", type: "longtext" }],
+};
+
 describe("PresentationTemplateEditor", () => {
+  it("explains the visual-builder field options in Syntax Help", async () => {
+    render(PresentationTemplateEditor, { schema });
+
+    await fireEvent.click(screen.getByTestId("presentation-editor-help-btn"));
+
+    expect(
+      screen.getByText(
+        "In the Visual Builder, right-click a field chip to choose a compatible display mode or hide its label.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("flags an unresolved field reference before save via diagnostics", async () => {
     render(PresentationTemplateEditor, { schema });
 
@@ -118,6 +137,41 @@ describe("PresentationTemplateEditor", () => {
 
     expect(saveTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ source: "{{stat.hp}}" }),
+    );
+  });
+
+  it("only offers compatible display modes and saves the selected mode from the visual builder", async () => {
+    const saved = {
+      ...builtIn,
+      id: "presentation-notes",
+      schemaTemplateId: longTextSchema.id,
+      isBuiltIn: false,
+    };
+    saveTemplate.mockResolvedValueOnce(saved);
+    render(PresentationTemplateEditor, {
+      schema: longTextSchema,
+      template: {
+        ...saved,
+        source: ":::card\n[notes]\n:::",
+      },
+    });
+
+    await fireEvent.contextMenu(
+      screen.getByTitle("Right-click for display options"),
+    );
+
+    expect(screen.getByRole("menuitem", { name: "Notes Area" })).toBeTruthy();
+    expect(
+      screen.queryByRole("menuitem", { name: "Current / Max Counter" }),
+    ).toBeNull();
+
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Notes Area" }));
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining('{{stat.notes display="notes"}}'),
+      }),
     );
   });
 });

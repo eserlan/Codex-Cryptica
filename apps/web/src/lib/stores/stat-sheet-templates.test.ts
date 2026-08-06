@@ -138,6 +138,16 @@ describe("StatSheetTemplateStore", () => {
       type: "counter",
       label: "Head HP",
     });
+    expect(mythras.fields.find((f) => f.id === "combat_styles")).toMatchObject({
+      type: "longtext",
+      label: "Combat Styles",
+    });
+    expect(
+      mythras.fields.find((f) => f.id === "professional_skills"),
+    ).toMatchObject({
+      type: "longtext",
+      label: "Professional & Magic Skills",
+    });
 
     const mythrasGear = BUILT_IN_STAT_SHEET_TEMPLATES.find(
       (t) => t.id === "builtin-item-mythras-gear",

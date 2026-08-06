@@ -113,9 +113,8 @@ const DND_CHARACTER_SHEET_SOURCE = `:::row
 const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::card
 ### Pools & Derived Attributes
-:::stat-group columns=4
+:::stat-group columns=3
 {{stat.ap display="counter" label="AP"}}
-{{stat.lp display="counter" label="Luck"}}
 {{stat.mp display="counter" label="MP"}}
 {{stat.hp display="counter" label="Total HP"}}
 :::
@@ -127,28 +126,31 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::
 :::
 
-### Characteristics (d100 / BRP)
-:::stat-group columns=4
+### Characteristics & Luck Points
+:::stat-group columns=8
 :::card
-{{stat.str display="prominent" label="STR"}}
+{{stat.str label="STR"}}
 :::
 :::card
-{{stat.con display="prominent" label="CON"}}
+{{stat.con label="CON"}}
 :::
 :::card
-{{stat.siz display="prominent" label="SIZ"}}
+{{stat.siz label="SIZ"}}
 :::
 :::card
-{{stat.dex display="prominent" label="DEX"}}
+{{stat.dex label="DEX"}}
 :::
 :::card
-{{stat.int display="prominent" label="INT"}}
+{{stat.int label="INT"}}
 :::
 :::card
-{{stat.pow display="prominent" label="POW"}}
+{{stat.pow label="POW"}}
 :::
 :::card
-{{stat.cha display="prominent" label="CHA"}}
+{{stat.cha label="CHA"}}
+:::
+:::card
+{{stat.lp label="Luck"}}
 :::
 :::
 
@@ -184,7 +186,9 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 [weapons_table]
 :::
 :::card
-### Passions & Cults
+### Combat, Specializations & Passions
+{{stat.combat_styles display="plain" label="Combat Styles"}}
+{{stat.professional_skills display="plain" label="Professional Skills"}}
 {{stat.passions_cults display="plain" label="Passions & Cults"}}
 :::
 :::

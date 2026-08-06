@@ -3,6 +3,7 @@ import type { PresentationTemplate, StatSheetTemplate } from "schema";
 import { parseTemplate, sanitizeSource } from "./parse";
 import { isTemplateUsable, validateAst } from "./validate";
 import { resolvePresentationTemplate } from "./resolve";
+import { getBuiltInPresentationTemplates } from "./built-ins";
 import {
   exportPresentationTemplate,
   importPresentationTemplatePackage,
@@ -40,6 +41,17 @@ const schema: StatSheetTemplate = {
     { id: "name_field", label: "Name", type: "text" },
   ],
 };
+
+describe("getBuiltInPresentationTemplates", () => {
+  it("keeps Mythras combat styles and professional skills in the character sheet", () => {
+    const mythrasTemplate = getBuiltInPresentationTemplates(
+      "builtin-mythras-character",
+    ).find((template) => template.name === "Mythras Character Sheet");
+
+    expect(mythrasTemplate?.source).toContain("{{stat.combat_styles");
+    expect(mythrasTemplate?.source).toContain("{{stat.professional_skills");
+  });
+});
 
 describe("parseTemplate", () => {
   it("parses standard Markdown headings/paragraphs", () => {
@@ -321,9 +333,13 @@ describe("sanitizeSource", () => {
   });
 
   it("returns no removed fragments for plain valid source", () => {
-    const result = sanitizeSource('# Title\n\n{{stat.hp display="plain"}}');
+    const result = sanitizeSource(
+      '# Title\n\n{{stat.hp display="plain"}}\n{{stat.str hide-label}}',
+    );
     expect(result.removed).toEqual([]);
-    expect(result.source).toBe('# Title\n\n{{stat.hp display="plain"}}');
+    expect(result.source).toBe(
+      '# Title\n\n{{stat.hp display="plain"}}\n{{stat.str hide-label}}',
+    );
   });
 });
 

@@ -16,7 +16,6 @@
     rolling: boolean;
     text: string | null;
     isError?: boolean;
-    success?: boolean;
   }>({
     rolling: false,
     text: null,
@@ -30,7 +29,6 @@
       rolling: false,
       text: res.text,
       isError: res.isError,
-      success: res.success,
     };
   }
 
@@ -57,6 +55,17 @@
   const isProminent = $derived(mode === "prominent");
   const controlsDisabled = $derived(
     context.readOnly || context.mode === "preview",
+  );
+  const targetScore = $derived(
+    field?.type === "dice" && typeof field.value === "number"
+      ? field.value
+      : null,
+  );
+  const displayRollText = $derived(
+    rollState.text?.replace(
+      /\s+\((?:Critical Success|Success|Failure|Fumble)\)$/i,
+      "",
+    ) ?? null,
   );
 </script>
 
@@ -213,17 +222,21 @@
       <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
         {field.formula ?? "1d20"}
       </span>
+      {#if targetScore !== null}
+        <span
+          class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+          data-testid="presentation-field-dice-target"
+        >
+          Target: {targetScore}
+        </span>
+      {/if}
       {#if rollState.text}
         <span
           class={rollState.isError
             ? "text-red-400 font-bold"
-            : rollState.success === true
-              ? "text-green-400 font-bold"
-              : rollState.success === false
-                ? "text-red-400 font-bold"
-                : "text-theme-primary font-bold"}
+            : "text-theme-primary font-bold"}
         >
-          {rollState.text}
+          {displayRollText}
         </span>
       {/if}
     </button>

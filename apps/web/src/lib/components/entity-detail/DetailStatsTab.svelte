@@ -93,6 +93,13 @@
         ),
       );
     },
+    onUpdateField: (fieldId, updates) => {
+      persistFields(
+        (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>
+          f.id === fieldId ? { ...f, ...updates } : f,
+        ),
+      );
+    },
     onAdjustCounter: (field, direction) => {
       persistFields(
         (entity.statSheet?.fields ?? []).map((f: StatSheetField) =>

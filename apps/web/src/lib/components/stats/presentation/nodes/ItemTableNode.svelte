@@ -13,12 +13,13 @@
 
   const columns = $derived(
     field.columns ?? [
-      { id: "name", label: "Item / Weapon", type: "text" },
-      { id: "size", label: "Size/Force", type: "text" },
-      { id: "reach", label: "Reach", type: "text" },
+      { id: "name", label: "Weapon Type", type: "text" },
+      { id: "size", label: "Size", type: "text" },
+      { id: "reach", label: "Reach (Force)", type: "text" },
       { id: "damage", label: "Damage", type: "dice" },
-      { id: "ap", label: "AP", type: "number" },
-      { id: "hp", label: "HP", type: "counter" },
+      { id: "ap_hp", label: "AP/HP", type: "text" },
+      { id: "effects", label: "Special Effects", type: "text" },
+      { id: "range_load", label: "Range & Load", type: "text" },
     ],
   );
 
@@ -32,9 +33,7 @@
   >({});
 
   function updateRows(nextRows: Record<string, any>[]) {
-    if (context.onUpdateFieldValue) {
-      context.onUpdateFieldValue(field.id, nextRows as any);
-    }
+    context.onUpdateField(field.id, { rows: nextRows });
   }
 
   function handleAddRow() {
@@ -71,14 +70,24 @@
     const next = rows.map((r, i) => {
       if (i !== rowIndex) return r;
       const current = r[colId];
-      const val =
-        typeof current === "object" ? current.value : Number(current) || 0;
-      const _max = typeof current === "object" ? current.max : undefined;
-      const newVal = val + delta;
+      const value =
+        current && typeof current === "object"
+          ? Number(current.value)
+          : Number(current);
+      const max =
+        current && typeof current === "object" ? Number(current.max) : NaN;
+      const currentValue = Number.isFinite(value) ? value : 0;
+      const adjustedValue = currentValue + delta;
+      const nextValue = Math.max(
+        0,
+        Number.isFinite(max) ? Math.min(max, adjustedValue) : adjustedValue,
+      );
       return {
         ...r,
         [colId]:
-          typeof current === "object" ? { ...current, value: newVal } : newVal,
+          current && typeof current === "object"
+            ? { ...current, value: nextValue }
+            : nextValue,
       };
     });
     updateRows(next);
@@ -145,13 +154,16 @@
         <tr class="border-b border-theme-border/60 bg-theme-surface/20">
           {#each columns as col (col.id)}
             <th
+              scope="col"
               class="px-2.5 py-1.5 text-center font-bold text-theme-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
             >
               {col.label}
             </th>
           {/each}
           {#if !context.readOnly}
-            <th class="w-8 px-1 py-1.5 text-center"></th>
+            <th scope="col" class="w-8 px-1 py-1.5 text-center">
+              <span class="sr-only">Actions</span>
+            </th>
           {/if}
         </tr>
       </thead>
@@ -181,6 +193,7 @@
                     {:else}
                       <input
                         type="text"
+                        aria-label={`${col.label} for item ${rIdx + 1}`}
                         class="w-full rounded border border-theme-border/60 bg-theme-bg px-1.5 py-0.5 text-center text-xs text-theme-text focus:border-theme-primary focus:outline-none"
                         value={row[col.id] ?? ""}
                         oninput={(e) =>
@@ -199,6 +212,7 @@
                     {:else}
                       <input
                         type="number"
+                        aria-label={`${col.label} for item ${rIdx + 1}`}
                         class="w-16 rounded border border-theme-border/60 bg-theme-bg px-1.5 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
                         value={row[col.id] ?? 0}
                         oninput={(e) =>
@@ -216,6 +230,7 @@
                     {#if context.mode === "view"}
                       <button
                         type="button"
+                        aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
                         class="inline-flex items-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-2 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
                         disabled={rollState?.rolling}
                         onclick={() => handleDiceRoll(rIdx, col.id, formula)}
@@ -227,7 +242,12 @@
                         ></span>
                         <span>{formula}</span>
                         {#if rollState?.text}
-                          <span class="ml-1 font-bold text-green-400"
+                          <span
+                            class={rollState.isError
+                              ? "ml-1 font-bold text-red-400"
+                              : rollState.success === false
+                                ? "ml-1 font-bold text-red-400"
+                                : "ml-1 font-bold text-green-400"}
                             >({rollState.text})</span
                           >
                         {/if}
@@ -239,6 +259,7 @@
                     {:else}
                       <input
                         type="text"
+                        aria-label={`${col.label} formula for item ${rIdx + 1}`}
                         class="w-20 rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
                         value={formula}
                         oninput={(e) =>
@@ -266,6 +287,7 @@
                       <div class="inline-flex items-center gap-1">
                         <button
                           type="button"
+                          aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
                           class="rounded px-1 text-theme-muted hover:text-theme-primary disabled:opacity-30"
                           onclick={() => handleCounterAdjust(rIdx, col.id, -1)}
                         >
@@ -276,6 +298,7 @@
                         </span>
                         <button
                           type="button"
+                          aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
                           class="rounded px-1 text-theme-muted hover:text-theme-primary disabled:opacity-30"
                           onclick={() => handleCounterAdjust(rIdx, col.id, 1)}
                         >
@@ -290,6 +313,7 @@
                 <td class="px-1 py-1.5 text-center align-middle">
                   <button
                     type="button"
+                    aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
                     class="text-theme-muted hover:text-red-400"
                     onclick={() => handleRemoveRow(rIdx)}
                     title="Remove item"

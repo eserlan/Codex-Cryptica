@@ -10,5 +10,6 @@ export interface PresentationRenderContext {
     fieldId: string,
     value: number | string | boolean | undefined,
   ) => void;
+  onUpdateField: (fieldId: string, updates: Partial<StatSheetField>) => void;
   onAdjustCounter: (field: StatSheetField, direction: 1 | -1) => void;
 }
