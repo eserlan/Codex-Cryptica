@@ -655,12 +655,26 @@ async function handleInteraction(
       headers: { ...cors, "Content-Type": "application/json" },
     });
 
-  const registryModel = getModel(body.model);
+  const rawModel = typeof body?.model === "string" ? body.model : undefined;
+  const registryModel = rawModel ? getModel(rawModel) : undefined;
   const useOpenAi = registryModel?.provider === "openai";
 
+  const outgoingBody = {
+    ...body,
+    model: rawModel,
+  };
+
+  if (registryModel && registryModel.provider === "gemini") {
+    outgoingBody.model = registryModel.modelId;
+  }
+
   const result = useOpenAi
-    ? await forwardInteractionToOpenAi(body, registryModel!.modelId, env)
-    : await forwardInteractionToGemini(body, env);
+    ? await forwardInteractionToOpenAi(
+        outgoingBody,
+        registryModel!.modelId,
+        env,
+      )
+    : await forwardInteractionToGemini(outgoingBody, env);
 
   if (result.transportError) {
     return json(

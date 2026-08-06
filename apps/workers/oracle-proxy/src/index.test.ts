@@ -437,7 +437,39 @@ describe("Oracle Proxy Worker Interactions API", () => {
       body: JSON.stringify(body),
     });
 
-  it("forwards an interaction and returns id + extracted text", async () => {
+  it("rewrites model to registry modelId for Gemini entries and ignores non-string model values", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_gemini",
+            steps: [{ content: [{ text: "gemini reply" }] }],
+          }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const res1 = await worker.fetch(
+      request({ input: "hi", model: "gemini-flash-lite" }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(res1.status).toBe(200);
+    const body1 = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    expect(body1.model).toBe("gemini-3.5-flash-lite");
+
+    const res2 = await worker.fetch(
+      request({ input: "hi", model: { invalid: true } }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(res2.status).toBe(200);
+    const body2 = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
+    expect(body2.model).toBe("gemini-3.5-flash-lite");
+  });
+
+  it("routes an unrecognized operation to legacy generateContent", async () => {
     const fetchMock = vi.fn(
       async () =>
         new Response(
