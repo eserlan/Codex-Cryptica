@@ -24,8 +24,10 @@ import { BANNED_NAMES, isTitleBanned } from "generator-engine";
 // enforcement backstop, retrying a few times before giving up.
 const MAX_STRUCTURED_ENTITY_ATTEMPTS = 3;
 
-/** Extracts the "**Name:** ..." line from a structured drafting response. */
+/** Extracts the "**Name:** ..." line or inline field from a structured drafting response. */
 function extractStructuredEntityTitle(text: string): string {
+  const lineMatch = text.match(/\*\*Name:\*\*\s*([^\r\n*]+)/i)?.[1]?.trim();
+  if (lineMatch) return lineMatch;
   return text.match(/\*\*Name:\*\*\s*(.+)/i)?.[1]?.trim() ?? "";
 }
 
