@@ -2,7 +2,6 @@
 import { aiClientManager } from "@codex/ai-engine";
 import type { Proposal } from "@codex/proposer";
 import { systemClock } from "$lib/utils/runtime-deps";
-import { BANNED_NAMES } from "generator-engine";
 
 function normalizeTargetId(value: string): string {
   return value
@@ -12,6 +11,65 @@ function normalizeTargetId(value: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
+// The rules, JSON schema, and output contract never change between requests
+// — only the Source Entity content and target list do — so this is the
+// system instruction, not part of the per-request user message. This also
+// keeps the request payload's only per-request content the actual data to
+// analyze, not several paragraphs of restated instructions around it.
+const SYSTEM_INSTRUCTION = `You are a lore expert assisting a writer.
+Analyze the given "Source Entity" content and the list of "Available Target Entities".
+Identify any POTENTIAL HIDDEN CONNECTIONS between the Source Entity and any Target Entity based on the semantic context.
+
+Criteria for a connection:
+1. The Source Entity mentions the Target Entity by name or description.
+2. The Source Entity implies a relationship (e.g., location, faction member, rival, family) with the Target.
+3. Only suggest connections that are NOT explicitly stated as WikiLinks (assumed).
+4. Assign a confidence score (0.0 to 1.0). High confidence means explicit mention; Low means thematic link.
+5. IMPORTANT: Output a MAXIMUM of ONE connection per Target Entity. Only provide the single most relevant or strongest connection if multiple exist.
+6. CRITICAL: You MUST ONLY use "targetId" values that exactly match one of the IDs given in that request's "Available Target Entities" list. Never invent a target — this task only links entities that already exist, it never names anything new, so there is no name to avoid reusing.
+
+Output a JSON object with this schema:
+{
+  "connections": [
+    {
+      "targetId": "string (ID from list)",
+      "type": "string (e.g. 'related', 'ally', 'rival', 'located_in')",
+      "reason": "string (short explanation)",
+      "context": "string (snippet from source text)",
+      "confidence": number
+    }
+  ]
+}
+
+Only return the JSON. If no connections are found, return { "connections": [] }.`;
+
+// The response is a JSON object with a "connections" array, not a bare
+// top-level array — some providers' structured-output modes (OpenAI's
+// json_schema mode included) require the schema root to be an object, so a
+// bare-array schema/response gets rejected or refused. This is oracle-proxy's
+// own plain-JSON-Schema shape (schema-validation.ts), not the Google SDK's
+// `Schema`/`SchemaType` shape, hence the `any` below.
+const CONNECTIONS_RESPONSE_SCHEMA: any = {
+  type: "object",
+  required: ["connections"],
+  properties: {
+    connections: {
+      type: "array",
+      items: {
+        type: "object",
+        required: ["targetId", "type", "reason", "context", "confidence"],
+        properties: {
+          targetId: { type: "string" },
+          type: { type: "string" },
+          reason: { type: "string" },
+          context: { type: "string" },
+          confidence: { type: "number" },
+        },
+      },
+    },
+  },
+};
 
 async function analyzeEntityWithModel(
   apiKey: string,
@@ -25,7 +83,11 @@ async function analyzeEntityWithModel(
     return [];
   }
 
-  const model = await aiClientManager.getModel(apiKey, modelName);
+  const model = await aiClientManager.getModel(
+    apiKey,
+    modelName,
+    SYSTEM_INSTRUCTION,
+  );
 
   // Truncate content to avoid exceeding token limits while keeping key context
   const truncatedContent =
@@ -34,43 +96,19 @@ async function analyzeEntityWithModel(
   const targetsList = availableTargets
     .map((t) => `- ${t.name} (ID: ${t.id})`)
     .join("\n");
-  const prompt = `You are a lore expert assisting a writer.
-Analyze the following "Source Entity" content and the list of "Available Target Entities".
-Identify any POTENTIAL HIDDEN CONNECTIONS between the Source Entity and any Target Entity based on the semantic context.
-
-Criteria for a connection:
-1. The Source Entity mentions the Target Entity by name or description.
-2. The Source Entity implies a relationship (e.g., location, faction member, rival, family) with the Target.
-3. Only suggest connections that are NOT explicitly stated as WikiLinks (assumed).
-4. Assign a confidence score (0.0 to 1.0). High confidence means explicit mention; Low means thematic link.
-5. IMPORTANT: Output a MAXIMUM of ONE connection per Target Entity. Only provide the single most relevant or strongest connection if multiple exist.
-6. CRITICAL: You MUST ONLY use "targetId" values that exactly match the IDs in the "Available Target Entities" list. Do not invent your own entities or use fantasy cliché names: ${BANNED_NAMES.join(", ")}.
-
-Source Entity Content:
+  const prompt = `Source Entity Content:
 """
 ${truncatedContent.replace(/"""/g, "''\"")}
 """
 
 Available Target Entities:
-${targetsList}
-
-Output a JSON array of objects with this schema:
-[
-  {
-    "targetId": "string (ID from list)",
-    "type": "string (e.g. 'related', 'ally', 'rival', 'located_in')",
-    "reason": "string (short explanation)",
-    "context": "string (snippet from source text)",
-    "confidence": number
-  }
-]
-
-Only return the JSON. If no connections are found, return empty array [].`;
+${targetsList}`;
 
   const result = await model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       responseMimeType: "application/json",
+      responseSchema: CONNECTIONS_RESPONSE_SCHEMA,
     },
   });
   const text = result.response.text();
@@ -78,7 +116,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
   let rawProposals: any[];
   try {
     const cleanedText = text.replace(/```json|```/g, "").trim();
-    rawProposals = JSON.parse(cleanedText);
+    const parsed = JSON.parse(cleanedText);
+    rawProposals = Array.isArray(parsed) ? parsed : parsed?.connections;
   } catch {
     console.warn(
       `ProposerWorker: Failed to parse JSON response for entity ${entityId}. Raw text: ${text.slice(0, 100)}...`,

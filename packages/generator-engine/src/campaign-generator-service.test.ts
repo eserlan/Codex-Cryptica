@@ -1104,14 +1104,16 @@ describe("AI policy (US2)", () => {
           input: expect.stringContaining("Return ONLY a JSON object"),
           previousInteractionId: "interaction-1",
           replayPrompt: expect.stringContaining(
-            "Do NOT use any of these names",
+            "do NOT title it any of these names",
           ),
         }),
       }),
     );
     const interaction = complete.mock.calls[0][2]?.interaction;
     expect(interaction?.input).toContain("delta context plus request");
-    expect(interaction?.input).not.toContain("Do NOT use any of these names");
+    expect(interaction?.input).not.toContain(
+      "do NOT title it any of these names",
+    );
   });
 
   it("reports prompt metrics for stateless and interaction-backed AI generations", async () => {
