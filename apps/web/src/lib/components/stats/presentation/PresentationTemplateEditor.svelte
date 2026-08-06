@@ -266,7 +266,10 @@
           card.tableHeaders && card.tableHeaders.length > 0
             ? card.tableHeaders
             : ["Field", "Value"];
-        out += `| ${headers.join(" | ")} |\n`;
+        const markdownHeaders = headers.map((header) =>
+          header.replace(/\r?\n/g, " ").replace(/\|/g, "\\|"),
+        );
+        out += `| ${markdownHeaders.join(" | ")} |\n`;
         out += `| ${headers.map(() => "---").join(" | ")} |\n`;
         for (const row of card.rows) {
           if (row.length === 0) continue;
@@ -375,6 +378,20 @@
         ),
         rows: card.rows.map((row) => row.slice(0, columns)),
       };
+    });
+    syncSourceFromVisualCards(visualCards);
+  }
+
+  function updateTableHeader(
+    cardId: string,
+    headerIndex: number,
+    value: string,
+  ) {
+    visualCards = visualCards.map((card) => {
+      if (card.id !== cardId || card.mode !== "table") return card;
+      const headers = [...(card.tableHeaders ?? [])];
+      headers[headerIndex] = value;
+      return { ...card, tableHeaders: headers };
     });
     syncSourceFromVisualCards(visualCards);
   }
@@ -1211,6 +1228,29 @@
                         </button>
                       </div>
                     </div>
+
+                    {#if card.mode === "table"}
+                      <div class="flex flex-wrap items-center gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 p-1.5">
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-theme-muted">
+                          Headers
+                        </span>
+                        {#each card.tableHeaders ?? [] as header, headerIndex (`${card.id}-header-${headerIndex}`)}
+                          <input
+                            type="text"
+                            class="min-w-20 flex-1 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
+                            value={header}
+                            aria-label={`Header ${headerIndex + 1} for ${card.title || "table"}`}
+                            placeholder={`Column ${headerIndex + 1}`}
+                            oninput={(event) =>
+                              updateTableHeader(
+                                card.id,
+                                headerIndex,
+                                (event.target as HTMLInputElement).value,
+                              )}
+                          />
+                        {/each}
+                      </div>
+                    {/if}
 
                     <div class="flex flex-col gap-2">
                       {#each card.rows as rowFields, rIdx (rIdx)}

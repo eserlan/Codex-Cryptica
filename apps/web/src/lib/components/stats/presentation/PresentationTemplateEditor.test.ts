@@ -239,4 +239,31 @@ describe("PresentationTemplateEditor", () => {
       expect.objectContaining({ source: expect.not.stringContaining("Steel") }),
     );
   });
+
+  it("edits visual table headers and saves them to Markdown", async () => {
+    const tableTemplate = {
+      ...builtIn,
+      id: "presentation-table-headers",
+      isBuiltIn: false,
+      source:
+        "### Equipment\n\n| Item | Notes |\n| --- | --- |\n| [hp] | Steel |",
+    };
+    saveTemplate.mockResolvedValueOnce(tableTemplate);
+    render(PresentationTemplateEditor, {
+      schema,
+      template: tableTemplate,
+    });
+
+    await fireEvent.input(
+      screen.getByRole("textbox", { name: "Header 2 for Equipment" }),
+      { target: { value: "Material" } },
+    );
+    await fireEvent.click(screen.getByTestId("presentation-editor-save"));
+
+    expect(saveTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: expect.stringContaining("| Item | Material |"),
+      }),
+    );
+  });
 });
