@@ -179,6 +179,13 @@ export class GraphContextMenuController {
     }
   };
 
+  handleOpenZenMode = () => {
+    if (this.selectedNodes.length !== 1) return;
+
+    this.deps.modalUIStore.openZenMode(this.selectedNodes[0]);
+    this.contextMenuOpen = false;
+  };
+
   handleMerge = () => {
     if (this.selectedNodes.length > 1) {
       this.deps.modalUIStore.openMergeDialog(this.selectedNodes);
