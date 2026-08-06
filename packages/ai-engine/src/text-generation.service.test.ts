@@ -547,6 +547,54 @@ describe("DefaultTextGenerationService", () => {
       expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
       expect(onUpdate).toHaveBeenCalledWith("Structured Record");
     });
+
+    it("retries the draft when the title collides with a banned name", async () => {
+      const onUpdate = vi.fn();
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "Lore Synthesis Summary" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "**Name:** Vance\n**Type:** npc" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "**Name:** Osric Vantwell\n**Type:** npc" },
+        });
+
+      await service.generateStructuredEntity!(
+        "key",
+        "Create a ripperdoc",
+        "Vault Context",
+        "model",
+        onUpdate,
+        ["npc"],
+      );
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(3);
+      expect(onUpdate).toHaveBeenCalledWith(
+        "**Name:** Osric Vantwell\n**Type:** npc",
+      );
+    });
+
+    it("gives up after the retry budget and returns the last (still banned) draft", async () => {
+      const onUpdate = vi.fn();
+      mockModel.generateContent.mockResolvedValue({
+        response: { text: () => "**Name:** Vance\n**Type:** npc" },
+      });
+
+      await service.generateStructuredEntity!(
+        "key",
+        "Create a ripperdoc",
+        "Vault Context",
+        "model",
+        onUpdate,
+        ["npc"],
+      );
+
+      // 1 synthesis call + MAX_STRUCTURED_ENTITY_ATTEMPTS (3) drafting calls.
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(4);
+      expect(onUpdate).toHaveBeenCalledWith("**Name:** Vance\n**Type:** npc");
+    });
   });
 
   describe("context optimizations", () => {
