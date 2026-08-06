@@ -8,6 +8,7 @@ export interface DiceRollDisplay {
   text: string;
   isError: boolean;
   success?: boolean;
+  total?: number;
 }
 
 export async function rollStatSheetDiceField(
@@ -64,6 +65,7 @@ export async function rollStatSheetDiceField(
         text: `= ${result.total} vs ${targetNum} (${outcome})`,
         isError: false,
         success: isSuccess,
+        total: result.total,
       };
     }
 
@@ -78,7 +80,7 @@ export async function rollStatSheetDiceField(
         "success",
       );
     }
-    return { text: `= ${result.total}`, isError: false };
+    return { text: `= ${result.total}`, isError: false, total: result.total };
   } catch (e: any) {
     return { text: e?.message ?? "Invalid formula", isError: true };
   }

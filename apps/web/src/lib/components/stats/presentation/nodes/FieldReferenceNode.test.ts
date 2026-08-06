@@ -120,6 +120,7 @@ describe("FieldReferenceNode", () => {
       text: "= 17 vs 50 (Success)",
       isError: false,
       success: true,
+      total: 17,
     });
     const node: FieldReferenceNodeType = {
       type: "field-reference",
@@ -144,11 +145,12 @@ describe("FieldReferenceNode", () => {
     await fireEvent.click(screen.getByTestId("presentation-field-dice-roll"));
 
     const roll = screen.getByTestId("presentation-field-dice-roll");
-    expect(screen.getByRole("img", { name: "Success" })).toBeTruthy();
+    expect(screen.getByRole("status", { name: "17: Success" })).toBeTruthy();
     expect(
       screen.getByTestId("presentation-field-dice-outcome").className,
     ).toContain("text-theme-primary");
     expect(roll.textContent).not.toContain("= 17 vs 50");
+    expect(roll.textContent).toContain("17");
     expect(roll.textContent).not.toContain("Success");
   });
 
@@ -157,6 +159,7 @@ describe("FieldReferenceNode", () => {
       text: "= 73 vs 50 (Failure)",
       isError: false,
       success: false,
+      total: 73,
     });
     const node: FieldReferenceNodeType = {
       type: "field-reference",
@@ -176,10 +179,11 @@ describe("FieldReferenceNode", () => {
     render(FieldReferenceNode, { props: { node, context } });
     await fireEvent.click(screen.getByTestId("presentation-field-dice-roll"));
 
-    expect(screen.getByRole("img", { name: "Failure" })).toBeTruthy();
+    expect(screen.getByRole("status", { name: "73: Failure" })).toBeTruthy();
     const outcome = screen.getByTestId("presentation-field-dice-outcome");
     expect(outcome.className).toContain("text-theme-danger");
-    expect(outcome.textContent).not.toContain("73");
+    expect(outcome.textContent).toContain("73");
+    expect(outcome.textContent).not.toContain("vs");
   });
 
   it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {

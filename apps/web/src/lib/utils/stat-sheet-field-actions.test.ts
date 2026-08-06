@@ -209,7 +209,7 @@ describe("rollStatSheetDiceField", () => {
   it("returns the roll total, records history, and broadcasts when a VTT session is live", async () => {
     const display = await rollStatSheetDiceField(diceField());
 
-    expect(display).toEqual({ text: "= 17", isError: false });
+    expect(display).toEqual({ text: "= 17", isError: false, total: 17 });
     expect(addResult).toHaveBeenCalled();
     expect(addResult).toHaveBeenCalledWith(
       expect.objectContaining({ total: 17 }),
@@ -264,6 +264,7 @@ describe("rollStatSheetDiceField", () => {
     );
     expect(successDisplay.text).toBe("= 17 vs 50 (Success)");
     expect(successDisplay.success).toBe(true);
+    expect(successDisplay.total).toBe(17);
 
     const critDisplay = await rollStatSheetDiceField(
       diceField({ formula: "1d100", value: 170 }),
@@ -276,6 +277,7 @@ describe("rollStatSheetDiceField", () => {
     );
     expect(failDisplay.text).toBe("= 17 vs 10 (Failure)");
     expect(failDisplay.success).toBe(false);
+    expect(failDisplay.total).toBe(17);
   });
 
   it("shows the outcome in the non-VTT toast for target rolls", async () => {

@@ -17,6 +17,7 @@
     text: string | null;
     isError?: boolean;
     success?: boolean;
+    total?: number;
   }>({
     rolling: false,
     text: null,
@@ -31,6 +32,7 @@
       text: res.text,
       isError: res.isError,
       success: res.success,
+      total: res.total,
     };
   }
 
@@ -74,6 +76,9 @@
       /\s+\((?:Critical Success|Success|Failure|Fumble)\)$/i,
       "",
     ) ?? null,
+  );
+  const displayRollTotal = $derived(
+    rollState.total ?? rollState.text?.match(/^=\s*(-?\d+)/)?.[1] ?? null,
   );
 </script>
 
@@ -257,16 +262,11 @@
             class={rollState.success
               ? "text-theme-primary"
               : "text-theme-danger"}
-            role="img"
-            aria-label={rollState.success ? "Success" : "Failure"}
+            role="status"
+            aria-label={`${displayRollTotal ?? "Roll"}: ${rollState.success ? "Success" : "Failure"}`}
             data-testid="presentation-field-dice-outcome"
           >
-            <span
-              class={rollState.success
-                ? "icon-[lucide--circle-check] h-4 w-4"
-                : "icon-[lucide--circle-x] h-4 w-4"}
-              aria-hidden="true"
-            ></span>
+            {displayRollTotal ?? displayRollText}
           </span>
         {:else}
           <span class="font-bold text-theme-primary">{displayRollText}</span>
