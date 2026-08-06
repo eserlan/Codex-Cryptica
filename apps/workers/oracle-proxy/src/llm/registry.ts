@@ -43,6 +43,12 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
     capabilities: {
       structuredOutput: true,
       freeformGeneration: true,
+      // Describes only the stateless operation-pipeline's "revision"
+      // LlmOperation (unused today, no caller/default wired to it). Luna IS
+      // used for entity revision via the separate Interactions path
+      // (text-generation-revision.service.ts / handleInteraction in
+      // index.ts), which never reads this flag — don't take `false` here as
+      // "Luna can't do revision."
       revision: false,
     },
     costTier: "low",

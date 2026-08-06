@@ -33,6 +33,11 @@ import {
   forwardInteractionToGemini,
 } from "./llm/adaptors/gemini-adaptor";
 import {
+  forwardInteractionToOpenAi,
+  extractOpenAiResponseText,
+} from "./llm/adaptors/openai-adaptor";
+import { getModel } from "./llm/registry";
+import {
   isLlmOperationRequest,
   handleLlmOperationRequest,
 } from "./llm/handle-operation-request";
@@ -624,11 +629,17 @@ export default {
 };
 
 /**
- * Handle a Gemini Interactions API request (server-side conversation state).
+ * Handle an Interactions-style request (server-side conversation state).
  *
- * Forwards to `/v1beta/interactions` with the system key, threading
- * `previous_interaction_id` so the model retains prior turns server-side. The
- * client therefore sends only the new `input` (query + new/changed lore).
+ * `body.model` is looked up against the model registry first: an OpenAI
+ * registry key (e.g. "luna-fast") routes to OpenAI's Responses API,
+ * threading `previous_response_id`; anything else (including raw Gemini
+ * model ids not in the registry, for back-compat) forwards to Gemini's
+ * `/v1beta/interactions`, threading `previous_interaction_id`. Either way the
+ * client only ever sends/receives the provider-neutral `previous_interaction_id`
+ * / `{ id, text }` shape — callers (chat/revision/generator sessions) don't
+ * need to know which provider is serving a given model key.
+ *
  * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
  * 409 so the client can reset and replay full history.
  */
@@ -644,7 +655,12 @@ async function handleInteraction(
       headers: { ...cors, "Content-Type": "application/json" },
     });
 
-  const result = await forwardInteractionToGemini(body, env);
+  const registryModel = getModel(body.model);
+  const useOpenAi = registryModel?.provider === "openai";
+
+  const result = useOpenAi
+    ? await forwardInteractionToOpenAi(body, registryModel!.modelId, env)
+    : await forwardInteractionToGemini(body, env);
 
   if (result.transportError) {
     return json(
@@ -669,26 +685,32 @@ async function handleInteraction(
   if (!result.ok) {
     const message: string =
       data?.error?.message || "Interaction request failed";
-    // An expired or unknown previous_interaction_id (retention window elapsed)
-    // is recoverable: the client should drop the id and replay full history.
+    // An expired or unknown previous id (retention window elapsed, or an
+    // OpenAI previous_response_id that's aged out) is recoverable: the
+    // client should drop the id and replay full history.
     const isStaleId =
       body.previous_interaction_id &&
       (result.status === 404 ||
         result.status === 400 ||
-        /previous_interaction_id|interaction.*not found/i.test(message));
+        /previous_interaction_id|previous_response_id|interaction.*not found|response.*not found/i.test(
+          message,
+        ));
     if (isStaleId) {
       return json({ error: { message, code: "INTERACTION_NOT_FOUND" } }, 409);
     }
     return json({ error: { message } }, result.status);
   }
 
-  // Output text lives at steps[].content[].text (model_output steps).
-  const steps: any[] = Array.isArray(data.steps) ? data.steps : [];
-  const extractedText = steps
-    .flatMap((s) => (Array.isArray(s?.content) ? s.content : []))
-    .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
-    .filter(Boolean)
-    .join("");
+  // Gemini's Interactions API: output text lives at steps[].content[].text
+  // (model_output steps). OpenAI's Responses API: output text lives at
+  // output[].content[].text (message items, output_text blocks).
+  const extractedText = useOpenAi
+    ? extractOpenAiResponseText(data)
+    : (Array.isArray(data.steps) ? data.steps : [])
+        .flatMap((s: any) => (Array.isArray(s?.content) ? s.content : []))
+        .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
+        .filter(Boolean)
+        .join("");
 
   return json({ id: data.id, text: extractedText }, 200);
 }

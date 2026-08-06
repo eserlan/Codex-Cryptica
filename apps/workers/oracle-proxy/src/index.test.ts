@@ -528,6 +528,104 @@ describe("Oracle Proxy Worker Interactions API", () => {
       }),
     );
   });
+
+  it("routes an OpenAI registry key (luna-fast) to the Responses API and extracts output text", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "resp_abc",
+            output: [
+              {
+                type: "message",
+                role: "assistant",
+                content: [{ type: "output_text", text: "The crone speaks." }],
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({ input: "Tell me about the crone", model: "luna-fast" }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ id: "resp_abc", text: "The crone speaks." }),
+    );
+
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1/responses");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gpt-5.6-luna");
+    expect(sent.input).toBe("Tell me about the crone");
+    expect(sent.store).toBe(true);
+  });
+
+  it("threads previous_interaction_id as previous_response_id for OpenAI models", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_two", output: [] }), {
+          status: 200,
+        }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await worker.fetch(
+      request({
+        input: "and then?",
+        model: "luna-fast",
+        previous_interaction_id: "resp_abc",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.previous_response_id).toBe("resp_abc");
+  });
+
+  it("maps an expired previous_response_id on an OpenAI model to a 409 INTERACTION_NOT_FOUND", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { message: "previous_response_id not found" },
+          }),
+          { status: 404 },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "continue",
+        model: "luna-fast",
+        previous_interaction_id: "expired",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: "INTERACTION_NOT_FOUND" }),
+      }),
+    );
+  });
 });
 
 describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", () => {

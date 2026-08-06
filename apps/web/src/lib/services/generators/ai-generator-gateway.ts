@@ -6,9 +6,13 @@ import type {
 import {
   aiClientManager,
   InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
   type DefaultAIClientManager,
 } from "@codex/ai-engine";
 
+// Only matters for the non-interaction Gemini-SDK-shaped path below —
+// the Interactions path uses the provider-neutral INTERACTION_MODEL_KEY
+// instead (see text-generation-chat.service.ts).
 const GENERATOR_MODEL = "gemini-3.5-flash-lite";
 const GENERATOR_GENERATION_CONFIG = {
   temperature: 0.85,
@@ -67,7 +71,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     if (interaction) {
       try {
         const result = await this.clientManager.sendInteraction({
-          model: GENERATOR_MODEL,
+          model: INTERACTION_MODEL_KEY,
           input: interaction.input,
           systemInstruction,
           previousInteractionId: interaction.previousInteractionId,
@@ -82,7 +86,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       } catch (err) {
         if (!(err instanceof InteractionExpiredError)) throw err;
         const result = await this.clientManager.sendInteraction({
-          model: GENERATOR_MODEL,
+          model: INTERACTION_MODEL_KEY,
           input: interaction.replayPrompt ?? prompt,
           systemInstruction,
           previousInteractionId: null,

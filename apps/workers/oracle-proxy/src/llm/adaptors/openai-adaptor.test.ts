@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { callOpenAi } from "./openai-adaptor";
+import {
+  callOpenAi,
+  forwardInteractionToOpenAi,
+  extractOpenAiResponseText,
+} from "./openai-adaptor";
 import type { LlmModelDefinition, LlmRequest } from "../types";
 
 const env = { OPENAI_API_KEY: "test-openai-key" };
@@ -340,5 +344,142 @@ describe("callOpenAi", () => {
     );
     expect(result.ok).toBe(false);
     expect(fetcher).not.toHaveBeenCalled();
+  });
+});
+
+describe("extractOpenAiResponseText", () => {
+  it("joins output_text blocks from message-typed output items", () => {
+    const text = extractOpenAiResponseText({
+      output: [
+        { type: "reasoning", content: [] },
+        {
+          type: "message",
+          role: "assistant",
+          content: [
+            { type: "output_text", text: "Hello" },
+            { type: "output_text", text: ", world." },
+          ],
+        },
+      ],
+    });
+    expect(text).toBe("Hello, world.");
+  });
+
+  it("returns an empty string for a missing/malformed output array", () => {
+    expect(extractOpenAiResponseText({})).toBe("");
+    expect(extractOpenAiResponseText({ output: null })).toBe("");
+  });
+});
+
+describe("forwardInteractionToOpenAi", () => {
+  it("translates previous_interaction_id into previous_response_id and posts to /v1/responses", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    const result = await forwardInteractionToOpenAi(
+      {
+        input: "continue the scene",
+        previous_interaction_id: "resp_0",
+        system_instruction: "Be a helpful oracle.",
+      },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe(200);
+
+    const [calledUrl, init] = fetcher.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1/responses");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gpt-5.6-luna");
+    expect(sent.input).toBe("continue the scene");
+    expect(sent.previous_response_id).toBe("resp_0");
+    expect(sent.instructions).toBe("Be a helpful oracle.");
+    expect(sent.store).toBe(true);
+  });
+
+  it("fails clearly when the API key is missing rather than sending an unauthenticated request", async () => {
+    const fetcher = vi.fn();
+    const result = await forwardInteractionToOpenAi(
+      { input: "hi" },
+      "gpt-5.6-luna",
+      {},
+      fetcher as unknown as typeof fetch,
+    );
+    expect(result.ok).toBe(false);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('requests json_object mode and guarantees "json" appears in instructions when responseMimeType is application/json', async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToOpenAi(
+      {
+        input: "generate a settlement",
+        system_instruction: "Be a helpful oracle.",
+        generationConfig: { responseMimeType: "application/json" },
+      },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.text).toEqual({ format: { type: "json_object" } });
+    expect(sent.instructions).toBe(
+      "Be a helpful oracle.\n\nRespond with valid JSON.",
+    );
+  });
+
+  it("still guarantees the json instruction when no system instruction was provided", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToOpenAi(
+      {
+        input: "generate a settlement",
+        generationConfig: { responseMimeType: "application/json" },
+      },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.instructions).toBe("Respond with valid JSON.");
+  });
+
+  it("reports a transport error without throwing", async () => {
+    const fetcher = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    const result = await forwardInteractionToOpenAi(
+      { input: "hi" },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+    expect(result.ok).toBe(false);
+    expect(result.transportError).toBe(true);
   });
 });
