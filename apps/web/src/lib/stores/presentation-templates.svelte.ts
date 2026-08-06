@@ -20,16 +20,21 @@ function entityLocalDefaultPresentation(
   const isNpcOrMonster = ["npc", "monster", "creature"].includes(
     normalizedEntityType ?? "",
   );
+  const isCharacter = normalizedEntityType === "character";
   return {
     id: `builtin-presentation-custom-${schemaTemplateId}`,
     vaultId: null,
     schemaTemplateId,
     name: isNpcOrMonster
       ? "Standard NPC / Monster Sheet"
-      : "Standard Custom Sheet",
+      : isCharacter
+        ? "Standard Character Sheet"
+        : "Standard Custom Sheet",
     description: isNpcOrMonster
       ? "A simple NPC or monster presentation generated from this sheet's fields."
-      : "A simple presentation generated from this sheet's fields.",
+      : isCharacter
+        ? "A simple character presentation generated from this sheet's fields."
+        : "A simple presentation generated from this sheet's fields.",
     source: `## Stats\n\n${references}`,
     formatVersion: 1,
     isBuiltIn: true,

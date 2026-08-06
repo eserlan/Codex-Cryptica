@@ -57,6 +57,22 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
     });
   });
 
+  it("provides a generated character presentation for custom character sheets", () => {
+    const store = makeStore();
+
+    const available = store.availableTemplatesForSchema(
+      "entity-local-stat-sheet:hero",
+      [{ id: "hp", label: "Hit Points", type: "counter" }],
+      "character",
+    );
+
+    expect(available[0]).toMatchObject({
+      name: "Standard Character Sheet",
+      isBuiltIn: true,
+      source: expect.stringContaining("{{stat.hp}}"),
+    });
+  });
+
   it("auto-suffixes a new template whose name collides with an existing one for the same schema", async () => {
     const store = makeStore();
     const first = await store.saveTemplate({
