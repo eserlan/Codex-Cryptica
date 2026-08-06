@@ -11,8 +11,13 @@ on:
       - "docs/**"
   pull_request:
     branches: [main, staging]
-    paths-ignore:
-      - "docs/**"
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig*.json"
   workflow_dispatch:
     inputs:
       full_validation:
