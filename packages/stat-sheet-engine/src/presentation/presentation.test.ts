@@ -235,6 +235,26 @@ describe("validateAst / isTemplateUsable", () => {
     expect(ref.requestedDisplayMode).toBeUndefined();
   });
 
+  it("uses the compact name-target mode by default for a 1d100 dice field", () => {
+    const parsed = parseTemplate("{{stat.attack}}", 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("name-target");
+  });
+
+  it("allows an explicit dice display mode to override the 1d100 default", () => {
+    const parsed = parseTemplate('{{stat.attack display="plain"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("plain");
+  });
+
   it("isTemplateUsable is false when schema is undefined", () => {
     const template = {
       id: "t1",

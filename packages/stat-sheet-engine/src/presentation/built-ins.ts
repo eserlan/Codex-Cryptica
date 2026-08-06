@@ -171,14 +171,14 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 :::card
 ### Standard Skills & Rolls
 :::stat-group columns=2
-{{stat.d100_check display="plain" label="d100 Roll"}}
-{{stat.athletics display="plain" label="Athletics"}}
-{{stat.brawn display="plain" label="Brawn"}}
-{{stat.evade display="plain" label="Evade"}}
-{{stat.insight display="plain" label="Insight"}}
-{{stat.perception display="plain" label="Perception"}}
-{{stat.stealth display="plain" label="Stealth"}}
-{{stat.willpower display="plain" label="Willpower"}}
+{{stat.d100_check label="d100 Roll"}}
+{{stat.athletics label="Athletics"}}
+{{stat.brawn label="Brawn"}}
+{{stat.evade label="Evade"}}
+{{stat.insight label="Insight"}}
+{{stat.perception label="Perception"}}
+{{stat.stealth label="Stealth"}}
+{{stat.willpower label="Willpower"}}
 :::
 :::
 :::card
