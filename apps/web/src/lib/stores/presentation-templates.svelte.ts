@@ -26,7 +26,7 @@ function entityLocalDefaultPresentation(
     : isCharacter
       ? "Character Sheet"
       : "Custom Stat Sheet";
-  const columns = isNpcOrMonster ? 2 : 3;
+  const columns = isNpcOrMonster ? 4 : 3;
   return {
     id: `builtin-presentation-custom-${schemaTemplateId}`,
     vaultId: null,

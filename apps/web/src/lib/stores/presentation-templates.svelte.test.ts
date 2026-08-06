@@ -54,7 +54,7 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
       isBuiltIn: true,
       source: expect.stringContaining("### NPC / Monster Sheet"),
     });
-    expect(available[0]?.source).toContain(":::stat-group columns=2");
+    expect(available[0]?.source).toContain(":::stat-group columns=4");
     expect(available).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "Standard Form" }),
