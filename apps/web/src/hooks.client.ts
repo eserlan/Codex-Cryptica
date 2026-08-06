@@ -7,12 +7,15 @@ const RELOAD_DEBOUNCE_MS = 10000;
  * Safely triggers a page reload when dynamic module version skew or missing chunk 404 is detected.
  * Uses sessionStorage to throttle reloads to at most once per 10 seconds to prevent infinite reload loops.
  */
-export function handleVersionSkewReload(targetWindow?: Window): boolean {
+export function handleVersionSkewReload(
+  targetWindow?: Window,
+  getNow: () => number = Date.now,
+): boolean {
   const win =
     targetWindow ?? (typeof window !== "undefined" ? window : undefined);
   if (!win || !win.sessionStorage || !win.location) return false;
 
-  const now = Date.now();
+  const now = getNow();
   const lastReloadStr = win.sessionStorage.getItem(RELOAD_KEY);
   const lastReload = lastReloadStr ? Number(lastReloadStr) : 0;
 

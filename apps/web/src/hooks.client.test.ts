@@ -60,11 +60,12 @@ describe("hooks.client - Version Skew Error Handling", () => {
         },
       } as unknown as Window;
 
-      const result = handleVersionSkewReload(mockWindow);
+      const result = handleVersionSkewReload(mockWindow, () => 20000);
 
       expect(result).toBe(true);
       expect(reloadMock).toHaveBeenCalledOnce();
       expect(storageMap.has("codex_version_skew_reload_ts")).toBe(true);
+      expect(storageMap.get("codex_version_skew_reload_ts")).toBe("20000");
     });
 
     it("throttles reloads if called again within debounce interval (throttling negative path)", () => {
@@ -78,15 +79,16 @@ describe("hooks.client - Version Skew Error Handling", () => {
         },
       } as unknown as Window;
 
-      // First reload
-      handleVersionSkewReload(mockWindow);
+      // First reload at time 20000
+      handleVersionSkewReload(mockWindow, () => 20000);
       expect(reloadMock).toHaveBeenCalledTimes(1);
 
-      // Second call immediately after
-      const secondResult = handleVersionSkewReload(mockWindow);
+      // Second call immediately after, at time 21000 (debounce is 10000ms)
+      const secondResult = handleVersionSkewReload(mockWindow, () => 21000);
 
       expect(secondResult).toBe(false);
       expect(reloadMock).toHaveBeenCalledTimes(1);
+      expect(storageMap.get("codex_version_skew_reload_ts")).toBe("20000");
     });
   });
 
