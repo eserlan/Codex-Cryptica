@@ -49,13 +49,18 @@ describe("PresentationTemplateStore.saveTemplate name uniqueness", () => {
       "creature",
     );
 
-    expect(available).toHaveLength(1);
     expect(available[0]).toMatchObject({
       name: "Standard NPC / Monster Sheet",
       isBuiltIn: true,
       source: expect.stringContaining("### NPC / Monster Sheet"),
     });
     expect(available[0]?.source).toContain(":::stat-group columns=2");
+    expect(available).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Standard Form" }),
+        expect.objectContaining({ name: "Compact Stat Block" }),
+      ]),
+    );
   });
 
   it("provides character sheets with both character and NPC presentation options", () => {

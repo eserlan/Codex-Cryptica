@@ -129,7 +129,12 @@ export class PresentationTemplateStore {
       if (entityType?.toLowerCase() === "character") {
         builtIns.push(entityLocalNpcPresentation(schemaTemplateId, fields));
       }
-      return [...builtIns, ...vaultTemplates];
+      const generalLayouts = getBuiltInPresentationTemplates(
+        schemaTemplateId,
+      ).filter((template) =>
+        ["Standard Form", "Compact Stat Block"].includes(template.name),
+      );
+      return [...builtIns, ...generalLayouts, ...vaultTemplates];
     }
     return [
       ...getBuiltInPresentationTemplates(schemaTemplateId),
