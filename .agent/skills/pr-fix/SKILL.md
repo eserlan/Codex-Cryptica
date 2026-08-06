@@ -1,32 +1,32 @@
 ---
 name: pr-fix
-description: Specialized PR review comment resolver. Fetches review comments, checks out PR branches, merges staging, resolves common conflicts, implements code/docs/test fixes with unit tests, runs type-checks, and pushes gitmoji commits.
+description: Specialized PR review comment & merge conflict resolver. Fetches review comments, checks out PR branches, merges staging, resolves merge conflicts, implements code/docs/test fixes, runs targeted unit tests and type-checks, and pushes gitmoji commits.
 metadata:
   type: workflow
 ---
 
 # PR Fix Skill (`pr-fix`)
 
-Use this skill when given a PR link (or PR number) that has review comments or merge conflicts needing resolution.
+Use this skill when given a PR link (or PR number) that has review comments, requested changes, or merge conflicts with `staging` needing resolution.
 
 ## Workflow Steps
 
 ### 1. Fetch PR & Review Comments
 
-Fetch full PR metadata and review comments across all 3 GitHub endpoints:
+Fetch PR status, branch metadata, and review feedback across all 3 GitHub endpoints:
 
 ```bash
-# Get PR branch info
-gh pr view <number> --json headRefName,baseRefName,title,url,mergeable
+# Get PR branch info & mergeability status
+gh pr view <number> --json headRefName,baseRefName,title,url,mergeable,mergeStateStatus
 
 # Fetch inline diff comments (not exposed in gh pr view comments)
 gh api repos/{owner}/{repo}/pulls/<number>/comments
 
-# Fetch review summary comments
+# Fetch top-level PR comments and review submissions
 gh pr view <number> --json comments,reviews
 ```
 
-### 2. Checkout & Merge Staging
+### 2. Checkout Branch & Merge Staging
 
 Fetch the remote PR branch and check out a local tracking branch:
 
@@ -35,17 +35,28 @@ git fetch origin <headRefName>:pr-<number>-fix
 git checkout pr-<number>-fix
 ```
 
-Merge `staging` to catch up and verify mergeability:
+Merge `staging` to catch up and detect any merge conflicts:
 
 ```bash
 GIT_EDITOR=true git merge staging --no-edit
 ```
 
-> **Common Conflict Patterns**:
->
-> - If `.Jules/binder.md` conflicts, keep both learning entries sequentially under their respective date headers.
+### 3. Resolve Merge Conflicts
 
-### 3. Analyze & Implement Fixes
+If `git merge staging` reports conflicts (`git status` shows unmerged paths):
+
+1. **Journal / Binder Files (`.Jules/binder.md`, `.Jules/curator.md`)**:
+   - Keep entries from both `HEAD` and `staging` sequentially in chronological order under their respective date headings. Never delete or overwrite previous entries.
+2. **Code Files (`.ts`, `.svelte`)**:
+   - Inspect both conflict sections (`<<<<<<< HEAD` vs `>>>>>>> staging`).
+   - Combine new features/fixes from `staging` with the PR's specific changes, ensuring DI seams and imports are preserved.
+3. **LLM Context Files (`llms-full.txt`, `apps/web/static/llms-full.txt`)**:
+   - Resolve by running `node scripts/generate-llms-full.mjs` after resolving documentation files.
+4. **Mark Resolved & Stage**:
+   - `git add <resolved-files>`
+   - Finish merge commit: `git commit -m ":twisted_right_wards_arrows: merge: resolve merge conflicts with staging"`
+
+### 4. Analyze & Implement Review Comment Fixes
 
 For each review comment:
 
@@ -54,11 +65,11 @@ For each review comment:
    - Replace hardcoded global calls with DI interfaces (`Clock`, `IdGenerator`, structural types).
    - Fix logical bugs (e.g. mismatched entity types, unhandled async promises, re-entrancy).
    - Update stale docs/guides/LLM context (`.md`, `llms-full.txt`) when features are modified or removed.
-   - If `llms-full.txt` files need updating, run `node scripts/generate-llms-full.mjs`.
+   - Run `node scripts/generate-llms-full.mjs` if help/blog docs change.
 
-### 4. Verification
+### 5. Verification
 
-Run targeted unit tests and type checks:
+Run targeted unit tests and workspace type checks to verify fixes and conflict resolutions:
 
 ```bash
 # Run unit tests for affected files only (fast feedback)
@@ -68,22 +79,28 @@ bun --filter web test <path/to/affected.test.ts>
 bun --filter web check
 ```
 
-### 5. Commit with Gitmoji & Push
+### 6. Commit with Gitmoji & Push
 
 Commit changes using gitmoji syntax to satisfy repo `commitlint` rules:
 
 ```bash
-git commit -am ":recycle: refactor: address PR review comments and update unit tests"
+git commit -am ":recycle: refactor: resolve PR review comments and merge conflicts"
 git push origin pr-<number>-fix:<headRefName>
 ```
 
 Recommended gitmojis:
 
-- `:recycle:` (`refactor:`) - Code refactoring or logic fixes
+- `:twisted_right_wards_arrows:` (`merge:`) - Resolving merge conflicts with staging
+- `:recycle:` (`refactor:`) - Code refactoring or review comment fixes
 - `:test_tube:` (`test:`) - Adding or updating unit tests
 - `:memo:` (`docs:`) - Updating documentation or LLM context files
 - `:bug:` (`fix:`) - Bug fixes
 
-### 6. Notify Completion
+### 7. Notify Completion
 
-Report back to the user with a bulleted summary of resolved items, passed test counts, and pushed commit SHAs.
+Report back to the user with a concise summary of:
+
+- Resolved merge conflicts (if any)
+- Addressed review comments
+- Passed unit test counts
+- Pushed commit SHAs
