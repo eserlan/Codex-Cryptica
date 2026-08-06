@@ -102,6 +102,24 @@ describe("DetailStatsTab presentation fallback (FR-010)", () => {
     expect(screen.queryByTestId("presentation-renderer")).toBeNull();
   });
 
+  it("offers presentation selection for a manually assembled stat sheet", () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: null,
+        fields: [
+          { id: "hp", label: "Hit Points", type: "counter", value: 5, max: 10 },
+        ],
+      },
+    });
+
+    render(DetailStatsTab, { entity });
+
+    expect(screen.getByTestId("presentation-template-picker")).toBeTruthy();
+    expect(
+      screen.getByTestId("stat-sheet-open-presentation-templates"),
+    ).toBeTruthy();
+  });
+
   it("renders via PresentationRenderer when a valid presentation template resolves", () => {
     const entity = buildEntity({
       statSheet: {

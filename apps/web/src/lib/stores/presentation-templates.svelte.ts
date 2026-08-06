@@ -5,6 +5,8 @@ import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import { getBuiltInPresentationTemplates } from "@codex/stat-sheet-engine";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 
+const ENTITY_LOCAL_SCHEMA_PREFIX = "entity-local-stat-sheet:";
+
 /**
  * Vault-scoped store for Markdown presentation templates
  * (152-stat-sheet-templates), mirroring StatSheetTemplateStore's
@@ -51,9 +53,18 @@ export class PresentationTemplateStore {
   availableTemplatesForSchema(
     schemaTemplateId: string,
   ): PresentationTemplate[] {
+    const vaultTemplates = this.templates.filter(
+      (t) => t.schemaTemplateId === schemaTemplateId,
+    );
+    // A manually assembled stat sheet has an entity-local schema rather
+    // than a reusable Stat Sheet template. Its presentations must stay
+    // local too: generic built-ins would reference fields it does not have.
+    if (schemaTemplateId.startsWith(ENTITY_LOCAL_SCHEMA_PREFIX)) {
+      return vaultTemplates;
+    }
     return [
       ...getBuiltInPresentationTemplates(schemaTemplateId),
-      ...this.templates.filter((t) => t.schemaTemplateId === schemaTemplateId),
+      ...vaultTemplates,
     ];
   }
 

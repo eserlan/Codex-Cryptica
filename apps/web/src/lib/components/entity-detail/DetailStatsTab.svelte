@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { Entity, StatSheetField } from "schema";
+  import type {
+    Entity,
+    StatSheetField,
+    StatSheetTemplate,
+    StatSheetTemplateField,
+  } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import StatSheetView from "$lib/components/stats/StatSheetView.svelte";
   import StatSheetEditor from "$lib/components/stats/StatSheetEditor.svelte";
@@ -37,11 +42,32 @@
   // FR-010: decide render-via-presentation-template vs. fall back to the
   // standard StatSheetView renderer, unchanged, whenever the resolved
   // template is missing, invalid, or its schema no longer exists.
-  const schema = $derived(
-    statSheetTemplates.allTemplates.find(
-      (t) => t.id === entity.statSheet?.templateId,
-    ),
-  );
+  const schema = $derived.by<StatSheetTemplate | null>(() => {
+    const templateId = entity.statSheet?.templateId;
+    if (templateId) {
+      return (
+        statSheetTemplates.allTemplates.find((t) => t.id === templateId) ?? null
+      );
+    }
+
+    const fields = entity.statSheet?.fields ?? [];
+    if (fields.length === 0) return null;
+    const schemaFields: StatSheetTemplateField[] = fields.map(
+      ({
+        value: _value,
+        collapsed: _collapsed,
+        favorite: _favorite,
+        barField: _barField,
+        ...field
+      }) => field,
+    );
+    return {
+      id: `entity-local-stat-sheet:${entity.id}`,
+      name: "Custom Stat Sheet",
+      isBuiltIn: false,
+      fields: schemaFields,
+    };
+  });
   const resolvedTemplate = $derived(
     schema
       ? resolvePresentationTemplate(
