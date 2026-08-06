@@ -55,6 +55,16 @@ export const factionConfig = {
       "Megacorp Subsidiary",
       "Intelligence Bureau",
     ],
+    "Vampire / Gothic Noir": [
+      "Vampire Court",
+      "Secret Society",
+      "Occult Order",
+      "Corrupt Nobility",
+      "Detective Agency",
+      "Criminal Syndicate",
+      "Cult of the Damned",
+      "Ecclesiastical Order",
+    ],
     "Cosmic Horror": [
       "Research Society",
       "Forbidden Archive",

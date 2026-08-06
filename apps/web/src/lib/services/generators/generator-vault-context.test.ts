@@ -124,6 +124,62 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(n?.contentExcerpt.length).toBeLessThanOrEqual(304);
   });
 
+  it("truncates prose at the last complete sentence boundary, not mid-sentence", () => {
+    // Two short sentences, then a long run-on well past the 300-char excerpt
+    // cap — the excerpt must end after "second sentence." (a real sentence
+    // boundary within the limit), never mid-word/mid-sentence into the run-on.
+    const prose =
+      "This is the first sentence. This is the second sentence. " +
+      "This is a very long run-on sentence that goes on and on ".repeat(6) +
+      "and finally ends.";
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const neighbor = entity({
+      id: "n1",
+      title: "Big",
+      type: "character",
+      content: prose,
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, n1: neighbor },
+      connectedIds: new Set(["n1"]),
+    });
+    const excerpt = ctx.neighbors.find((e) => e.id === "n1")?.contentExcerpt;
+    expect(excerpt).toBe(
+      "This is the first sentence. This is the second sentence.",
+    );
+    expect(excerpt?.endsWith("sentence.")).toBe(true);
+    expect(excerpt).not.toContain("…");
+  });
+
+  it("falls back to a word boundary (not a sentence one) for a single long run-on with no earlier break", () => {
+    const words = Array.from({ length: 100 }, (_, i) => `word${i}`).join(" ");
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const neighbor = entity({
+      id: "n1",
+      title: "Big",
+      type: "character",
+      content: words,
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, n1: neighbor },
+      connectedIds: new Set(["n1"]),
+    });
+    const excerpt = ctx.neighbors.find((e) => e.id === "n1")?.contentExcerpt;
+    expect(excerpt?.endsWith("…")).toBe(true);
+    const withoutEllipsis = excerpt!.slice(0, -1);
+    // The cut must land exactly on a word boundary in the source text — the
+    // character immediately after it in the original is a space, proving no
+    // word was sliced mid-token.
+    expect(words.startsWith(withoutEllipsis)).toBe(true);
+    expect(words[withoutEllipsis.length]).toBe(" ");
+  });
+
   it("keeps a generous source excerpt but caps extreme length", () => {
     const shortLore = "l".repeat(1000);
     const hugeLore = "h".repeat(5000);

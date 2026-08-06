@@ -86,8 +86,14 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 
 ## Core Style Rules
 
-- **Espen's Authentic Voice (Solo Dev Framing).** Write in the first-person singular (**"I wanted something a bit messier, so I made..."**, **"I'd be interested to hear..."**). Keep prose casual, direct, concise, and grounded. Speak as a GM and builder sharing a project with other GMs.
-- **Human Paragraphing & Rhythms.** Avoid rigid LLM structure templates (e.g. bold-lead-in bullet lists on every single line, heavy sub-headers for 2 lines of text). Use plain bullet points and simple list introductions (`The generator creates:`, `It also suggests three broad strategies:`).
+- **Espen's Authentic Voice (Solo Dev Framing).** Write as a solo developer showing off a tool built for their own table (**"I wanted something that felt more like..."**, **"I built a..."**, **"I'd love to know whether..."**). Keep prose loose, natural, and low-adjective.
+- **Banned Product-Copy Rhythms (Hard Rule).** Avoid marketing phrases like:
+  - _"Instead of a bare astronomical inventory..."_
+  - _"system-wide stakes making the system worth visiting"_
+  - _"It supports several genres, from..."_
+  - _"integrates into the in-app Campaign Generator to pull context directly..."_
+    Instead, state what it does plainly (_"It generates the system itself..."_, _"It can generate..."_, _"There are several genre options..."_, _"It is also available inside Codex Cryptica..."_).
+- **Human List Rhythms.** Keep feature lists loose and unadorned without heavy adjective pairing on every bullet point. Use simple bullet points under clear introductory headers (`It can generate:`).
 - **No Emojis or Em Dashes (Hard Rule).** NEVER use emojis (e.g. ✨, 🪐, 🚀) or em dashes (`—`). They look artificial and overly polished/AI-generated. Use plain punctuation (hyphens `-`, colons `:`, or parentheticals) instead.
 - **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
 - **Scannable but clean formatting.** Short paragraphs, light bullet points, and clean bold lead-ins (e.g., `### What's improved`, `### Where to find it`, `### What you can create`).

@@ -159,6 +159,56 @@ describe("DefaultAIClientManager", () => {
       expect(result.response.text()).toBe('{"ok":true}');
     });
 
+    it("forwards responseSchema as the request body's schema field", async () => {
+      // Regression: without a schema, oracle-proxy has nothing to validate
+      // the parsed response against, so structuredOutputValid defaults to
+      // true even for a malformed/wrong-shaped response. Forwarding the
+      // schema also lets OpenAI-family models return a JSON array at the
+      // root (json_object mode can only return an object).
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ content: [] }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const schema = { type: "array", items: { type: "string" } };
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: "Return JSON" }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: schema as any,
+        },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      expect(body.schema).toEqual(schema);
+    });
+
+    it("logs the model the registry actually resolved, not just the legacy model-name hint", async () => {
+      // Regression: a stale "gemini-3.5-flash-lite" model hint could read as
+      // the model that served the request even when the registry actually
+      // picked luna-fast — the resolved model must be logged explicitly.
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          content: { ok: true },
+          modelKey: "luna-fast",
+        }),
+      };
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      const model = await manager.getModel("", "gemini-3.5-flash-lite");
+      await model.generateContent("Test message");
+
+      expect(logSpy).toHaveBeenCalledWith(
+        "[OracleProxy] Resolved model: luna-fast",
+      );
+      logSpy.mockRestore();
+    });
+
     it("forwards temperature, topP, and maxOutputTokens from generationConfig", async () => {
       const mockResponse = {
         ok: true,

@@ -21,6 +21,10 @@ import {
   dungeonConfig,
   type DungeonGeneratorOptions,
 } from "./public-dungeon";
+import { forGenre } from "./public-dungeon-constants";
+import { themeIdToLabel, factionConfig } from "./public-faction-constants";
+import { npcThemeConfig } from "./public-npc-constants";
+import { settlementConfig } from "./public-settlement-constants";
 import {
   buildAdventurePrompt,
   generateAdventureLocal,
@@ -238,6 +242,24 @@ function worldBlock(request: GeneratorRunRequest): string {
   return lines.join("\n");
 }
 
+const SYNTHETIC_RACE_PATTERN =
+  /\b(robot|android|synthetic|construct|automaton|drone|ai|artificial intelligence|cyborg|machine)\b/i;
+
+/**
+ * When the NPC's preferred race/species reads as non-biological, the default
+ * (and any supplied template's) lore categories still assume a biological
+ * character — homeworld, birth, lineage. Redirect those categories to their
+ * synthetic equivalents instead of leaving the model to either invent
+ * biology for a machine or ignore the section.
+ */
+function syntheticAdaptationNote(request: GeneratorRunRequest): string {
+  const race = request.options?.race ?? request.options?.species;
+  if (typeof race !== "string" || !SYNTHETIC_RACE_PATTERN.test(race)) {
+    return "";
+  }
+  return `\nThis character is a synthetic/mechanical being (${race}), not a biological one. Wherever a lore section — template-supplied or built-in — would normally call for biological detail (homeworld, birth, family lineage, physiology), reinterpret it in synthetic terms instead: manufacturer/place of manufacture, chassis or frame model, firmware/software version and revision history, installed modules or peripherals, and service/maintenance history. Keep each section's original heading; only its content should be adapted.`;
+}
+
 function optionsBlock(request: GeneratorRunRequest): string {
   const entries = Object.entries(request.options).filter(([, v]) => v !== "");
   if (!entries.length) return "";
@@ -249,7 +271,11 @@ function optionsBlock(request: GeneratorRunRequest): string {
 function instructionsBlock(request: GeneratorRunRequest): string {
   const inst = request.instructions?.trim();
   if (!inst) return "";
-  return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\nThe entity you generate MUST directly depict what this instruction describes. Use the world context below only as supporting background — never substitute a different, better-documented event or subject for the one requested.\n`;
+  const src = request.vaultContext?.sourceEntity;
+  const relationalNote = src
+    ? ` When this instruction describes a relationship in general terms without naming who it is with (e.g. "its master", "its creator", "its rival", "its owner", "its enemy"), that relationship is with the Source Entity below, "${src.title}", unless a different, explicitly named entity is clearly intended instead.`
+    : "";
+  return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\nThe entity you generate MUST directly depict what this instruction describes. Use the world context below only as supporting background — never substitute a different, better-documented event or subject for the one requested.${relationalNote}\n`;
 }
 
 function bannedNamesBlock(request: GeneratorRunRequest): string {
@@ -257,7 +283,7 @@ function bannedNamesBlock(request: GeneratorRunRequest): string {
   const ctx = request.vaultContext;
   const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
   if (!all.length) return "";
-  return `\nDo NOT use any of these names, or hyphenated/compound variations of them (e.g. if "Vane" is listed, do not use "Vane-Smithe"): ${all.join(", ")}`;
+  return `\nThis ban applies only to the "title" of the entity you are generating now — do NOT title it any of these names, or a hyphenated/compound variation of one (e.g. if "Vane" is listed, do not title it "Vane-Smithe"): ${all.join(", ")}. These are existing entities and may still be referenced normally elsewhere (in "lore", "summary", or "connections") whenever they belong in the content — the ban is on reusing the name as this new entity's own title, not on mentioning them.`;
 }
 
 /**
@@ -318,13 +344,21 @@ function templateBlock(request: GeneratorRunRequest): string {
 /**
  * Require the model to weave the new entity into the world, and to fill the
  * "connections" array only with entities that actually appear in the context.
+ * When a Source Entity is present (the "generate related entity" flow), the
+ * relationship to it is mandatory, not merely encouraged — this is what makes
+ * the new entity actually related to the thing the user asked to relate it
+ * to, rather than a generic addition that happens to share a world.
  */
 function groundingNote(request: GeneratorRunRequest): string {
   const ctx = request.vaultContext;
+  const src = ctx?.sourceEntity;
   const hasWorld =
-    !!ctx?.sourceEntity || !!ctx?.neighbors.length || !!ctx?.worldSample.length;
+    !!src || !!ctx?.neighbors.length || !!ctx?.worldSample.length;
   if (!hasWorld) {
     return `\nThis world has no existing entities yet — leave "connections" as an empty array.`;
+  }
+  if (src) {
+    return `\nGround the entity in the world, with a mandatory, concrete relationship to the Source Entity: mention "${src.title}" by its exact name at least once in "lore" (not just an oblique reference), and include an entry in "connections" with "targetTitle": "${src.title}" whose "relationship" names the specific relationship (e.g. "subordinate of", "created by", "rival of") — never omit this connection. Explain the concrete mechanism of that relationship (technical, social, legal, or otherwise) rather than merely asserting it exists. The new entity must still be clearly distinct from "${src.title}": its own function, personality, agenda, and complication — not a renamed copy or reskin of it. You may reference other entities from the context above too; in "connections", reference only entities that appear in the context above, using their exact titles (never invent a target).`;
   }
   return `\nGround the entity in the world: weave in at least one entity named in the context above, reusing its exact name and the world's established terminology. In "connections", reference only entities that appear in the context above, using their exact titles; omit anything uncertain (an empty array is fine — never invent a target).`;
 }
@@ -363,7 +397,22 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
 };
 
-function exemplarBlock(id: GeneratorId): string {
+/**
+ * The stock exemplars above each hard-code their own "lore" markdown
+ * headings, which actively conflict with a supplied template outline's
+ * headings (e.g. the NPC exemplar's "## Who She Is" / "## Secret" / "## Hook"
+ * next to a template demanding "## Background & Origin" / "## Augmentations
+ * & Tech" / etc.) — a real cause of models blending or picking the wrong
+ * heading set. When a template is active, show only the JSON shape (title/
+ * summary/labels/connections), deferring "lore" entirely to the template
+ * instruction so there is exactly one authoritative heading set in the
+ * prompt, not two competing ones.
+ */
+function exemplarBlock(request: GeneratorRunRequest, id: GeneratorId): string {
+  const ctx = request.vaultContext;
+  if (ctx?.applyTemplate && ctx.templateOutline) {
+    return `\nExample shape (illustrative only, for "title"/"summary"/"labels"/"connections" — do NOT reuse these names or details; "lore" must follow the template above, not any headings shown here):\n{"title":"...","summary":"...","lore":"(use the template's exact headings above)","labels":["...","..."],"connections":[{"targetTitle":"...","relationship":"..."}]}\n`;
+  }
   return `\nExample (illustrative only — match the world context above and do NOT reuse these names or details):\n${EXEMPLARS[id]}\n`;
 }
 
@@ -375,7 +424,11 @@ export { SYSTEM_INSTRUCTION };
 
 /** Shared prompt context chain (everything before the task instruction). */
 function contextChain(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
+  // Preferences (the form's explicit dropdown selections, e.g. race/role) are
+  // direct user choices like the free-text instructions above them — surface
+  // them right after, ahead of the generic world context, rather than buried
+  // several paragraphs down where a model can lose track of them.
+  return `${instructionsBlock(request)}${optionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
 }
 
 function npcPrompt(request: GeneratorRunRequest): string {
@@ -383,7 +436,8 @@ function npcPrompt(request: GeneratorRunRequest): string {
 
 Generate a campaign NPC. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("npc")}${groundingNote(request)}
+${exemplarBlock(request, "npc")}${groundingNote(request)}
+${syntheticAdaptationNote(request)}
 ${loreGuidance(request, "who they are, what they want, a secret, and a first-scene hook")}`;
 }
 
@@ -392,7 +446,7 @@ function factionPrompt(request: GeneratorRunRequest): string {
 
 Generate a campaign faction, guild, or organisation. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("faction")}${groundingNote(request)}
+${exemplarBlock(request, "faction")}${groundingNote(request)}
 ${loreGuidance(request, "what they control, what they want, internal conflict, and an adventure hook")}`;
 }
 
@@ -401,7 +455,7 @@ function settlementPrompt(request: GeneratorRunRequest): string {
 
 Generate a campaign settlement or location. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("settlement")}${groundingNote(request)}
+${exemplarBlock(request, "settlement")}${groundingNote(request)}
 ${loreGuidance(request, "points of interest, power structure, notable rumours, and a hook for the players")}`;
 }
 
@@ -410,7 +464,7 @@ function magicItemPrompt(request: GeneratorRunRequest): string {
 
 Generate a campaign magic item or artefact. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("magic-item")}${groundingNote(request)}
+${exemplarBlock(request, "magic-item")}${groundingNote(request)}
 ${loreGuidance(request, "item history, its power/effect, a side effect or curse, and how it might enter play")}`;
 }
 
@@ -419,7 +473,7 @@ function eventPrompt(request: GeneratorRunRequest): string {
 
 Generate a campaign event — a historical or unfolding occurrence in the world. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("event")}${groundingNote(request)}
+${exemplarBlock(request, "event")}${groundingNote(request)}
 Place it correctly within the world's timeline (consistent with any campaign date and existing events).
 ${loreGuidance(request, "what happened, its causes, who and what was involved, its consequences, and a hook for the players")}`;
 }
@@ -429,7 +483,7 @@ function shipPrompt(request: GeneratorRunRequest): string {
 
 Generate a campaign ship — a traversable vehicle that functions as location, faction asset, and adventure seed. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("ship")}${groundingNote(request)}
+${exemplarBlock(request, "ship")}${groundingNote(request)}
 ${loreGuidance(request, "the ship's role and condition, its owner and current mission, its dominant complication, its secret, its key zones, and at least two adventure hooks")}`;
 }
 
@@ -438,7 +492,7 @@ function newsSheetPrompt(request: GeneratorRunRequest): string {
 
 Generate an in-world news sheet — a printable player handout of in-world headlines, short articles, rumours, classifieds, notices, and adverts, written in an in-world editorial voice and grounded in the world context. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("news-sheet")}${groundingNote(request)}
+${exemplarBlock(request, "news-sheet")}${groundingNote(request)}
 The "title" is the publication name plus issue number or in-world date. Everything before the GM Notes section must be player-safe: report events the way the publication's owner and censor would allow, not the way they actually happened.
 ${loreGuidance(request, "a masthead line with publication name, tagline, and issue metadata; a lead headline story (3-5 sentences); 2-4 short secondary articles; a 'Notices & Classifieds' bullet list; a 'Word on the Street' rumour list; one advert or piece of propaganda; and a final '## GM Notes' section with the truth behind the stories and 1-4 adventure hooks")}`;
 }
@@ -467,17 +521,22 @@ function languagePrompt(request: GeneratorRunRequest): string {
 // Local table-based generators
 // ---------------------------------------------------------------------------
 
-const NPC_RACES = ["Human", "Elf", "Dwarf", "Halfling", "Orc", "Tiefling"];
-const NPC_ROLES = [
-  "Mage",
-  "Warrior",
-  "Rogue",
-  "Priest",
-  "Merchant",
-  "Scholar",
-  "Guard",
-  "Noble",
-];
+/**
+ * Race ("ancestry") and role choices for the NPC generator, reusing the
+ * same genre-keyed tables the public RPG NPC generator already offers
+ * (`npcThemeConfig`) so the two tools agree — a Western game shouldn't
+ * offer "Elf" here any more than it does there.
+ */
+export function npcRacesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forGenre(npcThemeConfig.ancestries, genre);
+}
+export function npcRolesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forGenre(npcThemeConfig.roles, genre);
+}
+const NPC_RACES = npcRacesForTheme("workspace");
+const NPC_ROLES = npcRolesForTheme("workspace");
 const NPC_TRAITS = [
   "speaks in measured, deliberate sentences",
   "never removes their worn leather gloves",
@@ -485,14 +544,17 @@ const NPC_TRAITS = [
   "laughs a beat too late at every joke",
 ];
 
-const FACTION_TYPES = [
-  "Guild",
-  "Cult",
-  "Order",
-  "Syndicate",
-  "Council",
-  "Cabal",
-];
+/**
+ * Faction type choices, reusing `factionConfig.typesByTheme` — the same
+ * genre-keyed table the public Faction Generator already uses — so a
+ * Western vault offers "Outlaw Gang" instead of "Guild".
+ */
+export function factionTypesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forGenre(factionConfig.typesByTheme, genre);
+}
+const FACTION_TYPES = factionTypesForTheme("workspace");
+
 const FACTION_GOALS = [
   "control the regional trade routes",
   "uncover a buried pre-cataclysm secret",
@@ -500,14 +562,34 @@ const FACTION_GOALS = [
   "purge a rival faction from the city",
 ];
 
-const SETTLEMENT_TYPES = [
-  "Hamlet",
-  "Village",
-  "Town",
-  "City",
-  "Outpost",
-  "Fortress",
-];
+/**
+ * `settlementConfig.sizesByGenre` (public Settlement Generator) uses a
+ * shorter genre vocabulary than `themeIdToLabel` ("Western", not
+ * "Western / Frontier"; "Horror", not "Vampire / Gothic Noir") — alias
+ * the mismatched ones so `forGenre`'s own fallback logic doesn't miss an
+ * exact match that actually exists under a different spelling.
+ */
+const SETTLEMENT_GENRE_ALIASES: Record<string, string> = {
+  "Vampire / Gothic Noir": "Horror",
+  "Modern Conspiracy": "Modern",
+  "Cyberpunk / Corporate": "Cyberpunk",
+  "Sci-Fi / Space Opera": "Sci-Fi",
+  "Western / Frontier": "Western",
+};
+
+/**
+ * Settlement type ("size") choices, reusing `settlementConfig.sizesByGenre`
+ * so a Sci-Fi vault offers "Station"/"Colony" instead of "Hamlet"/"Fortress".
+ */
+export function settlementTypesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  const settlementGenre = SETTLEMENT_GENRE_ALIASES[genre] ?? genre;
+  return forGenre(settlementConfig.sizesByGenre, settlementGenre).map(
+    (tier) => tier.name,
+  );
+}
+const SETTLEMENT_TYPES = settlementTypesForTheme("workspace");
+
 const SETTLEMENT_FEATURES = [
   "a crumbling aqueduct still feeding the central well",
   "a market square that never fully closes",
@@ -607,8 +689,9 @@ function generateName(): string {
 
 function generateNpc(request: GeneratorRunRequest): GeneratorOutput {
   const name = generateName();
-  const race = optionString(request, "race", pick(NPC_RACES));
-  const role = optionString(request, "role", pick(NPC_ROLES));
+  const themeId = request.themeId || "workspace";
+  const race = optionString(request, "race", pick(npcRacesForTheme(themeId)));
+  const role = optionString(request, "role", pick(npcRolesForTheme(themeId)));
   const trait = pick(NPC_TRAITS);
   return {
     title: name,
@@ -619,7 +702,12 @@ function generateNpc(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 function generateFaction(request: GeneratorRunRequest): GeneratorOutput {
-  const type = optionString(request, "type", pick(FACTION_TYPES));
+  const themeId = request.themeId || "workspace";
+  const type = optionString(
+    request,
+    "type",
+    pick(factionTypesForTheme(themeId)),
+  );
   const name = `The ${generateName()} ${type}`;
   const goal = pick(FACTION_GOALS);
   return {
@@ -631,7 +719,12 @@ function generateFaction(request: GeneratorRunRequest): GeneratorOutput {
 }
 
 function generateSettlement(request: GeneratorRunRequest): GeneratorOutput {
-  const type = optionString(request, "type", pick(SETTLEMENT_TYPES));
+  const themeId = request.themeId || "workspace";
+  const type = optionString(
+    request,
+    "type",
+    pick(settlementTypesForTheme(themeId)),
+  );
   const name = generateName();
   const feature = pick(SETTLEMENT_FEATURES);
   return {
@@ -833,7 +926,7 @@ ${buildWorldPrompt(worldOptions(request)).userMessage}
 
 Return ONLY a JSON object matching this shared schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("world")}${groundingNote(request)}
+${exemplarBlock(request, "world")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the world profile; climate, geography, gravity, atmosphere, and biosphere; settlements, cultures, factions, economy, resources, technology, hazards, history, notable locations, mysteries, conflicts, and adventure hooks",
@@ -880,7 +973,7 @@ ${buildStarSystemPrompt(starSystemOptions(request)).userMessage}
 
 Return ONLY a JSON object matching this shared schema:
 ${OUTPUT_SCHEMA}
-${exemplarBlock("star-system")}${groundingNote(request)}
+${exemplarBlock(request, "star-system")}${groundingNote(request)}
 ${loreGuidance(
   request,
   "the core concept; the star(s); 3-12 major bodies; settlements and factions; resources and strategic importance; travel hazards; history; the system-wide conflict or mystery; and adventure hooks",
@@ -993,7 +1086,7 @@ export function councilVoteFoundationPrompt(
 
 Generate the FOUNDATION of a Council Vote political quest: the party must secure enough votes on a council before an urgent decision is made. Instead of persuading a single ruler, the objective is divided among ${size} named voters with different motives, alliances, secrets, and demands. This is step one of two — a second step will build the possible paths to victory afterward, treating everything you establish here as fixed, unchangeable fact. Do NOT write "Possible Paths" or "Follow-Up Hooks" yet; those come later. Return ONLY a JSON object matching this schema:
 ${COUNCIL_VOTE_FOUNDATION_SCHEMA}
-${exemplarBlock("council-vote")}${groundingNote(request)}
+${exemplarBlock(request, "council-vote")}${groundingNote(request)}
 ${loreGuidance(
   request,
   `these sections, in this order, and no others: the proposal being voted on and why the party needs it to pass; the deadline and reason for urgency; the voting procedure, threshold, and any exploitable procedural rules (if a veto, recusal, abstention, verification, or amendment mechanism exists, state it explicitly); the current best estimate of the vote, arithmetically consistent with the stances given below; exactly ${size} named council members — each with a role, personality, and public reputation; their public position on the proposal; their true priorities, fears, and political agenda; an initial voting stance (support, oppose, leaning, or unknown) identical everywhere it appears; relationships and dependencies with other councillors, each naming a real fellow councillor and stated in only one direction; what could genuinely persuade them; a related investigation, favour, quest, or problem; secrets, leverage, or corruption that may be uncovered; the moral or political cost of securing their vote; initial leads for learning how each councillor may vote; any faction actively bribing, coercing, monitoring, or retaliating against the party (only say there is no antagonist if none is described anywhere else in this content). The archetype implied by each councillor's role must be consistent with their actual described behavior — do not describe a councillor who follows no one and has no dependency as a loyal follower type. This is a political puzzle, not a sequence of mandatory fetch quests: give most voters multiple viable approaches with different costs, and never let the roster alone guarantee a majority.`,

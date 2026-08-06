@@ -60,9 +60,37 @@ function flatten(text: string | undefined): string {
     .trim();
 }
 
+/**
+ * Truncates at the last complete sentence boundary within `max` chars, so an
+ * excerpt handed to the model never stops mid-sentence (which reads as a
+ * broken/garbled fact rather than an intentionally-trimmed excerpt). Falls
+ * back to a word boundary — and only as a last resort a hard character cut —
+ * when the text has no usable sentence break within the limit (e.g. one long
+ * run-on sentence, or no punctuation at all).
+ */
+/** Below this, a "sentence boundary" is more likely a false positive (an abbreviation like "Dr.") than a real one, so it isn't worth trusting over a plain word-boundary cut. */
+const MIN_SENTENCE_EXCERPT_CHARS = 20;
+
 function clampFlat(text: string | undefined, max: number): string {
   const flattened = flatten(text);
-  return flattened.length > max ? flattened.slice(0, max) + "…" : flattened;
+  if (flattened.length <= max) return flattened;
+  const truncated = flattened.slice(0, max);
+  const lastSentenceEnd = Math.max(
+    truncated.lastIndexOf(". "),
+    truncated.lastIndexOf("! "),
+    truncated.lastIndexOf("? "),
+  );
+  // Prefer the sentence boundary whenever one exists in range, however early
+  // — a short-but-complete excerpt beats a longer one truncated mid-sentence.
+  // The only reason not to trust it is a near-zero-length result, which is
+  // more likely a false positive (an abbreviation like "Dr.") than a real,
+  // useful sentence break.
+  if (lastSentenceEnd > MIN_SENTENCE_EXCERPT_CHARS) {
+    return truncated.slice(0, lastSentenceEnd + 1);
+  }
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeCut = lastSpace > max * 0.6 ? lastSpace : truncated.length;
+  return truncated.slice(0, safeCut).trimEnd() + "…";
 }
 
 function excerpt(text: string | undefined): string {
