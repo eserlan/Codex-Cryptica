@@ -101,6 +101,33 @@ describe("OracleActionManager", () => {
     });
   });
 
+  it("should reuse a saved composed prompt without recomposing", async () => {
+    mockStore.vault.entities["entity-1"].imageArtDirection = {
+      artDirectionVersion: 2,
+      prompt: "saved composed prompt",
+      negativePrompt: "watermark, blurry",
+      aspectRatio: "3:2",
+    };
+
+    await manager.drawEntity("entity-1");
+
+    expect(mockExecutor.prepareEntityPrompt).not.toHaveBeenCalled();
+    expect(modalUIStore.imagePromptReview).toMatchObject({
+      open: true,
+      prompt: "saved composed prompt",
+      negativeTerms: ["watermark", "blurry"],
+      aspectRatio: "3:2",
+      target: { kind: "entity", id: "entity-1", title: "Entity One" },
+    });
+  });
+
+  it("should recompose when no prompt was previously saved (e.g. never generated, or pre-Art Direction v2)", async () => {
+    // Default mock entity has no imageArtDirection at all.
+    await manager.drawEntity("entity-1");
+
+    expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalled();
+  });
+
   it("should not start a duplicate entity draw while one is active", async () => {
     mockStore.ui.visualizingEntityId = "entity-1";
 
