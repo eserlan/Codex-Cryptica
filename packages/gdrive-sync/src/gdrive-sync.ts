@@ -144,19 +144,6 @@ export class DriveRestClient {
     const { files } = await res.json();
     return files as Array<{ id: string; name: string }>;
   }
-
-  /** Raw folder-metadata response so callers keep their status-specific errors. */
-  async getFolderMetadataResponse(
-    token: string,
-    folderId: string,
-  ): Promise<Response> {
-    return this.fetcher(
-      `${DRIVE_FILES_API}/${folderId}?fields=id,name,trashed`,
-      {
-        headers: this.authHeaders(token),
-      },
-    );
-  }
 }
 
 export const driveRest = new DriveRestClient();
@@ -315,30 +302,6 @@ export async function listDriveVaults(): Promise<
 }
 
 /**
- * Extracts a Google Drive folder ID from a share URL or returns the input as-is
- * if it already looks like a bare folder ID.
- *
- * Handles formats:
- *   https://drive.google.com/drive/folders/FOLDER_ID
- *   https://drive.google.com/drive/folders/FOLDER_ID?usp=sharing
- *   https://drive.google.com/drive/u/0/folders/FOLDER_ID
- */
-export function parseDriveFolderUrl(input: string): string | null {
-  const trimmed = input.trim();
-  // Try URL parse first
-  try {
-    const url = new URL(trimmed);
-    const match = url.pathname.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-    if (match) return match[1];
-  } catch {
-    // Not a URL — treat as bare ID
-  }
-  // Bare folder ID: alphanumeric + dashes/underscores, 20–60 chars
-  if (/^[a-zA-Z0-9_-]{20,60}$/.test(trimmed)) return trimmed;
-  return null;
-}
-
-/**
  * Imports a vault from a Drive folder into a local vault.
  * Finds an existing local vault connected to this folder, or creates a new one.
  * Only downloads files that are newer than what's stored locally (via registry diff).
@@ -393,36 +356,4 @@ export async function importVaultFromDrive(
 
   // Pull — DiffAlgorithm only downloads files newer than local (via registry)
   return runWorkerSync(targetVaultId!, "pull");
-}
-
-/**
- * Joins a vault shared by another user via a Drive folder link or bare folder ID.
- * Requests the broader "drive" scope so the app can read folders it didn't create,
- * fetches the folder name, then delegates to importVaultFromDrive.
- */
-export async function joinSharedVault(urlOrId: string): Promise<void> {
-  const folderId = parseDriveFolderUrl(urlOrId);
-  if (!folderId)
-    throw new Error("Could not extract a folder ID from that link.");
-
-  // drive scope is required to read folders owned by another user.
-  // drive.file only covers files this app created in the current user's Drive.
-  const token = await gdriveAuthService.getTokenWithScope(
-    "https://www.googleapis.com/auth/drive",
-  );
-
-  // Fetch folder metadata to get its name
-  const res = await driveRest.getFolderMetadataResponse(token, folderId);
-  if (!res.ok) {
-    if (res.status === 404 || res.status === 403) {
-      throw new Error(
-        "Folder not found or not shared with you. Ask the vault owner to share the folder.",
-      );
-    }
-    throw new Error("Failed to access the shared Drive folder.");
-  }
-  const folder = await res.json();
-  if (folder.trashed) throw new Error("That folder has been deleted.");
-
-  await importVaultFromDrive(folderId, folder.name);
 }
