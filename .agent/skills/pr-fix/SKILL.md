@@ -26,6 +26,13 @@ gh api repos/{owner}/{repo}/pulls/<number>/comments
 gh pr view <number> --json comments,reviews
 ```
 
+> **Target Branch Rule**:
+> All feature PRs in this repository MUST target `staging` (never `main`). If `baseRefName` is set to `main` or anything other than `staging`:
+>
+> ```bash
+> gh pr edit <number> --base staging
+> ```
+
 ### 2. Checkout Branch & Merge Staging
 
 Fetch the remote PR branch and check out a local tracking branch:
