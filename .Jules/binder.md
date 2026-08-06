@@ -102,3 +102,8 @@
 
 **Learning:** Found hardcoded `crypto.randomUUID()` usage within the logic for adding and deduping fields in Svelte stat sheet components (`StatSheetEditor` and `StatSheetView`). While these are UI components, the logic for generating IDs makes testing these interactions brittle and dependent on global browser APIs.
 **Action:** Injected `idGenerator: IdGenerator` as an optional prop with a default of `systemIdGenerator` from `$lib/utils/runtime-deps`. This pattern allows Svelte components to seamlessly use the production default while enabling easy mocking in component tests without global overrides.
+
+## 2026-08-04 - Inject Clock into Canvas Workspace Helpers
+
+**Learning:** Found hardcoded `Date.now()` usage in `autoArrangeCanvasNodes` within `apps/web/src/lib/components/canvas/canvas-workspace-helpers.ts`. This creates a hidden dependency on the global system clock that makes testing timestamp generation brittle.
+**Action:** Replaced direct `Date.now()` and `new Date().toISOString()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Updated tests to pass a mock `Clock` in the `params` to avoid Vitest global pollution.
