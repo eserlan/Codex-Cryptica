@@ -17,6 +17,12 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("Old World Context");
       expect(result).toContain("Canonical Synthesis Summary");
     });
+
+    it("asks the synthesizer to surface an established culture's naming convention", () => {
+      const result = buildCreationLoreSynthesisPrompt("New NPC", "Context");
+      expect(result).toContain("naming convention");
+      expect(result).toContain("state it explicitly in the summary");
+    });
   });
 
   it("wraps vault context and query in USER_CONTENT delimiters", () => {
@@ -67,6 +73,14 @@ describe("entity-creation prompts", () => {
       expect(result).toContain("Internal consistency:");
       expect(result).toContain("Fix anything that fails these checks");
       expect(result).toContain("never show your verification work");
+    });
+
+    it("requires the name to follow a vault-established naming convention when the synthesis states one", () => {
+      const result = buildStructuredDraftingPrompt("Syn", "Req");
+      expect(result).toContain("Naming style:");
+      expect(result).toContain("MUST follow it");
+      // Verification pass must re-check it too, not just the drafting guideline.
+      expect(result).toContain("Naming style: if the Canonical Synthesis");
     });
 
     it("should handle custom categories correctly", () => {
