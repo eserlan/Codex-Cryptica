@@ -376,7 +376,7 @@
       />
     {/if}
 
-    <div class="absolute inset-0 flex flex-col min-h-0">
+    <div class="absolute inset-0 flex flex-col min-h-0 min-w-0">
       <DetailHeader
         entity={activeEntity}
         {isEditing}
@@ -394,7 +394,7 @@
           <div
             in:fade={{ duration: 150, delay: 150 }}
             out:fade={{ duration: 150 }}
-            class="col-start-1 row-start-1 flex flex-col w-full min-h-full"
+            class="col-start-1 row-start-1 flex flex-col w-full min-w-0 min-h-full"
           >
             {#if sessionModeStore.isDemoMode}
               <div

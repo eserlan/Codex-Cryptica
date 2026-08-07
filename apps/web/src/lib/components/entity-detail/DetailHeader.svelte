@@ -312,7 +312,7 @@
     </div>
   </div>
 
-  <div class="md:flex md:justify-between md:items-center mb-2">
+  <div class="md:flex md:justify-between md:items-center mb-2 min-w-0">
     <div
       class="flex items-start md:items-center gap-3 md:gap-4 md:flex-1 min-w-0 w-full"
     >

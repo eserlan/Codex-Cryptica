@@ -162,7 +162,7 @@
     role="tablist"
     aria-label="Entity detail sections"
     tabindex="0"
-    class="flex flex-wrap md:flex-nowrap gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
     style:border-color={isFantasyTheme
       ? "var(--theme-selected-border)"
       : undefined}
@@ -172,6 +172,7 @@
       id={tabIds.status}
       type="button"
       role="tab"
+      class:shrink-0={true}
       aria-selected={activeTab === "status"}
       aria-controls={panelIds.status}
       tabindex={activeTab === "status" ? 0 : -1}
@@ -197,6 +198,7 @@
         id={tabIds.lore}
         type="button"
         role="tab"
+        class:shrink-0={true}
         aria-selected={activeTab === "lore"}
         aria-controls={panelIds.lore}
         tabindex={activeTab === "lore" ? 0 : -1}
@@ -224,6 +226,7 @@
       id={tabIds.map}
       type="button"
       role="tab"
+      class:shrink-0={true}
       aria-selected={activeTab === "map"}
       aria-controls={panelIds.map}
       tabindex={activeTab === "map" ? 0 : -1}
@@ -249,6 +252,7 @@
         id={tabIds.chats}
         type="button"
         role="tab"
+        class:shrink-0={true}
         aria-selected={activeTab === "chats"}
         aria-controls={panelIds.chats}
         tabindex={activeTab === "chats" ? 0 : -1}
@@ -275,6 +279,7 @@
         id={tabIds.family}
         type="button"
         role="tab"
+        class:shrink-0={true}
         aria-selected={activeTab === "family"}
         aria-controls={panelIds.family}
         tabindex={activeTab === "family" ? 0 : -1}
@@ -300,6 +305,7 @@
       id={tabIds.stats}
       type="button"
       role="tab"
+      class:shrink-0={true}
       aria-selected={activeTab === "stats"}
       aria-controls={panelIds.stats}
       tabindex={activeTab === "stats" ? 0 : -1}
@@ -324,6 +330,7 @@
       id={tabIds.timeline}
       type="button"
       role="tab"
+      class:shrink-0={true}
       aria-selected={activeTab === "timeline"}
       aria-controls={panelIds.timeline}
       tabindex={activeTab === "timeline" ? 0 : -1}
