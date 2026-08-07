@@ -2,13 +2,6 @@ import { u } from "./user-content";
 import { BANNED_NAMES } from "generator-engine";
 import type { ConnectedEntityPromptContext } from "schema";
 
-function extractTemplateHeadings(templateOutline: string): string {
-  return templateOutline
-    .split("\n")
-    .filter((line) => /^#{1,6}\s+\S/.test(line))
-    .join("\n");
-}
-
 export function buildRelatedEntityGenerationPrompt(
   sourceEntity: {
     title: string;
@@ -49,12 +42,9 @@ export function buildRelatedEntityGenerationPrompt(
         "\n"
       : "";
 
-  const templateHeadings = extractTemplateHeadings(templateOutline);
-  const templateRule = templateHeadings
-    ? `IMPORTANT: Structure the "description" field using every markdown heading below, in order. Write new, entity-specific prose beneath each heading. Do not repeat template guidance, placeholders, questions, or examples in the generated description.\nTEMPLATE HEADINGS:\n${u(templateHeadings)}\n`
-    : templateOutline.trim()
-      ? `IMPORTANT: Structure the "description" field using the following template. Write new, entity-specific prose and do not repeat template guidance, placeholders, questions, or examples in the generated description.\nTEMPLATE:\n${u(templateOutline)}\n`
-      : "";
+  const templateRule = templateOutline.trim()
+    ? `IMPORTANT: Structure the "description" field using the template guidance below. Use it only to understand each section's purpose. Preserve its markdown headings, but write new, entity-specific prose beneath them. Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated description.\n<template_guidance>\n${u(templateOutline)}\n</template_guidance>\n`
+    : "";
 
   const customInstructionsStr = customInstructions.trim()
     ? `[HIGHEST PRIORITY — User instructions, override defaults]\n${u(customInstructions.trim())}\nThe entity you generate MUST directly depict what this instruction describes. If a specific name is stated, you MUST use that exact name. Use the world context below only as supporting background — never substitute a different subject for the one requested.\n\n`

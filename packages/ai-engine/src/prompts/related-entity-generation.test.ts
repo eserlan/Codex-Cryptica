@@ -125,7 +125,7 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     expect(prompt).not.toContain("[HIGHEST PRIORITY");
   });
 
-  it("passes template headings without leaking their instructional prose", () => {
+  it("treats template prose as guidance rather than generated output", () => {
     const prompt = buildRelatedEntityGenerationPrompt(
       { title: "Thornwarden", type: "faction", content: "", lore: "" },
       "character",
@@ -141,16 +141,11 @@ Origin, heritage, species, culture, or noble house.`,
     );
 
     expect(prompt).toContain(
-      "TEMPLATE HEADINGS:\n<USER_CONTENT>\n## Summary\n## Lineage & Background\n</USER_CONTENT>",
+      "<template_guidance>\n<USER_CONTENT>\n## Summary\nA brief overview of who this character is in this fantasy setting.",
     );
+    expect(prompt).toContain("</USER_CONTENT>\n</template_guidance>");
     expect(prompt).toContain(
-      "Do not repeat template guidance, placeholders, questions, or examples",
-    );
-    expect(prompt).not.toContain(
-      "A brief overview of who this character is in this fantasy setting.",
-    );
-    expect(prompt).not.toContain(
-      "Origin, heritage, species, culture, or noble house.",
+      "Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
     );
   });
 
