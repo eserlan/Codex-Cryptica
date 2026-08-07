@@ -595,7 +595,7 @@
       title="Create"
       aria-label="Create new entity"
       data-testid="graph-fab-create"
-      class="fixed bottom-6 right-6 z-40 flex lg:hidden items-center justify-center w-14 h-14 rounded-full bg-theme-primary text-theme-bg shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.4)] hover:brightness-110 transition-all"
+      class="absolute bottom-6 right-6 z-40 flex lg:hidden items-center justify-center w-14 h-14 rounded-full bg-theme-primary text-theme-bg shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.4)] hover:brightness-110 transition-all"
     >
       <span class="icon-[lucide--plus] w-6 h-6" aria-hidden="true"></span>
     </button>

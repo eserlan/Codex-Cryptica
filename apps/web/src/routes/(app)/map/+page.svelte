@@ -1,4 +1,5 @@
 <script lang="ts">
+  import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
   import MapHUD from "$lib/components/map/MapHUD.svelte";
   import MapUploadOverlay from "$lib/components/map/MapUploadOverlay.svelte";
   import MapView from "$lib/components/map/MapView.svelte";
@@ -35,6 +36,11 @@
   const isPublishedVaultReader = $derived(
     sessionModeStore.isGuestMode && !!guestVault.publishId,
   );
+
+  const selectedEntity = $derived.by(() => {
+    const id = vault.selectedEntityId;
+    return id ? vault.entities[id] : null;
+  });
 
   function handleEntitySelect(entity: Entity) {
     modalUIStore.openZenMode(entity.id);
@@ -166,6 +172,13 @@
       onDrop={(event) => controller.onDrop(event)}
       onUpload={() => controller.handleUpload()}
       onCancel={() => controller.cancelUpload()}
+    />
+  {/if}
+
+  {#if selectedEntity}
+    <EntityDetailPanel
+      entity={selectedEntity}
+      onClose={() => (vault.selectedEntityId = null)}
     />
   {/if}
 </div>

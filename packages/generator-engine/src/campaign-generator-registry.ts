@@ -44,6 +44,7 @@ import {
   type StarSystemGeneratorOptions,
   starSystemConfig,
 } from "./public-star-system";
+import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
 
 /**
  * Generator id -> default vault category id.
@@ -321,7 +322,7 @@ function templateBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx?.applyTemplate || !ctx.templateOutline) return "";
-  return `\nStructure the "lore" field to follow this template, keeping its markdown headings and filling every section with generated content:\n${ctx.templateOutline}\n`;
+  return `\nStructure the "lore" field using the template guidance below. ${templateGuidanceInstruction("lore")}\n${templateGuidanceBlock(ctx.templateOutline)}\n`;
 }
 
 /**

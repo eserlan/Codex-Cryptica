@@ -99,10 +99,13 @@ export class VaultStore {
   }
   get allEntities() {
     if (sessionModeStore.isGuestMode) {
-      const extraEntities = Object.values(this.entityStore.entities).filter(
-        (e) => !guestVault.entitiesMap[e.id],
-      );
-      return [...guestVault.entities, ...extraEntities];
+      const allEnts = this.entityStore.allEntities;
+      const extraEntities: typeof allEnts = [];
+      for (let i = 0; i < allEnts.length; i++) {
+        const e = allEnts[i];
+        if (!guestVault.entitiesMap[e.id]) extraEntities.push(e);
+      }
+      return guestVault.entities.concat(extraEntities);
     }
     return this.entityStore.allEntities;
   }
