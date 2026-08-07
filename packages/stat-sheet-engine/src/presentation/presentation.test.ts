@@ -3,6 +3,7 @@ import type { PresentationTemplate, StatSheetTemplate } from "schema";
 import { parseTemplate, sanitizeSource } from "./parse";
 import { isTemplateUsable, validateAst } from "./validate";
 import { resolvePresentationTemplate } from "./resolve";
+import { getBuiltInPresentationTemplates } from "./built-ins";
 import {
   exportPresentationTemplate,
   importPresentationTemplatePackage,
@@ -38,8 +39,24 @@ const schema: StatSheetTemplate = {
     { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 10 },
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "name_field", label: "Name", type: "text" },
+    { id: "attack", label: "Attack", type: "dice", formula: "1d100" },
   ],
 };
+
+describe("getBuiltInPresentationTemplates", () => {
+  it("keeps Mythras attributes, combat styles, and professional skills in the character sheet", () => {
+    const mythrasTemplate = getBuiltInPresentationTemplates(
+      "builtin-mythras-character",
+    ).find((template) => template.name === "Mythras Character Sheet");
+
+    expect(mythrasTemplate?.source).toContain("{{stat.combat_styles");
+    expect(mythrasTemplate?.source).toContain("{{stat.professional_skills");
+    expect(mythrasTemplate?.source).toContain(
+      "| STR | CON | SIZ | DEX | INT | POW | CHA | Luck |",
+    );
+    expect(mythrasTemplate?.source).toContain("{{stat.str hide-label}}");
+  });
+});
 
 describe("parseTemplate", () => {
   it("parses standard Markdown headings/paragraphs", () => {
@@ -211,6 +228,37 @@ describe("validateAst / isTemplateUsable", () => {
     expect(ref.requestedDisplayMode).toBeUndefined();
   });
 
+  it("accepts the compact name-target display mode for dice fields", () => {
+    const parsed = parseTemplate('{{stat.attack display="name-target"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("name-target");
+    expect(ref.requestedDisplayMode).toBeUndefined();
+  });
+
+  it("uses the compact name-target mode by default for a 1d100 dice field", () => {
+    const parsed = parseTemplate("{{stat.attack}}", 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("name-target");
+  });
+
+  it("allows an explicit dice display mode to override the 1d100 default", () => {
+    const parsed = parseTemplate('{{stat.attack display="plain"}}', 1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const validated = validateAst(parsed.ast, schema);
+    const para = validated[0] as ParagraphNode;
+    const ref = para.children[0] as FieldReferenceNode;
+    expect(ref.displayMode).toBe("plain");
+  });
+
   it("isTemplateUsable is false when schema is undefined", () => {
     const template = {
       id: "t1",
@@ -321,9 +369,13 @@ describe("sanitizeSource", () => {
   });
 
   it("returns no removed fragments for plain valid source", () => {
-    const result = sanitizeSource('# Title\n\n{{stat.hp display="plain"}}');
+    const result = sanitizeSource(
+      '# Title\n\n{{stat.hp display="plain"}}\n{{stat.str hide-label}}',
+    );
     expect(result.removed).toEqual([]);
-    expect(result.source).toBe('# Title\n\n{{stat.hp display="plain"}}');
+    expect(result.source).toBe(
+      '# Title\n\n{{stat.hp display="plain"}}\n{{stat.str hide-label}}',
+    );
   });
 });
 

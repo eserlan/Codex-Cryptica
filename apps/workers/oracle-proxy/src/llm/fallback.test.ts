@@ -80,9 +80,7 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
     });
 
   it("Scenario 3: a fallback occurrence produces a ResolutionLogEntry recording intendedModelKey, modelKey, and fallbackReason", async () => {
-    const primaryEntry = MODEL_REGISTRY.find(
-      (m) => m.key === "gemini-flash-lite",
-    )!;
+    const primaryEntry = MODEL_REGISTRY.find((m) => m.key === "luna-fast")!;
     const originalEnabled = primaryEntry.enabled;
     primaryEntry.enabled = false;
 
@@ -93,7 +91,9 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
       globalThis.fetch = vi.fn(
         async () =>
           new Response(
-            JSON.stringify({ choices: [{ message: { content: "ok" } }] }),
+            JSON.stringify({
+              candidates: [{ content: { parts: [{ text: "ok" }] } }],
+            }),
             {
               status: 200,
             },
@@ -112,8 +112,8 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
 
       const logEntry = JSON.parse(logs[logs.length - 1]);
       expect(logEntry.outcome).toBe("fallback");
-      expect(logEntry.intendedModelKey).toBe("gemini-flash-lite");
-      expect(logEntry.modelKey).toBe("luna-fast");
+      expect(logEntry.intendedModelKey).toBe("luna-fast");
+      expect(logEntry.modelKey).toBe("gemini-flash-lite");
       expect(logEntry.fallbackReason).toBeTruthy();
     } finally {
       primaryEntry.enabled = originalEnabled;

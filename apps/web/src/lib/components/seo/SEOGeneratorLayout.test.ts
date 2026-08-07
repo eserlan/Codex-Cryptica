@@ -14,6 +14,7 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  resolve: (path: string) => path,
 }));
 
 const trackEventMock = vi.hoisted(() => vi.fn());
@@ -531,6 +532,59 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           source: "header",
         }),
       );
+    });
+
+    it("navigates in the same tab to Codex for the saved draft", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      const openCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(openCodexLink).not.toBeUndefined();
+      expect(openCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
+
+      await fireEvent.click(openCodexLink!);
+
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "open_codex",
+        expect.objectContaining({
+          generator_type: "npc",
+          source: "save_confirmation",
+        }),
+      );
+
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+      const secondOpenCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(secondOpenCodexLink).not.toBeUndefined();
+      expect(secondOpenCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
+
+      await fireEvent.click(secondOpenCodexLink!);
     });
   });
 });

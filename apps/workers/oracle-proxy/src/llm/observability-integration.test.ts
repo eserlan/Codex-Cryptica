@@ -86,8 +86,8 @@ describe("US5 Scenario 2 — token usage and estimated cost are logged when avai
       async () =>
         new Response(
           JSON.stringify({
-            candidates: [{ content: { parts: [{ text: "ok" }] } }],
-            usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 50 },
+            choices: [{ message: { content: "ok" } }],
+            usage: { prompt_tokens: 100, completion_tokens: 50 },
           }),
           { status: 200 },
         ),
@@ -104,9 +104,9 @@ describe("US5 Scenario 2 — token usage and estimated cost are logged when avai
 
     const entry = JSON.parse(logs[logs.length - 1]);
     expect(entry.usage).toEqual({ promptTokens: 100, completionTokens: 50 });
-    // gemini-flash-lite's registry pricing: $0.30/$2.50 per 1M tokens ->
-    // 0.0003/0.0025 per 1k. (100/1000)*0.0003 + (50/1000)*0.0025 = 0.000155.
-    expect(entry.estimatedCostUsd).toBeCloseTo(0.000155);
+    // luna-fast's registry pricing: $1/$6 per 1M tokens -> 0.001/0.006 per 1k.
+    // (100/1000)*0.001 + (50/1000)*0.006 = 0.0004.
+    expect(entry.estimatedCostUsd).toBeCloseTo(0.0004);
   });
 });
 

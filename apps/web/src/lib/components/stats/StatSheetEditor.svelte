@@ -39,6 +39,8 @@
       statSheet: {
         templateId: entity.statSheet?.templateId ?? null,
         fields: nextFields,
+        presentationTemplateId:
+          entity.statSheet?.presentationTemplateId ?? null,
       },
     });
   }

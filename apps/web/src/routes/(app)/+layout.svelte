@@ -144,6 +144,7 @@
 
   onMount(() => {
     if (!browser) return;
+    if (!layoutUIStore.autoFullscreen) return;
     return initFullscreenOnFirstInteraction();
   });
 

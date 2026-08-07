@@ -118,7 +118,7 @@
   let copiedSectionId = $state<string | null>(null);
   let useAI = $state(true);
   let showSaveModal = $state(false);
-  let redirectUrl = $state(`${cleanBase}/`);
+  let redirectQuery = $state("");
 
   // Offline awareness (#1494): generator pages still work offline using local
   // tables, but AI Lore Co-Author mode requires the network. Network status
@@ -231,7 +231,8 @@
       generator_type: generatorType,
       source: "save_confirmation",
     });
-    window.location.href = redirectUrl;
+
+    showSaveModal = false;
   }
 
   function handleOpenCodex() {
@@ -368,7 +369,7 @@
           0,
         ),
       });
-      redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
+      redirectQuery = `?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
       errorMessage = "Storage access is blocked. Please copy drafts manually.";
@@ -435,7 +436,7 @@
         itemCount: 1,
         relatedEntityCount: countRelatedEntities(content, undefined),
       });
-      redirectUrl = `${cleanBase}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
+      redirectQuery = `?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
       errorMessage =
@@ -941,6 +942,7 @@
 
   <SaveToCodexModal
     open={showSaveModal}
+    {redirectQuery}
     onConfirm={confirmSaveRedirect}
     onCancel={() => (showSaveModal = false)}
   />

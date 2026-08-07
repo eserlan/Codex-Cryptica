@@ -113,6 +113,30 @@ describe("StatSheetEditor", () => {
     );
   });
 
+  it("preserves a selected presentation while editing a manual stat sheet", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: null,
+        presentationTemplateId: "presentation-custom-sheet",
+        fields: [{ id: "hp", label: "Hit Points", type: "counter" }],
+      },
+    });
+    render(StatSheetEditor, { entity });
+
+    await fireEvent.input(screen.getByDisplayValue("Hit Points"), {
+      target: { value: "HP" },
+    });
+
+    expect(updateEntity).toHaveBeenCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          presentationTemplateId: "presentation-custom-sheet",
+        }),
+      }),
+    );
+  });
+
   it("reorders fields with move up/down", async () => {
     const entity = buildEntity({
       statSheet: {

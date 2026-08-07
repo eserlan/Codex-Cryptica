@@ -646,7 +646,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "presentation-templates",
     title: "Presentation Templates",
     content:
-      "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
+      "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Item and equipment table fields keep repeatable rows together: add items, edit their cells, adjust counters, and roll dice from the table. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
     icon: "icon-[lucide--layout-template]",
   },
 };

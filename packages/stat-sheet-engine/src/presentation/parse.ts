@@ -348,7 +348,7 @@ const HANDLEBARS_REGEXP = /\{\{[^}]*\}\}/g;
 // Mirrors fieldRefExtension's tokenizer regexp above, anchored full-match:
 // the only `{{...}}` form this contract allows through (directive-syntax.md).
 const VALID_FIELD_REF_REGEXP =
-  /^\{\{stat\.[a-zA-Z0-9_-]+(?:\s+[a-zA-Z]+="[^"]*")*\s*\}\}$/;
+  /^\{\{stat\.[a-zA-Z0-9_-]+((?:\s+[a-zA-Z0-9_-]+(?:="[^"]*"|=\S+)?)*)\s*\}\}$/;
 
 export interface SanitizeResult {
   source: string;

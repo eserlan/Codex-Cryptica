@@ -91,6 +91,7 @@ export class LayoutUIStore {
   vttSidebarCollapsed = $state(false);
   vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
+  autoFullscreen = $state(true);
   findNodeCounter = $state(0);
   lastSelectedNodePosition = $state<{ x: number; y: number } | null>(null);
 
@@ -192,6 +193,11 @@ export class LayoutUIStore {
     );
   }
 
+  setAutoFullscreen(enabled: boolean) {
+    this.autoFullscreen = enabled;
+    this.persistence.write(UI_STORAGE_KEYS.AUTO_FULLSCREEN, enabled, String);
+  }
+
   findInGraph() {
     this.findNodeCounter++;
   }
@@ -250,6 +256,11 @@ export class LayoutUIStore {
       UI_STORAGE_KEYS.VTT_ENTITY_LIST_COLLAPSED,
       (raw) => raw === "true",
       false,
+    );
+    this.autoFullscreen = this.persistence.read(
+      UI_STORAGE_KEYS.AUTO_FULLSCREEN,
+      (raw) => raw === "true",
+      true,
     );
   }
 
