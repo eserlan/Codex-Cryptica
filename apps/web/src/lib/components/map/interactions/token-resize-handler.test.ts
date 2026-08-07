@@ -60,6 +60,13 @@ describe("TokenResizeHandler", () => {
     expect(updateToken).not.toHaveBeenCalled();
   });
 
+  it("does not resize a locked token", () => {
+    tokens = [token({ id: "token-a", x: 10, y: 10, locked: true })];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(false);
+    expect(updateToken).not.toHaveBeenCalled();
+  });
+
   it("does not update when the token is already at the minimum scale", () => {
     expect(handler.resizeAt({ x: 20, y: 20 }, 100)).toBe(true);
 

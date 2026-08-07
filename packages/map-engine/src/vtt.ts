@@ -1,4 +1,5 @@
 import type { Point } from "schema";
+import { normalizeSpatialImageTransform } from "@codex/spatial-engine";
 
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
@@ -31,6 +32,34 @@ export interface Token {
   color: string;
   imageUrl: string | null;
   statusEffects: string[];
+  locked?: boolean;
+  /** Marks an image token placed from a procedural tile deck. */
+  kind?: "token" | "tile";
+  tileDeckId?: string | null;
+  tileDetails?: TileDetails;
+}
+
+export interface TileDetails {
+  description: string;
+  encounter: string;
+  notes: string;
+  contents: string;
+}
+
+export interface TileDeckEntry {
+  id: string;
+  name: string;
+  imagePath: string;
+  category?: string;
+}
+
+export interface TileDeck {
+  id: string;
+  name: string;
+  /** Identifies a catalog deck that was prefetched into this local vault. */
+  starterDeckId?: string;
+  tiles: TileDeckEntry[];
+  hardEdges: boolean;
 }
 
 export interface MeasurementState {
@@ -79,6 +108,7 @@ export interface EncounterSession {
   gridSize?: number;
   gridUnit?: string;
   gridDistance?: number;
+  tileDecks?: TileDeck[];
 }
 
 export function normalizeTokenVisibility(
@@ -96,14 +126,27 @@ export function normalizeToken(
         facingIndicator?: boolean;
       }),
 ): Token {
+  const transform = normalizeSpatialImageTransform(token);
   return {
     ...token,
+    ...transform,
     ownerPeerId: token.ownerPeerId ?? null,
     ownerGuestName: token.ownerGuestName ?? null,
     visibleTo: normalizeTokenVisibility(token.visibleTo),
     baseShape: token.baseShape === "square" ? "square" : "circle",
     facingIndicator: token.facingIndicator === true,
     statusEffects: [...(token.statusEffects ?? [])],
+    locked: token.locked === true,
+    kind: token.kind === "tile" ? "tile" : "token",
+    tileDeckId: token.tileDeckId ?? null,
+    tileDetails: token.tileDetails
+      ? {
+          description: token.tileDetails.description ?? "",
+          encounter: token.tileDetails.encounter ?? "",
+          notes: token.tileDetails.notes ?? "",
+          contents: token.tileDetails.contents ?? "",
+        }
+      : undefined,
   };
 }
 
@@ -157,6 +200,13 @@ export function normalizeEncounterSession(
             },
           }
         : {}),
+    })),
+    tileDecks: (session.tileDecks ?? []).map((deck) => ({
+      id: deck.id,
+      name: deck.name,
+      starterDeckId: deck.starterDeckId,
+      hardEdges: deck.hardEdges === true,
+      tiles: (deck.tiles ?? []).map((tile) => ({ ...tile })),
     })),
   };
 }

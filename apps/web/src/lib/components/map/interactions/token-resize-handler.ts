@@ -13,7 +13,7 @@ export class TokenResizeHandler {
 
   resizeAt(viewportPoint: Point, deltaY: number) {
     const hitToken = this.deps.tokenSelection.hitTest(viewportPoint);
-    if (!hitToken) return false;
+    if (!hitToken || hitToken.locked) return false;
 
     const gridSize = this.deps.getGridSize() || 50;
     const currentScale = Math.round(hitToken.width / gridSize);

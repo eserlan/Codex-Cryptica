@@ -177,6 +177,10 @@ export class VTTTokenManager {
       color: input.color || hashToColor(input.name),
       imageUrl: input.imageUrl ?? null,
       statusEffects: [],
+      locked: input.locked === true,
+      kind: input.kind ?? "token",
+      tileDeckId: input.tileDeckId ?? null,
+      tileDetails: input.tileDetails,
     };
   }
 
@@ -385,6 +389,27 @@ export class VTTTokenManager {
 
   rotateToken(tokenId: string, rotation: number, silent = false) {
     return this.updateToken(tokenId, { rotation }, silent);
+  }
+
+  toggleTokenLock(tokenId: string) {
+    const token = this.tokens[tokenId];
+    return token ? this.updateToken(tokenId, { locked: !token.locked }) : null;
+  }
+
+  bringTokenToFront(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token) return null;
+    const zIndex =
+      Math.max(...Object.values(this.tokens).map((item) => item.zIndex), 0) + 1;
+    return this.updateToken(tokenId, { zIndex });
+  }
+
+  sendTokenToBack(tokenId: string) {
+    const token = this.tokens[tokenId];
+    if (!token) return null;
+    const zIndex =
+      Math.min(...Object.values(this.tokens).map((item) => item.zIndex), 0) - 1;
+    return this.updateToken(tokenId, { zIndex });
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -613,6 +638,7 @@ export class VTTTokenManager {
   canMoveToken(tokenId: string, peerId: string | null, isHost = false) {
     const token = this.tokens[tokenId];
     if (!token) return false;
+    if (token.locked) return false;
     if (isHost) return true;
     return token.ownerPeerId !== null && token.ownerPeerId === peerId;
   }

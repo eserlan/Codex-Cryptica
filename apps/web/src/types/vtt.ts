@@ -16,6 +16,9 @@ export type {
   SessionMode,
   Token,
   TokenBaseShape,
+  TileDeck,
+  TileDeckEntry,
+  TileDetails,
   TokenVisibility,
 } from "map-engine";
 
@@ -62,6 +65,10 @@ export interface TokenCreationInput {
   visibleTo?: LegacyTokenVisibility;
   color?: string;
   imageUrl?: string | null;
+  kind?: "token" | "tile";
+  tileDeckId?: string | null;
+  tileDetails?: import("map-engine").TileDetails;
+  locked?: boolean;
 }
 
 export const TOKEN_STATUS_EFFECTS = [
@@ -112,6 +119,9 @@ export interface TokenStateUpdateInput {
   ownerGuestName?: string | null;
   imageUrl?: string | null;
   statusEffects?: string[];
+  locked?: boolean;
+  zIndex?: number;
+  tileDetails?: import("map-engine").TileDetails;
 }
 
 export interface SessionSnapshotPayload {

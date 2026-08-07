@@ -12,6 +12,7 @@ import type { VTTPersistenceManager } from "./vtt-persistence-manager.svelte";
 import type { VTTSessionLifecycleManager } from "./vtt-session-lifecycle-manager.svelte";
 import type { VTTSessionSnapshotManager } from "./vtt-session-snapshot-manager";
 import type { VTTTokenManager } from "./vtt-token-manager.svelte";
+import type { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
 import type {
   ChatMessagePayload,
   DragPreview,
@@ -41,6 +42,7 @@ export abstract class MapSessionFacade {
   networkManager!: VTTNetworkManager;
   snapshotManager!: VTTSessionSnapshotManager;
   lifecycleManager!: VTTSessionLifecycleManager;
+  tileDeckManager!: VTTTileDeckManager;
 
   get sessionId() {
     return this.encounterManager.sessionId;
@@ -172,6 +174,34 @@ export abstract class MapSessionFacade {
 
   get allTokens() {
     return this.tokenManager.allTokens;
+  }
+  get tileDecks() {
+    return this.tileDeckManager.decks;
+  }
+  createTileDeck(
+    name: string,
+    tiles: Array<{ name: string; imagePath: string; category?: string }>,
+    starterDeckId?: string,
+  ) {
+    return this.tileDeckManager.createDeck(name, tiles, starterDeckId);
+  }
+  setTileDeckHardEdges(deckId: string, hardEdges: boolean) {
+    this.tileDeckManager.setHardEdges(deckId, hardEdges);
+  }
+  drawTile(deckId: string, size = 150) {
+    return this.tileDeckManager.draw(deckId, size);
+  }
+  selectTile(deckId: string, tileId: string, size = 150) {
+    return this.tileDeckManager.select(deckId, tileId, size);
+  }
+  updatePendingTilePlacement(x: number, y: number) {
+    this.tileDeckManager.updatePendingPlacement(x, y);
+  }
+  placePendingTile() {
+    return this.tileDeckManager.placePending();
+  }
+  cancelPendingTilePlacement() {
+    this.tileDeckManager.cancelPendingPlacement();
   }
   get selectedToken() {
     return this.tokenManager.selectedToken;
@@ -349,11 +379,12 @@ export abstract class MapSessionFacade {
   }
 
   updateToken(tokenId: string, updates: TokenStateUpdateInput, silent = false) {
+    if (!this.tileDeckManager.canTransform(tokenId, updates)) return null;
     return this.tokenManager.updateToken(tokenId, updates, silent);
   }
 
   moveToken(tokenId: string, x: number, y: number, silent = false) {
-    return this.tokenManager.moveToken(tokenId, x, y, silent);
+    return this.updateToken(tokenId, { x, y }, silent);
   }
 
   requestTokenMove(tokenId: string, x: number, y: number, persistent = false) {
@@ -362,6 +393,18 @@ export abstract class MapSessionFacade {
 
   rotateToken(tokenId: string, rotation: number, silent = false) {
     return this.tokenManager.rotateToken(tokenId, rotation, silent);
+  }
+
+  toggleTokenLock(tokenId: string) {
+    return this.tokenManager.toggleTokenLock(tokenId);
+  }
+
+  bringTokenToFront(tokenId: string) {
+    return this.tokenManager.bringTokenToFront(tokenId);
+  }
+
+  sendTokenToBack(tokenId: string) {
+    return this.tokenManager.sendTokenToBack(tokenId);
   }
 
   requestTokenRotation(tokenId: string, rotation: number, persistent = false) {
