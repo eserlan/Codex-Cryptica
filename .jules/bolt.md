@@ -176,3 +176,6 @@
 
 **Learning:** When navigating connections or locating children nodes, invoking `.filter()` on the large `vault.allEntities` array triggers full O(N) traversal and allocates a new intermediate array on every evaluation (such as in `DetailStatusTab` and `ZenContent`). This places pressure on the garbage collector during rendering.
 **Action:** Replace `allEntities.filter(...)` with an imperative `for...of` (or traditional `for`) loop that checks conditions and constructs the necessary subsets or result shapes directly in a single pass.
+## 2026-07-02 - [Performance Insight: Replace chained array methods (Array.from().map().filter()) with imperative loops]
+**Learning:** In `apps/web/src/lib/services/dungeon-delve-service.ts`, using `Array.from(narrative.matchAll(...)).filter()` allocates multiple intermediate arrays for the regex matches, the mapped strings, and the filtered results. In hot paths or large narratives, this creates unnecessary GC pressure.
+**Action:** Replace chained array generation methods over iterators with imperative `for...of` loops that push valid results directly into the final array.
