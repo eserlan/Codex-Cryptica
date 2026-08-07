@@ -50,7 +50,7 @@
       );
     }
 
-    const fields = entity.statSheet?.fields ?? [];
+    const fields: StatSheetField[] = entity.statSheet?.fields ?? [];
     if (fields.length === 0) return null;
     const schemaFields: StatSheetTemplateField[] = fields.map(
       ({
@@ -59,7 +59,7 @@
         favorite: _favorite,
         barField: _barField,
         ...field
-      }) => field,
+      }: StatSheetField) => field,
     );
     return {
       id: `entity-local-stat-sheet:${entity.id}`,

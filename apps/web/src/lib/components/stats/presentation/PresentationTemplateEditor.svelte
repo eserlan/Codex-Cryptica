@@ -426,7 +426,7 @@
       if (c.id !== cardId) return c;
       const nextRows = c.rows.map((r, idx) =>
         idx === rowIndex && (c.mode !== "table" || r.length < c.columns)
-          ? [...r, { kind: "field", fieldId }]
+          ? [...r, { kind: "field" as const, fieldId }]
           : r,
       );
       return { ...c, rows: nextRows };
