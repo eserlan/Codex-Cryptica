@@ -17,8 +17,10 @@ vi.mock("$app/paths", () => ({
 }));
 
 const trackEventMock = vi.hoisted(() => vi.fn());
+const trackPublicGeneratorActionMock = vi.hoisted(() => vi.fn());
 vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
   trackEvent: trackEventMock,
+  trackPublicGeneratorAction: trackPublicGeneratorActionMock,
 }));
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
@@ -414,6 +416,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
   describe("Generator funnel tracking (#1796)", () => {
     beforeEach(() => {
       trackEventMock.mockClear();
+      trackPublicGeneratorActionMock.mockClear();
     });
 
     it("does not fire generator_started/generator_completed for the silent on-mount auto-draft", async () => {
@@ -482,6 +485,52 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(trackEventMock).toHaveBeenCalledWith("generator_completed", {
         generator_type: "npc",
       });
+    });
+
+    it("tracks public Save, Copy, and Open Codex actions", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "### Secret\nA secret.",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "copy",
+        expect.objectContaining({
+          generator_type: "npc",
+          copy_target: "markdown",
+        }),
+      );
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "save_to_codex",
+        expect.objectContaining({ generator_type: "npc" }),
+      );
+
+      await fireEvent.click(document.querySelector("#nav-cta-btn")!);
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "open_codex",
+        expect.objectContaining({
+          generator_type: "npc",
+          source: "header",
+        }),
+      );
     });
   });
 });
