@@ -312,9 +312,11 @@
     </div>
   </div>
 
-  <div class="md:flex md:justify-between md:items-center mb-2">
+  <div
+    class="mb-2 min-w-0 md:flex md:flex-wrap md:items-center md:justify-between"
+  >
     <div
-      class="flex items-start md:items-center gap-3 md:gap-4 md:flex-1 min-w-0 w-full"
+      class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
@@ -331,7 +333,7 @@
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal break-words overflow-visible w-full md:truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} w-full break-words whitespace-normal font-bold"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
@@ -378,7 +380,7 @@
     </div>
 
     <div
-      class="hidden md:flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4"
+      class="ml-2 hidden shrink-0 items-center gap-1.5 md:ml-auto md:flex md:gap-2"
     >
       {@render headerActions()}
 
