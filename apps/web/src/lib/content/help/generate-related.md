@@ -27,5 +27,5 @@ Once the draft is generated, you will see a preview screen displaying all genera
 
 ### Related Blog Posts
 
-- [Context-Aware Entity Generator](/blog/context-aware-entity-generator) — How Gemini uses neighboring graph nodes to generate connected lore.
+- [Context-Aware Entity Generator](/blog/context-aware-entity-generator) — How OpenAI/Luna uses neighboring graph nodes to generate connected lore.
 - [Worldbuilding AI Needs Your Lore](/blog/worldbuilding-ai-needs-your-lore) — Why context-aware retrieval prevents generic AI slop.

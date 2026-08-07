@@ -234,7 +234,7 @@
               href: "/ai-rpg-campaign-manager",
               label: "AI RPG Campaign Manager",
               summary:
-                "Review the AI-assisted campaign workflow built around local notes and BYO Gemini access.",
+                "Review the AI-assisted campaign workflow built around local notes and BYO OpenAI/Luna access.",
               icon: "icon-[lucide--wand-sparkles]",
             },
             {

@@ -58,7 +58,7 @@
       <h3
         class="font-semibold text-theme-primary uppercase tracking-wider text-base font-header"
       >
-        Lore Oracle (Gemini AI)
+        Lore Oracle (Luna AI)
       </h3>
     </div>
 
@@ -73,7 +73,7 @@
   </div>
 
   <p class="text-sm text-theme-text/80 mb-4 leading-relaxed">
-    The Oracle uses Google Gemini for AI-powered lore assistance. Use the system
+    The Oracle uses OpenAI/Luna for AI-powered lore assistance. Use the system
     proxy for free access, or add your own API key for direct access.
   </p>
 
@@ -97,7 +97,7 @@
             Direct Connection: Custom Key
           </span>
           <span class="text-xs text-theme-muted block mt-1">
-            Using your personal API key for direct access to Google Gemini.
+            Using your personal API key for direct access to the Oracle.
           </span>
         </div>
         <span class="text-xs text-theme-muted font-mono"
@@ -246,7 +246,7 @@
             disabled={!oracle.apiKey}
             onchange={() => oracle.updateSettings({ imageProvider: "gemini" })}
           />
-          Google Gemini API
+          OpenAI/Luna API
           {#if !oracle.apiKey}
             <span
               class="text-[10px] bg-theme-muted/20 px-1.5 py-0.5 rounded text-theme-muted"

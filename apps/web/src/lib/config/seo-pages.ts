@@ -187,7 +187,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Do I need a paid AI subscription?",
         answer:
-          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own Gemini API key for unlimited usage.",
+          "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own API key for unlimited usage.",
       },
       {
         question: "Is my campaign prompt context secure?",
@@ -303,7 +303,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Bring Your Own API Key",
         description:
-          "Connect your Gemini or OpenAI key for full AI generation — no subscription or data sent to Codex servers.",
+          "Connect your OpenAI/Luna key for full AI generation — no subscription or data sent to Codex servers.",
         icon: "icon-[lucide--key]",
       },
     ],
@@ -316,7 +316,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Does the AI DM assistant require a subscription?",
         answer:
-          "No. You bring your own API key (Gemini or OpenAI). Codex never charges for AI usage — you pay only your API provider's standard rates.",
+          "No. You bring your own API key (OpenAI/Luna). Codex never charges for AI usage — you pay only your API provider's standard rates.",
       },
       {
         question: "Does the AI see my campaign notes?",
