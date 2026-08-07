@@ -4,7 +4,7 @@ Codex Cryptica is designed with a **privacy-first, local-first** philosophy. We 
 
 ## 1. Data Storage
 
-By default, all data you create in Codex Cryptica (lore, chronicles, images, maps, and world configuration) is stored exclusively in your browser's **Origin Private File System (OPFS)**.
+By default, all data you create in Codex Cryptica (lore, chronicles, images, maps, and world configuration) is stored exclusively in your browser's **Origin Private File System (OPFS)** — a private storage area built into your browser, similar to a folder on your hard drive, but one only Codex Cryptica can open. It never leaves your device unless you explicitly export it, sync it to a folder, or use an AI feature.
 
 - **No Server Storage:** We do not host your campaign data on our servers.
 - **User Control:** You have full control over your data. Clearing your browser cache or deleting the application storage will remove your data.
@@ -18,10 +18,12 @@ You may choose to synchronize your campaign with a folder on your computer.
 
 ## 3. AI Features (Optional)
 
-If you use the AI features (Lore Oracle, Image Generation), your data is processed as follows:
+If you use any AI feature (Lore Oracle chat, entity generation/revision, connection suggestions, Image Generation), your data is processed as follows:
 
-- **Google Gemini:** Snippets of your current campaign context (entities and chronicles) are sent to Google's Gemini API to provide reasoning and generation.
-- **OpenAI:** For some requests — including Lore Oracle chat, entity revisions, and generator sessions — your campaign context and conversation is instead sent to OpenAI's API, retained server-side for the duration of that conversation so follow-up turns don't need to resend it.
+- **OpenAI:** Most AI features route through OpenAI's API by default. This includes conversational features (Lore Oracle chat, entity revisions, generator sessions) as well as one-shot analysis and generation features (such as detecting potential connections between entities, or generating a new entity related to an existing one).
+- **Google Gemini:** Used for Image Generation, and as an automatic fallback for other features if OpenAI is unavailable. Snippets of your current campaign context (entities and chronicles) are sent to Google's Gemini API in these cases.
+  - For conversational features specifically, OpenAI retains the conversation server-side for its duration, so follow-up turns don't need to resend earlier context.
+  - For one-shot features, each request is sent and processed independently, with no ongoing server-side conversation state.
 - **Data Usage:** According to Google's and OpenAI's standard API terms, data sent via their paid/tier-based APIs is typically not used to train their global models.
 - **Opt-out:** You can disable all AI features by enabling "AI Disabled" in the settings.
 
@@ -46,4 +48,4 @@ We may update this policy to reflect changes in our storage architecture or feat
 
 ---
 
-**Last Updated:** July 2026
+**Last Updated:** August 2026

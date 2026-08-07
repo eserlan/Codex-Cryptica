@@ -67,9 +67,7 @@ describe("LLM operation pipeline: end-to-end", () => {
     const fetchMock = vi.fn(
       async () =>
         new Response(
-          JSON.stringify({
-            candidates: [{ content: { parts: [{ text: "hi" }] } }],
-          }),
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
           { status: 200 },
         ),
     );
@@ -85,10 +83,28 @@ describe("LLM operation pipeline: end-to-end", () => {
     );
 
     const body = await response.json();
-    expect(body.modelKey).toBe("gemini-flash-lite");
+    expect(body.modelKey).toBe("luna-fast");
   });
 
   it("Scenario 3 — identical normalized response shape across a Gemini-served and an OpenAI/Luna-served request", async () => {
+    const openAiFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "from luna" } }] }),
+          { status: 200 },
+        ),
+    );
+    globalThis.fetch = openAiFetch as typeof fetch;
+    const lunaResponse = await worker.fetch(
+      post({
+        operation: "freeform-generation",
+        messages: [{ role: "user", content: "hi" }],
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+    const lunaBody = await lunaResponse.json();
+
     const geminiFetch = vi.fn(
       async () =>
         new Response(
@@ -103,30 +119,12 @@ describe("LLM operation pipeline: end-to-end", () => {
       post({
         operation: "freeform-generation",
         messages: [{ role: "user", content: "hi" }],
+        modelKeyOverride: "gemini-flash-lite",
       }),
       env,
       {} as ExecutionContext,
     );
     const geminiBody = await geminiResponse.json();
-
-    const openAiFetch = vi.fn(
-      async () =>
-        new Response(
-          JSON.stringify({ choices: [{ message: { content: "from luna" } }] }),
-          { status: 200 },
-        ),
-    );
-    globalThis.fetch = openAiFetch as typeof fetch;
-    const lunaResponse = await worker.fetch(
-      post({
-        operation: "freeform-generation",
-        messages: [{ role: "user", content: "hi" }],
-        modelKeyOverride: "luna-fast",
-      }),
-      env,
-      {} as ExecutionContext,
-    );
-    const lunaBody = await lunaResponse.json();
 
     expect(Object.keys(geminiBody).sort()).toEqual(
       Object.keys(lunaBody).sort(),

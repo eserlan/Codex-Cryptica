@@ -70,10 +70,12 @@ export const OPERATION_DEFAULTS: OperationDefaults[] = [
     fallbackModelKey: "gemini-flash-lite",
   },
   {
+    // Luna as the primary default (2026-08-07) — Gemini remains the
+    // fallback for resilience, not removed.
     operation: "freeform-generation",
     context: "public",
-    defaultModelKey: "gemini-flash-lite",
-    fallbackModelKey: "luna-fast",
+    defaultModelKey: "luna-fast",
+    fallbackModelKey: "gemini-flash-lite",
   },
   {
     // Luna as the primary default (not just fallback) for classification —
@@ -85,9 +87,11 @@ export const OPERATION_DEFAULTS: OperationDefaults[] = [
     fallbackModelKey: "gemini-flash-lite",
   },
   {
+    // Luna as the primary default (2026-08-07) — no caller uses this
+    // operation today, but keep it consistent with the rest of the registry.
     operation: "utility",
     context: "public",
-    defaultModelKey: "gemini-flash-lite",
+    defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
   },
   // "revision" intentionally has no default yet — no caller uses it this
