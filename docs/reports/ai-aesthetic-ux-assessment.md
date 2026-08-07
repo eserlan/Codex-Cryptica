@@ -331,33 +331,313 @@ Human evidence is a stronger antidote to “AI-made” perception than ornamenta
 - a legible mobile graph starting state;
 - clear alternative navigation for non-canvas users.
 
-## Recommended implementation order
+## Implementation chunks
 
-### Phase 1 — Must-fix product usability
+These are implementation-sized workstreams, not GitHub issues. Each chunk should
+normally fit in one focused pull request, though the graph work may need a short
+technical spike before its implementation pull request. Product changes include
+tests for both the expected path and a meaningful failure, fallback, or narrow-
+viewport path.
 
-1. Fix right-panel overflow at 1280–1600px.
-2. Fix graph edge-label collision and contrast.
-3. Change mobile graph initial zoom/centering.
-4. Verify graph-node keyboard/screen-reader access and expose the table fallback.
-5. Remove the marketing footer from application routes.
-6. Clarify Quick Start genre vs appearance.
-7. Correct provider/privacy copy.
+### Constitution alignment
 
-### Phase 2 — Remove the AI-template impression
+The chunks preserve the constitution's local-first privacy, plain-language, TDD,
+reuse-before-extraction, DI, documentation, and coverage requirements. Each code
+chunk must run the repository lint and test suites in addition to the focused
+validation named below.
 
-8. Rewrite the welcome hierarchy around one headline and two actions.
-9. Replace the feature wall with 4–6 screenshot-led workflows.
-10. Standardize the global shell and product naming.
-11. Consolidate duplicate generator entries.
-12. Group the responsible-AI article series and add author/provenance signals.
-13. Establish rules for when cards, uppercase text, and shadows are appropriate.
+One source-of-truth mismatch must be resolved before chunk 1 is complete: Principle
+IV still names Gemini as the Oracle provider, while the deployed product direction
+is OpenAI/Luna. Update that principle through the constitution workflow to describe
+the intended provider or a provider-neutral Oracle contract, then synchronize public
+copy against the amended wording. This is a planning prerequisite, not a GitHub issue.
 
-### Phase 3 — Polish and validate
+### Sequence and dependencies
 
-14. Curate a visually consistent demo world asset set.
-15. Add compact/full modes to generator output.
-16. Simplify mobile entity actions and tab overflow.
-17. Test the revised welcome → demo → entity → graph journey with 5–8 GMs.
+| Chunk | Workstream                          | Size | Depends on | Covers          |
+| ----- | ----------------------------------- | ---- | ---------- | --------------- |
+| 1     | Provider and privacy copy audit     | S    | —          | M7              |
+| 2     | Responsive entity-detail contract   | M    | —          | M1              |
+| 3     | Application shell reclamation       | M    | —          | M5              |
+| 4     | Full Toolbox action hierarchy       | M    | 3          | S1              |
+| 5     | Desktop graph-label legibility      | L    | —          | M2              |
+| 6     | Useful mobile graph entry state     | M    | —          | M3              |
+| 7     | Accessible graph navigation         | L    | —          | M4              |
+| 8     | Quick Start decision model          | M    | —          | M6              |
+| 9     | Shared brand and layout grammar     | L    | —          | AI sameness     |
+| 10    | Decision-first welcome experience   | M    | 9          | AI sameness, S5 |
+| 11    | Workflow-led Features page          | L    | 1, 9       | AI sameness     |
+| 12    | Canonical public generator model    | L    | 9          | AI sameness     |
+| 13    | Editorial blog structure            | M    | 9          | AI sameness     |
+| 14    | Coherent demonstration assets       | M    | 9          | AI sameness     |
+| 15    | Generator output information design | M    | —          | S2              |
+| 16    | Mobile entity actions and tabs      | M    | 2          | S3–S4           |
+| 17    | Cross-surface validation and tuning | M    | 2–16       | All             |
+
+Chunks 1–3, 5–9, and 15 can begin independently. Chunk 4 follows the shell work;
+chunks 10–14 share the design grammar from chunk 9. Chunk 17 is the release gate,
+but its automated viewport checks should be added incrementally by each earlier
+chunk rather than deferred to the end.
+
+### Chunk 1 — Provider and privacy copy audit
+
+**Outcome:** Public explanations match the current OpenAI/Luna-backed product and
+do not make stale Gemini, retention, or provider claims.
+
+**Scope:** Inventory provider and privacy language across the welcome, Features,
+Privacy, Help, public generators, settings, and generator states. Establish one
+canonical wording source where practical, then update every surfaced reference.
+This is a copy and content-source change; it does not change the generation API.
+
+**Acceptance criteria:** No user-facing page contradicts the deployed provider or
+data flow; privacy claims distinguish browser-local vault data from generation
+requests; the provider name does not appear where it is irrelevant to the user's
+decision. A repository search and route-level content tests cover stale terms.
+
+### Chunk 2 — Responsive entity-detail contract
+
+**Outcome:** The entity detail panel remains usable without clipping or horizontal
+page overflow at supported desktop widths.
+
+**Scope:** Define panel min/max widths, title and metadata wrapping, action overflow,
+tab overflow, and independent panel scrolling. Verify the Full Toolbox layout at
+1280, 1440, and 1600px and with unusually long entity names and labels.
+
+**Acceptance criteria:** All primary actions remain reachable; content and tabs do
+not render outside the panel; the document itself does not gain horizontal scroll;
+focus remains visible while keyboarding through the panel. Add responsive component
+tests and viewport screenshots for ordinary and stress-test content.
+
+### Chunk 3 — Application shell reclamation
+
+**Outcome:** Workspace routes feel like focused tools, not marketing pages wrapped
+around an application.
+
+**Scope:** Remove the marketing footer from graph, map, canvas, table, editor, and
+other workspace routes. Let each workspace occupy the available viewport. Keep the
+footer on public marketing/content routes and relocate essential support, legal,
+and privacy links to Help, Settings, or the application menu.
+
+**Acceptance criteria:** No application canvas is shortened by marketing chrome;
+all legally or operationally necessary links remain reachable; route transitions
+do not briefly flash the wrong shell. Cover representative public and application
+routes in layout tests.
+
+### Chunk 4 — Full Toolbox action hierarchy
+
+**Outcome:** The desktop header presents a small set of frequent actions and keeps
+infrequent vault operations discoverable without showing all controls at once.
+
+**Scope:** Rank current actions by frequency and consequence. Keep Create plus clear
+vault/save state visible; group import, export, sharing, and infrequent management
+actions under a labeled menu. Define collapse behavior at narrower widths and retain
+tooltips, keyboard access, and destructive-action separation.
+
+**Acceptance criteria:** Frequent creation and navigation require no extra step;
+every displaced action remains findable by label; the header fits without collision
+at supported widths; menu focus and Escape behavior are covered by interaction tests.
+
+### Chunk 5 — Desktop graph-label legibility
+
+**Outcome:** Relationship labels communicate the graph instead of obscuring it.
+
+**Scope:** Prototype and select a collision strategy for dense edge labels. Options
+may include layout-aware offsetting, truncation with reveal, selective labels by zoom
+or importance, and stronger text backplates. Include label bounds in fit calculations
+and prevent collision with open detail panels where feasible.
+
+**Acceptance criteria:** Labels are readable at default zoom in the demo world;
+crossing or nearby edges do not create stacked illegible text; a user can reveal any
+suppressed full label; node and edge selection still works at every zoom. Validate
+against small, medium, and deliberately dense graph fixtures before implementation
+is accepted.
+
+### Chunk 6 — Useful mobile graph entry state
+
+**Outcome:** Opening a graph on a phone immediately shows something understandable.
+
+**Scope:** Replace the initial “fit the entire world” behavior with a useful zoom
+centered on an important, recent, or explicitly selected node. Add a clearly labeled
+“Show whole world” action and a brief gesture hint. Preserve user-controlled zoom
+during the session and avoid resetting it after unrelated state changes.
+
+**Acceptance criteria:** The initial node and at least its immediate relationships
+are legible at 390×844; the whole graph remains one action away; returning from an
+entity preserves the user's prior camera where appropriate; empty and one-node
+graphs have intentional states. Cover camera persistence and fallback selection in
+tests.
+
+### Chunk 7 — Accessible graph navigation
+
+**Outcome:** The graph's information and navigation are available without precise
+pointer or canvas interaction.
+
+**Scope:** Audit the rendered graph with keyboard and screen-reader tooling. Either
+make nodes operable through a synchronized accessible structure or present a clearly
+labeled Browse as table/list path next to the graph controls. Synchronize selection
+and focus where that improves orientation, and document the chosen accessibility
+contract.
+
+**Acceptance criteria:** A keyboard-only user can find and open every entity and can
+understand the selected entity; the alternative is visible rather than buried in
+Help; focus is not lost when switching views; automated accessibility checks and a
+manual screen-reader pass cover the primary journey.
+
+### Chunk 8 — Quick Start decision model
+
+**Outcome:** “Theme” no longer ambiguously combines world genre and interface
+appearance.
+
+**Scope:** Decide whether genre and visual appearance are separate choices. If they
+remain coupled, rename the choice and show exactly what it changes. Add short examples
+or previews, preserve sensible defaults, and verify behavior when optional generation
+is unavailable or declined.
+
+**Acceptance criteria:** Test participants can predict what their selection changes;
+the flow works without AI; back navigation retains choices; the resulting workspace
+matches the preview or explanation. Update onboarding copy and tests together.
+
+### Chunk 9 — Shared brand and layout grammar
+
+**Outcome:** Public pages look like one authored product instead of a collection of
+independently generated landing-page patterns.
+
+**Scope:** Define and implement the shared public wordmark, navigation, footer,
+content widths, primary/secondary action hierarchy, typography roles, and spacing.
+Document when cards, uppercase labels, shadows, gradients, and genre ornament are
+appropriate. Apply the grammar to reusable shell components first, without replacing
+the workspace's user-selected themes.
+
+**Acceptance criteria:** Welcome, Features, Tools, Blog, Privacy, and generator pages
+share recognizable structure and controls; card and all-caps use is purposeful rather
+than default; responsive shell behavior is consistent. Add visual fixtures for the
+shared components before page-specific redesigns begin.
+
+### Chunk 10 — Decision-first welcome experience
+
+**Outcome:** A first-time visitor understands the product and chooses a next step
+before encountering decorative complexity.
+
+**Scope:** Reduce the opening to one concrete value proposition, one proof point,
+and two differentiated actions: explore a sample or start a world. Reposition the
+graph preview so it supports that decision, particularly on mobile. Add one compact
+human-proof module such as a signed creator note, real campaign workflow, or specific
+user story, while preserving existing analytics signals.
+
+**Acceptance criteria:** Both actions appear before or immediately adjacent to the
+primary demonstration on desktop and before a large graph on mobile; copy contains no
+generic unsupported superlatives; all existing destination flows and action tracking
+still work. Validate comprehension with the first suggested question below.
+
+### Chunk 11 — Workflow-led Features page
+
+**Outcome:** The page teaches a handful of real campaign workflows instead of
+presenting an exhaustive feature-card wall.
+
+**Scope:** Group capabilities into four to six jobs such as prepare, connect, run,
+improvise, and keep data private. Lead each group with a real product screenshot and
+a short outcome. Move exhaustive or technical details to searchable documentation,
+Help, or the changelog, and remove implementation details such as SEO prerendering
+from the product pitch.
+
+**Acceptance criteria:** Every section maps to a user goal and a visible product
+surface; the page has a meaningful content hierarchy when skimmed; provider/privacy
+language uses chunk 1's canonical wording; mobile does not become another long stack
+of identical cards.
+
+### Chunk 12 — Canonical public generator model
+
+**Outcome:** Public generator entries feel like intentional presets of one product,
+not duplicated microsites competing with one another.
+
+**Scope:** Define one canonical generator interaction and content structure. Treat
+NPC, character, faction, location, and similar pages as clearly named presets or
+aliases where their behavior is the same. Preserve valuable inbound routes with
+canonical metadata or redirects, and explain genuine differences where consolidation
+would be misleading.
+
+**Acceptance criteria:** Equivalent tools share interaction, state handling, actions,
+and analytics; users can understand why separate entries exist; existing public URLs
+continue to resolve safely; Save to Codex, Copy, Open Codex, Surprise Me, started, and
+completed signals remain correctly differentiated and tested.
+
+### Chunk 13 — Editorial blog structure
+
+**Outcome:** The blog reads as an authored publication with a point of view.
+
+**Scope:** Group the responsible-AI series under a single landing or collection,
+surface author and provenance, feature a smaller number of current articles, and add
+topic navigation or filtering. Reduce repetitive same-date cards and distinguish
+product updates, practical GM guidance, and policy/editorial writing.
+
+**Acceptance criteria:** Readers can identify who wrote an article, when it changed,
+and what series or topic it belongs to; the index no longer presents near-identical
+articles as equal standalone promotions; feeds, metadata, and existing article URLs
+remain valid.
+
+### Chunk 14 — Coherent demonstration assets
+
+**Outcome:** Product demonstrations resemble one lived-in campaign rather than a set
+of unrelated generated samples.
+
+**Scope:** Establish a small canonical demo world with a consistent art direction,
+entity naming voice, maps, portraits, and meaningful graph relationships. Favor real
+interface screenshots and annotated workflows over decorative character art. Record
+asset provenance and usage rights.
+
+**Acceptance criteria:** Welcome, Features, and onboarding reuse a coherent cast and
+world; screenshots display believable data density and relationships; assets remain
+legible in both light and dark contexts where used; every external or generated asset
+has documented provenance.
+
+### Chunk 15 — Generator output information design
+
+**Outcome:** Dense generated output supports fast use at the table without discarding
+the full result.
+
+**Scope:** Make generated content open in a compact summary with expandable full lore
+while preserving Save and Copy. Define which fields belong in the compact state per
+generator family, provide a clear expansion control, and keep section-level actions
+associated with the content they affect.
+
+**Acceptance criteria:** A GM can identify the generated result's most actionable
+fact without scrolling through every section; full generated content is still
+available and copied/saved without data loss; expanding and collapsing does not
+regenerate or mutate the draft; focus remains predictable. Include success plus
+copy/save failure tests for compact and full states.
+
+### Chunk 16 — Mobile entity actions and tabs
+
+**Outcome:** Small-screen entity controls remain understandable and all sections are
+discoverable without an icon-decoding exercise.
+
+**Scope:** Keep Back, Edit, and the main contextual action visible on mobile entity
+views. Move secondary actions into a labeled overflow sheet, separate destructive
+actions, and add a tab-scroll cue or a More destination for clipped sections. Reuse
+the responsive sizing contract established in chunk 2.
+
+**Acceptance criteria:** Visible and overflow actions use clear labels; destructive
+actions require confirmation and are visually separated; every tab is discoverable
+at 390×844 without accidental page overflow; opening and closing the overflow or More
+surface restores focus correctly. Cover the primary action, cancellation, and a long
+tab-label fixture in interaction tests.
+
+### Chunk 17 — Cross-surface validation and tuning
+
+**Outcome:** The revised experience is demonstrably clearer, more cohesive, and more
+usable rather than merely visually different.
+
+**Scope:** Run automated and manual passes at 1280, 1440, and 1600px desktop widths,
+390×844 mobile, and one tablet viewport. Cover keyboard operation, reduced motion,
+light/dark or representative genre themes, long content, offline behavior, and empty
+states. Conduct short moderated sessions with five to eight GMs using the questions
+below, then make narrowly scoped tuning changes.
+
+**Acceptance criteria:** Must-change findings M1–M7 are closed with evidence; no
+critical regression exists in welcome → demo → entity → graph or generator → save →
+Codex journeys; participants describe the product primarily as a private campaign
+workspace; unresolved observations are recorded with severity and supporting evidence
+instead of being silently folded into subjective polish.
 
 ## Suggested validation questions
 
