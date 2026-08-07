@@ -523,7 +523,8 @@ describe("buildPrompt template injection", () => {
   const ctxWithTemplate = (applyTemplate: boolean) => ({
     categoryLabels: [],
     applyTemplate,
-    templateOutline: "## Overview\n## Secrets",
+    templateOutline:
+      "## Overview\nA short explanation of this section.\n\n## Secrets\nHidden details for the GM.",
     neighbors: [],
     worldSample: [],
     existingTitles: [],
@@ -537,9 +538,13 @@ describe("buildPrompt template injection", () => {
         run(id, { vaultContext: ctxWithTemplate(true) }),
       );
       expect(prompt).toContain(
-        'Structure the "lore" field to follow this template',
+        'Structure the "lore" field using the template guidance below',
       );
-      expect(prompt).toContain("## Overview");
+      expect(prompt).toContain("<template_guidance>\n## Overview");
+      expect(prompt).toContain("A short explanation of this section.");
+      expect(prompt).toContain(
+        "Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
+      );
     }
   });
 

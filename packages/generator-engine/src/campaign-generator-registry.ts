@@ -321,7 +321,7 @@ function templateBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx?.applyTemplate || !ctx.templateOutline) return "";
-  return `\nStructure the "lore" field to follow this template, keeping its markdown headings and filling every section with generated content:\n${ctx.templateOutline}\n`;
+  return `\nStructure the "lore" field using the template guidance below. Use it only to understand each section's purpose. Preserve its markdown headings, but write new, entity-specific prose beneath them. Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated lore.\n<template_guidance>\n${ctx.templateOutline}\n</template_guidance>\n`;
 }
 
 /**

@@ -16,7 +16,7 @@ const TYPE_TEMPLATES: Array<{ type: string; templateKey: string }> = [
 
 const LORE_OUTLINE_SECTION = TYPE_TEMPLATES.map(
   ({ type, templateKey }) =>
-    `--- ${type} ---\n${GENERIC_TEMPLATES[templateKey]}`,
+    `--- ${type} ---\n<template_guidance>\n${GENERIC_TEMPLATES[templateKey]}\n</template_guidance>`,
 ).join("\n\n");
 
 export const EXTRACTION_PROMPT = `
@@ -32,7 +32,7 @@ For each identified entity:
 1.  **Title**: A concise, unique name.
 2.  **Type**: One of [Character, Location, Item, Lore, Faction, Creature, Event].
 3.  **Chronicle**: A short (1-2 paragraph) Markdown summary. Focus on the entity's immediate relevance.
-4.  **Lore**: Detailed background information, history, or complex data — the "deep dive" content. Structure it using the section headings from the outline below matching the entity's Type. Include every section from that outline; when the source text doesn't cover a section, generate reasonable content by inferring from what's already known rather than leaving it blank or omitting the section — but do not invent major facts unsupported by the text.
+4.  **Lore**: Detailed background information, history, or complex data — the "deep dive" content. Use the matching <template_guidance> block below only to understand each section's purpose. Preserve its markdown section headings, but write entity-specific prose beneath them. Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>. Include every section from that outline; when the source text doesn't cover a section, generate reasonable content by inferring from what's already known rather than leaving it blank or omitting the section — but do not invent major facts unsupported by the text.
 5.  **Frontmatter**: Generate YAML properties relevant to the type (e.g., "race", "gender", "status", "alignment" for Character; "region", "notable_districts" for Location).
 6.  **Image**: Scan the text for any absolute URLs starting with http or https that point to images (.png, .jpg, .jpeg, .webp).
 7.  **Connections**: Identify names of OTHER entities mentioned in the text. Provide a descriptive label for the relationship (e.g., "ally of", "located in", "belongs to").

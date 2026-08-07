@@ -21,6 +21,10 @@ describe("EXTRACTION_PROMPT", () => {
   it("instructs the model to structure lore by section outline instead of leaving it freeform", () => {
     expect(EXTRACTION_PROMPT).toMatch(/section headings/i);
     expect(EXTRACTION_PROMPT).toContain("LORE SECTION OUTLINES BY TYPE");
+    expect(EXTRACTION_PROMPT).toContain("<template_guidance>");
+    expect(EXTRACTION_PROMPT).toContain(
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
+    );
   });
 
   it("lists Creature and Event as valid types alongside the original set", () => {
