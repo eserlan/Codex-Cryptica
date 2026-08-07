@@ -4,6 +4,7 @@ import type {
   GenerativeContentBlob,
 } from "@google/generative-ai";
 import { safeSnapshot } from "./text-generation-context";
+import type { AiSessionManager } from "./session-manager";
 
 /**
  * Thrown when a `previous_interaction_id` is no longer valid (retention window
@@ -161,6 +162,35 @@ async function sendViaOperationPipeline(params: {
   };
 }
 
+/** Adds `Authorization: Bearer <token>` without disturbing existing headers. */
+function withBearerToken(
+  init: RequestInit | undefined,
+  token: string | null,
+): RequestInit | undefined {
+  if (!token) return init;
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  return { ...init, headers };
+}
+
+/**
+ * Whether a 401 is specifically an expired capability token (the recoverable
+ * case) rather than a missing or forged one.
+ *
+ * Reads a clone so the caller can still consume the original body when this
+ * turns out not to be a refresh case.
+ */
+async function isExpiredSessionToken(response: Response): Promise<boolean> {
+  try {
+    const body = (await response.clone().json()) as {
+      error?: { code?: string };
+    };
+    return body?.error?.code === "SESSION_TOKEN_EXPIRED";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * DefaultAIClientManager manages connections to Google's Generative AI service.
  */
@@ -179,11 +209,68 @@ export class DefaultAIClientManager {
     );
   }
 
+  private sessionManager: AiSessionManager | null = null;
+
   // Injected so tests can supply a fake without stubbing the global `fetch`.
   // Default wraps the global lazily (resolved at call time, not construction).
   constructor(
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
-  ) {}
+    sessionManager: AiSessionManager | null = null,
+  ) {
+    this.sessionManager = sessionManager;
+  }
+
+  /**
+   * Attach the session manager that supplies anti-abuse capability tokens.
+   *
+   * Set after construction because solving a Turnstile challenge needs the
+   * DOM, which the shared `aiClientManager` singleton has no access to at
+   * module-init time — the web app wires this up during startup.
+   */
+  setSessionManager(sessionManager: AiSessionManager | null): void {
+    this.sessionManager = sessionManager;
+  }
+
+  /**
+   * The single choke point for every oracle-proxy call.
+   *
+   * All three proxy paths — the operation pipeline, `sendInteraction`, and the
+   * legacy passthrough — go through here, so capability tokens are attached in
+   * exactly one place. Adding token logic at any individual call site instead
+   * would guarantee one of them eventually gets missed.
+   *
+   * On a 401 caused by an expired token it re-handshakes and replays the
+   * request **once**. A second 401 is returned to the caller: a persistently
+   * rejected token means something is actually wrong, and retrying it in a
+   * loop would hammer both Turnstile and the proxy.
+   *
+   * An arrow property, not a method, because it is passed around as a bare
+   * `doFetch` callback and must stay bound.
+   */
+  private proxyFetch: typeof fetch = async (input, init) => {
+    const manager = this.sessionManager;
+    if (!manager) return this.fetcher(input, init);
+
+    const token = await manager.getToken();
+    const response = await this.fetcher(input, withBearerToken(init, token));
+
+    if (response.status !== 401) return response;
+    // Only string bodies can be replayed safely; a consumed stream cannot.
+    // Every proxy call site sends JSON strings, so this is a guard, not a
+    // limitation in practice.
+    if (init?.body !== undefined && typeof init.body !== "string") {
+      return response;
+    }
+
+    const expired = await isExpiredSessionToken(response);
+    if (!expired) return response;
+
+    manager.invalidate();
+    const freshToken = await manager.getToken();
+    if (!freshToken) return response;
+
+    return this.fetcher(input, withBearerToken(init, freshToken));
+  };
 
   /**
    * Send a Gemini Interactions API turn through the proxy (server-side state).
@@ -218,7 +305,7 @@ export class DefaultAIClientManager {
       body.generationConfig = params.generationConfig;
     }
 
-    const response = await this.fetcher(DefaultAIClientManager.PROXY_URL, {
+    const response = await this.proxyFetch(DefaultAIClientManager.PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -294,7 +381,10 @@ export class DefaultAIClientManager {
     systemInstruction?: string,
   ): GenerativeModel {
     const proxyUrl = DefaultAIClientManager.PROXY_URL;
-    const doFetch = this.fetcher;
+    // The session-aware wrapper, not the raw fetcher: this callback is what
+    // both the operation pipeline and the legacy passthrough below use to
+    // reach the proxy, so it must carry the capability token.
+    const doFetch = this.proxyFetch;
 
     return {
       model: modelName,

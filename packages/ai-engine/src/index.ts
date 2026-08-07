@@ -1,6 +1,7 @@
 export { TIER_MODES } from "schema";
 export * from "./config";
 export * from "./client-manager";
+export * from "./session-manager";
 export * from "./capability-guard";
 export * from "./api-error-classifier";
 export * from "./interaction-session";

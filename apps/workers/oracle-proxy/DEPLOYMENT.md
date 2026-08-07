@@ -36,9 +36,32 @@ wrangler secret put GEMINI_API_KEY
 
 wrangler secret put TURNSTILE_SECRET_KEY
 # Paste the secret for the Turnstile widget used to create guest snapshots
+
+wrangler secret put SESSION_TOKEN_SECRET
+# Any high-entropy random string, e.g. `openssl rand -base64 32`.
+# HMAC signing key for LLM session capability tokens.
 ```
 
 For widget creation, web environment configuration, quotas, and testing, see [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md).
+
+#### About `SESSION_TOKEN_SECRET`
+
+Clients solve an invisible Turnstile challenge on app load, exchange it at
+`POST /api/session` for a short-lived signed token, and present that token on
+every text LLM request. The proxy verifies the signature locally and rate
+limits per token id.
+
+Two properties worth knowing before you deploy:
+
+- **Until the secret is set, the guard fails open** and generation behaves
+  exactly as it did before. That's deliberate — the worker can ship ahead of
+  the secret without an outage. Enforcement begins the moment it's set.
+- **Rotating the secret invalidates every live token at once.** Clients
+  recover on their own: they get a 401, re-solve the challenge, and replay.
+  Expect a burst of Turnstile solves right after a rotation.
+
+Image generation (`/v1/images/generations`) is not covered by this guard — it
+keeps its own per-IP daily limit.
 
 ### Step 5: Verify Deployment
 
