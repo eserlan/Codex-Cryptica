@@ -62,6 +62,16 @@ export async function callOpenAi(
     body.max_completion_tokens = maxOutputTokens;
   }
   if (request.topP !== undefined) body.top_p = request.topP;
+  // Reasoning-tier models (GPT-5.6-family) spend variable internal
+  // "thinking" time before responding; most of our tasks are constrained
+  // generation/classification following an already-detailed prompt, not
+  // genuine multi-step reasoning, so the registry sets this per operation
+  // (see OPERATION_DEFAULTS) rather than leaving it at the model's default
+  // depth. Omitted entirely when unset, so a future non-reasoning
+  // OpenAI-provider model that would reject this field is unaffected.
+  if (request.reasoningEffort) {
+    body.reasoning_effort = request.reasoningEffort;
+  }
 
   if (wantsStructuredOutput(request)) {
     if (request.schema) {
@@ -207,6 +217,14 @@ export async function forwardInteractionToOpenAi(
     model: modelId,
     input: body.input,
     store: body.store ?? true,
+    // This path (chat/revision/generator sessions via the Interactions API)
+    // has no per-operation registry hook like the resolver-driven pipeline
+    // in callOpenAi does — it's routed by which model was requested, not by
+    // an LlmOperation. Hardcoding "low" here matches that pipeline's
+    // freeform-generation/structured-generation level as a reasonable
+    // single default; revisit independently if this path proves too slow
+    // or too shallow once it's actually measured.
+    reasoning: { effort: "low" },
   };
   if (body.previous_interaction_id) {
     payload.previous_response_id = body.previous_interaction_id;

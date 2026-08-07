@@ -64,35 +64,49 @@ export const OPERATION_DEFAULTS: OperationDefaults[] = [
     // Luna as the primary default for structured-generation (2026-08-05,
     // verified live against real app traffic) — deliberate choice, not a
     // leftover from testing. Gemini is the fallback.
+    // reasoningEffort "low" (2026-08-07): entity/NPC/faction drafting is
+    // constrained creative generation following an already-detailed prompt
+    // (schema, naming rules, banned-name list) — it needs enough depth to
+    // honor those constraints coherently, not genuine multi-step reasoning.
     operation: "structured-generation",
     context: "public",
     defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "low",
   },
   {
     // Luna as the primary default (2026-08-07) — Gemini remains the
     // fallback for resilience, not removed.
+    // reasoningEffort "low": Oracle chat and creative synthesis/drafting
+    // stages are conversational, not deep reasoning.
     operation: "freeform-generation",
     context: "public",
     defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "low",
   },
   {
     // Luna as the primary default (not just fallback) for classification —
     // demonstrates SC-003: enabled purely through registry config, no
     // resolver/adaptor/caller changes required.
+    // reasoningEffort "minimal": pure categorization/confidence-scoring
+    // against an already-supplied candidate list — no deduction happening.
     operation: "classification",
     context: "public",
     defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "minimal",
   },
   {
     // Luna as the primary default (2026-08-07) — no caller uses this
     // operation today, but keep it consistent with the rest of the registry.
+    // reasoningEffort "minimal": no live caller, so this just keeps cost/
+    // latency low by default rather than expressing a real workload need.
     operation: "utility",
     context: "public",
     defaultModelKey: "luna-fast",
     fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "minimal",
   },
   // "revision" intentionally has no default yet — no caller uses it this
   // slice (spec Scope §4, out of scope).

@@ -49,11 +49,22 @@ export interface LlmModelDefinition {
   };
 }
 
+export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
+
 export interface OperationDefaults {
   operation: LlmOperation;
   context: LlmContext;
   defaultModelKey: string;
   fallbackModelKey: string;
+  /**
+   * How much internal reasoning an OpenAI-family reasoning model (e.g. Luna)
+   * should spend before responding. Only meaningful for reasoning-tier
+   * models; adaptors for providers without the concept (Gemini) ignore it.
+   * Operation-level, not model-level: the same model serves multiple
+   * operations that warrant different depths (e.g. classification needs far
+   * less deliberation than structured generation).
+   */
+  reasoningEffort?: ReasoningEffort;
 }
 
 export interface LlmMessage {
@@ -69,6 +80,9 @@ export interface LlmRequest {
   topP?: number;
   maxOutputTokens?: number;
   modelKeyOverride?: string;
+  /** Caller-supplied override; the resolver fills this from the resolved
+   * operation's default when the caller doesn't set one. */
+  reasoningEffort?: ReasoningEffort;
 }
 
 export interface LlmUsage {
