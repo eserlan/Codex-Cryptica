@@ -1,8 +1,11 @@
 # Codex Cryptica — UI/UX and “AI-Made” Perception Assessment
 
-**Date:** 2026-08-07  
-**Surface reviewed:** Production at `https://codexcryptica.com/`  
-**Viewports:** Desktop Chrome at 1440 × 1000; mobile Chrome at 390 × 844  
+**Date:** 2026-08-07
+
+**Surface reviewed:** Production at `https://codexcryptica.com/`
+
+**Viewports:** Desktop Chrome at 1440 × 1000; mobile Chrome at 390 × 844
+
 **Method:** Browser-driven heuristic review using Playwright, accessibility snapshots, interaction walkthroughs, and visual screenshot review. This is not a moderated usability study, so perception findings should be validated with real users.
 
 ## Executive summary
@@ -99,10 +102,12 @@ This is grammatically correct but editorially timid. Each line restates the one 
 
 **Change:** reduce the hero to one opinionated headline, one proof sentence, and two actions. For example:
 
-> **Keep your campaign connected—and on your device.**  
+> **Keep your campaign connected—and on your device.**
+>
 > Write characters, places, secrets, and timelines in one local archive. No account required.
 
-Primary action: **Explore a sample world**  
+Primary action: **Explore a sample world**
+
 Secondary action: **Start my own**
 
 Keep the graph preview, but place it after the decision point on mobile and beside the copy on wide desktop screens.
