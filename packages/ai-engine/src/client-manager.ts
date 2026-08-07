@@ -4,7 +4,7 @@ import type {
   GenerativeContentBlob,
 } from "@google/generative-ai";
 import { safeSnapshot } from "./text-generation-context";
-import type { AiSessionManager } from "./session-manager";
+import type { SessionTokenSource } from "./session-manager";
 
 /**
  * Thrown when a `previous_interaction_id` is no longer valid (retention window
@@ -209,13 +209,13 @@ export class DefaultAIClientManager {
     );
   }
 
-  private sessionManager: AiSessionManager | null = null;
+  private sessionManager: SessionTokenSource | null = null;
 
   // Injected so tests can supply a fake without stubbing the global `fetch`.
   // Default wraps the global lazily (resolved at call time, not construction).
   constructor(
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
-    sessionManager: AiSessionManager | null = null,
+    sessionManager: SessionTokenSource | null = null,
   ) {
     this.sessionManager = sessionManager;
   }
@@ -227,7 +227,7 @@ export class DefaultAIClientManager {
    * DOM, which the shared `aiClientManager` singleton has no access to at
    * module-init time — the web app wires this up during startup.
    */
-  setSessionManager(sessionManager: AiSessionManager | null): void {
+  setSessionManager(sessionManager: SessionTokenSource | null): void {
     this.sessionManager = sessionManager;
   }
 
