@@ -89,10 +89,19 @@ test.describe("Responsive Entity Detail Panel", () => {
           expect(tabListBounds.width).toBeLessThanOrEqual(panelBounds.width);
         }
 
-        const zenModeBtn = panel.locator(
-          '[data-testid="enter-zen-mode-button"]:visible',
-        );
-        await expect(zenModeBtn).toBeVisible();
+        for (const actionName of [
+          "AI Revise Description",
+          "Find in Graph",
+          "Sound bite",
+          "Enter Zen Mode",
+          "Close panel",
+          "DELETE",
+          "EDIT",
+        ]) {
+          await expect(
+            panel.getByRole("button", { name: actionName }),
+          ).toBeVisible();
+        }
 
         await expect(panel).toHaveScreenshot(
           `entity-panel-${fixture.screenshotName}-${viewport.width}.png`,
@@ -103,6 +112,8 @@ test.describe("Responsive Entity Detail Panel", () => {
         await panel.getByTestId("tab-status").press("End");
         const finalTab = panel.getByTestId("tab-timeline");
         await expect(finalTab).toBeFocused();
+        await expect(finalTab).toHaveCSS("outline-style", "solid");
+        await expect(finalTab).toHaveCSS("outline-width", "2px");
         const finalTabIsVisible = await finalTab.evaluate((element) => {
           const tab = element.getBoundingClientRect();
           const list = element

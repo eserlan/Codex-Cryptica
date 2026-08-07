@@ -354,3 +354,10 @@
     >
   </div>
 </div>
+
+<style>
+  button[role="tab"]:focus-visible {
+    outline: 2px solid var(--color-theme-primary);
+    outline-offset: 2px;
+  }
+</style>
