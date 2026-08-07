@@ -1,6 +1,10 @@
 import { u } from "./user-content";
 import { BANNED_NAMES } from "generator-engine";
-import type { ConnectedEntityPromptContext } from "schema";
+import {
+  templateGuidanceBlock,
+  templateGuidanceInstruction,
+  type ConnectedEntityPromptContext,
+} from "schema";
 
 export function buildRelatedEntityGenerationPrompt(
   sourceEntity: {
@@ -43,7 +47,7 @@ export function buildRelatedEntityGenerationPrompt(
       : "";
 
   const templateRule = templateOutline.trim()
-    ? `IMPORTANT: Structure the "description" field using the template guidance below. Use it only to understand each section's purpose. Preserve its markdown headings, but write new, entity-specific prose beneath them. Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated description.\n<template_guidance>\n${u(templateOutline)}\n</template_guidance>\n`
+    ? `IMPORTANT: Structure the "description" field using the template guidance below. ${templateGuidanceInstruction("description")}\n${templateGuidanceBlock(u(templateOutline))}\n`
     : "";
 
   const customInstructionsStr = customInstructions.trim()

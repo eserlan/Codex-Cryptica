@@ -71,7 +71,7 @@ describe("GeneratorSession", () => {
     expect(first.input).toContain("<template_guidance>");
     expect(first.input).toContain("A short entity overview.");
     expect(first.input).toContain(
-      "do not copy its explanatory text, placeholders, questions, examples, or XML tags",
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated lore.",
     );
     expect(first.sentLoreCount).toBe(loreEntries.length);
 

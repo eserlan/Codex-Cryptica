@@ -145,7 +145,7 @@ Origin, heritage, species, culture, or noble house.`,
     );
     expect(prompt).toContain("</USER_CONTENT>\n</template_guidance>");
     expect(prompt).toContain(
-      "Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
+      "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated description.",
     );
   });
 

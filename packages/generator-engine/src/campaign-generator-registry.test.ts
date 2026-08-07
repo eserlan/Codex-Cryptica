@@ -543,7 +543,7 @@ describe("buildPrompt template injection", () => {
       expect(prompt).toContain("<template_guidance>\n## Overview");
       expect(prompt).toContain("A short explanation of this section.");
       expect(prompt).toContain(
-        "Do not reproduce any explanatory text, placeholders, questions, examples, or XML tags from <template_guidance>",
+        "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated lore.",
       );
     }
   });
