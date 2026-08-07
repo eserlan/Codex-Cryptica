@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   trackEvent,
+  trackPublicGeneratorAction,
   initCodexAnalyticsBridge,
   resetCodexAnalyticsBridge,
 } from "./zaraz-analytics";
@@ -71,6 +72,42 @@ describe("trackEvent", () => {
     expect(() =>
       trackEvent("seo_entry", {}, { zaraz: { track } }),
     ).not.toThrow();
+  });
+});
+
+describe("trackPublicGeneratorAction", () => {
+  it("emits the action with public-generator metadata", () => {
+    const track = vi.fn();
+
+    trackPublicGeneratorAction(
+      "copy",
+      { generator_type: "npc", copy_target: "markdown" },
+      { zaraz: { track } },
+    );
+
+    expect(track).toHaveBeenCalledWith(
+      "public_generator_action_clicked",
+      expect.objectContaining({
+        action: "copy",
+        generator_type: "npc",
+        copy_target: "markdown",
+      }),
+    );
+  });
+
+  it("does not allow metadata to override the action", () => {
+    const track = vi.fn();
+
+    trackPublicGeneratorAction(
+      "copy",
+      { action: "open_codex", generator_type: "npc" },
+      { zaraz: { track } },
+    );
+
+    expect(track).toHaveBeenCalledWith(
+      "public_generator_action_clicked",
+      expect.objectContaining({ action: "copy" }),
+    );
   });
 });
 

@@ -41,7 +41,10 @@
     buildBreadcrumbJsonLd,
     buildResultJsonLd,
   } from "./generator-json-ld";
-  import { trackEvent } from "$lib/services/analytics/zaraz-analytics";
+  import {
+    trackEvent,
+    trackPublicGeneratorAction,
+  } from "$lib/services/analytics/zaraz-analytics";
   import {
     trackSaveToCodex,
     countRelatedEntities,
@@ -224,7 +227,18 @@
   }
 
   function confirmSaveRedirect() {
+    trackPublicGeneratorAction("open_codex", {
+      generator_type: generatorType,
+      source: "save_confirmation",
+    });
     window.location.href = redirectUrl;
+  }
+
+  function handleOpenCodex() {
+    trackPublicGeneratorAction("open_codex", {
+      generator_type: generatorType,
+      source: "header",
+    });
   }
 
   const faqJsonLd = $derived(buildFaqJsonLd(faqs));
@@ -309,6 +323,11 @@
 
   function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
     if (entitiesToSave.length === 0) return;
+    trackPublicGeneratorAction("save_to_codex", {
+      generator_type: generatorType,
+      is_hub_batch: true,
+      item_count: entitiesToSave.length,
+    });
     try {
       const draftsToSave = entitiesToSave.map((e) => {
         const prov = sessionHubStore.provenance[e.id];
@@ -358,6 +377,11 @@
 
   async function handleSaveToCodex() {
     if (!generatedData) return;
+    trackPublicGeneratorAction("save_to_codex", {
+      generator_type: generatorType,
+      is_hub_batch: false,
+      item_count: 1,
+    });
 
     try {
       const isAdventure =
@@ -421,6 +445,10 @@
 
   async function handleCopyMarkdown() {
     if (!generatedData) return;
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "markdown",
+    });
 
     const markdownText = [
       `# ${generatedData.title}`,
@@ -447,6 +475,11 @@
   }
 
   async function handleCopySection(sectionId: string, markdown: string) {
+    trackPublicGeneratorAction("copy", {
+      generator_type: generatorType,
+      copy_target: "section",
+      section_id: sectionId,
+    });
     try {
       await navigator.clipboard.writeText(markdown.trim());
       copiedSectionId = sectionId;
@@ -470,6 +503,10 @@
     if (copyBtn) {
       const textToCopy = copyBtn.getAttribute("data-copy-text");
       if (textToCopy) {
+        trackPublicGeneratorAction("copy", {
+          generator_type: generatorType,
+          copy_target: "inline",
+        });
         navigator.clipboard
           .writeText(textToCopy)
           .then(() => {
@@ -641,6 +678,7 @@
           href="{cleanBase}/?utm_source=generator-header-cta&utm_medium=nav&utm_campaign=seo-funnel"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
+          onclick={handleOpenCodex}
         >
           Open Codex
         </a>
@@ -678,6 +716,11 @@
             bodies={generatedData.bodies}
             starType={generatedData.starType}
             title={generatedData.title}
+            onCopy={() =>
+              trackPublicGeneratorAction("copy", {
+                generator_type: generatorType,
+                copy_target: "diagram_image",
+              })}
           />
         </div>
       {/if}
