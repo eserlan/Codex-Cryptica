@@ -231,6 +231,24 @@
       generator_type: generatorType,
       source: "save_confirmation",
     });
+
+    showSaveModal = false;
+
+    try {
+      const codexWindow = window.open("about:blank", "codex-cryptica-app");
+      if (codexWindow) {
+        // Keep the reusable named tab without allowing it to navigate the
+        // generator tab if it later reaches an untrusted origin.
+        codexWindow.opener = null;
+        codexWindow.location.href = redirectUrl;
+        return;
+      }
+    } catch {
+      // Fall through to same-tab navigation when popups are blocked or
+      // the browsing context cannot be controlled.
+    }
+
+    window.location.href = redirectUrl;
   }
 
   function handleOpenCodex() {
@@ -940,7 +958,6 @@
 
   <SaveToCodexModal
     open={showSaveModal}
-    {redirectUrl}
     onConfirm={confirmSaveRedirect}
     onCancel={() => (showSaveModal = false)}
   />
