@@ -41,6 +41,7 @@ import {
   isLlmOperationRequest,
   handleLlmOperationRequest,
 } from "./llm/handle-operation-request";
+import { handleSessionRequest, enforceLlmSession } from "./session-guard";
 import {
   handleCreateTemplateListing,
   handleDeleteTemplateListing,
@@ -64,6 +65,14 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   PUBLISH_WRITE_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  /** HMAC signing secret for LLM session capability tokens. */
+  SESSION_TOKEN_SECRET?: string;
+  LLM_BURST_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  LLM_GENERATION_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
@@ -139,6 +148,21 @@ export default {
 
     const url = new URL(request.url);
     const pathname = url.pathname;
+
+    if (pathname === "/api/session") {
+      const sessionOrigin = request.headers.get("Origin") || "";
+      if (!isOriginAllowed(sessionOrigin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+      return handleSessionRequest(
+        request,
+        env,
+        getCorsHeaders(request.headers, env),
+      );
+    }
 
     if (pathname.startsWith("/api/template-directory/")) {
       const origin = request.headers.get("Origin") || "";
@@ -533,6 +557,21 @@ export default {
         );
       }
     }
+
+    // Capability-token guard for the text LLM endpoints. Covers all three
+    // paths below (operation pipeline, interactions, legacy passthrough),
+    // which together are every text generation request the app makes.
+    //
+    // Image generation (`/v1/images/generations`, handled above) keeps its own
+    // per-IP daily limiter and is deliberately not guarded here: it is served
+    // by a different client that does not carry a capability token, so
+    // enforcing one would break image generation outright.
+    const sessionResponse = await enforceLlmSession(
+      request,
+      env,
+      getCorsHeaders(request.headers, env),
+    );
+    if (sessionResponse) return sessionResponse;
 
     try {
       // Parse the incoming request body

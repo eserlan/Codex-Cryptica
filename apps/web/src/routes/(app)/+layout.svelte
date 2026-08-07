@@ -16,6 +16,7 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
+  import { initAiSession } from "$lib/services/ai/session-bootstrap";
   import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
   import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
@@ -146,6 +147,14 @@
     if (!browser) return;
     if (!layoutUIStore.autoFullscreen) return;
     return initFullscreenOnFirstInteraction();
+  });
+
+  // Mint the LLM anti-abuse capability token up front, so the first
+  // generation isn't waiting on a Turnstile handshake. Scoped to the app
+  // layout rather than the root one: marketing pages never call the LLM and
+  // shouldn't be issuing challenges.
+  onMount(() => {
+    initAiSession();
   });
 
   // `100dvh` (app.css's --app-viewport-height fallback) is supposed to track
