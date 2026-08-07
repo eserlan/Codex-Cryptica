@@ -8,6 +8,7 @@ describe("UIPersistence", () => {
       "codex_active_sidebar_tool",
       "codex_ai_disabled",
       "codex_auto_archive",
+      "codex_auto_fullscreen",
       "codex_connection_discovery_mode",
       "codex_dismissed_landing",
       "codex_entity_discovery_mode",
