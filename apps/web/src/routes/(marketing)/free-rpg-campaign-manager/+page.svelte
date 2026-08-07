@@ -46,7 +46,7 @@
         name: "How does the AI GM assistant work?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own Google Gemini API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
+          text: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own OpenAI/Luna API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
         },
       },
     ],
@@ -72,7 +72,7 @@
     },
     {
       title: "AI-Powered Lore Oracle",
-      desc: "Co-author stories, parse draft summaries, and generate visual character art using local Gemini models.",
+      desc: "Co-author stories, parse draft summaries, and generate visual character art using local Luna models.",
       icon: "icon-[lucide--sparkles]",
     },
     {

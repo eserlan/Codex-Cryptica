@@ -2,6 +2,7 @@ import * as Comlink from "comlink";
 import OracleWorker from "$lib/workers/oracle.worker?worker";
 import { browser } from "$app/environment";
 import type { TextGenerationService } from "schema";
+import type { CachedToken } from "@codex/ai-engine";
 
 /**
  * OracleBridge manages the lifecycle of the Oracle Web Worker
@@ -30,6 +31,16 @@ export class OracleBridge {
 
   public get isReady(): boolean {
     return this.api !== null;
+  }
+
+  /**
+   * Relays the main thread's session token snapshot into the worker — see
+   * `session-bootstrap.ts`'s `onTokenChange` wiring and
+   * `RelayedSessionToken` for why this is necessary (the worker has no DOM
+   * and can't mint its own token).
+   */
+  public setSessionToken(token: CachedToken | null): void {
+    this.api?.setSessionToken(token);
   }
 
   /**

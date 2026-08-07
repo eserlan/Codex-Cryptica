@@ -2,7 +2,7 @@
 id: context-aware-entity-generator
 slug: context-aware-entity-generator
 title: "Introducing Context-Aware Entity Generation: Grounded Campaign Expansion"
-description: "Branch your campaign setting organically. Discover how the new Generate Related feature pulls context from surrounding nodes and chronicles to draft connected entities with the help of Gemini."
+description: "Branch your campaign setting organically. Discover how the new Generate Related feature pulls context from surrounding nodes and chronicles to draft connected entities with the help of OpenAI/Luna."
 keywords:
   [
     "Worldbuilding AI",
