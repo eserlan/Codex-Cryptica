@@ -231,7 +231,6 @@
       generator_type: generatorType,
       source: "save_confirmation",
     });
-    window.location.href = redirectUrl;
   }
 
   function handleOpenCodex() {
@@ -941,6 +940,7 @@
 
   <SaveToCodexModal
     open={showSaveModal}
+    {redirectUrl}
     onConfirm={confirmSaveRedirect}
     onCancel={() => (showSaveModal = false)}
   />

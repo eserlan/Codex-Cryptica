@@ -14,6 +14,7 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  resolve: (path: string) => path,
 }));
 
 const trackEventMock = vi.hoisted(() => vi.fn());
@@ -530,6 +531,38 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           generator_type: "npc",
           source: "header",
         }),
+      );
+    });
+
+    it("opens the saved draft in a new Codex tab", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      const openCodexLink = document.querySelector<HTMLAnchorElement>(
+        'a[target="codex-cryptica-app"]',
+      );
+      expect(openCodexLink).not.toBeNull();
+      expect(openCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
       );
     });
   });

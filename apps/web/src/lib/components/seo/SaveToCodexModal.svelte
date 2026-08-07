@@ -3,10 +3,12 @@
 
   let {
     open,
+    redirectUrl,
     onConfirm,
     onCancel,
   }: {
     open: boolean;
+    redirectUrl: string;
     onConfirm: () => void;
     onCancel: () => void;
   } = $props();
@@ -49,14 +51,15 @@
       </p>
 
       <div class="flex flex-col gap-2 mt-4">
-        <button
-          type="button"
+        <a
+          href={redirectUrl}
+          target="codex-cryptica-app"
           onclick={onConfirm}
           class="w-full py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
         >
           <span class="icon-[lucide--external-link] w-4 h-4"></span>
           Open Codex
-        </button>
+        </a>
 
         <button
           type="button"
