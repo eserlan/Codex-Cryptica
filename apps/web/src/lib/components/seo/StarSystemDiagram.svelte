@@ -11,10 +11,12 @@
     bodies,
     starType,
     title,
+    onCopy,
   }: {
     bodies: StarSystemBody[] | undefined;
     starType?: string;
     title?: string;
+    onCopy?: () => void;
   } = $props();
 
   const layout = $derived(buildStarSystemDiagram(bodies ?? []));
@@ -131,6 +133,7 @@
 
   async function handleCopyImage() {
     if (!inlineSvgEl) return;
+    onCopy?.();
     clearTimeout(copyTimeout);
     try {
       const blob = await exportPng();
