@@ -125,6 +125,35 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     expect(prompt).not.toContain("[HIGHEST PRIORITY");
   });
 
+  it("passes template headings without leaking their instructional prose", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      { title: "Thornwarden", type: "faction", content: "", lore: "" },
+      "character",
+      "high marshal",
+      "",
+      [],
+      [{ id: "character", label: "Character" }],
+      `## Summary
+A brief overview of who this character is in this fantasy setting.
+
+## Lineage & Background
+Origin, heritage, species, culture, or noble house.`,
+    );
+
+    expect(prompt).toContain(
+      "TEMPLATE HEADINGS:\n<USER_CONTENT>\n## Summary\n## Lineage & Background\n</USER_CONTENT>",
+    );
+    expect(prompt).toContain(
+      "Do not repeat template guidance, placeholders, questions, or examples",
+    );
+    expect(prompt).not.toContain(
+      "A brief overview of who this character is in this fantasy setting.",
+    );
+    expect(prompt).not.toContain(
+      "Origin, heritage, species, culture, or noble house.",
+    );
+  });
+
   it("instructs generated names to match setting, culture, and theme", () => {
     const prompt = buildRelatedEntityGenerationPrompt(
       {
