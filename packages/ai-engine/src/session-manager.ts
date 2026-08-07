@@ -88,6 +88,9 @@ export class AiSessionManager {
     this.now = options.now ?? (() => Date.now());
     this.onTokenChange = options.onTokenChange;
     this.cached = this.readStoredToken();
+    if (this.cached) {
+      this.onTokenChange?.(this.cached);
+    }
   }
 
   /**

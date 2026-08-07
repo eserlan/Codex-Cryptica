@@ -4,6 +4,18 @@ import { DefaultAIClientManager } from "./client-manager";
 
 const PROXY_URL = "https://proxy.example";
 
+if (typeof navigator === "undefined") {
+  Object.defineProperty(globalThis, "navigator", {
+    value: { onLine: true },
+    writable: true,
+  });
+} else {
+  Object.defineProperty(navigator, "onLine", {
+    value: true,
+    writable: true,
+  });
+}
+
 function memoryStorage() {
   const map = new Map<string, string>();
   return {
@@ -230,6 +242,32 @@ describe("AiSessionManager", () => {
     expect(await manager.getToken()).toBe("token-1");
   });
 
+  it("fires onTokenChange immediately upon booting with an already-cached token", async () => {
+    const storage = memoryStorage();
+    storage.setItem(
+      "codex.llm-session-token",
+      JSON.stringify({
+        token: "cached-1",
+        expiresAt: 1_000_000_000 / 1000 + 1_800,
+      }),
+    );
+
+    const onTokenChange = vi.fn();
+    new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => "challenge-abc",
+      fetcher: sessionFetcher() as unknown as typeof fetch,
+      storage,
+      now: () => 1_000_000_000,
+      onTokenChange,
+    });
+
+    expect(onTokenChange).toHaveBeenCalledWith({
+      token: "cached-1",
+      expiresAt: 1_000_000_000 / 1000 + 1_800,
+    });
+  });
+
   it("fires onTokenChange with the minted token after a successful handshake", async () => {
     const onTokenChange = vi.fn();
     const manager = new AiSessionManager({
@@ -303,9 +341,13 @@ describe("RelayedSessionToken", () => {
   it("returns null once the relayed token is expiring, same skew as AiSessionManager", async () => {
     let now = 1_000_000_000;
     const relay = new RelayedSessionToken(() => now);
-    relay.setToken({ token: "relayed-1", expiresAt: now / 1000 + 10 });
 
-    now += 5_000; // still outside the 30s skew window
+    // Expires in 40s. The 30s skew window means it's considered valid for the first 10s.
+    relay.setToken({ token: "relayed-1", expiresAt: now / 1000 + 40 });
+    expect(await relay.getToken()).toBe("relayed-1");
+
+    // Advance 15s. It now expires in 25s, crossing the 30s skew boundary.
+    now += 15_000;
     expect(await relay.getToken()).toBeNull();
   });
 
