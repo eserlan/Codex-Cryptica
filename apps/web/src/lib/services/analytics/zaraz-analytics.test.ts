@@ -94,6 +94,21 @@ describe("trackPublicGeneratorAction", () => {
       }),
     );
   });
+
+  it("does not allow metadata to override the action", () => {
+    const track = vi.fn();
+
+    trackPublicGeneratorAction(
+      "copy",
+      { action: "open_codex", generator_type: "npc" },
+      { zaraz: { track } },
+    );
+
+    expect(track).toHaveBeenCalledWith(
+      "public_generator_action_clicked",
+      expect.objectContaining({ action: "copy" }),
+    );
+  });
 });
 
 describe("initCodexAnalyticsBridge", () => {

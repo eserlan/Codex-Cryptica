@@ -33,7 +33,7 @@ export function trackPublicGeneratorAction(
   properties: Record<string, unknown> = {},
   win: any = typeof window !== "undefined" ? window : undefined,
 ): void {
-  trackEvent("public_generator_action_clicked", { action, ...properties }, win);
+  trackEvent("public_generator_action_clicked", { ...properties, action }, win);
 }
 
 function getZaraz(win: any): ZarazLike | undefined {
