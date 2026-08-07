@@ -28,7 +28,14 @@ paths:
                 properties:
                   token:
                     type: string
-                    description: The HMAC-signed session capability token.
+                    description: >-
+                      The HMAC-signed session capability token. Sent back on
+                      subsequent requests as `Authorization: Bearer <token>`.
+                      Signed, not encrypted — the payload is readable by the
+                      holder and carries nothing confidential.
+                  expiresAt:
+                    type: integer
+                    description: Expiry as seconds since epoch, mirroring the signed payload.
         '403':
           description: Invalid Turnstile token
   /api/generate:
@@ -38,11 +45,45 @@ paths:
         - bearerAuth: []
       responses:
         '401':
-          description: Missing or cryptographically invalid session capability token
+          description: >-
+            Missing, cryptographically invalid, or expired session capability
+            token. `error.code` is one of SESSION_TOKEN_MISSING,
+            SESSION_TOKEN_INVALID, SESSION_TOKEN_EXPIRED. On
+            SESSION_TOKEN_EXPIRED the client re-runs the Turnstile handshake and
+            replays the request exactly once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
-          description: Rate limit exceeded (more than 100 requests per 10 minutes)
+          description: >-
+            Rate limit exceeded. Enforced by native Cloudflare Rate Limiting
+            bindings keyed by the token id: 5 requests / 10s (burst) and
+            20 requests / 60s (sustained). The limiter is permissive and
+            eventually consistent, so these caps are approximate thresholds
+            rather than exact counters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                - SESSION_TOKEN_MISSING
+                - SESSION_TOKEN_INVALID
+                - SESSION_TOKEN_EXPIRED
+                - RATE_LIMITED
+            message:
+              type: string
