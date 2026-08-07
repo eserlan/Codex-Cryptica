@@ -110,7 +110,9 @@
       event.key,
     );
     activeTab = nextTab;
-    document.getElementById(tabIds[nextTab])?.focus();
+    const nextTabElement = document.getElementById(tabIds[nextTab]);
+    nextTabElement?.focus();
+    nextTabElement?.scrollIntoView({ block: "nearest", inline: "nearest" });
   };
 </script>
 
