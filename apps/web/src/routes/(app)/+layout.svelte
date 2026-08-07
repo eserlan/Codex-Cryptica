@@ -16,7 +16,7 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
-  import { initAiSession } from "$lib/services/ai/session-bootstrap";
+  import { initAiSessionEager } from "$lib/services/ai/session-bootstrap";
   import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
   import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
@@ -149,12 +149,13 @@
     return initFullscreenOnFirstInteraction();
   });
 
-  // Mint the LLM anti-abuse capability token up front, so the first
-  // generation isn't waiting on a Turnstile handshake. Scoped to the app
-  // layout rather than the root one: marketing pages never call the LLM and
-  // shouldn't be issuing challenges.
+  // Pre-solve the LLM capability token, so the first generation isn't waiting
+  // on a Turnstile handshake. Only the eager warm is scoped here — the wiring
+  // itself happens in the root layout, because the public generators under
+  // (marketing) share the same client singleton and generate without ever
+  // mounting this layout.
   onMount(() => {
-    initAiSession();
+    initAiSessionEager();
   });
 
   // `100dvh` (app.css's --app-viewport-height fallback) is supposed to track
