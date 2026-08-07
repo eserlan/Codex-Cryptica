@@ -122,6 +122,43 @@ describe("callOpenAi", () => {
     expect(sent.temperature).toBeUndefined();
   });
 
+  it("forwards reasoningEffort as reasoning_effort when set", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(
+      { ...request, reasoningEffort: "minimal" },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.reasoning_effort).toBe("minimal");
+  });
+
+  it("omits reasoning_effort entirely when unset", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+          { status: 200 },
+        ),
+    );
+
+    await callOpenAi(request, model, env, fetcher as unknown as typeof fetch);
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.reasoning_effort).toBeUndefined();
+  });
+
   it("sends response_format for structured-generation requests", async () => {
     const fetcher = vi.fn(
       async () =>
@@ -405,6 +442,26 @@ describe("forwardInteractionToOpenAi", () => {
     expect(sent.previous_response_id).toBe("resp_0");
     expect(sent.instructions).toBe("Be a helpful oracle.");
     expect(sent.store).toBe(true);
+  });
+
+  it("sends a low reasoning effort (no per-operation registry hook on this path)", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToOpenAi(
+      { input: "hi" },
+      "gpt-5.6-luna",
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.reasoning).toEqual({ effort: "low" });
   });
 
   it("fails clearly when the API key is missing rather than sending an unauthenticated request", async () => {

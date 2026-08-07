@@ -156,10 +156,18 @@ export function createResolver(deps: ResolverDeps) {
   }
 
   async function resolve(
-    request: LlmRequest,
+    rawRequest: LlmRequest,
     context: LlmContext,
   ): Promise<ResolveOutcome> {
-    const defaults = deps.getOperationDefaults(request.operation, context);
+    const defaults = deps.getOperationDefaults(rawRequest.operation, context);
+
+    // Merge in the operation's configured reasoning depth — never override
+    // a caller-supplied value, matching how temperature/maxOutputTokens
+    // already let a caller override a model/operation default.
+    const request: LlmRequest = {
+      ...rawRequest,
+      reasoningEffort: rawRequest.reasoningEffort ?? defaults?.reasoningEffort,
+    };
 
     let primaryKey: string | undefined;
     if (request.modelKeyOverride) {
