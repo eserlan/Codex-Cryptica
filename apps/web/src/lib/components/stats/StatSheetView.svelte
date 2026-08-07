@@ -8,6 +8,7 @@
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+  import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
 
   let {
     entity,
@@ -94,6 +95,14 @@
     persistFields(
       fields.map((f: StatSheetField) =>
         f.id === fieldId ? { ...f, value } : f,
+      ),
+    );
+  }
+
+  function updateField(fieldId: string, updates: Partial<StatSheetField>) {
+    persistFields(
+      fields.map((field: StatSheetField) =>
+        field.id === fieldId ? { ...field, ...updates } : field,
       ),
     );
   }
@@ -461,6 +470,18 @@
               </div>
             </div>
           </div>
+        {:else if field.type === "item-table"}
+          <ItemTableNode
+            {field}
+            context={{
+              fields,
+              readOnly,
+              mode: "view",
+              onUpdateFieldValue: (fId, val) => updateFieldValue(fId, val),
+              onUpdateField: (fId, updates) => updateField(fId, updates),
+              onAdjustCounter: () => {},
+            }}
+          />
         {/if}
       {/if}
     {/each}

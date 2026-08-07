@@ -17,6 +17,7 @@
     text: string | null;
     isError?: boolean;
     success?: boolean;
+    total?: number;
   }>({
     rolling: false,
     text: null,
@@ -31,6 +32,7 @@
       text: res.text,
       isError: res.isError,
       success: res.success,
+      total: res.total,
     };
   }
 
@@ -55,8 +57,28 @@
   );
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
+  const isNameTargetDice = $derived(mode === "name-target");
   const controlsDisabled = $derived(
     context.readOnly || context.mode === "preview",
+  );
+  const targetScore = $derived(
+    field?.type === "dice" && typeof field.value === "number"
+      ? field.value
+      : null,
+  );
+  const formattedTargetScore = $derived(
+    targetScore === null
+      ? null
+      : `${targetScore}${/d100\b/i.test(field?.formula ?? "1d20") ? "%" : ""}`,
+  );
+  const displayRollText = $derived(
+    rollState.text?.replace(
+      /\s+\((?:Critical Success|Success|Failure|Fumble)\)$/i,
+      "",
+    ) ?? null,
+  );
+  const displayRollTotal = $derived(
+    rollState.total ?? rollState.text?.match(/^=\s*(-?\d+)/)?.[1] ?? null,
   );
 </script>
 
@@ -210,21 +232,43 @@
         aria-hidden="true"
       ></span>
       {#if label}<span class="font-medium">{label}</span>{/if}
-      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
-        {field.formula ?? "1d20"}
-      </span>
-      {#if rollState.text}
-        <span
-          class={rollState.isError
-            ? "text-red-400 font-bold"
-            : rollState.success === true
-              ? "text-green-400 font-bold"
-              : rollState.success === false
-                ? "text-red-400 font-bold"
-                : "text-theme-primary font-bold"}
-        >
-          {rollState.text}
+      {#if isNameTargetDice}
+        {#if targetScore !== null}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+            data-testid="presentation-field-dice-target"
+          >
+            {formattedTargetScore}
+          </span>
+        {/if}
+      {:else}
+        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+          {field.formula ?? "1d20"}
         </span>
+        {#if targetScore !== null}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+            data-testid="presentation-field-dice-target"
+          >
+            Target: {targetScore}
+          </span>
+        {/if}
+      {/if}
+      {#if rollState.text}
+        {#if rollState.isError}
+          <span class="font-bold text-theme-danger">{rollState.text}</span>
+        {:else if rollState.success !== undefined}
+          <span
+            class={rollState.success ? "text-emerald-400" : "text-theme-danger"}
+            role="status"
+            aria-label={`${displayRollTotal ?? "Roll"}: ${rollState.success ? "Success" : "Failure"}`}
+            data-testid="presentation-field-dice-outcome"
+          >
+            {displayRollTotal ?? displayRollText}
+          </span>
+        {:else}
+          <span class="font-bold text-theme-primary">{displayRollText}</span>
+        {/if}
       {/if}
     </button>
   {:else}
@@ -237,9 +281,19 @@
         aria-hidden="true"
       ></span>
       {#if label}<span class="font-medium">{label}</span>{/if}
-      <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
-        {field.formula ?? "1d20"}
-      </span>
+      {#if isNameTargetDice}
+        {#if targetScore !== null}
+          <span
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+          >
+            {formattedTargetScore}
+          </span>
+        {/if}
+      {:else}
+        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+          {field.formula ?? "1d20"}
+        </span>
+      {/if}
     </span>
   {/if}
 {:else}

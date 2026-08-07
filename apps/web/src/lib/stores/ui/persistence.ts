@@ -36,6 +36,7 @@ export const UI_STORAGE_KEYS = {
   GUIDED_MODE_ACTIVE: "codex_guided_mode_active",
   GUIDED_MODE_DISMISSED_RECOMMENDATIONS:
     "codex_guided_mode_dismissed_recommendations",
+  AUTO_FULLSCREEN: "codex_auto_fullscreen",
 } as const;
 
 export type UIStorageKey =

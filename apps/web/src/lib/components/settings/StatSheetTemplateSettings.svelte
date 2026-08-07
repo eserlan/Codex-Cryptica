@@ -9,7 +9,11 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import TemplatePublishModal from "$lib/components/stats/community-template/TemplatePublishModal.svelte";
-  import PresentationTemplateManager from "$lib/components/stats/presentation/PresentationTemplateManager.svelte";
+  import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
+  import { importPresentationTemplatePackage } from "@codex/stat-sheet-engine";
+  import type { PresentationTemplate } from "schema";
+
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const handleDefaultChange = (categoryId: string, templateId: string) => {
     statSheetTemplates.setDefaultTemplate(categoryId, templateId || null);
@@ -18,7 +22,6 @@
   let editingId = $state<string | null>(null);
   let renameValue = $state("");
   let expandedIds = $state(new Set<string>());
-  let activePresentationManagerSchema = $state<StatSheetTemplate | null>(null);
   let selectedPresentationSchemaId = $state<string>("");
 
   const selectedPresentationSchema = $derived(
@@ -26,6 +29,123 @@
       (t) => t.id === selectedPresentationSchemaId,
     ) ?? statSheetTemplates.availableTemplates[0],
   );
+
+  const availablePresentations = $derived(
+    selectedPresentationSchema
+      ? [
+          ...presentationTemplates.availableTemplatesForSchema(
+            selectedPresentationSchema.id,
+          ),
+          ...presentationTemplates.generatedLayoutsForSchema(
+            selectedPresentationSchema.id,
+            selectedPresentationSchema.fields,
+          ),
+        ]
+      : [],
+  );
+
+  const schemaDefaultPresentationId = $derived(
+    selectedPresentationSchema &&
+      typeof statSheetTemplates.getDefaultPresentationTemplateId === "function"
+      ? statSheetTemplates.getDefaultPresentationTemplateId(
+          selectedPresentationSchema.id,
+        )
+      : null,
+  );
+
+  let presFileInput: HTMLInputElement | undefined = $state();
+  let presImportError = $state("");
+
+  function openCreatePresentation() {
+    if (!selectedPresentationSchema) return;
+    modalUIStore.presentationEditorState = {
+      open: true,
+      schema: selectedPresentationSchema,
+      template: null,
+      duplicate: false,
+    };
+  }
+
+  function openEditPresentation(template: PresentationTemplate) {
+    if (!selectedPresentationSchema) return;
+    modalUIStore.presentationEditorState = {
+      open: true,
+      schema: selectedPresentationSchema,
+      template,
+      duplicate: false,
+    };
+  }
+
+  function openDuplicatePresentation(template: PresentationTemplate) {
+    if (!selectedPresentationSchema) return;
+    modalUIStore.presentationEditorState = {
+      open: true,
+      schema: selectedPresentationSchema,
+      template,
+      duplicate: true,
+    };
+  }
+
+  async function deletePresentationTemplate(template: PresentationTemplate) {
+    const confirmed = await notificationStore.confirm({
+      title: "Delete Presentation Template",
+      message: `Delete "${template.name}"? Entities using it will fall back to the standard view.`,
+      confirmLabel: "Delete",
+      isDangerous: true,
+    });
+    if (!confirmed) return;
+    await presentationTemplates.deleteTemplate(template.id);
+  }
+
+  function triggerPresentationImport() {
+    presImportError = "";
+    presFileInput?.click();
+  }
+
+  async function handleImportPresentationFile(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file || !selectedPresentationSchema) return;
+    presImportError = "";
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const availableSchemaIds = [selectedPresentationSchema.id];
+      const result = importPresentationTemplatePackage(
+        json,
+        availableSchemaIds,
+      );
+      if (!result.ok) {
+        presImportError = result.message;
+        return;
+      }
+      const saved = await presentationTemplates.saveTemplate({
+        schemaTemplateId: result.package.schemaTemplateId,
+        name: presentationTemplates.uniqueNameForSchema(
+          result.package.name,
+          selectedPresentationSchema.id,
+        ),
+        description: result.package.description ?? null,
+        source: result.package.source,
+        formatVersion: result.package.formatVersion,
+      });
+      if (!saved) {
+        presImportError = "Failed to import template.";
+        return;
+      }
+      const notice =
+        result.removedFragments.length > 0
+          ? ` (${result.removedFragments.length} disallowed item${result.removedFragments.length === 1 ? "" : "s"} removed)`
+          : "";
+      notificationStore.notify(
+        `Imported template "${saved.name}"${notice}`,
+        "success",
+      );
+    } catch {
+      presImportError = "This file isn't a valid presentation template.";
+    }
+  }
 
   const startRename = (id: string, currentName: string) => {
     editingId = id;
@@ -722,24 +842,38 @@
           Presentation Layout Templates
         </h4>
         <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
-          Custom card, grid, and table layouts for stat sheets. Manage
-          presentation templates per stat sheet schema.
+          Custom card, grid, and table layouts for stat sheets.
         </p>
       </div>
-      {#if selectedPresentationSchema}
+      <div class="flex items-center gap-2 shrink-0">
         <button
           type="button"
-          class="rounded bg-theme-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-bg hover:opacity-90 shrink-0"
-          onclick={() =>
-            (activePresentationManagerSchema = selectedPresentationSchema)}
-          data-testid="settings-manage-presentations-btn"
+          class="rounded border border-theme-border px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+          onclick={triggerPresentationImport}
+          data-testid="presentation-manager-import"
         >
-          Manage Layouts
+          Import
         </button>
-      {/if}
+        <input
+          bind:this={presFileInput}
+          type="file"
+          accept="application/json"
+          class="hidden"
+          onchange={handleImportPresentationFile}
+        />
+        <button
+          type="button"
+          class="rounded bg-theme-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-theme-bg hover:opacity-90 transition-colors"
+          onclick={openCreatePresentation}
+          data-testid="presentation-manager-new"
+        >
+          New Layout
+        </button>
+      </div>
     </div>
+
     <div
-      class="flex items-center gap-3 p-3 bg-theme-surface border border-theme-border rounded"
+      class="flex items-center gap-3 p-3 bg-theme-surface border border-theme-border rounded mb-3"
     >
       <span class="text-xs font-bold text-theme-text truncate"
         >Select Stat Schema:</span
@@ -757,15 +891,86 @@
         {/each}
       </select>
     </div>
+
+    {#if presImportError}
+      <p class="mb-3 text-xs text-red-400" role="alert">{presImportError}</p>
+    {/if}
+
+    <div class="space-y-2">
+      {#each availablePresentations as t (t.id)}
+        <div
+          class="p-3 bg-theme-surface border border-theme-border rounded flex items-center justify-between gap-3 group transition-all hover:border-theme-primary/30"
+          data-testid="presentation-template-row"
+        >
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-theme-text truncate">
+                {t.name}
+              </span>
+              {#if t.id === schemaDefaultPresentationId}
+                <span
+                  class="rounded bg-theme-primary/10 border border-theme-primary/30 px-1.5 py-0.5 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+                >
+                  Default
+                </span>
+              {/if}
+              {#if t.isBuiltIn}
+                <span
+                  class="rounded bg-theme-surface border border-theme-border px-1.5 py-0.5 text-[9px] font-bold text-theme-muted uppercase tracking-wider"
+                >
+                  Built-in
+                </span>
+              {/if}
+            </div>
+            {#if t.description}
+              <span class="text-[10px] text-theme-muted truncate mt-0.5"
+                >{t.description}</span
+              >
+            {/if}
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            {#if t.isBuiltIn}
+              <button
+                type="button"
+                class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+                onclick={() => openDuplicatePresentation(t)}
+                data-testid="presentation-manager-duplicate"
+              >
+                Duplicate
+              </button>
+            {:else}
+              <button
+                type="button"
+                class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+                onclick={() => openEditPresentation(t)}
+                data-testid="presentation-manager-edit"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500 transition-colors"
+                onclick={() => deletePresentationTemplate(t)}
+                data-testid="presentation-manager-delete"
+              >
+                Delete
+              </button>
+            {/if}
+          </div>
+        </div>
+      {:else}
+        <div
+          class="p-6 text-center border border-dashed border-theme-border rounded bg-theme-surface/50"
+        >
+          <p class="text-xs text-theme-muted">
+            No layout templates found for this schema.
+          </p>
+        </div>
+      {/each}
+    </div>
   </div>
 </div>
-
-{#if activePresentationManagerSchema}
-  <PresentationTemplateManager
-    schema={activePresentationManagerSchema}
-    onClose={() => (activePresentationManagerSchema = null)}
-  />
-{/if}
 
 {#if publishingTemplates.length > 0}
   <TemplatePublishModal

@@ -8,7 +8,11 @@ import {
   MIN_RIGHT_SIDEBAR_WIDTH,
   type UIViewport,
 } from "./layout-ui.svelte";
-import { UIPersistence, type StorageLike } from "./persistence";
+import {
+  UIPersistence,
+  UI_STORAGE_KEYS,
+  type StorageLike,
+} from "./persistence";
 
 function storage(initial: Record<string, string> = {}) {
   const values = { ...initial };
@@ -283,5 +287,25 @@ describe("LayoutUIStore", () => {
 
     expect(store.leftSidebarOpen).toBe(true);
     expect(store.activeSidebarTool).toBe("oracle");
+  });
+
+  it("defaults autoFullscreen to true and persists changes via setAutoFullscreen", () => {
+    const { storage: memStorage, values } = storage();
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: memStorage }),
+      viewport().viewport,
+    );
+
+    expect(store.autoFullscreen).toBe(true);
+
+    store.setAutoFullscreen(false);
+    expect(store.autoFullscreen).toBe(false);
+    expect(values[UI_STORAGE_KEYS.AUTO_FULLSCREEN]).toBe("false");
+
+    const reloaded = new LayoutUIStore(
+      new UIPersistence({ storage: memStorage }),
+      viewport().viewport,
+    );
+    expect(reloaded.autoFullscreen).toBe(false);
   });
 });

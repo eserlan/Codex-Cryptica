@@ -1,9 +1,18 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { FieldReferenceNode as FieldReferenceNodeType } from "@codex/stat-sheet-engine";
 import type { PresentationRenderContext } from "../types";
+
+const { rollStatSheetDiceField } = vi.hoisted(() => ({
+  rollStatSheetDiceField: vi.fn(),
+}));
+
+vi.mock("$lib/utils/stat-sheet-field-actions", () => ({
+  rollStatSheetDiceField,
+}));
+
 import FieldReferenceNode from "./FieldReferenceNode.svelte";
 
 function makeContext(
@@ -14,6 +23,7 @@ function makeContext(
     readOnly: false,
     mode: "view",
     onUpdateFieldValue: vi.fn(),
+    onUpdateField: vi.fn(),
     onAdjustCounter: vi.fn(),
   };
 }
@@ -102,5 +112,103 @@ describe("FieldReferenceNode", () => {
     const previewContext = { ...context, mode: "preview" as const };
     render(FieldReferenceNode, { props: { node, context: previewContext } });
     expect(screen.getByTestId("presentation-field-dice-preview")).toBeTruthy();
+    expect(screen.queryByTestId("presentation-field-dice-target")).toBeNull();
+  });
+
+  it("shows a dice field's target before rolling and a compact success indicator after rolling", async () => {
+    rollStatSheetDiceField.mockResolvedValueOnce({
+      text: "= 17 vs 50 (Success)",
+      isError: false,
+      success: true,
+      total: 17,
+    });
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "evade",
+      label: "Evade",
+    };
+    const context = makeContext([
+      {
+        id: "evade",
+        label: "Evade",
+        type: "dice",
+        formula: "1d100",
+        value: 50,
+      },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    expect(
+      screen.getByTestId("presentation-field-dice-target").textContent,
+    ).toContain("Target: 50");
+    await fireEvent.click(screen.getByTestId("presentation-field-dice-roll"));
+
+    const roll = screen.getByTestId("presentation-field-dice-roll");
+    expect(screen.getByRole("status", { name: "17: Success" })).toBeTruthy();
+    expect(
+      screen.getByTestId("presentation-field-dice-outcome").className,
+    ).toContain("text-emerald-400");
+    expect(roll.textContent).not.toContain("= 17 vs 50");
+    expect(roll.textContent).toContain("17");
+    expect(roll.textContent).not.toContain("Success");
+  });
+
+  it("uses the semantic danger color for a failed target roll", async () => {
+    rollStatSheetDiceField.mockResolvedValueOnce({
+      text: "= 73 vs 50 (Failure)",
+      isError: false,
+      success: false,
+      total: 73,
+    });
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "evade",
+      label: "Evade",
+    };
+    const context = makeContext([
+      {
+        id: "evade",
+        label: "Evade",
+        type: "dice",
+        formula: "1d100",
+        value: 50,
+      },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+    await fireEvent.click(screen.getByTestId("presentation-field-dice-roll"));
+
+    expect(screen.getByRole("status", { name: "73: Failure" })).toBeTruthy();
+    const outcome = screen.getByTestId("presentation-field-dice-outcome");
+    expect(outcome.className).toContain("text-theme-danger");
+    expect(outcome.textContent).toContain("73");
+    expect(outcome.textContent).not.toContain("vs");
+  });
+
+  it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "perception",
+      label: "Perception",
+      displayMode: "name-target",
+    };
+    const context = makeContext([
+      {
+        id: "perception",
+        label: "Perception",
+        type: "dice",
+        formula: "1d100",
+        value: 45,
+      },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    const roll = screen.getByTestId("presentation-field-dice-roll");
+    expect(roll.textContent).toContain("Perception");
+    expect(roll.textContent).toContain("45%");
+    expect(roll.textContent).not.toContain("1d100");
+    expect(roll.textContent).not.toContain("Target:");
   });
 });

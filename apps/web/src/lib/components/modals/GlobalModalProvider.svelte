@@ -255,6 +255,33 @@
       {/await}
     {/if}
 
+    <!-- Presentation Template Manager -->
+    {#if modalUIStore.activePresentationManagerSchema}
+      {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateManager.svelte"), "PresentationTemplateManager") then PresentationTemplateManager}
+        {#if PresentationTemplateManager}
+          <PresentationTemplateManager
+            schema={modalUIStore.activePresentationManagerSchema}
+            onClose={() =>
+              (modalUIStore.activePresentationManagerSchema = null)}
+          />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Presentation Template Editor -->
+    {#if modalUIStore.presentationEditorState.open && modalUIStore.presentationEditorState.schema}
+      {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateEditor.svelte"), "PresentationTemplateEditor") then PresentationTemplateEditor}
+        {#if PresentationTemplateEditor}
+          <PresentationTemplateEditor
+            schema={modalUIStore.presentationEditorState.schema}
+            template={modalUIStore.presentationEditorState.template}
+            duplicate={modalUIStore.presentationEditorState.duplicate}
+            onClose={() => (modalUIStore.presentationEditorState.open = false)}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Guest Character Chat Modal -->
     {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
       {#if GuestChatModal}

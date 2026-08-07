@@ -1,42 +1,60 @@
 <script lang="ts">
-  import type { StatSheetTemplate, PresentationTemplate } from "schema";
+  import type { Entity, StatSheetTemplate, PresentationTemplate } from "schema";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { importPresentationTemplatePackage } from "@codex/stat-sheet-engine";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
-  import PresentationTemplateEditor from "./PresentationTemplateEditor.svelte";
 
   let {
     schema,
+    entityType,
     onClose = () => {},
-  }: { schema: StatSheetTemplate; onClose?: () => void } = $props();
+  }: {
+    schema: StatSheetTemplate;
+    entityType?: Entity["type"];
+    onClose?: () => void;
+  } = $props();
 
-  let editorState = $state<
-    | { open: false }
-    | { open: true; template: PresentationTemplate | null; duplicate: boolean }
-  >({ open: false });
   let importError = $state("");
   let fileInput: HTMLInputElement | undefined = $state();
 
   const available = $derived(
-    presentationTemplates.availableTemplatesForSchema(schema.id),
+    presentationTemplates.availableTemplatesForSchema(
+      schema.id,
+      schema.fields,
+      entityType,
+    ),
   );
   const schemaDefaultId = $derived(
     statSheetTemplates.getDefaultPresentationTemplateId(schema.id),
   );
 
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+
   function openCreate() {
-    editorState = { open: true, template: null, duplicate: false };
+    modalUIStore.presentationEditorState = {
+      open: true,
+      schema,
+      template: null,
+      duplicate: false,
+    };
   }
   function openEdit(template: PresentationTemplate) {
-    editorState = { open: true, template, duplicate: false };
+    modalUIStore.presentationEditorState = {
+      open: true,
+      schema,
+      template,
+      duplicate: false,
+    };
   }
   function openDuplicate(template: PresentationTemplate) {
-    editorState = { open: true, template, duplicate: true };
-  }
-  function closeEditor() {
-    editorState = { open: false };
+    modalUIStore.presentationEditorState = {
+      open: true,
+      schema,
+      template,
+      duplicate: true,
+    };
   }
 
   async function deleteTemplate(template: PresentationTemplate) {
@@ -102,7 +120,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-[105] flex items-center justify-center bg-theme-bg/80 p-3 sm:p-6"
+  class="fixed inset-0 z-[120] flex items-center justify-center bg-theme-bg/80 p-3 sm:p-6"
   role="presentation"
   onclick={(event) => event.target === event.currentTarget && onClose()}
 >
@@ -226,12 +244,3 @@
     </div>
   </div>
 </div>
-
-{#if editorState.open}
-  <PresentationTemplateEditor
-    {schema}
-    template={editorState.template}
-    duplicate={editorState.duplicate}
-    onClose={closeEditor}
-  />
-{/if}

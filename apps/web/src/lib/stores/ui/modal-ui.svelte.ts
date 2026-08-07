@@ -21,6 +21,20 @@ export class ModalUIStore {
   pendingCanvasEntities = $state<string[]>([]);
   isImporting = $state(false);
   showDiceModal = $state(false);
+  activePresentationManagerSchema = $state<
+    import("schema").StatSheetTemplate | null
+  >(null);
+  presentationEditorState = $state<{
+    open: boolean;
+    schema: import("schema").StatSheetTemplate | null;
+    template: import("schema").PresentationTemplate | null;
+    duplicate: boolean;
+  }>({
+    open: false,
+    schema: null,
+    template: null,
+    duplicate: false,
+  });
 
   // Set to signal that the entity-creation form should open. A latching flag
   // (not a counter) because on mobile VaultControls mounts only after the

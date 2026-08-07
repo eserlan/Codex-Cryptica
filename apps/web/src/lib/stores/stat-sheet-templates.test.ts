@@ -124,7 +124,13 @@ describe("StatSheetTemplateStore", () => {
     expect(mythras.fields.find((f) => f.id === "evade")).toMatchObject({
       type: "dice",
       formula: "1d100",
+      label: "Evade",
     });
+    expect(
+      mythras.fields
+        .filter((field) => field.type === "dice")
+        .some((field) => field.label.includes("(d100)")),
+    ).toBe(false);
     expect(mythras.fields.find((f) => f.id === "ap")).toMatchObject({
       type: "counter",
       min: 0,
@@ -137,6 +143,16 @@ describe("StatSheetTemplateStore", () => {
     expect(mythras.fields.find((f) => f.id === "loc_head_hp")).toMatchObject({
       type: "counter",
       label: "Head HP",
+    });
+    expect(mythras.fields.find((f) => f.id === "combat_styles")).toMatchObject({
+      type: "longtext",
+      label: "Combat Styles",
+    });
+    expect(
+      mythras.fields.find((f) => f.id === "professional_skills"),
+    ).toMatchObject({
+      type: "longtext",
+      label: "Professional & Magic Skills",
     });
 
     const mythrasGear = BUILT_IN_STAT_SHEET_TEMPLATES.find(
@@ -165,6 +181,11 @@ describe("StatSheetTemplateStore", () => {
       type: "longtext",
       label: "Creature Traits & Special Abilities",
     });
+    expect(
+      mythrasNpc.fields
+        .filter((field) => field.type === "dice")
+        .some((field) => field.label.includes("(d100)")),
+    ).toBe(false);
   });
 
   it("saves the current fields as a new vault-scoped template", async () => {
