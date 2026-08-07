@@ -580,6 +580,15 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           source: "save_confirmation",
         }),
       );
+
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+      const secondOpenCodexButton = Array.from(
+        document.querySelectorAll("button"),
+      ).find((button) => button.textContent?.trim() === "Open Codex");
+      await fireEvent.click(secondOpenCodexButton!);
+
+      expect(openSpy).toHaveBeenCalledTimes(1);
+      expect(codexWindow.location.href).toContain("utm_medium=save-to-vault");
     });
   });
 });

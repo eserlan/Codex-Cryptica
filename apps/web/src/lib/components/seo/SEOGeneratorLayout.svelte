@@ -119,6 +119,7 @@
   let useAI = $state(true);
   let showSaveModal = $state(false);
   let redirectUrl = $state(`${cleanBase}/`);
+  let codexWindow: Window | null = null;
 
   // Offline awareness (#1494): generator pages still work offline using local
   // tables, but AI Lore Co-Author mode requires the network. Network status
@@ -235,8 +236,15 @@
     showSaveModal = false;
 
     try {
-      const codexWindow = window.open("about:blank", "codex-cryptica-app");
-      if (codexWindow) {
+      if (codexWindow && !codexWindow.closed) {
+        codexWindow.location.href = redirectUrl;
+        codexWindow.focus?.();
+        return;
+      }
+
+      const nextCodexWindow = window.open("about:blank", "codex-cryptica-app");
+      if (nextCodexWindow) {
+        codexWindow = nextCodexWindow;
         // Keep the reusable named tab without allowing it to navigate the
         // generator tab if it later reaches an untrusted origin.
         codexWindow.opener = null;
