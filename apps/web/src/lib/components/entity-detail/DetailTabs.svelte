@@ -114,7 +114,7 @@
   };
 </script>
 
-<div class="px-4 pt-2 pb-0 md:px-6 md:pt-4 md:pb-0">
+<div class="min-w-0 px-4 pt-2 pb-0 md:px-6 md:pt-4 md:pb-0">
   {#if isEditing}
     <div class="mb-2">
       <label
