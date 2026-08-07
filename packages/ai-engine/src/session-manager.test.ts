@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { AiSessionManager } from "./session-manager";
+import { AiSessionManager, RelayedSessionToken } from "./session-manager";
 import { DefaultAIClientManager } from "./client-manager";
 
 const PROXY_URL = "https://proxy.example";
@@ -229,6 +229,99 @@ describe("AiSessionManager", () => {
 
     expect(await manager.getToken()).toBe("token-1");
   });
+
+  it("fires onTokenChange with the minted token after a successful handshake", async () => {
+    const onTokenChange = vi.fn();
+    const manager = new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => "challenge-abc",
+      fetcher: sessionFetcher(
+        1_800,
+        () => 1_000_000_000,
+      ) as unknown as typeof fetch,
+      storage: memoryStorage(),
+      now: () => 1_000_000_000,
+      onTokenChange,
+    });
+
+    await manager.getToken();
+
+    expect(onTokenChange).toHaveBeenCalledWith({
+      token: "token-1",
+      expiresAt: 1_000_000_000 / 1000 + 1_800,
+    });
+  });
+
+  it("fires onTokenChange with null on invalidate", async () => {
+    const onTokenChange = vi.fn();
+    const manager = new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => "challenge-abc",
+      fetcher: sessionFetcher() as unknown as typeof fetch,
+      storage: memoryStorage(),
+      onTokenChange,
+    });
+
+    await manager.getToken();
+    onTokenChange.mockClear();
+    manager.invalidate();
+
+    expect(onTokenChange).toHaveBeenCalledWith(null);
+  });
+
+  it("does not fire onTokenChange when a handshake fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const onTokenChange = vi.fn();
+    const manager = new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => {
+        throw new Error("widget failed");
+      },
+      fetcher: sessionFetcher() as unknown as typeof fetch,
+      storage: memoryStorage(),
+      onTokenChange,
+    });
+
+    await manager.getToken();
+
+    expect(onTokenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("RelayedSessionToken", () => {
+  it("returns null until a token is relayed", async () => {
+    const relay = new RelayedSessionToken();
+    expect(await relay.getToken()).toBeNull();
+  });
+
+  it("returns the relayed token once set", async () => {
+    const relay = new RelayedSessionToken();
+    relay.setToken({ token: "relayed-1", expiresAt: 9_999_999_999 });
+    expect(await relay.getToken()).toBe("relayed-1");
+  });
+
+  it("returns null once the relayed token is expiring, same skew as AiSessionManager", async () => {
+    let now = 1_000_000_000;
+    const relay = new RelayedSessionToken(() => now);
+    relay.setToken({ token: "relayed-1", expiresAt: now / 1000 + 10 });
+
+    now += 5_000; // still outside the 30s skew window
+    expect(await relay.getToken()).toBeNull();
+  });
+
+  it("clears the relayed token on invalidate", async () => {
+    const relay = new RelayedSessionToken();
+    relay.setToken({ token: "relayed-1", expiresAt: 9_999_999_999 });
+    relay.invalidate();
+    expect(await relay.getToken()).toBeNull();
+  });
+
+  it("relaying null clears any previously set token", async () => {
+    const relay = new RelayedSessionToken();
+    relay.setToken({ token: "relayed-1", expiresAt: 9_999_999_999 });
+    relay.setToken(null);
+    expect(await relay.getToken()).toBeNull();
+  });
 });
 
 describe("DefaultAIClientManager token attachment", () => {
@@ -377,6 +470,24 @@ describe("DefaultAIClientManager token attachment", () => {
       client.sendInteraction({ model: "luna-fast", input: "hello" }),
     ).rejects.toThrow(/upstream down/);
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts a RelayedSessionToken as a drop-in sessionManager (the worker-side case)", async () => {
+    const relay = new RelayedSessionToken();
+    relay.setToken({ token: "worker-relayed-1", expiresAt: 9_999_999_999 });
+
+    const fetcher = vi.fn(async (_input: any, _init?: RequestInit) =>
+      jsonResponse({ id: "i-1", text: "hi" }),
+    );
+    const client = new DefaultAIClientManager(
+      fetcher as unknown as typeof fetch,
+      relay,
+    );
+
+    await client.sendInteraction({ model: "luna-fast", input: "hello" });
+
+    const headers = new Headers(fetcher.mock.calls[0][1]?.headers);
+    expect(headers.get("Authorization")).toBe("Bearer worker-relayed-1");
   });
 
   it("still surfaces an expired interaction id as a typed error", async () => {

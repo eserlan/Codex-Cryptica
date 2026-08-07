@@ -18,6 +18,22 @@
 /** Solves an invisible Turnstile challenge, resolving with the challenge token. */
 export type ChallengeSolver = () => Promise<string>;
 
+/**
+ * Shape `DefaultAIClientManager.proxyFetch` actually needs from a session
+ * manager. `AiSessionManager` (the real, Turnstile-capable one) satisfies it,
+ * and so does {@link RelayedSessionToken} — the two are interchangeable from
+ * the client manager's point of view.
+ */
+export interface SessionTokenSource {
+  getToken(): Promise<string | null>;
+  invalidate(): void;
+}
+
+export interface CachedToken {
+  token: string;
+  expiresAt: number;
+}
+
 export interface AiSessionManagerOptions {
   proxyUrl: string;
   solveChallenge: ChallengeSolver;
@@ -25,11 +41,14 @@ export interface AiSessionManagerOptions {
   /** Defaults to `sessionStorage` in the browser, absent elsewhere. */
   storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
   now?: () => number;
-}
-
-interface CachedToken {
-  token: string;
-  expiresAt: number;
+  /**
+   * Fired whenever the cached token changes — minted, refreshed, or cleared
+   * (`null`). This is the hook that lets a token minted here (main thread,
+   * the only place that can run Turnstile) reach the AI Web Workers, which
+   * each carry their own isolated `aiClientManager` instance and have no DOM
+   * to solve a challenge themselves. See {@link RelayedSessionToken}.
+   */
+  onTokenChange?: (token: CachedToken | null) => void;
 }
 
 const STORAGE_KEY = "codex.llm-session-token";
@@ -58,6 +77,7 @@ export class AiSessionManager {
   private readonly fetcher: typeof fetch;
   private readonly storage: AiSessionManagerOptions["storage"];
   private readonly now: () => number;
+  private readonly onTokenChange?: (token: CachedToken | null) => void;
 
   constructor(options: AiSessionManagerOptions) {
     this.proxyUrl = options.proxyUrl;
@@ -66,6 +86,7 @@ export class AiSessionManager {
     this.storage =
       options.storage !== undefined ? options.storage : defaultStorage();
     this.now = options.now ?? (() => Date.now());
+    this.onTokenChange = options.onTokenChange;
     this.cached = this.readStoredToken();
   }
 
@@ -101,6 +122,7 @@ export class AiSessionManager {
     } catch {
       // A storage write failing (private mode, quota) must not break generation.
     }
+    this.onTokenChange?.(null);
   }
 
   private isExpiring(token: CachedToken): boolean {
@@ -137,6 +159,7 @@ export class AiSessionManager {
         expiresAt: data.expiresAt ?? this.now() / 1000 + 30 * 60,
       };
       this.writeStoredToken(this.cached);
+      this.onTokenChange?.(this.cached);
       return this.cached.token;
     } catch (error) {
       console.warn("[AiSession] Session handshake error:", error);
@@ -175,5 +198,51 @@ function defaultStorage(): AiSessionManagerOptions["storage"] {
     return typeof sessionStorage !== "undefined" ? sessionStorage : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * A {@link SessionTokenSource} for contexts that can't run Turnstile
+ * themselves — namely the AI Web Workers (`oracle.worker.ts`,
+ * `proposer.worker.ts`). Each worker gets its own isolated module graph and
+ * therefore its own separate `aiClientManager` instance; none of them have a
+ * `document`, so none can solve a challenge or mint a token on their own.
+ *
+ * This class holds no logic beyond "remember the last value I was told" —
+ * the main thread's real `AiSessionManager` (via its `onTokenChange` hook)
+ * is what actually mints and refreshes tokens; this just relays the result
+ * across the Worker boundary. `getToken()` returns `null` once the relayed
+ * token is expiring, same skew as `AiSessionManager`, so a worker never
+ * knowingly sends a request with a token that's about to be rejected.
+ */
+export class RelayedSessionToken implements SessionTokenSource {
+  private cached: CachedToken | null = null;
+  private readonly now: () => number;
+
+  constructor(now: () => number = () => Date.now()) {
+    this.now = now;
+  }
+
+  /** Called by the worker's message handler whenever the main thread relays a new snapshot. */
+  setToken(token: CachedToken | null): void {
+    this.cached = token;
+  }
+
+  async getToken(): Promise<string | null> {
+    const cached = this.cached;
+    if (!cached) return null;
+    if (cached.expiresAt - EXPIRY_SKEW_SECONDS <= this.now() / 1000) {
+      return null;
+    }
+    return cached.token;
+  }
+
+  /**
+   * A relay has nothing local to discard beyond its cached snapshot — the
+   * real invalidation (and re-handshake) happens on the main thread, which
+   * will relay the fresh token back via {@link setToken} once it lands.
+   */
+  invalidate(): void {
+    this.cached = null;
   }
 }

@@ -1,6 +1,12 @@
 import { browser } from "$app/environment";
-import { AiSessionManager, aiClientManager } from "@codex/ai-engine";
+import {
+  AiSessionManager,
+  aiClientManager,
+  type CachedToken,
+} from "@codex/ai-engine";
 import { getSessionTurnstileToken } from "$lib/services/publishing/turnstile";
+import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+import { proposerBridge } from "$lib/cloud-bridge/proposer-bridge";
 
 /**
  * Wires the shared `aiClientManager` to a session manager that mints
@@ -17,6 +23,13 @@ import { getSessionTurnstileToken } from "$lib/services/publishing/turnstile";
  * `(marketing)/tools` (see `services/seo/generator-engine.ts`). Those pages
  * generate without ever mounting the `(app)` layout, so wiring has to happen
  * app-wide or their requests go out unauthenticated and get 401'd.
+ *
+ * The Oracle and Proposer AI Web Workers each carry their own isolated
+ * `aiClientManager` instance (Workers don't share module state with the main
+ * thread) and have no DOM, so neither can solve a Turnstile challenge or
+ * mint a token itself. `onTokenChange` below relays every mint/refresh/clear
+ * from this, the one real session manager, into both workers — see
+ * `RelayedSessionToken` in `@codex/ai-engine` for the worker-side half.
  */
 
 const PROXY_URL =
@@ -25,12 +38,18 @@ const PROXY_URL =
 
 let sessionManager: AiSessionManager | null = null;
 
+function relayTokenToWorkers(token: CachedToken | null): void {
+  oracleBridge.setSessionToken(token);
+  proposerBridge.setSessionToken(token);
+}
+
 function ensureSessionManager(): AiSessionManager | null {
   if (!browser) return null;
   if (!sessionManager) {
     sessionManager = new AiSessionManager({
       proxyUrl: PROXY_URL,
       solveChallenge: getSessionTurnstileToken,
+      onTokenChange: relayTokenToWorkers,
     });
     aiClientManager.setSessionManager(sessionManager);
   }
