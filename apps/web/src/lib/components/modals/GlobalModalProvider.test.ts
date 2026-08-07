@@ -68,6 +68,12 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
       generatorId: null,
     },
     lightbox: { show: false, imageUrl: "", title: "" },
+    presentationEditorState: {
+      open: false,
+      schema: null,
+      template: null,
+      duplicate: false,
+    },
     showCanvasSelector: false,
     showMobileCreateSheet: false,
     closeMergeDialog: vi.fn(),
