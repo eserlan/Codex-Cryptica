@@ -21,9 +21,9 @@ You may choose to synchronize your campaign with a folder on your computer.
 If you use any AI feature (Lore Oracle chat, entity generation/revision, connection suggestions, Image Generation), your data is processed as follows:
 
 - **OpenAI:** Most AI features route through OpenAI's API by default. This includes conversational features (Lore Oracle chat, entity revisions, generator sessions) as well as one-shot analysis and generation features (such as detecting potential connections between entities, or generating a new entity related to an existing one).
+  - For conversational features, requests can include a conversation/interaction identifier so follow-up turns can reference earlier context without resending it.
+  - For one-shot features, each request is sent and processed independently, with no ongoing conversation identifier.
 - **Google Gemini:** Used for Image Generation, and as an automatic fallback for other features if OpenAI is unavailable. Snippets of your current campaign context (entities and chronicles) are sent to Google's Gemini API in these cases.
-  - For conversational features specifically, OpenAI retains the conversation server-side for its duration, so follow-up turns don't need to resend earlier context.
-  - For one-shot features, each request is sent and processed independently, with no ongoing server-side conversation state.
 - **Data Usage:** According to Google's and OpenAI's standard API terms, data sent via their paid/tier-based APIs is typically not used to train their global models.
 - **Opt-out:** You can disable all AI features by enabling "AI Disabled" in the settings.
 
