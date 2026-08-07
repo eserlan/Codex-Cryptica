@@ -289,8 +289,8 @@
                   : ''}"
               >
                 <p class="text-sm text-chrome-text/70 leading-relaxed">
-                  Manage AI integration settings. Codex Cryptica uses Google
-                  Gemini to provide context-aware reasoning, automated tagging,
+                  Manage AI integration settings. Codex Cryptica uses Google the
+                  Oracle to provide context-aware reasoning, automated tagging,
                   and image generation.
                 </p>
                 <AISettings />

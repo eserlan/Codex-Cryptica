@@ -226,7 +226,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "oracle-connection-modes",
     title: "Oracle Connection Modes",
     content:
-      "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.",
+      "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to OpenAI/Luna). The status badge in the Oracle sidebar shows which mode is active.",
     icon: "icon-[lucide--cloud]",
   },
   "oracle-memory": {

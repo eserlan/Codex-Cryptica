@@ -216,7 +216,7 @@
     </h3>
     <p class="text-xs text-theme-muted leading-relaxed max-w-[280px]">
       To consult the archives, please provide a <strong
-        class="text-theme-primary">Google Gemini API Key</strong
+        class="text-theme-primary">OpenAI/Luna API Key</strong
       >
       in the Settings panel.
       {#if !import.meta.env.VITE_SHARED_GEMINI_KEY}

@@ -65,7 +65,7 @@
 
         <p class="text-xs text-theme-text/70 leading-tight">
           Scabard JSON imports work without AI. Text, PDF, DOCX, and generic
-          JSON analysis still need a Gemini key in the
+          JSON analysis still need an API key in the
           <button
             class="underline hover:text-theme-text"
             onclick={() => (modalUIStore.activeSettingsTab = "intelligence")}

@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.1 -> 1.3.0
-- Modified principles: III. Simplicity & YAGNI (added a DRY/duplication-check rule)
+- Version change: 1.3.0 -> 1.3.1
+- Modified principles: IV. AI-First Extraction (replaced Gemini with OpenAI/Luna or provider-neutral phrasing)
 - Added sections: None
 - Removed sections: None
 - Templates requiring updates:
@@ -31,7 +31,7 @@ Before writing new logic, check whether the same logic already exists elsewhere 
 
 ### IV. AI-First Extraction
 
-The Oracle (Gemini) is the primary engine for transforming unstructured data into the Codex. Systems should be designed to feed the Oracle clean text/data and handle its structured outputs (JSON/Markdown) with robust validation.
+The Oracle (powered by OpenAI/Luna or a provider-neutral contract) is the primary engine for transforming unstructured data into the Codex. Systems should be designed to feed the Oracle clean text/data and handle its structured outputs (JSON/Markdown) with robust validation.
 
 ### V. Privacy & Client-Side Processing
 
@@ -82,4 +82,4 @@ To prevent user confusion and maintain conceptual clarity, the project converges
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.3.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-07-04
+**Version**: 1.3.1 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-08-07
