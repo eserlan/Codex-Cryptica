@@ -534,7 +534,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
     });
 
-    it("opens or reuses the Codex tab for the saved draft", async () => {
+    it("navigates in the same tab to Codex for the saved draft", async () => {
       const seedDraft = {
         type: "character" as const,
         title: "Seed",
@@ -557,22 +557,16 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       await tick();
       await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
 
-      const codexWindow = {
-        opener: window,
-        location: { href: "" },
-      } as unknown as Window;
-      const openSpy = vi.spyOn(window, "open").mockReturnValue(codexWindow);
+      const openCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(openCodexLink).not.toBeUndefined();
+      expect(openCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
 
-      const openCodexButton = Array.from(
-        document.querySelectorAll("button"),
-      ).find((button) => button.textContent?.trim() === "Open Codex");
-      expect(openCodexButton).not.toBeUndefined();
+      await fireEvent.click(openCodexLink!);
 
-      await fireEvent.click(openCodexButton!);
-
-      expect(openSpy).toHaveBeenCalledWith("about:blank", "codex-cryptica-app");
-      expect(codexWindow.opener).toBeNull();
-      expect(codexWindow.location.href).toContain("utm_medium=save-to-vault");
       expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
         "open_codex",
         expect.objectContaining({
@@ -582,13 +576,15 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
 
       await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
-      const secondOpenCodexButton = Array.from(
-        document.querySelectorAll("button"),
-      ).find((button) => button.textContent?.trim() === "Open Codex");
-      await fireEvent.click(secondOpenCodexButton!);
+      const secondOpenCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(secondOpenCodexLink).not.toBeUndefined();
+      expect(secondOpenCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
 
-      expect(openSpy).toHaveBeenCalledTimes(1);
-      expect(codexWindow.location.href).toContain("utm_medium=save-to-vault");
+      await fireEvent.click(secondOpenCodexLink!);
     });
   });
 });
