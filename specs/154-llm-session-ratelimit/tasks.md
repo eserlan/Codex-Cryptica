@@ -34,4 +34,4 @@
 ## Phase 5: Polish & Security Audit
 
 - [x] T020 Audit token expiry behavior (20-30 min) and confirm the refresh path in `packages/ai-engine/src/session-manager.ts` re-solves an invisible Turnstile challenge without user-visible interruption
-- [ ] T021 End-to-end testing of the complete session token lifecycle with rate limiting across client and proxy. **Not done** — covered by unit tests on both halves, but never exercised against a deployed worker with real Turnstile and real rate limit bindings. Do this on staging once `SESSION_TOKEN_SECRET` is set.
+- [x] T021 End-to-end testing of the complete session token lifecycle with rate limiting across client and proxy. Verified against production 2026-08-07: rejection paths by direct request (no token → 401 `SESSION_TOKEN_MISSING`, forged token → 401 `SESSION_TOKEN_INVALID`, bogus challenge → 403 `TURNSTILE_INVALID`), and the success path in an incognito window — cold handshake, new vault, entity generation all working.
