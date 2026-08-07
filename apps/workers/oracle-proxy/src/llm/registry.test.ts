@@ -61,7 +61,14 @@ describe("getModel", () => {
 describe("getOperationDefaults", () => {
   it("returns the matching operation/context pair", () => {
     const defaults = getOperationDefaults("freeform-generation", "public");
-    expect(defaults?.defaultModelKey).toBe("gemini-flash-lite");
+    expect(defaults?.defaultModelKey).toBe("luna-fast");
+    expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
+  });
+
+  it("returns luna-fast as utility's default, with gemini-flash-lite fallback", () => {
+    const defaults = getOperationDefaults("utility", "public");
+    expect(defaults?.defaultModelKey).toBe("luna-fast");
+    expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
   });
 
   it("returns luna-fast as structured-generation's current default (2026-08-05, verified live)", () => {
