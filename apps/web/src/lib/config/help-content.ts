@@ -254,7 +254,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "visual-graph",
     title: "Visual Graph",
     content:
-      "Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; use Fit to Screen in the graph controls whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
+      "Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; use Fit to Screen in the graph controls whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance. The drawing needs a pointer and a screen, so Browse as table in the graph controls opens the same entities as a keyboard-friendly list, and each entity page names its connections and their direction.",
     icon: "icon-[lucide--share-2]",
   },
   "world-chronology": {

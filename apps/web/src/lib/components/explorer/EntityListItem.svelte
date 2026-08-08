@@ -170,8 +170,8 @@
         class="truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text transition-colors group-hover:text-theme-primary"
       >
         {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-            >*</sup
-          >{/if}
+            aria-hidden="true">*</sup
+          ><span class="sr-only"> (past)</span>{/if}
       </div>
       {#if entity.aliases && entity.aliases.length > 0}
         <div class="truncate text-[9px] text-theme-muted/70 font-mono italic">

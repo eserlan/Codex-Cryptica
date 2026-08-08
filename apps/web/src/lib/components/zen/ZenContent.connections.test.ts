@@ -130,7 +130,7 @@ describe("ZenContent with duplicate/mutual connections", () => {
     );
 
     // Verify edit buttons are present (for the two outbound connections)
-    const editBtns = getAllByLabelText("Edit connection");
+    const editBtns = getAllByLabelText(/^Edit connection to /);
     expect(editBtns.length).toBe(2);
 
     // ConnectionEditor select/input should NOT be in the document initially
