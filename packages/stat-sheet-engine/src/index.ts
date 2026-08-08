@@ -6,5 +6,6 @@ export * from "./presentation/directives";
 export * from "./presentation/parse";
 export * from "./presentation/validate";
 export * from "./presentation/resolve";
+export * from "./presentation/schema-for-entity";
 export * from "./presentation/built-ins";
 export * from "./presentation/package";
