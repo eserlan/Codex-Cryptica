@@ -45,6 +45,7 @@ import {
   starSystemConfig,
 } from "./public-star-system";
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
+import { councilVoteConfig } from "./public-council-vote-constants";
 
 /**
  * Generator id -> default vault category id.
@@ -606,8 +607,6 @@ const EVENT_OUTCOMES = [
   "forged an uneasy alliance between former enemies",
   "uncovered a secret that should have stayed buried",
 ];
-
-import { councilVoteConfig } from "./public-council-vote-constants";
 
 const COUNCIL_VOTE_BODY_TYPES = councilVoteConfig.bodyTypes;
 
