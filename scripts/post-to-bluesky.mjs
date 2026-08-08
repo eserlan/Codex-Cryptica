@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Posts a single short message (with a required image) to Bluesky via the
+ * Posts a single short message (with 1-4 required images) to Bluesky via the
  * AT Protocol's XRPC REST endpoints directly (no @atproto/api dependency) —
  * the handful of calls this needs (createSession, uploadBlob, createRecord)
  * don't justify pulling in the SDK.
@@ -13,13 +13,15 @@
  * Usage:
  *   bun scripts/post-to-bluesky.mjs --image path/to/shot.png --alt "Description of the image" "Post text"
  *   bun scripts/post-to-bluesky.mjs --image https://assets.codexcryptica.com/shot.png --alt "..." "Post text"
+ *   bun scripts/post-to-bluesky.mjs --image a.png --alt "First" --image b.png --alt "Second" "Post text"
  *   echo "some text" | bun scripts/post-to-bluesky.mjs --image path/to/shot.png --alt "..."
  *   bun scripts/post-to-bluesky.mjs --dry-run --image path/to/shot.png --alt "..." "preview without posting"
  *
  * `--image` accepts either a local file path or an http(s) URL (e.g. a
  * Cloudflare R2 asset) — URLs are fetched and re-uploaded as a proper
  * Bluesky image blob, so the image renders inline in the post rather than
- * as a separate link-preview card.
+ * as a separate link-preview card. Repeat `--image`/`--alt` in pairs for up
+ * to 4 images (Bluesky's own per-post limit).
  *
  * Requires BLUESKY_IDENTIFIER (handle or email) and BLUESKY_APP_PASSWORD
  * in .env — Bun loads .env automatically, don't source it manually.
@@ -31,6 +33,7 @@ import { readFile } from "node:fs/promises";
 
 const BLUESKY_MAX_GRAPHEMES = 300;
 const BLUESKY_MAX_IMAGE_BYTES = 1_000_000;
+const BLUESKY_MAX_IMAGES = 4;
 const PDS_URL = "https://bsky.social";
 
 const IMAGE_MIME_TYPES = {
@@ -63,13 +66,30 @@ function graphemeLength(text) {
   return [...text].length;
 }
 
-/** Pulls `--flagName value` out of `args` in place, returning the value. */
-function extractFlagValue(args, flagName) {
-  const index = args.indexOf(flagName);
-  if (index === -1) return undefined;
-  const value = args[index + 1];
-  args.splice(index, 2);
-  return value;
+/**
+ * Pulls every `--image <path> --alt <text>` pair out of `args` in place,
+ * in the order given, so multiple images stay paired with their own alt
+ * text. Leaves any non-image/alt tokens (the post text) untouched.
+ */
+function extractImagePairs(args) {
+  const pairs = [];
+  let i = 0;
+  while (i < args.length) {
+    if (args[i] === "--image") {
+      const imagePathOrUrl = args[i + 1];
+      let alt;
+      let removeCount = 2;
+      if (args[i + 2] === "--alt") {
+        alt = args[i + 3];
+        removeCount = 4;
+      }
+      pairs.push({ imagePathOrUrl, alt });
+      args.splice(i, removeCount);
+      continue;
+    }
+    i++;
+  }
+  return pairs;
 }
 
 function mimeTypeForImagePath(imagePathOrUrl) {
@@ -99,6 +119,36 @@ function computeHashtagFacets(text) {
     facets.push({
       index: { byteStart, byteEnd },
       features: [{ $type: "app.bsky.richtext.facet#tag", tag }],
+    });
+  }
+  return facets;
+}
+
+/**
+ * Locates URLs — both `https://...` and bare domains like
+ * `codexcryptica.com/...` — and computes the facet metadata Bluesky needs to
+ * render them as real, clickable links. Mirrors the detection approach
+ * documented at docs.bsky.app/docs/advanced-guides/post-richtext: match
+ * explicit protocol URLs OR letter-led domain-dot-word patterns, then strip
+ * trailing sentence punctuation the regex's greedy `\S*` tail would
+ * otherwise sweep in (a period ending the sentence, a comma, a closing
+ * paren). Bare domains get `https://` prepended for the facet's `uri` —
+ * the visible text is left exactly as written.
+ */
+function computeLinkFacets(text) {
+  const encoder = new TextEncoder();
+  const facets = [];
+  const pattern = /https?:\/\/\S+|[a-zA-Z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9]+)+\S*/g;
+  let match;
+  while ((match = pattern.exec(text))) {
+    const trimmed = match[0].replace(/[.,;:!?)\]}]+$/, "");
+    if (!trimmed) continue;
+    const uri = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const byteStart = encoder.encode(text.slice(0, match.index)).length;
+    const byteEnd = byteStart + encoder.encode(trimmed).length;
+    facets.push({
+      index: { byteStart, byteEnd },
+      features: [{ $type: "app.bsky.richtext.facet#link", uri }],
     });
   }
   return facets;
@@ -177,14 +227,14 @@ async function uploadImage(accessJwt, bytes, mimeType) {
   return data.blob;
 }
 
-async function createPost(accessJwt, did, text, facets, imageBlob, imageAlt) {
+async function createPost(accessJwt, did, text, facets, images) {
   const record = {
     $type: "app.bsky.feed.post",
     text,
     createdAt: new Date().toISOString(),
     embed: {
       $type: "app.bsky.embed.images",
-      images: [{ image: imageBlob, alt: imageAlt }],
+      images: images.map(({ blob, alt }) => ({ image: blob, alt })),
     },
   };
   if (facets.length > 0) {
@@ -226,8 +276,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const remaining = args.filter((a) => a !== "--dry-run");
-  const imagePathOrUrl = extractFlagValue(remaining, "--image");
-  const imageAlt = extractFlagValue(remaining, "--alt");
+  const imagePairs = extractImagePairs(remaining);
 
   let text = remaining.join(" ").trim();
   if (!text) {
@@ -241,17 +290,29 @@ async function main() {
     process.exit(1);
   }
 
-  if (!imagePathOrUrl) {
+  if (imagePairs.length === 0) {
     console.error(
-      "Missing --image <path-or-url>. Every post needs an image (video/animated GIF aren't supported here yet).",
+      "Missing --image <path-or-url> --alt \"description\". Every post needs at least one image (video/animated GIF aren't supported here yet).",
     );
     process.exit(1);
   }
-  if (!imageAlt) {
+  if (imagePairs.length > BLUESKY_MAX_IMAGES) {
     console.error(
-      "Missing --alt \"description\". Alt text is required for every image.",
+      `${imagePairs.length} images given, over Bluesky's ${BLUESKY_MAX_IMAGES}-image-per-post limit.`,
     );
     process.exit(1);
+  }
+  for (const { imagePathOrUrl, alt } of imagePairs) {
+    if (!imagePathOrUrl) {
+      console.error("A --image flag is missing its path/URL value.");
+      process.exit(1);
+    }
+    if (!alt) {
+      console.error(
+        `Missing --alt "description" for image ${imagePathOrUrl}. Alt text is required for every image.`,
+      );
+      process.exit(1);
+    }
   }
 
   const length = graphemeLength(text);
@@ -262,25 +323,37 @@ async function main() {
     process.exit(1);
   }
 
-  const facets = computeHashtagFacets(text);
+  const linkFacets = computeLinkFacets(text);
+  const tagFacets = computeHashtagFacets(text);
+  const facets = [...linkFacets, ...tagFacets];
 
-  const { bytes: imageBytes, mimeType } = await loadImageBytes(imagePathOrUrl);
-  if (!mimeType) {
-    console.error(
-      "Couldn't determine the image type. Use a .png, .jpg/.jpeg, or .webp file/URL.",
-    );
-    process.exit(1);
-  }
-  if (imageBytes.length > BLUESKY_MAX_IMAGE_BYTES) {
-    console.error(
-      `Image is ${imageBytes.length} bytes, over Bluesky's ${BLUESKY_MAX_IMAGE_BYTES}-byte limit for post images.`,
-    );
-    process.exit(1);
+  const loadedImages = [];
+  for (const { imagePathOrUrl, alt } of imagePairs) {
+    const { bytes, mimeType } = await loadImageBytes(imagePathOrUrl);
+    if (!mimeType) {
+      console.error(
+        `Couldn't determine the image type for ${imagePathOrUrl}. Use a .png, .jpg/.jpeg, or .webp file/URL.`,
+      );
+      process.exit(1);
+    }
+    if (bytes.length > BLUESKY_MAX_IMAGE_BYTES) {
+      console.error(
+        `Image ${imagePathOrUrl} is ${bytes.length} bytes, over Bluesky's ${BLUESKY_MAX_IMAGE_BYTES}-byte limit for post images.`,
+      );
+      process.exit(1);
+    }
+    loadedImages.push({ imagePathOrUrl, alt, bytes, mimeType });
   }
 
   if (dryRun) {
+    const imageSummary = loadedImages
+      .map(
+        (img) =>
+          `  - ${img.imagePathOrUrl} (${img.bytes.length} bytes, ${img.mimeType}, alt: "${img.alt}")`,
+      )
+      .join("\n");
     console.log(
-      `[dry-run] Would post (${length} chars, ${facets.length} tag${facets.length === 1 ? "" : "s"}) with image ${imagePathOrUrl} (${imageBytes.length} bytes, ${mimeType}, alt: "${imageAlt}"):\n\n${text}`,
+      `[dry-run] Would post (${length} chars, ${tagFacets.length} tag${tagFacets.length === 1 ? "" : "s"}, ${linkFacets.length} link${linkFacets.length === 1 ? "" : "s"}) with ${loadedImages.length} image${loadedImages.length === 1 ? "" : "s"}:\n${imageSummary}\n\n${text}`,
     );
     return;
   }
@@ -295,17 +368,22 @@ async function main() {
   }
 
   const session = await createSession(identifier, password);
-  const imageBlob = await uploadImage(session.accessJwt, imageBytes, mimeType);
+  const uploadedImages = [];
+  for (const img of loadedImages) {
+    const blob = await uploadImage(session.accessJwt, img.bytes, img.mimeType);
+    uploadedImages.push({ blob, alt: img.alt });
+  }
   const record = await createPost(
     session.accessJwt,
     session.did,
     text,
     facets,
-    imageBlob,
-    imageAlt,
+    uploadedImages,
   );
 
-  console.log(`Posted (${length} chars, with image).`);
+  console.log(
+    `Posted (${length} chars, with ${uploadedImages.length} image${uploadedImages.length === 1 ? "" : "s"}).`,
+  );
   console.log(postUrlFromUri(record.uri, session.handle));
 }
 
