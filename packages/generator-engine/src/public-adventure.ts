@@ -44,7 +44,12 @@ import {
   ADVENTURE_OUTCOME_TYPES_BY_GENRE,
   PRESSURE_TYPES,
 } from "./public-adventure-constants";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  extractProperNouns,
+  formatCampaignContextBlock,
+  statesDeadline,
+} from "./campaign-context";
 
 export { adventureConfig, forAdventureGenre };
 
@@ -338,21 +343,6 @@ export function generateAdventureLocal(
 }
 
 /**
- * Words that read as a deadline or a "before X happens" consequence. Used to
- * decide whether a user-supplied seed carries its own pressure that the
- * adventure must adopt rather than invent one of its own.
- */
-const SEED_DEADLINE_PATTERNS = [
-  /\bbefore\b/i,
-  /\bunless\b/i,
-  /\buntil\b/i,
-  /\bby (?:dawn|dusk|midnight|nightfall|morning|sunrise|sunset|the end of)\b/i,
-  /\bwithin \w+ (?:hour|day|week|month|cycle|shift)/i,
-  /\bin \w+ (?:hours|days|weeks|months|cycles|shifts)\b/i,
-  /\b(?:deadline|countdown|ticking|running out|too late)\b/i,
-];
-
-/**
  * Terms that signal a trackable clock. Shared between the prompt-side
  * expectations and the response validation below.
  */
@@ -396,62 +386,15 @@ const PRESSURE_SIGNAL_TERMS = [
 ];
 
 /**
- * Capitalised sequences a user-supplied seed introduces — the people, places,
- * ships and organisations the adventure must keep rather than rename.
- *
- * A word that opens a sentence is skipped: "Investigate a series of telemetry
- * dropouts..." starts with a capital but names nothing. Multi-word sequences
- * and tokens carrying a digit or an internal capital ("Aurelia-7",
- * "Phobos-Zero") are kept wherever they appear, since sentence position tells
- * us nothing useful about those.
+ * The free text the user supplied, seed and campaign context together.
+ * Both pin the names they introduce, so both must be excluded from the
+ * session avoid-list — otherwise the prompt says "keep this name" and
+ * "pick a different name" about the same word.
  */
-export function extractSeedProperNouns(seed: string): string[] {
-  const found = new Set<string>();
-  // Sentence-ish spans, so "first word" is meaningful.
-  for (const sentence of seed.split(/(?<=[.!?;:\n])\s+/)) {
-    const trimmed = sentence.trim();
-    if (!trimmed) continue;
-    const pattern =
-      /\b[A-Z][A-Za-z0-9]*(?:[-'’][A-Za-z0-9]+)*(?:\s+[A-Z][A-Za-z0-9]*(?:[-'’][A-Za-z0-9]+)*)*/g;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(trimmed))) {
-      const candidate = match[0].trim();
-      if (candidate.length < 3) continue;
-      const isSentenceStart = match.index === 0;
-      const isMultiWord = /\s/.test(candidate);
-      const isDistinctiveToken =
-        /[0-9]/.test(candidate) || /[-'’]/.test(candidate);
-      if (isSentenceStart && !isMultiWord && !isDistinctiveToken) continue;
-      found.add(candidate);
-    }
-  }
-  return [...found];
-}
-
-/** True when the seed states its own deadline or "before X" consequence. */
-export function seedStatesDeadline(seed: string): boolean {
-  return SEED_DEADLINE_PATTERNS.some((pattern) => pattern.test(seed));
-}
-
-/**
- * The session's "already used" names, minus anything the seed itself
- * introduced. A seed handed over from another generator names bodies,
- * stations and factions that generator has already registered as used —
- * telling the model to avoid those would defeat the point of the handoff.
- */
-function avoidNamesExcludingSeed(
-  avoidNames: string[],
-  seed?: string,
-): string[] {
-  if (!seed?.trim()) return avoidNames;
-  const seedNouns = extractSeedProperNouns(seed).map((n) => n.toLowerCase());
-  return avoidNames.filter((name) => {
-    const lower = name.trim().toLowerCase();
-    if (!lower) return true;
-    return !seedNouns.some(
-      (noun) => noun.includes(lower) || lower.includes(noun),
-    );
-  });
+function userSuppliedText(options: AdventureGeneratorOptions): string {
+  return [options.seed, options.campaignContext]
+    .filter((text): text is string => Boolean(text?.trim()))
+    .join("\n");
 }
 
 /**
@@ -465,7 +408,7 @@ function avoidNamesExcludingSeed(
  */
 function formatUserSeedBlock(seed: string): string {
   const trimmed = seed.trim();
-  const properNouns = extractSeedProperNouns(trimmed);
+  const properNouns = extractProperNouns(trimmed);
   return [
     `GIVEN SITUATION — supplied by the user. This is NOT a creative seed to`,
     `reinterpret. Treat every detail below as established fact:`,
@@ -482,7 +425,7 @@ function formatUserSeedBlock(seed: string): string {
           ...properNouns.map((n) => `  - ${n}`),
         ]
       : []),
-    ...(seedStatesDeadline(trimmed)
+    ...(statesDeadline(trimmed)
       ? [
           `- This situation states its own deadline or consequence. That IS the`,
           `  adventure's primary pressure — do not invent a different one. Carry it`,
@@ -612,8 +555,11 @@ ${options.seed?.trim() ? `\n${formatUserSeedBlock(options.seed)}\n` : ""}
 
 ${formatAdventureSeeds(
   adventure,
-  avoidNamesExcludingSeed(options.avoidNames ?? [], options.seed),
-  Boolean(options.seed?.trim() && seedStatesDeadline(options.seed)),
+  avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    userSuppliedText(options),
+  ),
+  Boolean(options.seed?.trim() && statesDeadline(options.seed)),
 )}
 
 Required JSON schema:
@@ -793,7 +739,10 @@ export function parseAdventureResponseDetailed(
     }
     const reused = bannedNamesIn(
       nameValues,
-      avoidNamesExcludingSeed(options.avoidNames ?? [], options.seed),
+      avoidNamesExcludingContext(
+        options.avoidNames ?? [],
+        userSuppliedText(options),
+      ),
     ).filter((n) => !banned.includes(n));
     if (reused.length > 0) {
       problems.push(
@@ -808,7 +757,7 @@ export function parseAdventureResponseDetailed(
     const seedText = options.seed?.trim();
     if (seedText) {
       const wholeOutput = JSON.stringify(parsed);
-      const seedNouns = extractSeedProperNouns(seedText);
+      const seedNouns = extractProperNouns(seedText);
       if (
         seedNouns.length > 0 &&
         !seedNouns.some((noun) =>
@@ -819,7 +768,7 @@ export function parseAdventureResponseDetailed(
           `drops every name from the given situation (${seedNouns.join(", ")}) — these are fixed and must appear in the adventure as written.`,
         );
       }
-      if (seedStatesDeadline(seedText)) {
+      if (statesDeadline(seedText)) {
         const objectiveWithSummary =
           `${parsed.summary ?? ""} ${parsed.primaryObjective ?? ""}`.toLowerCase();
         const keepsPressure = PRESSURE_SIGNAL_TERMS.some((term) =>

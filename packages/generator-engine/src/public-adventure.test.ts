@@ -4,8 +4,6 @@ import {
   buildAdventureRetryMessage,
   parseAdventureResponse,
   parseAdventureResponseDetailed,
-  extractSeedProperNouns,
-  seedStatesDeadline,
   adventureConfig,
   generateAdventureLocal,
 } from "./public-adventure";
@@ -537,49 +535,6 @@ const AURELIA_HOOK =
   "Broker a tense truce between striking miners on Amalthea and corporate " +
   "executives on Phobos-Zero before sabotage disables the station's primary " +
   "reaction mass pumps.";
-
-describe("extractSeedProperNouns", () => {
-  it("keeps names that appear mid-sentence", () => {
-    const nouns = extractSeedProperNouns(AURELIA_HOOK);
-    expect(nouns).toContain("Amalthea");
-    expect(nouns).toContain("Phobos-Zero");
-  });
-
-  it("skips a plain capitalised word that only opens a sentence", () => {
-    const nouns = extractSeedProperNouns(
-      "Investigate the missing grain shipments.",
-    );
-    expect(nouns).not.toContain("Investigate");
-  });
-
-  it("keeps a distinctive token even at the start of a sentence", () => {
-    expect(extractSeedProperNouns("Aurelia-7 is starving.")).toContain(
-      "Aurelia-7",
-    );
-  });
-
-  it("returns nothing for a seed with no names", () => {
-    expect(extractSeedProperNouns("a crashed skycar in the undercity")).toEqual(
-      [],
-    );
-  });
-});
-
-describe("seedStatesDeadline", () => {
-  it("detects a 'before X happens' consequence", () => {
-    expect(seedStatesDeadline(AURELIA_HOOK)).toBe(true);
-  });
-
-  it("detects an explicit time window", () => {
-    expect(seedStatesDeadline("Recover the core within six hours.")).toBe(true);
-  });
-
-  it("is false for a situation with no stated pressure", () => {
-    expect(seedStatesDeadline("A crashed skycar in the undercity.")).toBe(
-      false,
-    );
-  });
-});
 
 describe("buildAdventurePrompt with a user seed", () => {
   it("presents the seed as binding fact rather than a creative seed", () => {

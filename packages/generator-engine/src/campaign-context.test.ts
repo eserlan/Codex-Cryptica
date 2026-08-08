@@ -101,3 +101,49 @@ describe("formatCampaignContextBlock", () => {
     expect(block).not.toContain("The names below are established");
   });
 });
+
+describe("avoid-list exclusion is wired into the prompt builders", () => {
+  const context = "The strike on Amalthea has cut the Phobos-Zero supply line.";
+
+  it("world does not ask the model to avoid a context name", async () => {
+    const { buildWorldPrompt } = await import("./public-world");
+    const msg = buildWorldPrompt({
+      campaignContext: context,
+      avoidNames: ["Amalthea", "Kestrel Vane"],
+    }).userMessage;
+    expect(msg).toContain("Kestrel Vane");
+    expect(msg).not.toContain("campaign-specific names: Amalthea");
+  });
+
+  it("star system does not ask the model to avoid a context name", async () => {
+    const { buildStarSystemPrompt } = await import("./public-star-system");
+    const msg = buildStarSystemPrompt({
+      campaignContext: context,
+      avoidNames: ["Amalthea", "Kestrel Vane"],
+    }).userMessage;
+    expect(msg).toContain("Kestrel Vane");
+    expect(msg).not.toContain("campaign-specific names: Amalthea");
+  });
+
+  it("dungeon does not list a context name as already used", async () => {
+    const { buildDungeonPrompt } = await import("./public-dungeon");
+    const msg = buildDungeonPrompt({
+      campaignContext: context,
+      avoidNames: ["Amalthea", "Kestrel Vane"],
+    }).userMessage;
+    const avoidSection = msg.slice(msg.indexOf("Already used elsewhere"));
+    expect(avoidSection).toContain("Kestrel Vane");
+    expect(avoidSection).not.toContain("- Amalthea\n");
+  });
+
+  it("adventure excludes names from context as well as from the seed", async () => {
+    const { buildAdventurePrompt } = await import("./public-adventure");
+    const msg = buildAdventurePrompt({
+      campaignContext: context,
+      avoidNames: ["Amalthea", "Kestrel Vane"],
+    }).userMessage;
+    const avoidSection = msg.slice(msg.indexOf("Already used elsewhere"));
+    expect(avoidSection).toContain("Kestrel Vane");
+    expect(avoidSection).not.toContain("- Amalthea\n");
+  });
+});

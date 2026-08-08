@@ -8,7 +8,10 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
 
 export const worldConfig = {
   worldTypes: [
@@ -719,8 +722,14 @@ export function buildWorldPrompt(
   const genre = options.genre?.trim() || "sci-fi";
   const dominantFeature =
     options.dominantFeature?.trim() || "an evocative dominant feature";
-  const extraAvoidedNames = options.avoidNames
-    ?.map((name) => name.trim())
+  // Names the campaign context introduced are pinned by the context block,
+  // so they must not also appear in the avoid list — the two instructions
+  // would contradict each other and invite the model to rename them.
+  const extraAvoidedNames = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  )
+    .map((name) => name.trim())
     .filter(Boolean);
   const extraAvoidedNumbers = extraAvoidedNames
     ?.flatMap((name) => name.match(/\b\d+\b/g) ?? [])
