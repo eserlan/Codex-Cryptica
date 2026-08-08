@@ -323,6 +323,14 @@
 
 <svelte:window onmousemove={handleDragMove} onmouseup={handleDragEnd} />
 
+<!-- The container is a group, not a button: it wraps the focusable viewport
+     rectangle below, and a button inside a button is a nested-interactive
+     violation that axe fails the workspace scan on. Its click-to-reposition
+     is a pointer convenience only. Nothing is lost for keyboard users, who
+     pan with the arrow keys on the viewport rectangle: the Enter handler that
+     used to sit here synthesised a click whose clientX/clientY were 0, so it
+     jumped the graph to the minimap's top-left corner rather than anywhere
+     the user asked for. -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
@@ -332,16 +340,9 @@
   style:width="{!isExpanded ? 0 : width}px"
   style:height="{!isExpanded ? 0 : height}px"
   style:opacity={!isExpanded ? 0 : 1}
-  role="button"
-  aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
-  tabindex="0"
+  role="group"
+  aria-label="Graph minimap"
   onclick={handleMinimapClick}
-  onkeydown={(event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      (event.currentTarget as HTMLElement).click();
-    }
-  }}
 >
   <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
   ></canvas>
@@ -355,7 +356,7 @@
     style:width="{Math.max(viewportW, 2)}px"
     style:height="{Math.max(viewportH, 2)}px"
     role="button"
-    aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
+    aria-label="Graph viewport. Drag to pan, or use the arrow keys when focused."
     tabindex="0"
     onmousedown={handleDragStart}
     onkeydown={(event) => {

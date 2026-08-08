@@ -286,6 +286,12 @@ describe("+layout.svelte", () => {
     expect(screen.getByTestId("layout-children")).toBeTruthy();
   });
 
+  it("does not mount marketing footer chrome in the application shell", () => {
+    render(LayoutTestHost);
+
+    expect(screen.queryByTestId("app-footer")).toBeNull();
+  });
+
   it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {
     const listeners = new Map<string, () => void>();
     const originalVisualViewport = window.visualViewport;
