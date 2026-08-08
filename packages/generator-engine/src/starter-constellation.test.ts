@@ -16,6 +16,12 @@ function seededRng(seed: number) {
 }
 
 describe("generateStarterConstellationLocal", () => {
+  it("falls back to the default theme for inherited object keys", () => {
+    const result = generateStarterConstellationLocal({ themeId: "toString" });
+    expect(result.themeId).toBe("fantasy");
+    expect(result.entities).toHaveLength(5);
+  });
+
   it.each(STARTER_CONSTELLATION_THEME_IDS)(
     "produces a valid 4-6 entity constellation for theme %s",
     (themeId) => {
@@ -368,5 +374,15 @@ describe("getStarterConstellationPreview", () => {
     expect(getStarterConstellationPreview("not-a-theme").themeId).toBe(
       "fantasy",
     );
+  });
+
+  it("treats inherited object keys as unknown ids", () => {
+    // `"toString" in THEME_ARCHETYPES` is true, and the lookup returns a
+    // Function, so a naive check would hand back an object with no slots.
+    for (const inherited of ["toString", "constructor", "__proto__"]) {
+      const preview = getStarterConstellationPreview(inherited);
+      expect(preview.themeId).toBe("fantasy");
+      expect(preview.slots).toHaveLength(5);
+    }
   });
 });

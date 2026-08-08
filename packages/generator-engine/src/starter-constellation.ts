@@ -467,8 +467,19 @@ const THEME_ARCHETYPES: Record<string, ThemeArchetypeSet> = {
   },
 };
 
+/**
+ * `in` and a bare lookup both accept inherited keys, so "toString" or
+ * "constructor" would resolve to a Function rather than falling back. These ids
+ * come from user-facing input, so check own properties only.
+ */
+function isKnownThemeId(themeId: string): boolean {
+  return Object.hasOwn(THEME_ARCHETYPES, themeId);
+}
+
 function getArchetypes(themeId: string): ThemeArchetypeSet {
-  return THEME_ARCHETYPES[themeId] ?? THEME_ARCHETYPES[DEFAULT_THEME_ID];
+  return isKnownThemeId(themeId)
+    ? THEME_ARCHETYPES[themeId]
+    : THEME_ARCHETYPES[DEFAULT_THEME_ID];
 }
 
 function premiseFragment(premise?: string): string {
@@ -486,8 +497,9 @@ export function generateStarterConstellationLocal(
   config: StarterConstellationConfig,
   rng: Rng = defaultRng,
 ): StarterConstellationResult {
-  const themeId =
-    config.themeId in THEME_ARCHETYPES ? config.themeId : DEFAULT_THEME_ID;
+  const themeId = isKnownThemeId(config.themeId)
+    ? config.themeId
+    : DEFAULT_THEME_ID;
   const archetypes = getArchetypes(themeId);
   const premiseNote = premiseFragment(config.premise);
 
@@ -703,7 +715,7 @@ export const STARTER_CONSTELLATION_THEME_IDS: readonly string[] =
 export function getStarterConstellationPreview(
   themeId: string,
 ): StarterConstellationPreview {
-  const resolvedId = themeId in THEME_ARCHETYPES ? themeId : DEFAULT_THEME_ID;
+  const resolvedId = isKnownThemeId(themeId) ? themeId : DEFAULT_THEME_ID;
   const a = getArchetypes(resolvedId);
 
   return {

@@ -87,6 +87,11 @@ export interface StarterConstellationPreview {
   genreName: string;
   /** One line on the genre's tone, reused from the generator's own flavor text. */
   flavor: string;
-  /** The five entities a starter world always contains, in creation order. */
+  /**
+   * The five archetype slots the offline generator always fills, in creation
+   * order, and the shape the AI prompt is told to mirror. The AI path may
+   * return 4 to 6 entities, so treat these as the shape of a starter world
+   * rather than an exact manifest.
+   */
   slots: StarterConstellationSlot[];
 }

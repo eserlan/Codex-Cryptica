@@ -57,6 +57,8 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
+// Real store, not a mock: the draft-retention behaviour under test lives here,
+// and each test resets it so nothing leaks between renders.
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
@@ -76,6 +78,7 @@ vi.mock("$lib/stores/graph.svelte", () => ({
 }));
 
 import QuickStartModal from "./QuickStartModal.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("QuickStartModal", () => {
   beforeEach(() => {
@@ -91,6 +94,10 @@ describe("QuickStartModal", () => {
       );
     }
     document.body.innerHTML = "";
+  });
+
+  beforeEach(() => {
+    modalUIStore.quickStartDraft = { themeId: null, premise: "" };
   });
 
   const renderModal = () => {
@@ -250,5 +257,41 @@ describe("QuickStartModal", () => {
       addConnectionMock.mock.invocationCallOrder.at(-1) ?? 0;
     expect(layoutOrder).toBeGreaterThan(lastCreateOrder);
     expect(layoutOrder).toBeGreaterThan(lastConnectOrder);
+  });
+});
+
+describe("QuickStartModal draft retention", () => {
+  beforeEach(() => {
+    modalUIStore.quickStartDraft = { themeId: null, premise: "" };
+  });
+
+  it("restores the previous choice when the dialog is reopened", async () => {
+    const first = document.createElement("div");
+    document.body.appendChild(first);
+    const { unmount } = render(QuickStartModal, {
+      target: first,
+      props: { onClose: vi.fn() },
+    });
+
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
+      target: { value: "western" },
+    });
+    await fireEvent.input(screen.getByLabelText("Seed Premise (optional)"), {
+      target: { value: "a stagecoach robbery" },
+    });
+    unmount();
+
+    const second = document.createElement("div");
+    document.body.appendChild(second);
+    render(QuickStartModal, { target: second, props: { onClose: vi.fn() } });
+
+    const select = screen.getByLabelText(
+      "World genre and look",
+    ) as HTMLSelectElement;
+    const premise = screen.getByLabelText(
+      "Seed Premise (optional)",
+    ) as HTMLTextAreaElement;
+    expect(select.value).toBe("western");
+    expect(premise.value).toBe("a stagecoach robbery");
   });
 });

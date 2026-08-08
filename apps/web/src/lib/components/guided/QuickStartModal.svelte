@@ -1,11 +1,3 @@
-<script module lang="ts">
-  // Module scope so the choice survives closing and reopening the dialog within
-  // a session. Not a store and not persisted: this is a convenience, not state
-  // worth synchronising or reloading.
-  let lastThemeId: string | null = null;
-  let lastPremise = "";
-</script>
-
 <script lang="ts">
   import { THEMES, type WorldThemeId } from "schema";
   import {
@@ -21,6 +13,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { graph } from "$lib/stores/graph.svelte";
 
@@ -41,15 +34,18 @@
   }));
 
   // Survives close-and-reopen within the session, so dismissing the dialog to
-  // check something doesn't silently reset the choice.
-  let themeId = $state<string>(lastThemeId ?? themeOptions[0]?.id ?? "fantasy");
-  let premise = $state(lastPremise);
+  // check something doesn't silently reset the choice. Held in modalUIStore
+  // (which already owns this dialog's lifecycle) rather than module state, so
+  // it stays per-tab and resets cleanly.
+  let themeId = $state<string>(
+    modalUIStore.quickStartDraft.themeId ?? themeOptions[0]?.id ?? "fantasy",
+  );
+  let premise = $state(modalUIStore.quickStartDraft.premise);
   let isGenerating = $state(false);
   let errorMsg = $state<string | null>(null);
 
   $effect(() => {
-    lastThemeId = themeId;
-    lastPremise = premise;
+    modalUIStore.quickStartDraft = { themeId, premise };
   });
 
   const preview = $derived(getStarterConstellationPreview(themeId));
@@ -239,7 +235,7 @@
         data-testid="quick-start-preview"
       >
         <p class="text-xs font-bold uppercase tracking-wider text-theme-muted">
-          You will get 5 linked entities
+          You will get 4 to 6 linked entities
         </p>
         <p class="mt-1 text-xs text-theme-text">
           {preview.genreName}: {preview.flavor}.
