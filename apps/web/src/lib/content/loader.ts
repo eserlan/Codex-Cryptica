@@ -134,6 +134,7 @@ export function getBlogIndex(): BlogIndexItem[] {
     title: a.title,
     description: a.description,
     publishedAt: a.publishedAt,
+    author: a.author,
   }));
 }
 

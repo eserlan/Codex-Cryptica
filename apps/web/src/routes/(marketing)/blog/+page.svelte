@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { SITE_AUTHOR } from "$lib/config";
   let { data } = $props();
 </script>
 
@@ -69,7 +70,11 @@
                 timeZone: "UTC",
               })}
             </time>
-            <span class="w-8 h-px bg-theme-border"></span>
+            <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
+            <span data-testid="blog-index-byline"
+              >By {article.author?.trim() || SITE_AUTHOR.name}</span
+            >
+            <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
             <span>{themeStore.resolveJargon("blog_entry")}</span>
           </div>
 

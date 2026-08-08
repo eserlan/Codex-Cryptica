@@ -19,6 +19,7 @@ const toIndexItem = (article: BlogArticle): BlogIndexItem => ({
   title: article.title,
   description: article.description,
   publishedAt: article.publishedAt,
+  author: article.author,
 });
 
 const loadLocalArticles = (): BlogArticle[] => {
