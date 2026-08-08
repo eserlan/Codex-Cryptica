@@ -337,8 +337,8 @@
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                >*</sup
-              >{/if}
+                aria-hidden="true">*</sup
+              ><span class="sr-only"> (past)</span>{/if}
           </h2>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
@@ -370,8 +370,8 @@
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
                 {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    >*</sup
-                  >{/if}
+                    aria-hidden="true">*</sup
+                  ><span class="sr-only"> (past)</span>{/if}
               </button>
             </div>
           {/if}

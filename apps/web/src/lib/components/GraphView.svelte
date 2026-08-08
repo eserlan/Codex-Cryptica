@@ -605,6 +605,7 @@
     class="sr-only"
     role="status"
     aria-live="polite"
+    aria-atomic="true"
     data-testid="graph-a11y-announcer"
   >
     {selectionAnnouncement}

@@ -848,8 +848,9 @@ journey fails on `staging`. It waits for a zoom of at least 0.75, and a direct
 probe of the demo vault measures **0.673** after entry settles.
 `MOBILE_ENTRY_MIN_ZOOM` is 0.75 and the centering call passes it, so something
 re-fits the camera after the entry effect runs. This went unnoticed because
-Playwright does not run on pull requests (PR checks are Deploy, Labeler, and
-Copilot review), so the chunk merged with its own acceptance test red. The
+Playwright runs only on a daily schedule (`.github/workflows/daily-e2e.yml`,
+03:00 UTC, plus manual dispatch); pull requests run Type Check, Lint, Test
+(unit), and Build, so the chunk merged with its own acceptance test red. The
 feature is therefore shipped but unverified, and the entry view is less legible
 than the acceptance criterion requires.
 
@@ -895,10 +896,11 @@ mounting cytoscape.
 (`@axe-core/playwright` over the graph route, table route, and an open entity
 detail), a focus-retention e2e across view switches, the documented
 accessibility contract, and the manual screen-reader pass. Deferred to its own
-change because it adds a dependency and CI surface. Note that Playwright does
-not currently run on pull requests at all (PR checks are Deploy, Labeler, and
-Copilot review), so any e2e-based acceptance criterion in this document is
-unenforced until that changes.
+change because it adds a dependency and CI surface. Note that Playwright runs
+only on the daily schedule, not on pull requests, so any e2e-based acceptance
+criterion in this document is unenforced at merge time. Phase 4's checks should
+either run in the pull-request workflow or the acceptance criteria should stop
+claiming e2e coverage they do not get.
 
 ### Chunk 8: Quick Start decision model
 

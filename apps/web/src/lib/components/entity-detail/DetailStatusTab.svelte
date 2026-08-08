@@ -45,9 +45,11 @@
   let prefillConnectionTargetId = $state<string | null>(null);
   let prefillConnectionTargetName = $state("");
 
-  // The "*" suffix on a name in the connections list marks a past-labelled
-  // entity. It's a purely visual footnote with no legend, so every site that
-  // renders it pairs it with screen-reader text (see the `sr-only` spans).
+  // The "*" suffix on a name marks a past-labelled entity. It's a purely
+  // visual footnote with no legend anywhere in the app, so the `sr-only`
+  // spans below pair it with text. Other surfaces rendering the same marker
+  // (DetailHeader, NodeReadModal, EntityListItem, MapPinPopover, PinLinker,
+  // TokenAddDialog) do the same.
   const entityIsPast = $derived(
     entity?.labels?.some((l: string) => l.toLowerCase() === "past") ?? false,
   );
