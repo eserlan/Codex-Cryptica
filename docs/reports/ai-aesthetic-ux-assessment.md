@@ -115,16 +115,16 @@ through 14 should not start until chunk 0 reports.
 
 ## Delivery status since revision 1
 
-| Item                                       | Status                                    | Evidence                                                                                                                                                                                                            |
-| ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chunk 1: Provider and privacy copy audit   | **Shipped**, but see M7 correction        | `0f4275e8`, `16253868`, PR #2094. No `Gemini` string remains under `src/routes` or `src/lib/config`.                                                                                                                |
-| Chunk 2: Responsive entity-detail contract | **Shipped**                               | `154693a8`, `633540a9`, `49ef7486`, PR #2095, with viewport snapshots at 1280/1440/1600.                                                                                                                            |
-| Chunk 3: Application shell reclamation     | **Shipped**                               | `4dae1425`, `85c98049`, PR #2096. Marketing footer removed from workspace routes; guest Help remains available.                                                                                                     |
-| Chunk 4: Full Toolbox action hierarchy     | **Shipped**                               | `799a6f74`, `271a5b02`, `be0efc59`, PR #2098. Merged to `staging` after all CI checks passed.                                                                                                                       |
-| Chunk 5: Desktop graph-label legibility    | **Shipped**                               | `c2053615`, `f9f962df`, PR #2099.                                                                                                                                                                                   |
-| Chunk 6: Useful mobile graph entry state   | **Shipped**                               | `310e76ed`, `49bad9b8`, `2a0a163f`, PR #2103. Both 390×844 journeys pass; see the verification note under Chunk 6 about a false regression report.                                                                  |
-| Chunk 7: Accessible graph navigation       | **Phases 1 to 3 shipped**                 | PR #2105. Canvas text alternatives, table route from the graph controls, connection-list semantics. Phase 4 (automated a11y checks, focus retention, documented contract, manual screen-reader pass) is still open. |
-| Constitution Principle IV amendment        | **Done, but reintroduces the same fault** | `.specify/memory/constitution.md:34` now reads "powered by OpenAI/Luna or a provider-neutral contract". See M7.                                                                                                     |
+| Item                                       | Status                                    | Evidence                                                                                                                                                                                                                             |
+| ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Chunk 1: Provider and privacy copy audit   | **Shipped**, but see M7 correction        | `0f4275e8`, `16253868`, PR #2094. No `Gemini` string remains under `src/routes` or `src/lib/config`.                                                                                                                                 |
+| Chunk 2: Responsive entity-detail contract | **Shipped**                               | `154693a8`, `633540a9`, `49ef7486`, PR #2095, with viewport snapshots at 1280/1440/1600.                                                                                                                                             |
+| Chunk 3: Application shell reclamation     | **Shipped**                               | `4dae1425`, `85c98049`, PR #2096. Marketing footer removed from workspace routes; guest Help remains available.                                                                                                                      |
+| Chunk 4: Full Toolbox action hierarchy     | **Shipped**                               | `799a6f74`, `271a5b02`, `be0efc59`, PR #2098. Merged to `staging` after all CI checks passed.                                                                                                                                        |
+| Chunk 5: Desktop graph-label legibility    | **Shipped**                               | `c2053615`, `f9f962df`, PR #2099.                                                                                                                                                                                                    |
+| Chunk 6: Useful mobile graph entry state   | **Shipped**                               | `310e76ed`, `49bad9b8`, `2a0a163f`, PR #2103. Both 390×844 journeys pass; see the verification note under Chunk 6 about a false regression report.                                                                                   |
+| Chunk 7: Accessible graph navigation       | **Shipped**                               | PR #2105 (phases 1 to 3) and the phase 4 follow-up: canvas text alternatives, table route from the graph controls, connection-list semantics, axe + keyboard e2e, and `docs/accessibility-contract.md`. Theme contrast remains open. |
+| Constitution Principle IV amendment        | **Done, but reintroduces the same fault** | `.specify/memory/constitution.md:34` now reads "powered by OpenAI/Luna or a provider-neutral contract". See M7.                                                                                                                      |
 
 ## Overall assessment
 
@@ -890,18 +890,32 @@ connections no longer presents twelve identical "Delete connection" buttons.
 Wording lives in `graph-a11y.ts` as pure functions, unit-testable without
 mounting cytoscape.
 
-**Still open (phase 4):** automated accessibility checks
-(`@axe-core/playwright` over the graph route, table route, and an open entity
-detail), a focus-retention e2e across view switches, the documented
-accessibility contract, and the manual screen-reader pass. Deferred to its own
-change because it adds a dependency and CI surface. Note that Playwright runs
-only on the daily schedule, not on pull requests, so any e2e-based acceptance
-criterion in this document is unenforced at merge time. Phase 4's checks should
-either run in the pull-request workflow or the acceptance criteria should stop
-claiming e2e coverage they do not get. When checking any of these criteria
-locally, pass an explicit `E2E_PORT`: `reuseExistingServer` will silently bind
-to whatever already holds port 5173, including a dev server from an entirely
-different checkout, and the results will look like product defects.
+**Implementation note (2026-08-08, phase 4):** `@axe-core/playwright` now scans
+the graph, table, and entity-detail states in
+`apps/web/tests/a11y-workspace.spec.ts`, failing on `serious` and `critical`
+violations, alongside a keyboard journey (graph to table to entity, asserting
+tab-order membership and that focus is never stranded on a detached node) and a
+check that the canvas stays `aria-hidden` while its description and announcer
+carry the meaning. The contract itself, including the manual screen-reader
+checklist, is `docs/accessibility-contract.md`.
+
+The scan found and fixed two real defects: the minimap nested a `role="button"`
+viewport rectangle inside a `role="button"` container (the container's Enter
+handler also synthesised a click at coordinates 0,0, jumping the graph to the
+minimap's top-left corner), and the Tiptap editing surface rendered a
+`role="textbox"` with no accessible name.
+
+**Still open after phase 4:** three controls in the entity detail measure 2.70
+to 3.39 contrast against the 4.5 AA threshold for small bold text. The colours
+are shared theme tokens, so this is a palette decision across every theme rather
+than a fix belonging to this chunk; the scan reports it without gating, and the
+exception is recorded in the contract. Also unresolved: Playwright runs only on
+the daily schedule, not on pull requests, so this spec does not gate a merge.
+Either move it into the pull-request workflow or stop claiming e2e coverage in
+these acceptance criteria. When checking any of them locally, pass an explicit
+`E2E_PORT`: `reuseExistingServer` will silently bind to whatever already holds
+port 5173, including a dev server from an entirely different checkout, and the
+results will look like product defects.
 
 ### Chunk 8: Quick Start decision model
 
