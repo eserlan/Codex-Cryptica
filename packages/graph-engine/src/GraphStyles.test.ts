@@ -95,4 +95,23 @@ describe("getGraphStyles", () => {
     expect(performanceEdgeStyle?.style["target-arrow-shape"]).toBe("none");
     expect(selectedLabelStyle?.style.label).toBe("data(label)");
   });
+
+  it("keeps relationship labels horizontal and clears dimmed background labels", () => {
+    const styles = getGraphStyles(
+      mockTemplate,
+      mockCategories,
+      true,
+      false,
+      true,
+    );
+    const edgeStyle = styles.find((s) => s.selector === "edge");
+    const dimmedEdgeStyle = styles.find((s) => s.selector === "edge.dimmed");
+
+    expect(edgeStyle?.style["text-rotation"]).toBe("none");
+    expect(edgeStyle?.style["text-background-opacity"]).toBe(0.92);
+    expect(edgeStyle?.style["text-background-padding"]).toBe("3px");
+    expect(edgeStyle?.style["text-max-width"]).toBe(120);
+    expect(edgeStyle?.style["text-wrap"]).toBe("ellipsis");
+    expect(dimmedEdgeStyle?.style.label).toBe("");
+  });
 });

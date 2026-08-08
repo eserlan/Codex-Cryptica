@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { render, fireEvent, waitFor } from "@testing-library/svelte";
-import { describe, it, expect, vi } from "vitest";
+import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
+import { afterEach, describe, it, expect, vi } from "vitest";
 
 // Mock transitions
 vi.mock("svelte/transition", () => ({
@@ -21,12 +21,16 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
+    isGuest: false,
     updateConnection: vi.fn(),
     removeConnection: vi.fn(),
   },
 }));
 
 import EdgeEditorModal from "./EdgeEditorModal.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+
+const testVault = vault as unknown as { isGuest: boolean };
 
 describe("EdgeEditorModal Dismissal", () => {
   const editingEdge = {
@@ -35,6 +39,10 @@ describe("EdgeEditorModal Dismissal", () => {
     label: "related",
     type: "neutral",
   };
+
+  afterEach(() => {
+    testVault.isGuest = false;
+  });
 
   it("should close when Escape key is pressed", async () => {
     const mockEditingEdge: any = editingEdge;
@@ -77,5 +85,22 @@ describe("EdgeEditorModal Dismissal", () => {
 
     await fireEvent.click(modalContent!);
     expect(container.querySelector(".fixed.inset-0")).toBeTruthy();
+  });
+
+  it("shows a read-only full label when a guest opens an edge", () => {
+    testVault.isGuest = true;
+
+    render(EdgeEditorModal, { editingEdge });
+
+    expect(
+      screen.getByRole("heading", { name: "Connection details" }),
+    ).toBeTruthy();
+    const label = screen.getByLabelText("Label") as HTMLInputElement;
+    const relationshipNature = screen.getByLabelText(
+      "Relationship Nature",
+    ) as HTMLSelectElement;
+    expect(label.value).toBe("related");
+    expect(label.readOnly).toBe(true);
+    expect(relationshipNature.disabled).toBe(true);
   });
 });
