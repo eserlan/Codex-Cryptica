@@ -56,6 +56,11 @@
     label?: string;
   } = $props();
 
+  // A default parameter only covers `undefined`, so an explicit "" (or
+  // whitespace) from a caller would leave the role="textbox" unnamed again,
+  // which is the exact violation the label exists to prevent.
+  const editorLabel = $derived(label?.trim() ? label.trim() : "Lore editor");
+
   // Options object shared with the EntityAutoLinkExtension closure.
   // Getters are used so the plugin reads current prop values at call-time
   // rather than capturing initial values (avoids Svelte state_referenced_locally
@@ -156,7 +161,7 @@
         attributes: {
           class:
             "prose max-w-none focus:outline-none min-h-[100px] font-body text-lg leading-relaxed text-theme-text",
-          "aria-label": label,
+          "aria-label": editorLabel,
         },
       },
       content: content,
