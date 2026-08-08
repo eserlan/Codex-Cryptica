@@ -45,6 +45,7 @@ import {
   starSystemConfig,
 } from "./public-star-system";
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
+import { councilVoteConfig } from "./public-council-vote-constants";
 
 /**
  * Generator id -> default vault category id.
@@ -607,54 +608,22 @@ const EVENT_OUTCOMES = [
   "uncovered a secret that should have stayed buried",
 ];
 
-const COUNCIL_VOTE_BODY_TYPES = [
-  "Town Council",
-  "Noble Court",
-  "Senate",
-  "Clan Moot",
-  "War Council",
-  "Corporate Board",
-  "Revolutionary Committee",
-  "Interstellar Assembly",
-  "Criminal Syndicate",
-  "Religious Conclave",
-];
-const COUNCIL_VOTE_SIZES = ["3", "5", "7", "9"];
-const COUNCIL_VOTE_RULES = [
-  "Simple Majority",
-  "Supermajority (Two-Thirds)",
-  "Unanimous",
-  "Veto Power",
-  "Secret Ballot",
-];
-const COUNCIL_VOTE_SCOPES = [
-  "Single Location",
-  "Distributed Across Settlements/Regions",
-];
-const COUNCIL_VOTE_TONES = [
-  "Political",
-  "Tense",
-  "Desperate",
-  "Farcical",
-  "Somber",
-  "Hopeful",
-];
-const COUNCIL_VOTE_ANTAGONIST_INFLUENCE = [
-  "None",
-  "Subtle",
-  "Entrenched",
-  "Dominant",
-];
-const COUNCIL_VOTE_ARCHETYPES = [
-  "Beleaguered Ally",
-  "Villain's Toady",
-  "Greedy Broker",
-  "Loyal Shadow",
-  "Traditionalist",
-  "Idealist",
-  "Wildcard",
-];
-const COUNCIL_VOTE_STANCES = ["Support", "Oppose", "Leaning", "Unknown"];
+const COUNCIL_VOTE_BODY_TYPES = councilVoteConfig.bodyTypes;
+
+const COUNCIL_VOTE_SIZES = councilVoteConfig.sizes;
+
+const COUNCIL_VOTE_RULES = councilVoteConfig.votingRules;
+
+const COUNCIL_VOTE_SCOPES = councilVoteConfig.scopes;
+
+const COUNCIL_VOTE_TONES = councilVoteConfig.tones;
+
+const COUNCIL_VOTE_ANTAGONIST_INFLUENCE =
+  councilVoteConfig.antagonistInfluences;
+
+const COUNCIL_VOTE_ARCHETYPES = councilVoteConfig.archetypes;
+
+const COUNCIL_VOTE_STANCES = councilVoteConfig.stances;
 
 function generateName(): string {
   const prefixes = [

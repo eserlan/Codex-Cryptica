@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
+  import { base } from "$app/paths";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { guestStore } from "$lib/stores/guest.svelte";
@@ -278,6 +279,23 @@
       MAX
     </button>
   </div>
+
+  <!-- The canvas is unreadable to assistive tech and unusable without a
+       pointer, so the equivalent list view has to be visible here rather than
+       only as an icon in the activity rail. The label is worded exactly as the
+       graph's screen-reader description names it (graph-a11y.ts). -->
+  <a
+    href="{base}/table"
+    onclick={closeMenuIfMobile}
+    class="{layoutUIStore.isMobile
+      ? 'flex'
+      : 'hidden sm:flex'} h-8 flex-shrink-0 items-center gap-1.5 rounded border border-theme-border bg-theme-surface/80 px-2 text-[10px] font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
+    data-testid="graph-browse-as-table"
+    title="Browse the same entities as a sortable table"
+  >
+    <span aria-hidden="true" class="icon-[lucide--table] h-4 w-4"></span>
+    Browse as table
+  </a>
 {/snippet}
 
 <div

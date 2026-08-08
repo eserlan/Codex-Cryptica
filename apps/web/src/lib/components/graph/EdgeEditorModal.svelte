@@ -62,7 +62,7 @@
       <h2
         class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"
       >
-        Update Connection
+        {vault.isGuest ? "Connection details" : "Update Connection"}
       </h2>
 
       <div class="space-y-4">
@@ -76,6 +76,7 @@
             id="edge-label"
             type="text"
             bind:value={edgeEditInput}
+            readonly={vault.isGuest}
             class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
             placeholder="Friend, Enemy, Leader..."
           />
@@ -87,15 +88,25 @@
             class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
             >Relationship Nature</label
           >
-          <select
-            id="edge-type"
-            bind:value={edgeEditType}
-            class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
-          >
-            <option value="friendly">Friendly</option>
-            <option value="neutral">Neutral</option>
-            <option value="enemy">Hostile</option>
-          </select>
+          {#if vault.isGuest}
+            <input
+              id="edge-type"
+              type="text"
+              value={edgeEditType}
+              readonly
+              class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs text-theme-text"
+            />
+          {:else}
+            <select
+              id="edge-type"
+              bind:value={edgeEditType}
+              class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
+            >
+              <option value="friendly">Friendly</option>
+              <option value="neutral">Neutral</option>
+              <option value="enemy">Hostile</option>
+            </select>
+          {/if}
         </div>
 
         <div class="flex justify-between items-center pt-4">

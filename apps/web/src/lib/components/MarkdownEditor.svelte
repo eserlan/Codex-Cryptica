@@ -36,6 +36,7 @@
     entityIndex = [],
     currentEntityId = "",
     onEntityClick = () => {},
+    label = "Lore editor",
   }: {
     content: string;
     editable?: boolean;
@@ -46,7 +47,19 @@
     currentEntityId?: string;
     /** Navigation callback invoked when a detected entity link is clicked. */
     onEntityClick?: (id: string) => void;
+    /**
+     * Accessible name for the editing surface. Tiptap renders a
+     * `role="textbox"` div, which has no implicit name, so without this the
+     * editor is an anonymous input to a screen reader (axe:
+     * aria-input-field-name).
+     */
+    label?: string;
   } = $props();
+
+  // A default parameter only covers `undefined`, so an explicit "" (or
+  // whitespace) from a caller would leave the role="textbox" unnamed again,
+  // which is the exact violation the label exists to prevent.
+  const editorLabel = $derived(label?.trim() ? label.trim() : "Lore editor");
 
   // Options object shared with the EntityAutoLinkExtension closure.
   // Getters are used so the plugin reads current prop values at call-time
@@ -148,6 +161,7 @@
         attributes: {
           class:
             "prose max-w-none focus:outline-none min-h-[100px] font-body text-lg leading-relaxed text-theme-text",
+          "aria-label": editorLabel,
         },
       },
       content: content,

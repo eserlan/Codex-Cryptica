@@ -561,12 +561,20 @@
                     class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
                     <span
+                      aria-hidden="true"
                       class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
                         ? 'bg-emerald-500'
                         : conn.isOutbound
                           ? 'bg-theme-primary'
                           : 'bg-blue-500'}"
                     ></span>
+                    <span class="sr-only"
+                      >{conn.isChild
+                        ? "Child of this entity:"
+                        : conn.isOutbound
+                          ? "Outgoing connection:"
+                          : "Incoming connection:"}</span
+                    >
                     <div class="flex-1 min-w-0">
                       <div
                         class="text-xs text-theme-muted uppercase tracking-widest font-header"
@@ -587,7 +595,7 @@
                           type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Edit connection"
+                          aria-label="Edit connection to {conn.title}"
                           title="Edit connection"
                         >
                           <span
@@ -605,7 +613,7 @@
                             isAddingConnection = true;
                           }}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Establish custom connection"
+                          aria-label="Establish custom connection to {conn.title}"
                           title="Establish custom connection"
                         >
                           <span
@@ -636,7 +644,7 @@
                           }
                         }}
                         class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                        aria-label="Delete connection"
+                        aria-label="Delete connection to {conn.title}"
                         title="Delete connection"
                       >
                         <span
