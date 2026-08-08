@@ -22,6 +22,10 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
+  import {
+    MOBILE_ENTRY_MIN_ZOOM,
+    resolveMobileEntryId,
+  } from "./graph/mobile-entry";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -74,6 +78,7 @@
   });
 
   let container: HTMLElement;
+  let mobileEntryVaultId: string | null = null;
 
   // COACH_MARKS lives in help-content.ts (config, testable) — see its
   // docstring there for why these are scoped to isMobile, not tablets.
@@ -389,6 +394,43 @@
           controller.pendingSearchFocus = null;
         }
       }
+    }
+  });
+
+  // A phone should enter a useful local view once per vault/session, then
+  // leave the camera entirely under the user's control. This follows the
+  // selection effect so an initially selected node cannot replace the legible
+  // entry zoom with the previous full-graph fit.
+  $effect(() => {
+    const currentCy = controller.cy;
+    const vaultId = vault.activeVaultId ?? "default";
+    const isReady = controller.loadPhase === "ready";
+    const entities = vault.allEntities;
+    if (
+      !layoutUIStore.isMobile ||
+      !currentCy ||
+      !isReady ||
+      mobileEntryVaultId === vaultId
+    )
+      return;
+
+    mobileEntryVaultId = vaultId;
+    const entryId = resolveMobileEntryId(
+      entities,
+      controller.selectedId,
+      vault.inboundConnections,
+    );
+    if (!entryId) return;
+
+    const node = currentCy.$id(entryId);
+    if (node.length > 0) {
+      untrack(() =>
+        centerOnNode(
+          node,
+          true,
+          Math.max(currentCy.zoom(), MOBILE_ENTRY_MIN_ZOOM),
+        ),
+      );
     }
   });
 
