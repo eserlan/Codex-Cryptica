@@ -18,16 +18,9 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="max-w-5xl mx-auto px-6 py-20">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-20">
     <!-- Header -->
     <header class="mb-20 text-center">
-      <a
-        href="{base}/?utm_source=features-page&utm_medium=features-cta&utm_campaign=marketing"
-        class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] mb-8 transition-colors"
-      >
-        <span class="icon-[lucide--arrow-left] w-3 h-3"></span>
-        Return to Workspace
-      </a>
       <h1
         class="text-5xl md:text-7xl font-bold font-header tracking-tight mb-6"
       >

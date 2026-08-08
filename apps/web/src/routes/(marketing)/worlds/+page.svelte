@@ -71,7 +71,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-theme-bg text-theme-text">
-  <div class="mx-auto max-w-6xl px-6 py-12 space-y-8">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 space-y-8">
     <header class="space-y-3">
       <p
         class="text-xs font-header uppercase tracking-widest text-theme-primary"

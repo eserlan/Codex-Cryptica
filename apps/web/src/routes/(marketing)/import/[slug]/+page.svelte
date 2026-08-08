@@ -277,7 +277,7 @@
   </header>
 
   <div
-    class="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col justify-center"
+    class="max-w-4xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
       <a
@@ -546,7 +546,7 @@
 
     {#if pageData.relatedLinks && pageData.relatedLinks.length > 0}
       <section class="border-t border-theme-border/30 py-10">
-        <div class="max-w-4xl mx-auto px-6">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
           <h2
             class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
           >

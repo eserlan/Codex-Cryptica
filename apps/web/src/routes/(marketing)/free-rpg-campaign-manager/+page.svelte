@@ -140,7 +140,7 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="max-w-6xl mx-auto px-6 py-16 md:py-24">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24">
     <!-- Header Navigation -->
     <nav class="flex justify-between items-center mb-16">
       <a

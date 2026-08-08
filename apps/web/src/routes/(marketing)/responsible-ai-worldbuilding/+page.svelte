@@ -218,7 +218,7 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center">
+  <section class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
     <div
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-8 uppercase tracking-wider"
     >
@@ -411,7 +411,7 @@
   <section
     class="border-t border-theme-border/30 bg-theme-surface/10 py-16 flex-grow"
   >
-    <div class="max-w-5xl mx-auto px-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
       >
@@ -471,7 +471,7 @@
 
   <!-- FAQ Section -->
   <section class="border-t border-theme-border/30 py-16">
-    <div class="max-w-3xl mx-auto px-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
       >
@@ -513,7 +513,7 @@
   <section
     class="border-t border-theme-border/30 bg-gradient-to-b from-theme-bg to-theme-surface/30 py-16 text-center"
   >
-    <div class="max-w-2xl mx-auto px-6 font-header">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 font-header">
       <h2 class="text-3xl font-extrabold mb-4 uppercase tracking-wider">
         Ready to Build Your World?
       </h2>

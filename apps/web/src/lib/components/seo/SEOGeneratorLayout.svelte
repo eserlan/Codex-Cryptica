@@ -661,7 +661,7 @@
   </div>
 
   <div
-    class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
+    class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
     <!-- Output Card Column: controls first on mobile, middle column on desktop -->
     <div

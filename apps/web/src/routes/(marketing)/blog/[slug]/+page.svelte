@@ -59,7 +59,7 @@
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"
 >
-  <div class="max-w-3xl mx-auto px-6 py-20 md:py-32">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
     <nav class="mb-12">
       <a
         href="{base}/blog"

@@ -159,7 +159,9 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Hero Section -->
-  <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center flex-grow">
+  <section
+    class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center flex-grow"
+  >
     <div
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-10 uppercase tracking-wider"
     >
@@ -251,7 +253,7 @@
 
   <!-- Features Grid -->
   <section class="border-t border-theme-border/30 bg-theme-surface/10 py-16">
-    <div class="max-w-5xl mx-auto px-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-xl uppercase tracking-[0.2em] text-theme-primary mb-12"
       >
@@ -283,7 +285,7 @@
   <!-- Comparison Section (If comparison type) -->
   {#if type === "comparison" && comparisonData}
     <section class="border-t border-theme-border/30 py-16">
-      <div class="max-w-4xl mx-auto px-6">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <h2
           class="text-center font-header text-2xl uppercase tracking-widest text-theme-primary mb-10"
         >
@@ -451,7 +453,7 @@
   <!-- Related Links Section -->
   {#if data.relatedLinks && data.relatedLinks.length > 0}
     <section class="border-t border-theme-border/30 py-10">
-      <div class="max-w-4xl mx-auto px-6">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <h2
           class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
         >
@@ -478,7 +480,7 @@
   <!-- Responsible AI Trust Banner -->
   {#if data.aiTrustSection}
     <section class="border-t border-theme-border/30 py-10">
-      <div class="max-w-3xl mx-auto px-6 text-center">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <p class="text-sm text-theme-muted leading-relaxed mb-3">
           Responsible AI, not replacement authorship. The Lore Oracle is
           optional, vault-aware, and draft-based. Your vault remains the source
@@ -500,7 +502,7 @@
 
   <!-- FAQ Accordion Section -->
   <section class="border-t border-theme-border/30 bg-theme-surface/10 py-16">
-    <div class="max-w-3xl mx-auto px-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-xl uppercase tracking-[0.2em] text-theme-primary mb-10"
       >
@@ -545,7 +547,7 @@
   <section
     class="border-t border-theme-border/30 bg-gradient-to-b from-theme-bg to-theme-surface/30 py-16 text-center"
   >
-    <div class="max-w-2xl mx-auto px-6">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6">
       <h2 class="text-2xl font-bold font-header mb-4 uppercase tracking-wider">
         {type === "comparison"
           ? "Try Codex Cryptica Free"
