@@ -93,7 +93,7 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="name-context" class={labelClass}>Optional Context</label>
+  <label for="name-context" class={labelClass}>Add campaign context</label>
   <textarea
     id="name-context"
     name="context"

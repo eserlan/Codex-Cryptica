@@ -44,6 +44,7 @@ import {
   ADVENTURE_OUTCOME_TYPES_BY_GENRE,
   PRESSURE_TYPES,
 } from "./public-adventure-constants";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export { adventureConfig, forAdventureGenre };
 
@@ -605,7 +606,7 @@ Setting Context:
 - Archetype: ${adventure.archetype}
 - Scale: ${adventure.scale}
 - Tone: ${adventure.tone}
-${options.campaignContext?.trim() ? `- Campaign Context: ${options.campaignContext.trim()}` : ""}
+${formatCampaignContextBlock(options.campaignContext)}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 ${options.seed?.trim() ? `\n${formatUserSeedBlock(options.seed)}\n` : ""}
 

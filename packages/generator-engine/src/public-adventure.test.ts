@@ -729,14 +729,17 @@ describe("campaign context", () => {
       campaignContext: "The Swift Wing Eagles rule the Kestrel Reach.",
     });
     expect(prompt.userMessage).toContain(
-      "- Campaign Context: The Swift Wing Eagles rule the Kestrel Reach.",
+      "[HIGHEST PRIORITY — Campaign context, supplied by the user]",
+    );
+    expect(prompt.userMessage).toContain(
+      "The Swift Wing Eagles rule the Kestrel Reach.",
     );
   });
 
   it("omits the line when no context was given", () => {
     expect(
       buildAdventurePrompt({ genre: "Fantasy" }).userMessage,
-    ).not.toContain("- Campaign Context:");
+    ).not.toContain("[HIGHEST PRIORITY — Campaign context");
   });
 
   it("keeps context and seed as separate blocks", () => {
@@ -745,7 +748,9 @@ describe("campaign context", () => {
       campaignContext: "The Kestrel Reach is under occupation.",
       seed: AURELIA_HOOK,
     });
-    expect(prompt.userMessage).toContain("- Campaign Context:");
+    expect(prompt.userMessage).toContain(
+      "[HIGHEST PRIORITY — Campaign context",
+    );
     expect(prompt.userMessage).toContain("GIVEN SITUATION");
   });
 });

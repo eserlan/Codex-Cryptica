@@ -2247,13 +2247,16 @@ describe("dungeon campaign context", () => {
       campaignContext: "The Swift Wing Eagles rule the Kestrel Reach.",
     });
     expect(prompt.userMessage).toContain(
-      "- Campaign Context: The Swift Wing Eagles rule the Kestrel Reach.",
+      "[HIGHEST PRIORITY — Campaign context, supplied by the user]",
+    );
+    expect(prompt.userMessage).toContain(
+      "The Swift Wing Eagles rule the Kestrel Reach.",
     );
   });
 
   it("omits the line when no context was given", () => {
     expect(buildDungeonPrompt({ genre: "Fantasy" }).userMessage).not.toContain(
-      "- Campaign Context:",
+      "[HIGHEST PRIORITY — Campaign context",
     );
   });
 });
