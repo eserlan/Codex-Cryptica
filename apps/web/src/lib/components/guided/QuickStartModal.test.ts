@@ -101,16 +101,73 @@ describe("QuickStartModal", () => {
     return { onClose };
   };
 
-  it("shows a theme selector and premise input", () => {
+  it("shows a genre selector and premise input", () => {
     renderModal();
-    expect(screen.getByLabelText("Theme")).toBeTruthy();
+    expect(screen.getByLabelText("World genre and look")).toBeTruthy();
     expect(screen.getByLabelText("Seed Premise (optional)")).toBeTruthy();
+  });
+
+  it("names both the genre and the appearance in every option", () => {
+    renderModal();
+    const select = screen.getByLabelText(
+      "World genre and look",
+    ) as HTMLSelectElement;
+    const options = Array.from(select.options).map((o) => o.textContent ?? "");
+
+    // The visual theme name alone ("Ancient Parchment") does not tell anyone
+    // they are about to generate a fantasy world.
+    expect(options).toContain("Classic Fantasy (Ancient Parchment look)");
+    expect(options).toContain("Space Exploration (LCARS Interface look)");
+    expect(options.every((label) => label.includes("look"))).toBe(true);
+  });
+
+  it("states that the one choice sets both the world and the workspace", () => {
+    renderModal();
+    const help = screen.getByTestId("quick-start-theme-help");
+    expect(help.textContent).toContain("One choice, two effects");
+    expect(help.textContent).toContain("Ancient Parchment");
+  });
+
+  it("previews what will be generated, in the selected genre's own words", async () => {
+    renderModal();
+    const preview = screen.getByTestId("quick-start-preview");
+    expect(preview.textContent).toContain("Classic Fantasy");
+    expect(preview.textContent).toContain("Region");
+
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
+      target: { value: "scifi" },
+    });
+
+    expect(preview.textContent).toContain("Sector");
+    expect(preview.textContent).not.toContain("Classic Fantasy");
+  });
+
+  it("says the flow works without AI when the Oracle is unavailable", () => {
+    renderModal();
+    // The mocked oracle is disabled, matching a first-run/no-key user.
+    expect(screen.getByTestId("quick-start-ai-note").textContent).toContain(
+      "No AI and no account needed",
+    );
+  });
+
+  it("suggests a premise from the chosen genre rather than a fixed one", async () => {
+    renderModal();
+    const premise = screen.getByLabelText(
+      "Seed Premise (optional)",
+    ) as HTMLTextAreaElement;
+    const fantasyHint = premise.placeholder;
+
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
+      target: { value: "cyberpunk" },
+    });
+
+    expect(premise.placeholder).not.toBe(fantasyHint);
   });
 
   it("generates a starter world locally (AI disabled) and creates entities with connections", async () => {
     const { onClose } = renderModal();
 
-    await fireEvent.change(screen.getByLabelText("Theme"), {
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
       target: { value: "cyberpunk" },
     });
     await fireEvent.input(screen.getByLabelText("Seed Premise (optional)"), {

@@ -11,6 +11,7 @@ import type {
   ConstellationEntity,
   ConstellationRelationship,
   StarterConstellationConfig,
+  StarterConstellationPreview,
   StarterConstellationResult,
 } from "./starter-constellation-types";
 
@@ -688,3 +689,33 @@ export function parseStarterConstellationResponse(
 
 export const STARTER_CONSTELLATION_THEME_IDS: readonly string[] =
   Object.keys(THEME_ARCHETYPES);
+
+/**
+ * What choosing `themeId` will actually generate, so the Quick Start dialog can
+ * show the consequences instead of asking the user to infer a genre from a
+ * visual theme name (#2107, assessment finding M6).
+ *
+ * Examples are the *first* candidate for each slot rather than a random pick:
+ * a preview that reshuffles on every keystroke reads as noise, and the point is
+ * to convey the kind of thing produced, not to predict the exact result.
+ * Unknown ids fall back to the default theme, matching the generator.
+ */
+export function getStarterConstellationPreview(
+  themeId: string,
+): StarterConstellationPreview {
+  const resolvedId = themeId in THEME_ARCHETYPES ? themeId : DEFAULT_THEME_ID;
+  const a = getArchetypes(resolvedId);
+
+  return {
+    themeId: resolvedId,
+    genreName: a.themeName,
+    flavor: a.flavor,
+    slots: [
+      { label: a.regionLabel, example: a.regionNames[0] },
+      { label: a.settlementLabel, example: a.settlementNames[0] },
+      { label: a.factionLabel, example: a.factionNames[0] },
+      { label: "Character", example: a.characterRoles[0] },
+      { label: a.threatLabel, example: a.threatNames[0] },
+    ],
+  };
+}

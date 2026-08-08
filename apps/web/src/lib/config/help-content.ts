@@ -191,7 +191,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "guided-mode-quick-start",
     title: "Quick Start a world",
     content:
-      "Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation from a theme and optional premise — works fully offline.",
+      "Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation. One choice sets both the genre of the generated world and your workspace appearance, and the dialog previews what you'll get before you commit. Works fully offline.",
     icon: "icon-[lucide--sparkles]",
   },
   "guided-mode-toggle": {
