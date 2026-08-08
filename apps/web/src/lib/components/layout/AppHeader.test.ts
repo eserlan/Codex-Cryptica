@@ -91,6 +91,22 @@ describe("AppHeader", () => {
     expect(modalUIStore.activeSettingsTab).toBe("help");
   });
 
+  it("keeps Help open when the guest entry is used again", async () => {
+    sessionModeStore.isGuestMode = true;
+    modalUIStore.openSettings("help");
+
+    render(AppHeader);
+
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open Help and legal information",
+      }),
+    );
+
+    expect(modalUIStore.showSettings).toBe(true);
+    expect(modalUIStore.activeSettingsTab).toBe("help");
+  });
+
   it("hides advanced toolbar utilities in Guided Mode", () => {
     render(AppHeader);
 

@@ -177,7 +177,7 @@
         <button
           type="button"
           class="flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
-          onclick={() => modalUIStore.toggleSettings("help")}
+          onclick={() => modalUIStore.openSettings("help")}
           title="Help and legal information"
           aria-label="Open Help and legal information"
           data-testid="guest-settings-button"
