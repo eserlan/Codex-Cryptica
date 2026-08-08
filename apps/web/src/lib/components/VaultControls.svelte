@@ -411,7 +411,7 @@
              cluster was showing two ways to do the same thing. The inline
              form itself stays — it's still opened via drafts
              (proposerStore.draftEntity) and pendingCreateEntity. -->
-        <VaultActionsMenu />
+        <VaultActionsMenu {orientation} />
 
         <div
           class="flex {isVertical

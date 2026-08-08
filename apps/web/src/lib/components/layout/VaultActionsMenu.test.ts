@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultActionsMenu from "./VaultActionsMenu.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -40,13 +40,32 @@ describe("VaultActionsMenu", () => {
     const trigger = screen.getByTestId("vault-actions-menu-button");
     trigger.focus();
     await fireEvent.keyDown(trigger, { key: "ArrowDown" });
-    expect(document.activeElement).toBe(
-      screen.getByRole("menuitem", { name: /import data/i }),
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("menuitem", { name: /import data/i }),
+      ),
     );
     await fireEvent.keyDown(screen.getByTestId("vault-actions-menu"), {
       key: "Escape",
     });
-    expect(screen.queryByTestId("vault-actions-menu")).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    await waitFor(() => {
+      expect(screen.queryByTestId("vault-actions-menu")).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    });
+  });
+
+  it("uses full-width touch targets in a vertical drawer", async () => {
+    render(VaultActionsMenu, { orientation: "vertical" });
+    const trigger = screen.getByTestId("vault-actions-menu-button");
+
+    expect(trigger.className).toContain("w-full");
+    await fireEvent.click(trigger);
+
+    expect(screen.getByTestId("vault-actions-menu").className).toContain(
+      "left-0",
+    );
+    expect(screen.getByTestId("vault-actions-menu").className).toContain(
+      "w-full",
+    );
   });
 });

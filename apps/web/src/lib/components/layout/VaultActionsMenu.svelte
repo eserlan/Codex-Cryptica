@@ -3,9 +3,14 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
 
+  let { orientation = "horizontal" } = $props<{
+    orientation?: "horizontal" | "vertical";
+  }>();
+
   let isOpen = $state(false);
   let triggerEl = $state<HTMLButtonElement | null>(null);
   let menuEl = $state<HTMLDivElement | null>(null);
+  const isVertical = $derived(orientation === "vertical");
 
   const close = (restoreFocus = false) => {
     isOpen = false;
@@ -56,7 +61,7 @@
 </script>
 
 <div
-  class="relative"
+  class={isVertical ? "relative w-full" : "relative"}
   onfocusout={(event) => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null))
       close();
@@ -65,7 +70,9 @@
   <button
     bind:this={triggerEl}
     type="button"
-    class="flex items-center gap-1.5 rounded border border-chrome-border px-3 py-1.5 text-xs font-bold tracking-wider text-chrome-muted transition-colors hover:border-chrome-accent hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent"
+    class="flex items-center rounded border border-chrome-border font-bold tracking-wider text-chrome-muted transition-colors hover:border-chrome-accent hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent {isVertical
+      ? 'w-full justify-center gap-2 py-3 text-sm'
+      : 'gap-1.5 px-3 py-1.5 text-xs'}"
     onclick={() => (isOpen ? close() : void open())}
     onkeydown={handleTriggerKeydown}
     aria-haspopup="menu"
@@ -88,14 +95,18 @@
       role="menu"
       aria-label="Vault actions"
       tabindex="-1"
-      class="absolute right-0 z-[90] mt-2 w-56 rounded border border-chrome-border bg-chrome-surface p-1 shadow-xl"
+      class="absolute z-[90] mt-2 rounded border border-chrome-border bg-chrome-surface p-1 shadow-xl {isVertical
+        ? 'left-0 w-full'
+        : 'right-0 w-56'}"
       onkeydown={handleMenuKeydown}
       data-testid="vault-actions-menu"
     >
       <button
         type="button"
         role="menuitem"
-        class="w-full rounded px-3 py-2 text-left text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent"
+        class="w-full rounded px-3 text-left text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent {isVertical
+          ? 'py-3 text-sm'
+          : 'py-2 text-xs'}"
         onclick={() => run(openImportWindow)}
       >
         <span
@@ -106,7 +117,9 @@
       <button
         type="button"
         role="menuitem"
-        class="w-full rounded px-3 py-2 text-left text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent"
+        class="w-full rounded px-3 text-left text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent {isVertical
+          ? 'py-3 text-sm'
+          : 'py-2 text-xs'}"
         onclick={() => run(() => modalUIStore.openSettings("vault"))}
       >
         <span
@@ -117,7 +130,9 @@
       <button
         type="button"
         role="menuitem"
-        class="w-full rounded px-3 py-2 text-left text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent"
+        class="w-full rounded px-3 text-left text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent {isVertical
+          ? 'py-3 text-sm'
+          : 'py-2 text-xs'}"
         onclick={() => run(() => modalUIStore.openShare())}
       >
         <span
