@@ -139,6 +139,7 @@
   let magicItem = $state({
     type: magicItemConfig.typesByTheme["Classic Fantasy"][0],
     rarity: magicItemConfig.rarities[1],
+    campaignContext: "",
   });
 
   let faction = $state({
@@ -336,6 +337,7 @@
         ? worldConfig.lancerConflicts[0]
         : worldConfig.campaignPressures[0],
     dominantFeature: "",
+    campaignContext: "",
   });
 
   let starSystem = $state<{
@@ -344,12 +346,14 @@
     civilisationLevel: string;
     systemCharacter: string;
     scientificRealism: string;
+    campaignContext: string;
   }>({
     systemType: starSystemConfig.systemTypes[0],
     genre: starSystemConfig.genres[0],
     civilisationLevel: starSystemConfig.civilisationLevels[0],
     systemCharacter: starSystemConfig.systemCharacters[0],
     scientificRealism: starSystemConfig.scientificRealism[0],
+    campaignContext: "",
   });
 
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
@@ -703,6 +707,7 @@
       <MagicItemFormFields
         bind:type={magicItem.type}
         bind:rarity={magicItem.rarity}
+        bind:campaignContext={magicItem.campaignContext}
       />
     {:else if slug === "faction"}
       <FactionFormFields
@@ -904,6 +909,7 @@
         bind:lancerWorldFrame={world.lancerWorldFrame}
         bind:campaignPressure={world.campaignPressure}
         bind:dominantFeature={world.dominantFeature}
+        bind:campaignContext={world.campaignContext}
         onGenreChange={(genre) => {
           activeTheme = mapWorldGenreToTheme(genre);
         }}
@@ -916,6 +922,7 @@
         bind:civilisationLevel={starSystem.civilisationLevel}
         bind:systemCharacter={starSystem.systemCharacter}
         bind:scientificRealism={starSystem.scientificRealism}
+        bind:campaignContext={starSystem.campaignContext}
         onGenreChange={(genre) => {
           activeTheme = mapStarSystemGenreToTheme(genre);
         }}

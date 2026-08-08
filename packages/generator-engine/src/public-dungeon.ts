@@ -58,6 +58,10 @@ import {
   TREASURES_BY_GENRE,
   HOOKS_BY_GENRE,
 } from "./public-dungeon-constants";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
 
 export { dungeonConfig, forGenre };
 
@@ -68,6 +72,8 @@ export interface DungeonGeneratorOptions {
   currentState?: string;
   scale?: string;
   instruction?: string;
+  /** Free-text world/campaign background from the form's context field. */
+  campaignContext?: string;
   /**
    * Names already used elsewhere in this session.
    *
@@ -1025,9 +1031,14 @@ Setting Context:
 - Original Purpose: ${dungeon.purpose}
 - Current State: ${dungeon.currentState}
 - Scale: ${dungeon.scale}
+${formatCampaignContextBlock(options.campaignContext)}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
-${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}
+${formatDungeonSeeds(
+  dungeon,
+  avoidNamesExcludingContext(options.avoidNames ?? [], options.campaignContext),
+  options.avoidTraits ?? [],
+)}
 
 ${formatDungeonJsonSchema(dungeon)}`;
 
@@ -1575,7 +1586,12 @@ export function parseDungeonResponseDetailed(
         sectors,
         factions,
         foundation,
-        options.avoidNames ?? [],
+        // Same exclusion as the prompt: a name the campaign context pinned is
+        // not a name to reject the response for reusing.
+        avoidNamesExcludingContext(
+          options.avoidNames ?? [],
+          options.campaignContext,
+        ),
         options.avoidTraits ?? [],
         invalidTerritoryFactions,
         omittedFactionFields,

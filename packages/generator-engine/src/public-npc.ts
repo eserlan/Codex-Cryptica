@@ -29,6 +29,7 @@ import {
   NPC_NAMING_STYLES,
   type MoralityAnchor,
 } from "./public-npc-constants";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export {
   BANNED_NAMES,
@@ -36,8 +37,6 @@ export {
   npcConfig,
   npcThemeConfig,
 } from "./public-npc-constants";
-
-
 
 function getDndNpcQuickStats(role: string) {
   return (
@@ -164,7 +163,7 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
 - Ancestry/Race: ${race}
 - Role: ${role}
 - Moral Stance: ${moralityLabel}
-- Behavioral Directive: ${behavioralDirective}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Behavioral Directive: ${behavioralDirective}${formatCampaignContextBlock(campaignContext)}
 - Naming Directive: ${chosenNamingStyle}`;
 
   return { systemInstruction, userMessage, resolved };

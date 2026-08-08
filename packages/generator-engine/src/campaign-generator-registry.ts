@@ -1452,7 +1452,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         id: "seed",
         label: "Starting Seed / Situation",
         description:
-          "Optional: describe a starting scenario, NPC, or situation to anchor the adventure.",
+          "Optional: describe or paste a starting scenario, NPC, or hook to anchor the adventure. Names are kept as written, and a deadline you state becomes the adventure's clock.",
         control: "textarea",
       },
     ],
