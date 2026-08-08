@@ -26,6 +26,10 @@
     MOBILE_ENTRY_MIN_ZOOM,
     resolveMobileEntryId,
   } from "./graph/mobile-entry";
+  import {
+    buildGraphSummary,
+    buildSelectionAnnouncement,
+  } from "./graph/graph-a11y";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -549,6 +553,29 @@
       vault.status !== "loading" &&
       vault.allEntities.length === 0,
   );
+
+  // ── Canvas text alternatives (see graph-a11y.ts) ─────────────────────────
+  let graphSummary = $derived(
+    buildGraphSummary({
+      totalEntities: graph.fullGraphSize.nodeCount,
+      totalConnections: graph.fullGraphSize.edgeCount,
+      renderedEntities: graph.stats.nodeCount,
+      focusViewActive: graph.focusViewActive,
+      filtersActive:
+        graph.activeCategories.size > 0 ||
+        graph.activeLabels.size > 0 ||
+        graph.timelineMode,
+    }),
+  );
+  let selectionAnnouncement = $derived(
+    buildSelectionAnnouncement(
+      selectedEntity,
+      (selectedEntity?.connections?.length ?? 0) +
+        (controller.selectedId
+          ? (vault.inboundConnections[controller.selectedId]?.length ?? 0)
+          : 0),
+    ),
+  );
 </script>
 
 <div
@@ -559,6 +586,29 @@
     class="absolute inset-0 pointer-events-none opacity-20"
     style="background-image: radial-gradient(var(--color-theme-secondary) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
+
+  <!-- The canvas below is aria-hidden (cytoscape paints pixels, not DOM), so
+       these two regions carry the view's meaning: a static description with
+       the operable alternatives, and the single polite announcer for
+       selection. Wording and the reasoning behind it live in graph-a11y.ts. -->
+  <section
+    class="sr-only"
+    aria-labelledby="graph-a11y-heading"
+    data-testid="graph-a11y-summary"
+  >
+    <h2 id="graph-a11y-heading">Knowledge graph</h2>
+    {#each graphSummary as line}
+      <p>{line}</p>
+    {/each}
+  </section>
+  <div
+    class="sr-only"
+    role="status"
+    aria-live="polite"
+    data-testid="graph-a11y-announcer"
+  >
+    {selectionAnnouncement}
+  </div>
 
   <GraphHUD
     {selectedEntity}
@@ -580,6 +630,7 @@
   <div
     bind:this={container}
     data-testid="graph-canvas"
+    aria-hidden="true"
     class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"

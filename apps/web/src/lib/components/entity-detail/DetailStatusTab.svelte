@@ -45,6 +45,13 @@
   let prefillConnectionTargetId = $state<string | null>(null);
   let prefillConnectionTargetName = $state("");
 
+  // The "*" suffix on a name in the connections list marks a past-labelled
+  // entity. It's a purely visual footnote with no legend, so every site that
+  // renders it pairs it with screen-reader text (see the `sr-only` spans).
+  const entityIsPast = $derived(
+    entity?.labels?.some((l: string) => l.toLowerCase() === "past") ?? false,
+  );
+
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
     if (!vault.isGuest) return true;
@@ -374,6 +381,7 @@
         {:else}
           <li class="flex gap-3 text-sm text-theme-muted items-start group">
             <span
+              aria-hidden="true"
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
                 ? 'icon-[lucide--chevron-down]'
                 : conn.isOutbound
@@ -385,6 +393,13 @@
                   ? "var(--theme-icon-active)"
                   : "var(--theme-icon-default)"}
             ></span>
+            <span class="sr-only"
+              >{conn.isChild
+                ? "Child of this entity:"
+                : conn.isOutbound
+                  ? "Outgoing connection:"
+                  : "Incoming connection:"}</span
+            >
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
                 onclick={(e) => {
@@ -398,51 +413,72 @@
               >
                 {#if conn.isChild}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >Child</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else if conn.isOutbound}
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {/if}
               </button>
@@ -454,7 +490,7 @@
                       type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => (editingConnectionTarget = conn.targetId)}
-                      aria-label="Edit connection"
+                      aria-label="Edit connection to {conn.displayTitle}"
                       title="Edit connection"
                     >
                       <span
@@ -472,7 +508,7 @@
                         prefillConnectionTargetName = conn.displayTitle;
                         isAddingConnection = true;
                       }}
-                      aria-label="Establish custom connection"
+                      aria-label="Establish custom connection to {conn.displayTitle}"
                       title="Establish custom connection"
                     >
                       <span
@@ -503,7 +539,7 @@
                         );
                       }
                     }}
-                    aria-label="Delete connection"
+                    aria-label="Delete connection to {conn.displayTitle}"
                     title="Delete connection"
                   >
                     <span
