@@ -327,4 +327,52 @@ test.describe("Demo graph zoom (#1296)", () => {
       timeout: 3000,
     });
   });
+
+  test("an initially selected entity keeps the legible entry zoom", async ({
+    page,
+  }) => {
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await page.addInitScript(seedOnboardingComplete);
+
+    let releaseDemoFetch: (() => void) | undefined;
+    const demoFetchReady = new Promise<void>((resolve) => {
+      releaseDemoFetch = resolve;
+    });
+    await page.route("**/vault-samples/fantasy.json", async (route) => {
+      await demoFetchReady;
+      await route.continue();
+    });
+
+    await page.goto("/?demo=fantasy");
+    await page.waitForFunction(
+      () => (window as any).sessionModeStore?.isDemoMode === true,
+      { timeout: 10000 },
+    );
+    await page.evaluate(() => {
+      (window as any).vault.selectedEntityId = "eldrin-the-wise";
+    });
+    if (!releaseDemoFetch)
+      throw new Error("Demo fetch gate was not initialized");
+    releaseDemoFetch();
+
+    await page.waitForFunction(
+      () => (window as any).vault?.allEntities?.length > 0,
+      { timeout: 20000 },
+    );
+    await dismissFrontPage(page);
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
+    await page.waitForFunction(
+      () => (window as any).uiStore?.isMobile === true,
+      { timeout: 5000 },
+    );
+    await page.waitForFunction(() => !!(window as any).cy?.nodes().length, {
+      timeout: 10000,
+    });
+    await page.waitForFunction(
+      () => ((window as any).cy?.zoom() ?? 0) >= 0.75,
+      { timeout: 3000 },
+    );
+  });
 });
