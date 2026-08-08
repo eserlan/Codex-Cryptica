@@ -34,13 +34,27 @@
   >({});
   let showItemPicker = $state(false);
 
-  const linkableItems = $derived(
-    Object.values(vault.entities).filter((entity) =>
-      ["item", "weapon", "gear", "artifact", "object"].some((type) =>
-        entity.type.toLowerCase().includes(type),
-      ),
-    ),
-  );
+  const linkableItems = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace Object.values().filter() with an imperative loop
+    // over allEntities to avoid unnecessary intermediate array allocations
+    const items = [];
+    const validTypes = ["item", "weapon", "gear", "artifact", "object"];
+    const entities = vault.allEntities;
+    const len = entities.length;
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
+      if (entity && entity.type) {
+        const type = entity.type.toLowerCase();
+        for (let j = 0; j < validTypes.length; j++) {
+          if (type.includes(validTypes[j])) {
+            items.push(entity);
+            break;
+          }
+        }
+      }
+    }
+    return items;
+  });
 
   function linkedEntity(row: Record<string, any>) {
     const entityId = row.entityId;
