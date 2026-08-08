@@ -434,7 +434,10 @@
     if (currentCy && graph.fitRequest > 0) {
       untrack(() =>
         currentCy.animate({
-          fit: { eles: currentCy.elements(), padding: 20 },
+          // Cytoscape includes edge-label bounds in fit calculations. Leave a
+          // larger rendered margin so label backplates do not sit against the
+          // graph frame or the desktop detail-panel boundary.
+          fit: { eles: currentCy.elements(), padding: 48 },
           duration: 800,
           easing: "ease-out-cubic",
         }),

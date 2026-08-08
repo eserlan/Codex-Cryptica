@@ -10,6 +10,7 @@ import {
   syncGraphElements,
   applyLargeGraphRenderHints,
   isLayoutCollinear,
+  setupGraphEvents,
 } from "graph-engine";
 
 // Mock graph-engine
@@ -177,6 +178,27 @@ describe("GraphViewController", () => {
     controller.applyFocus("node-1");
 
     expect(batchSpy).toHaveBeenCalled();
+  });
+
+  it("opens read-only edge details for guests", async () => {
+    deps.vault.isGuest = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    handlers?.onEdgeTap?.({
+      source: "node-a",
+      target: "node-b",
+      label: "Rivals in the old court",
+      connectionType: "rivals_of",
+    });
+
+    expect(controller.editingEdge).toEqual({
+      source: "node-a",
+      target: "node-b",
+      label: "Rivals in the old court",
+      type: "rivals_of",
+    });
   });
 
   it("should reset to idle when vault starts loading", () => {
