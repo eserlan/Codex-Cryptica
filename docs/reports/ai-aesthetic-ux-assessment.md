@@ -122,7 +122,7 @@ through 14 should not start until chunk 0 reports.
 | Chunk 3: Application shell reclamation     | **Shipped**                               | `4dae1425`, `85c98049`, PR #2096. Marketing footer removed from workspace routes; guest Help remains available.                                                                                                     |
 | Chunk 4: Full Toolbox action hierarchy     | **Shipped**                               | `799a6f74`, `271a5b02`, `be0efc59`, PR #2098. Merged to `staging` after all CI checks passed.                                                                                                                       |
 | Chunk 5: Desktop graph-label legibility    | **Shipped**                               | `c2053615`, `f9f962df`, PR #2099.                                                                                                                                                                                   |
-| Chunk 6: Useful mobile graph entry state   | **Shipped, but unverified**               | `310e76ed`, `49bad9b8`, `2a0a163f`, PR #2103. Its own e2e assertion fails locally: entry zoom settles at 0.673 against an asserted 0.75. See the note under Chunk 6.                                                |
+| Chunk 6: Useful mobile graph entry state   | **Shipped**                               | `310e76ed`, `49bad9b8`, `2a0a163f`, PR #2103. Both 390×844 journeys pass; see the verification note under Chunk 6 about a false regression report.                                                                  |
 | Chunk 7: Accessible graph navigation       | **Phases 1 to 3 shipped**                 | PR #2105. Canvas text alternatives, table route from the graph controls, connection-list semantics. Phase 4 (automated a11y checks, focus retention, documented contract, manual screen-reader pass) is still open. |
 | Constitution Principle IV amendment        | **Done, but reintroduces the same fault** | `.specify/memory/constitution.md:34` now reads "powered by OpenAI/Luna or a provider-neutral contract". See M7.                                                                                                     |
 
@@ -843,16 +843,14 @@ Graph help now explain drag, pinch, and node-tap gestures.
 The resolver, selector contract, and isolated 390×844 browser journey are covered
 by automated tests.
 
-**Open defect (2026-08-08, found while starting Chunk 7):** the 390×844 browser
-journey fails on `staging`. It waits for a zoom of at least 0.75, and a direct
-probe of the demo vault measures **0.673** after entry settles.
-`MOBILE_ENTRY_MIN_ZOOM` is 0.75 and the centering call passes it, so something
-re-fits the camera after the entry effect runs. This went unnoticed because
-Playwright runs only on a daily schedule (`.github/workflows/daily-e2e.yml`,
-03:00 UTC, plus manual dispatch); pull requests run Type Check, Lint, Test
-(unit), and Build, so the chunk merged with its own acceptance test red. The
-feature is therefore shipped but unverified, and the entry view is less legible
-than the acceptance criterion requires.
+**Verification note (2026-08-08):** an earlier revision of this document
+recorded a zoom regression here (an entry zoom of 0.673 against the asserted
+0.75). That was a measurement error, not a defect: Playwright's `webServer`
+config sets `reuseExistingServer: !process.env.CI`, and an unrelated dev server
+from a different checkout was already holding port 5173, so those runs
+exercised the wrong working tree. Re-run against a dedicated port
+(`E2E_PORT=5199`), both 390×844 journeys pass. The entry zoom behaves as
+specified.
 
 ### Chunk 7: Accessible graph navigation
 
@@ -900,7 +898,10 @@ change because it adds a dependency and CI surface. Note that Playwright runs
 only on the daily schedule, not on pull requests, so any e2e-based acceptance
 criterion in this document is unenforced at merge time. Phase 4's checks should
 either run in the pull-request workflow or the acceptance criteria should stop
-claiming e2e coverage they do not get.
+claiming e2e coverage they do not get. When checking any of these criteria
+locally, pass an explicit `E2E_PORT`: `reuseExistingServer` will silently bind
+to whatever already holds port 5173, including a dev server from an entirely
+different checkout, and the results will look like product defects.
 
 ### Chunk 8: Quick Start decision model
 
