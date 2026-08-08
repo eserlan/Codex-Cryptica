@@ -143,6 +143,7 @@ describe("onboarding selector contract", () => {
         cy: undefined,
         isLayoutRunning: false,
         onApplyLayout: async () => {},
+        onShowWholeWorld: async () => {},
         selectedCount: 0,
       },
     });
@@ -156,6 +157,9 @@ describe("onboarding selector contract", () => {
         `Expected GraphToolbar (mobile) to render an element matching ${selector}`,
       ).not.toBeNull();
     }
+    expect(
+      container.querySelector('[data-testid="mobile-show-whole-world"]'),
+    ).not.toBeNull();
   });
 
   it("GraphView's empty-state CTA testid is still wired (source check — see file docstring)", () => {

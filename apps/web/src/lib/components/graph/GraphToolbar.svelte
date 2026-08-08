@@ -12,12 +12,14 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { LayoutRequest } from "graph-engine";
 
-  let { cy, isLayoutRunning, onApplyLayout, selectedCount } = $props<{
-    cy: Core | undefined;
-    isLayoutRunning: boolean;
-    onApplyLayout: (req: LayoutRequest) => Promise<void>;
-    selectedCount: number;
-  }>();
+  let { cy, isLayoutRunning, onApplyLayout, onShowWholeWorld, selectedCount } =
+    $props<{
+      cy: Core | undefined;
+      isLayoutRunning: boolean;
+      onApplyLayout: (req: LayoutRequest) => Promise<void>;
+      onShowWholeWorld: () => Promise<void>;
+      selectedCount: number;
+    }>();
 
   let showMinimap = $state(false);
   let isMobileMenuOpen = $state(false);
@@ -355,6 +357,18 @@
     {#if !layoutUIStore.isMobile}
       {@render toolbarItems()}
     {:else}
+      <button
+        type="button"
+        onclick={() => void onShowWholeWorld()}
+        class="mb-2 rounded-full border border-theme-border bg-theme-surface/95 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-theme-primary shadow-lg backdrop-blur transition hover:border-theme-primary hover:bg-theme-primary/10 active:scale-95"
+        data-testid="mobile-show-whole-world"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--maximize] mr-1.5 inline-block h-3.5 w-3.5 align-text-bottom"
+        ></span>
+        Show whole world
+      </button>
       {#if isMobileMenuOpen}
         <div
           id="mobile-graph-controls"

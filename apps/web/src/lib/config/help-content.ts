@@ -161,7 +161,7 @@ export const COACH_MARKS: CoachMark[] = [
     id: "graph-fab",
     icon: "icon-[lucide--sliders-horizontal]",
     title: "Graph controls",
-    body: "The dark button opens layout, filters, and display options for the graph.",
+    body: "The dark button opens layout, filters, and display options. Drag to pan, pinch to zoom, and tap a node to open it.",
     targetSelector: '[data-testid="graph-controls-fab"]',
   },
   {
@@ -254,7 +254,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "visual-graph",
     title: "Visual Graph",
     content:
-      "Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
+      "Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; choose Show whole world whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
     icon: "icon-[lucide--share-2]",
   },
   "world-chronology": {

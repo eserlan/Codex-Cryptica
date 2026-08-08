@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy, untrack } from "svelte";
+  import { onMount, onDestroy, tick, untrack } from "svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -22,6 +22,10 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
+  import {
+    MOBILE_ENTRY_MIN_ZOOM,
+    resolveMobileEntryId,
+  } from "./graph/mobile-entry";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -74,6 +78,7 @@
   });
 
   let container: HTMLElement;
+  let mobileEntryVaultId: string | null = null;
 
   // COACH_MARKS lives in help-content.ts (config, testable) — see its
   // docstring there for why these are scoped to isMobile, not tablets.
@@ -307,6 +312,50 @@
     }
   }
 
+  async function showWholeWorld() {
+    if (graph.focusViewActive) {
+      graph.toggleFullGraph();
+      await tick();
+    }
+    graph.requestFit();
+  }
+
+  // A phone should enter a useful local view once per vault/session, then
+  // leave the camera entirely under the user's control. In particular, this
+  // must not re-run after a mobile node tap opens and closes Zen mode.
+  $effect(() => {
+    const currentCy = controller.cy;
+    const vaultId = vault.activeVaultId ?? "default";
+    const isReady = controller.loadPhase === "ready";
+    const entities = vault.allEntities;
+    if (
+      !layoutUIStore.isMobile ||
+      !currentCy ||
+      !isReady ||
+      mobileEntryVaultId === vaultId
+    )
+      return;
+
+    mobileEntryVaultId = vaultId;
+    const entryId = resolveMobileEntryId(
+      entities,
+      controller.selectedId,
+      vault.inboundConnections,
+    );
+    if (!entryId) return;
+
+    const node = currentCy.$id(entryId);
+    if (node.length > 0) {
+      untrack(() =>
+        centerOnNode(
+          node,
+          true,
+          Math.max(currentCy.zoom(), MOBILE_ENTRY_MIN_ZOOM),
+        ),
+      );
+    }
+  });
+
   // Selection & Search Focus
   $effect(() => {
     void controller.pendingSearchFocus;
@@ -530,6 +579,7 @@
     cy={controller.cy}
     isLayoutRunning={controller.isLayoutRunning}
     onApplyLayout={controller.applyCurrentLayout}
+    onShowWholeWorld={showWholeWorld}
     selectedCount={controller.selectedCount}
   />
 
