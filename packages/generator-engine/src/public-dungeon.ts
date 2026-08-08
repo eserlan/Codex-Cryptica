@@ -58,7 +58,10 @@ import {
   TREASURES_BY_GENRE,
   HOOKS_BY_GENRE,
 } from "./public-dungeon-constants";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
 
 export { dungeonConfig, forGenre };
 
@@ -1031,7 +1034,11 @@ Setting Context:
 ${formatCampaignContextBlock(options.campaignContext)}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
-${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}
+${formatDungeonSeeds(
+  dungeon,
+  avoidNamesExcludingContext(options.avoidNames ?? [], options.campaignContext),
+  options.avoidTraits ?? [],
+)}
 
 ${formatDungeonJsonSchema(dungeon)}`;
 

@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { buildWorldPrompt } from "./public-world";
+import { buildStarSystemPrompt } from "./public-star-system";
+import { buildAdventurePrompt } from "./public-adventure";
 import {
   avoidNamesExcludingContext,
   extractProperNouns,
@@ -99,5 +102,50 @@ describe("formatCampaignContextBlock", () => {
   it("omits the name clause when the context names nothing", () => {
     const block = formatCampaignContextBlock("a damp underground place");
     expect(block).not.toContain("The names below are established");
+  });
+});
+
+describe("prompt builders do not contradict the context block", () => {
+  // The block tells the model that names the user introduced are established
+  // and must be kept. Any generator that also emits an avoid-list has to drop
+  // those names from it, or the prompt argues with itself.
+  const CONTEXT =
+    "The crew answers to Kestrel Vane aboard the Aurelia-7 before the Dominion arrives.";
+
+  it("world omits context names from its avoid list", () => {
+    const prompt = buildWorldPrompt({
+      themeId: "scifi",
+      campaignContext: CONTEXT,
+      avoidNames: ["Kestrel Vane", "Unrelated Name"],
+    });
+
+    expect(prompt.userMessage).toContain("Unrelated Name");
+    expect(prompt.userMessage).not.toContain(
+      "campaign-specific names: Kestrel Vane",
+    );
+  });
+
+  it("star system omits context names from its avoid list", () => {
+    const prompt = buildStarSystemPrompt({
+      themeId: "scifi",
+      campaignContext: CONTEXT,
+      avoidNames: ["Aurelia-7", "Unrelated Name"],
+    });
+
+    const restriction =
+      prompt.userMessage.match(/campaign-specific names: ([^.]*)/)?.[1] ?? "";
+    expect(restriction).toContain("Unrelated Name");
+    expect(restriction).not.toContain("Aurelia-7");
+  });
+
+  it("adventure omits context names from its avoid list, not just seed names", () => {
+    const prompt = buildAdventurePrompt({
+      themeId: "scifi",
+      campaignContext: CONTEXT,
+      avoidNames: ["Kestrel Vane", "Unrelated Name"],
+    });
+
+    expect(prompt.userMessage).toContain("Unrelated Name");
+    expect(prompt.userMessage).not.toMatch(/^- Kestrel Vane$/m);
   });
 });

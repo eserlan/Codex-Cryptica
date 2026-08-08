@@ -44,7 +44,12 @@ import {
   ADVENTURE_OUTCOME_TYPES_BY_GENRE,
   PRESSURE_TYPES,
 } from "./public-adventure-constants";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  extractProperNouns,
+  formatCampaignContextBlock,
+  statesDeadline,
+} from "./campaign-context";
 
 export { adventureConfig, forAdventureGenre };
 
@@ -338,21 +343,6 @@ export function generateAdventureLocal(
 }
 
 /**
- * Words that read as a deadline or a "before X happens" consequence. Used to
- * decide whether a user-supplied seed carries its own pressure that the
- * adventure must adopt rather than invent one of its own.
- */
-const SEED_DEADLINE_PATTERNS = [
-  /\bbefore\b/i,
-  /\bunless\b/i,
-  /\buntil\b/i,
-  /\bby (?:dawn|dusk|midnight|nightfall|morning|sunrise|sunset|the end of)\b/i,
-  /\bwithin \w+ (?:hour|day|week|month|cycle|shift)/i,
-  /\bin \w+ (?:hours|days|weeks|months|cycles|shifts)\b/i,
-  /\b(?:deadline|countdown|ticking|running out|too late)\b/i,
-];
-
-/**
  * Terms that signal a trackable clock. Shared between the prompt-side
  * expectations and the response validation below.
  */
@@ -396,62 +386,34 @@ const PRESSURE_SIGNAL_TERMS = [
 ];
 
 /**
- * Capitalised sequences a user-supplied seed introduces — the people, places,
- * ships and organisations the adventure must keep rather than rename.
+ * Adventure's names for the shared campaign-context helpers.
  *
- * A word that opens a sentence is skipped: "Investigate a series of telemetry
- * dropouts..." starts with a capital but names nothing. Multi-word sequences
- * and tokens carrying a digit or an internal capital ("Aurelia-7",
- * "Phobos-Zero") are kept wherever they appear, since sentence position tells
- * us nothing useful about those.
+ * The seed field and the campaign-context field are the same kind of input
+ * (user prose whose proper nouns are binding), so they share one
+ * implementation in campaign-context.ts. These aliases keep the seed-specific
+ * vocabulary at the call sites and in the tests that predate the shared module.
  */
-export function extractSeedProperNouns(seed: string): string[] {
-  const found = new Set<string>();
-  // Sentence-ish spans, so "first word" is meaningful.
-  for (const sentence of seed.split(/(?<=[.!?;:\n])\s+/)) {
-    const trimmed = sentence.trim();
-    if (!trimmed) continue;
-    const pattern =
-      /\b[A-Z][A-Za-z0-9]*(?:[-'’][A-Za-z0-9]+)*(?:\s+[A-Z][A-Za-z0-9]*(?:[-'’][A-Za-z0-9]+)*)*/g;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(trimmed))) {
-      const candidate = match[0].trim();
-      if (candidate.length < 3) continue;
-      const isSentenceStart = match.index === 0;
-      const isMultiWord = /\s/.test(candidate);
-      const isDistinctiveToken =
-        /[0-9]/.test(candidate) || /[-'’]/.test(candidate);
-      if (isSentenceStart && !isMultiWord && !isDistinctiveToken) continue;
-      found.add(candidate);
-    }
-  }
-  return [...found];
-}
+export const extractSeedProperNouns = extractProperNouns;
 
 /** True when the seed states its own deadline or "before X" consequence. */
-export function seedStatesDeadline(seed: string): boolean {
-  return SEED_DEADLINE_PATTERNS.some((pattern) => pattern.test(seed));
-}
+export const seedStatesDeadline = statesDeadline;
 
 /**
- * The session's "already used" names, minus anything the seed itself
- * introduced. A seed handed over from another generator names bodies,
- * stations and factions that generator has already registered as used —
- * telling the model to avoid those would defeat the point of the handoff.
+ * Names this session has already used, minus anything the user's own prose
+ * introduced. Both free-text fields count: a name the user typed into the seed
+ * or into campaign context is one they want kept, and the context block tells
+ * the model exactly that, so listing it under "avoid these names" would
+ * contradict the instruction two paragraphs earlier.
  */
-function avoidNamesExcludingSeed(
+function avoidNamesExcludingUserText(
   avoidNames: string[],
   seed?: string,
+  campaignContext?: string,
 ): string[] {
-  if (!seed?.trim()) return avoidNames;
-  const seedNouns = extractSeedProperNouns(seed).map((n) => n.toLowerCase());
-  return avoidNames.filter((name) => {
-    const lower = name.trim().toLowerCase();
-    if (!lower) return true;
-    return !seedNouns.some(
-      (noun) => noun.includes(lower) || lower.includes(noun),
-    );
-  });
+  return avoidNamesExcludingContext(
+    avoidNamesExcludingContext(avoidNames, seed),
+    campaignContext,
+  );
 }
 
 /**
@@ -612,7 +574,11 @@ ${options.seed?.trim() ? `\n${formatUserSeedBlock(options.seed)}\n` : ""}
 
 ${formatAdventureSeeds(
   adventure,
-  avoidNamesExcludingSeed(options.avoidNames ?? [], options.seed),
+  avoidNamesExcludingUserText(
+    options.avoidNames ?? [],
+    options.seed,
+    options.campaignContext,
+  ),
   Boolean(options.seed?.trim() && seedStatesDeadline(options.seed)),
 )}
 
@@ -793,7 +759,11 @@ export function parseAdventureResponseDetailed(
     }
     const reused = bannedNamesIn(
       nameValues,
-      avoidNamesExcludingSeed(options.avoidNames ?? [], options.seed),
+      avoidNamesExcludingUserText(
+        options.avoidNames ?? [],
+        options.seed,
+        options.campaignContext,
+      ),
     ).filter((n) => !banned.includes(n));
     if (reused.length > 0) {
       problems.push(

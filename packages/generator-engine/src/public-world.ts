@@ -8,7 +8,10 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
-import { formatCampaignContextBlock } from "./campaign-context";
+import {
+  avoidNamesExcludingContext,
+  formatCampaignContextBlock,
+} from "./campaign-context";
 
 export const worldConfig = {
   worldTypes: [
@@ -719,15 +722,21 @@ export function buildWorldPrompt(
   const genre = options.genre?.trim() || "sci-fi";
   const dominantFeature =
     options.dominantFeature?.trim() || "an evocative dominant feature";
-  const extraAvoidedNames = options.avoidNames
-    ?.map((name) => name.trim())
+  // The campaign-context block above tells the model that names the user
+  // introduced are established and must be kept. Listing those same names
+  // under "do not use" here would contradict it, so drop them first.
+  const extraAvoidedNames = avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    options.campaignContext,
+  )
+    .map((name) => name.trim())
     .filter(Boolean);
   const extraAvoidedNumbers = extraAvoidedNames
-    ?.flatMap((name) => name.match(/\b\d+\b/g) ?? [])
+    .flatMap((name) => name.match(/\b\d+\b/g) ?? [])
     .filter((number, index, numbers) => numbers.indexOf(number) === index);
-  const nameRestrictions = extraAvoidedNames?.length
+  const nameRestrictions = extraAvoidedNames.length
     ? ` Also do not use these campaign-specific names: ${extraAvoidedNames.join(", ")}.${
-        extraAvoidedNumbers?.length
+        extraAvoidedNumbers.length
           ? ` Avoid reusing these numeric designations too: ${extraAvoidedNumbers.join(", ")}.`
           : ""
       }`
