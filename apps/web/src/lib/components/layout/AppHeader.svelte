@@ -174,6 +174,17 @@
         >
           Exit Guest Mode
         </button>
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
+          onclick={() => modalUIStore.toggleSettings("help")}
+          title="Help and legal information"
+          aria-label="Open Help and legal information"
+          data-testid="guest-settings-button"
+        >
+          <span class="icon-[lucide--circle-help] h-5 w-5" aria-hidden="true"
+          ></span>
+        </button>
       {:else}
         <button
           type="button"
