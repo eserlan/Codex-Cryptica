@@ -686,16 +686,15 @@ export function buildStarSystemPrompt(
   const systemCharacter =
     options.systemCharacter?.trim() || "an appropriate system character";
   const scientificRealism = options.scientificRealism?.trim() || "grounded";
-  // Names the campaign context introduced are pinned by the context block,
-  // so they must not also appear in the avoid list — the two instructions
-  // would contradict each other and invite the model to rename them.
+  // See public-world.ts: names the user introduced in campaign context are
+  // established, so they must not also appear in the avoid list.
   const extraAvoidedNames = avoidNamesExcludingContext(
     options.avoidNames ?? [],
     options.campaignContext,
   )
     .map((name) => name.trim())
     .filter(Boolean);
-  const nameRestrictions = extraAvoidedNames?.length
+  const nameRestrictions = extraAvoidedNames.length
     ? ` Also do not use these campaign-specific names: ${extraAvoidedNames.join(", ")}.`
     : "";
   const normalizedRealism = scientificRealism.toLowerCase();

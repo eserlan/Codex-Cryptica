@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { buildWorldPrompt } from "./public-world";
+import { buildStarSystemPrompt } from "./public-star-system";
+import { buildAdventurePrompt } from "./public-adventure";
+import { buildDungeonPrompt } from "./public-dungeon";
 import {
   avoidNamesExcludingContext,
   extractProperNouns,
@@ -105,8 +109,7 @@ describe("formatCampaignContextBlock", () => {
 describe("avoid-list exclusion is wired into the prompt builders", () => {
   const context = "The strike on Amalthea has cut the Phobos-Zero supply line.";
 
-  it("world does not ask the model to avoid a context name", async () => {
-    const { buildWorldPrompt } = await import("./public-world");
+  it("world does not ask the model to avoid a context name", () => {
     const msg = buildWorldPrompt({
       campaignContext: context,
       avoidNames: ["Amalthea", "Kestrel Vane"],
@@ -115,8 +118,7 @@ describe("avoid-list exclusion is wired into the prompt builders", () => {
     expect(msg).not.toContain("campaign-specific names: Amalthea");
   });
 
-  it("star system does not ask the model to avoid a context name", async () => {
-    const { buildStarSystemPrompt } = await import("./public-star-system");
+  it("star system does not ask the model to avoid a context name", () => {
     const msg = buildStarSystemPrompt({
       campaignContext: context,
       avoidNames: ["Amalthea", "Kestrel Vane"],
@@ -125,8 +127,7 @@ describe("avoid-list exclusion is wired into the prompt builders", () => {
     expect(msg).not.toContain("campaign-specific names: Amalthea");
   });
 
-  it("dungeon does not list a context name as already used", async () => {
-    const { buildDungeonPrompt } = await import("./public-dungeon");
+  it("dungeon does not list a context name as already used", () => {
     const msg = buildDungeonPrompt({
       campaignContext: context,
       avoidNames: ["Amalthea", "Kestrel Vane"],
@@ -136,8 +137,7 @@ describe("avoid-list exclusion is wired into the prompt builders", () => {
     expect(avoidSection).not.toContain("- Amalthea\n");
   });
 
-  it("adventure excludes names from context as well as from the seed", async () => {
-    const { buildAdventurePrompt } = await import("./public-adventure");
+  it("adventure excludes names from context as well as from the seed", () => {
     const msg = buildAdventurePrompt({
       campaignContext: context,
       avoidNames: ["Amalthea", "Kestrel Vane"],

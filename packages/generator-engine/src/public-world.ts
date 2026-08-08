@@ -722,9 +722,9 @@ export function buildWorldPrompt(
   const genre = options.genre?.trim() || "sci-fi";
   const dominantFeature =
     options.dominantFeature?.trim() || "an evocative dominant feature";
-  // Names the campaign context introduced are pinned by the context block,
-  // so they must not also appear in the avoid list — the two instructions
-  // would contradict each other and invite the model to rename them.
+  // The campaign-context block above tells the model that names the user
+  // introduced are established and must be kept. Listing those same names
+  // under "do not use" here would contradict it, so drop them first.
   const extraAvoidedNames = avoidNamesExcludingContext(
     options.avoidNames ?? [],
     options.campaignContext,
@@ -732,11 +732,11 @@ export function buildWorldPrompt(
     .map((name) => name.trim())
     .filter(Boolean);
   const extraAvoidedNumbers = extraAvoidedNames
-    ?.flatMap((name) => name.match(/\b\d+\b/g) ?? [])
+    .flatMap((name) => name.match(/\b\d+\b/g) ?? [])
     .filter((number, index, numbers) => numbers.indexOf(number) === index);
-  const nameRestrictions = extraAvoidedNames?.length
+  const nameRestrictions = extraAvoidedNames.length
     ? ` Also do not use these campaign-specific names: ${extraAvoidedNames.join(", ")}.${
-        extraAvoidedNumbers?.length
+        extraAvoidedNumbers.length
           ? ` Avoid reusing these numeric designations too: ${extraAvoidedNumbers.join(", ")}.`
           : ""
       }`
