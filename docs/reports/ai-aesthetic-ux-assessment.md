@@ -124,6 +124,7 @@ through 14 should not start until chunk 0 reports.
 | Chunk 5: Desktop graph-label legibility    | **Shipped**                               | `c2053615`, `f9f962df`, PR #2099.                                                                                                                                                                                                    |
 | Chunk 6: Useful mobile graph entry state   | **Shipped**                               | `310e76ed`, `49bad9b8`, `2a0a163f`, PR #2103. Both 390×844 journeys pass; see the verification note under Chunk 6 about a false regression report.                                                                                   |
 | Chunk 7: Accessible graph navigation       | **Shipped**                               | PR #2105 (phases 1 to 3) and the phase 4 follow-up: canvas text alternatives, table route from the graph controls, connection-list semantics, axe + keyboard e2e, and `docs/accessibility-contract.md`. Theme contrast remains open. |
+| Chunk 8: Quick Start decision model        | **Shipped**                               | PR #2107. "Theme" renamed to World genre and look, both names shown per option, a preview of the five entities in the genre's own vocabulary, genre-derived premise placeholder, and a visible no-AI path.                           |
 | Constitution Principle IV amendment        | **Done, but reintroduces the same fault** | `.specify/memory/constitution.md:34` now reads "powered by OpenAI/Luna or a provider-neutral contract". See M7.                                                                                                                      |
 
 ## Overall assessment
@@ -469,6 +470,15 @@ generates a whole starter world.
 **Required outcome:** separate **World genre** from **Workspace appearance**, or
 explicitly explain the combined effect with a small preview and example premise
 that updates with the selection.
+
+**Resolved** by Chunk 8 (PR #2107) along the second path. The source confirms
+the ambiguity was worse than the screenshot suggests: one id drives both the
+generated genre and the workspace skin, and the two carry _different names_ in
+different files. `THEMES[id].name` supplies the dropdown label while
+`THEME_ARCHETYPES[id].themeName` supplies the genre, so "Ancient Parchment"
+generates Classic Fantasy, "LCARS Interface" generates Space Exploration,
+"Pip-Boy Terminal" generates a Retro-Futurist Wasteland, and "Charted Waters"
+generates High Seas. The dialog showed only the first of each pair.
 
 ### M7. Make provider language provider-neutral (corrected and reopened)
 
@@ -930,6 +940,30 @@ is unavailable or declined.
 **Acceptance criteria:** Test participants can predict what their selection changes;
 the flow works without AI; back navigation retains choices; the resulting workspace
 matches the preview or explanation. Update onboarding copy and tests together.
+
+**Implementation note (2026-08-08, PR #2107):** genre and appearance stay
+coupled, deliberately. They are 1:1 in the data, and Quick Start's whole promise
+is one decision; decoupling would add a second choice to the fastest path and
+require inventing a cross-product mapping. Instead the coupling is made
+explicit:
+
+- the control is labelled **World genre and look**, not "Theme", and every
+  option names both halves, e.g. "Classic Fantasy (Ancient Parchment look)";
+- help text under it states the two effects in one sentence and says the
+  appearance can be changed later in Settings;
+- a preview panel lists the five entities that will be created, in the selected
+  genre's own vocabulary (Region/Settlement/Threat for fantasy becomes
+  System/Outpost/Anomaly for space exploration) with an example name each, and
+  says plainly that names are examples;
+- the seed-premise placeholder is drawn from the selected genre, replacing the
+  fixed cyberpunk suggestion the screenshot caught under Ancient Parchment;
+- a line under the button states whether the Oracle or the built-in offline
+  generator will write the entries, so the no-AI path is visible rather than
+  discovered;
+- the selection survives closing and reopening the dialog within a session.
+
+`getStarterConstellationPreview` in generator-engine supplies the genre name,
+flavor, and slots, unit-tested across every offered theme.
 
 ### Chunk 9: Shared brand and layout grammar
 

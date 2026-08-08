@@ -4,6 +4,7 @@ import {
   buildStarterConstellationPrompt,
   parseStarterConstellationResponse,
   STARTER_CONSTELLATION_THEME_IDS,
+  getStarterConstellationPreview,
 } from "./starter-constellation";
 
 function seededRng(seed: number) {
@@ -15,6 +16,12 @@ function seededRng(seed: number) {
 }
 
 describe("generateStarterConstellationLocal", () => {
+  it("falls back to the default theme for inherited object keys", () => {
+    const result = generateStarterConstellationLocal({ themeId: "toString" });
+    expect(result.themeId).toBe("fantasy");
+    expect(result.entities).toHaveLength(5);
+  });
+
   it.each(STARTER_CONSTELLATION_THEME_IDS)(
     "produces a valid 4-6 entity constellation for theme %s",
     (themeId) => {
@@ -315,5 +322,67 @@ describe("buildStarterConstellationPrompt / parseStarterConstellationResponse", 
 
     const result = parseStarterConstellationResponse(raw, config);
     expect(result.relationships).toHaveLength(0);
+  });
+});
+
+describe("getStarterConstellationPreview", () => {
+  it.each(STARTER_CONSTELLATION_THEME_IDS)(
+    "describes every offered theme without empty slots (%s)",
+    (themeId) => {
+      const preview = getStarterConstellationPreview(themeId);
+
+      expect(preview.themeId).toBe(themeId);
+      expect(preview.genreName.length).toBeGreaterThan(0);
+      expect(preview.flavor.length).toBeGreaterThan(0);
+      expect(preview.slots).toHaveLength(5);
+      for (const slot of preview.slots) {
+        expect(slot.label.length).toBeGreaterThan(0);
+        expect(slot.example.length).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  it("names the genre, which is not the theme's visual name", () => {
+    // The whole point of the preview: "Ancient Parchment" produces a Classic
+    // Fantasy world, and the dialog has to be able to say so.
+    expect(getStarterConstellationPreview("fantasy").genreName).toBe(
+      "Classic Fantasy",
+    );
+    expect(getStarterConstellationPreview("startrek").genreName).toBe(
+      "Space Exploration",
+    );
+    expect(getStarterConstellationPreview("fallout").genreName).toBe(
+      "Retro-Futurist Wasteland",
+    );
+  });
+
+  it("uses the genre's own words for each slot", () => {
+    const scifi = getStarterConstellationPreview("scifi");
+    expect(scifi.slots[0].label).toBe("Sector");
+
+    const fantasy = getStarterConstellationPreview("fantasy");
+    expect(fantasy.slots[0].label).toBe("Region");
+  });
+
+  it("is stable across calls, so a preview does not reshuffle as the user reads it", () => {
+    expect(getStarterConstellationPreview("cyberpunk")).toEqual(
+      getStarterConstellationPreview("cyberpunk"),
+    );
+  });
+
+  it("falls back to the default theme for an unknown id, matching the generator", () => {
+    expect(getStarterConstellationPreview("not-a-theme").themeId).toBe(
+      "fantasy",
+    );
+  });
+
+  it("treats inherited object keys as unknown ids", () => {
+    // `"toString" in THEME_ARCHETYPES` is true, and the lookup returns a
+    // Function, so a naive check would hand back an object with no slots.
+    for (const inherited of ["toString", "constructor", "__proto__"]) {
+      const preview = getStarterConstellationPreview(inherited);
+      expect(preview.themeId).toBe("fantasy");
+      expect(preview.slots).toHaveLength(5);
+    }
   });
 });

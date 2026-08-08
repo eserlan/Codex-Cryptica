@@ -4,6 +4,7 @@
     generateStarterConstellationLocal,
     buildStarterConstellationPrompt,
     parseStarterConstellationResponse,
+    getStarterConstellationPreview,
     STARTER_CONSTELLATION_THEME_IDS,
     type StarterConstellationResult,
   } from "generator-engine";
@@ -12,19 +13,53 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { graph } from "$lib/stores/graph.svelte";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
+  // One id drives two different things, and they are named differently: the
+  // theme "Ancient Parchment" generates a "Classic Fantasy" world, "LCARS
+  // Interface" generates "Space Exploration". Listing only the theme name (as
+  // this dialog used to) asks the user to guess the genre from a skin, right
+  // before the button that generates a whole world. So every option carries
+  // both names, and the preview below spells out the rest.
   const themeOptions = STARTER_CONSTELLATION_THEME_IDS.filter(
     (id) => id in THEMES,
-  ).map((id) => ({ id, name: THEMES[id as WorldThemeId].name }));
+  ).map((id) => ({
+    id,
+    appearance: THEMES[id as WorldThemeId].name,
+    genre: getStarterConstellationPreview(id).genreName,
+  }));
 
-  let themeId = $state<string>(themeOptions[0]?.id ?? "fantasy");
-  let premise = $state("");
+  // Survives close-and-reopen within the session, so dismissing the dialog to
+  // check something doesn't silently reset the choice. Held in modalUIStore
+  // (which already owns this dialog's lifecycle) rather than module state, so
+  // it stays per-tab and resets cleanly.
+  let themeId = $state<string>(
+    modalUIStore.quickStartDraft.themeId ?? themeOptions[0]?.id ?? "fantasy",
+  );
+  let premise = $state(modalUIStore.quickStartDraft.premise);
   let isGenerating = $state(false);
   let errorMsg = $state<string | null>(null);
+
+  $effect(() => {
+    modalUIStore.quickStartDraft = { themeId, premise };
+  });
+
+  const preview = $derived(getStarterConstellationPreview(themeId));
+  const appearanceName = $derived(
+    themeId in THEMES ? THEMES[themeId as WorldThemeId].name : themeId,
+  );
+
+  // The old placeholder was a fixed cyberpunk premise ("Corporation hijacking
+  // the net grid") shown even with Ancient Parchment selected, which is the
+  // mismatch the assessment screenshot caught. Suggest something from the genre
+  // actually chosen instead.
+  const premisePlaceholder = $derived(
+    `e.g. ${preview.slots[2]?.example ?? "A faction"} versus ${preview.slots[4]?.example ?? "a rising threat"}`,
+  );
 
   const aiAvailable = $derived(oracle.isEnabled && !vault.isGuest);
 
@@ -170,17 +205,52 @@
           for="quick-start-theme"
           class="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5"
         >
-          Theme
+          World genre and look
         </label>
         <select
           id="quick-start-theme"
           bind:value={themeId}
+          aria-describedby="quick-start-theme-help"
           class="w-full bg-theme-bg border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text focus:outline-none focus:border-theme-primary"
         >
           {#each themeOptions as option (option.id)}
-            <option value={option.id}>{option.name}</option>
+            <option value={option.id}
+              >{option.genre} ({option.appearance} look)</option
+            >
           {/each}
         </select>
+        <p
+          id="quick-start-theme-help"
+          class="mt-1.5 text-xs text-theme-muted"
+          data-testid="quick-start-theme-help"
+        >
+          One choice, two effects: it sets the genre of the world generated
+          below, and switches your workspace to the {appearanceName} appearance. You
+          can change the appearance later in Settings.
+        </p>
+      </div>
+
+      <div
+        class="rounded-lg border border-theme-border bg-theme-bg/60 p-3"
+        data-testid="quick-start-preview"
+      >
+        <p class="text-xs font-bold uppercase tracking-wider text-theme-muted">
+          You will get 4 to 6 linked entities
+        </p>
+        <p class="mt-1 text-xs text-theme-text">
+          {preview.genreName}: {preview.flavor}.
+        </p>
+        <ul class="mt-2 space-y-1">
+          {#each preview.slots as slot (slot.label + slot.example)}
+            <li class="text-xs text-theme-muted">
+              <span class="font-bold text-theme-text">{slot.label}</span>, for
+              example {slot.example}
+            </li>
+          {/each}
+        </ul>
+        <p class="mt-2 text-[11px] text-theme-muted italic">
+          Names are examples; yours will differ.
+        </p>
       </div>
 
       <div>
@@ -194,7 +264,7 @@
           id="quick-start-premise"
           bind:value={premise}
           rows="4"
-          placeholder="e.g. Corporation hijacking the net grid"
+          placeholder={premisePlaceholder}
           class="w-full bg-theme-bg border border-theme-border rounded-lg px-3 py-2 text-sm text-theme-text focus:outline-none focus:border-theme-primary resize-none"
         ></textarea>
       </div>
@@ -226,6 +296,15 @@
           Generate Starter World
         {/if}
       </button>
+
+      <p
+        class="text-center text-[11px] text-theme-muted"
+        data-testid="quick-start-ai-note"
+      >
+        {aiAvailable
+          ? "The Oracle will write these entries. If it is unavailable, the built-in generator takes over."
+          : "The built-in generator will write these entries. No AI and no account needed."}
+      </p>
     </div>
   </div>
 </ModalShell>

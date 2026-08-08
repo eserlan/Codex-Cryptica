@@ -57,6 +57,8 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
+// Real store, not a mock: the draft-retention behaviour under test lives here,
+// and each test resets it so nothing leaks between renders.
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
@@ -76,6 +78,7 @@ vi.mock("$lib/stores/graph.svelte", () => ({
 }));
 
 import QuickStartModal from "./QuickStartModal.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("QuickStartModal", () => {
   beforeEach(() => {
@@ -93,6 +96,10 @@ describe("QuickStartModal", () => {
     document.body.innerHTML = "";
   });
 
+  beforeEach(() => {
+    modalUIStore.quickStartDraft = { themeId: null, premise: "" };
+  });
+
   const renderModal = () => {
     const target = document.createElement("div");
     document.body.appendChild(target);
@@ -101,16 +108,73 @@ describe("QuickStartModal", () => {
     return { onClose };
   };
 
-  it("shows a theme selector and premise input", () => {
+  it("shows a genre selector and premise input", () => {
     renderModal();
-    expect(screen.getByLabelText("Theme")).toBeTruthy();
+    expect(screen.getByLabelText("World genre and look")).toBeTruthy();
     expect(screen.getByLabelText("Seed Premise (optional)")).toBeTruthy();
+  });
+
+  it("names both the genre and the appearance in every option", () => {
+    renderModal();
+    const select = screen.getByLabelText(
+      "World genre and look",
+    ) as HTMLSelectElement;
+    const options = Array.from(select.options).map((o) => o.textContent ?? "");
+
+    // The visual theme name alone ("Ancient Parchment") does not tell anyone
+    // they are about to generate a fantasy world.
+    expect(options).toContain("Classic Fantasy (Ancient Parchment look)");
+    expect(options).toContain("Space Exploration (LCARS Interface look)");
+    expect(options.every((label) => label.includes("look"))).toBe(true);
+  });
+
+  it("states that the one choice sets both the world and the workspace", () => {
+    renderModal();
+    const help = screen.getByTestId("quick-start-theme-help");
+    expect(help.textContent).toContain("One choice, two effects");
+    expect(help.textContent).toContain("Ancient Parchment");
+  });
+
+  it("previews what will be generated, in the selected genre's own words", async () => {
+    renderModal();
+    const preview = screen.getByTestId("quick-start-preview");
+    expect(preview.textContent).toContain("Classic Fantasy");
+    expect(preview.textContent).toContain("Region");
+
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
+      target: { value: "scifi" },
+    });
+
+    expect(preview.textContent).toContain("Sector");
+    expect(preview.textContent).not.toContain("Classic Fantasy");
+  });
+
+  it("says the flow works without AI when the Oracle is unavailable", () => {
+    renderModal();
+    // The mocked oracle is disabled, matching a first-run/no-key user.
+    expect(screen.getByTestId("quick-start-ai-note").textContent).toContain(
+      "No AI and no account needed",
+    );
+  });
+
+  it("suggests a premise from the chosen genre rather than a fixed one", async () => {
+    renderModal();
+    const premise = screen.getByLabelText(
+      "Seed Premise (optional)",
+    ) as HTMLTextAreaElement;
+    const fantasyHint = premise.placeholder;
+
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
+      target: { value: "cyberpunk" },
+    });
+
+    expect(premise.placeholder).not.toBe(fantasyHint);
   });
 
   it("generates a starter world locally (AI disabled) and creates entities with connections", async () => {
     const { onClose } = renderModal();
 
-    await fireEvent.change(screen.getByLabelText("Theme"), {
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
       target: { value: "cyberpunk" },
     });
     await fireEvent.input(screen.getByLabelText("Seed Premise (optional)"), {
@@ -193,5 +257,41 @@ describe("QuickStartModal", () => {
       addConnectionMock.mock.invocationCallOrder.at(-1) ?? 0;
     expect(layoutOrder).toBeGreaterThan(lastCreateOrder);
     expect(layoutOrder).toBeGreaterThan(lastConnectOrder);
+  });
+});
+
+describe("QuickStartModal draft retention", () => {
+  beforeEach(() => {
+    modalUIStore.quickStartDraft = { themeId: null, premise: "" };
+  });
+
+  it("restores the previous choice when the dialog is reopened", async () => {
+    const first = document.createElement("div");
+    document.body.appendChild(first);
+    const { unmount } = render(QuickStartModal, {
+      target: first,
+      props: { onClose: vi.fn() },
+    });
+
+    await fireEvent.change(screen.getByLabelText("World genre and look"), {
+      target: { value: "western" },
+    });
+    await fireEvent.input(screen.getByLabelText("Seed Premise (optional)"), {
+      target: { value: "a stagecoach robbery" },
+    });
+    unmount();
+
+    const second = document.createElement("div");
+    document.body.appendChild(second);
+    render(QuickStartModal, { target: second, props: { onClose: vi.fn() } });
+
+    const select = screen.getByLabelText(
+      "World genre and look",
+    ) as HTMLSelectElement;
+    const premise = screen.getByLabelText(
+      "Seed Premise (optional)",
+    ) as HTMLTextAreaElement;
+    expect(select.value).toBe("western");
+    expect(premise.value).toBe("a stagecoach robbery");
   });
 });
