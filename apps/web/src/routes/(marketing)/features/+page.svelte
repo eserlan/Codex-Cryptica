@@ -2,7 +2,6 @@
   import { FEATURE_HINTS } from "$lib/config/help-content";
   import { base } from "$app/paths";
   import { fly } from "svelte/transition";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   const features = Object.values(FEATURE_HINTS);
 </script>
@@ -106,6 +105,4 @@
       </div>
     </section>
   </div>
-
-  <MarketingFooter />
 </div>

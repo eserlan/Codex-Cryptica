@@ -4,7 +4,6 @@
   import { safeJsonLd } from "$lib/utils/json-ld";
   import type { SEOPageData } from "$lib/config/seo-pages";
   import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
-  import MarketingFooter from "./MarketingFooter.svelte";
 
   let {
     data,
@@ -159,67 +158,6 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/?utm_source={type === 'comparison'
-          ? 'vs-logo'
-          : 'solution-logo'}&utm_medium=nav&utm_campaign=seo-funnel"
-        class="flex items-center gap-2 group min-w-0"
-        id="logo-link"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
-      >
-        <a
-          href="{cleanBase}/free-rpg-campaign-manager"
-          class="hover:text-theme-primary transition-colors"
-          >Free RPG campaign manager</a
-        >
-        <a
-          href="{cleanBase}/worldbuilding-tool"
-          class="hover:text-theme-primary transition-colors"
-          >worldbuilding tool</a
-        >
-        <a
-          href="{cleanBase}/features"
-          class="hover:text-theme-primary transition-colors">Features</a
-        >
-        <a
-          href="{cleanBase}/blog"
-          class="hover:text-theme-primary transition-colors">Devlog</a
-        >
-        <a
-          href="{cleanBase}/tools/dnd-npc-generator"
-          class="hover:text-theme-primary transition-colors">Generators</a
-        >
-      </nav>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?utm_source={type === 'comparison'
-            ? 'vs-nav'
-            : 'solution-nav'}&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-          id="nav-cta-btn"
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
-
   <!-- Hero Section -->
   <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center flex-grow">
     <div
@@ -629,14 +567,4 @@
       </a>
     </div>
   </section>
-
-  <MarketingFooter
-    extraLinks={[
-      {
-        href: "/free-rpg-campaign-manager",
-        label: "Free RPG campaign manager",
-      },
-      { href: "/worldbuilding-tool", label: "worldbuilding tool" },
-    ]}
-  />
 </div>

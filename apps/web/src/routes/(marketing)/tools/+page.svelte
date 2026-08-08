@@ -1,6 +1,5 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   type ToolLink = {
     href: string;
@@ -399,7 +398,7 @@
   <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
@@ -487,6 +486,4 @@
       </section>
     {/each}
   </div>
-
-  <MarketingFooter />
-</main>
+</div>

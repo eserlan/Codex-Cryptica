@@ -9,7 +9,6 @@
     traverseEntry,
   } from "$lib/services/seo/import-parser";
   import type { PageData } from "./$types";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   let { data }: { data: PageData } = $props();
   const pageData = $derived(data.importPage);
@@ -277,7 +276,7 @@
     </div>
   </header>
 
-  <main
+  <div
     class="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
@@ -616,7 +615,5 @@
         {/each}
       </div>
     </section>
-  </main>
-
-  <MarketingFooter />
+  </div>
 </div>
