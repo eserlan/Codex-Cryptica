@@ -37,7 +37,7 @@ describe("EdgeEditorModal Dismissal", () => {
     source: "s1",
     target: "t1",
     label: "related",
-    type: "neutral",
+    type: "rivals_of",
   };
 
   afterEach(() => {
@@ -98,9 +98,10 @@ describe("EdgeEditorModal Dismissal", () => {
     const label = screen.getByLabelText("Label") as HTMLInputElement;
     const relationshipNature = screen.getByLabelText(
       "Relationship Nature",
-    ) as HTMLSelectElement;
+    ) as HTMLInputElement;
     expect(label.value).toBe("related");
     expect(label.readOnly).toBe(true);
-    expect(relationshipNature.disabled).toBe(true);
+    expect(relationshipNature.value).toBe("rivals_of");
+    expect(relationshipNature.readOnly).toBe(true);
   });
 });

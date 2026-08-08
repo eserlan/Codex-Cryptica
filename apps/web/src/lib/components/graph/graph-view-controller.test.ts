@@ -190,14 +190,14 @@ describe("GraphViewController", () => {
       source: "node-a",
       target: "node-b",
       label: "Rivals in the old court",
-      connectionType: "hostile",
+      connectionType: "rivals_of",
     });
 
     expect(controller.editingEdge).toEqual({
       source: "node-a",
       target: "node-b",
       label: "Rivals in the old court",
-      type: "hostile",
+      type: "rivals_of",
     });
   });
 
