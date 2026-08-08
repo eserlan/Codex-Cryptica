@@ -55,6 +55,9 @@
         ? node.label
         : (field?.label ?? node.fieldId),
   );
+  const accessibleLabel = $derived(
+    node.label !== undefined ? node.label : (field?.label ?? node.fieldId),
+  );
   const mode = $derived(node.displayMode ?? "plain");
   const isProminent = $derived(mode === "prominent");
   const isNameTargetDice = $derived(mode === "name-target");
@@ -127,7 +130,7 @@
           type="button"
           class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary"
           onclick={() => context.onAdjustCounter(field, -1)}
-          aria-label={`Decrease ${label}`}
+          aria-label={`Decrease ${accessibleLabel}`}
         >
           −
         </button>
@@ -142,7 +145,7 @@
           type="button"
           class="flex h-5 w-5 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary"
           onclick={() => context.onAdjustCounter(field, 1)}
-          aria-label={`Increase ${label}`}
+          aria-label={`Increase ${accessibleLabel}`}
         >
           +
         </button>

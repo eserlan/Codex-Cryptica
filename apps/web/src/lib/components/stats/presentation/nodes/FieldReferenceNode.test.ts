@@ -264,6 +264,23 @@ describe("FieldReferenceNode", () => {
     expect(row.textContent).toContain("2");
   });
 
+  it("uses the field label for counter button aria-labels even when hideLabel suppresses the visual label", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "lp",
+      hideLabel: true,
+      displayMode: "counter",
+    };
+    const context = makeContext([
+      { id: "lp", label: "Luck Points", type: "counter", value: 2 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    expect(screen.getByRole("button", { name: "Decrease Luck Points" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Increase Luck Points" })).toBeTruthy();
+  });
+
   it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {
     const node: FieldReferenceNodeType = {
       type: "field-reference",
