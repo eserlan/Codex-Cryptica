@@ -721,3 +721,31 @@ describe("seed pressure overrides the drawn pressure", () => {
     expect(prompt.userMessage).toContain("- Primary Pressure:");
   });
 });
+
+describe("campaign context", () => {
+  it("carries the form's world context into the prompt", () => {
+    const prompt = buildAdventurePrompt({
+      genre: "Fantasy",
+      campaignContext: "The Swift Wing Eagles rule the Kestrel Reach.",
+    });
+    expect(prompt.userMessage).toContain(
+      "- Campaign Context: The Swift Wing Eagles rule the Kestrel Reach.",
+    );
+  });
+
+  it("omits the line when no context was given", () => {
+    expect(
+      buildAdventurePrompt({ genre: "Fantasy" }).userMessage,
+    ).not.toContain("- Campaign Context:");
+  });
+
+  it("keeps context and seed as separate blocks", () => {
+    const prompt = buildAdventurePrompt({
+      genre: "Fantasy",
+      campaignContext: "The Kestrel Reach is under occupation.",
+      seed: AURELIA_HOOK,
+    });
+    expect(prompt.userMessage).toContain("- Campaign Context:");
+    expect(prompt.userMessage).toContain("GIVEN SITUATION");
+  });
+});

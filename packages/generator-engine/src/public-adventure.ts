@@ -55,6 +55,12 @@ export interface AdventureGeneratorOptions {
   tone?: string;
   seed?: string;
   instruction?: string;
+  /**
+   * Free-text world/campaign background from the form's context field.
+   * Background, not subject: the seed says what the adventure is about, this
+   * says what world it sits in.
+   */
+  campaignContext?: string;
   /** Names already used elsewhere in this session. */
   avoidNames?: string[];
 }
@@ -599,6 +605,7 @@ Setting Context:
 - Archetype: ${adventure.archetype}
 - Scale: ${adventure.scale}
 - Tone: ${adventure.tone}
+${options.campaignContext?.trim() ? `- Campaign Context: ${options.campaignContext.trim()}` : ""}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 ${options.seed?.trim() ? `\n${formatUserSeedBlock(options.seed)}\n` : ""}
 

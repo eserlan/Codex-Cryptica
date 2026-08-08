@@ -68,6 +68,8 @@ export interface DungeonGeneratorOptions {
   currentState?: string;
   scale?: string;
   instruction?: string;
+  /** Free-text world/campaign background from the form's context field. */
+  campaignContext?: string;
   /**
    * Names already used elsewhere in this session.
    *
@@ -1025,6 +1027,7 @@ Setting Context:
 - Original Purpose: ${dungeon.purpose}
 - Current State: ${dungeon.currentState}
 - Scale: ${dungeon.scale}
+${options.campaignContext?.trim() ? `- Campaign Context: ${options.campaignContext.trim()}` : ""}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
 ${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}

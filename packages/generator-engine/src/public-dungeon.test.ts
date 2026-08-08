@@ -2239,3 +2239,21 @@ describe("Campaign Generator Registry Integration", () => {
     ).toBe("location");
   });
 });
+
+describe("dungeon campaign context", () => {
+  it("carries the form's world context into the prompt", () => {
+    const prompt = buildDungeonPrompt({
+      genre: "Fantasy",
+      campaignContext: "The Swift Wing Eagles rule the Kestrel Reach.",
+    });
+    expect(prompt.userMessage).toContain(
+      "- Campaign Context: The Swift Wing Eagles rule the Kestrel Reach.",
+    );
+  });
+
+  it("omits the line when no context was given", () => {
+    expect(buildDungeonPrompt({ genre: "Fantasy" }).userMessage).not.toContain(
+      "- Campaign Context:",
+    );
+  });
+});
