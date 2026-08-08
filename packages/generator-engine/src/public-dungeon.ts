@@ -58,6 +58,7 @@ import {
   TREASURES_BY_GENRE,
   HOOKS_BY_GENRE,
 } from "./public-dungeon-constants";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export { dungeonConfig, forGenre };
 
@@ -68,6 +69,8 @@ export interface DungeonGeneratorOptions {
   currentState?: string;
   scale?: string;
   instruction?: string;
+  /** Free-text world/campaign background from the form's context field. */
+  campaignContext?: string;
   /**
    * Names already used elsewhere in this session.
    *
@@ -1025,6 +1028,7 @@ Setting Context:
 - Original Purpose: ${dungeon.purpose}
 - Current State: ${dungeon.currentState}
 - Scale: ${dungeon.scale}
+${formatCampaignContextBlock(options.campaignContext)}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
 
 ${formatDungeonSeeds(dungeon, options.avoidNames ?? [], options.avoidTraits ?? [])}

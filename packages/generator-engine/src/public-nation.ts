@@ -18,6 +18,7 @@ import {
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { buildRealmName, buildCapitalName } from "./realm-names";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export const nationConfig = {
   genres: [
@@ -252,7 +253,7 @@ ${sessionContext}`;
 - Polity Type: ${resolved.polityType}
 - Government Style: ${resolved.governmentStyle}
 - Scale: ${resolved.scale}
-- Conflict Level: ${resolved.conflictLevel}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Conflict Level: ${resolved.conflictLevel}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }

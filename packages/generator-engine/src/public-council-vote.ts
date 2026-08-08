@@ -31,6 +31,7 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
+import { formatCampaignContextBlock } from "./campaign-context";
 import { councilVoteConfig } from "./public-council-vote-constants";
 export { councilVoteConfig };
 
@@ -190,7 +191,7 @@ Options:
 - Scope: ${resolved.scope}
 - Tone: ${resolved.tone}
 - Antagonist Influence: ${resolved.antagonistInfluence}
-${resolved.campaignContext ? `- Campaign Context: ${resolved.campaignContext}` : ""}
+${formatCampaignContextBlock(resolved.campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly:
 {

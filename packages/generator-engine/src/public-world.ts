@@ -8,6 +8,7 @@ import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export const worldConfig = {
   worldTypes: [
@@ -471,6 +472,8 @@ export interface WorldGeneratorOptions {
   lancerWorldFrame?: string;
   campaignPressure?: string;
   dominantFeature?: string;
+  /** Free-text world/campaign background from the form's context field. */
+  campaignContext?: string;
   /** Existing titles to avoid when making a local fallback. */
   avoidNames?: string[];
 }
@@ -770,7 +773,7 @@ Make this pressure materially shape survival, settlement design, culture, econom
     systemInstruction:
       "You are a science-fiction worldbuilder creating evocative, coherent, immediately gameable material for a GM. Prioritise a few memorable connected ideas, understandable conflicts, useful locations, and playable hooks while keeping the setting internally consistent. Return only one valid JSON object.",
     userMessage: `Create a ${genre} ${worldType} with ${habitability} conditions, ${civilisation}, and ${normalizedGenre === "lancer" ? "a civilian social model derived from the selected Lancer world frame" : `a primary societal model of ${societalModel}`}. ${normalizedGenre === "lancer" ? "For Lancer, derive the civilian social model from the selected world frame, world type, and tags; do not let the civilisation level determine it by itself." : "Treat the societal model as an independent variable: do not infer or replace it from the civilisation level."} Its dominant feature is: ${dominantFeature}. Its two Stars Without Number world tags are: ${worldTagOne} and ${worldTagTwo}.${lancerParameters}
-
+${formatCampaignContextBlock(options.campaignContext)}
 Star-system context may be provided before this brief. When it is, develop this world as part of that system: respect its parent star, orbit, neighbouring bodies, existing factions, and active conflicts. Do not regenerate or contradict the supplied system.
 
 Return JSON with "title", "summary", "labels", "connections", and a markdown "lore" field. Labels must match the actual generated content: include only factual tags supported by the world, its world type, civilisation, societal model, and genre. Do not add attractive-sounding labels for features the lore does not contain. The lore must use these exact sections:
