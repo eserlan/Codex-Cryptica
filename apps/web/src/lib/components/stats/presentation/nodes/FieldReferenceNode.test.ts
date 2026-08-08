@@ -186,6 +186,84 @@ describe("FieldReferenceNode", () => {
     expect(outcome.textContent).not.toContain("vs");
   });
 
+  it("gives a labelled field a stretched row so a long label does not wrap into a fixed slot", () => {
+    // Labels used to sit in a hardcoded 56px slot, so anything longer than a
+    // word wrapped onto two lines while the rest of the cell sat empty
+    // (#2100).
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "exp_mod",
+      label: "Experience Modifier",
+    };
+    const context = makeContext([
+      { id: "exp_mod", label: "Experience Modifier", type: "number", value: 0 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    const row = screen.getByTestId("presentation-field-number");
+    expect(row.className).toContain("justify-between");
+    expect(row.className).not.toContain("inline-flex");
+
+    const labelSpan = screen.getByTitle("Experience Modifier");
+    expect(labelSpan.className).toContain("flex-1");
+    expect(labelSpan.className).toContain("truncate");
+    expect(labelSpan.className).not.toContain("w-14 shrink-0");
+  });
+
+  it("keeps an unlabelled field content-sized so a bare control is not flung across its table cell", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "str",
+      hideLabel: true,
+    };
+    const context = makeContext([
+      { id: "str", label: "STR", type: "number", value: 13 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    const row = screen.getByTestId("presentation-field-number");
+    expect(row.className).toContain("inline-flex");
+    expect(row.className).not.toContain("justify-between");
+  });
+
+  it("stretches a labelled counter to match the plain rows beside it in a column", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "ap",
+      label: "Action Points",
+      displayMode: "counter",
+    };
+    const context = makeContext([
+      { id: "ap", label: "Action Points", type: "counter", value: 3 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    const row = screen.getByTestId("presentation-field-counter");
+    expect(row.className).toContain("justify-between");
+    expect(screen.getByTitle("Action Points").className).toContain("truncate");
+  });
+
+  it("keeps an unlabelled counter compact for use inside a table cell", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "lp",
+      hideLabel: true,
+      displayMode: "counter",
+    };
+    const context = makeContext([
+      { id: "lp", label: "Luck Points", type: "counter", value: 2 },
+    ]);
+
+    render(FieldReferenceNode, { props: { node, context } });
+
+    const row = screen.getByTestId("presentation-field-counter");
+    expect(row.className).toContain("inline-flex");
+    expect(row.textContent).toContain("2");
+  });
+
   it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {
     const node: FieldReferenceNodeType = {
       type: "field-reference",
