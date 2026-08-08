@@ -277,7 +277,7 @@ test.describe("Graph coach marks (#1295)", () => {
 // #1296 — Demo graph initial zoom readable on mobile
 // ---------------------------------------------------------------------------
 test.describe("Demo graph zoom (#1296)", () => {
-  test("demo vault graph has a legible focused entry view and whole-world action", async ({
+  test("demo vault graph has a legible focused entry view on mobile", async ({
     page,
   }) => {
     await page.setViewportSize(MOBILE_VIEWPORT);
@@ -309,23 +309,10 @@ test.describe("Demo graph zoom (#1296)", () => {
       timeout: 10000,
     });
 
-    const wholeWorld = page.getByTestId("mobile-show-whole-world");
-    await expect(wholeWorld).toBeVisible();
-
     await page.waitForFunction(
       () => ((window as any).cy?.zoom() ?? 0) >= 0.75,
       { timeout: 3000 },
     );
-
-    // A single tap must restore a fitted whole-world overview after the user
-    // has deliberately moved the camera away from it.
-    await page.evaluate(() => {
-      (window as any).cy?.viewport({ zoom: 0.1, pan: { x: 999, y: 999 } });
-    });
-    await wholeWorld.click();
-    await page.waitForFunction(() => ((window as any).cy?.zoom() ?? 0) > 0.1, {
-      timeout: 3000,
-    });
   });
 
   test("an initially selected entity keeps the legible entry zoom", async ({

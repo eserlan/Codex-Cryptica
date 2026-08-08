@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy, tick, untrack } from "svelte";
+  import { onMount, onDestroy, untrack } from "svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -312,14 +312,6 @@
     }
   }
 
-  async function showWholeWorld() {
-    if (graph.focusViewActive) {
-      graph.toggleFullGraph();
-      await tick();
-    }
-    graph.requestFit();
-  }
-
   // Selection & Search Focus
   $effect(() => {
     void controller.pendingSearchFocus;
@@ -580,7 +572,6 @@
     cy={controller.cy}
     isLayoutRunning={controller.isLayoutRunning}
     onApplyLayout={controller.applyCurrentLayout}
-    onShowWholeWorld={showWholeWorld}
     selectedCount={controller.selectedCount}
   />
 
