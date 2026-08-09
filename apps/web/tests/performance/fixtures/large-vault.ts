@@ -1,7 +1,9 @@
 import type { Page } from "@playwright/test";
+import { createHash } from "node:crypto";
 
 export const LARGE_VAULT_ENTITY_COUNT = 1600;
 export const LARGE_VAULT_EDGE_COUNT = 9000;
+export const LARGE_VAULT_FIXTURE_VERSION = "large-vault.v1";
 
 export type LargeVaultEntity = {
   id: string;
@@ -49,6 +51,13 @@ export function createLargeVaultEntities(): Record<string, LargeVaultEntity> {
     });
   }
   return entities;
+}
+
+/** Stable checksum for result provenance; no fixture content is emitted. */
+export function getLargeVaultFixtureChecksum(): string {
+  return createHash("sha256")
+    .update(JSON.stringify(createLargeVaultEntities()))
+    .digest("hex");
 }
 
 export async function installLargeVaultFixture(page: Page) {
