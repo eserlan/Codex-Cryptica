@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { syncGraphElements, resolveLayoutTrigger } from "./useGraphSync";
 import type { Core } from "cytoscape";
 import type { LayoutRequest } from "../LayoutManager";
+import {
+  PerformanceRecorder,
+  type PerformanceSampleV1,
+} from "@codex/performance-observability";
 
 function createMockNode(id: string, labels?: string[]) {
   return {
@@ -72,6 +76,40 @@ describe("syncGraphElements", () => {
         JSON.stringify(a) === JSON.stringify(b),
     });
     expect(mockCy.elements).toHaveBeenCalled();
+  });
+
+  it("attributes reconciliation phases with allowlisted counts", () => {
+    const samples: PerformanceSampleV1[] = [];
+    let now = 0;
+    const recorder = new PerformanceRecorder({
+      isEnabled: () => true,
+      clock: { now: () => ++now },
+      sink: { record: (sample) => samples.push(sample) },
+    });
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [],
+      vaultStatus: "idle",
+      initialLoaded: false,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      performanceRecorder: recorder,
+    });
+
+    expect(samples.map((sample) => sample.operation)).toEqual([
+      "graph_sync_remove",
+      "graph_sync_add",
+      "graph_sync_patch_filter",
+      "graph_sync_reconcile",
+    ]);
+    expect(samples).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          operation: "graph_sync_reconcile",
+          renderedNodeCount: 0,
+          renderedEdgeCount: 0,
+        }),
+      ]),
+    );
   });
 
   it("should add new nodes", () => {

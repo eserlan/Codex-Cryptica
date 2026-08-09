@@ -17,6 +17,10 @@ import type {
 } from "./search-progress-coordinator";
 import { buildSearchAliases, buildSearchKeywords } from "./search-entry-fields";
 import { systemClock } from "./runtime";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 
 const INDEX_BATCH_SIZE = 100;
 
@@ -62,6 +66,7 @@ export interface SearchIndexPipelineDeps {
   getApi: () => Promise<Comlink.Remote<PipelineApi> | PipelineApi>;
   isApiReady: () => boolean;
   onSaveRequired: (vaultId: string) => Promise<void>;
+  performanceRecorder?: PerformanceRecorder;
 }
 
 export class SearchIndexPipeline {
@@ -72,6 +77,7 @@ export class SearchIndexPipeline {
   private getApi: () => Promise<Comlink.Remote<PipelineApi> | PipelineApi>;
   private isApiReady: () => boolean;
   private onSaveRequired: (vaultId: string) => Promise<void>;
+  private performanceRecorder: PerformanceRecorder;
   private indexQueue: Promise<void> = Promise.resolve();
   needsFullContentSweep = false;
 
@@ -83,6 +89,11 @@ export class SearchIndexPipeline {
     this.getApi = deps.getApi;
     this.isApiReady = deps.isApiReady;
     this.onSaveRequired = deps.onSaveRequired;
+    this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+  }
+
+  setPerformanceRecorder(performance: PerformanceRecorder): void {
+    this.performanceRecorder = performance;
   }
 
   async index(entry: SearchEntry): Promise<void> {
@@ -117,55 +128,62 @@ export class SearchIndexPipeline {
     context?: { runId: string; vaultId: string; totalCount: number | null },
   ) {
     const api = await this.getApi();
+    const batchSpan = this.performanceRecorder.start("search_index_batch");
 
     const queued = this.indexQueue.then(async () => {
-      for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
-        const chunkEntries: any[] = [];
-        const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
-        for (let j = i; j < end; j++) {
-          chunkEntries.push(this.mapToSearchEntry(entities[j]));
-        }
-        const cleanChunkEntries = snapshotValue(chunkEntries);
-
-        if (context) {
-          if (!this.coordinator.isActiveRun(context.vaultId, context.runId))
-            return;
-          const result: ProgressiveBatchResult = await api.addBatchProgressive(
-            cleanChunkEntries,
-            {
-              runId: context.runId,
-              vaultId: context.vaultId,
-              batchIndex: Math.floor(i / INDEX_BATCH_SIZE),
-              indexedBefore: this.coordinator.getIndexProgress().indexedCount,
-              totalCount: context.totalCount,
-            },
-          );
-          if (this.coordinator.isActiveRun(result.vaultId, result.runId)) {
-            const indexedCount =
-              this.coordinator.getIndexProgress().indexedCount +
-              result.acceptedCount;
-            this.coordinator.emitProgress({
-              status: "partial",
-              vaultId: result.vaultId,
-              runId: result.runId,
-              indexedCount,
-              totalCount: context.totalCount,
-              isPartial: true,
-              canRetry: false,
-              message:
-                context.totalCount === null
-                  ? "Search is still indexing."
-                  : `Search is still indexing (${indexedCount}/${context.totalCount}).`,
-              error:
-                result.failedIds.length > 0
-                  ? `Failed to index ${result.failedIds.length} records.`
-                  : null,
-            });
+      try {
+        for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
+          const chunkEntries: any[] = [];
+          const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
+          for (let j = i; j < end; j++) {
+            chunkEntries.push(this.mapToSearchEntry(entities[j]));
           }
-        } else {
-          await api.addBatch(cleanChunkEntries);
+          const cleanChunkEntries = snapshotValue(chunkEntries);
+
+          if (context) {
+            if (!this.coordinator.isActiveRun(context.vaultId, context.runId)) {
+              batchSpan.stale(() => ({ indexedInputCount: entities.length }));
+              return;
+            }
+            const result: ProgressiveBatchResult =
+              await api.addBatchProgressive(cleanChunkEntries, {
+                runId: context.runId,
+                vaultId: context.vaultId,
+                batchIndex: Math.floor(i / INDEX_BATCH_SIZE),
+                indexedBefore: this.coordinator.getIndexProgress().indexedCount,
+                totalCount: context.totalCount,
+              });
+            if (this.coordinator.isActiveRun(result.vaultId, result.runId)) {
+              const indexedCount =
+                this.coordinator.getIndexProgress().indexedCount +
+                result.acceptedCount;
+              this.coordinator.emitProgress({
+                status: "partial",
+                vaultId: result.vaultId,
+                runId: result.runId,
+                indexedCount,
+                totalCount: context.totalCount,
+                isPartial: true,
+                canRetry: false,
+                message:
+                  context.totalCount === null
+                    ? "Search is still indexing."
+                    : `Search is still indexing (${indexedCount}/${context.totalCount}).`,
+                error:
+                  result.failedIds.length > 0
+                    ? `Failed to index ${result.failedIds.length} records.`
+                    : null,
+              });
+            }
+          } else {
+            await api.addBatch(cleanChunkEntries);
+          }
+          await this.delay(0);
         }
-        await this.delay(0);
+        batchSpan.complete(() => ({ indexedInputCount: entities.length }));
+      } catch (error) {
+        batchSpan.fail("unexpected");
+        throw error;
       }
     });
 

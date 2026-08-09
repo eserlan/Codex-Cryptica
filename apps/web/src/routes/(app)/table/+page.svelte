@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -18,6 +19,11 @@
     type SortState,
     type ConnectionSummary,
   } from "$lib/components/table/entityTableSort";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+  import type {
+    PerformanceOperation,
+    PerformanceOperationHandle,
+  } from "@codex/performance-observability";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
   const vaultId = $derived(vault.activeVaultId);
@@ -26,6 +32,8 @@
   let typeFilters = $state<Set<string>>(new Set());
   let labelFilters = $state<Set<string>>(new Set());
   let sort = $state<SortState>({ key: "title", direction: "asc" });
+  let tableOpenRecorded = false;
+  const tableOpenSpan = browserPerformanceRecorder.start("table_open");
 
   const totalEntities = $derived(vault.allEntities.length);
 
@@ -77,6 +85,35 @@
   });
 
   const rows = $derived(sortEntities(filtered, sort, connectionCounts));
+
+  async function completeAfterRender(span: PerformanceOperationHandle) {
+    await tick();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+    span.complete(() => ({
+      entityCount: totalEntities,
+      resultCount: rows.length,
+      domNodeCount: document.querySelectorAll("[data-testid=entity-table-row]")
+        .length,
+    }));
+  }
+
+  function measureTableOperation(
+    operation: PerformanceOperation,
+    update: () => void,
+  ) {
+    const span = browserPerformanceRecorder.start(operation);
+    update();
+    void completeAfterRender(span);
+  }
+
+  $effect(() => {
+    if (!tableOpenRecorded && vault.isInitialized && vaultId) {
+      tableOpenRecorded = true;
+      void completeAfterRender(tableOpenSpan);
+    }
+  });
 
   // ─── Row selection + bulk actions ───────────────────────────────────────
   let selectedIds = $state<Set<string>>(new Set());
@@ -258,33 +295,47 @@
   }
 
   function handleSort(key: SortKey) {
-    sort = nextSortState(sort, key);
+    measureTableOperation("table_sort", () => {
+      sort = nextSortState(sort, key);
+    });
   }
 
   function toggleType(type: string) {
-    const next = new Set(typeFilters);
-    if (next.has(type)) {
-      next.delete(type);
-    } else {
-      next.add(type);
-    }
-    typeFilters = next;
+    measureTableOperation("table_filter", () => {
+      const next = new Set(typeFilters);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      typeFilters = next;
+    });
   }
 
   function toggleLabel(label: string) {
-    const next = new Set(labelFilters);
-    if (next.has(label)) {
-      next.delete(label);
-    } else {
-      next.add(label);
-    }
-    labelFilters = next;
+    measureTableOperation("table_filter", () => {
+      const next = new Set(labelFilters);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      labelFilters = next;
+    });
   }
 
   function clearFilters() {
-    searchQuery = "";
-    typeFilters = new Set();
-    labelFilters = new Set();
+    measureTableOperation("table_filter", () => {
+      searchQuery = "";
+      typeFilters = new Set();
+      labelFilters = new Set();
+    });
+  }
+
+  function setSearchQuery(value: string) {
+    measureTableOperation("table_filter", () => {
+      searchQuery = value;
+    });
   }
 
   const hasActiveFilters = $derived(
@@ -346,7 +397,8 @@
         ></span>
         <input
           type="search"
-          bind:value={searchQuery}
+          value={searchQuery}
+          oninput={(event) => setSearchQuery(event.currentTarget.value)}
           placeholder="Search by name, content, or #label…"
           aria-label="Search entities"
           data-testid="entity-table-search"

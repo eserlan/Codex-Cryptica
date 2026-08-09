@@ -16,6 +16,10 @@ import {
   type IdGenerator,
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
 
 // Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
 // literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
@@ -51,6 +55,7 @@ export class GraphStore {
     this.sessionModeStore = sessionStore;
     this.connectionModeStore = connectionStore;
     this.idGenerator = idGenerator;
+    browserPerformanceCapture.start();
   }
 
   // Svelte 5 derived state
@@ -98,6 +103,9 @@ export class GraphStore {
   }
 
   elements = $derived.by(() => {
+    const focusComputeSpan = browserPerformanceRecorder.start(
+      "graph_focus_compute",
+    );
     const graphVersion = this.graphStructureVersion;
     void graphVersion;
     const allEntities = this.graphSourceEntities;
@@ -128,28 +136,51 @@ export class GraphStore {
     // Built from `renderIds` via the entities record (O(rendered)) rather than
     // an O(N) Map build + O(N) filter, so a content edit in a large vault
     // doesn't re-walk all 1600 entities to produce the same small set.
-    if (this.focusViewActive && visibleEntities.length > 0) {
-      const focal = this.resolveFocalId(visibleEntities, validIds);
-      if (focal) {
-        const renderIds = this.computeFocusRenderIds(
-          focal,
-          this.focusDepth,
-          validIds,
-          visibleEntities,
-        );
-        if (renderIds.size !== validIds.size) {
-          const byId = this.vault.entities;
-          const renderEntities: Entity[] = [];
-          for (const id of renderIds) {
-            const entity = byId[id];
-            if (entity) renderEntities.push(entity);
+    try {
+      if (this.focusViewActive && visibleEntities.length > 0) {
+        const focal = this.resolveFocalId(visibleEntities, validIds);
+        if (focal) {
+          const renderIds = this.computeFocusRenderIds(
+            focal,
+            this.focusDepth,
+            validIds,
+            visibleEntities,
+          );
+          if (renderIds.size !== validIds.size) {
+            const byId = this.vault.entities;
+            const renderEntities: Entity[] = [];
+            for (const id of renderIds) {
+              const entity = byId[id];
+              if (entity) renderEntities.push(entity);
+            }
+            const result = GraphTransformer.entitiesToElements(
+              renderEntities,
+              renderIds,
+            );
+            focusComputeSpan.complete(() => ({
+              entityCount: allEntities.length,
+              renderedNodeCount: renderEntities.length,
+              renderedEdgeCount: result.length - renderEntities.length,
+            }));
+            return result;
           }
-          return GraphTransformer.entitiesToElements(renderEntities, renderIds);
         }
       }
-    }
 
-    return GraphTransformer.entitiesToElements(visibleEntities, validIds);
+      const result = GraphTransformer.entitiesToElements(
+        visibleEntities,
+        validIds,
+      );
+      focusComputeSpan.complete(() => ({
+        entityCount: allEntities.length,
+        renderedNodeCount: visibleEntities.length,
+        renderedEdgeCount: result.length - visibleEntities.length,
+      }));
+      return result;
+    } catch (error) {
+      focusComputeSpan.fail("unexpected");
+      throw error;
+    }
   });
 
   fitRequest = $state(0);

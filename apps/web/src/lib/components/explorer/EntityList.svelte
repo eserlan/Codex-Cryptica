@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { groupEntitiesForExplorer } from "./entityListGrouping";
@@ -13,6 +14,8 @@
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sortExplorerEntities } from "./entityListSorting";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+  import type { PerformanceOperationHandle } from "@codex/performance-observability";
 
   let {
     onSelect,
@@ -112,6 +115,43 @@
   let createChildError = $state<string | null>(null);
   let isDragging = $state(false);
   let draggedEntityId = $state<string | null>(null);
+  let explorerHasOpened = false;
+  let pendingExplorerSpan: PerformanceOperationHandle | null = null;
+
+  async function completeExplorerRender(span: PerformanceOperationHandle) {
+    await tick();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+    if (pendingExplorerSpan !== span) return;
+    span.complete(() => ({
+      entityCount: vault.allEntities.length,
+      resultCount: sortedEntities.length,
+      domNodeCount: document.querySelectorAll("[data-testid=entity-list-item]")
+        .length,
+    }));
+    pendingExplorerSpan = null;
+  }
+
+  $effect(() => {
+    void searchQuery;
+    void typeFilters;
+    void labelFilters;
+    void effectiveViewMode;
+    void sortKey;
+    void sortDirection;
+    void showDraftsOnly;
+    void sortedEntities.length;
+    if (!activeVaultId) return;
+
+    pendingExplorerSpan?.cancel();
+    const span = browserPerformanceRecorder.start(
+      explorerHasOpened ? "explorer_filter" : "explorer_open",
+    );
+    explorerHasOpened = true;
+    pendingExplorerSpan = span;
+    void completeExplorerRender(span);
+  });
 
   $effect(() => {
     if (inlineCreationParentId && categories.list.length > 0) {

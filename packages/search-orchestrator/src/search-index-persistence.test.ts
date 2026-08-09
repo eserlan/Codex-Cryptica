@@ -10,6 +10,10 @@ import {
   afterAll,
 } from "vitest";
 import { SearchIndexPersistence } from "./search-index-persistence";
+import {
+  PerformanceRecorder,
+  type PerformanceSampleV1,
+} from "@codex/performance-observability";
 
 // Simple pass-through mocks for CompressionStream and DecompressionStream to run in environments lacking them
 class MockCompressionStream {
@@ -38,6 +42,7 @@ describe("SearchIndexPersistence", () => {
   let mockCoordinator: any;
   let mockApi: any;
   let persistence: SearchIndexPersistence;
+  let performanceSamples: PerformanceSampleV1[];
 
   let stubbedCompressionStream = false;
   let stubbedDecompressionStream = false;
@@ -90,12 +95,18 @@ describe("SearchIndexPersistence", () => {
       exportIndex: vi.fn(),
       importIndex: vi.fn(),
     };
+    performanceSamples = [];
 
     persistence = new SearchIndexPersistence({
       db: mockDb,
       debug: mockDebug,
       coordinator: mockCoordinator,
       getApi: async () => mockApi,
+      performanceRecorder: new PerformanceRecorder({
+        isEnabled: () => true,
+        clock: { now: vi.fn().mockReturnValueOnce(1).mockReturnValueOnce(9) },
+        sink: { record: (sample) => performanceSamples.push(sample) },
+      }),
     });
   });
 
@@ -116,6 +127,13 @@ describe("SearchIndexPersistence", () => {
       const putArg = mockDb.searchIndex.put.mock.calls[0][0];
       expect(putArg.vaultId).toBe("vault-1");
       expect(putArg.data.constructor.name).toBe("Blob");
+      expect(performanceSamples).toEqual([
+        expect.objectContaining({
+          operation: "search_index_persist",
+          outcome: "completed",
+          indexedInputCount: 5,
+        }),
+      ]);
 
       // Verify the Blob contents by decompressing it
       const blob = putArg.data as Blob;
@@ -219,6 +237,36 @@ describe("SearchIndexPersistence", () => {
       } finally {
         globalThis.CompressionStream = originalCS;
       }
+    });
+
+    it("records an empty index as a successful no-op", async () => {
+      mockApi.exportIndex.mockResolvedValue({ keyCount: 0 });
+
+      await persistence.saveIndex("vault-1");
+
+      expect(mockDb.searchIndex.put).not.toHaveBeenCalled();
+      expect(performanceSamples).toEqual([
+        expect.objectContaining({
+          operation: "search_index_persist",
+          outcome: "completed",
+          indexedInputCount: 0,
+        }),
+      ]);
+    });
+
+    it("records a missing export as a failed save", async () => {
+      mockApi.exportIndex.mockResolvedValue(undefined);
+
+      await persistence.saveIndex("vault-1");
+
+      expect(mockDb.searchIndex.put).not.toHaveBeenCalled();
+      expect(performanceSamples).toEqual([
+        expect.objectContaining({
+          operation: "search_index_persist",
+          outcome: "failed",
+          errorKind: "unexpected",
+        }),
+      ]);
     });
   });
 
