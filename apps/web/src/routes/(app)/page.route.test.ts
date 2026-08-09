@@ -97,6 +97,11 @@ describe("root +page.svelte — front page overlay keydown", () => {
     // <title> and the meta description rather than needing a third statement
     // on screen.
     expect(screen.queryByText("Welcome to Codex Cryptica")).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: /rpg campaign manager & worldbuilding tool/i,
+      }),
+    ).toBeNull();
     expect(screen.getByText(/private markdown notes/i)).toBeTruthy();
     expect(
       screen.getByRole("heading", { level: 2, name: /living lore graph/i }),
