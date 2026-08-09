@@ -375,6 +375,7 @@
                 <button
                   type="button"
                   title="Rebuild Canvas Map"
+                  aria-label="Rebuild Canvas Map"
                   onclick={async () => {
                     try {
                       const canvasDoc =
@@ -387,7 +388,7 @@
                   }}
                   class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
                 >
-                  <span class="icon-[lucide--rotate-cw] w-3.5 h-3.5"></span>
+                  <span class="icon-[lucide--rotate-cw] w-3.5 h-3.5" aria-hidden="true"></span>
                 </button>
               {:else}
                 <button
