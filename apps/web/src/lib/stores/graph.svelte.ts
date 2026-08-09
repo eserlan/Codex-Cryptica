@@ -284,7 +284,7 @@ export class GraphStore {
 
   /** Establishes the initial focus root once the graph view is ready. */
   ensureFocusRoot(): void {
-    if (!this.focusViewActive || this.focusRootId) return;
+    if (!this.focusViewActive) return;
     const visibleEntities = this.graphSourceEntities.filter(
       (entity) =>
         this.sessionModeStore.isGuestMode ||
@@ -294,12 +294,21 @@ export class GraphStore {
         }),
     );
     const validIds = new Set(visibleEntities.map((entity) => entity.id));
+    if (this.focusRootId && validIds.has(this.focusRootId)) return;
+
+    // A deleted or no-longer-visible root must not fall back to the transient
+    // selection: establish a new stable root for the current graph scope.
     this.focusRootId = this.resolveFocalId(visibleEntities, validIds);
   }
 
   /** Explicitly navigate a large focus view to an entity outside its set. */
   navigateFocusTo(entityId: string): void {
-    if (!this.focusViewActive || !this.vault.entities[entityId]) return;
+    if (
+      !this.focusViewActive ||
+      !this.vault.entities[entityId] ||
+      this.focusRootId === entityId
+    )
+      return;
     this.focusRootId = entityId;
   }
 

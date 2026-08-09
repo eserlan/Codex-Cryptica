@@ -318,6 +318,9 @@
 
   // Selection & Search Focus
   $effect(() => {
+    // Revalidate the root when graph membership changes, while a regular
+    // selection remains outside this dependency path.
+    void graph.elements;
     if (controller.cy && graph.focusViewActive) {
       graph.ensureFocusRoot();
     }
@@ -334,6 +337,7 @@
       if (
         currentSelectedId &&
         graph.focusViewActive &&
+        graph.focusRootId !== currentSelectedId &&
         currentCy.$id(currentSelectedId).length === 0
       ) {
         graph.navigateFocusTo(currentSelectedId);

@@ -248,6 +248,12 @@ describe("GraphStore", () => {
     (vault as any).selectedEntityId = before[1];
 
     expect(store.focusRootId).toBe(root);
+    expect(
+      (store as any).resolveFocalId(
+        entities,
+        new Set(entities.map((entity) => entity.id)),
+      ),
+    ).toBe(root);
     expect(store.elements.map((element: any) => element.data.id)).toEqual(
       before,
     );
@@ -269,6 +275,32 @@ describe("GraphStore", () => {
     store.navigateFocusTo("node-700");
 
     expect(store.focusRootId).toBe("node-700");
+  });
+
+  it("replaces an invalid focus root without coupling it to later selection", () => {
+    const entities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      connections: [],
+    })) as any[];
+    (vault as any).allEntities = entities;
+    (vault as any).entities = Object.fromEntries(
+      entities.map((e) => [e.id, e]),
+    );
+    (vault as any).selectedEntityId = "node-700";
+    const store = new GraphStore();
+    store.focusRootId = "deleted-node";
+
+    store.ensureFocusRoot();
+
+    expect(store.focusRootId).toBe("node-700");
+    (vault as any).selectedEntityId = "node-1";
+    expect(
+      (store as any).resolveFocalId(
+        entities,
+        new Set(entities.map((entity) => entity.id)),
+      ),
+    ).toBe("node-700");
   });
 
   it("keeps the root on clear selection and resets it on a vault switch", async () => {
