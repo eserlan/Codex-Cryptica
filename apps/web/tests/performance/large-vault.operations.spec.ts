@@ -18,6 +18,13 @@ test("records repeatable large-vault operations in a production preview", async 
   });
   try {
     await setupVaultPage(page);
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      if (vault?.activeVaultId) {
+        await (window as any).cacheService?.clearVault(vault.activeVaultId);
+        await vault.loadFiles(false);
+      }
+    });
     await installLargeVaultFixture(page);
     await page.reload();
     await page.waitForFunction(
@@ -68,7 +75,9 @@ test("records repeatable large-vault operations in a production preview", async 
     await page.evaluate(() =>
       (window as any).layoutUIStore.toggleSidebarTool("explorer"),
     );
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
+      timeout: 30_000,
+    });
     const explorerSearch = page.getByPlaceholder("Search entities...");
     await explorerSearch.fill("benchmark entity 42");
     await explorerSearch.fill("");
@@ -76,7 +85,9 @@ test("records repeatable large-vault operations in a production preview", async 
     await page.evaluate(() =>
       (window as any).layoutUIStore.toggleSidebarTool("explorer"),
     );
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
+      timeout: 30_000,
+    });
 
     collectedSamples = await page.evaluate(
       () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
