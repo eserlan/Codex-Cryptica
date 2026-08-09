@@ -335,9 +335,17 @@
         class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-24 md:py-20 flex flex-col min-h-full justify-start md:justify-center items-center"
         style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem)"
       >
-        <section class="mb-10 md:mb-16 w-full">
+        <!-- Two columns from lg up. Stacked, the 511px graph preview pushed
+             every call to action below a 900px desktop fold: the primary
+             button measured at y=1039. Side by side, the copy and the actions
+             fit the viewport and the preview still sits next to them at full
+             size. Phones keep the stacked order, where the actions already
+             landed above the fold. -->
+        <section
+          class="mb-10 md:mb-16 w-full lg:grid lg:grid-cols-2 lg:items-center lg:gap-10 xl:gap-14"
+        >
           <div
-            class="mx-auto flex w-full max-w-6xl flex-col items-center text-center"
+            class="mx-auto flex w-full max-w-6xl flex-col items-center text-center lg:mx-0 lg:items-start lg:text-left"
           >
             <div
               class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
@@ -353,7 +361,7 @@
               Welcome to Codex Cryptica
             </p>
             <h1
-              class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
+              class="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
             >
               Private RPG Lore Vault
             </h1>
@@ -363,11 +371,48 @@
               RPG Campaign Manager &amp; Worldbuilding Tool
             </h2>
             <p
-              class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
+              class="text-sm sm:text-base md:text-lg lg:text-lg xl:text-xl text-theme-muted max-w-3xl mx-auto lg:mx-0 leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
               A free, local-first campaign manager for GMs: private Markdown
               notes, visual lore graphs, timelines, offline prep, and optional
               AI in one browser workspace.
+            </p>
+
+            <div
+              class="flex w-full max-w-5xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-start"
+            >
+              <button
+                type="button"
+                onclick={openQuickStartFromWelcome}
+                class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
+                data-testid="welcome-quick-start-button"
+              >
+                <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+                Quick Start World
+              </button>
+              <button
+                type="button"
+                onclick={() => demoService.startDemo("fantasy")}
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                data-testid="welcome-demo-button"
+              >
+                Explore Demo Vault
+              </button>
+              <button
+                type="button"
+                onclick={() => openVaultFromWelcome("open")}
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                data-testid="welcome-open-button"
+              >
+                Open Existing Vault
+              </button>
+            </div>
+            <p
+              class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center lg:px-0 lg:text-left"
+            >
+              Quick Start generates a ready-to-explore world in seconds — pick a
+              theme, add an optional premise, done. Optional AI is available
+              when you want it; your vault works fully without it.
             </p>
           </div>
 
@@ -416,43 +461,6 @@
               </div>
               <WelcomeGraphPreview />
             </button>
-
-            <div
-              class="flex w-full max-w-5xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center"
-            >
-              <button
-                type="button"
-                onclick={openQuickStartFromWelcome}
-                class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
-                data-testid="welcome-quick-start-button"
-              >
-                <span class="icon-[lucide--sparkles] w-4 h-4"></span>
-                Quick Start World
-              </button>
-              <button
-                type="button"
-                onclick={() => demoService.startDemo("fantasy")}
-                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
-                data-testid="welcome-demo-button"
-              >
-                Explore Demo Vault
-              </button>
-              <button
-                type="button"
-                onclick={() => openVaultFromWelcome("open")}
-                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
-                data-testid="welcome-open-button"
-              >
-                Open Existing Vault
-              </button>
-            </div>
-            <p
-              class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center"
-            >
-              Quick Start generates a ready-to-explore world in seconds — pick a
-              theme, add an optional premise, done. Optional AI is available
-              when you want it; your vault works fully without it.
-            </p>
           </section>
         </section>
 
