@@ -5,9 +5,12 @@
   import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
   import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { SITE_AUTHOR } from "$lib/config";
 
   let { data } = $props();
   const article = $derived(data.article);
+  // A post may name its own author; otherwise the site's.
+  const authorName = $derived(article.author?.trim() || SITE_AUTHOR.name);
   const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
   const articleContent = $derived(
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
@@ -23,10 +26,15 @@
       dateModified: article.publishedAt,
       url: data.canonicalUrl,
       mainEntityOfPage: { "@type": "WebPage", "@id": data.canonicalUrl },
+      // A Person, not the Organization: search engines and readers both treat
+      // an org-authored article as content rather than as someone's writing.
       author: {
-        "@type": "Organization",
-        name: "Codex Cryptica",
-        url: "https://codexcryptica.com",
+        "@type": "Person",
+        name: authorName,
+        // SITE_AUTHOR.url identifies one specific person. A post that names its
+        // own author must not inherit it, or the structured data claims that
+        // byline belongs to someone else's page.
+        ...(article.author?.trim() ? {} : { url: SITE_AUTHOR.url }),
       },
       publisher: {
         "@type": "Organization",
@@ -84,6 +92,12 @@
             timeZone: "UTC",
           })}
         </time>
+        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
+          class="sr-only"
+        >
+          ·
+        </span>
+        <span data-testid="blog-byline">By {authorName}</span>
         <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
           class="sr-only"
         >

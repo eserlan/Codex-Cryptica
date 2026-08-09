@@ -397,24 +397,47 @@
                     id="living-lore-graph-copy"
                     class="mt-1 text-[11px] text-theme-muted"
                   >
-                    See how characters, factions, secrets, and places connect —
-                    Quick Start builds one like this for you in seconds.
+                    See how characters, factions, secrets, and places connect.
+                    Click the graph and Quick Start builds one like this for you
+                    in seconds.
                   </p>
                 </div>
                 <span
-                  class="ml-auto flex shrink-0 items-center gap-1 text-[10px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
+                  class="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg border border-theme-primary/60 bg-theme-primary/10 px-3 py-2 text-xs font-bold font-header text-theme-primary transition-colors group-hover:bg-theme-primary group-hover:text-theme-bg"
+                  data-testid="welcome-preview-cue"
                 >
-                  Quick Start
+                  <span
+                    class="icon-[lucide--sparkles] h-3.5 w-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Build one like this
                   <span
                     class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
                   ></span>
                 </span>
               </div>
               <div id="living-lore-graph-preview" class="sr-only">
                 Interactive lore graph preview showing Captain Veyra connected
                 to factions, secrets, places, and unresolved plot threads.
+                Activates Quick Start, which builds a world like this one.
               </div>
-              <WelcomeGraphPreview />
+              <div class="relative">
+                <WelcomeGraphPreview />
+                <!-- The whole card has always been clickable and nothing said
+                     so. Decorative: the button's own accessible name and
+                     description already carry this for screen readers. -->
+                <div
+                  aria-hidden="true"
+                  class="pointer-events-none absolute inset-0 flex items-center justify-center bg-theme-bg/50 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  <span
+                    class="rounded-lg bg-theme-primary px-5 py-3 text-sm font-bold font-header text-theme-bg shadow-lg"
+                  >
+                    Build a world like this
+                  </span>
+                </div>
+              </div>
             </button>
 
             <div
