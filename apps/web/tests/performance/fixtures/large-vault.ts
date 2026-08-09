@@ -68,6 +68,13 @@ export async function installLargeVaultFixture(page: Page) {
     (window as any).graphViewController?.syncRenderHints();
     if (vault.activeVaultId) {
       await vault.persistToIndexedDB(vault.activeVaultId);
+      await (window as any).cacheService?.bulkSet(
+        Object.values(fixture).map((entity: any) => ({
+          path: `${vault.activeVaultId}:entities/${entity.id}.md`,
+          lastModified: entity.modifiedAt,
+          entity,
+        })),
+      );
     }
   }, entities);
 }

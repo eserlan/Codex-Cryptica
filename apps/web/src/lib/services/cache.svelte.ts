@@ -436,3 +436,11 @@ export class CacheService {
 }
 
 export const cacheService = new CacheService();
+
+if (
+  typeof window !== "undefined" &&
+  (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+    .__CODEX_PERFORMANCE_CAPTURE__ === true
+) {
+  (window as any).cacheService = cacheService;
+}
