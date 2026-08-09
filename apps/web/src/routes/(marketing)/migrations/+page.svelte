@@ -3,7 +3,6 @@
   const cleanBase = base === "/" ? "" : base;
   import { importsConfig } from "$lib/config/seo-pages";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   const importers = Object.values(importsConfig);
 
@@ -76,7 +75,7 @@
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-6 py-16 flex-grow w-full">
+  <div class="max-w-5xl mx-auto px-6 py-16 flex-grow w-full">
     <div class="text-center mb-14">
       <div
         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
@@ -126,7 +125,5 @@
         </li>
       {/each}
     </ul>
-  </main>
-
-  <MarketingFooter />
+  </div>
 </div>

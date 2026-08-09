@@ -2,7 +2,6 @@
   import { base } from "$app/paths";
   const cleanBase = base === "/" ? "" : base;
   import type { PageData } from "./$types";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   let { data }: { data: PageData } = $props();
   const articles = $derived(data.articles);
@@ -539,8 +538,6 @@
       </div>
     </div>
   </section>
-
-  <MarketingFooter />
 </div>
 
 <style>

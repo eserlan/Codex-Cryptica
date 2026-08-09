@@ -333,7 +333,7 @@
     `ipt>`}
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
@@ -429,4 +429,4 @@
       </section>
     {/each}
   </div>
-</main>
+</div>

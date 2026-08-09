@@ -119,9 +119,9 @@
       </p>
     </header>
 
-    <main class="mb-20">
+    <div class="mb-20">
       <ArticleRenderer content={articleContent} />
-    </main>
+    </div>
 
     {#if isRASeries}
       <ResponsibleAISeriesNav currentSlug={article.slug} />
