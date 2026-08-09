@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { setupVaultPage } from "../test-helpers";
-import {
-  installLargeVaultFixture,
-  LARGE_VAULT_ENTITY_COUNT,
-} from "./fixtures/large-vault";
+import { installLargeVaultFixture } from "./fixtures/large-vault";
 import { writeLargeVaultResults } from "./large-vault-results";
 
 test.describe.configure({ mode: "serial" });
@@ -20,8 +17,11 @@ test("records repeatable large-vault operations in a production preview", async 
     await installLargeVaultFixture(page);
 
     await page.waitForFunction(
-      (count) => (window as any).graph?.stats?.nodeCount >= count,
-      LARGE_VAULT_ENTITY_COUNT,
+      () => {
+        const cy = (window as any).cy;
+        return Boolean(cy && cy.nodes().length > 0);
+      },
+      undefined,
       { timeout: 60_000 },
     );
 

@@ -64,5 +64,7 @@ export async function installLargeVaultFixture(page: Page) {
     vault.selectedEntityId = "benchmark-42";
     vault.status = "idle";
     vault.isInitialized = true;
+    (window as any).graphViewController?.syncElements();
+    (window as any).graphViewController?.syncRenderHints();
   }, entities);
 }

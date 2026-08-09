@@ -214,6 +214,7 @@ export class GraphViewController {
           .__CODEX_PERFORMANCE_CAPTURE__ === true
       ) {
         (window as any).cy = instance;
+        (window as any).graphViewController = this;
       }
 
       this.cleanupEvents = setupGraphEvents(instance, {
@@ -405,6 +406,7 @@ export class GraphViewController {
           .__CODEX_PERFORMANCE_CAPTURE__ === true
       ) {
         delete (window as any).cy;
+        delete (window as any).graphViewController;
       }
       this.cy.destroy();
       this.cy = undefined;
