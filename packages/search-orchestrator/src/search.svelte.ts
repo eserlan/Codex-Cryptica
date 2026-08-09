@@ -16,6 +16,10 @@ import {
 import { SearchIndexLifecycle } from "./search-index-lifecycle";
 import { SearchIndexPersistence } from "./search-index-persistence";
 import { SearchIndexPipeline } from "./search-index-pipeline.svelte";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 
 type SearchApi = Pick<
   SearchEngine,
@@ -50,6 +54,7 @@ export interface SearchServiceDependencies {
   timers?: TimerApi;
   windowRef?: Window;
   documentRef?: Document;
+  performanceRecorder?: PerformanceRecorder;
 }
 
 export class SearchService {
@@ -70,6 +75,7 @@ export class SearchService {
   private coordinator: SearchProgressCoordinator;
   private pipeline: SearchIndexPipeline;
   private persistence: SearchIndexPersistence;
+  private performanceRecorder: PerformanceRecorder;
 
   constructor(dependencies: SearchServiceDependencies = {}) {
     this.workerFactory =
@@ -97,6 +103,8 @@ export class SearchService {
       dependencies.documentRef ??
       (typeof document !== "undefined" ? document : undefined);
     this.isInitialized = Boolean(this.api);
+    this.performanceRecorder =
+      dependencies.performanceRecorder ?? performanceRecorder;
 
     this.coordinator = new SearchProgressCoordinator({
       debug: this.debug,
@@ -110,6 +118,7 @@ export class SearchService {
       debug: this.debug,
       coordinator: this.coordinator,
       getApi: () => this.ensureWorker(),
+      performanceRecorder: this.performanceRecorder,
     });
 
     this.pipeline = new SearchIndexPipeline({
@@ -120,6 +129,7 @@ export class SearchService {
       getApi: () => this.ensureWorker(),
       isApiReady: () => this.isInitialized,
       onSaveRequired: (vaultId) => this.persistence.saveIndex(vaultId),
+      performanceRecorder: this.performanceRecorder,
     });
 
     new SearchIndexLifecycle({
@@ -191,6 +201,12 @@ export class SearchService {
         },
       },
     });
+  }
+
+  setPerformanceRecorder(performance: PerformanceRecorder): void {
+    this.performanceRecorder = performance;
+    this.persistence.setPerformanceRecorder(performance);
+    this.pipeline.setPerformanceRecorder(performance);
   }
 
   private async initWorker() {

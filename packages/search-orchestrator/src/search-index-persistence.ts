@@ -8,6 +8,10 @@ type DebugLogger = {
 };
 import type { SearchProgressCoordinator } from "./search-progress-coordinator";
 import { systemClock } from "./runtime";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 
 type PersistenceApi = Pick<SearchEngine, "exportIndex" | "importIndex">;
 
@@ -68,6 +72,7 @@ export interface SearchIndexPersistenceDeps {
   debug?: DebugLogger;
   coordinator: SearchProgressCoordinator;
   getApi: () => Promise<Comlink.Remote<PersistenceApi> | PersistenceApi>;
+  performanceRecorder?: PerformanceRecorder;
 }
 
 export class SearchIndexPersistence {
@@ -77,12 +82,18 @@ export class SearchIndexPersistence {
   private getApi: () => Promise<
     Comlink.Remote<PersistenceApi> | PersistenceApi
   >;
+  private performanceRecorder: PerformanceRecorder;
 
   constructor(deps: SearchIndexPersistenceDeps) {
     this.db = deps.db;
     this.debug = deps.debug ?? (globalThis as any).__debugStore__ ?? console;
     this.coordinator = deps.coordinator;
     this.getApi = deps.getApi;
+    this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+  }
+
+  setPerformanceRecorder(performance: PerformanceRecorder): void {
+    this.performanceRecorder = performance;
   }
 
   async loadIndex(vaultId: string): Promise<boolean> {
@@ -197,6 +208,7 @@ export class SearchIndexPersistence {
       );
       return;
     }
+    const saveSpan = this.performanceRecorder.start("search_index_persist");
     try {
       this.debug.log(
         `[SearchIndexPersistence] Save started: Exporting index for ${vaultId}...`,
@@ -294,15 +306,20 @@ export class SearchIndexPersistence {
           updatedAt: systemClock.now(),
         });
         this.coordinator.isDirty = false;
+        saveSpan.complete(() => ({
+          indexedInputCount: keyCount,
+        }));
         this.debug.log(
           `[SearchIndexPersistence] Save finished: Persisted index for ${vaultId} (${keyCount} keys) in ${(performance.now() - start).toFixed(2)}ms`,
         );
       } else {
+        saveSpan.cancel();
         this.debug.log(
           `[SearchIndexPersistence] Save skipped: Index is empty or export failed.`,
         );
       }
     } catch (err: any) {
+      saveSpan.fail("unexpected");
       this.debug.warn(
         `[SearchIndexPersistence] Failed to save index for ${vaultId}: ${err?.message || "Unknown error"}`,
         err,

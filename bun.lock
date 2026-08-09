@@ -311,6 +311,7 @@
       "name": "graph-engine",
       "version": "0.0.0",
       "dependencies": {
+        "@codex/performance-observability": "workspace:*",
         "comlink": "^4.4.1",
         "cytoscape": "^3.33.4",
         "cytoscape-fcose": "^2.2.0",
@@ -443,6 +444,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@codex/events": "workspace:*",
+        "@codex/performance-observability": "workspace:*",
         "@codex/runtime": "workspace:*",
         "@codex/search-engine": "workspace:*",
         "@codex/vault-engine": "workspace:*",
