@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { setupVaultPage } from "../test-helpers";
-import { installLargeVaultFixture } from "./fixtures/large-vault";
+import {
+  installLargeVaultFixture,
+  LARGE_VAULT_ENTITY_COUNT,
+} from "./fixtures/large-vault";
 import { writeLargeVaultResults } from "./large-vault-results";
 
 test.describe.configure({ mode: "serial" });
@@ -16,6 +19,17 @@ test("records repeatable large-vault operations in a production preview", async 
   try {
     await setupVaultPage(page);
     await installLargeVaultFixture(page);
+    await page.reload();
+    await page.waitForFunction(
+      (entityCount) => {
+        const vault = (window as any).vault;
+        return (
+          vault?.status === "idle" && vault.allEntities?.length === entityCount
+        );
+      },
+      LARGE_VAULT_ENTITY_COUNT,
+      { timeout: 60_000 },
+    );
 
     await page.waitForFunction(
       () => {
@@ -52,7 +66,12 @@ test("records repeatable large-vault operations in a production preview", async 
     );
 
     await page.goto("/table");
-    await installLargeVaultFixture(page);
+    await page.waitForFunction(
+      (entityCount) =>
+        (window as any).vault?.allEntities?.length === entityCount,
+      LARGE_VAULT_ENTITY_COUNT,
+      { timeout: 60_000 },
+    );
     const search = page.getByTestId("entity-table-search");
     await expect(search).toBeVisible();
     await search.fill("benchmark entity 42");
