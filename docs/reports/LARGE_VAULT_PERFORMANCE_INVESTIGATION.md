@@ -497,6 +497,13 @@ option until those paths are bounded.
 Add privacy-safe performance events that contain counts and timings but never
 entity titles, content, lore, labels, or file paths.
 
+The work is intentionally split: [#2137](https://github.com/eserlan/Codex-Cryptica/issues/2137)
+owns the recorder, metric schema, deterministic fixture, operation
+instrumentation, production-build Playwright scenarios, and JSON artifact.
+[#2149](https://github.com/eserlan/Codex-Cryptica/issues/2149) is blocked by
+#2137 and owns baseline collection, reviewed budget selection, the report-only
+shakeout, and blocking CI enforcement.
+
 Suggested operations:
 
 - `vault_open_warm`
@@ -506,13 +513,17 @@ Suggested operations:
 - `search_index_persist`
 - `graph_focus_compute`
 - `graph_sync_reconcile`
+- `graph_sync_remove`
 - `graph_sync_add`
-- `graph_sync_patch`
+- `graph_sync_patch_filter`
+- `graph_sync_layout`
+- `graph_sync_render_ready`
 - `graph_select`
 - `graph_focus_depth_change`
 - `explorer_open`
 - `explorer_filter`
 - `table_open`
+- `table_sort`
 - `table_filter`
 - `entity_save`
 
@@ -550,8 +561,11 @@ Initial targets should emphasize responsiveness:
 - Explorer and Table DOM size bounded independently of total entity count.
 - Cold search indexing proportional to changed entity count.
 
-The exact release budgets should be set after measuring a production build on
-the target desktop and mobile device classes.
+The exact release budgets are selected and enforced under
+[#2149](https://github.com/eserlan/Codex-Cryptica/issues/2149) after at least
+five production-build baseline runs on the project CI environment. Current
+regression limits and intended user-experience targets remain separate when
+the baseline is still slower than the target.
 
 ## Implementation Plan and GitHub Tracking
 
@@ -565,31 +579,39 @@ issues so high-impact fixes can land without waiting for the entire epic.
 The first phase establishes trustworthy budgets and removes the graph paths
 responsible for the largest measured blocked frames.
 
-1. [#2137 — Instrument large-vault operations and establish interaction budgets](https://github.com/eserlan/Codex-Cryptica/issues/2137)
-   adds privacy-safe operation timing, phase-level graph attribution, and
-   production-build budgets.
-2. [#1633 — Harden the existing large-vault graph performance test](https://github.com/eserlan/Codex-Cryptica/issues/1633)
+1. [#2137 — Add privacy-safe large-vault instrumentation and a production benchmark harness](https://github.com/eserlan/Codex-Cryptica/issues/2137)
+   adds the framework-neutral recorder, strict privacy schema, operation-level
+   and graph-phase attribution, deterministic persisted fixture,
+   production-preview scenarios, and versioned JSON output.
+2. [#2149 — Establish large-vault baselines and enforce interaction budgets in CI](https://github.com/eserlan/Codex-Cryptica/issues/2149)
+   collects multi-run evidence, keeps blocking limits separate from aspirational
+   targets, validates a checked-in budget manifest, completes a report-only
+   shakeout, and enables the dedicated single-worker CI gate.
+3. [#1633 — Harden the existing large-vault graph performance test](https://github.com/eserlan/Codex-Cryptica/issues/1633)
    covers edit resync, performance-mode effectiveness, and the first
    visual-detail threshold crossing that the current steady-state test warms
    away.
-3. [#2140 — Decouple node selection from focus-root navigation](https://github.com/eserlan/Codex-Cryptica/issues/2140)
+4. [#2140 — Decouple node selection from focus-root navigation](https://github.com/eserlan/Codex-Cryptica/issues/2140)
    makes selection of an already rendered node membership-stable.
-4. [#2136 — Add batched, delta-only focus membership synchronization](https://github.com/eserlan/Codex-Cryptica/issues/2136)
+5. [#2136 — Add batched, delta-only focus membership synchronization](https://github.com/eserlan/Codex-Cryptica/issues/2136)
    limits reconciliation to added, removed, and genuinely changed elements.
-5. [#2138 — Make large-vault focus expansion bounded and progressive](https://github.com/eserlan/Codex-Cryptica/issues/2138)
+6. [#2138 — Make large-vault focus expansion bounded and progressive](https://github.com/eserlan/Codex-Cryptica/issues/2138)
    prevents a normal zoom gesture from synchronously introducing an unbounded
    graph element set.
 
-The enforced GitHub dependency spine is:
+The enforced GitHub dependency spines are:
 
 ```text
+#2137 instrumentation and production harness
+  -> #2149 baselines, budgets, and CI enforcement
+
 #2140 selection semantics
   -> #2136 delta-only membership sync
     -> #2138 bounded focus expansion
 ```
 
-#2137 and #1633 can proceed in parallel with #2140. They should be complete
-before final phase budgets are accepted.
+#2137, #1633, and #2140 can proceed in parallel. #2149 starts after #2137 and
+coordinates with #1633 rather than duplicating its graph-specific guards.
 
 **Phase checkpoint:** Post before/after numbers for repeated node selection,
 focus expansion/contraction, first LOD crossing, and steady focus/full-graph
