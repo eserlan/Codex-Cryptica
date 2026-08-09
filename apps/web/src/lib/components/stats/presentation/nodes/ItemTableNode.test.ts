@@ -32,6 +32,9 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     get entities() {
       return vaultState.entities;
     },
+    get allEntities() {
+      return Object.values(vaultState.entities);
+    },
   },
 }));
 
