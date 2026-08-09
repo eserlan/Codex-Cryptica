@@ -421,9 +421,10 @@
                 </span>
               </div>
               <div id="living-lore-graph-preview" class="sr-only">
-                Interactive lore graph preview showing Captain Veyra connected
-                to factions, secrets, places, and unresolved plot threads.
-                Activates Quick Start, which builds a world like this one.
+                Interactive lore graph preview showing Eldrin the Wise connected
+                to the Gilded Hand, the Black Iron Tavern, an ancient forest
+                dragon, and a prophecy he is studying. Activates Quick Start,
+                which builds a world like this one.
               </div>
               <div class="relative">
                 <WelcomeGraphPreview />
