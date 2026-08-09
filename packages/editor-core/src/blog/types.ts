@@ -11,6 +11,14 @@ export interface BlogArticle {
    * with a different author sets this explicitly.
    */
   author?: string;
+  /**
+   * When the post was last meaningfully revised. Absent means never revised,
+   * which is different from "revised on the publication date": readers use
+   * this to tell current writing from old, so it must not be guessed.
+   */
+  updatedAt?: string;
+  /** Editorial section, e.g. product updates versus GM guidance. */
+  topic?: string;
   content: string; // Raw Markdown
 }
 
@@ -21,4 +29,6 @@ export interface BlogIndexItem {
   description: string;
   publishedAt: string;
   author?: string;
+  updatedAt?: string;
+  topic?: string;
 }

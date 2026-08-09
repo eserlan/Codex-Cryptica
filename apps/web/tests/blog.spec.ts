@@ -125,3 +125,59 @@ test.describe("Blog", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("Blog editorial structure", () => {
+  test("presents the responsible-AI batch as one series, in reading order", async ({
+    page,
+  }) => {
+    await page.goto("/blog");
+
+    // Seven posts published on one day, two hours apart, listed as seven equal
+    // standalone promotions is the "generated" signal the assessment names.
+    // Their dates are untouched; only the framing changed.
+    const series = page.getByTestId("blog-series-collection");
+    await expect(series).toBeVisible();
+
+    const items = series.locator("ol li a");
+    await expect(items).toHaveCount(7);
+
+    // Numbered by the series' own sequence, asserted by slug: RA_SERIES stores
+    // its own short titles, while the list renders each post's real one. The
+    // index sorts newest first, which would otherwise label the final part 01.
+    await expect(items.first()).toHaveAttribute(
+      "href",
+      /lore-oracle-not-the-author$/,
+    );
+    await expect(items.last()).toHaveAttribute(
+      "href",
+      /revising-your-lore-with-the-oracle$/,
+    );
+
+    // And they are no longer also listed as standalone articles.
+    const standalone = await page.locator("article h2 a").allTextContents();
+    expect(standalone.join(" ")).not.toContain("Drafts Are Not Canon");
+  });
+
+  test("shows a revision date only when a post has one", async ({ page }) => {
+    await page.goto("/blog/drafts-are-not-canon");
+
+    // No post carries `updatedAt` yet, and none should claim to: a date
+    // defaulted to publication would tell readers every post was revised the
+    // day it was written.
+    await expect(page.getByTestId("blog-updated")).toHaveCount(0);
+
+    const ld = await page
+      .locator('script[type="application/ld+json"]')
+      .allTextContents();
+    const posting = ld
+      .map((raw) => {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      })
+      .find((j) => j?.["@type"] === "BlogPosting");
+    expect(posting.dateModified).toBe(posting.datePublished);
+  });
+});

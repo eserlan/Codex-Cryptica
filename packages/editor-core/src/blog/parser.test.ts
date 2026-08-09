@@ -136,3 +136,41 @@ Content`;
     ).toBeUndefined();
   });
 });
+
+describe("parseBlogArticle updatedAt and topic", () => {
+  const front = (extra: string) => `---
+id: t
+slug: t
+title: Title
+description: Desc
+keywords: ["k"]
+publishedAt: 2026-01-01T00:00:00Z
+${extra}
+---
+Body`;
+
+  it("normalises updatedAt to ISO", () => {
+    expect(
+      parseBlogArticle("t.md", front("updatedAt: 2026-03-04"))?.updatedAt,
+    ).toBe("2026-03-04T00:00:00.000Z");
+  });
+
+  it("leaves updatedAt absent when the post has never been revised", () => {
+    // Absent must not fall back to publishedAt: that would tell every reader
+    // that every post was revised on the day it was written.
+    expect(parseBlogArticle("t.md", front(""))?.updatedAt).toBeUndefined();
+  });
+
+  it("drops an unparseable updatedAt rather than failing the whole post", () => {
+    const article = parseBlogArticle("t.md", front("updatedAt: not-a-date"));
+    expect(article).not.toBeNull();
+    expect(article?.updatedAt).toBeUndefined();
+  });
+
+  it("keeps a topic when set and absent when not", () => {
+    expect(
+      parseBlogArticle("t.md", front("topic: Product updates"))?.topic,
+    ).toBe("Product updates");
+    expect(parseBlogArticle("t.md", front(""))?.topic).toBeUndefined();
+  });
+});

@@ -23,7 +23,10 @@
       headline: article.title,
       description: article.description,
       datePublished: article.publishedAt,
-      dateModified: article.publishedAt,
+      // Only claim a modification when there was one. Echoing publishedAt here
+      // tells every reader and crawler that every post was revised on the day
+      // it went out.
+      dateModified: article.updatedAt ?? article.publishedAt,
       url: data.canonicalUrl,
       mainEntityOfPage: { "@type": "WebPage", "@id": data.canonicalUrl },
       // A Person, not the Organization: search engines and readers both treat
@@ -98,6 +101,23 @@
           ·
         </span>
         <span data-testid="blog-byline">By {authorName}</span>
+        {#if article.updatedAt}
+          <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
+            class="sr-only"
+          >
+            ·
+          </span>
+          <span data-testid="blog-updated">
+            Updated <time datetime={article.updatedAt}
+              >{new Date(article.updatedAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                timeZone: "UTC",
+              })}</time
+            >
+          </span>
+        {/if}
         <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
           class="sr-only"
         >
