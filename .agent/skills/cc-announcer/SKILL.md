@@ -100,6 +100,7 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 - **Visuals and Image Support.** Include image placeholders or embedded screenshots where relevant (e.g. `![Character Chat Mobile View](...)` or `[Image: Cosmic Horror Hub Theme preview]`). Show direct interface/visual proof of changes.
 - **Concrete over abstract.** A specific example or screenshot beats a paragraph of adjectives every time.
 - **One question at the end.** A genuine question that invites discussion. Not a CTA, not "what do you think?" — something the reader could actually answer.
+- **Always link to the feature.** If you are announcing a new tool, generator, or page on the live site, include a direct link to it so people can easily find it.
 - **Links: one or two in the post body, max.** Everything else goes in the first comment (or direct link with `👉` omitted; use plain text/links like `Explore the Cosmic Horror Hub: codexcryptica.com/...`).
 
 ### Phrases and formatting to avoid

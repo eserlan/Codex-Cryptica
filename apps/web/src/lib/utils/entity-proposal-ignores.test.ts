@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   loadIgnoredEntityProposals,
   saveIgnoredEntityProposals,
@@ -6,19 +6,25 @@ import {
 import type { StorageLike } from "./runtime-deps";
 
 describe("entity-proposal-ignores", () => {
-  const mockStorage: StorageLike = {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    length: 0,
-    key: vi.fn(),
-  };
+  let mockStorage: StorageLike;
+
+  beforeEach(() => {
+    mockStorage = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      length: 0,
+      key: vi.fn(),
+    };
+  });
 
   it("loads ignored proposals from injected storage", () => {
     vi.mocked(mockStorage.getItem).mockReturnValue(JSON.stringify(["A", "B"]));
     const result = loadIgnoredEntityProposals("vault-1", mockStorage);
 
-    expect(mockStorage.getItem).toHaveBeenCalledWith("entity-proposal-ignores:vault-1");
+    expect(mockStorage.getItem).toHaveBeenCalledWith(
+      "entity-proposal-ignores:vault-1",
+    );
     expect(result).toEqual(new Set(["A", "B"]));
   });
 
@@ -42,7 +48,9 @@ describe("entity-proposal-ignores", () => {
     vi.mocked(mockStorage.getItem).mockReturnValue(null);
     loadIgnoredEntityProposals(null, mockStorage);
 
-    expect(mockStorage.getItem).toHaveBeenCalledWith("entity-proposal-ignores:default");
+    expect(mockStorage.getItem).toHaveBeenCalledWith(
+      "entity-proposal-ignores:default",
+    );
   });
 
   it("saves ignored proposals to injected storage", () => {
