@@ -76,6 +76,8 @@ export class GraphStore {
   // detail) by the controller; starts with a bounded overview. See
   // MIN/MAX_FOCUS_DEPTH.
   focusDepth = $state(MIN_FOCUS_DEPTH);
+  /** Stable membership root for a large-vault focus view, independent of selection. */
+  focusRootId = $state<string | null>(null);
 
   // Vault scale, measured from the raw entity/connection counts — deliberately
   // independent of `elements` so focus-view culling can't feed back into the
@@ -245,14 +247,18 @@ export class GraphStore {
   }
 
   /**
-   * Picks the focus node for culling: the selected entity when it's visible,
-   * otherwise the highest-degree hub among visible entities so there's always a
-   * sensible default view before the user selects anything.
+   * Picks the focus node for culling. Once established, `focusRootId` remains
+   * stable while selection changes, preventing visible-node selection from
+   * rebuilding the rendered neighbourhood.
    */
   private resolveFocalId(
     visibleEntities: Entity[],
     validIds: Set<string>,
   ): string | null {
+    if (this.focusRootId && validIds.has(this.focusRootId)) {
+      return this.focusRootId;
+    }
+
     const selected = this.vault.selectedEntityId;
     if (selected && validIds.has(selected)) return selected;
 
@@ -274,6 +280,36 @@ export class GraphStore {
       }
     }
     return bestId;
+  }
+
+  /** Establishes the initial focus root once the graph view is ready. */
+  ensureFocusRoot(): void {
+    if (!this.focusViewActive) return;
+    const visibleEntities = this.graphSourceEntities.filter(
+      (entity) =>
+        this.sessionModeStore.isGuestMode ||
+        isEntityVisible(entity, {
+          sharedMode: this.sessionModeStore.sharedMode,
+          defaultVisibility: this.vault.defaultVisibility,
+        }),
+    );
+    const validIds = new Set(visibleEntities.map((entity) => entity.id));
+    if (this.focusRootId && validIds.has(this.focusRootId)) return;
+
+    // A deleted or no-longer-visible root must not fall back to the transient
+    // selection: establish a new stable root for the current graph scope.
+    this.focusRootId = this.resolveFocalId(visibleEntities, validIds);
+  }
+
+  /** Explicitly navigate a large focus view to an entity outside its set. */
+  navigateFocusTo(entityId: string): void {
+    if (
+      !this.focusViewActive ||
+      !this.vault.entities[entityId] ||
+      this.focusRootId === entityId
+    )
+      return;
+    this.focusRootId = entityId;
   }
 
   private get graphSourceEntities(): Entity[] {
@@ -456,6 +492,7 @@ export class GraphStore {
         this.centralNodeId = null;
         this.showFullGraph = false;
         this.focusDepth = MIN_FOCUS_DEPTH;
+        this.focusRootId = null;
         // Keep timelineMode as it's a global preference usually
         void this.loadViewPresets();
       };
@@ -619,6 +656,7 @@ export class GraphStore {
     this.centralNodeId = null;
     this.showFullGraph = false;
     this.focusDepth = MIN_FOCUS_DEPTH;
+    this.focusRootId = null;
   }
 
   async saveEras() {
