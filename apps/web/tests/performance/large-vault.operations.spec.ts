@@ -26,6 +26,9 @@ test("records repeatable large-vault operations in a production preview", async 
       }
     });
     await installLargeVaultFixture(page);
+    collectedSamples = await page.evaluate(
+      () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+    );
     await page.reload();
     await page.waitForFunction(
       (entityCount) => {
@@ -89,9 +92,10 @@ test("records repeatable large-vault operations in a production preview", async 
       timeout: 30_000,
     });
 
-    collectedSamples = await page.evaluate(
+    const graphPageSamples = await page.evaluate(
       () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
     );
+    collectedSamples = [...collectedSamples, ...graphPageSamples];
 
     await page.getByTestId("activity-bar-table").click();
     const search = page.getByTestId("entity-table-search");
