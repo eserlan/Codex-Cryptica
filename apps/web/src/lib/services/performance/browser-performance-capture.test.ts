@@ -73,4 +73,17 @@ describe("BrowserPerformanceCapture", () => {
     capture.start();
     expect(capture.longestAnimationFrameSince(0)).toBeUndefined();
   });
+
+  it("uses a zero monotonic baseline when no Performance API is available", () => {
+    const capture = new BrowserPerformanceCapture({
+      isEnabled: () => true,
+      performanceRef: null,
+    });
+
+    expect(capture.now()).toBe(0);
+    capture.recorder.start("graph_select").complete();
+    expect(capture.getSamples()).toEqual([
+      expect.objectContaining({ durationMs: 0 }),
+    ]);
+  });
 });

@@ -238,6 +238,36 @@ describe("SearchIndexPersistence", () => {
         globalThis.CompressionStream = originalCS;
       }
     });
+
+    it("records an empty index as a successful no-op", async () => {
+      mockApi.exportIndex.mockResolvedValue({ keyCount: 0 });
+
+      await persistence.saveIndex("vault-1");
+
+      expect(mockDb.searchIndex.put).not.toHaveBeenCalled();
+      expect(performanceSamples).toEqual([
+        expect.objectContaining({
+          operation: "search_index_persist",
+          outcome: "completed",
+          indexedInputCount: 0,
+        }),
+      ]);
+    });
+
+    it("records a missing export as a failed save", async () => {
+      mockApi.exportIndex.mockResolvedValue(undefined);
+
+      await persistence.saveIndex("vault-1");
+
+      expect(mockDb.searchIndex.put).not.toHaveBeenCalled();
+      expect(performanceSamples).toEqual([
+        expect.objectContaining({
+          operation: "search_index_persist",
+          outcome: "failed",
+          errorKind: "unexpected",
+        }),
+      ]);
+    });
   });
 
   describe("loadIndex", () => {

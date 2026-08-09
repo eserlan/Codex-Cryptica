@@ -38,11 +38,23 @@ const dimensionKeys = new Set<keyof PerformanceDimensions>([
   "processingDurationMs",
   "presentationDelayMs",
 ]);
+const countDimensionKeys = new Set<keyof PerformanceDimensions>([
+  "entityCount",
+  "changedEntityCount",
+  "indexedInputCount",
+  "renderedNodeCount",
+  "renderedEdgeCount",
+  "addedNodeCount",
+  "removedNodeCount",
+  "addedEdgeCount",
+  "removedEdgeCount",
+  "resultCount",
+  "domNodeCount",
+]);
 
 const noopSink: PerformanceSink = { record: () => undefined };
 const systemClock: PerformanceClock = {
-  now: () =>
-    typeof performance !== "undefined" ? performance.now() : Date.now(),
+  now: () => (typeof performance !== "undefined" ? performance.now() : 0),
 };
 
 export class PerformanceContractError extends Error {
@@ -56,6 +68,19 @@ function assertFiniteNonNegative(value: unknown, name: string): void {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
     throw new PerformanceContractError(
       `${name} must be a finite non-negative number`,
+    );
+  }
+}
+
+function assertFiniteNonNegativeInteger(value: unknown, name: string): void {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0 ||
+    !Number.isInteger(value)
+  ) {
+    throw new PerformanceContractError(
+      `${name} must be a finite non-negative integer`,
     );
   }
 }
@@ -107,7 +132,11 @@ export function assertValidPerformanceSample(
       continue;
     }
     if (dimensionKeys.has(key as keyof PerformanceDimensions)) {
-      assertFiniteNonNegative(value, key);
+      if (countDimensionKeys.has(key as keyof PerformanceDimensions)) {
+        assertFiniteNonNegativeInteger(value, key);
+      } else {
+        assertFiniteNonNegative(value, key);
+      }
     }
   }
 

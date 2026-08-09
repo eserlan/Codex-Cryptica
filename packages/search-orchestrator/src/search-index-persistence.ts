@@ -246,7 +246,19 @@ export class SearchIndexPersistence {
         encodedKeyCount ??
         Object.keys(rawData || {}).length;
 
-      if (rawData && keyCount > 1) {
+      if (!rawData) {
+        saveSpan.fail("unexpected");
+        this.debug.warn(
+          `[SearchIndexPersistence] Save skipped: Export did not return index data.`,
+        );
+      } else if (keyCount <= 1) {
+        saveSpan.complete(() => ({
+          indexedInputCount: keyCount,
+        }));
+        this.debug.log(
+          `[SearchIndexPersistence] Save skipped: Index is empty.`,
+        );
+      } else {
         let persistedData: any = rawData;
 
         // Convert ArrayBuffer segments to strings so that rawData is JSON-serializable
@@ -311,11 +323,6 @@ export class SearchIndexPersistence {
         }));
         this.debug.log(
           `[SearchIndexPersistence] Save finished: Persisted index for ${vaultId} (${keyCount} keys) in ${(performance.now() - start).toFixed(2)}ms`,
-        );
-      } else {
-        saveSpan.cancel();
-        this.debug.log(
-          `[SearchIndexPersistence] Save skipped: Index is empty or export failed.`,
         );
       }
     } catch (err: any) {

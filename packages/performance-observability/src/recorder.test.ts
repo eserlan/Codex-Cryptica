@@ -112,11 +112,18 @@ describe("assertValidPerformanceSample", () => {
     ).toThrow(PerformanceContractError);
   });
 
-  it("rejects negative counts and invalid terminal contracts", () => {
+  it("rejects invalid count dimensions and terminal contracts", () => {
     expect(() =>
       assertValidPerformanceSample({
         ...completedSample(),
         renderedNodeCount: -1,
+      }),
+    ).toThrow(PerformanceContractError);
+
+    expect(() =>
+      assertValidPerformanceSample({
+        ...completedSample(),
+        renderedNodeCount: 1.5,
       }),
     ).toThrow(PerformanceContractError);
 

@@ -17,7 +17,7 @@ type PerformanceObserverConstructor = new (
 
 export interface BrowserPerformanceCaptureOptions {
   isEnabled?: () => boolean;
-  performanceRef?: Performance;
+  performanceRef?: Performance | null;
   PerformanceObserver?: PerformanceObserverConstructor;
 }
 
@@ -39,15 +39,18 @@ export class BrowserPerformanceCapture implements PerformanceSink {
   constructor(options: BrowserPerformanceCaptureOptions = {}) {
     this.isEnabled = options.isEnabled ?? (() => false);
     this.performanceRef =
-      options.performanceRef ??
-      (typeof performance === "undefined" ? undefined : performance);
+      options.performanceRef === undefined
+        ? typeof performance === "undefined"
+          ? undefined
+          : performance
+        : (options.performanceRef ?? undefined);
     this.PerformanceObserver =
       options.PerformanceObserver ??
       (typeof PerformanceObserver === "undefined"
         ? undefined
         : PerformanceObserver);
     const clock: PerformanceClock = {
-      now: () => this.performanceRef?.now() ?? Date.now(),
+      now: () => this.performanceRef?.now() ?? 0,
     };
     const recorderOptions: PerformanceRecorderOptions = {
       clock,
@@ -110,7 +113,7 @@ export class BrowserPerformanceCapture implements PerformanceSink {
   }
 
   now(): number {
-    return this.performanceRef?.now() ?? Date.now();
+    return this.performanceRef?.now() ?? 0;
   }
 }
 
