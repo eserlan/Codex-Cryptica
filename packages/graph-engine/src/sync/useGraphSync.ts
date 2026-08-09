@@ -1,22 +1,22 @@
 import type { Core } from "cytoscape";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 import type { GraphNode, GraphEdge } from "../transformer";
 import type { LayoutRequest } from "../LayoutManager";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
   vaultStatus:
-    | "loading"
-    | "idle"
-    | "error"
-    | "saving"
-    | "saved"
-    | "needs-permission";
+    "loading" | "idle" | "error" | "saving" | "saved" | "needs-permission";
   initialLoaded: boolean;
   isTemporalMetadataEqual: (a: any, b: any) => boolean;
   activeLabels?: Set<string>;
   labelFilterMode?: "AND" | "OR";
   activeCategories?: Set<string>;
   skipRenderedWeightSync?: boolean;
+  performanceRecorder?: PerformanceRecorder;
   onFirstElements?: () => void;
   onLayoutUpdate?: (req: LayoutRequest) => void;
 }
@@ -102,7 +102,7 @@ function addNewElements(
   cy: Core,
   elements: (GraphNode | GraphEdge)[],
   elementMap: Map<string, any>,
-): { newNodes: GraphNode[] } {
+): { newNodes: GraphNode[]; addedEdgeCount: number } {
   const newNodes: GraphNode[] = [];
   const newEdges: GraphEdge[] = [];
   elements.forEach((el) => {
@@ -115,6 +115,7 @@ function addNewElements(
     }
   });
 
+  let addedEdgeCount = 0;
   if (newNodes.length > 0 || newEdges.length > 0) {
     if (newNodes.length > 0) {
       // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
@@ -146,10 +147,11 @@ function addNewElements(
       cy.add(validEdges).forEach((e) => {
         elementMap.set(e.id(), e);
       });
+      addedEdgeCount = validEdges.length;
     }
   }
 
-  return { newNodes };
+  return { newNodes, addedEdgeCount };
 }
 
 /**
@@ -372,12 +374,39 @@ export function resolveLayoutTrigger(
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const { elements, vaultStatus, initialLoaded } = options;
   const isVaultLoading = vaultStatus === "loading";
+  const recorder = options.performanceRecorder ?? performanceRecorder;
+  const reconcileSpan = recorder.start("graph_sync_reconcile");
 
   try {
     // Pass 1: reconcile + remove stale. Pass 2: add new. Pass 3: patch data + filters.
+    const removeSpan = recorder.start("graph_sync_remove");
     const { elementMap, elementsToRemove } = reconcileElements(cy, elements);
-    const { newNodes } = addNewElements(cy, elements, elementMap);
+    removeSpan.complete(() => ({
+      removedNodeCount: elementsToRemove.filter((element) => element.isNode())
+        .length,
+      removedEdgeCount: elementsToRemove.filter((element) => !element.isNode())
+        .length,
+    }));
+
+    const addSpan = recorder.start("graph_sync_add");
+    const { newNodes, addedEdgeCount } = addNewElements(
+      cy,
+      elements,
+      elementMap,
+    );
+    addSpan.complete(() => ({
+      addedNodeCount: newNodes.length,
+      addedEdgeCount,
+    }));
+
+    const patchSpan = recorder.start("graph_sync_patch_filter");
     syncDataAndFilters(cy, elements, elementMap, options);
+    patchSpan.complete(() => ({
+      renderedNodeCount: elements.filter((element) => element.group === "nodes")
+        .length,
+      renderedEdgeCount: elements.filter((element) => element.group === "edges")
+        .length,
+    }));
 
     const isFirstElements = !initialLoaded && elements.length > 0;
     const hasDeletions = elementsToRemove.length > 0;
@@ -399,7 +428,14 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         if (req) options.onLayoutUpdate?.(req);
       }
     }
+    reconcileSpan.complete(() => ({
+      renderedNodeCount: elements.filter((element) => element.group === "nodes")
+        .length,
+      renderedEdgeCount: elements.filter((element) => element.group === "edges")
+        .length,
+    }));
   } catch (err) {
+    reconcileSpan.fail("unexpected");
     console.error("[GraphSync] Error syncing elements", err);
   }
 }

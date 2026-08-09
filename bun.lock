@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.31.57",
+      "version": "0.31.58",
       "dependencies": {
         "@codex/ai-engine": "workspace:*",
         "@codex/audio-engine": "workspace:*",
@@ -51,6 +51,7 @@
         "@codex/gdrive-sync": "workspace:*",
         "@codex/importer": "workspace:*",
         "@codex/oracle-engine": "workspace:*",
+        "@codex/performance-observability": "workspace:*",
         "@codex/proposer": "workspace:*",
         "@codex/runtime": "workspace:*",
         "@codex/search-engine": "workspace:*",
@@ -379,6 +380,15 @@
         "vitest": "^4.1.7",
       },
     },
+    "packages/performance-observability": {
+      "name": "@codex/performance-observability",
+      "version": "0.0.0",
+      "devDependencies": {
+        "eslint": "^10.8.0",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
     "packages/proposer": {
       "name": "@codex/proposer",
       "version": "0.0.0",
@@ -561,6 +571,8 @@
     "@codex/importer": ["@codex/importer@workspace:packages/importer"],
 
     "@codex/oracle-engine": ["@codex/oracle-engine@workspace:packages/oracle-engine"],
+
+    "@codex/performance-observability": ["@codex/performance-observability@workspace:packages/performance-observability"],
 
     "@codex/proposer": ["@codex/proposer@workspace:packages/proposer"],
 

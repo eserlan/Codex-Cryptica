@@ -29,6 +29,10 @@ import {
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
 import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
@@ -111,6 +115,9 @@ export class GraphViewController {
   loadPhase = $state<LoadPhase>("idle");
 
   private nodeSelectTimer: number | null = null;
+  private nodeSelectSpan: ReturnType<
+    typeof browserPerformanceRecorder.start
+  > | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
 
   // Zoom-driven focus depth: the zoom at the last depth change (ratchet anchor),
@@ -172,6 +179,7 @@ export class GraphViewController {
   init = async (container: HTMLElement, graphStyle: any) => {
     this.container = container;
     this.isDestroyed = false;
+    browserPerformanceCapture.start();
 
     try {
       const instance = (await initGraph({
@@ -241,9 +249,25 @@ export class GraphViewController {
               return;
             }
             this.clearNodeSelectTimer();
+            const selectionStartedAt = browserPerformanceCapture.now();
+            this.nodeSelectSpan =
+              browserPerformanceRecorder.start("graph_select");
             this.nodeSelectTimer = window.setTimeout(() => {
               this.selectedId = id;
               this.nodeSelectTimer = null;
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  this.nodeSelectSpan?.complete(() => ({
+                    renderedNodeCount: this.cy?.nodes().length ?? 0,
+                    renderedEdgeCount: this.cy?.edges().length ?? 0,
+                    longestAnimationFrameMs:
+                      browserPerformanceCapture.longestAnimationFrameSince(
+                        selectionStartedAt,
+                      ),
+                  }));
+                  this.nodeSelectSpan = null;
+                });
+              });
             }, this.NODE_SELECT_DELAY_MS);
           }
         },
@@ -510,6 +534,8 @@ export class GraphViewController {
       clearTimeout(this.nodeSelectTimer);
       this.nodeSelectTimer = null;
     }
+    this.nodeSelectSpan?.cancel();
+    this.nodeSelectSpan = null;
   };
 
   // Sync Logic
@@ -535,6 +561,7 @@ export class GraphViewController {
           !this.deps.graph.timelineMode &&
           this.deps.graph.activeLabels.size === 0 &&
           this.deps.graph.activeCategories.size === 0,
+        performanceRecorder: browserPerformanceRecorder,
         onFirstElements: () => {
           this.loadPhase = "elements";
         },
