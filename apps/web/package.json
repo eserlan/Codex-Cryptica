@@ -17,6 +17,7 @@
     "test:e2e:all": "playwright test --reporter=list,./tests/success-tracker-reporter.ts",
     "test:e2e:failed": "playwright test --reporter=list,./tests/success-tracker-reporter.ts --last-failed",
     "test:e2e:clear": "rm -f .e2e-success.json",
+    "test:performance": "playwright test --config=playwright.performance.config.ts",
     "lint": "eslint .",
     "lint:types": "svelte-check --tsconfig ./tsconfig.json",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

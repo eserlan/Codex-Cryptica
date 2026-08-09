@@ -116,6 +116,9 @@ export class BrowserPerformanceCapture implements PerformanceSink {
 
 type HarnessGlobal = typeof globalThis & {
   __CODEX_PERFORMANCE_CAPTURE__?: boolean;
+  __CODEX_PERFORMANCE_RESULTS__?: {
+    getSamples(): PerformanceSampleV1[];
+  };
 };
 
 const harnessGlobal = globalThis as HarnessGlobal;
@@ -123,5 +126,13 @@ const harnessGlobal = globalThis as HarnessGlobal;
 export const browserPerformanceCapture = new BrowserPerformanceCapture({
   isEnabled: () => harnessGlobal.__CODEX_PERFORMANCE_CAPTURE__ === true,
 });
+
+if (harnessGlobal.__CODEX_PERFORMANCE_CAPTURE__ === true) {
+  harnessGlobal.__CODEX_PERFORMANCE_RESULTS__ = {
+    // Return copies so the local test harness cannot mutate recorder state.
+    getSamples: () =>
+      browserPerformanceCapture.getSamples().map((sample) => ({ ...sample })),
+  };
+}
 
 export const browserPerformanceRecorder = browserPerformanceCapture.recorder;

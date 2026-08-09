@@ -54,6 +54,7 @@ import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
+import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
   // Reactive State
@@ -382,6 +383,7 @@ export class VaultStore {
     });
 
     const mutations = new EntityMutationService({
+      performanceRecorder: browserPerformanceRecorder,
       repository: this.repository,
       persistence,
       loader,
@@ -819,7 +821,12 @@ export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());
 
-if (typeof window !== "undefined" && import.meta.env.DEV) {
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV ||
+    (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+      .__CODEX_PERFORMANCE_CAPTURE__ === true)
+) {
   (window as any).vault = vault;
   debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

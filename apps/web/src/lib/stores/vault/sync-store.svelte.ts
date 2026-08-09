@@ -497,8 +497,6 @@ export class SyncStore {
       if (!vaultOpenRecorded && vaultOpenSpan) {
         if (signal.aborted || this.isStale(vaultIdAtStart, signal)) {
           staleVaultOpen();
-        } else if (this._status === "error") {
-          failVaultOpen();
         } else {
           completeVaultOpen();
         }
