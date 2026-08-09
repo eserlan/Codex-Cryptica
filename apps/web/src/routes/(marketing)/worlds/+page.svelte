@@ -119,13 +119,13 @@
       <div class="flex items-end gap-2">
         <button
           type="submit"
-          class="min-h-12 rounded bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-white"
+          class="min-h-12 rounded bg-theme-primary px-4 py-2 text-xs font-bold text-white"
         >
           Search
         </button>
         <a
           href={resolve("/worlds")}
-          class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-text inline-flex items-center"
+          class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold text-theme-text inline-flex items-center"
         >
           Clear
         </a>
@@ -140,9 +140,7 @@
       <div
         class="flex items-center justify-between border-b border-theme-border pb-4"
       >
-        <p
-          class="text-xs font-header uppercase tracking-wider text-theme-text/60"
-        >
+        <p class="text-xs font-header text-theme-text/60">
           Found {data.page.results.length} world{data.page.results.length === 1
             ? ""
             : "s"}

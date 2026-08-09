@@ -190,7 +190,7 @@
         </span>
       </a>
       <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
+        class="hidden md:flex items-center gap-6 text-xs font-bold font-header text-theme-muted"
       >
         <a
           href="{cleanBase}/features"
@@ -208,7 +208,7 @@
       <div class="shrink-0">
         <a
           href="{cleanBase}/?utm_source=ra-pillar-nav&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -227,7 +227,7 @@
       Responsible AI
     </div>
     <h1
-      class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide uppercase"
+      class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide"
       id="hero-h1"
     >
       Responsible AI for <span class="text-theme-primary"
@@ -247,9 +247,7 @@
     >
       <div class="flex items-center gap-3 mb-6">
         <span class="icon-[lucide--info] text-theme-primary w-6 h-6"></span>
-        <h2 class="font-header font-bold text-lg uppercase tracking-wider">
-          AI Principles at a Glance
-        </h2>
+        <h2 class="font-header font-bold text-lg">AI Principles at a Glance</h2>
       </div>
       <ul class="space-y-3 text-sm text-theme-text/85">
         <li class="flex items-start gap-3">
@@ -324,9 +322,7 @@
     >
       <div class="flex items-center gap-3 mb-4">
         <span class="icon-[lucide--lock] text-theme-primary w-6 h-6"></span>
-        <h2 class="font-header font-bold text-lg uppercase tracking-wider">
-          Local-First Sovereignty
-        </h2>
+        <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
       </div>
       <p class="text-sm text-theme-text/75 leading-relaxed">
         True trust in digital worldbuilding requires full data ownership. Codex
@@ -345,9 +341,7 @@
     >
       <div class="flex items-center gap-3 mb-6">
         <span class="icon-[lucide--eye] text-theme-primary w-6 h-6"></span>
-        <h2 class="font-header font-bold text-lg uppercase tracking-wider">
-          What the Oracle Can See
-        </h2>
+        <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
       </div>
       <p class="text-sm text-theme-muted mb-6 leading-relaxed">
         Codex does not upload your entire vault. When you choose to query the
@@ -412,9 +406,7 @@
     class="border-t border-theme-border/30 bg-theme-surface/10 py-16 flex-grow"
   >
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <h2
-        class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
-      >
+      <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
         The 7 Pillars of Responsible AI
       </h2>
       <p
@@ -455,7 +447,7 @@
             >
               <a
                 href="{base}/blog/{principle.slug}"
-                class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary hover:text-theme-text transition-colors group font-header"
+                class="inline-flex items-center gap-1.5 text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors group font-header"
               >
                 Read Article
                 <span
@@ -472,9 +464,7 @@
   <!-- FAQ Section -->
   <section class="border-t border-theme-border/30 py-16">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <h2
-        class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
-      >
+      <h2 class="text-center font-header text-2xl text-theme-primary mb-4">
         Frequently Asked Questions
       </h2>
       <p
@@ -514,9 +504,7 @@
     class="border-t border-theme-border/30 bg-gradient-to-b from-theme-bg to-theme-surface/30 py-16 text-center"
   >
     <div class="max-w-2xl mx-auto px-4 sm:px-6 font-header">
-      <h2 class="text-3xl font-extrabold mb-4 uppercase tracking-wider">
-        Ready to Build Your World?
-      </h2>
+      <h2 class="text-3xl font-extrabold mb-4">Ready to Build Your World?</h2>
       <p class="text-theme-muted text-sm leading-relaxed mb-8 max-w-md mx-auto">
         No email sign-up required to start. Build a private, local-first
         campaign vault and use AI only when you choose.
@@ -524,14 +512,14 @@
       <div class="flex flex-wrap justify-center gap-4">
         <a
           href="{base}/?utm_source=ra-pillar-footer&utm_medium=footer-cta&utm_campaign=seo-funnel"
-          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
+          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >
           Launch Codex Cryptica
         </a>
         <a
           href="{base}/blog"
-          class="px-8 py-3.5 border border-theme-border hover:border-theme-primary/60 text-theme-text font-bold uppercase tracking-widest text-xs rounded-xl transition-all"
+          class="px-8 py-3.5 border border-theme-border hover:border-theme-primary/60 text-theme-text font-bold text-xs rounded-xl transition-all"
         >
           Explore All Devlogs
         </a>

@@ -411,7 +411,7 @@
           Tools Directory
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Tools, Generators, and Comparisons
         </h1>
@@ -429,7 +429,7 @@
         <div class="max-w-3xl mb-6">
           <h2
             id={`${section.title}-heading`}
-            class="font-header text-2xl font-bold uppercase tracking-wider text-theme-primary mb-2"
+            class="font-header text-2xl font-bold text-theme-primary mb-2"
           >
             {section.title}
           </h2>
@@ -442,9 +442,7 @@
           {#each section.groups as group, groupIndex (`${section.title}-${groupIndex}`)}
             <div>
               {#if group.title}
-                <h3
-                  class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
-                >
+                <h3 class="font-header text-sm font-bold text-theme-text mb-4">
                   {group.title}
                 </h3>
               {/if}
@@ -460,7 +458,7 @@
                         class="{link.icon} h-5 w-5 text-theme-primary mb-4 block"
                       ></span>
                       <span
-                        class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                        class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                       >
                         {link.label}
                       </span>
