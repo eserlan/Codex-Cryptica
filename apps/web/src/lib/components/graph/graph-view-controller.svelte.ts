@@ -252,7 +252,6 @@ export class GraphViewController {
           this.deps.modalUIStore.openZenMode(id);
         },
         onEdgeTap: (data) => {
-          if (this.deps.vault.isGuest) return;
           this.editingEdge = {
             source: data.source,
             target: data.target,

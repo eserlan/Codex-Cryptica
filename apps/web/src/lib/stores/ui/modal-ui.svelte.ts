@@ -316,6 +316,17 @@ export class ModalUIStore {
   // avoid stacking the "initial-onboarding" tour on top of it.
   showQuickStartModal = $state(false);
 
+  /**
+   * Quick Start's in-progress choices, kept here rather than in the component
+   * so closing the dialog to check something doesn't silently reset them.
+   * Store state, not module state: this stays per-tab, cannot leak across a
+   * server render, and resets cleanly between tests.
+   */
+  quickStartDraft = $state<{ themeId: string | null; premise: string }>({
+    themeId: null,
+    premise: "",
+  });
+
   openQuickStartModal() {
     this.showQuickStartModal = true;
   }

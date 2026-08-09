@@ -22,6 +22,14 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
+  import {
+    MOBILE_ENTRY_MIN_ZOOM,
+    resolveMobileEntryId,
+  } from "./graph/mobile-entry";
+  import {
+    buildGraphSummary,
+    buildSelectionAnnouncement,
+  } from "./graph/graph-a11y";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -74,6 +82,7 @@
   });
 
   let container: HTMLElement;
+  let mobileEntryVaultId: string | null = null;
 
   // COACH_MARKS lives in help-content.ts (config, testable) — see its
   // docstring there for why these are scoped to isMobile, not tablets.
@@ -392,6 +401,43 @@
     }
   });
 
+  // A phone should enter a useful local view once per vault/session, then
+  // leave the camera entirely under the user's control. This follows the
+  // selection effect so an initially selected node cannot replace the legible
+  // entry zoom with the previous full-graph fit.
+  $effect(() => {
+    const currentCy = controller.cy;
+    const vaultId = vault.activeVaultId ?? "default";
+    const isReady = controller.loadPhase === "ready";
+    const entities = vault.allEntities;
+    if (
+      !layoutUIStore.isMobile ||
+      !currentCy ||
+      !isReady ||
+      mobileEntryVaultId === vaultId
+    )
+      return;
+
+    mobileEntryVaultId = vaultId;
+    const entryId = resolveMobileEntryId(
+      entities,
+      controller.selectedId,
+      vault.inboundConnections,
+    );
+    if (!entryId) return;
+
+    const node = currentCy.$id(entryId);
+    if (node.length > 0) {
+      untrack(() =>
+        centerOnNode(
+          node,
+          true,
+          Math.max(currentCy.zoom(), MOBILE_ENTRY_MIN_ZOOM),
+        ),
+      );
+    }
+  });
+
   // When focus mode takes over from outside the graph, clear stale graph
   // selection and dimming so both views don't claim ownership simultaneously.
   $effect(() => {
@@ -434,7 +480,10 @@
     if (currentCy && graph.fitRequest > 0) {
       untrack(() =>
         currentCy.animate({
-          fit: { eles: currentCy.elements(), padding: 20 },
+          // Cytoscape includes edge-label bounds in fit calculations. Leave a
+          // larger rendered margin so label backplates do not sit against the
+          // graph frame or the desktop detail-panel boundary.
+          fit: { eles: currentCy.elements(), padding: 48 },
           duration: 800,
           easing: "ease-out-cubic",
         }),
@@ -504,6 +553,29 @@
       vault.status !== "loading" &&
       vault.allEntities.length === 0,
   );
+
+  // ── Canvas text alternatives (see graph-a11y.ts) ─────────────────────────
+  let graphSummary = $derived(
+    buildGraphSummary({
+      totalEntities: graph.fullGraphSize.nodeCount,
+      totalConnections: graph.fullGraphSize.edgeCount,
+      renderedEntities: graph.stats.nodeCount,
+      focusViewActive: graph.focusViewActive,
+      filtersActive:
+        graph.activeCategories.size > 0 ||
+        graph.activeLabels.size > 0 ||
+        graph.timelineMode,
+    }),
+  );
+  let selectionAnnouncement = $derived(
+    buildSelectionAnnouncement(
+      selectedEntity,
+      (selectedEntity?.connections?.length ?? 0) +
+        (controller.selectedId
+          ? (vault.inboundConnections[controller.selectedId]?.length ?? 0)
+          : 0),
+    ),
+  );
 </script>
 
 <div
@@ -514,6 +586,30 @@
     class="absolute inset-0 pointer-events-none opacity-20"
     style="background-image: radial-gradient(var(--color-theme-secondary) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
+
+  <!-- The canvas below is aria-hidden (cytoscape paints pixels, not DOM), so
+       these two regions carry the view's meaning: a static description with
+       the operable alternatives, and the single polite announcer for
+       selection. Wording and the reasoning behind it live in graph-a11y.ts. -->
+  <section
+    class="sr-only"
+    aria-labelledby="graph-a11y-heading"
+    data-testid="graph-a11y-summary"
+  >
+    <h2 id="graph-a11y-heading">Knowledge graph</h2>
+    {#each graphSummary as line}
+      <p>{line}</p>
+    {/each}
+  </section>
+  <div
+    class="sr-only"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    data-testid="graph-a11y-announcer"
+  >
+    {selectionAnnouncement}
+  </div>
 
   <GraphHUD
     {selectedEntity}
@@ -535,6 +631,7 @@
   <div
     bind:this={container}
     data-testid="graph-canvas"
+    aria-hidden="true"
     class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"

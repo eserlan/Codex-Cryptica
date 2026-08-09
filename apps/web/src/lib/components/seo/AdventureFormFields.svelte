@@ -111,9 +111,18 @@
     bind:value={seed}
     maxlength="4000"
     rows="3"
+    aria-describedby="adventure-seed-help"
     placeholder="e.g. A dying courier surrenders a stolen ledger at the city gates..."
     class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm leading-6 text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
+  <p
+    id="adventure-seed-help"
+    class="text-sm text-theme-text/70 leading-6 md:text-[13px] md:leading-relaxed text-wrap-pretty"
+  >
+    Paste an adventure hook here and the adventure is built around it. Names you
+    write are kept as-is, and a deadline you state becomes the adventure's
+    clock.
+  </p>
 </div>
 
 <div class="flex flex-col gap-1.5">

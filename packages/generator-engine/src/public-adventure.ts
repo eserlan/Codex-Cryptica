@@ -44,6 +44,12 @@ import {
   ADVENTURE_OUTCOME_TYPES_BY_GENRE,
   PRESSURE_TYPES,
 } from "./public-adventure-constants";
+import {
+  avoidNamesExcludingContext,
+  extractProperNouns,
+  formatCampaignContextBlock,
+  statesDeadline,
+} from "./campaign-context";
 
 export { adventureConfig, forAdventureGenre };
 
@@ -55,6 +61,12 @@ export interface AdventureGeneratorOptions {
   tone?: string;
   seed?: string;
   instruction?: string;
+  /**
+   * Free-text world/campaign background from the form's context field.
+   * Background, not subject: the seed says what the adventure is about, this
+   * says what world it sits in.
+   */
+  campaignContext?: string;
   /** Names already used elsewhere in this session. */
   avoidNames?: string[];
 }
@@ -331,6 +343,100 @@ export function generateAdventureLocal(
 }
 
 /**
+ * Terms that signal a trackable clock. Shared between the prompt-side
+ * expectations and the response validation below.
+ */
+const CLOCK_TERMS = [
+  "hour",
+  "dawn",
+  "dusk",
+  "solstice",
+  "equinox",
+  "midnight",
+  "eclipse",
+  "day",
+  "clock",
+  "timer",
+  "deadline",
+  "expire",
+];
+
+/**
+ * Broader pressure vocabulary. A primary objective that adopted a seed's
+ * deadline will almost always contain one of these, even when it phrases the
+ * clock in the seed's own words ("before the food riot") rather than in
+ * calendar terms. Kept deliberately wide — this backs a validation check that
+ * triggers a retry, so false positives cost a round-trip.
+ */
+const PRESSURE_SIGNAL_TERMS = [
+  ...CLOCK_TERMS,
+  "before",
+  "unless",
+  "until",
+  "within",
+  "race",
+  "escalat",
+  "spread",
+  "collapse",
+  "riot",
+  "starv",
+  "sabotage",
+  "pressure",
+  "window",
+];
+
+/**
+ * The free text the user supplied, seed and campaign context together.
+ * Both pin the names they introduce, so both must be excluded from the
+ * session avoid-list — otherwise the prompt says "keep this name" and
+ * "pick a different name" about the same word.
+ */
+function userSuppliedText(options: AdventureGeneratorOptions): string {
+  return [options.seed, options.campaignContext]
+    .filter((text): text is string => Boolean(text?.trim()))
+    .join("\n");
+}
+
+/**
+ * Format a user-supplied seed as binding fact.
+ *
+ * The mechanical seeds below are explicitly disposable — the prompt tells the
+ * model to interpret them and not quote them back. A seed the user typed or
+ * handed over from another generator is the opposite: its proper nouns and its
+ * stated deadline are the whole reason they chose it, so they get their own
+ * block that overrides the reinterpretation licence.
+ */
+function formatUserSeedBlock(seed: string): string {
+  const trimmed = seed.trim();
+  const properNouns = extractProperNouns(trimmed);
+  return [
+    `GIVEN SITUATION — supplied by the user. This is NOT a creative seed to`,
+    `reinterpret. Treat every detail below as established fact:`,
+    `"""`,
+    trimmed,
+    `"""`,
+    `- The adventure must be ABOUT this situation. Build outward from it; do not`,
+    `  replace it with a different premise that merely shares a genre.`,
+    ...(properNouns.length > 0
+      ? [
+          `- These names are fixed. Use each one spelled exactly as written, and do`,
+          `  not rename, translate, or substitute them. The name restrictions and`,
+          `  "already used elsewhere" list do NOT apply to them:`,
+          ...properNouns.map((n) => `  - ${n}`),
+        ]
+      : []),
+    ...(statesDeadline(trimmed)
+      ? [
+          `- This situation states its own deadline or consequence. That IS the`,
+          `  adventure's primary pressure — do not invent a different one. Carry it`,
+          `  into primaryObjective as the trackable clock, in the situation's own`,
+          `  terms, and let it drive the threats and complications.`,
+        ]
+      : []),
+  ].join("\n");
+}
+
+/**
  * Format the mechanical seeds for the AI prompt.
  * Deliberately withholds locally-generated prose — seeds are starting points
  * to interpret; the structure is the part that must not move.
@@ -338,16 +444,29 @@ export function generateAdventureLocal(
 function formatAdventureSeeds(
   adventure: ResolvedAdventure,
   avoidNames: string[] = [],
+  pressureComesFromSeed = false,
 ): string {
   return [
     `Creative seeds — starting points to interpret. Write your own prose from these;`,
     `do NOT quote them back or treat them as finished text.`,
     `- Archetype: ${adventure.archetype}`,
     `- Tone: ${adventure.tone}`,
-    `- Primary Pressure: ${adventure.primaryPressure}`,
-    ...(adventure.secondaryPressure
-      ? [`- Secondary Interacting Pressure: ${adventure.secondaryPressure}`]
-      : []),
+    // A randomly drawn pressure would contradict the deadline the user's own
+    // situation already states — and some draws say so outright ("No immediate
+    // deadline..."). The given situation wins.
+    ...(pressureComesFromSeed
+      ? [
+          `- Pressure: taken from the GIVEN SITUATION above. Ignore any other`,
+          `  pressure source; do not soften or replace its deadline.`,
+        ]
+      : [
+          `- Primary Pressure: ${adventure.primaryPressure}`,
+          ...(adventure.secondaryPressure
+            ? [
+                `- Secondary Interacting Pressure: ${adventure.secondaryPressure}`,
+              ]
+            : []),
+        ]),
     `- 2-3 key locations (seed types): ${adventure.keyLocations.join(", ")}`,
     ``,
     `Structure — fixed. Honour these exactly.`,
@@ -385,6 +504,8 @@ export function buildAdventurePrompt(
   const systemInstruction = `You are a master worldbuilder and TTRPG adventure designer. You write original ${adventure.genre} adventure concepts that a GM can run at the table.
 
 You will be given creative seeds and a fixed structure. The seeds are raw material — interpret them, build on them, and write your own prose. Do not quote them back. The structure (one initial situation, one primary objective, specific numbers of locations, NPCs, threats, discoveries, complications, outcomes, hooks) is fixed and must be honoured precisely.
+
+A "GIVEN SITUATION" block, when one is present, is the exception to that licence: it is user-supplied fact, not raw material. Its named people, places, and organisations must survive into the adventure exactly as written, and any deadline it states is the adventure's pressure. Follow the instructions inside that block over any general guidance here that conflicts with them.
 
 Everything else is yours to invent: the adventure's title, specific names for locations and NPCs, the exact nature of the clues and complications, and the texture of the possible outcomes. Make them specific to this adventure rather than generic to the genre, and make the whole document internally consistent — the initial situation should explain why the objective is urgent, the threats should explain why it is dangerous, and the discoveries should reward the players for engaging with the world.
 
@@ -428,10 +549,18 @@ Setting Context:
 - Archetype: ${adventure.archetype}
 - Scale: ${adventure.scale}
 - Tone: ${adventure.tone}
-${options.seed ? `- Starting Seed / Situation: ${options.seed}` : ""}
+${formatCampaignContextBlock(options.campaignContext)}
 ${options.instruction ? `- Special Instructions: ${options.instruction}` : ""}
+${options.seed?.trim() ? `\n${formatUserSeedBlock(options.seed)}\n` : ""}
 
-${formatAdventureSeeds(adventure, options.avoidNames ?? [])}
+${formatAdventureSeeds(
+  adventure,
+  avoidNamesExcludingContext(
+    options.avoidNames ?? [],
+    userSuppliedText(options),
+  ),
+  Boolean(options.seed?.trim() && statesDeadline(options.seed)),
+)}
 
 Required JSON schema:
 {
@@ -608,13 +737,49 @@ export function parseAdventureResponseDetailed(
     if (banned.length > 0) {
       problems.push(`uses banned cliché names: ${banned.join(", ")}`);
     }
-    const reused = bannedNamesIn(nameValues, options.avoidNames ?? []).filter(
-      (n) => !banned.includes(n),
-    );
+    const reused = bannedNamesIn(
+      nameValues,
+      avoidNamesExcludingContext(
+        options.avoidNames ?? [],
+        userSuppliedText(options),
+      ),
+    ).filter((n) => !banned.includes(n));
     if (reused.length > 0) {
       problems.push(
         `reuses names already used elsewhere in this session: ${reused.join(", ")}`,
       );
+    }
+
+    // 0. Seed fidelity. A user-supplied seed is binding: the model must keep
+    // its names and adopt its stated deadline rather than paraphrasing both
+    // away. Both checks are deliberately lenient — they fire only when the
+    // seed was clearly discarded, since each failure costs a retry.
+    const seedText = options.seed?.trim();
+    if (seedText) {
+      const wholeOutput = JSON.stringify(parsed);
+      const seedNouns = extractProperNouns(seedText);
+      if (
+        seedNouns.length > 0 &&
+        !seedNouns.some((noun) =>
+          wholeOutput.toLowerCase().includes(noun.toLowerCase()),
+        )
+      ) {
+        problems.push(
+          `drops every name from the given situation (${seedNouns.join(", ")}) — these are fixed and must appear in the adventure as written.`,
+        );
+      }
+      if (statesDeadline(seedText)) {
+        const objectiveWithSummary =
+          `${parsed.summary ?? ""} ${parsed.primaryObjective ?? ""}`.toLowerCase();
+        const keepsPressure = PRESSURE_SIGNAL_TERMS.some((term) =>
+          objectiveWithSummary.includes(term),
+        );
+        if (!keepsPressure) {
+          problems.push(
+            "the given situation states its own deadline, but primaryObjective carries no pressure — adopt that deadline as the adventure's clock.",
+          );
+        }
+      }
     }
 
     // 1. Programmatic Title vs. Environment Coherence Validation (Multi-Domain)
@@ -834,27 +999,13 @@ export function parseAdventureResponseDetailed(
     // 3. Programmatic Ticking Clock Integration Validation
     const summaryObjText =
       `${parsed.summary ?? ""} ${parsed.primaryObjective ?? ""}`.toLowerCase();
-    const clockTerms = [
-      "hour",
-      "dawn",
-      "dusk",
-      "solstice",
-      "equinox",
-      "midnight",
-      "eclipse",
-      "day",
-      "clock",
-      "timer",
-      "deadline",
-      "expire",
-    ];
-    const hasClockInObjective = clockTerms.some((term) =>
+    const hasClockInObjective = CLOCK_TERMS.some((term) =>
       summaryObjText.includes(term),
     );
     if (hasClockInObjective) {
       const threatsCompText =
         `${JSON.stringify(parsed.threats ?? "")} ${JSON.stringify(parsed.complications ?? "")}`.toLowerCase();
-      const integratesClock = clockTerms.some((term) =>
+      const integratesClock = CLOCK_TERMS.some((term) =>
         threatsCompText.includes(term),
       );
       if (!integratesClock) {

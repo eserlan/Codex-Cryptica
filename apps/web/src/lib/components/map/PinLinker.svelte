@@ -96,8 +96,8 @@
                 class="text-xs font-bold text-theme-text group-hover:text-theme-primary"
               >
                 {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    >*</sup
-                  >{/if}
+                    aria-hidden="true">*</sup
+                  ><span class="sr-only"> (past)</span>{/if}
               </div>
               <div
                 class="text-[10px] text-theme-muted uppercase tracking-tighter"

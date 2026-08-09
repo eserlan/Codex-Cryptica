@@ -52,6 +52,7 @@ describe("registry lookup", () => {
       "adventure",
       "world",
       "council-vote",
+      "secret-society",
       "star-system",
     ]);
   });
@@ -124,6 +125,20 @@ describe("registry lookup", () => {
   it("isSupportedGenerator narrows known ids", () => {
     expect(isSupportedGenerator("npc")).toBe(true);
     expect(isSupportedGenerator("dragon")).toBe(false);
+  });
+});
+
+describe("secret-society generator", () => {
+  it("maps to factions and provides a vault-grounded society prompt", () => {
+    expect(GENERATOR_ENTITY_TYPE["secret-society"]).toBe("faction");
+    const prompt = getGenerator("secret-society").buildPrompt(
+      run("secret-society", { options: { publicFace: "Church" } }),
+    );
+    expect(prompt).toContain("public face: Church");
+    expect(prompt).toContain("secret truth");
+    expect(
+      getGenerator("secret-society").generate(run("secret-society")).lore,
+    ).toContain("Follow-Up Suggestions");
   });
 });
 
@@ -1030,6 +1045,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       adventure: "note",
       world: "location",
       "council-vote": "note",
+      "secret-society": "faction",
       "star-system": "location",
     });
   });

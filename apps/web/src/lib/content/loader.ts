@@ -134,6 +134,11 @@ export function getBlogIndex(): BlogIndexItem[] {
     title: a.title,
     description: a.description,
     publishedAt: a.publishedAt,
+    // See blog-content.ts: omitted rather than undefined, so the shape matches
+    // an item parsed from a remote index.json.
+    ...(a.author ? { author: a.author } : {}),
+    ...(a.updatedAt ? { updatedAt: a.updatedAt } : {}),
+    ...(a.topic ? { topic: a.topic } : {}),
   }));
 }
 

@@ -45,6 +45,13 @@ import {
   starSystemConfig,
 } from "./public-star-system";
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
+import { councilVoteConfig } from "./public-council-vote-constants";
+import {
+  buildSecretSocietyPrompt,
+  generateSecretSocietyLocal,
+  secretSocietyConfig,
+  type SecretSocietyGeneratorOptions,
+} from "./public-secret-society";
 
 /**
  * Generator id -> default vault category id.
@@ -65,6 +72,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   adventure: "note",
   world: "location",
   "council-vote": "note",
+  "secret-society": "faction",
   "star-system": "location",
 };
 
@@ -379,6 +387,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
   "star-system": `{"title":"Kesh-9","summary":"A contested binary system whose fragile water compact is the only thing keeping two mining powers from open war.","lore":"## Core Concept\\nKesh-9 is a hard sci-fi binary system, contested in character and frontier in reach, valued for a rare isotope deposit found nowhere else on the charted lanes.\\n## The Star(s)\\nA close binary pair locks the system into overlapping shadows and unstable seasons.\\n## Major Bodies\\n- **Kesh-9 II** (Temperate World) — the system's one habitable body, and its most fought-over resource.\\n- **Kesh-9 III** (Asteroid Belt) — worked by independent crews who answer to no single authority.\\n- **New Halden** (Derelict Station) — abandoned mid-construction, its original purpose still disputed.\\n- **Kesh-9 IV** (Ice Giant) — its atmosphere mined for volatiles by orbital skimmers.\\n## Settlements & Factions\\nA handful of independent outposts hold the system together. The Kesh Compact favours the current water-sharing treaty; the Vantage Drilling Concern wants to break it for exclusive isotope rights.\\n## Resources & Strategic Importance\\nThe isotope deposit on Kesh-9 III is the system's leverage — whoever controls extraction rights controls the system's politics.\\n## Travel Hazards\\nGravitational tides between the twin stars scramble navigation near closest approach.\\n## History\\nThe current balance dates to the last treaty renegotiation, when the isotope deposit was first confirmed.\\n## System-Wide Conflict or Mystery\\nNew Halden was abandoned mid-construction for reasons neither faction will discuss, and its dormant systems have recently begun drawing power again.\\n## Adventure Hooks\\n- The Kesh Compact needs outside investigators to learn why New Halden woke up before the Concern finds out first.\\n- A supply convoy vanishes during a gravitational tide event, and both factions blame the other.\\n- Someone on Kesh-9 II is quietly negotiating to sell isotope rights out from under the Compact.","labels":["star-system","binary-system","hard-sci-fi","contested","frontier"],"connections":[]}`,
   "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
+  "secret-society": `{"title":"The Lantern Choir","summary":"A charitable order whose midnight hymns call something awake beneath the city.","lore":"## Belief & Doctrine\\nThe Choir teaches that darkness is a mercy offered by an imprisoned star.\\n## Public Face\\nIts soup kitchens and night shelters make it beloved in the poorest wards.\\n## Secret Truth\\nThe hymns are a map for the thing beneath the city.\\n## Adventure Hooks\\nA missing initiate left the party a verse that should not exist.","labels":["secret-society","cult","urban"],"connections":[]}`,
 };
 
 /**
@@ -607,54 +616,22 @@ const EVENT_OUTCOMES = [
   "uncovered a secret that should have stayed buried",
 ];
 
-const COUNCIL_VOTE_BODY_TYPES = [
-  "Town Council",
-  "Noble Court",
-  "Senate",
-  "Clan Moot",
-  "War Council",
-  "Corporate Board",
-  "Revolutionary Committee",
-  "Interstellar Assembly",
-  "Criminal Syndicate",
-  "Religious Conclave",
-];
-const COUNCIL_VOTE_SIZES = ["3", "5", "7", "9"];
-const COUNCIL_VOTE_RULES = [
-  "Simple Majority",
-  "Supermajority (Two-Thirds)",
-  "Unanimous",
-  "Veto Power",
-  "Secret Ballot",
-];
-const COUNCIL_VOTE_SCOPES = [
-  "Single Location",
-  "Distributed Across Settlements/Regions",
-];
-const COUNCIL_VOTE_TONES = [
-  "Political",
-  "Tense",
-  "Desperate",
-  "Farcical",
-  "Somber",
-  "Hopeful",
-];
-const COUNCIL_VOTE_ANTAGONIST_INFLUENCE = [
-  "None",
-  "Subtle",
-  "Entrenched",
-  "Dominant",
-];
-const COUNCIL_VOTE_ARCHETYPES = [
-  "Beleaguered Ally",
-  "Villain's Toady",
-  "Greedy Broker",
-  "Loyal Shadow",
-  "Traditionalist",
-  "Idealist",
-  "Wildcard",
-];
-const COUNCIL_VOTE_STANCES = ["Support", "Oppose", "Leaning", "Unknown"];
+const COUNCIL_VOTE_BODY_TYPES = councilVoteConfig.bodyTypes;
+
+const COUNCIL_VOTE_SIZES = councilVoteConfig.sizes;
+
+const COUNCIL_VOTE_RULES = councilVoteConfig.votingRules;
+
+const COUNCIL_VOTE_SCOPES = councilVoteConfig.scopes;
+
+const COUNCIL_VOTE_TONES = councilVoteConfig.tones;
+
+const COUNCIL_VOTE_ANTAGONIST_INFLUENCE =
+  councilVoteConfig.antagonistInfluences;
+
+const COUNCIL_VOTE_ARCHETYPES = councilVoteConfig.archetypes;
+
+const COUNCIL_VOTE_STANCES = councilVoteConfig.stances;
 
 function generateName(): string {
   const prefixes = [
@@ -1127,6 +1104,27 @@ If nothing needs fixing, return the paths exactly as they were.
 Return ONLY the JSON object.`;
 }
 
+function generateSecretSociety(request: GeneratorRunRequest): GeneratorOutput {
+  const output = generateSecretSocietyLocal(
+    request.options as SecretSocietyGeneratorOptions,
+  );
+  return {
+    title: output.title,
+    summary: output.summary ?? "",
+    content: output.content,
+    lore: output.lore,
+    labels: output.labels,
+  };
+}
+
+function secretSocietyPrompt(request: GeneratorRunRequest): string {
+  const { systemInstruction, userMessage } = buildSecretSocietyPrompt(
+    request.options as SecretSocietyGeneratorOptions,
+    contextChain(request),
+  );
+  return `${systemInstruction}\n\n${userMessage}`;
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   npc: {
     id: "npc",
@@ -1483,7 +1481,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         id: "seed",
         label: "Starting Seed / Situation",
         description:
-          "Optional: describe a starting scenario, NPC, or situation to anchor the adventure.",
+          "Optional: describe or paste a starting scenario, NPC, or hook to anchor the adventure. Names are kept as written, and a deadline you state becomes the adventure's clock.",
         control: "textarea",
       },
     ],
@@ -1695,6 +1693,83 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       starType: output.starType,
     }),
     buildPrompt: starSystemPrompt,
+  },
+  "secret-society": {
+    id: "secret-society",
+    label: "Secret Society",
+    description:
+      "Generate a cult, sect, conspiracy, or mystery order with a public face and a campaign-changing secret.",
+    entityType: GENERATOR_ENTITY_TYPE["secret-society"],
+    defaultInstruction:
+      "A campaign-ready secret society with doctrine, ritual, public face, hidden truth, and usable adventure hooks.",
+    icon: "lucide:eye",
+    options: [
+      {
+        id: "theme",
+        label: "Theme",
+        control: "select",
+        choices: secretSocietyConfig.themes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: secretSocietyConfig.tones.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "scale",
+        label: "Scale",
+        control: "select",
+        choices: secretSocietyConfig.scales.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "publicFace",
+        label: "Public Face",
+        control: "select",
+        choices: secretSocietyConfig.publicFaces.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "dangerLevel",
+        label: "Danger Level",
+        control: "select",
+        choices: secretSocietyConfig.dangers.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "truthRelationship",
+        label: "Relationship to Truth",
+        control: "select",
+        choices: secretSocietyConfig.truths.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      theme: "Classic Fantasy",
+      tone: "Sinister",
+      scale: "Local cell",
+      publicFace: "Charity",
+      dangerLevel: "Socially disruptive",
+      truthRelationship: "Partial truth",
+    },
+    generate: generateSecretSociety,
+    mapOutputToDraft: mapOutputToDraft("secret-society"),
+    buildPrompt: secretSocietyPrompt,
   },
   "council-vote": {
     id: "council-vote",

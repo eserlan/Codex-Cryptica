@@ -115,3 +115,8 @@
 ## 2026-08-06 - Replace raw localStorage with browserStorage in marketing world directory
 **Learning:** The application provides a wrapper `browserStorage` from `$lib/utils/runtime-deps` that encapsulates `localStorage` access safely, handling SSR rendering and unavailable storage scenarios transparently. This removes the need for ad-hoc `typeof localStorage !== 'undefined'` checks in the UI.
 **Action:** Always use `browserStorage` or inject it as a dependency using the `StorageLike` interface in place of raw `localStorage`.
+
+## 2024-08-08 - Injecting Clock into DelveTopologyGenerator
+
+**Learning:** Found hardcoded `Date.now()` usage in `DelveTopologyGenerator` within `packages/generator-engine/src/dungeon/delve-topology-generator.ts`. This creates a hidden dependency on the global system clock that makes testing timestamp generation brittle.
+**Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `@codex/runtime`. Updated tests to pass a mock `Clock` in the constructor to avoid Vitest global pollution.

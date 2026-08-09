@@ -1,8 +1,10 @@
 <script lang="ts">
-  import type { StatSheetField } from "schema";
+  import type { Entity, StatSheetField } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
   import { vault } from "$lib/stores/vault.svelte";
+
+  const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
 
   let {
     field,
@@ -34,13 +36,26 @@
   >({});
   let showItemPicker = $state(false);
 
-  const linkableItems = $derived(
-    Object.values(vault.entities).filter((entity) =>
-      ["item", "weapon", "gear", "artifact", "object"].some((type) =>
-        entity.type.toLowerCase().includes(type),
-      ),
-    ),
-  );
+  const linkableItems = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace Object.values().filter() with an imperative loop
+    // over allEntities to avoid unnecessary intermediate array allocations
+    const items: Entity[] = [];
+    const entities = vault.allEntities;
+    const len = entities.length;
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
+      if (entity && entity.type) {
+        const type = entity.type.toLowerCase();
+        for (let j = 0; j < linkableItemTypes.length; j++) {
+          if (type.includes(linkableItemTypes[j])) {
+            items.push(entity);
+            break;
+          }
+        }
+      }
+    }
+    return items;
+  });
 
   function linkedEntity(row: Record<string, any>) {
     const entityId = row.entityId;

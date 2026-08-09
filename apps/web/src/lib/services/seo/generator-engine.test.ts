@@ -664,6 +664,70 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateSecretSociety", () => {
+    it("generates a faction locally with the requested society inputs", async () => {
+      const result = await engine.generateSecretSociety({
+        theme: "Cosmic Horror",
+        publicFace: "Academic society",
+        dangerLevel: "Supernatural threat",
+        useAI: false,
+      });
+
+      expect(result.type).toBe("faction");
+      expect(result.content).toContain("### Secret truth");
+      expect(result.lore).toContain("**Sacred Object**");
+      expect(result.labels).toContain("secret-society");
+    });
+
+    it("uses a valid AI response and falls back when the provider is unavailable", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Glass Choir",
+                summary: "A choir that hears a signal beneath the city.",
+                content: "### What they believe\\nThe signal is mercy.",
+                lore: "### At the Table\\n- **Leader**: Orra Venn.",
+                labels: ["cosmic-horror"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const aiResult = await engine.generateSecretSociety({ useAI: true });
+      expect(aiResult.title).toBe("The Glass Choir");
+      expect(aiResult.labels).toEqual(
+        expect.arrayContaining(["secret-society", "cosmic-horror"]),
+      );
+      expect(aiResult.aiFallback).toBeUndefined();
+
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+      const fallbackResult = await engine.generateSecretSociety({
+        useAI: true,
+      });
+      expect(fallbackResult.aiFallback).toBe(true);
+      expect(fallbackResult.lore).toContain("### Follow-Up Suggestions");
+    });
+
+    it("falls back to a local draft when the AI response is malformed", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => "not valid JSON" },
+        }),
+      });
+
+      const result = await engine.generateSecretSociety({ useAI: true });
+
+      expect(result.aiFallback).toBe(true);
+      expect(result.labels).toEqual(
+        expect.arrayContaining(["secret-society", "imported-draft"]),
+      );
+      expect(result.content).toContain("### Secret truth");
+    });
+  });
+
   describe("generateSocialHub", () => {
     it("should generate a venue using local fallback when useAI is false", async () => {
       const res = await engine.generateSocialHub({

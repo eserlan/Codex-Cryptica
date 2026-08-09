@@ -277,6 +277,13 @@ export {
   type StarSystemBody,
 } from "./public-star-system";
 export {
+  buildSecretSocietyPrompt,
+  generateSecretSocietyLocal,
+  parseSecretSocietyResponse,
+  secretSocietyConfig,
+  type SecretSocietyGeneratorOptions,
+} from "./public-secret-society";
+export {
   buildStarSystemDiagram,
   colorForBodyType,
   type StarSystemDiagramLayout,
@@ -287,6 +294,7 @@ export {
   generateStarterConstellationLocal,
   buildStarterConstellationPrompt,
   parseStarterConstellationResponse,
+  getStarterConstellationPreview,
   STARTER_CONSTELLATION_THEME_IDS,
   type StarterConstellationPrompt,
 } from "./starter-constellation";

@@ -33,6 +33,9 @@ import {
   parseCouncilVotePathsResponse,
   mergeCouncilVoteOutput,
   generateCouncilVoteLocal,
+  buildSecretSocietyPrompt,
+  parseSecretSocietyResponse,
+  generateSecretSocietyLocal,
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
@@ -86,6 +89,7 @@ import {
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
   type CouncilVoteGeneratorOptions,
+  type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
   type NationGeneratorOptions,
@@ -126,6 +130,7 @@ export { settlementConfig } from "generator-engine";
 export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";
+export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
@@ -454,6 +459,24 @@ export class DefaultGeneratorEngine {
         return mergeCouncilVoteOutput(foundation, paths);
       },
       () => generateCouncilVoteLocal(councilVoteOptions),
+    );
+  }
+
+  async generateSecretSociety(
+    options: SecretSocietyGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...secretSocietyOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildSecretSocietyPrompt(secretSocietyOptions, getSessionContext());
+        return parseSecretSocietyResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateSecretSocietyLocal(secretSocietyOptions),
     );
   }
 

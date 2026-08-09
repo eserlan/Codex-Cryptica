@@ -22,6 +22,7 @@ describe("randomIdeaCategories", () => {
       "npc",
       "pantheon",
       "quest",
+      "secret-society",
       "social-hub",
     ]);
   });
@@ -40,6 +41,7 @@ describe("randomIdeaCategories", () => {
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
       generateCouncilVote: vi.fn().mockResolvedValue("council-vote-result"),
+      generateSecretSociety: vi.fn().mockResolvedValue("secret-society-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
       generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
     } as unknown as DefaultGeneratorEngine;
@@ -72,6 +74,10 @@ describe("randomIdeaCategories", () => {
     });
     expect(engine.generateCouncilVote).toHaveBeenCalledWith({
       useAI: true,
+    });
+    expect(engine.generateSecretSociety).toHaveBeenCalledWith({
+      useAI: true,
+      theme,
     });
     expect(engine.generateSocialHub).toHaveBeenCalledWith({
       useAI: true,

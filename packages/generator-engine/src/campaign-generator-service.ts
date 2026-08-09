@@ -774,10 +774,16 @@ export class CampaignGeneratorService {
           );
           const raw = completeText(result);
           const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+          const requiresCompleteSocietyDossier =
+            mergedRequest.generatorId === "secret-society";
           if (
             typeof parsed.title === "string" &&
             typeof parsed.summary === "string" &&
-            typeof parsed.lore === "string"
+            typeof parsed.lore === "string" &&
+            (!requiresCompleteSocietyDossier ||
+              (parsed.lore.trim().length > 0 &&
+                typeof parsed.content === "string" &&
+                parsed.content.trim().length > 0))
           ) {
             if (isTitleBanned(parsed.title, bannedNames)) continue;
             const output: GeneratorOutput = {

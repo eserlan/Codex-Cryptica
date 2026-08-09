@@ -26,6 +26,7 @@ const validSlugs = new Set([
   "adventure-idea-generator",
   "world",
   "council-vote",
+  "secret-society",
   "star-system",
   "random",
 ]);
