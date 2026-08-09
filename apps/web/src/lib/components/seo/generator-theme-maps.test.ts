@@ -31,6 +31,7 @@ describe("shouldSyncGeneratorTheme", () => {
     expect(shouldSyncGeneratorTheme("language-generator")).toBe(true);
     expect(shouldSyncGeneratorTheme("world")).toBe(true);
     expect(shouldSyncGeneratorTheme("council-vote")).toBe(true);
+    expect(shouldSyncGeneratorTheme("secret-society")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {

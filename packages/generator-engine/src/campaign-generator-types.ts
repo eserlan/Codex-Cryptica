@@ -21,6 +21,7 @@ export type GeneratorId =
   | "adventure"
   | "world"
   | "council-vote"
+  | "secret-society"
   | "star-system";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
@@ -36,6 +37,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "adventure",
   "world",
   "council-vote",
+  "secret-society",
   "star-system",
 ] as const;
 

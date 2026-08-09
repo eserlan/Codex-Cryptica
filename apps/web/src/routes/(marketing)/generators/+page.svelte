@@ -101,6 +101,13 @@
           icon: "icon-[lucide--gavel]",
         },
         {
+          href: "/generators/secret-society",
+          label: "Secret Society Generator",
+          summary:
+            "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+          icon: "icon-[lucide--eye]",
+        },
+        {
           href: "/generators/settlement",
           label: "Settlement Generator",
           summary:

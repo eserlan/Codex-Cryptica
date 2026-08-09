@@ -24,6 +24,7 @@ export type ValidSlug =
   | "adventure-idea-generator"
   | "world"
   | "council-vote"
+  | "secret-society"
   | "star-system";
 
 export type SlugMetaEntry = {
@@ -596,6 +597,39 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/quest", label: "Quest Hook Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/kingdom", label: "Kingdom Generator" },
+    ],
+  },
+  "secret-society": {
+    pageTitle:
+      "Secret Society Generator | Cult & Conspiracy Creator | Codex Cryptica",
+    metaDescription:
+      "Create campaign-ready cults, secret societies, sects, and conspiracies with beliefs, rituals, public faces, hidden truths, and adventure hooks.",
+    introTitle: "Secret Society Generator",
+    eyebrow: "Cult, Sect & Conspiracy Generator",
+    introText:
+      "Build a reusable society with a belief, ritual, public cover, secret truth, and immediate hooks for your campaign.",
+    canonicalPath: "/generators/secret-society",
+    faqs: [
+      {
+        question: "What does the secret society generator create?",
+        answer:
+          "It creates a campaign-ready cult, sect, conspiracy, or hidden order with a doctrine, revered thing, rituals, recruitment method, public cover, leadership structure, secret truth, signs, conflict, and adventure hooks.",
+      },
+      {
+        question: "Can I use it outside fantasy?",
+        answer:
+          "Yes. It supports fantasy cults, corporate conspiracies, academic circles, criminal orders, cosmic-horror sects, and other genre-neutral hidden organisations.",
+      },
+      {
+        question: "Can I save the result into my campaign?",
+        answer:
+          "Yes. Generate and copy a result without logging in, or save it as a Faction draft in your browser-local Codex Cryptica vault and link it to its people, places, rumours, and rivals.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/generators/quest", label: "Quest Hook Generator" },
+      { href: "/generators/god-generator", label: "God & Deity Generator" },
     ],
   },
   "star-system": {

@@ -586,6 +586,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
+  "secret-society-generator": {
+    id: "secret-society-generator",
+    title: "Secret Societies & Cults",
+    content:
+      "Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.",
+    icon: "icon-[lucide--eye]",
+  },
   "entity-timeline": {
     id: "entity-timeline",
     title: "Entity Timeline",

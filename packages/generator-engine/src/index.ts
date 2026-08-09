@@ -277,6 +277,13 @@ export {
   type StarSystemBody,
 } from "./public-star-system";
 export {
+  buildSecretSocietyPrompt,
+  generateSecretSocietyLocal,
+  parseSecretSocietyResponse,
+  secretSocietyConfig,
+  type SecretSocietyGeneratorOptions,
+} from "./public-secret-society";
+export {
   buildStarSystemDiagram,
   colorForBodyType,
   type StarSystemDiagramLayout,

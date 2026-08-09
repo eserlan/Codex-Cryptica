@@ -11,6 +11,7 @@
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
+  import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
@@ -38,6 +39,7 @@
     factionConfig,
     questConfig,
     councilVoteConfig,
+    secretSocietyConfig,
     socialHubConfig,
     kingdomConfig,
     nationConfig,
@@ -196,6 +198,15 @@
     scope: councilVoteConfig.scopes[0],
     tone: councilVoteConfig.tones[0],
     antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
+    campaignContext: "",
+  });
+  let secretSociety = $state({
+    theme: factionConfig.themes[0],
+    tone: secretSocietyConfig.tones[0],
+    scale: secretSocietyConfig.scales[0],
+    publicFace: secretSocietyConfig.publicFaces[0],
+    dangerLevel: secretSocietyConfig.dangers[0],
+    truthRelationship: secretSocietyConfig.truths[0],
     campaignContext: "",
   });
 
@@ -414,6 +425,7 @@
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
     else if (slug === "council-vote") councilVote.genre = activeTheme;
+    else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
       activeTheme =
         SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
@@ -608,6 +620,8 @@
     quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
     "council-vote": (useAI) =>
       generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
+    "secret-society": (useAI) =>
+      generatorEngine.generateSecretSociety({ ...secretSociety, useAI }),
     tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
     kingdom: (useAI) => generatorEngine.generateKingdom({ ...kingdom, useAI }),
     nation: (useAI) => generatorEngine.generateNation({ ...nation, useAI }),
@@ -769,6 +783,17 @@
         bind:tone={councilVote.tone}
         bind:antagonistInfluence={councilVote.antagonistInfluence}
         bind:campaignContext={councilVote.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "secret-society"}
+      <SecretSocietyFormFields
+        bind:theme={activeTheme}
+        bind:tone={secretSociety.tone}
+        bind:scale={secretSociety.scale}
+        bind:publicFace={secretSociety.publicFace}
+        bind:dangerLevel={secretSociety.dangerLevel}
+        bind:truthRelationship={secretSociety.truthRelationship}
+        bind:campaignContext={secretSociety.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "kingdom"}
