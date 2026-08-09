@@ -58,3 +58,34 @@ test.describe("Welcome primary action", () => {
     expect(tag).toBe("SPAN");
   });
 });
+
+test.describe("Welcome first click", () => {
+  test("reports which control was used, once per visitor", async ({ page }) => {
+    // Zaraz is not present in dev, so stand in for it and read what would
+    // have been sent.
+    await page.addInitScript(() => {
+      (window as any).__events = [];
+      (window as any).zaraz = {
+        track: (name: string, props: unknown) =>
+          (window as any).__events.push({ name, props }),
+      };
+    });
+
+    await page.goto("/");
+    await page.getByTestId("welcome-preview-button").click();
+
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__events))
+      .toEqual([
+        { name: "welcome_first_click", props: { action: "graph_preview" } },
+      ]);
+
+    // The measure is the *first* choice, so a later visit must not overwrite it.
+    await page.reload();
+    expect(
+      await page.evaluate(() =>
+        localStorage.getItem("codex-cryptica-welcome-first-click"),
+      ),
+    ).toBe("graph_preview");
+  });
+});
