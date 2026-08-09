@@ -16,12 +16,25 @@
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { seoImportService } from "$lib/services/seo/import-handler";
   import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
+  import {
+    trackWelcomeFirstClick,
+    type WelcomeAction,
+  } from "$lib/services/analytics/welcome-first-click";
 
   // "Open Existing Vault" dismisses the landing page and opens the vault
   // switcher with the matching intent.
   const openVaultFromWelcome = (intent: "open") => {
+    trackWelcomeFirstClick("open_vault");
     onboardingStore.dismissLandingPage();
     modalUIStore.openVaultSwitcher(intent);
+  };
+
+  // Which of the five things on this screen a visitor picks first, once per
+  // visitor, and nothing after it. See welcome-first-click.ts for why this one
+  // surface is instrumented when the rest of the app is not.
+  const startDemoFromWelcome = (theme: string, action: WelcomeAction) => {
+    trackWelcomeFirstClick(action);
+    demoService.startDemo(theme);
   };
 
   // Guided Mode (#1909): the primary "create" path leans into Quick Start
@@ -29,7 +42,8 @@
   // fully empty vault is still reachable via "Open Existing Vault" → NEW VAULT.
   // Tracked on modalUIStore (not local state) so the first-run orchestrator
   // sees it and doesn't stack the onboarding tour on top of Quick Start.
-  const openQuickStartFromWelcome = () => {
+  const openQuickStartFromWelcome = (action: WelcomeAction = "quick_start") => {
+    trackWelcomeFirstClick(action);
     onboardingStore.dismissLandingPage();
     modalUIStore.openQuickStartModal();
   };
@@ -366,7 +380,7 @@
           >
             <button
               type="button"
-              onclick={openQuickStartFromWelcome}
+              onclick={() => openQuickStartFromWelcome("graph_preview")}
               class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-primary/50 bg-theme-surface/60 shadow-2xl shadow-theme-primary/10 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary hover:shadow-theme-primary/30 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
               aria-labelledby="living-lore-graph"
               aria-describedby="living-lore-graph-copy living-lore-graph-preview"
@@ -434,7 +448,7 @@
             >
               <button
                 type="button"
-                onclick={openQuickStartFromWelcome}
+                onclick={() => openQuickStartFromWelcome("quick_start")}
                 class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
                 data-testid="welcome-quick-start-button"
               >
@@ -443,7 +457,7 @@
               </button>
               <button
                 type="button"
-                onclick={() => demoService.startDemo("fantasy")}
+                onclick={() => startDemoFromWelcome("fantasy", "demo")}
                 class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
                 data-testid="welcome-demo-button"
               >
@@ -501,7 +515,7 @@
           <div class="flex flex-wrap justify-center gap-4">
             {#each demoThemes as theme (theme)}
               <button
-                onclick={() => demoService.startDemo(theme)}
+                onclick={() => startDemoFromWelcome(theme, "themed_demo")}
                 class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
               >
                 {theme}

@@ -1026,6 +1026,36 @@ primary demonstration on desktop and before a large graph on mobile; copy contai
 generic unsupported superlatives; all existing destination flows and action tracking
 still work. Compare bounce and first-click distribution against the chunk 0 baseline.
 
+**Measurement note (2026-08-09):** the first-click half of that last criterion was
+not measurable when the chunk started, and the reason was structural rather than an
+oversight. The analytics boundary here is drawn by route group: `zaraz-analytics.ts`
+is wired from `(marketing)` only, and the marketing layout tears its bridge down on
+the way into the app. The welcome screen lives at `/`, an app route, so its six
+onboarding-funnel steps never left the browser. Verified in-browser: on a direct
+visit `window.__codexAnalytics.track` is undefined, and arriving from a marketing
+page and navigating in tears it down again.
+
+The welcome screen is a landing page by every measure that matters (80% of visits
+arrive directly; it is 38% of all page views) but was instrumented like app
+internals. Resolved with a deliberately narrow exception rather than by moving the
+boundary: one event naming which of the four controls a visitor uses first, once per
+visitor, carrying nothing else. Everything after that click stays untracked, and the
+onboarding funnel remains local-only. See
+`apps/web/src/lib/services/analytics/welcome-first-click.ts`.
+
+**Implementation note (2026-08-09, PR #2116):** the audit found that no call to
+action was visible on desktop at all. At 1280x900 the content was 1583px in an 833px
+layer and the primary button sat at y=1039; the welcome screen is an absolutely
+positioned overlay with its own scroll, so nothing in the usual place signalled more
+below. Mobile was already better than desktop, which inverts this document's framing
+of it as mainly a mobile problem: the 511px graph preview costs more of a 900px
+desktop viewport than of a phone's.
+
+The fix was not to move the buttons. The graph preview _is_ the primary action, a
+`<button>` opening Quick Start, and nothing said so. Its cue is now a button-styled
+"Build one like this", visible without scrolling at every viewport measured, with a
+hover state over the graph and copy that says it is clickable.
+
 ### Chunk 11: Workflow-led Features page
 
 _Blocked on chunk 0._
