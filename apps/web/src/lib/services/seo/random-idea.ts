@@ -11,6 +11,7 @@ export interface RandomIdeaCategory {
     | "npc"
     | "quest"
     | "council-vote"
+    | "secret-society"
     | "social-hub"
     | "pantheon"
     | "deity";
@@ -88,6 +89,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     key: "council-vote",
     label: "Council Vote",
     generate: (engine, useAI) => engine.generateCouncilVote({ useAI }),
+  },
+  {
+    key: "secret-society",
+    label: "Secret Society",
+    generate: (engine, useAI, theme) =>
+      engine.generateSecretSociety({ theme, useAI }),
   },
   {
     key: "social-hub",
