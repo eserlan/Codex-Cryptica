@@ -64,3 +64,39 @@ test.describe("Tools generator pages", () => {
     });
   });
 });
+
+test.describe("Tools pages show an example draft on load", () => {
+  /**
+   * The regression this guards against, found in review of the refactor that
+   * introduced this file: moving these routes onto the shared component
+   * silently dropped each page's own `initialDraft`. For a slug with no shared
+   * draft that is worse than a content change, because SEOGeneratorLayout
+   * falls back to auto-generating on mount, which replaces the above-the-fold
+   * example and disables Generate while it runs.
+   *
+   * Either source is fine, the page's own override or the shared slug draft.
+   * What must not happen is a page arriving with nothing.
+   */
+  const EXPECTED_TITLES: Record<string, string> = {
+    "/tools/fantasy-name-generator": "Generic Fantasy Names",
+    "/tools/quest-hook-generator": "The Sunken Relic",
+    "/tools/vampire-clan-generator": "House of Thorn",
+    "/tools/cyberpunk-nomad-clan-generator": "Dustborn Convoy",
+  };
+
+  for (const [path, title] of Object.entries(EXPECTED_TITLES)) {
+    test(`${path} lands on its example, not a spinner`, async ({ page }) => {
+      await page.goto(path);
+
+      // The draft is present without the visitor asking for one.
+      await expect(page.locator("#copy-markdown-btn")).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(page.getByText(title).first()).toBeVisible();
+
+      // And it arrived as a fixture rather than an on-mount generation, so the
+      // primary action is usable immediately.
+      await expect(page.locator("#generate-button")).toBeEnabled();
+    });
+  }
+});
