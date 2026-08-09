@@ -47,12 +47,34 @@ describe("Secret Society generator", () => {
     expect(prompt.userMessage).toContain("internally consistent");
   });
 
-  it("falls back safely when an AI response omits structured fields", () => {
+  it("keeps useful default labels when an AI response omits them", () => {
     const prompt = buildSecretSocietyPrompt({}, "", fixedRng);
-    const output = parseSecretSocietyResponse("not json", prompt.resolved);
+    const output = parseSecretSocietyResponse("{}", prompt.resolved);
 
     expect(output.title).toBe(prompt.resolved.title);
-    expect(output.labels).toContain("secret-society");
+    expect(output.labels).toEqual([
+      "secret-society",
+      "faction-generator",
+      "imported-draft",
+    ]);
     expect(output.status).toBe("active");
+  });
+
+  it("throws for malformed AI output so the caller can use local fallback", () => {
+    const prompt = buildSecretSocietyPrompt({}, "", fixedRng);
+    expect(() =>
+      parseSecretSocietyResponse("not json", prompt.resolved),
+    ).toThrow();
+  });
+
+  it("separates session context from the preceding prompt sentence", () => {
+    const prompt = buildSecretSocietyPrompt(
+      {},
+      "Existing campaign elements: Saltwatch.",
+      fixedRng,
+    );
+    expect(prompt.userMessage).toContain(
+      "\nExisting campaign elements: Saltwatch.",
+    );
   });
 });

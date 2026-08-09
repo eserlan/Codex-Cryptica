@@ -101,6 +101,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     hintIds: [
       "lore-oracle",
       "in-app-generators",
+      "secret-society-generator",
       "proposer-discovery",
       "draft-review",
       "oracle-connection-modes",

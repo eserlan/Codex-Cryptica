@@ -91,26 +91,22 @@ export function buildSecretSocietyPrompt(
   rng: Rng = defaultRng,
 ) {
   const r = resolve(options, rng);
+  const contextBlock = sessionContext ? `\n${sessionContext}` : "";
   return {
     resolved: r,
     systemInstruction:
       "You create campaign-ready secret societies for tabletop RPGs. Return only valid JSON.",
-    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${sessionContext}\nReturn {title,summary,content,lore,labels}. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
+    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${contextBlock}\nReturn {title,summary,content,lore,labels}. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
   };
 }
 export function parseSecretSocietyResponse(
   text: string,
   resolved: Resolved,
 ): PublicGeneratorOutput {
-  let data: Record<string, unknown> = {};
-  try {
-    data = parseFencedJson<Record<string, unknown>>(text);
-  } catch {
-    // Fall back to the resolved defaults when a provider returns malformed JSON.
-  }
+  const data = parseFencedJson<Record<string, unknown>>(text);
   const labels = Array.isArray(data.labels)
     ? data.labels.filter((label): label is string => typeof label === "string")
-    : [];
+    : ["secret-society", "faction-generator", "imported-draft"];
   if (!labels.includes("secret-society")) labels.unshift("secret-society");
 
   return {

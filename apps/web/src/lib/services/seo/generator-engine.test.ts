@@ -710,6 +710,22 @@ describe("DefaultGeneratorEngine", () => {
       expect(fallbackResult.aiFallback).toBe(true);
       expect(fallbackResult.lore).toContain("### Follow-Up Suggestions");
     });
+
+    it("falls back to a local draft when the AI response is malformed", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => "not valid JSON" },
+        }),
+      });
+
+      const result = await engine.generateSecretSociety({ useAI: true });
+
+      expect(result.aiFallback).toBe(true);
+      expect(result.labels).toEqual(
+        expect.arrayContaining(["secret-society", "imported-draft"]),
+      );
+      expect(result.content).toContain("### Secret truth");
+    });
   });
 
   describe("generateSocialHub", () => {
