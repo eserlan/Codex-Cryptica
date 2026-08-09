@@ -34,6 +34,13 @@ export interface FeatureGroup {
    */
   hintIds: string[];
   leadCount: number;
+  /**
+   * A real interface capture, not decorative art, per the chunk 14 scope.
+   * Taken from the cyberpunk demo vault in dark appearance: 35 connected
+   * entities, which is the density a screenshot has to show to mean anything.
+   */
+  image: string;
+  imageAlt: string;
 }
 
 export const FEATURE_GROUPS: FeatureGroup[] = [
@@ -43,6 +50,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     outcome:
       "Get a campaign out of your head and into a structure you can navigate.",
     leadCount: 4,
+    image: "/screenshots/feature-build.jpg",
+    imageAlt:
+      "The entity explorer open beside a 35-entity campaign graph, listing characters, factions and locations.",
     hintIds: [
       "guided-mode-quick-start",
       "guided-mode-intent-create",
@@ -64,6 +74,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     outcome:
       "The relationships between people, places and events become visible instead of remembered.",
     leadCount: 4,
+    image: "/screenshots/feature-connect.jpg",
+    imageAlt:
+      "A campaign graph of 35 linked entities with one netrunner selected, their connections highlighted across the web.",
     hintIds: [
       "visual-graph",
       "connect-mode",
@@ -81,6 +94,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     title: "Run the session",
     outcome: "What you prepared is usable at the table, with your players.",
     leadCount: 4,
+    image: "/screenshots/feature-run.jpg",
+    imageAlt:
+      "The map view of a campaign, with locations placed and ready for a session.",
     hintIds: [
       "vtt-mode",
       "map-mode",
@@ -98,6 +114,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     title: "Get unstuck",
     outcome: "A draft when you need one, that you edit rather than accept.",
     leadCount: 4,
+    image: "/screenshots/feature-unstuck.jpg",
+    imageAlt:
+      "The public vampire clan generator with its form on the left and a generated draft on the right.",
     hintIds: [
       "lore-oracle",
       "in-app-generators",
@@ -125,6 +144,9 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     outcome:
       "Local files you own, and all of it works with the AI switched off.",
     leadCount: 4,
+    image: "/screenshots/feature-yours.jpg",
+    imageAlt:
+      "The entity table listing all 35 entities with their types, connection counts, summaries and labels.",
     hintIds: [
       "total-privacy",
       "local-folder-sync",
