@@ -609,14 +609,20 @@
       content="https://codexcryptica.com{canonicalPath}"
     />
   {/if}
-  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
-  <meta property="og:image:width" content="1024" />
-  <meta property="og:image:height" content="1024" />
+  <meta
+    property="og:image"
+    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  />
+  <meta property="og:image:width" content="1600" />
+  <meta property="og:image:height" content="1000" />
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={metaDescription} />
-  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
+  <meta
+    name="twitter:image"
+    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  />
   <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +

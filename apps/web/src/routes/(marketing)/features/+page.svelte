@@ -53,16 +53,31 @@
           aria-labelledby={"group-" + group.id}
           data-testid="feature-group"
         >
-          <header class="mb-8 max-w-2xl">
-            <h2
-              id={"group-" + group.id}
-              class="text-3xl md:text-4xl font-bold font-header text-theme-text mb-3"
-            >
-              {group.title}
-            </h2>
-            <p class="text-lg text-theme-muted leading-relaxed font-light">
-              {group.outcome}
-            </p>
+          <header class="mb-8">
+            <div class="max-w-2xl">
+              <h2
+                id={"group-" + group.id}
+                class="text-3xl md:text-4xl font-bold font-header text-theme-text mb-3"
+              >
+                {group.title}
+              </h2>
+              <p class="text-lg text-theme-muted leading-relaxed font-light">
+                {group.outcome}
+              </p>
+            </div>
+
+            <!-- A real capture of the product doing this job, per chunk 14.
+                 Lazy, and sized so a phone never fetches the full-width file. -->
+            <img
+              src={group.image}
+              alt={group.imageAlt}
+              width="1600"
+              height="1000"
+              loading="lazy"
+              decoding="async"
+              sizes="(min-width: 768px) 704px, 100vw"
+              class="mt-6 w-full rounded-xl border border-theme-border shadow-lg"
+            />
           </header>
 
           <div class="grid md:grid-cols-2 gap-6">

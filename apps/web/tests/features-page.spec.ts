@@ -48,3 +48,32 @@ test.describe("Features page", () => {
     await expect(page.getByText("Adjustable Sidebars")).toHaveCount(0);
   });
 });
+
+test("every group leads with a real product screenshot", async ({ page }) => {
+  await page.goto("/features");
+
+  // Chunk 14 asks for real interface captures rather than decorative art, and
+  // chunk 11 asks each group to lead with one. They are lazy-loaded, so scroll
+  // the page before asking whether they decoded.
+  await page.evaluate(async () => {
+    for (let y = 0; y < document.body.scrollHeight; y += 600) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  });
+
+  const images = page.locator(
+    "section[data-testid='feature-group'] header img",
+  );
+  await expect(images).toHaveCount(5);
+
+  const loaded = await images.evaluateAll((els) =>
+    els.map((el) => ({
+      decoded: (el as HTMLImageElement).naturalWidth > 0,
+      described: ((el as HTMLImageElement).alt || "").length > 20,
+    })),
+  );
+  expect(loaded.every((i) => i.decoded)).toBe(true);
+  // Alt text has to say what the capture shows, not "screenshot".
+  expect(loaded.every((i) => i.described)).toBe(true);
+});
