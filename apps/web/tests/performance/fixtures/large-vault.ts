@@ -53,7 +53,7 @@ export function createLargeVaultEntities(): Record<string, LargeVaultEntity> {
 
 export async function installLargeVaultFixture(page: Page) {
   const entities = createLargeVaultEntities();
-  await page.evaluate((fixture) => {
+  await page.evaluate(async (fixture) => {
     const vault = (window as any).vault;
     if (!vault?.entityStore)
       throw new Error("Performance vault hook unavailable");
@@ -66,5 +66,8 @@ export async function installLargeVaultFixture(page: Page) {
     vault.isInitialized = true;
     (window as any).graphViewController?.syncElements();
     (window as any).graphViewController?.syncRenderHints();
+    if (vault.activeVaultId) {
+      await vault.persistToIndexedDB(vault.activeVaultId);
+    }
   }, entities);
 }
