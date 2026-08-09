@@ -9,6 +9,7 @@ test("records repeatable large-vault operations in a production preview", async 
   page,
 }) => {
   test.setTimeout(120_000);
+  let collectedSamples: any[] = [];
   await page.addInitScript(() => {
     (window as any).__CODEX_PERFORMANCE_CAPTURE__ = true;
   });
@@ -40,8 +41,18 @@ test("records repeatable large-vault operations in a production preview", async 
       graph.focusDepth = Math.min(graph.focusDepth + 1, 6);
       graph.focusDepth = Math.max(graph.focusDepth - 1, 1);
     });
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    collectedSamples = await page.evaluate(
+      () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+    );
 
     await page.goto("/table");
+    await installLargeVaultFixture(page);
     const search = page.getByTestId("entity-table-search");
     await expect(search).toBeVisible();
     await search.fill("benchmark entity 42");
@@ -67,6 +78,6 @@ test("records repeatable large-vault operations in a production preview", async 
         () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
       )
       .catch(() => []);
-    writeLargeVaultResults(samples);
+    writeLargeVaultResults([...collectedSamples, ...samples]);
   }
 });
