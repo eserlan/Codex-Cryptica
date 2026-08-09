@@ -96,7 +96,7 @@ export function buildSecretSocietyPrompt(
     resolved: r,
     systemInstruction:
       "You create campaign-ready secret societies for tabletop RPGs. Return only valid JSON.",
-    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${contextBlock}\nReturn {title,summary,content,lore,labels}. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
+    userMessage: `Create a Secret Society Generator result. Theme: ${r.theme}; tone: ${r.tone}; scale: ${r.scale}; public face: ${r.publicFace}; danger: ${r.dangerLevel}; relationship to truth: ${r.truthRelationship}.${r.campaignContext ? ` Campaign context: ${r.campaignContext}.` : ""}${contextBlock}\nReturn {title,summary,content,lore,labels}. Both content and lore are required, substantive markdown fields: never return a title-and-summary-only result. Content must cover belief, ritual, public face, secret truth, conflict, and adventure hooks. Lore must include leader, taboo, recruitment, hierarchy, sacred object, meeting site, symbols, and follow-up suggestions. Keep every detail internally consistent.`,
   };
 }
 export function parseSecretSocietyResponse(
@@ -109,12 +109,20 @@ export function parseSecretSocietyResponse(
     : ["secret-society", "faction-generator", "imported-draft"];
   if (!labels.includes("secret-society")) labels.unshift("secret-society");
 
+  const content = typeof data.content === "string" ? data.content : "";
+  const lore = typeof data.lore === "string" ? data.lore : "";
+  if (!content.trim() || !lore.trim()) {
+    throw new Error(
+      "Secret society response must include substantive content and lore.",
+    );
+  }
+
   return {
     type: "faction",
     title: typeof data.title === "string" ? data.title : resolved.title,
     summary: typeof data.summary === "string" ? data.summary : "",
-    content: typeof data.content === "string" ? data.content : "",
-    lore: typeof data.lore === "string" ? data.lore : "",
+    content,
+    lore,
     labels,
     status: "active",
   };

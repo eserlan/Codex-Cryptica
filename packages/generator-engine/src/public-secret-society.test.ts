@@ -47,9 +47,15 @@ describe("Secret Society generator", () => {
     expect(prompt.userMessage).toContain("internally consistent");
   });
 
-  it("keeps useful default labels when an AI response omits them", () => {
+  it("keeps useful default labels when a complete AI response omits them", () => {
     const prompt = buildSecretSocietyPrompt({}, "", fixedRng);
-    const output = parseSecretSocietyResponse("{}", prompt.resolved);
+    const output = parseSecretSocietyResponse(
+      JSON.stringify({
+        content: "### Belief\nA complete doctrine.",
+        lore: "### Leader\nA complete reference.",
+      }),
+      prompt.resolved,
+    );
 
     expect(output.title).toBe(prompt.resolved.title);
     expect(output.labels).toEqual([
@@ -67,6 +73,19 @@ describe("Secret Society generator", () => {
     ).toThrow();
   });
 
+  it("rejects a title-and-summary-only AI response so the caller can use local fallback", () => {
+    const prompt = buildSecretSocietyPrompt({}, "", fixedRng);
+    expect(() =>
+      parseSecretSocietyResponse(
+        JSON.stringify({
+          title: "The Empty Circle",
+          summary: "A thin result.",
+        }),
+        prompt.resolved,
+      ),
+    ).toThrow("substantive content and lore");
+  });
+
   it("separates session context from the preceding prompt sentence", () => {
     const prompt = buildSecretSocietyPrompt(
       {},
@@ -76,5 +95,6 @@ describe("Secret Society generator", () => {
     expect(prompt.userMessage).toContain(
       "\nExisting campaign elements: Saltwatch.",
     );
+    expect(prompt.userMessage).toContain("title-and-summary-only");
   });
 });

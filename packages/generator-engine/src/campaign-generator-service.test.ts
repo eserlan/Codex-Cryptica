@@ -1654,4 +1654,28 @@ describe("AI policy (US2)", () => {
     expect(d.title.toLowerCase()).not.toContain("vane");
     expect(d.sourceGeneratorId).toBe("npc");
   });
+
+  it("falls back to a complete local dossier when secret-society AI output is only a title and summary", async () => {
+    const complete = vi.fn(async () =>
+      JSON.stringify({
+        title: "The Sterling Remorse Corporation",
+        summary: "A thin corporate society result.",
+        lore: "",
+        labels: ["secret-society"],
+      }),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const generated = await svc.generateDraft(
+      run("secret-society", { useAI: true }),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(generated.sourceGeneratorId).toBe("secret-society");
+    expect(generated.content).toContain("### What they believe");
+    expect(generated.lore).toContain("**Leader**");
+  });
 });
