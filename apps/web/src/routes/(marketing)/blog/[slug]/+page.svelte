@@ -31,7 +31,10 @@
       author: {
         "@type": "Person",
         name: authorName,
-        url: SITE_AUTHOR.url,
+        // SITE_AUTHOR.url identifies one specific person. A post that names its
+        // own author must not inherit it, or the structured data claims that
+        // byline belongs to someone else's page.
+        ...(article.author?.trim() ? {} : { url: SITE_AUTHOR.url }),
       },
       publisher: {
         "@type": "Organization",
