@@ -57,9 +57,7 @@
                     'icon-[lucide--zap]'} text-theme-primary w-6 h-6"
                 ></span>
               </div>
-              <h2
-                class="text-xl font-bold uppercase font-header tracking-wider text-theme-text"
-              >
+              <h2 class="text-xl font-bold font-header text-theme-text">
                 {feature.title}
               </h2>
             </div>
@@ -91,7 +89,7 @@
         </p>
         <a
           href="{base}/?utm_source=features-page&utm_medium=features-cta&utm_campaign=marketing"
-          class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
+          class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
         >
           Enter the Codex
         </a>

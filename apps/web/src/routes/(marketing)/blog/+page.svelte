@@ -19,7 +19,7 @@
   <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
     <header class="mb-16 md:mb-24">
       <h1
-        class="text-4xl md:text-6xl font-header font-bold uppercase tracking-[0.2em] mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
+        class="text-4xl md:text-6xl font-header font-bold mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
       >
         The Archive
       </h1>
@@ -34,7 +34,7 @@
       >
         <div class="space-y-1">
           <h2
-            class="text-xs font-mono font-bold uppercase tracking-widest text-theme-primary flex items-center gap-2"
+            class="text-xs font-mono font-bold text-theme-primary flex items-center gap-2"
           >
             <span class="icon-[lucide--shield-alert] h-4 w-4"></span>
             Responsible AI Positioning
@@ -47,7 +47,7 @@
         </div>
         <a
           href="{base}/responsible-ai-worldbuilding"
-          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header uppercase tracking-widest bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
+          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
         >
           Read the Pillar
           <span class="icon-[lucide--arrow-right] h-3.5 w-3.5"></span>
@@ -102,7 +102,7 @@
       <div
         class="py-20 text-center border border-dashed border-theme-border rounded-lg bg-theme-surface/5"
       >
-        <p class="text-theme-muted font-mono uppercase tracking-widest">
+        <p class="text-theme-muted font-mono">
           No transmissions found in the archive.
         </p>
       </div>

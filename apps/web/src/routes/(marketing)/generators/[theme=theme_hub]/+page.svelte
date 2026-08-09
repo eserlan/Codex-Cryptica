@@ -672,7 +672,7 @@
     <div class="max-w-6xl mx-auto">
       <a
         href="{cleanBase}/generators"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
+        class="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors mb-8"
       >
         <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
         All Generators
@@ -684,7 +684,7 @@
           {config.eyebrow}
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           {config.label} RPG Generators
         </h1>
@@ -712,7 +712,7 @@
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
             ></span>
             <span
-              class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
             >
               {card.label}
             </span>

@@ -346,7 +346,7 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>
@@ -363,7 +363,7 @@
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+        class="font-header text-sm font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -377,7 +377,7 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
@@ -394,7 +394,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+          class="font-header text-sm font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -408,7 +408,7 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>
