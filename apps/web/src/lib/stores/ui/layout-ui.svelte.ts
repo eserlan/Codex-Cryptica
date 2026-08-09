@@ -348,3 +348,11 @@ export class LayoutUIStore {
 const KEY = "__codex_layout_ui_store__";
 export const layoutUIStore: LayoutUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new LayoutUIStore());
+
+if (
+  typeof window !== "undefined" &&
+  (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+    .__CODEX_PERFORMANCE_CAPTURE__ === true
+) {
+  (window as any).layoutUIStore = layoutUIStore;
+}

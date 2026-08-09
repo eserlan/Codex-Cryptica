@@ -61,17 +61,28 @@ test("records repeatable large-vault operations in a production preview", async 
           requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
         ),
     );
+
+    await page
+      .getByRole("switch", { name: "Switch to Full Toolbox mode" })
+      .click();
+    await page.evaluate(() =>
+      (window as any).layoutUIStore.toggleSidebarTool("explorer"),
+    );
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+    const explorerSearch = page.getByPlaceholder("Search entities...");
+    await explorerSearch.fill("benchmark entity 42");
+    await explorerSearch.fill("");
+    await page.getByLabel("Close Explorer").click();
+    await page.evaluate(() =>
+      (window as any).layoutUIStore.toggleSidebarTool("explorer"),
+    );
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+
     collectedSamples = await page.evaluate(
       () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
     );
 
-    await page.goto("/table");
-    await page.waitForFunction(
-      (entityCount) =>
-        (window as any).vault?.allEntities?.length === entityCount,
-      LARGE_VAULT_ENTITY_COUNT,
-      { timeout: 60_000 },
-    );
+    await page.getByTestId("activity-bar-table").click();
     const search = page.getByTestId("entity-table-search");
     await expect(search).toBeVisible();
     await search.fill("benchmark entity 42");
