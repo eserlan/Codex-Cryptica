@@ -31,6 +31,13 @@ test.describe("Public shell", () => {
       await page.goto(path);
       await expect(page.getByTestId("shell-wordmark")).toBeVisible();
 
+      // The banner is asserted by role rather than by counting <header> tags:
+      // several pages open their content with a page-level <header>, which is
+      // legitimate and carries no landmark role because it sits inside <main>.
+      // Only the shell's own header, a sibling of <main>, is the banner — so
+      // this is what catches a layout reintroducing a second one.
+      await expect(page.getByRole("banner")).toHaveCount(1);
+
       // One landmark each: the old per-page footers and the SEO layouts'
       // duplicate headers are gone, and no page nests its own <main>.
       expect(await landmarkCounts(page)).toEqual({
