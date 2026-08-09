@@ -51,6 +51,25 @@ describe("Secret Society generator", () => {
     expect(prompt.systemInstruction).toContain("modern terminology");
   });
 
+  it("keeps an existing food cult as relationship context rather than reusing its conceit", () => {
+    const prompt = buildSecretSocietyPrompt(
+      {
+        theme: "Classic Fantasy",
+        campaignContext:
+          "The Gilded Alimentary Concord is a food-harvesting cult.",
+      },
+      "Existing campaign entities: The Gilded Alimentary Concord, a food-harvesting cult.",
+      fixedRng,
+    );
+
+    expect(prompt.userMessage).toContain("The Gilded Alimentary Concord");
+    expect(prompt.systemInstruction).toContain("distinct central conceit");
+    expect(prompt.systemInstruction).toContain("optional relationship context");
+    expect(prompt.systemInstruction).toContain(
+      "do not reuse their central domain",
+    );
+  });
+
   it("keeps useful default labels when a complete AI response omits them", () => {
     const prompt = buildSecretSocietyPrompt({}, "", fixedRng);
     const output = parseSecretSocietyResponse(
