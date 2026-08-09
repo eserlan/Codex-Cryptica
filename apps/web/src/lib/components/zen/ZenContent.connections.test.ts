@@ -76,6 +76,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
+    activeTheme: { id: "workspace" },
     jargon: {
       chronicle_header: "Chronicle",
       lore_header: "Lore",
@@ -86,6 +87,22 @@ vi.mock("$lib/stores/theme.svelte", () => ({
 vi.mock("$lib/services/RevisionService.svelte", () => ({
   revisionService: {
     pendingDraft: null,
+  },
+}));
+
+vi.mock("$lib/stores/canvas-registry.svelte", () => ({
+  canvasRegistry: {
+    findCanvasForEntity: (entityId: string) =>
+      entityId === "delve-1" ? { slug: "delve-canvas" } : undefined,
+    importCanvas: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/services/dungeon-delve-service", () => ({
+  isDelveLocationEntity: (entity: { kind?: string }) =>
+    entity.kind === "dungeon",
+  dungeonDelveService: {
+    buildDelveCanvasFromConcept: vi.fn(),
   },
 }));
 
@@ -155,5 +172,21 @@ describe("ZenContent with duplicate/mutual connections", () => {
     expect(
       queryAllByRole("combobox", { name: /relationship type/i }).length,
     ).toBe(0);
+  });
+
+  it("gives the rebuild canvas control an accessible name only for existing delve canvases", () => {
+    const { getByRole, queryByRole } = render(ZenContent, {
+      entity: {
+        ...vault.entities["entity-1"],
+        id: "delve-1",
+        kind: "dungeon",
+      },
+      editState: { isEditing: false, aliases: [] },
+      scrollContainer: undefined,
+      onNavigate: () => {},
+    });
+
+    expect(getByRole("button", { name: "Rebuild Canvas Map" })).toBeTruthy();
+    expect(queryByRole("button", { name: "Generate Canvas Map" })).toBeNull();
   });
 });
