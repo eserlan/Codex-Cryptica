@@ -69,7 +69,7 @@
             <!-- A real capture of the product doing this job, per chunk 14.
                  Lazy, and sized so a phone never fetches the full-width file. -->
             <img
-              src="{base}{group.image}"
+              src={group.image}
               alt={group.imageAlt}
               width="1600"
               height="1000"

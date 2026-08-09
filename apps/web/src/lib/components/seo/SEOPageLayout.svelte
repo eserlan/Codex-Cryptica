@@ -137,7 +137,7 @@
   <meta property="og:url" content={pageUrl} />
   <meta
     property="og:image"
-    content="https://codexcryptica.com/screenshots/feature-connect.jpg"
+    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
   />
   <meta property="og:image:width" content="1600" />
   <meta property="og:image:height" content="1000" />
@@ -147,7 +147,7 @@
   <meta name="twitter:description" content={data.description} />
   <meta
     name="twitter:image"
-    content="https://codexcryptica.com/screenshots/feature-connect.jpg"
+    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
   />
   <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
