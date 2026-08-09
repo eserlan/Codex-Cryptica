@@ -91,8 +91,13 @@ describe("root +page.svelte — front page overlay keydown", () => {
         name: /private rpg lore vault/i,
       }),
     ).toBeTruthy();
-    expect(screen.getByText("Welcome to Codex Cryptica")).toBeTruthy();
-    expect(screen.getByText(/local-first campaign manager/i)).toBeTruthy();
+    // The "Welcome to Codex Cryptica" eyebrow and the
+    // "RPG Campaign Manager & Worldbuilding Tool" subheading were removed: the
+    // header wordmark already names the product, and those keywords live in
+    // <title> and the meta description rather than needing a third statement
+    // on screen.
+    expect(screen.queryByText("Welcome to Codex Cryptica")).toBeNull();
+    expect(screen.getByText(/private markdown notes/i)).toBeTruthy();
     expect(
       screen.getByRole("heading", { level: 2, name: /living lore graph/i }),
     ).toBeTruthy();

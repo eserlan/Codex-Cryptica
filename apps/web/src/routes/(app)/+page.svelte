@@ -347,27 +347,16 @@
               ></span>
               Local-first RPG campaign manager • Private by default
             </div>
-            <p
-              class="mb-2 text-sm md:text-base font-mono font-semibold uppercase tracking-[0.2em] text-theme-primary/90"
-            >
-              Welcome to Codex Cryptica
-            </p>
             <h1
               class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
             >
               Private RPG Lore Vault
             </h1>
-            <h2
-              class="text-xs sm:text-sm font-mono uppercase tracking-widest text-theme-primary/60 mb-3"
-            >
-              RPG Campaign Manager &amp; Worldbuilding Tool
-            </h2>
             <p
               class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
-              A free, local-first campaign manager for GMs: private Markdown
-              notes, visual lore graphs, timelines, offline prep, and optional
-              AI in one browser workspace.
+              Private Markdown notes, visual lore graphs, and timelines for GMs.
+              Free, offline-capable, no account.
             </p>
           </div>
 
