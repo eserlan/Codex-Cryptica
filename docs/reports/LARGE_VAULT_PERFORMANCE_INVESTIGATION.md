@@ -1,8 +1,9 @@
 # Large Vault Performance Investigation
 
-**Date:** 2026-08-09  
-**Status:** Investigation complete; no application changes implemented  
-**Test scale:** 1,600 entities and 9,000 directed connections
+- **Date:** 2026-08-09
+- **Status:** Investigation complete; implementation tracked in GitHub
+- **Test scale:** 1,600 entities and 9,000 directed connections
+- **Tracking epic:** [#2135 — Make 1,600+ entity vaults consistently responsive](https://github.com/eserlan/Codex-Cryptica/issues/2135)
 
 ## Executive Summary
 
@@ -552,19 +553,108 @@ Initial targets should emphasize responsiveness:
 The exact release budgets should be set after measuring a production build on
 the target desktop and mobile device classes.
 
-## Proposed Implementation Sequence
+## Implementation Plan and GitHub Tracking
 
-1. Add phase-level graph and vault timing instrumentation.
-2. Decouple graph selection from the focus root and add regression tests.
-3. Add a membership-only batched graph sync path.
-4. Make focus expansion explicit or progressive.
-5. Fix cumulative cold-sync payloads and repeated index rebuilds.
-6. Introduce Table pagination or virtualization.
-7. Introduce Explorer virtualization or a progressive flattened tree.
-8. Make cache startup metadata-first and separate lore from bulk reads.
-9. Move search serialization and compression to the worker.
-10. Profile the production build against a private copy of the real vault and
-    revise thresholds from field evidence.
+The implementation source of truth is
+[epic #2135](https://github.com/eserlan/Codex-Cryptica/issues/2135) and its
+GitHub Sub-issues panel. The work is divided into independently reviewable
+issues so high-impact fixes can land without waiting for the entire epic.
+
+### Phase 0 — Measure and Remove the Graph Interaction Stalls
+
+The first phase establishes trustworthy budgets and removes the graph paths
+responsible for the largest measured blocked frames.
+
+1. [#2137 — Instrument large-vault operations and establish interaction budgets](https://github.com/eserlan/Codex-Cryptica/issues/2137)
+   adds privacy-safe operation timing, phase-level graph attribution, and
+   production-build budgets.
+2. [#1633 — Harden the existing large-vault graph performance test](https://github.com/eserlan/Codex-Cryptica/issues/1633)
+   covers edit resync, performance-mode effectiveness, and the first
+   visual-detail threshold crossing that the current steady-state test warms
+   away.
+3. [#2140 — Decouple node selection from focus-root navigation](https://github.com/eserlan/Codex-Cryptica/issues/2140)
+   makes selection of an already rendered node membership-stable.
+4. [#2136 — Add batched, delta-only focus membership synchronization](https://github.com/eserlan/Codex-Cryptica/issues/2136)
+   limits reconciliation to added, removed, and genuinely changed elements.
+5. [#2138 — Make large-vault focus expansion bounded and progressive](https://github.com/eserlan/Codex-Cryptica/issues/2138)
+   prevents a normal zoom gesture from synchronously introducing an unbounded
+   graph element set.
+
+The enforced GitHub dependency spine is:
+
+```text
+#2140 selection semantics
+  -> #2136 delta-only membership sync
+    -> #2138 bounded focus expansion
+```
+
+#2137 and #1633 can proceed in parallel with #2140. They should be complete
+before final phase budgets are accepted.
+
+**Phase checkpoint:** Post before/after numbers for repeated node selection,
+focus expansion/contraction, first LOD crossing, and steady focus/full-graph
+interaction. A rendered-node selection must no longer replace the Cytoscape
+element set.
+
+### Phase 1 — Bound Broad Scale-Sensitive Surfaces
+
+These issues can mostly proceed in parallel once their baselines and shared
+data contracts are recorded.
+
+1. [#2139 — Make cold-sync indexing proportional to changed entities](https://github.com/eserlan/Codex-Cryptica/issues/2139)
+   replaces cumulative chunk payloads and repeated full index rebuilds with
+   changed-entity work.
+2. [#2141 — Bound Entity Table rendering for large vaults](https://github.com/eserlan/Codex-Cryptica/issues/2141)
+   selects and implements accessible pagination or virtualization.
+3. [#2142 — Bound Entity Explorer rendering for large vaults](https://github.com/eserlan/Codex-Cryptica/issues/2142)
+   introduces a bounded model for list, category, label, and hierarchy views.
+4. [#2148 — Route Explorer and Table content filtering through the search worker](https://github.com/eserlan/Codex-Cryptica/issues/2148)
+   removes per-query main-thread scans of every entity content field.
+5. [#2143 — Make warm startup metadata-first and avoid bulk lore deserialization](https://github.com/eserlan/Codex-Cryptica/issues/2143)
+   separates initial metadata availability from heavy content and lore
+   hydration.
+
+#2148 and #2143 must agree on the metadata, preview, partial-index, and fallback
+contract before either issue finalizes a persisted data shape. Table and
+Explorer rendering should be bounded independently of whether worker-backed
+content filtering has landed.
+
+**Phase checkpoint:** Demonstrate cold indexing proportional to changed entity
+count, warm startup without bulk lore deserialization, and Explorer/Table DOM
+size bounded independently of total vault size. Record accessibility results
+for the selected pagination or virtualization designs.
+
+### Phase 2 — Remove Secondary and Conditional Long-Task Sources
+
+1. [#2144 — Move search-index serialization and compression off the main thread](https://github.com/eserlan/Codex-Cryptica/issues/2144)
+   keeps large persisted-index transformations in the worker and makes
+   background persistence input-aware.
+2. [#2145 — Add delta-based mutation and true bulk-operation APIs](https://github.com/eserlan/Codex-Cryptica/issues/2145)
+   removes full-map change discovery, serial per-entity bulk operations, and
+   unnecessary explicit-save debounce latency.
+3. [#2146 — Suspend rendering work while the graph is fully covered](https://github.com/eserlan/Codex-Cryptica/issues/2146)
+   pauses minimap, animation, layout, and avoidable observer work behind a full
+   workspace or hidden document.
+4. [#2147 — Bound Timeline and Agenda rendering in date-heavy vaults](https://github.com/eserlan/Codex-Cryptica/issues/2147)
+   first establishes a representative chronology baseline, then introduces a
+   bounded rendering policy if the conditional bottleneck is confirmed.
+
+**Phase checkpoint:** Either land these improvements with before/after evidence
+or explicitly defer an issue with measurements showing that it is below the
+agreed priority threshold.
+
+### Epic Closeout
+
+The epic can close when:
+
+1. All subissues are complete or explicitly moved out of scope with rationale.
+2. The production-build scenario suite passes the agreed budgets.
+3. The suite is run against both the synthetic 1,600-entity fixture and a
+   private copy of the real large vault.
+4. The epic receives a consolidated before/after comment covering warm and
+   cold startup, graph selection and expansion, Explorer, Table, editing,
+   bulk operations, background persistence, and any remaining architectural
+   follow-ups.
 
 ## Conclusion
 
