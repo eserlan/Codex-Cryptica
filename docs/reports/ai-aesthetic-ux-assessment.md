@@ -117,6 +117,7 @@ through 14 should not start until chunk 0 reports.
 
 | Item                                       | Status                                    | Evidence                                                                                                                                                                                                                             |
 | ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Chunk 0: Perception validation             | **Baseline done, sessions pending**       | Analytics baseline and session protocol in `docs/research/chunk-0-perception-validation.md`. Chunks 9 to 14 stay blocked until the sessions run.                                                                                     |
 | Chunk 1: Provider and privacy copy audit   | **Shipped**, but see M7 correction        | `0f4275e8`, `16253868`, PR #2094. No `Gemini` string remains under `src/routes` or `src/lib/config`.                                                                                                                                 |
 | Chunk 2: Responsive entity-detail contract | **Shipped**                               | `154693a8`, `633540a9`, `49ef7486`, PR #2095, with viewport snapshots at 1280/1440/1600.                                                                                                                                             |
 | Chunk 3: Application shell reclamation     | **Shipped**                               | `4dae1425`, `85c98049`, PR #2096. Marketing footer removed from workspace routes; guest Help remains available.                                                                                                                      |
@@ -732,6 +733,24 @@ their named surface as the priority order.
 **Why this is chunk 0:** chunks 9 through 14 contain four L-sized workstreams and
 represent the majority of the plan by effort. They rest on one reviewer's read.
 This chunk costs an afternoon.
+
+**Baseline captured (2026-08-08):** the analytics half is done and the session
+protocol is written up in
+[docs/research/chunk-0-perception-validation.md](../research/chunk-0-perception-validation.md),
+including the decision rule agreed in advance. Thirty days of production traffic:
+3,080 page views over 1,880 visits; the welcome page is 38% of views;
+`/tools` and individual generator pages sit at 1.17 to 1.20 views per visit
+(arrive, act or don't, leave); 80% of visits are direct and 16% come from Reddit,
+with search a rounding error. **Mobile is 55% of visits against desktop's 43%**,
+which is worth holding onto given how much of this document's evidence was
+gathered at 1440px.
+
+Three measures the acceptance criteria assume are not actually available:
+Cloudflare Web Analytics exposes no bounce rate, scroll depth is not tracked at
+all, and save-to-vault conversion lives in Zaraz custom events rather than the
+RUM dataset. The proxy used instead is views per visit. **The sessions themselves
+still need running**; they need five to eight GMs who have not seen the product,
+and cannot be recruited from the existing Reddit audience.
 
 ### Chunk 1: Provider and privacy copy audit
 
