@@ -74,6 +74,7 @@ Use the canonical theme vocabulary already defined by comparable generators. If 
 3. Add the slug to both `GENERATOR_SLUGS_WITH_THEME` and `SLUGS_USING_STORED_THEME` in `generator-theme-maps.ts`.
 4. Update the real theme map, not the orphaned `generator-theme.ts`; verify imports before changing lookalike files.
 5. Use per-theme option pools only for options that genuinely vary by genre. Preserve custom user values when changing theme.
+6. Make the AI prompt explicitly require theme fidelity: respect the selected genre's era, technology, institutions, and vocabulary. Prohibit modern terminology, institutions, or technology unless the selected theme supports them, and add a prompt regression test for that rule.
 
 ## Structured visuals and saved entities
 
