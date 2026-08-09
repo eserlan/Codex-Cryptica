@@ -123,6 +123,9 @@ test("records repeatable large-vault operations in a production preview", async 
         () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
       )
       .catch(() => []);
-    writeLargeVaultResults([...collectedSamples, ...samples]);
+    writeLargeVaultResults([...collectedSamples, ...samples], {
+      browserVersion: page.context().browser()?.version() ?? "unknown",
+      cacheState: "cold-and-warm",
+    });
   }
 });

@@ -1,4 +1,5 @@
 export const PERFORMANCE_SCHEMA_VERSION = 1 as const;
+export const PERFORMANCE_BUDGET_SCHEMA_VERSION = 1 as const;
 
 export const PERFORMANCE_OPERATIONS = [
   "vault_open_warm",
@@ -118,4 +119,48 @@ export interface PerformanceResultV1 {
   samples: PerformanceSampleV1[];
   summaries: PerformanceSummaryV1[];
   outcomes: Record<PerformanceOutcome, number>;
+}
+
+export const PERFORMANCE_BUDGET_STATISTICS = [
+  "medianMs",
+  "p90Ms",
+  "maxMs",
+] as const;
+
+export type PerformanceBudgetStatistic =
+  (typeof PERFORMANCE_BUDGET_STATISTICS)[number];
+
+export type PerformanceBudgetMode = "report-only" | "blocking";
+
+/** A reviewed gate for one operation summary in the v1 result contract. */
+export interface PerformanceBudgetEntryV1 {
+  scenario: string;
+  operation: PerformanceOperation;
+  statistic: PerformanceBudgetStatistic;
+  unit: "ms";
+  blockingLimitMs: number;
+  targetMs: number;
+  sampleCount: number;
+  warmupPolicy: string;
+  baselineValueMs: number;
+  baselineCommit: string;
+  browserVersion: string;
+  runnerImage: string;
+  capturedAt: string;
+  rationale: string;
+  relatedIssues: number[];
+}
+
+export interface PerformanceBudgetManifestV1 {
+  schemaVersion: typeof PERFORMANCE_BUDGET_SCHEMA_VERSION;
+  mode: PerformanceBudgetMode;
+  fixtureVersion: string;
+  fixtureChecksum: string;
+  entries: PerformanceBudgetEntryV1[];
+}
+
+export interface PerformanceBudgetCheckV1 {
+  entry: PerformanceBudgetEntryV1;
+  observedMs: number | undefined;
+  status: "pass" | "report" | "fail" | "missing";
 }
