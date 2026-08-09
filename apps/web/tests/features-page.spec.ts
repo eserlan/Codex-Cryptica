@@ -17,10 +17,10 @@ test.describe("Features page", () => {
     await expect(groups).toHaveCount(5);
 
     // Each group leads with a few and lists the rest, so no group is a wall.
-    const leads = await page.getByTestId("feature-lead").count();
-    const rest = await page.locator('[data-testid="feature-rest"] li').count();
-    expect(leads).toBe(20);
-    expect(rest).toBeGreaterThan(0);
+    await expect(page.getByTestId("feature-lead")).toHaveCount(20);
+    await expect
+      .poll(() => page.locator('[data-testid="feature-rest"] li').count())
+      .toBeGreaterThan(0);
   });
 
   test("orders the reader's jobs before the AI ones", async ({ page }) => {

@@ -49,10 +49,13 @@
     <!-- Grouped by job -->
     <div class="space-y-20 mb-32">
       {#each groups as group, groupIndex (group.id)}
-        <section aria-labelledby="group-{group.id}" data-testid="feature-group">
+        <section
+          aria-labelledby={"group-" + group.id}
+          data-testid="feature-group"
+        >
           <header class="mb-8 max-w-2xl">
             <h2
-              id="group-{group.id}"
+              id={"group-" + group.id}
               class="text-3xl md:text-4xl font-bold font-header text-theme-text mb-3"
             >
               {group.title}
