@@ -318,10 +318,26 @@
 
   // Selection & Search Focus
   $effect(() => {
+    if (controller.cy && graph.focusViewActive) {
+      graph.ensureFocusRoot();
+    }
+  });
+
+  $effect(() => {
     void controller.pendingSearchFocus;
+    // Re-apply focus after an explicit outside-focus navigation has synced the
+    // newly rendered node into Cytoscape.
+    void graph.focusRootId;
     const currentCy = controller.cy;
     const currentSelectedId = controller.selectedId;
     if (currentCy) {
+      if (
+        currentSelectedId &&
+        graph.focusViewActive &&
+        currentCy.$id(currentSelectedId).length === 0
+      ) {
+        graph.navigateFocusTo(currentSelectedId);
+      }
       controller.applyFocus(currentSelectedId);
       if (currentSelectedId) {
         const node = currentCy.$id(currentSelectedId);

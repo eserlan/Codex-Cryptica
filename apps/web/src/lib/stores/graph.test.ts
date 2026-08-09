@@ -80,6 +80,7 @@ describe("GraphStore", () => {
     graph.recentLabels = [];
     graph.eras = [];
     graph.centralNodeId = null;
+    graph.focusRootId = null;
     graph.labelFilterMode = "OR"; // Reset this explicitly
     (graph as any)._initPromise = null;
 
@@ -223,6 +224,72 @@ describe("GraphStore", () => {
     expect(renderedIds.has("node-7")).toBe(true);
     expect(renderedIds.has("node-8")).toBe(true);
     expect(renderedIds.has("node-9")).toBe(true);
+  });
+
+  it("keeps focus membership stable when selecting an already rendered node", () => {
+    const entities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      connections: index === 0 ? [{ target: "node-1" }] : [],
+    })) as any[];
+    (vault as any).allEntities = entities;
+    (vault as any).entities = Object.fromEntries(
+      entities.map((e) => [e.id, e]),
+    );
+    (GraphTransformer.entitiesToElements as any).mockImplementation(
+      (items: any[]) =>
+        items.map((item) => ({ group: "nodes", data: { id: item.id } })),
+    );
+    const store = new GraphStore();
+    store.ensureFocusRoot();
+    const root = store.focusRootId;
+    const before = store.elements.map((element: any) => element.data.id);
+
+    (vault as any).selectedEntityId = before[1];
+
+    expect(store.focusRootId).toBe(root);
+    expect(store.elements.map((element: any) => element.data.id)).toEqual(
+      before,
+    );
+  });
+
+  it("moves the focus root only for explicit outside-focus navigation", () => {
+    const entities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      connections: [],
+    })) as any[];
+    (vault as any).allEntities = entities;
+    (vault as any).entities = Object.fromEntries(
+      entities.map((e) => [e.id, e]),
+    );
+    const store = new GraphStore();
+    store.ensureFocusRoot();
+
+    store.navigateFocusTo("node-700");
+
+    expect(store.focusRootId).toBe("node-700");
+  });
+
+  it("keeps the root on clear selection and resets it on a vault switch", async () => {
+    const entities = Array.from({ length: 701 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      connections: [],
+    })) as any[];
+    (vault as any).allEntities = entities;
+    (vault as any).entities = Object.fromEntries(
+      entities.map((e) => [e.id, e]),
+    );
+    const store = new GraphStore();
+    store.navigateFocusTo("node-12");
+
+    (vault as any).selectedEntityId = null;
+    expect(store.focusRootId).toBe("node-12");
+
+    await store.init();
+    window.dispatchEvent(new Event("vault-switched"));
+    expect(store.focusRootId).toBeNull();
   });
 
   it("toggleFullGraph flips the showFullGraph flag", () => {
