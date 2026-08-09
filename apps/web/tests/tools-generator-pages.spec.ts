@@ -78,6 +78,10 @@ test.describe("Tools pages show an example draft on load", () => {
    * What must not happen is a page arriving with nothing.
    */
   const EXPECTED_TITLES: Record<string, string> = {
+    // Four carry their own override; rpg-npc-generator relies on the shared
+    // slugDrafts["npc"], and is listed for the same reason as the rest: if that
+    // shared draft went away, this page would start auto-generating too.
+    "/tools/rpg-npc-generator": "Zephyrus Gray",
     "/tools/fantasy-name-generator": "Generic Fantasy Names",
     "/tools/quest-hook-generator": "The Sunken Relic",
     "/tools/vampire-clan-generator": "House of Thorn",
@@ -88,15 +92,27 @@ test.describe("Tools pages show an example draft on load", () => {
     test(`${path} lands on its example, not a spinner`, async ({ page }) => {
       await page.goto(path);
 
-      // The draft is present without the visitor asking for one.
+      // The deterministic guard. An on-mount generation produces a random
+      // title; the fixture's is fixed. So the exact title is the assertion
+      // that actually catches the regression, verified by detaching the quest
+      // override and watching this line fail.
+      //
+      // Timing-based checks were tried first and rejected: local generation
+      // finishes in well under a sampling interval, so the Generate button's
+      // disabled window is not reliably observable. A `toBeEnabled()` with the
+      // default timeout is worse than nothing here, since it retries for
+      // seconds and passes once the generation it should catch has completed.
       await expect(page.locator("#copy-markdown-btn")).toBeVisible({
         timeout: 15000,
       });
       await expect(page.getByText(title).first()).toBeVisible();
 
-      // And it arrived as a fixture rather than an on-mount generation, so the
-      // primary action is usable immediately.
-      await expect(page.locator("#generate-button")).toBeEnabled();
+      // Secondary, and cheap: the primary action is usable straight away. Short
+      // explicit timeout, because the default would wait out exactly the
+      // generation this is meant to rule out.
+      await expect(page.locator("#generate-button")).toBeEnabled({
+        timeout: 500,
+      });
     });
   }
 });
