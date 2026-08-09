@@ -32,6 +32,7 @@ import {
   FACTION_NPC_NAMING_STYLES,
   factionResource,
 } from "./public-faction-constants";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export { factionConfig, themeIdToLabel, vampireConfig, nomadClanConfig };
 
@@ -116,7 +117,7 @@ ${sessionContext}
 - Theme/Genre: ${theme}
 - Faction Type: ${factionType}
 - Scope: ${scope}
-- Moral Posture: ${alignment}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Moral Posture: ${alignment}${formatCampaignContextBlock(campaignContext)}
 - Faction Naming Directive: ${chosenNamingStyle}
 - NPC Naming Directive: ${chosenNpcStyle}`;
 
@@ -339,7 +340,7 @@ ${sessionContext}
 - Role: ${role}
 - Tone: ${tone}
 - Territory: ${territory}
-- Current Conflict: ${conflict}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}`;
+- Current Conflict: ${conflict}${formatCampaignContextBlock(campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }
@@ -503,7 +504,7 @@ Options:
 - Clan Weakness: ${weakness}
 - Scope of Influence: ${scope}
 - Moral Posture: ${alignment}
-${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+${formatCampaignContextBlock(campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly:
 {

@@ -17,7 +17,6 @@
   import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
-  import MarketingFooter from "./MarketingFooter.svelte";
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
   import EntityDetailModal from "./EntityDetailModal.svelte";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
@@ -49,6 +48,7 @@
     trackSaveToCodex,
     countRelatedEntities,
   } from "$lib/services/analytics/generator-save-tracking";
+  import { registerShellCtaHandler } from "./marketing-shell";
 
   let {
     canonicalPath,
@@ -234,6 +234,10 @@
 
     showSaveModal = false;
   }
+
+  // The shell renders the header CTA now, so this page registers its tracking
+  // rather than binding it to a button it no longer owns.
+  $effect(() => registerShellCtaHandler(handleOpenCodex));
 
   function handleOpenCodex() {
     trackPublicGeneratorAction("open_codex", {
@@ -640,52 +644,6 @@
   data-world-theme={activeThemeId}
 >
   <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/?utm_source=generator-logo&utm_medium=nav&utm_campaign=seo-funnel"
-        class="flex items-center gap-2 group min-w-0"
-        id="logo-link"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
-      >
-        <a
-          href="{cleanBase}/features"
-          class="hover:text-theme-primary transition-colors">Features</a
-        >
-        <a
-          href="{cleanBase}/blog"
-          class="hover:text-theme-primary transition-colors">Devlog</a
-        >
-        <a
-          href="{cleanBase}/generators"
-          class="hover:text-theme-primary transition-colors">Generators</a
-        >
-      </nav>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?utm_source=generator-header-cta&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-          id="nav-cta-btn"
-          onclick={handleOpenCodex}
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
 
   <!-- Compact Explainer Strip — no duplicate generate CTA (#1274) -->
   <div class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6">
@@ -703,7 +661,7 @@
   </div>
 
   <div
-    class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
+    class="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
     <!-- Output Card Column: controls first on mobile, middle column on desktop -->
     <div
@@ -951,8 +909,6 @@
     entity={selectedHubEntity}
     onClose={() => (selectedHubEntity = null)}
   />
-
-  <MarketingFooter />
 </div>
 
 <style>

@@ -71,7 +71,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-theme-bg text-theme-text">
-  <div class="mx-auto max-w-6xl px-6 py-12 space-y-8">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 space-y-8">
     <header class="space-y-3">
       <p
         class="text-xs font-header uppercase tracking-widest text-theme-primary"
@@ -119,13 +119,13 @@
       <div class="flex items-end gap-2">
         <button
           type="submit"
-          class="min-h-12 rounded bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-white"
+          class="min-h-12 rounded bg-theme-primary px-4 py-2 text-xs font-bold text-white"
         >
           Search
         </button>
         <a
           href={resolve("/worlds")}
-          class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-text inline-flex items-center"
+          class="min-h-12 rounded border border-theme-border px-4 py-2 text-xs font-bold text-theme-text inline-flex items-center"
         >
           Clear
         </a>
@@ -140,9 +140,7 @@
       <div
         class="flex items-center justify-between border-b border-theme-border pb-4"
       >
-        <p
-          class="text-xs font-header uppercase tracking-wider text-theme-text/60"
-        >
+        <p class="text-xs font-header text-theme-text/60">
           Found {data.page.results.length} world{data.page.results.length === 1
             ? ""
             : "s"}

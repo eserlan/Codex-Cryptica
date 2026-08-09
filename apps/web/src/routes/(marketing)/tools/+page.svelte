@@ -1,6 +1,5 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
 
   type ToolLink = {
     href: string;
@@ -399,19 +398,12 @@
   <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{base}/?ref=tools"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        Codex Cryptica
-      </a>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -419,7 +411,7 @@
           Tools Directory
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Tools, Generators, and Comparisons
         </h1>
@@ -431,13 +423,13 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-14">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-14">
     {#each toolSections as section (section.title)}
       <section aria-labelledby={`${section.title}-heading`}>
         <div class="max-w-3xl mb-6">
           <h2
             id={`${section.title}-heading`}
-            class="font-header text-2xl font-bold uppercase tracking-wider text-theme-primary mb-2"
+            class="font-header text-2xl font-bold text-theme-primary mb-2"
           >
             {section.title}
           </h2>
@@ -450,9 +442,7 @@
           {#each section.groups as group, groupIndex (`${section.title}-${groupIndex}`)}
             <div>
               {#if group.title}
-                <h3
-                  class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
-                >
+                <h3 class="font-header text-sm font-bold text-theme-text mb-4">
                   {group.title}
                 </h3>
               {/if}
@@ -468,7 +458,7 @@
                         class="{link.icon} h-5 w-5 text-theme-primary mb-4 block"
                       ></span>
                       <span
-                        class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                        class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                       >
                         {link.label}
                       </span>
@@ -487,6 +477,4 @@
       </section>
     {/each}
   </div>
-
-  <MarketingFooter />
-</main>
+</div>

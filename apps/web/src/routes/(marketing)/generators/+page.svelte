@@ -333,19 +333,12 @@
     `ipt>`}
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{base}/?ref=generators"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        Codex Cryptica
-      </a>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -353,7 +346,7 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>
@@ -366,11 +359,11 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-12">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-12">
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+        class="font-header text-sm font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -384,7 +377,7 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
@@ -401,7 +394,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+          class="font-header text-sm font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -415,7 +408,7 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>
@@ -429,4 +422,4 @@
       </section>
     {/each}
   </div>
-</main>
+</div>

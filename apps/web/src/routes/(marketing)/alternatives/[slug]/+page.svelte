@@ -10,7 +10,7 @@
       class="icon-[lucide--loader-2] animate-spin text-theme-primary w-8 h-8"
       aria-hidden="true"
     ></span>
-    <p class="text-xs uppercase tracking-widest text-theme-muted font-bold">
+    <p class="text-xs text-theme-muted font-bold">
       Redirecting to comparison...
     </p>
   </div>

@@ -161,7 +161,7 @@ export const COACH_MARKS: CoachMark[] = [
     id: "graph-fab",
     icon: "icon-[lucide--sliders-horizontal]",
     title: "Graph controls",
-    body: "The dark button opens layout, filters, and display options for the graph.",
+    body: "The dark button opens layout, filters, and display options. Drag to pan, pinch to zoom, and tap a node to open it.",
     targetSelector: '[data-testid="graph-controls-fab"]',
   },
   {
@@ -191,7 +191,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "guided-mode-quick-start",
     title: "Quick Start a world",
     content:
-      "Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation from a theme and optional premise — works fully offline.",
+      "Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation. One choice sets both the genre of the generated world and your workspace appearance, and the dialog previews what you'll get before you commit. Works fully offline.",
     icon: "icon-[lucide--sparkles]",
   },
   "guided-mode-toggle": {
@@ -254,7 +254,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "visual-graph",
     title: "Visual Graph",
     content:
-      "Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
+      "Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; use Fit to Screen in the graph controls whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance. The drawing needs a pointer and a screen, so Browse as table in the graph controls opens the same entities as a keyboard-friendly list, and each entity page names its connections and their direction.",
     icon: "icon-[lucide--share-2]",
   },
   "world-chronology": {

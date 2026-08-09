@@ -122,7 +122,7 @@
           onclick={() => {
             lockedTheme = null;
           }}
-          class="font-bold uppercase tracking-wider text-theme-primary hover:brightness-110 flex-shrink-0"
+          class="font-bold text-theme-primary hover:brightness-110 flex-shrink-0"
           id="unlock-theme-btn"
           title="Let each roll pick a random theme again"
         >
@@ -139,7 +139,7 @@
           keepCategory = true;
           trigger();
         }}
-        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
+        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold font-header text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
         id="regenerate-category-btn"
         title="Keep this idea type and roll a fresh one"
       >

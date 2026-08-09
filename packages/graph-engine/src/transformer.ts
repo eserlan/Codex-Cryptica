@@ -523,15 +523,20 @@ export const getGraphStyle = (
         // hit this default path, so keep base opacity high enough to read.
         opacity: 0.6,
         label: "data(label)",
-        "text-rotation": "autorotate",
-        "font-size": 8,
+        // Keep relationship labels horizontal. Autorotation turns labels on
+        // steep or reciprocal edges into hard-to-scan text and makes crowded
+        // clusters look denser than they are.
+        "text-rotation": "none",
+        "font-size": 9,
         "min-zoomed-font-size": 8,
         "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         color: tokens.text,
         "text-background-color": tokens.background,
-        "text-background-opacity": 0.8,
-        "text-background-padding": "2px",
-        "text-margin-y": -8,
+        "text-background-opacity": 0.92,
+        "text-background-padding": "3px",
+        "text-margin-y": -10,
+        "text-max-width": 120,
+        "text-wrap": "ellipsis",
         "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
         ...getFantasyEdgeStyle(template),
@@ -564,6 +569,16 @@ export const getGraphStyle = (
         opacity: 0.08,
         "text-opacity": 0.08,
         events: "no",
+      },
+    },
+    {
+      // When an entity is selected, retain labels for its immediate
+      // neighbourhood and remove the dimmed background labels. This avoids
+      // labels competing with the entity-detail panel without trying to route
+      // canvas text around a DOM overlay.
+      selector: "edge.dimmed",
+      style: {
+        label: "",
       },
     },
     {

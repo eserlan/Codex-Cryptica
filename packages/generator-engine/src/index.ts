@@ -287,6 +287,7 @@ export {
   generateStarterConstellationLocal,
   buildStarterConstellationPrompt,
   parseStarterConstellationResponse,
+  getStarterConstellationPreview,
   STARTER_CONSTELLATION_THEME_IDS,
   type StarterConstellationPrompt,
 } from "./starter-constellation";

@@ -525,3 +525,187 @@ describe("adventure generator registry", () => {
     expect(resolveEntityType("adventure", ["character"])).toBe("character");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Binding user-supplied seeds
+// ---------------------------------------------------------------------------
+
+/** A hook copied straight out of the star system generator's sidebar. */
+const AURELIA_HOOK =
+  "Broker a tense truce between striking miners on Amalthea and corporate " +
+  "executives on Phobos-Zero before sabotage disables the station's primary " +
+  "reaction mass pumps.";
+
+describe("buildAdventurePrompt with a user seed", () => {
+  it("presents the seed as binding fact rather than a creative seed", () => {
+    const prompt = buildAdventurePrompt({ seed: AURELIA_HOOK });
+    expect(prompt.userMessage).toContain("GIVEN SITUATION");
+    expect(prompt.userMessage).toContain(AURELIA_HOOK);
+    expect(prompt.userMessage).toContain("must be ABOUT this situation");
+  });
+
+  it("lists the seed's names as fixed", () => {
+    const prompt = buildAdventurePrompt({ seed: AURELIA_HOOK });
+    expect(prompt.userMessage).toContain("These names are fixed");
+    expect(prompt.userMessage).toContain("- Amalthea");
+    expect(prompt.userMessage).toContain("- Phobos-Zero");
+  });
+
+  it("promotes a seed's stated deadline to the adventure's pressure", () => {
+    const prompt = buildAdventurePrompt({ seed: AURELIA_HOOK });
+    expect(prompt.userMessage).toContain("states its own deadline");
+  });
+
+  it("omits the deadline instruction for a seed with no stated pressure", () => {
+    const prompt = buildAdventurePrompt({
+      seed: "A crashed skycar in the undercity.",
+    });
+    expect(prompt.userMessage).toContain("GIVEN SITUATION");
+    expect(prompt.userMessage).not.toContain("states its own deadline");
+  });
+
+  it("tells the model the seed's names override the name restrictions", () => {
+    const prompt = buildAdventurePrompt({ seed: AURELIA_HOOK });
+    expect(prompt.systemInstruction).toContain("GIVEN SITUATION");
+    expect(prompt.userMessage).toContain(
+      `"already used elsewhere" list do NOT apply`,
+    );
+  });
+
+  it("does not ask the model to avoid names the seed itself introduced", () => {
+    const prompt = buildAdventurePrompt({
+      seed: AURELIA_HOOK,
+      avoidNames: ["Amalthea", "Kestrel Vane"],
+    });
+    const avoidSection = prompt.userMessage.slice(
+      prompt.userMessage.indexOf("Already used elsewhere"),
+    );
+    expect(avoidSection).toContain("Kestrel Vane");
+    expect(avoidSection).not.toContain("- Amalthea\n");
+  });
+
+  it("still carries a seed with no proper nouns", () => {
+    const prompt = buildAdventurePrompt({
+      seed: "a crashed skycar in the undercity",
+    });
+    expect(prompt.userMessage).toContain("a crashed skycar in the undercity");
+    expect(prompt.userMessage).not.toContain("These names are fixed");
+  });
+});
+
+describe("parseAdventureResponseDetailed seed fidelity", () => {
+  it("reports a response that drops every name from the seed", () => {
+    const result = parseAdventureResponseDetailed(VALID_AI_RESPONSE, {
+      genre: "Hard Sci-Fi",
+      seed: AURELIA_HOOK,
+    });
+    // A soft problem: it feeds buildAdventureRetryMessage rather than
+    // discarding the model's work for the local foundation, which only
+    // happens for banned/reused names.
+    expect(result.problems.join(" ")).toContain("drops every name");
+    expect(result.rejected).toBe(false);
+  });
+
+  it("accepts a response that keeps at least one seed name", () => {
+    const kept = VALID_AI_RESPONSE.replace(
+      "The Magistrate's Court",
+      "Phobos-Zero Court",
+    );
+    const result = parseAdventureResponseDetailed(kept, {
+      genre: "Hard Sci-Fi",
+      seed: AURELIA_HOOK,
+    });
+    expect(result.problems.join(" ")).not.toContain("drops every name");
+  });
+
+  it("does not flag seed fidelity when no seed was given", () => {
+    const result = parseAdventureResponseDetailed(VALID_AI_RESPONSE, {
+      genre: "Fantasy",
+    });
+    expect(result.problems.join(" ")).not.toContain("drops every name");
+    expect(result.problems.join(" ")).not.toContain("states its own deadline");
+  });
+
+  it("does not penalise reusing a name the seed introduced", () => {
+    const kept = VALID_AI_RESPONSE.replace(
+      "The Magistrate's Court",
+      "Phobos-Zero Court",
+    );
+    const result = parseAdventureResponseDetailed(kept, {
+      genre: "Hard Sci-Fi",
+      seed: AURELIA_HOOK,
+      avoidNames: ["Phobos-Zero"],
+    });
+    expect(result.problems.join(" ")).not.toContain("reuses names");
+  });
+
+  it("flags an objective that carries no pressure from a deadline seed", () => {
+    const limp = JSON.parse(VALID_AI_RESPONSE);
+    limp.summary = "The crew catalogues ore samples on the station.";
+    limp.primaryObjective =
+      "Catalogue the ore samples and file the assay with the Phobos-Zero registrar.";
+    const result = parseAdventureResponseDetailed(JSON.stringify(limp), {
+      genre: "Hard Sci-Fi",
+      seed: AURELIA_HOOK,
+    });
+    expect(result.problems.join(" ")).toContain("carries no pressure");
+  });
+});
+
+describe("seed pressure overrides the drawn pressure", () => {
+  it("suppresses the mechanical pressure seeds when the seed sets a deadline", () => {
+    const prompt = buildAdventurePrompt({ seed: AURELIA_HOOK });
+    expect(prompt.userMessage).toContain(
+      "Pressure: taken from the GIVEN SITUATION above",
+    );
+    expect(prompt.userMessage).not.toContain("- Primary Pressure:");
+    expect(prompt.userMessage).not.toContain(
+      "- Secondary Interacting Pressure:",
+    );
+  });
+
+  it("keeps the drawn pressure when the seed states none", () => {
+    const prompt = buildAdventurePrompt({
+      seed: "A crashed skycar in the undercity.",
+    });
+    expect(prompt.userMessage).toContain("- Primary Pressure:");
+  });
+
+  it("keeps the drawn pressure when there is no seed at all", () => {
+    const prompt = buildAdventurePrompt({ genre: "Fantasy" });
+    expect(prompt.userMessage).toContain("- Primary Pressure:");
+  });
+});
+
+describe("campaign context", () => {
+  it("carries the form's world context into the prompt", () => {
+    const prompt = buildAdventurePrompt({
+      genre: "Fantasy",
+      campaignContext: "The Swift Wing Eagles rule the Kestrel Reach.",
+    });
+    expect(prompt.userMessage).toContain(
+      "[HIGHEST PRIORITY — Campaign context, supplied by the user]",
+    );
+    expect(prompt.userMessage).toContain(
+      "The Swift Wing Eagles rule the Kestrel Reach.",
+    );
+  });
+
+  it("omits the line when no context was given", () => {
+    expect(
+      buildAdventurePrompt({ genre: "Fantasy" }).userMessage,
+    ).not.toContain("[HIGHEST PRIORITY — Campaign context");
+  });
+
+  it("keeps context and seed as separate blocks", () => {
+    const prompt = buildAdventurePrompt({
+      genre: "Fantasy",
+      campaignContext: "The Kestrel Reach is under occupation.",
+      seed: AURELIA_HOOK,
+    });
+    expect(prompt.userMessage).toContain(
+      "[HIGHEST PRIORITY — Campaign context",
+    );
+    expect(prompt.userMessage).toContain("GIVEN SITUATION");
+  });
+});

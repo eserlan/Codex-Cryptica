@@ -17,6 +17,7 @@ import {
   generatePlaceholderName as generateName,
 } from "./random-utils";
 import { parseFencedJson, asString } from "./llm-response-utils";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 const VENUE_ADJECTIVES = [
   "Sullen",
@@ -465,7 +466,7 @@ ${sessionContext}`;
 - Venue Type: ${resolved.venueType}
 - Atmosphere: ${resolved.atmosphere}
 - Wealth Level: ${resolved.wealthLevel}
-- Primary Clientele: ${resolved.clientele}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }
@@ -502,7 +503,7 @@ ${sessionContext}
 - Atmosphere: ${resolved.atmosphere}
 - Settlement Type: ${resolved.settlementType}
 - Wealth Level: ${resolved.wealthLevel}
-- Primary Clientele: ${resolved.clientele}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}
+- Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}
 - Naming Directive: ${resolved.namingDirective}`;
 
   return { systemInstruction, userMessage, resolved };
