@@ -249,7 +249,7 @@
         </span>
       </a>
       <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
+        class="hidden md:flex items-center gap-6 text-xs font-bold font-header text-theme-muted"
       >
         <a
           href="{cleanBase}/features"
@@ -267,7 +267,7 @@
       <div class="shrink-0">
         <a
           href="{cleanBase}/?utm_source=importer-nav&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -277,7 +277,7 @@
   </header>
 
   <div
-    class="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col justify-center"
+    class="max-w-4xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
       <a
@@ -289,7 +289,7 @@
         Migration Hub
       </a>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide uppercase text-theme-primary mb-4"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary mb-4"
       >
         {pageData.h1}
       </h1>
@@ -303,7 +303,7 @@
           href={pageData.toolUrl}
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
+          class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
         >
           <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
           Get {pageData.toolLabel ?? pageData.competitorName}
@@ -322,9 +322,7 @@
           >
             <span class="{feat.icon} w-4 h-4"></span>
           </div>
-          <h3
-            class="font-header font-bold text-xs uppercase tracking-wider text-theme-text"
-          >
+          <h3 class="font-header font-bold text-xs text-theme-text">
             {feat.title}
           </h3>
           <p class="text-xs text-theme-muted leading-relaxed">
@@ -350,7 +348,7 @@
       ></span>
 
       <div>
-        <h3 class="font-header font-bold text-sm uppercase tracking-wider mb-2">
+        <h3 class="font-header font-bold text-sm mb-2">
           Drag & Drop {pageData.slug === "obsidian-vault"
             ? "markdown files or vault folders"
             : "your export JSON"} here
@@ -366,7 +364,7 @@
       <div class="flex items-center gap-4">
         <label
           for="file-upload"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
         >
           Select File
         </label>
@@ -398,21 +396,17 @@
           class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-theme-border/60 pb-4 gap-4"
         >
           <div>
-            <h3
-              class="font-header font-bold text-base uppercase tracking-wider text-theme-primary"
-            >
+            <h3 class="font-header font-bold text-base text-theme-primary">
               Parsed Preview
             </h3>
-            <p
-              class="text-[10px] uppercase font-mono tracking-widest text-theme-muted mt-1"
-            >
+            <p class="text-[10px] font-mono text-theme-muted mt-1">
               Review extracted campaign data
             </p>
           </div>
           <button
             type="button"
             onclick={executeImport}
-            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           >
             Import {parseStats.total} Entries into Codex
           </button>
@@ -530,7 +524,7 @@
 
               <!-- Type select -->
               <select
-                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono uppercase rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
+                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
                 bind:value={filesParsed[idx].type}
                 aria-label="Entity type"
               >
@@ -546,17 +540,15 @@
 
     {#if pageData.relatedLinks && pageData.relatedLinks.length > 0}
       <section class="border-t border-theme-border/30 py-10">
-        <div class="max-w-4xl mx-auto px-6">
-          <h2
-            class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
-          >
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+          <h2 class="font-header text-sm text-theme-muted mb-6 text-center">
             Related Pages
           </h2>
           <div class="flex flex-wrap justify-center gap-3">
             {#each pageData.relatedLinks as link (link.href)}
               <a
                 href="{cleanBase}{link.href}"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
               >
                 <span
                   class="icon-[lucide--arrow-right] w-3 h-3"
@@ -580,7 +572,7 @@
         </p>
         <a
           href="{cleanBase}/responsible-ai-worldbuilding"
-          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+          class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary hover:underline"
         >
           <span
             class="icon-[lucide--shield-check] w-3.5 h-3.5"
@@ -594,7 +586,7 @@
     <!-- FAQ Section -->
     <section class="border-t border-theme-border/60 mt-16 pt-16">
       <h2
-        class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary mb-8 text-center"
+        class="font-header font-bold text-xl text-theme-primary mb-8 text-center"
       >
         Frequently Asked Questions
       </h2>
@@ -603,9 +595,7 @@
           <article
             class="border border-theme-border/60 bg-theme-surface/30 rounded-2xl p-5"
           >
-            <h3
-              class="font-header font-bold text-sm uppercase tracking-wider mb-2"
-            >
+            <h3 class="font-header font-bold text-sm mb-2">
               {faqItem.question}
             </h3>
             <p class="text-sm text-theme-muted leading-relaxed">

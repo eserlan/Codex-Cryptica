@@ -67,7 +67,7 @@
       <div class="shrink-0">
         <a
           href="{cleanBase}/?utm_source=migrations-nav&utm_medium=nav&utm_campaign=seo-funnel"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
         >
           Open Codex
         </a>
@@ -75,7 +75,7 @@
     </div>
   </header>
 
-  <div class="max-w-5xl mx-auto px-6 py-16 flex-grow w-full">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full">
     <div class="text-center mb-14">
       <div
         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
@@ -85,7 +85,7 @@
         Migration Hub
       </div>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide uppercase text-theme-primary mb-4"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary mb-4"
       >
         Bring Your Campaign Into Codex Cryptica
       </h1>
@@ -105,7 +105,7 @@
             class="group block h-full rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
           >
             <span
-              class="block font-header text-lg font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+              class="block font-header text-lg font-bold mb-2 group-hover:text-theme-primary transition-colors"
             >
               {importer.h1}
             </span>
@@ -113,7 +113,7 @@
               {importer.subheading}
             </span>
             <span
-              class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary"
+              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary"
             >
               {importer.ctaText}
               <span
