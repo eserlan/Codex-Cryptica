@@ -29,7 +29,7 @@
     modalUIStore.openVaultSwitcher(intent);
   };
 
-  // Which of the four things on this screen a visitor picks first, once per
+  // Which of the five things on this screen a visitor picks first, once per
   // visitor, and nothing after it. See welcome-first-click.ts for why this one
   // surface is instrumented when the rest of the app is not.
   const startDemoFromWelcome = (theme: string, action: WelcomeAction) => {

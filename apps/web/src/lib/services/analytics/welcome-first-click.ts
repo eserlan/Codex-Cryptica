@@ -12,12 +12,12 @@
  * So the welcome screen fell into a gap: it is a landing page by every measure
  * that matters (80% of visits arrive directly, it is 38% of all page views),
  * but it was instrumented like app internals, which is to say not at all. We
- * could not answer the simplest question about it: of the four things a
+ * could not answer the simplest question about it: of the five things a
  * visitor can do here, which do they pick?
  *
  * ## What this deliberately does not do
  *
- * It records one event, naming one of four controls, once per visitor, and
+ * It records one event, naming one of five controls, once per visitor, and
  * then stops. It carries no vault name, no entity, no content, no count of
  * anything the user has written, because at this moment none of that exists
  * yet. It does not initialise the analytics bridge inside the app, so the
@@ -28,8 +28,9 @@
  */
 
 import { trackEvent } from "./zaraz-analytics";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
-/** The four things a visitor can do on the welcome screen. */
+/** The five things a visitor can do on the welcome screen. */
 export const WELCOME_ACTIONS = [
   "graph_preview",
   "quick_start",
@@ -43,19 +44,9 @@ export type WelcomeAction = (typeof WELCOME_ACTIONS)[number];
 const STORAGE_KEY = "codex-cryptica-welcome-first-click";
 
 interface Deps {
-  storage?: Pick<Storage, "getItem" | "setItem">;
+  storage?: Pick<StorageLike, "getItem" | "setItem">;
   track?: typeof trackEvent;
 }
-
-const defaultStorage = () => {
-  try {
-    return typeof localStorage !== "undefined" ? localStorage : undefined;
-  } catch {
-    // Storage can throw outright in some privacy modes.
-    return undefined;
-  }
-};
-
 /**
  * Records the visitor's *first* choice on the welcome screen and nothing after.
  *
@@ -69,7 +60,7 @@ export function trackWelcomeFirstClick(
   action: WelcomeAction,
   deps: Deps = {},
 ): boolean {
-  const storage = deps.storage ?? defaultStorage();
+  const storage = deps.storage ?? browserStorage;
   const track = deps.track ?? trackEvent;
 
   try {
@@ -91,7 +82,7 @@ export function trackWelcomeFirstClick(
 
 /** Test seam: forget that this visitor has already chosen. */
 export function resetWelcomeFirstClick(
-  storage: Pick<Storage, "removeItem"> | undefined = defaultStorage(),
+  storage: Pick<StorageLike, "removeItem"> = browserStorage,
 ): void {
   try {
     storage?.removeItem(STORAGE_KEY);
