@@ -56,7 +56,11 @@
     themeToQuestGenre,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
-  import { type ValidSlug, slugMeta } from "./generator-page-meta";
+  import {
+    type SlugMetaEntry,
+    type ValidSlug,
+    slugMeta,
+  } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
   import {
     HUB_LABELS,
@@ -75,7 +79,28 @@
   let {
     slug,
     urlHubTheme = undefined,
-  }: { slug: ValidSlug; urlHubTheme?: string } = $props();
+    metaOverrides = undefined,
+    initialDraftOverride = undefined,
+  }: {
+    slug: ValidSlug;
+    urlHubTheme?: string;
+    /**
+     * Page copy that differs from the slug's own, for routes that present the
+     * same generator under a different URL and pitch.
+     *
+     * The `/tools/*` pages each hand-wired their own state, generate call and
+     * form bindings to say the same thing this component already says for
+     * their slug. They now render this and pass their title, description,
+     * FAQs, related links and canonical here, so the generator wiring exists
+     * once while the pages keep their distinct content and URLs.
+     */
+    metaOverrides?: Partial<SlugMetaEntry>;
+    /**
+     * Replaces the slug's default initial draft (from slugDrafts) when provided.
+     * Used by alternative routes that need a different default draft on first load.
+     */
+    initialDraftOverride?: GeneratorOutput;
+  } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
   // values (backHref, initialHubGenre) compute correctly on first render.
@@ -104,7 +129,7 @@
 
   const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
-  const meta = $derived(slugMeta[slug]);
+  const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
 
   let npc = $state({
     theme: factionConfig.themes[0],
@@ -662,7 +687,9 @@
     return handler(useAI);
   }
 
-  const initialDraft = $derived(slugDrafts[slug] ?? null);
+  const initialDraft = $derived(
+    initialDraftOverride ?? slugDrafts[slug] ?? null,
+  );
 </script>
 
 <SEOGeneratorLayout
