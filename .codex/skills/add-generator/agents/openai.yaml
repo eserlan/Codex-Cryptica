@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Generator"
+  short_description: "Create Codex Cryptica generators"
+  default_prompt: "Add a new generator to Codex Cryptica, including the requested in-app and public surfaces."
