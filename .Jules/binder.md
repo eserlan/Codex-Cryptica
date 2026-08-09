@@ -120,3 +120,8 @@
 
 **Learning:** Found hardcoded `Date.now()` usage in `DelveTopologyGenerator` within `packages/generator-engine/src/dungeon/delve-topology-generator.ts`. This creates a hidden dependency on the global system clock that makes testing timestamp generation brittle.
 **Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `@codex/runtime`. Updated tests to pass a mock `Clock` in the constructor to avoid Vitest global pollution.
+
+## 2024-05-18 - Isolated Storage Usage in Utilities
+
+**Learning:** SvelteKit utilities that access `localStorage` directly in functions (rather than inside components or classes) can be hard to test cleanly because they depend on the global object.
+**Action:** Extract global storage dependencies into a typed `StorageLike` interface parameter with a default to the production `browserStorage`. This provides a very clean DI seam that preserves runtime behavior while making unit testing trivial and avoiding cross-test pollution.
