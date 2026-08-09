@@ -80,6 +80,7 @@
     slug,
     urlHubTheme = undefined,
     metaOverrides = undefined,
+    initialDraftOverride = undefined,
   }: {
     slug: ValidSlug;
     urlHubTheme?: string;
@@ -94,6 +95,11 @@
      * once while the pages keep their distinct content and URLs.
      */
     metaOverrides?: Partial<SlugMetaEntry>;
+    /**
+     * Replaces the slug's default initial draft (from slugDrafts) when provided.
+     * Used by alternative routes that need a different default draft on first load.
+     */
+    initialDraftOverride?: GeneratorOutput;
   } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
@@ -681,7 +687,9 @@
     return handler(useAI);
   }
 
-  const initialDraft = $derived(slugDrafts[slug] ?? null);
+  const initialDraft = $derived(
+    initialDraftOverride ?? slugDrafts[slug] ?? null,
+  );
 </script>
 
 <SEOGeneratorLayout

@@ -9,6 +9,19 @@
    * copy and the URL were ever really this page's own.
    */
   import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
+  const initialDraftOverride: GeneratorOutput = {
+    type: "faction",
+    title: "House of Thorn",
+    summary:
+      "An aristocratic lineage of gothic vampires controlling the local banking system.",
+    content:
+      "### Heritage\nAristocratic bloodline with feeding habits centered around the upper-class elite.\n\n### Clan Weakness\nExtremely vulnerable to silver and holy ground, causing severe degradation of power.",
+    lore: "",
+    labels: ["rpg-faction", "Vampire", "Aristocratic"],
+    status: "draft",
+  };
 
   const relatedLinks = [
     { href: "/tools/faction-generator", label: "Faction generator" },
@@ -47,6 +60,7 @@
 
 <GeneratorPageContent
   slug="vampire-clan"
+  {initialDraftOverride}
   metaOverrides={{
     canonicalPath: "/tools/vampire-clan-generator",
     pageTitle:

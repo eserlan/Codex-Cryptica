@@ -9,6 +9,18 @@
    * copy and the URL were ever really this page's own.
    */
   import GeneratorPageContent from "$lib/components/seo/GeneratorPageContent.svelte";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
+  const initialDraftOverride: GeneratorOutput = {
+    type: "character",
+    title: "Generic Fantasy Names — Person",
+    summary: "",
+    content:
+      "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
+    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+    labels: ["rpg-names", "name-generator", "imported-draft"],
+    status: "draft",
+  };
 
   const relatedLinks = [
     { href: "/worldbuilding-tool", label: "Worldbuilding tool" },
@@ -42,6 +54,7 @@
 
 <GeneratorPageContent
   slug="fantasy-names"
+  {initialDraftOverride}
   metaOverrides={{
     canonicalPath: "/tools/fantasy-name-generator",
     pageTitle:
