@@ -117,6 +117,7 @@ through 14 should not start until chunk 0 reports.
 
 | Item                                       | Status                                    | Evidence                                                                                                                                                                                                                             |
 | ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Chunk 0: Perception validation             | **Baseline done, sessions pending**       | Analytics baseline and session protocol in `docs/research/chunk-0-perception-validation.md`. Chunks 9 to 14 stay blocked until the sessions run.                                                                                     |
 | Chunk 1: Provider and privacy copy audit   | **Shipped**, but see M7 correction        | `0f4275e8`, `16253868`, PR #2094. No `Gemini` string remains under `src/routes` or `src/lib/config`.                                                                                                                                 |
 | Chunk 2: Responsive entity-detail contract | **Shipped**                               | `154693a8`, `633540a9`, `49ef7486`, PR #2095, with viewport snapshots at 1280/1440/1600.                                                                                                                                             |
 | Chunk 3: Application shell reclamation     | **Shipped**                               | `4dae1425`, `85c98049`, PR #2096. Marketing footer removed from workspace routes; guest Help remains available.                                                                                                                      |
@@ -733,6 +734,24 @@ their named surface as the priority order.
 represent the majority of the plan by effort. They rest on one reviewer's read.
 This chunk costs an afternoon.
 
+**Baseline captured (2026-08-08):** the analytics half is done and the session
+protocol is written up in
+[docs/research/chunk-0-perception-validation.md](../research/chunk-0-perception-validation.md),
+including the decision rule agreed in advance. Thirty days of production traffic:
+3,080 page views over 1,880 visits; the welcome page is 38% of views;
+`/tools` and individual generator pages sit at 1.17 to 1.20 views per visit
+(arrive, act or don't, leave); 80% of visits are direct and 16% come from Reddit,
+with search a rounding error. **Mobile is 55% of visits against desktop's 43%**,
+which is worth holding onto given how much of this document's evidence was
+gathered at 1440px.
+
+Three measures the acceptance criteria assume are not actually available:
+Cloudflare Web Analytics exposes no bounce rate, scroll depth is not tracked at
+all, and save-to-vault conversion lives in Zaraz custom events rather than the
+RUM dataset. The proxy used instead is views per visit. **The sessions themselves
+still need running**; they need five to eight GMs who have not seen the product,
+and cannot be recruited from the existing Reddit audience.
+
 ### Chunk 1: Provider and privacy copy audit
 
 **Outcome:** Public explanations describe the actual data flow and name no
@@ -1006,6 +1025,36 @@ user story, while preserving existing analytics signals.
 primary demonstration on desktop and before a large graph on mobile; copy contains no
 generic unsupported superlatives; all existing destination flows and action tracking
 still work. Compare bounce and first-click distribution against the chunk 0 baseline.
+
+**Measurement note (2026-08-09):** the first-click half of that last criterion was
+not measurable when the chunk started, and the reason was structural rather than an
+oversight. The analytics boundary here is drawn by route group: `zaraz-analytics.ts`
+is wired from `(marketing)` only, and the marketing layout tears its bridge down on
+the way into the app. The welcome screen lives at `/`, an app route, so its six
+onboarding-funnel steps never left the browser. Verified in-browser: on a direct
+visit `window.__codexAnalytics.track` is undefined, and arriving from a marketing
+page and navigating in tears it down again.
+
+The welcome screen is a landing page by every measure that matters (80% of visits
+arrive directly; it is 38% of all page views) but was instrumented like app
+internals. Resolved with a deliberately narrow exception rather than by moving the
+boundary: one event naming which of the four controls a visitor uses first, once per
+visitor, carrying nothing else. Everything after that click stays untracked, and the
+onboarding funnel remains local-only. See
+`apps/web/src/lib/services/analytics/welcome-first-click.ts`.
+
+**Implementation note (2026-08-09, PR #2116):** the audit found that no call to
+action was visible on desktop at all. At 1280x900 the content was 1583px in an 833px
+layer and the primary button sat at y=1039; the welcome screen is an absolutely
+positioned overlay with its own scroll, so nothing in the usual place signalled more
+below. Mobile was already better than desktop, which inverts this document's framing
+of it as mainly a mobile problem: the 511px graph preview costs more of a 900px
+desktop viewport than of a phone's.
+
+The fix was not to move the buttons. The graph preview _is_ the primary action, a
+`<button>` opening Quick Start, and nothing said so. Its cue is now a button-styled
+"Build one like this", visible without scrolling at every viewport measured, with a
+hover state over the graph and copy that says it is clickable.
 
 ### Chunk 11: Workflow-led Features page
 

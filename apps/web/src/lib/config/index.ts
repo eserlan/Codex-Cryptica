@@ -13,6 +13,22 @@ export const CODENAME = import.meta.env.VITE_APP_CODENAME ?? "Cryptica";
 
 export const APP_NAME = "Codex Cryptica";
 export const PATREON_URL = "https://patreon.com/EspenE";
+
+/**
+ * The person behind the writing, used as the default blog byline.
+ *
+ * Every post carried an Organization byline and nothing else, which reads as
+ * output rather than as something a person will answer for. A post can name a
+ * different author in its frontmatter; this is the fallback, so changing the
+ * name is one edit rather than one per post.
+ *
+ * Name whoever actually stands behind the words. An accurate byline is the
+ * entire point; a decorative one is worse than none.
+ */
+export const SITE_AUTHOR = {
+  name: "Espen",
+  url: PATREON_URL,
+} as const;
 export const DISCORD_URL = "https://discord.gg/5UUMCChF2u";
 
 export const IS_STAGING =

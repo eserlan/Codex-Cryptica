@@ -11,6 +11,7 @@
     civilisationLevel = $bindable(starSystemConfig.civilisationLevels[0]),
     systemCharacter = $bindable(starSystemConfig.systemCharacters[0]),
     scientificRealism = $bindable(starSystemConfig.scientificRealism[0]),
+    campaignContext = $bindable(""),
     onGenreChange = undefined,
     onSurprise = undefined,
   }: {
@@ -19,6 +20,7 @@
     civilisationLevel: string;
     systemCharacter: string;
     scientificRealism: string;
+    campaignContext?: string;
     onGenreChange?: (genre: string) => void;
     onSurprise?: () => void;
   } = $props();
@@ -113,4 +115,26 @@
     <span class="icon-[lucide--dices] h-3.5 w-3.5"></span>
     Surprise Me
   </button>
+</div>
+
+<div class="flex flex-col gap-1.5">
+  <label for="star-system-campaign-context" class={labelClass}
+    >Add campaign context</label
+  >
+  <textarea
+    id="star-system-campaign-context"
+    name="campaign_context"
+    bind:value={campaignContext}
+    maxlength="4000"
+    rows="4"
+    aria-describedby="star-system-campaign-context-help"
+    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+  ></textarea>
+  <p
+    id="star-system-campaign-context-help"
+    class="text-[10px] text-theme-text/60 leading-relaxed"
+  >
+    Name the campaign, sector, or powers this system sits among. Anything you
+    name here is kept and the system is built to fit it.
+  </p>
 </div>

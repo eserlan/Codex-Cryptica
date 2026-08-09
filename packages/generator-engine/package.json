@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@codex/oracle-engine": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "schema": "workspace:*"
   },
   "devDependencies": {

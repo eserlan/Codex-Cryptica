@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
+import { runShellCtaHandler } from "./marketing-shell";
 
 const noopSnippet = (() => {}) as unknown as Snippet;
 
@@ -372,48 +373,6 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
   });
 
-  describe("UTM Referral Attribution Links", () => {
-    it("renders header logo and CTA links with generator UTM params", () => {
-      const mockGenerate = vi.fn().mockResolvedValue({});
-
-      const { container } = render(SEOGeneratorLayout, {
-        props: {
-          pageTitle: "RPG NPC Generator | Codex Cryptica",
-          metaDescription: "Generate awesome characters.",
-          canonicalPath: "/generators/npc",
-          generate: mockGenerate,
-          formFields: noopSnippet,
-        },
-      });
-
-      const logoLink = container.querySelector(
-        "#logo-link",
-      ) as HTMLAnchorElement;
-      const navCtaBtn = container.querySelector(
-        "#nav-cta-btn",
-      ) as HTMLAnchorElement;
-
-      expect(logoLink).toBeTruthy();
-      expect(logoLink.getAttribute("href")).toContain(
-        "utm_source=generator-logo",
-      );
-      expect(logoLink.getAttribute("href")).toContain("utm_medium=nav");
-      expect(logoLink.getAttribute("href")).toContain(
-        "utm_campaign=seo-funnel",
-      );
-
-      expect(navCtaBtn).toBeTruthy();
-      expect(navCtaBtn.getAttribute("href")).toContain(
-        "utm_source=generator-header-cta",
-      );
-      expect(navCtaBtn.getAttribute("href")).toContain("utm_medium=nav");
-
-      // Negative path check: verify links are not bare root links lacking UTM params
-      expect(logoLink.getAttribute("href")).not.toBe("/");
-      expect(navCtaBtn.getAttribute("href")).not.toBe("/");
-    });
-  });
-
   describe("Generator funnel tracking (#1796)", () => {
     beforeEach(() => {
       trackEventMock.mockClear();
@@ -524,7 +483,10 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         expect.objectContaining({ generator_type: "npc" }),
       );
 
-      await fireEvent.click(document.querySelector("#nav-cta-btn")!);
+      // The header CTA is the shell's button now, so this layout registers its
+      // tracking instead of binding it. Running the registered handler is what
+      // the shell's onclick does.
+      runShellCtaHandler();
       expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
         "open_codex",
         expect.objectContaining({

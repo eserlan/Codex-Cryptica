@@ -103,21 +103,21 @@ test.describe("Blog", () => {
     expect(response?.status()).toBeGreaterThanOrEqual(400);
   });
 
-  test("should navigate to blog via footer link", async ({ page }) => {
-    await page.goto("/");
+  test("should navigate to the blog from site chrome", async ({ page }) => {
+    // This used to click a "Blog" link in the footer on `/`. Two things have
+    // changed since: chunk 3 removed AppFooter from workspace routes, and the
+    // marketing footer has no Blog link either (Terms, Privacy, Tools,
+    // Sitemap, LLM Docs, Groupfinder). So the test was asserting on chrome
+    // that exists nowhere, and had been failing on staging.
+    //
+    // The intent still holds, the mechanism moved: the shared shell's nav
+    // carries "Devlog" on every public page.
+    await page.goto("/tools");
 
-    // Dismiss the first-run landing overlay if present so the footer is reachable.
     await page
-      .evaluate(() => {
-        const uiStore = (window as any).uiStore;
-        if (uiStore) uiStore.dismissedLandingPage = true;
-      })
-      .catch(() => {});
-
-    const footerBlogLink = page
-      .locator("footer")
-      .getByRole("link", { name: "Blog" });
-    await footerBlogLink.click();
+      .getByTestId("shell-nav")
+      .getByRole("link", { name: "Devlog" })
+      .click();
 
     await expect(page).toHaveURL(/\/blog/);
     await expect(

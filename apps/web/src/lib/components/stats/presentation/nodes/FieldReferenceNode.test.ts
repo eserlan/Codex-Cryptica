@@ -277,8 +277,12 @@ describe("FieldReferenceNode", () => {
 
     render(FieldReferenceNode, { props: { node, context } });
 
-    expect(screen.getByRole("button", { name: "Decrease Luck Points" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Increase Luck Points" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Decrease Luck Points" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Increase Luck Points" }),
+    ).toBeTruthy();
   });
 
   it("renders a compact d100 dice roll with its label and percentage target instead of its formula", () => {

@@ -7,6 +7,7 @@
   import { SCHEMA_ORG } from "$lib/config";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { attributionStore } from "$lib/services/analytics/attribution";
+  import MarketingShell from "$lib/components/seo/MarketingShell.svelte";
   import {
     trackEvent,
     initCodexAnalyticsBridge,
@@ -72,4 +73,6 @@
     `ipt>`}
 </svelte:head>
 
-{@render children()}
+<MarketingShell>
+  {@render children()}
+</MarketingShell>

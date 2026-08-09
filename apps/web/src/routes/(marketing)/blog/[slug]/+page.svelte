@@ -5,9 +5,12 @@
   import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
   import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { SITE_AUTHOR } from "$lib/config";
 
   let { data } = $props();
   const article = $derived(data.article);
+  // A post may name its own author; otherwise the site's.
+  const authorName = $derived(article.author?.trim() || SITE_AUTHOR.name);
   const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
   const articleContent = $derived(
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
@@ -23,10 +26,15 @@
       dateModified: article.publishedAt,
       url: data.canonicalUrl,
       mainEntityOfPage: { "@type": "WebPage", "@id": data.canonicalUrl },
+      // A Person, not the Organization: search engines and readers both treat
+      // an org-authored article as content rather than as someone's writing.
       author: {
-        "@type": "Organization",
-        name: "Codex Cryptica",
-        url: "https://codexcryptica.com",
+        "@type": "Person",
+        name: authorName,
+        // SITE_AUTHOR.url identifies one specific person. A post that names its
+        // own author must not inherit it, or the structured data claims that
+        // byline belongs to someone else's page.
+        ...(article.author?.trim() ? {} : { url: SITE_AUTHOR.url }),
       },
       publisher: {
         "@type": "Organization",
@@ -59,11 +67,11 @@
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"
 >
-  <div class="max-w-3xl mx-auto px-6 py-20 md:py-32">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-20 md:py-32">
     <nav class="mb-12">
       <a
         href="{base}/blog"
-        class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-text transition-colors text-xs font-bold uppercase tracking-widest group"
+        class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-text transition-colors text-xs font-bold group"
       >
         <span
           class="icon-[lucide--arrow-left] w-4 h-4 group-hover:-translate-x-1 transition-transform"
@@ -89,12 +97,16 @@
         >
           ·
         </span>
+        <span data-testid="blog-byline">By {authorName}</span>
+        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
+          class="sr-only"
+        >
+          ·
+        </span>
         <span>{themeStore.resolveJargon("blog_entry")}</span>
       </div>
 
-      <h1
-        class="text-3xl md:text-5xl font-header font-bold uppercase leading-tight mb-8"
-      >
+      <h1 class="text-3xl md:text-5xl font-header font-bold leading-tight mb-8">
         {article.title}
       </h1>
 
@@ -105,9 +117,9 @@
       </p>
     </header>
 
-    <main class="mb-20">
+    <div class="mb-20">
       <ArticleRenderer content={articleContent} />
-    </main>
+    </div>
 
     {#if isRASeries}
       <ResponsibleAISeriesNav currentSlug={article.slug} />
@@ -137,9 +149,7 @@
         class="mt-16 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
       >
         <div class="text-center md:text-left">
-          <h3
-            class="text-lg font-header font-bold uppercase tracking-widest mb-2"
-          >
+          <h3 class="text-lg font-header font-bold mb-2">
             Ready to bring your lore home?
           </h3>
           <p class="text-sm text-theme-muted">
@@ -148,7 +158,7 @@
         </div>
         <a
           href="{base}/?utm_source=blog-{article.slug}&utm_medium=blog-cta&utm_campaign=devlog"
-          class="px-8 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
+          class="px-8 py-4 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
         >
           Enter the Codex
         </a>
