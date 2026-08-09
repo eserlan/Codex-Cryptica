@@ -45,6 +45,10 @@ describe("Secret Society generator", () => {
       "belief, ritual, public face, secret truth, conflict, and adventure hooks",
     );
     expect(prompt.userMessage).toContain("internally consistent");
+    expect(prompt.systemInstruction).toContain(
+      "selected theme's genre conventions",
+    );
+    expect(prompt.systemInstruction).toContain("modern terminology");
   });
 
   it("keeps useful default labels when a complete AI response omits them", () => {
