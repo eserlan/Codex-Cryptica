@@ -2,7 +2,31 @@
   import { base } from "$app/paths";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { SITE_AUTHOR } from "$lib/config";
+  import {
+    RA_SERIES,
+    RA_SERIES_SLUGS,
+  } from "$lib/content/responsible-ai-series";
+
   let { data } = $props();
+
+  // The seven responsible-AI posts went out on one day, two hours apart. Listed
+  // as seven standalone promotions they read as a batch, which is what they
+  // are; presented as the series they are, they read as one deliberate piece of
+  // writing. Their dates are untouched, only how the index frames them.
+  // Ordered by the series' own sequence, not by date. The index sorts newest
+  // first, which would number the final part 01.
+  const seriesOrder = RA_SERIES.map((a) => a.slug);
+  const seriesArticles = $derived(
+    data.articles
+      .filter((a: { slug: string }) => RA_SERIES_SLUGS.has(a.slug))
+      .sort(
+        (a: { slug: string }, b: { slug: string }) =>
+          seriesOrder.indexOf(a.slug) - seriesOrder.indexOf(b.slug),
+      ),
+  );
+  const standaloneArticles = $derived(
+    data.articles.filter((a: { slug: string }) => !RA_SERIES_SLUGS.has(a.slug)),
+  );
 </script>
 
 <svelte:head>
@@ -57,7 +81,7 @@
     </header>
 
     <div class="grid gap-12 md:gap-20">
-      {#each data.articles as article (article.slug)}
+      {#each standaloneArticles as article (article.slug)}
         <article class="group relative flex flex-col gap-4">
           <div
             class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-2"
@@ -101,6 +125,54 @@
           </div>
         </article>
       {/each}
+
+      {#if seriesArticles.length > 0}
+        <section
+          class="rounded-2xl border border-theme-border/60 bg-theme-surface/25 p-6 md:p-8"
+          aria-labelledby="ra-series-heading"
+          data-testid="blog-series-collection"
+        >
+          <div
+            class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-3"
+          >
+            <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
+            ></span>
+            <span>{seriesArticles.length}-part series</span>
+          </div>
+
+          <h2
+            id="ra-series-heading"
+            class="text-2xl md:text-3xl font-header font-bold mb-3"
+          >
+            <a
+              href="{base}/responsible-ai-worldbuilding"
+              class="hover:text-theme-primary transition-colors"
+            >
+              Responsible AI worldbuilding
+            </a>
+          </h2>
+          <p class="text-theme-text/70 text-lg leading-relaxed mb-5">
+            One argument across seven posts: what an AI worldbuilding tool owes
+            the person using it, and where the author's control has to stay.
+          </p>
+
+          <ol class="space-y-2">
+            {#each seriesArticles as article, i (article.slug)}
+              <li class="flex gap-3 text-sm">
+                <span class="font-mono text-theme-muted shrink-0"
+                  >{String(i + 1).padStart(2, "0")}</span
+                >
+                <a
+                  href="{base}/blog/{article.slug}"
+                  class="text-theme-text hover:text-theme-primary transition-colors"
+                >
+                  {article.title}
+                </a>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
     </div>
 
     {#if data.articles.length === 0}

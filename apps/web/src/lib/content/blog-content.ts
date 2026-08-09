@@ -23,6 +23,8 @@ const toIndexItem = (article: BlogArticle): BlogIndexItem => ({
   // shape as one parsed from a remote index.json, where an absent author is an
   // absent key.
   ...(article.author ? { author: article.author } : {}),
+  ...(article.updatedAt ? { updatedAt: article.updatedAt } : {}),
+  ...(article.topic ? { topic: article.topic } : {}),
 });
 
 const loadLocalArticles = (): BlogArticle[] => {
