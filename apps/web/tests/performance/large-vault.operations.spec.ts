@@ -4,7 +4,11 @@ import {
   installLargeVaultFixture,
   LARGE_VAULT_ENTITY_COUNT,
 } from "./fixtures/large-vault";
-import { writeLargeVaultResults } from "./large-vault-results";
+import {
+  LARGE_VAULT_SCENARIOS,
+  writeLargeVaultResults,
+} from "./large-vault-results";
+import { createPerformanceResult } from "@codex/performance-observability";
 
 test.describe.configure({ mode: "serial" });
 
@@ -13,6 +17,17 @@ test("records repeatable large-vault operations in a production preview", async 
 }) => {
   test.setTimeout(120_000);
   let collectedSamples: any[] = [];
+  const scenarios = new Map<string, any[]>();
+  const captureScenario = (
+    name: string,
+    samples: any[],
+    operations: string[],
+  ) => {
+    scenarios.set(
+      name,
+      samples.filter((sample) => operations.includes(sample.operation)),
+    );
+  };
   await page.addInitScript(() => {
     (window as any).__CODEX_PERFORMANCE_CAPTURE__ = true;
   });
@@ -29,6 +44,12 @@ test("records repeatable large-vault operations in a production preview", async 
     collectedSamples = await page.evaluate(
       () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
     );
+    captureScenario("cold-open-index", collectedSamples, [
+      "vault_open_cold",
+      "vault_sync_chunk",
+      "search_index_batch",
+      "search_index_persist",
+    ]);
     await page.reload();
     await page.waitForFunction(
       (entityCount) => {
@@ -39,6 +60,14 @@ test("records repeatable large-vault operations in a production preview", async 
       },
       LARGE_VAULT_ENTITY_COUNT,
       { timeout: 60_000 },
+    );
+
+    captureScenario(
+      "warm-open",
+      await page.evaluate(
+        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+      ),
+      ["vault_open_warm"],
     );
 
     await page.waitForFunction(
@@ -57,19 +86,41 @@ test("records repeatable large-vault operations in a production preview", async 
         cy.$id(`benchmark-${index}`).emit("tap");
       }
     });
+    await page.waitForFunction(() =>
+      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
+        (sample: any) => sample.operation === "graph_select",
+      ),
+    );
+    captureScenario(
+      "rendered-node-selection",
+      await page.evaluate(
+        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+      ),
+      ["graph_select"],
+    );
 
-    // Focus depth expansion and contraction use the same deterministic node set.
-    await page.evaluate(() => {
+    // Establish the zoom ratchet, then perform a real zoom-driven depth change.
+    const focusDepth = await page.evaluate(() => {
       const graph = (window as any).graph;
-      graph.focusViewActive = true;
-      graph.focusDepth = Math.min(graph.focusDepth + 1, 6);
-      graph.focusDepth = Math.max(graph.focusDepth - 1, 1);
+      const cy = (window as any).cy;
+      cy.zoom(cy.zoom() * 1.05);
+      return graph.focusDepth;
     });
-    await page.evaluate(
-      () =>
-        new Promise<void>((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-        ),
+    await page.waitForTimeout(200);
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      cy.zoom(cy.zoom() * 1.3);
+    });
+    await page.waitForFunction(
+      (previousDepth) => (window as any).graph.focusDepth > previousDepth,
+      focusDepth,
+    );
+    captureScenario(
+      "focus-depth-change",
+      await page.evaluate(
+        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+      ),
+      ["graph_focus_depth_change"],
     );
 
     await page
@@ -81,6 +132,13 @@ test("records repeatable large-vault operations in a production preview", async 
     await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
       timeout: 30_000,
     });
+    captureScenario(
+      "explorer-workflow",
+      await page.evaluate(
+        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+      ),
+      ["explorer_open", "explorer_filter"],
+    );
     const explorerSearch = page.getByPlaceholder("Search entities...");
     await explorerSearch.fill("benchmark entity 42");
     await explorerSearch.fill("");
@@ -103,6 +161,13 @@ test("records repeatable large-vault operations in a production preview", async 
     await search.fill("benchmark entity 42");
     await search.fill("");
     await page.getByRole("columnheader").first().click();
+    captureScenario(
+      "table-workflow",
+      await page.evaluate(
+        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+      ),
+      ["table_open", "table_filter", "table_sort"],
+    );
 
     // Save one harmless edit through the real persistence path.
     await page.evaluate(async () => {
@@ -110,6 +175,13 @@ test("records repeatable large-vault operations in a production preview", async 
         content: "Deterministic benchmark content, revised.",
       });
     });
+    captureScenario(
+      "entity-save",
+      await page.evaluate(
+        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+      ),
+      ["entity_save"],
+    );
     const samples = await page.evaluate(
       () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
     );
@@ -123,9 +195,18 @@ test("records repeatable large-vault operations in a production preview", async 
         () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
       )
       .catch(() => []);
-    writeLargeVaultResults([...collectedSamples, ...samples], {
-      browserVersion: page.context().browser()?.version() ?? "unknown",
-      cacheState: "cold-and-warm",
-    });
+    writeLargeVaultResults(
+      [...collectedSamples, ...samples],
+      {
+        browserVersion: page.context().browser()?.version() ?? "unknown",
+        cacheState: "cold-and-warm",
+      },
+      Object.fromEntries(
+        LARGE_VAULT_SCENARIOS.map((scenario) => [
+          scenario,
+          createPerformanceResult(scenarios.get(scenario) ?? []),
+        ]),
+      ),
+    );
   }
 });
