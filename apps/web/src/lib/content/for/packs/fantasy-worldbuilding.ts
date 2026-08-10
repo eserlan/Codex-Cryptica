@@ -44,33 +44,28 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     },
   ],
   exampleGraph: {
-    title: "Narrative Relationship Graph",
+    title: "Sample Realm Relationship Graph",
     description:
-      "An example of how Codex Cryptica connects people, factions, relics, sites, and faiths into a single story web.",
+      "How mages, city hubs, merchant guilds, and guard captains connect in the Fantasy demo vault.",
     steps: [
       {
-        label: "Queen Mereth",
-        sublabel: "Ruler of Eldoria",
-        relation: "secretly funds",
+        label: "Eldrin the Wise",
+        sublabel: "Mysterious Archmage",
+        relation: "frequents",
       },
       {
-        label: "The Ash Covenant",
-        sublabel: "Rebel Faction",
-        relation: "searches for",
+        label: "Black Iron Tavern",
+        sublabel: "Lower District City Hub",
+        relation: "patrolled by",
       },
       {
-        label: "The Broken Crown",
-        sublabel: "Relic Artifact",
-        relation: "hidden beneath",
+        label: "Captain Vaelen",
+        sublabel: "Guard Captain",
+        relation: "enforces order for",
       },
       {
-        label: "Greyspire Abbey",
-        sublabel: "Ancient Ruin",
-        relation: "holy site of",
-      },
-      {
-        label: "The Drowned Saint",
-        sublabel: "Forgotten Faith",
+        label: "The Gilded Hand",
+        sublabel: "Wealthy Merchant Guild",
       },
     ],
   },

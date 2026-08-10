@@ -44,33 +44,28 @@ export const vampireTheMasquerade: LandingPageConfig = {
     },
   ],
   exampleGraph: {
-    title: "Sample City Relationship Web",
+    title: "Sample Chronicle Relationship Web",
     description:
-      "How a coterie, Camarilla court hierarchy, and mortal touchstones connect inside Codex Cryptica.",
+      "How Kindred rulers, dark covenants, rival hunters, and havens connect in the Vampire demo vault.",
     steps: [
       {
-        label: "Prince Quintus",
-        sublabel: "Ventrue • City Ruler",
-        relation: "commands",
+        label: "Lord Julian Thorne",
+        sublabel: "Vampire • Grand Architect",
+        relation: "rules at",
       },
       {
-        label: "Sheriff Cross",
-        sublabel: "Gangrel • Enforcer",
-        relation: "monitors",
+        label: "Manor of Whispers",
+        sublabel: "Decaying Estate Haven",
+        relation: "sanctuary for",
       },
       {
-        label: "Primogen Council",
-        sublabel: "Toreador / Tremere / Nosferatu",
-        relation: "influences",
+        label: "The Crimson Court",
+        sublabel: "Secret Aristocracy Faction",
+        relation: "hunted by",
       },
       {
-        label: "Coterie: The Velvet Pact",
-        sublabel: "PC Players",
-        relation: "protects",
-      },
-      {
-        label: "Mortal Touchstones & Feeders",
-        sublabel: "Kine Network",
+        label: "Seraphina Vane",
+        sublabel: "Vengeful Dhampir Hunter",
       },
     ],
   },
