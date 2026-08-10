@@ -76,7 +76,7 @@ export const pathfinder2e: LandingPageConfig = {
   },
   recommendedTools: [
     {
-      title: "Faction & Society Generator",
+      title: "Faction Generator",
       description:
         "Design secret societies, religious orders, noble houses, and rival factions for your world.",
       href: "/generators/faction",

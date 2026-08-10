@@ -142,6 +142,32 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Cyberpunk RED Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const cp = getLandingPage("cyberpunk-red");
+      expect(cp).toBeDefined();
+      expect(cp?.slug).toBe("cyberpunk-red");
+      expect(cp?.kind).toBe("system");
+      expect(cp?.theme).toBe("cyberpunk");
+      expect(cp?.disclaimer).toContain("R. Talsorian Games");
+      expect(cp?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(cp?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Dystopian Sci-Fi Pack", () => {
+    it("is registered as genre and omits non-affiliation disclaimer", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi");
+      expect(dystopia).toBeDefined();
+      expect(dystopia?.slug).toBe("dystopian-sci-fi");
+      expect(dystopia?.kind).toBe("genre");
+      expect(dystopia?.theme).toBe("cyberpunk");
+      expect(dystopia?.disclaimer).toBeUndefined();
+      expect(dystopia?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("Extensibility (US3)", () => {
     it("allows dynamic page addition and handles optional section collapsing", () => {
       const customConfig: LandingPageConfig = {

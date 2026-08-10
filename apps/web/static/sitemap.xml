@@ -197,6 +197,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/cyberpunk-red</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/for/dystopian-sci-fi</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/presentation-templates</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
