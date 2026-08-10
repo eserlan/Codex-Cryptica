@@ -14,7 +14,18 @@ export const vampireTheMasquerade: LandingPageConfig = {
     problemStatement:
       "Running a VtM chronicle gets complicated quickly. Between coteries, Elysium etiquette, Prince decrees, domain claims, and mortal contacts, keeping your gothic conspiracy connected during play requires more than standard notes.",
   },
-  useCases: [],
+  useCases: [
+    {
+      title: "Track Coteries & Factions",
+      description: "Connect Primogen, Anarch barons, and mortal pawns.",
+      icon: "icon-[lucide--eye]",
+    },
+    {
+      title: "Domain Claims",
+      description: "Map out Elysium and hunting grounds across the city.",
+      icon: "icon-[lucide--map]",
+    },
+  ],
   exampleGraph: {
     title: "City Structure",
     steps: [
@@ -25,7 +36,14 @@ export const vampireTheMasquerade: LandingPageConfig = {
       { label: "Mortal Contacts" },
     ],
   },
-  recommendedTools: [],
+  recommendedTools: [
+    {
+      title: "Vampire Clan Generator",
+      description: "Generate bloodlines and clan histories.",
+      href: "/generators/vampire-clan",
+      badge: "Generator",
+    },
+  ],
   cta: {
     title: "Start your Chronicle",
     buttonText: "Try Codex Cryptica",

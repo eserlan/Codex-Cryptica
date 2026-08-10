@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from "$app/paths";
   import type { PageData } from "./$types";
   import type { LandingPageConfig } from "$lib/content/for/schema";
 
@@ -120,7 +121,7 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           {#each config.recommendedTools as tool}
             <a
-              href={tool.href}
+              href="{base}{tool.href}"
               class="bg-theme-surface border-theme-border group flex flex-col rounded-xl border p-6 transition-all hover:border-theme-accent hover:shadow-md"
             >
               <div class="mb-2 flex items-center justify-between">
@@ -156,7 +157,7 @@
         </p>
       {/if}
       <a
-        href={config.cta.buttonHref}
+        href="{base}{config.cta.buttonHref}"
         class="bg-theme-accent text-theme-primary-inverse inline-flex items-center justify-center rounded-lg px-8 py-4 font-bold transition-transform hover:scale-105 active:scale-95"
       >
         {config.cta.buttonText}

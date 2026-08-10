@@ -1,4 +1,4 @@
-import type { LandingPageConfig } from "./schema";
+import { LandingPageConfigSchema, type LandingPageConfig } from "./schema";
 import { packs } from "./packs";
 
 /**
@@ -9,7 +9,11 @@ export function getLandingPage(
   slug: string,
   customRegistry: Record<string, LandingPageConfig> = packs,
 ): LandingPageConfig | undefined {
-  return customRegistry[slug];
+  const config = customRegistry[slug];
+  if (config) {
+    return LandingPageConfigSchema.parse(config);
+  }
+  return undefined;
 }
 
 /**
