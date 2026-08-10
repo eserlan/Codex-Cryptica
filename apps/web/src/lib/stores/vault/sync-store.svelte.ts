@@ -427,7 +427,10 @@ export class SyncStore {
               vaultEventBus.emit({
                 type: "SYNC_CHUNK_READY",
                 vaultId: vaultIdAtStart,
-                entities: this.deps.repository.entities,
+                // Keep chunk events proportional to changed files. The repository
+                // still owns the complete accumulated map; consumers only need the
+                // parsed records from this chunk.
+                entities: newOrChanged,
                 newOrChangedIds: changedIds,
               });
               chunkSpan.complete(() => ({
