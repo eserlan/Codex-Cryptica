@@ -46,26 +46,31 @@ export const fantasyWorldbuilding: LandingPageConfig = {
   exampleGraph: {
     title: "Sample Realm Relationship Graph",
     description:
-      "How mages, city hubs, merchant guilds, and guard captains connect in the Fantasy demo vault.",
+      "Demonstrating how a connected graph links rulers, trade cities, factions, artifacts, and mages in one living web.",
     steps: [
       {
-        label: "Eldrin the Wise",
-        sublabel: "Mysterious Archmage",
-        relation: "frequents",
+        label: "High Queen Vaeloria",
+        sublabel: "Ruler of Sunspire",
+        relation: "controls",
       },
       {
-        label: "Black Iron Tavern",
-        sublabel: "Lower District City Hub",
-        relation: "patrolled by",
+        label: "Oakhaven Harbor",
+        sublabel: "Capital Trade City",
+        relation: "opposed by",
       },
       {
-        label: "Captain Vaelen",
-        sublabel: "Guard Captain",
-        relation: "enforces order for",
+        label: "The Iron Syndicate",
+        sublabel: "Outlaw Merchant Faction",
+        relation: "seeks",
       },
       {
-        label: "The Gilded Hand",
-        sublabel: "Wealthy Merchant Guild",
+        label: "Sunstone Relic",
+        sublabel: "Ancient Power Source",
+        relation: "crafted by",
+      },
+      {
+        label: "Archmage Eldrin",
+        sublabel: "Court Sorcerer",
       },
     ],
   },

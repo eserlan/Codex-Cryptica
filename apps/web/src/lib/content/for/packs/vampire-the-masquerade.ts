@@ -102,7 +102,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
   cta: {
     title: "Organize Your Chronicle",
     description:
-      "Start managing your Vampire: The Masquerade campaign with local-first security and visual relationship graphs.",
+      "Start managing your Vampire: The Masquerade campaign with local-first privacy and visual relationship graphs.",
     buttonText: "Try Codex Cryptica Free",
     buttonHref: "/app",
   },

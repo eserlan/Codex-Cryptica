@@ -102,8 +102,8 @@
             Genres & Settings
           </h2>
           <p class="mt-1 font-light text-sm text-theme-muted">
-            System-agnostic worldbuilding frameworks for fantasy, sci-fi, and
-            horror realms.
+            System-agnostic approaches to worldbuilding across fantasy, sci-fi,
+            horror, and other genres.
           </p>
         </div>
 
