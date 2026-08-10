@@ -39,6 +39,12 @@
 <svelte:head>
   <title>{config.seo.title}</title>
   <meta name="description" content={config.seo.description} />
+  <meta property="og:title" content={config.seo.title} />
+  <meta property="og:description" content={config.seo.description} />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={config.seo.title} />
+  <meta name="twitter:description" content={config.seo.description} />
   {#if config.seo.canonical}
     <link rel="canonical" href={config.seo.canonical} />
   {/if}

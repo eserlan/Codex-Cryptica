@@ -111,11 +111,30 @@ const buildXml = (entries) => {
     }),
   );
 
+  // Landing pages (/for/[slug])
+  const forPacksDir = join(repoRoot, "apps/web/src/lib/content/for/packs");
+  let landingPageRoutes = [{ path: "/for", changefreq: "weekly", priority: "0.9" }];
+
+  try {
+    const packFiles = (await readdir(forPacksDir)).filter((file) => file.endsWith(".ts"));
+    for (const file of packFiles) {
+      const slug = file.replace(/\.ts$/i, "");
+      landingPageRoutes.push({
+        path: `/for/${slug}`,
+        changefreq: "weekly",
+        priority: "0.8",
+      });
+    }
+  } catch (e) {
+    console.warn("[generate-sitemap] Could not read /for/packs directory:", e);
+  }
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
     ...comparisonRoutes,
     ...generatorRoutes,
+    ...landingPageRoutes,
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>

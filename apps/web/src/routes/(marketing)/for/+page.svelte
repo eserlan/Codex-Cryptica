@@ -14,6 +14,24 @@
     name="description"
     content="Different campaigns get complicated in different ways. See how Codex Cryptica helps organize, connect, and expand the kind of world you're building."
   />
+  <meta
+    property="og:title"
+    content="Find the right Codex Cryptica for your world"
+  />
+  <meta
+    property="og:description"
+    content="Different campaigns get complicated in different ways. See how Codex Cryptica helps organize, connect, and expand the kind of world you're building."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta
+    name="twitter:title"
+    content="Find the right Codex Cryptica for your world"
+  />
+  <meta
+    name="twitter:description"
+    content="Different campaigns get complicated in different ways. See how Codex Cryptica helps organize, connect, and expand the kind of world you're building."
+  />
 </svelte:head>
 
 <div
