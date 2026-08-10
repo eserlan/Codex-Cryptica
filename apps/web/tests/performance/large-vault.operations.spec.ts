@@ -163,7 +163,7 @@ test("records repeatable large-vault operations in a production preview", async 
     await expect(search).toBeVisible();
     await search.fill("benchmark entity 42");
     await search.fill("");
-    await page.getByRole("columnheader").first().click();
+    await page.getByTestId("entity-table-sort-title").click();
     await page.waitForFunction(() =>
       ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
         (sample: any) => sample.operation === "table_sort",
