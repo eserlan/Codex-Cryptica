@@ -13,9 +13,9 @@ export const pathfinder2e: LandingPageConfig = {
     eyebrow: "Pathfinder 2e Campaign & World Management",
     title: "Codex Cryptica for Pathfinder 2e",
     tagline:
-      "Keep ancestries, regional nations, secret societies, deities, and adventure paths connected in one place.",
+      "Keep characters, factions, nations, deities, adventure paths, and campaign lore connected in one place.",
     problemStatement:
-      "Pathfinder 2e campaigns thrive on intricate world lore, layered adventure paths, multi-faction politics, and deep regional histories. When your party travels between sprawling city-states or uncovers an ancient conspiratorial order, you shouldn't have to search through scattered documents to trace which faction pulls the strings — or how it impacts the realm.",
+      "Pathfinder 2e campaigns quickly grow into a web of characters, factions, nations, deities, locations, and long-running adventure arcs. When the party crosses regions or uncovers a hidden faction, you shouldn't have to dig through scattered notes to remember who is connected — or why it matters.",
   },
   useCases: [
     {
@@ -27,80 +27,80 @@ export const pathfinder2e: LandingPageConfig = {
     {
       title: "Nations, Settlements & Factions",
       description:
-        "Connect regional realms, trade metropolises, secret cabals, and noble houses to the characters who guide or oppose them.",
+        "Connect regional realms, settlements, secret societies, and noble houses to the characters who guide or oppose them.",
       icon: "icon-[lucide--crown]",
     },
     {
       title: "Adventure Paths & Session Notes",
       description:
-        "Keep multi-part adventure arcs, mystery clues, session recaps, and campaign milestones organized in local-first storage.",
+        "Keep multi-part adventure arcs, mystery clues, session recaps, and campaign milestones connected to the people and places they involve.",
       icon: "icon-[lucide--scroll]",
     },
     {
-      title: "Ancestries, Cultures & Lore Fragments",
+      title: "Ancestries, Cultures & History",
       description:
-        "Catalog regional ancestries, ancient historical eras, legendary artifacts, and world lore alongside your campaign entities.",
+        "Connect ancestries and cultures to regions, historical events, factions, notable characters, and the places they call home.",
       icon: "icon-[lucide--book-open]",
     },
   ],
   exampleGraph: {
     title: "Sample Pathfinder 2e Campaign Web",
     description:
-      "See how noble houses, divine cults, regional strongholds, and ancient artifacts connect in a campaign graph.",
+      "See how religious orders, realm champions, secret cabals, and ancient relics connect in a campaign graph.",
     steps: [
       {
-        label: "House of Sarenrae",
-        sublabel: "Sun Deity Cathedral",
-        relation: "protects",
+        label: "Temple of the Dawnflower",
+        sublabel: "Sun Deity Sanctuary",
+        relation: "protected by",
       },
       {
-        label: "High Warden Kaelen",
-        sublabel: "Paladin • Realm Defender",
+        label: "Champion Vaelis",
+        sublabel: "Realm Defender",
         relation: "opposes",
       },
       {
-        label: "The Whispering Cabal",
+        label: "The Ashen Veil",
         sublabel: "Secret Necromantic Society",
-        relation: "infiltrates",
+        relation: "occupies",
       },
       {
-        label: "Citadel of the Undying",
-        sublabel: "Subterranean Fortress",
-        relation: "guards",
+        label: "Blackstone Keep",
+        sublabel: "Ancient Fortress",
+        relation: "seeks",
       },
       {
-        label: "Orb of the Dawn",
-        sublabel: "Relic of Power",
+        label: "The Ember Reliquary",
+        sublabel: "Artifact of Power",
       },
     ],
   },
   recommendedTools: [
     {
-      title: "Fantasy Name Generator",
+      title: "Faction & Society Generator",
       description:
-        "Generate names for regional strongholds, noble lineages, ancient ruins, and mythical figures.",
-      href: "/tools/fantasy-name-generator",
+        "Design secret societies, religious orders, noble houses, and rival factions for your world.",
+      href: "/generators/faction",
+      badge: "Generator",
+    },
+    {
+      title: "NPC Generator",
+      description:
+        "Create NPCs with distinct motives, personalities, backgrounds, and campaign roles.",
+      href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Pantheon Generator",
       description:
-        "Design custom mythologies, divine portfolios, sacred symbols, and clerical tenets for your setting.",
+        "Design divine portfolios, sacred domains, clerical tenets, and religious orders.",
       href: "/generators/pantheon-generator",
       badge: "Generator",
     },
     {
-      title: "Kingdom Generator",
+      title: "Quest Hook Generator",
       description:
-        "Build feudal realms, government structures, regional rivalries, and trade exports for your world.",
-      href: "/generators/kingdom",
-      badge: "Generator",
-    },
-    {
-      title: "Dungeon Generator",
-      description:
-        "Generate subterranean temples, ruins, encounters, and adventure-ready locations.",
-      href: "/generators/dungeon-generator",
+        "Generate adventure hooks, patron requests, mysteries, and campaign complications.",
+      href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
   ],
