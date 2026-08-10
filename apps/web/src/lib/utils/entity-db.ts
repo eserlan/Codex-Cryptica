@@ -6,13 +6,20 @@ import type { LocalEntity } from "../stores/vault/types";
  * Content and lore are excluded to keep the graph data lightweight.
  * These are the only fields needed for graph visualization.
  */
-export type GraphEntity = Omit<LocalEntity, "content" | "lore">;
+export type GraphEntity = Omit<
+  LocalEntity,
+  "content" | "lore" | "contentPreview" | "contentLoaded"
+>;
 
 /**
  * Row stored in the `graphEntities` Dexie table.
  * Includes vault-scoping and cache-validation fields alongside all graph data.
  */
 export interface GraphEntityRecord extends GraphEntity {
+  /** Bounded text used by metadata-first warm views and filtering. */
+  contentPreview?: string;
+  /** Preview schema version; absent rows are backfilled lazily. */
+  contentPreviewVersion?: number;
   /** Vault this entity belongs to. Part of the compound primary key. */
   vaultId: string;
   /**
@@ -117,6 +124,7 @@ export interface QuickNoteRecord {
  *  4 — added vaultMetadata table and graphEntity indexes for front page lookups.
  *  5 — added compound lastModified and label indexes for front page queries.
  *  6 — added quickNotes table for transient fast scratchpad persistence.
+ *  7 — metadata-first content previews are stored on graph entity rows.
  */
 export class EntityDb extends Dexie {
   graphEntities!: Table<GraphEntityRecord>;
@@ -168,6 +176,16 @@ export class EntityDb extends Dexie {
     });
 
     this.version(6).stores({
+      graphEntities:
+        "[vaultId+id], vaultId, [vaultId+filePath], [vaultId+lastModified], lastModified, *tags, *labels",
+      entityContent: "[vaultId+entityId], vaultId",
+      searchIndex: "vaultId",
+      appSettings: "key",
+      vaultMetadata: "id, lastModified",
+      quickNotes: "++id, vaultId, status, createdAt",
+    });
+
+    this.version(7).stores({
       graphEntities:
         "[vaultId+id], vaultId, [vaultId+filePath], [vaultId+lastModified], lastModified, *tags, *labels",
       entityContent: "[vaultId+entityId], vaultId",
