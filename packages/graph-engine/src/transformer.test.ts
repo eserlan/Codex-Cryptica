@@ -8,6 +8,34 @@ import {
 import type { Entity } from "schema";
 
 describe("GraphTransformer", () => {
+  it("caps rendered edges while retaining all selected nodes", () => {
+    const entities = Array.from({ length: 4 }, (_, source) => ({
+      id: `node-${source}`,
+      type: "npc",
+      title: `Node ${source}`,
+      tags: [],
+      labels: [],
+      content: "",
+      connections: Array.from({ length: 4 }, (_, target) => ({
+        target: `node-${target}`,
+        type: "knows",
+      })),
+    })) as Entity[];
+
+    const elements = GraphTransformer.entitiesToElements(
+      entities,
+      undefined,
+      3,
+    );
+
+    expect(
+      elements.filter((element) => element.group === "nodes"),
+    ).toHaveLength(4);
+    expect(
+      elements.filter((element) => element.group === "edges"),
+    ).toHaveLength(3);
+  });
+
   it("should transform entities to nodes and edges", () => {
     const entities: Entity[] = [
       {

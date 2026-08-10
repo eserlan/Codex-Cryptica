@@ -21,13 +21,15 @@ import {
   browserPerformanceRecorder,
 } from "$lib/services/performance/browser-performance-capture";
 
-// Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
-// literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
-// nodes, so the default (level 1) lands around 500 — enough for a real overview,
-// not just the focal + its handful of direct links — and zooming in doubles it.
+// Focus-view detail level. Zoom reveals a bounded fixed-size increment rather
+// than doubling the rendered graph, so one gesture cannot synchronously add an
+// unbounded set of nodes in a large vault.
 export const MIN_FOCUS_DEPTH = 1;
-export const MAX_FOCUS_DEPTH = 6;
+export const MAX_FOCUS_DEPTH = 3;
 export const FOCUS_BASE_COUNT = 500;
+export const FOCUS_DETAIL_STEP = 150;
+/** Avoid a dense focus neighbourhood overwhelming the renderer. */
+export const FOCUS_EDGE_CAP = 2_000;
 
 export class GraphStore {
   // Dependencies
@@ -158,6 +160,7 @@ export class GraphStore {
             const result = GraphTransformer.entitiesToElements(
               renderEntities,
               renderIds,
+              FOCUS_EDGE_CAP,
             );
             focusComputeSpan.complete(() => ({
               entityCount: allEntities.length,
@@ -329,8 +332,21 @@ export class GraphStore {
     );
     return Math.min(
       visibleCount,
-      FOCUS_BASE_COUNT * 2 ** (level - MIN_FOCUS_DEPTH),
+      FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (level - MIN_FOCUS_DEPTH),
     );
+  }
+
+  get canIncreaseFocusDetail() {
+    return (
+      this.focusViewActive &&
+      this.focusDepth < MAX_FOCUS_DEPTH &&
+      this.stats.nodeCount < this.fullGraphSize.nodeCount
+    );
+  }
+
+  /** Explicit detail reveal for users who want more than the zoom overview. */
+  increaseFocusDetail() {
+    if (this.canIncreaseFocusDetail) this.focusDepth++;
   }
 
   /**

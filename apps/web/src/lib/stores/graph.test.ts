@@ -55,7 +55,13 @@ vi.mock("schema", async (importOriginal) => {
   };
 });
 
-import { FOCUS_BASE_COUNT, graph, GraphStore } from "./graph.svelte";
+import {
+  FOCUS_BASE_COUNT,
+  FOCUS_DETAIL_STEP,
+  MAX_FOCUS_DEPTH,
+  graph,
+  GraphStore,
+} from "./graph.svelte";
 import { vault } from "./vault.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible } from "schema";
@@ -186,6 +192,37 @@ describe("GraphStore", () => {
     const renderedIds = new Set(store.elements.map((el: any) => el.data.id));
     expect(renderedIds.size).toBe(visibleCount);
     expect(renderedIds.has(`node-${visibleCount}`)).toBe(false);
+  });
+
+  it("keeps zoom-driven focus expansion bounded and supports explicit detail reveal", () => {
+    const entities = Array.from({ length: 1600 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      connections: [],
+    })) as any[];
+    (vault as any).allEntities = entities;
+    (vault as any).entities = Object.fromEntries(
+      entities.map((entity) => [entity.id, entity]),
+    );
+    (GraphTransformer.entitiesToElements as any).mockImplementation(
+      (items: any[]) =>
+        items.map((item) => ({ group: "nodes", data: { id: item.id } })),
+    );
+    const store = new GraphStore();
+
+    expect(
+      (store as any).getFocusTargetCount(MAX_FOCUS_DEPTH, entities.length),
+    ).toBe(FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (MAX_FOCUS_DEPTH - 1));
+    expect(
+      (store as any).getFocusTargetCount(MAX_FOCUS_DEPTH + 10, entities.length),
+    ).toBe(FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (MAX_FOCUS_DEPTH - 1));
+
+    store.increaseFocusDetail();
+    expect(store.focusDepth).toBe(2);
+    store.focusDepth = MAX_FOCUS_DEPTH;
+    expect(store.canIncreaseFocusDetail).toBe(false);
+    store.increaseFocusDetail();
+    expect(store.focusDepth).toBe(MAX_FOCUS_DEPTH);
   });
 
   it("falls back to the highest-degree hub when nothing is selected", () => {
