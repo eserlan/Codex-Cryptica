@@ -1,4 +1,94 @@
 import type { Entity } from "schema";
+import type { SearchOptions, SearchResult } from "schema";
+
+export interface EntitySearchService {
+  search(query: string, options?: SearchOptions): Promise<SearchResult[]>;
+}
+
+export interface ParsedEntitySearchQuery {
+  labelTokens: string[];
+  textQuery: string;
+}
+
+export interface EntityTextSearchResult {
+  matchIds: Set<string>;
+  error: Error | null;
+}
+
+export interface EntityTextSearchRunner {
+  search(
+    query: string,
+    entityCount: number,
+  ): Promise<EntityTextSearchResult | null>;
+  cancel(): void;
+}
+
+export function parseEntitySearchQuery(query: string): ParsedEntitySearchQuery {
+  const textTokens: string[] = [];
+  const labelTokens: string[] = [];
+
+  for (const token of query.trim().toLowerCase().split(/\s+/)) {
+    if (!token) continue;
+    if (token.startsWith("#") || token.startsWith("@")) {
+      const label = token.slice(1);
+      if (label) labelTokens.push(label);
+    } else {
+      textTokens.push(token);
+    }
+  }
+
+  return {
+    labelTokens,
+    textQuery: textTokens.join(" "),
+  };
+}
+
+/**
+ * Search the text-bearing part of an Explorer/Table query in the worker.
+ * Structured filters remain local because they depend on the current view's
+ * type, label, and draft semantics.
+ */
+export async function searchEntityText(
+  query: string,
+  entityCount: number,
+  searchService: EntitySearchService,
+): Promise<EntityTextSearchResult> {
+  const { textQuery } = parseEntitySearchQuery(query);
+  if (!textQuery) return { matchIds: new Set(), error: null };
+
+  try {
+    const results = await searchService.search(textQuery, {
+      limit: Math.max(entityCount, 1),
+      includeDrafts: true,
+    });
+    return {
+      matchIds: new Set(results.map((result) => result.id)),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      matchIds: new Set(),
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
+}
+
+export function createEntityTextSearchRunner(
+  searchService: EntitySearchService,
+): EntityTextSearchRunner {
+  let requestId = 0;
+
+  return {
+    async search(query, entityCount) {
+      const currentRequestId = ++requestId;
+      const result = await searchEntityText(query, entityCount, searchService);
+      return currentRequestId === requestId ? result : null;
+    },
+    cancel() {
+      requestId++;
+    },
+  };
+}
 
 type EntityWithPreview = Entity & { contentPreview?: string };
 
@@ -8,6 +98,12 @@ export interface FilterOptions {
   labelFilters: Set<string>;
   allowedTypes: string[] | null;
   showDraftsOnly: boolean;
+  /** IDs returned by the worker for the text-bearing query, when available. */
+  textMatchIds?: ReadonlySet<string> | null;
+  /** Worker failed; use metadata-only matching rather than a blocking content scan. */
+  textSearchUnavailable?: boolean;
+  /** Worker request is in flight; use metadata-only matching until it resolves. */
+  textSearchPending?: boolean;
 }
 
 export function filterEntities(
@@ -22,21 +118,8 @@ export function filterEntities(
     ? new Set(options.allowedTypes)
     : null;
 
-  // Structured query parsing: #label or @label, and raw text (unified under labels)
-  const tokens = query ? query.split(/\s+/) : [];
-  const textTokens: string[] = [];
-  const labelTokens: string[] = [];
-
-  for (let j = 0; j < tokens.length; j++) {
-    const t = tokens[j];
-    if (t.startsWith("#") || t.startsWith("@")) {
-      const label = t.slice(1);
-      if (label) labelTokens.push(label);
-    } else {
-      textTokens.push(t);
-    }
-  }
-  const remainingTextQuery = textTokens.join(" ");
+  const { labelTokens, textQuery: remainingTextQuery } =
+    parseEntitySearchQuery(query);
 
   for (let i = 0; i < allEntities.length; i++) {
     const e = allEntities[i];
@@ -74,12 +157,24 @@ export function filterEntities(
     // Match remaining raw text queries (no longer checking e.tags)
     const matchesText =
       !remainingTextQuery ||
-      e.title.toLowerCase().includes(remainingTextQuery) ||
-      (e.contentPreview ?? e.content)
-        .toLowerCase()
-        .includes(remainingTextQuery) ||
-      e.labels?.some((l) => l.toLowerCase().includes(remainingTextQuery)) ||
-      e.aliases?.some((a) => a.toLowerCase().includes(remainingTextQuery));
+      (options.textMatchIds
+        ? options.textMatchIds.has(e.id)
+        : options.textSearchUnavailable || options.textSearchPending
+          ? e.title.toLowerCase().includes(remainingTextQuery) ||
+            e.labels?.some((l) =>
+              l.toLowerCase().includes(remainingTextQuery),
+            ) ||
+            e.aliases?.some((a) => a.toLowerCase().includes(remainingTextQuery))
+          : e.title.toLowerCase().includes(remainingTextQuery) ||
+            (e.contentPreview ?? e.content)
+              .toLowerCase()
+              .includes(remainingTextQuery) ||
+            e.labels?.some((l) =>
+              l.toLowerCase().includes(remainingTextQuery),
+            ) ||
+            e.aliases?.some((a) =>
+              a.toLowerCase().includes(remainingTextQuery),
+            ));
 
     if (matchesText) {
       filtered.push(e);
