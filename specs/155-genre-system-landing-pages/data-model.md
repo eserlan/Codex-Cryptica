@@ -51,6 +51,7 @@ export interface RecommendedTool {
 export interface LandingPageConfig {
   slug: string; // URL path parameter under /for/[slug]
   kind: LandingPageKind;
+  theme?: string; // Optional string referencing a valid system theme
   seo: {
     title: string;
     description: string;
@@ -83,6 +84,7 @@ export interface LandingPageConfig {
 
 - **slug**: `"vampire-the-masquerade"`
 - **kind**: `'system'`
+- **theme**: `"vampire"`
 - **hero.title**: `"Codex Cryptica for Vampire: The Masquerade"`
 - **hero.tagline**: `"Build and run your chronicle without losing track of your city."`
 - **hero.problemStatement**: `"Running a VtM chronicle gets complicated quickly. Between coteries, Elysium etiquette, Prince decrees, domain claims, and mortal contacts, keeping your gothic conspiracy connected during play requires more than standard notes."`
@@ -94,6 +96,7 @@ export interface LandingPageConfig {
 
 - **slug**: `"fantasy-worldbuilding"`
 - **kind**: `'genre'`
+- **theme**: `"fantasy"`
 - **hero.title**: `"Codex Cryptica for Fantasy Worldbuilding"`
 - **hero.tagline**: `"Connect pantheons, kingdoms, artifacts, and lineages into a living world."`
 - **hero.problemStatement**: `"Fantasy settings demand massive depth: royal bloodlines, rival guilds, ancient magic systems, and sprawling campaign timelines. Codex Cryptica turns flat world notes into a dynamic, connected graph."`

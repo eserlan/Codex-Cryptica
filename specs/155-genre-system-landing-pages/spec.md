@@ -64,6 +64,7 @@ As a maintainer/developer, I want to add new system or genre landing pages (e.g.
 - **FR-002**: The page content MUST be driven by a structured data model containing:
   - `slug`: unique URL identifier
   - `kind`: `'system'` | `'genre'` | `'use-case'`
+  - `theme`: optional string referencing a valid system theme (e.g., `'vampire'`, `'fantasy'`)
   - `hero`: headline, tagline, and genre/system-specific problem statement
   - `useCases`: 3–5 tailored use case blocks (title, description, optional icon)
   - `exampleGraph`: optional visual/textual campaign structure preview (e.g., entity nodes & connections)
@@ -83,6 +84,7 @@ As a maintainer/developer, I want to add new system or genre landing pages (e.g.
 - **FR-007**: System MUST include initial content packs for validation:
   - `/for/vampire-the-masquerade` (System page prototype)
   - `/for/fantasy-worldbuilding` (Genre page prototype)
+- **FR-008**: System MUST apply an appropriate CSS theme/skin based on the landing page config.
 
 ### Key Entities
 

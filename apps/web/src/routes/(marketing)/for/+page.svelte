@@ -40,7 +40,7 @@
               {page.hero.title}
             </h2>
             <p class="text-theme-secondary flex-1 text-base leading-relaxed">
-              {page.hero.subtitle}
+              {page.hero.tagline}
             </p>
             <div
               class="text-theme-accent mt-6 flex items-center text-sm font-semibold"

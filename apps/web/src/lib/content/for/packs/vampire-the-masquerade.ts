@@ -3,6 +3,7 @@ import type { LandingPageConfig } from "../schema";
 export const vampireTheMasquerade: LandingPageConfig = {
   slug: "vampire-the-masquerade",
   kind: "system",
+  theme: "vampire",
   seo: {
     title: "Codex Cryptica for Vampire: The Masquerade",
     description:

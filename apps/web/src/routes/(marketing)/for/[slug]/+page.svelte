@@ -15,7 +15,7 @@
   {/if}
 </svelte:head>
 
-<div class="bg-theme-base min-h-screen">
+<div data-theme={config.theme} class="bg-theme-base min-h-screen">
   <!-- Hero Section -->
   <header
     class="bg-theme-surface border-theme-border flex flex-col items-center justify-center border-b px-4 py-20 text-center"

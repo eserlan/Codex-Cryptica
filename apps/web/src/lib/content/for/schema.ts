@@ -33,8 +33,9 @@ export const RecommendedToolSchema = z.object({
 export type RecommendedTool = z.infer<typeof RecommendedToolSchema>;
 
 export const LandingPageConfigSchema = z.object({
-  slug: z.string(),
-  kind: LandingPageKindSchema,
+  slug: z.string().min(1),
+  kind: z.enum(["system", "genre"]),
+  theme: z.string().optional(),
   seo: z.object({
     title: z.string(),
     description: z.string(),

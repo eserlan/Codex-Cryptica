@@ -3,6 +3,7 @@ import type { LandingPageConfig } from "../schema";
 export const fantasyWorldbuilding: LandingPageConfig = {
   slug: "fantasy-worldbuilding",
   kind: "genre",
+  theme: "fantasy",
   seo: {
     title: "Codex Cryptica for Fantasy Worldbuilding",
     description:
