@@ -322,7 +322,7 @@ describe("VaultRepository", () => {
     expect(repository.entities["e1"].lore).toBe("New Lore");
   });
 
-  it("should yield when total files exceed CHUNK_SIZE", async () => {
+  it("should yield between chunks without imposing a fixed delay", async () => {
     const mockHandle = {} as FileSystemDirectoryHandle;
     // CHUNK_SIZE is 40
     const mockFiles = Array.from({ length: 45 }, (_, i) => ({
@@ -336,12 +336,13 @@ describe("VaultRepository", () => {
       entity: { id: "some-id", type: "note", title: "title" } as any,
     });
 
-    const start = Date.now();
-    await repository.loadFiles("vault-1", mockHandle);
-    const duration = Date.now() - start;
-
-    // Should have waited at least 50ms due to setTimeout
-    expect(duration).toBeGreaterThanOrEqual(45);
+    const yieldSpy = vi.spyOn(globalThis, "setTimeout");
+    try {
+      await repository.loadFiles("vault-1", mockHandle);
+      expect(yieldSpy).toHaveBeenCalledWith(expect.any(Function), 0);
+    } finally {
+      yieldSpy.mockRestore();
+    }
   });
 
   it("should clear entities", () => {

@@ -228,9 +228,10 @@ export class VaultRepository {
         );
       }
 
-      if (total > CHUNK_SIZE) {
-        // Yield to allow UI updates
-        await new Promise((resolve) => setTimeout(resolve, 50));
+      // Yield only between chunks so rendering/input can run without imposing
+      // a fixed delay or adding a needless completion hop.
+      if (i + CHUNK_SIZE < total) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
 
