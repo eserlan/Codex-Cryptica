@@ -76,7 +76,7 @@ const listBlogEntries = async () => {
   );
 };
 
-const buildXml = (entries) => {
+const buildXml = async (entries) => {
   const urls = entries
     .map(
       (entry) => `  <url>
@@ -116,7 +116,9 @@ const buildXml = (entries) => {
   let landingPageRoutes = [{ path: "/for", changefreq: "weekly", priority: "0.9" }];
 
   try {
-    const packFiles = (await readdir(forPacksDir)).filter((file) => file.endsWith(".ts"));
+    const packFiles = (await readdir(forPacksDir)).filter(
+      (file) => file.endsWith(".ts") && file !== "index.ts",
+    );
     for (const file of packFiles) {
       const slug = file.replace(/\.ts$/i, "");
       landingPageRoutes.push({
@@ -156,7 +158,7 @@ ${allStatic
 
 async function main() {
   const entries = await listBlogEntries();
-  const xml = buildXml(entries);
+  const xml = await buildXml(entries);
 
   await mkdir(dirname(outputFile), { recursive: true });
   await writeFile(outputFile, xml, "utf8");

@@ -83,6 +83,22 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Dungeons & Dragons Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const dnd = getLandingPage("dungeons-and-dragons");
+      expect(dnd).toBeDefined();
+      expect(dnd?.slug).toBe("dungeons-and-dragons");
+      expect(dnd?.kind).toBe("system");
+      expect(dnd?.disclaimer).toContain("Wizards of the Coast");
+      expect(dnd?.disclaimer).toContain("Hasbro");
+      expect(dnd?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(
+        dnd?.recommendedTools.some((t) => t.href.includes("dnd-npc")),
+      ).toBe(true);
+      expect(dnd?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("Extensibility (US3)", () => {
     it("allows dynamic page addition and handles optional section collapsing", () => {
       const customConfig: LandingPageConfig = {
