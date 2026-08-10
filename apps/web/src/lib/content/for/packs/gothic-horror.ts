@@ -90,7 +90,7 @@ export const gothicHorror: LandingPageConfig = {
       badge: "Generator",
     },
     {
-      title: "Faction & Society Generator",
+      title: "Faction Generator",
       description:
         "Design secret societies, dark covens, fanatical inquisitions, and noble houses.",
       href: "/generators/faction",

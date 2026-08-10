@@ -76,7 +76,7 @@ export const cyberpunkRed: LandingPageConfig = {
   },
   recommendedTools: [
     {
-      title: "Faction & Society Generator",
+      title: "Faction Generator",
       description:
         "Design megacorporations, street gangs, mercenary syndicates, and fixer networks.",
       href: "/generators/faction",

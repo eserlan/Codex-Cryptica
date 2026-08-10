@@ -88,7 +88,7 @@ export const callOfCthulhu: LandingPageConfig = {
       badge: "Generator",
     },
     {
-      title: "Faction & Society Generator",
+      title: "Faction Generator",
       description:
         "Design secret societies, esoteric orders, occult cults, and investigator alliances.",
       href: "/generators/faction",

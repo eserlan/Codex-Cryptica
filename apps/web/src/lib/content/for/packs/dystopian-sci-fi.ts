@@ -76,7 +76,7 @@ export const dystopianSciFi: LandingPageConfig = {
   },
   recommendedTools: [
     {
-      title: "Faction & Society Generator",
+      title: "Faction Generator",
       description:
         "Design corporate conglomerates, state security agencies, rebel cells, and crime syndicates.",
       href: "/generators/faction",
