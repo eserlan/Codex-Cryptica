@@ -87,7 +87,14 @@ export class CacheService {
       >();
 
       for (const record of graphRecords) {
-        const { vaultId: _vid, lastModified, filePath, ...graphData } = record;
+        const {
+          vaultId: _vid,
+          lastModified,
+          filePath,
+          contentPreview: _preview,
+          contentPreviewVersion: _previewVersion,
+          ...graphData
+        } = record;
         const entity: LocalEntity = {
           ...graphData,
           content: record.contentPreview ?? "",
@@ -150,6 +157,8 @@ export class CacheService {
         vaultId: _vid,
         lastModified,
         filePath: _fp,
+        contentPreview: _preview,
+        contentPreviewVersion: _previewVersion,
         ...graphData
       } = record;
 
@@ -402,6 +411,7 @@ export class CacheService {
       );
       // Invalidate the in-memory snapshot — it belongs to one vault.
       this.preloaded = null;
+      this._preloadedVaultId = null;
     } catch {
       // Non-fatal.
     }
@@ -424,6 +434,7 @@ export class CacheService {
    */
   invalidatePreload(): void {
     this.preloaded = null;
+    this._preloadedVaultId = null;
   }
 
   /**
@@ -481,12 +492,12 @@ export class CacheService {
           await entityDb.graphEntities.put(graphRecord);
 
           if (this.preloaded && this._preloadedVaultId === vaultId) {
-            for (const cached of this.preloaded.values()) {
-              if (String(cached.entity.id) === record.entityId) {
-                cached.entity.content = graphRecord.contentPreview ?? "";
-                cached.entity.contentPreview = graphRecord.contentPreview ?? "";
-                break;
-              }
+            const cached = this.preloaded.get(
+              `${vaultId}:${graphRecord.filePath}`,
+            );
+            if (cached) {
+              cached.entity.content = graphRecord.contentPreview ?? "";
+              cached.entity.contentPreview = graphRecord.contentPreview ?? "";
             }
           }
         }
@@ -520,6 +531,7 @@ export class CacheService {
   /** @deprecated Use `clearVault` instead. */
   async clear(): Promise<void> {
     this.preloaded = null;
+    this._preloadedVaultId = null;
   }
 }
 

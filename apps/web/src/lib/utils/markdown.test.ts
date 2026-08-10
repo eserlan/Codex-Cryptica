@@ -162,6 +162,22 @@ describe("markdown.ts utility", () => {
       expect(lines[1]).toContain("updatedAt: 1000");
     });
 
+    it("should omit runtime cache preview fields from frontmatter", () => {
+      const result = stringifyEntity({
+        id: "id1",
+        title: "Test",
+        type: "note",
+        content: "Body",
+        contentPreview: "Body",
+        contentLoaded: false,
+        contentPreviewVersion: 1,
+      } as any);
+
+      expect(result).not.toContain("contentPreview");
+      expect(result).not.toContain("contentLoaded");
+      expect(result).not.toContain("contentPreviewVersion");
+    });
+
     it("should round-trip a canonical language profile through frontmatter", () => {
       const entity = EntitySchema.parse({
         id: "lemari",
