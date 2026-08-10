@@ -62,6 +62,15 @@ test("records repeatable large-vault operations in a production preview", async 
       { timeout: 60_000 },
     );
 
+    // Reopen from the completed cache to capture the warm lifecycle directly.
+    await page.evaluate(async () => {
+      const span = (window as any).__CODEX_PERFORMANCE_RESULTS__?.start(
+        "vault_open_warm",
+      );
+      await (window as any).vault.loadFiles(false);
+      span?.complete();
+    });
+
     captureScenario(
       "warm-open",
       await page.evaluate(
