@@ -3,6 +3,28 @@ import type { LocalEntity } from "../stores/vault/types";
 import { debugStore } from "../stores/debug.svelte";
 import { systemClock } from "$lib/utils/runtime-deps";
 
+const CONTENT_PREVIEW_VERSION = 1;
+const CONTENT_PREVIEW_LIMIT = 280;
+const PREVIEW_BACKFILL_BATCH_SIZE = 50;
+
+function scheduleIdle(task: () => void): void {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(task);
+  } else {
+    setTimeout(task, 0);
+  }
+}
+
+function buildContentPreview(content: unknown, lore?: unknown): string {
+  const source =
+    typeof content === "string" && content.trim()
+      ? content
+      : typeof lore === "string"
+        ? lore
+        : "";
+  return source.replace(/\s+/g, " ").trim().slice(0, CONTENT_PREVIEW_LIMIT);
+}
+
 /**
  * Parses the composite cache key used by the vault adapter layer.
  * The key is formatted as `"<vaultId>:<filePath>"` where vaultId is a
@@ -42,13 +64,8 @@ export class CacheService {
   private _preloadedVaultId: string | null = null;
 
   /**
-   * Bulk-loads graph entity metadata and content (but not lore) from Dexie for
-   * the given vault into an in-memory map.  Calling this once before iterating
-   * over individual OPFS files reduces N per-file IDB round-trips to two table
-   * scans, significantly speeding up warm cache loads.
-   *
-   * `lore` is intentionally excluded — it can be large and is only needed when
-   * an entity is actively opened for editing.
+   * Bulk-loads only graph metadata and bounded previews from Dexie. Full
+   * content/lore stays in entityContent and is hydrated on demand.
    *
    * Safe to call even when Dexie is unavailable (e.g. in test environments)
    * — any error is swallowed and the service falls back to per-file lookups.
@@ -59,15 +76,10 @@ export class CacheService {
     try {
       debugStore.log(`[CacheService] Preloading vault: ${vaultId}`);
       const start = performance.now();
-      const [graphRecords, contentRecords] = await Promise.all([
-        entityDb.graphEntities.where("vaultId").equals(vaultId).toArray(),
-        entityDb.entityContent.where("vaultId").equals(vaultId).toArray(),
-      ]);
-
-      // Build a fast entityId → content lookup so the loop below is O(1) per entity
-      const contentByEntityId = new Map(
-        contentRecords.map((r) => [r.entityId, r.content]),
-      );
+      const graphRecords = await entityDb.graphEntities
+        .where("vaultId")
+        .equals(vaultId)
+        .toArray();
 
       const map = new Map<
         string,
@@ -78,8 +90,10 @@ export class CacheService {
         const { vaultId: _vid, lastModified, filePath, ...graphData } = record;
         const entity: LocalEntity = {
           ...graphData,
-          content: contentByEntityId.get(String(graphData.id)) ?? "",
+          content: record.contentPreview ?? "",
           lore: undefined, // lore is large — kept lazy-loaded per entity
+          contentPreview: record.contentPreview ?? "",
+          contentLoaded: false,
           _path: normalizePath(graphData._path, filePath),
         };
         map.set(`${vaultId}:${filePath}`, { lastModified, entity });
@@ -90,6 +104,9 @@ export class CacheService {
       debugStore.log(
         `[CacheService] Preloaded ${map.size} graph entities in ${(performance.now() - start).toFixed(2)}ms`,
       );
+      // Existing rows may predate previews. Backfill in bounded, retryable
+      // batches without delaying metadata availability.
+      scheduleIdle(() => void this.backfillContentPreviews(vaultId));
       return map;
     } catch (err) {
       debugStore.error("[CacheService] Preload failed:", err);
@@ -136,16 +153,12 @@ export class CacheService {
         ...graphData
       } = record;
 
-      // Also load content for this entity (lore stays lazy)
-      const contentRecord = await entityDb.entityContent
-        .where("[vaultId+entityId]")
-        .equals([vaultId, String(graphData.id)])
-        .first();
-
       const entity: LocalEntity = {
         ...graphData,
-        content: contentRecord?.content ?? "",
+        content: record.contentPreview ?? "",
         lore: undefined,
+        contentPreview: record.contentPreview ?? "",
+        contentLoaded: false,
         _path: normalizePath(graphData._path, _fp),
       };
       return { lastModified, entity };
@@ -179,12 +192,20 @@ export class CacheService {
       const { vaultId, filePath } = parseKey(path);
 
       // Separate heavy text from graph metadata
-      const { content, lore, ...graphData } = raw;
+      const {
+        content,
+        lore,
+        contentPreview: _preview,
+        contentLoaded: _loaded,
+        ...graphData
+      } = raw;
 
       // Explicitly shape the Dexie record to match the GraphEntityRecord schema.
       // Since `raw` is a non-reactive deep copy from $state.snapshot(), we can trust its structure.
       const graphRecord = {
         ...graphData,
+        contentPreview: buildContentPreview(content, lore),
+        contentPreviewVersion: CONTENT_PREVIEW_VERSION,
         updatedAt:
           typeof raw.updatedAt === "number" ? raw.updatedAt : systemClock.now(),
         status: raw.status || "active",
@@ -212,7 +233,9 @@ export class CacheService {
         const graphEntity: LocalEntity = {
           ...graphData,
           content: String(content || ""),
-          lore: undefined, // lore stays lazy
+          lore: String(lore || ""),
+          contentPreview: buildContentPreview(content, lore),
+          contentLoaded: true,
           _path: normalizePath(graphData._path, filePath),
         } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
@@ -251,10 +274,18 @@ export class CacheService {
         const { path, lastModified, entity } = entry;
         const raw = $state.snapshot(entity) as Record<string, any>;
         const { vaultId, filePath } = parseKey(path);
-        const { content, lore, ...graphData } = raw;
+        const {
+          content,
+          lore,
+          contentPreview: _preview,
+          contentLoaded: _loaded,
+          ...graphData
+        } = raw;
 
         const graphRecord = {
           ...graphData,
+          contentPreview: buildContentPreview(content, lore),
+          contentPreviewVersion: CONTENT_PREVIEW_VERSION,
           updatedAt:
             typeof raw.updatedAt === "number"
               ? raw.updatedAt
@@ -279,7 +310,9 @@ export class CacheService {
           entity: {
             ...graphData,
             content: String(content || ""),
-            lore: undefined, // lore stays lazy
+            lore: String(lore || ""),
+            contentPreview: buildContentPreview(content, lore),
+            contentLoaded: true,
             _path: normalizePath(graphData._path, filePath),
           } as LocalEntity,
         });
@@ -410,6 +443,61 @@ export class CacheService {
         err,
       );
       return null;
+    }
+  }
+
+  /**
+   * Backfills previews for legacy rows in bounded, idempotent batches. The
+   * preload map remains usable while this compatibility migration runs.
+   */
+  private async backfillContentPreviews(vaultId: string): Promise<void> {
+    try {
+      let offset = 0;
+      while (this._preloadedVaultId === vaultId) {
+        const records = await entityDb.entityContent
+          .where("vaultId")
+          .equals(vaultId)
+          .offset(offset)
+          .limit(PREVIEW_BACKFILL_BATCH_SIZE)
+          .toArray();
+        if (records.length === 0) return;
+
+        for (const record of records) {
+          const graphRecord = await entityDb.graphEntities.get([
+            vaultId,
+            record.entityId,
+          ]);
+          if (
+            !graphRecord ||
+            graphRecord.contentPreviewVersion === CONTENT_PREVIEW_VERSION
+          ) {
+            continue;
+          }
+          graphRecord.contentPreview = buildContentPreview(
+            record.content,
+            record.lore,
+          );
+          graphRecord.contentPreviewVersion = CONTENT_PREVIEW_VERSION;
+          await entityDb.graphEntities.put(graphRecord);
+
+          if (this.preloaded && this._preloadedVaultId === vaultId) {
+            for (const cached of this.preloaded.values()) {
+              if (String(cached.entity.id) === record.entityId) {
+                cached.entity.content = graphRecord.contentPreview ?? "";
+                cached.entity.contentPreview = graphRecord.contentPreview ?? "";
+                break;
+              }
+            }
+          }
+        }
+        offset += records.length;
+        if (records.length < PREVIEW_BACKFILL_BATCH_SIZE) return;
+      }
+    } catch (err) {
+      debugStore.warn(
+        `[CacheService] Preview backfill failed for ${vaultId}:`,
+        err,
+      );
     }
   }
 
