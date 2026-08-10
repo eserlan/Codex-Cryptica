@@ -33,7 +33,7 @@ export const callOfCthulhu: LandingPageConfig = {
     {
       title: "Occult Relics & Archival Lore",
       description:
-        "Link ancient artifacts, forbidden manuscripts, and historical events to the mysteries they unravel.",
+        "Link ancient artefacts, forbidden manuscripts, and historical events to the mysteries they unravel.",
       icon: "icon-[lucide--book-open]",
     },
     {
@@ -46,7 +46,7 @@ export const callOfCthulhu: LandingPageConfig = {
   exampleGraph: {
     title: "Sample Call of Cthulhu Investigation Web",
     description:
-      "See how investigators, police contacts, evidence, cult orders, and forbidden artifacts connect in a mystery web.",
+      "See how investigators, police contacts, evidence, cult orders, and forbidden artefacts connect in a mystery web.",
     steps: [
       {
         label: "Dr. Evelyn Mercer",
