@@ -77,11 +77,10 @@ test("records repeatable large-vault operations in a production preview", async 
     );
     await captureScenario("warm-open", 0, ["vault_open_warm"]);
 
-    const closeFrontPage = page.getByRole("button", {
-      name: "Close front page",
-    });
-    if (await closeFrontPage.isVisible()) {
-      await closeFrontPage.click();
+    const frontPageOverlay = page.getByTestId("front-page-overlay");
+    if (await frontPageOverlay.isVisible()) {
+      await frontPageOverlay.press("Escape");
+      await expect(frontPageOverlay).toBeHidden();
     }
 
     await page.waitForFunction(
