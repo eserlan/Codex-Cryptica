@@ -135,6 +135,10 @@ export class GraphViewController {
   private focusRebaselineTimer: number | null = null;
   private suppressFocusZoom = false;
   private lastSyncedFocusDepth = MIN_FOCUS_DEPTH;
+  private lastSyncedFocusRootId: string | null = null;
+  private lastSyncedGraphStructureVersion = 0;
+  private lastSyncedFilterSignature = "";
+  private elementSyncGeneration = 0;
   private readonly FOCUS_ZOOM_SETTLE_MS = 150;
   private readonly FOCUS_REBASELINE_MS = 300;
 
@@ -604,12 +608,32 @@ export class GraphViewController {
   // Sync Logic
   syncElements = () => {
     if (this.cy && this.deps.graph.elements) {
+      const syncGeneration = ++this.elementSyncGeneration;
+      const syncCy = this.cy;
       // When the element set changed because zoom changed the focus detail level
       // (not a real entity edit), keep the user's camera — the depth change was
       // driven by their zoom, so refitting would fight it.
       const focusDepthChanged =
         this.deps.graph.focusDepth !== this.lastSyncedFocusDepth;
+      const focusRootId = this.deps.graph.focusRootId;
+      const focusRootChanged = focusRootId !== this.lastSyncedFocusRootId;
+      const graphStructureVersion = this.deps.vault.graphStructureVersion ?? 0;
+      const filterSignature = [
+        this.deps.graph.labelFilterMode,
+        ...Array.from(this.deps.graph.activeLabels).sort(),
+        "|",
+        ...Array.from(this.deps.graph.activeCategories).sort(),
+      ].join("\u0000");
+      const focusMembershipOnly =
+        this.loadPhase !== "idle" &&
+        this.deps.graph.focusViewActive &&
+        (focusDepthChanged || focusRootChanged) &&
+        graphStructureVersion === this.lastSyncedGraphStructureVersion &&
+        filterSignature === this.lastSyncedFilterSignature;
       this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
+      this.lastSyncedFocusRootId = focusRootId;
+      this.lastSyncedGraphStructureVersion = graphStructureVersion;
+      this.lastSyncedFilterSignature = filterSignature;
 
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
@@ -619,6 +643,7 @@ export class GraphViewController {
         activeLabels: this.deps.graph.activeLabels,
         labelFilterMode: this.deps.graph.labelFilterMode,
         activeCategories: this.deps.graph.activeCategories,
+        focusMembershipOnly,
         skipRenderedWeightSync:
           this.deps.graph.perfStylingActive &&
           !this.deps.graph.timelineMode &&
@@ -629,6 +654,13 @@ export class GraphViewController {
           this.loadPhase = "elements";
         },
         onLayoutUpdate: (req) => {
+          // A future/asynchronous sync callback must never lay out a newer
+          // focus depth or a switched vault with stale membership data.
+          if (
+            syncGeneration !== this.elementSyncGeneration ||
+            this.cy !== syncCy
+          )
+            return;
           if (focusDepthChanged) req.viewport = "preserve";
           this.applyCurrentLayout(req);
         },
