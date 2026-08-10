@@ -43,13 +43,13 @@
 
   const SELECT_ACCENT = "#e6b450";
 
-  // Hub & spoke 2D layout matching WelcomeGraphPreview (viewBox 0 0 480 260)
+  // Spanned 2D viewBox (540 x 280) with enlarged node coordinates and spacing
   const POSITIONS = [
-    { cx: 240, cy: 130 }, // Center Hub (Node 0)
-    { cx: 115, cy: 68 }, // Top Left (Node 1)
-    { cx: 365, cy: 75 }, // Top Right (Node 2)
-    { cx: 355, cy: 195 }, // Bottom Right (Node 3)
-    { cx: 125, cy: 195 }, // Bottom Left (Node 4)
+    { cx: 270, cy: 140 }, // Center Hub (Node 0)
+    { cx: 120, cy: 70 }, // Top Left (Node 1)
+    { cx: 420, cy: 80 }, // Top Right (Node 2)
+    { cx: 410, cy: 215 }, // Bottom Right (Node 3)
+    { cx: 130, cy: 215 }, // Bottom Left (Node 4)
   ];
 
   let selectedIndex = $state(0);
@@ -59,20 +59,20 @@
 </script>
 
 <div
-  class="flex h-[18rem] sm:h-[22rem] md:h-[26rem] lg:h-[28rem] rounded-xl border border-theme-border/80 bg-theme-bg/95 overflow-hidden shadow-xl"
+  class="flex flex-col md:flex-row h-[22rem] sm:h-[26rem] md:h-[30rem] lg:h-[34rem] xl:h-[36rem] rounded-xl border border-theme-border/80 bg-theme-bg/95 overflow-hidden shadow-2xl"
   style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Graph Canvas -->
-  <div class="relative flex-1">
+  <div class="relative flex-1 min-h-[16rem] md:min-h-0">
     <svg
-      viewBox="0 0 480 260"
+      viewBox="0 0 540 280"
       class="absolute inset-0 h-full w-full"
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
       <!-- Peripheral interconnect lines (dim background web) -->
       {#if steps.length > 2}
-        <g stroke="#8a8175" stroke-opacity="0.25" stroke-width="1.2">
+        <g stroke="#8a8175" stroke-opacity="0.3" stroke-width="1.8">
           <line
             x1={POSITIONS[1].cx}
             y1={POSITIONS[1].cy}
@@ -104,8 +104,8 @@
             x2={pos.cx}
             y2={pos.cy}
             stroke={color}
-            stroke-opacity={isLinked ? "0.6" : "0.3"}
-            stroke-width={isLinked ? "2" : "1.2"}
+            stroke-opacity={isLinked ? "0.75" : "0.35"}
+            stroke-width={isLinked ? "2.8" : "1.5"}
           />
 
           {#if step.relation}
@@ -113,25 +113,25 @@
             {@const midY = (hub.cy + pos.cy) / 2}
             <!-- Relation label badge -->
             <rect
-              x={midX - 34}
-              y={midY - 9}
-              width="68"
-              height="16"
-              rx="4"
-              fill="#1a1c23"
-              fill-opacity="0.9"
+              x={midX - 42}
+              y={midY - 11}
+              width="84"
+              height="22"
+              rx="6"
+              fill="#14161f"
+              fill-opacity="0.95"
               stroke={isLinked ? SELECT_ACCENT : "#475569"}
-              stroke-opacity={isLinked ? "0.8" : "0.4"}
-              stroke-width="1"
+              stroke-opacity={isLinked ? "0.9" : "0.5"}
+              stroke-width="1.2"
             />
             <text
               x={midX}
-              y={midY + 2.5}
+              y={midY + 3.5}
               font-family="var(--font-mono, monospace)"
-              font-size="8.5"
-              font-weight="600"
+              font-size="10.5"
+              font-weight="700"
               text-anchor="middle"
-              fill={isLinked ? SELECT_ACCENT : "#94a3b8"}
+              fill={isLinked ? SELECT_ACCENT : "#cbd5e1"}
             >
               {step.relation}
             </text>
@@ -143,19 +143,19 @@
       <circle
         cx={selPos.cx}
         cy={selPos.cy}
-        r="32"
+        r="42"
         fill={SELECT_ACCENT}
-        fill-opacity="0.14"
+        fill-opacity="0.18"
       >
         <animate
           attributeName="opacity"
-          values="0.1;0.25;0.1"
+          values="0.12;0.3;0.12"
           dur="3s"
           repeatCount="indefinite"
         />
         <animate
           attributeName="r"
-          values="24;30;24"
+          values="32;44;32"
           dur="3s"
           repeatCount="indefinite"
         />
@@ -163,16 +163,16 @@
 
       <!-- Selection bounding box -->
       <rect
-        x={selPos.cx - 20}
-        y={selPos.cy - 20}
-        width="40"
-        height="40"
-        rx="9"
+        x={selPos.cx - 27}
+        y={selPos.cy - 27}
+        width="54"
+        height="54"
+        rx="12"
         fill="none"
         stroke={SELECT_ACCENT}
-        stroke-opacity="0.6"
-        stroke-width="1.2"
-        stroke-dasharray="4 3"
+        stroke-opacity="0.7"
+        stroke-width="1.5"
+        stroke-dasharray="5 3"
       />
 
       <!-- Render Nodes -->
@@ -181,7 +181,7 @@
         {@const color = getNodeColor(step.sublabel)}
         {@const isHub = i === 0}
         {@const isSelected = i === selectedIndex}
-        {@const r = isHub ? 13 : 9}
+        {@const r = isHub ? 20 : 15}
 
         <g
           class="cursor-pointer transition-transform hover:scale-110"
@@ -192,28 +192,45 @@
           onkeydown={(e) =>
             (e.key === "Enter" || e.key === " ") && (selectedIndex = i)}
         >
+          <!-- Outer ring -->
+          {#if isSelected}
+            <circle
+              cx={pos.cx}
+              cy={pos.cy}
+              r={r + 6}
+              fill="none"
+              stroke={SELECT_ACCENT}
+              stroke-width="2.5"
+            />
+          {/if}
           <!-- Node circle -->
-          <circle cx={pos.cx} cy={pos.cy} {r} fill={color} fill-opacity="0.9" />
+          <circle
+            cx={pos.cx}
+            cy={pos.cy}
+            {r}
+            fill={color}
+            fill-opacity="0.95"
+          />
           <circle
             cx={pos.cx}
             cy={pos.cy}
             {r}
             fill="none"
-            stroke={isSelected ? SELECT_ACCENT : color}
-            stroke-opacity={isSelected ? "1" : "0.6"}
-            stroke-width={isSelected ? "2" : "1"}
+            stroke={isSelected ? "#ffffff" : color}
+            stroke-opacity={isSelected ? "1" : "0.7"}
+            stroke-width="2"
           />
 
           <!-- Label text -->
           <text
             x={pos.cx}
-            y={pos.cy + (isHub ? 30 : 22)}
+            y={pos.cy + (isHub ? 38 : 32)}
             font-family="var(--font-header, serif)"
-            font-size={isHub ? "11" : "9.5"}
+            font-size={isHub ? "14" : "12"}
             font-weight={isHub || isSelected ? "700" : "600"}
             text-anchor="middle"
-            fill={isSelected ? "#f6dca0" : "#d7d2c8"}
-            fill-opacity={isSelected ? "1" : "0.92"}
+            fill={isSelected ? "#f6dca0" : "#f1f5f9"}
+            fill-opacity={isSelected ? "1" : "0.95"}
           >
             {step.label}
           </text>
@@ -222,60 +239,66 @@
     </svg>
   </div>
 
-  <!-- Entity Side Detail Panel (matching WelcomeGraphPreview structure) -->
+  <!-- Entity Side Detail Panel -->
   {#if activeNode}
     <div
-      class="w-36 sm:w-44 md:w-52 shrink-0 border-l border-theme-border bg-theme-bg/60 p-4 text-left flex flex-col justify-between"
+      class="w-full md:w-56 shrink-0 border-t md:border-t-0 md:border-l border-theme-border bg-theme-bg/80 p-5 text-left flex flex-col justify-between"
     >
       <div>
         <div
-          class="w-10 h-10 rounded-lg mb-2.5 flex items-center justify-center border border-theme-border/50"
+          class="w-12 h-12 rounded-xl mb-3 flex items-center justify-center border border-theme-border/60 shadow-sm"
           style="background-color: {activeColor}2e"
         >
           <span
-            class="icon-[lucide--network] w-5 h-5"
+            class="icon-[lucide--network] w-6 h-6"
             style="color: {activeColor}"
           ></span>
         </div>
         <div
-          class="font-header text-xs sm:text-sm font-bold text-theme-text leading-tight"
+          class="font-header text-sm sm:text-base font-bold text-theme-text leading-tight"
         >
           {activeNode.label}
         </div>
         {#if activeNode.sublabel}
           <div
-            class="text-[9px] font-mono uppercase tracking-[0.15em] mt-0.5 mb-3"
+            class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.16em] mt-1 mb-4 font-bold"
             style="color: {activeColor}"
           >
             {activeNode.sublabel}
           </div>
         {/if}
         <div
-          class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug text-theme-muted"
+          class="space-y-2 text-xs font-body leading-relaxed text-theme-muted"
         >
-          <div>
-            Status: <span class="text-theme-text font-medium"
-              >Active Graph Node</span
-            >
-          </div>
-          <div>
-            Vault Storage: <span class="text-theme-text font-medium"
-              >Local First</span
+          <div
+            class="flex items-center justify-between border-b border-theme-border/40 pb-1.5"
+          >
+            <span>Graph Node Type</span>
+            <span class="text-theme-text font-bold capitalize"
+              >{activeNode.sublabel || "Entity"}</span
             >
           </div>
           <div
-            class="flex items-center gap-1 text-theme-primary pt-1 font-mono text-[9px]"
+            class="flex items-center justify-between border-b border-theme-border/40 pb-1.5"
           >
-            <span class="icon-[lucide--sparkles] w-3 h-3 shrink-0"></span>
-            Connected Web Node
+            <span>Vault Storage</span>
+            <span class="text-theme-text font-bold">Local-first</span>
+          </div>
+          <div
+            class="flex items-center gap-1.5 text-theme-primary pt-1 font-mono text-[10px] font-bold"
+          >
+            <span class="icon-[lucide--sparkles] w-3.5 h-3.5 shrink-0"></span>
+            Connected Web Entity
           </div>
         </div>
       </div>
 
       <div
-        class="border-t border-theme-border/60 pt-2 text-[9px] font-mono text-theme-muted uppercase tracking-wider"
+        class="border-t border-theme-border/60 pt-3 text-[10px] font-mono text-theme-muted uppercase tracking-wider flex items-center justify-between"
       >
-        Click node to inspect
+        <span>Interactive Node</span>
+        <span class="icon-[lucide--pointer] w-3.5 h-3.5 text-theme-primary"
+        ></span>
       </div>
     </div>
   {/if}
