@@ -15,11 +15,11 @@ export const callOfCthulhu: LandingPageConfig = {
     tagline:
       "Keep investigators, contacts, clues, cult conspiracies, and mystery lore connected in one place.",
     problemStatement:
-      "Investigative horror campaigns quickly grow into a tangled web of clues, suspect testimonies, cult connections, and hidden relics. When your investigators follow a forgotten lead to an old archive, you shouldn't have to search through scattered session notes to remember which contact provided the clue — or what it reveals.",
+      "Investigative horror campaigns quickly grow into a web of clues, suspects, contacts, locations, and hidden connections. When the investigators follow an old lead to a forgotten archive, you shouldn't have to dig through scattered notes to remember who gave them the clue — or why it matters.",
   },
   useCases: [
     {
-      title: "Investigative Clues & Evidence Webs",
+      title: "Clues, Evidence & Connections",
       description:
         "Map how clues, testimonies, documents, and crime scenes connect using a visual relationship graph.",
       icon: "icon-[lucide--search]",
@@ -37,7 +37,7 @@ export const callOfCthulhu: LandingPageConfig = {
       icon: "icon-[lucide--book-open]",
     },
     {
-      title: "Session Recaps & Mystery Logs",
+      title: "Session Notes & Active Leads",
       description:
         "Keep active leads, mystery timelines, session notes, and investigation milestones connected to the people and places they involve.",
       icon: "icon-[lucide--scroll]",
@@ -46,36 +46,36 @@ export const callOfCthulhu: LandingPageConfig = {
   exampleGraph: {
     title: "Sample Call of Cthulhu Investigation Web",
     description:
-      "See how investigators, police contacts, evidence, cult orders, and forbidden artefacts connect in a mystery web.",
+      "See how an investigator, a police contact, a telegram, and a secret society lead to a hidden archive and its occult ledger.",
     steps: [
       {
-        label: "Dr. Evelyn Mercer",
-        sublabel: "Lead Investigator",
+        label: "Dr Evelyn Mercer",
+        sublabel: "Investigator",
         relation: "consulted",
       },
       {
         label: "Inspector Thomas Vance",
         sublabel: "Police Contact",
-        relation: "uncovered",
+        relation: "shared",
       },
       {
-        label: "The Blackwood Telegram",
-        sublabel: "Cryptic Clue",
-        relation: "exposes",
+        label: "Telegram from Arkham",
+        sublabel: "Clue",
+        relation: "mentions",
       },
       {
-        label: "Order of the Silver Eye",
-        sublabel: "Esoteric Cult",
+        label: "The Orne Society",
+        sublabel: "Secret Society",
         relation: "meets beneath",
       },
       {
-        label: "Miskatonic Vaults",
-        sublabel: "Archival Vault",
+        label: "St Bartholomew's Archive",
+        sublabel: "Forgotten Archive",
         relation: "conceals",
       },
       {
-        label: "The Obsidian Codex",
-        sublabel: "Forbidden Artefact",
+        label: "The Ashen Ledger",
+        sublabel: "Occult Ledger",
       },
     ],
   },
@@ -88,7 +88,7 @@ export const callOfCthulhu: LandingPageConfig = {
       badge: "Generator",
     },
     {
-      title: "Faction & Society Generator",
+      title: "Faction Generator",
       description:
         "Design secret societies, esoteric orders, occult cults, and investigator alliances.",
       href: "/generators/faction",
