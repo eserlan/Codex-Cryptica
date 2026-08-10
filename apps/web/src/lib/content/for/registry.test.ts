@@ -116,6 +116,32 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Call of Cthulhu Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const coc = getLandingPage("call-of-cthulhu");
+      expect(coc).toBeDefined();
+      expect(coc?.slug).toBe("call-of-cthulhu");
+      expect(coc?.kind).toBe("system");
+      expect(coc?.theme).toBe("horror");
+      expect(coc?.disclaimer).toContain("Chaosium Inc.");
+      expect(coc?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(coc?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Gothic Horror Pack", () => {
+    it("is registered as genre and omits non-affiliation disclaimer", () => {
+      const gothic = getLandingPage("gothic-horror");
+      expect(gothic).toBeDefined();
+      expect(gothic?.slug).toBe("gothic-horror");
+      expect(gothic?.kind).toBe("genre");
+      expect(gothic?.theme).toBe("horror");
+      expect(gothic?.disclaimer).toBeUndefined();
+      expect(gothic?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(gothic?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("Extensibility (US3)", () => {
     it("allows dynamic page addition and handles optional section collapsing", () => {
       const customConfig: LandingPageConfig = {
