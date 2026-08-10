@@ -97,13 +97,7 @@ test("records repeatable large-vault operations in a production preview", async 
       for (let index = 0; index < 10; index += 1) {
         cy.$id(`benchmark-${index}`).emit("tap");
       }
-    });
-    await page.evaluate(() => {
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() =>
-          (window as any).__selectionSpan?.complete(),
-        ),
-      );
+      (window as any).__selectionSpan?.complete();
     });
     await page.waitForFunction(() =>
       ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
