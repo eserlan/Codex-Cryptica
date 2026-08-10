@@ -3,7 +3,11 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { groupEntitiesForExplorer } from "./entityListGrouping";
-  import { buildEntityTree, type TreeNode } from "./entityTree";
+  import {
+    buildEntityTree,
+    flattenVisibleEntityTree,
+    type TreeNode,
+  } from "./entityTree";
   import { filterEntities, countEntityTypes } from "./entityListFiltering";
   import type { Entity } from "schema";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
@@ -16,6 +20,29 @@
   import { sortExplorerEntities } from "./entityListSorting";
   import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
   import type { PerformanceOperationHandle } from "@codex/performance-observability";
+  import {
+    clampExplorerPage,
+    ENTITY_EXPLORER_PAGE_SIZE,
+    getExplorerPageCount,
+    getExplorerPageItems,
+  } from "./entityExplorerPagination";
+
+  type GroupEntry =
+    | {
+        kind: "group";
+        id: string;
+        groupType: "label" | "category" | "unlabeled";
+        groupKey: string;
+        title: string;
+        count: number;
+        collapsed: boolean;
+      }
+    | {
+        kind: "entity";
+        id: string;
+        groupKey: string;
+        entity: Entity;
+      };
 
   let {
     onSelect,
@@ -107,6 +134,119 @@
       direction: sortDirection,
     }),
   );
+  const flattenedTree = $derived(
+    flattenVisibleEntityTree(
+      entityTree,
+      collapsedEntities,
+      searchQuery.trim() !== "",
+    ),
+  );
+  const groupedEntries = $derived.by((): GroupEntry[] => {
+    if (!groupedEntities) return [];
+    const entries: GroupEntry[] = [];
+    if (groupedEntities.type === "label") {
+      for (const label of groupedEntities.sortedKeys) {
+        const items = groupedEntities.groups.get(label) ?? [];
+        const collapsed = collapsedLabelGroups.has(label);
+        entries.push({
+          kind: "group",
+          id: `label:${label}`,
+          groupType: "label",
+          groupKey: label,
+          title: label,
+          count: items.length,
+          collapsed,
+        });
+        if (!collapsed) {
+          for (const entity of items) {
+            entries.push({
+              kind: "entity",
+              id: `${entity.id}:${label}`,
+              groupKey: label,
+              entity,
+            });
+          }
+        }
+      }
+      if (groupedEntities.unlabeled.length > 0) {
+        entries.push({
+          kind: "group",
+          id: "label:unlabeled",
+          groupType: "unlabeled",
+          groupKey: "unlabeled",
+          title: "Unlabeled",
+          count: groupedEntities.unlabeled.length,
+          collapsed: false,
+        });
+        for (const entity of groupedEntities.unlabeled) {
+          entries.push({
+            kind: "entity",
+            id: `${entity.id}:unlabeled`,
+            groupKey: "unlabeled",
+            entity,
+          });
+        }
+      }
+    } else {
+      for (const categoryId of groupedEntities.sortedKeys) {
+        const items = groupedEntities.groups.get(categoryId) ?? [];
+        const collapsed = collapsedCategoryGroups.has(categoryId);
+        entries.push({
+          kind: "group",
+          id: `category:${categoryId}`,
+          groupType: "category",
+          groupKey: categoryId,
+          title: getCategoryLabel(categoryId),
+          count: items.length,
+          collapsed,
+        });
+        if (!collapsed) {
+          for (const entity of items) {
+            entries.push({
+              kind: "entity",
+              id: `${entity.id}:${categoryId}`,
+              groupKey: categoryId,
+              entity,
+            });
+          }
+        }
+      }
+    }
+    return entries;
+  });
+
+  const pageSize = ENTITY_EXPLORER_PAGE_SIZE;
+  let page = $state(1);
+  const pagedRows = $derived(
+    effectiveViewMode === "list"
+      ? getExplorerPageItems(flattenedTree, page, pageSize)
+      : getExplorerPageItems(groupedEntries, page, pageSize),
+  );
+  const totalPageRows = $derived(
+    effectiveViewMode === "list" ? flattenedTree.length : groupedEntries.length,
+  );
+  const pageCount = $derived(getExplorerPageCount(totalPageRows, pageSize));
+  const firstPageRow = $derived(
+    totalPageRows === 0 ? 0 : (page - 1) * pageSize + 1,
+  );
+  const lastPageRow = $derived(Math.min(page * pageSize, totalPageRows));
+
+  $effect(() => {
+    void searchQuery;
+    void typeFilters;
+    void labelFilters;
+    void effectiveViewMode;
+    void sortKey;
+    void sortDirection;
+    page = 1;
+  });
+  $effect(() => {
+    page = clampExplorerPage(page, totalPageRows, pageSize);
+  });
+
+  function goToPage(nextPage: number) {
+    page = clampExplorerPage(nextPage, totalPageRows, pageSize);
+  }
 
   let inlineCreationParentId = $state<string | null>(null);
   let newChildTitle = $state("");
@@ -233,13 +373,16 @@
     class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
-    {#snippet treeNode(node: TreeNode, depth: number)}
+    {#snippet treeNode(node: TreeNode, depth: number, includeChildren = true)}
       {@const entity = node.entity}
       {@const hasChildren = node.children.length > 0}
       {@const isCollapsed =
         searchQuery.trim() !== "" ? false : collapsedEntities.has(entity.id)}
 
-      <div class="space-y-1">
+      <div
+        class="space-y-1"
+        style:margin-left={`${Math.min(depth, 8) * 0.75}rem`}
+      >
         <EntityListItem
           {entity}
           isMatching={node.isMatchingQuery}
@@ -357,7 +500,7 @@
           </div>
         {/if}
 
-        {#if hasChildren && !isCollapsed}
+        {#if includeChildren && hasChildren && !isCollapsed}
           <div
             class="space-y-1 {depth < 8
               ? 'border-l border-theme-border/15 ml-3 pl-2'
@@ -368,14 +511,6 @@
             {/each}
           </div>
         {/if}
-      </div>
-    {/snippet}
-
-    {#snippet sectionHeader(title: string)}
-      <div
-        class="py-1 px-2 mt-4 first:mt-0 text-[10px] font-bold text-theme-muted uppercase tracking-[0.2em] border-b border-theme-border/30 mb-1"
-      >
-        {title}
       </div>
     {/snippet}
 
@@ -435,8 +570,8 @@
           Move to Root
         </div>
       {/if}
-      {#each entityTree as node (node.entity.id)}
-        {@render treeNode(node, 0)}
+      {#each pagedRows as row (row.node.entity.id)}
+        {@render treeNode(row.node, row.depth, false)}
       {:else}
         <div data-testid="no-entities-found">
           {#if vault.allEntities.length === 0}
@@ -460,136 +595,38 @@
           {/if}
         </div>
       {/each}
-    {:else if effectiveViewMode === "label" && groupedEntities?.type === "label"}
-      {#each groupedEntities.sortedKeys as label (label)}
-        {@const labelEntities = groupedEntities.groups.get(label) ?? []}
-        {@const isCollapsed = collapsedLabelGroups.has(label)}
-        <button
-          type="button"
-          onclick={() =>
-            explorerUIStore.toggleExplorerLabelGroup(activeVaultId, label)}
-          aria-expanded={!isCollapsed}
-          class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
-        >
-          <span class="flex items-center gap-1.5">
-            {#if isCollapsed}
-              <span class="icon-[lucide--chevron-right] h-3 w-3"></span>
-            {:else}
-              <span class="icon-[lucide--chevron-down] h-3 w-3"></span>
-            {/if}
-            <span>{label}</span>
-          </span>
-          <span class="text-[9px] text-theme-muted/80"
-            >{labelEntities.length}</span
+    {:else if effectiveViewMode === "label" || effectiveViewMode === "category"}
+      {#each pagedRows as entry (entry.id)}
+        {#if entry.kind === "group"}
+          <button
+            type="button"
+            onclick={() =>
+              entry.groupType === "label"
+                ? explorerUIStore.toggleExplorerLabelGroup(
+                    activeVaultId,
+                    entry.groupKey,
+                  )
+                : entry.groupType === "category"
+                  ? explorerUIStore.toggleExplorerCategoryGroup(
+                      activeVaultId,
+                      entry.groupKey,
+                    )
+                  : undefined}
+            aria-expanded={!entry.collapsed}
+            class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
           >
-        </button>
-        {#if !isCollapsed}
-          {#each labelEntities as entity (`${entity.id}:${label}`)}
-            <EntityListItem
-              {entity}
-              {isDragging}
-              isDragSource={entity.id === draggedEntityId}
-              draggable={!!onDragStart}
-              {onSelect}
-              onDragStart={onDragStart
-                ? (e, entityId) => {
-                    draggedEntityId = entityId;
-                    requestAnimationFrame(() => {
-                      if (draggedEntityId === entityId) {
-                        isDragging = true;
-                      }
-                    });
-                    onDragStart?.(e, entityId);
-                  }
-                : undefined}
-              onDragEnd={onDragStart
-                ? () => {
-                    isDragging = false;
-                    draggedEntityId = null;
-                    onDragEnd?.();
-                  }
-                : undefined}
-              {onOpenZen}
-              {onFindInGraph}
-              {onApproveDraft}
-              {onRejectDraft}
-            />
-          {/each}
-        {/if}
-      {/each}
-      {#if groupedEntities.unlabeled && groupedEntities.unlabeled.length > 0}
-        {@render sectionHeader("Unlabeled")}
-        {#each groupedEntities.unlabeled as entity (entity.id)}
-          <EntityListItem
-            {entity}
-            {isDragging}
-            isDragSource={entity.id === draggedEntityId}
-            draggable={!!onDragStart}
-            {onSelect}
-            onDragStart={onDragStart
-              ? (e, entityId) => {
-                  draggedEntityId = entityId;
-                  requestAnimationFrame(() => {
-                    if (draggedEntityId === entityId) {
-                      isDragging = true;
-                    }
-                  });
-                  onDragStart?.(e, entityId);
-                }
-              : undefined}
-            onDragEnd={onDragStart
-              ? () => {
-                  isDragging = false;
-                  draggedEntityId = null;
-                  onDragEnd?.();
-                }
-              : undefined}
-            {onOpenZen}
-            {onFindInGraph}
-            {onApproveDraft}
-            {onRejectDraft}
-          />
-        {/each}
-      {/if}
-      {#if sortedEntities.length === 0}
-        <div data-testid="no-entities-found">
-          <EmptyState
-            icon="icon-[lucide--search-x]"
-            headline="No entities found"
-            body="Try adjusting your search or filters."
-          />
-        </div>
-      {/if}
-    {:else if effectiveViewMode === "category" && groupedEntities?.type === "category"}
-      {#each groupedEntities.sortedKeys as categoryId (categoryId)}
-        {@const categoryEntities = groupedEntities.groups.get(categoryId) ?? []}
-        {@const isCollapsed = collapsedCategoryGroups.has(categoryId)}
-        <button
-          type="button"
-          onclick={() =>
-            explorerUIStore.toggleExplorerCategoryGroup(
-              activeVaultId,
-              categoryId,
-            )}
-          aria-expanded={!isCollapsed}
-          class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
-        >
-          <span class="flex items-center gap-1.5">
-            {#if isCollapsed}
-              <span class="icon-[lucide--chevron-right] h-3 w-3"></span>
-            {:else}
-              <span class="icon-[lucide--chevron-down] h-3 w-3"></span>
-            {/if}
-            <span>{getCategoryLabel(categoryId)}</span>
-          </span>
-          <span class="text-[9px] text-theme-muted/80"
-            >{categoryEntities.length}</span
-          >
-        </button>
-        {#if !isCollapsed}
-          {#each categoryEntities as entity (`${entity.id}:${categoryId}`)}
-            {@render groupedEntityItem(entity, categoryId)}
-          {/each}
+            <span class="flex items-center gap-1.5">
+              <span
+                class="{entry.collapsed
+                  ? 'icon-[lucide--chevron-right]'
+                  : 'icon-[lucide--chevron-down]'} h-3 w-3"
+              ></span>
+              <span>{entry.title}</span>
+            </span>
+            <span class="text-[9px] text-theme-muted/80">{entry.count}</span>
+          </button>
+        {:else}
+          {@render groupedEntityItem(entry.entity, entry.groupKey)}
         {/if}
       {/each}
       {#if sortedEntities.length === 0}
@@ -601,6 +638,39 @@
           />
         </div>
       {/if}
+    {/if}
+
+    {#if pageCount > 1}
+      <nav
+        class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-theme-border/30 pt-2"
+        aria-label="Entity explorer pages"
+        data-testid="entity-explorer-pagination"
+      >
+        <span class="text-[10px] text-theme-muted" aria-live="polite">
+          Showing {firstPageRow}–{lastPageRow} of {totalPageRows} visible rows
+        </span>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Previous page"
+            disabled={page === 1}
+            onclick={() => goToPage(page - 1)}
+            class="rounded px-2 py-1 text-[10px] text-theme-muted disabled:opacity-40"
+            >Previous</button
+          >
+          <span class="px-1 text-[10px] text-theme-text"
+            >Page {page} of {pageCount}</span
+          >
+          <button
+            type="button"
+            aria-label="Next page"
+            disabled={page === pageCount}
+            onclick={() => goToPage(page + 1)}
+            class="rounded px-2 py-1 text-[10px] text-theme-muted disabled:opacity-40"
+            >Next</button
+          >
+        </div>
+      </nav>
     {/if}
   </div>
 </div>
