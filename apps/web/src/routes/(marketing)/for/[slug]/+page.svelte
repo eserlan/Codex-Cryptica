@@ -7,6 +7,7 @@
     LandingPageSection,
   } from "$lib/content/for/schema";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import LandingPageGraphPreview from "$lib/components/for/LandingPageGraphPreview.svelte";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
@@ -151,43 +152,7 @@
             </span>
           </div>
 
-          <div
-            class="rounded-lg border border-theme-border/80 bg-theme-bg/90 p-6 sm:p-8"
-          >
-            <div class="flex flex-wrap items-center justify-center gap-3 py-2">
-              {#each config.exampleGraph.steps as step, index}
-                <div
-                  class="flex flex-col items-center rounded-lg border border-theme-primary/30 bg-theme-surface px-4 py-3 shadow-md"
-                >
-                  <span
-                    class="font-header font-bold text-theme-text text-xs sm:text-sm"
-                    >{step.label}</span
-                  >
-                  {#if step.sublabel}
-                    <span
-                      class="mt-1 font-mono text-[10px] uppercase tracking-wider text-theme-muted"
-                      >{step.sublabel}</span
-                    >
-                  {/if}
-                </div>
-                {#if index < config.exampleGraph.steps.length - 1}
-                  <div
-                    class="flex flex-col items-center justify-center px-1 text-center"
-                  >
-                    {#if step.relation}
-                      <span
-                        class="font-mono text-[10px] italic text-theme-primary"
-                        >{step.relation}</span
-                      >
-                    {/if}
-                    <span
-                      class="icon-[lucide--arrow-right] mt-0.5 h-4 w-4 text-theme-muted"
-                    ></span>
-                  </div>
-                {/if}
-              {/each}
-            </div>
-          </div>
+          <LandingPageGraphPreview steps={config.exampleGraph.steps} />
         </section>
       {:else if section === "tools" && config.recommendedTools.length > 0}
         <!-- Recommended Tools -->
