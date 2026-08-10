@@ -437,6 +437,15 @@ export class SearchEngine {
    */
   async exportIndexCompressed(): Promise<CompressedSearchIndex> {
     const segmented = await this.exportIndex();
+    const keyCount = segmented.keyCount ?? 0;
+    if (keyCount <= 1) {
+      return {
+        format: SEARCH_INDEX_COMPRESSION_FORMAT,
+        data: new Uint8Array(),
+        keyCount,
+      };
+    }
+
     const decoder = new TextDecoder();
     const serializable = {
       ...segmented,
@@ -452,7 +461,7 @@ export class SearchEngine {
       {
         format: SEARCH_INDEX_COMPRESSION_FORMAT,
         data: compressed,
-        keyCount: segmented.keyCount ?? 0,
+        keyCount,
       },
       [compressed.buffer],
     );
@@ -468,15 +477,19 @@ export class SearchEngine {
       throw new Error("Unsupported search index compression format");
     }
 
-    const parsed = JSON.parse(strFromU8(decompressSync(payload.data)));
-    if (
-      !parsed?.isSegmented ||
-      !parsed.segments ||
-      !Array.isArray(JSON.parse(String(parsed.segments._docIds ?? "")))
-    ) {
+    try {
+      const parsed = JSON.parse(strFromU8(decompressSync(payload.data)));
+      const docIds =
+        parsed?.segments?._docIds === undefined
+          ? null
+          : JSON.parse(String(parsed.segments._docIds));
+      if (!parsed?.isSegmented || !parsed.segments || !Array.isArray(docIds)) {
+        throw new Error("invalid segmented payload");
+      }
+      await this.importIndex(parsed);
+    } catch {
       throw new Error("Corrupt segmented search index payload");
     }
-    await this.importIndex(parsed);
   }
 
   /**

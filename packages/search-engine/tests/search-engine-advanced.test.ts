@@ -377,6 +377,13 @@ describe("SearchEngine – concurrent task queue", () => {
 });
 
 describe("SearchEngine – worker index compression", () => {
+  it("skips compression for an empty index", async () => {
+    const payload = await new SearchEngine().exportIndexCompressed();
+
+    expect(payload.keyCount).toBe(0);
+    expect(payload.data.byteLength).toBe(0);
+  });
+
   it("exports a transferable compressed payload and restores it", async () => {
     const source = new SearchEngine();
     await source.add(makeEntry("compressed-1"));
@@ -400,6 +407,6 @@ describe("SearchEngine – worker index compression", () => {
         data: new Uint8Array([1, 2, 3]),
         keyCount: 1,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow("Corrupt segmented search index payload");
   });
 });

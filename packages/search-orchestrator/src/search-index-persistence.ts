@@ -1,3 +1,4 @@
+import { SEARCH_INDEX_COMPRESSION_FORMAT } from "@codex/search-engine";
 import type { CompressedSearchIndex, SearchEngine } from "@codex/search-engine";
 import type * as Comlink from "comlink";
 
@@ -112,7 +113,7 @@ export class SearchIndexPersistence {
       if (record && record.data) {
         const compressedApi = api as PersistenceApi;
         if (
-          record.format === "fflate-json-v1" &&
+          record.format === SEARCH_INDEX_COMPRESSION_FORMAT &&
           typeof compressedApi.importIndexCompressed === "function"
         ) {
           const runId = this.coordinator.createRunId(vaultId);
@@ -301,7 +302,10 @@ export class SearchIndexPersistence {
       if (typeof compressedApi.exportIndexCompressed === "function") {
         try {
           const payload = await compressedApi.exportIndexCompressed();
-          if (this.saveGenerations.get(vaultId) !== generation) return;
+          if (this.saveGenerations.get(vaultId) !== generation) {
+            saveSpan.stale(() => ({ indexedInputCount: 0 }));
+            return;
+          }
           if (!payload?.data || payload.keyCount <= 1) {
             saveSpan.complete(() => ({
               indexedInputCount: payload?.keyCount ?? 0,
@@ -332,6 +336,10 @@ export class SearchIndexPersistence {
       }
 
       const rawData = await api.exportIndex();
+      if (this.saveGenerations.get(vaultId) !== generation) {
+        saveSpan.stale(() => ({ indexedInputCount: 0 }));
+        return;
+      }
 
       const explicitKeyCount =
         typeof rawData?.keyCount === "number" ? rawData.keyCount : undefined;
@@ -429,7 +437,10 @@ export class SearchIndexPersistence {
           }
         }
 
-        if (this.saveGenerations.get(vaultId) !== generation) return;
+        if (this.saveGenerations.get(vaultId) !== generation) {
+          saveSpan.stale(() => ({ indexedInputCount: keyCount }));
+          return;
+        }
         await this.getDb().searchIndex.put({
           vaultId,
           data: persistedData,
