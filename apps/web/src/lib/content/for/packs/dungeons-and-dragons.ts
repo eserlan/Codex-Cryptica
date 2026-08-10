@@ -7,39 +7,39 @@ export const dungeonsAndDragons: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for D&D 5e Campaign Management",
     description:
-      "Organize D&D 5e adventuring parties, villainous factions, regional maps, dungeon vaults, session prep, and magic item registries in one connected campaign workspace.",
+      "Organise your D&D 5e campaign with connected characters, factions, locations, quests, maps, session notes, and worldbuilding tools.",
   },
   hero: {
     eyebrow: "5e Campaign & Lore Management",
     title: "Codex Cryptica for Dungeons & Dragons 5e",
     tagline:
-      "Keep adventuring parties, villainous factions, regional strongholds, quest hooks, and magic item vaults connected in one local-first campaign space.",
+      "Keep characters, factions, locations, quests, and campaign lore connected in one place.",
     problemStatement:
-      "D&D campaigns quickly grow into a web of player backstories, patron quests, regional factions, and dungeon vaults. When your party decides to follow a minor rumor to a distant stronghold, you shouldn't have to scramble through loose notes to remember which faction controls the region.",
+      "D&D campaigns quickly grow into a web of character backstories, quests, factions, locations, and NPCs. When the party follows a forgotten rumour to a distant stronghold, you shouldn't have to dig through scattered notes to remember who controls the region — or why it matters.",
   },
   useCases: [
     {
       title: "Adventuring Parties & Factions",
       description:
-        "Map player characters, party patrons, rival adventuring guilds, and villainous factions with visual relationship webs.",
+        "Map player characters, party patrons, rival adventuring guilds, and villainous factions with a visual relationship graph.",
       icon: "icon-[lucide--users]",
     },
     {
-      title: "Dungeon Vaults & Wilderness Regions",
+      title: "Dungeons, Settlements & Regions",
       description:
-        "Organize subterranean complexes, regional maps, wilderness strongholds, and planar portals into linked world hubs.",
+        "Connect dungeons, towns, strongholds, wilderness regions, and planar locations to the characters and factions that inhabit them.",
       icon: "icon-[lucide--castle]",
     },
     {
-      title: "Session Prep & Quest Registries",
+      title: "Quests, Clues & Session Notes",
       description:
-        "Track active quest hooks, mystery clues, session recaps, and campaign milestones with local-first privacy.",
+        "Keep active quests, rumours, clues, session notes, and campaign milestones connected to the people and places they involve.",
       icon: "icon-[lucide--scroll]",
     },
     {
-      title: "Magic Items & Divine Pantheons",
+      title: "Magic Items & Pantheons",
       description:
-        "Catalog rare artifacts, attunement histories, deity domains, and sacred holy orders alongside your entity lore.",
+        "Connect legendary items to their creators, owners, histories, gods, temples, and the adventures surrounding them.",
       icon: "icon-[lucide--sparkles]",
     },
   ],
@@ -56,12 +56,12 @@ export const dungeonsAndDragons: LandingPageConfig = {
       {
         label: "Lord Caspian Vane",
         sublabel: "Patron • High Warden",
-        relation: "investigating",
+        relation: "opposes",
       },
       {
         label: "Cult of the Black Flame",
         sublabel: "Villainous Faction",
-        relation: "operating in",
+        relation: "occupies",
       },
       {
         label: "Sunken Citadel of Ash",
@@ -78,28 +78,28 @@ export const dungeonsAndDragons: LandingPageConfig = {
     {
       title: "D&D NPC Generator",
       description:
-        "Instantly spin up D&D 5e NPCs with distinct motives, quirks, personality traits, and party roles.",
+        "Create NPCs with distinct motives, personalities, backgrounds, and roles in your campaign.",
       href: "/tools/dnd-npc-generator",
       badge: "Generator",
     },
     {
       title: "Dungeon Generator",
       description:
-        "Generate multi-level dungeon vaults, lair encounters, and subterranean hazards.",
+        "Generate dungeons, dangerous locations, encounters, and adventure-ready details.",
       href: "/generators/dungeon-generator",
       badge: "Generator",
     },
     {
       title: "Quest Hook Generator",
       description:
-        "Create compelling quest hooks, patron assignments, and campaign plot twists.",
+        "Create quest hooks, patron requests, mysteries, and complications for your campaign.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
     {
       title: "Magic Item Generator",
       description:
-        "Design unique magic items, ancient artifacts, and attunement lore for your campaign rewards.",
+        "Create distinctive magic items, artefacts, histories, and adventure hooks.",
       href: "/generators/magic-item",
       badge: "Generator",
     },
@@ -107,8 +107,8 @@ export const dungeonsAndDragons: LandingPageConfig = {
   cta: {
     title: "Organize Your D&D Campaign",
     description:
-      "Take control of your D&D 5e world with visual relationship graphs, interactive maps, and local-first privacy.",
-    buttonText: "Start D&D Campaign Free",
+      "Keep your D&D campaign connected with relationship graphs, interactive maps, and local-first storage.",
+    buttonText: "Start Building Free",
     buttonHref: "/app",
   },
   disclaimer:
