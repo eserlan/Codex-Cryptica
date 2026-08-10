@@ -43,13 +43,13 @@
 
   const SELECT_ACCENT = "#e6b450";
 
-  // Wide 2D viewBox (640 x 360) spanning full canvas width
+  // Spanned 2D viewBox (540 x 280) tuned for aspect ratio fill
   const POSITIONS = [
-    { cx: 320, cy: 180 }, // Center Hub (Node 0)
-    { cx: 140, cy: 90 }, // Top Left (Node 1)
-    { cx: 500, cy: 100 }, // Top Right (Node 2)
-    { cx: 480, cy: 275 }, // Bottom Right (Node 3)
-    { cx: 150, cy: 275 }, // Bottom Left (Node 4)
+    { cx: 270, cy: 140 }, // Center Hub (Node 0)
+    { cx: 85, cy: 65 }, // Top Left (Node 1)
+    { cx: 455, cy: 75 }, // Top Right (Node 2)
+    { cx: 435, cy: 220 }, // Bottom Right (Node 3)
+    { cx: 105, cy: 220 }, // Bottom Left (Node 4)
   ];
 
   let selectedIndex = $state(0);
@@ -62,22 +62,22 @@
   class="flex flex-col md:flex-row min-h-[26rem] sm:min-h-[30rem] md:min-h-[34rem] lg:min-h-[38rem] rounded-xl border border-theme-border/80 bg-[#0b0f19] text-slate-100 overflow-hidden shadow-2xl"
 >
   <!-- Dark High-Contrast SVG Graph Canvas -->
-  <div class="relative flex-1 min-h-[20rem] md:min-h-0 bg-[#0b0f19] p-2">
+  <div class="relative flex-1 min-h-[22rem] md:min-h-0 bg-[#0b0f19] p-3">
     <!-- Subtle background grid pattern -->
     <div
-      class="absolute inset-0 opacity-15 pointer-events-none"
-      style="background-image: radial-gradient(#e2e8f0 1px, transparent 1px); background-size: 24px 24px;"
+      class="absolute inset-0 opacity-20 pointer-events-none"
+      style="background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 28px 28px;"
     ></div>
 
     <svg
-      viewBox="0 0 640 360"
+      viewBox="0 0 540 280"
       class="absolute inset-0 h-full w-full"
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
       <!-- Peripheral interconnect lines (dim background web) -->
       {#if steps.length > 2}
-        <g stroke="#64748b" stroke-opacity="0.35" stroke-width="2">
+        <g stroke="#64748b" stroke-opacity="0.35" stroke-width="2.5">
           <line
             x1={POSITIONS[1].cx}
             y1={POSITIONS[1].cy}
@@ -110,7 +110,7 @@
             y2={pos.cy}
             stroke={color}
             stroke-opacity={isLinked ? "0.85" : "0.4"}
-            stroke-width={isLinked ? "3.5" : "1.8"}
+            stroke-width={isLinked ? "4.5" : "2"}
           />
 
           {#if step.relation}
@@ -118,22 +118,22 @@
             {@const midY = (hub.cy + pos.cy) / 2}
             <!-- Relation label badge -->
             <rect
-              x={midX - 48}
-              y={midY - 12}
-              width="96"
-              height="24"
-              rx="6"
+              x={midX - 54}
+              y={midY - 14}
+              width="108"
+              height="28"
+              rx="7"
               fill="#0f172a"
               fill-opacity="0.95"
               stroke={isLinked ? SELECT_ACCENT : "#334155"}
               stroke-opacity={isLinked ? "1" : "0.6"}
-              stroke-width="1.5"
+              stroke-width="1.8"
             />
             <text
               x={midX}
-              y={midY + 4}
+              y={midY + 5}
               font-family="var(--font-mono, monospace)"
-              font-size="11.5"
+              font-size="12.5"
               font-weight="700"
               text-anchor="middle"
               fill={isLinked ? SELECT_ACCENT : "#cbd5e1"}
@@ -148,9 +148,9 @@
       <circle
         cx={selPos.cx}
         cy={selPos.cy}
-        r="48"
+        r="64"
         fill={SELECT_ACCENT}
-        fill-opacity="0.22"
+        fill-opacity="0.25"
       >
         <animate
           attributeName="opacity"
@@ -160,7 +160,7 @@
         />
         <animate
           attributeName="r"
-          values="38;52;38"
+          values="52;68;52"
           dur="3s"
           repeatCount="indefinite"
         />
@@ -168,16 +168,16 @@
 
       <!-- Selection dashed bounding box -->
       <rect
-        x={selPos.cx - 32}
-        y={selPos.cy - 32}
-        width="64"
-        height="64"
-        rx="14"
+        x={selPos.cx - 44}
+        y={selPos.cy - 44}
+        width="88"
+        height="88"
+        rx="18"
         fill="none"
         stroke={SELECT_ACCENT}
-        stroke-opacity="0.8"
-        stroke-width="1.8"
-        stroke-dasharray="6 4"
+        stroke-opacity="0.85"
+        stroke-width="2.5"
+        stroke-dasharray="7 5"
       />
 
       <!-- Render Nodes -->
@@ -186,7 +186,7 @@
         {@const color = getNodeColor(step.sublabel)}
         {@const isHub = i === 0}
         {@const isSelected = i === selectedIndex}
-        {@const r = isHub ? 26 : 18}
+        {@const r = isHub ? 38 : 28}
 
         <g
           class="cursor-pointer transition-transform hover:scale-110"
@@ -202,10 +202,10 @@
             <circle
               cx={pos.cx}
               cy={pos.cy}
-              r={r + 7}
+              r={r + 9}
               fill="none"
               stroke={SELECT_ACCENT}
-              stroke-width="3"
+              stroke-width="4"
             />
           {/if}
           <!-- Main Node circle -->
@@ -223,19 +223,19 @@
             fill="none"
             stroke={isSelected ? "#ffffff" : color}
             stroke-opacity={isSelected ? "1" : "0.7"}
-            stroke-width="2.5"
+            stroke-width="3"
           />
 
-          <!-- High-Contrast Label Text -->
+          <!-- High-Contrast Ultra-Legible Label Text -->
           <text
             x={pos.cx}
-            y={pos.cy + (isHub ? 46 : 38)}
+            y={pos.cy + (isHub ? 58 : 48)}
             font-family="var(--font-header, serif)"
-            font-size={isHub ? "16" : "13.5"}
+            font-size={isHub ? "21" : "17"}
             font-weight="700"
             text-anchor="middle"
             fill={isSelected ? "#fde047" : "#ffffff"}
-            style="filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.9));"
+            style="filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.95));"
           >
             {step.label}
           </text>
