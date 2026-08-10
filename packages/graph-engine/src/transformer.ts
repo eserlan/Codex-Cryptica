@@ -97,6 +97,7 @@ export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
     validIds?: Set<string>,
+    maxEdges = Number.POSITIVE_INFINITY,
   ): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
     if (!validIds) {
@@ -114,6 +115,9 @@ export class GraphTransformer {
 
     // Precompute rendered degree so node sizing matches the graph after
     // connections to hidden or missing targets have been filtered out.
+    // Keep weight calculation aligned with the edges that are actually
+    // rendered when a caller applies an edge budget.
+    let weightedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
@@ -122,11 +126,13 @@ export class GraphTransformer {
       if (!connections) continue;
 
       for (let j = 0; j < connections.length; j++) {
+        if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
         if (!validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
+        weightedEdgeCount++;
       }
     }
 
@@ -137,6 +143,7 @@ export class GraphTransformer {
     // solves cleanly. This keeps the bad coordinates from flashing on screen
     // during the load before the heal runs.
     const savedPositions: { x: number; y: number }[] = [];
+    let renderedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const c = entities[i]?.metadata?.coordinates;
       if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
@@ -246,6 +253,7 @@ export class GraphTransformer {
       const connections = entity.connections;
       if (connections) {
         for (let l = 0; l < connections.length; l++) {
+          if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
           // Skip edges to non-existent targets
           if (!validIds.has(conn.target)) continue;
@@ -264,6 +272,7 @@ export class GraphTransformer {
               strength: conn.strength,
             },
           });
+          renderedEdgeCount++;
         }
       }
     }
