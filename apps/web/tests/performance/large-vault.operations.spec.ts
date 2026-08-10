@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { dismissFrontPage, setupVaultPage } from "../test-helpers";
+import { setupVaultPage } from "../test-helpers";
 import {
   installLargeVaultFixture,
   LARGE_VAULT_ENTITY_COUNT,
@@ -88,7 +88,7 @@ test("records repeatable large-vault operations in a production preview", async 
 
     const frontPageOverlay = page.getByTestId("front-page-overlay");
     if (await frontPageOverlay.isVisible()) {
-      await dismissFrontPage(page);
+      await frontPageOverlay.click({ position: { x: 1, y: 1 } });
       await expect(frontPageOverlay).toBeHidden();
     }
 
