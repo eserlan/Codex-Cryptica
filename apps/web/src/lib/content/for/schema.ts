@@ -13,6 +13,7 @@ export type LandingPageUseCase = z.infer<typeof LandingPageUseCaseSchema>;
 export const LandingPageGraphStepSchema = z.object({
   label: z.string(),
   sublabel: z.string().optional(),
+  relation: z.string().optional(),
   type: z.string().optional(),
 });
 export type LandingPageGraphStep = z.infer<typeof LandingPageGraphStepSchema>;
@@ -32,10 +33,22 @@ export const RecommendedToolSchema = z.object({
 });
 export type RecommendedTool = z.infer<typeof RecommendedToolSchema>;
 
+export const LandingPageSectionSchema = z.enum([
+  "hero",
+  "useCases",
+  "graph",
+  "tools",
+  "cta",
+  "disclaimer",
+]);
+
+export type LandingPageSection = z.infer<typeof LandingPageSectionSchema>;
+
 export const LandingPageConfigSchema = z.object({
   slug: z.string().min(1),
   kind: z.enum(["system", "genre"]),
   theme: z.string().optional(),
+  sectionOrder: z.array(LandingPageSectionSchema).optional(),
   seo: z.object({
     title: z.string(),
     description: z.string(),

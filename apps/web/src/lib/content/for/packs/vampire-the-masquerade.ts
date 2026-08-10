@@ -5,92 +5,110 @@ export const vampireTheMasquerade: LandingPageConfig = {
   kind: "system",
   theme: "horror",
   seo: {
-    title:
-      "Vampire: The Masquerade Campaign Manager & Chronicle Tools | Codex Cryptica",
+    title: "Codex Cryptica for Vampire: The Masquerade",
     description:
-      "Manage gothic conspiracies, coteries, Elysium political webs, domain claims, and mortal contacts with an interactive relationship graph for VtM.",
+      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
   },
   hero: {
-    eyebrow: "World of Darkness Chronicle Hub",
+    eyebrow: "Chronicle & Campaign Management",
     title: "Codex Cryptica for Vampire: The Masquerade",
     tagline:
-      "Orchestrate gothic conspiracies, coterie loyalties, and urban domain webs without losing control of the Night.",
+      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
     problemStatement:
-      "Running a VtM chronicle means balancing intricate webs of Blood Bonds, Primogen feuds, Anarch territories, and mortal assets. Standard campaign notes quickly fracture under the weight of interconnected undead politics.",
+      "Standard campaign notes struggle when every NPC is connected to three secrets and four rival factions. When a Primogen member shifts their support, you shouldn’t have to manually update five separate documents to remember who owes what to whom.",
   },
   useCases: [
     {
-      title: "Interactive Web of Shadow Politics",
+      title: "Interactive Relationship Graph",
       description:
-        "Map Blood Bonds, sire-childe lineages, Primogen rivalries, and mortal puppets in a real-time visual graph.",
+        "Map Blood Bonds, sire-childe lineages, Primogen rivalries, and mortal assets visually so you never lose track of who influences whom.",
       icon: "icon-[lucide--network]",
     },
     {
-      title: "Domain & Elysium Territory Tracking",
+      title: "Domains & Hunting Grounds",
       description:
-        "Delineate hunting grounds, Elysium sanctuaries, rack territories, and clan domains across your nocturnal city.",
+        "Track Elysium sanctuaries, rack territories, clan domains, and contested havens across your nocturnal city.",
       icon: "icon-[lucide--map-pin]",
     },
     {
-      title: "Humanity, Resonance & Touchstones",
+      title: "Touchstones & Mortal Connections",
       description:
-        "Keep track of coterie touchstones, convictions, feeding grounds, and human disguises alongside undead stats.",
-      icon: "icon-[lucide--heart-crack]",
+        "Keep track of coterie touchstones, human disguises, feeding grounds, and blackmail material alongside your campaign lore.",
+      icon: "icon-[lucide--heart-handshake]",
     },
     {
-      title: "Session Log & Secret Lore Binders",
+      title: "Session Notes & Secret Lore",
       description:
-        "Store secret notes, elder decrees, ancient lore fragments, and NPC motives with local-first, private vault storage.",
+        "Organize elder decrees, ancient lore fragments, coterie decisions, and private GM secrets in local-first storage.",
       icon: "icon-[lucide--book-open]",
     },
   ],
   exampleGraph: {
-    title: "Sample City Conspiracy Structure",
+    title: "Sample City Relationship Web",
     description:
-      "A visual snapshot of how coteries, Camarilla court hierarchy, and mortal assets connect inside Codex Cryptica.",
+      "How a coterie, Camarilla court hierarchy, and mortal touchstones connect inside Codex Cryptica.",
     steps: [
-      { label: "Prince Quintus", sublabel: "Ventrue • City Ruler" },
-      { label: "Sheriff Cross", sublabel: "Gangrel • Enforcer" },
-      { label: "Primogen Council", sublabel: "Toreador / Tremere / Nosferatu" },
-      { label: "Coterie: The Velvet Pact", sublabel: "PC Players" },
-      { label: "Mortal Touchstones & Feeders", sublabel: "Kine Network" },
+      {
+        label: "Prince Quintus",
+        sublabel: "Ventrue • City Ruler",
+        relation: "commands",
+      },
+      {
+        label: "Sheriff Cross",
+        sublabel: "Gangrel • Enforcer",
+        relation: "monitors",
+      },
+      {
+        label: "Primogen Council",
+        sublabel: "Toreador / Tremere / Nosferatu",
+        relation: "influences",
+      },
+      {
+        label: "Coterie: The Velvet Pact",
+        sublabel: "PC Players",
+        relation: "protects",
+      },
+      {
+        label: "Mortal Touchstones & Feeders",
+        sublabel: "Kine Network",
+      },
     ],
   },
   recommendedTools: [
     {
       title: "Vampire Clan Generator",
       description:
-        "Generate evocative bloodlines, clan histories, and founder lore for homebrew or custom VtM factions.",
+        "Generate bloodlines, clan histories, and founder lore for homebrew or custom VtM factions.",
       href: "/generators/vampire-clan",
       badge: "Generator",
     },
     {
-      title: "NPC & Rival Kindred Generator",
+      title: "NPC Generator",
       description:
-        "Instantly spin up detailed vampires with motives, clan disciplines, feeding habits, and secrets.",
+        "Spin up rival Kindred, Primogen members, and mortal assets with distinct motives and backgrounds.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
-      title: "Gothic Settlement & Haven Creator",
+      title: "Settlement Generator",
       description:
-        "Design atmospheric urban havens, underground nightclubs, and secluded havens.",
+        "Use the Settlement Generator to create districts, domains, havens, and feeding grounds for your chronicle.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
-      title: "Chronicle Event & Quest Hooks",
+      title: "Secret Society Generator",
       description:
-        "Generate Masquerade breach investigations, Sabbat incursions, and political coups.",
-      href: "/generators/quest",
+        "Design secretive cults, Anarch cells, and conspiracy webs operating in the shadows.",
+      href: "/generators/secret-society",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Claim Your Night",
+    title: "Organize Your Chronicle",
     description:
-      "Start managing your VtM chronicle with local-first security and deep visual campaign graphs.",
-    buttonText: "Launch Codex Cryptica",
+      "Start managing your Vampire: The Masquerade campaign with local-first security and visual relationship graphs.",
+    buttonText: "Try Codex Cryptica Free",
     buttonHref: "/app",
   },
   disclaimer:

@@ -5,90 +5,109 @@ export const fantasyWorldbuilding: LandingPageConfig = {
   kind: "genre",
   theme: "fantasy",
   seo: {
-    title: "Fantasy Worldbuilding & Campaign Graph Tool | Codex Cryptica",
+    title: "Codex Cryptica for Fantasy Worldbuilding",
     description:
-      "Build rich fantasy settings with connected pantheons, kingdom lineages, magic systems, and campaign timelines.",
+      "Your fantasy world is more than a folder of notes. Connect kingdoms to rulers, gods to temples, factions to enemies, and historical events to the world they changed.",
   },
   hero: {
-    eyebrow: "High & Dark Fantasy Worldbuilding",
+    eyebrow: "Fantasy Worldbuilding",
     title: "Codex Cryptica for Fantasy Worldbuilding",
     tagline:
-      "Weave pantheons, ancient magic, royal bloodlines, and epic world lore into an interconnected realm.",
+      "Your fantasy world is more than a folder of notes. Connect kingdoms to rulers, gods to temples, factions to enemies, and historical events to the world they changed.",
     problemStatement:
-      "Fantasy campaigns demand immense depth—from multi-generational royal dynasties and warring guilds to forgotten ruins and divine pantheons. Flat notes fail to capture how your world lives and breathes.",
+      "When your world grows to dozens of towns, historical eras, and rival houses, linear notebooks break down. Codex Cryptica turns scattered world notes into an interconnected knowledge web.",
   },
   useCases: [
     {
-      title: "Pantheons & Cosmic Mythos",
+      title: "Pantheons & Holy Orders",
       description:
-        "Define divine hierarchies, holy domains, planar cosmology, and religious holy orders in one linked system.",
+        "Define divine hierarchies, clerical domains, planar cosmology, and religious orders in one linked system.",
       icon: "icon-[lucide--sun]",
     },
     {
-      title: "Kingdom Dynasties & Political Alliances",
+      title: "Kingdom Dynasties & Alliances",
       description:
-        "Map out noble houses, succession crises, trade routes, and secret alliances across continents.",
+        "Map out noble houses, succession lines, regional rivalries, and trade routes across your continents.",
       icon: "icon-[lucide--crown]",
     },
     {
-      title: "Relics, Artifacts & Magic Laws",
+      title: "Relics & Magical Artifacts",
       description:
-        "Link legendary magic items to the heroes, villains, and ancient dungeons where they rest.",
+        "Link legendary magic items to the heroes who wield them, the villains who seek them, and the vaults where they rest.",
       icon: "icon-[lucide--sparkles]",
     },
     {
-      title: "Chronological Timelines & Eras",
+      title: "World History & Eras",
       description:
-        "Track world ages, historical battles, and cataclysms with an interactive timeline engine.",
+        "Track historical ages, cataclysms, battles, and campaign events with an interactive timeline engine.",
       icon: "icon-[lucide--hourglass]",
     },
   ],
   exampleGraph: {
-    title: "Realm & Lineage Connection Graph",
+    title: "Narrative Relationship Graph",
     description:
-      "See how deities, ancient artifacts, royal dynasties, and dungeon vaults intertwine.",
+      "An example of how Codex Cryptica connects people, factions, relics, sites, and faiths into a single story web.",
     steps: [
-      { label: "Solar Deity Ignis", sublabel: "Primary Pantheon" },
-      { label: "Order of the Sunburst", sublabel: "Holy Knights" },
-      { label: "High Kingdom of Eldoria", sublabel: "Feudal Realm" },
-      { label: "Crown of the Sun King", sublabel: "Relic Artifact" },
-      { label: "Dungeon of the Forgotten Tomb", sublabel: "Adventure Site" },
+      {
+        label: "Queen Mereth",
+        sublabel: "Ruler of Eldoria",
+        relation: "secretly funds",
+      },
+      {
+        label: "The Ash Covenant",
+        sublabel: "Rebel Faction",
+        relation: "searches for",
+      },
+      {
+        label: "The Broken Crown",
+        sublabel: "Relic Artifact",
+        relation: "hidden beneath",
+      },
+      {
+        label: "Greyspire Abbey",
+        sublabel: "Ancient Ruin",
+        relation: "holy site of",
+      },
+      {
+        label: "The Drowned Saint",
+        sublabel: "Forgotten Faith",
+      },
     ],
   },
   recommendedTools: [
     {
       title: "Fantasy Name Generator",
       description:
-        "Generate immersive names for elf nobles, dwarf strongholds, dragon lords, and ancient ruins.",
+        "Generate names for noble lineages, ancient ruins, regional strongholds, and mythical figures.",
       href: "/generators/fantasy-names",
       badge: "Generator",
     },
     {
-      title: "Pantheon & Deity Creator",
+      title: "Pantheon Generator",
       description:
         "Forge custom mythologies, divine portfolios, sacred symbols, and clerical tenets.",
       href: "/generators/pantheon-generator",
       badge: "Generator",
     },
     {
-      title: "Kingdom & Realm Builder",
+      title: "Kingdom Generator",
       description:
-        "Generate feudal realms, government types, regional threats, and economic exports.",
+        "Build feudal realms, government structures, regional rivalries, and economic exports.",
       href: "/generators/kingdom",
       badge: "Generator",
     },
     {
-      title: "Dungeon Structural Builder",
+      title: "Dungeon Generator",
       description:
-        "Construct multi-level dungeons, ancient temples, and monster-infested vaults.",
+        "Design multi-level vaults, subterranean temples, and dangerous ruins for your campaign.",
       href: "/generators/dungeon-generator",
       badge: "Generator",
     },
   ],
   cta: {
-    title: "Build Your Fantasy World",
+    title: "Build Your World Graph",
     description:
-      "Transform your scattered campaign notes into a living, visual world graph.",
+      "Transform your scattered campaign notes into a living, visual world web with local-first privacy.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },

@@ -6,10 +6,10 @@
 </script>
 
 <svelte:head>
-  <title>Codex Cryptica For...</title>
+  <title>Find the right Codex Cryptica for your world</title>
   <meta
     name="description"
-    content="Discover how Codex Cryptica helps you build and manage campaigns across different tabletop RPG systems and worldbuilding genres."
+    content="Different campaigns get complicated in different ways. See how Codex Cryptica helps organize, connect, and expand the kind of world you're building."
   />
 </svelte:head>
 
@@ -19,11 +19,14 @@
       <h1
         class="text-theme-primary text-4xl font-bold tracking-tight sm:text-5xl"
       >
-        Codex Cryptica For...
+        Find the right Codex Cryptica for your world
       </h1>
-      <p class="text-theme-secondary mx-auto mt-4 max-w-2xl text-xl">
-        Whether you are running a specific tabletop system or building a custom
-        setting, explore how our tools adapt to your campaign.
+      <p
+        class="text-theme-secondary mx-auto mt-4 max-w-2xl text-xl leading-relaxed"
+      >
+        Different campaigns get complicated in different ways. See how Codex
+        Cryptica helps organize, connect, and expand the kind of world you're
+        building.
       </p>
     </div>
 
@@ -34,6 +37,13 @@
           class="bg-theme-surface border-theme-border group flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:border-theme-accent hover:shadow-lg"
         >
           <div class="flex flex-1 flex-col p-8">
+            <div class="mb-4 flex items-center justify-between">
+              <span
+                class="bg-theme-accent/10 text-theme-accent rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+              >
+                {page.kind === "system" ? "Game System" : "Genre"}
+              </span>
+            </div>
             <h2
               class="text-theme-primary mb-3 text-2xl font-bold transition-colors group-hover:text-theme-accent"
             >
@@ -45,7 +55,7 @@
             <div
               class="text-theme-accent mt-6 flex items-center text-sm font-semibold"
             >
-              Explore capabilities
+              {page.kind === "system" ? "Explore system" : "Explore genre"}
               <span
                 class="icon-[lucide--arrow-right] ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
               ></span>
