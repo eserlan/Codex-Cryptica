@@ -77,6 +77,13 @@ test("records repeatable large-vault operations in a production preview", async 
     );
     await captureScenario("warm-open", 0, ["vault_open_warm"]);
 
+    const dismissFrontPage = page.getByRole("button", {
+      name: "Dismiss front page",
+    });
+    if (await dismissFrontPage.isVisible()) {
+      await dismissFrontPage.click();
+    }
+
     await page.waitForFunction(
       () => {
         const cy = (window as any).cy;
