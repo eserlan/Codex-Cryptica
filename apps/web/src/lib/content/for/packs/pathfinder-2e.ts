@@ -49,8 +49,8 @@ export const pathfinder2e: LandingPageConfig = {
       "See how religious orders, realm champions, secret cabals, and ancient relics connect in a campaign graph.",
     steps: [
       {
-        label: "Temple of the Dawnflower",
-        sublabel: "Sun Deity Sanctuary",
+        label: "Sanctuary of the Golden Dawn",
+        sublabel: "Sun Temple",
         relation: "protected by",
       },
       {
