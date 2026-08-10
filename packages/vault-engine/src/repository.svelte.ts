@@ -228,10 +228,9 @@ export class VaultRepository {
         );
       }
 
-      if (total > CHUNK_SIZE) {
-        // Yield to allow UI updates
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
+      // Yield after every chunk so rendering/input can run without imposing a
+      // fixed 50 ms delay on large vaults.
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
 
     if (this._currentLoadId !== loadId) return this.entities;
