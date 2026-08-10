@@ -67,6 +67,7 @@ vi.mock("graph-engine", () => {
     style: vi.fn(),
     destroyed: vi.fn().mockReturnValue(false),
     nodes: vi.fn().mockReturnValue({ length: 0, map: vi.fn(() => []) }),
+    edges: vi.fn().mockReturnValue({ length: 0 }),
   };
 
   function MockLayoutManager() {
