@@ -8,7 +8,17 @@
     flattenVisibleEntityTree,
     type TreeNode,
   } from "./entityTree";
-  import { filterEntities, countEntityTypes } from "./entityListFiltering";
+  import {
+    filterEntities,
+    countEntityTypes,
+    createEntityTextSearchRunner,
+    parseEntitySearchQuery,
+  } from "./entityListFiltering";
+  import {
+    searchService as defaultSearchService,
+    type SearchService,
+  } from "@codex/search-orchestrator";
+  import type { SearchIndexProgress } from "@codex/search-engine";
   import type { Entity } from "schema";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -55,6 +65,7 @@
     allowedTypes = null,
     showDraftsOnly = false,
     class: className = "",
+    searchService = defaultSearchService,
   }: {
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
@@ -66,10 +77,68 @@
     allowedTypes?: string[] | null;
     showDraftsOnly?: boolean;
     class?: string;
+    searchService?: SearchService;
   } = $props();
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
+  let textMatchIds = $state<Set<string> | null>(null);
+  let textSearchUnavailable = $state(false);
+  let textSearchError = $state<string | null>(null);
+  let indexProgress = $state<SearchIndexProgress>(
+    defaultSearchService.getIndexProgress(),
+  );
+  let latestIndexStatus = defaultSearchService.getIndexProgress().status;
+  let indexStatusVersion = $state(0);
+
+  $effect(() => {
+    const initialProgress = searchService.getIndexProgress();
+    latestIndexStatus = initialProgress.status;
+    indexProgress = initialProgress;
+    const unsubscribe = searchService.subscribeIndexProgress((progress) => {
+      if (progress.status !== latestIndexStatus) {
+        latestIndexStatus = progress.status;
+        indexStatusVersion += 1;
+      }
+      indexProgress = progress;
+    });
+    return unsubscribe;
+  });
+
+  $effect(() => {
+    const query = searchQuery;
+    const entityCount = vault.allEntities.length;
+    void indexStatusVersion;
+    const indexStatus = latestIndexStatus;
+    const { textQuery } = parseEntitySearchQuery(query);
+    if (!textQuery) {
+      textMatchIds = null;
+      textSearchUnavailable = false;
+      textSearchError = null;
+      return;
+    }
+
+    // An idle index has not been opened yet. Keep the UI responsive and use
+    // the metadata fallback until the lifecycle reports a usable index.
+    if (indexStatus === "idle") {
+      textMatchIds = null;
+      textSearchUnavailable = true;
+      textSearchError = null;
+      return;
+    }
+
+    const searchRunner = createEntityTextSearchRunner(searchService);
+    void searchRunner.search(query, entityCount).then((result) => {
+      if (!result) return;
+      textMatchIds = result.error ? null : result.matchIds;
+      textSearchUnavailable = result.error !== null;
+      textSearchError = result.error?.message ?? null;
+    });
+
+    return () => {
+      searchRunner.cancel();
+    };
+  });
 
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
@@ -110,7 +179,17 @@
       labelFilters,
       allowedTypes,
       showDraftsOnly,
+      textMatchIds,
+      textSearchUnavailable,
     }),
+  );
+
+  const searchStatusMessage = $derived(
+    textSearchError
+      ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
+      : indexProgress.isPartial && searchQuery.trim()
+        ? "Search is still indexing; results will update as indexing finishes."
+        : null,
   );
 
   const sortedEntities = $derived(
@@ -338,6 +417,11 @@
 <div class="flex flex-col h-full min-h-0 {className}">
   <div class="p-4 border-b border-theme-border shrink-0 space-y-3">
     <EntityListSearch bind:searchQuery />
+    {#if searchStatusMessage}
+      <p class="text-[10px] text-theme-muted" aria-live="polite">
+        {searchStatusMessage}
+      </p>
+    {/if}
     <EntityListFilterBar bind:typeFilters {typeCounts} {allowedTypes} />
     <div class="flex items-center justify-end gap-1.5">
       <label

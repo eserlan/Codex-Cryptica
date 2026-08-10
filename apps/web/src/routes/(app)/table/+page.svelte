@@ -8,7 +8,11 @@
   import {
     filterEntities,
     countEntityTypes,
+    createEntityTextSearchRunner,
+    parseEntitySearchQuery,
   } from "$lib/components/explorer/entityListFiltering";
+  import { searchService } from "@codex/search-orchestrator";
+  import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
   import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
@@ -31,11 +35,63 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   let labelFilters = $state<Set<string>>(new Set());
+  let textMatchIds = $state<Set<string> | null>(null);
+  let textSearchUnavailable = $state(false);
+  let textSearchError = $state<string | null>(null);
+  let indexProgress = $state<SearchIndexProgress>(
+    searchService.getIndexProgress(),
+  );
+  let latestIndexStatus = searchService.getIndexProgress().status;
+  let indexStatusVersion = $state(0);
   let sort = $state<SortState>({ key: "title", direction: "asc" });
   let tableOpenRecorded = false;
   const tableOpenSpan = browserPerformanceRecorder.start("table_open");
 
   const totalEntities = $derived(vault.allEntities.length);
+
+  $effect(() => {
+    const unsubscribe = searchService.subscribeIndexProgress((progress) => {
+      if (progress.status !== latestIndexStatus) {
+        latestIndexStatus = progress.status;
+        indexStatusVersion += 1;
+      }
+      indexProgress = progress;
+    });
+    return unsubscribe;
+  });
+
+  $effect(() => {
+    const query = searchQuery;
+    const entityCount = vault.allEntities.length;
+    void indexStatusVersion;
+    const indexStatus = latestIndexStatus;
+    const { textQuery } = parseEntitySearchQuery(query);
+    if (!textQuery) {
+      textMatchIds = null;
+      textSearchUnavailable = false;
+      textSearchError = null;
+      return;
+    }
+
+    if (indexStatus === "idle") {
+      textMatchIds = null;
+      textSearchUnavailable = true;
+      textSearchError = null;
+      return;
+    }
+
+    const searchRunner = createEntityTextSearchRunner(searchService);
+    void searchRunner.search(query, entityCount).then((result) => {
+      if (!result) return;
+      textMatchIds = result.error ? null : result.matchIds;
+      textSearchUnavailable = result.error !== null;
+      textSearchError = result.error?.message ?? null;
+    });
+
+    return () => {
+      searchRunner.cancel();
+    };
+  });
 
   const typeCounts = $derived(
     countEntityTypes(vault.allEntities, {
@@ -51,7 +107,17 @@
       labelFilters,
       allowedTypes: null,
       showDraftsOnly: false,
+      textMatchIds,
+      textSearchUnavailable,
     }),
+  );
+
+  const searchStatusMessage = $derived(
+    textSearchError
+      ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
+      : indexProgress.isPartial && searchQuery.trim()
+        ? "Search is still indexing; results will update as indexing finishes."
+        : null,
   );
 
   const connectionCounts = $derived.by(() => {
@@ -405,6 +471,11 @@
           class="w-full rounded-lg border border-theme-border bg-theme-surface py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
         />
       </div>
+      {#if searchStatusMessage}
+        <p class="text-[10px] text-theme-muted" aria-live="polite">
+          {searchStatusMessage}
+        </p>
+      {/if}
 
       {#if typeCounts.size > 0}
         <div class="flex flex-wrap items-center gap-1.5">
