@@ -1,10 +1,22 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { base } from "$app/paths";
   import type { PageData } from "./$types";
   import type { LandingPageConfig } from "$lib/content/for/schema";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
+
+  $effect(() => {
+    if (config.theme) {
+      themeStore.previewTheme(config.theme);
+    }
+  });
+
+  onDestroy(() => {
+    themeStore.previewTheme(null);
+  });
 </script>
 
 <svelte:head>
