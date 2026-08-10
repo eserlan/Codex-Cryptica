@@ -90,6 +90,8 @@ export function createEntityTextSearchRunner(
   };
 }
 
+type EntityWithPreview = Entity & { contentPreview?: string };
+
 export interface FilterOptions {
   searchQuery: string;
   typeFilters: Set<string>;
@@ -105,7 +107,7 @@ export interface FilterOptions {
 }
 
 export function filterEntities(
-  allEntities: Entity[],
+  allEntities: EntityWithPreview[],
   options: FilterOptions,
 ): Entity[] {
   const filtered: Entity[] = [];
@@ -164,7 +166,9 @@ export function filterEntities(
             ) ||
             e.aliases?.some((a) => a.toLowerCase().includes(remainingTextQuery))
           : e.title.toLowerCase().includes(remainingTextQuery) ||
-            e.content.toLowerCase().includes(remainingTextQuery) ||
+            (e.contentPreview ?? e.content)
+              .toLowerCase()
+              .includes(remainingTextQuery) ||
             e.labels?.some((l) =>
               l.toLowerCase().includes(remainingTextQuery),
             ) ||
