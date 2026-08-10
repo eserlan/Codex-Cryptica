@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { solutions } from "../apps/web/src/lib/config/seo-pages.ts";
 import { comparisons } from "../apps/web/src/lib/config/seo-comparisons.ts";
+import { getAllLandingPageSlugs } from "../apps/web/src/lib/content/for/registry.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -112,13 +113,11 @@ const buildXml = async (entries) => {
   );
 
   // Landing pages (/for/[slug])
-  const forPacksDir = join(repoRoot, "apps/web/src/lib/content/for/packs");
   let landingPageRoutes = [{ path: "/for", changefreq: "weekly", priority: "0.9" }];
 
   try {
-    const packFiles = (await readdir(forPacksDir)).filter((file) => file.endsWith(".ts"));
-    for (const file of packFiles) {
-      const slug = file.replace(/\.ts$/i, "");
+    const slugs = getAllLandingPageSlugs();
+    for (const slug of slugs) {
       landingPageRoutes.push({
         path: `/for/${slug}`,
         changefreq: "weekly",
@@ -126,7 +125,7 @@ const buildXml = async (entries) => {
       });
     }
   } catch (e) {
-    console.warn("[generate-sitemap] Could not read /for/packs directory:", e);
+    console.warn("[generate-sitemap] Could not read landing page registry:", e);
   }
 
   const allStatic = [
