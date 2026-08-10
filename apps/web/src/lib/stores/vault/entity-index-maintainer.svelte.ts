@@ -1,4 +1,5 @@
 import type { LocalEntity } from "./types";
+import type { EntityDelta } from "./entity-mutations";
 import {
   isGraphRelevantEntityChange,
   stringArrayEqual,
@@ -122,6 +123,20 @@ export class EntityIndexMaintainer {
     this.titleAndAliasIndex = titleAndAlias.sort(
       (a, b) => b.lowercaseText.length - a.lowercaseText.length,
     );
+  }
+
+  applyDelta(delta: EntityDelta) {
+    if (delta.kind === "deleted") {
+      if (delta.before) this.incrementalDelete(delta.before);
+      return;
+    }
+    if (delta.kind === "added") {
+      if (delta.after) this.incrementalAdd(delta.after);
+      return;
+    }
+    if (delta.before && delta.after) {
+      this.incrementalUpdate(delta.before, delta.after);
+    }
   }
 
   handleEntitiesUpdate(

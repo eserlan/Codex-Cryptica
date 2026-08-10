@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-05
+Auto-generated from all feature plans. Last updated: 2026-08-10
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + `@codex/vault-engine`, `schema`, existing OPFS/IndexedDB cache, `@codex/events`, `@codex/performance-observability` (2145-vault-bulk-mutations)
+- Local OPFS entity files, browser IndexedDB cache, in-memory `VaultRepository.entities` (2145-vault-bulk-mutations)
 
 - TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
 - N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
@@ -47,11 +50,11 @@ TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventi
 
 ## Recent Changes
 
+- 2145-vault-bulk-mutations: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + `@codex/vault-engine`, `schema`, existing OPFS/IndexedDB cache, `@codex/events`, `@codex/performance-observability`
+
 - 153-llm-model-registry: Added TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution)
 
 - 150-stat-sheet-marketplace: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing
-
-- 149-reusable-stat-sheets: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService`
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

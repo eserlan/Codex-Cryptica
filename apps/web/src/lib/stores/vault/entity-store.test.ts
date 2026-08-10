@@ -738,6 +738,59 @@ describe("EntityStore", () => {
     });
   });
 
+  describe("batchChangeEntityType", () => {
+    it("updates valid IDs once and reports unknown or duplicate IDs", async () => {
+      const result = await store.batchChangeEntityType(
+        ["hero", "missing", "hero"],
+        "location",
+      );
+
+      expect(result).toMatchObject({
+        succeededIds: ["hero"],
+        failed: [],
+        skippedIds: ["missing", "hero"],
+        cancelled: false,
+      });
+      expect(store.entities.hero.type).toBe("location");
+      expect(vaultEventBus.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "BATCH_UPDATED",
+          entities: [expect.objectContaining({ id: "hero", type: "location" })],
+        }),
+      );
+    });
+
+    it("cancels before persistence when the active vault changes", async () => {
+      let activeVault = "vault-1";
+      const cancelledStore = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => activeVault,
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockImplementation(async () => {
+          activeVault = "vault-2";
+          return { name: "vault-1" };
+        }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const result = await cancelledStore.batchChangeEntityType(
+        ["hero"],
+        "location",
+      );
+
+      expect(result.cancelled).toBe(true);
+      expect(vaultEventBus.emit).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "BATCH_UPDATED" }),
+      );
+    });
+  });
+
   describe("deleteEntity", () => {
     it("should throw in guest mode", async () => {
       const guestStore = new EntityStore({
@@ -796,6 +849,53 @@ describe("EntityStore", () => {
 
       // Should schedule save for the modified entity
       expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    });
+  });
+
+  describe("batchDeleteEntities", () => {
+    it("deletes a batch and reports unknown IDs without serial debounce saves", async () => {
+      vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
+        entities: { place: repository.entities.place },
+        deletedEntity: repository.entities.hero,
+        modifiedIds: [],
+      });
+
+      const result = await store.batchDeleteEntities(["hero", "missing"]);
+
+      expect(result).toMatchObject({
+        succeededIds: ["hero"],
+        failed: [],
+        skippedIds: ["missing"],
+        cancelled: false,
+      });
+      expect(repository.entities.hero).toBeUndefined();
+      expect(repository.saveQueue.enqueue).not.toHaveBeenCalled();
+      expect(vaultEventBus.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "ENTITY_DELETED",
+          entityId: "hero",
+        }),
+      );
+    });
+
+    it("retains guest deletion restrictions", async () => {
+      const guestStore = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => true,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({}),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await expect(guestStore.batchDeleteEntities(["hero"])).rejects.toThrow(
+        "Cannot delete entities in Guest Mode",
+      );
     });
   });
 

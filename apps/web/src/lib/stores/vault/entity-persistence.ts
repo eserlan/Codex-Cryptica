@@ -37,6 +37,15 @@ export interface ScheduleSaveOptions {
   preserveCachedContent?: boolean;
 }
 
+export interface BatchSaveResult {
+  succeededIds: string[];
+  failed: { id: string; error: string }[];
+}
+
+interface PersistOptions extends ScheduleSaveOptions {
+  throwOnFailure?: boolean;
+}
+
 const SAVE_DEBOUNCE_MS = 400;
 
 // Disk-write resilience tuning. A single _persistEntity call retries the OPFS
@@ -168,15 +177,67 @@ export class EntityPersistenceService {
     await this.deps.repository.waitForAllSaves(timeoutMs);
   }
 
+  async persistBatch(
+    entities: Array<LocalEntity | Entity>,
+    options: ScheduleSaveOptions = {},
+  ): Promise<BatchSaveResult> {
+    const vaultId = this.deps.activeVaultId();
+    if (!vaultId || sessionModeStore.isDemoMode) {
+      return {
+        succeededIds: [],
+        failed: entities.map((entity) => ({
+          id: entity.id,
+          error: "No active writable vault.",
+        })),
+      };
+    }
+
+    const uniqueEntities = Array.from(
+      new Map(entities.map((entity) => [entity.id, entity])).values(),
+    );
+    const results = await Promise.all(
+      uniqueEntities.map((entity) =>
+        this.deps.repository
+          .enqueueSave(entity.id, () =>
+            this._persistEntity(entity.id, vaultId, {
+              ...options,
+              throwOnFailure: true,
+            }),
+          )
+          .then(() => ({ id: entity.id, ok: true as const }))
+          .catch((error) => ({
+            id: entity.id,
+            ok: false as const,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to persist entity.",
+          })),
+      ),
+    );
+
+    return {
+      succeededIds: results
+        .filter((result) => result.ok)
+        .map((result) => result.id),
+      failed: results
+        .filter((result) => !result.ok)
+        .map((result) => ({ id: result.id, error: result.error })),
+    };
+  }
+
   private async _persistEntity(
     id: string,
     vaultIdAtStart: string,
-    options: ScheduleSaveOptions = {},
+    options: PersistOptions = {},
   ): Promise<void> {
     if (this.deps.activeVaultId() !== vaultIdAtStart) {
       debugStore.log(
         `[EntityPersistence] Discarding save for ${id} - vault changed.`,
       );
+      if (options.throwOnFailure) {
+        throw new Error("Vault changed before entity persistence completed.");
+      }
       return;
     }
 
@@ -213,6 +274,10 @@ export class EntityPersistenceService {
       if (!vaultHandle) {
         this.deps.setStatus("idle");
         return;
+      }
+
+      if (this.deps.activeVaultId() !== vaultIdAtStart) {
+        throw new Error("Vault changed before entity persistence completed.");
       }
 
       // Retry the disk write a few times before giving up. Bulk imports issue
@@ -253,6 +318,7 @@ export class EntityPersistenceService {
       // transient OPFS failure during a bulk import can't permanently corrupt
       // the on-disk file (which the cache would otherwise mask).
       this._requeueFailedSave(id, vaultIdAtStart, options);
+      if (options.throwOnFailure) throw error;
     }
   }
 

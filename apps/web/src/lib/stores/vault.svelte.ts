@@ -592,6 +592,12 @@ export class VaultStore {
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
   }
+  batchChangeEntityType(ids: string[], type: Entity["type"]) {
+    return this.entityStore.batchChangeEntityType(ids, type);
+  }
+  batchDeleteEntities(ids: string[]) {
+    return this.entityStore.batchDeleteEntities(ids);
+  }
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
   }

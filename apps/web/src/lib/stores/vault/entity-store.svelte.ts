@@ -5,7 +5,7 @@ import type { Entity } from "schema";
 import type { InboundMap } from "./relationships";
 import { EntityContentLoader } from "./entity-content-loader.svelte";
 import { EntityPersistenceService } from "./entity-persistence";
-import { EntityMutationService } from "./entity-mutations";
+import { EntityMutationService, type EntityDelta } from "./entity-mutations";
 import { EntityIndexMaintainer } from "./entity-index-maintainer.svelte";
 import { vaultEventBus } from "./events.svelte";
 
@@ -37,6 +37,7 @@ export interface EntityStoreDependencies {
     oldEntities: Record<string, LocalEntity>,
     newEntities: Record<string, LocalEntity>,
   ) => void;
+  onEntityDelta?: (delta: EntityDelta) => void;
 }
 
 export class EntityStore {
@@ -124,6 +125,8 @@ export class EntityStore {
       const originalOnEntityDelete = this.mutations.deps?.onEntityDelete;
       const originalOnBatchUpdate = this.mutations.deps?.onBatchUpdate;
       const originalOnEntitiesUpdated = this.mutations.deps?.onEntitiesUpdated;
+      const originalOnEntityDelta = this.mutations.deps?.onEntityDelta;
+      let deltaApplied = false;
 
       this.mutations.registerStoreCallbacks({
         onEntityDelete: (id) => {
@@ -134,8 +137,14 @@ export class EntityStore {
           originalOnBatchUpdate?.(updates);
         },
         onEntitiesUpdated: (oldVal, val) => {
-          this.handleEntitiesUpdate(oldVal, val);
+          if (!deltaApplied) this.handleEntitiesUpdate(oldVal, val);
+          deltaApplied = false;
           originalOnEntitiesUpdated?.(oldVal, val);
+        },
+        onEntityDelta: (delta) => {
+          deltaApplied = true;
+          this.index.applyDelta(delta);
+          originalOnEntityDelta?.(delta);
         },
         onConnectionAdded: (sourceId, targetId, connection) => {
           this.patchAddConnection(sourceId, targetId, connection);
@@ -151,6 +160,7 @@ export class EntityStore {
       });
     } else {
       const deps = depsOrRepository as EntityStoreDependencies;
+      let deltaApplied = false;
       this.repository = deps.repository;
       this.loader = new EntityContentLoader({
         repository: deps.repository,
@@ -191,8 +201,14 @@ export class EntityStore {
         },
         onBatchUpdate: deps.onBatchUpdate,
         onEntitiesUpdated: (oldVal, val) => {
-          this.handleEntitiesUpdate(oldVal, val);
+          if (!deltaApplied) this.handleEntitiesUpdate(oldVal, val);
+          deltaApplied = false;
           if (deps.onEntitiesUpdated) deps.onEntitiesUpdated(oldVal, val);
+        },
+        onEntityDelta: (delta) => {
+          deltaApplied = true;
+          this.index.applyDelta(delta);
+          deps.onEntityDelta?.(delta);
         },
         updateEntityCount: deps.updateEntityCount,
         onConnectionAdded: (sourceId, targetId, connection) => {
@@ -305,6 +321,14 @@ export class EntityStore {
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
     return this.mutations.batchUpdate(updates);
+  }
+
+  batchChangeEntityType(id: string[], type: Entity["type"]) {
+    return this.mutations.batchChangeEntityType(id, type);
+  }
+
+  batchDeleteEntities(ids: string[]) {
+    return this.mutations.batchDeleteEntities(ids);
   }
 
   async deleteEntity(id: string) {

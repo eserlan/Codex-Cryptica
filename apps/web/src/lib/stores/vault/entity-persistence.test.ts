@@ -120,6 +120,29 @@ describe("EntityPersistenceService disk-write resilience", () => {
     // on-disk loss the way it did before.
     expect(cacheSet).not.toHaveBeenCalled();
   });
+
+  it("persists a batch immediately and returns per-entity failures", async () => {
+    const saveToDisk = vi.fn(
+      async (_handle: unknown, _vaultId: string, entity: any) => {
+        if (entity.id === "bad") throw new Error("bad entity");
+      },
+    );
+    const entities = {
+      hero: { id: "hero", title: "Hero", connections: [] },
+      bad: { id: "bad", title: "Bad", connections: [] },
+    };
+    const { svc } = makeService(saveToDisk, entities);
+
+    const pending = svc.persistBatch([
+      entities.hero as any,
+      entities.bad as any,
+    ]);
+    await vi.advanceTimersByTimeAsync(1000);
+    const result = await pending;
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.failed).toEqual([{ id: "bad", error: "bad entity" }]);
+  });
 });
 
 describe("EntityPersistenceService coordinate-only saves", () => {

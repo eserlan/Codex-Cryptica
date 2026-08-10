@@ -28,6 +28,7 @@
     PerformanceOperation,
     PerformanceOperationHandle,
   } from "@codex/performance-observability";
+  import type { Entity } from "schema";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
   const vaultId = $derived(vault.activeVaultId);
@@ -321,8 +322,15 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        for (const id of targetIds) {
-          await vault.updateEntity(id, { type });
+        const result = await vault.batchChangeEntityType(
+          targetIds,
+          type as Entity["type"],
+        );
+        if (result.failed.length > 0 || result.cancelled) {
+          notificationStore.notify(
+            `Updated ${result.succeededIds.length} entities; ${result.failed.length} failed.`,
+            "error",
+          );
         }
       } catch (err: any) {
         console.error("Failed to change type", err);
@@ -354,8 +362,12 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        for (const id of targetIds) {
-          await vault.deleteEntity(id);
+        const result = await vault.batchDeleteEntities(targetIds);
+        if (result.failed.length > 0 || result.cancelled) {
+          notificationStore.notify(
+            `Deleted ${result.succeededIds.length} entities; ${result.failed.length} failed.`,
+            "error",
+          );
         }
         clearSelection();
       } catch (err: any) {

@@ -7,6 +7,7 @@ import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.s
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
+import type { Entity } from "schema";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
@@ -367,14 +368,15 @@ export class GraphContextMenuController {
         await this.deps.vault.updateEntity(nodesToUpdate[0], { type });
         this.deps.notificationStore.notify("Category updated.", "success");
       } else if (nodesToUpdate.length > 1) {
-        const updates: Record<string, { type: string }> = {};
-        for (const id of nodesToUpdate) {
-          updates[id] = { type };
-        }
-        await this.deps.vault.batchUpdate(updates);
+        const result = await this.deps.vault.batchChangeEntityType(
+          nodesToUpdate,
+          type as Entity["type"],
+        );
         this.deps.notificationStore.notify(
-          `Updated ${nodesToUpdate.length} nodes.`,
-          "success",
+          result.failed.length > 0 || result.cancelled
+            ? `Updated ${result.succeededIds.length} nodes; ${result.failed.length} failed.`
+            : `Updated ${result.succeededIds.length} nodes.`,
+          result.failed.length > 0 || result.cancelled ? "error" : "success",
         );
       }
     } catch (err: any) {
@@ -536,12 +538,16 @@ export class GraphContextMenuController {
       this.categoryPickerOpen = false;
       this.imagePickerOpen = false;
       try {
-        for (const id of this.selectedNodes) {
-          await this.deps.vault.deleteEntity(id);
-        }
+        const result = await this.deps.vault.batchDeleteEntities(
+          $state.snapshot(this.selectedNodes),
+        );
         this.deps.notificationStore.notify(
-          count > 1 ? `Deleted ${count} nodes.` : "Node deleted.",
-          "success",
+          result.failed.length > 0 || result.cancelled
+            ? `Deleted ${result.succeededIds.length} nodes; ${result.failed.length} failed.`
+            : result.succeededIds.length > 1
+              ? `Deleted ${result.succeededIds.length} nodes.`
+              : "Node deleted.",
+          result.failed.length > 0 || result.cancelled ? "error" : "success",
         );
       } catch (err: any) {
         console.error("Failed to delete nodes", err);

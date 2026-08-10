@@ -21,9 +21,21 @@ describe("GraphContextMenuController", () => {
         entities: {},
         updateEntity: vi.fn(),
         batchUpdate: vi.fn(),
+        batchChangeEntityType: vi.fn().mockResolvedValue({
+          succeededIds: ["node-1", "node-2"],
+          skippedIds: [],
+          failed: [],
+          cancelled: false,
+        }),
         bulkAddLabel: vi.fn(),
         bulkRemoveLabel: vi.fn(),
         deleteEntity: vi.fn(),
+        batchDeleteEntities: vi.fn().mockResolvedValue({
+          succeededIds: ["node-1"],
+          skippedIds: [],
+          failed: [],
+          cancelled: false,
+        }),
         resolveImageUrl: vi.fn(),
       },
       oracle: { drawEntity: vi.fn() },
@@ -109,7 +121,10 @@ describe("GraphContextMenuController", () => {
     controller.selectedNodes = ["node-1", "node-2"];
     await controller.handleSetCategory("place");
 
-    expect(deps.vault.batchUpdate).toHaveBeenCalled();
+    expect(deps.vault.batchChangeEntityType).toHaveBeenCalledWith(
+      ["node-1", "node-2"],
+      "place",
+    );
     expect(deps.notificationStore.notify).toHaveBeenCalledWith(
       "Updated 2 nodes.",
       "success",
@@ -268,7 +283,7 @@ describe("GraphContextMenuController", () => {
     await controller.deleteNodes();
 
     expect(deps.notificationStore.confirm).toHaveBeenCalled();
-    expect(deps.vault.deleteEntity).toHaveBeenCalledWith("node-1");
+    expect(deps.vault.batchDeleteEntities).toHaveBeenCalledWith(["node-1"]);
   });
 
   it("should open context menu at cursor position when right clicking empty space", () => {
