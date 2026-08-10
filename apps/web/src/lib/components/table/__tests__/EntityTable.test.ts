@@ -207,6 +207,63 @@ describe("EntityTable", () => {
     expect(screen.getAllByTestId("entity-table-row-select")).toHaveLength(2);
   });
 
+  it("bounds large vault rendering and exposes accessible page navigation", async () => {
+    const manyRows = Array.from({ length: 1600 }, (_, index) =>
+      entity({ id: `entity-${index}`, title: `Entity ${index}` }),
+    );
+
+    render(EntityTable, {
+      props: { entities: manyRows, vaultId: "v1", sort, onSort: vi.fn() },
+    });
+
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    expect(
+      screen.getByTestId("entity-table-pagination").getAttribute("aria-label"),
+    ).toBe("Entity table pages");
+    expect(screen.getByText("Page 1 of 32")).toBeTruthy();
+    expect(
+      screen.getByText("Showing 1–50 of 1600 filtered entities"),
+    ).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    expect(screen.getByText("Page 2 of 32")).toBeTruthy();
+    expect(screen.getByText("Entity 50")).toBeTruthy();
+    expect(screen.queryByText("Entity 0")).toBeNull();
+  });
+
+  it("keeps pagination usable when session storage is unavailable", () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+
+    try {
+      const manyRows = Array.from({ length: 100 }, (_, index) =>
+        entity({ id: `storage-${index}`, title: `Storage ${index}` }),
+      );
+      render(EntityTable, {
+        props: {
+          entities: manyRows,
+          vaultId: "storage-v1",
+          sort,
+          onSort: vi.fn(),
+        },
+      });
+
+      expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
+  });
+
   it("reflects the selected set and toggles a row without navigating", async () => {
     const onToggleRow = vi.fn<(id: string) => void>();
     render(EntityTable, {
