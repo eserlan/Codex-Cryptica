@@ -43,112 +43,145 @@
   {/if}
 </svelte:head>
 
-<div data-theme={config.theme} class="bg-theme-base min-h-screen">
-  {#each activeSectionOrder as section}
-    {#if section === "hero"}
-      <!-- Hero Section -->
-      <header
-        class="bg-theme-surface border-theme-border flex flex-col items-center justify-center border-b px-4 py-20 text-center"
-      >
-        {#if config.hero.eyebrow}
-          <p
-            class="text-theme-accent mb-2 text-sm font-semibold uppercase tracking-wider"
+<div
+  class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
+  style:background-image="var(--bg-texture-overlay)"
+>
+  <div class="mx-auto max-w-5xl px-4 sm:px-6 py-12 sm:py-16">
+    {#each activeSectionOrder as section}
+      {#if section === "hero"}
+        <!-- Hero Section -->
+        <header class="mb-14 text-center">
+          {#if config.hero.eyebrow}
+            <p
+              class="mb-3 text-xs font-mono font-bold uppercase tracking-[0.24em] text-theme-primary"
+            >
+              {config.hero.eyebrow}
+            </p>
+          {/if}
+          <h1
+            class="mb-6 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-4xl lg:text-5xl"
           >
-            {config.hero.eyebrow}
+            {config.hero.title}
+          </h1>
+          <p
+            class="mx-auto mb-8 max-w-2xl text-lg sm:text-xl font-light leading-relaxed text-theme-muted"
+          >
+            {config.hero.tagline}
           </p>
-        {/if}
-        <h1
-          class="text-theme-primary mb-4 max-w-4xl text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl"
-        >
-          {config.hero.title}
-        </h1>
-        <p class="text-theme-secondary mb-8 max-w-2xl text-xl leading-relaxed">
-          {config.hero.tagline}
-        </p>
-        <p
-          class="text-theme-secondary bg-theme-surface/60 border-theme-border max-w-3xl rounded-xl border p-6 text-lg italic shadow-sm"
-        >
-          "{config.hero.problemStatement}"
-        </p>
-      </header>
-    {:else if section === "useCases" && config.useCases.length > 0}
-      <!-- Main Content / Use Cases -->
-      <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+
+          <div
+            class="mx-auto max-w-2xl rounded-xl border border-theme-border/70 bg-theme-surface/50 p-6 text-left shadow-sm sm:p-8"
+            style:background-image="var(--bg-texture-overlay)"
+          >
+            <h2
+              class="mb-2 font-header text-base font-bold text-theme-text sm:text-lg"
+            >
+              Why {config.kind === "system" ? "chronicles" : "fantasy worlds"} get
+              complicated
+            </h2>
+            <p
+              class="font-light text-sm sm:text-base leading-relaxed text-theme-muted"
+            >
+              {config.hero.problemStatement}
+            </p>
+          </div>
+        </header>
+      {:else if section === "useCases" && config.useCases.length > 0}
+        <!-- Use Cases -->
         <section class="mb-16">
-          <h2 class="text-theme-primary mb-12 text-center text-3xl font-bold">
+          <h2
+            class="mb-8 text-center font-header text-2xl font-bold text-theme-text sm:text-3xl"
+          >
             Why Codex Cryptica?
           </h2>
-          <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div class="grid gap-6 md:grid-cols-2">
             {#each config.useCases as useCase}
               <div
-                class="bg-theme-surface border-theme-border flex flex-col rounded-xl border p-6 shadow-sm transition-all hover:border-theme-accent hover:shadow-md"
+                class="group relative overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/40 sm:p-8"
+                style:background-image="var(--bg-texture-overlay)"
               >
-                {#if useCase.icon}
-                  <div
-                    class="text-theme-accent mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-theme-surface-hover"
-                  >
-                    <span class={useCase.icon + " h-6 w-6"}></span>
-                  </div>
-                {/if}
-                <h3 class="text-theme-primary mb-2 text-xl font-semibold">
-                  {useCase.title}
-                </h3>
-                <p class="text-theme-secondary flex-1 leading-relaxed">
+                <div class="flex items-center gap-4 mb-3">
+                  {#if useCase.icon}
+                    <div
+                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-theme-primary/20 bg-theme-primary/10 transition-transform duration-300 group-hover:scale-110"
+                    >
+                      <span class={useCase.icon + " h-5 w-5 text-theme-primary"}
+                      ></span>
+                    </div>
+                  {/if}
+                  <h3 class="font-header text-lg font-bold text-theme-text">
+                    {useCase.title}
+                  </h3>
+                </div>
+                <p
+                  class="font-light leading-relaxed text-theme-muted text-sm sm:text-base"
+                >
                   {useCase.description}
                 </p>
               </div>
             {/each}
           </div>
         </section>
-      </div>
-    {:else if section === "graph" && config.exampleGraph}
-      <!-- Example Graph Preview -->
-      <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {:else if section === "graph" && config.exampleGraph}
+        <!-- Example Graph Preview -->
         <section
-          class="bg-theme-surface border-theme-border mb-16 overflow-hidden rounded-2xl border shadow-md"
+          class="mb-16 overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-lg sm:p-8"
+          style:background-image="var(--bg-texture-overlay)"
         >
-          <div class="border-theme-border border-b px-8 py-6">
-            <div class="flex items-center justify-between">
-              <h2 class="text-theme-primary text-2xl font-bold">
+          <div
+            class="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-center border-b border-theme-border/60 pb-4"
+          >
+            <div>
+              <h2
+                class="font-header text-xl font-bold text-theme-text sm:text-2xl"
+              >
                 {config.exampleGraph.title}
               </h2>
-              <span
-                class="text-theme-accent bg-theme-accent/10 rounded-full px-3 py-1 text-xs font-semibold"
-              >
-                Interactive Graph View
-              </span>
+              {#if config.exampleGraph.description}
+                <p class="mt-1 font-light text-sm text-theme-muted">
+                  {config.exampleGraph.description}
+                </p>
+              {/if}
             </div>
-            {#if config.exampleGraph.description}
-              <p class="text-theme-secondary mt-2">
-                {config.exampleGraph.description}
-              </p>
-            {/if}
+            <span
+              class="self-start sm:self-auto rounded-full border border-theme-primary/20 bg-theme-primary/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+            >
+              Interactive Graph View
+            </span>
           </div>
-          <div class="bg-theme-base/80 p-8 sm:p-12">
-            <div class="flex flex-wrap items-center justify-center gap-4 py-4">
+
+          <div
+            class="rounded-lg border border-theme-border/80 bg-theme-bg/90 p-6 sm:p-8"
+          >
+            <div class="flex flex-wrap items-center justify-center gap-3 py-2">
               {#each config.exampleGraph.steps as step, index}
                 <div
-                  class="bg-theme-surface border-theme-border flex flex-col items-center rounded-xl border px-6 py-4 shadow-sm transition-all hover:border-theme-accent hover:shadow-md"
+                  class="flex flex-col items-center rounded-lg border border-theme-primary/30 bg-theme-surface px-4 py-3 shadow-md"
                 >
-                  <span class="text-theme-primary font-bold">{step.label}</span>
+                  <span
+                    class="font-header font-bold text-theme-text text-xs sm:text-sm"
+                    >{step.label}</span
+                  >
                   {#if step.sublabel}
                     <span
-                      class="text-theme-secondary mt-1 text-xs uppercase tracking-wider"
+                      class="mt-1 font-mono text-[10px] uppercase tracking-wider text-theme-muted"
                       >{step.sublabel}</span
                     >
                   {/if}
                 </div>
                 {#if index < config.exampleGraph.steps.length - 1}
                   <div
-                    class="flex flex-col items-center justify-center px-2 py-1 text-center"
+                    class="flex flex-col items-center justify-center px-1 text-center"
                   >
                     {#if step.relation}
-                      <span class="text-theme-accent font-mono text-xs italic"
+                      <span
+                        class="font-mono text-[10px] italic text-theme-primary"
                         >{step.relation}</span
                       >
                     {/if}
                     <span
-                      class="icon-[lucide--arrow-right] text-theme-secondary mt-1 h-5 w-5"
+                      class="icon-[lucide--arrow-right] mt-0.5 h-4 w-4 text-theme-muted"
                     ></span>
                   </div>
                 {/if}
@@ -156,74 +189,76 @@
             </div>
           </div>
         </section>
-      </div>
-    {:else if section === "tools" && config.recommendedTools.length > 0}
-      <!-- Recommended Tools -->
-      <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {:else if section === "tools" && config.recommendedTools.length > 0}
+        <!-- Recommended Tools -->
         <section class="mb-16">
-          <h2 class="text-theme-primary mb-12 text-center text-3xl font-bold">
-            Featured Worldbuilding Tools
+          <h2
+            class="mb-8 text-center font-header text-2xl font-bold text-theme-text sm:text-3xl"
+          >
+            Featured Tools
           </h2>
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="grid gap-6 md:grid-cols-2">
             {#each config.recommendedTools as tool}
               <a
                 href="{base}{tool.href}"
-                class="bg-theme-surface border-theme-border group flex flex-col rounded-xl border p-6 transition-all hover:border-theme-accent hover:shadow-md"
+                class="group block rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50"
+                style:background-image="var(--bg-texture-overlay)"
               >
                 <div class="mb-2 flex items-center justify-between">
                   <h3
-                    class="text-theme-primary font-bold transition-colors group-hover:text-theme-accent"
+                    class="font-header text-base font-bold text-theme-text transition-colors group-hover:text-theme-primary"
                   >
                     {tool.title}
                   </h3>
                   {#if tool.badge}
                     <span
-                      class="bg-theme-surface-hover text-theme-secondary rounded-full px-3 py-1 text-xs font-medium"
+                      class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
                       >{tool.badge}</span
                     >
                   {/if}
                 </div>
-                <p class="text-theme-secondary leading-relaxed">
+                <p class="font-light text-sm leading-relaxed text-theme-muted">
                   {tool.description}
                 </p>
               </a>
             {/each}
           </div>
         </section>
-      </div>
-    {:else if section === "cta"}
-      <!-- CTA -->
-      <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {:else if section === "cta"}
+        <!-- CTA -->
         <section
-          class="bg-theme-accent/10 border-theme-accent/20 mb-16 rounded-3xl border px-6 py-16 text-center shadow-inner sm:px-12"
+          class="mx-auto mb-16 max-w-3xl rounded-2xl border border-theme-border bg-theme-surface px-6 py-12 text-center shadow-xl sm:px-12"
+          style:background-image="var(--bg-texture-overlay)"
         >
-          <h2 class="text-theme-primary mb-4 text-3xl font-bold">
+          <h2
+            class="mb-4 font-header text-2xl font-bold text-theme-text sm:text-3xl"
+          >
             {config.cta.title}
           </h2>
           {#if config.cta.description}
-            <p class="text-theme-secondary mb-8 text-xl">
+            <p
+              class="mx-auto mb-8 max-w-xl font-light text-base sm:text-lg leading-relaxed text-theme-muted"
+            >
               {config.cta.description}
             </p>
           {/if}
           <a
             href="{base}{config.cta.buttonHref}"
-            class="bg-theme-accent text-theme-primary-inverse inline-flex items-center justify-center rounded-lg px-8 py-4 font-bold transition-transform hover:scale-105 active:scale-95"
+            class="inline-block rounded-lg bg-theme-primary px-10 py-4 font-header text-sm font-bold text-theme-bg transition-all hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] active:scale-95"
           >
             {config.cta.buttonText}
           </a>
         </section>
-      </div>
-    {:else if section === "disclaimer" && config.disclaimer}
-      <!-- Disclaimer -->
-      <div class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <footer class="border-t border-theme-border pt-8 text-center">
+      {:else if section === "disclaimer" && config.disclaimer}
+        <!-- Disclaimer -->
+        <footer class="mt-8 border-t border-theme-border/60 pt-6 text-center">
           <p
-            class="text-theme-secondary mx-auto max-w-4xl text-sm leading-relaxed"
+            class="mx-auto max-w-3xl font-mono text-xs leading-relaxed text-theme-muted"
           >
             {config.disclaimer}
           </p>
         </footer>
-      </div>
-    {/if}
-  {/each}
+      {/if}
+    {/each}
+  </div>
 </div>

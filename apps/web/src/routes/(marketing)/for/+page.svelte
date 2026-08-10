@@ -16,64 +16,75 @@
   />
 </svelte:head>
 
-<div class="bg-theme-background min-h-screen pt-24 pb-16">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="mb-16 text-center">
+<div
+  class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
+  style:background-image="var(--bg-texture-overlay)"
+>
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+    <header class="mb-16 text-center">
+      <p
+        class="mb-3 text-xs font-mono font-bold uppercase tracking-[0.24em] text-theme-primary"
+      >
+        Campaign Directory
+      </p>
       <h1
-        class="text-theme-primary text-4xl font-bold tracking-tight sm:text-5xl"
+        class="mb-4 font-header text-3xl font-bold tracking-tight text-theme-text sm:text-5xl"
       >
         Find the right Codex Cryptica for your world
       </h1>
       <p
-        class="text-theme-secondary mx-auto mt-4 max-w-2xl text-xl leading-relaxed"
+        class="mx-auto max-w-2xl font-light text-lg leading-relaxed text-theme-muted"
       >
         Different campaigns get complicated in different ways. See how Codex
         Cryptica helps organize, connect, and expand the kind of world you're
         building.
       </p>
-    </div>
+    </header>
 
     <!-- Game Systems Section -->
     {#if systemPages.length > 0}
       <section class="mb-16">
-        <div class="mb-8 border-b border-theme-border pb-4">
-          <h2 class="text-theme-primary text-2xl font-bold">Game Systems</h2>
-          <p class="text-theme-secondary mt-1 text-sm">
+        <div class="mb-8 border-b border-theme-border/60 pb-4">
+          <h2 class="font-header text-2xl font-bold text-theme-text">
+            Game Systems
+          </h2>
+          <p class="mt-1 font-light text-sm text-theme-muted">
             Tailored tools and relationship structures for specific tabletop RPG
             systems.
           </p>
         </div>
 
-        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {#each systemPages as page}
             <a
               href="{base}/for/{page.slug}"
-              class="bg-theme-surface border-theme-border group flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:border-theme-accent hover:shadow-lg"
+              class="group flex h-full flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 hover:shadow-lg"
+              style:background-image="var(--bg-texture-overlay)"
             >
-              <div class="flex flex-1 flex-col p-8">
-                <div class="mb-4 flex items-center justify-between">
+              <div class="flex flex-1 flex-col">
+                <div class="mb-3 flex items-center justify-between">
                   <span
-                    class="bg-theme-accent/10 text-theme-accent rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+                    class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
                   >
                     Game System
                   </span>
                 </div>
                 <h3
-                  class="text-theme-primary mb-3 text-2xl font-bold transition-colors group-hover:text-theme-accent"
+                  class="mb-2 font-header text-xl font-bold text-theme-text transition-colors group-hover:text-theme-primary"
                 >
                   {page.hero.title}
                 </h3>
                 <p
-                  class="text-theme-secondary flex-1 text-base leading-relaxed"
+                  class="flex-1 font-light text-sm leading-relaxed text-theme-muted"
                 >
                   {page.hero.tagline}
                 </p>
                 <div
-                  class="text-theme-accent mt-6 flex items-center text-sm font-semibold"
+                  class="mt-6 flex items-center font-header text-xs font-bold text-theme-primary"
                 >
                   Explore system
                   <span
-                    class="icon-[lucide--arrow-right] ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
+                    class="icon-[lucide--arrow-right] ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1"
                   ></span>
                 </div>
               </div>
@@ -86,46 +97,47 @@
     <!-- Genres Section -->
     {#if genrePages.length > 0}
       <section class="mb-16">
-        <div class="mb-8 border-b border-theme-border pb-4">
-          <h2 class="text-theme-primary text-2xl font-bold">
+        <div class="mb-8 border-b border-theme-border/60 pb-4">
+          <h2 class="font-header text-2xl font-bold text-theme-text">
             Genres & Settings
           </h2>
-          <p class="text-theme-secondary mt-1 text-sm">
+          <p class="mt-1 font-light text-sm text-theme-muted">
             System-agnostic worldbuilding frameworks for fantasy, sci-fi, and
             horror realms.
           </p>
         </div>
 
-        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {#each genrePages as page}
             <a
               href="{base}/for/{page.slug}"
-              class="bg-theme-surface border-theme-border group flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 hover:border-theme-accent hover:shadow-lg"
+              class="group flex h-full flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 hover:shadow-lg"
+              style:background-image="var(--bg-texture-overlay)"
             >
-              <div class="flex flex-1 flex-col p-8">
-                <div class="mb-4 flex items-center justify-between">
+              <div class="flex flex-1 flex-col">
+                <div class="mb-3 flex items-center justify-between">
                   <span
-                    class="bg-theme-accent/10 text-theme-accent rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+                    class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
                   >
                     Genre
                   </span>
                 </div>
                 <h3
-                  class="text-theme-primary mb-3 text-2xl font-bold transition-colors group-hover:text-theme-accent"
+                  class="mb-2 font-header text-xl font-bold text-theme-text transition-colors group-hover:text-theme-primary"
                 >
                   {page.hero.title}
                 </h3>
                 <p
-                  class="text-theme-secondary flex-1 text-base leading-relaxed"
+                  class="flex-1 font-light text-sm leading-relaxed text-theme-muted"
                 >
                   {page.hero.tagline}
                 </p>
                 <div
-                  class="text-theme-accent mt-6 flex items-center text-sm font-semibold"
+                  class="mt-6 flex items-center font-header text-xs font-bold text-theme-primary"
                 >
                   Explore genre
                   <span
-                    class="icon-[lucide--arrow-right] ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
+                    class="icon-[lucide--arrow-right] ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1"
                   ></span>
                 </div>
               </div>
