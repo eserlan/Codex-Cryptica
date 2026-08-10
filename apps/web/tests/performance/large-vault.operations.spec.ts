@@ -86,52 +86,71 @@ test("records repeatable large-vault operations in a production preview", async 
       { timeout: 60_000 },
     );
 
-    // Select through the graph event handler so the span includes the delayed
-    // state update and the two post-selection animation frames.
+    // Select through the graph event handler so every sample includes the
+    // delayed state update and the two post-selection animation frames.
     const selectionStart = (await getSamples()).length;
-    await page.evaluate(() => {
-      const cy = (window as any).cy;
-      cy.$id("benchmark-42").emit("tap");
-    });
-    await page.waitForFunction(
-      (startAt) =>
-        ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
-          .slice(startAt)
-          .some((sample: any) => sample.operation === "graph_select"),
-      selectionStart,
-    );
+    for (let index = 0; index < 10; index += 1) {
+      const sampleStart = (await getSamples()).length;
+      await page.evaluate((entityId) => {
+        (window as any).cy.$id(entityId).emit("tap");
+      }, `benchmark-${index}`);
+      await page.waitForFunction(
+        (startAt) =>
+          ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+            .slice(startAt)
+            .some((sample: any) => sample.operation === "graph_select"),
+        sampleStart,
+      );
+    }
     await captureScenario("rendered-node-selection", selectionStart, [
       "graph_select",
     ]);
 
-    // Use a deterministic focus state transition. The controller owns the
-    // measured render-ready lifecycle once membership reconciliation begins.
-    const focusStart = (await getSamples()).length;
+    // Focus-depth changes operate on the real culled focus view, not the full
+    // graph. Pinning the selected fixture entity activates that lifecycle.
     await page.evaluate(() => {
-      (window as any).__focusSpan = (
-        window as any
-      ).__CODEX_PERFORMANCE_RESULTS__?.start("graph_focus_depth_change");
-      const graph = (window as any).graph;
-      const cy = (window as any).cy;
-      graph.focusDepth = Math.min(graph.focusDepth + 1, 3);
-      cy.emit("zoom");
+      (window as any).vault.selectedEntityId = "benchmark-42";
+      (window as any).graph.focusRootId = "benchmark-42";
+      (window as any).graph.ensureFocusRoot();
     });
-    await page.evaluate(
-      () =>
-        new Promise<void>((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-        ),
-    );
-    await page.evaluate(() => (window as any).__focusSpan?.complete());
     await page.waitForFunction(
-      (startAt) =>
-        ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
-          .slice(startAt)
-          .some(
-            (sample: any) => sample.operation === "graph_focus_depth_change",
-          ),
-      focusStart,
+      (entityCount) => {
+        const graph = (window as any).graph;
+        const cy = (window as any).cy;
+        return Boolean(
+          graph?.focusViewActive &&
+          cy?.nodes().length > 0 &&
+          cy.nodes().length < entityCount,
+        );
+      },
+      LARGE_VAULT_ENTITY_COUNT,
+      { timeout: 60_000 },
     );
+
+    // Exercise both directions. The controller owns the measured render-ready
+    // lifecycle, avoiding a competing test-owned span.
+    const focusStart = (await getSamples()).length;
+    const focusDepth = await page.evaluate(
+      () => (window as any).graph.focusDepth,
+    );
+    const changedFocusDepth = focusDepth < 3 ? focusDepth + 1 : focusDepth - 1;
+    for (const nextFocusDepth of [changedFocusDepth, focusDepth]) {
+      const sampleStart = (await getSamples()).length;
+      await page.evaluate((nextDepth) => {
+        (window as any).graph.focusDepth = nextDepth;
+      }, nextFocusDepth);
+      await page.waitForFunction(
+        (startAt) =>
+          ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+            .slice(startAt)
+            .some(
+              (sample: any) =>
+                sample.operation === "graph_focus_depth_change" &&
+                sample.outcome === "completed",
+            ),
+        sampleStart,
+      );
+    }
     await captureScenario("focus-depth-change", focusStart, [
       "graph_focus_depth_change",
     ]);
