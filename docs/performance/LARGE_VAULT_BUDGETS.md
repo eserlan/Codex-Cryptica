@@ -76,7 +76,7 @@ across the five workflow runs. They are aggregate-only synthetic-fixture data.
 
 - The corrected harness is stable for selection (a 7 ms total range), focus
   depth (77 ms), persistence (13 ms), and warm open (43 ms). These are suitable
-  for report-only comparison after the manifest evaluator is added.
+  for report-only comparison.
 - The cold-open range is wider because it includes the full first-load lifecycle;
   a 300 ms ceiling preserves 33% headroom above the slowest observed run.
 - Table sorting and filtering show runner-sensitive variance. Their ceilings use
@@ -85,9 +85,13 @@ across the five workflow runs. They are aggregate-only synthetic-fixture data.
 - `search_index_batch` is not emitted by this lifecycle and is therefore not a
   candidate for the v1 manifest. Cold-open duration and index persistence remain
   the observable signals for this suite.
-- These are **not blocking limits** yet. Commit the reviewed manifest in
-  `report-only` mode, validate it for five additional successful workflow runs,
-  then consider switching it to `blocking`.
+- The reviewed manifest lives at
+  `apps/web/tests/performance/budgets/large-vault.v1.json`. Its evaluator
+  rejects malformed, unknown, and missing scenario evidence, while report-only
+  regressions stay visible in the GitHub summary without failing the workflow.
+- These are **not blocking limits** yet. Validate the manifest in report-only
+  mode for five additional successful workflow runs, then consider switching it
+  to `blocking`.
 
 Run locally with:
 
@@ -95,6 +99,9 @@ Run locally with:
 cd apps/web
 bun run build
 bun run test:performance
+bun tests/performance/large-vault-budget.ts \
+  test-results/large-vault-results.v1.json \
+  tests/performance/budgets/large-vault.v1.json
 ```
 
 Private-vault comparisons must remain local. Only aggregate allowlisted
