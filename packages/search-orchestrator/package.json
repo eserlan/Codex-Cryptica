@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@codex/events": "workspace:*",
+    "@codex/performance-observability": "workspace:*",
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",

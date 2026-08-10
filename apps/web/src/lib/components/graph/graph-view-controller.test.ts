@@ -115,6 +115,9 @@ describe("GraphViewController", () => {
         activeLabels: new Set(),
         activeCategories: new Set(),
         labelFilterMode: "OR",
+        focusDepth: 1,
+        focusRootId: null,
+        focusViewActive: false,
       },
       vault: {
         isGuest: false,
@@ -123,6 +126,7 @@ describe("GraphViewController", () => {
         releaseImageUrl: vi.fn(),
         resolveImageUrl: vi.fn(),
         batchUpdate: vi.fn(),
+        graphStructureVersion: 0,
       },
       debugStore: {
         log: vi.fn(),
@@ -259,6 +263,54 @@ describe("GraphViewController", () => {
         expect.anything(),
         expect.objectContaining({ skipRenderedWeightSync: false }),
       );
+    });
+
+    it("uses delta-only reconciliation for a stable-data focus transition", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      vi.mocked(syncGraphElements).mockClear();
+
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ focusMembershipOnly: true }),
+      );
+    });
+
+    it("keeps full reconciliation when graph data changes with focus membership", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      vi.mocked(syncGraphElements).mockClear();
+
+      deps.graph.focusDepth = 2;
+      deps.vault.graphStructureVersion = 1;
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ focusMembershipOnly: false }),
+      );
+    });
+
+    it("ignores a stale sync layout callback after a newer focus transition", () => {
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      const staleOptions = vi.mocked(syncGraphElements).mock.calls[0][1];
+      const layoutSpy = vi.spyOn(controller, "applyCurrentLayout");
+
+      controller.syncElements();
+      staleOptions.onLayoutUpdate?.({
+        reason: "Elements Update",
+        isForced: false,
+        hasNewNodes: true,
+        hasRemovedNodes: false,
+      });
+
+      expect(layoutSpy).not.toHaveBeenCalled();
     });
   });
 

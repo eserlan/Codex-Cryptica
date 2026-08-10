@@ -318,10 +318,30 @@
 
   // Selection & Search Focus
   $effect(() => {
+    // Revalidate the root when graph membership changes, while a regular
+    // selection remains outside this dependency path.
+    void graph.elements;
+    if (controller.cy && graph.focusViewActive) {
+      graph.ensureFocusRoot();
+    }
+  });
+
+  $effect(() => {
     void controller.pendingSearchFocus;
+    // Re-apply focus after an explicit outside-focus navigation has synced the
+    // newly rendered node into Cytoscape.
+    void graph.focusRootId;
     const currentCy = controller.cy;
     const currentSelectedId = controller.selectedId;
     if (currentCy) {
+      if (
+        currentSelectedId &&
+        graph.focusViewActive &&
+        graph.focusRootId !== currentSelectedId &&
+        currentCy.$id(currentSelectedId).length === 0
+      ) {
+        graph.navigateFocusTo(currentSelectedId);
+      }
       controller.applyFocus(currentSelectedId);
       if (currentSelectedId) {
         const node = currentCy.$id(currentSelectedId);

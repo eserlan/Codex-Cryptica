@@ -11,8 +11,13 @@ import type { IVaultServices } from "./service-registry";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { updateLastInternalChange } from "./registry";
 import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 
 export interface MutationDependencies {
+  performanceRecorder?: PerformanceRecorder;
   repository: VaultRepository;
   persistence: EntityPersistenceService;
   loader: EntityContentLoader;
@@ -53,7 +58,11 @@ export interface MutationDependencies {
 }
 
 export class EntityMutationService {
-  constructor(public deps: MutationDependencies) {}
+  private performanceRecorder: PerformanceRecorder;
+
+  constructor(public deps: MutationDependencies) {
+    this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+  }
 
   registerStoreCallbacks(
     callbacks: Partial<
@@ -128,6 +137,7 @@ export class EntityMutationService {
   ): Promise<boolean> {
     const existing = this.entities[id];
     if (!existing) return false;
+    const span = this.performanceRecorder.start("entity_save");
 
     const safeUpdates = {
       ...updates,
@@ -168,7 +178,14 @@ export class EntityMutationService {
       services.ai.clearStyleCache();
     }
 
-    await this.deps.persistence.scheduleSave(updated);
+    try {
+      await this.deps.persistence.scheduleSave(updated);
+    } catch (error) {
+      span.fail("unexpected", () => ({
+        entityCount: Object.keys(this.entities).length,
+      }));
+      throw error;
+    }
 
     vaultEventBus.emit({
       type: "ENTITY_UPDATED",
@@ -177,6 +194,7 @@ export class EntityMutationService {
       patch: updates,
     });
 
+    span.complete(() => ({ entityCount: Object.keys(this.entities).length }));
     return true;
   }
 
