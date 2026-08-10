@@ -124,4 +124,11 @@
 ## 2024-05-18 - Isolated Storage Usage in Utilities
 
 **Learning:** SvelteKit utilities that access `localStorage` directly in functions (rather than inside components or classes) can be hard to test cleanly because they depend on the global object.
+
 **Action:** Extract global storage dependencies into a typed `StorageLike` interface parameter with a default to the production `browserStorage`. This provides a very clean DI seam that preserves runtime behavior while making unit testing trivial and avoiding cross-test pollution.
+## 2024-05-18 - Inject time into pure graph generators
+
+
+**Learning:** Pure graph generators (like `adventure-graph-generator.ts`) that assign creation timestamps or time-based IDs (e.g., `adv-canvas-${Date.now()}`) should inject a clock dependency (`systemClock` from `@codex/runtime`).
+
+**Action:** When implementing or refactoring generators that need to produce deterministic output in tests, inject `Clock` as an optional parameter with `systemClock` as the default to allow deterministic timestamp injection.
