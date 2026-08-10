@@ -76,7 +76,7 @@ const listBlogEntries = async () => {
   );
 };
 
-const buildXml = (entries) => {
+const buildXml = async (entries) => {
   const urls = entries
     .map(
       (entry) => `  <url>
@@ -156,7 +156,7 @@ ${allStatic
 
 async function main() {
   const entries = await listBlogEntries();
-  const xml = buildXml(entries);
+  const xml = await buildXml(entries);
 
   await mkdir(dirname(outputFile), { recursive: true });
   await writeFile(outputFile, xml, "utf8");
