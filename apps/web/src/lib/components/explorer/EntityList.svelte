@@ -83,13 +83,23 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   let textMatchIds = $state<Set<string> | null>(null);
+  let textSearchPending = $state(false);
   let textSearchUnavailable = $state(false);
   let textSearchError = $state<string | null>(null);
-  let indexProgress = $state<SearchIndexProgress>(
-    defaultSearchService.getIndexProgress(),
-  );
-  let latestIndexStatus = defaultSearchService.getIndexProgress().status;
+  let indexProgress = $state<SearchIndexProgress>({
+    status: "idle",
+    vaultId: null,
+    runId: null,
+    indexedCount: 0,
+    totalCount: null,
+    isPartial: false,
+    canRetry: false,
+    message: "Search is idle.",
+    error: null,
+  });
+  let latestIndexStatus: SearchIndexProgress["status"] = "idle";
   let indexStatusVersion = $state(0);
+  const parsedSearchQuery = $derived(parseEntitySearchQuery(searchQuery));
 
   $effect(() => {
     const initialProgress = searchService.getIndexProgress();
@@ -110,9 +120,10 @@
     const entityCount = vault.allEntities.length;
     void indexStatusVersion;
     const indexStatus = latestIndexStatus;
-    const { textQuery } = parseEntitySearchQuery(query);
+    const { textQuery } = parsedSearchQuery;
     if (!textQuery) {
       textMatchIds = null;
+      textSearchPending = false;
       textSearchUnavailable = false;
       textSearchError = null;
       return;
@@ -122,14 +133,20 @@
     // the metadata fallback until the lifecycle reports a usable index.
     if (indexStatus === "idle") {
       textMatchIds = null;
+      textSearchPending = false;
       textSearchUnavailable = true;
       textSearchError = null;
       return;
     }
 
+    textMatchIds = null;
+    textSearchPending = true;
+    textSearchUnavailable = false;
+    textSearchError = null;
     const searchRunner = createEntityTextSearchRunner(searchService);
     void searchRunner.search(query, entityCount).then((result) => {
       if (!result) return;
+      textSearchPending = false;
       textMatchIds = result.error ? null : result.matchIds;
       textSearchUnavailable = result.error !== null;
       textSearchError = result.error?.message ?? null;
@@ -180,16 +197,19 @@
       allowedTypes,
       showDraftsOnly,
       textMatchIds,
+      textSearchPending,
       textSearchUnavailable,
     }),
   );
 
   const searchStatusMessage = $derived(
-    textSearchError
-      ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
-      : indexProgress.isPartial && searchQuery.trim()
-        ? "Search is still indexing; results will update as indexing finishes."
-        : null,
+    textSearchPending
+      ? "Searching indexed content…"
+      : textSearchError
+        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
+        : indexProgress.isPartial && parsedSearchQuery.textQuery
+          ? "Search is still indexing; results will update as indexing finishes."
+          : null,
   );
 
   const sortedEntities = $derived(

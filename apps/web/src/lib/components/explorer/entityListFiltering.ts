@@ -100,6 +100,8 @@ export interface FilterOptions {
   textMatchIds?: ReadonlySet<string> | null;
   /** Worker failed; use metadata-only matching rather than a blocking content scan. */
   textSearchUnavailable?: boolean;
+  /** Worker request is in flight; use metadata-only matching until it resolves. */
+  textSearchPending?: boolean;
 }
 
 export function filterEntities(
@@ -155,7 +157,7 @@ export function filterEntities(
       !remainingTextQuery ||
       (options.textMatchIds
         ? options.textMatchIds.has(e.id)
-        : options.textSearchUnavailable
+        : options.textSearchUnavailable || options.textSearchPending
           ? e.title.toLowerCase().includes(remainingTextQuery) ||
             e.labels?.some((l) =>
               l.toLowerCase().includes(remainingTextQuery),

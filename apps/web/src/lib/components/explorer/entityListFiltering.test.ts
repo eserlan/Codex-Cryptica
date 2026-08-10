@@ -245,6 +245,19 @@ describe("entityListFiltering pure functions", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("avoids scanning content while a worker query is pending", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "patrolling",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textSearchPending: true,
+      });
+
+      expect(result).toEqual([]);
+    });
   });
 
   describe("worker query helpers", () => {
