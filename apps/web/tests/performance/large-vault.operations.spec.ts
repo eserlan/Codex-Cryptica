@@ -91,13 +91,14 @@ test("records repeatable large-vault operations in a production preview", async 
     const selectionStart = (await getSamples()).length;
     for (let index = 0; index < 10; index += 1) {
       const sampleStart = (await getSamples()).length;
-      const position = await page.evaluate((entityId) => {
+      const position = await page.evaluate((nodeIndex) => {
         const cy = (window as any).cy;
-        const node = cy.$id(entityId);
+        const nodes = cy.nodes().toArray();
+        const node = nodes[nodeIndex % nodes.length];
         const rendered = node.renderedPosition();
         const rect = cy.container().getBoundingClientRect();
         return { x: rect.left + rendered.x, y: rect.top + rendered.y };
-      }, `benchmark-${index}`);
+      }, index);
       await page.mouse.click(position.x, position.y);
       await page.waitForFunction(
         (startAt) =>
