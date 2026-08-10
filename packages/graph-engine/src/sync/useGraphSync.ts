@@ -426,19 +426,30 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
   try {
     // Reconcile the target once, then perform every renderer mutation in one
     // batch so Cytoscape does not redraw between remove/add/filter phases.
-    const removeSpan = recorder.start("graph_sync_remove");
     const { elementMap, elementsToRemove } = reconcileElements(cy, elements);
-    const addSpan = recorder.start("graph_sync_add");
-    const patchSpan = recorder.start("graph_sync_patch_filter");
     let newNodes: GraphNode[] = [];
     let addedEdgeCount = 0;
     runInRendererBatch(cy, () => {
+      const removeSpan = recorder.start("graph_sync_remove");
       if (elementsToRemove.length > 0) {
         cy.remove(cy.collection(elementsToRemove));
       }
+      removeSpan.complete(() => ({
+        removedNodeCount: elementsToRemove.filter((element) => element.isNode())
+          .length,
+        removedEdgeCount: elementsToRemove.filter(
+          (element) => !element.isNode(),
+        ).length,
+      }));
 
+      const addSpan = recorder.start("graph_sync_add");
       ({ newNodes, addedEdgeCount } = addNewElements(cy, elements, elementMap));
+      addSpan.complete(() => ({
+        addedNodeCount: newNodes.length,
+        addedEdgeCount,
+      }));
 
+      const patchSpan = recorder.start("graph_sync_patch_filter");
       if (options.focusMembershipOnly) {
         syncFocusMembershipDelta(
           elements,
@@ -449,24 +460,15 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
       } else {
         syncDataAndFilters(elements, elementMap, options);
       }
+      patchSpan.complete(() => ({
+        renderedNodeCount: elements.filter(
+          (element) => element.group === "nodes",
+        ).length,
+        renderedEdgeCount: elements.filter(
+          (element) => element.group === "edges",
+        ).length,
+      }));
     });
-
-    removeSpan.complete(() => ({
-      removedNodeCount: elementsToRemove.filter((element) => element.isNode())
-        .length,
-      removedEdgeCount: elementsToRemove.filter((element) => !element.isNode())
-        .length,
-    }));
-    addSpan.complete(() => ({
-      addedNodeCount: newNodes.length,
-      addedEdgeCount,
-    }));
-    patchSpan.complete(() => ({
-      renderedNodeCount: elements.filter((element) => element.group === "nodes")
-        .length,
-      renderedEdgeCount: elements.filter((element) => element.group === "edges")
-        .length,
-    }));
 
     const isFirstElements = !initialLoaded && elements.length > 0;
     const hasDeletions = elementsToRemove.length > 0;

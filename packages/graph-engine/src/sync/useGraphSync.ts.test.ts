@@ -114,6 +114,50 @@ describe("syncGraphElements", () => {
     );
   });
 
+  it("records non-overlapping renderer phase durations", () => {
+    let now = 0;
+    const samples: Array<{ operation: string; durationMs: number }> = [];
+    const recorder = {
+      start: (operation: string) => {
+        const startedAt = now;
+        return {
+          complete: () =>
+            samples.push({ operation, durationMs: now - startedAt }),
+          cancel: () => {},
+          stale: () => {},
+          fail: () => {},
+        };
+      },
+    };
+    const staleNode = createMockNode("stale");
+    mockCy.elements.mockReturnValue([staleNode]);
+    mockCy.remove.mockImplementation(() => {
+      now += 5;
+    });
+    const add = mockCy.add.getMockImplementation();
+    mockCy.add.mockImplementation((elements: any) => {
+      now += 7;
+      return add(elements);
+    });
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [{ group: "nodes", data: { id: "added" } }] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      focusMembershipOnly: true,
+      skipRenderedWeightSync: true,
+      performanceRecorder: recorder as any,
+    });
+
+    expect(samples).toEqual([
+      { operation: "graph_sync_remove", durationMs: 5 },
+      { operation: "graph_sync_add", durationMs: 7 },
+      { operation: "graph_sync_patch_filter", durationMs: 0 },
+      { operation: "graph_sync_reconcile", durationMs: 12 },
+    ]);
+  });
+
   it("should add new nodes", () => {
     const newElements = [{ group: "nodes", data: { id: "node1" } }] as any[];
     syncGraphElements(mockCy as unknown as Core, {
