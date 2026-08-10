@@ -15,7 +15,7 @@ export const gothicHorror: LandingPageConfig = {
     tagline:
       "Keep noble lineages, decaying estates, ancestral curses, and dark secrets connected in one place.",
     problemStatement:
-      "Gothic horror campaigns thrive on ancestral secrets, family curses, isolated settlements, and tragic character histories. When players uncover a hidden chamber in a decaying estate, you shouldn't have to search through loose notes to remember which ancestor forged the pact — or how it haunts the living.",
+      "Gothic horror campaigns often revolve around inherited secrets, family curses, isolated estates, and tragic histories. When the players uncover a sealed room or forgotten journal, you shouldn't have to dig through scattered notes to remember which ancestor made the pact — or who is still paying for it.",
   },
   useCases: [
     {
@@ -31,13 +31,13 @@ export const gothicHorror: LandingPageConfig = {
       icon: "icon-[lucide--castle]",
     },
     {
-      title: "Forbidden Manuscripts & Relics",
+      title: "Heirlooms, Journals & Forbidden Lore",
       description:
         "Link cursed heirlooms, family journals, and dark rituals to the histories they haunt.",
       icon: "icon-[lucide--book-open]",
     },
     {
-      title: "Session Recaps & Gothic Mysteries",
+      title: "Secrets, Rumours & Session Notes",
       description:
         "Keep active rumours, investigation notes, session recaps, and campaign milestones connected to the people and places they involve.",
       icon: "icon-[lucide--scroll]",
@@ -46,40 +46,41 @@ export const gothicHorror: LandingPageConfig = {
   exampleGraph: {
     title: "Sample Gothic Horror Campaign Web",
     description:
-      "See how noble heirs, decaying manors, ancestral journals, and family curses connect in a gothic web.",
+      "See how an inheritance leads from a manor to a journal, a secret society, and the ancestor who swore its pact.",
     steps: [
       {
-        label: "Baroness Eleanor Blackwood",
-        sublabel: "Estate Heir",
+        label: "Lady Elspeth Vale",
+        sublabel: "Last Surviving Heir",
         relation: "inherits",
       },
       {
-        label: "Blackwood Manor",
-        sublabel: "Decaying Estate",
+        label: "Harrowmere House",
+        sublabel: "Inherited Estate",
         relation: "conceals",
       },
       {
-        label: "The Family Journal",
-        sublabel: "Forbidden Manuscript",
+        label: "The West Wing Journal",
+        sublabel: "Forgotten Journal",
         relation: "reveals",
       },
       {
-        label: "The Crimson Covenant",
-        sublabel: "Ancestral Cult",
-        relation: "cursed",
+        label: "The Society of the Hollow Bell",
+        sublabel: "Secret Organisation",
+        relation: "reveals",
       },
       {
-        label: "Lord Malachi Blackwood",
-        sublabel: "Original Patriarch",
+        label: "Sir Alaric Vale",
+        sublabel: "Founder of the Estate",
+        relation: "swore the pact",
       },
     ],
   },
   recommendedTools: [
     {
-      title: "Fantasy Name Generator",
+      title: "NPC Generator",
       description:
-        "Generate names for noble lineages, ancient ruins, ancestral estates, and gothic figures.",
-      href: "/tools/fantasy-name-generator",
+        "Create heirs, servants, family rivals, and gothic figures with distinct motives and secrets.",
+      href: "/generators/npc",
       badge: "Generator",
     },
     {
@@ -90,10 +91,10 @@ export const gothicHorror: LandingPageConfig = {
       badge: "Generator",
     },
     {
-      title: "Faction & Society Generator",
+      title: "Secret Society Generator",
       description:
         "Design secret societies, dark covens, fanatical inquisitions, and noble houses.",
-      href: "/generators/faction",
+      href: "/generators/secret-society",
       badge: "Generator",
     },
     {
@@ -105,7 +106,7 @@ export const gothicHorror: LandingPageConfig = {
     },
   ],
   cta: {
-    title: "Organise Your Gothic Campaign",
+    title: "Build Your Gothic World",
     description:
       "Keep your gothic horror world connected with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
