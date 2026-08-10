@@ -91,15 +91,21 @@ test("records repeatable large-vault operations in a production preview", async 
     const selectionStart = (await getSamples()).length;
     for (let index = 0; index < 10; index += 1) {
       const sampleStart = (await getSamples()).length;
-      await page.evaluate((entityId) => {
-        (window as any).cy.$id(entityId).emit("tap");
+      const position = await page.evaluate((entityId) => {
+        const cy = (window as any).cy;
+        const node = cy.$id(entityId);
+        const rendered = node.renderedPosition();
+        const rect = cy.container().getBoundingClientRect();
+        return { x: rect.left + rendered.x, y: rect.top + rendered.y };
       }, `benchmark-${index}`);
+      await page.mouse.click(position.x, position.y);
       await page.waitForFunction(
         (startAt) =>
           ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
             .slice(startAt)
             .some((sample: any) => sample.operation === "graph_select"),
         sampleStart,
+        { timeout: 10_000 },
       );
     }
     await captureScenario("rendered-node-selection", selectionStart, [
