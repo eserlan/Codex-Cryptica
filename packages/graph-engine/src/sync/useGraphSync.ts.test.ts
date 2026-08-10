@@ -55,6 +55,8 @@ describe("syncGraphElements", () => {
         };
       }),
       batch: vi.fn((cb) => cb()),
+      startBatch: vi.fn(),
+      endBatch: vi.fn(),
       collection: vi.fn((els) => els),
       fit: vi.fn(),
       $id: vi.fn().mockReturnValue({
@@ -122,6 +124,93 @@ describe("syncGraphElements", () => {
         JSON.stringify(a) === JSON.stringify(b),
     });
     expect(mockCy.add).toHaveBeenCalled();
+  });
+
+  it("adds only the focus-membership delta without patching retained data", () => {
+    const retainedNode = createMockNode("retained", ["keep"]);
+    mockCy.elements.mockReturnValue([retainedNode]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        { group: "nodes", data: { id: "retained", labels: ["keep"] } },
+        { group: "nodes", data: { id: "added", labels: ["keep"] } },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      focusMembershipOnly: true,
+      skipRenderedWeightSync: true,
+    });
+
+    expect(mockCy.add).toHaveBeenCalledTimes(1);
+    expect(retainedNode.addClass).not.toHaveBeenCalled();
+    expect(retainedNode.removeClass).not.toHaveBeenCalled();
+    expect(retainedNode.removeData).not.toHaveBeenCalled();
+  });
+
+  it("removes only stale focus-membership elements", () => {
+    const retainedNode = createMockNode("retained");
+    const staleNode = createMockNode("stale");
+    mockCy.elements.mockReturnValue([retainedNode, staleNode]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [{ group: "nodes", data: { id: "retained" } }] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      focusMembershipOnly: true,
+      skipRenderedWeightSync: true,
+    });
+
+    expect(mockCy.remove).toHaveBeenCalledWith([staleNode]);
+    expect(mockCy.add).not.toHaveBeenCalled();
+    expect(retainedNode.removeClass).not.toHaveBeenCalled();
+  });
+
+  it("handles mixed focus-membership deltas in one renderer batch", () => {
+    const retainedNode = createMockNode("retained");
+    const staleNode = createMockNode("stale");
+    mockCy.elements.mockReturnValue([retainedNode, staleNode]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        { group: "nodes", data: { id: "retained" } },
+        { group: "nodes", data: { id: "added" } },
+        {
+          group: "edges",
+          data: { id: "edge-added", source: "retained", target: "added" },
+        },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      focusMembershipOnly: true,
+      skipRenderedWeightSync: true,
+    });
+
+    expect(mockCy.startBatch).toHaveBeenCalledTimes(1);
+    expect(mockCy.endBatch).toHaveBeenCalledTimes(1);
+    expect(mockCy.remove).toHaveBeenCalledWith([staleNode]);
+    expect(mockCy.add).toHaveBeenCalledTimes(2);
+  });
+
+  it("always closes the renderer batch when delta reconciliation throws", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockCy.add.mockImplementation(() => {
+      throw new Error("renderer failed");
+    });
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [{ group: "nodes", data: { id: "added" } }] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      focusMembershipOnly: true,
+    });
+
+    expect(mockCy.startBatch).toHaveBeenCalledTimes(1);
+    expect(mockCy.endBatch).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
   });
 
   it("should remove existing graph items when the target element list is empty", () => {
