@@ -21,10 +21,10 @@
   import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
   import type { PerformanceOperationHandle } from "@codex/performance-observability";
   import {
-    clampExplorerPage,
     ENTITY_EXPLORER_PAGE_SIZE,
     getExplorerPageCount,
     getExplorerPageItems,
+    paginateExplorerGroups,
   } from "./entityExplorerPagination";
 
   type GroupEntry =
@@ -217,15 +217,21 @@
 
   const pageSize = ENTITY_EXPLORER_PAGE_SIZE;
   let page = $state(1);
-  const pagedRows = $derived(
-    effectiveViewMode === "list"
-      ? getExplorerPageItems(flattenedTree, page, pageSize)
-      : getExplorerPageItems(groupedEntries, page, pageSize),
+  const pagedTreeRows = $derived(
+    getExplorerPageItems(flattenedTree, page, pageSize),
   );
+  const groupedPages = $derived(
+    paginateExplorerGroups(groupedEntries, pageSize),
+  );
+  const pagedGroupRows = $derived(groupedPages[page - 1] ?? []);
   const totalPageRows = $derived(
     effectiveViewMode === "list" ? flattenedTree.length : groupedEntries.length,
   );
-  const pageCount = $derived(getExplorerPageCount(totalPageRows, pageSize));
+  const pageCount = $derived(
+    effectiveViewMode === "list"
+      ? getExplorerPageCount(totalPageRows, pageSize)
+      : Math.max(1, groupedPages.length),
+  );
   const firstPageRow = $derived(
     totalPageRows === 0 ? 0 : (page - 1) * pageSize + 1,
   );
@@ -241,11 +247,11 @@
     page = 1;
   });
   $effect(() => {
-    page = clampExplorerPage(page, totalPageRows, pageSize);
+    page = Math.min(Math.max(1, page), pageCount);
   });
 
   function goToPage(nextPage: number) {
-    page = clampExplorerPage(nextPage, totalPageRows, pageSize);
+    page = Math.min(Math.max(1, nextPage), pageCount);
   }
 
   let inlineCreationParentId = $state<string | null>(null);
@@ -570,7 +576,7 @@
           Move to Root
         </div>
       {/if}
-      {#each pagedRows as row (row.node.entity.id)}
+      {#each pagedTreeRows as row (row.node.entity.id)}
         {@render treeNode(row.node, row.depth, false)}
       {:else}
         <div data-testid="no-entities-found">
@@ -596,8 +602,9 @@
         </div>
       {/each}
     {:else if effectiveViewMode === "label" || effectiveViewMode === "category"}
-      {#each pagedRows as entry (entry.id)}
+      {#each pagedGroupRows as entry (entry.id)}
         {#if entry.kind === "group"}
+          {@const isToggleable = entry.groupType !== "unlabeled"}
           <button
             type="button"
             onclick={() =>
@@ -612,15 +619,18 @@
                       entry.groupKey,
                     )
                   : undefined}
-            aria-expanded={!entry.collapsed}
+            aria-expanded={isToggleable ? !entry.collapsed : undefined}
+            disabled={!isToggleable}
             class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
           >
             <span class="flex items-center gap-1.5">
-              <span
-                class="{entry.collapsed
-                  ? 'icon-[lucide--chevron-right]'
-                  : 'icon-[lucide--chevron-down]'} h-3 w-3"
-              ></span>
+              {#if isToggleable}
+                <span
+                  class="{entry.collapsed
+                    ? 'icon-[lucide--chevron-right]'
+                    : 'icon-[lucide--chevron-down]'} h-3 w-3"
+                ></span>
+              {/if}
               <span>{entry.title}</span>
             </span>
             <span class="text-[9px] text-theme-muted/80">{entry.count}</span>
