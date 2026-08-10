@@ -86,6 +86,24 @@ test("records repeatable large-vault operations in a production preview", async 
       undefined,
       { timeout: 60_000 },
     );
+    await page.waitForFunction(
+      () => {
+        const controller = (window as any).graphViewController;
+        const samples =
+          (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [];
+        return (
+          controller?.loadPhase === "ready" &&
+          !controller.isLayoutRunning &&
+          samples.some(
+            (sample: any) =>
+              sample.operation === "graph_sync_render_ready" &&
+              sample.outcome === "completed",
+          )
+        );
+      },
+      undefined,
+      { timeout: 60_000 },
+    );
 
     // Select through the graph event handler so every sample includes the
     // delayed state update and the two post-selection animation frames.
