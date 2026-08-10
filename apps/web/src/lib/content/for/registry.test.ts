@@ -99,6 +99,23 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Pathfinder 2e Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const pf2 = getLandingPage("pathfinder-2e");
+      expect(pf2).toBeDefined();
+      expect(pf2?.slug).toBe("pathfinder-2e");
+      expect(pf2?.kind).toBe("system");
+      expect(pf2?.disclaimer).toContain("Paizo Inc.");
+      expect(pf2?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(
+        pf2?.recommendedTools.some((t) =>
+          t.href.includes("pantheon-generator"),
+        ),
+      ).toBe(true);
+      expect(pf2?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("Extensibility (US3)", () => {
     it("allows dynamic page addition and handles optional section collapsing", () => {
       const customConfig: LandingPageConfig = {
