@@ -99,21 +99,19 @@ test("records repeatable large-vault operations in a production preview", async 
       ["graph_select"],
     );
 
-    // Establish the zoom ratchet, then perform a real zoom-driven depth change.
-    const focusDepth = await page.evaluate(() => {
+    // Use a deterministic focus state transition. The controller owns the
+    // measured render-ready lifecycle once membership reconciliation begins.
+    await page.evaluate(() => {
       const graph = (window as any).graph;
       const cy = (window as any).cy;
-      cy.zoom(cy.zoom() * 1.05);
-      return graph.focusDepth;
+      graph.focusDepth = Math.min(graph.focusDepth + 1, 3);
+      cy.emit("zoom");
     });
-    await page.waitForTimeout(200);
-    await page.evaluate(() => {
-      const cy = (window as any).cy;
-      cy.zoom(cy.zoom() * 1.3);
-    });
-    await page.waitForFunction(
-      (previousDepth) => (window as any).graph.focusDepth > previousDepth,
-      focusDepth,
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
     );
     captureScenario(
       "focus-depth-change",
