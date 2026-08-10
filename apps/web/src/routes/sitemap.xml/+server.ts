@@ -6,6 +6,7 @@ import {
 import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
+import { getAllLandingPageSlugs } from "$lib/content/for/registry";
 
 export const prerender = true;
 
@@ -132,6 +133,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Landing pages (/for/[slug])
+  const landingPageRoutes = getAllLandingPageSlugs().map((slug) => ({
+    path: `/for/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
@@ -140,6 +148,7 @@ export async function GET() {
     ...generatorRoutes,
     ...themeHubRoutes,
     ...importRoutes,
+    ...landingPageRoutes,
   ];
 
   const staticUrls = allStatic
