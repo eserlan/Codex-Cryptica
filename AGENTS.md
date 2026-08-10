@@ -54,7 +54,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/153-llm-model-registry/plan.md).
+shell commands, and other important information, read the [current plan](./specs/155-genre-system-landing-pages/plan.md).
 
 <!-- SPECKIT END -->
 

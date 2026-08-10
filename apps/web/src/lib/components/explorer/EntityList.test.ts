@@ -436,6 +436,30 @@ describe("EntityList", () => {
     expect(screen.queryByText("Pending Draft")).toBeNull();
   });
 
+  it("bounds flat rendering for a large vault and paginates the visible rows", () => {
+    const originalEntities = mockVault.allEntities;
+    mockVault.allEntities = Array.from({ length: 1600 }, (_, index) => ({
+      id: `large-${index}`,
+      title: `Large Entity ${index}`,
+      type: "npc",
+      tags: [],
+      labels: [],
+      connections: [],
+      content: "",
+      updatedAt: index,
+      status: "active",
+    }));
+
+    try {
+      render(EntityList);
+      expect(screen.getAllByTestId("entity-list-item")).toHaveLength(100);
+      expect(screen.getByTestId("entity-explorer-pagination")).toBeTruthy();
+      expect(screen.getByText("Page 1 of 16")).toBeTruthy();
+    } finally {
+      mockVault.allEntities = originalEntities;
+    }
+  });
+
   it("shows draft entities in review mode and wires approve and reject actions", async () => {
     const onApproveDraft = vi.fn();
     const onRejectDraft = vi.fn();

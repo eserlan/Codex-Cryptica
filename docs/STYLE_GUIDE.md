@@ -87,6 +87,20 @@ For the full token reference, see:
 - **[Colors](design/tokens/colors.md)**: Semantic color token table (`--color-theme-*`), feedback tokens, and domain-specific variants.
 - **[Typography and Spacing](design/tokens/typography.md)**: Font tokens (`--font-header`, `--font-body`), type scale, and layout constants.
 
+### Marketing & Landing Page Pattern (`(marketing)` routes)
+
+All marketing, landing, feature, and directory pages under `(marketing)` must follow these visual rules:
+
+1. **Paper/Parchment Surface Texture**: Container shells and cards MUST include `style:background-image="var(--bg-texture-overlay)"` over `bg-theme-bg` to preserve Codex Cryptica's tactile, book-like aesthetic.
+2. **Typography Standards**:
+   - **Main Headings (H1/H2/H3)**: MUST use the serif display font (`font-header font-bold text-theme-text`). Never use sans-serif `font-extrabold` for primary page headings.
+   - **Eyebrows**: MUST use monospace (`font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary`).
+   - **Mobile H1 Scale**: Keep H1 font sizes restrained on mobile (`text-3xl sm:text-4xl lg:text-5xl`) to ensure long titles fit naturally without taking up the entire first viewport.
+   - **Body Copy**: `font-body font-light text-theme-muted` with comfortable reading measures (`max-w-2xl`).
+3. **Editorial Hero Flow**: Avoid generic SaaS hero templates (centered H1 + centered subtext + separate bordered quote card). Format problem statements as editorial prose under a serif sub-heading (`<h2 class="font-header text-base font-bold text-theme-text">...</h2>`) inside a soft parchment container (`bg-theme-surface/50 border border-theme-border/70`).
+4. **Card Language**: Reuse CC's parchment card styling (`bg-theme-surface border border-theme-border rounded-xl shadow-md`) with texture overlay and primary icon pills (`w-10 h-10 rounded-xl bg-theme-primary/10 border border-theme-primary/20`).
+5. **Restrained Spacing**: Keep vertical section padding to `py-12 sm:py-16` and section gaps to `mb-14` / `mb-16`.
+
 ## Living Examples
 
 These snippets represent the most common UI building blocks used across the application.

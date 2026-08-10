@@ -11,6 +11,33 @@ export interface TreeNode {
   isMatchingQuery: boolean;
 }
 
+export interface FlattenedTreeNode {
+  node: TreeNode;
+  depth: number;
+}
+
+/** Return only the currently visible tree rows, preserving their depth. */
+export function flattenVisibleEntityTree(
+  nodes: TreeNode[],
+  collapsedIds: ReadonlySet<string>,
+  forceExpand = false,
+): FlattenedTreeNode[] {
+  const result: FlattenedTreeNode[] = [];
+  const visit = (items: TreeNode[], depth: number) => {
+    for (const node of items) {
+      result.push({ node, depth });
+      if (
+        node.children.length > 0 &&
+        (forceExpand || !collapsedIds.has(node.entity.id))
+      ) {
+        visit(node.children, depth + 1);
+      }
+    }
+  };
+  visit(nodes, 0);
+  return result;
+}
+
 export function buildEntityTree(
   entities: Entity[],
   filteredEntities: Entity[],
