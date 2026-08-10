@@ -337,9 +337,12 @@ describe("VaultRepository", () => {
     });
 
     const yieldSpy = vi.spyOn(globalThis, "setTimeout");
-    await repository.loadFiles("vault-1", mockHandle);
-    expect(yieldSpy).toHaveBeenCalledWith(expect.any(Function), 0);
-    yieldSpy.mockRestore();
+    try {
+      await repository.loadFiles("vault-1", mockHandle);
+      expect(yieldSpy).toHaveBeenCalledWith(expect.any(Function), 0);
+    } finally {
+      yieldSpy.mockRestore();
+    }
   });
 
   it("should clear entities", () => {

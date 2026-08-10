@@ -228,9 +228,11 @@ export class VaultRepository {
         );
       }
 
-      // Yield after every chunk so rendering/input can run without imposing a
-      // fixed 50 ms delay on large vaults.
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      // Yield only between chunks so rendering/input can run without imposing
+      // a fixed delay or adding a needless completion hop.
+      if (i + CHUNK_SIZE < total) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
     }
 
     if (this._currentLoadId !== loadId) return this.entities;
