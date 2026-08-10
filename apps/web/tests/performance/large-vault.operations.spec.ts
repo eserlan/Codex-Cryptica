@@ -52,6 +52,11 @@ test("records repeatable large-vault operations in a production preview", async 
       }
     });
     await installLargeVaultFixture(page);
+    const vaultThemePrompt = page.getByTestId("vault-theme-modal");
+    if (await vaultThemePrompt.isVisible()) {
+      await page.getByRole("button", { name: "LATER" }).click();
+      await expect(vaultThemePrompt).toBeHidden();
+    }
     await captureScenario("cold-open-index", 0, [
       "vault_open_cold",
       "vault_sync_chunk",
