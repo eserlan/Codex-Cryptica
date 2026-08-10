@@ -121,6 +121,9 @@ type HarnessGlobal = typeof globalThis & {
   __CODEX_PERFORMANCE_CAPTURE__?: boolean;
   __CODEX_PERFORMANCE_RESULTS__?: {
     getSamples(): PerformanceSampleV1[];
+    start(operation: PerformanceSampleV1["operation"]): {
+      complete(): void;
+    };
   };
 };
 
@@ -135,6 +138,7 @@ if (harnessGlobal.__CODEX_PERFORMANCE_CAPTURE__ === true) {
     // Return copies so the local test harness cannot mutate recorder state.
     getSamples: () =>
       browserPerformanceCapture.getSamples().map((sample) => ({ ...sample })),
+    start: (operation) => browserPerformanceRecorder.start(operation),
   };
 }
 

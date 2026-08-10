@@ -81,10 +81,20 @@ test("records repeatable large-vault operations in a production preview", async 
 
     // Ten deterministic selections exercise the renderer and selection pipeline.
     await page.evaluate(() => {
+      (window as any).__selectionSpan = (
+        window as any
+      ).__CODEX_PERFORMANCE_RESULTS__?.start("graph_select");
       const cy = (window as any).cy;
       for (let index = 0; index < 10; index += 1) {
         cy.$id(`benchmark-${index}`).emit("tap");
       }
+    });
+    await page.evaluate(() => {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          (window as any).__selectionSpan?.complete(),
+        ),
+      );
     });
     await page.waitForFunction(() =>
       ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
@@ -102,6 +112,9 @@ test("records repeatable large-vault operations in a production preview", async 
     // Use a deterministic focus state transition. The controller owns the
     // measured render-ready lifecycle once membership reconciliation begins.
     await page.evaluate(() => {
+      (window as any).__focusSpan = (
+        window as any
+      ).__CODEX_PERFORMANCE_RESULTS__?.start("graph_focus_depth_change");
       const graph = (window as any).graph;
       const cy = (window as any).cy;
       graph.focusDepth = Math.min(graph.focusDepth + 1, 3);
@@ -113,6 +126,7 @@ test("records repeatable large-vault operations in a production preview", async 
           requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
         ),
     );
+    await page.evaluate(() => (window as any).__focusSpan?.complete());
     await page.waitForFunction(() =>
       ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
         (sample: any) => sample.operation === "graph_focus_depth_change",
