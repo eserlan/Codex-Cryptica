@@ -57,6 +57,7 @@ vi.mock("schema", async (importOriginal) => {
 
 import {
   FOCUS_BASE_COUNT,
+  FOCUS_EDGE_CAP,
   FOCUS_DETAIL_STEP,
   MAX_FOCUS_DEPTH,
   graph,
@@ -192,6 +193,34 @@ describe("GraphStore", () => {
     const renderedIds = new Set(store.elements.map((el: any) => el.data.id));
     expect(renderedIds.size).toBe(visibleCount);
     expect(renderedIds.has(`node-${visibleCount}`)).toBe(false);
+  });
+
+  it("applies the edge cap when every visible entity fits in focus view", () => {
+    const entities = Array.from({ length: 400 }, (_, index) => ({
+      id: `node-${index}`,
+      type: "npc",
+      connections: Array.from({ length: 5 }, (_, offset) => ({
+        target: `node-${(index + offset + 1) % 400}`,
+      })),
+    })) as any[];
+    (vault as any).allEntities = entities;
+    (vault as any).entities = Object.fromEntries(
+      entities.map((entity) => [entity.id, entity]),
+    );
+    (GraphTransformer.entitiesToElements as any).mockImplementation(
+      (items: any[]) =>
+        items.map((item) => ({ group: "nodes", data: { id: item.id } })),
+    );
+
+    const store = new GraphStore();
+
+    expect(store.focusViewActive).toBe(true);
+    void store.elements;
+    expect(GraphTransformer.entitiesToElements).toHaveBeenLastCalledWith(
+      entities,
+      expect.any(Set),
+      FOCUS_EDGE_CAP,
+    );
   });
 
   it("keeps zoom-driven focus expansion bounded and supports explicit detail reveal", () => {

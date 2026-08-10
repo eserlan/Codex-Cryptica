@@ -175,6 +175,7 @@ export class GraphStore {
       const result = GraphTransformer.entitiesToElements(
         visibleEntities,
         validIds,
+        this.focusViewActive ? FOCUS_EDGE_CAP : undefined,
       );
       focusComputeSpan.complete(() => ({
         entityCount: allEntities.length,

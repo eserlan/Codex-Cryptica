@@ -8,7 +8,7 @@ import {
 import type { Entity } from "schema";
 
 describe("GraphTransformer", () => {
-  it("caps rendered edges while retaining all selected nodes", () => {
+  it("caps rendered edges while retaining all provided nodes", () => {
     const entities = Array.from({ length: 4 }, (_, source) => ({
       id: `node-${source}`,
       type: "npc",

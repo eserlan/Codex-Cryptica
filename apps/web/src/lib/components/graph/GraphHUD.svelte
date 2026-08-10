@@ -37,7 +37,7 @@
   const focusDetailHint = $derived(
     graph.canIncreaseFocusDetail
       ? `Zoom in or choose Show more detail to reveal up to ${FOCUS_DETAIL_STEP} more entities. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view.`
-      : `This is the maximum focus detail. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view; use Show full graph for the complete vault.`,
+      : `This is the maximum focus detail. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view; use Show full graph for all visible entities.`,
   );
   const fullGraphMessage = $derived(
     `Full graph performance mode: ${graph.fullGraphSize.nodeCount} entities and ${graph.fullGraphSize.edgeCount} connections.`,
