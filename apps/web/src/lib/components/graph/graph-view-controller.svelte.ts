@@ -630,6 +630,14 @@ export class GraphViewController {
         (focusDepthChanged || focusRootChanged) &&
         graphStructureVersion === this.lastSyncedGraphStructureVersion &&
         filterSignature === this.lastSyncedFilterSignature;
+      // Explicit detail controls can change focus depth without a Cytoscape
+      // zoom event. Start the same lifecycle span here so every membership
+      // transition is measured through render readiness.
+      if (focusDepthChanged && !this.focusDepthSpan) {
+        this.focusDepthSpan = browserPerformanceRecorder.start(
+          "graph_focus_depth_change",
+        );
+      }
       this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
       this.lastSyncedFocusRootId = focusRootId;
       this.lastSyncedGraphStructureVersion = graphStructureVersion;

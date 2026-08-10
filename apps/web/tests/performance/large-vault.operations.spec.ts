@@ -113,6 +113,11 @@ test("records repeatable large-vault operations in a production preview", async 
           requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
         ),
     );
+    await page.waitForFunction(() =>
+      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
+        (sample: any) => sample.operation === "graph_focus_depth_change",
+      ),
+    );
     captureScenario(
       "focus-depth-change",
       await page.evaluate(
@@ -159,6 +164,11 @@ test("records repeatable large-vault operations in a production preview", async 
     await search.fill("benchmark entity 42");
     await search.fill("");
     await page.getByRole("columnheader").first().click();
+    await page.waitForFunction(() =>
+      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
+        (sample: any) => sample.operation === "table_sort",
+      ),
+    );
     captureScenario(
       "table-workflow",
       await page.evaluate(
