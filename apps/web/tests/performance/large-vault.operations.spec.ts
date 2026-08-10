@@ -40,6 +40,7 @@ test("records repeatable large-vault operations in a production preview", async 
   };
   await page.addInitScript(() => {
     (window as any).__CODEX_PERFORMANCE_CAPTURE__ = true;
+    localStorage.setItem("codex_world_page_dismissed_at", String(Date.now()));
   });
   try {
     await setupVaultPage(page);
@@ -85,12 +86,6 @@ test("records repeatable large-vault operations in a production preview", async 
       undefined,
       { timeout: 60_000 },
     );
-
-    const frontPageOverlay = page.getByTestId("front-page-overlay");
-    if (await frontPageOverlay.isVisible()) {
-      await frontPageOverlay.click({ position: { x: 1, y: 1 } });
-      await expect(frontPageOverlay).toBeHidden();
-    }
 
     // Select through the graph event handler so every sample includes the
     // delayed state update and the two post-selection animation frames.
