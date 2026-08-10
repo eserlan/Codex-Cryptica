@@ -8,7 +8,11 @@ import {
   LARGE_VAULT_SCENARIOS,
   writeLargeVaultResults,
 } from "./large-vault-results";
-import { createPerformanceResult } from "@codex/performance-observability";
+import {
+  createPerformanceResult,
+  type PerformanceOperation,
+  type PerformanceSampleV1,
+} from "@codex/performance-observability";
 
 test.describe.configure({ mode: "serial" });
 
@@ -16,16 +20,22 @@ test("records repeatable large-vault operations in a production preview", async 
   page,
 }) => {
   test.setTimeout(120_000);
-  let collectedSamples: any[] = [];
-  const scenarios = new Map<string, any[]>();
-  const captureScenario = (
+  const scenarios = new Map<string, PerformanceSampleV1[]>();
+  const getSamples = () =>
+    page.evaluate(
+      () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+    ) as Promise<PerformanceSampleV1[]>;
+  const captureScenario = async (
     name: string,
-    samples: any[],
-    operations: string[],
+    startAt: number,
+    operations: readonly PerformanceOperation[],
   ) => {
+    const samples = await getSamples();
     scenarios.set(
       name,
-      samples.filter((sample) => operations.includes(sample.operation)),
+      samples
+        .slice(startAt)
+        .filter((sample) => operations.includes(sample.operation)),
     );
   };
   await page.addInitScript(() => {
@@ -41,10 +51,7 @@ test("records repeatable large-vault operations in a production preview", async 
       }
     });
     await installLargeVaultFixture(page);
-    collectedSamples = await page.evaluate(
-      () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-    );
-    captureScenario("cold-open-index", collectedSamples, [
+    await captureScenario("cold-open-index", 0, [
       "vault_open_cold",
       "vault_sync_chunk",
       "search_index_batch",
@@ -62,22 +69,13 @@ test("records repeatable large-vault operations in a production preview", async 
       { timeout: 60_000 },
     );
 
-    // Reopen from the completed cache to capture the warm lifecycle directly.
-    await page.evaluate(async () => {
-      const span = (window as any).__CODEX_PERFORMANCE_RESULTS__?.start(
-        "vault_open_warm",
-      );
-      await (window as any).vault.loadFiles(false);
-      span?.complete();
-    });
-
-    captureScenario(
-      "warm-open",
-      await page.evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
+    // The reload itself exercises the real cache-backed warm-open lifecycle.
+    await page.waitForFunction(() =>
+      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
+        (sample: any) => sample.operation === "vault_open_warm",
       ),
-      ["vault_open_warm"],
     );
+    await captureScenario("warm-open", 0, ["vault_open_warm"]);
 
     await page.waitForFunction(
       () => {
@@ -88,32 +86,27 @@ test("records repeatable large-vault operations in a production preview", async 
       { timeout: 60_000 },
     );
 
-    // Ten deterministic selections exercise the renderer and selection pipeline.
+    // Select through the graph event handler so the span includes the delayed
+    // state update and the two post-selection animation frames.
+    const selectionStart = (await getSamples()).length;
     await page.evaluate(() => {
-      (window as any).__selectionSpan = (
-        window as any
-      ).__CODEX_PERFORMANCE_RESULTS__?.start("graph_select");
       const cy = (window as any).cy;
-      for (let index = 0; index < 10; index += 1) {
-        cy.$id(`benchmark-${index}`).emit("tap");
-      }
-      (window as any).__selectionSpan?.complete();
+      cy.$id("benchmark-42").emit("tap");
     });
-    await page.waitForFunction(() =>
-      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
-        (sample: any) => sample.operation === "graph_select",
-      ),
+    await page.waitForFunction(
+      (startAt) =>
+        ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+          .slice(startAt)
+          .some((sample: any) => sample.operation === "graph_select"),
+      selectionStart,
     );
-    captureScenario(
-      "rendered-node-selection",
-      await page.evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-      ),
-      ["graph_select"],
-    );
+    await captureScenario("rendered-node-selection", selectionStart, [
+      "graph_select",
+    ]);
 
     // Use a deterministic focus state transition. The controller owns the
     // measured render-ready lifecycle once membership reconciliation begins.
+    const focusStart = (await getSamples()).length;
     await page.evaluate(() => {
       (window as any).__focusSpan = (
         window as any
@@ -130,19 +123,20 @@ test("records repeatable large-vault operations in a production preview", async 
         ),
     );
     await page.evaluate(() => (window as any).__focusSpan?.complete());
-    await page.waitForFunction(() =>
-      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
-        (sample: any) => sample.operation === "graph_focus_depth_change",
-      ),
+    await page.waitForFunction(
+      (startAt) =>
+        ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+          .slice(startAt)
+          .some(
+            (sample: any) => sample.operation === "graph_focus_depth_change",
+          ),
+      focusStart,
     );
-    captureScenario(
-      "focus-depth-change",
-      await page.evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-      ),
-      ["graph_focus_depth_change"],
-    );
+    await captureScenario("focus-depth-change", focusStart, [
+      "graph_focus_depth_change",
+    ]);
 
+    const explorerStart = (await getSamples()).length;
     await page
       .getByRole("switch", { name: "Switch to Full Toolbox mode" })
       .click();
@@ -152,13 +146,6 @@ test("records repeatable large-vault operations in a production preview", async 
     await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
       timeout: 30_000,
     });
-    captureScenario(
-      "explorer-workflow",
-      await page.evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-      ),
-      ["explorer_open", "explorer_filter"],
-    );
     const explorerSearch = page.getByPlaceholder("Search entities...");
     await explorerSearch.fill("benchmark entity 42");
     await explorerSearch.fill("");
@@ -169,59 +156,48 @@ test("records repeatable large-vault operations in a production preview", async 
     await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
       timeout: 30_000,
     });
+    await captureScenario("explorer-workflow", explorerStart, [
+      "explorer_open",
+      "explorer_filter",
+    ]);
 
-    const graphPageSamples = await page.evaluate(
-      () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-    );
-    collectedSamples = [...collectedSamples, ...graphPageSamples];
-
+    const tableStart = (await getSamples()).length;
     await page.getByTestId("activity-bar-table").click();
     const search = page.getByTestId("entity-table-search");
     await expect(search).toBeVisible();
     await search.fill("benchmark entity 42");
     await search.fill("");
     await page.getByTestId("entity-table-sort-title").click();
-    await page.waitForFunction(() =>
-      ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? []).some(
-        (sample: any) => sample.operation === "table_sort",
-      ),
+    await page.waitForFunction(
+      (startAt) =>
+        ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+          .slice(startAt)
+          .some((sample: any) => sample.operation === "table_sort"),
+      tableStart,
     );
-    captureScenario(
-      "table-workflow",
-      await page.evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-      ),
-      ["table_open", "table_filter", "table_sort"],
-    );
+    await captureScenario("table-workflow", tableStart, [
+      "table_open",
+      "table_filter",
+      "table_sort",
+    ]);
 
     // Save one harmless edit through the real persistence path.
+    const saveStart = (await getSamples()).length;
     await page.evaluate(async () => {
       await (window as any).vault.updateEntity("benchmark-42", {
         content: "Deterministic benchmark content, revised.",
       });
     });
-    captureScenario(
-      "entity-save",
-      await page.evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-      ),
-      ["entity_save"],
-    );
-    const samples = await page.evaluate(
-      () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-    );
+    await captureScenario("entity-save", saveStart, ["entity_save"]);
+    const samples = await getSamples();
     expect(samples.length).toBeGreaterThan(0);
     expect(samples.every((sample: any) => sample.schemaVersion === 1)).toBe(
       true,
     );
   } finally {
-    const samples = await page
-      .evaluate(
-        () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
-      )
-      .catch(() => []);
+    const aggregateSamples = [...scenarios.values()].flat();
     writeLargeVaultResults(
-      [...collectedSamples, ...samples],
+      aggregateSamples,
       {
         browserVersion: page.context().browser()?.version() ?? "unknown",
         cacheState: "cold-and-warm",
