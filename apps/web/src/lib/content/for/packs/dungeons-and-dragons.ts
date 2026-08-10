@@ -10,7 +10,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
       "Organise your D&D 5e campaign with connected characters, factions, locations, quests, maps, session notes, and worldbuilding tools.",
   },
   hero: {
-    eyebrow: "5e Campaign & Lore Management",
+    eyebrow: "5e Campaign & World Management",
     title: "Codex Cryptica for Dungeons & Dragons 5e",
     tagline:
       "Keep characters, factions, locations, quests, and campaign lore connected in one place.",
@@ -46,7 +46,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
   exampleGraph: {
     title: "Sample D&D 5e Campaign Web",
     description:
-      "See how adventuring parties, patron guilds, villainous cults, and ancient vaults connect in a campaign graph.",
+      "See how adventuring parties, patron guilds, villainous cults, and adventure sites connect in a campaign graph.",
     steps: [
       {
         label: "The Ashen Company",
@@ -65,7 +65,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
       },
       {
         label: "Sunken Citadel of Ash",
-        sublabel: "Dungeon Vault",
+        sublabel: "Ancient Citadel",
         relation: "houses",
       },
       {
@@ -105,7 +105,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
     },
   ],
   cta: {
-    title: "Organize Your D&D Campaign",
+    title: "Organise Your D&D Campaign",
     description:
       "Keep your D&D campaign connected with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
