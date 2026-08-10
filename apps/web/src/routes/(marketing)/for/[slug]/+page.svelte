@@ -131,30 +131,46 @@
           </div>
         </section>
       {:else if section === "graph" && config.exampleGraph}
+        {@const isHorror =
+          config.theme === "horror" || config.slug === "vampire-the-masquerade"}
         <!-- Example Graph Preview -->
         <section
-          class="mb-16 overflow-hidden rounded-xl border border-theme-border bg-theme-surface p-6 shadow-lg sm:p-8"
-          style:background-image="var(--bg-texture-overlay)"
+          class="mb-16 overflow-hidden rounded-xl border p-6 sm:p-8 {isHorror
+            ? 'border-red-950/80 bg-[#0c0707] text-slate-100 shadow-2xl'
+            : 'border-theme-border bg-theme-surface shadow-lg'}"
+          style={isHorror
+            ? "background-image: radial-gradient(ellipse at top, rgba(128,20,20,0.18), transparent 70%), var(--bg-texture-overlay)"
+            : "background-image: var(--bg-texture-overlay)"}
         >
           <div
-            class="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-center border-b border-theme-border/60 pb-4"
+            class="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-center border-b pb-4 {isHorror
+              ? 'border-red-950/80'
+              : 'border-theme-border/60'}"
           >
             <div>
               <h2
-                class="font-header text-xl font-bold text-theme-text sm:text-2xl"
+                class="font-header text-xl font-bold sm:text-2xl {isHorror
+                  ? 'text-red-100'
+                  : 'text-theme-text'}"
               >
                 {config.exampleGraph.title}
               </h2>
               {#if config.exampleGraph.description}
-                <p class="mt-1 font-light text-sm text-theme-muted">
+                <p
+                  class="mt-1 font-light text-sm {isHorror
+                    ? 'text-red-200/70'
+                    : 'text-theme-muted'}"
+                >
                   {config.exampleGraph.description}
                 </p>
               {/if}
             </div>
             <span
-              class="self-start sm:self-auto rounded-full border border-theme-primary/20 bg-theme-primary/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+              class="self-start sm:self-auto rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider {isHorror
+                ? 'border-red-900/60 bg-red-950/80 text-red-300'
+                : 'border-theme-primary/20 bg-theme-primary/10 text-theme-primary'}"
             >
-              Interactive Graph View
+              {isHorror ? "Dark Underworld Web" : "Interactive Graph View"}
             </span>
           </div>
 

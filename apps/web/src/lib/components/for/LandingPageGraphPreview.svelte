@@ -1,14 +1,55 @@
 <script lang="ts">
   import { DEFAULT_CATEGORIES } from "schema";
   import type { LandingPageGraphStep } from "$lib/content/for/schema";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let { steps }: { steps: LandingPageGraphStep[] } = $props();
+
+  const isHorrorTheme = $derived(
+    themeStore.activeTheme?.id === "horror" ||
+      themeStore.activeTheme?.id === "horror_light" ||
+      themeStore.previewThemeId === "horror",
+  );
 
   // Color resolution matching WelcomeGraphPreview & canonical graph palette
   const typeColor = (id: string) =>
     DEFAULT_CATEGORIES.find((c) => c.id === id)?.color ?? "#e6b450";
 
   function getNodeColor(sublabel?: string): string {
+    if (isHorrorTheme) {
+      if (!sublabel) return "#801414";
+      const key = sublabel.toLowerCase();
+      if (
+        key.includes("vampire") ||
+        key.includes("character") ||
+        key.includes("elder") ||
+        key.includes("primogen")
+      )
+        return "#b91c1c";
+      if (
+        key.includes("haven") ||
+        key.includes("sanctuary") ||
+        key.includes("domain") ||
+        key.includes("location")
+      )
+        return "#78350f";
+      if (
+        key.includes("faction") ||
+        key.includes("court") ||
+        key.includes("anarch") ||
+        key.includes("cell")
+      )
+        return "#801414";
+      if (
+        key.includes("hunter") ||
+        key.includes("inquisition") ||
+        key.includes("creature") ||
+        key.includes("dhampir")
+      )
+        return "#dc2626";
+      return "#991b1b";
+    }
+
     if (!sublabel) return "#e6b450";
     const key = sublabel.toLowerCase();
     if (
@@ -41,7 +82,7 @@
     return typeColor("note");
   }
 
-  const SELECT_ACCENT = "#e6b450";
+  let selectAccent = $derived(isHorrorTheme ? "#f87171" : "#e6b450");
 
   // Spanned 2D viewBox (540 x 280) tuned for aspect ratio fill
   const POSITIONS = [
@@ -59,14 +100,22 @@
 </script>
 
 <div
-  class="flex flex-col md:flex-row min-h-[26rem] sm:min-h-[30rem] md:min-h-[34rem] lg:min-h-[38rem] rounded-xl border border-theme-border/80 bg-[#0b0f19] text-slate-100 overflow-hidden shadow-2xl"
+  class="flex flex-col md:flex-row min-h-[26rem] sm:min-h-[30rem] md:min-h-[34rem] lg:min-h-[38rem] rounded-xl border {isHorrorTheme
+    ? 'border-red-950/80 bg-[#0a0505]'
+    : 'border-theme-border/80 bg-[#0b0f19]'} text-slate-100 overflow-hidden shadow-2xl"
 >
   <!-- Dark High-Contrast SVG Graph Canvas -->
-  <div class="relative flex-1 min-h-[22rem] md:min-h-0 bg-[#0b0f19] p-3">
+  <div
+    class="relative flex-1 min-h-[22rem] md:min-h-0 {isHorrorTheme
+      ? 'bg-[#0c0606]'
+      : 'bg-[#0b0f19]'} p-3"
+  >
     <!-- Subtle background grid pattern -->
     <div
       class="absolute inset-0 opacity-20 pointer-events-none"
-      style="background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 28px 28px;"
+      style="background-image: radial-gradient({isHorrorTheme
+        ? '#801414'
+        : '#e2e8f0'} 1.5px, transparent 1.5px); background-size: 28px 28px;"
     ></div>
 
     <svg
@@ -77,7 +126,11 @@
     >
       <!-- Peripheral interconnect lines (dim background web) -->
       {#if steps.length > 2}
-        <g stroke="#64748b" stroke-opacity="0.35" stroke-width="2.5">
+        <g
+          stroke={isHorrorTheme ? "#451a1a" : "#64748b"}
+          stroke-opacity="0.35"
+          stroke-width="2.5"
+        >
           <line
             x1={POSITIONS[1].cx}
             y1={POSITIONS[1].cy}
@@ -101,7 +154,11 @@
           {@const hub = POSITIONS[0]}
           {@const pos = POSITIONS[i % POSITIONS.length]}
           {@const isLinked = selectedIndex === 0 || selectedIndex === i}
-          {@const color = isLinked ? SELECT_ACCENT : "#475569"}
+          {@const color = isLinked
+            ? selectAccent
+            : isHorrorTheme
+              ? "#451a1a"
+              : "#475569"}
 
           <line
             x1={hub.cx}
@@ -123,9 +180,13 @@
               width="108"
               height="28"
               rx="7"
-              fill="#0f172a"
+              fill={isHorrorTheme ? "#140808" : "#0f172a"}
               fill-opacity="0.95"
-              stroke={isLinked ? SELECT_ACCENT : "#334155"}
+              stroke={isLinked
+                ? selectAccent
+                : isHorrorTheme
+                  ? "#801414"
+                  : "#334155"}
               stroke-opacity={isLinked ? "1" : "0.6"}
               stroke-width="1.8"
             />
@@ -136,7 +197,11 @@
               font-size="12.5"
               font-weight="700"
               text-anchor="middle"
-              fill={isLinked ? SELECT_ACCENT : "#cbd5e1"}
+              fill={isLinked
+                ? selectAccent
+                : isHorrorTheme
+                  ? "#f87171"
+                  : "#cbd5e1"}
             >
               {step.relation}
             </text>
@@ -149,7 +214,7 @@
         cx={selPos.cx}
         cy={selPos.cy}
         r="64"
-        fill={SELECT_ACCENT}
+        fill={selectAccent}
         fill-opacity="0.25"
       >
         <animate
@@ -174,7 +239,7 @@
         height="88"
         rx="18"
         fill="none"
-        stroke={SELECT_ACCENT}
+        stroke={selectAccent}
         stroke-opacity="0.85"
         stroke-width="2.5"
         stroke-dasharray="7 5"
@@ -204,7 +269,7 @@
               cy={pos.cy}
               r={r + 9}
               fill="none"
-              stroke={SELECT_ACCENT}
+              stroke={selectAccent}
               stroke-width="4"
             />
           {/if}
@@ -234,7 +299,11 @@
             font-size={isHub ? "21" : "17"}
             font-weight="700"
             text-anchor="middle"
-            fill={isSelected ? "#fde047" : "#ffffff"}
+            fill={isSelected
+              ? isHorrorTheme
+                ? "#fca5a5"
+                : "#fde047"
+              : "#ffffff"}
             style="filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.95));"
           >
             {step.label}
@@ -244,14 +313,18 @@
     </svg>
   </div>
 
-  <!-- Entity Side Detail Panel (High Contrast Slate) -->
+  <!-- Entity Side Detail Panel -->
   {#if activeNode}
     <div
-      class="w-full md:w-60 shrink-0 border-t md:border-t-0 md:border-l border-slate-800 bg-[#0f172a] p-5 text-left flex flex-col justify-between"
+      class="w-full md:w-60 shrink-0 border-t md:border-t-0 md:border-l {isHorrorTheme
+        ? 'border-red-950 bg-[#120808]'
+        : 'border-slate-800 bg-[#0f172a]'} p-5 text-left flex flex-col justify-between"
     >
       <div>
         <div
-          class="w-12 h-12 rounded-xl mb-3 flex items-center justify-center border border-slate-700 shadow-md"
+          class="w-12 h-12 rounded-xl mb-3 flex items-center justify-center border {isHorrorTheme
+            ? 'border-red-900/40'
+            : 'border-slate-700'} shadow-md"
           style="background-color: {activeColor}33"
         >
           <span
@@ -276,7 +349,9 @@
           class="space-y-2.5 text-xs font-body leading-relaxed text-slate-300"
         >
           <div
-            class="flex items-center justify-between border-b border-slate-800 pb-2"
+            class="flex items-center justify-between border-b {isHorrorTheme
+              ? 'border-red-950/60'
+              : 'border-slate-800'} pb-2"
           >
             <span class="text-slate-400">Category</span>
             <span class="text-white font-bold capitalize"
@@ -284,13 +359,21 @@
             >
           </div>
           <div
-            class="flex items-center justify-between border-b border-slate-800 pb-2"
+            class="flex items-center justify-between border-b {isHorrorTheme
+              ? 'border-red-950/60'
+              : 'border-slate-800'} pb-2"
           >
             <span class="text-slate-400">Vault Mode</span>
-            <span class="text-emerald-400 font-bold">Local-first</span>
+            <span
+              class="{isHorrorTheme
+                ? 'text-red-400'
+                : 'text-emerald-400'} font-bold">Local-first</span
+            >
           </div>
           <div
-            class="flex items-center gap-1.5 text-amber-400 pt-1 font-mono text-[11px] font-bold"
+            class="flex items-center gap-1.5 {isHorrorTheme
+              ? 'text-red-400'
+              : 'text-amber-400'} pt-1 font-mono text-[11px] font-bold"
           >
             <span class="icon-[lucide--sparkles] w-4 h-4 shrink-0"></span>
             Interactive Web Node
@@ -299,10 +382,16 @@
       </div>
 
       <div
-        class="border-t border-slate-800 pt-3 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between"
+        class="border-t {isHorrorTheme
+          ? 'border-red-950'
+          : 'border-slate-800'} pt-3 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between"
       >
         <span>Inspect Node</span>
-        <span class="icon-[lucide--pointer] w-4 h-4 text-amber-400"></span>
+        <span
+          class="icon-[lucide--pointer] w-4 h-4 {isHorrorTheme
+            ? 'text-red-400'
+            : 'text-amber-400'}"
+        ></span>
       </div>
     </div>
   {/if}

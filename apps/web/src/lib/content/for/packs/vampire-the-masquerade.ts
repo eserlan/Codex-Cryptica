@@ -44,28 +44,33 @@ export const vampireTheMasquerade: LandingPageConfig = {
     },
   ],
   exampleGraph: {
-    title: "Sample Chronicle Relationship Web",
+    title: "The Nocturnal Web (Hidden Underworld)",
     description:
-      "How Kindred rulers, dark covenants, rival hunters, and havens connect in the Vampire demo vault.",
+      "Beneath the respectable surface: sire-childe lineages, Blood Bonds, Primogen debts, and hunting grounds in the Vampire chronicle web.",
     steps: [
       {
-        label: "Lord Julian Thorne",
-        sublabel: "Vampire • Grand Architect",
-        relation: "rules at",
+        label: "Prince Sebastiani",
+        sublabel: "Vampire • Ventrue Elder",
+        relation: "Sire of",
       },
       {
-        label: "Manor of Whispers",
-        sublabel: "Decaying Estate Haven",
-        relation: "sanctuary for",
+        label: "Victoria Ash",
+        sublabel: "Vampire • Toreador Primogen",
+        relation: "Blood Bond to",
       },
       {
-        label: "The Crimson Court",
-        sublabel: "Secret Aristocracy Faction",
-        relation: "hunted by",
+        label: "The Grand Elysium",
+        sublabel: "Sanctuary Domain",
+        relation: "Blackmails",
       },
       {
-        label: "Seraphina Vane",
-        sublabel: "Vengeful Dhampir Hunter",
+        label: "House Carna Cell",
+        sublabel: "Anarch Faction",
+        relation: "Owes favour to",
+      },
+      {
+        label: "Second Inquisition Unit",
+        sublabel: "Mortal Hunter Cell",
       },
     ],
   },

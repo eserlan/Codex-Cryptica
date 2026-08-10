@@ -677,13 +677,53 @@
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{cleanBase}/generators"
-        class="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        All Generators
-      </a>
+      <div class="flex items-center justify-between gap-4 mb-8">
+        <a
+          href="{cleanBase}/generators"
+          class="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
+        >
+          <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
+          All Generators
+        </a>
+
+        <div
+          class="flex items-center gap-1 rounded-lg border border-theme-border/60 bg-theme-surface/50 p-1 shadow-sm"
+          role="group"
+          aria-label="App Appearance"
+        >
+          <button
+            type="button"
+            title="Switch to Light Mode"
+            aria-label="Light mode"
+            aria-pressed={themeStore.resolvedAppAppearanceId ===
+              "neutral-light"}
+            class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+            'neutral-light'
+              ? 'bg-theme-primary text-theme-bg shadow-sm'
+              : 'text-theme-muted hover:text-theme-text'}"
+            onclick={() => themeStore.setAppAppearance("neutral-light")}
+          >
+            <span class="icon-[lucide--sun] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            <span class="hidden sm:inline">Light</span>
+          </button>
+          <button
+            type="button"
+            title="Switch to Dark Mode"
+            aria-label="Dark mode"
+            aria-pressed={themeStore.resolvedAppAppearanceId === "neutral-dark"}
+            class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+            'neutral-dark'
+              ? 'bg-theme-primary text-theme-bg shadow-sm'
+              : 'text-theme-muted hover:text-theme-text'}"
+            onclick={() => themeStore.setAppAppearance("neutral-dark")}
+          >
+            <span class="icon-[lucide--moon] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
+            <span class="hidden sm:inline">Dark</span>
+          </button>
+        </div>
+      </div>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
