@@ -232,6 +232,38 @@ describe("EntityTable", () => {
     expect(screen.queryByText("Entity 0")).toBeNull();
   });
 
+  it("keeps pagination usable when session storage is unavailable", () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+
+    try {
+      const manyRows = Array.from({ length: 100 }, (_, index) =>
+        entity({ id: `storage-${index}`, title: `Storage ${index}` }),
+      );
+      render(EntityTable, {
+        props: {
+          entities: manyRows,
+          vaultId: "storage-v1",
+          sort,
+          onSort: vi.fn(),
+        },
+      });
+
+      expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
+  });
+
   it("reflects the selected set and toggles a row without navigating", async () => {
     const onToggleRow = vi.fn<(id: string) => void>();
     render(EntityTable, {

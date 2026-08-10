@@ -74,6 +74,25 @@
     page = clampEntityTablePage(nextPage, entities.length, pageSize);
   }
 
+  function readStoredPage(storageKey: string): number | null {
+    if (typeof sessionStorage === "undefined") return null;
+    try {
+      const storedPage = Number(sessionStorage.getItem(storageKey));
+      return Number.isFinite(storedPage) && storedPage > 0 ? storedPage : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStoredPage(storageKey: string, value: number) {
+    if (typeof sessionStorage === "undefined") return;
+    try {
+      sessionStorage.setItem(storageKey, String(value));
+    } catch {
+      // Storage can be blocked or full; pagination remains usable in memory.
+    }
+  }
+
   // Keep the current page for browser-back navigation from an entity detail.
   // sessionStorage is transient, tab-local, and guarded for SSR.
   $effect(() => {
@@ -81,16 +100,13 @@
     const storageKey = `codex.entity-table.page.${vaultId}`;
     if (restoredStorageKey !== storageKey) {
       restoredStorageKey = storageKey;
-      if (typeof sessionStorage === "undefined") return;
-      const storedPage = Number(sessionStorage.getItem(storageKey));
-      if (Number.isFinite(storedPage) && storedPage > 0) {
+      const storedPage = readStoredPage(storageKey);
+      if (storedPage !== null) {
         page = clampEntityTablePage(storedPage, entities.length, pageSize);
       }
       return;
     }
-    if (typeof sessionStorage !== "undefined") {
-      sessionStorage.setItem(storageKey, String(currentPage));
-    }
+    writeStoredPage(storageKey, currentPage);
   });
 
   // <input indeterminate> can't be set via attribute — bind the element.
@@ -123,11 +139,7 @@
 </script>
 
 <div class="overflow-x-auto rounded-lg border border-theme-border">
-  <table
-    class="w-full border-collapse text-left"
-    data-testid="entity-table"
-    aria-rowcount={entities.length + 1}
-  >
+  <table class="w-full border-collapse text-left" data-testid="entity-table">
     <thead class="sticky top-0 z-10 bg-theme-surface">
       <tr class="border-b border-theme-border">
         <th scope="col" class="px-3 py-2 w-10">
