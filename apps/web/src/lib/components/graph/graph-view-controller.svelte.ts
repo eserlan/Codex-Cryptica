@@ -123,6 +123,7 @@ export class GraphViewController {
   private renderReadyFrameTwo: number | null = null;
   private renderReadySpan: PerformanceOperationHandle | null = null;
   private focusDepthSpan: PerformanceOperationHandle | null = null;
+  private focusDepthStartCounts: { nodes: number; edges: number } | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
 
   // Zoom-driven focus depth: the zoom at the last depth change (ratchet anchor),
@@ -546,6 +547,32 @@ export class GraphViewController {
     this.renderReadySpan = null;
     this.focusDepthSpan?.cancel();
     this.focusDepthSpan = null;
+    this.focusDepthStartCounts = null;
+  };
+
+  private startFocusDepthMeasurement = () => {
+    if (this.focusDepthSpan) return;
+    this.focusDepthStartCounts = {
+      nodes: this.cy?.nodes().length ?? 0,
+      edges: this.cy?.edges().length ?? 0,
+    };
+    this.focusDepthSpan = browserPerformanceRecorder.start(
+      "graph_focus_depth_change",
+    );
+  };
+
+  private focusDepthMeasurementDimensions = () => {
+    const nodes = this.cy?.nodes().length ?? 0;
+    const edges = this.cy?.edges().length ?? 0;
+    const start = this.focusDepthStartCounts;
+    return {
+      ...this.graphMeasurementDimensions(),
+      renderedEdgeCount: edges,
+      addedNodeCount: Math.max(0, nodes - (start?.nodes ?? nodes)),
+      removedNodeCount: Math.max(0, (start?.nodes ?? nodes) - nodes),
+      addedEdgeCount: Math.max(0, edges - (start?.edges ?? edges)),
+      removedEdgeCount: Math.max(0, (start?.edges ?? edges) - edges),
+    };
   };
 
   private scheduleRenderReadyMeasurement = () => {
@@ -560,8 +587,9 @@ export class GraphViewController {
         const dimensions = () => this.graphMeasurementDimensions();
         this.renderReadySpan?.complete(dimensions);
         this.renderReadySpan = null;
-        this.focusDepthSpan?.complete(dimensions);
+        this.focusDepthSpan?.complete(this.focusDepthMeasurementDimensions);
         this.focusDepthSpan = null;
+        this.focusDepthStartCounts = null;
       });
     });
   };
@@ -633,11 +661,7 @@ export class GraphViewController {
       // Explicit detail controls can change focus depth without a Cytoscape
       // zoom event. Start the same lifecycle span here so every membership
       // transition is measured through render readiness.
-      if (focusDepthChanged && !this.focusDepthSpan) {
-        this.focusDepthSpan = browserPerformanceRecorder.start(
-          "graph_focus_depth_change",
-        );
-      }
+      if (focusDepthChanged) this.startFocusDepthMeasurement();
       this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
       this.lastSyncedFocusRootId = focusRootId;
       this.lastSyncedGraphStructureVersion = graphStructureVersion;
@@ -720,9 +744,9 @@ export class GraphViewController {
     this.focusZoomMark = mark;
     if (depth !== this.deps.graph.focusDepth) {
       this.focusDepthSpan?.cancel();
-      this.focusDepthSpan = browserPerformanceRecorder.start(
-        "graph_focus_depth_change",
-      );
+      this.focusDepthSpan = null;
+      this.focusDepthStartCounts = null;
+      this.startFocusDepthMeasurement();
       this.deps.graph.focusDepth = depth;
     }
   };

@@ -133,29 +133,31 @@ test("records repeatable large-vault operations in a production preview", async 
       { timeout: 60_000 },
     );
 
-    // Exercise both directions. The controller owns the measured render-ready
-    // lifecycle, avoiding a competing test-owned span.
+    // Exercise five expansion/contraction cycles. The controller owns the
+    // measured render-ready lifecycle, avoiding a competing test-owned span.
     const focusStart = (await getSamples()).length;
     const focusDepth = await page.evaluate(
       () => (window as any).graph.focusDepth,
     );
     const changedFocusDepth = focusDepth < 3 ? focusDepth + 1 : focusDepth - 1;
-    for (const nextFocusDepth of [changedFocusDepth, focusDepth]) {
-      const sampleStart = (await getSamples()).length;
-      await page.evaluate((nextDepth) => {
-        (window as any).graph.focusDepth = nextDepth;
-      }, nextFocusDepth);
-      await page.waitForFunction(
-        (startAt) =>
-          ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
-            .slice(startAt)
-            .some(
-              (sample: any) =>
-                sample.operation === "graph_focus_depth_change" &&
-                sample.outcome === "completed",
-            ),
-        sampleStart,
-      );
+    for (let cycle = 0; cycle < 5; cycle += 1) {
+      for (const nextFocusDepth of [changedFocusDepth, focusDepth]) {
+        const sampleStart = (await getSamples()).length;
+        await page.evaluate((nextDepth) => {
+          (window as any).graph.focusDepth = nextDepth;
+        }, nextFocusDepth);
+        await page.waitForFunction(
+          (startAt) =>
+            ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+              .slice(startAt)
+              .some(
+                (sample: any) =>
+                  sample.operation === "graph_focus_depth_change" &&
+                  sample.outcome === "completed",
+              ),
+          sampleStart,
+        );
+      }
     }
     await captureScenario("focus-depth-change", focusStart, [
       "graph_focus_depth_change",
@@ -165,54 +167,64 @@ test("records repeatable large-vault operations in a production preview", async 
     await page
       .getByRole("switch", { name: "Switch to Full Toolbox mode" })
       .click();
-    await page.evaluate(() =>
-      (window as any).layoutUIStore.toggleSidebarTool("explorer"),
-    );
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
-      timeout: 30_000,
-    });
     const explorerSearch = page.getByPlaceholder("Search entities...");
-    await explorerSearch.fill("benchmark entity 42");
-    await explorerSearch.fill("");
-    await page.getByLabel("Close Explorer").click();
-    await page.evaluate(() =>
-      (window as any).layoutUIStore.toggleSidebarTool("explorer"),
-    );
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
-      timeout: 30_000,
-    });
+    for (let cycle = 0; cycle < 5; cycle += 1) {
+      await page.evaluate(() =>
+        (window as any).layoutUIStore.toggleSidebarTool("explorer"),
+      );
+      await expect(page.getByTestId("entity-explorer-panel")).toBeVisible({
+        timeout: 30_000,
+      });
+      await explorerSearch.fill(`benchmark entity ${cycle}`);
+      await explorerSearch.fill("");
+      await page.getByLabel("Close Explorer").click();
+    }
     await captureScenario("explorer-workflow", explorerStart, [
       "explorer_open",
       "explorer_filter",
     ]);
 
     const tableStart = (await getSamples()).length;
-    await page.getByTestId("activity-bar-table").click();
     const search = page.getByTestId("entity-table-search");
-    await expect(search).toBeVisible();
-    await search.fill("benchmark entity 42");
-    await search.fill("");
-    await page.getByTestId("entity-table-sort-title").click();
-    await page.waitForFunction(
-      (startAt) =>
-        ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
-          .slice(startAt)
-          .some((sample: any) => sample.operation === "table_sort"),
-      tableStart,
-    );
+    for (let cycle = 0; cycle < 5; cycle += 1) {
+      const sampleStart = (await getSamples()).length;
+      await page.getByTestId("activity-bar-table").click();
+      await expect(search).toBeVisible();
+      await search.fill(`benchmark entity ${cycle}`);
+      await search.fill("");
+      await page.getByTestId("entity-table-sort-title").click();
+      await page.waitForFunction(
+        (startAt) =>
+          ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+            .slice(startAt)
+            .some((sample: any) => sample.operation === "table_sort"),
+        sampleStart,
+      );
+      await page.getByTestId("activity-bar-graph").click();
+    }
     await captureScenario("table-workflow", tableStart, [
       "table_open",
       "table_filter",
       "table_sort",
     ]);
 
-    // Save one harmless edit through the real persistence path.
+    // Save a deterministic sequence through the real persistence path.
     const saveStart = (await getSamples()).length;
-    await page.evaluate(async () => {
-      await (window as any).vault.updateEntity("benchmark-42", {
-        content: "Deterministic benchmark content, revised.",
-      });
-    });
+    for (let revision = 0; revision < 10; revision += 1) {
+      const sampleStart = (await getSamples()).length;
+      await page.evaluate(async (nextRevision) => {
+        await (window as any).vault.updateEntity("benchmark-42", {
+          content: `Deterministic benchmark content, revision ${nextRevision}.`,
+        });
+      }, revision);
+      await page.waitForFunction(
+        (startAt) =>
+          ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])
+            .slice(startAt)
+            .some((sample: any) => sample.operation === "entity_save"),
+        sampleStart,
+      );
+    }
     await captureScenario("entity-save", saveStart, ["entity_save"]);
     const samples = await getSamples();
     expect(samples.length).toBeGreaterThan(0);
