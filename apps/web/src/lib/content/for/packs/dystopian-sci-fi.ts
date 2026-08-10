@@ -7,25 +7,25 @@ export const dystopianSciFi: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Dystopian Sci-Fi Worldbuilding",
     description:
-      "Organise dystopian sci-fi campaigns and worldbuilding with connected mega-corporations, resistance cells, surveillance networks, and corporate towers.",
+      "Organise dystopian sci-fi campaigns and worldbuilding with connected regimes, corporations, surveillance networks, and resistance movements.",
   },
   hero: {
     eyebrow: "Dystopian Sci-Fi Worldbuilding",
     title: "Codex Cryptica for Dystopian Sci-Fi",
     tagline:
-      "Keep corporations, resistance cells, surveillance networks, megacities, and campaign lore connected in one place.",
+      "Keep regimes, corporations, resistance movements, surveillance systems, districts, and campaign lore connected in one place.",
     problemStatement:
-      "Dystopian sci-fi campaigns thrive on oppressive power structures, underground resistance networks, corporate conspiracies, and technological control. When players infiltrate a high-security enclave or uncover a secret surveillance programme, you shouldn't have to dig through scattered notes to trace who controls the network — or how the factions react.",
+      "Dystopian sci-fi worlds are built from overlapping systems of power: governments, corporations, surveillance networks, resistance movements, controlled districts, and the people caught between them. When the players expose one secret, you should be able to see who benefits, who is threatened, and what changes next.",
   },
   useCases: [
     {
-      title: "Corporations, Oligarchies & Factions",
+      title: "Regimes, Corporations & Resistance",
       description:
         "Map corporate boards, state security forces, rebel cells, and syndicate networks with a visual relationship graph.",
       icon: "icon-[lucide--building-2]",
     },
     {
-      title: "Megacities, Enclaves & Under-cities",
+      title: "Megacities, Enclaves & Undercities",
       description:
         "Connect sprawling arcologies, elite high-rises, industrial sectors, and subterranean slums to the factions operating within them.",
       icon: "icon-[lucide--map-pin]",
@@ -33,11 +33,11 @@ export const dystopianSciFi: LandingPageConfig = {
     {
       title: "Surveillance, Data & Tech Assets",
       description:
-        "Link classified projects, AI networks, stolen blueprints, and black-market technologies to the entities contesting them.",
+        "Link surveillance systems, classified projects, stolen research, and restricted technologies to the factions and characters fighting over them.",
       icon: "icon-[lucide--cpu]",
     },
     {
-      title: "Session Recaps & Resistance Logs",
+      title: "Operations, Secrets & Session Notes",
       description:
         "Keep active operations, intrigue leads, session notes, and campaign milestones connected to the people and places involved.",
       icon: "icon-[lucide--file-text]",
@@ -46,31 +46,36 @@ export const dystopianSciFi: LandingPageConfig = {
   exampleGraph: {
     title: "Sample Dystopian Sci-Fi Campaign Web",
     description:
-      "See how corporate boards, surveillance programmes, industrial sectors, and underground resistance cells connect in a dystopian web.",
+      "See how regime councils, corporate contractors, surveillance networks, and resistance movements connect in a world web.",
     steps: [
       {
-        label: "Aegis Dynamics Board",
-        sublabel: "Corporate Oligarchy",
-        relation: "funds",
+        label: "Veyra Civic Authority",
+        sublabel: "Regime Council",
+        relation: "contracts",
       },
       {
-        label: "Project Sentinel",
-        sublabel: "Surveillance Programme",
+        label: "Orison Systems",
+        sublabel: "Corporate Contractor",
+        relation: "operates",
+      },
+      {
+        label: "Census Mirror",
+        sublabel: "Surveillance Network",
         relation: "monitors",
       },
       {
-        label: "Arcology Level 9",
-        sublabel: "Industrial Slum",
-        relation: "hides",
+        label: "Ward 17",
+        sublabel: "Controlled District",
+        relation: "organising in",
       },
       {
-        label: "The Free Grid Movement",
+        label: "The Common Assembly",
         sublabel: "Underground Resistance",
-        relation: "seeks",
+        relation: "stole",
       },
       {
-        label: "The Master Cipher Key",
-        sublabel: "Encrypted Data-Core",
+        label: "Citizen Access Archive",
+        sublabel: "Classified Data-Vault",
       },
     ],
   },
@@ -99,7 +104,7 @@ export const dystopianSciFi: LandingPageConfig = {
     {
       title: "Quest Hook Generator",
       description:
-        "Generate corporate espionage leads, sabotage missions, propaganda campaigns, and heist hooks.",
+        "Generate resistance operations, political crises, sabotage attempts, disappearances, and secrets worth uncovering.",
       href: "/tools/quest-hook-generator",
       badge: "Generator",
     },
@@ -107,7 +112,7 @@ export const dystopianSciFi: LandingPageConfig = {
   cta: {
     title: "Organise Your Dystopian World",
     description:
-      "Keep your dystopian sci-fi campaign connected with relationship graphs, interactive maps, and local-first storage.",
+      "Keep your dystopian world connected with relationship graphs, interactive maps, and local-first storage.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },
