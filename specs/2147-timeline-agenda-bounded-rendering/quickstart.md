@@ -10,8 +10,8 @@
 ## Targeted checks during implementation
 
 ```bash
-bun test apps/web/src/lib/stores/timeline.test.ts
-bun test apps/web/src/lib/components/timeline/CalendarViews.test.ts
+bun --filter web test -- src/lib/stores/timeline.test.ts
+bun --filter web test -- src/lib/components/timeline/CalendarViews.test.ts
 bun run lint
 ```
 
