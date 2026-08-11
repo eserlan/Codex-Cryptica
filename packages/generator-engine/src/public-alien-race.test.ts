@@ -336,6 +336,79 @@ describe("public-alien-race", () => {
       );
     });
 
+    it("lists unset options as an explicit choice without mangling the sentence", () => {
+      // The parameters used to be interpolated into prose, which produced
+      // "a psychology of your choosing psychology" and "at a a technology
+      // level of your choosing technology level" when left unset.
+      const { userMessage } = buildAlienRacePrompt({});
+      expect(userMessage).toContain("- Psychology: your choice");
+      expect(userMessage).toContain("- Technology level: your choice");
+      expect(userMessage).not.toMatch(/\bof your choosing\b/);
+      expect(userMessage).not.toMatch(/\bat a a\b/);
+    });
+
+    it("asks for one Core Alien Concept carried through the draft", () => {
+      const { systemInstruction, userMessage } = buildAlienRacePrompt();
+      expect(systemInstruction).toContain("Core Alien Concept");
+      expect(userMessage).toContain("Core Alien Concept");
+      expect(userMessage).toContain("## Overview");
+      expect(userMessage).toContain("at least three other sections");
+    });
+
+    it("rules out purely cosmetic traits", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain("Purely cosmetic differences");
+      expect(userMessage).toMatch(
+        /culture, technology, architecture, psychology, law, communication/,
+      );
+    });
+
+    it("forbids monocultures and demands a dissenting faction", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain("Do not write a monoculture");
+      expect(userMessage).toContain(
+        "challenge a foundational cultural assumption",
+      );
+      expect(userMessage).toContain("all of them believe");
+    });
+
+    it("demands scientific consistency in grounded mode only", () => {
+      const grounded = buildAlienRacePrompt({
+        generationMode: GROUNDED_MODE,
+      }).userMessage;
+      expect(grounded).toContain(
+        "environment, gravity, atmosphere, biology, senses and locomotion",
+      );
+      expect(grounded).toContain("unjustified absolutes");
+      expect(grounded).toContain("no sense without a medium to carry it");
+
+      // Freeform is allowed exotic physics, so the rigour block and its
+      // consistency-pass counterpart must not be imposed there.
+      const freeform = buildAlienRacePrompt({
+        generationMode: FREEFORM_MODE,
+      }).userMessage;
+      expect(freeform).not.toContain("unjustified absolutes");
+      expect(freeform).not.toContain("no sense without a medium to carry it");
+    });
+
+    it("keeps the grounded rigour rules when an exotic trait is carved out", () => {
+      // The carve-out replaces the prohibition, not the plausibility bar.
+      const { userMessage } = buildAlienRacePrompt({
+        generationMode: GROUNDED_MODE,
+        bodyPlan: "Crystalline lattice",
+      });
+      expect(userMessage).toContain("one deliberate exception");
+      expect(userMessage).toContain("unjustified absolutes");
+    });
+
+    it("ends with the could-this-be-humans replaceability test", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain(
+        "could this species be swapped for humans without changing the setting?",
+      );
+      expect(userMessage).toContain("make its biology, psychology, lifecycle");
+    });
+
     it("ends with a consistency pass naming the specific cross-section links", () => {
       const { userMessage } = buildAlienRacePrompt();
       expect(userMessage).toContain("run a consistency pass");

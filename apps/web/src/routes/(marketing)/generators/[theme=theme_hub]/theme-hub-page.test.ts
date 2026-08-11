@@ -92,6 +92,34 @@ describe("Generator Theme Hub Page", () => {
     ).toBeNull();
   });
 
+  it.each([
+    "cyberpunk",
+    "sci-fi",
+    "post-apocalyptic",
+    "modern",
+    "lancer",
+    "cosmic-horror",
+    "space-opera-resistance",
+    "optimistic-exploration-sci-fi",
+  ])("offers the alien race generator on the %s hub", (theme) => {
+    render(Page, { props: { data: { theme: theme as ThemeSlug } } });
+
+    expect(
+      screen.getByRole("link", { name: /alien race generator/i }),
+    ).toBeTruthy();
+  });
+
+  it.each(["fantasy", "pirate", "western", "vampire", "steampunk"])(
+    "leaves the alien race generator off the %s hub",
+    (theme) => {
+      render(Page, { props: { data: { theme: theme as ThemeSlug } } });
+
+      expect(
+        screen.queryByRole("link", { name: /alien race generator/i }),
+      ).toBeNull();
+    },
+  );
+
   it("links to the landing pages belonging to the hub", () => {
     render(Page, { props: { data: { theme: "vampire" } } });
 
