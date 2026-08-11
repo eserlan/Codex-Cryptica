@@ -285,7 +285,7 @@ test.describe("large graph performance", () => {
           const sortedFrames = [...frameTimes].sort((a, b) => a - b);
           const p90Index = Math.min(
             sortedFrames.length - 1,
-            Math.floor(sortedFrames.length * 0.9),
+            Math.ceil(sortedFrames.length * 0.9) - 1,
           );
 
           return {
