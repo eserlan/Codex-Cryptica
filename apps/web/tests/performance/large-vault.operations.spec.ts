@@ -110,6 +110,36 @@ test("records repeatable large-vault operations in a production preview", async 
         content: "Deterministic benchmark content, revised.",
       });
     });
+
+    await page.getByTestId("activity-bar-timeline").click();
+
+    for (const mode of ["agenda", "vertical", "horizontal"]) {
+      const label =
+        mode === "agenda"
+          ? "Agenda"
+          : mode === "vertical"
+            ? "Timeline"
+            : "Bands";
+      await page.getByTitle(`Switch to ${label} View`).click();
+      const region = page.getByRole("region", {
+        name:
+          mode === "agenda"
+            ? "Agenda"
+            : `${mode[0].toUpperCase()}${mode.slice(1)} Timeline`,
+      });
+      await expect(region).toBeVisible({ timeout: 30_000 });
+      await expect
+        .poll(() => region.locator("button").count(), { timeout: 30_000 })
+        .toBeLessThan(80);
+
+      await region.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+        element.scrollLeft = element.scrollWidth;
+        element.dispatchEvent(new Event("scroll"));
+      });
+      await page.waitForTimeout(50);
+    }
+
     const samples = await page.evaluate(
       () => (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [],
     );

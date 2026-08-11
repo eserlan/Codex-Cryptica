@@ -23,6 +23,7 @@ export const PERFORMANCE_OPERATIONS = [
   "table_sort",
   "table_filter",
   "entity_save",
+  "timeline_open",
 ] as const;
 
 export type PerformanceOperation = (typeof PERFORMANCE_OPERATIONS)[number];
