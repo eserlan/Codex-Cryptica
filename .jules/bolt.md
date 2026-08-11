@@ -192,11 +192,6 @@
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
 
-## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
-
-**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
-**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
-
 ## 2024-05-18 - Replacing inline array .filter().length with imperative counting in Svelte derived states
 
 **Learning:** In Svelte `$derived` blocks, chaining `.filter(...).length` on potentially large arrays creates an entirely new intermediate array in memory just to count its elements. This causes unnecessary garbage collection pressure and CPU overhead on every reactive update.

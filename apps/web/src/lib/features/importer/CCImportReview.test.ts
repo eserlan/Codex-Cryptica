@@ -268,3 +268,96 @@ describe("CCImportReview — matched-item field diff (T021/FR-015)", () => {
     ).toBeNull();
   });
 });
+
+describe("CCImportReview — derived counts (actionableCount and matchCount)", () => {
+  it("renders correct matchCount and actionableCount for positive and edge cases", () => {
+    const session: CCImportSession = {
+      ...baseSession,
+      items: [
+        {
+          draft: { sourceId: "item-1", title: "Item 1", content: "c1" },
+          resolvedType: "note",
+          typeFallback: false,
+          sourceRef: "ref:1",
+          match: { entityId: "e-1" },
+          decision: "include",
+          matchDecision: "update",
+        },
+        {
+          draft: { sourceId: "item-2", title: "Item 2", content: "c2" },
+          resolvedType: "note",
+          typeFallback: false,
+          sourceRef: "ref:2",
+          match: null,
+          decision: "include",
+        },
+        {
+          draft: { sourceId: "item-3", title: "Item 3", content: "c3" },
+          resolvedType: "note",
+          typeFallback: false,
+          sourceRef: "ref:3",
+          match: { entityId: "e-3" },
+          decision: "include",
+          matchDecision: "skip",
+        },
+        {
+          draft: { sourceId: "item-4", title: "Item 4", content: "c4" },
+          resolvedType: "note",
+          typeFallback: false,
+          sourceRef: "ref:4",
+          match: { entityId: "e-4" },
+          decision: "ignore",
+          matchDecision: "update",
+        },
+      ],
+      relationships: [],
+      assets: [],
+      warnings: [],
+    };
+
+    render(CCImportReview, {
+      session,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(screen.getByText("3 Matches")).toBeTruthy();
+    expect(screen.getByText("2 items ready to import")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Import 2" })).toBeTruthy();
+  });
+
+  it("handles edge case of matched item with decision=include and matchDecision=skip resulting in 0 actionable items", () => {
+    const session: CCImportSession = {
+      ...baseSession,
+      items: [
+        {
+          draft: { sourceId: "item-1", title: "Item 1", content: "c1" },
+          resolvedType: "note",
+          typeFallback: false,
+          sourceRef: "ref:1",
+          match: { entityId: "e-1" },
+          decision: "include",
+          matchDecision: "skip",
+        },
+      ],
+      relationships: [],
+      assets: [],
+      warnings: [],
+    };
+
+    render(CCImportReview, {
+      session,
+      onItemDecisionChange: vi.fn(),
+      onMatchDecisionChange: vi.fn(),
+      onItemTypeChange: vi.fn(),
+      onCommit: vi.fn(),
+      onCancel: vi.fn(),
+    });
+
+    expect(screen.getByText("1 Matches")).toBeTruthy();
+    expect(screen.getByText("0 items ready to import")).toBeTruthy();
+  });
+});
