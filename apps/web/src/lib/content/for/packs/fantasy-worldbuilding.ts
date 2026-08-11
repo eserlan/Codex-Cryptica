@@ -4,6 +4,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
   slug: "fantasy-worldbuilding",
   kind: "genre",
   theme: "fantasy",
+  hub: "fantasy",
   seo: {
     title: "Codex Cryptica for Fantasy Worldbuilding",
     description:

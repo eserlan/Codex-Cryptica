@@ -83,12 +83,32 @@ describe("Generator Theme Hub Page", () => {
       },
     });
 
-    expect(screen.getByRole("heading").textContent).toContain(
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
       "Cosmic Horror RPG Generators",
     );
     expect(screen.getByText(/impossible environments/i)).toBeTruthy();
     expect(
       screen.queryByRole("link", { name: /vampire clan generator/i }),
     ).toBeNull();
+  });
+
+  it("links to the landing pages belonging to the hub", () => {
+    render(Page, { props: { data: { theme: "vampire" } } });
+
+    const vtm = screen.getByRole("link", {
+      name: /Vampire: The Masquerade/i,
+    });
+    expect(vtm.getAttribute("href")).toBe("/for/vampire-the-masquerade");
+    expect(
+      screen
+        .getByRole("link", { name: /for Gothic Horror/i })
+        .getAttribute("href"),
+    ).toBe("/for/gothic-horror");
+  });
+
+  it("omits the guides section on a hub with no landing pages", () => {
+    render(Page, { props: { data: { theme: "steampunk" } } });
+
+    expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
   });
 });

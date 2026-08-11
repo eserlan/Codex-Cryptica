@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { load, entries } from "./+page";
+import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
 
 describe("Generator Theme Hub Route", () => {
   describe("load", () => {
@@ -34,6 +35,11 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
+    it("prerenders exactly the hubs declared in hub-themes", () => {
+      const prerendered = (entries as any)().map((e: any) => e.theme);
+      expect(prerendered.sort()).toEqual([...HUB_THEME_SLUGS].sort());
+    });
+
     it("should return all theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([

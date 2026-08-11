@@ -3,7 +3,9 @@ import {
   getLandingPage,
   getAllLandingPages,
   getAllLandingPageSlugs,
+  getLandingPagesForHub,
 } from "./registry";
+import { isHubThemeSlug } from "../hub-themes";
 import type { LandingPageConfig } from "./schema";
 
 describe("Landing Page Registry", () => {
@@ -194,6 +196,37 @@ describe("Landing Page Registry", () => {
         expect(badge).not.toMatch(/underworld/i);
       }
       expect(new Set(horrorBadges).size).toBeGreaterThan(1);
+    });
+  });
+
+  describe("Theme hub linking", () => {
+    it("points every landing page at a hub that exists", () => {
+      for (const page of getAllLandingPages()) {
+        expect(page.hub, `${page.slug} has no hub`).toBeDefined();
+        expect(isHubThemeSlug(page.hub!), `${page.slug} -> ${page.hub}`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("groups the horror systems under the hub matching their subject", () => {
+      expect(getLandingPage("vampire-the-masquerade")?.hub).toBe("vampire");
+      expect(getLandingPage("gothic-horror")?.hub).toBe("vampire");
+      // Both are theme: "horror", but they belong to different hubs.
+      expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
+    });
+
+    it("returns the pages belonging to a hub", () => {
+      const fantasy = getLandingPagesForHub("fantasy").map((p) => p.slug);
+      expect(fantasy).toContain("dungeons-and-dragons");
+      expect(fantasy).toContain("pathfinder-2e");
+      expect(fantasy).toContain("fantasy-worldbuilding");
+      expect(fantasy).not.toContain("call-of-cthulhu");
+    });
+
+    it("returns nothing for a hub with no landing pages", () => {
+      expect(getLandingPagesForHub("steampunk")).toEqual([]);
+      expect(getLandingPagesForHub("not-a-hub")).toEqual([]);
     });
   });
 

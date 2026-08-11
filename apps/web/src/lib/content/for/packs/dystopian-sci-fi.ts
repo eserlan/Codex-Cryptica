@@ -4,6 +4,7 @@ export const dystopianSciFi: LandingPageConfig = {
   slug: "dystopian-sci-fi",
   kind: "genre",
   theme: "cyberpunk",
+  hub: "cyberpunk",
   seo: {
     title: "Codex Cryptica for Dystopian Sci-Fi Worldbuilding",
     description:

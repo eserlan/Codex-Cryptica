@@ -4,6 +4,7 @@ export const gothicHorror: LandingPageConfig = {
   slug: "gothic-horror",
   kind: "genre",
   theme: "horror",
+  hub: "vampire",
   seo: {
     title: "Codex Cryptica for Gothic Horror Worldbuilding",
     description:

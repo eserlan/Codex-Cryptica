@@ -4,6 +4,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
   slug: "vampire-the-masquerade",
   kind: "system",
   theme: "horror",
+  hub: "vampire",
   surfaceStyle: "sharp",
   seo: {
     title: "Codex Cryptica for Vampire: The Masquerade",
