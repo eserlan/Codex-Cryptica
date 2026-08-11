@@ -44,6 +44,13 @@ import {
   type StarSystemGeneratorOptions,
   starSystemConfig,
 } from "./public-star-system";
+import {
+  alienRaceConfig,
+  buildAlienRacePrompt,
+  generateAlienRaceLocal,
+  GROUNDED_MODE,
+  type AlienRaceGeneratorOptions,
+} from "./public-alien-race";
 import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
 import { councilVoteConfig } from "./public-council-vote-constants";
 import {
@@ -74,6 +81,8 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "council-vote": "note",
   "secret-society": "faction",
   "star-system": "location",
+  // A species, not an individual — creature rather than character.
+  "alien-race": "creature",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -387,6 +396,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
   "star-system": `{"title":"Kesh-9","summary":"A contested binary system whose fragile water compact is the only thing keeping two mining powers from open war.","lore":"## Core Concept\\nKesh-9 is a hard sci-fi binary system, contested in character and frontier in reach, valued for a rare isotope deposit found nowhere else on the charted lanes.\\n## The Star(s)\\nA close binary pair locks the system into overlapping shadows and unstable seasons.\\n## Major Bodies\\n- **Kesh-9 II** (Temperate World) — the system's one habitable body, and its most fought-over resource.\\n- **Kesh-9 III** (Asteroid Belt) — worked by independent crews who answer to no single authority.\\n- **New Halden** (Derelict Station) — abandoned mid-construction, its original purpose still disputed.\\n- **Kesh-9 IV** (Ice Giant) — its atmosphere mined for volatiles by orbital skimmers.\\n## Settlements & Factions\\nA handful of independent outposts hold the system together. The Kesh Compact favours the current water-sharing treaty; the Vantage Drilling Concern wants to break it for exclusive isotope rights.\\n## Resources & Strategic Importance\\nThe isotope deposit on Kesh-9 III is the system's leverage — whoever controls extraction rights controls the system's politics.\\n## Travel Hazards\\nGravitational tides between the twin stars scramble navigation near closest approach.\\n## History\\nThe current balance dates to the last treaty renegotiation, when the isotope deposit was first confirmed.\\n## System-Wide Conflict or Mystery\\nNew Halden was abandoned mid-construction for reasons neither faction will discuss, and its dormant systems have recently begun drawing power again.\\n## Adventure Hooks\\n- The Kesh Compact needs outside investigators to learn why New Halden woke up before the Concern finds out first.\\n- A supply convoy vanishes during a gravitational tide event, and both factions blame the other.\\n- Someone on Kesh-9 II is quietly negotiating to sell isotope rights out from under the Compact.","labels":["star-system","binary-system","hard-sci-fi","contested","frontier"],"connections":[]}`,
   "council-vote": `{"title":"The Vote for the Salt Road Levy","summary":"The five-seat Harbor Concord must approve emergency funding to reopen the Salt Road within three days, and a rival power is quietly buying votes to keep it closed.","lore":"## The Proposal\\nApprove a one-time levy on harbour traffic to fund the Salt Road's reopening, restoring the party's patron's trade route.\\n## Deadline & Stakes\\nThe Concord's charter requires the vote be called before the next new moon, three days away — if it fails, the levy cannot be raised again until next year and the patron's caravan company collapses.\\n## Voting Procedure\\nSimple majority of five seats; the Concord Chair may break a tie but cannot otherwise vote.\\n## Current Vote Estimate\\nTwo leaning in favour, one opposed, two undecided.\\n## Council Members\\n- **Ossian Thale, Concord Chair** (Traditionalist) — Public position: neutral pending evidence. True agenda: wants precedent and expert testimony before committing either way; privately resents being pressured by either side. Persuaded by: a formal audit of the Salt Road's prior revenue. Hook: his ledger-clerk owes a gambling debt to a smuggler who would trade information for its forgiveness.\\n- **Maren Koss** (Beleaguered Ally) — Public position: supports the levy. True agenda: sympathetic to the patron but her seat depends on a guild that opposes new taxes; she cannot vote her conscience without cover. Persuaded by: a face-saving amendment that frames the levy as guild-administered. Hook: needs the party to quietly resolve a debt her guild holds over her.\\n- **Devrin Ashcombe** (Villain's Toady) — Public position: opposed. True agenda: answers directly to the rival power funding the blockade and will not be moved by persuasion. Persuaded by: nothing — better exposed than courted. Hook: his correspondence with the rival's agent is hidden in his warehouse strongbox.\\n- **Yeva Sallow** (Greedy Broker) — Public position: undecided. True agenda: will vote however benefits her shipping contracts most, and is soliciting offers from both sides. Persuaded by: a better contract than the rival is offering. Hook: exposing her as an open vote-seller would cost her the seat, which is leverage in itself.\\n- **Brant Oduya** (Idealist) — Public position: supports the levy. True agenda: genuinely believes in the trade route but will withdraw support if the party's methods harm ordinary dockworkers. Persuaded by: proof the levy protects labourers, not just merchants. Hook: he is already drafting a labour-protection clause the party could champion for him.\\n## Antagonist Influence\\nEntrenched — the rival power has bought Devrin outright and is bidding for Yeva; expect a countermove within a day of any public progress toward a majority.\\n## Investigation Leads\\nThe harbourmaster's manifest shows unusual payments routed through Yeva's shipping contracts; Maren's guild hall keeps the ledger of her debt; Ossian's clerk drinks at the Salt Row taproom most nights.\\n## Possible Paths\\nSecure Ossian's audit and Brant's labour clause to win a clean majority of three, or expose Devrin and outbid the rival for Yeva to force a 3-2 vote without ever winning Ossian over.\\n## Follow-Up Hooks\\nWhichever way Yeva sells her vote, she will remember who paid better; exposing Devrin publicly earns the rival power's open enmity rather than its quiet one.","labels":["council-vote","political-intrigue","quest"],"connections":[{"targetTitle":"Harbor Concord","relationship":"governing body of"}]}`,
+  "alien-race": `{"title":"Ith'vareen","summary":"A six-limbed species whose chemical speech makes their emotions public and their motives unreadable.","lore":"## Overview\\nThe Ith'vareen are a hard sci-fi species with six limbs, the forward pair specialised for fine work, native to a high-gravity world.\\n## Evolutionary Origin\\nHeavy gravity selected for compact frames and cautious movement; a fall at home is usually fatal, so recklessness never became a virtue.\\n## Homeworld & Environment\\nTheir world weighs nearly twice what visitors expect, and their architecture assumes it.\\n## Biology & Lifecycle\\nSix limbs, four load-bearing, and a working lifespan of roughly ninety years.\\n## Senses, Communication & Psychology\\nThey speak in emitted chemical signals, so emotional state is broadcast whether or not they intend it — they cannot lie about how they feel, only about why.\\n## Culture & Social Structure\\nThey have no concept of \\"free hands\\": standing, carrying and working are simultaneous, and idleness reads to them as illness.\\n## Technology\\nTools are built for three-point grip and are near-unusable by two-handed species; their script runs in three parallel columns because three limbs write at once.\\n## Beliefs & Worldview\\nA truth nobody has agreed to is treated as a proposal, which outsiders mistake for relativism.\\n## Relations with Outsiders\\nTrade works, which is exactly why neither side has had to resolve what they think of each other.\\n## Internal Factions & Conflicts\\nOne faction would trade their structural engineering openly for standing; another calls that the first step to being absorbed.\\n## Weaknesses & Constraints\\n- The forward limbs break easily, and losing one is a maiming their medicine has never solved.\\n- Standard gravity feels unsafe to them; they misjudge distances constantly off-world.\\n## Naming Conventions\\nSpoken names are transliterations of a scent-signature, with several equally valid written forms.\\n## Typical Archetypes\\n- **The Intermediary** — works comfortably with outsiders, and is quietly distrusted at home for it.\\n## Adventure Hooks\\n- A delegation needs an outsider to carry a message their own speech cannot safely encode.","labels":["alien-race","hard-sci-fi","hexapodal","high-gravity-world"],"connections":[]}`,
   "secret-society": `{"title":"The Lantern Choir","summary":"A charitable order whose midnight hymns call something awake beneath the city.","lore":"## Belief & Doctrine\\nThe Choir teaches that darkness is a mercy offered by an imprisoned star.\\n## Public Face\\nIts soup kitchens and night shelters make it beloved in the poorest wards.\\n## Secret Truth\\nThe hymns are a map for the thing beneath the city.\\n## Adventure Hooks\\nA missing initiate left the party a verse that should not exist.","labels":["secret-society","cult","urban"],"connections":[]}`,
 };
 
@@ -925,6 +935,54 @@ function generateStarSystem(request: GeneratorRunRequest): GeneratorOutput {
     bodies: result.bodies,
     starType: result.starType,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Alien Race generator helpers
+// ---------------------------------------------------------------------------
+
+function alienRaceOptions(
+  request: GeneratorRunRequest,
+): AlienRaceGeneratorOptions {
+  return {
+    genre: optionString(request, "genre", ""),
+    generationMode: optionString(request, "generationMode", ""),
+    homeEnvironment: optionString(request, "homeEnvironment", ""),
+    bodyPlan: optionString(request, "bodyPlan", ""),
+    psychology: optionString(request, "psychology", ""),
+    socialOrganisation: optionString(request, "socialOrganisation", ""),
+    technologyLevel: optionString(request, "technologyLevel", ""),
+    relationToOutsiders: optionString(request, "relationToOutsiders", ""),
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateAlienRace(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateAlienRaceLocal(alienRaceOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    content: result.content,
+    lore: result.lore,
+    labels: result.labels,
+  };
+}
+
+function alienRacePrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+${buildAlienRacePrompt(alienRaceOptions(request)).userMessage}
+
+Return ONLY a JSON object matching this shared schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "alien-race")}${groundingNote(request)}
+${loreGuidance(
+  request,
+  "the species overview; its evolutionary origin; homeworld and environment; biology and lifecycle; senses, communication and psychology; culture and social structure; technology; beliefs; relations with outsiders; internal factions; weaknesses and constraints; naming conventions; typical archetypes; and adventure hooks",
+)}`;
 }
 
 function starSystemPrompt(request: GeneratorRunRequest): string {
@@ -1693,6 +1751,110 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       starType: output.starType,
     }),
     buildPrompt: starSystemPrompt,
+  },
+  "alien-race": {
+    id: "alien-race",
+    label: "Alien Race",
+    description:
+      "Generate a coherent alien species where biology, environment, psychology, society and technology visibly shape one another.",
+    entityType: GENERATOR_ENTITY_TYPE["alien-race"],
+    defaultInstruction:
+      "An alien species that is genuinely non-human — every major biological or environmental trait should change something else about how they live, build, and deal with outsiders.",
+    icon: "lucide:dna",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: alienRaceConfig.genres.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "generationMode",
+        label: "Generation Mode",
+        description:
+          "Grounded keeps the species biologically plausible; Freeform unlocks crystalline, colonial, plasma and machine life.",
+        control: "select",
+        choices: alienRaceConfig.generationModes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "homeEnvironment",
+        label: "Home Environment",
+        control: "select",
+        choices: alienRaceConfig.homeEnvironments.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "bodyPlan",
+        label: "Body Plan",
+        control: "select",
+        choices: alienRaceConfig.bodyPlans.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "psychology",
+        label: "Psychology",
+        control: "select",
+        choices: alienRaceConfig.psychologies.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "socialOrganisation",
+        label: "Social Organisation",
+        control: "select",
+        choices: alienRaceConfig.socialOrganisations.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "technologyLevel",
+        label: "Technology Level",
+        control: "select",
+        choices: alienRaceConfig.technologyLevels.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "relationToOutsiders",
+        label: "Relationship to Other Species",
+        control: "select",
+        choices: alienRaceConfig.relationsToOutsiders.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    ],
+    defaults: {
+      genre: "Hard Sci-Fi",
+      generationMode: GROUNDED_MODE,
+      homeEnvironment: "High-gravity world",
+      bodyPlan: "Hexapodal",
+      psychology: "Consensus-seeking",
+      socialOrganisation: "Clan lineages",
+      technologyLevel: "Interplanetary",
+      relationToOutsiders: "First contact pending",
+    },
+    generate: generateAlienRace,
+    mapOutputToDraft: (output, request) => ({
+      ...mapOutputToDraft("alien-race")(output, request),
+      // The species reads as one document, so both halves land in lore
+      // rather than splitting across the entity's summary field.
+      lore: [output.content, output.lore].filter(Boolean).join("\n\n"),
+    }),
+    buildPrompt: alienRacePrompt,
   },
   "secret-society": {
     id: "secret-society",

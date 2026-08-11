@@ -22,7 +22,8 @@ export type GeneratorId =
   | "world"
   | "council-vote"
   | "secret-society"
-  | "star-system";
+  | "star-system"
+  | "alien-race";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -39,6 +40,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "council-vote",
   "secret-society",
   "star-system",
+  "alien-race",
 ] as const;
 
 /** A user-configurable field for a generator. */

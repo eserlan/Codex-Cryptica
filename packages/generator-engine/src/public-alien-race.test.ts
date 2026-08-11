@@ -1,0 +1,364 @@
+import { describe, it, expect } from "vitest";
+import {
+  alienRaceConfig,
+  buildAlienRacePrompt,
+  generateAlienRaceLocal,
+  parseAlienRaceResponse,
+  resolveAlienRace,
+  GROUNDED_MODE,
+  FREEFORM_MODE,
+} from "./public-alien-race";
+
+function seededRng(seed: number) {
+  let state = seed;
+  return () => {
+    state = (state * 1103515245 + 12345) & 0x7fffffff;
+    return state / 0x7fffffff;
+  };
+}
+
+const CONTENT_SECTIONS = [
+  "## Overview",
+  "## Evolutionary Origin",
+  "## Homeworld & Environment",
+  "## Biology & Lifecycle",
+  "## Senses, Communication & Psychology",
+  "## Culture & Social Structure",
+  "## Technology",
+  "## Beliefs & Worldview",
+  "## Relations with Outsiders",
+  "## Internal Factions & Conflicts",
+];
+
+const LORE_SECTIONS = [
+  "## Weaknesses & Constraints",
+  "## Naming Conventions",
+  "## Typical Archetypes",
+  "## Adventure Hooks",
+];
+
+/** Trait names flagged exotic — only reachable in Freeform mode. */
+const EXOTIC_BODY_PLANS = [
+  "Crystalline lattice",
+  "Colonial swarm",
+  "Plasma-bound field",
+  "Self-replicating machine lineage",
+];
+const EXOTIC_ENVIRONMENTS = [
+  "Gas giant cloud deck",
+  "Deep void",
+  "Generation-ship interior",
+];
+
+describe("public-alien-race", () => {
+  describe("generateAlienRaceLocal", () => {
+    it("is deterministic for a fixed seed", () => {
+      const a = generateAlienRaceLocal({}, seededRng(42));
+      const b = generateAlienRaceLocal({}, seededRng(42));
+      expect(a).toEqual(b);
+    });
+
+    it("emits every content and lore section", () => {
+      const result = generateAlienRaceLocal({}, seededRng(7));
+      for (const section of CONTENT_SECTIONS) {
+        expect(result.content).toContain(section);
+      }
+      for (const section of LORE_SECTIONS) {
+        expect(result.lore).toContain(section);
+      }
+    });
+
+    it("saves as a creature, since a species is not an individual", () => {
+      expect(generateAlienRaceLocal({}, seededRng(1)).type).toBe("creature");
+    });
+
+    it("passes through explicit options into the output labels", () => {
+      const result = generateAlienRaceLocal({
+        genre: "Cosmic Horror",
+        generationMode: GROUNDED_MODE,
+        homeEnvironment: "Ocean world",
+        bodyPlan: "Radially symmetric",
+        socialOrganisation: "Rigid caste system",
+        technologyLevel: "Interstellar",
+      });
+      expect(result.labels).toContain("alien-race");
+      expect(result.labels).toContain("cosmic-horror");
+      expect(result.labels).toContain("radially-symmetric");
+      expect(result.labels).toContain("ocean-world");
+      expect(result.labels).toContain("rigid-caste-system");
+      expect(result.labels).toContain("interstellar");
+    });
+
+    it("never produces label fragments with leading or trailing dashes", () => {
+      // "Grounded / Evolutionary" splits on "/" and would otherwise leave a
+      // trailing separator once non-alphanumerics collapse to dashes.
+      for (let seed = 0; seed < 50; seed++) {
+        for (const item of generateAlienRaceLocal({}, seededRng(seed)).labels) {
+          expect(item).not.toMatch(/^-|-$/);
+        }
+      }
+    });
+  });
+
+  describe("generation mode", () => {
+    it("never picks exotic traits in grounded mode across many seeds", () => {
+      for (let seed = 0; seed < 200; seed++) {
+        const resolved = resolveAlienRace(
+          { generationMode: GROUNDED_MODE },
+          seededRng(seed),
+        );
+        expect(EXOTIC_BODY_PLANS).not.toContain(resolved.bodyPlan);
+        expect(EXOTIC_ENVIRONMENTS).not.toContain(resolved.homeEnvironment);
+      }
+    });
+
+    it("can reach exotic traits in freeform mode", () => {
+      const reached = new Set<string>();
+      for (let seed = 0; seed < 300; seed++) {
+        reached.add(
+          resolveAlienRace({ generationMode: FREEFORM_MODE }, seededRng(seed))
+            .bodyPlan,
+        );
+      }
+      expect(EXOTIC_BODY_PLANS.some((plan) => reached.has(plan))).toBe(true);
+    });
+
+    it("respects an explicit exotic choice even in grounded mode", () => {
+      // The form allows custom values; a user who typed it meant it.
+      const resolved = resolveAlienRace({
+        generationMode: GROUNDED_MODE,
+        bodyPlan: "Crystalline lattice",
+      });
+      expect(resolved.bodyPlan).toBe("Crystalline lattice");
+    });
+
+    it("exposes mode-filtered pools for the form to narrow its choices", () => {
+      expect(alienRaceConfig.bodyPlansByMode[GROUNDED_MODE]).not.toContain(
+        "Plasma-bound field",
+      );
+      expect(alienRaceConfig.bodyPlansByMode[FREEFORM_MODE]).toContain(
+        "Plasma-bound field",
+      );
+      expect(
+        alienRaceConfig.homeEnvironmentsByMode[GROUNDED_MODE],
+      ).not.toContain("Deep void");
+      expect(alienRaceConfig.homeEnvironmentsByMode[FREEFORM_MODE]).toContain(
+        "Deep void",
+      );
+    });
+  });
+
+  describe("consequence chaining (#2122 core principle)", () => {
+    it("reflects the body plan in the technology section, not just biology", () => {
+      const result = generateAlienRaceLocal({
+        bodyPlan: "Hexapodal",
+        generationMode: GROUNDED_MODE,
+      });
+      const technology = result.content.split("## Technology")[1] ?? "";
+      // The hexapod's technology consequence is three-limbed grip and script.
+      expect(technology).toContain("three");
+    });
+
+    it("ties naming conventions to the communication channel", () => {
+      // A plasma being communicates by field modulation, whose names are
+      // frequency signatures rather than spoken words.
+      const result = generateAlienRaceLocal({
+        generationMode: FREEFORM_MODE,
+        bodyPlan: "Plasma-bound field",
+      });
+      const naming = result.lore.split("## Naming Conventions")[1] ?? "";
+      expect(naming.toLowerCase()).toContain("frequency");
+    });
+
+    it("never picks a channel the environment's medium cannot carry", () => {
+      // Vacuum carries neither air-borne chemistry nor sound. A body plan
+      // that prefers chemical signalling (colonial swarm) must not override
+      // that — the medium veto has to win.
+      for (let seed = 0; seed < 60; seed++) {
+        const senses = generateAlienRaceLocal(
+          {
+            generationMode: FREEFORM_MODE,
+            homeEnvironment: "Deep void",
+            bodyPlan: "Colonial swarm",
+          },
+          seededRng(seed),
+        ).content.split("## Senses, Communication & Psychology")[1];
+        expect(senses).not.toContain(
+          "chemical signals read directly from the air",
+        );
+        expect(senses?.toLowerCase()).toMatch(
+          /modulated fields|light patterns/,
+        );
+      }
+    });
+
+    it("keeps air-borne chemistry out of open water", () => {
+      for (let seed = 0; seed < 40; seed++) {
+        const senses = generateAlienRaceLocal(
+          { homeEnvironment: "Ocean world" },
+          seededRng(seed),
+        ).content.split("## Senses, Communication & Psychology")[1];
+        expect(senses).not.toContain(
+          "chemical signals read directly from the air",
+        );
+      }
+    });
+
+    it("lets the lifespan govern what culture says about succession", () => {
+      const result = generateAlienRaceLocal({
+        homeEnvironment: "Ice world",
+        generationMode: GROUNDED_MODE,
+      });
+      // Cold, slow metabolisms are derived as Extended lifespans, whose
+      // political consequence is centuries-long tenure.
+      const culture =
+        result.content.split("## Culture & Social Structure")[1] ?? "";
+      expect(culture.toLowerCase()).toContain("centuries");
+    });
+
+    it("draws at least one weakness from the chosen body plan", () => {
+      const result = generateAlienRaceLocal({
+        bodyPlan: "Winged biped",
+        generationMode: GROUNDED_MODE,
+      });
+      const weaknesses =
+        result.lore.split("## Weaknesses & Constraints")[1] ?? "";
+      expect(weaknesses.toLowerCase()).toContain("hollow skeleton");
+    });
+  });
+
+  describe("buildAlienRacePrompt", () => {
+    it("states the selected options in the brief", () => {
+      const { userMessage } = buildAlienRacePrompt({
+        genre: "Space Opera",
+        homeEnvironment: "Desert world",
+        bodyPlan: "Serpentine with manipulator hood",
+        socialOrganisation: "Nomadic bands",
+        technologyLevel: "Interplanetary",
+        relationToOutsiders: "Uneasy ceasefire",
+      });
+      expect(userMessage).toContain("Space Opera");
+      expect(userMessage).toContain("Desert world");
+      expect(userMessage).toContain("Serpentine with manipulator hood");
+      expect(userMessage).toContain("Nomadic bands");
+      expect(userMessage).toContain("Interplanetary");
+      expect(userMessage).toContain("Uneasy ceasefire");
+    });
+
+    it("forbids exotic life in grounded mode and allows it in freeform", () => {
+      expect(
+        buildAlienRacePrompt({ generationMode: GROUNDED_MODE }).userMessage,
+      ).toContain("No crystalline, plasma, energy-based or machine life");
+      expect(
+        buildAlienRacePrompt({ generationMode: FREEFORM_MODE }).userMessage,
+      ).toContain("exotic life is permitted");
+    });
+
+    it("states the consequence principle as the primary rule", () => {
+      const { systemInstruction, userMessage } = buildAlienRacePrompt();
+      expect(systemInstruction).toContain("consequence");
+      expect(systemInstruction).toContain("humans with unusual appearances");
+      expect(userMessage).toContain(
+        "must have consequences elsewhere in the species design",
+      );
+    });
+
+    it("ends with a consistency pass naming the specific cross-section links", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain("run a consistency pass");
+      // Field-specific, not a generic "check your work".
+      expect(userMessage).toContain("## Technology");
+      expect(userMessage).toContain("## Naming Conventions");
+      expect(userMessage).toContain("## Culture & Social Structure");
+      expect(userMessage).toContain("## Weaknesses & Constraints");
+      expect(userMessage).toContain("would not work unchanged for a generic");
+    });
+
+    it("lists both the content and lore sections it expects", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      for (const section of [...CONTENT_SECTIONS, ...LORE_SECTIONS]) {
+        expect(userMessage).toContain(section);
+      }
+    });
+
+    it("passes campaign context and avoided names through", () => {
+      const { userMessage } = buildAlienRacePrompt({
+        campaignContext: "The Kesh Compact controls the outer belt.",
+        avoidNames: ["Zarnok"],
+      });
+      expect(userMessage).toContain("Kesh Compact");
+      expect(userMessage).toContain("Zarnok");
+    });
+
+    it("does not re-ban a name the user introduced in campaign context", () => {
+      const { userMessage } = buildAlienRacePrompt({
+        campaignContext: "The Ulmenaar have held the reach for centuries.",
+        avoidNames: ["Ulmenaar"],
+      });
+      expect(userMessage).not.toContain(
+        "do not use these campaign-specific names: Ulmenaar",
+      );
+    });
+  });
+
+  describe("parseAlienRaceResponse", () => {
+    const valid = JSON.stringify({
+      title: "Ith'vareen",
+      summary: "A species that cannot lie about feeling.",
+      content: "## Overview\nThey are six-limbed.",
+      lore: "## Weaknesses & Constraints\n- Fragile forward limbs.",
+      labels: ["hexapodal"],
+    });
+
+    it("parses a valid response and always prefixes the alien-race label", () => {
+      const result = parseAlienRaceResponse(valid);
+      expect(result.title).toBe("Ith'vareen");
+      expect(result.type).toBe("creature");
+      expect(result.labels[0]).toBe("alien-race");
+      expect(result.labels).toContain("hexapodal");
+    });
+
+    it("parses a fenced response", () => {
+      const result = parseAlienRaceResponse("```json\n" + valid + "\n```");
+      expect(result.title).toBe("Ith'vareen");
+    });
+
+    it("throws on a response missing a title or lore", () => {
+      expect(() =>
+        parseAlienRaceResponse(JSON.stringify({ lore: "x" })),
+      ).toThrow(/missing a title/);
+      expect(() =>
+        parseAlienRaceResponse(JSON.stringify({ title: "Ith'vareen" })),
+      ).toThrow(/missing lore/);
+    });
+
+    it("throws on a banned title so the caller can fall back locally", () => {
+      expect(() =>
+        parseAlienRaceResponse(
+          JSON.stringify({ title: "Elara", lore: "## Weaknesses" }),
+        ),
+      ).toThrow(/banned title/);
+    });
+
+    it("throws on an avoided title", () => {
+      expect(() =>
+        parseAlienRaceResponse(
+          JSON.stringify({ title: "Ith'vareen", lore: "## Weaknesses" }),
+          ["Ith'vareen"],
+        ),
+      ).toThrow(/banned title/);
+    });
+
+    it("cleans up duplicated punctuation from AI prose", () => {
+      const result = parseAlienRaceResponse(
+        JSON.stringify({
+          title: "Ith'vareen",
+          summary: "They cannot lie..",
+          lore: "## Weaknesses & Constraints\n- Fragile  limbs.",
+        }),
+      );
+      expect(result.summary).toBe("They cannot lie.");
+      expect(result.lore).toContain("Fragile limbs.");
+    });
+  });
+});
