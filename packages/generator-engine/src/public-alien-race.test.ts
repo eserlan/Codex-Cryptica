@@ -44,6 +44,22 @@ const EXOTIC_BODY_PLANS = [
   "Plasma-bound field",
   "Self-replicating machine lineage",
 ];
+/**
+ * The full environment descriptions, which must appear at most once per
+ * draft. Keyed by the name the config exposes.
+ */
+const LONG_ENVIRONMENT_DETAILS: Record<string, string> = {
+  "Tidally locked world":
+    "a world with one face in permanent day and the other in permanent night",
+  "Dense-jungle world":
+    "a crowded biosphere where sightlines are short and something is always competing with you",
+  "Desert world":
+    "an arid world where water is the only currency that never inflates",
+  "High-gravity world":
+    "a dense world where everything weighs nearly twice what it should",
+  "Ocean world": "a world of open water with no permanent land at all",
+};
+
 const EXOTIC_ENVIRONMENTS = [
   "Gas giant cloud deck",
   "Deep void",
@@ -260,6 +276,49 @@ describe("public-alien-race", () => {
           seededRng(seed),
         ).content.split("## Culture & Social Structure")[1]!;
         expect(culture).toContain("Not all of it comes from their biology");
+      }
+    });
+
+    it("spends the long environment description exactly once", () => {
+      // It used to appear four times verbatim — summary, Overview,
+      // Evolutionary Origin and Homeworld — which is what made a local draft
+      // read as templated.
+      for (let seed = 0; seed < 60; seed++) {
+        const result = generateAlienRaceLocal({}, seededRng(seed));
+        const whole = `${result.summary}\n${result.content}`;
+        for (const environment of alienRaceConfig.homeEnvironments) {
+          const detail = LONG_ENVIRONMENT_DETAILS[environment];
+          if (!detail) continue;
+          const occurrences = whole.split(detail).length - 1;
+          expect(occurrences, `${environment} @ seed ${seed}`).toBeLessThan(2);
+        }
+      }
+    });
+
+    it("never concatenates a trait name with a noun it does not fit", () => {
+      // "metamorphic castes lifespan" and "electromagnetic field modulation
+      // communication" both came from suffixing a name that is already a
+      // noun phrase.
+      for (let seed = 0; seed < 80; seed++) {
+        const { summary } = generateAlienRaceLocal({}, seededRng(seed));
+        expect(summary, `seed ${seed}`).not.toMatch(
+          /castes lifespan|modulation communication|patterning communication/,
+        );
+      }
+    });
+
+    it("injects the speciality as a short phrase, not a whole clause", () => {
+      // Four specialities have no comma, so deriving a short form by
+      // splitting on one dropped a 90-plus-character clause mid-sentence.
+      for (let seed = 0; seed < 80; seed++) {
+        const archetypes = generateAlienRaceLocal({}, seededRng(seed))
+          .lore.split("## Typical Archetypes")[1]!
+          .split("\n##")[0];
+        const injected = archetypes.match(
+          /people's speciality, (.+?), and worth more abroad/,
+        );
+        expect(injected, `seed ${seed}`).toBeTruthy();
+        expect(injected![1].length, injected![1]).toBeLessThan(45);
       }
     });
 

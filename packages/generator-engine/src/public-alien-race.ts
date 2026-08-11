@@ -62,10 +62,23 @@ interface BodyPlanProfile extends TraitProfile {
 }
 
 interface EnvironmentProfile extends TraitProfile {
+  /**
+   * Compact noun phrase for the three places the environment is referenced
+   * after "## Homeworld & Environment" has already described it in full.
+   * Without it the same long clause repeats four times in one draft.
+   */
+  short: string;
   /** What the environment selected for, for "## Evolutionary Origin". */
   selectedFor: string;
   /** The technological speciality the environment pushed them towards. */
   speciality: string;
+  /**
+   * The speciality as a short noun phrase, for mid-sentence use. Stored
+   * rather than derived: splitting `speciality` on its first comma looks
+   * equivalent but four entries have no comma, and those dropped the whole
+   * 90-plus-character clause into the middle of a sentence.
+   */
+  specialityShort: string;
   /** A hard limit the environment leaves them with, for "## Weaknesses". */
   constraint: string;
 }
@@ -82,6 +95,8 @@ interface RelationProfile {
 }
 
 interface CommunicationProfile extends TraitProfile {
+  /** Summary phrase, for the same reason as LifespanProfile's. */
+  summaryPhrase: string;
   /** What privacy, secrecy, and lying mean given this channel. */
   privacy: string;
   /** How the channel constrains or shapes their names. */
@@ -89,6 +104,11 @@ interface CommunicationProfile extends TraitProfile {
 }
 
 interface LifespanProfile extends TraitProfile {
+  /**
+   * Summary phrase. The name alone cannot be suffixed with "lifespan" —
+   * "metamorphic castes lifespan" — so the whole phrase is stored.
+   */
+  summaryPhrase: string;
   /** How the lifespan reshapes politics, inheritance, and institutions. */
   politics: string;
 }
@@ -242,6 +262,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "structural engineering and load-bearing materials, which they export everywhere",
     constraint:
       "standard gravity feels weightless and unsafe to them; they misjudge distances and drop things constantly on other worlds",
+    short: "a high-gravity world",
+    specialityShort: "structural engineering",
   },
   {
     name: "Low-gravity moon",
@@ -253,6 +275,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "orbital mechanics and low-thrust transit, learned early because leaving was always easy",
     constraint:
       "they cannot stand unaided in standard gravity and need a support frame anywhere but home",
+    short: "a low-gravity moon",
+    specialityShort: "orbital mechanics",
   },
   {
     name: "Tidally locked world",
@@ -266,6 +290,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "thermal management and long-distance overland logistics along the habitable band",
     constraint:
       "they have no circadian rhythm to speak of and suffer badly on worlds that impose one",
+    short: "a tidally locked world",
+    specialityShort: "thermal management",
   },
   {
     name: "Ocean world",
@@ -277,6 +303,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "pressure vessels and sealed systems, which made them competent in vacuum far earlier than expected",
     constraint:
       "they dehydrate quickly in open air and cannot go long without immersion",
+    short: "an ocean world",
+    specialityShort: "pressure vessels",
   },
   {
     name: "Desert world",
@@ -289,6 +317,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "closed-loop recycling so efficient that other species buy their reclamation systems outright",
     constraint:
       "humid air waterlogs their respiration and leaves them sluggish and prone to infection",
+    short: "a desert world",
+    specialityShort: "closed-loop recycling",
   },
   {
     name: "Ice world",
@@ -300,6 +330,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "thermal drilling and subsurface construction, exported to every ice moon in reach",
     constraint:
       "anything above temperate heat is a slow injury, and they cannot work at all in it",
+    short: "an ice world",
+    specialityShort: "thermal drilling",
   },
   {
     name: "Dense-jungle world",
@@ -311,6 +343,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
     speciality:
       "biochemistry and pharmacology, from a very long history of things trying to poison them",
     constraint: "open ground and long sightlines leave them badly agoraphobic",
+    short: "a dense-jungle world",
+    specialityShort: "biochemistry and pharmacology",
   },
   {
     name: "Volcanic world",
@@ -323,6 +357,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "geothermal power and rapid modular construction they can abandon without regret",
     constraint:
       "they have no institutional memory to speak of, because nothing they built ever survived long enough to hold one",
+    short: "a volcanic world",
+    specialityShort: "geothermal power",
   },
   {
     name: "Thin-atmosphere highlands",
@@ -334,6 +370,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "gas separation and atmospheric processing, the industry their whole economy was built on",
     constraint:
       "oxygen-rich air is mildly toxic to them over long exposure and must be diluted",
+    short: "the thin-atmosphere highlands",
+    specialityShort: "gas separation",
   },
   {
     name: "Gas giant cloud deck",
@@ -347,6 +385,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "atmospheric chemistry and buoyant structures, unmatched by any surface-dwelling species",
     constraint:
       "a solid surface is unusable to them; they cannot support their own weight on one",
+    short: "a gas giant's cloud deck",
+    specialityShort: "atmospheric chemistry",
   },
   {
     name: "Deep void",
@@ -359,6 +399,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "radiation handling and very long-duration systems built to run unattended for centuries",
     constraint:
       "gravity of any strength is exhausting and injurious over days rather than months",
+    short: "the deep void",
+    specialityShort: "radiation handling",
   },
   {
     name: "Generation-ship interior",
@@ -373,6 +415,8 @@ const ENVIRONMENTS: readonly EnvironmentProfile[] = [
       "life support and closed ecology, maintained with a rigour that borders on religious",
     constraint:
       "open sky triggers a profound and lasting distress they have no cultural framework for",
+    short: "a generation ship's interior",
+    specialityShort: "life support",
   },
 ];
 
@@ -386,6 +430,7 @@ const COMMUNICATION: readonly CommunicationProfile[] = [
       "they cannot lie about how they feel, only about why — so their deceptions are elaborate constructions of true feelings arranged to mislead, and they consider a species that can simply say something false to be fundamentally dangerous",
     naming:
       "spoken names are transliterations of a scent-signature and are considered approximations at best; each has several equally valid written forms",
+    summaryPhrase: "chemical speech",
   },
   {
     name: "Bioluminescent patterning",
@@ -396,6 +441,7 @@ const COMMUNICATION: readonly CommunicationProfile[] = [
       "privacy is physical — a closed door is genuinely a sealed conversation — and their law treats being seen speaking as equivalent to being overheard",
     naming:
       "names are short pattern-sequences, written as glyph strings and pronounced only when speaking to species who cannot see properly",
+    summaryPhrase: "speech in light",
   },
   {
     name: "Infrasound",
@@ -406,6 +452,7 @@ const COMMUNICATION: readonly CommunicationProfile[] = [
       "secrecy means distance rather than walls, so their conspirators travel rather than whisper, and their intelligence services are organised around geography",
     naming:
       "names are tonal and lose most of their meaning when rendered in another species' script, which they find quietly insulting",
+    summaryPhrase: "infrasound speech",
   },
   {
     name: "Postural and gestural",
@@ -417,6 +464,7 @@ const COMMUNICATION: readonly CommunicationProfile[] = [
       "concealment is easy and lying is easier, which is precisely why their culture invested so heavily in witnesses, seals and ritual",
     naming:
       "names are stance-descriptions rendered into other languages as short phrases rather than words",
+    summaryPhrase: "postural speech",
   },
   {
     name: "Electromagnetic field modulation",
@@ -428,6 +476,7 @@ const COMMUNICATION: readonly CommunicationProfile[] = [
       "shielding is their equivalent of a private room, and the right to be unshielded — legible, unarmoured — is a formal gesture of trust in their law",
     naming:
       "names are frequency signatures, conventionally written as a numeric index that outsiders mistake for a serial number",
+    summaryPhrase: "speech in modulated fields",
   },
   {
     name: "Vocal",
@@ -438,6 +487,7 @@ const COMMUNICATION: readonly CommunicationProfile[] = [
       "they lie as easily as any speaking species, and their legal tradition is built almost entirely around testing testimony",
     naming:
       "names are ordinary spoken words and survive translation intact, which is a large part of why other species find them approachable",
+    summaryPhrase: "ordinary speech",
   },
 ];
 
@@ -449,6 +499,7 @@ const LIFESPANS: readonly LifespanProfile[] = [
       "they are always in a hurry, and other species mistake that urgency for aggression",
     politics:
       "power changes hands constantly, nothing is inherited because nobody lives to inherit it, and their institutions are written down obsessively because no living memory spans two generations",
+    summaryPhrase: "twenty-five-year lives",
   },
   {
     name: "Comparable to most species",
@@ -457,6 +508,7 @@ const LIFESPANS: readonly LifespanProfile[] = [
       "their generational rhythms line up with their neighbours', which is the least remarked-upon reason they integrate so easily",
     politics:
       "their politics run on familiar cycles of succession and reform, making them the species everyone else uses as a baseline",
+    summaryPhrase: "unremarkable lifespan",
   },
   {
     name: "Extended",
@@ -465,6 +517,7 @@ const LIFESPANS: readonly LifespanProfile[] = [
       "they plan on timescales that make their treaty partners nervous, and routinely outlive the governments they negotiated with",
     politics:
       "offices are held for centuries, inheritance is rare enough to be a scandal, and their reform movements are led by people who personally remember the last three failures",
+    summaryPhrase: "centuries-long lives",
   },
   {
     name: "Metamorphic castes",
@@ -474,6 +527,7 @@ const LIFESPANS: readonly LifespanProfile[] = [
       "an individual is not one person to them but a sequence, and their languages use different pronouns and often different names per stage",
     politics:
       "authority attaches to a life stage rather than a person, so their leadership rotates biologically and cannot be seized — only waited for",
+    summaryPhrase: "metamorphic life stages",
   },
   {
     name: "Effectively perpetual",
@@ -484,6 +538,7 @@ const LIFESPANS: readonly LifespanProfile[] = [
       "they experience change as loss rather than progress, and their oldest members are functionally unreachable by argument",
     politics:
       "nothing is ever inherited and nothing is ever vacated, so their entire political history is the history of how the young force the old to step aside",
+    summaryPhrase: "refusal to age",
   },
 ];
 
@@ -928,13 +983,13 @@ export function generateAlienRaceLocal(
   // Each trait's consequence is spent in exactly one section, so the draft
   // reads as a chain of implications rather than restating the same fragment
   // under several headings.
-  const speciality = environment.speciality.split(",")[0];
+  const speciality = environment.specialityShort;
   const content = [
     "## Overview",
-    `The ${title} are a ${resolved.genre.toLowerCase()} species with ${bodyPlan.detail}, native to ${environment.detail}. Their disposition is ${psychology.detail}, they are organised as ${resolved.socialOrganisation.toLowerCase()}, and they currently stand as ${resolved.relationToOutsiders.toLowerCase()} to their neighbours.`,
+    `The ${title} are a ${resolved.genre.toLowerCase()} species with ${bodyPlan.detail}, native to ${environment.short}. Their disposition is ${psychology.detail}, they are organised as ${resolved.socialOrganisation.toLowerCase()}, and they currently stand as ${resolved.relationToOutsiders.toLowerCase()} to their neighbours.`,
     "",
     "## Evolutionary Origin",
-    `They evolved in ${environment.detail}, which selected for ${environment.selectedFor}. That pressure set the constraints they have lived inside ever since — though not everything about them follows from it.`,
+    `They evolved on ${environment.short}, which selected for ${environment.selectedFor}. That pressure set the constraints they have lived inside ever since — though not everything about them follows from it.`,
     "",
     "## Homeworld & Environment",
     `Their homeworld is ${environment.detail}. Because of it, ${environment.consequence}.`,
@@ -985,7 +1040,7 @@ export function generateAlienRaceLocal(
     title,
     // Leads with what makes them non-human rather than what they look like,
     // matching the rule the AI prompt sets for its own summary.
-    summary: `The ${title} are a ${resolved.genre.toLowerCase()} species from ${environment.detail}, whose ${communication.name.toLowerCase()} communication and ${lifespan.name.toLowerCase()} lifespan make them persistently difficult for other species to read.`,
+    summary: `The ${title} are a ${resolved.genre.toLowerCase()} species from ${environment.short}, whose ${communication.summaryPhrase} and ${lifespan.summaryPhrase} make them persistently difficult for other species to read.`,
     content,
     lore,
     labels: [
