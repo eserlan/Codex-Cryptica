@@ -3,6 +3,7 @@
 // across the SEO generator pages.
 
 export const GENERATOR_SLUGS_WITH_THEME = new Set([
+  "alien-race",
   "npc",
   "settlement",
   "magic-item",
@@ -114,6 +115,7 @@ export const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
 };
 
 export const SLUGS_USING_STORED_THEME = new Set([
+  "alien-race",
   "npc",
   "faction",
   "quest",
@@ -181,5 +183,13 @@ export function mapStarSystemGenreToTheme(genre: string): string {
   if (genre === "Space Opera") return "Star Wars";
   if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
   if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
+  return "Sci-Fi / Space Opera";
+}
+
+export function mapAlienRaceGenreToTheme(genre: string): string {
+  if (genre === "Cyberpunk") return "Cyberpunk / Corporate";
+  if (genre === "Cosmic Horror") return "Cosmic Horror";
+  if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
+  // Hard Sci-Fi and Space Opera both skin as the general sci-fi theme.
   return "Sci-Fi / Space Opera";
 }

@@ -140,6 +140,14 @@
     icon: "icon-[lucide--orbit]",
   };
 
+  const alienRaceCard: GeneratorCard = {
+    slug: "alien-race",
+    label: "Alien Race Generator",
+    summary:
+      "Generate a coherent alien species whose biology, homeworld, culture, and technology all follow from each other.",
+    icon: "icon-[lucide--dna]",
+  };
+
   const pirateShipCard: GeneratorCard = {
     slug: "ship-generator",
     label: "Pirate Ship Generator",
@@ -299,6 +307,7 @@
         ),
         nomadClanCard,
         starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -327,6 +336,7 @@
           "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
         ),
         starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -360,6 +370,7 @@
           "Wasteland Bulletin Generator",
           "Generate a bunker bulletin — trade warnings, raider reports, ration notices, and salvage rumours, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -385,6 +396,7 @@
           "Tabloid Generator",
           "Generate a local tabloid — cover-ups, conspiracies, missing persons, and strange classifieds, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -405,6 +417,7 @@
           "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
         ),
         starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -489,6 +502,7 @@
           "Field Report Generator",
           "Generate a field report — missing expeditions, astronomical anomalies, restricted notices, and unsettling leads, with GM-only hooks.",
         ),
+        alienRaceCard,
         languageCard,
         surpriseMeCard,
       ],
@@ -535,6 +549,7 @@
           "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
         ),
         starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
@@ -563,6 +578,7 @@
           "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
         starSystemCard,
+        alienRaceCard,
         worldCard,
         shipCard,
         socialHubCard,
