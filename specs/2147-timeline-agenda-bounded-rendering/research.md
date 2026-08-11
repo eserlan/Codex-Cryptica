@@ -8,13 +8,13 @@ The issue explicitly makes the implementation conditional on a representative da
 
 **Alternatives considered**: A synthetic unit-only fixture would not measure DOM/component work; a production-content benchmark would violate privacy and repeatability.
 
-## Decision: Use bounded/windowed mounting for affected views
+## Decision: Choose the policy after baseline measurements
 
-Keep the complete normalized and filtered entry arrays available for ordering, filters, related-entity lookup, and selection, but mount only a visible slice plus a small overscan region once a threshold is crossed. Use the policy best suited to each view: row windowing for Agenda and vertical Timeline, and horizontal item windowing with stable spacer geometry for Horizontal Timeline.
+Keep the complete normalized and filtered entry arrays available for ordering, filters, related-entity lookup, and selection. If the benchmark confirms a DOM/component bottleneck, choose a bounded policy per view: visible-row/range rendering, pagination, or another approach that fits its geometry.
 
 **Rationale**: `content-visibility` can reduce layout/paint but does not prevent Svelte component creation or DOM instantiation. The current `each` blocks in all three views mount every entry. Bounded mounting addresses the measured cost directly.
 
-**Alternatives considered**:
+**Alternatives to evaluate after measurement**:
 
 - Pagination: bounded, but changes continuous scroll and makes scroll restoration/navigation less natural.
 - CSS `content-visibility` alone: insufficient because components and DOM are still instantiated.
@@ -27,9 +27,9 @@ Continue using `TimelineStore` and `chronology-engine` for date normalization, s
 
 **Rationale**: This follows library-first architecture and avoids duplicating date logic in Svelte components.
 
-## Decision: Reconcile state explicitly on window changes
+## Decision: Preserve logical identity across any bounded policy
 
-Use stable entry keys and a window generation/range identity. On scroll or range changes, discard stale projections, keep the selected entity recoverable, and restore focus/scroll by logical entry identity rather than DOM index. Keyboard movement must navigate the full logical sequence, not only currently mounted nodes.
+Use stable entry keys. If a bounded policy is introduced, keep the selected entity recoverable and restore focus/scroll by logical entry identity rather than DOM index. Keyboard movement must navigate the full logical sequence, not only currently rendered nodes. Add generation/cancellation state only if range computation becomes asynchronous.
 
 **Rationale**: Windowing can otherwise cause selection loss, focus jumps, or stale content during rapid navigation.
 

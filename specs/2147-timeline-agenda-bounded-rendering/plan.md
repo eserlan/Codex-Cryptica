@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add a deterministic date-heavy benchmark first, then bound rendering for Vertical Timeline, Horizontal Timeline, and Agenda only if measurements confirm the issue. Keep chronology-engine grouping and current date semantics as the source of truth; add a small UI-side visible-window projection with explicit reconciliation for selection, keyboard focus, navigation, and scroll restoration. CalendarMonthView remains out of scope unless measurement proves it is independently over budget.
+Add a deterministic date-heavy benchmark first, then choose the smallest proven rendering policy for Vertical Timeline, Horizontal Timeline, and Agenda if measurements confirm the issue. Keep chronology-engine grouping and current date semantics as the source of truth. CalendarMonthView remains out of scope unless measurement proves it is independently over budget.
 
 ## Technical Context
 
@@ -15,7 +15,7 @@ Add a deterministic date-heavy benchmark first, then bound rendering for Vertica
 **Testing**: Vitest component/store tests, Playwright benchmark/smoke coverage, repository lint/type checks  
 **Target Platform**: Browser-local Codex-Cryptica web app  
 **Project Type**: Local-first Svelte web application  
-**Performance Goals**: Mount only a bounded visible/overscan slice after the threshold; document baseline and post-change DOM/render measurements for the 1,600-entity date-heavy scenario  
+**Performance Goals**: Establish baseline and post-change measurements for mounted entries, initial render, range/navigation latency, and scroll interaction in the 1,600-entity date-heavy scenario; select concrete budgets from the measured baseline and existing project performance guidance
 **Constraints**: Preserve ordering, era grouping, filters, related entities, selection, keyboard access, and scroll restoration; no user-content telemetry; no CalendarMonthView change without evidence  
 **Scale/Scope**: Existing large-vault benchmark scale, with dates distributed across multiple years/eras and concentrated same-day groups; three affected views only
 
@@ -62,14 +62,14 @@ apps/web/tests/performance/large-vault.operations.spec.ts
 docs/performance/
 ```
 
-**Structure Decision**: Keep the feature in the existing web Timeline surface and performance harness. Chronology normalization/grouping stays in `packages/chronology-engine`; only a reusable UI projection or component is added if the benchmark shows all three views need the same window behavior.
+**Structure Decision**: Keep the feature in the existing web Timeline surface and performance harness. Chronology normalization/grouping stays in `packages/chronology-engine`; any bounded-slice helper remains UI-side and pure. Agenda, vertical, and horizontal layouts may use different policies because their row/card geometry differs.
 
 ## Implementation Phases
 
-1. **Benchmark**: Extend the deterministic performance fixture with date distributions, invalid/missing/approximate entries, same-day concentration, and multiple eras. Capture per-view entry count, mounted entry count, initial render, range change, scroll, and selection samples without content.
-2. **Decision gate**: Compare measurements with the existing large-vault investigation and document whether each of the three views needs bounding. Do not modify month view based on assumptions.
-3. **Bounded projection**: Add pure visible-window/range helpers or a shared component contract, then integrate the minimum required view-specific policies. Use overscan and stable keys; keep full normalized data available for filtering and selection, but mount only the window.
-4. **Interaction reconciliation**: Preserve era/year headers, same-day ordering, related-entity selection, focus, keyboard movement, and scroll restoration. Define stale range-change behavior so rapid navigation cannot display an old window.
+1. **Benchmark**: Extend the deterministic performance fixture with dates across multiple years/eras and concentrated same-day groups. Include edge-case records in focused tests, not necessarily in the first performance run. Capture per-view logical count, mounted entry count, initial render, range/navigation latency, scroll interaction, and selection samples without content.
+2. **Decision gate**: Compare measurements with the existing large-vault investigation and document whether each view needs intervention. Define concrete budgets from that evidence. Do not modify month view based on assumptions.
+3. **Smallest implementation**: Select the appropriate policy per affected view—visible-row/range rendering, pagination, or another bounded approach. Prefer a pure bounded-slice helper with view-specific layout adapters; do not introduce a shared component or dependency until duplication or measurement justifies it. Keep stable keys and full logical data for filtering and selection.
+4. **Interaction regressions**: Preserve era/year headers, same-day ordering, related-entity selection, focus, keyboard movement, and scroll restoration. Add generation/cancellation handling only if implementation introduces asynchronous range work.
 5. **Verification/docs**: Add unit/component and browser tests, rerun the date-heavy benchmark, document baseline and result, then run targeted checks and repository validation.
 
 ## Out of Scope
