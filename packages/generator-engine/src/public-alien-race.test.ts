@@ -473,6 +473,9 @@ describe("public-alien-race", () => {
         "entropy, heat-death or thermodynamics",
         "communal or hive identity",
         "biological inability to lie",
+        "secular physics-derived philosophy",
+        "hereditary castes, ranks or role-locked birth classes",
+        "communication method that is a non-spoken signal channel",
         "conservative-versus-reformer axis",
       ]) {
         expect(userMessage, trope).toContain(trope);
