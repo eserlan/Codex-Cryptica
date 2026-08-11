@@ -988,18 +988,15 @@ export function buildAlienRacePrompt(
 ): AlienRacePrompt {
   const genre = options.genre?.trim() || "science-fiction";
   const generationMode = options.generationMode?.trim() || GROUNDED_MODE;
-  const homeEnvironment =
-    options.homeEnvironment?.trim() || "an environment of your choosing";
-  const bodyPlan = options.bodyPlan?.trim() || "a body plan of your choosing";
-  const psychology =
-    options.psychology?.trim() || "a psychology of your choosing";
-  const socialOrganisation =
-    options.socialOrganisation?.trim() || "a social structure of your choosing";
-  const technologyLevel =
-    options.technologyLevel?.trim() || "a technology level of your choosing";
-  const relationToOutsiders =
-    options.relationToOutsiders?.trim() ||
-    "a relationship to other species of your choosing";
+  // Unset options are listed as an explicit "your choice" rather than being
+  // dropped, so the brief always shows the model the full parameter set.
+  const UNSET = "your choice";
+  const homeEnvironment = options.homeEnvironment?.trim() || UNSET;
+  const bodyPlan = options.bodyPlan?.trim() || UNSET;
+  const psychology = options.psychology?.trim() || UNSET;
+  const socialOrganisation = options.socialOrganisation?.trim() || UNSET;
+  const technologyLevel = options.technologyLevel?.trim() || UNSET;
+  const relationToOutsiders = options.relationToOutsiders?.trim() || UNSET;
 
   const extraAvoidedNames = avoidNamesExcludingContext(
     options.avoidNames ?? [],
@@ -1029,9 +1026,14 @@ export function buildAlienRacePrompt(
     )?.name,
   ].filter((name): name is string => !!name);
 
+  // Applies to both grounded variants: the plausibility bar is about internal
+  // consistency and avoiding howlers, not about writing a physics lecture.
+  const groundedRigour =
+    ' Keep the physical picture internally consistent: environment, gravity, atmosphere, biology, senses and locomotion must all agree with one another. High gravity implies short, heavily reinforced bodies and a real cost to flight; a thin or exotic atmosphere constrains what respiration, sound and fire can do; a sense only works if its medium exists there — no sight in perpetual darkness, no air-borne scent or sound in vacuum, no unexplained echolocation in a vacuum or awareness with no organ behind it. Avoid obvious scientific mistakes (a species that "evolved to be perfect", eyes on a world with no light, warm-blooded metabolism with no food chain to support it) and avoid unjustified absolutes ("they are immune to all disease", "they never sleep", "they cannot lie", "they always tell the truth") unless you state the mechanism that makes it true and the cost it carries. Prefer "almost always, except…" to "always".';
+
   const groundedGuidance = explicitExotic.length
-    ? `Generation mode is Grounded / Evolutionary, with one deliberate exception: the user explicitly asked for ${explicitExotic.join(" and ")}, which you must keep. Treat that as the single non-standard element and build everything else around it as plausibly as possible — the rest of the species should still be clearly shaped by selection pressure from its environment, and the exception itself must obey a consistent internal logic with the same concrete downstream consequences an ordinary biological trait would have. Do not add further exotic traits beyond the one asked for.`
-    : "Generation mode is Grounded / Evolutionary: the species must be biologically plausible and clearly shaped by selection pressure from its environment. No crystalline, plasma, energy-based or machine life. Every trait should have an evolutionary reason a xenobiologist could argue for.";
+    ? `Generation mode is Grounded / Evolutionary, with one deliberate exception: the user explicitly asked for ${explicitExotic.join(" and ")}, which you must keep. Treat that as the single non-standard element and build everything else around it as plausibly as possible — the rest of the species should still be clearly shaped by selection pressure from its environment, and the exception itself must obey a consistent internal logic with the same concrete downstream consequences an ordinary biological trait would have. Do not add further exotic traits beyond the one asked for.${groundedRigour}`
+    : `Generation mode is Grounded / Evolutionary: the species must be biologically plausible and clearly shaped by selection pressure from its environment. No crystalline, plasma, energy-based or machine life. Every trait should have an evolutionary reason a xenobiologist could argue for.${groundedRigour}`;
 
   const modeGuidance = isFreeform(generationMode)
     ? "Generation mode is Freeform / Fantastic: exotic life is permitted — crystalline organisms, colonial swarm minds, plasma structures, self-replicating machine lineages, life with no planetary origin. Exotic does not mean arbitrary: whatever you choose still has to obey its own internal logic consistently, and its strangeness must produce the same concrete downstream consequences a biological trait would."
@@ -1050,8 +1052,14 @@ export function buildAlienRacePrompt(
 
   return {
     systemInstruction:
-      "You are a xenobiologist and worldbuilder designing a coherent alien species for a tabletop RPG campaign. Your defining constraint is consequence: every biological and environmental trait you establish must visibly change something else about the species. Never write a species that is humans with unusual appearances. Return only one valid JSON object.",
-    userMessage: `Create a ${genre} alien species living in ${homeEnvironment}, with ${bodyPlan}, ${psychology} psychology, organised as ${socialOrganisation}, at a ${technologyLevel} technology level, standing as ${relationToOutsiders} to other species.
+      "You are a xenobiologist and worldbuilder designing a coherent alien species for a tabletop RPG campaign. Build the species around one strong Core Alien Concept, and hold to one defining constraint: consequence. Every biological and environmental trait you establish must visibly change something else about the species — a trait that changes nothing is decoration, not biology. Never write a species that is humans with unusual appearances, and never write one that agrees with itself about everything. Return only one valid JSON object.",
+    userMessage: `Create a ${genre} alien species from these starting parameters:
+- Home environment: ${homeEnvironment}
+- Body plan: ${bodyPlan}
+- Psychology: ${psychology}
+- Social organisation: ${socialOrganisation}
+- Technology level: ${technologyLevel}
+- Relationship to other species: ${relationToOutsiders}
 ${formatCampaignContextBlock(options.campaignContext)}
 
 ${modeGuidance}
@@ -1078,13 +1086,19 @@ Return JSON with "title", "summary", "labels", "connections", a markdown "conten
 ## Typical Archetypes
 ## Adventure Hooks
 
-The single most important rule: **every major biological or environmental difference must have consequences elsewhere in the species design.** A trait that appears in "## Biology & Lifecycle" and nowhere else is a failure. Concretely — six limbs must change their tools, their architecture, or a social concept they have that we do not; chemical or broadcast communication must change what privacy, secrecy and deception mean to them, and therefore how their law and their conspiracies work; an extreme lifespan must change their politics, inheritance, and how their institutions retain memory; a hostile home environment must show up in their technological speciality and in what they consider basic hospitality or basic decency. "## Technology" must explicitly reflect the body plan and the homeworld, not describe generic technology at the stated level. "## Culture & Social Structure" and "## Beliefs & Worldview" must both trace back to a specific biological or environmental fact you established earlier. "## Weaknesses & Constraints" must follow from the biology you actually described rather than being a list of unrelated vulnerabilities, and at least one weakness must be something the species cannot simply engineer around. "## Naming Conventions" must be consistent with how they communicate — a species that signals chemically or by light does not have names that survive being spoken aloud unchanged. "## Typical Archetypes" must be roles that only make sense for this species, not portable fantasy classes. "## Adventure Hooks" must contain at least three playable hooks that each depend on something specific to this species — a hook that would work equally well for any other species is a failure.
+Give the species one **Core Alien Concept**: a single striking central idea that makes them memorable and that other species find genuinely hard to accommodate. It should be the thing a GM still remembers a week later — a way of being alive, thinking, or relating to others that has no clean human equivalent. Introduce it in "## Overview" and carry it visibly through at least three other sections, including at least one of "## Culture & Social Structure" or "## Beliefs & Worldview". Commit to that one idea and follow it all the way through rather than scattering the strangeness across a dozen mild quirks.
 
-Keep the species politically ambiguous: "## Internal Factions & Conflicts" must present at least two positions with defensible reasoning, and "## Relations with Outsiders" must make their friction with other species legible as a difference in priorities rather than villainy. Labels must match the actual generated content.
+The single most important rule: **every major biological or environmental difference must have consequences elsewhere in the species design.** A trait that appears in "## Biology & Lifecycle" and nowhere else is a failure. Each major trait must visibly shape at least two of: their culture, technology, architecture, psychology, law, communication, or the ordinary texture of daily life. Purely cosmetic differences — unusual colouring, an extra pair of eyes, decorative crests, a striking silhouette — do not count as alien traits at all: if a trait changes nothing about how they live, either give it consequences or leave it out. Concretely — six limbs must change their tools, their architecture, or a social concept they have that we do not; chemical or broadcast communication must change what privacy, secrecy and deception mean to them, and therefore how their law and their conspiracies work; an extreme lifespan must change their politics, inheritance, and how their institutions retain memory; a hostile home environment must show up in their technological speciality and in what they consider basic hospitality or basic decency. "## Technology" must explicitly reflect the body plan and the homeworld, not describe generic technology at the stated level. "## Culture & Social Structure" and "## Beliefs & Worldview" must both trace back to a specific biological or environmental fact you established earlier. "## Weaknesses & Constraints" must follow from the biology you actually described rather than being a list of unrelated vulnerabilities, and at least one weakness must be something the species cannot simply engineer around. "## Naming Conventions" must be consistent with how they communicate — a species that signals chemically or by light does not have names that survive being spoken aloud unchanged. "## Typical Archetypes" must be roles that only make sense for this species, not portable fantasy classes. "## Adventure Hooks" must contain at least three playable hooks that each depend on something specific to this species — a hook that would work equally well for any other species is a failure.
+
+**Do not write a monoculture.** A species that agrees with itself has no story in it. "## Internal Factions & Conflicts" must present at least two positions with defensible reasoning, and at least one of them must challenge a foundational cultural assumption — a faction, subculture, generation or reform movement that rejects something the rest of the species treats as simply how things are, up to and including the Core Alien Concept itself. Never write "all of them believe" or "every one of them does" as if the species were of one mind; where a belief really is near-universal, say who the exceptions are and what it costs them. Keep the species politically ambiguous: "## Relations with Outsiders" must make their friction with other species legible as a difference in priorities rather than villainy. Labels must match the actual generated content.
 
 ${NAME_BAN_PROMPT}${nameRestrictions}
 
-Before returning, run a consistency pass: confirm the body plan you described in "## Biology & Lifecycle" is visibly reflected in "## Technology" (tools, architecture, or movement) and in at least one social concept in "## Culture & Social Structure"; confirm the communication method drives what "## Senses, Communication & Psychology" says about privacy or deception and matches "## Naming Conventions"; confirm the lifespan you established governs what "## Culture & Social Structure" says about inheritance, succession, or institutional memory; confirm the home environment is reflected in the technological speciality named in "## Technology" and in at least one entry under "## Weaknesses & Constraints"; confirm every weakness follows from a trait you actually described rather than being unrelated; confirm each of the three adventure hooks depends on a specific trait of this species and would not work unchanged for a generic species; confirm neither internal faction nor the species itself is written as simply villainous; and confirm the species could not be described accurately as a human culture with unusual physiology. Quietly correct anything that fails, then return only the corrected final JSON.`,
+Before returning, run a consistency pass: confirm the body plan you described in "## Biology & Lifecycle" is visibly reflected in "## Technology" (tools, architecture, or movement) and in at least one social concept in "## Culture & Social Structure"; confirm the communication method drives what "## Senses, Communication & Psychology" says about privacy or deception and matches "## Naming Conventions"; confirm the lifespan you established governs what "## Culture & Social Structure" says about inheritance, succession, or institutional memory; confirm the home environment is reflected in the technological speciality named in "## Technology" and in at least one entry under "## Weaknesses & Constraints"; confirm every weakness follows from a trait you actually described rather than being unrelated; confirm each of the three adventure hooks depends on a specific trait of this species and would not work unchanged for a generic species; confirm neither internal faction nor the species itself is written as simply villainous; confirm the Core Alien Concept is introduced in "## Overview" and visibly carried through at least three other sections; confirm no major trait is purely cosmetic; confirm "## Internal Factions & Conflicts" contains at least one faction or subculture challenging a foundational cultural assumption, and that nothing in the draft describes the species as uniformly agreeing about anything without naming the exceptions;${
+      isFreeform(generationMode)
+        ? ""
+        : " confirm the physical picture holds together — environment, gravity, atmosphere, biology, senses and locomotion agreeing with one another, no sense without a medium to carry it, and no unjustified absolute stated without its mechanism and its cost;"
+    } and then apply the final test: **could this species be swapped for humans without changing the setting?** Read the draft as if every alien detail were merely decorative and ask whether the culture, technology, politics and hooks would still work unchanged. If they would, the species is not doing any work — go back and make its biology, psychology, lifecycle or environment matter more, changing at least one concrete thing about how it lives, builds or decides, until the answer is clearly no. Quietly correct anything that fails, then return only the corrected final JSON.`,
   };
 }
 
