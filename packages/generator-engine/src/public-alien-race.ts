@@ -808,10 +808,11 @@ function deriveLifespan(
   const byName = (name: string) =>
     LIFESPANS.find((l) => l.name === name) ?? LIFESPANS[1];
 
-  if (
-    bodyPlan.name === "Self-replicating machine lineage" &&
-    isFreeform(mode)
-  ) {
+  // Keyed off the body plan itself rather than the mode: an exotic body plan
+  // can still be reached in Grounded mode by choosing it explicitly, and a
+  // machine lineage with a twenty-five-year biological lifespan would
+  // contradict the trait it was derived from.
+  if (bodyPlan.name === "Self-replicating machine lineage") {
     return byName("Effectively perpetual");
   }
   if (bodyPlan.name === "Chitinous exoskeletal") {
@@ -822,7 +823,11 @@ function deriveLifespan(
     return byName("Extended");
   }
   if (environment.name === "Dense-jungle world") return byName("Brief");
-  const available = isFreeform(mode)
+  // An explicitly-chosen exotic trait unlocks the exotic lifespans alongside
+  // it, so the species stays internally consistent whatever the mode says.
+  const allowExotic =
+    isFreeform(mode) || !!bodyPlan.exotic || !!environment.exotic;
+  const available = allowExotic
     ? LIFESPANS
     : LIFESPANS.filter((l) => !l.exotic);
   return pickFrom(available, rng);
@@ -1006,9 +1011,31 @@ export function buildAlienRacePrompt(
     ? ` Also do not use these campaign-specific names: ${extraAvoidedNames.join(", ")}.`
     : "";
 
+  // A user can reach an exotic trait in Grounded mode by choosing it
+  // explicitly (the selects accept custom values, and the in-app registry
+  // offers every trait regardless of mode). Blanket-forbidding exotic life in
+  // that case would contradict the request line directly above it, so the
+  // prohibition carves out whatever they actually asked for.
+  const explicitExotic = [
+    BODY_PLANS.find(
+      (b) =>
+        b.exotic &&
+        b.name.toLowerCase() === options.bodyPlan?.trim().toLowerCase(),
+    )?.name,
+    ENVIRONMENTS.find(
+      (e) =>
+        e.exotic &&
+        e.name.toLowerCase() === options.homeEnvironment?.trim().toLowerCase(),
+    )?.name,
+  ].filter((name): name is string => !!name);
+
+  const groundedGuidance = explicitExotic.length
+    ? `Generation mode is Grounded / Evolutionary, with one deliberate exception: the user explicitly asked for ${explicitExotic.join(" and ")}, which you must keep. Treat that as the single non-standard element and build everything else around it as plausibly as possible — the rest of the species should still be clearly shaped by selection pressure from its environment, and the exception itself must obey a consistent internal logic with the same concrete downstream consequences an ordinary biological trait would have. Do not add further exotic traits beyond the one asked for.`
+    : "Generation mode is Grounded / Evolutionary: the species must be biologically plausible and clearly shaped by selection pressure from its environment. No crystalline, plasma, energy-based or machine life. Every trait should have an evolutionary reason a xenobiologist could argue for.";
+
   const modeGuidance = isFreeform(generationMode)
     ? "Generation mode is Freeform / Fantastic: exotic life is permitted — crystalline organisms, colonial swarm minds, plasma structures, self-replicating machine lineages, life with no planetary origin. Exotic does not mean arbitrary: whatever you choose still has to obey its own internal logic consistently, and its strangeness must produce the same concrete downstream consequences a biological trait would."
-    : "Generation mode is Grounded / Evolutionary: the species must be biologically plausible and clearly shaped by selection pressure from its environment. No crystalline, plasma, energy-based or machine life. Every trait should have an evolutionary reason a xenobiologist could argue for.";
+    : groundedGuidance;
 
   const genreGuidance =
     genre.toLowerCase() === "cosmic horror"
@@ -1080,6 +1107,12 @@ export function parseAlienRaceResponse(
   if (typeof data.lore !== "string" || !data.lore.trim()) {
     throw new Error("Alien race response is missing lore.");
   }
+  // "content" carries ten of the fourteen sections and is the whole main
+  // column. Returning "" for a missing one would render a near-empty draft;
+  // throwing lets runWithAIFallback drop to the local tables instead.
+  if (typeof data.content !== "string" || !data.content.trim()) {
+    throw new Error("Alien race response is missing content.");
+  }
   const forbidden = new Set(
     [...BANNED_NAMES, ...avoidNames].map((name) => name.trim().toLowerCase()),
   );
@@ -1100,8 +1133,7 @@ export function parseAlienRaceResponse(
     type: "creature",
     title: data.title.trim(),
     summary: typeof data.summary === "string" ? sanitizeText(data.summary) : "",
-    content:
-      typeof data.content === "string" ? sanitizeText(data.content.trim()) : "",
+    content: sanitizeText(data.content.trim()),
     lore: sanitizeText(data.lore.trim()),
     labels,
     status: "active",

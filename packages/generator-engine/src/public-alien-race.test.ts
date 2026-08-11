@@ -132,6 +132,22 @@ describe("public-alien-race", () => {
       expect(resolved.bodyPlan).toBe("Crystalline lattice");
     });
 
+    it("keeps derived traits consistent with an explicit exotic choice in grounded mode", () => {
+      // A machine lineage is perpetual because of what it is, not because of
+      // which mode was picked — deriving a 25-year biological lifespan here
+      // would contradict the trait it was derived from.
+      for (let seed = 0; seed < 40; seed++) {
+        const biology = generateAlienRaceLocal(
+          {
+            generationMode: GROUNDED_MODE,
+            bodyPlan: "Self-replicating machine lineage",
+          },
+          seededRng(seed),
+        ).content.split("## Biology & Lifecycle")[1]!;
+        expect(biology).toContain("no fixed lifespan");
+      }
+    });
+
     it("exposes mode-filtered pools for the form to narrow its choices", () => {
       expect(alienRaceConfig.bodyPlansByMode[GROUNDED_MODE]).not.toContain(
         "Plasma-bound field",
@@ -205,15 +221,22 @@ describe("public-alien-race", () => {
     });
 
     it("lets the lifespan govern what culture says about succession", () => {
-      const result = generateAlienRaceLocal({
-        homeEnvironment: "Ice world",
-        generationMode: GROUNDED_MODE,
-      });
-      // Cold, slow metabolisms are derived as Extended lifespans, whose
-      // political consequence is centuries-long tenure.
-      const culture =
-        result.content.split("## Culture & Social Structure")[1] ?? "";
-      expect(culture.toLowerCase()).toContain("centuries");
+      // The body plan is pinned as well as the environment: a chitinous
+      // exoskeleton derives metamorphic castes and would take precedence over
+      // the environment's lifespan, so leaving it to chance made this flaky.
+      for (let seed = 0; seed < 40; seed++) {
+        const culture = generateAlienRaceLocal(
+          {
+            homeEnvironment: "Ice world",
+            bodyPlan: "Hexapodal",
+            generationMode: GROUNDED_MODE,
+          },
+          seededRng(seed),
+        ).content.split("## Culture & Social Structure")[1]!;
+        // Cold, slow metabolisms are derived as Extended lifespans, whose
+        // political consequence is centuries-long tenure.
+        expect(culture.toLowerCase()).toContain("centuries");
+      }
     });
 
     it("uses the right indefinite article for every technology level", () => {
@@ -264,6 +287,44 @@ describe("public-alien-race", () => {
       expect(
         buildAlienRacePrompt({ generationMode: FREEFORM_MODE }).userMessage,
       ).toContain("exotic life is permitted");
+    });
+
+    it("does not forbid the very trait the user explicitly asked for", () => {
+      // Grounded + an explicit exotic trait is reachable: the selects take
+      // custom values and the in-app registry offers every trait regardless
+      // of mode. Forbidding it here would contradict the request line.
+      const { userMessage } = buildAlienRacePrompt({
+        generationMode: GROUNDED_MODE,
+        bodyPlan: "Crystalline lattice",
+      });
+      expect(userMessage).not.toContain(
+        "No crystalline, plasma, energy-based or machine life",
+      );
+      expect(userMessage).toContain("Crystalline lattice");
+      expect(userMessage).toContain("one deliberate exception");
+      expect(userMessage).toContain(
+        "Do not add further exotic traits beyond the one asked for",
+      );
+    });
+
+    it("names every explicitly-chosen exotic trait in the exception", () => {
+      const { userMessage } = buildAlienRacePrompt({
+        generationMode: GROUNDED_MODE,
+        bodyPlan: "Plasma-bound field",
+        homeEnvironment: "Deep void",
+      });
+      expect(userMessage).toContain("Plasma-bound field and Deep void");
+    });
+
+    it("still forbids exotic life when the grounded choices are all ordinary", () => {
+      const { userMessage } = buildAlienRacePrompt({
+        generationMode: GROUNDED_MODE,
+        bodyPlan: "Hexapodal",
+        homeEnvironment: "Ocean world",
+      });
+      expect(userMessage).toContain(
+        "No crystalline, plasma, energy-based or machine life",
+      );
     });
 
     it("states the consequence principle as the primary rule", () => {
@@ -335,6 +396,28 @@ describe("public-alien-race", () => {
       expect(result.title).toBe("Ith'vareen");
     });
 
+    it("throws on a response missing content, so the local fallback runs", () => {
+      // content holds ten of the fourteen sections and the whole main column;
+      // returning "" would render a near-empty draft instead of falling back.
+      expect(() =>
+        parseAlienRaceResponse(
+          JSON.stringify({
+            title: "Ith'vareen",
+            lore: "## Weaknesses & Constraints\n- Fragile limbs.",
+          }),
+        ),
+      ).toThrow(/missing content/);
+      expect(() =>
+        parseAlienRaceResponse(
+          JSON.stringify({
+            title: "Ith'vareen",
+            content: "   ",
+            lore: "## Weaknesses & Constraints\n- Fragile limbs.",
+          }),
+        ),
+      ).toThrow(/missing content/);
+    });
+
     it("throws on a response missing a title or lore", () => {
       expect(() =>
         parseAlienRaceResponse(JSON.stringify({ lore: "x" })),
@@ -347,7 +430,11 @@ describe("public-alien-race", () => {
     it("throws on a banned title so the caller can fall back locally", () => {
       expect(() =>
         parseAlienRaceResponse(
-          JSON.stringify({ title: "Elara", lore: "## Weaknesses" }),
+          JSON.stringify({
+            title: "Elara",
+            content: "## Overview",
+            lore: "## Weaknesses",
+          }),
         ),
       ).toThrow(/banned title/);
     });
@@ -355,7 +442,11 @@ describe("public-alien-race", () => {
     it("throws on an avoided title", () => {
       expect(() =>
         parseAlienRaceResponse(
-          JSON.stringify({ title: "Ith'vareen", lore: "## Weaknesses" }),
+          JSON.stringify({
+            title: "Ith'vareen",
+            content: "## Overview",
+            lore: "## Weaknesses",
+          }),
           ["Ith'vareen"],
         ),
       ).toThrow(/banned title/);
@@ -366,10 +457,12 @@ describe("public-alien-race", () => {
         JSON.stringify({
           title: "Ith'vareen",
           summary: "They cannot lie..",
+          content: "## Overview\nThey  broadcast feeling.",
           lore: "## Weaknesses & Constraints\n- Fragile  limbs.",
         }),
       );
       expect(result.summary).toBe("They cannot lie.");
+      expect(result.content).toContain("They broadcast feeling.");
       expect(result.lore).toContain("Fragile limbs.");
     });
   });
