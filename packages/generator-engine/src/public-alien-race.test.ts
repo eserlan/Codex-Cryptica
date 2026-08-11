@@ -263,6 +263,21 @@ describe("public-alien-race", () => {
       }
     });
 
+    it("closes the culture sentence on a word that can end a sentence", () => {
+      // A contingency ending on a stranded preposition is grammatical but
+      // reads badly at the end of an already-long sentence. Guards the whole
+      // pool, so a new entry cannot reintroduce it.
+      for (let seed = 0; seed < 200; seed++) {
+        const culture = generateAlienRaceLocal({}, seededRng(seed))
+          .content.split("## Culture & Social Structure")[1]!
+          .split("##")[0]
+          .trim();
+        expect(culture, `seed ${seed}`).not.toMatch(
+          /\b(of|to|with|for|by|from|about|into|onto|upon|than|and|but)\.$/i,
+        );
+      }
+    });
+
     it("never asserts that everything follows from the environment", () => {
       for (let seed = 0; seed < 40; seed++) {
         const content = generateAlienRaceLocal({}, seededRng(seed)).content;

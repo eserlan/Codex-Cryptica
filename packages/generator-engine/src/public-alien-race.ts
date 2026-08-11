@@ -554,7 +554,7 @@ const PSYCHOLOGIES: readonly PsychologyProfile[] = [
  * than from their bodies.
  */
 const CONTINGENCIES: readonly string[] = [
-  "their present institutions date from a treaty signed in bad faith three generations ago, which held anyway, and which nobody now alive can explain the terms of",
+  "their present institutions date from a treaty signed in bad faith three generations ago, whose terms held anyway and whose original purpose nobody now alive can reconstruct",
   "an early and unusually good relationship with a passing trade power gave them a legal vocabulary they never developed themselves, and they still argue in a grammar borrowed from strangers",
   "a single catastrophic engineering failure, entirely avoidable, made caution a civic virtue in a way nothing about their biology required",
   "the settlement that happened to sit on the only navigable route became their capital by accident and has been defending that accident politically ever since",
