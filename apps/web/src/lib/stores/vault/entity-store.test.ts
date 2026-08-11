@@ -23,6 +23,8 @@ vi.mock("./entities", () => ({
   createEntity: vi.fn(),
   updateEntity: vi.fn(),
   deleteEntity: vi.fn(),
+  deleteEntityFiles: vi.fn(),
+  applyBatchDelete: vi.fn(),
   addConnection: vi.fn(),
   updateConnection: vi.fn(),
   removeConnection: vi.fn(),
@@ -265,6 +267,26 @@ describe("EntityStore", () => {
     expect(repository.saveQueue.enqueue).toHaveBeenCalled();
   });
 
+  it("returns per-entity bulk update results and commits successful deltas", async () => {
+    repository.saveToDisk!.mockImplementation(
+      async (_handle: unknown, _vaultId: string, entity: LocalEntity) => {
+        if (entity.id === "place") throw new Error("write failed");
+      },
+    );
+
+    const result = await store.bulkUpdate({
+      hero: { type: "npc" },
+      place: { type: "location" },
+      missing: { type: "note" },
+    });
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.failedIds).toEqual(["place"]);
+    expect(result.skippedIds).toEqual(["missing"]);
+    expect(store.entities.hero.type).toBe("npc");
+    expect(store.entities.place.type).toBe("location");
+  });
+
   it("deletes an entity", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
       entities: { place: repository.entities.place },
@@ -282,6 +304,27 @@ describe("EntityStore", () => {
         type: "ENTITY_DELETED",
         entityId: "hero",
       }),
+    );
+  });
+
+  it("uses one batch delete path and reports missing IDs", async () => {
+    vi.mocked(vaultEntities.deleteEntityFiles).mockResolvedValue(undefined);
+    vi.mocked(vaultEntities.applyBatchDelete).mockReturnValue({
+      entities: { place: repository.entities.place },
+      deletedIds: ["hero"],
+      modified: {},
+    });
+
+    const result = await store.bulkDelete(["hero", "missing"]);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["missing"]);
+    expect(vaultEntities.deleteEntityFiles).toHaveBeenCalledTimes(1);
+    expect(vaultEntities.applyBatchDelete).toHaveBeenCalledWith(
+      expect.anything(),
+      ["hero"],
+      expect.anything(),
+      expect.anything(),
     );
   });
 

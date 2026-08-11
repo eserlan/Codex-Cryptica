@@ -8,6 +8,13 @@ import type { Entity } from "schema";
 import type { EntityPersistenceService } from "./entity-persistence";
 import type { EntityContentLoader } from "./entity-content-loader.svelte";
 import type { IVaultServices } from "./service-registry";
+import {
+  summarizeBulkMutation,
+  runWithConcurrency,
+  type BulkMutationResult,
+  type BulkMutationItemResult,
+} from "./bulk-results";
+import type { ImmediateSaveEntry } from "./entity-persistence";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { updateLastInternalChange } from "./registry";
 import { systemClock } from "$lib/utils/runtime-deps";
@@ -201,15 +208,28 @@ export class EntityMutationService {
   async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
-    let hasChanges = false;
+    const result = await this.bulkUpdate(updates);
+    return result.succeededIds.length > 0;
+  }
+
+  async bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    const requestedIds = Object.keys(updates);
+    const span = this.performanceRecorder.start("vault_bulk_mutation");
+    const mutationVaultId = this.deps.activeVaultId();
     const currentEntities = this.entities;
-    const newEntities = { ...currentEntities };
+    const stagedEntities = { ...currentEntities };
     const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
-    const savePromises: Promise<void>[] = [];
+    const entries: ImmediateSaveEntry[] = [];
+    const items: BulkMutationItemResult[] = [];
 
     for (const [id, patch] of Object.entries(updates)) {
-      if (!currentEntities[id]) continue;
       const current = currentEntities[id];
+      if (!current) {
+        items.push({ id, status: "skipped" });
+        continue;
+      }
 
       const preserveGuestContent =
         this.deps.isGuest() && patch.content === "" && !!current.content;
@@ -231,45 +251,95 @@ export class EntityMutationService {
         modifiedAt: systemClock.now(),
       } as LocalEntity;
 
-      newEntities[id] = merged;
+      stagedEntities[id] = merged;
       appliedUpdates[id] = patch;
-      hasChanges = true;
-
-      if (
-        patch.content !== undefined ||
-        patch.lore !== undefined ||
-        patch.title !== undefined ||
-        patch.labels !== undefined
-      ) {
-        this.deps.loader.markContentLoaded(id);
-      }
-
       if (patch.image && this.deps.invalidateUrlCache) {
         this.deps.invalidateUrlCache(patch.image);
       }
-
-      savePromises.push(
-        this.deps.persistence.scheduleSave(merged, {
-          preserveCachedContent: isCoordinateOnlyPatch(patch),
-        }),
-      );
+      entries.push({
+        entity: merged,
+        options: {
+          preserveCachedContent:
+            patch.content === undefined && patch.lore === undefined,
+        },
+      });
     }
 
-    if (hasChanges) {
-      this.entities = newEntities;
-      if (this.deps.onBatchUpdate) this.deps.onBatchUpdate(appliedUpdates);
-      await Promise.all(savePromises);
+    if (entries.length === 0) {
+      span.complete(() => ({ changedEntityCount: 0 }));
+      return summarizeBulkMutation(requestedIds, items);
+    }
 
+    if (sessionModeStore.isDemoMode || this.deps.isGuest()) {
+      this.entities = stagedEntities;
+      this.deps.onBatchUpdate?.(appliedUpdates);
+      for (const id of Object.keys(appliedUpdates)) {
+        items.push({ id, status: "success" });
+      }
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
-        entities: Object.keys(appliedUpdates).map((id) => newEntities[id]),
+        entities: Object.keys(appliedUpdates).map((id) => stagedEntities[id]),
         patches: appliedUpdates,
       });
+    } else {
+      const persisted = await this.deps.persistence.persistImmediately(entries);
+      const persistedById = new Map(
+        persisted.map((result) => [result.id, result]),
+      );
+      const committedEntities = { ...currentEntities };
+      const committedUpdates: Record<string, Partial<LocalEntity>> = {};
 
-      return true;
+      if (mutationVaultId !== this.deps.activeVaultId()) {
+        for (const id of Object.keys(appliedUpdates)) {
+          const result = persistedById.get(id);
+          items.push({
+            id,
+            status: result?.ok ? "cancelled" : "failed",
+            error: result?.error,
+          });
+        }
+        span.cancel(() => ({ changedEntityCount: 0 }));
+        return summarizeBulkMutation(requestedIds, items);
+      }
+
+      for (const id of Object.keys(appliedUpdates)) {
+        const result = persistedById.get(id);
+        if (result?.ok) {
+          committedEntities[id] = stagedEntities[id];
+          committedUpdates[id] = appliedUpdates[id];
+          this.deps.loader.markContentLoaded(id);
+          items.push({ id, status: "success" });
+        } else {
+          items.push({ id, status: "failed", error: result?.error });
+        }
+      }
+
+      if (Object.keys(committedUpdates).length > 0) {
+        this.entities = committedEntities;
+        this.deps.onBatchUpdate?.(committedUpdates);
+        vaultEventBus.emit({
+          type: "BATCH_UPDATED",
+          vaultId: this.deps.activeVaultId() || "unknown",
+          entities: Object.keys(committedUpdates).map(
+            (id) => committedEntities[id],
+          ),
+          patches: committedUpdates,
+        });
+      }
     }
-    return false;
+
+    const result = summarizeBulkMutation(requestedIds, items);
+    if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+      span.fail("unexpected", () => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    } else {
+      span.complete(() => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    }
+    return result;
   }
 
   async deleteEntity(id: string) {
@@ -366,6 +436,150 @@ export class EntityMutationService {
         }
       }
     });
+  }
+
+  async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    if (this.deps.isGuest()) {
+      throw new Error("Cannot delete entities in Guest Mode");
+    }
+
+    const requestedIds = [...new Set(ids)];
+    const span = this.performanceRecorder.start("vault_bulk_mutation");
+    if (sessionModeStore.isDemoMode) {
+      const next = { ...this.entities };
+      const items: BulkMutationItemResult[] = [];
+      for (const id of requestedIds) {
+        if (!next[id]) {
+          items.push({ id, status: "skipped" });
+          continue;
+        }
+        delete next[id];
+        this.deps.onEntityDelete?.(id);
+        items.push({ id, status: "success" });
+      }
+      this.entities = next;
+      const result = summarizeBulkMutation(requestedIds, items);
+      span.complete(() => ({ changedEntityCount: result.succeededIds.length }));
+      return result;
+    }
+
+    const vaultHandle = await this.deps.getActiveVaultHandle();
+    const localHandle = await this.deps.getActiveFolderHandle();
+    const vaultId = this.deps.activeVaultId();
+    if (!vaultHandle || !vaultId) {
+      const result = summarizeBulkMutation(
+        requestedIds,
+        requestedIds.map((id) => ({ id, status: "failed" as const })),
+      );
+      span.fail("unexpected", () => ({ changedEntityCount: 0 }));
+      return result;
+    }
+
+    const validIds = requestedIds.filter((id) => this.entities[id]);
+    const deletedPaths = new Map(
+      validIds.map((id) => [id, this.entities[id]._path || [`${id}.md`]]),
+    );
+    const items: BulkMutationItemResult[] = requestedIds
+      .filter((id) => !this.entities[id])
+      .map((id) => ({ id, status: "skipped" as const }));
+    const deleteTasks = validIds.map((id) => async () => {
+      const entity = this.entities[id];
+      if (!entity || this.deps.activeVaultId() !== vaultId) {
+        return { id, ok: false, cancelled: true };
+      }
+      try {
+        await this.deps.repository.enqueueSave(id, () =>
+          vaultEntities.deleteEntityFiles(vaultHandle, entity),
+        );
+        return { id, ok: true, cancelled: false };
+      } catch (error) {
+        return { id, ok: false, cancelled: false, error };
+      }
+    });
+    const deletedResults = await runWithConcurrency(deleteTasks, 4);
+    if (vaultId !== this.deps.activeVaultId()) {
+      const result = summarizeBulkMutation(
+        requestedIds,
+        deletedResults.map((item) => ({
+          id: item.id,
+          status: item.ok ? ("cancelled" as const) : ("failed" as const),
+          error: item.error,
+        })),
+      );
+      span.cancel(() => ({ changedEntityCount: 0 }));
+      return result;
+    }
+    const deletedIds = deletedResults
+      .filter((result) => result.ok)
+      .map((result) => result.id);
+
+    for (const result of deletedResults) {
+      items.push({
+        id: result.id,
+        status: result.cancelled
+          ? "cancelled"
+          : result.ok
+            ? "success"
+            : "failed",
+        error: result.error,
+      });
+    }
+
+    if (deletedIds.length > 0) {
+      const applied = vaultEntities.applyBatchDelete(
+        this.entities,
+        deletedIds,
+        this.deps.getInboundConnections?.(),
+        this.deps.getParentToChildren?.(),
+      );
+      const survivorEntries: ImmediateSaveEntry[] = Object.values(
+        applied.modified,
+      ).map((entity) => ({ entity }));
+      const survivorResults =
+        await this.deps.persistence.persistImmediately(survivorEntries);
+      const survivorSuccess = new Set(
+        survivorResults
+          .filter((result) => result.ok)
+          .map((result) => result.id),
+      );
+      const committed = { ...this.entities };
+      for (const id of deletedIds) {
+        delete committed[id];
+        this.deps.onEntityDelete?.(id);
+      }
+      for (const id of Object.keys(applied.modified)) {
+        if (survivorSuccess.has(id)) committed[id] = applied.modified[id];
+      }
+      this.entities = committed;
+
+      for (const id of deletedIds) {
+        vaultEventBus.emit({
+          type: "ENTITY_DELETED",
+          vaultId,
+          entityId: id,
+        });
+        const path = deletedPaths.get(id) || [`${id}.md`];
+        await cacheService.remove(`${vaultId}:${path.join("/")}`);
+        await removeLocalEntityFile(localHandle, path);
+      }
+      await updateLastInternalChange(vaultId);
+      await this.deps.updateEntityCount(
+        vaultId,
+        Object.keys(this.entities).length,
+      );
+    }
+
+    const result = summarizeBulkMutation(requestedIds, items);
+    if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+      span.fail("unexpected", () => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    } else {
+      span.complete(() => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    }
+    return result;
   }
 
   async addConnection(
@@ -620,23 +834,29 @@ export class EntityMutationService {
   }
 }
 
-function isCoordinateOnlyPatch(patch: Partial<LocalEntity>): boolean {
-  const keys = Object.keys(patch);
-  if (keys.length !== 1 || !("metadata" in patch)) return false;
+async function removeLocalEntityFile(
+  localHandle: FileSystemDirectoryHandle | undefined,
+  path: string[],
+): Promise<void> {
+  if (!localHandle) return;
+  try {
+    const permission = await localHandle.queryPermission({ mode: "readwrite" });
+    if (permission !== "granted") return;
 
-  const metadata = patch.metadata;
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return false;
+    const fileName = path[path.length - 1];
+    const dirPath = path.slice(0, -1);
+    let targetDir: FileSystemDirectoryHandle | undefined = localHandle;
+    for (const part of dirPath) {
+      targetDir = await targetDir
+        ?.getDirectoryHandle(part, { create: false })
+        .catch(() => undefined);
+      if (!targetDir) return;
+    }
+    await targetDir?.removeEntry(fileName, { recursive: true });
+  } catch (error) {
+    debugStore.warn(
+      `[EntityMutation] Failed to delete ${path.join("/")} from local filesystem`,
+      error,
+    );
   }
-
-  const metadataKeys = Object.keys(metadata);
-  if (metadataKeys.length !== 1 || !("coordinates" in metadata)) return false;
-
-  const coordinates = (metadata as any).coordinates;
-  return (
-    coordinates != null &&
-    typeof coordinates === "object" &&
-    Number.isFinite(coordinates.x) &&
-    Number.isFinite(coordinates.y)
-  );
 }

@@ -321,8 +321,16 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        for (const id of targetIds) {
-          await vault.updateEntity(id, { type });
+        const result = await vault.bulkUpdate(
+          Object.fromEntries(targetIds.map((id) => [id, { type }])),
+        );
+        if (result.failedIds.length > 0 || result.skippedIds.length > 0) {
+          notificationStore.notify(
+            `Changed ${result.succeededIds.length} entities; ${
+              result.failedIds.length + result.skippedIds.length
+            } could not be changed.`,
+            "error",
+          );
         }
       } catch (err: any) {
         console.error("Failed to change type", err);
@@ -354,10 +362,20 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        for (const id of targetIds) {
-          await vault.deleteEntity(id);
+        const result = await vault.bulkDelete(targetIds);
+        selectedIds = new Set(
+          [...selectedIds].filter((id) => !result.succeededIds.includes(id)),
+        );
+        if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+          notificationStore.notify(
+            `Deleted ${result.succeededIds.length} entities; ${
+              result.failedIds.length + result.cancelledIds.length
+            } remain selected for retry.`,
+            "error",
+          );
+        } else {
+          clearSelection();
         }
-        clearSelection();
       } catch (err: any) {
         console.error("Failed to delete", err);
         notificationStore.notify(`Error: ${err.message}`, "error");
