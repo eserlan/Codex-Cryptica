@@ -76,8 +76,9 @@ export function generateAdventureGraphTopology(
   output: PublicGeneratorOutput,
   clock: Clock = systemClock,
 ): AdventureCanvasDocument {
-  const documentId = `adv-canvas-${clock.now()}`;
-  const now = new Date(clock.now()).toISOString();
+  const timestamp = clock.now();
+  const documentId = `adv-canvas-${timestamp}`;
+  const now = new Date(timestamp).toISOString();
 
   const nodes: AdventureNode[] = [];
   const edges: AdventureEdge[] = [];
