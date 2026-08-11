@@ -15,6 +15,15 @@
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
+  let themeBootstrap = $derived(
+    config.theme
+      ? "<" +
+          "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
+          JSON.stringify(config.theme) +
+          ");</" +
+          "script>"
+      : "",
+  );
 
   const DEFAULT_SECTION_ORDER: LandingPageSection[] = [
     "hero",
@@ -56,6 +65,11 @@
 </script>
 
 <svelte:head>
+  {#if themeBootstrap}
+    <!-- Apply the page theme before the body is parsed to avoid a first-paint flash. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html themeBootstrap}
+  {/if}
   <title>{config.seo.title}</title>
   <meta name="description" content={config.seo.description} />
   <meta property="og:title" content={config.seo.title} />
