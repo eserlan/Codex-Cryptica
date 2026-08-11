@@ -75,7 +75,7 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: "https://codex-cryptica.com",
+        Origin: "https://codexcryptica.com",
       },
       body: JSON.stringify(body),
     });

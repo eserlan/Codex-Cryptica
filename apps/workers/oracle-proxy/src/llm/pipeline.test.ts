@@ -18,7 +18,7 @@ const post = (body: Record<string, unknown>) =>
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Origin: "https://codex-cryptica.com",
+      Origin: "https://codexcryptica.com",
     },
     body: JSON.stringify(body),
   });
