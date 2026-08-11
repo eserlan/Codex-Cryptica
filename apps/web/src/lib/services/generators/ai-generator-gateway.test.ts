@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   InteractionExpiredError,
   INTERACTION_MODEL_KEY,
+  GENERATOR_INTERACTION_MODEL_KEY,
 } from "@codex/ai-engine";
 import {
   ProxyAIGeneratorGateway,
@@ -44,12 +45,21 @@ describe("extractJsonObject", () => {
 });
 
 describe("ProxyAIGeneratorGateway", () => {
+  it("routes generator interactions to a different model than chat and revision", () => {
+    // The whole point of the split (2026-08-11): generators sit on Gemini for
+    // latency, while Oracle chat and entity revision stay on Luna. If these
+    // ever converge again, the split has been undone by accident.
+    expect(GENERATOR_INTERACTION_MODEL_KEY).not.toBe(INTERACTION_MODEL_KEY);
+    expect(GENERATOR_INTERACTION_MODEL_KEY).toBe("gemini-flash-lite");
+    expect(INTERACTION_MODEL_KEY).toBe("luna-fast");
+  });
+
   it("uses the Interactions API when interaction options are provided", async () => {
     const client = {
       sendInteraction: async (params: unknown) => {
         expect(params).toEqual(
           expect.objectContaining({
-            model: INTERACTION_MODEL_KEY,
+            model: GENERATOR_INTERACTION_MODEL_KEY,
             input: "delta request",
             previousInteractionId: "interaction-1",
             storeConversation: true,
@@ -110,7 +120,7 @@ describe("ProxyAIGeneratorGateway", () => {
     expect(calls).toHaveLength(2);
     expect(calls[1]).toEqual(
       expect.objectContaining({
-        model: INTERACTION_MODEL_KEY,
+        model: GENERATOR_INTERACTION_MODEL_KEY,
         input: "full replay",
         previousInteractionId: null,
         generationConfig: expect.objectContaining({

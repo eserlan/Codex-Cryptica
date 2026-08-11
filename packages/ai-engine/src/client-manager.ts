@@ -26,6 +26,21 @@ export class InteractionExpiredError extends Error {
 export const INTERACTION_MODEL_KEY = "luna-fast";
 
 /**
+ * Registry key for generator interactions specifically (2026-08-11).
+ *
+ * Split from {@link INTERACTION_MODEL_KEY} so the in-app campaign generators
+ * can sit on Gemini alongside the public ones, for the same reason: the user
+ * is waiting on a draft with nothing else to do, and Luna's latency is felt
+ * there far more than in Oracle chat, which reads as conversational. Chat and
+ * entity revision keep Luna via the key above.
+ *
+ * oracle-proxy's `handleInteraction` branches on the resolved model's
+ * provider, so a Gemini key here routes to Gemini's Interactions API — the
+ * original path, with the OpenAI Responses branch added alongside it later.
+ */
+export const GENERATOR_INTERACTION_MODEL_KEY = "gemini-flash-lite";
+
+/**
  * Sends a plain-text generateContent request through oracle-proxy's
  * provider-neutral operation pipeline (specs/153-llm-model-registry)
  * instead of the legacy Gemini-only `contents`/`generationConfig` shape.
