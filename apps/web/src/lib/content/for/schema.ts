@@ -10,18 +10,51 @@ export const LandingPageUseCaseSchema = z.object({
 });
 export type LandingPageUseCase = z.infer<typeof LandingPageUseCaseSchema>;
 
+/**
+ * Entity category a graph node belongs to. Mirrors DEFAULT_CATEGORIES in the
+ * schema package so preview nodes colour themselves the same way real vault
+ * entities do — the graph component never inspects node text to guess a type.
+ */
+export const LandingPageGraphCategorySchema = z.enum([
+  "character",
+  "creature",
+  "location",
+  "item",
+  "event",
+  "faction",
+  "note",
+]);
+export type LandingPageGraphCategory = z.infer<
+  typeof LandingPageGraphCategorySchema
+>;
+
 export const LandingPageGraphStepSchema = z.object({
   label: z.string(),
   sublabel: z.string().optional(),
+  /** Relation from the hub node (the first step) to this node. */
   relation: z.string().optional(),
-  type: z.string().optional(),
+  category: LandingPageGraphCategorySchema.optional(),
 });
 export type LandingPageGraphStep = z.infer<typeof LandingPageGraphStepSchema>;
+
+/** Node/edge colour family used inside the dark graph canvas. */
+export const LandingPageGraphPaletteSchema = z.enum(["default", "oxblood"]);
+export type LandingPageGraphPalette = z.infer<
+  typeof LandingPageGraphPaletteSchema
+>;
 
 export const LandingPageGraphSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   steps: z.array(LandingPageGraphStepSchema),
+  /** Badge shown beside the section heading. Defaults to "Interactive Graph View". */
+  badgeLabel: z.string().optional(),
+  palette: LandingPageGraphPaletteSchema.optional(),
+  /**
+   * "dark" drops the whole section onto a dark ground, so a light page reveals
+   * the graph as a distinct layer. Defaults to the page surface.
+   */
+  surface: z.enum(["page", "dark"]).optional(),
 });
 export type LandingPageGraph = z.infer<typeof LandingPageGraphSchema>;
 
@@ -44,10 +77,20 @@ export const LandingPageSectionSchema = z.enum([
 
 export type LandingPageSection = z.infer<typeof LandingPageSectionSchema>;
 
+/**
+ * Corner treatment for the page's cards, panels and CTA. "sharp" gives an
+ * archival/printed-document feel; "soft" is the default app-like rounding.
+ */
+export const LandingPageSurfaceStyleSchema = z.enum(["soft", "sharp"]);
+export type LandingPageSurfaceStyle = z.infer<
+  typeof LandingPageSurfaceStyleSchema
+>;
+
 export const LandingPageConfigSchema = z.object({
   slug: z.string().min(1),
   kind: z.enum(["system", "genre"]),
   theme: z.string().optional(),
+  surfaceStyle: LandingPageSurfaceStyleSchema.optional(),
   sectionOrder: z.array(LandingPageSectionSchema).optional(),
   seo: z.object({
     title: z.string(),

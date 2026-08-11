@@ -47,31 +47,39 @@ export const gothicHorror: LandingPageConfig = {
     title: "Sample Gothic Horror Campaign Web",
     description:
       "See how an inheritance leads from a manor to a journal, a secret society, and the ancestor who swore its pact.",
+    badgeLabel: "Relationship Graph",
+    palette: "oxblood",
+    surface: "dark",
     steps: [
       {
         label: "Lady Elspeth Vale",
         sublabel: "Last Surviving Heir",
         relation: "inherits",
+        category: "character",
       },
       {
         label: "Harrowmere House",
         sublabel: "Inherited Estate",
         relation: "conceals",
+        category: "location",
       },
       {
         label: "The West Wing Journal",
         sublabel: "Forgotten Journal",
         relation: "reveals",
+        category: "item",
       },
       {
         label: "The Society of the Hollow Bell",
         sublabel: "Secret Organisation",
         relation: "reveals",
+        category: "faction",
       },
       {
         label: "Sir Alaric Vale",
         sublabel: "Founder of the Estate",
         relation: "swore the pact",
+        category: "character",
       },
     ],
   },

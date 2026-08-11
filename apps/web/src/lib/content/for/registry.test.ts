@@ -168,6 +168,106 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Example graphs", () => {
+    const pagesWithGraphs = getAllLandingPages().filter((p) => p.exampleGraph);
+
+    it("covers every page that ships a graph", () => {
+      expect(pagesWithGraphs.length).toBeGreaterThan(0);
+    });
+
+    it("gives every node a category so colours come from config, not node text", () => {
+      for (const page of pagesWithGraphs) {
+        for (const step of page.exampleGraph!.steps) {
+          expect(step.category, `${page.slug} / ${step.label}`).toBeDefined();
+        }
+      }
+    });
+
+    it("keeps graph badge copy per-page rather than sharing one horror label", () => {
+      const horrorBadges = getAllLandingPages()
+        .filter((p) => p.theme === "horror" && p.exampleGraph)
+        .map((p) => p.exampleGraph!.badgeLabel);
+
+      expect(horrorBadges.length).toBeGreaterThanOrEqual(3);
+      for (const badge of horrorBadges) {
+        expect(badge).toBeTruthy();
+        expect(badge).not.toMatch(/underworld/i);
+      }
+      expect(new Set(horrorBadges).size).toBeGreaterThan(1);
+    });
+  });
+
+  describe("Copy consistency", () => {
+    it("uses British spellings", () => {
+      const copy = JSON.stringify(getAllLandingPages());
+      expect(copy).not.toMatch(/\bOrganiz/i);
+      expect(copy).not.toMatch(/\bHarbor\b/);
+      expect(copy).not.toMatch(/\bCatalog\b/);
+    });
+  });
+
+  describe("Vampire: The Masquerade graph", () => {
+    const vtm = getLandingPage("vampire-the-masquerade")!;
+    const graph = vtm.exampleGraph!;
+    const clanOf = (sublabel = "") => sublabel.match(/Kindred • (\w+)/)?.[1];
+
+    it("uses sharp surfaces and reveals the graph on a dark ground", () => {
+      expect(vtm.surfaceStyle).toBe("sharp");
+      expect(graph.surface).toBe("dark");
+      expect(graph.palette).toBe("oxblood");
+    });
+
+    it("names the graph without explaining the metaphor", () => {
+      const copy = `${graph.title} ${graph.description ?? ""} ${graph.badgeLabel ?? ""}`;
+      expect(copy).not.toMatch(/underworld|nocturnal|hidden/i);
+      expect(graph.title).toContain("Relationship Web");
+    });
+
+    it("labels every spoke with its relation to the hub, and leaves the hub unlabelled", () => {
+      // LandingPageGraphPreview draws step[i].relation on the edge from the
+      // hub (step 0) to step i, so a relation on the hub itself never renders.
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      for (const spoke of spokes) {
+        expect(spoke.relation, spoke.label).toBeTruthy();
+      }
+    });
+
+    it("gives a childe the same clan as their sire", () => {
+      const hub = graph.steps[0];
+      const childe = graph.steps.find((s) => s.relation === "Sire of");
+      expect(childe).toBeDefined();
+      expect(clanOf(childe!.sublabel)).toBe(clanOf(hub.sublabel));
+      expect(clanOf(hub.sublabel)).toBeTruthy();
+    });
+
+    it("only points Kindred-to-Kindred relations at Kindred", () => {
+      const kindredOnly = ["Sire of", "Blood Bond to"];
+      for (const step of graph.steps) {
+        if (step.relation && kindredOnly.includes(step.relation)) {
+          expect(step.category, step.label).toBe("character");
+          expect(step.sublabel).toContain("Kindred");
+        }
+      }
+    });
+
+    it("only lets people and factions act on other entities", () => {
+      // Blackmail, favours and control are things agents do — a domain cannot
+      // blackmail anyone, so the hub must be a character or a faction.
+      expect(["character", "faction"]).toContain(graph.steps[0].category);
+    });
+
+    it("connects Kindred, a domain, a faction and a mortal contact", () => {
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("location");
+      expect(categories).toContain("faction");
+      expect(graph.steps.some((s) => s.sublabel?.startsWith("Mortal"))).toBe(
+        true,
+      );
+    });
+  });
+
   describe("Extensibility (US3)", () => {
     it("allows dynamic page addition and handles optional section collapsing", () => {
       const customConfig: LandingPageConfig = {

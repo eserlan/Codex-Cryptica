@@ -1,88 +1,119 @@
 <script lang="ts">
   import { DEFAULT_CATEGORIES } from "schema";
-  import type { LandingPageGraphStep } from "$lib/content/for/schema";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import type {
+    LandingPageGraphCategory,
+    LandingPageGraphPalette,
+    LandingPageGraphStep,
+    LandingPageSurfaceStyle,
+  } from "$lib/content/for/schema";
 
-  let { steps }: { steps: LandingPageGraphStep[] } = $props();
+  let {
+    steps,
+    palette = "default",
+    surfaceStyle = "soft",
+  }: {
+    steps: LandingPageGraphStep[];
+    palette?: LandingPageGraphPalette;
+    surfaceStyle?: LandingPageSurfaceStyle;
+  } = $props();
 
-  const isHorrorTheme = $derived(
-    themeStore.activeTheme?.id === "horror" ||
-      themeStore.activeTheme?.id === "horror_light" ||
-      themeStore.previewThemeId === "horror",
-  );
+  let isSharp = $derived(surfaceStyle === "sharp");
+  /** Panel corners, in px. */
+  let panelRadius = $derived(isSharp ? 3 : 12);
+  /** Relation badge corners, in SVG user units. */
+  let badgeRadius = $derived(isSharp ? 2 : 7);
 
-  // Color resolution matching WelcomeGraphPreview & canonical graph palette
-  const typeColor = (id: string) =>
-    DEFAULT_CATEGORIES.find((c) => c.id === id)?.color ?? "#e6b450";
+  type GraphPalette = {
+    /** Node fill per entity category. */
+    categories: Record<LandingPageGraphCategory, string>;
+    accent: string;
+    selectedLabel: string;
+    shellBorder: string;
+    shellBg: string;
+    canvasBg: string;
+    gridDot: string;
+    /** Unselected hub spokes. */
+    dimEdge: string;
+    /** Background web between peripheral nodes. */
+    webEdge: string;
+    badgeFill: string;
+    badgeStroke: string;
+    badgeText: string;
+    panelBorder: string;
+    panelBg: string;
+    panelDivider: string;
+    panelHighlight: string;
+    panelPositive: string;
+  };
 
-  function getNodeColor(sublabel?: string): string {
-    if (isHorrorTheme) {
-      if (!sublabel) return "#801414";
-      const key = sublabel.toLowerCase();
-      if (
-        key.includes("vampire") ||
-        key.includes("character") ||
-        key.includes("elder") ||
-        key.includes("primogen")
-      )
-        return "#b91c1c";
-      if (
-        key.includes("haven") ||
-        key.includes("sanctuary") ||
-        key.includes("domain") ||
-        key.includes("location")
-      )
-        return "#78350f";
-      if (
-        key.includes("faction") ||
-        key.includes("court") ||
-        key.includes("anarch") ||
-        key.includes("cell")
-      )
-        return "#801414";
-      if (
-        key.includes("hunter") ||
-        key.includes("inquisition") ||
-        key.includes("creature") ||
-        key.includes("dhampir")
-      )
-        return "#dc2626";
-      return "#991b1b";
-    }
+  const categoryColor = (id: string) =>
+    DEFAULT_CATEGORIES.find((c) => c.id === id)?.color ?? "#94a3b8";
 
-    if (!sublabel) return "#e6b450";
-    const key = sublabel.toLowerCase();
-    if (
-      key.includes("character") ||
-      key.includes("vampire") ||
-      key.includes("archmage")
-    )
-      return typeColor("character");
-    if (
-      key.includes("location") ||
-      key.includes("haven") ||
-      key.includes("city hub") ||
-      key.includes("manor")
-    )
-      return typeColor("location");
-    if (
-      key.includes("faction") ||
-      key.includes("court") ||
-      key.includes("guild")
-    )
-      return typeColor("faction");
-    if (key.includes("event") || key.includes("heirloom"))
-      return typeColor("event");
-    if (
-      key.includes("creature") ||
-      key.includes("hunter") ||
-      key.includes("dhampir")
-    )
-      return typeColor("creature");
-    return typeColor("note");
-  }
+  const PALETTES: Record<LandingPageGraphPalette, GraphPalette> = {
+    // Canonical vault graph colours, matching WelcomeGraphPreview.
+    default: {
+      categories: {
+        character: categoryColor("character"),
+        creature: categoryColor("creature"),
+        location: categoryColor("location"),
+        item: categoryColor("item"),
+        event: categoryColor("event"),
+        faction: categoryColor("faction"),
+        note: categoryColor("note"),
+      },
+      accent: "#e6b450",
+      selectedLabel: "#fde047",
+      shellBorder: "#1e293b",
+      shellBg: "#0b0f19",
+      canvasBg: "#0b0f19",
+      gridDot: "#e2e8f0",
+      dimEdge: "#475569",
+      webEdge: "#64748b",
+      badgeFill: "#0f172a",
+      badgeStroke: "#334155",
+      badgeText: "#cbd5e1",
+      panelBorder: "#1e293b",
+      panelBg: "#0f172a",
+      panelDivider: "#1e293b",
+      panelHighlight: "#fbbf24",
+      panelPositive: "#34d399",
+    },
+    // Dried-blood on near-black, for pages that reveal the graph as a dark layer.
+    oxblood: {
+      categories: {
+        character: "#b91c1c",
+        creature: "#dc2626",
+        location: "#78350f",
+        item: "#a16207",
+        event: "#9f1239",
+        faction: "#801414",
+        note: "#991b1b",
+      },
+      accent: "#f87171",
+      selectedLabel: "#fca5a5",
+      shellBorder: "#450a0a",
+      shellBg: "#0a0505",
+      canvasBg: "#0c0606",
+      gridDot: "#801414",
+      dimEdge: "#451a1a",
+      webEdge: "#451a1a",
+      badgeFill: "#140808",
+      badgeStroke: "#801414",
+      badgeText: "#f87171",
+      panelBorder: "#450a0a",
+      panelBg: "#120808",
+      panelDivider: "#451a1a",
+      panelHighlight: "#f87171",
+      panelPositive: "#f87171",
+    },
+  };
 
-  let selectAccent = $derived(isHorrorTheme ? "#f87171" : "#e6b450");
+  let p = $derived(PALETTES[palette] ?? PALETTES.default);
+
+  const getNodeColor = (step?: LandingPageGraphStep) =>
+    p.categories[step?.category ?? "note"];
+
+  let selectAccent = $derived(p.accent);
 
   // Spanned 2D viewBox (540 x 280) tuned for aspect ratio fill
   const POSITIONS = [
@@ -95,27 +126,23 @@
 
   let selectedIndex = $state(0);
   let activeNode = $derived(steps[selectedIndex] || steps[0]);
-  let activeColor = $derived(getNodeColor(activeNode?.sublabel));
+  let activeColor = $derived(getNodeColor(activeNode));
   let selPos = $derived(POSITIONS[selectedIndex % POSITIONS.length]);
 </script>
 
 <div
-  class="flex flex-col md:flex-row min-h-[26rem] sm:min-h-[30rem] md:min-h-[34rem] lg:min-h-[38rem] rounded-xl border {isHorrorTheme
-    ? 'border-red-950/80 bg-[#0a0505]'
-    : 'border-theme-border/80 bg-[#0b0f19]'} text-slate-100 overflow-hidden shadow-2xl"
+  class="flex flex-col md:flex-row min-h-[26rem] sm:min-h-[30rem] md:min-h-[34rem] lg:min-h-[38rem] border text-slate-100 overflow-hidden shadow-2xl"
+  style="border-color: {p.shellBorder}; background-color: {p.shellBg}; border-radius: {panelRadius}px;"
 >
   <!-- Dark High-Contrast SVG Graph Canvas -->
   <div
-    class="relative flex-1 min-h-[22rem] md:min-h-0 {isHorrorTheme
-      ? 'bg-[#0c0606]'
-      : 'bg-[#0b0f19]'} p-3"
+    class="relative flex-1 min-h-[22rem] md:min-h-0 p-3"
+    style="background-color: {p.canvasBg};"
   >
     <!-- Subtle background grid pattern -->
     <div
       class="absolute inset-0 opacity-20 pointer-events-none"
-      style="background-image: radial-gradient({isHorrorTheme
-        ? '#801414'
-        : '#e2e8f0'} 1.5px, transparent 1.5px); background-size: 28px 28px;"
+      style="background-image: radial-gradient({p.gridDot} 1.5px, transparent 1.5px); background-size: 28px 28px;"
     ></div>
 
     <svg
@@ -126,11 +153,7 @@
     >
       <!-- Peripheral interconnect lines (dim background web) -->
       {#if steps.length > 2}
-        <g
-          stroke={isHorrorTheme ? "#451a1a" : "#64748b"}
-          stroke-opacity="0.35"
-          stroke-width="2.5"
-        >
+        <g stroke={p.webEdge} stroke-opacity="0.35" stroke-width="2.5">
           <line
             x1={POSITIONS[1].cx}
             y1={POSITIONS[1].cy}
@@ -154,11 +177,7 @@
           {@const hub = POSITIONS[0]}
           {@const pos = POSITIONS[i % POSITIONS.length]}
           {@const isLinked = selectedIndex === 0 || selectedIndex === i}
-          {@const color = isLinked
-            ? selectAccent
-            : isHorrorTheme
-              ? "#451a1a"
-              : "#475569"}
+          {@const color = isLinked ? selectAccent : p.dimEdge}
 
           <line
             x1={hub.cx}
@@ -173,20 +192,21 @@
           {#if step.relation}
             {@const midX = (hub.cx + pos.cx) / 2}
             {@const midY = (hub.cy + pos.cy) / 2}
-            <!-- Relation label badge -->
+            <!-- Relation label badge, sized to its text so short relations
+                 don't crowd the hub or the neighbouring node labels. -->
+            {@const badgeW = Math.max(
+              54,
+              Math.round(step.relation.length * 7.4) + 18,
+            )}
             <rect
-              x={midX - 54}
+              x={midX - badgeW / 2}
               y={midY - 14}
-              width="108"
+              width={badgeW}
               height="28"
-              rx="7"
-              fill={isHorrorTheme ? "#140808" : "#0f172a"}
+              rx={badgeRadius}
+              fill={p.badgeFill}
               fill-opacity="0.95"
-              stroke={isLinked
-                ? selectAccent
-                : isHorrorTheme
-                  ? "#801414"
-                  : "#334155"}
+              stroke={isLinked ? selectAccent : p.badgeStroke}
               stroke-opacity={isLinked ? "1" : "0.6"}
               stroke-width="1.8"
             />
@@ -197,11 +217,7 @@
               font-size="12.5"
               font-weight="700"
               text-anchor="middle"
-              fill={isLinked
-                ? selectAccent
-                : isHorrorTheme
-                  ? "#f87171"
-                  : "#cbd5e1"}
+              fill={isLinked ? selectAccent : p.badgeText}
             >
               {step.relation}
             </text>
@@ -248,7 +264,7 @@
       <!-- Render Nodes -->
       {#each steps as step, i}
         {@const pos = POSITIONS[i % POSITIONS.length]}
-        {@const color = getNodeColor(step.sublabel)}
+        {@const color = getNodeColor(step)}
         {@const isHub = i === 0}
         {@const isSelected = i === selectedIndex}
         {@const r = isHub ? 38 : 28}
@@ -291,19 +307,17 @@
             stroke-width="3"
           />
 
-          <!-- High-Contrast Ultra-Legible Label Text -->
+          <!-- High-Contrast Ultra-Legible Label Text.
+               The hub label sits above its node: relation badges land at the
+               midpoint of every spoke, which crowds the space below the hub. -->
           <text
             x={pos.cx}
-            y={pos.cy + (isHub ? 58 : 48)}
+            y={pos.cy + (isHub ? -54 : 48)}
             font-family="var(--font-header, serif)"
             font-size={isHub ? "21" : "17"}
             font-weight="700"
             text-anchor="middle"
-            fill={isSelected
-              ? isHorrorTheme
-                ? "#fca5a5"
-                : "#fde047"
-              : "#ffffff"}
+            fill={isSelected ? p.selectedLabel : "#ffffff"}
             style="filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.95));"
           >
             {step.label}
@@ -316,16 +330,13 @@
   <!-- Entity Side Detail Panel -->
   {#if activeNode}
     <div
-      class="w-full md:w-60 shrink-0 border-t md:border-t-0 md:border-l {isHorrorTheme
-        ? 'border-red-950 bg-[#120808]'
-        : 'border-slate-800 bg-[#0f172a]'} p-5 text-left flex flex-col justify-between"
+      class="w-full md:w-60 shrink-0 border-t md:border-t-0 md:border-l p-5 text-left flex flex-col justify-between"
+      style="border-color: {p.panelBorder}; background-color: {p.panelBg};"
     >
       <div>
         <div
-          class="w-12 h-12 rounded-xl mb-3 flex items-center justify-center border {isHorrorTheme
-            ? 'border-red-900/40'
-            : 'border-slate-700'} shadow-md"
-          style="background-color: {activeColor}33"
+          class="w-12 h-12 mb-3 flex items-center justify-center border shadow-md"
+          style="background-color: {activeColor}33; border-color: {p.panelDivider}; border-radius: {panelRadius}px;"
         >
           <span
             class="icon-[lucide--network] w-6 h-6"
@@ -349,9 +360,8 @@
           class="space-y-2.5 text-xs font-body leading-relaxed text-slate-300"
         >
           <div
-            class="flex items-center justify-between border-b {isHorrorTheme
-              ? 'border-red-950/60'
-              : 'border-slate-800'} pb-2"
+            class="flex items-center justify-between border-b pb-2"
+            style="border-color: {p.panelDivider}"
           >
             <span class="text-slate-400">Category</span>
             <span class="text-white font-bold capitalize"
@@ -359,21 +369,17 @@
             >
           </div>
           <div
-            class="flex items-center justify-between border-b {isHorrorTheme
-              ? 'border-red-950/60'
-              : 'border-slate-800'} pb-2"
+            class="flex items-center justify-between border-b pb-2"
+            style="border-color: {p.panelDivider}"
           >
             <span class="text-slate-400">Vault Mode</span>
-            <span
-              class="{isHorrorTheme
-                ? 'text-red-400'
-                : 'text-emerald-400'} font-bold">Local-first</span
+            <span class="font-bold" style="color: {p.panelPositive}"
+              >Local-first</span
             >
           </div>
           <div
-            class="flex items-center gap-1.5 {isHorrorTheme
-              ? 'text-red-400'
-              : 'text-amber-400'} pt-1 font-mono text-[11px] font-bold"
+            class="flex items-center gap-1.5 pt-1 font-mono text-[11px] font-bold"
+            style="color: {p.panelHighlight}"
           >
             <span class="icon-[lucide--sparkles] w-4 h-4 shrink-0"></span>
             Interactive Web Node
@@ -382,15 +388,13 @@
       </div>
 
       <div
-        class="border-t {isHorrorTheme
-          ? 'border-red-950'
-          : 'border-slate-800'} pt-3 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between"
+        class="border-t pt-3 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between"
+        style="border-color: {p.panelBorder}"
       >
         <span>Inspect Node</span>
         <span
-          class="icon-[lucide--pointer] w-4 h-4 {isHorrorTheme
-            ? 'text-red-400'
-            : 'text-amber-400'}"
+          class="icon-[lucide--pointer] w-4 h-4"
+          style="color: {p.panelHighlight}"
         ></span>
       </div>
     </div>
