@@ -15,15 +15,22 @@
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
-  let themeBootstrap = $derived(
-    config.theme
-      ? "<" +
-          "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
-          JSON.stringify(config.theme) +
-          ");</" +
-          "script>"
-      : "",
-  );
+  let themeBootstrap = $derived.by(() => {
+    if (!config.theme) return "";
+
+    // Keep arbitrary config strings from closing the inline script element.
+    const serializedTheme = JSON.stringify(config.theme).replaceAll(
+      "<",
+      "\\u003C",
+    );
+    return (
+      "<" +
+      "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
+      serializedTheme +
+      ");</" +
+      "script>"
+    );
+  });
 
   const DEFAULT_SECTION_ORDER: LandingPageSection[] = [
     "hero",

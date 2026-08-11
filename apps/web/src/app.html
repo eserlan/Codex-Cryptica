@@ -134,6 +134,9 @@
 				if (t.texture) {
 					root.style.setProperty("--bg-texture", `url('/themes/${t.texture}')`);
 					root.style.setProperty("--bg-texture-overlay", `linear-gradient(${t.bg}80, ${t.bg}80), url('/themes/${t.texture}')`);
+				} else {
+					root.style.removeProperty("--bg-texture");
+					root.style.removeProperty("--bg-texture-overlay");
 				}
 			}
 
