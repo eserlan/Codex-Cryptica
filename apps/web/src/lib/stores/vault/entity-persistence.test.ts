@@ -37,6 +37,7 @@ function makeService(
   saveToDisk: any,
   entities: Record<string, any>,
   options: {
+    activeVaultId?: () => string | null;
     isContentLoaded?: (id: string) => boolean;
     loadContent?: (id: string) => Promise<void>;
     markContentLoaded?: (id: string) => void;
@@ -50,7 +51,7 @@ function makeService(
   };
   const svc = new EntityPersistenceService({
     repository,
-    activeVaultId: () => "v1",
+    activeVaultId: options.activeVaultId ?? (() => "v1"),
     isGuest: () => false,
     getSpecificVaultHandle: async () => ({}) as any,
     setStatus: () => {},
@@ -119,6 +120,64 @@ describe("EntityPersistenceService disk-write resilience", () => {
     // Crucially: the cache is NOT told the entity saved, so it can't mask the
     // on-disk loss the way it did before.
     expect(cacheSet).not.toHaveBeenCalled();
+  });
+});
+
+describe("EntityPersistenceService immediate batches", () => {
+  beforeEach(() => {
+    cacheSet.mockClear();
+  });
+
+  it("returns per-entity outcomes without waiting for the debounce", async () => {
+    const saveToDisk = vi.fn(
+      async (_handle: unknown, _vaultId: string, entity: any) => {
+        if (entity.id === "broken") throw new Error("disk full");
+      },
+    );
+    const entities = {
+      hero: { id: "hero", title: "Hero", connections: [] },
+      broken: { id: "broken", title: "Broken", connections: [] },
+    };
+    const { svc } = makeService(saveToDisk, entities);
+
+    const results = await svc.persistImmediately([
+      { entity: entities.hero as any },
+      { entity: entities.broken as any },
+    ]);
+
+    expect(results).toEqual([
+      { id: "hero", ok: true },
+      { id: "broken", ok: false },
+    ]);
+    expect(saveToDisk).toHaveBeenCalledTimes(4);
+    expect(cacheSet).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels stale entries when the active vault changes mid-batch", async () => {
+    let activeVaultId: string | null = "v1";
+    const saveToDisk = vi.fn(
+      async (_handle: unknown, _vaultId: string, entity: any) => {
+        if (entity.id === "hero") activeVaultId = "v2";
+      },
+    );
+    const entities = {
+      hero: { id: "hero", title: "Hero", connections: [] },
+      place: { id: "place", title: "Place", connections: [] },
+    };
+    const { svc } = makeService(saveToDisk, entities, {
+      activeVaultId: () => activeVaultId,
+    });
+
+    const results = await svc.persistImmediately(
+      [{ entity: entities.hero as any }, { entity: entities.place as any }],
+      1,
+    );
+
+    expect(results).toEqual([
+      { id: "hero", ok: true },
+      { id: "place", ok: false },
+    ]);
+    expect(saveToDisk).toHaveBeenCalledTimes(1);
   });
 });
 

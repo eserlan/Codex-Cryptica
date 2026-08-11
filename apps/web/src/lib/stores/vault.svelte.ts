@@ -6,6 +6,7 @@ import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
 import type { Entity, GuestChatTranscript } from "schema";
+import type { BulkMutationResult } from "./vault/bulk-results";
 import {
   saveTranscriptToDisk,
   loadTranscriptsForCharacterFromDisk,
@@ -592,8 +593,16 @@ export class VaultStore {
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
   }
+  bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    return this.entityStore.bulkUpdate(updates);
+  }
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
+  }
+  bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    return this.entityStore.bulkDelete(ids);
   }
   /**
    * Freeform relationship phrases like "Mother of" are redirected to a real

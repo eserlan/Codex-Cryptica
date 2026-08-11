@@ -78,11 +78,26 @@ interface Env {
   TEMPLATE_ADMIN_TOKEN?: string;
 }
 
-// Allowed origins for CORS
+/**
+ * Allowed origins for CORS — the single source of truth.
+ *
+ * One `oracle-proxy` Worker serves every environment (no `--env`, no
+ * `[env.*]` in wrangler.toml), so this list must cover them all. Setting
+ * `ALLOWED_ORIGINS` per deploy is what broke staging on 2026-08-11: the
+ * variable is authoritative when present, so a deploy carrying only the
+ * production origins cut staging off until the next deploy. Keeping the list
+ * here means every deploy is identical no matter who runs it or which
+ * environment they thought they were deploying.
+ *
+ * `ALLOWED_ORIGINS` still overrides this if set, as an escape hatch for
+ * locking the Worker down without a code change — it just isn't set normally.
+ *
+ * Only origins actually served belong here: an entry for a domain nobody owns
+ * would hand CORS access to whoever registers it next.
+ */
 const DEFAULT_ALLOWED_ORIGINS = [
-  "https://codex-cryptica.com",
   "https://codexcryptica.com",
-  "https://staging.codex-cryptica.com",
+  "https://www.codexcryptica.com",
   "https://staging.codexcryptica.com",
   "https://codex-cryptica.pages.dev",
   "http://localhost",

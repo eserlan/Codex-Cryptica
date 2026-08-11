@@ -251,6 +251,49 @@ describe("public-alien-race", () => {
       }
     });
 
+    it("gives culture a source outside biology, as the prompt demands", () => {
+      // The local path has to obey the same anti-determinism rule the prompt
+      // states, or we ship a generator whose own fallback breaks its rules.
+      for (let seed = 0; seed < 40; seed++) {
+        const culture = generateAlienRaceLocal(
+          {},
+          seededRng(seed),
+        ).content.split("## Culture & Social Structure")[1]!;
+        expect(culture).toContain("Not all of it comes from their biology");
+      }
+    });
+
+    it("closes the culture sentence on a word that can end a sentence", () => {
+      // A contingency ending on a stranded preposition is grammatical but
+      // reads badly at the end of an already-long sentence. Guards the whole
+      // pool, so a new entry cannot reintroduce it.
+      for (let seed = 0; seed < 200; seed++) {
+        const culture = generateAlienRaceLocal({}, seededRng(seed))
+          .content.split("## Culture & Social Structure")[1]!
+          .split("##")[0]
+          .trim();
+        expect(culture, `seed ${seed}`).not.toMatch(
+          /\b(of|to|with|for|by|from|about|into|onto|upon|than|and|but)\.$/i,
+        );
+      }
+    });
+
+    it("never asserts that everything follows from the environment", () => {
+      for (let seed = 0; seed < 40; seed++) {
+        const content = generateAlienRaceLocal({}, seededRng(seed)).content;
+        expect(content).not.toContain("Everything else about them follows");
+      }
+    });
+
+    it("includes an archetype who does not fit the dominant pattern", () => {
+      const archetypes = generateAlienRaceLocal({}).lore.split(
+        "## Typical Archetypes",
+      )[1]!;
+      expect(archetypes).toContain("The Unfitted");
+      // The conservative-vs-reformer archetype is one the prompt now bans.
+      expect(archetypes).not.toContain("The Traditionalist");
+    });
+
     it("draws at least one weakness from the chosen body plan", () => {
       const result = generateAlienRaceLocal({
         bodyPlan: "Winged biped",
@@ -345,6 +388,47 @@ describe("public-alien-race", () => {
       expect(userMessage).toContain("- Technology level: your choice");
       expect(userMessage).not.toMatch(/\bof your choosing\b/);
       expect(userMessage).not.toMatch(/\bat a a\b/);
+    });
+
+    it("forbids biological determinism while keeping the consequence rule", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain("Biology shapes; it does not determine");
+      expect(userMessage).toContain(
+        "Do not derive an entire civilisation from one adaptation",
+      );
+      // The two rules have to coexist, not replace one another.
+      expect(userMessage).toContain(
+        "every major biological or environmental difference must have consequences",
+      );
+      expect(userMessage).toContain(
+        "at least one major cultural feature must come from somewhere other than biology",
+      );
+    });
+
+    it("bans the recurring alien templates by name", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain("Vary the template");
+      for (const trope of [
+        "guild or artisan-collective societies",
+        "efficiency, optimisation or resource-thrift",
+        "entropy, heat-death or thermodynamics",
+        "communal or hive identity",
+        "biological inability to lie",
+        "conservative-versus-reformer axis",
+      ]) {
+        expect(userMessage, trope).toContain(trope);
+      }
+    });
+
+    it("stops the Core Alien Concept becoming an explanation for everything", () => {
+      const { userMessage } = buildAlienRacePrompt();
+      expect(userMessage).toContain(
+        "must not become the explanation for everything",
+      );
+      expect(userMessage).toContain("does not fit the dominant pattern");
+      expect(userMessage).toContain(
+        "at least one part of their life it simply does not govern",
+      );
     });
 
     it("asks for one Core Alien Concept carried through the draft", () => {
