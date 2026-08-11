@@ -8,6 +8,7 @@ import { EntityPersistenceService } from "./entity-persistence";
 import { EntityMutationService } from "./entity-mutations";
 import { EntityIndexMaintainer } from "./entity-index-maintainer.svelte";
 import { vaultEventBus } from "./events.svelte";
+import type { BulkMutationResult } from "./bulk-results";
 
 export interface EntityStoreDependencies {
   repository: VaultRepository;
@@ -307,8 +308,18 @@ export class EntityStore {
     return this.mutations.batchUpdate(updates);
   }
 
+  async bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    return this.mutations.bulkUpdate(updates);
+  }
+
   async deleteEntity(id: string) {
     return this.mutations.deleteEntity(id);
+  }
+
+  async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    return this.mutations.bulkDelete(ids);
   }
 
   async addConnection(

@@ -23,6 +23,7 @@ export const PERFORMANCE_OPERATIONS = [
   "table_sort",
   "table_filter",
   "entity_save",
+  "vault_bulk_mutation",
   "timeline_open",
 ] as const;
 
