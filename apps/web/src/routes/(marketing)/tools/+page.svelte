@@ -107,6 +107,13 @@
               icon: "icon-[lucide--orbit]",
             },
             {
+              href: "/generators/alien-race",
+              label: "Alien Race Generator",
+              summary:
+                "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+              icon: "icon-[lucide--dna]",
+            },
+            {
               href: "/generators/world",
               label: "Sci-Fi World Generator",
               summary:

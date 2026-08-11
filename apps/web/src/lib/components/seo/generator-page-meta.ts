@@ -25,7 +25,8 @@ export type ValidSlug =
   | "world"
   | "council-vote"
   | "secret-society"
-  | "star-system";
+  | "star-system"
+  | "alien-race";
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -668,6 +669,50 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     relatedLinks: [
       { href: "/generators/world", label: "Sci-Fi World Generator" },
       { href: "/generators/ship-generator", label: "Ship Generator" },
+      { href: "/generators/faction", label: "Faction Generator" },
+    ],
+  },
+  "alien-race": {
+    pageTitle:
+      "Alien Race Generator | Sci-Fi Alien Species Creator | Codex Cryptica",
+    metaDescription:
+      "Generate coherent alien species for sci-fi RPG campaigns — biology, homeworld, senses, culture, technology, weaknesses, naming conventions, and adventure hooks that all follow from each other.",
+    introTitle: "Alien Race Generator",
+    eyebrow: "Alien Species & Xenobiology Generator",
+    introText:
+      "Build an alien species that is genuinely non-human. Every biological and environmental trait changes something else — six limbs reach their tools and architecture, chemical speech changes what privacy means, a long life reshapes their politics.",
+    canonicalPath: "/generators/alien-race",
+    faqs: [
+      {
+        question: "What does the alien race generator create?",
+        answer:
+          "A campaign-ready alien species with a physical description, evolutionary origin, homeworld, biology and lifecycle, senses and communication, culture, technology, beliefs, relations with outsiders, internal factions, weaknesses, naming conventions, typical archetypes, and adventure hooks.",
+      },
+      {
+        question:
+          "How is this different from just describing an unusual-looking humanoid?",
+        answer:
+          "The generator is built around consequence: every major biological or environmental trait has to change something else about the species. A six-limbed species gets tools, architecture and social concepts that assume six limbs; a species that communicates chemically gets a different idea of privacy, deception and law. A trait that shows up in the biology section and nowhere else is treated as a failure.",
+      },
+      {
+        question: "What is the difference between Grounded and Freeform mode?",
+        answer:
+          "Grounded / Evolutionary keeps the species biologically plausible and clearly shaped by selection pressure from its environment. Freeform / Fantastic also allows exotic life — crystalline organisms, colonial swarm minds, plasma structures, and self-replicating machine lineages — while still requiring that strangeness to have consistent consequences.",
+      },
+      {
+        question: "Can I build a species to fit a world I already have?",
+        answer:
+          "Yes. Describe the world, system, or powers in the campaign context field and the species is built to fit it, keeping any names you introduce. Inside a Codex Cryptica vault, the in-app generator also grounds the species in your existing entities.",
+      },
+      {
+        question: "Does it work without an account?",
+        answer:
+          "Yes. Generate and copy alien species on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/star-system", label: "Star System Generator" },
+      { href: "/generators/world", label: "Sci-Fi World Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
     ],
   },
