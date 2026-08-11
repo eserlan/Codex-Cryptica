@@ -149,10 +149,14 @@ describe("GuestVaultStore", () => {
   it("should resolve local paths to proxy asset URLs based on manifest mapping", async () => {
     await store.loadBundle(mockBundle);
 
+    const expectedProxy =
+      import.meta.env?.VITE_ORACLE_PROXY_URL ||
+      "https://oracle-proxy.espen-erlandsen.workers.dev";
+
     // Existing asset in manifest
     const url1 = store.resolveImageUrl("images/world.webp");
     expect(url1).toBe(
-      "https://oracle-proxy.espen-erlandsen.workers.dev/api/published/snapshot-123/assets/images_world_webp",
+      `${expectedProxy}/api/published/snapshot-123/assets/images_world_webp`,
     );
 
     // Non-existing asset returns empty string
