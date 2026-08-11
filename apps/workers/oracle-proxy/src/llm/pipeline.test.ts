@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import worker from "../index";
 import { getModel, getOperationDefaults } from "./registry";
+import { respondPerProvider } from "./test-helpers";
 
 const env = {
   GEMINI_API_KEY: "test-gemini-key",
@@ -21,25 +22,6 @@ const post = (body: Record<string, unknown>) =>
     },
     body: JSON.stringify(body),
   });
-
-/**
- * Answers a request with the response shape the called provider expects, so a
- * test does not have to know which model the registry currently routes to.
- */
-function respondPerProvider(content = "hi") {
-  return vi.fn(async (url: string) =>
-    String(url).includes("chat/completions")
-      ? new Response(JSON.stringify({ choices: [{ message: { content } }] }), {
-          status: 200,
-        })
-      : new Response(
-          JSON.stringify({
-            candidates: [{ content: { parts: [{ text: content }] } }],
-          }),
-          { status: 200 },
-        ),
-  );
-}
 
 describe("LLM operation pipeline: end-to-end", () => {
   it("Scenario 1 — only selects a model whose registry entry declares structuredOutput for structured-generation", async () => {
