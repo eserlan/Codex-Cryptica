@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { createResolver } from "./resolver";
 import { getModel, getOperationDefaults, MODEL_REGISTRY } from "./registry";
 import worker from "../index";
+import { respondPerProvider } from "./test-helpers";
 import type { LlmRequest } from "./types";
 
 const baseRequest: LlmRequest = {
@@ -80,7 +81,12 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
     });
 
   it("Scenario 3: a fallback occurrence produces a ResolutionLogEntry recording intendedModelKey, modelKey, and fallbackReason", async () => {
-    const primaryEntry = MODEL_REGISTRY.find((m) => m.key === "luna-fast")!;
+    // Disable whichever model is currently the configured primary, so this
+    // keeps testing the fallback path rather than a specific provider.
+    const defaults = getOperationDefaults("freeform-generation", "public")!;
+    const primaryEntry = MODEL_REGISTRY.find(
+      (m) => m.key === defaults.defaultModelKey,
+    )!;
     const originalEnabled = primaryEntry.enabled;
     primaryEntry.enabled = false;
 
@@ -88,17 +94,10 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
     console.log = (msg: string) => logs.push(msg);
 
     try {
-      globalThis.fetch = vi.fn(
-        async () =>
-          new Response(
-            JSON.stringify({
-              candidates: [{ content: { parts: [{ text: "ok" }] } }],
-            }),
-            {
-              status: 200,
-            },
-          ),
-      ) as typeof fetch;
+      // Must answer per-provider: after a routing change the fallback may be
+      // the OpenAI-family model, and a Gemini-shaped body would be parsed to
+      // empty content while every assertion below still passed.
+      globalThis.fetch = respondPerProvider("ok") as typeof fetch;
 
       const response = await worker.fetch(
         post({
@@ -112,9 +111,13 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
 
       const logEntry = JSON.parse(logs[logs.length - 1]);
       expect(logEntry.outcome).toBe("fallback");
-      expect(logEntry.intendedModelKey).toBe("luna-fast");
-      expect(logEntry.modelKey).toBe("gemini-flash-lite");
+      expect(logEntry.intendedModelKey).toBe(defaults.defaultModelKey);
+      expect(logEntry.modelKey).toBe(defaults.fallbackModelKey);
       expect(logEntry.fallbackReason).toBeTruthy();
+      // Asserting the content is what gives this test teeth: without it, a
+      // provider/shape mismatch parses to "" and the log-field assertions
+      // above still pass.
+      expect((await response.json()).content).toBe("ok");
     } finally {
       primaryEntry.enabled = originalEnabled;
     }

@@ -61,28 +61,35 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
 
 export const OPERATION_DEFAULTS: OperationDefaults[] = [
   {
-    // Luna as the primary default for structured-generation (2026-08-05,
-    // verified live against real app traffic) — deliberate choice, not a
-    // leftover from testing. Gemini is the fallback.
-    // reasoningEffort "low" (2026-08-07): entity/NPC/faction drafting is
-    // constrained creative generation following an already-detailed prompt
-    // (schema, naming rules, banned-name list) — it needs enough depth to
-    // honor those constraints coherently, not genuine multi-step reasoning.
+    // Back to Gemini as the primary (2026-08-11). Luna held this from
+    // 2026-08-05 on output quality, but its latency is user-visible on the
+    // public generator pages — a logged-out visitor watching a spinner — and
+    // these are the app's largest prompts (the world generator's brief alone
+    // is ~3.5k tokens), where Luna also costs 3.3x more per input token.
+    // Luna is now the fallback, so this is a one-line revert if the quality
+    // difference turns out to matter more than the wait.
+    // reasoningEffort is retained for whenever Luna serves as fallback:
+    // entity/NPC/faction drafting is constrained creative generation
+    // following an already-detailed prompt (schema, naming rules,
+    // banned-name list) — it needs enough depth to honor those constraints
+    // coherently, not genuine multi-step reasoning.
     operation: "structured-generation",
     context: "public",
-    defaultModelKey: "luna-fast",
-    fallbackModelKey: "gemini-flash-lite",
+    defaultModelKey: "gemini-flash-lite",
+    fallbackModelKey: "luna-fast",
     reasoningEffort: "low",
   },
   {
-    // Luna as the primary default (2026-08-07) — Gemini remains the
-    // fallback for resilience, not removed.
-    // reasoningEffort "low": Oracle chat and creative synthesis/drafting
-    // stages are conversational, not deep reasoning.
+    // Back to Gemini as the primary (2026-08-11), same reasoning as above.
+    // This is the operation the public generators actually use: the client
+    // only sends "structured-generation" when it asks for a JSON mime type,
+    // which today is the language generator alone.
+    // reasoningEffort "low" applies when Luna serves as fallback: creative
+    // synthesis and drafting stages are conversational, not deep reasoning.
     operation: "freeform-generation",
     context: "public",
-    defaultModelKey: "luna-fast",
-    fallbackModelKey: "gemini-flash-lite",
+    defaultModelKey: "gemini-flash-lite",
+    fallbackModelKey: "luna-fast",
     reasoningEffort: "low",
   },
   {
