@@ -209,6 +209,11 @@ describe("GraphViewController", () => {
     controller.syncElements();
 
     expect(controller.isSuspended).toBe(false);
+    expect(controller.cy!.resize).toHaveBeenCalled();
+    expect(layoutSpy).toHaveBeenCalledWith({
+      reason: "Visibility Resume",
+      viewport: "preserve",
+    });
     expect(syncGraphElements).toHaveBeenCalled();
   });
 

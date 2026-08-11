@@ -257,7 +257,12 @@ export class GraphViewController {
       return;
     }
 
+    this.cy.resize();
     this.needsVisibilityReconcile = true;
+    void this.applyCurrentLayout({
+      reason: "Visibility Resume",
+      viewport: "preserve",
+    });
     this.deps.debugStore.log("[GraphView] Resuming rendering");
   };
 
