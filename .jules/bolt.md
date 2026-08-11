@@ -186,3 +186,18 @@
 
 **Learning:** Replacing an expensive `.filter()` operation on `Object.values(entities)` with an imperative loop on `allEntities` is a good performance pattern. However, you must first verify that `allEntities` actually exists on the production object being modified (e.g. `vault`). If it does exist in production, it is correct to update the test mock to include it. If it does not exist, adding it only to the test mock will cause a `TypeError: Cannot read properties of undefined` in production, leading to a crash.
 **Action:** When refactoring to use a pre-calculated property (like `allEntities`), explicitly verify its existence in the real production code (not just the mock) before changing the test. Do not artificially mask errors by adding missing properties to test mocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing inline array .filter().length with imperative counting in Svelte derived states
+
+**Learning:** In Svelte `$derived` blocks, chaining `.filter(...).length` on potentially large arrays creates an entirely new intermediate array in memory just to count its elements. This causes unnecessary garbage collection pressure and CPU overhead on every reactive update.
+**Action:** Replace inline `.filter(...).length` derivations with `$derived.by()` utilizing an imperative `for` loop that iterates over the original array and increments a counter based on the filter logic. This reduces the memory complexity of the count from O(N) to O(1).
