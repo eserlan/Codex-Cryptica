@@ -80,7 +80,12 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
     });
 
   it("Scenario 3: a fallback occurrence produces a ResolutionLogEntry recording intendedModelKey, modelKey, and fallbackReason", async () => {
-    const primaryEntry = MODEL_REGISTRY.find((m) => m.key === "luna-fast")!;
+    // Disable whichever model is currently the configured primary, so this
+    // keeps testing the fallback path rather than a specific provider.
+    const defaults = getOperationDefaults("freeform-generation", "public")!;
+    const primaryEntry = MODEL_REGISTRY.find(
+      (m) => m.key === defaults.defaultModelKey,
+    )!;
     const originalEnabled = primaryEntry.enabled;
     primaryEntry.enabled = false;
 
@@ -112,8 +117,8 @@ describe("US4 — fallback and failure are observable end-to-end", () => {
 
       const logEntry = JSON.parse(logs[logs.length - 1]);
       expect(logEntry.outcome).toBe("fallback");
-      expect(logEntry.intendedModelKey).toBe("luna-fast");
-      expect(logEntry.modelKey).toBe("gemini-flash-lite");
+      expect(logEntry.intendedModelKey).toBe(defaults.defaultModelKey);
+      expect(logEntry.modelKey).toBe(defaults.fallbackModelKey);
       expect(logEntry.fallbackReason).toBeTruthy();
     } finally {
       primaryEntry.enabled = originalEnabled;

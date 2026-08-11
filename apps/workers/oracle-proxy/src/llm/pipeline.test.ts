@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import worker from "../index";
-import { getModel } from "./registry";
+import { getModel, getOperationDefaults } from "./registry";
 
 const env = {
   GEMINI_API_KEY: "test-gemini-key",
@@ -21,6 +21,25 @@ const post = (body: Record<string, unknown>) =>
     },
     body: JSON.stringify(body),
   });
+
+/**
+ * Answers a request with the response shape the called provider expects, so a
+ * test does not have to know which model the registry currently routes to.
+ */
+function respondPerProvider(content = "hi") {
+  return vi.fn(async (url: string) =>
+    String(url).includes("chat/completions")
+      ? new Response(JSON.stringify({ choices: [{ message: { content } }] }), {
+          status: 200,
+        })
+      : new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: content }] } }],
+          }),
+          { status: 200 },
+        ),
+  );
+}
 
 describe("LLM operation pipeline: end-to-end", () => {
   it("Scenario 1 — only selects a model whose registry entry declares structuredOutput for structured-generation", async () => {
@@ -64,14 +83,7 @@ describe("LLM operation pipeline: end-to-end", () => {
   });
 
   it("Scenario 2 — selects the configured default when no override is given", async () => {
-    const fetchMock = vi.fn(
-      async () =>
-        new Response(
-          JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
-          { status: 200 },
-        ),
-    );
-    globalThis.fetch = fetchMock as typeof fetch;
+    globalThis.fetch = respondPerProvider() as typeof fetch;
 
     const response = await worker.fetch(
       post({
@@ -83,7 +95,11 @@ describe("LLM operation pipeline: end-to-end", () => {
     );
 
     const body = await response.json();
-    expect(body.modelKey).toBe("luna-fast");
+    // Read from the registry rather than naming a model: this test is about
+    // the default being honoured, not about which model is currently default.
+    expect(body.modelKey).toBe(
+      getOperationDefaults("freeform-generation", "public")!.defaultModelKey,
+    );
   });
 
   it("Scenario 3 — identical normalized response shape across a Gemini-served and an OpenAI/Luna-served request", async () => {
@@ -99,6 +115,9 @@ describe("LLM operation pipeline: end-to-end", () => {
       post({
         operation: "freeform-generation",
         messages: [{ role: "user", content: "hi" }],
+        // Both sides are pinned explicitly: this scenario is about the
+        // normalized shape matching across providers, not about defaults.
+        modelKeyOverride: "luna-fast",
       }),
       env,
       {} as ExecutionContext,
@@ -185,21 +204,23 @@ describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'impr
     let calls = 0;
     const fetchMock = vi.fn(async (url: string) => {
       calls++;
-      if (String(url).includes("chat/completions")) {
-        // Primary (Luna, the structured-generation default) always returns
-        // invalid JSON, so it should be retried once, then the pipeline
-        // falls back to the Gemini-served fallback.
-        return new Response(
-          JSON.stringify({
-            choices: [{ message: { content: "not valid json" } }],
-          }),
-          { status: 200 },
-        );
-      }
+      // The configured primary always returns invalid JSON, so it is retried
+      // once and then the pipeline falls back. Which provider is which comes
+      // from the registry, so this survives a routing change.
+      const isOpenAiCall = String(url).includes("chat/completions");
+      const primaryIsOpenAi =
+        getModel(
+          getOperationDefaults("structured-generation", "public")!
+            .defaultModelKey,
+        )!.provider === "openai";
+      const isPrimary = isOpenAiCall === primaryIsOpenAi;
+      const payload = isPrimary ? "not valid json" : '{"ok":true}';
       return new Response(
-        JSON.stringify({
-          candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }],
-        }),
+        JSON.stringify(
+          isOpenAiCall
+            ? { choices: [{ message: { content: payload } }] }
+            : { candidates: [{ content: { parts: [{ text: payload }] } }] },
+        ),
         { status: 200 },
       );
     });
@@ -217,7 +238,9 @@ describe("LLM operation pipeline: bounded call count (FR-009 — no silent 'impr
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.modelKey).toBe("gemini-flash-lite");
+    expect(body.modelKey).toBe(
+      getOperationDefaults("structured-generation", "public")!.fallbackModelKey,
+    );
     // 2 calls to the failing primary (initial + retry) + 1 to the fallback = 3.
     expect(calls).toBe(3);
     // Never a 4th call — no silent "improve the result" pass after a model
