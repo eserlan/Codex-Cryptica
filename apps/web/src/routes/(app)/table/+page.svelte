@@ -363,8 +363,9 @@
       isCommitting = true;
       try {
         const result = await vault.bulkDelete(targetIds);
+        const succeededIds = new Set(result.succeededIds);
         selectedIds = new Set(
-          [...selectedIds].filter((id) => !result.succeededIds.includes(id)),
+          [...selectedIds].filter((id) => !succeededIds.has(id)),
         );
         if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
           notificationStore.notify(

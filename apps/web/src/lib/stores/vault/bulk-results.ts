@@ -51,7 +51,7 @@ export async function runWithConcurrency<T>(
   tasks: (() => Promise<T>)[],
   concurrency = 4,
 ): Promise<T[]> {
-  const results: T[] = [];
+  const results: T[] = Array.from({ length: tasks.length });
   let nextIndex = 0;
   const workerCount = Math.max(
     1,
@@ -60,8 +60,8 @@ export async function runWithConcurrency<T>(
 
   const worker = async () => {
     while (nextIndex < tasks.length) {
-      const task = tasks[nextIndex++];
-      results.push(await task());
+      const index = nextIndex++;
+      results[index] = await tasks[index]();
     }
   };
 

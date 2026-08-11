@@ -292,11 +292,9 @@ export class EntityMutationService {
 
       if (mutationVaultId !== this.deps.activeVaultId()) {
         for (const id of Object.keys(appliedUpdates)) {
-          const result = persistedById.get(id);
           items.push({
             id,
-            status: result?.ok ? "cancelled" : "failed",
-            error: result?.error,
+            status: "cancelled",
           });
         }
         span.cancel(() => ({ changedEntityCount: 0 }));
@@ -548,7 +546,10 @@ export class EntityMutationService {
         this.deps.onEntityDelete?.(id);
       }
       for (const id of Object.keys(applied.modified)) {
-        if (survivorSuccess.has(id)) committed[id] = applied.modified[id];
+        committed[id] = applied.modified[id];
+        if (!survivorSuccess.has(id)) {
+          void this.deps.persistence.scheduleSave(applied.modified[id]);
+        }
       }
       this.entities = committed;
 

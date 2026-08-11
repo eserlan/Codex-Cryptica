@@ -30,6 +30,7 @@ describe("bulk mutation results", () => {
     const results = await runWithConcurrency(tasks, 3);
 
     expect(results).toHaveLength(100);
+    expect(results).toEqual(Array.from({ length: 100 }, (_, index) => index));
     expect(maximum).toBeLessThanOrEqual(3);
   });
 });

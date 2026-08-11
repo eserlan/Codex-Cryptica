@@ -276,7 +276,7 @@ describe("EntityStore", () => {
 
     const result = await store.bulkUpdate({
       hero: { type: "npc" },
-      place: { type: "location" },
+      place: { type: "landmark" },
       missing: { type: "note" },
     });
 
