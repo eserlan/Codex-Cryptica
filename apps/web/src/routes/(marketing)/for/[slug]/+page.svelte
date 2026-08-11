@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { base } from "$app/paths";
+  // Matches the marketing shell: a bare "/" base would make every link
+  // protocol-relative ("//generators/...").
+  const cleanBase = base === "/" ? "" : base;
   import type { PageData } from "./$types";
   import type {
     LandingPageConfig,
@@ -208,7 +211,7 @@
           <div class="grid gap-6 md:grid-cols-2">
             {#each config.recommendedTools as tool}
               <a
-                href="{base}{tool.href}"
+                href="{cleanBase}{tool.href}"
                 class="group block rounded-[var(--for-surface-radius)] border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50"
                 style:background-image="var(--bg-texture-overlay)"
               >
@@ -237,7 +240,7 @@
         <!-- Theme hub cross-link -->
         <section class="mb-16">
           <a
-            href="{base}/generators/{hub}"
+            href="{cleanBase}/generators/{hub}"
             class="group flex flex-col gap-3 rounded-[var(--for-surface-radius)] border border-theme-border bg-theme-surface p-6 shadow-md transition-all hover:border-theme-primary/50 sm:flex-row sm:items-center sm:justify-between sm:p-8"
             style:background-image="var(--bg-texture-overlay)"
           >
@@ -283,7 +286,7 @@
             </p>
           {/if}
           <a
-            href="{base}{config.cta.buttonHref}"
+            href="{cleanBase}{config.cta.buttonHref}"
             class="inline-block rounded-[var(--for-surface-radius)] bg-theme-primary px-10 py-4 font-header text-sm font-bold text-theme-bg transition-all hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] active:scale-95"
           >
             {config.cta.buttonText}
