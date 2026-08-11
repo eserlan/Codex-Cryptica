@@ -4,6 +4,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
   slug: "dungeons-and-dragons",
   kind: "system",
   theme: "fantasy",
+  hub: "fantasy",
   seo: {
     title: "Codex Cryptica for D&D 5e Campaign Management",
     description:

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HUB_THEME_SLUGS, type HubThemeSlug } from "../hub-themes";
 
 export const LandingPageKindSchema = z.enum(["system", "genre", "use-case"]);
 export type LandingPageKind = z.infer<typeof LandingPageKindSchema>;
@@ -71,6 +72,7 @@ export const LandingPageSectionSchema = z.enum([
   "useCases",
   "graph",
   "tools",
+  "hub",
   "cta",
   "disclaimer",
 ]);
@@ -91,6 +93,11 @@ export const LandingPageConfigSchema = z.object({
   kind: z.enum(["system", "genre"]),
   theme: z.string().optional(),
   surfaceStyle: LandingPageSurfaceStyleSchema.optional(),
+  /**
+   * Theme hub at /generators/[hub] this page belongs to. Drives the link out
+   * to the hub, and the hub's links back to its landing pages.
+   */
+  hub: z.enum(HUB_THEME_SLUGS as [HubThemeSlug, ...HubThemeSlug[]]).optional(),
   sectionOrder: z.array(LandingPageSectionSchema).optional(),
   seo: z.object({
     title: z.string(),

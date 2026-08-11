@@ -4,6 +4,7 @@ export const callOfCthulhu: LandingPageConfig = {
   slug: "call-of-cthulhu",
   kind: "system",
   theme: "horror",
+  hub: "cosmic-horror",
   seo: {
     title: "Codex Cryptica for Call of Cthulhu Campaign Management",
     description:

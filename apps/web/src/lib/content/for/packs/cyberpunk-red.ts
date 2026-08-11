@@ -4,6 +4,7 @@ export const cyberpunkRed: LandingPageConfig = {
   slug: "cyberpunk-red",
   kind: "system",
   theme: "cyberpunk",
+  hub: "cyberpunk",
   seo: {
     title: "Codex Cryptica for Cyberpunk RED Campaign Management",
     description:

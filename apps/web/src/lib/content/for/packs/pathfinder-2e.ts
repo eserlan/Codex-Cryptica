@@ -4,6 +4,7 @@ export const pathfinder2e: LandingPageConfig = {
   slug: "pathfinder-2e",
   kind: "system",
   theme: "fantasy",
+  hub: "fantasy",
   seo: {
     title: "Codex Cryptica for Pathfinder 2e Campaign Management",
     description:
