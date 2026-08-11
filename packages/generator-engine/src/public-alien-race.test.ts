@@ -216,6 +216,18 @@ describe("public-alien-race", () => {
       expect(culture.toLowerCase()).toContain("centuries");
     });
 
+    it("uses the right indefinite article for every technology level", () => {
+      for (const technologyLevel of alienRaceConfig.technologyLevels) {
+        const technology = generateAlienRaceLocal({
+          technologyLevel,
+        }).content.split("## Technology")[1]!;
+        const expected = /^[aeiou]/i.test(technologyLevel) ? "an" : "a";
+        expect(technology, technologyLevel).toContain(
+          `At ${expected} ${technologyLevel.toLowerCase()} level`,
+        );
+      }
+    });
+
     it("draws at least one weakness from the chosen body plan", () => {
       const result = generateAlienRaceLocal({
         bodyPlan: "Winged biped",

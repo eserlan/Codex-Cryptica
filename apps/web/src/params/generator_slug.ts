@@ -28,6 +28,7 @@ const validSlugs = new Set([
   "council-vote",
   "secret-society",
   "star-system",
+  "alien-race",
   "random",
 ]);
 

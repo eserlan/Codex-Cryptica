@@ -695,6 +695,13 @@ const capitalise = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1);
 
 /**
+ * Indefinite article for a following word. The technology levels are the only
+ * place this matters — "an industrial level" but "a pre-industrial level" —
+ * and a first-letter vowel check covers every value in that pool.
+ */
+const article = (word: string) => (/^[aeiou]/i.test(word.trim()) ? "an" : "a");
+
+/**
  * Resolves a trait against its pool, honouring the generation mode: an exotic
  * trait is only reachable in Freeform mode, but an explicit user choice is
  * always respected (the form can offer a custom value, and a user who typed
@@ -918,7 +925,7 @@ export function generateAlienRaceLocal(
     `They organise themselves as ${resolved.socialOrganisation.toLowerCase()}. ${capitalise(lifespan.politics)}. Their body plan shows here too: ${bodyPlan.consequence}.`,
     "",
     "## Technology",
-    `At an ${resolved.technologyLevel.toLowerCase()} level, their engineering shows its origins plainly: ${bodyPlan.technology}. Their acknowledged speciality is ${environment.speciality}.`,
+    `At ${article(resolved.technologyLevel)} ${resolved.technologyLevel.toLowerCase()} level, their engineering shows its origins plainly: ${bodyPlan.technology}. Their acknowledged speciality is ${environment.speciality}.`,
     "",
     "## Beliefs & Worldview",
     `${capitalise(psychology.worldview)}. What another species would call faith, they treat as an accurate description of how the world has always behaved for them.`,

@@ -30,6 +30,7 @@
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
+  import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -54,6 +55,7 @@
     adventureConfig,
     worldConfig,
     starSystemConfig,
+    alienRaceConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -74,6 +76,7 @@
     mapShipGenreToTheme,
     mapWorldGenreToTheme,
     mapStarSystemGenreToTheme,
+    mapAlienRaceGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -392,6 +395,28 @@
     campaignContext: "",
   });
 
+  let alienRace = $state<{
+    genre: string;
+    generationMode: string;
+    homeEnvironment: string;
+    bodyPlan: string;
+    psychology: string;
+    socialOrganisation: string;
+    technologyLevel: string;
+    relationToOutsiders: string;
+    campaignContext: string;
+  }>({
+    genre: alienRaceConfig.genres[0],
+    generationMode: alienRaceConfig.generationModes[0],
+    homeEnvironment: alienRaceConfig.homeEnvironments[0],
+    bodyPlan: alienRaceConfig.bodyPlans[0],
+    psychology: alienRaceConfig.psychologies[0],
+    socialOrganisation: alienRaceConfig.socialOrganisations[0],
+    technologyLevel: alienRaceConfig.technologyLevels[0],
+    relationToOutsiders: alienRaceConfig.relationsToOutsiders[0],
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
@@ -443,6 +468,8 @@
     else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
     else if (slug === "star-system")
       activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    else if (slug === "alien-race")
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
     else if (
       slug === "adventure-generator" ||
@@ -571,6 +598,17 @@
       activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
       return;
     }
+    if (slug === "alien-race") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (alienRaceConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        alienRace.genre = hubGenre;
+      }
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
+      return;
+    }
     if (slug === "news-sheet-generator") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
@@ -690,6 +728,12 @@
     "star-system": (useAI) =>
       generatorEngine.generateStarSystem({
         ...starSystem,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "alien-race": (useAI) =>
+      generatorEngine.generateAlienRace({
+        ...alienRace,
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
@@ -977,6 +1021,22 @@
         bind:campaignContext={starSystem.campaignContext}
         onGenreChange={(genre) => {
           activeTheme = mapStarSystemGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "alien-race"}
+      <AlienRaceFormFields
+        bind:genre={alienRace.genre}
+        bind:generationMode={alienRace.generationMode}
+        bind:homeEnvironment={alienRace.homeEnvironment}
+        bind:bodyPlan={alienRace.bodyPlan}
+        bind:psychology={alienRace.psychology}
+        bind:socialOrganisation={alienRace.socialOrganisation}
+        bind:technologyLevel={alienRace.technologyLevel}
+        bind:relationToOutsiders={alienRace.relationToOutsiders}
+        bind:campaignContext={alienRace.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapAlienRaceGenreToTheme(genre);
         }}
         onSurprise={trigger}
       />
