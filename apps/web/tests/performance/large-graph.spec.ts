@@ -14,6 +14,9 @@ const EDGE_COUNT = 9000;
 const AVG_FRAME_BUDGET_MS = 200;
 const P90_FRAME_BUDGET_MS = 350;
 const MAX_FRAME_BUDGET_MS = 1500;
+const EDIT_RESYNC_BUDGET_MS = 250;
+const LOD_CROSSING_BUDGET_MS = 1500;
+const PERF_MODE_IMPROVEMENT_RATIO = 0.95;
 
 type LargeGraphMetrics = {
   seedMs: number;
@@ -27,6 +30,9 @@ type LargeGraphMetrics = {
   maxViewportFrameMs: number;
   avgViewportFrameMs: number;
   p90ViewportFrameMs: number;
+  lodCrossingFrameMs: number[];
+  perfOnAvgViewportFrameMs: number;
+  perfOffAvgViewportFrameMs: number;
 };
 
 async function seedLargeVault(page: Page) {
@@ -204,6 +210,32 @@ test.describe("large graph performance", () => {
       { timeout: 60000 },
     );
 
+    const editResync = await page.evaluate(async () => {
+      const graph = (window as any).graph;
+      const vault = (window as any).vault;
+      if (!graph || !vault) {
+        throw new Error("Graph or vault is not available for edit measurement");
+      }
+
+      const beforeElements = graph.elements;
+      const beforeStructureVersion = graph.graphStructureVersion;
+      const start = performance.now();
+      await vault.updateEntity("large-node-42", {
+        content: "Deterministic content-only performance edit.",
+      });
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+
+      return {
+        elapsedMs: performance.now() - start,
+        graphElementsPreserved: graph.elements === beforeElements,
+        structureVersionPreserved:
+          graph.graphStructureVersion === beforeStructureVersion,
+      };
+    });
+    console.log(`Large graph edit resync: ${JSON.stringify(editResync)}`);
+
     const metrics = await page.evaluate(
       async ({ seedMs, readyMs }) => {
         const graph = (window as any).graph;
@@ -231,14 +263,49 @@ test.describe("large graph performance", () => {
 
         const center = () => ({ x: cy.width() / 2, y: cy.height() / 2 });
 
+        const measureViewport = async () => {
+          const frameTimes: number[] = [];
+          for (let i = 0; i < 36; i++) {
+            const start = performance.now();
+            cy.panBy({
+              x: i % 2 === 0 ? 6 : -6,
+              y: i % 3 === 0 ? 4 : -4,
+            });
+            cy.zoom({
+              level: cy.zoom() * (i % 2 === 0 ? 1.002 : 0.998),
+              renderedPosition: center(),
+            });
+            await nextFrame();
+            if (i >= 6) {
+              frameTimes.push(performance.now() - start);
+            }
+          }
+
+          const totalFrameTime = frameTimes.reduce((sum, ms) => sum + ms, 0);
+          const sortedFrames = [...frameTimes].sort((a, b) => a - b);
+          const p90Index = Math.min(
+            sortedFrames.length - 1,
+            Math.floor(sortedFrames.length * 0.9),
+          );
+
+          return {
+            maxViewportFrameMs: Math.max(...frameTimes),
+            avgViewportFrameMs: totalFrameTime / frameTimes.length,
+            p90ViewportFrameMs: sortedFrames[p90Index],
+          };
+        };
+
         // Warm up: sweep zoom across every LOD tier (low/medium/high) before
         // measuring, so the one-off style recompute when crossing a tier
-        // boundary happens here rather than mid-measurement. The measurement
-        // loop below then reflects steady-state continuous interaction.
+        // boundary is measured separately, and the loop below reflects
+        // steady-state continuous interaction.
         const baseZoom = cy.zoom();
-        for (const level of [baseZoom * 0.25, baseZoom * 4, baseZoom]) {
+        const lodCrossingFrameMs: number[] = [];
+        for (const level of [baseZoom * 0.1, baseZoom * 0.35, baseZoom]) {
+          const start = performance.now();
           cy.zoom({ level, renderedPosition: center() });
           await nextFrame();
+          lodCrossingFrameMs.push(performance.now() - start);
         }
         // Extra JIT/raster settling frames.
         for (let i = 0; i < 4; i++) {
@@ -246,29 +313,38 @@ test.describe("large graph performance", () => {
           await nextFrame();
         }
 
-        const frameTimes: number[] = [];
-        for (let i = 0; i < 36; i++) {
-          const start = performance.now();
-          cy.panBy({
-            x: i % 2 === 0 ? 6 : -6,
-            y: i % 3 === 0 ? 4 : -4,
-          });
-          cy.zoom({
-            level: cy.zoom() * (i % 2 === 0 ? 1.002 : 0.998),
-            renderedPosition: center(),
-          });
-          await nextFrame();
-          if (i >= 6) {
-            frameTimes.push(performance.now() - start);
-          }
-        }
+        const perfOn = await measureViewport();
 
-        const totalFrameTime = frameTimes.reduce((sum, ms) => sum + ms, 0);
-        const sortedFrames = [...frameTimes].sort((a, b) => a - b);
-        const p90Index = Math.min(
-          sortedFrames.length - 1,
-          Math.floor(sortedFrames.length * 0.9),
+        // Keep the same 1,600-node Cytoscape instance and remove only the
+        // performance stylesheet rules and renderer hints. This makes the
+        // comparison detect the optimization becoming inert, rather than
+        // comparing different fixture sizes or different graph topology.
+        const performanceStyle = cy.style().json();
+        const lastBaseRule = new Map<string, number>();
+        performanceStyle.forEach((rule: any, index: number) => {
+          if (rule.selector === "node" || rule.selector === "edge") {
+            lastBaseRule.set(rule.selector, index);
+          }
+        });
+        const normalStyle = performanceStyle.filter(
+          (rule: any, index: number) =>
+            index !== lastBaseRule.get("node") &&
+            index !== lastBaseRule.get("edge") &&
+            rule.selector !== "node[isImportant]" &&
+            rule.selector !== "node:selected, .neighborhood",
         );
+        const renderer = cy.renderer();
+        cy.style(normalStyle);
+        renderer.hideEdgesOnViewport = false;
+        renderer.motionBlurEnabled = false;
+        renderer.motionBlur = false;
+        await nextFrame();
+        const perfOff = await measureViewport();
+
+        cy.style(performanceStyle);
+        renderer.hideEdgesOnViewport = true;
+        renderer.motionBlurEnabled = true;
+        renderer.motionBlur = true;
 
         return {
           seedMs,
@@ -279,15 +355,18 @@ test.describe("large graph performance", () => {
           graphEdgeCount,
           cyNodeCount: cy.nodes().length,
           cyEdgeCount: cy.edges().length,
-          maxViewportFrameMs: Math.max(...frameTimes),
-          avgViewportFrameMs: totalFrameTime / frameTimes.length,
-          p90ViewportFrameMs: sortedFrames[p90Index],
+          ...perfOn,
+          lodCrossingFrameMs,
+          perfOnAvgViewportFrameMs: perfOn.avgViewportFrameMs,
+          perfOffAvgViewportFrameMs: perfOff.avgViewportFrameMs,
         } satisfies LargeGraphMetrics;
       },
       { seedMs, readyMs },
     );
 
-    console.log(`Large graph metrics: ${JSON.stringify(metrics, null, 2)}`);
+    console.log(
+      `Large graph metrics: ${JSON.stringify({ metrics, editResync }, null, 2)}`,
+    );
 
     expect(metrics.vaultNodeCount).toBe(NODE_COUNT);
     expect(metrics.fullEdgeCount).toBe(EDGE_COUNT);
@@ -302,6 +381,15 @@ test.describe("large graph performance", () => {
     expect(metrics.avgViewportFrameMs).toBeLessThan(AVG_FRAME_BUDGET_MS);
     expect(metrics.p90ViewportFrameMs).toBeLessThan(P90_FRAME_BUDGET_MS);
     expect(metrics.maxViewportFrameMs).toBeLessThan(MAX_FRAME_BUDGET_MS);
+    expect(editResync.elapsedMs).toBeLessThan(EDIT_RESYNC_BUDGET_MS);
+    expect(editResync.graphElementsPreserved).toBe(true);
+    expect(editResync.structureVersionPreserved).toBe(true);
+    expect(Math.max(...metrics.lodCrossingFrameMs)).toBeLessThan(
+      LOD_CROSSING_BUDGET_MS,
+    );
+    expect(metrics.perfOnAvgViewportFrameMs).toBeLessThan(
+      metrics.perfOffAvgViewportFrameMs * PERF_MODE_IMPROVEMENT_RATIO,
+    );
   });
 
   test("large vaults default to a culled focus view around the selection", async ({
