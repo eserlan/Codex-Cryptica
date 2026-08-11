@@ -16,6 +16,7 @@ export const PERFORMANCE_OPERATIONS = [
   "graph_sync_render_ready",
   "graph_select",
   "graph_focus_depth_change",
+  "graph_visibility_suspend",
   "explorer_open",
   "explorer_filter",
   "table_open",

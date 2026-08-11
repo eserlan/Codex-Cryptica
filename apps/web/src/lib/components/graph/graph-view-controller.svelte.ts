@@ -34,6 +34,12 @@ import {
   browserPerformanceRecorder,
 } from "$lib/services/performance/browser-performance-capture";
 import type { PerformanceOperationHandle } from "@codex/performance-observability";
+import {
+  resolveGraphVisibility,
+  type GraphVisibilityInputs,
+  type GraphVisibilityReason,
+  type GraphVisibilitySnapshot,
+} from "./graph-visibility";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
@@ -100,6 +106,15 @@ export class GraphViewController {
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
   selectedCount = $state(0);
+  visibility = $state<GraphVisibilitySnapshot>(
+    resolveGraphVisibility({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    }),
+  );
+  isSuspended = $derived(this.visibility.suspended);
+  requiresReinitialization = $state(false);
 
   hoveredEntityId = $state<string | null>(null);
   hoverPosition = $state<{ x: number; y: number } | null>(null);
@@ -165,6 +180,9 @@ export class GraphViewController {
   private savedCoordsDegenerate = false;
 
   private isDestroyed = false;
+  private visibilityGeneration = 0;
+  private needsVisibilityReconcile = false;
+  private suspendSpan: PerformanceOperationHandle | null = null;
 
   pendingSearchFocus: {
     entityId: string;
@@ -184,6 +202,89 @@ export class GraphViewController {
     this.selectedId = options.selectedId;
     this.deps = deps;
   }
+
+  setVisibilityInputs = (inputs: GraphVisibilityInputs) => {
+    const next = resolveGraphVisibility(inputs);
+    if (
+      next.suspended === this.visibility.suspended &&
+      next.reason === this.visibility.reason &&
+      next.documentVisible === this.visibility.documentVisible &&
+      next.surfaceCovered === this.visibility.surfaceCovered &&
+      next.containerIntersecting === this.visibility.containerIntersecting
+    ) {
+      return;
+    }
+
+    const wasSuspended = this.visibility.suspended;
+    this.visibility = next;
+    if (!wasSuspended && next.suspended) {
+      this.suspend(next.reason ?? "offscreen");
+    } else if (wasSuspended && !next.suspended) {
+      this.resume();
+    }
+  };
+
+  private suspend = (reason: Exclude<GraphVisibilityReason, null>) => {
+    this.visibilityGeneration++;
+    this.elementSyncGeneration++;
+    this.needsVisibilityReconcile = true;
+    this.suspendSpan = browserPerformanceRecorder.start(
+      "graph_visibility_suspend",
+    );
+    this.deps.debugStore.log(`[GraphView] Suspended rendering: ${reason}`);
+    this.isLayoutRunning = false;
+    this.suppressFocusZoom = false;
+    this.layoutManager?.stop();
+    this.cy?.stop();
+    this.clearRenderReadyMeasurement();
+    this.clearNodeSelectTimer();
+    this.clearVisibilityTimers();
+  };
+
+  private resume = () => {
+    this.visibilityGeneration++;
+    this.suspendSpan?.complete(() => ({
+      entityCount: this.deps.graph.stats.nodeCount,
+    }));
+    this.suspendSpan = null;
+
+    if (!this.cy || this.cy.destroyed()) {
+      this.requiresReinitialization = true;
+      this.cy = undefined;
+      this.layoutManager = undefined;
+      this.imageManager = undefined;
+      this.loadPhase = "idle";
+      return;
+    }
+
+    this.needsVisibilityReconcile = true;
+    this.deps.debugStore.log("[GraphView] Resuming rendering");
+  };
+
+  consumeReinitializationRequest = () => {
+    if (!this.requiresReinitialization) return false;
+    this.requiresReinitialization = false;
+    return true;
+  };
+
+  private clearVisibilityTimers = () => {
+    if (this.focusZoomTimer) {
+      clearTimeout(this.focusZoomTimer);
+      this.focusZoomTimer = null;
+    }
+    if (this.focusRebaselineTimer) {
+      clearTimeout(this.focusRebaselineTimer);
+      this.focusRebaselineTimer = null;
+    }
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+    if (this.slashGuardTimer) {
+      clearTimeout(this.slashGuardTimer);
+      this.slashGuardTimer = null;
+    }
+  };
 
   init = async (container: HTMLElement, graphStyle: any) => {
     this.container = container;
@@ -362,6 +463,9 @@ export class GraphViewController {
 
   destroy = () => {
     this.isDestroyed = true;
+    this.visibilityGeneration++;
+    this.suspendSpan?.cancel();
+    this.suspendSpan = null;
     window.removeEventListener("resize", this.handleResize);
     if (this.resizeTimer) {
       clearTimeout(this.resizeTimer);
@@ -424,7 +528,12 @@ export class GraphViewController {
    * changes, explicit Fit/Redraw, and orientation changes still fit.
    */
   applyCurrentLayout = async (req: LayoutRequest) => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (!this.layoutManager) return;
+    const layoutGeneration = this.visibilityGeneration;
     const span = browserPerformanceRecorder.start("graph_sync_layout");
 
     const isInitial = req.isInitial ?? false;
@@ -461,6 +570,11 @@ export class GraphViewController {
           isGuest: this.deps.vault.isGuest,
           isMobile: this.deps.layoutUIStore.isMobile,
           onLayoutStart: () => {
+            if (
+              layoutGeneration !== this.visibilityGeneration ||
+              this.isSuspended
+            )
+              return;
             this.isLayoutRunning = true;
           },
           onLayoutComputed: (ms) => {
@@ -470,6 +584,11 @@ export class GraphViewController {
             });
           },
           onLayoutStop: () => {
+            if (
+              layoutGeneration !== this.visibilityGeneration ||
+              this.isSuspended
+            )
+              return;
             this.isLayoutRunning = false;
             if (isInitial) {
               this.loadPhase = "ready";
@@ -492,6 +611,13 @@ export class GraphViewController {
             }
           },
           onPositionsUpdated: (updates, meta) => {
+            if (
+              layoutGeneration !== this.visibilityGeneration ||
+              this.isSuspended
+            ) {
+              this.needsVisibilityReconcile = true;
+              return;
+            }
             // Never bulk-persist positions from a focus-view (culled) solve. The
             // rendered set is a partial view of the vault, so its solved layout
             // isn't a meaningful full-graph layout to save — and persisting it is
@@ -521,6 +647,11 @@ export class GraphViewController {
           },
         },
       );
+      if (layoutGeneration !== this.visibilityGeneration || this.isSuspended) {
+        this.needsVisibilityReconcile = true;
+        span.cancel();
+        return;
+      }
       span.complete(() => this.graphMeasurementDimensions());
     } catch (error) {
       span.fail("unexpected", () => this.graphMeasurementDimensions());
@@ -567,8 +698,11 @@ export class GraphViewController {
   };
 
   private handleResize = () => {
+    if (this.isSuspended) return;
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
     this.resizeTimer = window.setTimeout(() => {
+      this.resizeTimer = null;
+      if (this.isSuspended) return;
       if (this.cy) {
         this.cy.resize();
         const width = this.cy.width();
@@ -607,9 +741,15 @@ export class GraphViewController {
 
   // Sync Logic
   syncElements = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (this.cy && this.deps.graph.elements) {
       const syncGeneration = ++this.elementSyncGeneration;
       const syncCy = this.cy;
+      const visibilityGeneration = this.visibilityGeneration;
+      this.needsVisibilityReconcile = false;
       // When the element set changed because zoom changed the focus detail level
       // (not a real entity edit), keep the user's camera — the depth change was
       // driven by their zoom, so refitting would fight it.
@@ -658,7 +798,9 @@ export class GraphViewController {
           // focus depth or a switched vault with stale membership data.
           if (
             syncGeneration !== this.elementSyncGeneration ||
-            this.cy !== syncCy
+            this.cy !== syncCy ||
+            visibilityGeneration !== this.visibilityGeneration ||
+            this.isSuspended
           )
             return;
           if (focusDepthChanged) req.viewport = "preserve";
@@ -677,6 +819,7 @@ export class GraphViewController {
   private handleFocusZoom = () => this.scheduleFocusSettle();
 
   private scheduleFocusSettle = () => {
+    if (this.isSuspended) return;
     if (this.focusZoomTimer) clearTimeout(this.focusZoomTimer);
     this.focusZoomTimer = window.setTimeout(
       this.settleFocusZoom,
@@ -686,6 +829,7 @@ export class GraphViewController {
 
   private settleFocusZoom = () => {
     this.focusZoomTimer = null;
+    if (this.isSuspended) return;
     const cy = this.cy;
     if (!cy || cy.destroyed() || !this.deps.graph.focusViewActive) return;
     // Ignore zoom while a programmatic fit is in flight.
@@ -727,12 +871,20 @@ export class GraphViewController {
    * have streamed in and `isLargeGraph` settles.
    */
   syncRenderHints = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (this.cy) {
       applyLargeGraphRenderHints(this.cy, this.deps.graph.isLargeGraph);
     }
   };
 
   syncImages = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (this.cy && this.deps.graph.elements && this.imageManager) {
       untrack(() => {
         this.imageManager!.sync({
@@ -811,6 +963,10 @@ export class GraphViewController {
   };
 
   reconcileLoadState = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     const { status, allEntities, activeVaultId } = this.deps.vault;
 
     // A vault switch under a reused controller never reactively empties the
@@ -874,6 +1030,7 @@ export class GraphViewController {
   };
 
   private scheduleSlashGuard = () => {
+    if (this.isSuspended) return;
     if (this.slashGuardTimer) clearTimeout(this.slashGuardTimer);
     this.slashGuardTimer = window.setTimeout(() => {
       this.slashGuardTimer = null;
@@ -882,6 +1039,7 @@ export class GraphViewController {
   };
 
   private recoverFromSlashIfNeeded = () => {
+    if (this.isSuspended) return;
     if (this.slashRecoveryDone || !this.cy || this.cy.destroyed()) return;
     if (this.deps.vault.status === "loading") return;
     if (!this.savedCoordsDegenerate) return;
@@ -899,6 +1057,10 @@ export class GraphViewController {
   };
 
   handleModeChange = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (
       this.cy &&
       (this.loadPhase === "finalized" || this.loadPhase === "ready")

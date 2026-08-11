@@ -13,9 +13,16 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { LayoutRequest } from "graph-engine";
 
-  let { cy, isLayoutRunning, onApplyLayout, selectedCount } = $props<{
+  let {
+    cy,
+    isLayoutRunning,
+    isSuspended = false,
+    onApplyLayout,
+    selectedCount,
+  } = $props<{
     cy: Core | undefined;
     isLayoutRunning: boolean;
+    isSuspended?: boolean;
     onApplyLayout: (req: LayoutRequest) => Promise<void>;
     selectedCount: number;
   }>();
@@ -309,6 +316,7 @@
         width={192}
         height={128}
         isExpanded={showMinimap}
+        {isSuspended}
       />
     </div>
   {/if}

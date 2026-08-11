@@ -63,6 +63,7 @@ vi.mock("graph-engine", () => {
     height: vi.fn().mockReturnValue(100),
     resize: vi.fn(),
     animate: vi.fn().mockResolvedValue(undefined),
+    stop: vi.fn(),
     center: vi.fn(),
     style: vi.fn(),
     destroyed: vi.fn().mockReturnValue(false),
@@ -172,6 +173,63 @@ describe("GraphViewController", () => {
 
     expect(destroySpy).toHaveBeenCalled();
     expect(controller.cy).toBeUndefined();
+  });
+
+  it("suspends rendering work and resumes the latest graph state", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+    deps.graph.elements = [{ group: "nodes", data: { id: "node-1" } }];
+    controller.syncElements();
+    const staleOptions = vi.mocked(syncGraphElements).mock.calls.at(-1)?.[1];
+
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: true,
+      containerIntersecting: true,
+    });
+
+    expect(controller.isSuspended).toBe(true);
+    expect(controller.cy!.stop).toHaveBeenCalled();
+    expect(controller.layoutManager!.stop).toHaveBeenCalled();
+    vi.mocked(syncGraphElements).mockClear();
+    const layoutSpy = vi.spyOn(controller, "applyCurrentLayout");
+    staleOptions?.onLayoutUpdate?.({
+      reason: "Elements Update",
+      isForced: false,
+    });
+    expect(layoutSpy).not.toHaveBeenCalled();
+    controller.syncElements();
+    expect(syncGraphElements).not.toHaveBeenCalled();
+
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+    controller.syncElements();
+
+    expect(controller.isSuspended).toBe(false);
+    expect(syncGraphElements).toHaveBeenCalled();
+  });
+
+  it("requests reinitialization when the preserved Cytoscape instance is invalid", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+    vi.mocked(controller.cy!.destroyed).mockReturnValueOnce(true);
+
+    controller.setVisibilityInputs({
+      documentVisible: false,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+
+    expect(controller.requiresReinitialization).toBe(true);
+    expect(controller.consumeReinitializationRequest()).toBe(true);
   });
 
   it("should apply focus when selectedId changes", async () => {
