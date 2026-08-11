@@ -41,6 +41,7 @@ export async function handleLlmOperationRequest(
   body: any,
   corsHeaders: Record<string, string>,
   env: HandleEnv,
+  now: () => number = () => Date.now(),
 ): Promise<Response> {
   const json = (data: unknown, status: number) =>
     new Response(JSON.stringify(data), {
@@ -76,9 +77,9 @@ export async function handleLlmOperationRequest(
     },
   });
 
-  const start = Date.now();
+  const start = now();
   const outcome = await resolver.resolve(llmRequest, context);
-  const latencyMs = Date.now() - start;
+  const latencyMs = now() - start;
 
   // Metadata-only log entry — never the request messages or response
   // content (FR-012/SC-006). This is the only thing ever logged here.
