@@ -4,6 +4,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
   slug: "vampire-the-masquerade",
   kind: "system",
   theme: "horror",
+  surfaceStyle: "sharp",
   seo: {
     title: "Codex Cryptica for Vampire: The Masquerade",
     description:
@@ -39,33 +40,47 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Session Notes & Secret Lore",
       description:
-        "Organize elder decrees, ancient lore fragments, coterie decisions, and private GM secrets in local-first storage.",
+        "Organise elder decrees, ancient lore fragments, coterie decisions, and private GM secrets in local-first storage.",
       icon: "icon-[lucide--book-open]",
     },
   ],
   exampleGraph: {
-    title: "Sample Chronicle Relationship Web",
+    title: "Chronicle Relationship Web",
     description:
-      "How Kindred rulers, dark covenants, rival hunters, and havens connect in the Vampire demo vault.",
+      "One Prince, her lineage, her domain, the debts she carries, and the mortal who keeps her secrets.",
+    badgeLabel: "Relationship Graph",
+    palette: "oxblood",
+    surface: "dark",
+    // Hub-and-spoke: every relation reads outward from the first node.
     steps: [
       {
-        label: "Lord Julian Thorne",
-        sublabel: "Vampire • Grand Architect",
-        relation: "rules at",
+        label: "Prince Ilaria Vesk",
+        sublabel: "Kindred • Ventrue Prince",
+        category: "character",
       },
       {
-        label: "Manor of Whispers",
-        sublabel: "Decaying Estate Haven",
-        relation: "sanctuary for",
+        label: "Marcus Vesk",
+        sublabel: "Kindred • Ventrue Childe",
+        relation: "Sire of",
+        category: "character",
       },
       {
-        label: "The Crimson Court",
-        sublabel: "Secret Aristocracy Faction",
-        relation: "hunted by",
+        label: "The Ashgrove Rack",
+        sublabel: "Domain • Hunting Ground",
+        relation: "Controls",
+        category: "location",
       },
       {
-        label: "Seraphina Vane",
-        sublabel: "Vengeful Dhampir Hunter",
+        label: "The Cinderhall Anarchs",
+        sublabel: "Faction • Anarch Cell",
+        relation: "Owes favour to",
+        category: "faction",
+      },
+      {
+        label: "Sgt Iona Brack",
+        sublabel: "Mortal • Police Liaison",
+        relation: "Blackmails",
+        category: "character",
       },
     ],
   },
@@ -100,7 +115,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
     },
   ],
   cta: {
-    title: "Organize Your Chronicle",
+    title: "Organise Your Chronicle",
     description:
       "Start managing your Vampire: The Masquerade campaign with local-first privacy and visual relationship graphs.",
     buttonText: "Try Codex Cryptica Free",

@@ -39,7 +39,7 @@ export const cyberpunkRed: LandingPageConfig = {
     {
       title: "Districts, Safehouses & Hotspots",
       description:
-        "Catalog city districts, corporate towers, black-market safehouses, and contested zones alongside your campaign entities.",
+        "Catalogue city districts, corporate towers, black-market safehouses, and contested zones alongside your campaign entities.",
       icon: "icon-[lucide--map-pin]",
     },
   ],
@@ -52,25 +52,30 @@ export const cyberpunkRed: LandingPageConfig = {
         label: "Fixer Jax Vance",
         sublabel: "District Fixer",
         relation: "brokers job for",
+        category: "character",
       },
       {
         label: "Zeta-Tech Systems",
         sublabel: "Megacorporation",
         relation: "targets rival",
+        category: "faction",
       },
       {
         label: "Arasaka Security Division",
         sublabel: "Corporate Security",
         relation: "patrols",
+        category: "faction",
       },
       {
         label: "Sector 4 Combat Zone",
         sublabel: "Contested District",
         relation: "shelters",
+        category: "location",
       },
       {
         label: "The Blackout Data-Drive",
         sublabel: "Encrypted Asset",
+        category: "item",
       },
     ],
   },

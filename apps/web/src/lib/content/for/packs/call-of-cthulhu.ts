@@ -47,35 +47,44 @@ export const callOfCthulhu: LandingPageConfig = {
     title: "Sample Call of Cthulhu Investigation Web",
     description:
       "See how an investigator, a police contact, a telegram, and a secret society lead to a hidden archive and its occult ledger.",
+    badgeLabel: "Investigation Graph",
+    palette: "oxblood",
+    surface: "dark",
     steps: [
       {
         label: "Dr Evelyn Mercer",
         sublabel: "Investigator",
         relation: "consulted",
+        category: "character",
       },
       {
         label: "Inspector Thomas Vance",
         sublabel: "Police Contact",
         relation: "shared",
+        category: "character",
       },
       {
         label: "Telegram from Arkham",
         sublabel: "Clue",
         relation: "mentions",
+        category: "item",
       },
       {
         label: "The Orne Society",
         sublabel: "Secret Society",
         relation: "meets beneath",
+        category: "faction",
       },
       {
         label: "St Bartholomew's Archive",
         sublabel: "Forgotten Archive",
         relation: "conceals",
+        category: "location",
       },
       {
         label: "The Ashen Ledger",
         sublabel: "Occult Ledger",
+        category: "item",
       },
     ],
   },
