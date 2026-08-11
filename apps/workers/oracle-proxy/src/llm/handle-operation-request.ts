@@ -41,7 +41,7 @@ export async function handleLlmOperationRequest(
   body: any,
   corsHeaders: Record<string, string>,
   env: HandleEnv,
-  now: () => number = () => Date.now(),
+  now: () => number = Date.now,
 ): Promise<Response> {
   const json = (data: unknown, status: number) =>
     new Response(JSON.stringify(data), {
