@@ -5,6 +5,12 @@ export const LARGE_VAULT_ENTITY_COUNT = 1600;
 export const LARGE_VAULT_EDGE_COUNT = 9000;
 export const LARGE_VAULT_FIXTURE_VERSION = "large-vault.v1";
 
+export type BenchmarkDate = {
+  year: number;
+  month?: number;
+  day?: number;
+};
+
 export type LargeVaultEntity = {
   id: string;
   type: string;
@@ -18,6 +24,7 @@ export type LargeVaultEntity = {
   }[];
   content: string;
   lore: string;
+  date?: BenchmarkDate;
   updatedAt: number;
   modifiedAt: number;
 };
@@ -35,6 +42,16 @@ export function createLargeVaultEntities(): Record<string, LargeVaultEntity> {
       connections: [],
       content: "Deterministic benchmark content.",
       lore: "",
+      date:
+        index % 113 === 0
+          ? undefined
+          : index % 37 === 0
+            ? { year: 900 + (index % 240) }
+            : {
+                year: 900 + (index % 240),
+                month: index % 5 === 0 ? 6 : (index % 12) + 1,
+                day: index % 5 === 0 ? 18 : (index % 28) + 1,
+              },
       updatedAt: index,
       modifiedAt: index,
     };
