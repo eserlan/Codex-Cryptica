@@ -172,3 +172,55 @@ describe("WebShelfVault — rollback idempotence (invariant J3)", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+/** Just enough of an OPFS directory for writeOpfsFile to walk and write. */
+function fakeVaultHandle(): FileSystemDirectoryHandle {
+  const handle = {
+    kind: "directory",
+    getDirectoryHandle: async () => handle,
+    getFileHandle: async () => ({
+      createWritable: async () => ({
+        write: async () => {},
+        close: async () => {},
+      }),
+    }),
+    removeEntry: async () => {},
+  };
+  return handle as unknown as FileSystemDirectoryHandle;
+}
+
+describe("WebShelfVault — asset paths are deterministic (FR-020)", () => {
+  it("names a written asset from role alone, ignoring the incoming filename", async () => {
+    // A filename-derived extension would leave rollback guessing: an asset
+    // saved as `.jfif` would survive a delete pass looking for `.webp`.
+    const vault = new WebShelfVault(
+      deps({ vaultHandle: async () => fakeVaultHandle() }),
+    );
+
+    const { ref } = await vault.saveAsset({
+      entityId: "goblin",
+      role: "image",
+      bytes: new Blob(["x"]),
+      mimeType: "image/jpeg",
+      originalName: "portrait.jfif",
+    });
+
+    expect(ref).toBe("images/goblin_image.webp");
+  });
+
+  it("uses the audio directory and extension for sound bites", async () => {
+    const vault = new WebShelfVault(
+      deps({ vaultHandle: async () => fakeVaultHandle() }),
+    );
+
+    const { ref } = await vault.saveAsset({
+      entityId: "goblin",
+      role: "soundBite",
+      bytes: new Blob(["x"]),
+      mimeType: "audio/wav",
+      originalName: "clip.ogg",
+    });
+
+    expect(ref).toBe("audio/goblin_soundBite.wav");
+  });
+});

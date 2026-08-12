@@ -85,6 +85,17 @@
 
     if (!sessionModeStore.isGuestMode) {
       list.push({
+        id: "shelf",
+        icon: "icon-[lucide--library]",
+        label: "Shelf",
+        title:
+          "The Shelf — carry entities between your vaults. Held in this browser; not a backup.",
+        action: () => layoutUIStore.toggleSidebarTool("shelf"),
+      });
+    }
+
+    if (!sessionModeStore.isGuestMode) {
+      list.push({
         id: "quicknote",
         icon: "icon-[lucide--zap]",
         label: "Notes",

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ShelfPanel from "$lib/components/shelf/ShelfPanel.svelte";
   import { onMount } from "svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import ResizerHandle from "./ResizerHandle.svelte";
@@ -56,6 +57,10 @@
       <OracleSidebarPanel />
     {:else if layoutUIStore.activeSidebarTool === "explorer" && EntityExplorer}
       <EntityExplorer />
+    {:else if layoutUIStore.activeSidebarTool === "shelf"}
+      <div class="flex-1 overflow-y-auto p-4">
+        <ShelfPanel />
+      </div>
     {:else}
       <div class="flex-1 flex items-center justify-center p-8 text-center">
         <div

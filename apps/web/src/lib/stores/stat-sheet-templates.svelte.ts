@@ -863,6 +863,24 @@ export class StatSheetTemplateStore {
     }
   }
 
+  /**
+   * Writes a template exactly as given, id and all.
+   *
+   * Distinct from `saveTemplate`, which is the authoring path and mints its
+   * own id: an imported template has to land under the identifier the import
+   * planned for, because that is what its rollback journal names (156-entity-shelf).
+   */
+  async putTemplateRecord(template: StatSheetTemplate): Promise<void> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+    const db = await getDB();
+    await db.put("stat_sheet_templates", { ...template, vaultId });
+    this.templates = [
+      ...this.templates.filter((t) => t.id !== template.id),
+      template,
+    ];
+  }
+
   async deleteTemplate(id: string): Promise<boolean> {
     try {
       const db = await getDB();

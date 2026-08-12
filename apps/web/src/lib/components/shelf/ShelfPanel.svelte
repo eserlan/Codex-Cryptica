@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ImportPlan } from "@codex/entity-shelf";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { shelf as defaultShelf } from "$lib/features/shelf";
   import type { ShelfStore } from "$lib/features/shelf/shelf.svelte";
   import ShelfEntryCard from "./ShelfEntryCard.svelte";
@@ -16,6 +17,15 @@
   );
   const canImport = $derived(selected.size > 0 && !shelf.busy);
 
+  // Entries can vanish under us — removed here, or in another tab, since the
+  // Shelf is live across tabs. A selection holding a ghost would fail the
+  // import on an entry that no longer exists.
+  $effect(() => {
+    const live = new Set(shelf.entries.map((entry) => entry.id));
+    const pruned = new Set([...selected].filter((id) => live.has(id)));
+    if (pruned.size !== selected.size) selected = pruned;
+  });
+
   function toggle(id: string) {
     const next = new Set(selected);
     if (next.has(id)) next.delete(id);
@@ -24,12 +34,18 @@
   }
 
   async function beginImport() {
-    const built = await shelf.plan([...selected]);
-    if (built.templateDecisions.some((decision) => decision.unresolved)) {
-      plan = built;
-      return;
+    // `plan` throws when an entry has gone — removed in another tab between
+    // this list rendering and the button being pressed.
+    try {
+      const built = await shelf.plan([...selected]);
+      if (built.templateDecisions.some((decision) => decision.unresolved)) {
+        plan = built;
+        return;
+      }
+      await runImport(built);
+    } catch (err) {
+      shelf.error = err instanceof Error ? err.message : String(err);
     }
-    await runImport(built);
   }
 
   async function runImport(ready: ImportPlan) {
@@ -62,6 +78,8 @@
       browser — it is not a backup, and it cannot send anything to anyone else.
     </p>
   </header>
+
+  <FeatureHint hintId="entity-shelf" />
 
   {#if shelf.entries.length === 0}
     <div

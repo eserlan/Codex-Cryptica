@@ -48,6 +48,7 @@ export class ShelfStore {
   private readonly bus: typeof defaultAppEventBus;
   private unsubscribe: (() => void) | null = null;
   private progressTimer: ReturnType<typeof setTimeout> | null = null;
+  private progressVisible = false;
 
   constructor(private readonly deps: ShelfStoreDeps) {
     this.bus = deps.appEventBus ?? defaultAppEventBus;
@@ -151,12 +152,18 @@ export class ShelfStore {
   }
 
   private async run(work: () => Promise<void>): Promise<boolean> {
+    // Two concurrent imports would each plan identifiers against the same
+    // pre-import view of the vault, mint the same ones, and collide mid-write.
+    if (this.busy) return false;
+
     this.busy = true;
     this.error = null;
     // Nothing appears for a fast operation — progress that flashes for 80ms is
     // noise, not reassurance.
     this.progressTimer = setTimeout(() => {
-      if (this.busy) this.progress ??= { completed: 0, total: 0, label: "" };
+      if (!this.busy) return;
+      this.progressVisible = true;
+      this.progress ??= { completed: 0, total: 0, label: "" };
     }, PROGRESS_VISIBLE_AFTER_MS);
 
     try {
@@ -169,15 +176,16 @@ export class ShelfStore {
     } finally {
       if (this.progressTimer) clearTimeout(this.progressTimer);
       this.progressTimer = null;
+      this.progressVisible = false;
       this.progress = null;
       this.busy = false;
     }
   }
 
   private reportProgress(report: ProgressReport): void {
-    if (this.progress !== null || this.progressTimer === null) {
-      this.progress = report;
-    }
+    // Suppressed until the timer above decides the operation is slow enough to
+    // be worth showing — progress that flashes for 80ms is noise.
+    if (this.progressVisible) this.progress = report;
   }
 
   /** Refreshes this tab and tells the others to do the same. */

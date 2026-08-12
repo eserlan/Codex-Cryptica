@@ -59,9 +59,26 @@ const ASSET_DIRECTORY: Record<SaveAssetInput["role"], string> = {
   soundBite: "audio",
 };
 
-function extensionOf(name: string, fallback: string): string {
-  const match = name.match(/\.([a-z0-9]+)$/i);
-  return match ? match[1].toLowerCase() : fallback;
+/**
+ * Fixed per role rather than derived from the incoming filename.
+ *
+ * Rollback has to be able to name every file this import wrote without being
+ * told, and a filename-derived extension makes that guesswork: an asset saved
+ * as `portrait.jfif` would never be matched by a delete pass guessing `.webp`,
+ * leaving an orphan behind and breaking the "nothing left behind" half of
+ * FR-020. The original filename still travels on the shelf entry for display.
+ */
+const ASSET_EXTENSION: Record<SaveAssetInput["role"], string> = {
+  image: "webp",
+  thumbnail: "webp",
+  soundBite: "wav",
+};
+
+function assetRef(entityId: string, role: SaveAssetInput["role"]): string[] {
+  return [
+    ASSET_DIRECTORY[role],
+    `${entityId}_${role}.${ASSET_EXTENSION[role]}`,
+  ];
 }
 
 export class WebShelfVault implements VaultReader, VaultWriter {
@@ -141,20 +158,14 @@ export class WebShelfVault implements VaultReader, VaultWriter {
     const handle = await this.deps.vaultHandle();
     if (!handle) throw new Error("No vault is open.");
 
-    const directory = ASSET_DIRECTORY[input.role];
-    const extension = extensionOf(
-      input.originalName,
-      input.role === "soundBite" ? "wav" : "webp",
-    );
-    const ref = `${directory}/${input.entityId}_${input.role}.${extension}`;
-
+    const path = assetRef(input.entityId, input.role);
     await writeOpfsFile(
-      ref.split("/"),
+      path,
       input.bytes,
       handle,
       this.deps.activeVaultId() ?? undefined,
     );
-    return { ref };
+    return { ref: path.join("/") };
   }
 
   async saveStatSheetTemplate(template: StatSheetTemplate): Promise<void> {
@@ -182,24 +193,17 @@ export class WebShelfVault implements VaultReader, VaultWriter {
     const handle = await this.deps.vaultHandle();
     if (!handle) return;
 
-    // Assets this import wrote are named from the entity id, and the entity is
-    // one this import created, so every match is ours to remove.
-    for (const [role, directory] of Object.entries(ASSET_DIRECTORY)) {
-      for (const extension of [
-        "webp",
-        "png",
-        "jpg",
-        "jpeg",
-        "gif",
-        "wav",
-        "mp3",
-      ]) {
-        await deleteOpfsEntry(
-          handle,
-          [directory, `${entityId}_${role}.${extension}`],
-          this.deps.activeVaultId() ?? undefined,
-        ).catch(() => {});
-      }
+    // Assets this import wrote are named deterministically from the entity id
+    // and role, and the entity is one this import created — so these three
+    // paths are exhaustive, and every one of them is ours to remove.
+    for (const role of Object.keys(
+      ASSET_DIRECTORY,
+    ) as SaveAssetInput["role"][]) {
+      await deleteOpfsEntry(
+        handle,
+        assetRef(entityId, role),
+        this.deps.activeVaultId() ?? undefined,
+      ).catch(() => {});
     }
   }
 

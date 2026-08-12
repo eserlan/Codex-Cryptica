@@ -2,7 +2,6 @@ import type { Entity, PresentationTemplate, StatSheetTemplate } from "schema";
 import { vault } from "$lib/stores/vault.svelte";
 import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
 import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
-import { getDB } from "$lib/utils/idb";
 import { ShelfStore } from "./shelf.svelte";
 import type { ShelfVaultDeps } from "./web-shelf-vault";
 
@@ -12,11 +11,10 @@ export { WebShelfVault, vaultRecordCodec } from "./web-shelf-vault";
 export type { ShelfVaultDeps } from "./web-shelf-vault";
 
 /**
- * Templates are written record-for-record rather than through the stores'
- * authoring helpers, which mint their own ids and timestamps. An imported
- * template has to land exactly as planned — the journal names the ids it will
- * roll back, so a store that quietly chose a different one would leave the
- * rollback list pointing at nothing.
+ * Templates go through each store's `putTemplateRecord`, which writes a record
+ * exactly as given rather than minting its own id like the authoring path
+ * does. An imported template has to land under the identifier the import
+ * planned for, because that is what its rollback journal names.
  */
 const vaultDeps: ShelfVaultDeps = {
   activeVaultId: () => vault.activeVaultId ?? null,
@@ -31,41 +29,15 @@ const vaultDeps: ShelfVaultDeps = {
   readPresentationTemplate: (id) =>
     presentationTemplates.templates.find((t) => t.id === id) ?? null,
 
-  saveStatSheetTemplate: async (template: StatSheetTemplate) => {
-    const vaultId = vault.activeVaultId;
-    if (!vaultId) throw new Error("No vault is open.");
-    const db = await getDB();
-    await db.put("stat_sheet_templates", { ...template, vaultId });
-    statSheetTemplates.templates = [
-      ...statSheetTemplates.templates.filter((t) => t.id !== template.id),
-      template,
-    ];
-  },
-  savePresentationTemplate: async (template: PresentationTemplate) => {
-    const vaultId = vault.activeVaultId;
-    if (!vaultId) throw new Error("No vault is open.");
-    const db = await getDB();
-    await db.put("stat_sheet_presentation_templates", { ...template, vaultId });
-    presentationTemplates.templates = [
-      ...presentationTemplates.templates.filter((t) => t.id !== template.id),
-      { ...template, vaultId },
-    ];
-  },
+  saveStatSheetTemplate: (template: StatSheetTemplate) =>
+    statSheetTemplates.putTemplateRecord(template),
+  savePresentationTemplate: (template: PresentationTemplate) =>
+    presentationTemplates.putTemplateRecord(template),
 
-  deleteStatSheetTemplate: async (id: string) => {
-    const db = await getDB();
-    await db.delete("stat_sheet_templates", id);
-    statSheetTemplates.templates = statSheetTemplates.templates.filter(
-      (t) => t.id !== id,
-    );
-  },
-  deletePresentationTemplate: async (id: string) => {
-    const db = await getDB();
-    await db.delete("stat_sheet_presentation_templates", id);
-    presentationTemplates.templates = presentationTemplates.templates.filter(
-      (t) => t.id !== id,
-    );
-  },
+  deleteStatSheetTemplate: (id: string) =>
+    statSheetTemplates.deleteTemplate(id),
+  deletePresentationTemplate: (id: string) =>
+    presentationTemplates.deleteTemplate(id),
 };
 
 /** The Shelf, shared by every vault in this browser. */
