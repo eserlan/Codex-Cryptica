@@ -635,6 +635,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
     icon: "icon-[lucide--map]",
   },
+  "plot-twist-generator": {
+    id: "plot-twist-generator",
+    title: "Plot Twist & Complication Generator",
+    content:
+      "Start with an existing premise, scene, or campaign problem and generate a coherent reversal or complication. The generator preserves established facts, identifies an assumption that can be overturned, adds foreshadowing and consequences, and gives the players new choices. Add campaign context or constraints when you need the twist to fit an existing storyline.",
+    icon: "icon-[lucide--shuffle]",
+  },
   "world-generator": {
     id: "world-generator",
     title: "Sci-Fi World Generator",
