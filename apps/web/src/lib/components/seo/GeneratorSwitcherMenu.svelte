@@ -69,6 +69,10 @@
           path: "/generators/adventure-generator",
         },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        {
+          label: "Plot Twist & Complication Generator",
+          path: "/generators/plot-twist-generator",
+        },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {
           label: "Secret Society Generator",
