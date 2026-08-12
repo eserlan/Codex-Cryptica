@@ -55,13 +55,31 @@ export function latestTemporalYear(
 export function findSingleQuestHook(
   entities: Record<string, Entity>,
 ): Entity | undefined {
-  const questHooks = Object.values(entities).filter((entity) => {
-    const labels = new Set(
-      (entity.labels ?? []).map((label) => label.toLocaleLowerCase()),
-    );
-    return labels.has("quest-generator") || labels.has("rpg-quest");
-  });
-  return questHooks.length === 1 ? questHooks[0] : undefined;
+  // ⚡ Bolt Optimization: Replace Object.values().filter() and Set mapping with
+  // an imperative loop and early return to reduce GC pressure and O(N) allocations.
+  let questHook: Entity | undefined;
+  for (const id in entities) {
+    if (!Object.prototype.hasOwnProperty.call(entities, id)) continue;
+
+    const entity = entities[id];
+    if (!entity.labels) continue;
+
+    let isHook = false;
+    for (const label of entity.labels) {
+      const lower = label.toLocaleLowerCase();
+      if (lower === "quest-generator" || lower === "rpg-quest") {
+        isHook = true;
+        break;
+      }
+    }
+
+    if (isHook) {
+      if (questHook !== undefined) return undefined; // Multiple found, abort early
+      questHook = entity;
+    }
+  }
+
+  return questHook;
 }
 
 /**
