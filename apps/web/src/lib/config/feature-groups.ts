@@ -141,6 +141,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "draw-button",
       "image-stature",
       "adventure-generator",
+      "quest-generator",
       "dungeon-generator",
       "world-generator",
       "language-generator",
