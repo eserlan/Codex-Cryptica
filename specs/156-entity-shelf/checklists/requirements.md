@@ -39,3 +39,9 @@
   organisation. The reasoning and the conditions under which it would be worth revisiting are
   recorded in Assumptions.
 - All checklist items pass. Ready for `/speckit-plan`.
+- Clarification session 2026-08-12 resolved five further items: title collisions on import,
+  cross-tab shelf behaviour, the user-facing name, how template conflicts are prompted, and a
+  measurable bar for SC-009. Added FR-013a, FR-016a and FR-023a; amended FR-019, SC-002 and
+  SC-009. SC-002 previously said an imported entity differed from its source "only in its
+  identifier", which the title-collision decision made untrue — corrected rather than left to
+  contradict FR-013a.

@@ -10,6 +10,16 @@ specification addresses the underlying need — moving entities between vaults �
 in-app transfer buffer instead of files. See **Out of Scope** for why, and what a
 file-based layer would still add later.
 
+## Clarifications
+
+### Session 2026-08-12
+
+- Q: When the target vault already holds an entity with the shelved entity's title, what title does the imported one get? → A: Keep the title, except on an exact collision, where a disambiguator is appended (e.g. "Goblin (2)") and the rename is reported.
+- Q: What does one tab show when another tab changes the shelf? → A: The shelf is live across tabs — shelving, removing, or clearing in one tab updates every other open tab immediately.
+- Q: What is the feature called in the UI? → A: "Shelf" — confirmed as the user-facing name ("Send to Shelf", "Import from Shelf"), and the canonical term throughout spec, UI copy, and code.
+- Q: How are template conflicts put to the author when importing several entities at once? → A: Resolved once up front — a single step lists every conflicting template with a choice, then the import runs unattended.
+- Q: What performance bar replaces SC-009's "a few seconds"? → A: Under 5 seconds for ten entities with images, with progress shown for anything exceeding 1 second.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Carry one entity to another vault (Priority: P1)
@@ -41,7 +51,11 @@ resulting entity field-by-field against the original.
    identifier unique within the target vault, and no existing entity in that vault is
    modified, replaced, or removed.
 5. **Given** a target vault that already contains an entity with the same title, **when**
-   the shelved entity is imported, **then** both entities exist independently afterwards.
+   the shelved entity is imported, **then** both entities exist independently afterwards, the
+   imported one carrying a distinguishing suffix on its title, and the author is told it was
+   renamed.
+6. **Given** a target vault with no entity of that title, **when** the shelved entity is
+   imported, **then** its title is carried across untouched.
 
 ---
 
@@ -117,8 +131,14 @@ confirming the entry survives each import and that all three vaults hold complet
   the entity. This is a legitimate way to clone a complex entity.
 - **Template identifier collision**: the target vault already holds a template with the same
   identifier as one arriving with an entity. If the two are identical, the existing one is
-  used. If they differ, the author is asked to choose, and the entity's sheet resolves to
-  whichever they chose.
+  used with no prompt. If they differ, the author is asked to choose — once per template, not
+  once per entity — before anything is written, and the affected sheets resolve to whichever
+  they chose.
+- **Author abandons the conflict step**: nothing is written and the target vault is untouched,
+  the same as any other unfinished import.
+- **Repeated import of the same entry into one vault**: each import produces another
+  independent entity, the second and later ones carrying a distinguishing suffix. Importing
+  the same monster three times gives three monsters, not one overwritten three times.
 - **Ambiguous connection target**: two or more entities in the target vault match a
   connection's target by title or alias. The connection is left unresolved and reported,
   rather than attaching to an arbitrary one of them.
@@ -132,6 +152,11 @@ confirming the entry survives each import and that all three vaults hold complet
   as it was, with no half-written entity, orphaned image, or stray template.
 - **Empty shelf**: opening the shelf with nothing on it explains what the shelf is and how
   to put something on it.
+- **Entry removed in another tab mid-import**: an import already under way completes against
+  the copy it started with rather than failing part-way; the entry is simply gone from the
+  shelf afterwards in every tab.
+- **Two tabs open on different vaults**: shelving in one and importing in the other works, and
+  the entry appears in the second tab's shelf without a reload.
 - **Site data cleared**: shelf contents are gone. This is expected and disclosed, not an
   error state to recover from.
 - **Large selection**: shelving a selection whose images total tens of megabytes reports
@@ -172,6 +197,9 @@ confirming the entry survives each import and that all three vaults hold complet
   were shelved as a group, importing them together MUST recreate the connections among them.
 - **FR-013**: Every imported entity MUST be created with an identifier unique within the
   target vault; import MUST NEVER overwrite, merge into, or delete an existing entity.
+- **FR-013a**: An imported entity MUST keep its title unchanged unless the target vault
+  already holds an entity with exactly that title, in which case a distinguishing suffix MUST
+  be appended to make it unique. Titles MUST NOT be altered in any other circumstance.
 - **FR-014**: Import MUST bring the entry's referenced files into the target vault so the
   imported entity's image, thumbnail, and sound bite work there.
 - **FR-015**: Import MUST make the entry's stat sheet and presentation templates available in
@@ -179,12 +207,17 @@ confirming the entry survives each import and that all three vaults hold complet
 - **FR-016**: When the target vault holds a different template under the same identifier as
   an arriving template, the system MUST ask the author which to use and MUST NOT silently
   overwrite the existing one.
+- **FR-016a**: All template conflicts across an import MUST be gathered and resolved in a
+  single step before any entity is written, each conflicting template presented once however
+  many of the imported entities depend on it. Once the author has decided, the import MUST
+  run to completion without further prompting.
 - **FR-017**: Import MUST resolve each connection by looking first among the entities
   imported alongside it, then among entities in the target vault matched by title or alias.
 - **FR-018**: A connection that cannot be resolved unambiguously MUST be omitted and
   reported to the author; it MUST NOT cause the import to fail.
-- **FR-019**: Import MUST report its outcome: what was created, which templates were reused,
-  brought in, or chosen between, and which connections and parent references were dropped.
+- **FR-019**: Import MUST report its outcome: what was created, any entity renamed to avoid a
+  title collision, which templates were reused, brought in, or chosen between, and which
+  connections and parent references were dropped.
 - **FR-020**: An import that cannot complete MUST leave the target vault unchanged rather
   than partially populated.
 - **FR-021**: Importing an entry MUST leave that entry on the shelf, available to import
@@ -196,6 +229,9 @@ confirming the entry survives each import and that all three vaults hold complet
   entity title, type, source vault, and shelving date.
 - **FR-023**: Authors MUST be able to remove an individual entry and to clear the shelf
   entirely, and doing so MUST release the storage those entries occupied.
+- **FR-023a**: The shelf MUST show the same contents in every open tab. Shelving, removing,
+  or clearing in one tab MUST be reflected in the others without requiring a reload, so no
+  tab can offer an entry that no longer exists.
 - **FR-024**: The system MUST disclose, at the point where entities are first placed on the
   shelf, that shelf contents are held in the current browser and are neither a backup nor a
   means of sending entities to another person.
@@ -206,6 +242,9 @@ confirming the entry survives each import and that all three vaults hold complet
   transfer buffer authors work through and empty, not a library they curate.
 
 ### Key Entities
+
+"Shelf" is the canonical term, in the interface and in this document alike. Authors "send to
+the Shelf" and "import from the Shelf"; they do not export, save, or copy.
 
 - **Shelf**: A single collection of shelved entities belonging to the person using this
   browser, not to any one vault. Visible and usable from whichever vault is open. Persists
@@ -229,8 +268,9 @@ confirming the entry survives each import and that all three vaults hold complet
   downloaded file.
 - **SC-002**: An entity that has made the round trip is field-for-field identical to its
   source in everything the author wrote — 100% of stat sheet fields and values, images,
-  sound bite, tags, labels, aliases, lore, body content, and dates — with only its identifier
-  differing.
+  sound bite, tags, labels, aliases, lore, body content, and dates — differing only in its
+  identifier and, where the title already existed in the target vault, its disambiguated
+  title.
 - **SC-003**: When four interconnected entities are shelved together and imported together,
   100% of the connections among those four are present in the destination.
 - **SC-004**: Across all imports, zero pre-existing entities in the target vault are
@@ -243,9 +283,9 @@ confirming the entry survives each import and that all three vaults hold complet
   files, or stray templates behind.
 - **SC-008**: Authors are told that the shelf is browser-local and not a backup before they
   can put anything on it, and can state that limitation correctly when asked afterwards.
-- **SC-009**: Shelving a selection of ten entities with images, and importing them into
-  another vault, each complete within a few seconds and report progress throughout rather
-  than appearing frozen.
+- **SC-009**: Shelving a selection of ten entities with images completes in under 5 seconds,
+  and importing those ten into another vault completes in under 5 seconds. Any shelve or
+  import lasting longer than 1 second shows progress rather than appearing frozen.
 
 ## Assumptions
 
