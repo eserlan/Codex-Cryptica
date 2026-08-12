@@ -75,7 +75,7 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 - [x] T016 [P] [US1] Source-immutability test in `packages/entity-shelf/src/shelve.test.ts` — after shelving, the source entity record, its assets, and its templates are unchanged, and no write of any kind was issued against the source vault (FR-010)
 - [x] T017 [P] [US1] No-overwrite test in `packages/entity-shelf/src/import.test.ts` — importing into a vault already holding entities with the same titles and the same source identifiers creates new entities and leaves **every** pre-existing entity byte-identical (FR-013, SC-004). This invariant is what makes rollback safe rather than destructive (data-model J2), so it is verified directly rather than inferred
 - [x] T018 [P] [US1] Storage-exhaustion test in `packages/entity-shelf/src/shelve.test.ts` — a quota failure part-way through shelving leaves no partial entry on the shelf and surfaces a clear message (SC-007)
-- [ ] T019 [P] [US1] Component tests in `apps/web/src/lib/components/shelf/ShelfPanel.test.ts` covering the empty state and newest-first ordering (FR-026)
+- [x] T019 [P] [US1] Component tests in `apps/web/src/lib/components/shelf/ShelfPanel.test.ts` covering the empty state and newest-first ordering (FR-026)
 
 ### Implementation for User Story 1
 
@@ -88,11 +88,11 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 - [x] T026 [US1] Implement `recoverCrashedImports()` in `packages/entity-shelf/src/import.ts`, replaying any journal found at startup
 - [x] T027 [US1] Assemble `EntityShelfService` and the public surface in `packages/entity-shelf/src/index.ts` — constructor injection with production defaults, exporting both class and singleton per ADR 007 (principle VIII)
 - [x] T028 [US1] Create the Svelte store in `apps/web/src/lib/features/shelf/shelf.svelte.ts` — entry list state, shelve and import actions, progress reporting for operations exceeding 1 second (SC-009)
-- [ ] T029 [US1] Call `recoverCrashedImports()` during application startup so a crashed import is cleaned up before the shelf is usable
-- [ ] T030 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfPanel.svelte` — flat list, newest first, no search or grouping (FR-026)
-- [ ] T031 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfEntryCard.svelte` showing title, type, source vault name and shelved date (FR-022)
-- [ ] T032 [P] [US1] Build `apps/web/src/lib/components/shelf/ImportOutcomeSummary.svelte` reporting entities created, any title renamed, template resolutions, and dropped connections and parent references (FR-019)
-- [ ] T033 [US1] Add "Send to Shelf" to `apps/web/src/lib/components/entity-detail/DetailHeader.svelte` (FR-001)
+- [x] T029 [US1] Call `recoverCrashedImports()` during application startup so a crashed import is cleaned up before the shelf is usable
+- [x] T030 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfPanel.svelte` — flat list, newest first, no search or grouping (FR-026)
+- [x] T031 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfEntryCard.svelte` showing title, type, source vault name and shelved date (FR-022)
+- [x] T032 [P] [US1] Build `apps/web/src/lib/components/shelf/ImportOutcomeSummary.svelte` reporting entities created, any title renamed, template resolutions, and dropped connections and parent references (FR-019)
+- [x] T033 [US1] Add "Send to Shelf" to `apps/web/src/lib/components/entity-detail/DetailHeader.svelte` (FR-001)
 
 **Checkpoint**: User Story 1 is fully functional. This is a shippable MVP that resolves issue #2101 on its own.
 
@@ -115,10 +115,10 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 - [x] T037 [US2] Implement batch-first, then target-vault resolution by title and alias in `packages/entity-shelf/src/connections.ts`, classifying every failure as `not-found` or `ambiguous`, sharing the comparison used by `titles.ts` so the two can never disagree (research R5)
 - [x] T038 [US2] Extend `plan()` in `packages/entity-shelf/src/import.ts` to produce `connectionResolutions` and `parentResolutions`, and gather all template conflicts into a single decision set (FR-016a)
 - [x] T039 [US2] Write resolved connections during the import write phase in `packages/entity-shelf/src/import.ts`, mapping shelved target identifiers onto the freshly created ones (FR-012)
-- [ ] T040 [US2] Build `apps/web/src/lib/components/shelf/TemplateConflictStep.svelte` presenting each conflicting template once, before any write begins (FR-016)
-- [ ] T041 [P] [US2] Add "Send to Shelf" to the existing multi-selection in `apps/web/src/lib/components/table/TableContextMenu.svelte` (FR-002)
-- [ ] T042 [P] [US2] Add "Send to Shelf" to the existing multi-selection in `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` (FR-002)
-- [ ] T043 [US2] Extend `ImportOutcomeSummary.svelte` to list dropped connections with their reason, distinguishing "no match found" from "more than one match" (FR-019)
+- [x] T040 [US2] Build `apps/web/src/lib/components/shelf/TemplateConflictStep.svelte` presenting each conflicting template once, before any write begins (FR-016)
+- [x] T041 [P] [US2] Add "Send to Shelf" to the existing multi-selection in `apps/web/src/lib/components/table/TableContextMenu.svelte` (FR-002)
+- [x] T042 [P] [US2] Add "Send to Shelf" to the existing multi-selection in `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` (FR-002)
+- [x] T043 [US2] Extend `ImportOutcomeSummary.svelte` to list dropped connections with their reason, distinguishing "no match found" from "more than one match" (FR-019)
 
 **Checkpoint**: User Stories 1 and 2 both work independently.
 
@@ -134,15 +134,15 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 - [x] T044 [P] [US3] Reuse tests in `packages/entity-shelf/src/import.test.ts` — importing an entry leaves it on the shelf (FR-021); the same entry imported into one vault three times yields three independent entities, the later two suffixed
 - [x] T045 [P] [US3] Source-vault-deleted test in `packages/entity-shelf/src/import.test.ts` — an entry whose source vault no longer exists imports completely, assets and templates included (FR-007, SC-006)
-- [ ] T046 [P] [US3] Cross-tab tests in `apps/web/src/lib/features/shelf/shelf.svelte.test.ts` — a shelf-changed event triggers a re-read; the emitted event carries **no entry payload**, since `CrossTabBroadcaster` serialises with `JSON.stringify` and would silently drop blobs (research R2, FR-023a)
+- [x] T046 [P] [US3] Cross-tab tests in `apps/web/src/lib/features/shelf/shelf.svelte.test.ts` — a shelf-changed event triggers a re-read; the emitted event carries **no entry payload**, since `CrossTabBroadcaster` serialises with `JSON.stringify` and would silently drop blobs (research R2, FR-023a)
 
 ### Implementation for User Story 3
 
 - [x] T047 [US3] Emit a payload-free shelf-changed event on the existing `AppEventBus` from `apps/web/src/lib/features/shelf/shelf.svelte.ts`, and re-read entries on receipt, reusing `CrossTabBroadcaster` from `packages/events` rather than adding a second broadcast mechanism (FR-023a)
-- [ ] T048 [P] [US3] Add remove-entry and clear-shelf actions to `ShelfPanel.svelte`, releasing the storage the entries occupied (FR-023)
-- [ ] T049 [P] [US3] Show shelf storage usage in `ShelfPanel.svelte` using `totalBytes()`, warning once the shelf exceeds 80% of the browser's reported storage allowance and naming clearing entries as the remedy (FR-025)
-- [ ] T050 [US3] Add the first-use disclosure that shelf contents live in this browser and are neither a backup nor a way to send an entity to another person — as a `FeatureHint`, per principle VII (FR-024, SC-008)
-- [ ] T051 [US3] Add a Shelf entry to `apps/web/src/lib/config/help-content.ts` (principle VII)
+- [x] T048 [P] [US3] Add remove-entry and clear-shelf actions to `ShelfPanel.svelte`, releasing the storage the entries occupied (FR-023)
+- [x] T049 [P] [US3] Show shelf storage usage in `ShelfPanel.svelte` using `totalBytes()`, warning once the shelf exceeds 80% of the browser's reported storage allowance and naming clearing entries as the remedy (FR-025)
+- [x] T050 [US3] Add the first-use disclosure that shelf contents live in this browser and are neither a backup nor a way to send an entity to another person — as a `FeatureHint`, per principle VII (FR-024, SC-008)
+- [x] T051 [US3] Add a Shelf entry to `apps/web/src/lib/config/help-content.ts` (principle VII)
 
 **Checkpoint**: All three user stories independently functional.
 
@@ -150,11 +150,11 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T052 Audit every user-facing string added by this feature for the word "tags" — principle XII forbids exposing it, and the `tags` field is preserved in data while never surfacing in copy. Related debt is tracked in issue #2218
-- [ ] T053 Confirm `packages/entity-shelf` meets the 70% coverage goal required of new packages (principle X)
+- [x] T052 Audit every user-facing string added by this feature for the word "tags" — principle XII forbids exposing it, and the `tags` field is preserved in data while never surfacing in copy. Related debt is tracked in issue #2218
+- [x] T053 Confirm `packages/entity-shelf` meets the 70% coverage goal required of new packages (principle X)
 - [ ] T054 Verify SC-009 by hand — ten entities with images shelve in under 5 seconds and import in under 5 seconds, with progress shown beyond 1 second — and SC-001, that a single entity moves between vaults in under 30 seconds
 - [ ] T055 Walk `quickstart.md` end to end, exercising every acceptance scenario in `spec.md`
-- [ ] T056 Run `bun run lint` and `bun run test` clean across the workspace (principle VI)
+- [x] T056 Run `bun run lint` and `bun run test` clean across the workspace (principle VI)
 
 ---
 
