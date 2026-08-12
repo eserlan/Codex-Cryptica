@@ -32,14 +32,14 @@ reusable across campaigns instead of trapped in the vault it was authored in.
 an amplification of this single loop. Shipped alone it already resolves the reported need.
 
 **Independent Test**: In a vault containing a fully authored creature (stat sheet, image,
-sound bite, tags, lore), shelve it, switch to a second vault, import it, and compare the
+sound bite, labels, lore), shelve it, switch to a second vault, import it, and compare the
 resulting entity field-by-field against the original.
 
 **Acceptance Scenarios**:
 
 1. **Given** an entity in vault A, **when** the author shelves it and then imports it while
    vault B is open, **then** vault B contains a new entity carrying that entity's title,
-   body content, lore, tags, labels, aliases, dates, status, and every other authored
+   body content, lore, labels, aliases, dates, status, and every other authored
    field.
 2. **Given** a shelved entity that has a stat sheet, **when** it is imported into a vault
    that has never seen its stat sheet template, **then** the template and its presentation
@@ -268,7 +268,7 @@ the Shelf" and "import from the Shelf"; they do not export, save, or copy.
   downloaded file.
 - **SC-002**: An entity that has made the round trip is field-for-field identical to its
   source in everything the author wrote — 100% of stat sheet fields and values, images,
-  sound bite, tags, labels, aliases, lore, body content, and dates — differing only in its
+  sound bite, labels, aliases, lore, body content, and dates — differing only in its
   identifier and, where the title already existed in the target vault, its disambiguated
   title.
 - **SC-003**: When four interconnected entities are shelved together and imported together,
