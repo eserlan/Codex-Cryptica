@@ -900,7 +900,7 @@ function generatePlotTwist(request: GeneratorRunRequest): GeneratorOutput {
 function plotTwistPrompt(request: GeneratorRunRequest): string {
   const options = plotTwistOptions(request);
   const prompt = buildPlotTwistPrompt(options);
-  return `${contextChain(request)}\n\n${prompt.userMessage}`;
+  return `${contextChain(request)}\n\n${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
 function worldOptions(request: GeneratorRunRequest): WorldGeneratorOptions {

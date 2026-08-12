@@ -145,6 +145,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "world-generator",
       "language-generator",
       "news-sheet-generator",
+      "plot-twist-generator",
       "delve-structural-builder",
     ],
   },

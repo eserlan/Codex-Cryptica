@@ -86,6 +86,7 @@ describe("registry lookup", () => {
     expect(prompt).toContain("The peace treaty is about to fail.");
     expect(prompt).toContain("Do not change the villain.");
     expect(prompt).toContain("without contradicting known facts");
+    expect(prompt).toContain("do not invalidate witnessed events");
     expect(generator.generate(run("plot-twist")).content).toContain(
       "## New Choices",
     );

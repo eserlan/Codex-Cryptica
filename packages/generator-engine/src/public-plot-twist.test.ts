@@ -45,10 +45,25 @@ describe("buildPlotTwistPrompt", () => {
     );
     expect(prompt.userMessage).toContain("Do not change the villain.");
     expect(prompt.userMessage).toContain("Queen Ilyra and the Dock Guild");
+    expect(prompt.userMessage).toContain("content field MUST contain");
+    expect(prompt.userMessage).toContain("Reserve lore for brief GM notes");
     expect(prompt.systemInstruction).toContain(
       "do not invalidate witnessed events",
     );
     expect(prompt.systemInstruction).toContain("meaningful player choices");
+  });
+
+  it("varies local titles when the random source varies", () => {
+    const first = generatePlotTwistLocal(
+      { premise: "The treaty is about to fail", twistType: "Reversal" },
+      () => 0,
+    );
+    const second = generatePlotTwistLocal(
+      { premise: "The treaty is about to fail", twistType: "Reversal" },
+      () => 0.99,
+    );
+
+    expect(first.title).not.toBe(second.title);
   });
 });
 

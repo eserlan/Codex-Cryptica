@@ -37,6 +37,23 @@ export const PLOT_TWIST_FORESHADOWING = [
   "Already hinted",
 ] as const;
 
+const PLOT_TWIST_TITLE_PREFIXES = [
+  "The Cost of Being Right",
+  "The Price of the Obvious Answer",
+  "What the Evidence Hides",
+  "The Choice Beneath the Choice",
+  "A Truth with Terms",
+] as const;
+
+const REQUIRED_HEADINGS = [
+  "## The Reveal",
+  "## What Everyone Believed",
+  "## Why It Makes Sense",
+  "## Foreshadowing",
+  "## Immediate Consequences",
+  "## New Choices",
+] as const;
+
 export interface PlotTwistGeneratorOptions {
   premise?: string;
   themeId?: string;
@@ -145,11 +162,12 @@ function renderOutput(
     foreshadowing: string[];
     immediateConsequences: string[];
     newChoices: string[];
+    content?: string;
     lore?: string;
     labels?: string[];
   },
 ): PublicGeneratorOutput {
-  const content = [
+  const generatedContent = [
     "## The Reveal",
     fields.reveal,
     "",
@@ -168,6 +186,7 @@ function renderOutput(
     "## New Choices",
     bullets(fields.newChoices),
   ].join("\n");
+  const content = fields.content?.trim() || generatedContent;
 
   return {
     type: "note",
@@ -200,7 +219,7 @@ export function generatePlotTwistLocal(
       : resolved.twistType;
   const reveal = `The situation is exactly as witnessed, but its most important meaning has been misunderstood: the pressure around ${subject.toLowerCase()} is being used to force a choice that benefits someone who cannot act openly.`;
   return renderOutput(resolved, {
-    title: `The Cost of Being Right`,
+    title: `${pickFrom(PLOT_TWIST_TITLE_PREFIXES, rng)}: ${type}`,
     summary: `${type} complication for: ${resolved.premise}`,
     reveal,
     believedAssumption: `Everyone assumes the visible conflict has one obvious cause and that resolving it will restore the old balance.`,
@@ -243,7 +262,7 @@ export function buildPlotTwistPrompt(
       : "",
     "",
     "Find an assumption within the established situation that can be overturned without contradicting known facts.",
-    "Return JSON with title, summary, lore, labels, and connections. The lore field MUST contain the complete markdown sections ## The Reveal, ## What Everyone Believed, ## Why It Makes Sense, ## Foreshadowing, ## Immediate Consequences, and ## New Choices. Include 2-4 foreshadowing clues and at least 2 actionable player decisions in those sections. You may also provide reveal, believedAssumption, rationale, foreshadowing, immediateConsequences, and newChoices as structured fields, but lore is the saved document.",
+    "Return JSON with title, summary, content, lore, labels, and connections. The content field MUST contain the complete markdown sections ## The Reveal, ## What Everyone Believed, ## Why It Makes Sense, ## Foreshadowing, ## Immediate Consequences, and ## New Choices. Include 2-4 foreshadowing clues and at least 2 actionable player decisions in those sections. Reserve lore for brief GM notes or an at-a-glance summary. You may also provide reveal, believedAssumption, rationale, foreshadowing, immediateConsequences, and newChoices as structured fields.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -257,7 +276,12 @@ export function parsePlotTwistResponse(
 ): PublicGeneratorOutput {
   try {
     const parsed = parseFencedJson<Record<string, unknown>>(rawText);
+    const parsedContent = text(parsed.content);
+    const hasCompleteContent = REQUIRED_HEADINGS.every((heading) =>
+      parsedContent.includes(heading),
+    );
     if (
+      !hasCompleteContent &&
       REQUIRED_FIELDS.some(
         (field) => !text(parsed[field]) && !list(parsed[field]).length,
       )
@@ -274,6 +298,7 @@ export function parsePlotTwistResponse(
       foreshadowing: list(parsed.foreshadowing),
       immediateConsequences: list(parsed.immediateConsequences),
       newChoices: list(parsed.newChoices),
+      content: hasCompleteContent ? parsedContent : undefined,
       lore: text(parsed.lore),
       labels: list(parsed.labels),
     });
