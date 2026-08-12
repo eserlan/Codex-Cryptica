@@ -900,7 +900,16 @@ function generatePlotTwist(request: GeneratorRunRequest): GeneratorOutput {
 function plotTwistPrompt(request: GeneratorRunRequest): string {
   const options = plotTwistOptions(request);
   const prompt = buildPlotTwistPrompt(options);
-  return `${contextChain(request)}\n\n${prompt.systemInstruction}\n\n${prompt.userMessage}`;
+  return `${contextChain(request)}
+
+${prompt.systemInstruction}
+
+Generate a campaign plot twist or complication. Return ONLY a JSON object matching this schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "plot-twist")}${groundingNote(request)}
+${loreGuidance(request, "the reveal, the overturned assumption, why it makes sense, foreshadowing, immediate consequences, and new player choices")}
+The complete six-section player-facing document belongs in the "content" field; keep "lore" concise and GM-facing.
+${prompt.userMessage}`;
 }
 
 function worldOptions(request: GeneratorRunRequest): WorldGeneratorOptions {

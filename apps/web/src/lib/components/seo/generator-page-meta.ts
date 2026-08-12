@@ -22,6 +22,7 @@ export type ValidSlug =
   | "dungeon-generator"
   | "adventure-generator"
   | "adventure-idea-generator"
+  | "plot-twist-generator"
   | "world"
   | "council-vote"
   | "secret-society"
@@ -538,6 +539,16 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/quest", label: "Quest Hook Generator" },
     ],
+  },
+  "plot-twist-generator": {
+    pageTitle: "Plot Twist & Complication Generator | Codex Cryptica",
+    metaDescription:
+      "Generate coherent RPG plot twists that preserve established facts, add fair foreshadowing, and create meaningful player choices.",
+    introTitle: "Plot Twist & Complication Generator",
+    eyebrow: "Plot Twist Generator",
+    introText:
+      "Turn an established situation into a fair, playable reversal or complication. Keep the facts that matter, overturn an assumption, and give the players new choices.",
+    canonicalPath: "/generators/plot-twist-generator",
   },
   "adventure-idea-generator": {
     pageTitle:

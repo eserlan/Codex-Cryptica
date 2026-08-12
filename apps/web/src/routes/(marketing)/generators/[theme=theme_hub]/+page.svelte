@@ -58,6 +58,13 @@
       icon: "icon-[lucide--scroll]",
     },
     {
+      slug: "plot-twist-generator",
+      label: "Plot Twist & Complication Generator",
+      summary:
+        "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+      icon: "icon-[lucide--shuffle]",
+    },
+    {
       slug: "council-vote",
       label: "Council Vote Generator",
       summary:

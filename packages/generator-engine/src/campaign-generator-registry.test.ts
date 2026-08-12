@@ -87,6 +87,11 @@ describe("registry lookup", () => {
     expect(prompt).toContain("Do not change the villain.");
     expect(prompt).toContain("without contradicting known facts");
     expect(prompt).toContain("do not invalidate witnessed events");
+    expect(prompt).toContain("matching this schema");
+    expect(prompt).toContain("Example (illustrative only");
+    expect(prompt).toContain(
+      'The complete six-section player-facing document belongs in the "content" field',
+    );
     expect(generator.generate(run("plot-twist")).content).toContain(
       "## New Choices",
     );
