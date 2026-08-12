@@ -1,4 +1,5 @@
-import { parseTemplate, PRESENTATION_TEMPLATE_FORMAT_VERSION } from "@codex/stat-sheet-engine";
+import { parseTemplate } from "@codex/stat-sheet-engine";
+import { PRESENTATION_TEMPLATE_FORMAT_VERSION } from "schema";
 import type { StatSheetField } from "schema";
 
 export type VisualCell =
