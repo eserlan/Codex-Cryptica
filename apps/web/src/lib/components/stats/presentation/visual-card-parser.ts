@@ -3,8 +3,7 @@ import { PRESENTATION_TEMPLATE_FORMAT_VERSION } from "schema";
 import type { StatSheetField } from "schema";
 
 export type VisualCell =
-  | { kind: "field"; fieldId: string }
-  | { kind: "value"; value: string };
+  { kind: "field"; fieldId: string } | { kind: "value"; value: string };
 
 export interface VisualCard {
   id: string;
@@ -22,9 +21,7 @@ export function getUnusedFields(
   const used = new Set(
     cards.flatMap((card) =>
       card.rows.flatMap((row) =>
-        row
-          .filter((cell) => cell.kind === "field")
-          .map((cell) => cell.fieldId),
+        row.flatMap((cell) => (cell.kind === "field" ? [cell.fieldId] : [])),
       ),
     ),
   );
@@ -33,7 +30,7 @@ export function getUnusedFields(
 
 export function parseCardsFromSource(
   src: string,
-  schemaFields: StatSheetField[] = []
+  schemaFields: StatSheetField[] = [],
 ): VisualCard[] {
   const cards: VisualCard[] = [];
   const res = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
