@@ -29,6 +29,14 @@ describe("writeLargeVaultResults", () => {
         },
       ],
       { browserVersion: "Chromium 1", cacheState: "cold-and-warm" },
+      {
+        "rendered-node-selection": {
+          schemaVersion: 1,
+          samples: [],
+          summaries: [],
+          outcomes: { completed: 0, cancelled: 0, stale: 0, failed: 0 },
+        },
+      },
     );
 
     const result = JSON.parse(fs.readFileSync(output, "utf8"));
@@ -42,5 +50,6 @@ describe("writeLargeVaultResults", () => {
       attempt: 1,
     });
     expect(JSON.stringify(result)).not.toContain("Benchmark entity");
+    expect(result.scenarios).toHaveProperty("rendered-node-selection");
   });
 });

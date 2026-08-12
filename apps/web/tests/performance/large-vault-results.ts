@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   createPerformanceResult,
+  type PerformanceResultV1,
   type PerformanceSampleV1,
 } from "@codex/performance-observability";
 import {
@@ -14,9 +15,26 @@ export interface LargeVaultResultMetadata {
   cacheState: "cold-and-warm";
 }
 
+/** Fixed user journeys used by the large-vault budget manifest. */
+export const LARGE_VAULT_SCENARIOS = [
+  "cold-open-index",
+  "warm-open",
+  "rendered-node-selection",
+  "focus-depth-change",
+  "explorer-workflow",
+  "table-workflow",
+  "entity-save",
+] as const;
+
+export type LargeVaultScenario = (typeof LARGE_VAULT_SCENARIOS)[number];
+export type LargeVaultScenarioResults = Partial<
+  Record<LargeVaultScenario, PerformanceResultV1>
+>;
+
 export function writeLargeVaultResults(
   samples: PerformanceSampleV1[],
   metadata: LargeVaultResultMetadata,
+  scenarios: LargeVaultScenarioResults = {},
 ) {
   const result = {
     schemaVersion: 1,
@@ -37,6 +55,11 @@ export function writeLargeVaultResults(
       cacheState: metadata.cacheState,
     },
     results: createPerformanceResult(samples),
+    scenarios: Object.fromEntries(
+      Object.entries(scenarios).sort(([left], [right]) =>
+        left.localeCompare(right),
+      ),
+    ),
   };
   const output =
     process.env.PERFORMANCE_RESULTS_PATH ??
