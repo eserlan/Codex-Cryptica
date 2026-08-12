@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPlotTwistPremise } from "./generator-handoffs";
+import { buildPlotTwistPremise, isQuestHookDraft } from "./generator-handoffs";
 
 describe("buildPlotTwistPremise", () => {
   it("keeps the quest hook's useful public draft fields in order", () => {
@@ -24,5 +24,11 @@ describe("buildPlotTwistPremise", () => {
         lore: "",
       }),
     ).toHaveLength(4000);
+  });
+
+  it("recognizes only quest-generator labels", () => {
+    expect(isQuestHookDraft(["rpg-quest", "Retrieval"])).toBe(true);
+    expect(isQuestHookDraft(["event", "political"])).toBe(false);
+    expect(isQuestHookDraft(undefined)).toBe(false);
   });
 });

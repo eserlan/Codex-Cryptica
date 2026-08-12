@@ -35,6 +35,10 @@
   import StarSystemDiagram from "$lib/components/seo/StarSystemDiagram.svelte";
   import { blobToFile } from "$lib/utils/svg-export";
   import { entityMapLinkingService } from "$lib/services/entity-map-linking";
+  import {
+    buildPlotTwistPremise,
+    isQuestHookDraft,
+  } from "$lib/services/seo/generator-handoffs";
 
   let loadingIndex = $state(0);
   let activeLoadingMessages = $derived(
@@ -174,9 +178,7 @@
 
   function openPlotTwistFromDraft() {
     if (!draft) return;
-    const premise = [draft.title, draft.summary, draft.content, draft.lore]
-      .filter(Boolean)
-      .join("\n\n");
+    const premise = buildPlotTwistPremise(draft);
     stage = "configure";
     draft = null;
     errorMsg = null;
@@ -584,9 +586,7 @@
           stage = "configure";
           errorMsg = null;
         }}
-        onGeneratePlotTwist={draft.labels?.some((label) =>
-          ["quest-generator", "rpg-quest"].includes(label.toLowerCase()),
-        )
+        onGeneratePlotTwist={isQuestHookDraft(draft.labels)
           ? openPlotTwistFromDraft
           : undefined}
       />

@@ -366,9 +366,9 @@
     campaignContext: "",
   });
 
-  const _initialQuestPremise = untrack(
-    () => page.url.searchParams.get("questPremise") ?? "",
-  );
+  const _initialQuestPremise = browser
+    ? (new URL(window.location.href).searchParams.get("questPremise") ?? "")
+    : "";
 
   let plotTwist = $state({
     genre: factionConfig.themes[0],
