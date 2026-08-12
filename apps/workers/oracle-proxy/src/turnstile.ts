@@ -4,7 +4,9 @@ export function isCodexHostname(hostname: string | undefined): boolean {
     hostname === "codex-cryptica.com" ||
     hostname === "staging.codexcryptica.com" ||
     hostname === "staging.codex-cryptica.com" ||
+    hostname === "codex-cryptica.pages.dev" ||
     hostname?.endsWith(".codex-cryptica.pages.dev") === true ||
+    hostname?.endsWith(".pages.dev") === true ||
     hostname === "localhost"
   );
 }
