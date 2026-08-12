@@ -1,0 +1,140 @@
+- generic [ref=f35e3]:
+  - banner [ref=f35e4]:
+    - generic [ref=f35e5]:
+      - link "Codex Cryptica" [ref=f35e6] [cursor=pointer]:
+        - /url: ../?utm_source=generator-logo&utm_medium=nav&utm_campaign=seo-funnel
+      - navigation "Site" [ref=f35e9]:
+        - link "Features" [ref=f35e10] [cursor=pointer]:
+          - /url: ../features
+        - link "Generators" [ref=f35e11] [cursor=pointer]:
+          - /url: ../generators
+        - link "Tools" [ref=f35e12] [cursor=pointer]:
+          - /url: ../tools
+        - link "Devlog" [ref=f35e13] [cursor=pointer]:
+          - /url: ../blog
+      - link "Open Codex" [ref=f35e15] [cursor=pointer]:
+        - /url: ../?utm_source=generator-header-cta&utm_medium=nav&utm_campaign=seo-funnel
+  - main [ref=f35e16]:
+    - generic [ref=f35e17]:
+      - paragraph [ref=f35e20]: Generate campaign-ready RPG NPCs in seconds — no account required.
+      - generic [ref=f35e22]:
+        - generic [ref=f35e23]:
+          - region "Generated Output Workspace" [ref=f35e24]:
+            - generic [ref=f35e25]:
+              - heading "No Draft Generated" [level=3] [ref=f35e27]
+              - paragraph [ref=f35e28]: Use the sidebar generator control panel to customize parameters, then trigger the generation engine to forge details.
+          - generic [ref=f35e30]:
+            - heading "Session Hub" [level=3] [ref=f35e32]
+            - paragraph [ref=f35e33]: Generated drafts appear here automatically. Choose which ones to reuse as context or save to Codex.
+        - generic [ref=f35e37]:
+          - paragraph [ref=f35e39]: At the Table
+          - paragraph [ref=f35e40]: GM utility details appear here after generation.
+        - generic [ref=f35e42]:
+          - link "All generators" [ref=f35e43] [cursor=pointer]:
+            - /url: ../generators
+          - button "RPG NPC Generator" [ref=f35e46]
+          - heading "RPG NPC Generator" [level=1] [ref=f35e49]
+          - paragraph [ref=f35e50]: Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.
+          - paragraph [ref=f35e51]: Set your inputs — your draft updates to the right
+          - generic [ref=f35e53]:
+            - generic [ref=f35e54]:
+              - generic [ref=f35e55]: Choose a vibe
+              - combobox "Choose a vibe" [ref=f35e56]:
+                - option "Classic Fantasy" [selected]
+                - option "Pirate"
+                - option "Cyberpunk / Corporate"
+                - option "Vampire / Gothic Noir"
+                - option "Cosmic Horror"
+                - option "Sci-Fi / Space Opera"
+                - option "Modern Conspiracy"
+                - option "Post-Apocalyptic"
+                - option "Western / Frontier"
+                - option "Steampunk"
+                - option "Lancer"
+                - option "Space Opera Resistance"
+                - option "Optimistic Exploration Sci-Fi"
+                - option "Own option"
+            - generic [ref=f35e57]:
+              - generic [ref=f35e58]: Choose their ancestry
+              - combobox "Choose their ancestry" [ref=f35e59]:
+                - option "Human" [selected]
+                - option "Elf"
+                - option "Dwarf"
+                - option "Halfling"
+                - option "Tiefling"
+                - option "Half-Orc"
+                - option "Gnome"
+                - option "Dragonborn"
+                - option "Own option"
+            - generic [ref=f35e60]:
+              - generic [ref=f35e61]: Choose their role
+              - combobox "Choose their role" [ref=f35e62]:
+                - option "Mage" [selected]
+                - option "Warrior"
+                - option "Rogue"
+                - option "Priest"
+                - option "Merchant"
+                - option "Noble"
+                - option "Scholar"
+                - option "Guard"
+                - option "Own option"
+            - generic [ref=f35e63]:
+              - generic [ref=f35e64]: Choose their moral stance
+              - combobox "Choose their moral stance" [ref=f35e65]:
+                - option "Chivalric Code" [selected]
+                - option "Common Good"
+                - option "Enlightened Balance"
+                - option "Mercenary Instinct"
+                - option "Zealous Crusade"
+                - option "Power at All Costs"
+                - option "Own option"
+            - generic [ref=f35e66]:
+              - generic [ref=f35e67]: Add campaign context
+              - textbox "Add campaign context" [ref=f35e68]
+              - paragraph [ref=f35e69]: Add a location, faction, villain, or active problem to aim the NPC at your table.
+            - button "Surprise Me" [ref=f35e71] [cursor=pointer]
+            - button "Generate RPG NPC" [ref=f35e73]
+            - generic [ref=f35e74]:
+              - generic [ref=f35e75]:
+                - checkbox "AI Lore Co-Author Mode" [checked] [ref=f35e76]
+                - generic [ref=f35e77] [cursor=pointer]: AI Lore Co-Author Mode
+              - paragraph [ref=f35e79]: AI writes unique, rich lore on each generate.
+      - generic [ref=f35e81]:
+        - heading "RPG NPC Generator FAQ" [level=2] [ref=f35e82]
+        - generic [ref=f35e83]:
+          - article [ref=f35e84]:
+            - heading "Does the D&D NPC generator require an account?" [level=3] [ref=f35e85]
+            - paragraph [ref=f35e86]: No. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.
+          - article [ref=f35e87]:
+            - heading "What does the RPG NPC generator create?" [level=3] [ref=f35e88]
+            - paragraph [ref=f35e89]: It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook — structured for immediate use.
+          - article [ref=f35e90]:
+            - heading "Can I use it outside D&D?" [level=3] [ref=f35e91]
+            - paragraph [ref=f35e92]: Yes. The output works for D&D, Pathfinder, OSR games, cyberpunk, and any genre. The generator is system-agnostic.
+          - article [ref=f35e93]:
+            - heading "How does saving a generated NPC work?" [level=3] [ref=f35e94]
+            - paragraph [ref=f35e95]: Clicking 'Save to Codex' stores the NPC draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Character entity, ready to link to factions, locations, and campaign notes.
+      - generic [ref=f35e97]:
+        - heading "More RPG Worldbuilding Tools" [level=2] [ref=f35e98]
+        - generic [ref=f35e99]:
+          - link "AI GM assistant" [ref=f35e100] [cursor=pointer]:
+            - /url: ../solutions/ai-gm-assistant
+          - link "Free RPG campaign manager" [ref=f35e103] [cursor=pointer]:
+            - /url: ../free-rpg-campaign-manager
+  - contentinfo [ref=f35e106]:
+    - generic [ref=f35e107]:
+      - generic [ref=f35e108]: © 2026 Codex Cryptica. All rights reserved.
+      - generic [ref=f35e109]:
+        - link "Terms" [ref=f35e110] [cursor=pointer]:
+          - /url: ../terms
+        - link "Privacy" [ref=f35e111] [cursor=pointer]:
+          - /url: ../privacy
+        - link "Tools" [ref=f35e112] [cursor=pointer]:
+          - /url: ../tools
+        - link "Sitemap" [ref=f35e113] [cursor=pointer]:
+          - /url: ../sitemap.xml
+        - link "LLM Docs" [ref=f35e114] [cursor=pointer]:
+          - /url: ../llms.txt
+        - link "Codex Cryptica on Groupfinder" [ref=f35e115] [cursor=pointer]:
+          - /url: https://groupfinder.gg/library/codex-cryptica
+          - img "Codex Cryptica on Groupfinder" [ref=f35e116]
