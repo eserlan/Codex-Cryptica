@@ -57,9 +57,29 @@
   );
 
   let resizeObserver: ResizeObserver | undefined;
+  let visibilityObserver: IntersectionObserver | undefined;
+  let documentVisible = $state(
+    typeof document === "undefined" ? true : !document.hidden,
+  );
+  let containerIntersecting = $state(true);
   const hoverContentLoader = createHoverContentLoader((entityId) =>
     vault.loadEntityContent(entityId),
   );
+
+  const surfaceCovered = $derived(
+    onboardingStore.isLandingPageVisible ||
+      modalUIStore.isAnyModalOpen ||
+      (layoutUIStore.isEntityExplorerWorkspace &&
+        !!layoutUIStore.focusedEntityId) ||
+      (vault.isInitialized &&
+        onboardingStore.skipWelcomeScreen &&
+        !onboardingStore.dismissedWorldPage &&
+        !vault.selectedEntityId),
+  );
+
+  const handleDocumentVisibilityChange = () => {
+    documentVisible = !document.hidden;
+  };
 
   // Sync prop -> controller
   $effect(() => {
@@ -201,6 +221,11 @@
   };
 
   onMount(() => {
+    documentVisible = !document.hidden;
+    document.addEventListener(
+      "visibilitychange",
+      handleDocumentVisibilityChange,
+    );
     // Funnel: reaching the graph is the final onboarding milestone. Guests are
     // visitors, not first-time GMs, so they don't count.
     if (!vault.isGuest) {
@@ -210,11 +235,17 @@
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
-        if (controller.cy) {
+        if (controller.cy && !controller.isSuspended) {
           controller.cy.resize();
         }
       });
       resizeObserver.observe(container);
+    }
+    if (typeof IntersectionObserver !== "undefined") {
+      visibilityObserver = new IntersectionObserver(([entry]) => {
+        containerIntersecting = entry?.isIntersecting === true;
+      });
+      visibilityObserver.observe(container);
     }
 
     // Re-measure the coach mark's spotlighted element on resize/scroll, same
@@ -228,9 +259,31 @@
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
+    visibilityObserver?.disconnect();
+    visibilityObserver = undefined;
+    document.removeEventListener(
+      "visibilitychange",
+      handleDocumentVisibilityChange,
+    );
     window.removeEventListener("resize", updateCoachMarkTargetRect);
     window.removeEventListener("scroll", updateCoachMarkTargetRect, true);
     controller.destroy();
+  });
+
+  $effect(() => {
+    const inputs = {
+      documentVisible,
+      surfaceCovered,
+      containerIntersecting,
+    };
+    untrack(() => controller.setVisibilityInputs(inputs));
+  });
+
+  $effect(() => {
+    void controller.requiresReinitialization;
+    if (controller.consumeReinitializationRequest() && container) {
+      void controller.init(container, graphStyle);
+    }
   });
 
   // Mode change triggers
@@ -274,6 +327,7 @@
     void graph.labelFilterMode;
     void graph.activeCategories;
     void controller.cy;
+    void controller.isSuspended;
     untrack(() => controller.syncElements());
   });
 
@@ -497,7 +551,8 @@
   // Fit request
   $effect(() => {
     const currentCy = controller.cy;
-    if (currentCy && graph.fitRequest > 0) {
+    void controller.isSuspended;
+    if (currentCy && graph.fitRequest > 0 && !controller.isSuspended) {
       untrack(() =>
         currentCy.animate({
           // Cytoscape includes edge-label bounds in fit calculations. Leave a
@@ -539,6 +594,7 @@
     void graph.showImages;
     void graph.perfStylingActive;
     void controller.cy;
+    void controller.isSuspended;
     untrack(() => controller.syncImages());
   });
 
@@ -548,6 +604,7 @@
   $effect(() => {
     void graph.isLargeGraph;
     void controller.cy;
+    void controller.isSuspended;
     untrack(() => controller.syncRenderHints());
   });
 
@@ -642,6 +699,7 @@
   <GraphToolbar
     cy={controller.cy}
     isLayoutRunning={controller.isLayoutRunning}
+    isSuspended={controller.isSuspended}
     onApplyLayout={controller.applyCurrentLayout}
     selectedCount={controller.selectedCount}
   />

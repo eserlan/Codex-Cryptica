@@ -375,3 +375,38 @@ describe("SearchEngine – concurrent task queue", () => {
     expect(engine.docCount).toBe(N);
   });
 });
+
+describe("SearchEngine – worker index compression", () => {
+  it("skips compression for an empty index", async () => {
+    const payload = await new SearchEngine().exportIndexCompressed();
+
+    expect(payload.keyCount).toBe(0);
+    expect(payload.data.byteLength).toBe(0);
+  });
+
+  it("exports a transferable compressed payload and restores it", async () => {
+    const source = new SearchEngine();
+    await source.add(makeEntry("compressed-1"));
+
+    const payload = await source.exportIndexCompressed();
+    expect(payload.format).toBe("fflate-json-v1");
+    expect(payload.data).toBeInstanceOf(Uint8Array);
+    expect(payload.data.byteLength).toBeGreaterThan(0);
+
+    const target = new SearchEngine();
+    await target.importIndexCompressed(payload);
+    expect(target.docCount).toBe(1);
+    expect(await target.search("compressed-1")).toHaveLength(1);
+  });
+
+  it("rejects corrupt compressed payloads so persistence can rebuild", async () => {
+    const engine = new SearchEngine();
+    await expect(
+      engine.importIndexCompressed({
+        format: "fflate-json-v1",
+        data: new Uint8Array([1, 2, 3]),
+        keyCount: 1,
+      }),
+    ).rejects.toThrow("Corrupt segmented search index payload");
+  });
+});

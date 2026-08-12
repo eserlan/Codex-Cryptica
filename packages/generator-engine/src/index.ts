@@ -284,6 +284,18 @@ export {
   type SecretSocietyGeneratorOptions,
 } from "./public-secret-society";
 export {
+  alienRaceConfig,
+  buildAlienRacePrompt,
+  generateAlienRaceLocal,
+  parseAlienRaceResponse,
+  resolveAlienRace,
+  FREEFORM_MODE,
+  GROUNDED_MODE,
+  type AlienRaceGeneratorOptions,
+  type AlienRacePrompt,
+  type ResolvedAlienRace,
+} from "./public-alien-race";
+export {
   buildStarSystemDiagram,
   colorForBodyType,
   type StarSystemDiagramLayout,

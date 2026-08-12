@@ -4,6 +4,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
   slug: "fantasy-worldbuilding",
   kind: "genre",
   theme: "fantasy",
+  hub: "fantasy",
   seo: {
     title: "Codex Cryptica for Fantasy Worldbuilding",
     description:
@@ -52,25 +53,30 @@ export const fantasyWorldbuilding: LandingPageConfig = {
         label: "High Queen Vaeloria",
         sublabel: "Ruler of Sunspire",
         relation: "controls",
+        category: "character",
       },
       {
-        label: "Oakhaven Harbor",
+        label: "Oakhaven Harbour",
         sublabel: "Capital Trade City",
         relation: "opposed by",
+        category: "location",
       },
       {
         label: "The Iron Syndicate",
         sublabel: "Outlaw Merchant Faction",
         relation: "seeks",
+        category: "faction",
       },
       {
         label: "Sunstone Relic",
         sublabel: "Ancient Power Source",
         relation: "crafted by",
+        category: "item",
       },
       {
         label: "Archmage Eldrin",
         sublabel: "Court Sorcerer",
+        category: "character",
       },
     ],
   },

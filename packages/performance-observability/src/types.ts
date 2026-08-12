@@ -16,12 +16,15 @@ export const PERFORMANCE_OPERATIONS = [
   "graph_sync_render_ready",
   "graph_select",
   "graph_focus_depth_change",
+  "graph_visibility_suspend",
   "explorer_open",
   "explorer_filter",
   "table_open",
   "table_sort",
   "table_filter",
   "entity_save",
+  "vault_bulk_mutation",
+  "timeline_open",
 ] as const;
 
 export type PerformanceOperation = (typeof PERFORMANCE_OPERATIONS)[number];

@@ -272,6 +272,11 @@ export class SearchIndexPipeline {
     let totalCount: number | null;
 
     try {
+      // Give user input and pending search queries a turn before the first
+      // potentially expensive content query. Subsequent batches yield below.
+      await this.yieldToIdle();
+      if (this.coordinator.activeVaultId !== vaultId) return;
+
       const db = this.getDb();
       const contentQuery = db.entityContent.where("vaultId").equals(vaultId);
       totalCount =

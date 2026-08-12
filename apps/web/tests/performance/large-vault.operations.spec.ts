@@ -246,6 +246,35 @@ test("records repeatable large-vault operations in a production preview", async 
       "table_sort",
     ]);
 
+    await page.getByTestId("activity-bar-timeline").click();
+
+    for (const mode of ["agenda", "vertical", "horizontal"]) {
+      const label =
+        mode === "agenda"
+          ? "Agenda"
+          : mode === "vertical"
+            ? "Timeline"
+            : "Bands";
+      await page.getByTitle(`Switch to ${label} View`).click();
+      const region = page.getByRole("region", {
+        name:
+          mode === "agenda"
+            ? "Agenda"
+            : `${mode[0].toUpperCase()}${mode.slice(1)} Timeline`,
+      });
+      await expect(region).toBeVisible({ timeout: 30_000 });
+      await expect
+        .poll(() => region.locator("button").count(), { timeout: 30_000 })
+        .toBeLessThan(80);
+
+      await region.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+        element.scrollLeft = element.scrollWidth;
+        element.dispatchEvent(new Event("scroll"));
+      });
+      await page.waitForTimeout(50);
+    }
+
     // Save a deterministic sequence through the real persistence path.
     const saveStart = (await getSamples()).length;
     for (let revision = 0; revision < 10; revision += 1) {

@@ -106,6 +106,9 @@ export function stringifyEntity(entity: Entity): string {
   const cleanRest: Record<string, unknown> = { ...metadata };
   delete cleanRest._fsHandle;
   delete cleanRest._lastModified;
+  delete cleanRest.contentPreview;
+  delete cleanRest.contentLoaded;
+  delete cleanRest.contentPreviewVersion;
   delete cleanRest.connections;
 
   Object.assign(orderedMetadata, cleanRest);

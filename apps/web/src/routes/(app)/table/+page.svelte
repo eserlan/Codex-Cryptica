@@ -8,7 +8,11 @@
   import {
     filterEntities,
     countEntityTypes,
+    createEntityTextSearchRunner,
+    parseEntitySearchQuery,
   } from "$lib/components/explorer/entityListFiltering";
+  import { searchService } from "@codex/search-orchestrator";
+  import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
   import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
@@ -31,11 +35,72 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   let labelFilters = $state<Set<string>>(new Set());
+  let textMatchIds = $state<Set<string> | null>(null);
+  let textSearchPending = $state(false);
+  let textSearchUnavailable = $state(false);
+  let textSearchError = $state<string | null>(null);
+  let indexProgress = $state<SearchIndexProgress>(
+    searchService.getIndexProgress(),
+  );
+  let latestIndexStatus = searchService.getIndexProgress().status;
+  let indexStatusVersion = $state(0);
+  const parsedSearchQuery = $derived(parseEntitySearchQuery(searchQuery));
   let sort = $state<SortState>({ key: "title", direction: "asc" });
   let tableOpenRecorded = false;
   const tableOpenSpan = browserPerformanceRecorder.start("table_open");
 
   const totalEntities = $derived(vault.allEntities.length);
+
+  $effect(() => {
+    const unsubscribe = searchService.subscribeIndexProgress((progress) => {
+      if (progress.status !== latestIndexStatus) {
+        latestIndexStatus = progress.status;
+        indexStatusVersion += 1;
+      }
+      indexProgress = progress;
+    });
+    return unsubscribe;
+  });
+
+  $effect(() => {
+    const query = searchQuery;
+    const entityCount = vault.allEntities.length;
+    void indexStatusVersion;
+    const indexStatus = latestIndexStatus;
+    const { textQuery } = parsedSearchQuery;
+    if (!textQuery) {
+      textMatchIds = null;
+      textSearchPending = false;
+      textSearchUnavailable = false;
+      textSearchError = null;
+      return;
+    }
+
+    if (indexStatus === "idle") {
+      textMatchIds = null;
+      textSearchPending = false;
+      textSearchUnavailable = true;
+      textSearchError = null;
+      return;
+    }
+
+    textMatchIds = null;
+    textSearchPending = true;
+    textSearchUnavailable = false;
+    textSearchError = null;
+    const searchRunner = createEntityTextSearchRunner(searchService);
+    void searchRunner.search(query, entityCount).then((result) => {
+      if (!result) return;
+      textSearchPending = false;
+      textMatchIds = result.error ? null : result.matchIds;
+      textSearchUnavailable = result.error !== null;
+      textSearchError = result.error?.message ?? null;
+    });
+
+    return () => {
+      searchRunner.cancel();
+    };
+  });
 
   const typeCounts = $derived(
     countEntityTypes(vault.allEntities, {
@@ -51,7 +116,20 @@
       labelFilters,
       allowedTypes: null,
       showDraftsOnly: false,
+      textMatchIds,
+      textSearchPending,
+      textSearchUnavailable,
     }),
+  );
+
+  const searchStatusMessage = $derived(
+    textSearchPending
+      ? "Searching indexed content…"
+      : textSearchError
+        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
+        : indexProgress.isPartial && parsedSearchQuery.textQuery
+          ? "Search is still indexing; results will update as indexing finishes."
+          : null,
   );
 
   const connectionCounts = $derived.by(() => {
@@ -243,8 +321,16 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        for (const id of targetIds) {
-          await vault.updateEntity(id, { type });
+        const result = await vault.bulkUpdate(
+          Object.fromEntries(targetIds.map((id) => [id, { type }])),
+        );
+        if (result.failedIds.length > 0 || result.skippedIds.length > 0) {
+          notificationStore.notify(
+            `Changed ${result.succeededIds.length} entities; ${
+              result.failedIds.length + result.skippedIds.length
+            } could not be changed.`,
+            "error",
+          );
         }
       } catch (err: any) {
         console.error("Failed to change type", err);
@@ -276,10 +362,21 @@
     if (confirmed) {
       isCommitting = true;
       try {
-        for (const id of targetIds) {
-          await vault.deleteEntity(id);
+        const result = await vault.bulkDelete(targetIds);
+        const succeededIds = new Set(result.succeededIds);
+        selectedIds = new Set(
+          [...selectedIds].filter((id) => !succeededIds.has(id)),
+        );
+        if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+          notificationStore.notify(
+            `Deleted ${result.succeededIds.length} entities; ${
+              result.failedIds.length + result.cancelledIds.length
+            } remain selected for retry.`,
+            "error",
+          );
+        } else {
+          clearSelection();
         }
-        clearSelection();
       } catch (err: any) {
         console.error("Failed to delete", err);
         notificationStore.notify(`Error: ${err.message}`, "error");
@@ -405,6 +502,11 @@
           class="w-full rounded-lg border border-theme-border bg-theme-surface py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
         />
       </div>
+      {#if searchStatusMessage}
+        <p class="text-[10px] text-theme-muted" aria-live="polite">
+          {searchStatusMessage}
+        </p>
+      {/if}
 
       {#if typeCounts.size > 0}
         <div class="flex flex-wrap items-center gap-1.5">

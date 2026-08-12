@@ -1,7 +1,7 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { execSync } from "node:child_process";
@@ -12,6 +12,41 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(
   readFileSync(resolve(__dirname, "package.json"), "utf8"),
 );
+
+const packagesDir = resolve(__dirname, "../../packages");
+const workspacePackages: Array<{ name: string; dir: string; main: string }> =
+  [];
+
+if (existsSync(packagesDir)) {
+  for (const dir of readdirSync(packagesDir)) {
+    const pkgPath = resolve(packagesDir, dir, "package.json");
+    if (existsSync(pkgPath)) {
+      try {
+        const pkgData = JSON.parse(readFileSync(pkgPath, "utf8"));
+        if (pkgData.name) {
+          workspacePackages.push({
+            name: pkgData.name,
+            dir,
+            main: pkgData.main || "./src/index.ts",
+          });
+        }
+      } catch (err) {
+        console.warn(
+          `[vite.config] Could not parse workspace package at ${pkgPath}:`,
+          err,
+        );
+      }
+    }
+  }
+}
+
+const workspacePackageNames = workspacePackages.map((p) => p.name);
+
+const dynamicWorkspaceAliases: Record<string, string> = {};
+for (const p of workspacePackages) {
+  const relPath = p.main.startsWith("./") ? p.main.slice(2) : p.main;
+  dynamicWorkspaceAliases[p.name] = resolve(packagesDir, p.dir, relPath);
+}
 
 let gitHash = "unknown";
 try {
@@ -54,22 +89,13 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@codex/events": resolve(__dirname, "../../packages/events/src/index.ts"),
-      "@codex/runtime": resolve(
-        __dirname,
-        "../../packages/runtime/src/index.ts",
-      ),
-      "@codex/vault-engine": resolve(
-        __dirname,
-        "../../packages/vault-engine/src/index.ts",
-      ),
+      ...dynamicWorkspaceAliases,
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
       "generator-engine": resolve(
         __dirname,
         "../../packages/generator-engine/src",
       ),
       "map-engine": resolve(__dirname, "../../packages/map-engine/src"),
-      schema: resolve(__dirname, "../../packages/schema/src/index.ts"),
     },
     dedupe: ["svelte"],
   },
@@ -77,6 +103,7 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),
     ...(process.env.VITEST
       ? {
+          "import.meta.env.VITEST": "true",
           __BUNDLED_DEV__: "true",
           __SERVER_FORWARD_CONSOLE__: "false",
           __HMR_PROTOCOL__: '"ws"',
@@ -114,6 +141,9 @@ export default defineConfig({
     },
   },
   test: {
+    env: {
+      VITEST: "true",
+    },
     include: ["src/**/*.{test,spec}.{js,ts}"],
     environment: "jsdom",
     globals: true,
@@ -190,21 +220,7 @@ export default defineConfig({
     },
   } as any,
   ssr: {
-    noExternal: [
-      "graph-engine",
-      "map-engine",
-      "editor-core",
-      "schema",
-      "chronology-engine",
-      "dice-engine",
-      "generator-engine",
-      "@codex/sync-engine",
-      "@codex/oracle-engine",
-      "@codex/proposer",
-      "@codex/search-engine",
-      "@codex/importer",
-      "@codex/canvas-engine",
-    ],
+    noExternal: workspacePackageNames,
   },
   server: {
     headers: {
@@ -222,15 +238,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: [
-      "graph-engine",
-      "map-engine",
-      "editor-core",
-      "schema",
-      "chronology-engine",
-      "generator-engine",
-      "@codex/canvas-engine",
-    ],
+    exclude: workspacePackageNames,
     include: ["@xyflow/svelte"],
   },
 });

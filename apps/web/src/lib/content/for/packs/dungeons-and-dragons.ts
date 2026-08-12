@@ -4,6 +4,7 @@ export const dungeonsAndDragons: LandingPageConfig = {
   slug: "dungeons-and-dragons",
   kind: "system",
   theme: "fantasy",
+  hub: "fantasy",
   seo: {
     title: "Codex Cryptica for D&D 5e Campaign Management",
     description:
@@ -52,25 +53,30 @@ export const dungeonsAndDragons: LandingPageConfig = {
         label: "The Ashen Company",
         sublabel: "Adventuring Party",
         relation: "sponsored by",
+        category: "faction",
       },
       {
         label: "Lord Caspian Vane",
         sublabel: "Patron • High Warden",
         relation: "opposes",
+        category: "character",
       },
       {
         label: "Cult of the Black Flame",
         sublabel: "Villainous Faction",
         relation: "occupies",
+        category: "faction",
       },
       {
         label: "Sunken Citadel of Ash",
         sublabel: "Ancient Citadel",
         relation: "houses",
+        category: "location",
       },
       {
         label: "Eye of the Sun God",
         sublabel: "Artifact of Power",
+        category: "item",
       },
     ],
   },

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "comlink": "^4.4.1",
+    "fflate": "^0.8.3",
     "flexsearch": "^0.8.212",
     "schema": "workspace:*"
   },

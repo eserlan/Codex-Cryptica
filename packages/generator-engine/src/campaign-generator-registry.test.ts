@@ -54,6 +54,7 @@ describe("registry lookup", () => {
       "council-vote",
       "secret-society",
       "star-system",
+      "alien-race",
     ]);
   });
 
@@ -106,6 +107,45 @@ describe("registry lookup", () => {
     const draft = getGenerator("star-system").generate(run("star-system"));
     expect(draft.lore).toContain("## Adventure Hooks");
     expect(draft.lore).toContain("## System-Wide Conflict or Mystery");
+  });
+
+  it("builds a context-aware alien-race prompt and maps species to creatures", () => {
+    const prompt = getGenerator("alien-race").buildPrompt(
+      run("alien-race", {
+        options: {
+          genre: "Cosmic Horror",
+          bodyPlan: "Radially symmetric",
+          homeEnvironment: "Ocean world",
+        },
+      }),
+    );
+    expect(prompt).toContain("Cosmic Horror");
+    expect(prompt).toContain("Radially symmetric");
+    expect(prompt).toContain("Ocean world");
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("Example (illustrative only");
+    // The generator's defining rule has to survive into the in-app prompt,
+    // not just the public one.
+    expect(prompt).toContain(
+      "must have consequences elsewhere in the species design",
+    );
+    // A species is a creature, not an individual character.
+    expect(GENERATOR_ENTITY_TYPE["alien-race"]).toBe("creature");
+    const draft = getGenerator("alien-race").generate(run("alien-race"));
+    expect(draft.content).toContain("## Biology & Lifecycle");
+    expect(draft.lore).toContain("## Adventure Hooks");
+  });
+
+  it("folds the alien-race document into a single lore field when saving", () => {
+    const generator = getGenerator("alien-race");
+    const request = run("alien-race");
+    const draft = generator.mapOutputToDraft(
+      generator.generate(request),
+      request,
+    );
+    expect(draft.entityType).toBe("creature");
+    expect(draft.lore).toContain("## Overview");
+    expect(draft.lore).toContain("## Weaknesses & Constraints");
   });
 
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
@@ -1047,6 +1087,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "council-vote": "note",
       "secret-society": "faction",
       "star-system": "location",
+      "alien-race": "creature",
     });
   });
 

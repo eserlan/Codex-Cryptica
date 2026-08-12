@@ -33,7 +33,10 @@ type SearchApi = Pick<
   | "clear"
   | "exportIndex"
   | "importIndex"
->;
+> &
+  Partial<
+    Pick<SearchEngine, "exportIndexCompressed" | "importIndexCompressed">
+  >;
 
 export interface SearchServiceDependencies {
   workerFactory?: () => Worker | Promise<Worker>;

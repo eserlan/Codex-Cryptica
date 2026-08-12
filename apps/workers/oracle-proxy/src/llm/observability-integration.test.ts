@@ -15,7 +15,7 @@ const post = (body: Record<string, unknown>) =>
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Origin: "https://codex-cryptica.com",
+      Origin: "https://codexcryptica.com",
     },
     body: JSON.stringify(body),
   });
@@ -97,6 +97,10 @@ describe("US5 Scenario 2 — token usage and estimated cost are logged when avai
       post({
         operation: "freeform-generation",
         messages: [{ role: "user", content: "hi" }],
+        // Pinned: this scenario is about usage and cost being logged, not
+        // about which model the operation currently routes to. The mocked
+        // response below is OpenAI-shaped, so the model must be too.
+        modelKeyOverride: "luna-fast",
       }),
       env,
       {} as ExecutionContext,

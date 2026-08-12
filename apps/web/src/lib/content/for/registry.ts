@@ -26,6 +26,17 @@ export function getAllLandingPages(
 }
 
 /**
+ * Returns the landing pages belonging to a theme hub, so a hub page can link
+ * back to the system and genre guides it covers.
+ */
+export function getLandingPagesForHub(
+  hub: string,
+  customRegistry: Record<string, LandingPageConfig> = packs,
+): LandingPageConfig[] {
+  return getAllLandingPages(customRegistry).filter((page) => page.hub === hub);
+}
+
+/**
  * Returns an array of all valid slug strings (useful for SvelteKit entries() prerendering).
  */
 export function getAllLandingPageSlugs(
