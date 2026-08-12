@@ -6,6 +6,7 @@
     LandingPageGraphStep,
     LandingPageSurfaceStyle,
   } from "$lib/content/for/schema";
+  import { getPositions } from "$lib/components/for/graph-preview-layout";
 
   let {
     steps,
@@ -114,28 +115,6 @@
     p.categories[step?.category ?? "note"];
 
   let selectAccent = $derived(p.accent);
-
-  // Spanned 2D viewBox (540 x 280) tuned for aspect ratio fill
-  const getPositions = (count: number) => {
-    const hub = { cx: 270, cy: 140 };
-    if (count <= 5) {
-      return [
-        hub,
-        { cx: 85, cy: 65 }, // Top Left (Node 1)
-        { cx: 455, cy: 75 }, // Top Right (Node 2)
-        { cx: 435, cy: 220 }, // Bottom Right (Node 3)
-        { cx: 105, cy: 220 }, // Bottom Left (Node 4)
-      ];
-    }
-    return [
-      hub,
-      { cx: 85, cy: 65 }, // Top Left (Node 1)
-      { cx: 455, cy: 75 }, // Top Right (Node 2)
-      { cx: 445, cy: 215 }, // Bottom Right (Node 3)
-      { cx: 270, cy: 225 }, // Bottom Center (Node 4)
-      { cx: 95, cy: 215 }, // Bottom Left (Node 5)
-    ];
-  };
 
   let positions = $derived(getPositions(steps.length));
   let selectedIndex = $state(0);

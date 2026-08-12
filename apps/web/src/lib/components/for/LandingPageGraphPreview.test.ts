@@ -1,29 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { getAllLandingPages } from "$lib/content/for/registry";
+import { getPositions } from "$lib/components/for/graph-preview-layout";
 
 describe("LandingPageGraphPreview Layout & Positions", () => {
-  // Mirrors the layout function in LandingPageGraphPreview.svelte
-  const getPositions = (count: number) => {
-    const hub = { cx: 270, cy: 140 };
-    if (count <= 5) {
-      return [
-        hub,
-        { cx: 85, cy: 65 },
-        { cx: 455, cy: 75 },
-        { cx: 435, cy: 220 },
-        { cx: 105, cy: 220 },
-      ];
-    }
-    return [
-      hub,
-      { cx: 85, cy: 65 },
-      { cx: 455, cy: 75 },
-      { cx: 445, cy: 215 },
-      { cx: 270, cy: 225 },
-      { cx: 95, cy: 215 },
-    ];
-  };
-
   const distance = (
     p1: { cx: number; cy: number },
     p2: { cx: number; cy: number },
