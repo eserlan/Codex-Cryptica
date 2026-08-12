@@ -317,13 +317,24 @@ function rebuildRecord(
     plan.titleAssignments.find((a) => a.entryId === entry.id)?.finalTitle ??
     entry.title;
 
+  // An asset that was already missing from the source vault was shelved
+  // without it, so nothing was written here either. The reference has to go
+  // with it: left in place it would point at a path in the *source* vault,
+  // giving the imported entity a broken image or a sound bite that 404s.
   const image = assetRefs.get("image");
   if (image) next.image = image;
+  else delete next.image;
+
   const thumbnail = assetRefs.get("thumbnail");
   if (thumbnail) next.thumbnail = thumbnail;
-  const audio = assetRefs.get("soundBite");
-  if (audio && next.soundBite && typeof next.soundBite === "object") {
-    next.soundBite = { ...(next.soundBite as object), audioFile: audio };
+  else delete next.thumbnail;
+
+  if (next.soundBite && typeof next.soundBite === "object") {
+    const audio = assetRefs.get("soundBite");
+    const soundBite = { ...(next.soundBite as Record<string, unknown>) };
+    if (audio) soundBite.audioFile = audio;
+    else delete soundBite.audioFile;
+    next.soundBite = soundBite;
   }
 
   next.connections = plan.connectionResolutions
@@ -399,15 +410,21 @@ export async function executeImport(
     );
   }
 
-  const existing = await deps.reader.listEntities();
-  const takenSchemaIds = new Set<string>();
-  const takenPresentationIds = new Set<string>();
+  // Template identifiers only. Seeding this from entity ids — which an earlier
+  // revision did — protected against nothing, because entity and template ids
+  // are unrelated namespaces, and left a fresh template id free to land on an
+  // existing template and overwrite it.
+  const takenSchemaIds = new Set([
+    ...(await deps.reader.listStatSheetTemplateIds()),
+  ]);
+  const takenPresentationIds = new Set([
+    ...(await deps.reader.listPresentationTemplateIds()),
+  ]);
   for (const entry of plan.entries) {
     if (entry.statSheetTemplate) takenSchemaIds.add(entry.statSheetTemplate.id);
     if (entry.presentationTemplate)
       takenPresentationIds.add(entry.presentationTemplate.id);
   }
-  for (const entity of existing) takenSchemaIds.add(entity.id);
 
   const templates = buildTemplateWritePlan(
     plan,

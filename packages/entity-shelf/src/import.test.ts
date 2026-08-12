@@ -636,3 +636,109 @@ describe("recoverCrashedImports", () => {
     expect(store.journals.size).toBe(0);
   });
 });
+
+describe("import — references that have nothing behind them", () => {
+  it("drops an image reference whose file was already missing when shelved", async () => {
+    // The entity shelved without the file, so nothing is written here either.
+    // Left in place, the reference would point into the *source* vault and the
+    // imported entity would show a broken image.
+    const store = new InMemoryShelfStore();
+    const source = sourceVault();
+    source.assets.delete("images/goblin.webp");
+    await shelveEntities(
+      {
+        store,
+        reader: source,
+        codec,
+        clock: new FakeClock(5_000),
+        ids: new SeqIdFactory("entry"),
+      },
+      { vaultId: "vault-a", vaultName: "Vault A", entityIds: ["goblin"] },
+    );
+
+    const target = new FakeVault();
+    const deps = importDeps(store, target);
+    const plan = await planImport(deps, {
+      entryIds: [...store.entries.values()].map((e) => e.id),
+      targetVaultId: "vault-b",
+    });
+    await executeImport(deps, plan);
+
+    const created = [...target.entities.values()][0];
+    const metadata = codec.parse(created.record).metadata;
+
+    expect(metadata.image).toBeUndefined();
+    // The sound bite survived, so its audio reference is rewritten as normal.
+    expect(metadata.soundBite).toMatchObject({ transcript: "Grah!" });
+    expect((metadata.soundBite as { audioFile: string }).audioFile).not.toBe(
+      "audio/goblin.wav",
+    );
+  });
+
+  it("drops a sound bite's audio reference when its file was missing", async () => {
+    const store = new InMemoryShelfStore();
+    const source = sourceVault();
+    source.assets.delete("audio/goblin.wav");
+    await shelveEntities(
+      {
+        store,
+        reader: source,
+        codec,
+        clock: new FakeClock(5_000),
+        ids: new SeqIdFactory("entry"),
+      },
+      { vaultId: "vault-a", vaultName: "Vault A", entityIds: ["goblin"] },
+    );
+
+    const target = new FakeVault();
+    const deps = importDeps(store, target);
+    const plan = await planImport(deps, {
+      entryIds: [...store.entries.values()].map((e) => e.id),
+      targetVaultId: "vault-b",
+    });
+    await executeImport(deps, plan);
+
+    const created = [...target.entities.values()][0];
+    const soundBite = codec.parse(created.record).metadata.soundBite as Record<
+      string,
+      unknown
+    >;
+
+    expect(soundBite.audioFile).toBeUndefined();
+    // The transcript is still worth having without the recording.
+    expect(soundBite.transcript).toBe("Grah!");
+  });
+});
+
+describe("import — fresh template ids avoid the destination's own", () => {
+  it("never mints a template id that already exists in the target vault", async () => {
+    // Landing on an existing id would overwrite a template this import did not
+    // create, and put it on the rollback list (invariant J2).
+    const store = new InMemoryShelfStore();
+    const entries = await shelfWith(["goblin"], store);
+
+    const conflicting = {
+      ...schemaTemplate,
+      fields: [{ id: "ac", label: "AC", type: "number" }],
+    } as StatSheetTemplate;
+    const squatter = {
+      ...schemaTemplate,
+      id: "monster-imported",
+    } as StatSheetTemplate;
+
+    const target = new FakeVault({ schemaTemplates: [conflicting, squatter] });
+    const before = target.schemaTemplates.get("monster-imported");
+
+    const deps = importDeps(store, target);
+    let plan = await planImport(deps, {
+      entryIds: entries.map((e) => e.id),
+      targetVaultId: "vault-b",
+    });
+    plan = chooseTemplate(plan, "tpl-monster", "bring-in");
+    await executeImport(deps, plan);
+
+    expect(target.schemaTemplates.get("monster-imported")).toBe(before);
+    expect(target.schemaTemplates.get("tpl-monster")!.fields[0].id).toBe("ac");
+    expect(target.schemaTemplates.size).toBe(3);
+  });
+});

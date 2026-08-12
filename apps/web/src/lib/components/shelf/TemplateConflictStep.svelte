@@ -21,9 +21,9 @@
 -->
 <div class="space-y-4" data-testid="template-conflict-step">
   <p class="text-sm text-theme-text-muted">
-    This vault already has a stat sheet template under the same name, with
-    different contents. Choose which to use — nothing is written until you
-    decide.
+    This vault already has a stat sheet template that the shelved entity also
+    carries, and the two differ. Choose which to use — nothing is written until
+    you decide.
   </p>
 
   {#each conflicts as conflict (conflict.templateId)}

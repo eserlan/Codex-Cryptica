@@ -214,6 +214,14 @@ export class FakeVault implements VaultReader, VaultWriter {
     return this.presentationTemplates.get(id) ?? null;
   }
 
+  async listStatSheetTemplateIds(): Promise<string[]> {
+    return [...this.schemaTemplates.keys()];
+  }
+
+  async listPresentationTemplateIds(): Promise<string[]> {
+    return [...this.presentationTemplates.keys()];
+  }
+
   async listEntities(): Promise<VaultEntitySummary[]> {
     return [...this.entities.values()].map(({ id, title, aliases }) => ({
       id,

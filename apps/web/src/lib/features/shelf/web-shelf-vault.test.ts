@@ -15,6 +15,8 @@ function deps(overrides: Partial<ShelfVaultDeps> = {}): ShelfVaultDeps {
       initialData.id as string,
     deleteEntity: () => {},
     readStatSheetTemplate: () => null,
+    listStatSheetTemplateIds: () => [],
+    listPresentationTemplateIds: () => [],
     readPresentationTemplate: () => null,
     saveStatSheetTemplate: async () => {},
     savePresentationTemplate: async () => {},

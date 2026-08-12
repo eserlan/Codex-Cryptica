@@ -46,6 +46,8 @@ export interface ShelfVaultDeps {
   ) => Promise<string>;
   deleteEntity: (id: string) => Promise<void> | void;
   readStatSheetTemplate: (id: string) => StatSheetTemplate | null;
+  listStatSheetTemplateIds: () => string[];
+  listPresentationTemplateIds: () => string[];
   readPresentationTemplate: (id: string) => PresentationTemplate | null;
   saveStatSheetTemplate: (template: StatSheetTemplate) => Promise<void>;
   savePresentationTemplate: (template: PresentationTemplate) => Promise<void>;
@@ -122,6 +124,14 @@ export class WebShelfVault implements VaultReader, VaultWriter {
     id: string,
   ): Promise<PresentationTemplate | null> {
     return this.deps.readPresentationTemplate(id);
+  }
+
+  async listStatSheetTemplateIds(): Promise<string[]> {
+    return this.deps.listStatSheetTemplateIds();
+  }
+
+  async listPresentationTemplateIds(): Promise<string[]> {
+    return this.deps.listPresentationTemplateIds();
   }
 
   async listEntities(): Promise<VaultEntitySummary[]> {

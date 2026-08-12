@@ -28,6 +28,10 @@ const vaultDeps: ShelfVaultDeps = {
     statSheetTemplates.allTemplates.find((t) => t.id === id) ?? null,
   readPresentationTemplate: (id) =>
     presentationTemplates.templates.find((t) => t.id === id) ?? null,
+  listStatSheetTemplateIds: () =>
+    statSheetTemplates.allTemplates.map((t) => t.id),
+  listPresentationTemplateIds: () =>
+    presentationTemplates.templates.map((t) => t.id),
 
   saveStatSheetTemplate: (template: StatSheetTemplate) =>
     statSheetTemplates.putTemplateRecord(template),

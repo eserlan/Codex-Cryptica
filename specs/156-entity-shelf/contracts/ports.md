@@ -24,7 +24,6 @@ interface ShelfStore {
   totalBytes(): Promise<number>; // FR-025
 
   writeJournal(journal: ImportJournal): Promise<void>;
-  markWritten(importId: string, artifactKey: string): Promise<void>;
   readJournals(): Promise<ImportJournal[]>; // crash recovery at startup
   deleteJournal(importId: string): Promise<void>;
 }
@@ -38,6 +37,11 @@ interface ShelfStore {
 - `removeEntry` and `clear` release the space the blobs occupied (FR-023).
 - Journal writes are durable before the caller proceeds; that ordering is the whole point of
   J1.
+- There is no per-artifact marking. An earlier draft had `markWritten`, recording each
+  artifact as it was created — which left a window between a write succeeding and the record
+  of that write existing, and a crash in that window orphaned the artifact permanently.
+  Identifiers are now minted during planning, so one journal written up front already names
+  everything a rollback would need to delete.
 
 ---
 
@@ -49,15 +53,17 @@ Implemented over OPFS and the existing template stores.
 ```ts
 interface VaultReader {
   readEntityRecord(entityId: string): Promise<string>; // stringifyEntity output
-  readAsset(path: string): Promise<{ bytes: Blob; mimeType: string } | null>;
+  readAsset(
+    path: string,
+  ): Promise<{ bytes: Blob; mimeType: string; originalName: string } | null>;
   readStatSheetTemplate(id: string): Promise<StatSheetTemplate | null>;
   readPresentationTemplate(id: string): Promise<PresentationTemplate | null>;
 
-  listTitles(): Promise<
+  listEntities(): Promise<
     Array<{ id: string; title: string; aliases: string[] }>
   >;
-  hasStatSheetTemplate(id: string): Promise<StatSheetTemplate | null>;
-  hasPresentationTemplate(id: string): Promise<PresentationTemplate | null>;
+  listStatSheetTemplateIds(): Promise<string[]>;
+  listPresentationTemplateIds(): Promise<string[]>;
 }
 ```
 
@@ -66,8 +72,11 @@ interface VaultReader {
 - `readAsset` returns `null` for a missing file rather than throwing. An entity referencing an
   image that is already gone from its own vault shelves successfully, minus that asset — a
   broken source is not a reason to refuse the operation.
-- `listTitles` is the single input to both title-collision detection and connection resolution,
-  which is what keeps R5's consistency invariant true by construction.
+- `listEntities` is the single input to both title-collision detection and connection
+  resolution, which is what keeps R5's consistency invariant true by construction.
+- The two `list*TemplateIds` calls exist so that bringing a conflicting template in under a
+  fresh identifier cannot land on one the destination already uses. Doing so would overwrite a
+  template this import never created and put it on the rollback list, which J2 forbids.
 
 ---
 
@@ -78,21 +87,19 @@ existing entity persistence and `AssetManager`.
 
 ```ts
 interface VaultWriter {
-  createEntity(
-    record: string,
-    title: string,
-  ): Promise<{ id: string; path: string[] }>;
-  saveAsset(asset: {
+  createEntity(input: { id: string; record: string }): Promise<void>;
+  saveAsset(input: {
+    entityId: string;
+    role: "image" | "thumbnail" | "soundBite";
     bytes: Blob;
     mimeType: string;
     originalName: string;
-    entityId: string;
-  }): Promise<{ path: string[]; ref: string }>;
+  }): Promise<{ ref: string }>;
   saveStatSheetTemplate(template: StatSheetTemplate): Promise<void>;
   savePresentationTemplate(template: PresentationTemplate): Promise<void>;
 
-  deleteEntity(path: string[]): Promise<void>; // rollback only
-  deleteAsset(path: string[]): Promise<void>; // rollback only
+  deleteEntity(id: string): Promise<void>; // rollback only
+  deleteEntityAssets(entityId: string): Promise<void>; // rollback only
   deleteStatSheetTemplate(id: string): Promise<void>; // rollback only
   deletePresentationTemplate(id: string): Promise<void>;
 }
@@ -100,8 +107,13 @@ interface VaultWriter {
 
 **Guarantees**
 
-- `createEntity` mints an identifier unique within the target vault and **never** overwrites an
-  existing entity (FR-013). The caller has already ensured the title is free (FR-013a).
+- `createEntity` takes the identifier rather than minting one. The caller mints it during
+  planning, having already checked it is free and the title does not collide (FR-013, FR-013a),
+  because the rollback journal has to name every identifier before the first write happens.
+  An implementation that quietly substituted its own would leave the journal pointing at
+  nothing.
+- Rollback works per entity rather than per path: `deleteEntityAssets` removes everything
+  attached to an entity this import created, so no path bookkeeping has to survive a crash.
 - Every `delete*` is idempotent — deleting something absent is a no-op, not an error (J3).
   Rollback runs against a journal that may list artifacts the failure prevented from existing.
 - The writer is not responsible for atomicity. Sequencing and rollback live in the package.

@@ -70,6 +70,15 @@ export interface VaultReader {
    * (research R5).
    */
   listEntities(): Promise<VaultEntitySummary[]>;
+  /**
+   * Template identifiers already present in this vault.
+   *
+   * Needed so that bringing a conflicting template in under a fresh id cannot
+   * land on one that already exists — which would overwrite a template this
+   * import did not create, and put it on the rollback list (invariant J2).
+   */
+  listStatSheetTemplateIds(): Promise<string[]>;
+  listPresentationTemplateIds(): Promise<string[]>;
 }
 
 export interface SaveAssetInput {
