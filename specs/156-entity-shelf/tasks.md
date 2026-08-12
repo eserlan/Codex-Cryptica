@@ -38,20 +38,20 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 Bump `DB_VERSION` to 23 and add `shelf_entries` (keyed by `id`, index `by-group`) and `shelf_journal` (keyed by `importId`) to the schema and upgrade callback in `apps/web/src/lib/utils/idb.ts`, each behind an `if (!db.objectStoreNames.contains(...))` guard as every other store there does
+- [x] T005 Bump `DB_VERSION` to 23 and add `shelf_entries` (keyed by `id`, index `by-group`) and `shelf_journal` (keyed by `importId`) to the schema and upgrade callback in `apps/web/src/lib/utils/idb.ts`, each behind an `if (!db.objectStoreNames.contains(...))` guard as every other store there does
 - [ ] T006 Verify the v22 → v23 upgrade against a **populated** database, not a fresh one — the version-history comment in `idb.ts` records a previously consumed no-op version, and this is the one step in the feature whose failure mode is other people's data
 
 ### Tests for the adapters ⚠️
 
 > Write these before the adapters exist and confirm they fail.
 
-- [ ] T007 [P] Write `ShelfStore` tests in `apps/web/src/lib/features/shelf/idb-shelf-store.test.ts` covering: `listEntries` returns newest first without loading blobs; `putEntry` replaces an existing entry for the same `(sourceVaultId, sourceEntityId)` (invariant I2); `removeEntry` and `clear` release blob storage (FR-023); **`listEntries` returns identical results regardless of which vault is currently open (FR-003)**
-- [ ] T008 [P] Write vault adapter tests in `apps/web/src/lib/features/shelf/web-shelf-vault.test.ts` covering: `readAsset` returns `null` for a missing file rather than throwing; every `delete*` is idempotent against an absent artifact (invariant J3)
+- [x] T007 [P] Write `ShelfStore` tests in `apps/web/src/lib/features/shelf/idb-shelf-store.test.ts` covering: `listEntries` returns newest first without loading blobs; `putEntry` replaces an existing entry for the same `(sourceVaultId, sourceEntityId)` (invariant I2); `removeEntry` and `clear` release blob storage (FR-023); **`listEntries` returns identical results regardless of which vault is currently open (FR-003)**
+- [x] T008 [P] Write vault adapter tests in `apps/web/src/lib/features/shelf/web-shelf-vault.test.ts` covering: `readAsset` returns `null` for a missing file rather than throwing; every `delete*` is idempotent against an absent artifact (invariant J3)
 
 ### Implementation of the adapters
 
-- [ ] T009 [P] Implement the `ShelfStore` port over IndexedDB in `apps/web/src/lib/features/shelf/idb-shelf-store.ts`, ensuring `listEntries` reads denormalised summary fields only and never loads blobs
-- [ ] T010 [P] Implement `VaultReader`/`VaultWriter` factories over OPFS and the template stores in `apps/web/src/lib/features/shelf/web-shelf-vault.ts`, reusing `AssetManager.saveImageToVault` rather than writing new asset-write logic (principle III)
+- [x] T009 [P] Implement the `ShelfStore` port over IndexedDB in `apps/web/src/lib/features/shelf/idb-shelf-store.ts`, ensuring `listEntries` reads denormalised summary fields only and never loads blobs
+- [x] T010 [P] Implement `VaultReader`/`VaultWriter` factories over OPFS and the template stores in `apps/web/src/lib/features/shelf/web-shelf-vault.ts`, reusing `AssetManager.saveImageToVault` rather than writing new asset-write logic (principle III)
 
 **Checkpoint**: Storage exists and is reachable from any vault. User story work can begin.
 
@@ -87,7 +87,7 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 - [x] T025 [US1] Implement the journalled write phase and compensating rollback in `packages/entity-shelf/src/import.ts` — journal before first artifact, mark each write, delete journal on success, replay as deletes on failure (research R1)
 - [x] T026 [US1] Implement `recoverCrashedImports()` in `packages/entity-shelf/src/import.ts`, replaying any journal found at startup
 - [x] T027 [US1] Assemble `EntityShelfService` and the public surface in `packages/entity-shelf/src/index.ts` — constructor injection with production defaults, exporting both class and singleton per ADR 007 (principle VIII)
-- [ ] T028 [US1] Create the Svelte store in `apps/web/src/lib/features/shelf/shelf.svelte.ts` — entry list state, shelve and import actions, progress reporting for operations exceeding 1 second (SC-009)
+- [x] T028 [US1] Create the Svelte store in `apps/web/src/lib/features/shelf/shelf.svelte.ts` — entry list state, shelve and import actions, progress reporting for operations exceeding 1 second (SC-009)
 - [ ] T029 [US1] Call `recoverCrashedImports()` during application startup so a crashed import is cleaned up before the shelf is usable
 - [ ] T030 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfPanel.svelte` — flat list, newest first, no search or grouping (FR-026)
 - [ ] T031 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfEntryCard.svelte` showing title, type, source vault name and shelved date (FR-022)
@@ -138,7 +138,7 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 ### Implementation for User Story 3
 
-- [ ] T047 [US3] Emit a payload-free shelf-changed event on the existing `AppEventBus` from `apps/web/src/lib/features/shelf/shelf.svelte.ts`, and re-read entries on receipt, reusing `CrossTabBroadcaster` from `packages/events` rather than adding a second broadcast mechanism (FR-023a)
+- [x] T047 [US3] Emit a payload-free shelf-changed event on the existing `AppEventBus` from `apps/web/src/lib/features/shelf/shelf.svelte.ts`, and re-read entries on receipt, reusing `CrossTabBroadcaster` from `packages/events` rather than adding a second broadcast mechanism (FR-023a)
 - [ ] T048 [P] [US3] Add remove-entry and clear-shelf actions to `ShelfPanel.svelte`, releasing the storage the entries occupied (FR-023)
 - [ ] T049 [P] [US3] Show shelf storage usage in `ShelfPanel.svelte` using `totalBytes()`, warning once the shelf exceeds 80% of the browser's reported storage allowance and naming clearing entries as the remedy (FR-025)
 - [ ] T050 [US3] Add the first-use disclosure that shelf contents live in this browser and are neither a backup nor a way to send an entity to another person — as a `FeatureHint`, per principle VII (FR-024, SC-008)
