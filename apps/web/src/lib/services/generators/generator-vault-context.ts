@@ -59,7 +59,7 @@ export function findSingleQuestHook(
   // an imperative loop and early return to reduce GC pressure and O(N) allocations.
   let questHook: Entity | undefined;
   for (const id in entities) {
-    if (!Object.prototype.hasOwnProperty.call(entities, id)) continue;
+    if (!Object.hasOwn(entities, id)) continue;
 
     const entity = entities[id];
     if (!entity.labels) continue;
