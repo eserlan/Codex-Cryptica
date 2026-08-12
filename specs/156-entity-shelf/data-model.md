@@ -16,21 +16,22 @@ from every other store in `CodexCryptica`: the shelf deliberately has no `vaultI
 One record is one snapshot of one entity, self-contained: after it is written, nothing it needs
 lives anywhere else, and it survives its source vault being deleted (FR-005, FR-007, US3-3).
 
-| Field                  | Type                           | Notes                                                                                                        |
-| ---------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `id`                   | `string`                       | Entry identity. Fresh per shelving.                                                                          |
-| `groupId`              | `string`                       | Shelving action that produced it (FR-008). A single entity shelved alone still gets a group of one.          |
-| `entityRecord`         | `string`                       | Output of `stringifyEntity()` — YAML frontmatter plus body. The complete entity, losslessly (FR-004).        |
-| `sourceEntityId`       | `string`                       | Entity id in the source vault. Used only for replace-on-re-shelve (FR-009); never reused as an id on import. |
-| `sourceVaultId`        | `string`                       | Source vault. May refer to a vault that no longer exists.                                                    |
-| `sourceVaultName`      | `string`                       | Captured at shelving time, retained after that vault is deleted (FR-007).                                    |
-| `title`                | `string`                       | Denormalised for list display without parsing the record (FR-022).                                           |
-| `type`                 | `string`                       | Denormalised likewise.                                                                                       |
-| `shelvedAt`            | `number`                       | Epoch ms, from the injected clock. Orders the list, newest first.                                            |
-| `assets`               | `ShelfAsset[]`                 | Copies of every referenced file (FR-005).                                                                    |
-| `statSheetTemplate`    | `StatSheetTemplate \| null`    | Full record, `vaultId` stripped.                                                                             |
-| `presentationTemplate` | `PresentationTemplate \| null` | Full record, `vaultId` stripped.                                                                             |
-| `byteSize`             | `number`                       | Sum of asset sizes plus record length. Powers the storage display in FR-025 without reading blobs.           |
+| Field                  | Type                               | Notes                                                                                                                                                                                                                            |
+| ---------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | `string`                           | Entry identity. Fresh per shelving.                                                                                                                                                                                              |
+| `groupId`              | `string`                           | Shelving action that produced it (FR-008). A single entity shelved alone still gets a group of one.                                                                                                                              |
+| `entityRecord`         | `string`                           | Output of `stringifyEntity()` — YAML frontmatter plus body. The complete entity, losslessly (FR-004).                                                                                                                            |
+| `sourceEntityId`       | `string`                           | Entity id in the source vault. Used only for replace-on-re-shelve (FR-009); never reused as an id on import.                                                                                                                     |
+| `sourceVaultId`        | `string`                           | Source vault. May refer to a vault that no longer exists.                                                                                                                                                                        |
+| `sourceVaultName`      | `string`                           | Captured at shelving time, retained after that vault is deleted (FR-007).                                                                                                                                                        |
+| `title`                | `string`                           | Denormalised for list display without parsing the record (FR-022).                                                                                                                                                               |
+| `type`                 | `string`                           | Denormalised likewise.                                                                                                                                                                                                           |
+| `shelvedAt`            | `number`                           | Epoch ms, from the injected clock. Orders the list, newest first.                                                                                                                                                                |
+| `assets`               | `ShelfAsset[]`                     | Copies of every referenced file (FR-005).                                                                                                                                                                                        |
+| `statSheetTemplate`    | `StatSheetTemplate \| null`        | Full record, `vaultId` stripped.                                                                                                                                                                                                 |
+| `presentationTemplate` | `PresentationTemplate \| null`     | Full record, `vaultId` stripped.                                                                                                                                                                                                 |
+| `referencedTitles`     | `Record<string, {title, aliases}>` | Titles of everything the entity points at, keyed by source-vault id. `Connection.target` and `parent` hold an id and nothing else, and ids mean nothing in another vault — without this snapshot FR-017 has no name to match on. |
+| `byteSize`             | `number`                           | Sum of asset sizes plus record length. Powers the storage display in FR-025 without reading blobs.                                                                                                                               |
 
 ### `ShelfAsset`
 
@@ -71,15 +72,23 @@ lives anywhere else, and it survives its source vault being deleted (FR-005, FR-
 Exists only while an import is in flight. A record found at application start is a crashed
 import and its listed artifacts are deleted (R1).
 
-| Field                | Type                                           | Notes                                                                                                                           |
-| -------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `importId`           | `string`                                       |                                                                                                                                 |
-| `vaultId`            | `string`                                       | Target vault.                                                                                                                   |
-| `startedAt`          | `number`                                       |                                                                                                                                 |
-| `plannedEntityPaths` | `string[][]`                                   | OPFS paths the import intends to create.                                                                                        |
-| `plannedAssetPaths`  | `string[][]`                                   | Likewise for assets.                                                                                                            |
-| `plannedTemplateIds` | `{ schema: string[]; presentation: string[] }` | Only templates this import will _create_. Templates reused from the target vault are never listed and so are never rolled back. |
-| `written`            | `string[]`                                     | Artifact keys confirmed written, so rollback deletes only what exists.                                                          |
+| Field                     | Type       | Notes                                                                                                        |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| `importId`                | `string`   |                                                                                                              |
+| `vaultId`                 | `string`   | Target vault.                                                                                                |
+| `startedAt`               | `number`   |                                                                                                              |
+| `entityIds`               | `string[]` | Entity ids, minted before any write. Rollback deletes each and its assets, so no path bookkeeping is needed. |
+| `schemaTemplateIds`       | `string[]` | Only templates this import will _create_. Reused ones are never listed and so are never rolled back.         |
+| `presentationTemplateIds` | `string[]` | Likewise.                                                                                                    |
+
+> **Everything is knowable before the first write.** Ids are minted during planning rather
+> than by the writer, so the journal is complete the moment it is written and a crash at any
+> point leaves a full record of what to undo. An earlier draft journalled OPFS paths as they
+> were created, which left a window between a successful write and its record of that write.
+
+> **Choosing "bring mine in" on a template conflict writes under a fresh id.** Replacing the
+> vault's existing template would put a pre-existing record on the rollback list, which J2
+> forbids outright: rollback would then delete something this import never created.
 
 ### Invariants
 

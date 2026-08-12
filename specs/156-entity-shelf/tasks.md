@@ -25,10 +25,10 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 **Purpose**: Scaffold the new package so logic tasks have somewhere to land.
 
-- [ ] T001 Create `packages/entity-shelf/` scaffold — `package.json`, `tsconfig.json`, vitest config — matching the conventions in `packages/generator-engine/` and registered in the workspace
-- [ ] T002 [P] Define stored and in-memory shapes in `packages/entity-shelf/src/types.ts` — `ShelfEntry`, `ShelfAsset`, `ShelfGroup`, `ImportJournal`, `ImportPlan`, `ImportOutcome` — per `data-model.md`. Note that `ShelfGroup` is assembled in memory from entries sharing a `groupId`; it has no store of its own
-- [ ] T003 [P] Define the four ports in `packages/entity-shelf/src/ports.ts` — `ShelfStore`, `VaultReader`, `VaultWriter`, `Clock`, `IdFactory` — per `contracts/ports.md`
-- [ ] T004 [P] Build in-memory port fakes in `packages/entity-shelf/src/test-helpers.ts` for use by every unit test, following the pattern of `packages/generator-engine/src/llm/test-helpers.ts`
+- [x] T001 Create `packages/entity-shelf/` scaffold — `package.json`, `tsconfig.json`, vitest config — matching the conventions in `packages/generator-engine/` and registered in the workspace
+- [x] T002 [P] Define stored and in-memory shapes in `packages/entity-shelf/src/types.ts` — `ShelfEntry`, `ShelfAsset`, `ShelfGroup`, `ImportJournal`, `ImportPlan`, `ImportOutcome` — per `data-model.md`. Note that `ShelfGroup` is assembled in memory from entries sharing a `groupId`; it has no store of its own
+- [x] T003 [P] Define the four ports in `packages/entity-shelf/src/ports.ts` — `ShelfStore`, `VaultReader`, `VaultWriter`, `Clock`, `IdFactory` — per `contracts/ports.md`
+- [x] T004 [P] Build in-memory port fakes in `packages/entity-shelf/src/test-helpers.ts` for use by every unit test, following the pattern of `packages/generator-engine/src/llm/test-helpers.ts`
 
 ---
 
@@ -67,26 +67,26 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 > Write these first and confirm they fail before implementing.
 
-- [ ] T011 [P] [US1] Title collision tests in `packages/entity-shelf/src/titles.test.ts` — no collision leaves the title untouched (US1-6); exact, differing-case, and surrounding-whitespace collisions all suffix (FR-013a, research R5); suffixes increment past `(2)`
-- [ ] T012 [P] [US1] Template comparison tests in `packages/entity-shelf/src/templates.test.ts` — identical templates reuse silently with no prompt; templates differing only in `vaultId` are treated as identical (research R6); genuinely differing templates raise a conflict; a template absent from the target is brought in (FR-015)
-- [ ] T013 [P] [US1] Shelving tests in `packages/entity-shelf/src/shelve.test.ts` — all three asset roles are collected **including sound bite audio** (FR-005); a referenced-but-missing asset shelves without it rather than throwing; re-shelving replaces the prior entry (I2, FR-009); templates are stored `vaultId`-stripped (I3, FR-006); **every entry records the `groupId` of the shelving action that produced it, a lone entity included (FR-008)**; `sourceVaultName` is captured at shelving time (FR-007)
-- [ ] T014 [P] [US1] Import and rollback tests in `packages/entity-shelf/src/import.test.ts` — a failure injected at each write stage leaves no entity, asset, or template behind (FR-020, SC-007); rollback is idempotent (J3); a journal found at startup is replayed as deletes; templates reused from the target vault are never rolled back; **the entry's assets are written into the target vault and referenced by the created entity (FR-014)**
-- [ ] T015 [P] [US1] Losslessness test in `packages/entity-shelf/src/shelve.test.ts` — an entity carrying `statSheet`, `connections`, `soundBite`, `date`, `status`, `kind`, `visibility`, `languageProfile` and `imageArtDirection` survives a shelve/import round trip with every field intact (FR-004, SC-002)
-- [ ] T016 [P] [US1] Source-immutability test in `packages/entity-shelf/src/shelve.test.ts` — after shelving, the source entity record, its assets, and its templates are unchanged, and no write of any kind was issued against the source vault (FR-010)
-- [ ] T017 [P] [US1] No-overwrite test in `packages/entity-shelf/src/import.test.ts` — importing into a vault already holding entities with the same titles and the same source identifiers creates new entities and leaves **every** pre-existing entity byte-identical (FR-013, SC-004). This invariant is what makes rollback safe rather than destructive (data-model J2), so it is verified directly rather than inferred
-- [ ] T018 [P] [US1] Storage-exhaustion test in `packages/entity-shelf/src/shelve.test.ts` — a quota failure part-way through shelving leaves no partial entry on the shelf and surfaces a clear message (SC-007)
+- [x] T011 [P] [US1] Title collision tests in `packages/entity-shelf/src/titles.test.ts` — no collision leaves the title untouched (US1-6); exact, differing-case, and surrounding-whitespace collisions all suffix (FR-013a, research R5); suffixes increment past `(2)`
+- [x] T012 [P] [US1] Template comparison tests in `packages/entity-shelf/src/templates.test.ts` — identical templates reuse silently with no prompt; templates differing only in `vaultId` are treated as identical (research R6); genuinely differing templates raise a conflict; a template absent from the target is brought in (FR-015)
+- [x] T013 [P] [US1] Shelving tests in `packages/entity-shelf/src/shelve.test.ts` — all three asset roles are collected **including sound bite audio** (FR-005); a referenced-but-missing asset shelves without it rather than throwing; re-shelving replaces the prior entry (I2, FR-009); templates are stored `vaultId`-stripped (I3, FR-006); **every entry records the `groupId` of the shelving action that produced it, a lone entity included (FR-008)**; `sourceVaultName` is captured at shelving time (FR-007)
+- [x] T014 [P] [US1] Import and rollback tests in `packages/entity-shelf/src/import.test.ts` — a failure injected at each write stage leaves no entity, asset, or template behind (FR-020, SC-007); rollback is idempotent (J3); a journal found at startup is replayed as deletes; templates reused from the target vault are never rolled back; **the entry's assets are written into the target vault and referenced by the created entity (FR-014)**
+- [x] T015 [P] [US1] Losslessness test in `packages/entity-shelf/src/shelve.test.ts` — an entity carrying `statSheet`, `connections`, `soundBite`, `date`, `status`, `kind`, `visibility`, `languageProfile` and `imageArtDirection` survives a shelve/import round trip with every field intact (FR-004, SC-002)
+- [x] T016 [P] [US1] Source-immutability test in `packages/entity-shelf/src/shelve.test.ts` — after shelving, the source entity record, its assets, and its templates are unchanged, and no write of any kind was issued against the source vault (FR-010)
+- [x] T017 [P] [US1] No-overwrite test in `packages/entity-shelf/src/import.test.ts` — importing into a vault already holding entities with the same titles and the same source identifiers creates new entities and leaves **every** pre-existing entity byte-identical (FR-013, SC-004). This invariant is what makes rollback safe rather than destructive (data-model J2), so it is verified directly rather than inferred
+- [x] T018 [P] [US1] Storage-exhaustion test in `packages/entity-shelf/src/shelve.test.ts` — a quota failure part-way through shelving leaves no partial entry on the shelf and surfaces a clear message (SC-007)
 - [ ] T019 [P] [US1] Component tests in `apps/web/src/lib/components/shelf/ShelfPanel.test.ts` covering the empty state and newest-first ordering (FR-026)
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] Implement case-insensitive, trimmed collision detection and `Title (2)` suffixing in `packages/entity-shelf/src/titles.ts`
-- [ ] T021 [P] [US1] Implement template comparison in `packages/entity-shelf/src/templates.ts`, reusing `exportPresentationTemplate()` from `@codex/stat-sheet-engine` for the presentation projection and stripping `vaultId` for schema templates
-- [ ] T022 [US1] Implement entry construction in `packages/entity-shelf/src/shelve.ts` — read the entity record via `stringifyEntity` output, collect `image`, `thumbnail` **and sound bite** assets, attach both templates, assign `groupId`, capture `sourceVaultName`, compute `byteSize`
-- [ ] T023 [US1] Handle storage exhaustion during shelving in `packages/entity-shelf/src/shelve.ts` — fail with a clear message leaving no partial entry behind. Shelving ships in this MVP, so this belongs here rather than with the later shelf-management work
-- [ ] T024 [US1] Implement `plan()` in `packages/entity-shelf/src/import.ts` — title assignments and template decisions resolved before any write
-- [ ] T025 [US1] Implement the journalled write phase and compensating rollback in `packages/entity-shelf/src/import.ts` — journal before first artifact, mark each write, delete journal on success, replay as deletes on failure (research R1)
-- [ ] T026 [US1] Implement `recoverCrashedImports()` in `packages/entity-shelf/src/import.ts`, replaying any journal found at startup
-- [ ] T027 [US1] Assemble `EntityShelfService` and the public surface in `packages/entity-shelf/src/index.ts` — constructor injection with production defaults, exporting both class and singleton per ADR 007 (principle VIII)
+- [x] T020 [P] [US1] Implement case-insensitive, trimmed collision detection and `Title (2)` suffixing in `packages/entity-shelf/src/titles.ts`
+- [x] T021 [P] [US1] Implement template comparison in `packages/entity-shelf/src/templates.ts`, reusing `exportPresentationTemplate()` from `@codex/stat-sheet-engine` for the presentation projection and stripping `vaultId` for schema templates
+- [x] T022 [US1] Implement entry construction in `packages/entity-shelf/src/shelve.ts` — read the entity record via `stringifyEntity` output, collect `image`, `thumbnail` **and sound bite** assets, attach both templates, assign `groupId`, capture `sourceVaultName`, compute `byteSize`
+- [x] T023 [US1] Handle storage exhaustion during shelving in `packages/entity-shelf/src/shelve.ts` — fail with a clear message leaving no partial entry behind. Shelving ships in this MVP, so this belongs here rather than with the later shelf-management work
+- [x] T024 [US1] Implement `plan()` in `packages/entity-shelf/src/import.ts` — title assignments and template decisions resolved before any write
+- [x] T025 [US1] Implement the journalled write phase and compensating rollback in `packages/entity-shelf/src/import.ts` — journal before first artifact, mark each write, delete journal on success, replay as deletes on failure (research R1)
+- [x] T026 [US1] Implement `recoverCrashedImports()` in `packages/entity-shelf/src/import.ts`, replaying any journal found at startup
+- [x] T027 [US1] Assemble `EntityShelfService` and the public surface in `packages/entity-shelf/src/index.ts` — constructor injection with production defaults, exporting both class and singleton per ADR 007 (principle VIII)
 - [ ] T028 [US1] Create the Svelte store in `apps/web/src/lib/features/shelf/shelf.svelte.ts` — entry list state, shelve and import actions, progress reporting for operations exceeding 1 second (SC-009)
 - [ ] T029 [US1] Call `recoverCrashedImports()` during application startup so a crashed import is cleaned up before the shelf is usable
 - [ ] T030 [P] [US1] Build `apps/web/src/lib/components/shelf/ShelfPanel.svelte` — flat list, newest first, no search or grouping (FR-026)
@@ -106,15 +106,15 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T034 [P] [US2] Connection resolution tests in `packages/entity-shelf/src/connections.test.ts` — edges within the imported batch always reconnect (US2-2, SC-003); an edge to an entity matched by title in the target reconnects (US2-3); an edge matched by alias reconnects; two matching candidates yield `ambiguous` and the edge is dropped, never guessed at; an unresolved edge never fails the import (FR-018, SC-005)
-- [ ] T035 [P] [US2] Parent resolution tests in `packages/entity-shelf/src/connections.test.ts` — an entity whose parent was not shelved and is absent from the target imports parentless, with the dropped reference reported
-- [ ] T036 [P] [US2] Consolidated conflict tests in `packages/entity-shelf/src/import.test.ts` — importing four entities sharing two conflicting templates produces exactly two decisions, not eight (FR-016a); abandoning the conflict step writes nothing
+- [x] T034 [P] [US2] Connection resolution tests in `packages/entity-shelf/src/connections.test.ts` — edges within the imported batch always reconnect (US2-2, SC-003); an edge to an entity matched by title in the target reconnects (US2-3); an edge matched by alias reconnects; two matching candidates yield `ambiguous` and the edge is dropped, never guessed at; an unresolved edge never fails the import (FR-018, SC-005)
+- [x] T035 [P] [US2] Parent resolution tests in `packages/entity-shelf/src/connections.test.ts` — an entity whose parent was not shelved and is absent from the target imports parentless, with the dropped reference reported
+- [x] T036 [P] [US2] Consolidated conflict tests in `packages/entity-shelf/src/import.test.ts` — importing four entities sharing two conflicting templates produces exactly two decisions, not eight (FR-016a); abandoning the conflict step writes nothing
 
 ### Implementation for User Story 2
 
-- [ ] T037 [US2] Implement batch-first, then target-vault resolution by title and alias in `packages/entity-shelf/src/connections.ts`, classifying every failure as `not-found` or `ambiguous`, sharing the comparison used by `titles.ts` so the two can never disagree (research R5)
-- [ ] T038 [US2] Extend `plan()` in `packages/entity-shelf/src/import.ts` to produce `connectionResolutions` and `parentResolutions`, and gather all template conflicts into a single decision set (FR-016a)
-- [ ] T039 [US2] Write resolved connections during the import write phase in `packages/entity-shelf/src/import.ts`, mapping shelved target identifiers onto the freshly created ones (FR-012)
+- [x] T037 [US2] Implement batch-first, then target-vault resolution by title and alias in `packages/entity-shelf/src/connections.ts`, classifying every failure as `not-found` or `ambiguous`, sharing the comparison used by `titles.ts` so the two can never disagree (research R5)
+- [x] T038 [US2] Extend `plan()` in `packages/entity-shelf/src/import.ts` to produce `connectionResolutions` and `parentResolutions`, and gather all template conflicts into a single decision set (FR-016a)
+- [x] T039 [US2] Write resolved connections during the import write phase in `packages/entity-shelf/src/import.ts`, mapping shelved target identifiers onto the freshly created ones (FR-012)
 - [ ] T040 [US2] Build `apps/web/src/lib/components/shelf/TemplateConflictStep.svelte` presenting each conflicting template once, before any write begins (FR-016)
 - [ ] T041 [P] [US2] Add "Send to Shelf" to the existing multi-selection in `apps/web/src/lib/components/table/TableContextMenu.svelte` (FR-002)
 - [ ] T042 [P] [US2] Add "Send to Shelf" to the existing multi-selection in `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` (FR-002)
@@ -132,8 +132,8 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T044 [P] [US3] Reuse tests in `packages/entity-shelf/src/import.test.ts` — importing an entry leaves it on the shelf (FR-021); the same entry imported into one vault three times yields three independent entities, the later two suffixed
-- [ ] T045 [P] [US3] Source-vault-deleted test in `packages/entity-shelf/src/import.test.ts` — an entry whose source vault no longer exists imports completely, assets and templates included (FR-007, SC-006)
+- [x] T044 [P] [US3] Reuse tests in `packages/entity-shelf/src/import.test.ts` — importing an entry leaves it on the shelf (FR-021); the same entry imported into one vault three times yields three independent entities, the later two suffixed
+- [x] T045 [P] [US3] Source-vault-deleted test in `packages/entity-shelf/src/import.test.ts` — an entry whose source vault no longer exists imports completely, assets and templates included (FR-007, SC-006)
 - [ ] T046 [P] [US3] Cross-tab tests in `apps/web/src/lib/features/shelf/shelf.svelte.test.ts` — a shelf-changed event triggers a re-read; the emitted event carries **no entry payload**, since `CrossTabBroadcaster` serialises with `JSON.stringify` and would silently drop blobs (research R2, FR-023a)
 
 ### Implementation for User Story 3
