@@ -73,6 +73,9 @@ import {
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
   generateAdventureLocal,
+  buildPlotTwistPrompt,
+  parsePlotTwistResponse,
+  generatePlotTwistLocal,
   buildWorldPrompt,
   parseWorldResponse,
   generateWorldLocal,
@@ -103,6 +106,7 @@ import {
   type NewsSheetGeneratorOptions,
   type DungeonGeneratorOptions,
   type AdventureGeneratorOptions,
+  type PlotTwistGeneratorOptions,
   type WorldGeneratorOptions,
   type StarSystemGeneratorOptions,
   type AlienRaceGeneratorOptions,
@@ -145,6 +149,7 @@ export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
 export { dungeonConfig, forDungeonGenre } from "generator-engine";
 export { adventureConfig, forAdventureGenre } from "generator-engine";
+export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
 export { starSystemConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
@@ -838,6 +843,23 @@ export class DefaultGeneratorEngine {
         return first.output;
       },
       () => generateAdventureLocal(adventureOptions),
+    );
+  }
+
+  /** Plot twist generation preserves established facts while adding playable choices. */
+  async generatePlotTwist(
+    options: PlotTwistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...plotTwistOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildPlotTwistPrompt(plotTwistOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parsePlotTwistResponse(text, plotTwistOptions);
+      },
+      () => generatePlotTwistLocal(plotTwistOptions),
     );
   }
 
