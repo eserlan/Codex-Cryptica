@@ -963,9 +963,8 @@ describe("plot twist source context", () => {
       }),
     );
 
-    expect(prompt).toContain("The Silent Bell");
     expect(prompt).toContain(
-      "The bell rings only when someone is about to vanish.",
+      "Current situation / premise: The Silent Bell: The bell rings only when someone is about to vanish.",
     );
   });
 });

@@ -873,11 +873,7 @@ function plotTwistOptions(
 ): PlotTwistGeneratorOptions {
   const sourceEntity = request.vaultContext?.sourceEntity;
   const sourcePremise = sourceEntity
-    ? [
-        sourceEntity.title,
-        sourceEntity.contentExcerpt,
-        sourceEntity.loreExcerpt,
-      ]
+    ? [sourceEntity.title, sourceEntity.contentExcerpt.slice(0, 600).trim()]
         .filter(Boolean)
         .join(": ")
     : "";
