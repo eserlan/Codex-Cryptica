@@ -172,6 +172,17 @@
     );
   }
 
+  function openPlotTwistFromDraft() {
+    if (!draft) return;
+    const premise = [draft.title, draft.summary, draft.content, draft.lore]
+      .filter(Boolean)
+      .join("\n\n");
+    stage = "configure";
+    draft = null;
+    errorMsg = null;
+    modalUIStore.openIntentGeneratorWorkflow("plot-twist", null, premise);
+  }
+
   function close(options: { preserveSession?: boolean } = {}) {
     modalUIStore.closeGeneratorWorkflow();
     if (!options.preserveSession) generatorSessionManager.reset();
@@ -573,6 +584,11 @@
           stage = "configure";
           errorMsg = null;
         }}
+        onGeneratePlotTwist={draft.labels?.some((label) =>
+          ["quest-generator", "rpg-quest"].includes(label.toLowerCase()),
+        )
+          ? openPlotTwistFromDraft
+          : undefined}
       />
     {:else if stage === "error"}
       <div class="py-4">

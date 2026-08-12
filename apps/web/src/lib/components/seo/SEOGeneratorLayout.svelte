@@ -70,6 +70,7 @@
     inputHint = "Set your inputs — your draft updates to the right",
     backHref = undefined,
     backLabel = undefined,
+    onGeneratePlotTwist = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -89,6 +90,7 @@
     generateLabel?: string;
     inputHint?: string;
     onLinkToHub?: () => void;
+    onGeneratePlotTwist?: (data: GeneratorOutput) => void;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -713,6 +715,7 @@
         onSaveHubToCodex={handleSaveHubToCodex}
         onBuildDelveCanvas={handleBuildDelveCanvas}
         onBuildAdventureCanvas={handleBuildAdventureCanvas}
+        {onGeneratePlotTwist}
       />
     </div>
 

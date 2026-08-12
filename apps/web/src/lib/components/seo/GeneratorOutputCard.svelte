@@ -46,6 +46,7 @@
     onSaveHubToCodex,
     onBuildDelveCanvas,
     onBuildAdventureCanvas,
+    onGeneratePlotTwist,
   }: {
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
@@ -69,6 +70,7 @@
     onSaveHubToCodex: (entities: SessionEntity[]) => void;
     onBuildDelveCanvas?: (data: GeneratorOutput) => void;
     onBuildAdventureCanvas?: (data: GeneratorOutput) => void;
+    onGeneratePlotTwist?: (data: GeneratorOutput) => void;
   } = $props();
 
   import { getThemeLoadingMessages } from "generator-engine";
@@ -214,6 +216,21 @@
                 <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
                 ></span>
                 Open Adventure Canvas
+              </button>
+            {/if}
+            {#if onGeneratePlotTwist}
+              <button
+                type="button"
+                onclick={() => onGeneratePlotTwist(generatedData!)}
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
+                id="generate-plot-twist-btn"
+                title="Generate a Plot Twist from this quest hook"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--shuffle] mr-1.5 inline-block h-3.5 w-3.5 align-[-0.15em]"
+                ></span>
+                Generate Plot Twist
               </button>
             {/if}
             <button
