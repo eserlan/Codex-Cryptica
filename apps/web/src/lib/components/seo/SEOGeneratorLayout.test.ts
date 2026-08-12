@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, fireEvent } from "@testing-library/svelte";
+import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
@@ -445,6 +445,50 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(trackEventMock).toHaveBeenCalledWith("generator_completed", {
         generator_type: "npc",
       });
+    });
+
+    it("offers a Plot Twist only after the user generates a Quest Hook", async () => {
+      const seedDraft = {
+        type: "event" as const,
+        title: "Example Quest",
+        content: "An example quest hook.",
+        lore: "",
+        labels: ["rpg-quest"],
+        status: "draft" as const,
+      };
+      const generatedQuest = {
+        ...seedDraft,
+        title: "The Bell Beneath Blackwater",
+        content: "The newly generated quest hook.",
+      };
+      const onGeneratePlotTwist = vi.fn();
+      const mockGenerate = vi.fn().mockResolvedValue(generatedQuest);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/quest",
+          eyebrow: "Quest Hook Generator",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          onGeneratePlotTwist,
+        },
+      });
+
+      expect(
+        screen.queryByRole("button", { name: "Generate Plot Twist" }),
+      ).toBeNull();
+
+      await fireEvent.click(
+        container.querySelector("#generate-button") as HTMLButtonElement,
+      );
+
+      const plotTwistButton = await screen.findByRole("button", {
+        name: "Generate Plot Twist",
+      });
+      await fireEvent.click(plotTwistButton);
+
+      expect(onGeneratePlotTwist).toHaveBeenCalledWith(generatedQuest);
     });
 
     it("tracks public Save, Copy, and Open Codex actions", async () => {

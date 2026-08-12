@@ -39,6 +39,12 @@ import {
   type PlotTwistGeneratorOptions,
 } from "./public-plot-twist";
 import {
+  buildQuestPrompt,
+  generateQuestLocal,
+  questConfig,
+  type QuestGeneratorOptions,
+} from "./public-quest";
+import {
   buildWorldPrompt,
   generateWorldLocal,
   type WorldGeneratorOptions,
@@ -83,6 +89,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "news-sheet": "note",
   dungeon: "location",
   adventure: "note",
+  quest: "event",
   world: "location",
   "council-vote": "note",
   "secret-society": "faction",
@@ -400,6 +407,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   language: `{"title":"Low-Speak","summary":"A guttural, whispered dialect used by miners and tunnel-diggers to communicate across echoing caverns.","content":"## Pronunciation & Phonology\\nLow-frequency clicks, soft whistles, and deep guttural stops that carry well through stone.\\n\\n## Cultural Role & Usage\\nSpoken in the deep galleries where torchlight is rationed; surface-folk who use it mark themselves as tunnel-kin.\\n\\n## Naming Conventions\\nNames are formed by compound roots relating to geological features or mineral properties.\\n\\n## Common Vocabulary & Word Bank\\n| Word | Pronunciation | English Meaning |\\n| --- | --- | --- |\\n| Vur | VOOR | Iron |\\n| Lith | LITH | Stone |\\n\\n## Sample Phrases\\n- *\\"Vur-Lith-Garon\\"* — (VOOR-lith-GAH-ron) — \\"Solid as iron\\"","lore":"### At a Glance\\n- **Genre / Setting**: Classic Fantasy\\n- **Tone**: Harsh & Consonant-heavy\\n- **Role**: Common Speech\\n- **Name Structure**: Compound Words\\n\\n### Example Names\\n- **Garon-Vur** — Iron Seeker (person)\\n- **Kael-Lith** — Stone Speaker (person)\\n\\n### At the Table\\n- Greet with a short falling whistle before speaking; skipping it reads as a threat.","labels":["dialect","underdark","conlang"],"connections":[]}`,
   dungeon: `{"title":"The Submerged Vault of Sunken Runes","summary":"An ancient flooded temple complex whose inner sanctum preserves an active celestial beacon.","lore":"## History & Original Purpose\\nOriginally built 800 years ago as a sacred dwarven sanctuary, the delve was abandoned during the Dragon War and subsequently flooded by subterranean rivers.\\n## Current State & Function\\nCurrently overrun by a desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Signature Feature\\nThe Levitating Sunstone: A massive radiant orb suspended over an inverted fountain pool, illuminating the entire central hall.\\n## Current Conflict\\nAn invading Kobold mining crew has broken into the lower sectors, sparking a turf war with the resident Goblin clan.\\n## Key Sectors & Layout\\n### Sector 1: The Guarded Gateway\\nFortified entry halls with collapse traps.\\n### Sector 2: The Deep Arcana Vault\\nSealed inner chamber housing warding circles.\\n## Inhabitants & Factions\\nA desperate clan of Goblins utilizing ancient defense traps against an intruding Kobold mining party.\\n## Central Secret / Boss Mystery\\nThe dungeon was not built as a tomb, but as a vault to lock away an elemental planar core.\\n## Hazards & Traps\\nPressure-plate needle traps laced with paralyzing wyvern venom.\\n## Treasures & Artifacts\\nA silver-hilted shortsword glowing with pale starlight near undead.\\n## Adventure Hooks & Rumours\\nA local scholar hires the party to retrieve an ancient astrological tablet from the ruins.","labels":["dungeon","location","fantasy","temple-shrine"],"connections":[]}`,
   adventure: `{"title":"The Witness Who Came Back","summary":"A dying informant has surfaced with evidence that implicates the city's most powerful magistrate — and she has three days to live.","lore":"## Initial Situation\\nA street physician treated a woman who should be dead — she was listed as a victim of last year's warehouse fire. She is carrying a sealed ledger and will only hand it to someone who can guarantee safe passage out of the city.\\n## Primary Objective & Pressure\\nGet the witness and the ledger to the provincial capital before the magistrate's agents locate her — the city gates close in 36 hours for the harvest festival.\\n## Key Locations\\n- **The Drowned Clinic** — A basement surgery below the harbour market; currently off the magistrate's map, but her colleagues will tell the wrong people.\\n- **The Salt Gate** — The only land route out; controlled by a guard captain who owes the magistrate a significant favour.\\n## Important NPCs & Factions\\n- **Mira Osal, the witness** — Survived by accident; wants to testify but is terrified of dying before she can.\\n- **Guard-Captain Deren** — Loyal to the magistrate, but only because the magistrate has his brother.\\n## Threats & Antagonists\\n- The magistrate's investigation office has already been tipped off; two plainclothes agents are watching the harbour market.\\n## Clues, Secrets & Discoveries\\n- The ledger names not just the magistrate but three provincial judges — the testimony is worth more than a conviction, which is why the magistrate wants it destroyed rather than suppressed.\\n## Complications & Escalating Pressures\\n- The physician who treated Mira has been taken in for questioning.\\n- The party's own credentials are in the magistrate's files from a prior interaction.\\n## Possible Outcomes\\n- The witness reaches the capital and testifies; the magistrate is arrested but the provincial judges are not named in the hearing.\\n- The ledger is lost or destroyed; Mira survives and her testimony alone changes nothing.\\n## Adventure Hooks\\n- The street physician sends word through a mutual contact: a patient is asking for people who handle difficult situations.\\n- A reward notice is posted for information on the whereabouts of a woman matching Mira's description.","labels":["adventure","event","investigation","fantasy"],"connections":[]}`,
+  quest: `{"title":"The Bell Beneath Blackwater","summary":"A drowned chapel's bell has begun ringing beneath the marsh, and every toll draws one villager toward the water.","lore":"## Quest Hook\\nThe reeve begs the party to find the submerged chapel before the next moonrise, when the bell is expected to toll thirteen times.\\n## Threat\\nA grief-bound spirit is calling descendants of those who abandoned the chapel during a flood.\\n## Complication\\nThe reeve's family caused the original disaster and has hidden the surviving evacuation ledger.\\n## Reward\\nThe village offers an old river charter granting safe passage and salvage rights throughout the marsh.","labels":["rpg-quest","quest-generator","marsh"],"connections":[]}`,
   "plot-twist": `{"title":"The Mercy That Bought Time","summary":"The duke's loyalty is genuine, but the sacrifice keeping his army supplied has created a crisis the party must choose how to expose.","reveal":"The duke diverted the war treasury to prevent a famine, and the missing funds are now being used to manipulate the campaign.","believedAssumption":"Everyone believes the duke's unexplained absence of supplies proves he is secretly aiding the enemy.","rationale":"The known shortages and the duke's loyalty are both true; only the motive and consequence were misunderstood.","foreshadowing":["The poorest districts have unusually full grain stores.","The duke refuses a public audit but quietly protects a group of civilian clerks.","Enemy scouts avoid villages that should be easy targets."],"immediateConsequences":["The army's next offensive must be delayed or risk starving civilians.","Exposing the duke may restore political trust while destroying the emergency food network."],"newChoices":["Protect the duke's secret and find another way to supply the army.","Reveal the truth and force the nobles to choose between victory and famine.","Use the evidence to negotiate a public settlement with the enemy."],"lore":"### GM Note\\nThe twist preserves the established facts and turns the players' proof into leverage rather than a simple accusation.","labels":["complication","moral-dilemma","political"]}`,
   world: `{"title":"Khepri IV","summary":"A tidally locked desert world whose settlements cling to the narrow belt of dusk between a molten dayside and frozen night.","lore":"## World Profile\\nKhepri IV is a frontier world where every border follows the shade line.\\n## Climate & Geography\\nThe terminator belt migrates slowly, forcing towns to move their farms and roads with it.\\n## Gravity, Atmosphere & Biosphere\\nThe air is breathable but carries abrasive dust; native life burrows beneath the cooling surface.\\n## Settlements, Cultures & Factions\\nThe twilight cities share water through a fragile compact, while a solar-mining consortium wants to break it.\\n## Economy, Resources & Technology\\nMirror arrays harvest dayside energy, but only the cities can distribute it safely.\\n## Hazards & History\\nA failed weather-engineering project widened the dayside by three kilometres.\\n## Notable Locations\\n- The Moving Capital — a city on crawler treads.\\n- The Glass Sea — dunes fused by solar storms.\\n- The Cold Gate — the only protected route into the nightside.\\n## Mysteries & Conflicts\\nThe old climate array is receiving commands from somewhere beneath the Glass Sea.\\n## Adventure Hooks\\n- A water convoy has vanished beyond the Cold Gate.\\n- The consortium offers a fortune for a map of the buried array.\\n- A city refuses to move with the terminator, and its people need another solution.","labels":["world","desert-world","frontier","hard-sci-fi"],"connections":[]}`,
   "star-system": `{"title":"Kesh-9","summary":"A contested binary system whose fragile water compact is the only thing keeping two mining powers from open war.","lore":"## Core Concept\\nKesh-9 is a hard sci-fi binary system, contested in character and frontier in reach, valued for a rare isotope deposit found nowhere else on the charted lanes.\\n## The Star(s)\\nA close binary pair locks the system into overlapping shadows and unstable seasons.\\n## Major Bodies\\n- **Kesh-9 II** (Temperate World) — the system's one habitable body, and its most fought-over resource.\\n- **Kesh-9 III** (Asteroid Belt) — worked by independent crews who answer to no single authority.\\n- **New Halden** (Derelict Station) — abandoned mid-construction, its original purpose still disputed.\\n- **Kesh-9 IV** (Ice Giant) — its atmosphere mined for volatiles by orbital skimmers.\\n## Settlements & Factions\\nA handful of independent outposts hold the system together. The Kesh Compact favours the current water-sharing treaty; the Vantage Drilling Concern wants to break it for exclusive isotope rights.\\n## Resources & Strategic Importance\\nThe isotope deposit on Kesh-9 III is the system's leverage — whoever controls extraction rights controls the system's politics.\\n## Travel Hazards\\nGravitational tides between the twin stars scramble navigation near closest approach.\\n## History\\nThe current balance dates to the last treaty renegotiation, when the isotope deposit was first confirmed.\\n## System-Wide Conflict or Mystery\\nNew Halden was abandoned mid-construction for reasons neither faction will discuss, and its dormant systems have recently begun drawing power again.\\n## Adventure Hooks\\n- The Kesh Compact needs outside investigators to learn why New Halden woke up before the Concern finds out first.\\n- A supply convoy vanishes during a gravitational tide event, and both factions blame the other.\\n- Someone on Kesh-9 II is quietly negotiating to sell isotope rights out from under the Compact.","labels":["star-system","binary-system","hard-sci-fi","contested","frontier"],"connections":[]}`,
@@ -866,6 +874,39 @@ ${prompt.userMessage}`,
 
 function adventurePrompt(request: GeneratorRunRequest): string {
   return buildCampaignAdventurePrompt(request).userMessage;
+}
+
+function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    ),
+    tone: optionString(request, "tone", ""),
+    scope: optionString(request, "scope", ""),
+    locationType: optionString(request, "locationType", ""),
+    threat: optionString(request, "threat", ""),
+    twist: optionString(request, "twist", ""),
+    reward: optionString(request, "reward", ""),
+    campaignContext: request.instructions?.trim() || undefined,
+  };
+}
+
+function generateQuest(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateQuestLocal(questOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
+function questPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildQuestPrompt(questOptions(request), contextChain(request));
+  return `${prompt.systemInstruction}\n\n${prompt.userMessage}`;
 }
 
 function plotTwistOptions(
@@ -1614,6 +1655,75 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateAdventure,
     mapOutputToDraft: mapOutputToDraft("adventure"),
     buildPrompt: adventurePrompt,
+  },
+  quest: {
+    id: "quest",
+    label: "Quest Hook",
+    description:
+      "Generate a campaign-ready quest hook with a threat, complication, twist, and reward.",
+    entityType: GENERATOR_ENTITY_TYPE.quest,
+    defaultInstruction:
+      "A playable quest hook grounded in the campaign, with a clear patron or inciting event, a concrete threat, a complication, and a meaningful reward.",
+    icon: "lucide:scroll-text",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: questConfig.genres.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: questConfig.tones.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "scope",
+        label: "Scope",
+        control: "select",
+        choices: questConfig.scopes.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "locationType",
+        label: "Location",
+        control: "select",
+        choices: questConfig.locationTypes.map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+      {
+        id: "threat",
+        label: "Threat",
+        control: "select",
+        choices: questConfig.threats.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "twist",
+        label: "Initial Twist",
+        control: "select",
+        choices: questConfig.twists.map((value) => ({ value, label: value })),
+      },
+      {
+        id: "reward",
+        label: "Reward",
+        control: "select",
+        choices: questConfig.rewards.map((value) => ({ value, label: value })),
+      },
+    ],
+    defaults: {
+      genre: "",
+      tone: "",
+      scope: "",
+      locationType: "",
+      threat: "",
+      twist: "",
+      reward: "",
+    },
+    generate: generateQuest,
+    mapOutputToDraft: mapOutputToDraft("quest"),
+    buildPrompt: questPrompt,
   },
   "plot-twist": {
     id: "plot-twist",

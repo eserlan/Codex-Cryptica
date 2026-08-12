@@ -50,6 +50,7 @@ describe("registry lookup", () => {
       "news-sheet",
       "dungeon",
       "adventure",
+      "quest",
       "plot-twist",
       "world",
       "council-vote",
@@ -69,6 +70,32 @@ describe("registry lookup", () => {
     expect(prompt).toContain("Generate a campaign event");
     const draft = getGenerator("event").generate(run("event"));
     expect(draft.title.length).toBeGreaterThan(0);
+  });
+
+  it("builds and generates a quest hook as an event draft", () => {
+    const generator = getGenerator("quest");
+    const request = run("quest", {
+      options: {
+        genre: "Classic Fantasy",
+        tone: "Heroic",
+        scope: "Local",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.quest).toBe("event");
+    expect(generator.buildPrompt(request)).toContain(
+      "Generate a detailed RPG quest hook",
+    );
+    const output = generator.generate(request);
+    const draft = generator.mapOutputToDraft(output, request);
+
+    expect(output.labels).toEqual(
+      expect.arrayContaining(["rpg-quest", "quest-generator"]),
+    );
+    expect(draft).toMatchObject({
+      entityType: "event",
+      sourceGeneratorId: "quest",
+    });
   });
 
   it("registers plot twists as note drafts with continuity guidance", () => {
@@ -1140,6 +1167,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "news-sheet": "note",
       dungeon: "location",
       adventure: "note",
+      quest: "event",
       "plot-twist": "note",
       world: "location",
       "council-vote": "note",

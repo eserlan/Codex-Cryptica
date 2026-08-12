@@ -586,7 +586,8 @@
           stage = "configure";
           errorMsg = null;
         }}
-        onGeneratePlotTwist={isQuestHookDraft(draft.labels)
+        onGeneratePlotTwist={draft.sourceGeneratorId === "quest" &&
+        isQuestHookDraft(draft.labels)
           ? openPlotTwistFromDraft
           : undefined}
       />

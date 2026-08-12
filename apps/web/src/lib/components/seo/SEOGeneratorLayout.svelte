@@ -715,7 +715,7 @@
         onSaveHubToCodex={handleSaveHubToCodex}
         onBuildDelveCanvas={handleBuildDelveCanvas}
         onBuildAdventureCanvas={handleBuildAdventureCanvas}
-        {onGeneratePlotTwist}
+        onGeneratePlotTwist={userGenerated ? onGeneratePlotTwist : undefined}
       />
     </div>
 
