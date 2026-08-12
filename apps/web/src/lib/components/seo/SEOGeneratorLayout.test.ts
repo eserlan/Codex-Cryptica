@@ -491,6 +491,38 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(onGeneratePlotTwist).toHaveBeenCalledWith(generatedQuest);
     });
 
+    it("keeps the Quest Hook example and hides Plot Twist after generation fails", async () => {
+      const seedDraft = {
+        type: "event" as const,
+        title: "Example Quest",
+        content: "An example quest hook.",
+        lore: "",
+        labels: ["rpg-quest"],
+        status: "draft" as const,
+      };
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/quest",
+          eyebrow: "Quest Hook Generator",
+          generate: vi.fn().mockRejectedValue(new Error("Generation failed")),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          onGeneratePlotTwist: vi.fn(),
+        },
+      });
+
+      await fireEvent.click(
+        container.querySelector("#generate-button") as HTMLButtonElement,
+      );
+      await screen.findByText("Failed to generate: Generation failed");
+
+      expect(screen.getByText("Example")).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Generate Plot Twist" }),
+      ).toBeNull();
+    });
+
     it("tracks public Save, Copy, and Open Codex actions", async () => {
       const seedDraft = {
         type: "character" as const,

@@ -635,6 +635,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
     icon: "icon-[lucide--map]",
   },
+  "quest-generator": {
+    id: "quest-generator",
+    title: "Quest Hook Generator",
+    content:
+      "Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.",
+    icon: "icon-[lucide--scroll-text]",
+  },
   "plot-twist-generator": {
     id: "plot-twist-generator",
     title: "Plot Twist & Complication Generator",

@@ -102,6 +102,9 @@
   // Once the user explicitly generates, the in-flight seed draft must not clobber
   // their result if it resolves later.
   let userGenerated = $state(false);
+  // Follow-up actions must only use a result from a completed explicit run,
+  // never the example draft left behind after a failed attempt.
+  let userGenerationSucceeded = $state(false);
   const isBusy = $derived(isGenerating || isAutoDrafting);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
@@ -262,8 +265,8 @@
 
   async function handleGenerate() {
     if (isGenerating) return;
-    isExampleDraft = false;
     userGenerated = true;
+    userGenerationSucceeded = false;
     isGenerating = true;
     errorMessage = null;
     aiFallbackDismissed = false;
@@ -278,6 +281,8 @@
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
       generatedData = await generate({ useAI: useAINow });
+      userGenerationSucceeded = true;
+      isExampleDraft = false;
       // #1796: only on the success path — a caught error below means the
       // generation did not complete, so it must not count as one.
       trackEvent("generator_completed", { generator_type: generatorType });
@@ -715,7 +720,9 @@
         onSaveHubToCodex={handleSaveHubToCodex}
         onBuildDelveCanvas={handleBuildDelveCanvas}
         onBuildAdventureCanvas={handleBuildAdventureCanvas}
-        onGeneratePlotTwist={userGenerated ? onGeneratePlotTwist : undefined}
+        onGeneratePlotTwist={userGenerationSucceeded
+          ? onGeneratePlotTwist
+          : undefined}
       />
     </div>
 
