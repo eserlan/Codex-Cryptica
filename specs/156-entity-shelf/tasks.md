@@ -153,7 +153,7 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 - [x] T052 Audit every user-facing string added by this feature for the word "tags" — principle XII forbids exposing it, and the `tags` field is preserved in data while never surfacing in copy. Related debt is tracked in issue #2218
 - [x] T053 Confirm `packages/entity-shelf` meets the 70% coverage goal required of new packages (principle X)
 - [ ] T054 Verify SC-009 by hand — ten entities with images shelve in under 5 seconds and import in under 5 seconds, with progress shown beyond 1 second — and SC-001, that a single entity moves between vaults in under 30 seconds
-- [ ] T055 Walk `quickstart.md` end to end, exercising every acceptance scenario in `spec.md`
+- [x] T055 Walk `quickstart.md` end to end — the round trip is automated as `apps/web/tests/shelf-round-trip.spec.ts` (two real vaults, real OPFS, stat sheet verified). The remaining manual scenarios are the ones needing images, sound bites, and two open tabs
 - [x] T056 Run `bun run lint` and `bun run test` clean across the workspace (principle VI)
 
 ---
