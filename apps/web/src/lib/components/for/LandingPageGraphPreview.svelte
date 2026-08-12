@@ -116,18 +116,32 @@
   let selectAccent = $derived(p.accent);
 
   // Spanned 2D viewBox (540 x 280) tuned for aspect ratio fill
-  const POSITIONS = [
-    { cx: 270, cy: 140 }, // Center Hub (Node 0)
-    { cx: 85, cy: 65 }, // Top Left (Node 1)
-    { cx: 455, cy: 75 }, // Top Right (Node 2)
-    { cx: 435, cy: 220 }, // Bottom Right (Node 3)
-    { cx: 105, cy: 220 }, // Bottom Left (Node 4)
-  ];
+  const getPositions = (count: number) => {
+    const hub = { cx: 270, cy: 140 };
+    if (count <= 5) {
+      return [
+        hub,
+        { cx: 85, cy: 65 }, // Top Left (Node 1)
+        { cx: 455, cy: 75 }, // Top Right (Node 2)
+        { cx: 435, cy: 220 }, // Bottom Right (Node 3)
+        { cx: 105, cy: 220 }, // Bottom Left (Node 4)
+      ];
+    }
+    return [
+      hub,
+      { cx: 85, cy: 65 }, // Top Left (Node 1)
+      { cx: 455, cy: 75 }, // Top Right (Node 2)
+      { cx: 445, cy: 215 }, // Bottom Right (Node 3)
+      { cx: 270, cy: 225 }, // Bottom Center (Node 4)
+      { cx: 95, cy: 215 }, // Bottom Left (Node 5)
+    ];
+  };
 
+  let positions = $derived(getPositions(steps.length));
   let selectedIndex = $state(0);
   let activeNode = $derived(steps[selectedIndex] || steps[0]);
   let activeColor = $derived(getNodeColor(activeNode));
-  let selPos = $derived(POSITIONS[selectedIndex % POSITIONS.length]);
+  let selPos = $derived(positions[selectedIndex % positions.length]);
 </script>
 
 <div
@@ -154,28 +168,22 @@
       <!-- Peripheral interconnect lines (dim background web) -->
       {#if steps.length > 2}
         <g stroke={p.webEdge} stroke-opacity="0.35" stroke-width="2.5">
-          <line
-            x1={POSITIONS[1].cx}
-            y1={POSITIONS[1].cy}
-            x2={POSITIONS[2].cx}
-            y2={POSITIONS[2].cy}
-          />
-          {#if steps.length > 3}
+          {#each Array(Math.min(steps.length, positions.length) - 2) as _, idx}
             <line
-              x1={POSITIONS[2].cx}
-              y1={POSITIONS[2].cy}
-              x2={POSITIONS[3].cx}
-              y2={POSITIONS[3].cy}
+              x1={positions[idx + 1].cx}
+              y1={positions[idx + 1].cy}
+              x2={positions[idx + 2].cx}
+              y2={positions[idx + 2].cy}
             />
-          {/if}
+          {/each}
         </g>
       {/if}
 
       <!-- Star/Hub lines connecting Center Node (0) to spokes -->
       {#each steps as step, i}
         {#if i > 0}
-          {@const hub = POSITIONS[0]}
-          {@const pos = POSITIONS[i % POSITIONS.length]}
+          {@const hub = positions[0]}
+          {@const pos = positions[i % positions.length]}
           {@const isLinked = selectedIndex === 0 || selectedIndex === i}
           {@const color = isLinked ? selectAccent : p.dimEdge}
 
@@ -263,7 +271,7 @@
 
       <!-- Render Nodes -->
       {#each steps as step, i}
-        {@const pos = POSITIONS[i % POSITIONS.length]}
+        {@const pos = positions[i % positions.length]}
         {@const color = getNodeColor(step)}
         {@const isHub = i === 0}
         {@const isSelected = i === selectedIndex}
