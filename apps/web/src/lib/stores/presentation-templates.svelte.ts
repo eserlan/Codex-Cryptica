@@ -240,6 +240,25 @@ export class PresentationTemplateStore {
    * override pointing at it is left as a now-dangling id, which
    * `resolvePresentationTemplate`/`isTemplateUsable` treat as invalid and
    * fall back on next render (no migration needed). */
+  /**
+   * Writes a template exactly as given, id and timestamps included.
+   *
+   * Distinct from `saveTemplate`, which mints ids and stamps `updatedAt`: an
+   * imported template must land under the identifier the import planned for,
+   * since that is what its rollback journal names (156-entity-shelf).
+   */
+  async putTemplateRecord(template: PresentationTemplate): Promise<void> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+    const record = { ...template, vaultId };
+    const db = await getDB();
+    await db.put("stat_sheet_presentation_templates", record);
+    this.templates = [
+      ...this.templates.filter((t) => t.id !== template.id),
+      record,
+    ];
+  }
+
   async deleteTemplate(id: string): Promise<boolean> {
     try {
       const db = await getDB();

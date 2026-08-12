@@ -1,6 +1,8 @@
 <script lang="ts">
   import { categories } from "$lib/stores/categories.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { shelf } from "$lib/features/shelf";
 
   let { x, y, selectedIds, onManageLabels, onChangeType, onDelete, onClose } =
     $props<{
@@ -53,6 +55,23 @@
       Read-Only Guest Session
     </div>
   {/if}
+
+  <!-- Send to Shelf: copies the selection so it can be brought into another
+       vault. Read-only against this one. -->
+  <button
+    type="button"
+    role="menuitem"
+    disabled={isGuest}
+    data-testid="context-menu-send-to-shelf"
+    class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase tracking-widest disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-theme-text"
+    onclick={() => {
+      void shelf.shelve(selectedIds, vault.vaultName ?? "This vault");
+      onClose();
+    }}
+  >
+    <span class="icon-[lucide--library] w-3.5 h-3.5" aria-hidden="true"></span>
+    Send {count > 1 ? `${count} ` : ""}to Shelf
+  </button>
 
   <!-- Manage Labels -->
   <button

@@ -113,7 +113,12 @@ vi.mock("$lib/stores/quicknote.svelte", () => ({
   quickNoteStore: {},
 }));
 vi.mock("@codex/events", () => ({
-  appEventBus: {},
+  // The Shelf subscribes to this bus on mount, so the stub needs the two
+  // methods it actually calls rather than being a bare object.
+  appEventBus: {
+    subscribe: () => () => {},
+    emit: () => {},
+  },
   CrossTabBroadcaster: class {
     destroy() {}
   },

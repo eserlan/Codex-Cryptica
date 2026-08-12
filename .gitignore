@@ -84,3 +84,8 @@ apps/web/.e2e-success.json
 
 # Local debugging scratch
 scratch/
+
+# Scratch artifacts from local browser-automation runs
+.playwright-cli/
+.playwright-mcp/
+output/

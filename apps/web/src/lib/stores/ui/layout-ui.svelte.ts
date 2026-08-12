@@ -8,7 +8,7 @@ export const MIN_LEFT_SIDEBAR_WIDTH = 240;
 export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
 export const MAX_SIDEBAR_VW = 40;
 
-export type SidebarTool = "oracle" | "explorer" | "none";
+export type SidebarTool = "oracle" | "explorer" | "shelf" | "none";
 
 function isSidebarTool(value: string): value is SidebarTool {
   return value === "oracle" || value === "explorer" || value === "none";

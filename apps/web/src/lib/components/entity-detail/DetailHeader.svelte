@@ -8,6 +8,7 @@
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import SidepanelRevisionButton from "$lib/components/entity/SidepanelRevisionButton.svelte";
+  import { shelf } from "$lib/features/shelf";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -71,6 +72,19 @@
       defaultVisibility: vault.defaultVisibility,
     });
   });
+
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
 
   const handleFindInGraph = () => {
     const nodeId = vault.selectedEntityId;
@@ -204,6 +218,27 @@
           class="{existingCanvas
             ? 'icon-[lucide--external-link]'
             : 'icon-[lucide--map]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
+    {#if !vault.isGuest}
+      <button
+        type="button"
+        onclick={handleSendToShelf}
+        class="transition flex items-center justify-center p-1 {shelvedJustNow
+          ? 'text-theme-primary'
+          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
+        aria-label="Send to Shelf"
+        title={shelvedJustNow
+          ? "On the Shelf"
+          : "Send to Shelf — to bring into another vault"}
+        data-testid="send-to-shelf-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{shelvedJustNow
+            ? 'icon-[lucide--check]'
+            : 'icon-[lucide--library]'} w-5 h-5"
         ></span>
       </button>
     {/if}
