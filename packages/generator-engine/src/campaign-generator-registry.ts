@@ -871,8 +871,18 @@ function adventurePrompt(request: GeneratorRunRequest): string {
 function plotTwistOptions(
   request: GeneratorRunRequest,
 ): PlotTwistGeneratorOptions {
+  const sourceEntity = request.vaultContext?.sourceEntity;
+  const sourcePremise = sourceEntity
+    ? [sourceEntity.title, sourceEntity.contentExcerpt.slice(0, 600).trim()]
+        .filter(Boolean)
+        .join(": ")
+    : "";
   return {
-    premise: optionString(request, "premise", request.instructions ?? ""),
+    premise: optionString(
+      request,
+      "premise",
+      sourcePremise || request.instructions || "",
+    ),
     themeId: request.themeId || optionString(request, "themeId", "workspace"),
     twistType: optionString(request, "twistType", "Random"),
     impact: optionString(request, "impact", "Significant"),
