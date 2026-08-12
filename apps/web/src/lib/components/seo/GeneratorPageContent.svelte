@@ -2,6 +2,7 @@
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
@@ -68,6 +69,7 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
+  import { buildPlotTwistPremise } from "$lib/services/seo/generator-handoffs";
   import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
@@ -364,13 +366,17 @@
     campaignContext: "",
   });
 
+  const _initialQuestPremise = browser
+    ? (new URL(window.location.href).searchParams.get("questPremise") ?? "")
+    : "";
+
   let plotTwist = $state({
     genre: factionConfig.themes[0],
     twistType: plotTwistConfig.twistTypes[0],
     impact: plotTwistConfig.impacts[1],
     timing: plotTwistConfig.timings[4],
     foreshadowing: plotTwistConfig.foreshadowing[0],
-    premise: "",
+    premise: _initialQuestPremise,
     constraints: "",
     campaignContext: "",
   });
@@ -766,8 +772,17 @@
     return handler(useAI);
   }
 
+  function openPlotTwistFromQuest(draft: GeneratorOutput) {
+    const params = new URLSearchParams({
+      questPremise: buildPlotTwistPremise(draft),
+    });
+    void goto(resolve(`/generators/plot-twist-generator?${params}`));
+  }
+
   const initialDraft = $derived(
-    initialDraftOverride ?? slugDrafts[slug] ?? null,
+    _initialQuestPremise && slug === "plot-twist-generator"
+      ? null
+      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
   );
 </script>
 
@@ -787,6 +802,7 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
+  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
 >
   {#snippet formFields(trigger)}
     {#if slug === "npc"}

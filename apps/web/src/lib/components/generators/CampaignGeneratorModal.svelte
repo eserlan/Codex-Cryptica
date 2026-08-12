@@ -35,6 +35,10 @@
   import StarSystemDiagram from "$lib/components/seo/StarSystemDiagram.svelte";
   import { blobToFile } from "$lib/utils/svg-export";
   import { entityMapLinkingService } from "$lib/services/entity-map-linking";
+  import {
+    buildPlotTwistPremise,
+    isQuestHookDraft,
+  } from "$lib/services/seo/generator-handoffs";
 
   let loadingIndex = $state(0);
   let activeLoadingMessages = $derived(
@@ -170,6 +174,15 @@
       singleQuestHook.id,
       "plot-twist",
     );
+  }
+
+  function openPlotTwistFromDraft() {
+    if (!draft) return;
+    const premise = buildPlotTwistPremise(draft);
+    stage = "configure";
+    draft = null;
+    errorMsg = null;
+    modalUIStore.openIntentGeneratorWorkflow("plot-twist", null, premise);
   }
 
   function close(options: { preserveSession?: boolean } = {}) {
@@ -573,6 +586,9 @@
           stage = "configure";
           errorMsg = null;
         }}
+        onGeneratePlotTwist={isQuestHookDraft(draft.labels)
+          ? openPlotTwistFromDraft
+          : undefined}
       />
     {:else if stage === "error"}
       <div class="py-4">

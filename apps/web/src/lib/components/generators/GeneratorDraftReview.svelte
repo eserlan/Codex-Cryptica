@@ -16,6 +16,8 @@
     /** Label for the back button — "Customize" when the draft was generated
      * immediately from a Guided Mode intent (#1909, FR-010). */
     backLabel?: string;
+    /** Open Plot Twist seeded from a quest-hook draft. */
+    onGeneratePlotTwist?: () => void;
   }
 
   let {
@@ -27,6 +29,7 @@
     showRelationshipToggle = false,
     themeId = "workspace",
     backLabel = "Back",
+    onGeneratePlotTwist,
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -215,7 +218,9 @@
     </label>
   {/if}
 
-  <div class="flex justify-between gap-2 border-t border-chrome-border pt-4">
+  <div
+    class="flex flex-wrap justify-between gap-2 border-t border-chrome-border pt-4"
+  >
     <button
       type="button"
       onclick={onback}
@@ -224,13 +229,28 @@
     >
       {backLabel}
     </button>
-    <button
-      type="submit"
-      disabled={saving}
-      class="px-5 py-2 bg-chrome-accent text-chrome-surface font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-    >
-      {saving ? "Opening…" : "Open in Editor"}
-    </button>
+    <div class="flex flex-wrap justify-end gap-2">
+      {#if onGeneratePlotTwist}
+        <button
+          type="button"
+          onclick={onGeneratePlotTwist}
+          disabled={saving}
+          class="inline-flex items-center gap-2 rounded-lg border border-chrome-accent/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-chrome-accent transition-colors hover:bg-chrome-accent/10 disabled:pointer-events-none disabled:opacity-50"
+          data-testid="generate-plot-twist-from-quest"
+        >
+          <span aria-hidden="true" class="icon-[lucide--shuffle] h-3.5 w-3.5"
+          ></span>
+          Generate Plot Twist
+        </button>
+      {/if}
+      <button
+        type="submit"
+        disabled={saving}
+        class="rounded-lg bg-chrome-accent px-5 py-2 text-xs font-bold uppercase tracking-wider text-chrome-surface transition-all hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+      >
+        {saving ? "Opening…" : "Open in Editor"}
+      </button>
+    </div>
   </div>
 </form>
 
