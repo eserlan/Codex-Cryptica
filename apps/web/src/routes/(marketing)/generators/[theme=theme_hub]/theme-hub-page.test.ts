@@ -58,6 +58,17 @@ describe("Generator Theme Hub Page", () => {
     expect(link.getAttribute("href")).toBe("/generators/pirate/ship-generator");
   });
 
+  it("shows the plot twist generator on the shared hub catalogue", () => {
+    render(Page, { props: { data: { theme: "cyberpunk" } } });
+
+    const link = screen.getByRole("link", {
+      name: /plot twist & complication generator/i,
+    });
+    expect(link.getAttribute("href")).toBe(
+      "/generators/cyberpunk/plot-twist-generator",
+    );
+  });
+
   it.each([
     ["sci-fi", "Sci-Fi"],
     ["cyberpunk", "Cyberpunk"],
