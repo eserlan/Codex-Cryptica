@@ -4,6 +4,7 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
+  import { shelf } from "$lib/features/shelf";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -155,6 +156,18 @@
   // mounting this layout.
   onMount(() => {
     initAiSessionEager();
+  });
+
+  // The Shelf is shared by every vault in this browser, so it starts listening
+  // once here rather than per-vault. Any import that never finished — a crashed
+  // tab, a browser closed mid-write — is rolled back before the Shelf becomes
+  // usable, so a half-written import cannot be mistaken for real content
+  // (156-entity-shelf, FR-020).
+  onMount(() => {
+    if (!browser) return;
+    shelf.start();
+    void shelf.recoverCrashedImports().then(() => shelf.refresh());
+    return () => shelf.stop();
   });
 
   // `100dvh` (app.css's --app-viewport-height fallback) is supposed to track

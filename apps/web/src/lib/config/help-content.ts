@@ -174,6 +174,16 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  // The browser-local caveat is the whole point of this hint (156-entity-shelf,
+  // FR-024): people will otherwise assume the Shelf is a backup or a way to
+  // send an entity to a co-GM, and find out it is neither at the worst moment.
+  "entity-shelf": {
+    id: "entity-shelf",
+    title: "The Shelf",
+    content:
+      "Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
+    icon: "icon-[lucide--library]",
+  },
   "touch-graph-gestures": {
     id: "touch-graph-gestures",
     title: "Touch gestures",

@@ -7,6 +7,7 @@ import type {
   StatSheetTemplate,
   PresentationTemplate,
 } from "schema";
+import type { ImportJournal, ShelfEntry } from "@codex/entity-shelf";
 // ... (rest of imports unchanged)
 export interface VaultRecord {
   id: string;
@@ -142,6 +143,22 @@ interface CodexDB extends DBSchema {
       "by-schema-template-id": string;
     };
   };
+  // The Shelf (156-entity-shelf). Deliberately NOT vault-scoped: unlike every
+  // other store here it carries no vaultId key and no by-vault index, because
+  // being readable from whichever vault is open is the whole feature.
+  shelf_entries: {
+    key: string; // entry id
+    value: ShelfEntry;
+    indexes: {
+      "by-group": string;
+    };
+  };
+  // Present only while an import is in flight. Anything found at startup is a
+  // crashed import whose artifacts need rolling back.
+  shelf_journal: {
+    key: string; // importId
+    value: ImportJournal;
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
@@ -150,7 +167,8 @@ export const DB_NAME = "CodexCryptica";
 // the upgrade() callback below, so 20 was a consumed no-op for them and the
 // store never got created) to support vault-scoped stat sheet templates.
 // Bumped to 22 to add stat_sheet_presentation_templates (152-stat-sheet-templates).
-export const DB_VERSION = 22;
+// Bumped to 23 to add shelf_entries and shelf_journal (156-entity-shelf).
+export const DB_VERSION = 23;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -273,6 +291,17 @@ export function getDB() {
           );
           store.createIndex("by-vault", "vaultId");
           store.createIndex("by-schema-template-id", "schemaTemplateId");
+        }
+
+        if (!db.objectStoreNames.contains("shelf_entries")) {
+          const store = db.createObjectStore("shelf_entries", {
+            keyPath: "id",
+          });
+          store.createIndex("by-group", "groupId");
+        }
+
+        if (!db.objectStoreNames.contains("shelf_journal")) {
+          db.createObjectStore("shelf_journal", { keyPath: "importId" });
         }
       },
       blocked() {

@@ -168,6 +168,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "vault-save",
       "vault-load",
       "import-resume",
+      "entity-shelf",
     ],
   },
 ];

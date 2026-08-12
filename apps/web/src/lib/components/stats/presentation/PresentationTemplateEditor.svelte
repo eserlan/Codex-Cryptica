@@ -5,7 +5,11 @@
     type StatSheetField,
     type PresentationTemplate,
   } from "schema";
-  import { type VisualCard, getUnusedFields, parseCardsFromSource } from "./visual-card-parser";
+  import {
+    type VisualCard,
+    getUnusedFields,
+    parseCardsFromSource,
+  } from "./visual-card-parser";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
@@ -76,9 +80,9 @@
 
   // Visual layout builder state derived from AST or built interactively
 
-
-
-  let visualCards = $state<VisualCard[]>(parseCardsFromSource(source, schema?.fields));
+  let visualCards = $state<VisualCard[]>(
+    parseCardsFromSource(source, schema?.fields),
+  );
 
   function syncSourceFromVisualCards(cards: VisualCard[]) {
     let out = "";
