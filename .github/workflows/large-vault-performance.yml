@@ -53,6 +53,14 @@ jobs:
         working-directory: apps/web
         run: bun tests/performance/large-vault-summary.ts test-results/large-vault-results.v1.json
 
+      - name: Evaluate report-only budgets
+        if: ${{ always() && hashFiles('apps/web/test-results/large-vault-results.v1.json') != '' }}
+        working-directory: apps/web
+        run: >
+          bun tests/performance/large-vault-budget.ts
+          test-results/large-vault-results.v1.json
+          tests/performance/budgets/large-vault.v1.json
+
       - name: Upload benchmark evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -60,5 +68,6 @@ jobs:
           name: large-vault-performance-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             apps/web/test-results/
+            apps/web/tests/performance/budgets/large-vault.v1.json
             apps/web/preview.log
           retention-days: 30

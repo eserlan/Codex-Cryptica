@@ -19,6 +19,8 @@ export type GeneratorId =
   | "news-sheet"
   | "dungeon"
   | "adventure"
+  | "quest"
+  | "plot-twist"
   | "world"
   | "council-vote"
   | "secret-society"
@@ -36,6 +38,8 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "news-sheet",
   "dungeon",
   "adventure",
+  "quest",
+  "plot-twist",
   "world",
   "council-vote",
   "secret-society",

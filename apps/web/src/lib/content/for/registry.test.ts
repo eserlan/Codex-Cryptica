@@ -185,6 +185,26 @@ describe("Landing Page Registry", () => {
       }
     });
 
+    it("labels every spoke with its relation to the hub, and leaves the hub unlabelled across all packs", () => {
+      for (const page of pagesWithGraphs) {
+        const [hub, ...spokes] = page.exampleGraph!.steps;
+        expect(
+          hub.relation,
+          `${page.slug} hub (${hub.label}) should not have a relation`,
+        ).toBeUndefined();
+        expect(
+          spokes.length,
+          `${page.slug} should have at least 1 spoke`,
+        ).toBeGreaterThan(0);
+        for (const spoke of spokes) {
+          expect(
+            spoke.relation,
+            `${page.slug} / ${spoke.label} is missing a spoke relation`,
+          ).toBeTruthy();
+        }
+      }
+    });
+
     it("keeps graph badge copy per-page rather than sharing one horror label", () => {
       const horrorBadges = getAllLandingPages()
         .filter((p) => p.theme === "horror" && p.exampleGraph)

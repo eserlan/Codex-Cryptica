@@ -2,6 +2,7 @@
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
@@ -28,6 +29,7 @@
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
+  import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
@@ -53,6 +55,7 @@
     newsSheetConfig,
     dungeonConfig,
     adventureConfig,
+    plotTwistConfig,
     worldConfig,
     starSystemConfig,
     alienRaceConfig,
@@ -66,6 +69,7 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
+  import { buildPlotTwistPremise } from "$lib/services/seo/generator-handoffs";
   import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
@@ -362,6 +366,21 @@
     campaignContext: "",
   });
 
+  const _initialQuestPremise = browser
+    ? (new URL(window.location.href).searchParams.get("questPremise") ?? "")
+    : "";
+
+  let plotTwist = $state({
+    genre: factionConfig.themes[0],
+    twistType: plotTwistConfig.twistTypes[0],
+    impact: plotTwistConfig.impacts[1],
+    timing: plotTwistConfig.timings[4],
+    foreshadowing: plotTwistConfig.foreshadowing[0],
+    premise: _initialQuestPremise,
+    constraints: "",
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -476,6 +495,7 @@
       slug === "adventure-idea-generator"
     )
       adventure.genre = activeTheme;
+    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -718,6 +738,13 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
+    "plot-twist-generator": (useAI) =>
+      generatorEngine.generatePlotTwist({
+        ...plotTwist,
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+      }),
     world: (useAI) =>
       generatorEngine.generateWorld({
         ...world,
@@ -745,8 +772,17 @@
     return handler(useAI);
   }
 
+  function openPlotTwistFromQuest(draft: GeneratorOutput) {
+    const params = new URLSearchParams({
+      questPremise: buildPlotTwistPremise(draft),
+    });
+    void goto(resolve(`/generators/plot-twist-generator?${params}`));
+  }
+
   const initialDraft = $derived(
-    initialDraftOverride ?? slugDrafts[slug] ?? null,
+    _initialQuestPremise && slug === "plot-twist-generator"
+      ? null
+      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
   );
 </script>
 
@@ -766,6 +802,7 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
+  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
 >
   {#snippet formFields(trigger)}
     {#if slug === "npc"}
@@ -991,6 +1028,18 @@
         bind:tone={adventure.tone}
         bind:seed={adventure.seed}
         bind:campaignContext={adventure.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "plot-twist-generator"}
+      <PlotTwistFormFields
+        bind:theme={activeTheme}
+        bind:twistType={plotTwist.twistType}
+        bind:impact={plotTwist.impact}
+        bind:timing={plotTwist.timing}
+        bind:foreshadowing={plotTwist.foreshadowing}
+        bind:premise={plotTwist.premise}
+        bind:constraints={plotTwist.constraints}
+        bind:campaignContext={plotTwist.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}

@@ -68,7 +68,10 @@ Locate the missing salt-toll affidavit before midnight.
 describe("generateAdventureGraphTopology", () => {
   it("generates an AdventureCanvasDocument with expected node types", () => {
     const fakeClock = { now: () => 1234567890 };
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT, fakeClock);
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
 
     expect(doc.id).toBe("adv-canvas-1234567890");
     expect(doc.createdAt).toBe("1970-01-15T06:56:07.890Z");
@@ -88,7 +91,10 @@ describe("generateAdventureGraphTopology", () => {
 
   it("assigns spatial coordinates without overlapping origins", () => {
     const fakeClock = { now: () => 1234567890 };
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT, fakeClock);
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
     const locNodes = doc.nodes.filter((n) => n.type === "location");
 
     expect(locNodes.length).toBe(2);
@@ -101,7 +107,10 @@ describe("generateAdventureGraphTopology", () => {
 describe("validateAdventureGraph", () => {
   it("returns no warnings for a fully connected document", () => {
     const fakeClock = { now: () => 1234567890 };
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT, fakeClock);
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
     const warnings = validateAdventureGraph(doc);
 
     expect(warnings.filter((w) => w.severity === "warning")).toHaveLength(0);
@@ -109,7 +118,10 @@ describe("validateAdventureGraph", () => {
 
   it("detects orphan nodes", () => {
     const fakeClock = { now: () => 1234567890 };
-    const doc = generateAdventureGraphTopology(MOCK_ADVENTURE_OUTPUT, fakeClock);
+    const doc = generateAdventureGraphTopology(
+      MOCK_ADVENTURE_OUTPUT,
+      fakeClock,
+    );
     doc.nodes.push({
       id: "node-orphan-1",
       type: "clue",
