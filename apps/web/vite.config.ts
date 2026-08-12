@@ -30,8 +30,11 @@ if (existsSync(packagesDir)) {
             main: pkgData.main || "./src/index.ts",
           });
         }
-      } catch {
-        // Ignore invalid package.json
+      } catch (err) {
+        console.warn(
+          `[vite.config] Could not parse workspace package at ${pkgPath}:`,
+          err,
+        );
       }
     }
   }
