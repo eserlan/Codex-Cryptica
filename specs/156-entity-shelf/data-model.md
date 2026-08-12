@@ -46,6 +46,12 @@ lives anywhere else, and it survives its source vault being deleted (FR-005, FR-
 > path (`audio/{id}_soundbite.wav`) alongside `image` and `thumbnail`. An implementation that
 > collects only the two image references ships entities whose voice clips break on arrival.
 
+> **Shelf Group is derived, not stored.** The spec lists it under Key Entities, but it has no
+> object store of its own: a group is the set of entries sharing a `groupId`, reached through
+> the `by-group` index. `shelve()` returns a `ShelfGroup` assembled in memory. There is
+> deliberately nothing to keep in sync — deleting the last entry of a group leaves no orphan
+> record behind.
+
 ### Invariants
 
 - **I1** — An entry is complete: every path referenced by `entityRecord` has a matching

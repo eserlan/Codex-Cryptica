@@ -235,8 +235,9 @@ confirming the entry survives each import and that all three vaults hold complet
 - **FR-024**: The system MUST disclose, at the point where entities are first placed on the
   shelf, that shelf contents are held in the current browser and are neither a backup nor a
   means of sending entities to another person.
-- **FR-025**: The system MUST show how much storage the shelf is using and warn the author
-  when the shelf is approaching the browser's storage limit.
+- **FR-025**: The system MUST show how much storage the shelf is using, and MUST warn the
+  author once the shelf occupies more than 80% of the browser's reported storage allowance.
+  The warning MUST name clearing shelf entries as the remedy.
 - **FR-026**: The shelf MUST present its entries as a single flat list, ordered most recently
   shelved first. It MUST NOT provide search, sorting, grouping, or folders: the shelf is a
   transfer buffer authors work through and empty, not a library they curate.
