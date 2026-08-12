@@ -39,7 +39,7 @@ Workspace monorepo: logic in `packages/entity-shelf/src/`, adapters and UI in
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
 - [x] T005 Bump `DB_VERSION` to 23 and add `shelf_entries` (keyed by `id`, index `by-group`) and `shelf_journal` (keyed by `importId`) to the schema and upgrade callback in `apps/web/src/lib/utils/idb.ts`, each behind an `if (!db.objectStoreNames.contains(...))` guard as every other store there does
-- [ ] T006 Verify the v22 → v23 upgrade against a **populated** database, not a fresh one — the version-history comment in `idb.ts` records a previously consumed no-op version, and this is the one step in the feature whose failure mode is other people's data
+- [x] T006 Verify the v22 → v23 upgrade against a **populated** database, not a fresh one — automated as `apps/web/tests/shelf-db-upgrade.spec.ts` — the version-history comment in `idb.ts` records a previously consumed no-op version, and this is the one step in the feature whose failure mode is other people's data
 
 ### Tests for the adapters ⚠️
 
