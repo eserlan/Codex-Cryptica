@@ -69,7 +69,10 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
-  import { buildPlotTwistPremise } from "$lib/services/seo/generator-handoffs";
+  import {
+    buildPlotTwistPremise,
+    resolvePlotTwistPremiseForGeneration,
+  } from "$lib/services/seo/generator-handoffs";
   import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
@@ -366,9 +369,11 @@
     campaignContext: "",
   });
 
-  const _initialQuestPremise = browser
-    ? (new URL(window.location.href).searchParams.get("questPremise") ?? "")
-    : "";
+  const handedOffQuestPremise = $derived(
+    slug === "plot-twist-generator"
+      ? (page.url.searchParams.get("questPremise") ?? "")
+      : "",
+  );
 
   let plotTwist = $state({
     genre: factionConfig.themes[0],
@@ -376,9 +381,17 @@
     impact: plotTwistConfig.impacts[1],
     timing: plotTwistConfig.timings[4],
     foreshadowing: plotTwistConfig.foreshadowing[0],
-    premise: _initialQuestPremise,
+    premise: "",
     constraints: "",
     campaignContext: "",
+  });
+
+  // Dynamic generator routes reuse this component during client navigation.
+  // Apply the URL handoff reactively instead of capturing window.location once.
+  $effect(() => {
+    if (handedOffQuestPremise) {
+      plotTwist.premise = handedOffQuestPremise;
+    }
   });
 
   let world = $state({
@@ -741,6 +754,10 @@
     "plot-twist-generator": (useAI) =>
       generatorEngine.generatePlotTwist({
         ...plotTwist,
+        premise: resolvePlotTwistPremiseForGeneration(
+          plotTwist.premise,
+          handedOffQuestPremise,
+        ),
         themeId: activeTheme,
         genre: activeTheme,
         useAI,
@@ -780,7 +797,7 @@
   }
 
   const initialDraft = $derived(
-    _initialQuestPremise && slug === "plot-twist-generator"
+    handedOffQuestPremise && slug === "plot-twist-generator"
       ? null
       : (initialDraftOverride ?? slugDrafts[slug] ?? null),
   );
