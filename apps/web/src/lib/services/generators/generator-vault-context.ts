@@ -48,6 +48,23 @@ export function latestTemporalYear(
 }
 
 /**
+ * Returns the sole quest-generator entry in memory, when there is exactly
+ * one. Quest drafts carry these labels so ordinary event entities are not
+ * accidentally treated as quest hooks.
+ */
+export function findSingleQuestHook(
+  entities: Record<string, Entity>,
+): Entity | undefined {
+  const questHooks = Object.values(entities).filter((entity) => {
+    const labels = new Set(
+      (entity.labels ?? []).map((label) => label.toLocaleLowerCase()),
+    );
+    return labels.has("quest-generator") || labels.has("rpg-quest");
+  });
+  return questHooks.length === 1 ? questHooks[0] : undefined;
+}
+
+/**
  * Flatten markdown into a single clean line: drop heading markers (so a source
  * entity's "## Summary" can't collide with the generator template's headings)
  * and collapse newlines/whitespace (so each entity stays on one context line).

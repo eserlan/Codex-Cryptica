@@ -8,6 +8,7 @@
   import {
     buildVaultContext,
     detectVaultLanguages,
+    findSingleQuestHook,
     latestTemporalYear,
     suggestPrimaryLanguageId,
   } from "$lib/services/generators/generator-vault-context";
@@ -63,6 +64,7 @@
   type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
   const workflow = $derived(modalUIStore.generatorWorkflow);
+  const singleQuestHook = $derived(findSingleQuestHook(vault.entities));
   const languageChoices = $derived(
     detectVaultLanguages(
       vault.entities,
@@ -161,6 +163,14 @@
     },
   };
   const svc = new CampaignGeneratorService(svcDeps);
+
+  function openPlotTwistFromQuestHook() {
+    if (!singleQuestHook) return;
+    modalUIStore.openGeneratorWorkflowForEntity(
+      singleQuestHook.id,
+      "plot-twist",
+    );
+  }
 
   function close(options: { preserveSession?: boolean } = {}) {
     modalUIStore.closeGeneratorWorkflow();
@@ -474,6 +484,38 @@
   <!-- Body -->
   <div class="px-5 py-4 overflow-y-auto max-h-[70vh] md:max-h-[85vh]">
     {#if stage === "configure"}
+      {#if singleQuestHook && generatorId !== "plot-twist"}
+        <div
+          class="mb-4 rounded-lg border border-chrome-accent/30 bg-chrome-accent/5 p-3"
+          data-testid="plot-twist-from-quest-hook"
+        >
+          <div class="flex items-start gap-3">
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--sparkles] mt-0.5 h-4 w-4 shrink-0 text-chrome-accent"
+            ></span>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold text-chrome-text">
+                One quest hook is in your campaign memory
+              </p>
+              <p class="mt-1 truncate text-xs text-chrome-muted">
+                {singleQuestHook.title}
+              </p>
+              <button
+                type="button"
+                class="mt-2 inline-flex items-center gap-2 rounded border border-chrome-accent/50 px-2.5 py-1.5 text-xs font-semibold text-chrome-accent transition hover:bg-chrome-accent/10"
+                onclick={openPlotTwistFromQuestHook}
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--shuffle] h-3.5 w-3.5"
+                ></span>
+                Turn it into a Plot Twist
+              </button>
+            </div>
+          </div>
+        </div>
+      {/if}
       <GeneratorConfigForm
         bind:generatorId
         onsubmit={onGenerate}

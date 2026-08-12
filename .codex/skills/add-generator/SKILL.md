@@ -61,9 +61,13 @@ Only do this when the no-login public tool is requested.
    - `apps/web/src/params/generator_slug.ts`;
    - both generator route `+page.ts` files, including prerender `entries()`;
    - `GeneratorPageContent.svelte` imports, state, handler, and form branch;
-   - generator index, theme-hub index, switcher menu, and generator route tests.
+   - generator index, theme-hub index, generator switcher dropdown pill/menu, and generator route tests.
 7. Add the generator to `random-idea.ts` only when it is a meaningful random category; update its exact-match tests and engine mock.
 8. Add a `/tools` listing link when appropriate. Do not create a dedicated `/tools` page unless explicitly requested.
+9. Verify the public catalogue is consistent: the generator slug and label must
+   appear in the generator index, every shared theme-hub card list, the
+   generator switcher dropdown pill/menu, and `/tools` when the surface is
+   intended to be discoverable there. Add or update focused catalogue tests.
 
 ## Theme-aware generators
 

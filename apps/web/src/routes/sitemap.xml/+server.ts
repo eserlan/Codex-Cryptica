@@ -113,6 +113,7 @@ export async function GET() {
     "news-sheet-generator",
     "dungeon-generator",
     "adventure-generator",
+    "plot-twist-generator",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,

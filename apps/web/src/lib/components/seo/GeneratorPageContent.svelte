@@ -28,6 +28,7 @@
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
+  import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
@@ -53,6 +54,7 @@
     newsSheetConfig,
     dungeonConfig,
     adventureConfig,
+    plotTwistConfig,
     worldConfig,
     starSystemConfig,
     alienRaceConfig,
@@ -362,6 +364,17 @@
     campaignContext: "",
   });
 
+  let plotTwist = $state({
+    genre: factionConfig.themes[0],
+    twistType: plotTwistConfig.twistTypes[0],
+    impact: plotTwistConfig.impacts[1],
+    timing: plotTwistConfig.timings[4],
+    foreshadowing: plotTwistConfig.foreshadowing[0],
+    premise: "",
+    constraints: "",
+    campaignContext: "",
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -476,6 +489,7 @@
       slug === "adventure-idea-generator"
     )
       adventure.genre = activeTheme;
+    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -717,6 +731,13 @@
         genre: activeTheme,
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "plot-twist-generator": (useAI) =>
+      generatorEngine.generatePlotTwist({
+        ...plotTwist,
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
       }),
     world: (useAI) =>
       generatorEngine.generateWorld({
@@ -991,6 +1012,18 @@
         bind:tone={adventure.tone}
         bind:seed={adventure.seed}
         bind:campaignContext={adventure.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "plot-twist-generator"}
+      <PlotTwistFormFields
+        bind:theme={activeTheme}
+        bind:twistType={plotTwist.twistType}
+        bind:impact={plotTwist.impact}
+        bind:timing={plotTwist.timing}
+        bind:foreshadowing={plotTwist.foreshadowing}
+        bind:premise={plotTwist.premise}
+        bind:constraints={plotTwist.constraints}
+        bind:campaignContext={plotTwist.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "world"}
