@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildVaultContext,
   detectVaultLanguages,
+  findSingleQuestHook,
   latestTemporalYear,
   suggestPrimaryLanguageId,
 } from "./generator-vault-context";
@@ -43,6 +44,40 @@ describe("latestTemporalYear", () => {
     const a = entity({ id: "a", title: "A", type: "character" });
     expect(latestTemporalYear({ a })).toBeUndefined();
     expect(latestTemporalYear({})).toBeUndefined();
+  });
+});
+
+describe("findSingleQuestHook", () => {
+  it("returns the only quest-generator entry in memory", () => {
+    const hook = entity({
+      id: "quest-1",
+      title: "The Silent Bell",
+      type: "event",
+      labels: ["rpg-quest", "quest-generator"],
+    });
+    expect(findSingleQuestHook({ hook })).toBe(hook);
+  });
+
+  it("returns undefined when there are zero or multiple quest hooks", () => {
+    const first = entity({
+      id: "quest-1",
+      title: "First",
+      type: "event",
+      labels: ["quest-generator"],
+    });
+    const second = entity({
+      id: "quest-2",
+      title: "Second",
+      type: "event",
+      labels: ["rpg-quest"],
+    });
+    expect(findSingleQuestHook({})).toBeUndefined();
+    expect(findSingleQuestHook({ first, second })).toBeUndefined();
+  });
+
+  it("does not classify an ordinary event as a quest hook", () => {
+    const event = entity({ id: "event-1", title: "Festival", type: "event" });
+    expect(findSingleQuestHook({ event })).toBeUndefined();
   });
 });
 

@@ -939,6 +939,37 @@ describe("buildPrompt campaign date", () => {
   });
 });
 
+describe("plot twist source context", () => {
+  it("uses the contextual source entity as the premise when no premise is supplied", () => {
+    const prompt = getGenerator("plot-twist").buildPrompt(
+      run("plot-twist", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          sourceEntity: {
+            id: "quest-1",
+            title: "The Silent Bell",
+            type: "event",
+            contentExcerpt:
+              "The bell rings only when someone is about to vanish.",
+            loreExcerpt: "A forgotten watchtower keeps the village awake.",
+          },
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: ["source"],
+        },
+      }),
+    );
+
+    expect(prompt).toContain("The Silent Bell");
+    expect(prompt).toContain(
+      "The bell rings only when someone is about to vanish.",
+    );
+  });
+});
+
 describe("buildPrompt source entity", () => {
   it("includes both the content and lore of the source entity for every generator", () => {
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
