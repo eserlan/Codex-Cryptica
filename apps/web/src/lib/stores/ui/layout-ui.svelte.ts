@@ -253,7 +253,7 @@ export class LayoutUIStore {
       : "none";
 
     if (this.#leftSidebarOpen && this.#activeSidebarTool === "none") {
-      this.#leftSidebarOpen = false;
+      this.leftSidebarOpen = false;
     }
 
     this.vttSidebarCollapsed = this.persistence.read(

@@ -303,7 +303,7 @@ describe("LayoutUIStore", () => {
     expect(store.activeSidebarTool).toBe("shelf");
   });
 
-  it("closes leftSidebarOpen on load if activeSidebarTool is none", () => {
+  it("closes leftSidebarOpen on load and persists false if activeSidebarTool is none", () => {
     const backing = storage({
       codex_left_sidebar_open: "true",
       codex_active_sidebar_tool: "none",
@@ -315,6 +315,10 @@ describe("LayoutUIStore", () => {
 
     expect(store.leftSidebarOpen).toBe(false);
     expect(store.activeSidebarTool).toBe("none");
+    expect(backing.storage.setItem).toHaveBeenCalledWith(
+      "codex_left_sidebar_open",
+      "false",
+    );
   });
 
   it("defaults autoFullscreen to true and persists changes via setAutoFullscreen", () => {

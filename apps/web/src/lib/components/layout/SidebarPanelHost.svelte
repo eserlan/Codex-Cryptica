@@ -74,7 +74,8 @@
         data-testid="sidebar-panel-error"
       >
         <div class="text-chrome-muted text-xs">
-          Failed to load panel component ({loadError})
+          Failed to load panel component{#if isSpecialEnv}
+            ({loadError}){/if}
         </div>
         <button
           type="button"
