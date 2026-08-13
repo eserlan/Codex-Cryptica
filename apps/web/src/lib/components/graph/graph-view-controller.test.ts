@@ -136,6 +136,7 @@ describe("GraphViewController", () => {
       },
       layoutUIStore: {
         isMobile: false,
+        setLastSelectedNodePosition: vi.fn(),
       },
       connectionModeStore: {
         isConnecting: false,
@@ -267,6 +268,60 @@ describe("GraphViewController", () => {
       label: "Rivals in the old court",
       type: "rivals_of",
     });
+  });
+
+  it("suppresses mobile tap Zen Mode navigation after a context gesture", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", Date.now());
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+  });
+
+  it("opens Zen Mode on mobile node tap when cxttap did not recently occur", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", 0);
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
   });
 
   it("should reset to idle when vault starts loading", () => {
