@@ -5,6 +5,28 @@ import { describe, expect, it, vi } from "vitest";
 import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
 
 describe("GeneratorConfigForm", () => {
+  it("names each generator and says which campaign entity it creates", () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [
+          { id: "character", label: "Character" },
+          { id: "note", label: "Note" },
+        ],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByRole("radio", { name: "NPC Creates Character" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("radio", {
+        name: "Plot Twist & Complication Creates Note",
+      }),
+    ).toBeTruthy();
+  });
+
   it("submits custom option values for select-based generator options", async () => {
     const onsubmit = vi.fn();
 
@@ -65,7 +87,9 @@ describe("GeneratorConfigForm", () => {
     });
 
     expect(
-      screen.getByRole("radio", { name: "Location (Facility)" }),
+      screen.getByRole("radio", {
+        name: "Dungeon / Delve Creates Location (Facility)",
+      }),
     ).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByLabelText("Original Purpose")).toBeTruthy();
