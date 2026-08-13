@@ -134,3 +134,8 @@
 **Learning:** Pure graph generators (like `adventure-graph-generator.ts`) that assign creation timestamps or time-based IDs (e.g., `adv-canvas-${Date.now()}`) should inject a clock dependency (`systemClock` from `@codex/runtime`).
 
 **Action:** When implementing or refactoring generators that need to produce deterministic output in tests, inject `Clock` as an optional parameter with `systemClock` as the default to allow deterministic timestamp injection.
+
+## 2024-05-18 - Replacing hoisted global test mocks with explicit dependency injection
+
+**Learning:** When a module already supports dependency injection (e.g., `SearchStore` accepting a `StorageLike` argument), its corresponding test suite should avoid hoisted global mocks (like `vi.hoisted(() => { global.localStorage = ... })`). Hoisted mocks are brittle, prone to cross-test pollution, and hide the actual dependency usage.
+**Action:** Remove hoisted global mocks and create explicit mock objects to inject into constructors during test setup. Ensure the implementation actually uses the injected property (e.g., `this.storage.getItem()`) to safely evaluate behavior.
