@@ -5,6 +5,48 @@ import { describe, expect, it, vi } from "vitest";
 import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
 
 describe("GeneratorConfigForm", () => {
+  it("names generators, identifies their entity types, and describes only the selected one", async () => {
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "npc",
+        categoryLabels: [
+          { id: "character", label: "Character" },
+          { id: "note", label: "Note" },
+        ],
+        onsubmit: vi.fn(),
+      },
+    });
+
+    const npcRadio = screen.getByRole("radio", {
+      name: "NPC Creates Character",
+    });
+    const plotTwistRadio = screen.getByRole("radio", {
+      name: "Plot Twist & Complication Creates Note",
+    });
+
+    expect(npcRadio.getAttribute("aria-describedby")).toBe(
+      "generator-description-npc",
+    );
+    expect(
+      document.getElementById("generator-description-npc")?.textContent,
+    ).toContain("Generate a non-player character for your campaign.");
+    expect(plotTwistRadio.hasAttribute("aria-describedby")).toBe(false);
+    expect(
+      document.getElementById("generator-description-plot-twist"),
+    ).toBeNull();
+
+    await fireEvent.click(plotTwistRadio);
+
+    expect(npcRadio.hasAttribute("aria-describedby")).toBe(false);
+    expect(document.getElementById("generator-description-npc")).toBeNull();
+    expect(plotTwistRadio.getAttribute("aria-describedby")).toBe(
+      "generator-description-plot-twist",
+    );
+    expect(
+      document.getElementById("generator-description-plot-twist")?.textContent,
+    ).toContain("Reinterpret an established situation");
+  });
+
   it("submits custom option values for select-based generator options", async () => {
     const onsubmit = vi.fn();
 
@@ -65,7 +107,9 @@ describe("GeneratorConfigForm", () => {
     });
 
     expect(
-      screen.getByRole("radio", { name: "Location (Facility)" }),
+      screen.getByRole("radio", {
+        name: "Dungeon / Delve Creates Location (Facility)",
+      }),
     ).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByLabelText("Original Purpose")).toBeTruthy();
