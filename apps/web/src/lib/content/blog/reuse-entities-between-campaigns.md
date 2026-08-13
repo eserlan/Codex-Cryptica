@@ -14,6 +14,8 @@ keywords:
     "vault management",
   ]
 publishedAt: 2026-08-13T10:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/reuse-entities-between-campaigns/shelf-in-context.png"
+imageAlt: "The Shelf open beside a second campaign, holding three entities carried over from another vault"
 ---
 
 You spent an hour on a monster. Statted it properly, found the right artwork, wrote three hooks about where it came from. It was good.
