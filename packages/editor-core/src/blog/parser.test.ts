@@ -194,4 +194,27 @@ Body`;
     expect(article?.image).toBeUndefined();
     expect(article?.imageAlt).toBeUndefined();
   });
+
+  it("drops non-absolute or invalid image URLs along with their alt text", () => {
+    const relativeArticle = parseBlogArticle(
+      "t.md",
+      front('image: "/relative/path.png"\nimageAlt: "A relative image"'),
+    );
+    expect(relativeArticle?.image).toBeUndefined();
+    expect(relativeArticle?.imageAlt).toBeUndefined();
+
+    const invalidArticle = parseBlogArticle(
+      "t.md",
+      front('image: "not a valid url"\nimageAlt: "Invalid"'),
+    );
+    expect(invalidArticle?.image).toBeUndefined();
+    expect(invalidArticle?.imageAlt).toBeUndefined();
+
+    const ftpArticle = parseBlogArticle(
+      "t.md",
+      front('image: "ftp://example.com/card.png"\nimageAlt: "FTP image"'),
+    );
+    expect(ftpArticle?.image).toBeUndefined();
+    expect(ftpArticle?.imageAlt).toBeUndefined();
+  });
 });

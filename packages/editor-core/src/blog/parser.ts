@@ -1,6 +1,16 @@
 import { load } from "js-yaml";
 import type { BlogArticle } from "./types";
 
+function isValidAbsoluteUrl(value: unknown): value is string {
+  if (typeof value !== "string" || !value.trim()) return false;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function parseBlogArticle(
   path: string,
   rawContent: string,
@@ -123,9 +133,10 @@ export function parseBlogArticle(
         ? { topic: topic.trim() }
         : {}),
       // A post without its own card image gets the site's default rather than a
-      // broken one, so an absent or empty value stays absent. Alt text without
-      // an image would describe nothing, so it only survives alongside one.
-      ...(typeof image === "string" && image.trim()
+      // broken one, so an absent, invalid, or non-absolute value stays absent.
+      // Alt text without an image would describe nothing, so it only survives
+      // alongside a valid absolute image URL.
+      ...(isValidAbsoluteUrl(image)
         ? {
             image: image.trim(),
             ...(typeof imageAlt === "string" && imageAlt.trim()
