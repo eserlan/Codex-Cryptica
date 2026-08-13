@@ -188,6 +188,30 @@ async function buildEntry(
 }
 
 /**
+ * Names the failure rather than guessing at it.
+ *
+ * An earlier version reported every failure as "there may not be enough
+ * storage", which was wrong in the common case and actively unhelpful: it sent
+ * people to clear space over a fault that had nothing to do with space, and
+ * buried the real cause where nobody would look for it. Only a genuine quota
+ * error earns the storage wording.
+ */
+function shelveFailureMessage(cause: unknown): string {
+  const name = (cause as { name?: unknown } | null)?.name;
+  const text = cause instanceof Error ? cause.message : String(cause);
+
+  if (name === "QuotaExceededError" || /quota/i.test(text)) {
+    return (
+      "There is not enough storage left in this browser to put these entities " +
+      "on the Shelf. Nothing was added — clearing Shelf entries you no longer " +
+      "need will free space."
+    );
+  }
+
+  return `Could not put these entities on the Shelf: ${text}. Nothing was added.`;
+}
+
+/**
  * Copies entities onto the shelf. Reads only — the source vault is never
  * written to (FR-010), which is what makes shelving safe to offer on a
  * right-click.
@@ -237,11 +261,7 @@ export async function shelveEntities(
         // Best effort: the original failure is the one worth reporting.
       });
     }
-    throw new Error(
-      "Could not put these entities on the Shelf — there may not be enough storage " +
-        "left in this browser. Nothing was added.",
-      { cause },
-    );
+    throw new Error(shelveFailureMessage(cause), { cause });
   }
 
   return {

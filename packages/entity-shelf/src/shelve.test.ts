@@ -256,9 +256,51 @@ describe("shelveEntities", () => {
         vaultName: "Vault A",
         entityIds: ["goblin", "orc"],
       }),
-    ).rejects.toThrow(/storage/i);
+    ).rejects.toThrow(/not enough storage/i);
 
     expect(failingStore.entries.size).toBe(0);
+  });
+
+  it("names a non-quota failure instead of blaming storage", async () => {
+    // Reporting every failure as "there may not be enough storage" sent people
+    // to clear space over faults that had nothing to do with space, and buried
+    // the real cause where nobody would look for it.
+    const failingStore = new InMemoryShelfStore();
+    failingStore.failNextPut = Object.assign(
+      new Error("Failed to execute 'put': An object could not be cloned."),
+      { name: "DataCloneError" },
+    );
+
+    await expect(
+      shelveEntities(deps(failingStore, vault), {
+        vaultId: "vault-a",
+        vaultName: "Vault A",
+        entityIds: ["goblin"],
+      }),
+    ).rejects.toThrow(/could not be cloned/i);
+
+    await expect(
+      shelveEntities(deps(new InMemoryShelfStore(), vault), {
+        vaultId: "vault-a",
+        vaultName: "Vault A",
+        entityIds: ["goblin"],
+      }),
+    ).resolves.toBeTruthy();
+  });
+
+  it("still names quota when quota really is the problem", async () => {
+    const failingStore = new InMemoryShelfStore();
+    failingStore.failNextPut = Object.assign(new Error("out of room"), {
+      name: "QuotaExceededError",
+    });
+
+    await expect(
+      shelveEntities(deps(failingStore, vault), {
+        vaultId: "vault-a",
+        vaultName: "Vault A",
+        entityIds: ["goblin"],
+      }),
+    ).rejects.toThrow(/not enough storage/i);
   });
 
   it("reports progress so a long shelve does not look frozen (SC-009)", async () => {

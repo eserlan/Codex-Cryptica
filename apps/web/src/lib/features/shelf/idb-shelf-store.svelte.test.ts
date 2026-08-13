@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ShelfEntry } from "@codex/entity-shelf";
-import { IdbShelfStore } from "./idb-shelf-store";
+import { IdbShelfStore } from "./idb-shelf-store.svelte";
 
 function entry(overrides: Partial<ShelfEntry> = {}): ShelfEntry {
   return {
@@ -125,6 +125,36 @@ describe("IdbShelfStore", () => {
     await store.clear();
     expect(await store.listEntries()).toEqual([]);
     expect(await store.totalBytes()).toBe(0);
+  });
+
+  it("stores an entry whose templates and aliases are Svelte state proxies", async () => {
+    // Templates come from $state stores and aliases from the reactive entity
+    // map, so a real entry arrives holding proxies — which IndexedDB's
+    // structured clone rejects outright with a DataCloneError. In the field
+    // that surfaced as a bogus "there may not be enough storage" message.
+    const reactive = $state({
+      statSheetTemplate: {
+        id: "tpl",
+        name: "Monster",
+        fields: [{ id: "hp", label: "HP", type: "number" }],
+      },
+      referencedTitles: {
+        king: { title: "Goblin King", aliases: ["The Gob"] },
+      },
+    });
+
+    await expect(
+      store.putEntry(
+        entry({
+          statSheetTemplate: reactive.statSheetTemplate as never,
+          referencedTitles: reactive.referencedTitles as never,
+        }),
+      ),
+    ).resolves.toBeUndefined();
+
+    const loaded = await store.getEntry("entry-1");
+    expect(loaded?.statSheetTemplate?.name).toBe("Monster");
+    expect(loaded?.referencedTitles.king.aliases).toEqual(["The Gob"]);
   });
 
   it("persists and clears import journals", async () => {
