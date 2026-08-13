@@ -27,3 +27,11 @@ export function isQuestHookDraft(labels: string[] | undefined): boolean {
     ) ?? false
   );
 }
+
+/** Prefer the editable form premise, with the URL handoff as a navigation-safe fallback. */
+export function resolvePlotTwistPremiseForGeneration(
+  formPremise: string,
+  handedOffPremise: string,
+): string {
+  return formPremise.trim() || handedOffPremise.trim();
+}

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildPlotTwistPremise, isQuestHookDraft } from "./generator-handoffs";
+import {
+  buildPlotTwistPremise,
+  isQuestHookDraft,
+  resolvePlotTwistPremiseForGeneration,
+} from "./generator-handoffs";
 
 describe("buildPlotTwistPremise", () => {
   it("keeps the quest hook's useful public draft fields in order", () => {
@@ -30,5 +34,25 @@ describe("buildPlotTwistPremise", () => {
     expect(isQuestHookDraft(["rpg-quest", "Retrieval"])).toBe(true);
     expect(isQuestHookDraft(["event", "political"])).toBe(false);
     expect(isQuestHookDraft(undefined)).toBe(false);
+  });
+});
+
+describe("resolvePlotTwistPremiseForGeneration", () => {
+  it("uses the transferred Quest Hook while client navigation state catches up", () => {
+    expect(
+      resolvePlotTwistPremiseForGeneration(
+        "",
+        "The drowned bell calls villagers into the marsh.",
+      ),
+    ).toBe("The drowned bell calls villagers into the marsh.");
+  });
+
+  it("uses the user's edited premise after the handoff populates the form", () => {
+    expect(
+      resolvePlotTwistPremiseForGeneration(
+        "The bell now calls only the reeve's family.",
+        "The drowned bell calls villagers into the marsh.",
+      ),
+    ).toBe("The bell now calls only the reeve's family.");
   });
 });

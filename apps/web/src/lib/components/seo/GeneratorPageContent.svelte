@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
-  import { goto } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
@@ -69,7 +69,10 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
-  import { buildPlotTwistPremise } from "$lib/services/seo/generator-handoffs";
+  import {
+    buildPlotTwistPremise,
+    resolvePlotTwistPremiseForGeneration,
+  } from "$lib/services/seo/generator-handoffs";
   import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
@@ -113,6 +116,7 @@
 
   // When arriving via a themed URL, seed hubContext immediately so derived
   // values (backHref, initialHubGenre) compute correctly on first render.
+  const _initialSlug = untrack(() => slug);
   const _initialUrlHubTheme = untrack(() => urlHubTheme);
   if (_initialUrlHubTheme) {
     hubContext.set(_initialUrlHubTheme);
@@ -366,9 +370,11 @@
     campaignContext: "",
   });
 
-  const _initialQuestPremise = browser
-    ? (new URL(window.location.href).searchParams.get("questPremise") ?? "")
-    : "";
+  const initialHandedOffQuestPremise =
+    browser && _initialSlug === "plot-twist-generator"
+      ? (new URLSearchParams(window.location.search).get("questPremise") ?? "")
+      : "";
+  let handedOffQuestPremise = $state(initialHandedOffQuestPremise);
 
   let plotTwist = $state({
     genre: factionConfig.themes[0],
@@ -376,9 +382,20 @@
     impact: plotTwistConfig.impacts[1],
     timing: plotTwistConfig.timings[4],
     foreshadowing: plotTwistConfig.foreshadowing[0],
-    premise: _initialQuestPremise,
+    premise: initialHandedOffQuestPremise,
     constraints: "",
     campaignContext: "",
+  });
+
+  // Dynamic generator routes reuse this component during client navigation.
+  // Read the URL only in the browser so static prerendering remains valid.
+  afterNavigate(({ to }) => {
+    const premise =
+      slug === "plot-twist-generator"
+        ? (to?.url.searchParams.get("questPremise") ?? "")
+        : "";
+    handedOffQuestPremise = premise;
+    if (premise) plotTwist.premise = premise;
   });
 
   let world = $state({
@@ -437,7 +454,6 @@
   });
 
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
-  const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
@@ -741,6 +757,10 @@
     "plot-twist-generator": (useAI) =>
       generatorEngine.generatePlotTwist({
         ...plotTwist,
+        premise: resolvePlotTwistPremiseForGeneration(
+          plotTwist.premise,
+          handedOffQuestPremise,
+        ),
         themeId: activeTheme,
         genre: activeTheme,
         useAI,
@@ -780,7 +800,7 @@
   }
 
   const initialDraft = $derived(
-    _initialQuestPremise && slug === "plot-twist-generator"
+    handedOffQuestPremise && slug === "plot-twist-generator"
       ? null
       : (initialDraftOverride ?? slugDrafts[slug] ?? null),
   );
