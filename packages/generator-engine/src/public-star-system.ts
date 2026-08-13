@@ -14,7 +14,7 @@
  */
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import { parseFencedJson } from "./llm-response-utils";
+import { parseFencedJson, sanitizeText } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import {
@@ -443,22 +443,6 @@ function bodyDescription(type: string, rng: Rng): string {
  */
 function sentence(text: string | undefined): string {
   return (text ?? "").trim().replace(/[.,;:\s\-–—]+$/, "");
-}
-
-/**
- * Light defensive cleanup for common AI wording slips: doubled whitespace,
- * duplicated terminal punctuation ("!!", "??"), and stray dash/em-dash
- * collisions ("—-", "-—") that turn up when free-text AI output gets
- * concatenated with generated suffixes elsewhere. Deliberately leaves an
- * intentional ellipsis ("...") untouched.
- */
-function sanitizeText(text: string): string {
-  return text
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\.\.(?!\.)/g, ".")
-    .replace(/([!?,;:])\1+/g, "$1")
-    .replace(/—-|-—/g, "—")
-    .trim();
 }
 
 /**

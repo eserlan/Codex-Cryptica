@@ -29,6 +29,17 @@ import {
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
 import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
+import type { PerformanceOperationHandle } from "@codex/performance-observability";
+import {
+  resolveGraphVisibility,
+  type GraphVisibilityInputs,
+  type GraphVisibilityReason,
+  type GraphVisibilitySnapshot,
+} from "./graph-visibility";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
@@ -95,6 +106,15 @@ export class GraphViewController {
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
   selectedCount = $state(0);
+  visibility = $state<GraphVisibilitySnapshot>(
+    resolveGraphVisibility({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    }),
+  );
+  isSuspended = $derived(this.visibility.suspended);
+  requiresReinitialization = $state(false);
 
   hoveredEntityId = $state<string | null>(null);
   hoverPosition = $state<{ x: number; y: number } | null>(null);
@@ -111,6 +131,14 @@ export class GraphViewController {
   loadPhase = $state<LoadPhase>("idle");
 
   private nodeSelectTimer: number | null = null;
+  private nodeSelectSpan: ReturnType<
+    typeof browserPerformanceRecorder.start
+  > | null = null;
+  private renderReadyFrameOne: number | null = null;
+  private renderReadyFrameTwo: number | null = null;
+  private renderReadySpan: PerformanceOperationHandle | null = null;
+  private focusDepthSpan: PerformanceOperationHandle | null = null;
+  private focusDepthStartCounts: { nodes: number; edges: number } | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
 
   // Zoom-driven focus depth: the zoom at the last depth change (ratchet anchor),
@@ -123,6 +151,10 @@ export class GraphViewController {
   private focusRebaselineTimer: number | null = null;
   private suppressFocusZoom = false;
   private lastSyncedFocusDepth = MIN_FOCUS_DEPTH;
+  private lastSyncedFocusRootId: string | null = null;
+  private lastSyncedGraphStructureVersion = 0;
+  private lastSyncedFilterSignature = "";
+  private elementSyncGeneration = 0;
   private readonly FOCUS_ZOOM_SETTLE_MS = 150;
   private readonly FOCUS_REBASELINE_MS = 300;
 
@@ -149,6 +181,9 @@ export class GraphViewController {
   private savedCoordsDegenerate = false;
 
   private isDestroyed = false;
+  private visibilityGeneration = 0;
+  private needsVisibilityReconcile = false;
+  private suspendSpan: PerformanceOperationHandle | null = null;
 
   pendingSearchFocus: {
     entityId: string;
@@ -169,9 +204,98 @@ export class GraphViewController {
     this.deps = deps;
   }
 
+  setVisibilityInputs = (inputs: GraphVisibilityInputs) => {
+    const next = resolveGraphVisibility(inputs);
+    if (
+      next.suspended === this.visibility.suspended &&
+      next.reason === this.visibility.reason &&
+      next.documentVisible === this.visibility.documentVisible &&
+      next.surfaceCovered === this.visibility.surfaceCovered &&
+      next.containerIntersecting === this.visibility.containerIntersecting
+    ) {
+      return;
+    }
+
+    const wasSuspended = this.visibility.suspended;
+    this.visibility = next;
+    if (!wasSuspended && next.suspended) {
+      this.suspend(next.reason ?? "offscreen");
+    } else if (wasSuspended && !next.suspended) {
+      this.resume();
+    }
+  };
+
+  private suspend = (reason: Exclude<GraphVisibilityReason, null>) => {
+    this.visibilityGeneration++;
+    this.elementSyncGeneration++;
+    this.needsVisibilityReconcile = true;
+    this.suspendSpan = browserPerformanceRecorder.start(
+      "graph_visibility_suspend",
+    );
+    this.deps.debugStore.log(`[GraphView] Suspended rendering: ${reason}`);
+    this.isLayoutRunning = false;
+    this.suppressFocusZoom = false;
+    this.layoutManager?.stop();
+    this.cy?.stop();
+    this.clearRenderReadyMeasurement();
+    this.clearNodeSelectTimer();
+    this.clearVisibilityTimers();
+  };
+
+  private resume = () => {
+    this.visibilityGeneration++;
+    this.suspendSpan?.complete(() => ({
+      entityCount: this.deps.graph.stats.nodeCount,
+    }));
+    this.suspendSpan = null;
+
+    if (!this.cy || this.cy.destroyed()) {
+      this.requiresReinitialization = true;
+      this.cy = undefined;
+      this.layoutManager = undefined;
+      this.imageManager = undefined;
+      this.loadPhase = "idle";
+      return;
+    }
+
+    this.cy.resize();
+    this.needsVisibilityReconcile = true;
+    void this.applyCurrentLayout({
+      reason: "Visibility Resume",
+      viewport: "preserve",
+    });
+    this.deps.debugStore.log("[GraphView] Resuming rendering");
+  };
+
+  consumeReinitializationRequest = () => {
+    if (!this.requiresReinitialization) return false;
+    this.requiresReinitialization = false;
+    return true;
+  };
+
+  private clearVisibilityTimers = () => {
+    if (this.focusZoomTimer) {
+      clearTimeout(this.focusZoomTimer);
+      this.focusZoomTimer = null;
+    }
+    if (this.focusRebaselineTimer) {
+      clearTimeout(this.focusRebaselineTimer);
+      this.focusRebaselineTimer = null;
+    }
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+    if (this.slashGuardTimer) {
+      clearTimeout(this.slashGuardTimer);
+      this.slashGuardTimer = null;
+    }
+  };
+
   init = async (container: HTMLElement, graphStyle: any) => {
     this.container = container;
     this.isDestroyed = false;
+    browserPerformanceCapture.start();
 
     try {
       const instance = (await initGraph({
@@ -195,8 +319,13 @@ export class GraphViewController {
       instance.on("select unselect", "node", updateSelectionCount);
       updateSelectionCount();
 
-      if (import.meta.env.DEV) {
+      if (
+        import.meta.env.DEV ||
+        (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+          .__CODEX_PERFORMANCE_CAPTURE__ === true
+      ) {
         (window as any).cy = instance;
+        (window as any).graphViewController = this;
       }
 
       this.cleanupEvents = setupGraphEvents(instance, {
@@ -241,9 +370,25 @@ export class GraphViewController {
               return;
             }
             this.clearNodeSelectTimer();
+            const selectionStartedAt = browserPerformanceCapture.now();
+            this.nodeSelectSpan =
+              browserPerformanceRecorder.start("graph_select");
             this.nodeSelectTimer = window.setTimeout(() => {
               this.selectedId = id;
               this.nodeSelectTimer = null;
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  this.nodeSelectSpan?.complete(() => ({
+                    renderedNodeCount: this.cy?.nodes().length ?? 0,
+                    renderedEdgeCount: this.cy?.edges().length ?? 0,
+                    longestAnimationFrameMs:
+                      browserPerformanceCapture.longestAnimationFrameSince(
+                        selectionStartedAt,
+                      ),
+                  }));
+                  this.nodeSelectSpan = null;
+                });
+              });
             }, this.NODE_SELECT_DELAY_MS);
           }
         },
@@ -324,6 +469,9 @@ export class GraphViewController {
 
   destroy = () => {
     this.isDestroyed = true;
+    this.visibilityGeneration++;
+    this.suspendSpan?.cancel();
+    this.suspendSpan = null;
     window.removeEventListener("resize", this.handleResize);
     if (this.resizeTimer) {
       clearTimeout(this.resizeTimer);
@@ -353,6 +501,7 @@ export class GraphViewController {
       this.cleanupEvents = undefined;
     }
     this.clearNodeSelectTimer();
+    this.clearRenderReadyMeasurement();
     if (this.layoutManager) {
       this.layoutManager.stop();
       this.layoutManager = undefined;
@@ -365,7 +514,14 @@ export class GraphViewController {
       this.imageManager = undefined;
     }
     if (this.cy) {
-      if (import.meta.env.DEV) delete (window as any).cy;
+      if (
+        import.meta.env.DEV ||
+        (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+          .__CODEX_PERFORMANCE_CAPTURE__ === true
+      ) {
+        delete (window as any).cy;
+        delete (window as any).graphViewController;
+      }
       this.cy.destroy();
       this.cy = undefined;
     }
@@ -378,7 +534,13 @@ export class GraphViewController {
    * changes, explicit Fit/Redraw, and orientation changes still fit.
    */
   applyCurrentLayout = async (req: LayoutRequest) => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (!this.layoutManager) return;
+    const layoutGeneration = this.visibilityGeneration;
+    const span = browserPerformanceRecorder.start("graph_sync_layout");
 
     const isInitial = req.isInitial ?? false;
     // A caller may pin the camera policy (focus-view reveals pass "preserve" so
@@ -401,83 +563,179 @@ export class GraphViewController {
     const isFit = viewport === "fit";
     if (isFit) this.suppressFocusZoom = true;
 
-    await this.layoutManager.apply(
-      { ...req, viewport },
-      {
-        timelineMode: this.deps.graph.timelineMode,
-        timelineAxis: this.deps.graph.timelineAxis,
-        timelineScale: this.deps.graph.timelineScale,
-        orbitMode: this.deps.graph.orbitMode,
-        centralNodeId: this.deps.graph.centralNodeId,
-        stableLayout: this.deps.graph.stableLayout,
-        isGuest: this.deps.vault.isGuest,
-        isMobile: this.deps.layoutUIStore.isMobile,
-        onLayoutStart: () => {
-          this.isLayoutRunning = true;
+    try {
+      await this.layoutManager.apply(
+        { ...req, viewport },
+        {
+          timelineMode: this.deps.graph.timelineMode,
+          timelineAxis: this.deps.graph.timelineAxis,
+          timelineScale: this.deps.graph.timelineScale,
+          orbitMode: this.deps.graph.orbitMode,
+          centralNodeId: this.deps.graph.centralNodeId,
+          stableLayout: this.deps.graph.stableLayout,
+          isGuest: this.deps.vault.isGuest,
+          isMobile: this.deps.layoutUIStore.isMobile,
+          onLayoutStart: () => {
+            if (
+              layoutGeneration !== this.visibilityGeneration ||
+              this.isSuspended
+            )
+              return;
+            this.isLayoutRunning = true;
+          },
+          onLayoutComputed: (ms) => {
+            this.deps.debugStore.log(`Layout: ${ms}ms`, {
+              nodes: this.deps.graph.stats.nodeCount,
+              caller: req.reason,
+            });
+          },
+          onLayoutStop: () => {
+            if (
+              layoutGeneration !== this.visibilityGeneration ||
+              this.isSuspended
+            )
+              return;
+            this.isLayoutRunning = false;
+            if (isInitial) {
+              this.loadPhase = "ready";
+            }
+            // Re-enable the ratchet and re-anchor it to the *settled* zoom. A
+            // re-cull can chain fits (cluster → spread) and the slash guard can
+            // re-fit later, so capture the mark on a dedicated timer (which a fast
+            // user zoom can't clear) rather than trusting this stop's transient zoom.
+            if (isFit) {
+              this.suppressFocusZoom = false;
+              if (this.focusRebaselineTimer)
+                clearTimeout(this.focusRebaselineTimer);
+              this.focusRebaselineTimer = window.setTimeout(() => {
+                this.focusRebaselineTimer = null;
+                if (this.cy && !this.cy.destroyed()) {
+                  const z = this.cy.zoom();
+                  if (z > 0) this.focusZoomMark = z;
+                }
+              }, this.FOCUS_REBASELINE_MS);
+            }
+          },
+          onPositionsUpdated: (updates, meta) => {
+            if (
+              layoutGeneration !== this.visibilityGeneration ||
+              this.isSuspended
+            ) {
+              this.needsVisibilityReconcile = true;
+              return;
+            }
+            // Never bulk-persist positions from a focus-view (culled) solve. The
+            // rendered set is a partial view of the vault, so its solved layout
+            // isn't a meaningful full-graph layout to save — and persisting it is
+            // catastrophically expensive on large vaults: each coordinate save of
+            // a lazily-loaded entity forces a full content load + disk write, so
+            // a 500-node heal/solve serialized hundreds of store mutations and
+            // wedged the main thread for minutes (#1576). Full-graph mode
+            // ("Show full graph") still persists and heals normally.
+            if (this.deps.graph.focusViewActive) return;
+            const notLoading = this.deps.vault.status !== "loading";
+            const isReady = this.loadPhase === "ready" && notLoading;
+            // Persist the initial layout when it heals a degenerate vault — either
+            // a runtime re-solve (meta.healed) or the first solve of a vault whose
+            // saved coords were a discarded slash. This lands the fix in the vault
+            // so it stops reshuffling every load and a Save cleans the on-disk
+            // diagonal, instead of being skipped just because it's the initial pass.
+            const isHealPersist = meta?.healed || this.savedCoordsDegenerate;
+            const shouldPersist = isHealPersist
+              ? notLoading
+              : !isInitial && isReady;
+            if (shouldPersist) {
+              this.savedCoordsDegenerate = false;
+              this.deps.vault.batchUpdate(
+                updates as Record<string, Partial<LocalEntity>>,
+              );
+            }
+          },
         },
-        onLayoutComputed: (ms) => {
-          this.deps.debugStore.log(`Layout: ${ms}ms`, {
-            nodes: this.deps.graph.stats.nodeCount,
-            caller: req.reason,
-          });
-        },
-        onLayoutStop: () => {
-          this.isLayoutRunning = false;
-          if (isInitial) {
-            this.loadPhase = "ready";
-          }
-          // Re-enable the ratchet and re-anchor it to the *settled* zoom. A
-          // re-cull can chain fits (cluster → spread) and the slash guard can
-          // re-fit later, so capture the mark on a dedicated timer (which a fast
-          // user zoom can't clear) rather than trusting this stop's transient zoom.
-          if (isFit) {
-            this.suppressFocusZoom = false;
-            if (this.focusRebaselineTimer)
-              clearTimeout(this.focusRebaselineTimer);
-            this.focusRebaselineTimer = window.setTimeout(() => {
-              this.focusRebaselineTimer = null;
-              if (this.cy && !this.cy.destroyed()) {
-                const z = this.cy.zoom();
-                if (z > 0) this.focusZoomMark = z;
-              }
-            }, this.FOCUS_REBASELINE_MS);
-          }
-        },
-        onPositionsUpdated: (updates, meta) => {
-          // Never bulk-persist positions from a focus-view (culled) solve. The
-          // rendered set is a partial view of the vault, so its solved layout
-          // isn't a meaningful full-graph layout to save — and persisting it is
-          // catastrophically expensive on large vaults: each coordinate save of
-          // a lazily-loaded entity forces a full content load + disk write, so
-          // a 500-node heal/solve serialized hundreds of store mutations and
-          // wedged the main thread for minutes (#1576). Full-graph mode
-          // ("Show full graph") still persists and heals normally.
-          if (this.deps.graph.focusViewActive) return;
-          const notLoading = this.deps.vault.status !== "loading";
-          const isReady = this.loadPhase === "ready" && notLoading;
-          // Persist the initial layout when it heals a degenerate vault — either
-          // a runtime re-solve (meta.healed) or the first solve of a vault whose
-          // saved coords were a discarded slash. This lands the fix in the vault
-          // so it stops reshuffling every load and a Save cleans the on-disk
-          // diagonal, instead of being skipped just because it's the initial pass.
-          const isHealPersist = meta?.healed || this.savedCoordsDegenerate;
-          const shouldPersist = isHealPersist
-            ? notLoading
-            : !isInitial && isReady;
-          if (shouldPersist) {
-            this.savedCoordsDegenerate = false;
-            this.deps.vault.batchUpdate(
-              updates as Record<string, Partial<LocalEntity>>,
-            );
-          }
-        },
-      },
+      );
+      if (layoutGeneration !== this.visibilityGeneration || this.isSuspended) {
+        this.needsVisibilityReconcile = true;
+        span.cancel();
+        return;
+      }
+      span.complete(() => this.graphMeasurementDimensions());
+    } catch (error) {
+      span.fail("unexpected", () => this.graphMeasurementDimensions());
+      throw error;
+    }
+  };
+
+  private graphMeasurementDimensions = () => ({
+    entityCount: this.deps.graph.stats.nodeCount,
+    renderedNodeCount: this.cy?.nodes().length,
+  });
+
+  private clearRenderReadyMeasurement = () => {
+    if (this.renderReadyFrameOne !== null) {
+      cancelAnimationFrame(this.renderReadyFrameOne);
+      this.renderReadyFrameOne = null;
+    }
+    if (this.renderReadyFrameTwo !== null) {
+      cancelAnimationFrame(this.renderReadyFrameTwo);
+      this.renderReadyFrameTwo = null;
+    }
+    this.renderReadySpan?.cancel();
+    this.renderReadySpan = null;
+    this.focusDepthSpan?.cancel();
+    this.focusDepthSpan = null;
+    this.focusDepthStartCounts = null;
+  };
+
+  private startFocusDepthMeasurement = () => {
+    if (this.focusDepthSpan) return;
+    this.focusDepthStartCounts = {
+      nodes: this.cy?.nodes().length ?? 0,
+      edges: this.cy?.edges().length ?? 0,
+    };
+    this.focusDepthSpan = browserPerformanceRecorder.start(
+      "graph_focus_depth_change",
     );
   };
 
+  private focusDepthMeasurementDimensions = () => {
+    const nodes = this.cy?.nodes().length ?? 0;
+    const edges = this.cy?.edges().length ?? 0;
+    const start = this.focusDepthStartCounts;
+    return {
+      ...this.graphMeasurementDimensions(),
+      renderedEdgeCount: edges,
+      addedNodeCount: Math.max(0, nodes - (start?.nodes ?? nodes)),
+      removedNodeCount: Math.max(0, (start?.nodes ?? nodes) - nodes),
+      addedEdgeCount: Math.max(0, edges - (start?.edges ?? edges)),
+      removedEdgeCount: Math.max(0, (start?.edges ?? edges) - edges),
+    };
+  };
+
+  private scheduleRenderReadyMeasurement = () => {
+    this.clearRenderReadyMeasurement();
+    this.renderReadySpan = browserPerformanceRecorder.start(
+      "graph_sync_render_ready",
+    );
+    this.renderReadyFrameOne = requestAnimationFrame(() => {
+      this.renderReadyFrameOne = null;
+      this.renderReadyFrameTwo = requestAnimationFrame(() => {
+        this.renderReadyFrameTwo = null;
+        const dimensions = () => this.graphMeasurementDimensions();
+        this.renderReadySpan?.complete(dimensions);
+        this.renderReadySpan = null;
+        this.focusDepthSpan?.complete(this.focusDepthMeasurementDimensions);
+        this.focusDepthSpan = null;
+        this.focusDepthStartCounts = null;
+      });
+    });
+  };
+
   private handleResize = () => {
+    if (this.isSuspended) return;
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
     this.resizeTimer = window.setTimeout(() => {
+      this.resizeTimer = null;
+      if (this.isSuspended) return;
       if (this.cy) {
         this.cy.resize();
         const width = this.cy.width();
@@ -510,17 +768,49 @@ export class GraphViewController {
       clearTimeout(this.nodeSelectTimer);
       this.nodeSelectTimer = null;
     }
+    this.nodeSelectSpan?.cancel();
+    this.nodeSelectSpan = null;
   };
 
   // Sync Logic
   syncElements = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (this.cy && this.deps.graph.elements) {
+      const syncGeneration = ++this.elementSyncGeneration;
+      const syncCy = this.cy;
+      const visibilityGeneration = this.visibilityGeneration;
+      this.needsVisibilityReconcile = false;
       // When the element set changed because zoom changed the focus detail level
       // (not a real entity edit), keep the user's camera — the depth change was
       // driven by their zoom, so refitting would fight it.
       const focusDepthChanged =
         this.deps.graph.focusDepth !== this.lastSyncedFocusDepth;
+      const focusRootId = this.deps.graph.focusRootId;
+      const focusRootChanged = focusRootId !== this.lastSyncedFocusRootId;
+      const graphStructureVersion = this.deps.vault.graphStructureVersion ?? 0;
+      const filterSignature = [
+        this.deps.graph.labelFilterMode,
+        ...Array.from(this.deps.graph.activeLabels).sort(),
+        "|",
+        ...Array.from(this.deps.graph.activeCategories).sort(),
+      ].join("\u0000");
+      const focusMembershipOnly =
+        this.loadPhase !== "idle" &&
+        this.deps.graph.focusViewActive &&
+        (focusDepthChanged || focusRootChanged) &&
+        graphStructureVersion === this.lastSyncedGraphStructureVersion &&
+        filterSignature === this.lastSyncedFilterSignature;
+      // Explicit detail controls can change focus depth without a Cytoscape
+      // zoom event. Start the same lifecycle span here so every membership
+      // transition is measured through render readiness.
+      if (focusDepthChanged) this.startFocusDepthMeasurement();
       this.lastSyncedFocusDepth = this.deps.graph.focusDepth;
+      this.lastSyncedFocusRootId = focusRootId;
+      this.lastSyncedGraphStructureVersion = graphStructureVersion;
+      this.lastSyncedFilterSignature = filterSignature;
 
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
@@ -530,19 +820,31 @@ export class GraphViewController {
         activeLabels: this.deps.graph.activeLabels,
         labelFilterMode: this.deps.graph.labelFilterMode,
         activeCategories: this.deps.graph.activeCategories,
+        focusMembershipOnly,
         skipRenderedWeightSync:
           this.deps.graph.perfStylingActive &&
           !this.deps.graph.timelineMode &&
           this.deps.graph.activeLabels.size === 0 &&
           this.deps.graph.activeCategories.size === 0,
+        performanceRecorder: browserPerformanceRecorder,
         onFirstElements: () => {
           this.loadPhase = "elements";
         },
         onLayoutUpdate: (req) => {
+          // A future/asynchronous sync callback must never lay out a newer
+          // focus depth or a switched vault with stale membership data.
+          if (
+            syncGeneration !== this.elementSyncGeneration ||
+            this.cy !== syncCy ||
+            visibilityGeneration !== this.visibilityGeneration ||
+            this.isSuspended
+          )
+            return;
           if (focusDepthChanged) req.viewport = "preserve";
           this.applyCurrentLayout(req);
         },
       });
+      this.scheduleRenderReadyMeasurement();
     }
   };
 
@@ -554,6 +856,7 @@ export class GraphViewController {
   private handleFocusZoom = () => this.scheduleFocusSettle();
 
   private scheduleFocusSettle = () => {
+    if (this.isSuspended) return;
     if (this.focusZoomTimer) clearTimeout(this.focusZoomTimer);
     this.focusZoomTimer = window.setTimeout(
       this.settleFocusZoom,
@@ -563,6 +866,7 @@ export class GraphViewController {
 
   private settleFocusZoom = () => {
     this.focusZoomTimer = null;
+    if (this.isSuspended) return;
     const cy = this.cy;
     if (!cy || cy.destroyed() || !this.deps.graph.focusViewActive) return;
     // Ignore zoom while a programmatic fit is in flight.
@@ -588,6 +892,10 @@ export class GraphViewController {
     );
     this.focusZoomMark = mark;
     if (depth !== this.deps.graph.focusDepth) {
+      this.focusDepthSpan?.cancel();
+      this.focusDepthSpan = null;
+      this.focusDepthStartCounts = null;
+      this.startFocusDepthMeasurement();
       this.deps.graph.focusDepth = depth;
     }
   };
@@ -600,12 +908,20 @@ export class GraphViewController {
    * have streamed in and `isLargeGraph` settles.
    */
   syncRenderHints = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (this.cy) {
       applyLargeGraphRenderHints(this.cy, this.deps.graph.isLargeGraph);
     }
   };
 
   syncImages = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (this.cy && this.deps.graph.elements && this.imageManager) {
       untrack(() => {
         this.imageManager!.sync({
@@ -684,6 +1000,10 @@ export class GraphViewController {
   };
 
   reconcileLoadState = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     const { status, allEntities, activeVaultId } = this.deps.vault;
 
     // A vault switch under a reused controller never reactively empties the
@@ -747,6 +1067,7 @@ export class GraphViewController {
   };
 
   private scheduleSlashGuard = () => {
+    if (this.isSuspended) return;
     if (this.slashGuardTimer) clearTimeout(this.slashGuardTimer);
     this.slashGuardTimer = window.setTimeout(() => {
       this.slashGuardTimer = null;
@@ -755,6 +1076,7 @@ export class GraphViewController {
   };
 
   private recoverFromSlashIfNeeded = () => {
+    if (this.isSuspended) return;
     if (this.slashRecoveryDone || !this.cy || this.cy.destroyed()) return;
     if (this.deps.vault.status === "loading") return;
     if (!this.savedCoordsDegenerate) return;
@@ -772,6 +1094,10 @@ export class GraphViewController {
   };
 
   handleModeChange = () => {
+    if (this.isSuspended) {
+      this.needsVisibilityReconcile = true;
+      return;
+    }
     if (
       this.cy &&
       (this.loadPhase === "finalized" || this.loadPhase === "ready")

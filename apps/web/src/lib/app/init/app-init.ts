@@ -7,6 +7,10 @@ import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
 import { searchService } from "@codex/search-orchestrator";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
 import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
 import {
   handleVersionSkewReload,
@@ -23,6 +27,8 @@ export function bootSystem(stores: {
   sessionModeStore: any;
 }): boolean {
   debugStore.log("System booting: Initializing core stores...");
+  browserPerformanceCapture.start();
+  searchService.setPerformanceRecorder(browserPerformanceRecorder);
   configureAIEngine({
     searchService,
     templateResolver: resolveTemplateSync,

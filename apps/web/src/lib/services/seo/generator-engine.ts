@@ -73,12 +73,18 @@ import {
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
   generateAdventureLocal,
+  buildPlotTwistPrompt,
+  parsePlotTwistResponse,
+  generatePlotTwistLocal,
   buildWorldPrompt,
   parseWorldResponse,
   generateWorldLocal,
   buildStarSystemPrompt,
   parseStarSystemResponse,
   generateStarSystemLocal,
+  buildAlienRacePrompt,
+  parseAlienRaceResponse,
+  generateAlienRaceLocal,
   BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
@@ -100,8 +106,10 @@ import {
   type NewsSheetGeneratorOptions,
   type DungeonGeneratorOptions,
   type AdventureGeneratorOptions,
+  type PlotTwistGeneratorOptions,
   type WorldGeneratorOptions,
   type StarSystemGeneratorOptions,
+  type AlienRaceGeneratorOptions,
   type PublicGeneratorOutput,
   languageConfig,
 } from "generator-engine";
@@ -141,8 +149,10 @@ export { languageConfig } from "generator-engine";
 export { newsSheetConfig } from "generator-engine";
 export { dungeonConfig, forDungeonGenre } from "generator-engine";
 export { adventureConfig, forAdventureGenre } from "generator-engine";
+export { plotTwistConfig } from "generator-engine";
 export { worldConfig } from "generator-engine";
 export { starSystemConfig } from "generator-engine";
+export { alienRaceConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -836,6 +846,23 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  /** Plot twist generation preserves established facts while adding playable choices. */
+  async generatePlotTwist(
+    options: PlotTwistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...plotTwistOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildPlotTwistPrompt(plotTwistOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parsePlotTwistResponse(text, plotTwistOptions);
+      },
+      () => generatePlotTwistLocal(plotTwistOptions),
+    );
+  }
+
   /** World generation delegates to the shared offline-first generator package. */
   async generateWorld(
     options: WorldGeneratorOptions & { useAI?: boolean } = {},
@@ -883,6 +910,30 @@ export class DefaultGeneratorEngine {
             ...BANNED_NAMES,
             ...(starSystemOptions.avoidNames ?? []),
           ],
+        }),
+    );
+  }
+
+  /** Alien race generation delegates to the shared offline-first generator package. */
+  async generateAlienRace(
+    options: AlienRaceGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...alienRaceOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildAlienRacePrompt(alienRaceOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseAlienRaceResponse(text, [
+          ...BANNED_NAMES,
+          ...(alienRaceOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateAlienRaceLocal({
+          ...alienRaceOptions,
+          avoidNames: [...BANNED_NAMES, ...(alienRaceOptions.avoidNames ?? [])],
         }),
     );
   }

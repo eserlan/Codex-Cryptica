@@ -23,6 +23,7 @@ describe("Tools directory", () => {
 
     expect(source).toContain('title: "Adventure & Worldbuilding"');
     expect(source).toContain('href: "/generators/world"');
+    expect(source).toContain('href: "/generators/plot-twist-generator"');
     expect(source).toContain('label: "Sci-Fi World Generator"');
     expect(source).not.toContain('title: "Browse by Theme"');
     expect(source).not.toContain('href: "/generators/cosmic-horror"');

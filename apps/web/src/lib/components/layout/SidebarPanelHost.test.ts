@@ -23,6 +23,17 @@ vi.mock("../explorer/EntityExplorer.svelte", () => ({
   },
 }));
 
+// Stubbed for the same reason as the other two panels: mounting the real one
+// would drag in the whole vault and shelf dependency chain for a test about
+// which panel the host picks.
+vi.mock("$lib/components/shelf/ShelfPanel.svelte", () => ({
+  default: function ShelfPanelMock() {
+    return {
+      $$render: () => '<div data-testid="shelf-panel">The Shelf</div>',
+    };
+  },
+}));
+
 vi.mock("$lib/stores/debug.svelte", () => ({
   debugStore: {
     error: vi.fn(),
@@ -57,5 +68,14 @@ describe("SidebarPanelHost", () => {
 
     expect(screen.queryByTestId("sidebar-panel-host")).toBeNull();
     expect(screen.queryByTestId("oracle-sidebar-panel")).toBeNull();
+  });
+
+  it("does not render the host when left sidebar is open but active tool is none", () => {
+    layoutUIStore.leftSidebarOpen = true;
+    layoutUIStore.activeSidebarTool = "none";
+
+    render(SidebarPanelHost);
+
+    expect(screen.queryByTestId("sidebar-panel-host")).toBeNull();
   });
 });

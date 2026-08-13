@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-07
+Auto-generated from all feature plans. Last updated: 2026-08-11
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
+- N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
 
 - TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API (154-llm-session-ratelimit)
 - Cloudflare Rate Limiting binding, client-side `sessionStorage` (154-llm-session-ratelimit)
@@ -233,11 +236,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
+
 - 154-llm-session-ratelimit: Added TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API
 
 - 153-llm-model-registry: Added TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution)
-
-- 150-stat-sheet-marketplace: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing
 
 <!-- MANUAL ADDITIONS START -->
 

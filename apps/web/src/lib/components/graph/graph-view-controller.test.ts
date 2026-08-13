@@ -63,10 +63,12 @@ vi.mock("graph-engine", () => {
     height: vi.fn().mockReturnValue(100),
     resize: vi.fn(),
     animate: vi.fn().mockResolvedValue(undefined),
+    stop: vi.fn(),
     center: vi.fn(),
     style: vi.fn(),
     destroyed: vi.fn().mockReturnValue(false),
     nodes: vi.fn().mockReturnValue({ length: 0, map: vi.fn(() => []) }),
+    edges: vi.fn().mockReturnValue({ length: 0 }),
   };
 
   function MockLayoutManager() {
@@ -115,6 +117,9 @@ describe("GraphViewController", () => {
         activeLabels: new Set(),
         activeCategories: new Set(),
         labelFilterMode: "OR",
+        focusDepth: 1,
+        focusRootId: null,
+        focusViewActive: false,
       },
       vault: {
         isGuest: false,
@@ -123,6 +128,7 @@ describe("GraphViewController", () => {
         releaseImageUrl: vi.fn(),
         resolveImageUrl: vi.fn(),
         batchUpdate: vi.fn(),
+        graphStructureVersion: 0,
       },
       debugStore: {
         log: vi.fn(),
@@ -168,6 +174,68 @@ describe("GraphViewController", () => {
 
     expect(destroySpy).toHaveBeenCalled();
     expect(controller.cy).toBeUndefined();
+  });
+
+  it("suspends rendering work and resumes the latest graph state", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+    deps.graph.elements = [{ group: "nodes", data: { id: "node-1" } }];
+    controller.syncElements();
+    const staleOptions = vi.mocked(syncGraphElements).mock.calls.at(-1)?.[1];
+
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: true,
+      containerIntersecting: true,
+    });
+
+    expect(controller.isSuspended).toBe(true);
+    expect(controller.cy!.stop).toHaveBeenCalled();
+    expect(controller.layoutManager!.stop).toHaveBeenCalled();
+    vi.mocked(syncGraphElements).mockClear();
+    const layoutSpy = vi.spyOn(controller, "applyCurrentLayout");
+    staleOptions?.onLayoutUpdate?.({
+      reason: "Elements Update",
+      isForced: false,
+    });
+    expect(layoutSpy).not.toHaveBeenCalled();
+    controller.syncElements();
+    expect(syncGraphElements).not.toHaveBeenCalled();
+
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+    controller.syncElements();
+
+    expect(controller.isSuspended).toBe(false);
+    expect(controller.cy!.resize).toHaveBeenCalled();
+    expect(layoutSpy).toHaveBeenCalledWith({
+      reason: "Visibility Resume",
+      viewport: "preserve",
+    });
+    expect(syncGraphElements).toHaveBeenCalled();
+  });
+
+  it("requests reinitialization when the preserved Cytoscape instance is invalid", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+    vi.mocked(controller.cy!.destroyed).mockReturnValueOnce(true);
+
+    controller.setVisibilityInputs({
+      documentVisible: false,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+    controller.setVisibilityInputs({
+      documentVisible: true,
+      surfaceCovered: false,
+      containerIntersecting: true,
+    });
+
+    expect(controller.requiresReinitialization).toBe(true);
+    expect(controller.consumeReinitializationRequest()).toBe(true);
   });
 
   it("should apply focus when selectedId changes", async () => {
@@ -259,6 +327,54 @@ describe("GraphViewController", () => {
         expect.anything(),
         expect.objectContaining({ skipRenderedWeightSync: false }),
       );
+    });
+
+    it("uses delta-only reconciliation for a stable-data focus transition", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      vi.mocked(syncGraphElements).mockClear();
+
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ focusMembershipOnly: true }),
+      );
+    });
+
+    it("keeps full reconciliation when graph data changes with focus membership", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      vi.mocked(syncGraphElements).mockClear();
+
+      deps.graph.focusDepth = 2;
+      deps.vault.graphStructureVersion = 1;
+      controller.syncElements();
+
+      expect(syncGraphElements).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ focusMembershipOnly: false }),
+      );
+    });
+
+    it("ignores a stale sync layout callback after a newer focus transition", () => {
+      controller.loadPhase = "ready";
+      controller.syncElements();
+      const staleOptions = vi.mocked(syncGraphElements).mock.calls[0][1];
+      const layoutSpy = vi.spyOn(controller, "applyCurrentLayout");
+
+      controller.syncElements();
+      staleOptions.onLayoutUpdate?.({
+        reason: "Elements Update",
+        isForced: false,
+        hasNewNodes: true,
+        hasRemovedNodes: false,
+      });
+
+      expect(layoutSpy).not.toHaveBeenCalled();
     });
   });
 

@@ -255,6 +255,20 @@ export {
   type AdventurePrompt,
   type ResolvedAdventure,
 } from "./public-adventure";
+export {
+  buildPlotTwistPrompt,
+  generatePlotTwistLocal,
+  parsePlotTwistResponse,
+  plotTwistConfig,
+  resolvePlotTwist,
+  PLOT_TWIST_FORESHADOWING,
+  PLOT_TWIST_IMPACTS,
+  PLOT_TWIST_TIMINGS,
+  PLOT_TWIST_TYPES,
+  type PlotTwistGeneratorOptions,
+  type PlotTwistPrompt,
+  type ResolvedPlotTwist,
+} from "./public-plot-twist";
 export * from "./dungeon";
 export * from "./adventure";
 export * from "./starter-constellation-types";
@@ -283,6 +297,18 @@ export {
   secretSocietyConfig,
   type SecretSocietyGeneratorOptions,
 } from "./public-secret-society";
+export {
+  alienRaceConfig,
+  buildAlienRacePrompt,
+  generateAlienRaceLocal,
+  parseAlienRaceResponse,
+  resolveAlienRace,
+  FREEFORM_MODE,
+  GROUNDED_MODE,
+  type AlienRaceGeneratorOptions,
+  type AlienRacePrompt,
+  type ResolvedAlienRace,
+} from "./public-alien-race";
 export {
   buildStarSystemDiagram,
   colorForBodyType,

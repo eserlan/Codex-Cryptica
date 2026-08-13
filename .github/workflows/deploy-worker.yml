@@ -60,32 +60,37 @@ jobs:
         id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          # Set per GitHub Environment (production/staging) for strict CORS allowlisting
+          # Optional override only. One Worker serves every environment, so the
+          # CORS allowlist lives in DEFAULT_ALLOWED_ORIGINS (src/index.ts) and
+          # every deploy is identical. Setting this per GitHub Environment is
+          # what broke staging on 2026-08-11: the variable is authoritative
+          # when present, so a production deploy cut staging off.
           ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
-          ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: ${{ vars.ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS }}
           # Worker name from wrangler.toml
           WORKER_NAME: oracle-proxy
         working-directory: apps/workers/oracle-proxy
         run: |
           echo "Deploying worker to ${{ github.event.inputs.environment || 'production' }}..."
-          if [ -z "${ALLOWED_ORIGINS:-}" ]; then
-            echo "::error::Missing ALLOWED_ORIGINS for this GitHub environment."
-            echo "::error::Set ALLOWED_ORIGINS in the '${{ github.event.inputs.environment || 'production' }}' environment variables."
-            exit 1
+          if [ -n "${ALLOWED_ORIGINS:-}" ]; then
+            echo "::warning::ALLOWED_ORIGINS is set for this environment and overrides"
+            echo "::warning::DEFAULT_ALLOWED_ORIGINS for *all* environments this Worker serves."
+            wrangler deploy \
+              --commit-dirty=true \
+              --var ALLOWED_ORIGINS:"$ALLOWED_ORIGINS"
+          else
+            wrangler deploy --commit-dirty=true
           fi
-
-          wrangler deploy \
-            --commit-dirty=true \
-            --var ALLOWED_ORIGINS:"$ALLOWED_ORIGINS" \
-            --var ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS:"${ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS:-false}"
           echo "worker_url=https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_OUTPUT
       
       - name: Verify Deployment
         run: |
           echo "Waiting 10 seconds for deployment to propagate..."
           sleep 10
+          # Falls back to the primary production origin, which is always in
+          # DEFAULT_ALLOWED_ORIGINS, so the check works with no override set.
           HEALTH_CHECK_ORIGIN="${ALLOWED_ORIGINS%%,*}"
           HEALTH_CHECK_ORIGIN="$(printf '%s' "$HEALTH_CHECK_ORIGIN" | xargs)"
+          HEALTH_CHECK_ORIGIN="${HEALTH_CHECK_ORIGIN:-https://codexcryptica.com}"
           
           # Simple health check
           response=$(curl -s -o /dev/null -w "%{http_code}" \

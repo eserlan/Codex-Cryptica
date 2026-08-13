@@ -107,6 +107,13 @@
               icon: "icon-[lucide--orbit]",
             },
             {
+              href: "/generators/alien-race",
+              label: "Alien Race Generator",
+              summary:
+                "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+              icon: "icon-[lucide--dna]",
+            },
+            {
               href: "/generators/world",
               label: "Sci-Fi World Generator",
               summary:
@@ -119,6 +126,13 @@
               summary:
                 "Generate a GM-ready quest hook with a complication, key NPC, twist, and reward.",
               icon: "icon-[lucide--scroll-text]",
+            },
+            {
+              href: "/generators/plot-twist-generator",
+              label: "Plot Twist & Complication Generator",
+              summary:
+                "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+              icon: "icon-[lucide--shuffle]",
             },
             {
               href: "/generators/council-vote",

@@ -211,6 +211,31 @@ describe("SyncStore", () => {
     expect((store as any).status).toBe("idle");
   });
 
+  it("emits only changed entities for each sync chunk", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+    repository.loadFiles.mockImplementation(
+      async (_vId, _handle, onProgress) => {
+        repository.entities = {
+          cached: { id: "cached" },
+          changed: { id: "changed" },
+        };
+        await onProgress(repository.entities, 2, 2, {
+          changed: repository.entities.changed,
+        });
+      },
+    );
+    const emitSpy = vi.spyOn(vaultEventBus, "emit");
+
+    await store.loadFiles(false);
+
+    expect(emitSpy).toHaveBeenCalledWith({
+      type: "SYNC_CHUNK_READY",
+      vaultId: "vault-1",
+      entities: { changed: { id: "changed" } },
+      newOrChangedIds: ["changed"],
+    });
+  });
+
   it("detects conflict files in the vault", async () => {
     const { fileIOAdapter } = await import("./adapters.svelte");
     vi.mocked(fileIOAdapter.walkDirectory).mockResolvedValue([

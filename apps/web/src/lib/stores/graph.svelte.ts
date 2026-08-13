@@ -16,14 +16,20 @@ import {
   type IdGenerator,
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
 
-// Focus-view detail level. `focusDepth` is a 1..MAX zoom-driven level (not a
-// literal hop count); each level targets FOCUS_BASE_COUNT * 2^(level-1) rendered
-// nodes, so the default (level 1) lands around 500 — enough for a real overview,
-// not just the focal + its handful of direct links — and zooming in doubles it.
+// Focus-view detail level. Zoom reveals a bounded fixed-size increment rather
+// than doubling the rendered graph, so one gesture cannot synchronously add an
+// unbounded set of nodes in a large vault.
 export const MIN_FOCUS_DEPTH = 1;
-export const MAX_FOCUS_DEPTH = 6;
+export const MAX_FOCUS_DEPTH = 3;
 export const FOCUS_BASE_COUNT = 500;
+export const FOCUS_DETAIL_STEP = 150;
+/** Avoid a dense focus neighbourhood overwhelming the renderer. */
+export const FOCUS_EDGE_CAP = 2_000;
 
 export class GraphStore {
   // Dependencies
@@ -51,6 +57,7 @@ export class GraphStore {
     this.sessionModeStore = sessionStore;
     this.connectionModeStore = connectionStore;
     this.idGenerator = idGenerator;
+    browserPerformanceCapture.start();
   }
 
   // Svelte 5 derived state
@@ -71,6 +78,8 @@ export class GraphStore {
   // detail) by the controller; starts with a bounded overview. See
   // MIN/MAX_FOCUS_DEPTH.
   focusDepth = $state(MIN_FOCUS_DEPTH);
+  /** Stable membership root for a large-vault focus view, independent of selection. */
+  focusRootId = $state<string | null>(null);
 
   // Vault scale, measured from the raw entity/connection counts — deliberately
   // independent of `elements` so focus-view culling can't feed back into the
@@ -98,6 +107,9 @@ export class GraphStore {
   }
 
   elements = $derived.by(() => {
+    const focusComputeSpan = browserPerformanceRecorder.start(
+      "graph_focus_compute",
+    );
     const graphVersion = this.graphStructureVersion;
     void graphVersion;
     const allEntities = this.graphSourceEntities;
@@ -128,28 +140,53 @@ export class GraphStore {
     // Built from `renderIds` via the entities record (O(rendered)) rather than
     // an O(N) Map build + O(N) filter, so a content edit in a large vault
     // doesn't re-walk all 1600 entities to produce the same small set.
-    if (this.focusViewActive && visibleEntities.length > 0) {
-      const focal = this.resolveFocalId(visibleEntities, validIds);
-      if (focal) {
-        const renderIds = this.computeFocusRenderIds(
-          focal,
-          this.focusDepth,
-          validIds,
-          visibleEntities,
-        );
-        if (renderIds.size !== validIds.size) {
-          const byId = this.vault.entities;
-          const renderEntities: Entity[] = [];
-          for (const id of renderIds) {
-            const entity = byId[id];
-            if (entity) renderEntities.push(entity);
+    try {
+      if (this.focusViewActive && visibleEntities.length > 0) {
+        const focal = this.resolveFocalId(visibleEntities, validIds);
+        if (focal) {
+          const renderIds = this.computeFocusRenderIds(
+            focal,
+            this.focusDepth,
+            validIds,
+            visibleEntities,
+          );
+          if (renderIds.size !== validIds.size) {
+            const byId = this.vault.entities;
+            const renderEntities: Entity[] = [];
+            for (const id of renderIds) {
+              const entity = byId[id];
+              if (entity) renderEntities.push(entity);
+            }
+            const result = GraphTransformer.entitiesToElements(
+              renderEntities,
+              renderIds,
+              FOCUS_EDGE_CAP,
+            );
+            focusComputeSpan.complete(() => ({
+              entityCount: allEntities.length,
+              renderedNodeCount: renderEntities.length,
+              renderedEdgeCount: result.length - renderEntities.length,
+            }));
+            return result;
           }
-          return GraphTransformer.entitiesToElements(renderEntities, renderIds);
         }
       }
-    }
 
-    return GraphTransformer.entitiesToElements(visibleEntities, validIds);
+      const result = GraphTransformer.entitiesToElements(
+        visibleEntities,
+        validIds,
+        this.focusViewActive ? FOCUS_EDGE_CAP : undefined,
+      );
+      focusComputeSpan.complete(() => ({
+        entityCount: allEntities.length,
+        renderedNodeCount: visibleEntities.length,
+        renderedEdgeCount: result.length - visibleEntities.length,
+      }));
+      return result;
+    } catch (error) {
+      focusComputeSpan.fail("unexpected");
+      throw error;
+    }
   });
 
   fitRequest = $state(0);
@@ -214,14 +251,18 @@ export class GraphStore {
   }
 
   /**
-   * Picks the focus node for culling: the selected entity when it's visible,
-   * otherwise the highest-degree hub among visible entities so there's always a
-   * sensible default view before the user selects anything.
+   * Picks the focus node for culling. Once established, `focusRootId` remains
+   * stable while selection changes, preventing visible-node selection from
+   * rebuilding the rendered neighbourhood.
    */
   private resolveFocalId(
     visibleEntities: Entity[],
     validIds: Set<string>,
   ): string | null {
+    if (this.focusRootId && validIds.has(this.focusRootId)) {
+      return this.focusRootId;
+    }
+
     const selected = this.vault.selectedEntityId;
     if (selected && validIds.has(selected)) return selected;
 
@@ -245,6 +286,36 @@ export class GraphStore {
     return bestId;
   }
 
+  /** Establishes the initial focus root once the graph view is ready. */
+  ensureFocusRoot(): void {
+    if (!this.focusViewActive) return;
+    const visibleEntities = this.graphSourceEntities.filter(
+      (entity) =>
+        this.sessionModeStore.isGuestMode ||
+        isEntityVisible(entity, {
+          sharedMode: this.sessionModeStore.sharedMode,
+          defaultVisibility: this.vault.defaultVisibility,
+        }),
+    );
+    const validIds = new Set(visibleEntities.map((entity) => entity.id));
+    if (this.focusRootId && validIds.has(this.focusRootId)) return;
+
+    // A deleted or no-longer-visible root must not fall back to the transient
+    // selection: establish a new stable root for the current graph scope.
+    this.focusRootId = this.resolveFocalId(visibleEntities, validIds);
+  }
+
+  /** Explicitly navigate a large focus view to an entity outside its set. */
+  navigateFocusTo(entityId: string): void {
+    if (
+      !this.focusViewActive ||
+      !this.vault.entities[entityId] ||
+      this.focusRootId === entityId
+    )
+      return;
+    this.focusRootId = entityId;
+  }
+
   private get graphSourceEntities(): Entity[] {
     return ((this.vault as any).graphEntities ??
       this.vault.allEntities) as Entity[];
@@ -262,8 +333,21 @@ export class GraphStore {
     );
     return Math.min(
       visibleCount,
-      FOCUS_BASE_COUNT * 2 ** (level - MIN_FOCUS_DEPTH),
+      FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (level - MIN_FOCUS_DEPTH),
     );
+  }
+
+  get canIncreaseFocusDetail() {
+    return (
+      this.focusViewActive &&
+      this.focusDepth < MAX_FOCUS_DEPTH &&
+      this.stats.nodeCount < this.fullGraphSize.nodeCount
+    );
+  }
+
+  /** Explicit detail reveal for users who want more than the zoom overview. */
+  increaseFocusDetail() {
+    if (this.canIncreaseFocusDetail) this.focusDepth++;
   }
 
   /**
@@ -425,6 +509,7 @@ export class GraphStore {
         this.centralNodeId = null;
         this.showFullGraph = false;
         this.focusDepth = MIN_FOCUS_DEPTH;
+        this.focusRootId = null;
         // Keep timelineMode as it's a global preference usually
         void this.loadViewPresets();
       };
@@ -588,6 +673,7 @@ export class GraphStore {
     this.centralNodeId = null;
     this.showFullGraph = false;
     this.focusDepth = MIN_FOCUS_DEPTH;
+    this.focusRootId = null;
   }
 
   async saveEras() {

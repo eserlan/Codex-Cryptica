@@ -5,20 +5,29 @@ import worker, { isOriginAllowed } from "./index";
 describe("Oracle Proxy Worker CORS", () => {
   const emptyEnv = { GEMINI_API_KEY: "test-key" };
 
-  it("allows the production origins", () => {
-    expect(
-      isOriginAllowed("https://codex-cryptica.com", emptyEnv),
-    ).toBeTruthy();
-    expect(isOriginAllowed("https://codexcryptica.com", emptyEnv)).toBeTruthy();
-    expect(
-      isOriginAllowed("https://staging.codex-cryptica.com", emptyEnv),
-    ).toBeTruthy();
-    expect(
-      isOriginAllowed("https://staging.codexcryptica.com", emptyEnv),
-    ).toBeTruthy();
-    expect(
-      isOriginAllowed("https://codex-cryptica.pages.dev", emptyEnv),
-    ).toBeTruthy();
+  it("allows every origin this Worker actually serves, with no env vars set", () => {
+    // One Worker serves all environments, so the defaults have to cover all of
+    // them — setting ALLOWED_ORIGINS per environment is what broke staging on
+    // 2026-08-11.
+    for (const origin of [
+      "https://codexcryptica.com",
+      "https://www.codexcryptica.com",
+      "https://staging.codexcryptica.com",
+      "https://codex-cryptica.pages.dev",
+    ]) {
+      expect(isOriginAllowed(origin, emptyEnv), origin).toBeTruthy();
+    }
+  });
+
+  it("does not allow domains the project no longer serves", () => {
+    // An allowlist entry for an unregistered domain hands CORS access to
+    // whoever registers it next; these two resolve nowhere.
+    for (const origin of [
+      "https://codex-cryptica.com",
+      "https://staging.codex-cryptica.com",
+    ]) {
+      expect(isOriginAllowed(origin, emptyEnv), origin).toBeFalsy();
+    }
   });
 
   it("allows Cloudflare Pages preview subdomains for this project", () => {
@@ -74,7 +83,7 @@ describe("Oracle Proxy Worker CORS", () => {
       }),
     ).toBeTruthy();
     expect(
-      isOriginAllowed("https://codex-cryptica.com", {
+      isOriginAllowed("https://codexcryptica.com", {
         GEMINI_API_KEY: "test-key",
         ALLOWED_ORIGINS: "https://example.com",
       }),
@@ -130,7 +139,7 @@ describe("Oracle Proxy Worker directory routing", () => {
         {
           method: "POST",
           headers: {
-            Origin: "https://codex-cryptica.com",
+            Origin: "https://codexcryptica.com",
           },
         },
       ),
@@ -148,7 +157,7 @@ describe("Oracle Proxy Worker directory routing", () => {
         {
           method: "PATCH",
           headers: {
-            Origin: "https://codex-cryptica.com",
+            Origin: "https://codexcryptica.com",
           },
         },
       ),
@@ -166,7 +175,7 @@ describe("Oracle Proxy Worker directory routing", () => {
         {
           method: "GET",
           headers: {
-            Origin: "https://codex-cryptica.com",
+            Origin: "https://codexcryptica.com",
           },
         },
       ),
@@ -195,7 +204,7 @@ describe("Oracle Proxy Worker image generation", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Origin: "https://codex-cryptica.com",
+          Origin: "https://codexcryptica.com",
         },
         body: JSON.stringify(body),
       },
@@ -432,7 +441,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: "https://codex-cryptica.com",
+        Origin: "https://codexcryptica.com",
       },
       body: JSON.stringify(body),
     });
@@ -673,7 +682,7 @@ describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", 
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: "https://codex-cryptica.com",
+        Origin: "https://codexcryptica.com",
       },
       body: JSON.stringify(body),
     });

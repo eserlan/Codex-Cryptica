@@ -7,6 +7,7 @@ import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.s
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
+import { shelf } from "$lib/features/shelf";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
@@ -198,6 +199,17 @@ export class GraphContextMenuController {
       this.deps.connectionModeStore.startSelectionConnection();
       this.contextMenuOpen = false;
     }
+  };
+
+  /**
+   * Copies the selection onto the Shelf, to be brought into another vault.
+   * Reads this vault only — nothing here is modified.
+   */
+  handleSendToShelf = () => {
+    if (this.selectedNodes.length === 0) return;
+    const ids = $state.snapshot(this.selectedNodes);
+    void shelf.shelve(ids, this.deps.vault.vaultName ?? "This vault");
+    this.contextMenuOpen = false;
   };
 
   handleBulkLabel = () => {
