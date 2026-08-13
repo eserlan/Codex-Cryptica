@@ -10,14 +10,24 @@
 import { getGenerator } from "./campaign-generator-registry";
 import { generateShipLocal } from "./public-ship";
 import type { ShipGeneratorOptions } from "./public-ship";
+import { generateNomadClanLocal } from "./public-faction";
+import type { NomadClanGeneratorOptions } from "./public-faction";
+import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
   GeneratorRunRequest,
 } from "./campaign-generator-types";
+import type { LanguageProfileV1 } from "schema";
+import type { StarSystemBody } from "./public-star-system";
 
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
 export interface PublicGeneratorOutput {
   type: string;
+  /**
+   * Vault entity sub-kind (e.g. "language" on notes) so drafts saved through
+   * the marketing funnel stay detectable by kind-based vault scans (FR-008).
+   */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;
@@ -30,6 +40,12 @@ export interface PublicGeneratorOutput {
    * (#1494). Absent on ordinary AI or explicitly-local results.
    */
   aiFallback?: boolean;
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
+  bodies?: StarSystemBody[];
+  /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
+  starType?: string;
 }
 
 /** First non-blank value, or the last one if all are blank. */
@@ -43,6 +59,7 @@ function firstNonBlank(...values: Array<string | undefined>): string {
 function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
   return {
     type: draft.entityType,
+    kind: draft.sourceGeneratorId === "language" ? "language" : undefined,
     title: draft.title,
     summary: draft.summary,
     // Prefer the rich body; fall back to lore, then the one-line summary, so the
@@ -52,6 +69,8 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     lore: draft.lore,
     labels: [...(draft.labels ?? [])],
     status: "active",
+    languageProfile: draft.languageProfile,
+    languageProfileVersion: draft.languageProfileVersion,
   };
 }
 
@@ -127,9 +146,40 @@ export function adaptVampire(
   return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
 }
 
+/** Generate a Nomad Clan using the package's local generator. */
+export function adaptNomadClan(
+  options: NomadClanGeneratorOptions = {},
+): PublicGeneratorOutput {
+  return generateNomadClanLocal(options);
+}
+
 /** Generate a Ship using the package's local generator. */
 export function adaptShip(
   options: ShipGeneratorOptions = {},
 ): PublicGeneratorOutput {
   return generateShipLocal(options);
+}
+
+/** Generate a Language using the package's local generator. */
+export function adaptLanguage(
+  options: LanguageGeneratorOptions = {
+    genre: "Classic Fantasy",
+    tone: "Lyrical & Vowel-rich",
+    role: "Common Speech",
+    structure: "Compound Words",
+  },
+): PublicGeneratorOutput {
+  const gen = getGenerator("language");
+  const req = baseReq("language", options as any);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
+}
+
+/** Generate a Dungeon / Delve using the package's local generator. */
+export function adaptDungeon(
+  options: Record<string, unknown> = {},
+  themeId?: string,
+): PublicGeneratorOutput {
+  const gen = getGenerator("dungeon");
+  const req = baseReq("dungeon", options, themeId);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
 }

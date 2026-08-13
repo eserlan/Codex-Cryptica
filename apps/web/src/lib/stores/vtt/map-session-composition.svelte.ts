@@ -86,6 +86,8 @@ export function initializeMapSessionComposition(
     setHasHydratedSession: (hydrated) => {
       store.lifecycleManager.setHasHydratedSession(hydrated);
     },
+    sessionStorage: store.deps.sessionStorage,
+    localStorage: store.deps.localStorage,
   });
 
   store.gridManager = new VTTGridManager({
@@ -209,6 +211,8 @@ export function initializeMapSessionComposition(
     },
     resetChatManager: () => store.chatManager.reset(),
     resetEncounterManager: () => store.encounterManager.reset(),
+    sessionStorage: store.deps.sessionStorage,
+    localStorage: store.deps.localStorage,
   });
 
   store.networkManager = new VTTNetworkManager({

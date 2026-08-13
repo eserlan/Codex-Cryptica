@@ -119,4 +119,67 @@ describe("SEOPageLayout Breadcrumb & Schema Generation", () => {
 
     expect(breadcrumbFound).toBe(true);
   });
+
+  // The wordmark and header CTA moved to MarketingShell when the shared shell
+  // landed; their UTM values are pinned in marketing-shell.test.ts. What stays
+  // this component's responsibility is the hero and footer CTAs.
+  describe("UTM Referral Attribution Links", () => {
+    it("renders solution-type navigation and CTA links with solution UTM params", () => {
+      const { container } = render(SEOPageLayout, {
+        props: {
+          data: mockData,
+          type: "solution",
+        },
+      });
+
+      const heroCtaBtn = container.querySelector(
+        "#hero-primary-cta",
+      ) as HTMLAnchorElement;
+      const footerCtaBtn = container.querySelector(
+        "#footer-cta-btn",
+      ) as HTMLAnchorElement;
+
+      expect(heroCtaBtn).toBeTruthy();
+      expect(heroCtaBtn.getAttribute("href")).toContain(
+        "utm_source=solution-hero",
+      );
+
+      expect(footerCtaBtn).toBeTruthy();
+      expect(footerCtaBtn.getAttribute("href")).toContain(
+        "utm_source=solution-footer",
+      );
+
+      // Negative path check: verify links are not bare root links lacking UTM params
+      expect(heroCtaBtn.getAttribute("href")).not.toBe("/");
+      expect(footerCtaBtn.getAttribute("href")).not.toBe("/");
+    });
+
+    it("renders comparison-type navigation and CTA links with vs UTM params", () => {
+      const mockComparisonData = {
+        ...mockData,
+        competitorName: "World Anvil",
+        comparisonTable: [],
+        verdict: "Codex wins",
+      };
+
+      const { container } = render(SEOPageLayout, {
+        props: {
+          data: mockComparisonData as any,
+          type: "comparison",
+        },
+      });
+
+      const heroCtaBtn = container.querySelector(
+        "#hero-primary-cta",
+      ) as HTMLAnchorElement;
+      const footerCtaBtn = container.querySelector(
+        "#footer-cta-btn",
+      ) as HTMLAnchorElement;
+
+      expect(heroCtaBtn.getAttribute("href")).toContain("utm_source=vs-hero");
+      expect(footerCtaBtn.getAttribute("href")).toContain(
+        "utm_source=vs-footer",
+      );
+    });
+  });
 });

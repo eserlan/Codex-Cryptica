@@ -6,6 +6,7 @@ import type {
   VTTMessage,
 } from "../../../types/vtt";
 import { debugStore } from "../../stores/debug.svelte";
+import type { VoiceMessage } from "./voice/voice-types";
 
 const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 
@@ -63,6 +64,7 @@ export type P2PMessage =
     }
   | { type: "GUEST_CHAR_CHAT_CHUNK"; requestId: string; partial: string }
   | { type: "GUEST_CHAR_CHAT_DONE"; requestId: string; error?: string }
+  | VoiceMessage
   | VTTMessage;
 
 export function isValidP2PMessage(
@@ -138,6 +140,7 @@ export function isVTTMessage(message: any): message is VTTMessage {
       "PING",
       "TOKEN_ADD_REQUEST",
       "TOKEN_MOVE",
+      "TOKEN_ROTATE",
       "TOKEN_REMOVE",
       "TOKEN_SELECT",
       "SESSION_SAVE",
@@ -177,6 +180,7 @@ export function isGuestOnlyVTTMessage(message: VTTMessage): boolean {
   return [
     "TOKEN_ADD_REQUEST",
     "TOKEN_MOVE",
+    "TOKEN_ROTATE",
     "TOKEN_REMOVE",
     "TOKEN_SELECT",
     "PING",

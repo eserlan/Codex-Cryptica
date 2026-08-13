@@ -91,11 +91,12 @@
     class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300 z-10"
   >
     <button
+      type="button"
       class="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors"
       onclick={close}
       aria-label="Close"
     >
-      <span class="icon-[heroicons--x-mark] w-5 h-5"></span>
+      <span aria-hidden="true" class="icon-[heroicons--x-mark] w-5 h-5"></span>
     </button>
 
     <h2

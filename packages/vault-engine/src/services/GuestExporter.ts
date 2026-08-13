@@ -1,4 +1,11 @@
-import { isEntityVisible, type Entity, type GuestBundle, type GuestRelationship, type Map } from "schema";
+import {
+  isEntityVisible,
+  type Entity,
+  type GuestBundle,
+  type GuestRelationship,
+  type Map,
+} from "schema";
+import { type Clock, systemClock } from "../runtime";
 
 export interface ExporterOptions {
   entities: Entity[];
@@ -9,7 +16,13 @@ export interface ExporterOptions {
   publisherVersion: string;
   maps?: Map[];
   canvases?: any[];
-  assetManifest?: Array<{ assetId: string; filename?: string; mimeType: string; hash: string }>;
+  assetManifest?: Array<{
+    assetId: string;
+    filename?: string;
+    mimeType: string;
+    hash: string;
+  }>;
+  metadata?: { description?: string; coverImage?: string };
 }
 
 export class GuestExporter {
@@ -19,7 +32,10 @@ export class GuestExporter {
    * Redacts inline links to private/excluded entities.
    * Strips out GM secrets like lore and artDirection.
    */
-  static export(options: ExporterOptions): GuestBundle {
+  static export(
+    options: ExporterOptions,
+    clock: Clock = systemClock,
+  ): GuestBundle {
     const {
       entities,
       defaultVisibility,
@@ -30,6 +46,7 @@ export class GuestExporter {
       maps = [],
       canvases = [],
       assetManifest = [],
+      metadata,
     } = options;
 
     const visibilitySettings = {
@@ -79,7 +96,7 @@ export class GuestExporter {
       .filter((m) => m.playerVisible === true)
       .map((m) => {
         const pins = (m.pins || []).filter(
-          (p) => !p.entityId || includedEntityIds.has(p.entityId)
+          (p) => !p.entityId || includedEntityIds.has(p.entityId),
         );
         return {
           ...m,
@@ -92,11 +109,11 @@ export class GuestExporter {
       .filter((c) => c.playerVisible === true)
       .map((c) => {
         const nodes = (c.nodes || []).filter(
-          (n: any) => n.type !== "entity" || includedEntityIds.has(n.entityId)
+          (n: any) => n.type !== "entity" || includedEntityIds.has(n.entityId),
         );
         const nodeIds = new Set(nodes.map((n: any) => n.id));
         const edges = (c.edges || []).filter(
-          (e: any) => nodeIds.has(e.source) && nodeIds.has(e.target)
+          (e: any) => nodeIds.has(e.source) && nodeIds.has(e.target),
         );
         return {
           ...c,
@@ -123,7 +140,7 @@ export class GuestExporter {
         sanitized.content = this.redactDanglingLinks(
           sanitized.content,
           includedEntityIds,
-          allKnownEntityIds
+          allKnownEntityIds,
         );
       }
 
@@ -134,9 +151,10 @@ export class GuestExporter {
       schemaVersion: 1,
       publishId,
       vaultTitle,
-      publishedAt: new Date().toISOString(),
+      publishedAt: new Date(clock.now()).toISOString(),
       publisherVersion,
       activeTheme: activeTheme || {},
+      metadata,
       entities: sanitizedEntities,
       relationships: guestRelationships,
       maps: guestMaps,
@@ -151,40 +169,45 @@ export class GuestExporter {
   static redactDanglingLinks(
     content: string,
     includedEntityIds: Set<string>,
-    allKnownEntityIds: Set<string>
+    allKnownEntityIds: Set<string>,
   ): string {
     if (!content) return "";
-    return content.replace(/(^|[^!])\[([^\]]*)\]\(([^)]+)\)/g, (match, prefix, text, target) => {
-      const cleanTarget = target.split("#")[0].trim();
-      let resolvedId = cleanTarget;
-      if (resolvedId.startsWith("file:///")) {
-        resolvedId = resolvedId.substring(8);
-      }
-      if (resolvedId.endsWith(".md")) {
-        resolvedId = resolvedId.substring(0, resolvedId.length - 3);
-      } else if (resolvedId.endsWith(".markdown")) {
-        resolvedId = resolvedId.substring(0, resolvedId.length - 9);
-      }
-      
-      const lastSegment = resolvedId.substring(resolvedId.lastIndexOf("/") + 1);
-
-      // Check if target points to a known entity in the vault
-      const isTargetKnownEntity =
-        allKnownEntityIds.has(resolvedId) ||
-        allKnownEntityIds.has(lastSegment) ||
-        allKnownEntityIds.has(cleanTarget);
-
-      const isTargetIncluded =
-        includedEntityIds.has(resolvedId) ||
-        includedEntityIds.has(lastSegment) ||
-        includedEntityIds.has(cleanTarget);
-
-      if (isTargetKnownEntity) {
-        if (!isTargetIncluded) {
-          return `${prefix}[Redacted]`;
+    return content.replace(
+      /(^|[^!])\[([^\]]*)\]\(([^)]+)\)/g,
+      (match, prefix, text, target) => {
+        const cleanTarget = target.split("#")[0].trim();
+        let resolvedId = cleanTarget;
+        if (resolvedId.startsWith("file:///")) {
+          resolvedId = resolvedId.substring(8);
         }
-      }
-      return match;
-    });
+        if (resolvedId.endsWith(".md")) {
+          resolvedId = resolvedId.substring(0, resolvedId.length - 3);
+        } else if (resolvedId.endsWith(".markdown")) {
+          resolvedId = resolvedId.substring(0, resolvedId.length - 9);
+        }
+
+        const lastSegment = resolvedId.substring(
+          resolvedId.lastIndexOf("/") + 1,
+        );
+
+        // Check if target points to a known entity in the vault
+        const isTargetKnownEntity =
+          allKnownEntityIds.has(resolvedId) ||
+          allKnownEntityIds.has(lastSegment) ||
+          allKnownEntityIds.has(cleanTarget);
+
+        const isTargetIncluded =
+          includedEntityIds.has(resolvedId) ||
+          includedEntityIds.has(lastSegment) ||
+          includedEntityIds.has(cleanTarget);
+
+        if (isTargetKnownEntity) {
+          if (!isTargetIncluded) {
+            return `${prefix}[Redacted]`;
+          }
+        }
+        return match;
+      },
+    );
   }
 }

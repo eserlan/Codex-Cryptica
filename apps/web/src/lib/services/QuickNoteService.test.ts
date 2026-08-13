@@ -4,11 +4,12 @@ import { entityDb } from "../utils/entity-db";
 
 describe("QuickNoteService", () => {
   let service: QuickNoteService;
+  const mockClock = { now: () => 1234567890 };
 
   beforeEach(async () => {
     // Clear our dedicated Dexie table before each unit test run
     await entityDb.quickNotes.clear();
-    service = new QuickNoteService(entityDb);
+    service = new QuickNoteService(entityDb, mockClock);
   });
 
   it("should initialize with no active notes", async () => {
@@ -21,8 +22,8 @@ describe("QuickNoteService", () => {
       vaultId: "vault-1",
       content: "This is a fleeting pirate idea",
       status: "active",
-      createdAt: Date.now(),
-    });
+      createdAt: undefined,
+    } as any);
 
     expect(id).toBeDefined();
     expect(typeof id).toBe("number");
@@ -31,6 +32,7 @@ describe("QuickNoteService", () => {
     expect(note).toBeDefined();
     expect(note?.content).toBe("This is a fleeting pirate idea");
     expect(note?.status).toBe("active");
+    expect(note?.createdAt).toBe(1234567890); // Uses injected mock clock
   });
 
   it("should filter active notes by vault and sort by createdAt descending", async () => {

@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codexcryptica.com/schemas/cif/1.0/manifest.schema.json",
+  "title": "Codex Interchange Format manifest",
+  "description": "The structural contract for a Codex Interchange Format (CIF) 1.0 manifest.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "source",
+    "world",
+    "entities",
+    "relationships",
+    "assets"
+  ],
+  "properties": {
+    "format": {
+      "const": "codex-world-interchange"
+    },
+    "version": {
+      "const": "1.0"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "world": {
+      "$ref": "#/$defs/world"
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relationship"
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "extensions": {
+      "$ref": "#/$defs/extensions"
+    }
+  },
+  "$comment": "Use cross-record validation in addition to this schema. It must enforce unique entity and asset keys, resolve parent, relationship, and media references, and verify ZIP asset paths and SHA-256 digests.",
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "uniqueItems": true
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Producer-owned namespaced extension data. Consumers must ignore unrecognized namespaces safely."
+    },
+    "recordSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "system": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "worldKey": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "exportedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "source": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/recordSource"
+        }
+      ],
+      "required": ["system"]
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "description": {
+          "type": "string"
+        },
+        "labels": {
+          "$ref": "#/$defs/stringList"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "markdownContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "body"],
+      "properties": {
+        "format": {
+          "const": "markdown"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
+    "date": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "precision"],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "precision": {
+          "enum": ["year", "month", "day"]
+        }
+      }
+    },
+    "dates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/date"
+        },
+        "end": {
+          "$ref": "#/$defs/date"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetKey"],
+      "properties": {
+        "assetKey": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "role": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "kind", "title", "content"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "content": {
+          "$ref": "#/$defs/markdownContent"
+        },
+        "labels": {
+          "$ref": "#/$defs/stringList"
+        },
+        "aliases": {
+          "$ref": "#/$defs/stringList"
+        },
+        "parent": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "dates": {
+          "$ref": "#/$defs/dates"
+        },
+        "media": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/media"
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/recordSource"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "kind"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "from": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "to": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "label": {
+          "type": "string"
+        },
+        "directed": {
+          "type": "boolean",
+          "default": true
+        },
+        "source": {
+          "$ref": "#/$defs/recordSource"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "mediaType"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "mediaType": {
+          "type": "string",
+          "pattern": "^[^/\\s]+/[^/\\s]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "source": {
+          "$ref": "#/$defs/recordSource"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["path", "sha256"]
+        },
+        {
+          "required": ["url"]
+        }
+      ]
+    }
+  }
+}

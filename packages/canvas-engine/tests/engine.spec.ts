@@ -14,6 +14,45 @@ describe("CanvasStore", () => {
     });
   });
 
+  it("adds a vault file node with its storage metadata", () => {
+    const store = new CanvasStore(undefined, {
+      idGenerator: { uuid: () => "file-id" },
+    });
+
+    const nodeId = store.addFileNode(
+      {
+        path: "files/file-id-map.pdf",
+        name: "map.pdf",
+        mimeType: "application/pdf",
+        size: 100,
+      },
+      { x: 8, y: 9 },
+    );
+
+    expect(nodeId).toBe("file-file-id");
+    expect(store.nodes).toMatchObject([
+      { id: nodeId, type: "file", file: { path: "files/file-id-map.pdf" } },
+    ]);
+  });
+
+  it("adds a text node with its content", () => {
+    const store = new CanvasStore(undefined, {
+      idGenerator: { uuid: () => "text-id" },
+    });
+
+    const nodeId = store.addTextNode("hello world", { x: 3, y: 4 });
+
+    expect(nodeId).toBe("text-text-id");
+    expect(store.nodes).toMatchObject([
+      {
+        id: nodeId,
+        type: "text",
+        position: { x: 3, y: 4 },
+        data: { text: "hello world" },
+      },
+    ]);
+  });
+
   it("should remove a node and its edges", () => {
     const store = new CanvasStore();
     const n1 = store.addNode("e1", { x: 0, y: 0 });
@@ -35,6 +74,33 @@ describe("CanvasStore", () => {
 
     expect(data.nodes).toHaveLength(1);
     expect(data.nodes[0].entityId).toBe("e1");
+  });
+
+  it("adds, loads, and exports drawings with the canvas snapshot", () => {
+    const drawing = {
+      id: "drawing-1",
+      color: "#ff00aa",
+      width: 4,
+      points: [{ x: 10, y: 20 }],
+    } as const;
+    const store = new CanvasStore({
+      nodes: [],
+      edges: [],
+      drawings: [drawing],
+    });
+
+    expect(store.drawings).toEqual([drawing]);
+    store.addDrawing({
+      ...drawing,
+      id: "drawing-2",
+      points: [{ x: 30, y: 40 }],
+    });
+    expect(store.export().drawings).toHaveLength(2);
+
+    store.removeDrawing("drawing-1");
+    expect(store.drawings).toHaveLength(1);
+    store.clearDrawings();
+    expect(store.export().drawings).toEqual([]);
   });
 
   it("should update a node's position using updateNode", () => {
@@ -116,5 +182,17 @@ describe("CanvasStore", () => {
     store.redo();
     // No-op but coverage met
     expect(true).toBe(true);
+  });
+
+  it("uses custom IdGenerator for node and edge IDs when provided", () => {
+    let count = 0;
+    const mockIdGen = { uuid: () => `deterministic-${++count}` };
+    const store = new CanvasStore(undefined, { idGenerator: mockIdGen });
+
+    const nodeId = store.addNode("e1", { x: 0, y: 0 });
+    const edgeId = store.addEdge(nodeId, "other-node");
+
+    expect(nodeId).toBe("node-deterministic-1");
+    expect(edgeId).toBe("edge-deterministic-2");
   });
 });

@@ -1,6 +1,8 @@
 export interface SessionEntity {
   id: string;
   type: string;
+  /** Vault entity sub-kind (e.g. "language" on notes), carried through saves. */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;
@@ -9,6 +11,8 @@ export interface SessionEntity {
   status: "active" | "draft";
   reuseEnabled: boolean;
   pinned: boolean;
+  /** Whether this draft is included by the session hub's selected-save action. */
+  selectedForSave?: boolean;
   createdOrder: number;
 }
 

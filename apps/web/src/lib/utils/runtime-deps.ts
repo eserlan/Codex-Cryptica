@@ -11,23 +11,12 @@ import type { StorageLike } from "$lib/stores/ui/persistence";
 
 export type { StorageLike };
 
-export interface Clock {
-  now(): number;
-}
-
-export interface IdGenerator {
-  uuid(): string;
-}
-
-/** Production clock backed by `Date`. */
-export const systemClock: Clock = {
-  now: () => Date.now(),
-};
-
-/** Production id generator backed by `crypto.randomUUID`, resolved lazily. */
-export const systemIdGenerator: IdGenerator = {
-  uuid: () => globalThis.crypto.randomUUID(),
-};
+export {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "@codex/runtime";
 
 /**
  * Production storage backed by `localStorage`, resolved lazily and SSR-safe:
@@ -57,6 +46,70 @@ export const browserStorage: StorageLike = {
       localStorage.removeItem(key);
     } catch {
       // ignore — storage unavailable
+    }
+  },
+  get length(): number {
+    if (typeof localStorage === "undefined") return 0;
+    try {
+      return localStorage.length;
+    } catch {
+      return 0;
+    }
+  },
+  key(index: number): string | null {
+    if (typeof localStorage === "undefined") return null;
+    try {
+      return localStorage.key(index);
+    } catch {
+      return null;
+    }
+  },
+};
+
+/**
+ * Production storage backed by `sessionStorage`, resolved lazily and SSR-safe:
+ * no-ops (and returns null) when `sessionStorage` is unavailable.
+ */
+export const browserSessionStorage: StorageLike = {
+  getItem(key) {
+    if (typeof sessionStorage === "undefined") return null;
+    // Access can throw (SecurityError, blocked/quota storage) — treat as absent.
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem(key, value) {
+    if (typeof sessionStorage === "undefined") return;
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // ignore — storage unavailable or quota exceeded
+    }
+  },
+  removeItem(key) {
+    if (typeof sessionStorage === "undefined") return;
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore — storage unavailable
+    }
+  },
+  get length(): number {
+    if (typeof sessionStorage === "undefined") return 0;
+    try {
+      return sessionStorage.length;
+    } catch {
+      return 0;
+    }
+  },
+  key(index: number): string | null {
+    if (typeof sessionStorage === "undefined") return null;
+    try {
+      return sessionStorage.key(index);
+    } catch {
+      return null;
     }
   },
 };

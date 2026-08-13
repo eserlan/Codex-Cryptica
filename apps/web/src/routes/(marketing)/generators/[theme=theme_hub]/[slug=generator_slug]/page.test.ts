@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { load, entries } from "./+page";
+import { entries as generatorEntries } from "../../[slug=generator_slug]/+page";
+import { VALID_HUB_THEMES } from "../../../../../params/theme_hub";
 
 describe("Themed Generator Route", () => {
   describe("load", () => {
@@ -9,6 +11,14 @@ describe("Themed Generator Route", () => {
       } as any) as any;
       expect(res.theme).toBe("lancer");
       expect(res.slug).toBe("npc");
+    });
+
+    it("loads the World Generator from a sci-fi hub", () => {
+      const res = load({
+        params: { theme: "sci-fi", slug: "world" },
+      } as any) as any;
+
+      expect(res).toEqual({ theme: "sci-fi", slug: "world" });
     });
 
     it("throws 404 for an unknown theme", () => {
@@ -29,8 +39,10 @@ describe("Themed Generator Route", () => {
   describe("entries", () => {
     it("returns a cross-product of all themes and slugs", () => {
       const res = (entries as any)();
-      // 11 themes × 17 slugs = 187 entries
-      expect(res).toHaveLength(11 * 17);
+      expect(res).toHaveLength(
+        Array.from(VALID_HUB_THEMES).length *
+          (generatorEntries as any)().length,
+      );
     });
 
     it("includes lancer + npc", () => {

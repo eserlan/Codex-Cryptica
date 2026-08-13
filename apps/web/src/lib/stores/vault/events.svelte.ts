@@ -1,6 +1,7 @@
 import { appEventBus, type AppEvent } from "@codex/events";
 import { VAULT_EVENTS } from "@codex/vault-engine";
 import type { LocalEntity } from "./types";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export type VaultEvent =
   | { type: "VAULT_OPENING"; vaultId: string }
@@ -101,7 +102,7 @@ export class VaultEventBus {
   }
 
   private bridgeToAppEventBus(event: VaultEvent) {
-    const timestamp = Date.now();
+    const timestamp = systemClock.now();
     let appEvent: AppEvent | null = null;
 
     switch (event.type) {

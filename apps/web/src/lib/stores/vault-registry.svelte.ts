@@ -3,6 +3,7 @@ import { getDB, type VaultRecord } from "../utils/idb";
 import { getOpfsRoot, createVaultDir } from "../utils/opfs";
 import { debugStore } from "./debug.svelte";
 import * as registry from "./vault/registry";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 class VaultRegistryStore {
   availableVaults = $state<VaultRecord[]>([]);
@@ -39,10 +40,10 @@ class VaultRegistryStore {
           await db.put("vaults", {
             id: "default",
             name: "Default Vault",
-            createdAt: Date.now(),
-            lastOpenedAt: Date.now(),
+            createdAt: systemClock.now(),
+            lastOpenedAt: systemClock.now(),
             entityCount: 0,
-            lastInternalChange: Date.now(),
+            lastInternalChange: systemClock.now(),
             lastSavedToFolder: 0,
           });
         }

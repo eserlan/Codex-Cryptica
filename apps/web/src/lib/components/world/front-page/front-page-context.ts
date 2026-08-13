@@ -11,7 +11,7 @@
  * by surrounding whitespace or casing.
  */
 
-import { contextRetrievalService } from "$lib/services/ai/context-retrieval.service";
+import { contextRetrievalService } from "@codex/ai-engine";
 
 /** Minimal interface matching the vault store subset used by context retrieval. */
 interface VaultLike {

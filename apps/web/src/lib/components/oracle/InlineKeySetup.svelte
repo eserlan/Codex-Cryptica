@@ -49,7 +49,7 @@
       <div class="relative">
         <input
           type={showKey ? "text" : "password"}
-          placeholder="Paste your Google Gemini API key..."
+          placeholder="Paste your OpenAI/Luna API key..."
           class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary rounded-lg px-4 py-3 text-sm text-theme-text outline-none pr-12 font-mono transition-all shadow-inner"
           bind:value={inputKey}
           onkeydown={(e) => e.key === "Enter" && handleSave()}
@@ -61,9 +61,10 @@
           aria-label="{showKey ? 'Hide' : 'Show'} API Key"
         >
           {#if showKey}
-            <span class="icon-[lucide--eye-off] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--eye-off] w-4 h-4"
+            ></span>
           {:else}
-            <span class="icon-[lucide--eye] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--eye] w-4 h-4"></span>
           {/if}
         </button>
       </div>

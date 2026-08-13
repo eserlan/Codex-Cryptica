@@ -1,13 +1,17 @@
 import TurndownService from "turndown";
 export * from "./utils/validation";
 
+let sharedTurndownService: TurndownService | null = null;
+
 export function htmlToMarkdown(html: string): string {
-  const turndownService = new TurndownService({
-    headingStyle: "atx",
-    codeBlockStyle: "fenced",
-    emDelimiter: "*",
-  });
-  return turndownService.turndown(html);
+  if (!sharedTurndownService) {
+    sharedTurndownService = new TurndownService({
+      headingStyle: "atx",
+      codeBlockStyle: "fenced",
+      emDelimiter: "*",
+    });
+  }
+  return sharedTurndownService.turndown(html);
 }
 
 import type { DiscoveredEntity } from "./types";

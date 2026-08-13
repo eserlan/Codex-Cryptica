@@ -25,6 +25,12 @@ export interface P2PClientTransport {
   readonly connected: boolean;
 
   /**
+   * Underlying realtime peer (e.g. the PeerJS Peer) for media calls.
+   * Undefined/null when the transport has no media-capable peer.
+   */
+  readonly rawPeer?: unknown;
+
+  /**
    * Connects to a remote host.
    * @param hostId The Peer ID of the host.
    */

@@ -4,8 +4,10 @@
   import { page } from "$app/state";
   import { PATREON_URL } from "$lib/config";
   import VaultControls from "$lib/components/VaultControls.svelte";
+  import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
   let { isOpen = $bindable(false) } = $props();
 
@@ -66,17 +68,29 @@
         MENU
       </h2>
       <button
+        type="button"
         bind:this={closeButton}
         onclick={close}
         class="p-3 text-theme-muted hover:text-theme-primary transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Close menu"
       >
-        <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[heroicons--x-mark] w-6 h-6"
+        ></span>
       </button>
     </div>
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+      <!-- Mode -->
+      <div class="flex flex-col gap-2">
+        <h3
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
+        >
+          Mode
+        </h3>
+        <GuidedModeToggle />
+      </div>
+
       <!-- Main Navigation -->
       <div class="flex flex-col gap-2">
         <h3
@@ -215,6 +229,16 @@
           <span class="icon-[lucide--newspaper] w-4 h-4"></span>
           Blog
         </a>
+        {#if !guidedModeStore.isGuidedMode}
+          <a
+            href="{base}/worlds"
+            class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
+            onclick={close}
+          >
+            <span class="icon-[lucide--compass] w-4 h-4"></span>
+            Explore Worlds
+          </a>
+        {/if}
         <a
           href="{base}/responsible-ai-worldbuilding"
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GeneratedDraft } from "generator-engine";
   import type { Category } from "schema";
+  import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
   import { renderMarkdown } from "$lib/utils/markdown";
 
   interface Props {
@@ -11,6 +12,12 @@
     onback: () => void;
     /** When true, show the relationship creation toggle (contextual launch). */
     showRelationshipToggle?: boolean;
+    themeId?: string;
+    /** Label for the back button — "Customize" when the draft was generated
+     * immediately from a Guided Mode intent (#1909, FR-010). */
+    backLabel?: string;
+    /** Open Plot Twist seeded from a quest-hook draft. */
+    onGeneratePlotTwist?: () => void;
   }
 
   let {
@@ -20,6 +27,9 @@
     onsave,
     onback,
     showRelationshipToggle = false,
+    themeId = "workspace",
+    backLabel = "Back",
+    onGeneratePlotTwist,
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -55,6 +65,20 @@
     Review the draft below, then open in the editor to accept or discard.
   </p>
 
+  {#if draft.primaryLanguageTitle}
+    <div
+      class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
+      data-testid="primary-language-context"
+    >
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--languages] h-4 w-4 text-chrome-accent"
+      ></span>
+      <span class="text-chrome-muted">Naming language:</span>
+      <strong>{draft.primaryLanguageTitle}</strong>
+    </div>
+  {/if}
+
   <div class="flex flex-col gap-1">
     <label
       for="draft-title"
@@ -86,7 +110,11 @@
       class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
     >
       {#each categories as cat (cat.id)}
-        <option value={cat.id}>{cat.label}</option>
+        <option value={cat.id}>
+          {draft.sourceGeneratorId === "dungeon" && cat.id === "location"
+            ? getDelveLocationTypeLabel(themeId)
+            : cat.label}
+        </option>
       {/each}
     </select>
   </div>
@@ -113,7 +141,7 @@
       <span
         class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
       >
-        Content
+        Summary
       </span>
       <div
         class="draft-preview max-h-32 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
@@ -124,15 +152,31 @@
     </div>
   {/if}
 
+  {#if draft.content}
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Content
+      </span>
+      <div
+        class="draft-preview min-h-48 max-h-80 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
+      >
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        {@html renderMarkdown(draft.content)}
+      </div>
+    </div>
+  {/if}
+
   {#if draft.lore}
     <div class="flex flex-col gap-1">
       <span
         class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
       >
-        Lore
+        GM Reference
       </span>
       <div
-        class="draft-preview min-h-48 md:min-h-80 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
+        class="draft-preview min-h-48 max-h-64 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
       >
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html renderMarkdown(draft.lore)}
@@ -174,22 +218,39 @@
     </label>
   {/if}
 
-  <div class="flex justify-between gap-2 border-t border-chrome-border pt-4">
+  <div
+    class="flex flex-wrap justify-between gap-2 border-t border-chrome-border pt-4"
+  >
     <button
       type="button"
       onclick={onback}
       {disabled}
       class="px-4 py-2 border border-chrome-border rounded-lg text-xs font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors disabled:opacity-50"
     >
-      Back
+      {backLabel}
     </button>
-    <button
-      type="submit"
-      disabled={saving}
-      class="px-5 py-2 bg-chrome-accent text-chrome-surface font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-    >
-      {saving ? "Opening…" : "Open in Editor"}
-    </button>
+    <div class="flex flex-wrap justify-end gap-2">
+      {#if onGeneratePlotTwist}
+        <button
+          type="button"
+          onclick={onGeneratePlotTwist}
+          disabled={saving}
+          class="inline-flex items-center gap-2 rounded-lg border border-chrome-accent/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-chrome-accent transition-colors hover:bg-chrome-accent/10 disabled:pointer-events-none disabled:opacity-50"
+          data-testid="generate-plot-twist-from-quest"
+        >
+          <span aria-hidden="true" class="icon-[lucide--shuffle] h-3.5 w-3.5"
+          ></span>
+          Generate Plot Twist
+        </button>
+      {/if}
+      <button
+        type="submit"
+        disabled={saving}
+        class="rounded-lg bg-chrome-accent px-5 py-2 text-xs font-bold uppercase tracking-wider text-chrome-surface transition-all hover:brightness-110 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+      >
+        {saving ? "Opening…" : "Open in Editor"}
+      </button>
+    </div>
   </div>
 </form>
 

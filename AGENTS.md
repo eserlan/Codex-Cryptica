@@ -6,6 +6,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 - The Speckit command definitions in [`.gemini/commands`](./.gemini/commands) are the canonical command source for this repo.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
+- Codex review is available through [`.codex/commands/code-review.md`](./.codex/commands/code-review.md) and [`.codex/skills/codex-review/SKILL.md`](./.codex/skills/codex-review/SKILL.md); the extended canonical review patterns remain in [`.agent/skills/codex-review`](./.agent/skills/codex-review).
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
@@ -53,11 +54,36 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/137-standalone-generator-session-hub/plan.md).
+shell commands, and other important information, read the [current plan](./specs/156-entity-shelf/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
+- N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
+
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `fflate` archive parsing, `@codex/vault-engine`, Svelte 5, existing notification confirmation UI (1826-vault-file-import)
+- Browser-local OPFS vault directories and IndexedDB-backed vault registry; no new persistence format (1826-vault-file-import)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
+
+- TypeScript 6.0.3 + `schema` workspace types, existing `map-engine`, Svelte 5 (1661-extract-vtt-domain)
+- No storage changes; browser persistence remains in `apps/web` (1661-extract-vtt-domain)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + `marked` (extended with custom directive/field-ref tokenizers), `zod`, `@codex/stat-sheet-engine` (152-stat-sheet-templates)
+- New IndexedDB store `stat_sheet_presentation_templates`; schema default + entity override stored alongside existing Stat Sheet association (152-stat-sheet-templates)
+- Diverged from plan.md: no `DOMPurify` dependency — safety comes from the parser only ever emitting an allowlisted `PresentationAst` (never raw HTML/`{@html}`), not from sanitizing HTML strings (152-stat-sheet-templates)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing Cloudflare Worker runtime/wrangler, Cloudflare R2, Svelte 5, Tailwind 4 semantic tokens, Iconify utility classes, existing `schema` and `@codex/vault-engine` packages (139-public-world-directory)
+- Cloudflare R2 bucket (`codex-cryptica-statics`) for public listing records; existing R2 guest snapshot bundle/assets from `135-guest-vault-r2`; browser IndexedDB for local publish registry (139-public-world-directory)
 
 - TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, existing layout UI (133-entity-explorer-layout)
 - Existing browser-local sidebar-open and active-tool preferences; no new (133-entity-explorer-layout)

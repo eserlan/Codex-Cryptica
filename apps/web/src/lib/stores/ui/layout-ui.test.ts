@@ -8,7 +8,11 @@ import {
   MIN_RIGHT_SIDEBAR_WIDTH,
   type UIViewport,
 } from "./layout-ui.svelte";
-import { UIPersistence, type StorageLike } from "./persistence";
+import {
+  UIPersistence,
+  UI_STORAGE_KEYS,
+  type StorageLike,
+} from "./persistence";
 
 function storage(initial: Record<string, string> = {}) {
   const values = { ...initial };
@@ -123,6 +127,34 @@ describe("LayoutUIStore", () => {
     expect(store.isMobile).toBe(false);
     fakeViewport.emit("(max-width: 768px)", true);
     expect(store.isMobile).toBe(true);
+  });
+
+  it("tracks tablet-range and coarse-pointer media queries (#1785)", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    expect(store.isTablet).toBe(false);
+    expect(store.isTouch).toBe(false);
+    expect(store.prefersTouchCoaching).toBe(false);
+
+    fakeViewport.emit("(min-width: 769px) and (max-width: 1279px)", true);
+    expect(store.isTablet).toBe(true);
+    // Tablet alone (mouse) should not trigger touch coaching.
+    expect(store.prefersTouchCoaching).toBe(false);
+
+    fakeViewport.emit("(pointer: coarse)", true);
+    expect(store.isTouch).toBe(true);
+    // Touch + tablet => coaching on.
+    expect(store.prefersTouchCoaching).toBe(true);
+  });
+
+  it("prefers touch coaching on phones regardless of tablet range (#1785)", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    fakeViewport.emit("(max-width: 768px)", true);
+    expect(store.isMobile).toBe(true);
+    expect(store.prefersTouchCoaching).toBe(true);
   });
 
   it("tracks wide viewport media query changes and derives Explorer workspace eligibility", () => {
@@ -255,5 +287,57 @@ describe("LayoutUIStore", () => {
 
     expect(store.leftSidebarOpen).toBe(true);
     expect(store.activeSidebarTool).toBe("oracle");
+  });
+
+  it("supports shelf as a persisted sidebar tool", () => {
+    const backing = storage({
+      codex_left_sidebar_open: "true",
+      codex_active_sidebar_tool: "shelf",
+    });
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: backing.storage }),
+      null,
+    );
+
+    expect(store.leftSidebarOpen).toBe(true);
+    expect(store.activeSidebarTool).toBe("shelf");
+  });
+
+  it("closes leftSidebarOpen on load and persists false if activeSidebarTool is none", () => {
+    const backing = storage({
+      codex_left_sidebar_open: "true",
+      codex_active_sidebar_tool: "none",
+    });
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: backing.storage }),
+      null,
+    );
+
+    expect(store.leftSidebarOpen).toBe(false);
+    expect(store.activeSidebarTool).toBe("none");
+    expect(backing.storage.setItem).toHaveBeenCalledWith(
+      "codex_left_sidebar_open",
+      "false",
+    );
+  });
+
+  it("defaults autoFullscreen to true and persists changes via setAutoFullscreen", () => {
+    const { storage: memStorage, values } = storage();
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: memStorage }),
+      viewport().viewport,
+    );
+
+    expect(store.autoFullscreen).toBe(true);
+
+    store.setAutoFullscreen(false);
+    expect(store.autoFullscreen).toBe(false);
+    expect(values[UI_STORAGE_KEYS.AUTO_FULLSCREEN]).toBe("false");
+
+    const reloaded = new LayoutUIStore(
+      new UIPersistence({ storage: memStorage }),
+      viewport().viewport,
+    );
+    expect(reloaded.autoFullscreen).toBe(false);
   });
 });

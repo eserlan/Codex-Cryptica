@@ -62,13 +62,22 @@ export class VaultHandler extends BaseHandler {
     const displayName = normalizeGuestName(payload?.displayName, peerId);
     const currentRoster = guestStore.guestRoster as Record<string, any>;
 
-    const hasDuplicateName = Object.values(currentRoster).some(
-      (guest: any) =>
-        guest.peerId !== peerId &&
-        guest.displayName.localeCompare(displayName, undefined, {
-          sensitivity: "base",
-        }) === 0,
-    );
+    // ⚡ Bolt Optimization: Loop over keys instead of Object.values() to avoid array allocation
+    let hasDuplicateName = false;
+    for (const key in currentRoster) {
+      if (Object.prototype.hasOwnProperty.call(currentRoster, key)) {
+        const guest = currentRoster[key];
+        if (
+          guest.peerId !== peerId &&
+          guest.displayName.localeCompare(displayName, undefined, {
+            sensitivity: "base",
+          }) === 0
+        ) {
+          hasDuplicateName = true;
+          break;
+        }
+      }
+    }
 
     if (hasDuplicateName) {
       conn.send({
@@ -109,20 +118,22 @@ export class VaultHandler extends BaseHandler {
     conn: P2PConnection,
     context: P2PHandlerContext,
   ) {
-    const roster = Object.values(
-      context.guestStore.guestRoster as Record<string, any>,
-    );
-    for (const guest of roster as any[]) {
-      conn.send({
-        type: "GUEST_STATUS",
-        payload: {
-          peerId: guest.peerId,
-          displayName: guest.displayName,
-          status: guest.status,
-          currentEntityId: guest.currentEntityId,
-          currentEntityTitle: guest.currentEntityTitle,
-        },
-      });
+    const roster = context.guestStore.guestRoster as Record<string, any>;
+    // ⚡ Bolt Optimization: Loop over keys instead of Object.values() array allocation
+    for (const key in roster) {
+      if (Object.prototype.hasOwnProperty.call(roster, key)) {
+        const guest = roster[key];
+        conn.send({
+          type: "GUEST_STATUS",
+          payload: {
+            peerId: guest.peerId,
+            displayName: guest.displayName,
+            status: guest.status,
+            currentEntityId: guest.currentEntityId,
+            currentEntityTitle: guest.currentEntityTitle,
+          },
+        });
+      }
     }
   }
 

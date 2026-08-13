@@ -8,6 +8,11 @@ import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 function resolveGuestCharacterId(
   username: string | null | undefined,
@@ -15,7 +20,9 @@ function resolveGuestCharacterId(
 ): string | null {
   if (!username?.trim()) return null;
   const name = username.trim().toLowerCase();
-  for (const entity of Object.values(entities)) {
+  // ⚡ Bolt Optimization: Use imperative loop over keys instead of Object.values() array allocation
+  for (const id in entities) {
+    const entity = entities[id];
     if (entity.type !== "character") continue;
     if (entity.title?.toLowerCase() === name) return entity.id;
     if (entity.aliases?.some((a: string) => a.toLowerCase() === name))
@@ -42,7 +49,10 @@ export class GuestChatStore {
     this.showChatModal = true;
   }
 
-  constructor() {
+  private idGenerator: IdGenerator;
+
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
     if (typeof window !== "undefined") {
       void this.init();
     }
@@ -54,7 +64,10 @@ export class GuestChatStore {
       const all = await db.getAll("guest_chat_transcripts");
       const recordMap: Record<string, GuestChatTranscript> = {};
       for (const transcript of all) {
-        recordMap[transcript.characterId] = transcript;
+        const existing = recordMap[transcript.characterId];
+        if (!existing || transcript.lastUpdated > existing.lastUpdated) {
+          recordMap[transcript.characterId] = transcript;
+        }
       }
       this.transcripts = recordMap;
     } catch (err) {
@@ -65,20 +78,78 @@ export class GuestChatStore {
     }
   }
 
-  async startChat(characterId: string, characterTitle: string) {
+  // All locally-saved sessions for a character (host "try it yourself"
+  // chats), newest first, so a previous conversation can be resumed instead
+  // of always starting over.
+  async listSessions(characterId: string): Promise<GuestChatTranscript[]> {
+    const db = await getDB();
+    const sessions = await db.getAllFromIndex(
+      "guest_chat_transcripts",
+      "by-character",
+      characterId,
+    );
+    return sessions.sort((a, b) => b.lastUpdated - a.lastUpdated);
+  }
+
+  async resumeSession(characterId: string, transcriptId: string) {
+    const db = await getDB();
+    const transcript = await db.get("guest_chat_transcripts", transcriptId);
+    if (transcript && transcript.characterId === characterId) {
+      this.transcripts[characterId] = transcript;
+      this.activeCharacterId = characterId;
+    }
+  }
+
+  // Unlike startChat (which resumes the character's one "current" session
+  // if it exists), this always begins a fresh session and leaves any prior
+  // ones in place so they can be resumed later via listSessions/resumeSession.
+  async startNewSession(
+    characterId: string,
+    characterTitle: string,
+    speakerCharacterId?: string,
+  ) {
+    this.activeCharacterId = characterId;
+
+    const guestId = p2pGuestService.peerId || "guest-local";
+    const guestName = sessionModeStore.guestUsername || "Invited Guest";
+    const transcript: GuestChatTranscript = {
+      id: this.idGenerator.uuid(),
+      guestId,
+      guestName,
+      speakerCharacterId,
+      characterId,
+      characterTitle,
+      messages: [],
+      lastUpdated: systemClock.now(),
+    };
+
+    this.transcripts[characterId] = transcript;
+
+    const db = await getDB();
+    await db.put("guest_chat_transcripts", $state.snapshot(transcript));
+    this.syncTranscript(transcript);
+    return transcript;
+  }
+
+  async startChat(
+    characterId: string,
+    characterTitle: string,
+    speakerCharacterId?: string,
+  ) {
     this.activeCharacterId = characterId;
 
     if (!this.transcripts[characterId]) {
       const guestId = p2pGuestService.peerId || "guest-local";
       const guestName = sessionModeStore.guestUsername || "Invited Guest";
       const transcript: GuestChatTranscript = {
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         guestId,
         guestName,
+        speakerCharacterId,
         characterId,
         characterTitle,
         messages: [],
-        lastUpdated: Date.now(),
+        lastUpdated: systemClock.now(),
       };
 
       this.transcripts[characterId] = transcript;
@@ -102,14 +173,14 @@ export class GuestChatStore {
     if (!transcript) return;
 
     const userMsg: GuestChatMessage = {
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       role: "user",
       content: content.trim(),
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
 
     transcript.messages.push(userMsg);
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
 
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
@@ -117,7 +188,7 @@ export class GuestChatStore {
 
     this.isGenerating = true;
 
-    if (p2pGuestService.connected) {
+    if (vault.isGuest && p2pGuestService.connected) {
       await this.sendMessageViaHost(characterId, content.trim(), transcript);
     } else {
       await this.sendMessageLocally(characterId, content.trim(), transcript);
@@ -129,17 +200,17 @@ export class GuestChatStore {
     query: string,
     transcript: GuestChatTranscript,
   ) {
-    const assistantMsgId = crypto.randomUUID();
+    const assistantMsgId = this.idGenerator.uuid();
     const assistantMsg: GuestChatMessage = {
       id: assistantMsgId,
       role: "assistant",
       content: "",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     transcript.messages.push(assistantMsg);
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
 
-    const requestId = crypto.randomUUID();
+    const requestId = this.idGenerator.uuid();
     this.pendingRequests.set(requestId, { characterId, assistantMsgId });
 
     const history = transcript.messages
@@ -175,7 +246,7 @@ export class GuestChatStore {
     );
     if (msg) {
       msg.content = partial;
-      transcript.lastUpdated = Date.now();
+      transcript.lastUpdated = systemClock.now();
     }
   }
 
@@ -195,7 +266,7 @@ export class GuestChatStore {
       if (msg) msg.content = `❌ ${error}`;
     }
 
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
     this.syncTranscript(transcript);
@@ -225,10 +296,10 @@ export class GuestChatStore {
             id: msg.id,
             role: msg.role === "assistant" ? "assistant" : "user",
             content: msg.content || "",
-            timestamp: msg.timestamp || Date.now(),
+            timestamp: msg.timestamp ?? systemClock.now(),
           };
           transcript.messages.push(newMsg);
-          transcript.lastUpdated = Date.now();
+          transcript.lastUpdated = systemClock.now();
           const localDb = await getDB();
           await localDb.put(
             "guest_chat_transcripts",
@@ -241,7 +312,7 @@ export class GuestChatStore {
             if (existing) {
               if (updates.content !== undefined)
                 existing.content = updates.content;
-              transcript.lastUpdated = Date.now();
+              transcript.lastUpdated = systemClock.now();
               if (persist) {
                 const localDb = await getDB();
                 await localDb.put(
@@ -266,9 +337,9 @@ export class GuestChatStore {
             id: m.id,
             role: m.role === "assistant" ? "assistant" : "user",
             content: m.content,
-            timestamp: m.timestamp || Date.now(),
+            timestamp: m.timestamp ?? systemClock.now(),
           }));
-          transcript.lastUpdated = Date.now();
+          transcript.lastUpdated = systemClock.now();
           const localDb = await getDB();
           await localDb.put(
             "guest_chat_transcripts",
@@ -335,10 +406,12 @@ export class GuestChatStore {
         },
       } as any;
 
-      const guestCharacterId = resolveGuestCharacterId(
-        sessionModeStore.guestUsername,
-        vault.entities,
-      );
+      const guestCharacterId = vault.isGuest
+        ? resolveGuestCharacterId(
+            sessionModeStore.guestUsername,
+            vault.entities,
+          )
+        : transcript.speakerCharacterId;
 
       await oracle.executor.execute(
         {
@@ -357,12 +430,15 @@ export class GuestChatStore {
     }
   }
 
-  async clearTranscript(characterId: string) {
+  async clearTranscript(characterId: string, speakerCharacterId?: string) {
     const transcript = this.transcripts[characterId];
     if (!transcript) return;
 
     transcript.messages = [];
-    transcript.lastUpdated = Date.now();
+    if (speakerCharacterId !== undefined) {
+      transcript.speakerCharacterId = speakerCharacterId || undefined;
+    }
+    transcript.lastUpdated = systemClock.now();
 
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
@@ -379,7 +455,7 @@ export class GuestChatStore {
     const msg = transcript.messages.find((m) => m.id === messageId);
     if (msg) {
       msg.content = newContent.trim();
-      transcript.lastUpdated = Date.now();
+      transcript.lastUpdated = systemClock.now();
       const db = await getDB();
       await db.put("guest_chat_transcripts", $state.snapshot(transcript));
       this.syncTranscript(transcript);
@@ -390,7 +466,7 @@ export class GuestChatStore {
     const transcript = this.transcripts[characterId];
     if (!transcript) return;
     transcript.messages = transcript.messages.filter((m) => m.id !== messageId);
-    transcript.lastUpdated = Date.now();
+    transcript.lastUpdated = systemClock.now();
     const db = await getDB();
     await db.put("guest_chat_transcripts", $state.snapshot(transcript));
     this.syncTranscript(transcript);
@@ -398,6 +474,7 @@ export class GuestChatStore {
 
   syncTranscript(transcript: GuestChatTranscript) {
     if (
+      vault.isGuest &&
       p2pGuestService.connected &&
       transcript.messages.length > 0 &&
       p2pGuestService.sendToHost

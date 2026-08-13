@@ -1,22 +1,24 @@
 import { describe, it, expect } from "vitest";
+import { StylingTemplateSchema } from "./theme";
 import {
   THEMES,
   DEFAULT_THEME,
   WORKSPACE_DARK,
   FANTASY_DARK,
+  PIRATE_DARK,
   MODERN_DARK,
   SCIFI_LIGHT,
   CYBERPUNK_LIGHT,
   APOCALYPTIC_LIGHT,
   HORROR_LIGHT,
+  COSMIC_HORROR_LIGHT,
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
   LANCER_LIGHT,
   WESTERN_DARK,
   SPACE_OPERA_RESISTANCE_DARK,
-  StylingTemplateSchema,
-} from "./theme";
+} from "./theme-templates";
 
 describe("Theme Schema & Definitions", () => {
   it("defines the workspace and workspace_dark themes", () => {
@@ -49,15 +51,41 @@ describe("Theme Schema & Definitions", () => {
     expect(fantasy.graph.edgeWidth).toBeLessThanOrEqual(2); // Reduced from 3
   });
 
-  it("defines light and dark counterparts for all 11 world themes", () => {
+  it("defines the Pirate light and dark themes with nautical contrast tokens", () => {
+    expect(THEMES.pirate.id).toBe("pirate");
+    expect(PIRATE_DARK.id).toBe("pirate_dark");
+    expect(THEMES.pirate.tokens.primary).toBe("#164e63");
+    expect(PIRATE_DARK.tokens.accent).toBe("#d0a456");
+    expect(() => StylingTemplateSchema.parse(THEMES.pirate)).not.toThrow();
+    expect(() => StylingTemplateSchema.parse(PIRATE_DARK)).not.toThrow();
+  });
+
+  it("defines HORROR_LIGHT as an Archival Dossier in cold aged ivory, charcoal, and oxblood", () => {
+    expect(HORROR_LIGHT.id).toBe("horror_light");
+    expect(HORROR_LIGHT.name).toBe("Archival Dossier");
+    expect(HORROR_LIGHT.tokens.primary).toBe("#801414");
+    expect(HORROR_LIGHT.tokens.accent).toBe("#801414");
+    expect(HORROR_LIGHT.tokens.background).toBe("#e4dfd5");
+    expect(HORROR_LIGHT.tokens.text).toBe("#1c1917");
+    expect(HORROR_LIGHT.tokens.secondary).toBe("#4a4543");
+    expect(HORROR_LIGHT.tokens.borderRadius).toBe("0px");
+    expect(() => StylingTemplateSchema.parse(HORROR_LIGHT)).not.toThrow();
+  });
+
+  it("defines light and dark counterparts for all world themes", () => {
     const counterparts: Record<string, { light: any; dark: any }> = {
       workspace: { light: THEMES.workspace, dark: WORKSPACE_DARK },
       scifi: { light: SCIFI_LIGHT, dark: THEMES.scifi },
       fantasy: { light: THEMES.fantasy, dark: FANTASY_DARK },
+      pirate: { light: THEMES.pirate, dark: PIRATE_DARK },
       modern: { light: THEMES.modern, dark: MODERN_DARK },
       cyberpunk: { light: CYBERPUNK_LIGHT, dark: THEMES.cyberpunk },
       apocalyptic: { light: APOCALYPTIC_LIGHT, dark: THEMES.apocalyptic },
       horror: { light: HORROR_LIGHT, dark: THEMES.horror },
+      cosmic_horror: {
+        light: COSMIC_HORROR_LIGHT,
+        dark: THEMES.cosmic_horror,
+      },
       fallout: { light: FALLOUT_LIGHT, dark: THEMES.fallout },
       starwars: { light: STARWARS_LIGHT, dark: THEMES.starwars },
       startrek: { light: STARTREK_LIGHT, dark: THEMES.startrek },
@@ -72,6 +100,7 @@ describe("Theme Schema & Definitions", () => {
       const expectedLightId =
         key === "workspace" ||
         key === "fantasy" ||
+        key === "pirate" ||
         key === "modern" ||
         key === "western"
           ? key
@@ -79,6 +108,7 @@ describe("Theme Schema & Definitions", () => {
       const expectedDarkId =
         key === "workspace" ||
         key === "fantasy" ||
+        key === "pirate" ||
         key === "modern" ||
         key === "western"
           ? `${key}_dark`
@@ -99,6 +129,8 @@ describe("Theme Schema & Definitions", () => {
   it("assigns the correct SVG textures to the target themes", () => {
     const expectedTextures: Record<string, string> = {
       workspace: "workspace_grain.svg",
+      pirate: "nautical_chart.svg",
+      pirate_dark: "harbour_night.svg",
       workspace_dark: "workspace_grain.svg",
       scifi: "scifi_grid.svg",
       // scifi_light ("Starship Bridge", #1456) intentionally has no texture —
@@ -114,12 +146,16 @@ describe("Theme Schema & Definitions", () => {
       "space-opera-resistance": "resistance_console.svg",
       "space-opera-resistance_dark": "resistance_console.svg",
       horror_light: "autopsy_smudge.svg",
+      cosmic_horror: "eldritch_cartography.svg",
+      cosmic_horror_light: "eldritch_cartography.svg",
       fallout_light: "vault_blueprint.svg",
     };
 
     const themesMap: Record<string, any> = {
       workspace: THEMES.workspace,
       workspace_dark: WORKSPACE_DARK,
+      pirate: THEMES.pirate,
+      pirate_dark: PIRATE_DARK,
       scifi: THEMES.scifi,
       modern: THEMES.modern,
       modern_dark: MODERN_DARK,
@@ -132,6 +168,8 @@ describe("Theme Schema & Definitions", () => {
       "space-opera-resistance": THEMES["space-opera-resistance"],
       "space-opera-resistance_dark": SPACE_OPERA_RESISTANCE_DARK,
       horror_light: HORROR_LIGHT,
+      cosmic_horror: THEMES.cosmic_horror,
+      cosmic_horror_light: COSMIC_HORROR_LIGHT,
       fallout_light: FALLOUT_LIGHT,
     };
 

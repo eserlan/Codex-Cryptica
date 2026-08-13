@@ -2,11 +2,16 @@
 
 How to add a new world theme to Codex Cryptica.
 
+> A theme is more than a colour palette. If it has a public generator hub, it
+> must provide its own generator choices and generated vocabulary for every
+> generator advertised by that hub. Never present a new theme while silently
+> selecting a different genre's data as its default.
+
 ---
 
 ## Overview
 
-Each theme is a `StylingTemplate` object with four parts:
+Each visual theme is a `StylingTemplate` object with four parts:
 
 | Field                       | Purpose                                               |
 | --------------------------- | ----------------------------------------------------- |
@@ -21,6 +26,24 @@ Every theme ships as **two variants**: a primary mode and an alternate mode. Whi
 - **Light-primary themes** (workspace, fantasy, modern): the light variant lives in `THEMES`, the dark variant is a named export with `_dark` suffix.
 
 The `ThemeStore` in `apps/web/src/lib/stores/theme.svelte.ts` picks the right variant at runtime based on the user's app appearance setting (light/dark/system).
+
+## Decide the scope before writing code
+
+Write down which of these the new theme includes. A visual-only theme stops at
+the first section below. A public generator theme must complete every relevant
+section.
+
+| Scope                | What it includes                                                                  | What it must not imply                         |
+| -------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Visual theme         | App palette, graph treatment, jargon, art direction, and both appearance variants | A generator genre or public hub                |
+| Generator genre      | Dedicated selectable options and local-generation vocabulary                      | A public hub unless one is intentionally added |
+| Public generator hub | A landing page that advertises a selected set of generators under the theme       | Support from a nearest or similar genre        |
+
+For a public hub, list its generator cards first. That list is the support
+contract: every listed card needs a dedicated theme entry or must be removed
+from the hub. Do not use a related genre as an undocumented fallback. If a
+fallback is genuinely intended, document it in the hub copy and in the mapping
+table, then add a test for it.
 
 ---
 
@@ -84,7 +107,7 @@ Override only what fits the theme. Anything not specified falls back to `DEFAULT
 
 ### 4. Add the primary variant to `THEMES`
 
-In `packages/schema/src/theme.ts`, add your theme to the `THEMES` object:
+In `packages/schema/src/theme-templates.ts`, add your theme to the `THEMES` object:
 
 ```ts
 export const THEMES = {
@@ -127,28 +150,53 @@ In `apps/web/src/lib/stores/theme.svelte.ts`:
 
 ### 7. Add art direction
 
-In `packages/schema/src/art-direction.ts`, add an entry to `THEME_ART_DIRECTION_DEFAULTS`. This controls the AI image generation style when the theme is active:
+In `packages/schema/src/art-direction-catalogue.ts`, add an `ArtTheme` entry to
+`ART_THEMES`. It controls the AI image-generation direction for the active
+theme. Define its medium, palette, lighting, craft and terrain materials, and
+the name-free fallback. The catalogue derives `THEME_ALIASES` from the entry's
+`aliases` field, so include common forms such as `"my-theme"` and `"my_theme"`
+there instead of maintaining a separate alias map.
 
-```ts
-const mytheme: ArtDirectionTemplate = {
-  id: "theme.mytheme",
-  label: "My Theme Default",
-  source: "theme-default",
-  template: "{subject}. [Art style description — medium, palette, mood, texture].",
-};
+### 8. Register a generator genre (when the theme has generators)
 
-// Then in THEME_ART_DIRECTION_DEFAULTS:
-mytheme: {
-  id: "theme.mytheme",
-  label: "My Theme Default",
-  source: "theme-default",
-  template: mytheme.template,
-},
-```
+Use one canonical display label, such as `"Cosmic Horror"`, everywhere the
+same theme is selectable. Add its own option arrays and local-generation
+tables—do not reuse a neighbouring genre's arrays just because the moods
+overlap.
 
-If the theme has common name aliases (e.g. `"my-theme"`, `"my_theme"`), add them to `THEME_ALIASES` so art direction resolves correctly.
+At minimum, inspect the generator configuration for every card the proposed
+hub will show:
 
-### 8. Update tests
+| Hub card                                 | Generator data to review                                                                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| NPC                                      | `public-npc-constants.ts` and the local prompt voice/data in `public-npc.ts`                                                 |
+| Faction                                  | `public-faction-constants.ts` and local faction prompt data                                                                  |
+| Quest                                    | `public-quest.ts`: genre mapping, tone, scope, locations, threats, rewards, and any theme-specific twists                    |
+| Name                                     | `public-names-constants.ts` and the form's culture/default mapping                                                           |
+| Settlement                               | `public-settlement-constants.ts`: size, environment, function, tone, tension, authority, locations, factions, and name parts |
+| Dungeon                                  | A new dedicated file under `dungeon/genres/`, registered in `dungeon/genres/index.ts`                                        |
+| Adventure                                | A new dedicated file under `adventure/genres/`, registered in `adventure/genres/index.ts`                                    |
+| Social hub, nation, news sheet, language | The corresponding public generator's genres, option lists, and prompt hints                                                  |
+
+The selector must show the new label, and arriving from its hub must select it
+by default. An unfamiliar label that falls through to `Fantasy`, `Horror`, or
+another established genre is a defect, even if generation still succeeds.
+
+### 9. Add or extend the public hub (when promised)
+
+1. Add the hub configuration in
+   `apps/web/src/routes/(marketing)/generators/[theme=theme_hub]/+page.svelte`.
+   Make each card's copy truthful to the generator support it has.
+2. Add the hub slug, generator label, visible hub label, stored visual theme id,
+   and social-hub mapping (when applicable) in
+   `apps/web/src/lib/components/seo/generator-theme-maps.ts`.
+3. Add the visual theme mapping in
+   `apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`, so pages opened
+   from the hub preserve the theme rather than defaulting to Workspace.
+4. Add the hub to public discovery surfaces only after its listed generator
+   contract is complete.
+
+### 10. Update tests
 
 In `packages/schema/src/theme.test.ts`, add the theme pair to the counterparts record in the "defines light and dark counterparts" test:
 
@@ -157,6 +205,12 @@ mytheme: { light: MYTHEME_LIGHT, dark: THEMES.mytheme },
 ```
 
 Run tests: `cd packages/schema && bun run test`
+
+For generator themes, add focused tests that prove the label is selectable and
+that every displayed option comes from its own data. Include a negative
+assertion where it is meaningful: for example, the Cosmic Horror default must
+not resolve to a Fantasy or Vampire/Gothic Noir table. Keep the cross-generator
+coverage test current so a newly selectable theme cannot silently fall back.
 
 ---
 
@@ -189,27 +243,25 @@ All keys are optional — unset keys fall back to `DEFAULT_JARGON`.
 
 ## Existing themes reference
 
-| Theme key     | Primary mode         | Alternate                                      | Vibe                   |
-| ------------- | -------------------- | ---------------------------------------------- | ---------------------- |
-| `workspace`   | Light (`workspace`)  | Dark (`workspace_dark`)                        | Neutral warm gray      |
-| `fantasy`     | Light (`fantasy`)    | Dark (`fantasy_dark` / Candlelit Tome)         | Parchment, inked serif |
-| `modern`      | Light (`modern`)     | Dark (`modern_dark` / After Hours)             | Clean sans-serif       |
-| `scifi`       | Dark (`scifi`)       | Light (`scifi_light` / Clean Room)             | Green terminal         |
-| `cyberpunk`   | Dark (`cyberpunk`)   | Light (`cyberpunk_light` / Vapor Dawn)         | Pink/cyan neon         |
-| `apocalyptic` | Dark (`apocalyptic`) | Light (`apocalyptic_light` / Sun-Bleached)     | Rust/orange wasteland  |
-| `horror`      | Dark (`horror`)      | Light (`horror_light` / Autopsy Report)        | Crimson/black gothic   |
-| `fallout`     | Dark (`fallout`)     | Light (`fallout_light` / Vault-Tec Bulletin)   | Pip-Boy phosphor green |
-| `starwars`    | Dark (`starwars`)    | Light (`starwars_light` / Jedi Archives)       | Space opera            |
-| `startrek`    | Dark (`startrek`)    | Light (`startrek_light` / Stellar Cartography) | LCARS Okudagram        |
-| `lancer`      | Dark (`lancer`)      | Light (`lancer_light` / Hangar Briefing)       | Mech/tactical terminal |
+| Theme key       | Primary mode           | Alternate                                      | Vibe                                       |
+| --------------- | ---------------------- | ---------------------------------------------- | ------------------------------------------ |
+| `workspace`     | Light (`workspace`)    | Dark (`workspace_dark`)                        | Neutral warm gray                          |
+| `fantasy`       | Light (`fantasy`)      | Dark (`fantasy_dark` / Candlelit Tome)         | Parchment, inked serif                     |
+| `modern`        | Light (`modern`)       | Dark (`modern_dark` / After Hours)             | Clean sans-serif                           |
+| `scifi`         | Dark (`scifi`)         | Light (`scifi_light` / Clean Room)             | Green terminal                             |
+| `cyberpunk`     | Dark (`cyberpunk`)     | Light (`cyberpunk_light` / Vapor Dawn)         | Pink/cyan neon                             |
+| `apocalyptic`   | Dark (`apocalyptic`)   | Light (`apocalyptic_light` / Sun-Bleached)     | Rust/orange wasteland                      |
+| `horror`        | Dark (`horror`)        | Light (`horror_light` / Autopsy Report)        | Crimson/black gothic                       |
+| `cosmic_horror` | Dark (`cosmic_horror`) | Light (`cosmic_horror_light` / Field Notes)    | Sea-green field notes, impossible geometry |
+| `fallout`       | Dark (`fallout`)       | Light (`fallout_light` / Vault-Tec Bulletin)   | Pip-Boy phosphor green                     |
+| `starwars`      | Dark (`starwars`)      | Light (`starwars_light` / Jedi Archives)       | Space opera                                |
+| `startrek`      | Dark (`startrek`)      | Light (`startrek_light` / Stellar Cartography) | LCARS Okudagram                            |
+| `lancer`        | Dark (`lancer`)        | Light (`lancer_light` / Hangar Briefing)       | Mech/tactical terminal                     |
 
 ---
 
 ## Checklist
 
-- [ ] `THEMES.{key}` added to `theme.ts`
-- [ ] `{KEY}_LIGHT` (or `_DARK`) export added to `theme.ts`
-- [ ] Alternate variant imported and wired in `theme.svelte.ts`
-- [ ] Art direction entry added in `art-direction.ts`
-- [ ] Test counterpart added in `theme.test.ts`
-- [ ] Tests pass: `cd packages/schema && bun run test`
+Use the detailed [Theme Creation Checklist](./THEME_CREATION_CHECKLIST.md) for
+each new theme. It separates visual-only work from generator and public-hub
+work, and includes the required regression tests.

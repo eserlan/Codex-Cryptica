@@ -4,11 +4,13 @@ import {
   DEFAULT_JARGON,
   WORKSPACE_DARK,
   FANTASY_DARK,
+  PIRATE_DARK,
   MODERN_DARK,
   SCIFI_LIGHT,
   CYBERPUNK_LIGHT,
   APOCALYPTIC_LIGHT,
   HORROR_LIGHT,
+  COSMIC_HORROR_LIGHT,
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
@@ -35,6 +37,7 @@ import {
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 import { guestVault } from "./guest-vault.svelte";
+import { vaultRegistry } from "./vault-registry.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 const APPEARANCE_KEY = "codex-cryptica-app-appearance";
@@ -78,6 +81,8 @@ export class ThemeStore {
           return WORKSPACE_DARK;
         case "fantasy":
           return FANTASY_DARK;
+        case "pirate":
+          return PIRATE_DARK;
         case "modern":
           return MODERN_DARK;
         case "western":
@@ -93,6 +98,8 @@ export class ThemeStore {
           return THEMES.workspace;
         case "fantasy":
           return THEMES.fantasy;
+        case "pirate":
+          return THEMES.pirate;
         case "modern":
           return THEMES.modern;
         case "scifi":
@@ -103,6 +110,8 @@ export class ThemeStore {
           return APOCALYPTIC_LIGHT;
         case "horror":
           return HORROR_LIGHT;
+        case "cosmic_horror":
+          return COSMIC_HORROR_LIGHT;
         case "fallout":
           return FALLOUT_LIGHT;
         case "starwars":
@@ -225,8 +234,17 @@ export class ThemeStore {
   ) {
     this.sessionModeStore = sessionStore;
     this.storage = storage;
+    // Read the active vault id from the lightweight vault registry rather than
+    // dynamically importing the full vault store. vault.svelte pulls in the
+    // heavy search-orchestrator `.svelte.ts` chain (via vault → lifecycle /
+    // search-store); a floating `import("./vault.svelte")` here could resolve
+    // after a test's environment was torn down, causing Vitest
+    // EnvironmentTeardownError (issue #1704). In non-guest mode (the only path
+    // that reaches getVault) `vault.activeVaultId` is exactly
+    // `vaultRegistry.activeVaultId`, so this is behaviourally equivalent while
+    // avoiding the theme↔vault circular import.
     this.getVault =
-      getVault || (() => import("./vault.svelte").then((m) => m.vault));
+      getVault || (() => ({ activeVaultId: vaultRegistry.activeVaultId }));
 
     // Media query listener for prefers-color-scheme
     if (
@@ -319,7 +337,12 @@ export class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || this.sessionModeStore.isDemoMode || this.sessionModeStore.isGuestMode) return;
+    if (
+      !browser ||
+      this.sessionModeStore.isDemoMode ||
+      this.sessionModeStore.isGuestMode
+    )
+      return;
 
     this.previewThemeId = null; // Clear any preview on vault switch
 
@@ -366,6 +389,27 @@ export class ThemeStore {
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
+    }
+  }
+
+  async hasSavedThemeForVault(vaultId: string): Promise<boolean> {
+    if (
+      !browser ||
+      this.sessionModeStore.isDemoMode ||
+      this.sessionModeStore.isGuestMode
+    ) {
+      return true;
+    }
+
+    try {
+      const opfsTheme = await this.storage.loadFromDisk(vaultId);
+      if (opfsTheme && THEMES[opfsTheme as WorldThemeId]) return true;
+
+      const cachedTheme = await this.storage.loadFromCache(vaultId);
+      return Boolean(cachedTheme && THEMES[cachedTheme as WorldThemeId]);
+    } catch (e) {
+      console.warn("[ThemeStore] Failed to check vault-specific theme", e);
+      return true;
     }
   }
 
@@ -538,12 +582,14 @@ export class ThemeStore {
     if (theme.id === "horror") glow = `0 0 20px ${tokens.primary}33`;
     if (theme.id === "fantasy") glow = `0 0 14px ${tokens.accent}44`;
     // Phosphor bloom: neon green bleeds into surrounding glass like a real CRT tube
-    if (theme.id === "fallout") glow = `0 0 18px ${tokens.primary}55, 0 0 6px ${tokens.primary}33`;
+    if (theme.id === "fallout")
+      glow = `0 0 18px ${tokens.primary}55, 0 0 6px ${tokens.primary}33`;
     root.style.setProperty("--theme-glow", glow);
 
     // Phosphor text-shadow for CRT header glow — bleeds light from characters into the screen glass
     let textGlow = "none";
-    if (theme.id === "fallout") textGlow = `0 0 4px ${tokens.primary}80, 0 0 1px ${tokens.primary}`;
+    if (theme.id === "fallout")
+      textGlow = `0 0 4px ${tokens.primary}80, 0 0 1px ${tokens.primary}`;
     root.style.setProperty("--theme-text-glow", textGlow);
 
     let radius = "2px"; // Gothic/Terminal default

@@ -6,6 +6,8 @@ import {
   adaptMagicItem,
   adaptEvent,
   adaptVampire,
+  adaptLanguage,
+  adaptDungeon,
 } from "./public-generator-adapters";
 
 describe("public generator adapters (T052)", () => {
@@ -33,6 +35,14 @@ describe("public generator adapters (T052)", () => {
     expect(result.title.length).toBeGreaterThan(0);
   });
 
+  it("adaptDungeon returns PublicGeneratorOutput shape", () => {
+    const result = adaptDungeon();
+    expect(result.type).toBe("location");
+    expect(result.title.length).toBeGreaterThan(0);
+    expect(result.lore.length).toBeGreaterThan(0);
+    expect(result.labels).toContain("dungeon");
+  });
+
   it("adaptMagicItem returns PublicGeneratorOutput shape", () => {
     const result = adaptMagicItem();
     expect(result.type).toBe("item");
@@ -42,6 +52,7 @@ describe("public generator adapters (T052)", () => {
   it("accepts themeId and produces output without throwing", () => {
     expect(() => adaptNPC({}, "fantasy")).not.toThrow();
     expect(() => adaptSettlement({}, "cyberpunk")).not.toThrow();
+    expect(() => adaptDungeon({}, "scifi")).not.toThrow();
     expect(() => adaptFaction({}, "horror")).not.toThrow();
   });
 
@@ -63,6 +74,15 @@ describe("public generator adapters (T052)", () => {
     expect(() => adaptVampire({}, "vampire-gothic-noir")).not.toThrow();
   });
 
+  it("adaptLanguage returns PublicGeneratorOutput shape", () => {
+    const result = adaptLanguage();
+    expect(result.type).toBe("note");
+    expect(result.title.length).toBeGreaterThan(0);
+    expect(result.lore.length).toBeGreaterThan(0);
+    expect(result.languageProfileVersion).toBe(1);
+    expect(result.languageProfile?.lexicon).toHaveLength(10);
+  });
+
   it("content carries the rich body, never the empty string, for every adapter", () => {
     for (const adapt of [
       adaptNPC,
@@ -71,6 +91,8 @@ describe("public generator adapters (T052)", () => {
       adaptMagicItem,
       adaptEvent,
       adaptVampire,
+      adaptLanguage,
+      adaptDungeon,
     ]) {
       const result = adapt();
       // content falls back to lore (then summary) and must never be blank

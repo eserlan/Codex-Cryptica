@@ -4,62 +4,21 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
-  import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
+  import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
-  import { isEntityVisible, resolveArtDirection, type Entity } from "schema";
+  import { isEntityVisible, composeImagePrompt, type Entity } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   import { debugStore } from "$lib/stores/debug.svelte";
-  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
 
   let editingConnectionTarget = $state<string | null>(null);
   let isAddingConnection = $state(false);
-  let newConnectionTargetName = $state("");
-  let newConnectionTargetId = $state<string | null>(null);
-  let newConnectionType = $state("related_to");
-  let newConnectionLabel = $state("");
-  let addConnectionError = $state<string | null>(null);
-  let isConnecting = $state(false);
-
-  const handleAddConnection = async () => {
-    addConnectionError = null;
-    if (!entity) return;
-    if (!newConnectionTargetId) {
-      addConnectionError = "Please select a valid entity.";
-      return;
-    }
-    if (newConnectionTargetId === entity.id) {
-      addConnectionError = "Cannot connect an entity to itself.";
-      return;
-    }
-    if (isConnecting) return;
-
-    try {
-      isConnecting = true;
-      const success = await vault.addConnection(
-        entity.id,
-        newConnectionTargetId,
-        newConnectionType,
-        newConnectionLabel.trim() || undefined,
-      );
-
-      if (success) {
-        isAddingConnection = false;
-        newConnectionTargetName = "";
-        newConnectionTargetId = null;
-        newConnectionType = "related_to";
-        newConnectionLabel = "";
-      } else {
-        addConnectionError = "Failed to create connection.";
-      }
-    } finally {
-      isConnecting = false;
-    }
-  };
+  let prefillConnectionTargetId = $state<string | null>(null);
+  let prefillConnectionTargetName = $state("");
 
   let {
     entity,
@@ -83,6 +42,8 @@
 
   let isImageLoaded = $state(false);
   let isDraggingOver = $state(false);
+  let fileInput = $state<HTMLInputElement | null>(null);
+  let imageUploadError = $state("");
 
   const handleDragOver = (e: DragEvent) => {
     if (vault.isGuest) return;
@@ -132,39 +93,58 @@
 
     // Fallback to standard file drop
     if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      await handleFileDrop(e.dataTransfer.files[0]);
+      await handleImageFile(e.dataTransfer.files[0]);
     }
   };
 
-  async function handleFileDrop(file: File) {
+  const handleFileInputChange = async (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+
+    try {
+      if (file) await handleImageFile(file);
+    } finally {
+      // Selecting the same image again should still trigger a new upload.
+      input.value = "";
+    }
+  };
+
+  async function handleImageFile(file: File) {
     if (!entity || !file) return;
-    if (file.type.startsWith("image/")) {
-      try {
-        const { image, thumbnail } = await vault.saveImageToVault(
-          file,
-          entity.id,
-        );
-        await vault.updateEntity(entity.id, { image, thumbnail });
-      } catch (err) {
-        debugStore.error("[ZenSidebar] Failed to save external file:", err);
-        notificationStore.notify(
-          "Failed to save image. Check the console for details.",
-          "error",
-        );
-      }
+    if (!file.type.startsWith("image/")) {
+      imageUploadError = "Choose an image file to upload.";
+      notificationStore.notify(imageUploadError, "error");
+      return;
+    }
+
+    try {
+      const { image, thumbnail } = await vault.saveImageToVault(
+        file,
+        entity.id,
+      );
+      await vault.updateEntity(entity.id, { image, thumbnail });
+      imageUploadError = "";
+    } catch (err) {
+      debugStore.error("[ZenSidebar] Failed to save external file:", err);
+      imageUploadError = "Failed to save image. Please try again.";
+      notificationStore.notify(imageUploadError, "error");
     }
   }
 
+  // See DetailImage: preview of the direction wrapped around the AI-written
+  // subject, with the entity title standing in for that subject.
   const artDirectionPrompt = $derived.by(() => {
     if (!entity) return "";
-    const res = resolveArtDirection({
-      surface: "entity",
+    return composeImagePrompt({
       subject: entity.title,
-      categoryId: entity.type,
-      themeId: themeStore.activeTheme?.id || "default",
-      entityArtDirection: entity.artDirection,
-    });
-    return res.prompt;
+      category: entity.type,
+      theme: themeStore.activeTheme?.id || "default",
+      styleOverride: entity.artDirection,
+      subjectOptions: {
+        names: [entity.title],
+        descriptor: entity.type ? `a ${entity.type}` : undefined,
+      },
+    }).prompt;
   });
 
   $effect(() => {
@@ -238,27 +218,27 @@
     }
 
     // Add children if exist
-    const entityId = entity?.id || "";
-    // ⚡ Bolt Optimization: Use vault.allEntities instead of allocating Object.values()
+    const entityId = (entity?.id || "").toLowerCase();
+    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
     const allEntities = vault.allEntities || [];
-    const children = allEntities.filter(
-      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
-    );
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (checkVisibility(child.id)) {
-        const alreadyConnected = result.some((c) => c.id === child.id);
-        if (!alreadyConnected) {
-          result.push({
-            id: child.id,
-            key: `${child.id}-child-${i}`,
-            displayLabel: "Child",
-            rawLabel: "Child",
-            title: child.title,
-            type: "child",
-            isOutbound: false,
-            isChild: true,
-          });
+
+    for (let i = 0; i < allEntities.length; i++) {
+      const child = allEntities[i];
+      if (child.parent && child.parent.toLowerCase() === entityId) {
+        if (checkVisibility(child.id)) {
+          const alreadyConnected = result.some((c) => c.id === child.id);
+          if (!alreadyConnected) {
+            result.push({
+              id: child.id,
+              key: `${child.id}-child-${i}`,
+              displayLabel: "Child",
+              rawLabel: "Child",
+              title: child.title,
+              type: "child",
+              isOutbound: false,
+              isChild: true,
+            });
+          }
         }
       }
     }
@@ -299,7 +279,7 @@
     </div>
   {/if}
 
-  <!-- Labels & Aliases -->
+  <!-- Labels -->
   <div class="mb-4 space-y-4">
     {#if !editState.isEditing}
       <div class="space-y-2">
@@ -354,14 +334,6 @@
           >
           <LabelInput entityId={entity?.id || ""} ariaLabel="Labels" />
         </div>
-
-        <div class="space-y-1">
-          <label
-            class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
-            for="zen-aliases">Aliases</label
-          >
-          <AliasInput bind:aliases={editState.aliases} />
-        </div>
       </div>
     {/if}
   </div>
@@ -377,6 +349,41 @@
     role="region"
     aria-label="Image drop zone"
   >
+    {#if !editState.isEditing && !vault.isGuest}
+      <input
+        bind:this={fileInput}
+        type="file"
+        accept="image/*"
+        class="sr-only"
+        onchange={handleFileInputChange}
+        aria-hidden="true"
+        tabindex="-1"
+      />
+      <button
+        type="button"
+        onclick={() => fileInput?.click()}
+        class="mb-2 w-full rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+        aria-describedby={imageUploadError
+          ? "zen-image-upload-error"
+          : undefined}
+      >
+        <span
+          class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        {entity?.image ? "Replace image" : "Choose image"}
+      </button>
+      {#if imageUploadError}
+        <p
+          id="zen-image-upload-error"
+          class="mb-2 text-xs text-theme-error"
+          role="alert"
+        >
+          {imageUploadError}
+        </p>
+      {/if}
+    {/if}
+
     {#if !isVisible && vault.isGuest}
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
@@ -405,7 +412,9 @@
     {:else if entity?.image}
       <button
         type="button"
+        disabled={!resolvedImageUrl}
         onclick={(e) => {
+          if (!resolvedImageUrl) return;
           const rect = e.currentTarget.getBoundingClientRect();
           onShowLightbox({
             x: rect.left,
@@ -414,7 +423,6 @@
             height: rect.height,
           });
         }}
-        disabled={!resolvedImageUrl}
         class="w-full aspect-square rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none disabled:cursor-wait"
         aria-label="View full size image"
       >
@@ -422,7 +430,10 @@
           <div
             class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
           >
-            <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--image] w-8 h-8 opacity-30"
+            ></span>
             <span
               class="text-[10px] font-mono uppercase tracking-wider opacity-40"
               >Resolving Neural Visual...</span
@@ -615,117 +626,29 @@
               class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
               aria-label="Add new connection"
             >
-              <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+              <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+              ></span>
               ADD
             </button>
           {/if}
         </div>
 
         {#if isAddingConnection}
-          <div
-            class="p-3 bg-theme-bg border border-theme-primary/30 rounded-md space-y-3 shadow-md"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest font-header"
-                >New Connection</span
-              >
-              <button
-                type="button"
-                onclick={() => {
-                  isAddingConnection = false;
-                  newConnectionTargetName = "";
-                  newConnectionTargetId = null;
-                  newConnectionType = "related_to";
-                  newConnectionLabel = "";
-                  addConnectionError = null;
-                }}
-                class="text-theme-muted hover:text-theme-text"
-                aria-label="Cancel adding connection"
-              >
-                <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
-              </button>
-            </div>
-
-            <div class="space-y-1">
-              <label
-                for="new-connection-target"
-                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-                >Target Entity</label
-              >
-              <Autocomplete
-                bind:value={newConnectionTargetName}
-                bind:selectedId={newConnectionTargetId}
-                placeholder="Search entities..."
-                id="new-connection-target"
-                ariaLabel="Search target entity"
-              />
-            </div>
-
-            <div class="space-y-1">
-              <label
-                for="new-connection-type"
-                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-                >Relationship Type</label
-              >
-              <select
-                id="new-connection-type"
-                bind:value={newConnectionType}
-                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
-              >
-                <option value="related_to">Default (Grey)</option>
-                <option value="neutral">Neutral (Amber)</option>
-                <option value="friendly">Friendly (Blue)</option>
-                <option value="enemy">Enemy (Red)</option>
-              </select>
-            </div>
-
-            <div class="space-y-1">
-              <label
-                for="new-connection-label"
-                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-                >Custom Label (Optional)</label
-              >
-              <input
-                id="new-connection-label"
-                type="text"
-                bind:value={newConnectionLabel}
-                placeholder="e.g. Ally, Rivalling, Secret"
-                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
-              />
-            </div>
-
-            {#if addConnectionError}
-              <p class="text-xs text-theme-danger font-semibold">
-                {addConnectionError}
-              </p>
-            {/if}
-
-            <div class="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onclick={() => {
-                  isAddingConnection = false;
-                  newConnectionTargetName = "";
-                  newConnectionTargetId = null;
-                  newConnectionType = "related_to";
-                  newConnectionLabel = "";
-                  addConnectionError = null;
-                }}
-                class="text-[10px] font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isConnecting}
-                onclick={handleAddConnection}
-                class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isConnecting ? "Connecting..." : "Connect"}
-              </button>
-            </div>
-          </div>
+          <ConnectionCreator
+            entityId={entity.id}
+            initialTargetId={prefillConnectionTargetId}
+            initialTargetName={prefillConnectionTargetName}
+            onCancel={() => {
+              isAddingConnection = false;
+              prefillConnectionTargetId = null;
+              prefillConnectionTargetName = "";
+            }}
+            onConnectionAdded={() => {
+              isAddingConnection = false;
+              prefillConnectionTargetId = null;
+              prefillConnectionTargetName = "";
+            }}
+          />
         {/if}
 
         {#if allConnections.length > 0}
@@ -755,12 +678,20 @@
                     class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
                     <span
+                      aria-hidden="true"
                       class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
                         ? 'bg-emerald-500'
                         : conn.isOutbound
                           ? 'bg-theme-primary'
                           : 'bg-blue-500'}"
                     ></span>
+                    <span class="sr-only"
+                      >{conn.isChild
+                        ? "Child of this entity:"
+                        : conn.isOutbound
+                          ? "Outgoing connection:"
+                          : "Incoming connection:"}</span
+                    >
                     <div class="flex-1 min-w-0">
                       <div
                         class="text-xs text-theme-muted uppercase tracking-widest font-header"
@@ -782,10 +713,12 @@
                           type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Edit connection"
+                          aria-label="Edit connection to {conn.title}"
                           title="Edit connection"
                         >
-                          <span class="icon-[lucide--pencil] w-3.5 h-3.5"
+                          <span
+                            class="icon-[lucide--pencil] w-3.5 h-3.5"
+                            aria-hidden="true"
                           ></span>
                         </button>
                       {/if}
@@ -793,17 +726,18 @@
                         <button
                           type="button"
                           onclick={() => {
+                            prefillConnectionTargetId = conn.id;
+                            prefillConnectionTargetName = conn.title;
                             isAddingConnection = true;
-                            newConnectionTargetId = conn.id;
-                            newConnectionTargetName = conn.title;
-                            newConnectionType = "related_to";
-                            newConnectionLabel = "";
                           }}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Establish custom connection"
+                          aria-label="Establish custom connection to {conn.title}"
                           title="Establish custom connection"
                         >
-                          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+                          <span
+                            class="icon-[lucide--plus] w-3.5 h-3.5"
+                            aria-hidden="true"
+                          ></span>
                         </button>
                       {/if}
                       <button
@@ -828,10 +762,13 @@
                           }
                         }}
                         class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                        aria-label="Delete connection"
+                        aria-label="Delete connection to {conn.title}"
                         title="Delete connection"
                       >
-                        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                        <span
+                          class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                          aria-hidden="true"
+                        ></span>
                       </button>
                     </div>
                   {/if}

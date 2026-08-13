@@ -4,6 +4,7 @@
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import TokenQuickStats from "./TokenQuickStats.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
@@ -38,6 +39,8 @@
     class="relative z-10 w-full max-w-sm rounded-xl border border-theme-border bg-theme-surface/95 backdrop-blur shadow-xl p-4 space-y-4 pointer-events-auto"
     role="presentation"
     onmousedown={(e) => e.stopPropagation()}
+    ondblclick={(e) => e.stopPropagation()}
+    onclick={(e) => e.stopPropagation()}
   >
     <div class="flex items-start justify-between gap-3">
       <div>
@@ -56,31 +59,34 @@
         aria-label="Clear token selection"
         type="button"
       >
-        <span class="icon-[lucide--x] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
       </button>
     </div>
 
-    {#if canManageToken}
-      {#if linkedEntity}
-        <div class="rounded-lg border border-theme-border bg-theme-bg/50 p-3">
-          <div class="text-[10px] uppercase tracking-widest text-theme-muted">
-            Linked Entity
-          </div>
-          <div class="text-sm font-bold text-theme-text">
-            {linkedEntity.title}
-          </div>
-          <div class="text-[10px] uppercase tracking-widest text-theme-muted">
-            {linkedEntity.type}
-          </div>
+    {#if linkedEntity}
+      <div class="rounded-lg border border-theme-border bg-theme-bg/50 p-3">
+        <div class="text-[10px] uppercase tracking-widest text-theme-muted">
+          Linked Entity
         </div>
-      {:else}
-        <div
-          class="rounded-lg border border-theme-border bg-theme-bg/50 p-3 text-sm text-theme-muted"
-        >
-          Freeform marker
+        <div class="text-sm font-bold text-theme-text">
+          {linkedEntity.title}
         </div>
+        <div class="text-[10px] uppercase tracking-widest text-theme-muted">
+          {linkedEntity.type}
+        </div>
+      </div>
+      {#if linkedEntity.statSheet?.fields?.length}
+        <TokenQuickStats entity={linkedEntity} />
       {/if}
+    {:else}
+      <div
+        class="rounded-lg border border-theme-border bg-theme-bg/50 p-3 text-sm text-theme-muted"
+      >
+        Freeform marker
+      </div>
+    {/if}
 
+    {#if canManageToken}
       <label class="space-y-2 block">
         <span
           class="text-[10px] uppercase tracking-widest font-bold text-theme-muted"
@@ -141,7 +147,8 @@
             aria-label="Show token image to players"
             title="Show token image to players"
           >
-            <span class="icon-[lucide--image-up] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--image-up] h-4 w-4"
+            ></span>
           </button>
         {/if}
         <button

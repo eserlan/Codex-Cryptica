@@ -62,12 +62,25 @@ describe("ChatExecutor", () => {
   });
 
   it("should prevent concurrent execution", async () => {
+    let startGeneration: () => void;
+    const generationStarted = new Promise<void>((resolve) => {
+      startGeneration = resolve;
+    });
+    let completeGeneration: (value: {
+      primaryEntityId: string;
+      sourceIds: string[];
+    }) => void;
+    const generation = new Promise<{
+      primaryEntityId: string;
+      sourceIds: string[];
+    }>((resolve) => {
+      completeGeneration = resolve;
+    });
     const generator = {
-      generateChatResponse: vi
-        .fn()
-        .mockImplementation(
-          () => new Promise((resolve) => setTimeout(resolve, 50)),
-        ),
+      generateChatResponse: vi.fn().mockImplementation(() => {
+        startGeneration();
+        return generation;
+      }),
     };
     const executor = new ChatExecutor(generator as any);
     const addMessage = vi.fn();
@@ -80,7 +93,9 @@ describe("ChatExecutor", () => {
     const p1 = executor.execute({ type: "chat", query: "q1" }, context);
     const p2 = executor.execute({ type: "chat", query: "q2" }, context);
 
-    await Promise.all([p1, p2]);
+    await Promise.all([p2, generationStarted]);
+    completeGeneration({ primaryEntityId: "e1", sourceIds: [] });
+    await p1;
 
     expect(addMessage).toHaveBeenCalledWith(
       expect.objectContaining({

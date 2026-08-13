@@ -5,6 +5,7 @@
   import { fade, fly } from "svelte/transition";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let {
     isOpen = false,
@@ -48,7 +49,7 @@
       if (shared.size === 0) break;
     }
 
-    return Array.from(shared).sort((a, b) => a.localeCompare(b));
+    return Array.from(shared).sort((a, b) => (a ?? "").localeCompare(b ?? ""));
   });
 
   // Labels present in at least one selected entity (for remove tab when no shared ones)
@@ -216,11 +217,15 @@
           {themeStore.resolveJargon("entity", entityIds.length)}
         </h2>
         <button
+          type="button"
           onclick={onClose}
           class="text-theme-muted hover:text-theme-text p-1"
           aria-label="Close"
         >
-          <span class="icon-[lucide--x] w-5 h-5 md:w-6 md:h-6"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--x] w-5 h-5 md:w-6 md:h-6"
+          ></span>
         </button>
       </div>
 
@@ -349,14 +354,11 @@
             aria-labelledby="remove-label-tab"
           >
             {#if anyLabels.length === 0}
-              <div class="text-center py-8">
-                <p class="text-sm text-theme-muted italic">
-                  No labels found on the selected {themeStore.resolveJargon(
-                    "entity",
-                    entityIds.length,
-                  )}.
-                </p>
-              </div>
+              <EmptyState
+                icon="icon-[lucide--tags]"
+                headline="No labels found"
+                body={`No labels on the selected ${themeStore.resolveJargon("entity", entityIds.length)}.`}
+              />
             {:else}
               <div class="space-y-4">
                 <p class="text-xs md:text-sm text-theme-muted">

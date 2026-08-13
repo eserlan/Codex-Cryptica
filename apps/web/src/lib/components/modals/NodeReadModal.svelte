@@ -6,6 +6,7 @@
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   const close = () => modalUIStore.closeReadMode();
 
@@ -149,7 +150,9 @@
     }}
     role="dialog"
     aria-modal="true"
+    aria-labelledby="read-mode-title"
     tabindex="-1"
+    use:focusTrap
     onkeydown={(e) => e.key === "Escape" && close()}
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -176,42 +179,52 @@
               >
             </div>
             <h2
+              id="read-mode-title"
               class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
               {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                  >*</sup
-                >{/if}
+                  aria-hidden="true">*</sup
+                ><span class="sr-only"> (past)</span>{/if}
             </h2>
           {:else}
-            <h2 class="text-2xl text-red-500 font-mono">Entity Not Found</h2>
+            <h2 id="read-mode-title" class="text-2xl text-red-500 font-mono">
+              Entity Not Found
+            </h2>
           {/if}
         </div>
 
         <div class="flex items-center gap-2 absolute top-4 right-4">
           {#if entity}
             <button
+              type="button"
               onclick={copyToClipboard}
               class="p-2 text-green-700 hover:text-green-500 transition rounded hover:bg-green-900/20"
               title="Copy Content"
               aria-label="Copy Content"
             >
               {#if copyStatus === "success"}
-                <span class="icon-[lucide--check] w-6 h-6"></span>
+                <span aria-hidden="true" class="icon-[lucide--check] w-6 h-6"
+                ></span>
               {:else if copyStatus === "error"}
-                <span class="icon-[lucide--alert-triangle] w-6 h-6 text-red-500"
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--alert-triangle] w-6 h-6 text-red-500"
                 ></span>
               {:else}
-                <span class="icon-[lucide--copy] w-6 h-6"></span>
+                <span aria-hidden="true" class="icon-[lucide--copy] w-6 h-6"
+                ></span>
               {/if}
             </button>
           {/if}
 
           <button
+            type="button"
             onclick={close}
             class="text-green-700 hover:text-green-500 transition p-2 hover:bg-green-900/20 rounded"
             aria-label="Close"
           >
-            <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+            <span aria-hidden="true" class="icon-[heroicons--x-mark] w-6 h-6"
+            ></span>
           </button>
         </div>
       </div>
@@ -286,8 +299,9 @@
                       <div
                         class="text-sm font-bold text-gray-200 group-hover:text-green-400 transition truncate"
                       >
-                        {conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                          >{/if}
+                        {conn.displayTitle}{#if conn.hasPastLabel}<sup
+                            aria-hidden="true">*</sup
+                          ><span class="sr-only"> (past)</span>{/if}
                       </div>
                       <div class="text-xs text-gray-500 truncate">
                         {conn.label || conn.type}

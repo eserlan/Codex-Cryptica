@@ -8,23 +8,80 @@ This document maps the evolution of Codex Cryptica from its architectural founda
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
 
-### [PROPOSED] Default Entity Templates with Local Overrides
+### [PROPOSED] Direct P2P Video Overlays
 
-- **Target Area**: Entity Creation & Vault-Level Templates (`apps/web/src/lib/stores/vault/` & `packages/vault-engine/`)
-- **Objective**: Standardize entity creation with high-quality default Markdown templates, while allowing vault-specific customization and theme-adapted templates.
-- **Details**: Pre-populates newly created Character, Faction, Location, Item, Event, Creature, or Note entities with beautiful default markdown structures (like Goals, Secrets, and Story Hooks). Provides a visual toggle to disable template populating. Supports vault-level overrides via local markdown files in `.cc/templates/{type}.md` (case-insensitive conversion). Adapts default structures dynamically to configured world genres (e.g., High-Fantasy vs. Cyberpunk). Detailed in [123-entity-templates](./123-entity-templates/spec.md).
+- **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/cloud-bridge/p2p/`)
+- **Objective**: Extend the shipped session voice channel ([144-vtt-voice-chat](./144-vtt-voice-chat/spec.md)) with decentralized video, rendered as floating overlays on the tactical map view.
+- **Details**: Voice shipped in v0.28.x as host-mixed hub-and-spoke audio over PeerJS media calls. Video remains proposed: adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components, transmitted over the same media-call infrastructure. Original feasibility analysis in [p2p_audio_video_analysis.md](./p2p_audio_video_analysis.md).
 
 ---
 
-### [PROPOSED] Direct P2P Audio/Video Integration
+### [DRAFT] VTT Domain Extraction
 
-- **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/services/p2p/`)
-- **Objective**: Implement decentralized, low-latency voice and video channels directly on the tactical map view.
-- **Details**: Leverages CC's decoupled PeerJS network topology to transmit audio/video stream tracks in real-time, completely bypassing centralized routing. Includes adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components. Detailed in [p2p_audio_video_analysis.md](./p2p_audio_video_analysis.md).
+- **Target Area**: VTT stores & services (`apps/web/src/lib/stores/vtt/`, `apps/web/src/lib/cloud-bridge/p2p/`)
+- **Objective**: Extract the VTT domain (session managers, token/grid/initiative logic, P2P handlers) into a standalone workspace package per Constitution Principle I.
+- **Details**: Spec drafted in [1661-extract-vtt-domain](./1661-extract-vtt-domain/spec.md); implementation not started. The voice-chat code (144) deliberately stayed in `apps/web` pending this extraction.
+
+---
+
+### [PROPOSED] Voice Chat Enhancements
+
+- **Target Area**: Session voice channel (`apps/web/src/lib/cloud-bridge/p2p/voice/`)
+- **Objective**: Quality-of-life follow-ups to the shipped voice channel, tracked in issue #1757.
+- **Details**: Speaking indicators, per-participant volume sliders, and device selection. Out of scope for the initial release of [144-vtt-voice-chat](./144-vtt-voice-chat/spec.md).
+
+---
+
+### [DRAFT] LLM Model Registry & Provider Resolver
+
+- **Target Area**: `oracle-proxy` Cloudflare Worker (`apps/workers/oracle-proxy/`)
+- **Objective**: Replace the Worker's hardcoded, Gemini-only forwarding with a central model registry, a provider-neutral resolver, and provider adaptors (Gemini + OpenAI-compatible), adding GPT-5.6 Luna as a selectable low-cost model.
+- **Details**: Backend-plumbing slice of issue [#2049](https://github.com/eserlan/Codex-Cryptica/issues/2049). Spec drafted in [153-llm-model-registry](./153-llm-model-registry/spec.md); implementation not started. Deliberately excludes any UI, persistence, or admin config — see the follow-up entry below.
+
+---
+
+### [PROPOSED] LLM Model Selection UI & Admin Config
+
+- **Target Area**: Generator/editor UI (`apps/web/src/lib/`) and `oracle-proxy` admin config
+- **Objective**: Let authenticated users pick a model tier (Fast/Creative/Deep) for generators and content revision, persist the choice, and let admins configure defaults and availability per tier.
+- **Details**: Follow-up slice of issue [#2049](https://github.com/eserlan/Codex-Cryptica/issues/2049), building on [153-llm-model-registry](./153-llm-model-registry/spec.md). No spec drafted yet — depends on the registry/resolver landing first.
 
 ---
 
 ## 🏛️ Historical Roadmap & Release Timeline
+
+### v0.31.0 — The Guided Worldbuilding Update (2026-07-30)
+
+- **Highlights**: Guided Mode workflow assistance dynamically analyzing vault state for structural recommendations and lore gaps; Quick Start onboarding wizard for campaign theme selection and seed constellation generation; Intent-Driven Entity Creator drafting grounded entities based on narrative intent; pre-connected Starter Constellations providing instant world depth; and non-intrusive workspace banners with contextual recommendations.
+- **Associated Specifications**:
+  - [148-guided-mode-quickstart](./148-guided-mode-quickstart/spec.md) (Guided Mode & Quick Start, 2026-07-30)
+
+### v0.30.0 — The Dungeon & Delve Update (2026-07-28)
+
+- **Highlights**: The Dungeon / Delve Idea Generator, building coherent explorable locations across all CC world themes around a purpose→history→current state→conflict→signature feature chain, with key areas, factions, hazards, a central secret, and hooks; the companion Dungeon & Delve Structural Builder turning a generated delve into a room-by-room map with connections, loops, and hidden routes on an interactive canvas; Layered Art Direction v2 (faction-inherited visual identity, a stature/scale axis, canon-preserving subject compression); a redesigned first-run onboarding tour and Getting Started hub; CIF Mechanical Importer Phase 2 (ZIP packages with image assets); Thread Weaver/Scabard import support with a migration guide; and mobile entity image uploads.
+- **Associated Specifications**:
+  - [1825-dungeon-idea-generator](./1825-dungeon-idea-generator/spec.md) (Dungeon / Delve Idea Generator, 2026-07-25)
+  - [145-dungeon-structural-builder](./145-dungeon-structural-builder/spec.md) (Dungeon & Delve Structural Builder, 2026-07-26)
+
+### v0.29.0 — The Voice & Lineage Update (2026-07-19)
+
+- **Highlights**: In-app group voice chat for live sessions (host-mixed hub-and-spoke audio over PeerJS with mute controls and a participant roster); the CIF Mechanical Importer Phase 1 text-only core; a full Family Tree view for characters (zoom, full-screen, relation categories) extended by the multi-generation Lineage view with relationship alias normalization and sibling auto-linking; the Language (conlang profile) Generator with vault grounding and genre-following themes; copyright/fan-content notices with report intake and suspension sidecars for public worlds; the Entity Table/List view with guest-mode filters and deep-link hardening; theme bestiaries and creature catalogue packs in the importer; the discoverable Public World Directory with search and filtering; and the Entity Timeline tab in the detail panel. Internals: duplication cleanup epic (shared utils, `ModalShell`, retry helpers, DRY rule in constitution v1.3.0) and injected `Clock`/runtime dependencies across services.
+- **Associated Specifications**:
+  - [144-vtt-voice-chat](./144-vtt-voice-chat/spec.md) (Session voice channel, 2026-07-19)
+  - [143-cif-importer](./143-cif-importer/spec.md) (CIF Mechanical Importer Phase 1, 2026-07-16)
+  - [142-lineage-view](./142-lineage-view/spec.md) & [1702-family-tree-view](./1702-family-tree-view/spec.md) (Family tree and full lineage views, 2026-07-15/16)
+  - [1660-worlds-copyright-notice](./1660-worlds-copyright-notice/spec.md) (Copyright and fan-content notices, 2026-07-10)
+  - [141-language-generator](./141-language-generator/spec.md) (Conlang profile generator, 2026-07-05)
+  - [140-entity-table-view](./140-entity-table-view/spec.md) (Entity Table/List view, 2026-07-02)
+  - [139-public-world-directory](./139-public-world-directory/spec.md) (Public World Directory, 2026-06-30)
+  - [138-bestiary-creature-packs](./138-bestiary-creature-packs/spec.md) (Theme bestiaries and creature packs, 2026-06-29)
+  - [136-entity-timeline](./136-entity-timeline/spec.md) (Entity Timeline tab, 2026-06-24)
+
+### v0.28.0 — Share Your World with Guests (2026-06-22)
+
+- **Highlights**: Read-only shareable world links that work even when the GM is offline, backed by published guest vault snapshots on Cloudflare R2; automatic exclusion of GM-only notes, art direction, and hidden-content links from shared worlds; background publishing with progress; a single Settings surface to copy links, update visibility, or unpublish; and device-local guest history of recently visited worlds.
+- **Associated Specifications**:
+  - [135-guest-vault-r2](./135-guest-vault-r2/spec.md) (Published guest vault snapshots via Cloudflare R2)
 
 ### v0.27.0 — The Themed Generators & World Chronology Update (2026-06-22)
 
@@ -34,11 +91,19 @@ The following high-impact candidate specifications target performance, scaling, 
   - [133-entity-explorer-layout](./133-entity-explorer-layout/spec.md) (Entity Explorer desktop workspace)
   - [134-entity-navigation-history](./134-entity-navigation-history/spec.md) (Entity navigation history and shortcuts)
 
+### v0.26.4 — The In-App Campaign Generator Update (2026-06-14)
+
+- **Highlights**: Themed RPG campaign generators moved fully in-app with a standalone generator Session Hub for saving, resuming, and importing generated sessions; generator hub UX and quality improvements; and the SEO consolidation content push with competitor import landing pages.
+- **Associated Specifications**:
+  - [131-in-app-rpg-generators](./131-in-app-rpg-generators/spec.md) (In-app themed RPG campaign generators)
+  - [137-standalone-generator-session-hub](./137-standalone-generator-session-hub/spec.md) (Standalone Generator Session Hub)
+
 ### v0.26.3 — The Grounded Context-Aware Entity Creator Update (2026-05-30)
 
-- **Highlights**: Branch campaign settings organically using a new 'Generate Related' action that gathers the active entity and its first-degree graph neighbors to draft grounded entities, with outline templates integration, adaptive relationship suggestions, and automatic directed back-linking in the vault.
+- **Highlights**: Branch campaign settings organically using a new 'Generate Related' action that gathers the active entity and its first-degree graph neighbors to draft grounded entities, with outline templates integration, adaptive relationship suggestions, and automatic directed back-linking in the vault. Default entity templates with vault-level `.cc/templates/{type}.md` overrides shipped in the same window.
 - **Associated Specifications**:
   - [127-context-aware-entity-generator](./127-context-aware-entity-generator/spec.md) (Grounded context-aware related entity creator, adaptive suggestions, and directed connection back-linking)
+  - [123-entity-templates](./123-entity-templates/spec.md) (Default entity templates with local overrides, 2026-05-28)
 
 ### v0.26.2 — The Vault Save Confidence & Chronology Quality Update (2026-05-26)
 

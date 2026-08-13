@@ -24,6 +24,7 @@
 
   let showResizeSubmenu = $state(false);
   let showStatusSubmenu = $state(false);
+  let showAppearanceSubmenu = $state(false);
 </script>
 
 <div
@@ -31,6 +32,7 @@
   style="left: {x}px; top: {y}px;"
   transition:fade={{ duration: 100 }}
   role="menu"
+  tabindex="-1"
   aria-label="Map context menu"
   onmousedown={(e) => e.stopPropagation()}
 >
@@ -185,6 +187,99 @@
         ></span>
         <span>Remove Token</span>
       </button>
+
+      <!-- Appearance Submenu (Host only) -->
+      <div
+        class="relative group"
+        role="presentation"
+        onmouseenter={() => {
+          showAppearanceSubmenu = true;
+          showResizeSubmenu = false;
+          showStatusSubmenu = false;
+        }}
+        onmouseleave={() => {
+          showAppearanceSubmenu = false;
+        }}
+      >
+        <button
+          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+          role="menuitem"
+          aria-haspopup="menu"
+          aria-expanded={showAppearanceSubmenu}
+          onclick={(e) => {
+            e.stopPropagation();
+            showAppearanceSubmenu = !showAppearanceSubmenu;
+            if (showAppearanceSubmenu) {
+              showResizeSubmenu = false;
+              showStatusSubmenu = false;
+            }
+          }}
+          onkeydown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              showAppearanceSubmenu = !showAppearanceSubmenu;
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <span
+              class="icon-[lucide--circle-dashed] w-3.5 h-3.5"
+              aria-hidden="true"
+            ></span>
+            <span>Appearance</span>
+          </div>
+          <span
+            class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+            aria-hidden="true"
+          ></span>
+        </button>
+
+        {#if showAppearanceSubmenu}
+          <div
+            class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[150px]"
+            role="menu"
+            aria-label="Token appearance options"
+          >
+            <button
+              class="w-full text-left px-4 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+              role="menuitemcheckbox"
+              aria-checked={_ctxToken?.facingIndicator === true}
+              onclick={() => {
+                if (_ctxToken) {
+                  mapSession.updateToken(tokenId, {
+                    facingIndicator: !_ctxToken.facingIndicator,
+                  });
+                }
+                onClose();
+              }}
+            >
+              <span>Facing indicator</span>
+              <span class="text-[10px] text-theme-muted"
+                >{_ctxToken?.facingIndicator ? "ON" : "OFF"}</span
+              >
+            </button>
+            {#each ["circle", "square"] as shape (shape)}
+              <button
+                class="w-full text-left px-4 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+                role="menuitemradio"
+                aria-checked={(_ctxToken?.baseShape ?? "circle") === shape}
+                onclick={() => {
+                  mapSession.updateToken(tokenId, {
+                    baseShape: shape as "circle" | "square",
+                  });
+                  onClose();
+                }}
+              >
+                <span class="capitalize">{shape} base</span>
+                {#if (_ctxToken?.baseShape ?? "circle") === shape}
+                  <span aria-hidden="true">✓</span>
+                {/if}
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
 
       <!-- Resize Submenu (Host only) -->
       <div

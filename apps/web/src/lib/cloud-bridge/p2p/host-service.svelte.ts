@@ -13,6 +13,8 @@ import type {
 } from "./transport/transport-interface";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { VTTHandler } from "./handlers/vtt-handler";
+import { VoiceHandler } from "./handlers/voice-handler";
+import { voiceChat } from "./voice/voice-chat.svelte";
 import { VaultHandler } from "./handlers/vault-handler";
 import { FileHandler } from "./handlers/file-handler";
 import { HostCharChatHandler } from "./handlers/host-char-chat-handler";
@@ -22,6 +24,11 @@ import {
   PeerJSConnectionManager,
   type ConnectionState,
 } from "./connection-manager.svelte";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+  systemClock,
+} from "$lib/utils/runtime-deps";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -34,6 +41,7 @@ type HostDeps = {
   transport?: P2PTransport;
   dispatcher?: P2PDispatcher;
   connectionManager?: PeerJSConnectionManager;
+  idGenerator?: IdGenerator;
 };
 
 export class P2PHostService {
@@ -59,6 +67,7 @@ export class P2PHostService {
   private readonly mapStore: typeof defaultMapStore;
   private readonly sessionModeStore: typeof defaultSessionModeStore;
   private readonly notificationStore: typeof defaultNotificationStore;
+  private idGenerator: IdGenerator;
 
   constructor(deps: HostDeps = {}) {
     this.vault = deps.vault ?? defaultVault;
@@ -67,12 +76,17 @@ export class P2PHostService {
     this.mapStore = deps.mapStore ?? defaultMapStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
 
     this.connectionManager =
       deps.connectionManager ??
       new PeerJSConnectionManager(deps.peerFactory ?? createPeer);
     this.transport =
-      deps.transport ?? new PeerJSTransport(deps.peerFactory ?? createPeer);
+      deps.transport ??
+      new PeerJSTransport({
+        peerFactory: deps.peerFactory,
+        idGenerator: this.idGenerator,
+      });
     this.dispatcher = deps.dispatcher ?? new P2PDispatcher();
 
     this.setupDispatcher();
@@ -84,6 +98,7 @@ export class P2PHostService {
     this.dispatcher.register(new VaultHandler());
     this.dispatcher.register(new FileHandler());
     this.dispatcher.register(new HostCharChatHandler());
+    this.dispatcher.register(new VoiceHandler());
   }
 
   private setupTransportListeners() {
@@ -99,7 +114,7 @@ export class P2PHostService {
           const ack = {
             type: "handshake_ack",
             senderId: this.transport.id || "",
-            timestamp: Date.now(),
+            timestamp: systemClock.now(),
             payload: null,
           };
           conn.send(ack);
@@ -109,7 +124,7 @@ export class P2PHostService {
           const pong = {
             type: "pong",
             senderId: this.transport.id || "",
-            timestamp: (data as any).timestamp || Date.now(),
+            timestamp: (data as any).timestamp ?? systemClock.now(),
             payload: null,
           };
           conn.send(pong);
@@ -171,6 +186,10 @@ export class P2PHostService {
   get activePeerId() {
     return this.transport.id;
   }
+  /** Underlying media-capable peer for the voice channel, if the transport has one. */
+  get rawPeer(): unknown {
+    return this.transport.rawPeer ?? null;
+  }
 
   async startHosting(onPeerId?: (peerId: string) => void): Promise<string> {
     if (this._isHosting && this.transport.id) {
@@ -178,7 +197,7 @@ export class P2PHostService {
       return this.transport.id;
     }
 
-    const peerId = crypto.randomUUID();
+    const peerId = this.idGenerator.uuid();
     onPeerId?.(peerId);
 
     this.state.status = "connecting";
@@ -313,6 +332,7 @@ export class P2PHostService {
   }
 
   stopHosting() {
+    voiceChat.reset();
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;

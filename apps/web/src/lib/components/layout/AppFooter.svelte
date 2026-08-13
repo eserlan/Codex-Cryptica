@@ -47,6 +47,11 @@
       >Blog</a
     >
     <a
+      href="{base}/worlds"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Explore Worlds</a
+    >
+    <a
       href="{base}/responsible-ai-worldbuilding"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Responsible AI</a

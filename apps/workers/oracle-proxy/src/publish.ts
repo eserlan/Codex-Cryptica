@@ -2,6 +2,8 @@ import {
   GuestBundleSchema,
   PUBLISH_LIMITS,
 } from "../../../../packages/schema/src/publishing";
+import { verifyTurnstile as verifyTurnstileShared } from "./turnstile";
+import { readSuspensionMarker } from "./suspension";
 
 interface PublishEnv {
   BUCKET?: any; // R2Bucket
@@ -19,15 +21,17 @@ const ALLOWED_ASSET_TYPES = new Set([
 
 class PayloadTooLargeError extends Error {}
 
-async function readTextWithLimit(
+async function readBytesWithLimit(
   request: Request,
   maxBytes: number,
-): Promise<string> {
+): Promise<Uint8Array | null> {
   const declaredLength = Number(request.headers.get("Content-Length"));
   if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-    throw new PayloadTooLargeError();
+    throw new PayloadTooLargeError(
+      `Payload exceeded size limit (${maxBytes} bytes)`,
+    );
   }
-  if (!request.body) return "";
+  if (!request.body) return new Uint8Array(0);
 
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -38,7 +42,9 @@ async function readTextWithLimit(
     totalBytes += value.byteLength;
     if (totalBytes > maxBytes) {
       await reader.cancel();
-      throw new PayloadTooLargeError();
+      throw new PayloadTooLargeError(
+        `Payload exceeded size limit (${maxBytes} bytes)`,
+      );
     }
     chunks.push(value);
   }
@@ -48,6 +54,19 @@ async function readTextWithLimit(
     body.set(chunk, offset);
     offset += chunk.byteLength;
   }
+  return body;
+}
+
+async function readTextWithLimit(
+  request: Request,
+  maxBytes: number,
+): Promise<string> {
+  const body = await readBytesWithLimit(request, maxBytes);
+  if (!body) {
+    throw new PayloadTooLargeError(
+      `Payload exceeded size limit (${maxBytes} bytes)`,
+    );
+  }
   return new TextDecoder().decode(body);
 }
 
@@ -55,45 +74,10 @@ async function verifyTurnstile(
   request: Request,
   env: PublishEnv,
 ): Promise<boolean> {
-  const token = request.headers.get("X-Turnstile-Token");
-  if (!env.TURNSTILE_SECRET_KEY || !token || token.length > 2_048) return false;
-
-  const form = new FormData();
-  form.set("secret", env.TURNSTILE_SECRET_KEY);
-  form.set("response", token);
-  form.set("remoteip", request.headers.get("CF-Connecting-IP") || "");
-
-  try {
-    const response = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        body: form,
-      },
-    );
-    if (!response.ok) return false;
-    const result = (await response.json()) as {
-      success?: boolean;
-      hostname?: string;
-      action?: string;
-    };
-    return (
-      result.success === true &&
-      result.action === "publish_snapshot" &&
-      isCodexHostname(result.hostname)
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isCodexHostname(hostname: string | undefined): boolean {
-  return (
-    hostname === "codexcryptica.com" ||
-    hostname === "codex-cryptica.com" ||
-    hostname === "staging.codexcryptica.com" ||
-    hostname === "staging.codex-cryptica.com" ||
-    hostname?.endsWith(".codex-cryptica.pages.dev") === true
+  return verifyTurnstileShared(
+    request,
+    env.TURNSTILE_SECRET_KEY,
+    "publish_snapshot",
   );
 }
 
@@ -158,7 +142,7 @@ async function getAssetUsage(
 /**
  * Extract token from authorization header
  */
-function getWriteToken(request: Request): string | null {
+export function getWriteToken(request: Request): string | null {
   const auth = request.headers.get("Authorization");
   if (!auth) return null;
   if (auth.startsWith("Bearer ")) {
@@ -170,7 +154,7 @@ function getWriteToken(request: Request): string | null {
 /**
  * Get CORS headers
  */
-function getCorsHeaders(
+export function getCorsHeaders(
   requestHeaders: Headers,
   _env: PublishEnv,
 ): Record<string, string> {
@@ -184,7 +168,7 @@ function getCorsHeaders(
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers":
       "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename",
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   };
 }
 
@@ -403,6 +387,19 @@ export async function handleGetBundle(
     });
   }
 
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension && suspension.mode === "disable") {
+    return new Response(
+      JSON.stringify({
+        error: { message: "This world is temporarily unavailable." },
+      }),
+      {
+        status: 451,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
+  }
+
   const key = `published/${publishId}/bundle.json`;
   const obj = await env.BUCKET.get(key);
 
@@ -443,6 +440,19 @@ export async function handleGetManifest(
       status: 500,
       headers: cors,
     });
+  }
+
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension && suspension.mode === "disable") {
+    return new Response(
+      JSON.stringify({
+        error: { message: "This world is temporarily unavailable." },
+      }),
+      {
+        status: 451,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const key = `published/${publishId}/bundle.json`;
@@ -644,8 +654,31 @@ export async function handleGetAsset(
     });
   }
 
+  const suspension = await readSuspensionMarker(env, publishId);
+  if (suspension && suspension.mode === "disable") {
+    return new Response(
+      JSON.stringify({
+        error: { message: "This world is temporarily unavailable." },
+      }),
+      {
+        status: 451,
+        headers: { ...cors, "Content-Type": "application/json" },
+      },
+    );
+  }
+
   const assetKey = `published/${publishId}/assets/${assetId}`;
-  const obj = await env.BUCKET.get(assetKey);
+  let obj = await env.BUCKET.get(assetKey);
+
+  if (!obj) {
+    const fallbackId = assetId.includes(".")
+      ? assetId.replace(/\./g, "_")
+      : assetId;
+    if (fallbackId !== assetId) {
+      const fallbackKey = `published/${publishId}/assets/${fallbackId}`;
+      obj = await env.BUCKET.get(fallbackKey);
+    }
+  }
 
   if (!obj) {
     return new Response(
@@ -751,6 +784,8 @@ export async function handleDeleteVault(
         break;
       }
     }
+
+    await env.BUCKET.delete(`directory/listings/${publishId}.json`);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

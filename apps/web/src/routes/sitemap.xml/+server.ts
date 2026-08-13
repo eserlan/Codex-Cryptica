@@ -1,11 +1,12 @@
 import {
   solutions,
-  comparisons,
   featuresConfig,
   importsConfig,
 } from "$lib/config/seo-pages";
+import { comparisons } from "$lib/config/seo-comparisons";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 import { VALID_HUB_THEMES } from "../../params/theme_hub";
+import { getAllLandingPageSlugs } from "$lib/content/for/registry";
 
 export const prerender = true;
 
@@ -25,8 +26,10 @@ export async function GET() {
   const staticRoutes = [
     { path: "/", changefreq: "weekly", priority: "1.0" },
     { path: "/blog", changefreq: "weekly", priority: "0.9" },
+    { path: "/for", changefreq: "weekly", priority: "0.9" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
+    { path: "/migrations", changefreq: "weekly", priority: "0.9" },
     { path: "/generators", changefreq: "weekly", priority: "0.9" },
     {
       path: "/free-rpg-campaign-manager",
@@ -105,6 +108,12 @@ export async function GET() {
     "dnd-npc",
     "pantheon-generator",
     "god-generator",
+    "ship-generator",
+    "language-generator",
+    "news-sheet-generator",
+    "dungeon-generator",
+    "adventure-generator",
+    "plot-twist-generator",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,
@@ -126,6 +135,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Landing pages (/for/[slug])
+  const landingPageRoutes = getAllLandingPageSlugs().map((slug) => ({
+    path: `/for/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
@@ -134,6 +150,7 @@ export async function GET() {
     ...generatorRoutes,
     ...themeHubRoutes,
     ...importRoutes,
+    ...landingPageRoutes,
   ];
 
   const staticUrls = allStatic

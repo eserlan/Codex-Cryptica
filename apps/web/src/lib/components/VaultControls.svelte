@@ -11,10 +11,11 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import { openImportWindow } from "$lib/stores/ui/navigation";
+  import VaultActionsMenu from "./layout/VaultActionsMenu.svelte";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -74,9 +75,6 @@
 
   const btnPrimary = $derived(
     `${btnBase} bg-chrome-accent text-chrome-bg hover:bg-chrome-accent/90`,
-  );
-  const btnSecondary = $derived(
-    `${btnBase} border border-chrome-border text-chrome-muted hover:text-chrome-text hover:border-chrome-accent`,
   );
   const btnAccent = $derived(
     `${btnBase} border border-chrome-border text-chrome-accent hover:text-chrome-accent/85 hover:border-chrome-accent`,
@@ -208,16 +206,16 @@
           }
         }}
         data-testid="save-as-campaign-button"
-        aria-label={`Save as ${themeStore.jargon.vault}`}
+        aria-label={`Make this my ${themeStore.jargon.vault}`}
         aria-describedby="save-as-campaign-desc-text"
-        title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
+        title="Keep this world as your own and start building — we'll walk you through the first steps"
       >
-        <span class="icon-[lucide--save] w-3 h-3"></span>
-        SAVE AS {themeStore.jargon.vault.toUpperCase()}
+        <span class="icon-[lucide--save] w-3 h-3" aria-hidden="true"></span>
+        MAKE THIS MINE
       </button>
       <div class="sr-only" id="save-as-campaign-desc-text">
-        Save this demo exploration as your own persistent {themeStore.jargon
-          .vault}
+        Keep this demo world as your own editable {themeStore.jargon.vault} and start
+        building — a short guide walks you through the first steps.
       </div>
       <button
         class={isVertical
@@ -226,7 +224,7 @@
         onclick={() => demoService.exitDemo()}
         aria-label="Exit Demo"
       >
-        <span class="icon-[lucide--log-out] w-3 h-3"></span>
+        <span class="icon-[lucide--log-out] w-3 h-3" aria-hidden="true"></span>
         EXIT DEMO
       </button>
     {/if}
@@ -236,7 +234,8 @@
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
         title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
-        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
+        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5" aria-hidden="true"
+        ></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
       </div>
     {/if}
@@ -255,6 +254,7 @@
       >
         <span
           class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
+          aria-hidden="true"
         ></span>
         <span
           class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans min-w-0"
@@ -263,6 +263,7 @@
         </span>
         <span
           class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
+          aria-hidden="true"
         ></span>
       </button>
     {/if}
@@ -347,15 +348,18 @@
               class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showNoVaultMenu
                 ? 'rotate-180'
                 : ''}"
+              aria-hidden="true"
             ></span>
           </button>
 
           {#if showNoVaultMenu}
-            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-            <div
-              class="fixed inset-0 z-[80]"
+            <button
+              type="button"
+              class="fixed inset-0 z-[80] w-full h-full cursor-default"
+              aria-label="Close menu"
+              tabindex="-1"
               onclick={() => (showNoVaultMenu = false)}
-            ></div>
+            ></button>
             <div
               class="absolute right-0 mt-2 w-56 z-[81] rounded-lg border border-chrome-border bg-chrome-surface shadow-xl py-1 text-left {isVertical
                 ? 'left-0 right-auto'
@@ -396,53 +400,18 @@
           data-testid="exit-guest-mode-button"
           aria-label="Exit Guest Mode"
         >
-          <span class="icon-[lucide--log-out] w-3 h-3"></span>
+          <span class="icon-[lucide--log-out] w-3 h-3" aria-hidden="true"
+          ></span>
           EXIT GUEST MODE
         </button>
-      {:else}
-        <!-- Main Actions -->
-        <button
-          type="button"
-          class={isVertical
-            ? `${btnGhost} py-3 text-sm justify-center`
-            : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
-          onclick={() => {
-            showForm = !showForm;
-            if (showForm) {
-              createError = null;
-            } else {
-              draftContent = "";
-              newTitle = "";
-              prefillStartDate = null;
-            }
-          }}
-          data-testid="new-entity-button"
-          aria-expanded={showForm}
-        >
-          <span
-            class={showForm
-              ? "icon-[heroicons--x-mark] w-3 h-3"
-              : "icon-[heroicons--plus] w-3 h-3"}
-          ></span>
-          {showForm
-            ? "CANCEL"
-            : `NEW ${themeStore.jargon.entity.toUpperCase()}`}
-        </button>
-
-        <div class="relative flex items-center">
-          <button
-            class={isVertical
-              ? `${btnGhost} py-3 text-sm justify-center gap-2 w-full`
-              : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
-            onclick={() => openImportWindow()}
-            data-testid="import-vault-button"
-            title="Import markdown notes or JSON data into your archive."
-            aria-label="Import Data"
-          >
-            <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
-            IMPORT
-          </button>
-        </div>
+      {:else if !guidedModeStore.isGuidedMode}
+        <!-- Main Actions — Full Toolbox only. The old "NEW ENTITY" button
+             that toggled the form below was removed (#1915 follow-up): the
+             header's "+ Create" now covers that in both modes, so this
+             cluster was showing two ways to do the same thing. The inline
+             form itself stays — it's still opened via drafts
+             (proposerStore.draftEntity) and pendingCreateEntity. -->
+        <VaultActionsMenu {orientation} />
 
         <div
           class="flex {isVertical
@@ -511,6 +480,7 @@
                   class={vault.isDirty || !vault.hasFolderHandle
                     ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
                     : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
+                  aria-hidden="true"
                 ></span>
                 {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
               {/if}
@@ -526,22 +496,10 @@
               : "Generate campaign content"}
             data-testid="open-generator-button"
           >
-            <span class="icon-[lucide--wand-2] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--wand-2] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
             {#if isVertical}<span class="font-bold tracking-widest"
                 >GENERATE</span
-              >{/if}
-          </button>
-
-          <button
-            class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
-            onclick={() => modalUIStore.openShare()}
-            title="Share Campaign"
-            aria-label={isVertical
-              ? "SHARE - Share Campaign"
-              : "Share Campaign"}
-          >
-            <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
-            {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
               >{/if}
           </button>
         </div>
@@ -635,6 +593,21 @@
         {:else}
           ADD
         {/if}
+      </button>
+      <button
+        type="button"
+        class="{btnGhost} {isVertical
+          ? 'py-3 text-sm justify-center'
+          : 'px-4 py-1.5 text-xs'}"
+        onclick={() => {
+          showForm = false;
+          draftContent = "";
+          newTitle = "";
+          prefillStartDate = null;
+        }}
+        data-testid="cancel-new-entity-button"
+      >
+        CANCEL
       </button>
       {#if createError}
         <div

@@ -7,6 +7,7 @@
   import type { SearchResult } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
   import { page } from "$app/state";
+  import { base } from "$app/paths";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
@@ -14,6 +15,7 @@
   } from "./search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
@@ -31,7 +33,9 @@
         }
       }
     }
-    return Array.from(labelsSet).sort((a, b) => a.localeCompare(b));
+    return Array.from(labelsSet).sort((a, b) =>
+      (a ?? "").localeCompare(b ?? ""),
+    );
   });
 
   // Autocomplete state
@@ -106,7 +110,16 @@
     }
   }
 
-  const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
+  // Match the route segment exactly (not just a prefix) so e.g. `/tablet`
+  // doesn't get mistaken for `/table`, and account for a non-empty
+  // SvelteKit `base` path.
+  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const isCanvasPage = $derived(
+    new RegExp(`^${escapedBase}/canvas(?:/|$)`).test(page.url.pathname),
+  );
+  const isTablePage = $derived(
+    new RegExp(`^${escapedBase}/table(?:/|$)`).test(page.url.pathname),
+  );
   const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
   const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
   let overlayClass = $derived(
@@ -160,6 +173,7 @@
         autocompleteActiveIndex =
           (autocompleteActiveIndex + 1) % suggestions.length;
         event.preventDefault();
+        event.stopPropagation();
         return;
       }
 
@@ -168,6 +182,7 @@
           (autocompleteActiveIndex - 1 + suggestions.length) %
           suggestions.length;
         event.preventDefault();
+        event.stopPropagation();
         return;
       }
 
@@ -177,10 +192,12 @@
           autocompleteActiveIndex < suggestions.length
         ) {
           event.preventDefault();
+          event.stopPropagation();
           selectLabel(suggestions[autocompleteActiveIndex]);
           return;
         } else if (event.key === "Tab" && suggestions.length > 0) {
           event.preventDefault();
+          event.stopPropagation();
           selectLabel(suggestions[0]);
           return;
         }
@@ -188,20 +205,24 @@
     }
 
     if (event.key === "ArrowDown") {
+      event.preventDefault();
+      event.stopPropagation();
       searchStore.setSelectedIndex(searchStore.selectedIndex + 1);
       scrollToSelected();
-      event.preventDefault();
       return;
     }
 
     if (event.key === "ArrowUp") {
+      event.preventDefault();
+      event.stopPropagation();
       searchStore.setSelectedIndex(searchStore.selectedIndex - 1);
       scrollToSelected();
-      event.preventDefault();
       return;
     }
 
     if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
       const selected = searchStore.selectCurrent();
       if (selected) {
         selectResult(selected as SearchResult, event);
@@ -247,6 +268,9 @@
 
     dispatchSearchEntityFocus(selectedEntityId, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = selectedEntityId;
+    if (isTablePage) {
+      modalUIStore.openZenMode(selectedEntityId);
+    }
     searchStore.close();
   };
 
@@ -255,7 +279,7 @@
     const selectedEl = resultsContainer.children[
       searchStore.selectedIndex
     ] as HTMLElement;
-    if (selectedEl) {
+    if (selectedEl && typeof selectedEl.scrollIntoView === "function") {
       selectedEl.scrollIntoView({ block: "nearest" });
     }
   };
@@ -271,7 +295,7 @@
       type="button"
       aria-label="Close search"
       class="absolute inset-0 w-full h-full bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
-      onclick={searchStore.close}
+      onclick={() => searchStore.close()}
       onkeydown={(e) => e.key === "Escape" && searchStore.close()}
       tabindex="-1"
     ></button>
@@ -283,8 +307,8 @@
       onkeydown={handleKeydown}
     >
       <!-- Input Header -->
-      <div class="p-4 border-b border-chrome-border">
-        <div class="relative">
+      <div class="p-4 border-b border-chrome-border flex items-center gap-2">
+        <div class="relative flex-1">
           <span
             aria-hidden="true"
             class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-chrome-muted"
@@ -294,7 +318,6 @@
             type="text"
             value={searchStore.query}
             oninput={handleInput}
-            onkeydown={handleKeydown}
             onfocus={() => (isFocused = true)}
             onblur={() => setTimeout(() => (isFocused = false), 200)}
             placeholder="Search notes..."
@@ -346,6 +369,19 @@
           {/if}
         </div>
 
+        <button
+          type="button"
+          class="p-2 rounded-md text-chrome-muted hover:text-chrome-text hover:bg-chrome-bg transition-colors flex items-center justify-center shrink-0"
+          onclick={() => searchStore.close()}
+          aria-label="Close search"
+          data-testid="search-modal-close"
+        >
+          <span
+            class="icon-[heroicons--x-mark] w-5 h-5 block"
+            aria-hidden="true"
+          ></span>
+        </button>
+
         {#if explorerUIStore.labelFilters.size > 0}
           <div
             class="flex flex-wrap gap-1.5 mt-3"
@@ -362,6 +398,7 @@
               >
                 <span>#{activeLabel}</span>
                 <span
+                  aria-hidden="true"
                   class="icon-[lucide--x] w-3 h-3 text-chrome-accent/60 hover:text-chrome-accent transition-colors"
                 ></span>
               </button>
@@ -468,6 +505,7 @@
 
                   {#if isCanvasPage}
                     <button
+                      type="button"
                       class="ml-auto p-1.5 rounded-md bg-chrome-accent/10 text-chrome-accent hover:bg-chrome-accent hover:text-chrome-surface transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
@@ -483,7 +521,9 @@
                         }
                       }}
                     >
-                      <span class="icon-[heroicons--plus-circle] w-3 h-3"
+                      <span
+                        aria-hidden="true"
+                        class="icon-[heroicons--plus-circle] w-3 h-3"
                       ></span>
                       Add to Canvas
                     </button>

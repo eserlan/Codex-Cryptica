@@ -13,6 +13,8 @@
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
+  import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
+  import DetailStatsTab from "./entity-detail/DetailStatsTab.svelte";
   import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
@@ -27,6 +29,7 @@
     MIN_RIGHT_SIDEBAR_WIDTH,
   } from "$lib/stores/ui/layout-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
 
   let {
     entity: _entity,
@@ -80,6 +83,9 @@
 
   const canGuestEdit = $derived.by(() => {
     if (!vault.isGuest || !entity) return false;
+    // Own-character editing is a P2P live-session feature; published
+    // snapshots are always read-only.
+    if (guestVault.publishId) return false;
     const name = sessionModeStore.guestUsername?.trim().toLowerCase();
     if (!name) return false;
     return (
@@ -370,7 +376,7 @@
       />
     {/if}
 
-    <div class="absolute inset-0 flex flex-col min-h-0">
+    <div class="absolute inset-0 flex flex-col min-h-0 min-w-0">
       <DetailHeader
         entity={activeEntity}
         {isEditing}
@@ -388,7 +394,7 @@
           <div
             in:fade={{ duration: 150, delay: 150 }}
             out:fade={{ duration: 150 }}
-            class="col-start-1 row-start-1 flex flex-col w-full h-full min-h-0"
+            class="col-start-1 row-start-1 flex flex-col w-full min-w-0 min-h-full"
           >
             {#if sessionModeStore.isDemoMode}
               <div
@@ -408,23 +414,31 @@
                 </span>
                 <div class="flex items-center gap-1">
                   <button
+                    type="button"
                     onclick={handleApproveDraft}
                     disabled={isDraftActioning}
                     title="Approve draft"
                     aria-label="Approve draft"
                     class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/10 disabled:opacity-50"
                   >
-                    <span class="icon-[lucide--check] h-3 w-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--check] h-3 w-3"
+                    ></span>
                     Approve
                   </button>
                   <button
+                    type="button"
                     onclick={handleRejectDraft}
                     disabled={isDraftActioning}
                     title="Reject draft"
                     aria-label="Reject draft"
                     class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-red-500 transition hover:bg-red-500/10 disabled:opacity-50"
                   >
-                    <span class="icon-[lucide--trash-2] h-3 w-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--trash-2] h-3 w-3"
+                    ></span>
                     Reject
                   </button>
                 </div>
@@ -461,10 +475,8 @@
                     {isEditing}
                     {editType}
                     bind:editContent
-                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
-                    bind:editGuestChatConfig
                   />
                 {/if}
               </div>
@@ -503,7 +515,36 @@
                   activeEntity.type !== "character"}
               >
                 {#if activeTab === "chats" && activeEntity.type === "character"}
-                  <DetailChatsTab entity={activeEntity} />
+                  <DetailChatsTab
+                    entity={activeEntity}
+                    {isEditing}
+                    {editContent}
+                    bind:editLore
+                    bind:editGuestChatConfig
+                  />
+                {/if}
+              </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.family}
+                aria-labelledby={tabIds.family}
+                hidden={activeTab !== "family" ||
+                  activeEntity.type !== "character"}
+              >
+                {#if activeTab === "family" && activeEntity.type === "character"}
+                  <DetailFamilyTab entity={activeEntity} />
+                {/if}
+              </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.stats}
+                aria-labelledby={tabIds.stats}
+                hidden={activeTab !== "stats"}
+              >
+                {#if activeTab === "stats"}
+                  <DetailStatsTab entity={activeEntity} />
                 {/if}
               </div>
 

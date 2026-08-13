@@ -8,7 +8,7 @@ export interface PinInteractionDependencies {
   canEditPins: () => boolean;
   updatePinCoordinates: (pinId: string, point: Point) => void;
   saveMaps: () => Promise<void>;
-  selectEntity: (entityId: string) => void;
+  selectEntity: (entityId: string, selectionPoint: Point) => void;
 }
 
 export interface PinDragState {
@@ -61,7 +61,7 @@ export class PinInteractionHandler {
     );
 
     if (clickedPin?.entityId) {
-      this.deps.selectEntity(clickedPin.entityId);
+      this.deps.selectEntity(clickedPin.entityId, viewportPoint);
     }
 
     return clickedPin;
@@ -106,7 +106,7 @@ export class PinInteractionHandler {
         .getPins()
         .find((candidate) => candidate.id === pinId);
       if (pin?.entityId) {
-        this.deps.selectEntity(pin.entityId);
+        this.deps.selectEntity(pin.entityId, mouseUpPoint);
       }
       return { type: "selected", pinId };
     }

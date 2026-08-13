@@ -8,9 +8,23 @@ import type { Entity } from "schema";
 import type { EntityPersistenceService } from "./entity-persistence";
 import type { EntityContentLoader } from "./entity-content-loader.svelte";
 import type { IVaultServices } from "./service-registry";
+import {
+  summarizeBulkMutation,
+  runWithConcurrency,
+  type BulkMutationResult,
+  type BulkMutationItemResult,
+} from "./bulk-results";
+import type { ImmediateSaveEntry } from "./entity-persistence";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { updateLastInternalChange } from "./registry";
+import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  performanceRecorder,
+  type PerformanceRecorder,
+} from "@codex/performance-observability";
 
 export interface MutationDependencies {
+  performanceRecorder?: PerformanceRecorder;
   repository: VaultRepository;
   persistence: EntityPersistenceService;
   loader: EntityContentLoader;
@@ -51,7 +65,11 @@ export interface MutationDependencies {
 }
 
 export class EntityMutationService {
-  constructor(public deps: MutationDependencies) {}
+  private performanceRecorder: PerformanceRecorder;
+
+  constructor(public deps: MutationDependencies) {
+    this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+  }
 
   registerStoreCallbacks(
     callbacks: Partial<
@@ -126,6 +144,7 @@ export class EntityMutationService {
   ): Promise<boolean> {
     const existing = this.entities[id];
     if (!existing) return false;
+    const span = this.performanceRecorder.start("entity_save");
 
     const safeUpdates = {
       ...updates,
@@ -166,7 +185,14 @@ export class EntityMutationService {
       services.ai.clearStyleCache();
     }
 
-    await this.deps.persistence.scheduleSave(updated);
+    try {
+      await this.deps.persistence.scheduleSave(updated);
+    } catch (error) {
+      span.fail("unexpected", () => ({
+        entityCount: Object.keys(this.entities).length,
+      }));
+      throw error;
+    }
 
     vaultEventBus.emit({
       type: "ENTITY_UPDATED",
@@ -175,21 +201,35 @@ export class EntityMutationService {
       patch: updates,
     });
 
+    span.complete(() => ({ entityCount: Object.keys(this.entities).length }));
     return true;
   }
 
   async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
-    let hasChanges = false;
+    const result = await this.bulkUpdate(updates);
+    return result.succeededIds.length > 0;
+  }
+
+  async bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    const requestedIds = Object.keys(updates);
+    const span = this.performanceRecorder.start("vault_bulk_mutation");
+    const mutationVaultId = this.deps.activeVaultId();
     const currentEntities = this.entities;
-    const newEntities = { ...currentEntities };
+    const stagedEntities = { ...currentEntities };
     const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
-    const savePromises: Promise<void>[] = [];
+    const entries: ImmediateSaveEntry[] = [];
+    const items: BulkMutationItemResult[] = [];
 
     for (const [id, patch] of Object.entries(updates)) {
-      if (!currentEntities[id]) continue;
       const current = currentEntities[id];
+      if (!current) {
+        items.push({ id, status: "skipped" });
+        continue;
+      }
 
       const preserveGuestContent =
         this.deps.isGuest() && patch.content === "" && !!current.content;
@@ -207,45 +247,97 @@ export class EntityMutationService {
               : patch.content
             : current.content,
         lore: patch.lore !== undefined ? patch.lore : current.lore,
-        updatedAt: Date.now(),
-        modifiedAt: Date.now(),
+        updatedAt: systemClock.now(),
+        modifiedAt: systemClock.now(),
       } as LocalEntity;
 
-      newEntities[id] = merged;
+      stagedEntities[id] = merged;
       appliedUpdates[id] = patch;
-      hasChanges = true;
-
-      if (
-        patch.content !== undefined ||
-        patch.lore !== undefined ||
-        patch.title !== undefined ||
-        patch.labels !== undefined
-      ) {
-        this.deps.loader.markContentLoaded(id);
-      }
-
       if (patch.image && this.deps.invalidateUrlCache) {
         this.deps.invalidateUrlCache(patch.image);
       }
-
-      savePromises.push(this.deps.persistence.scheduleSave(merged));
+      entries.push({
+        entity: merged,
+        options: {
+          preserveCachedContent:
+            patch.content === undefined && patch.lore === undefined,
+        },
+      });
     }
 
-    if (hasChanges) {
-      this.entities = newEntities;
-      if (this.deps.onBatchUpdate) this.deps.onBatchUpdate(appliedUpdates);
-      await Promise.all(savePromises);
+    if (entries.length === 0) {
+      span.complete(() => ({ changedEntityCount: 0 }));
+      return summarizeBulkMutation(requestedIds, items);
+    }
 
+    if (sessionModeStore.isDemoMode || this.deps.isGuest()) {
+      this.entities = stagedEntities;
+      this.deps.onBatchUpdate?.(appliedUpdates);
+      for (const id of Object.keys(appliedUpdates)) {
+        items.push({ id, status: "success" });
+      }
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
-        entities: Object.keys(appliedUpdates).map((id) => newEntities[id]),
+        entities: Object.keys(appliedUpdates).map((id) => stagedEntities[id]),
         patches: appliedUpdates,
       });
+    } else {
+      const persisted = await this.deps.persistence.persistImmediately(entries);
+      const persistedById = new Map(
+        persisted.map((result) => [result.id, result]),
+      );
+      const committedEntities = { ...currentEntities };
+      const committedUpdates: Record<string, Partial<LocalEntity>> = {};
 
-      return true;
+      if (mutationVaultId !== this.deps.activeVaultId()) {
+        for (const id of Object.keys(appliedUpdates)) {
+          items.push({
+            id,
+            status: "cancelled",
+          });
+        }
+        span.cancel(() => ({ changedEntityCount: 0 }));
+        return summarizeBulkMutation(requestedIds, items);
+      }
+
+      for (const id of Object.keys(appliedUpdates)) {
+        const result = persistedById.get(id);
+        if (result?.ok) {
+          committedEntities[id] = stagedEntities[id];
+          committedUpdates[id] = appliedUpdates[id];
+          this.deps.loader.markContentLoaded(id);
+          items.push({ id, status: "success" });
+        } else {
+          items.push({ id, status: "failed", error: result?.error });
+        }
+      }
+
+      if (Object.keys(committedUpdates).length > 0) {
+        this.entities = committedEntities;
+        this.deps.onBatchUpdate?.(committedUpdates);
+        vaultEventBus.emit({
+          type: "BATCH_UPDATED",
+          vaultId: this.deps.activeVaultId() || "unknown",
+          entities: Object.keys(committedUpdates).map(
+            (id) => committedEntities[id],
+          ),
+          patches: committedUpdates,
+        });
+      }
     }
-    return false;
+
+    const result = summarizeBulkMutation(requestedIds, items);
+    if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+      span.fail("unexpected", () => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    } else {
+      span.complete(() => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    }
+    return result;
   }
 
   async deleteEntity(id: string) {
@@ -288,9 +380,7 @@ export class EntityMutationService {
           this.entities = entities;
           if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
 
-          import("./registry").then((m) =>
-            m.updateLastInternalChange(activeVaultId),
-          );
+          await updateLastInternalChange(activeVaultId);
 
           modifiedIds.forEach((mId) => {
             const modEntity = this.entities[mId];
@@ -346,6 +436,153 @@ export class EntityMutationService {
     });
   }
 
+  async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    if (this.deps.isGuest()) {
+      throw new Error("Cannot delete entities in Guest Mode");
+    }
+
+    const requestedIds = [...new Set(ids)];
+    const span = this.performanceRecorder.start("vault_bulk_mutation");
+    if (sessionModeStore.isDemoMode) {
+      const next = { ...this.entities };
+      const items: BulkMutationItemResult[] = [];
+      for (const id of requestedIds) {
+        if (!next[id]) {
+          items.push({ id, status: "skipped" });
+          continue;
+        }
+        delete next[id];
+        this.deps.onEntityDelete?.(id);
+        items.push({ id, status: "success" });
+      }
+      this.entities = next;
+      const result = summarizeBulkMutation(requestedIds, items);
+      span.complete(() => ({ changedEntityCount: result.succeededIds.length }));
+      return result;
+    }
+
+    const vaultHandle = await this.deps.getActiveVaultHandle();
+    const localHandle = await this.deps.getActiveFolderHandle();
+    const vaultId = this.deps.activeVaultId();
+    if (!vaultHandle || !vaultId) {
+      const result = summarizeBulkMutation(
+        requestedIds,
+        requestedIds.map((id) => ({ id, status: "failed" as const })),
+      );
+      span.fail("unexpected", () => ({ changedEntityCount: 0 }));
+      return result;
+    }
+
+    const validIds = requestedIds.filter((id) => this.entities[id]);
+    const deletedPaths = new Map(
+      validIds.map((id) => [id, this.entities[id]._path || [`${id}.md`]]),
+    );
+    const items: BulkMutationItemResult[] = requestedIds
+      .filter((id) => !this.entities[id])
+      .map((id) => ({ id, status: "skipped" as const }));
+    const deleteTasks = validIds.map((id) => async () => {
+      const entity = this.entities[id];
+      if (!entity || this.deps.activeVaultId() !== vaultId) {
+        return { id, ok: false, cancelled: true };
+      }
+      try {
+        await this.deps.repository.enqueueSave(id, () =>
+          vaultEntities.deleteEntityFiles(vaultHandle, entity),
+        );
+        return { id, ok: true, cancelled: false };
+      } catch (error) {
+        return { id, ok: false, cancelled: false, error };
+      }
+    });
+    const deletedResults = await runWithConcurrency(deleteTasks, 4);
+    if (vaultId !== this.deps.activeVaultId()) {
+      const result = summarizeBulkMutation(
+        requestedIds,
+        deletedResults.map((item) => ({
+          id: item.id,
+          status: item.ok ? ("cancelled" as const) : ("failed" as const),
+          error: item.error,
+        })),
+      );
+      span.cancel(() => ({ changedEntityCount: 0 }));
+      return result;
+    }
+    const deletedIds = deletedResults
+      .filter((result) => result.ok)
+      .map((result) => result.id);
+
+    for (const result of deletedResults) {
+      items.push({
+        id: result.id,
+        status: result.cancelled
+          ? "cancelled"
+          : result.ok
+            ? "success"
+            : "failed",
+        error: result.error,
+      });
+    }
+
+    if (deletedIds.length > 0) {
+      const applied = vaultEntities.applyBatchDelete(
+        this.entities,
+        deletedIds,
+        this.deps.getInboundConnections?.(),
+        this.deps.getParentToChildren?.(),
+      );
+      const survivorEntries: ImmediateSaveEntry[] = Object.values(
+        applied.modified,
+      ).map((entity) => ({ entity }));
+      const survivorResults =
+        await this.deps.persistence.persistImmediately(survivorEntries);
+      const survivorSuccess = new Set(
+        survivorResults
+          .filter((result) => result.ok)
+          .map((result) => result.id),
+      );
+      const committed = { ...this.entities };
+      for (const id of deletedIds) {
+        delete committed[id];
+        this.deps.onEntityDelete?.(id);
+      }
+      for (const id of Object.keys(applied.modified)) {
+        committed[id] = applied.modified[id];
+        if (!survivorSuccess.has(id)) {
+          void this.deps.persistence.scheduleSave(applied.modified[id]);
+        }
+      }
+      this.entities = committed;
+
+      for (const id of deletedIds) {
+        vaultEventBus.emit({
+          type: "ENTITY_DELETED",
+          vaultId,
+          entityId: id,
+        });
+        const path = deletedPaths.get(id) || [`${id}.md`];
+        await cacheService.remove(`${vaultId}:${path.join("/")}`);
+        await removeLocalEntityFile(localHandle, path);
+      }
+      await updateLastInternalChange(vaultId);
+      await this.deps.updateEntityCount(
+        vaultId,
+        Object.keys(this.entities).length,
+      );
+    }
+
+    const result = summarizeBulkMutation(requestedIds, items);
+    if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+      span.fail("unexpected", () => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    } else {
+      span.complete(() => ({
+        changedEntityCount: result.succeededIds.length,
+      }));
+    }
+    return result;
+  }
+
   async addConnection(
     sourceId: string,
     targetId: string,
@@ -353,6 +590,9 @@ export class EntityMutationService {
     label?: string,
     strength: number = 1.0,
   ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
     const { entities, updatedSource } = vaultEntities.addConnection(
       this.entities,
       sourceId,
@@ -371,6 +611,17 @@ export class EntityMutationService {
       if (newConn && this.deps.onConnectionAdded) {
         this.deps.onConnectionAdded(sourceId, targetId, newConn);
       }
+
+      vaultEventBus.emit({
+        type: "CONNECTION_ADDED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        connectionType: type,
+        label,
+        strength,
+      });
+
       return true;
     }
     return false;
@@ -383,6 +634,9 @@ export class EntityMutationService {
     newType: string,
     newLabel?: string,
   ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
     const { entities, updatedSource } = vaultEntities.updateConnection(
       this.entities,
       sourceId,
@@ -401,6 +655,17 @@ export class EntityMutationService {
       if (updatedConn && this.deps.onConnectionUpdated) {
         this.deps.onConnectionUpdated(sourceId, targetId, oldType, updatedConn);
       }
+
+      vaultEventBus.emit({
+        type: "CONNECTION_UPDATED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        oldType,
+        newType,
+        newLabel,
+      });
+
       return true;
     }
     return false;
@@ -411,6 +676,9 @@ export class EntityMutationService {
     targetId: string,
     type: string,
   ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
     const { entities, updatedSource } = vaultEntities.removeConnection(
       this.entities,
       sourceId,
@@ -564,5 +832,32 @@ export class EntityMutationService {
       vaultId: activeVaultId || "unknown",
       entities: created,
     });
+  }
+}
+
+async function removeLocalEntityFile(
+  localHandle: FileSystemDirectoryHandle | undefined,
+  path: string[],
+): Promise<void> {
+  if (!localHandle) return;
+  try {
+    const permission = await localHandle.queryPermission({ mode: "readwrite" });
+    if (permission !== "granted") return;
+
+    const fileName = path[path.length - 1];
+    const dirPath = path.slice(0, -1);
+    let targetDir: FileSystemDirectoryHandle | undefined = localHandle;
+    for (const part of dirPath) {
+      targetDir = await targetDir
+        ?.getDirectoryHandle(part, { create: false })
+        .catch(() => undefined);
+      if (!targetDir) return;
+    }
+    await targetDir?.removeEntry(fileName, { recursive: true });
+  } catch (error) {
+    debugStore.warn(
+      `[EntityMutation] Failed to delete ${path.join("/")} from local filesystem`,
+      error,
+    );
   }
 }

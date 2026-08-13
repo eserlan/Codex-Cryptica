@@ -11,6 +11,13 @@ export class MetaExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
+  constructor(
+    clock?: import("../runtime").Clock,
+    idGenerator?: import("../runtime").IdGenerator,
+  ) {
+    super(clock, idGenerator);
+  }
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -54,7 +61,7 @@ export class MetaExecutor
     const isAIDisabled = context.uiStore.aiDisabled;
 
     const msg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       role: "system",
       content: isAIDisabled
         ? `### Restricted Mode Active

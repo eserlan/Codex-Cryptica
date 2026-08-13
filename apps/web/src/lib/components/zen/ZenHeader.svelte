@@ -14,7 +14,19 @@
   import { base } from "$app/paths";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
+  import { soundBiteService } from "@codex/audio-engine";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
+  import { goto } from "$app/navigation";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let {
     entity,
@@ -48,6 +60,19 @@
     isDraftActioning?: boolean;
   }>();
 
+  let linkCopied = $state(false);
+
+  const handleCopyGuestLink = async () => {
+    if (!guestVault.publishId || !entity) return;
+    try {
+      await copyGuestEntityLink(guestVault.publishId, entity.id);
+      linkCopied = true;
+      setTimeout(() => (linkCopied = false), 2000);
+    } catch {
+      notificationStore.notify("Could not copy the link.", "error");
+    }
+  };
+
   const isGraphView = $derived.by(() => {
     const path = page.url.pathname;
     const normalizedBase = base.endsWith("/") ? base : `${base}/`;
@@ -73,6 +98,15 @@
   };
   const parentEntity = $derived(
     entity?.parent ? vault.entities[entity.parent] : null,
+  );
+
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
   );
 </script>
 
@@ -178,20 +212,62 @@
       class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
-      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
+      ></span>
     </button>
 
     <div class="flex items-center gap-1.5 md:gap-3 shrink-0 ml-auto">
       {#if !editState.isEditing}
+        {#if entity && isDelveLocationEntity(entity)}
+          <button
+            type="button"
+            onclick={async () => {
+              try {
+                if (existingCanvas) {
+                  openCanvasFromZen(existingCanvas, goto);
+                  return;
+                }
+                const canvasDoc =
+                  dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                const slug = await canvasRegistry.importCanvas(canvasDoc);
+                openCanvasFromZen({ slug }, goto);
+              } catch (err) {
+                console.error("[DelveCanvas] ZenHeader build failed:", err);
+              }
+            }}
+            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-[10px] md:text-xs font-bold tracking-widest cursor-pointer"
+            title={existingCanvas
+              ? `Open ${delveCanvasLabel}`
+              : `Build ${delveCanvasLabel}`}
+            aria-label={existingCanvas
+              ? `Open ${delveCanvasLabel}`
+              : `Build ${delveCanvasLabel}`}
+            data-testid="zen-build-delve-canvas-button"
+          >
+            <span
+              aria-hidden="true"
+              class="{existingCanvas
+                ? 'icon-[lucide--external-link]'
+                : 'icon-[lucide--map]'} w-4 h-4"
+            ></span>
+            <span class="hidden sm:inline"
+              >{existingCanvas
+                ? `Open ${delveCanvasLabel}`
+                : delveCanvasLabel}</span
+            >
+          </button>
+        {/if}
         {#if isGraphView}
           <button
+            type="button"
             onclick={handleFindInGraph}
             class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
             title="Find in Graph"
             aria-label="Find in Graph"
             data-testid="zen-find-in-graph-button"
           >
-            <span class="icon-[lucide--target] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
+            ></span>
           </button>
         {/if}
         {#if entity && (!vault.isGuest || entity.soundBite)}
@@ -217,37 +293,65 @@
               class="{entity.soundBite
                 ? 'icon-[lucide--volume-2]'
                 : 'icon-[lucide--mic]'} w-4 h-4"
+              aria-hidden="true"
             ></span>
           </button>
         {/if}
         {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
           <button
+            type="button"
             onclick={() => guestChatStore.openChat(entity.id, entity.title)}
             class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
             title="Chat with character"
             aria-label="Chat with character"
             data-testid="zen-guest-chat-button"
           >
-            <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--messages-square] w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if vault.isGuest && guestVault.publishId && entity}
+          <button
+            type="button"
+            onclick={handleCopyGuestLink}
+            class="px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
+              ? 'text-theme-primary'
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title={linkCopied ? "Link copied!" : "Copy link to this entity"}
+            aria-label="Copy link to this entity"
+            data-testid="zen-copy-guest-link-button"
+          >
+            <span
+              class="{linkCopied
+                ? 'icon-[lucide--check]'
+                : 'icon-[lucide--link]'} w-4 h-4"
+              aria-hidden="true"
+            ></span>
           </button>
         {/if}
         <button
+          type="button"
           onclick={onCopy}
           class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
           title="Copy Content"
           aria-label="Copy Content"
         >
           {#if isCopied}
-            <span class="icon-[lucide--check] w-4 h-4 text-theme-primary"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--check] w-4 h-4 text-theme-primary"
             ></span>
           {:else}
-            <span class="icon-[lucide--copy] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--copy] w-4 h-4"></span>
           {/if}
         </button>
       {/if}
 
       {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
         <button
+          type="button"
           onclick={onApproveDraft}
           disabled={isDraftActioning}
           title="Approve draft"
@@ -255,10 +359,11 @@
           class="flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="approve-draft-button"
         >
-          <span class="icon-[lucide--check] h-3 w-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--check] h-3 w-3"></span>
           <span class="hidden sm:inline">APPROVE</span>
         </button>
         <button
+          type="button"
           onclick={onRejectDraft}
           disabled={isDraftActioning}
           title="Reject draft"
@@ -266,20 +371,23 @@
           class="flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="reject-draft-button"
         >
-          <span class="icon-[lucide--trash-2] h-3 w-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
+          ></span>
           <span class="hidden sm:inline">REJECT</span>
         </button>
       {/if}
       {#if !editState.isEditing && !vault.isGuest && entity}
         {#if onDelete}
           <button
+            type="button"
             onclick={onDelete}
             class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             title="Delete entity"
             aria-label="Delete entity"
             data-testid="delete-entity-button"
           >
-            <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
+            ></span>
           </button>
         {/if}
         <button
@@ -314,12 +422,15 @@
 
       {#if onPopOut && !editState.isEditing}
         <button
+          type="button"
           onclick={onPopOut}
           class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
           title="Open in new tab"
           aria-label="Open in new tab"
         >
-          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          <span
+            aria-hidden="true"
+            class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
           ></span>
         </button>
       {/if}
@@ -329,11 +440,12 @@
       ></div>
 
       <button
+        type="button"
         onclick={onClose}
         class="hidden md:flex text-theme-muted hover:text-theme-primary transition p-2 hover:bg-theme-primary/10 rounded"
         aria-label="Close"
       >
-        <span class="icon-[lucide--x] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-6 h-6"></span>
       </button>
     </div>
   </div>

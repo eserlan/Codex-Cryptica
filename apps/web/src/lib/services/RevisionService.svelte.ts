@@ -8,6 +8,7 @@ import { type RevisionDraft } from "@codex/oracle-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 import type { LocalEntity } from "$lib/stores/vault/types";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export type RevisionRequest = {
   entityId: string;
@@ -22,6 +23,8 @@ export class RevisionService {
   pendingDraft = $state<RevisionDraft | null>(null);
   isRevising = $state(false);
   error = $state<string | null>(null);
+
+  constructor(private clock: Clock = systemClock) {}
 
   async revise(
     requestOrEntityId: RevisionRequest | string,
@@ -58,6 +61,7 @@ export class RevisionService {
       return true;
     } catch (err: unknown) {
       this.error = errorMessage(err);
+      notificationStore.notify(this.error, "error");
       console.error("[RevisionService] Failed to revise:", err);
       return false;
     } finally {
@@ -89,7 +93,7 @@ export class RevisionService {
       source: "revise",
       chronicle: revised.content ?? entity?.content ?? "",
       lore: revised.lore ?? entity?.lore ?? "",
-      timestamp: Date.now(),
+      timestamp: this.clock.now(),
     };
   }
 
@@ -99,8 +103,7 @@ export class RevisionService {
     messageId?: string,
   ) {
     const entity = vault.entities[finalContent.targetId] as
-      | LocalEntity
-      | undefined;
+      LocalEntity | undefined;
     this.pendingDraft = {
       entityId: finalContent.targetId,
       messageId,
@@ -111,7 +114,7 @@ export class RevisionService {
         sourceIds,
         finalContent,
       },
-      timestamp: Date.now(),
+      timestamp: this.clock.now(),
     };
     vault.selectedEntityId = finalContent.targetId;
   }
@@ -144,8 +147,7 @@ export class RevisionService {
       }
       if (acceptedDraft.generatorSessionCommit) {
         const entity = vault.entities[acceptedDraft.entityId] as
-          | LocalEntity
-          | undefined;
+          LocalEntity | undefined;
         generatorSessionManager.commitAcceptedEntity({
           id: acceptedDraft.entityId,
           title: entity?.title ?? acceptedDraft.entityId,

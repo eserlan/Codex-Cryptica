@@ -19,17 +19,41 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Touch gestures
+Drag to pan, pinch to zoom, and tap a node to open it.
+
+### New here?
+Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.
+
+### Quick Start a world
+Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation. One choice sets both the genre of the generated world and your workspace appearance, and the dialog previews what you'll get before you commit. Works fully offline.
+
+### Guided Mode
+Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header — nothing you've created is ever hidden or lost.
+
+### + Create
+Pick Character, Place, Faction, Event, or Item and Codex Cryptica infers the current context and generates a draft immediately. Click Customize on the draft to reveal the full generator options.
+
+### Next-step suggestions
+A subtle banner at the bottom of an entity's detail panel suggests logical next steps, like adding a leader to a faction. Click the suggestion, or dismiss it if it doesn't apply.
+
 ### AI Oracle
 Chat with the AI about your world. Ask questions, brainstorm ideas, or get help writing descriptions directly from your notes. Use the system proxy for free access, or add your own API key for direct connection.
 
 ### Oracle Connection Modes
-The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.
+The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to OpenAI/Luna). The status badge in the Oracle sidebar shows which mode is active.
 
 ### Oracle Memory
-The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
+
+### Family Tree
+Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
+
+### Explore the lineage
+Drag to pan, scroll or pinch to zoom, and use ⊞ to expand a branch. Choose Show all generations to reveal the whole recorded lineage.
 
 ### Visual Graph
-Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.
+Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; use Fit to Screen in the graph controls whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance. The drawing needs a pointer and a screen, so Browse as table in the graph controls opens the same entities as a keyboard-friendly list, and each entity page names its connections and their direction.
 
 ### World Chronology
 Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year — use Previous / Next to navigate months, or click the month title to jump straight to a year with the scroll picker. Click an entry to open it in the detail panel; double-click to open it full-screen. Double-click an empty area of any date cell to open the entity creation form with that date pre-filled as the start date. Drag an entity from the left sidebar onto any calendar day to set its start or end date. If an entity has a date, click that date text in the detail panel to jump the calendar straight to it. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and 'include undated' toggles to narrow what's visible.
@@ -40,6 +64,9 @@ Use the briefing field to edit the world blurb directly. If it is empty, the Gen
 ### Load and Save Folders
 Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
 
+### Codex Interchange Format (CIF) Import
+Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too — it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.
+
 ### Search Indexing
 Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.
 
@@ -48,6 +75,15 @@ The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It o
 
 ### Load from Folder
 Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
+
+### Public World Directory
+Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link. All listed worlds display a provenance and copyright notice confirming they are user-created and independently published without rights-holder endorsement. Authors must confirm they have the legal right to publish their content, and visitors may report potential copyright concerns for moderation review.
+
+### Sharing a Link to an Entry
+In a shared world, every entry has a link button (next to the entry title in the side panel and in the full-screen view). It copies a direct link that opens that entry full-screen for anyone you send it to. While browsing a shared world, the address bar also carries the current entry, so copying the address works too.
+
+### Table View Filters
+In table view, click a type badge or a label chip on any row to filter the table down to matching entries; click again (or use Clear) to remove the filter. Active label filters appear next to the type pills above the table. Every column header with an arrow, including Labels, can be clicked to sort.
 
 ### Total Privacy
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
@@ -79,11 +115,17 @@ Use `Shift+Left` and `Shift+Right` arrows to quickly navigate back and forward t
 ### Smart Importing
 Safe file loading. If a file import stops, just pick the file again to finish where you left off.
 
+### Creature Packs
+Populate a new vault fast with Creature Packs — curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.
+
 ### Themes
 Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes—from Ancient Parchment to Sci-Fi Terminal—to perfectly match the genre of your story.
 
 ### Instant Visualization
 For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.
+
+### Drawing Gods and Legends
+A picture of a god should not look like a picture of a villager. Label an entity 'deity', 'god', 'divine', 'immortal' or 'titan' and its images are drawn in materials beyond mortal making, lit from within, and framed from below. 'legendary' or 'demigod' does the same a step down. Everything else is drawn as ordinary, and the entity panel shows which one is in effect. You can also set it for a single picture under Advanced art direction when you review a prompt.
 
 ### Demo Mode
 Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.
@@ -98,13 +140,16 @@ Our marketing and legal pages are pre-baked as static HTML for instant loading a
 Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.
 
 ### VTT Mode
-Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.
+Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map. Select a token and drag the handle above it or its facing indicator ring to rotate its facing; Alt+Left/Right rotates it in 45-degree steps. Right-click a token and open Appearance to show its facing indicator or switch between circle and square bases.
 
 ### VTT Entity List
 Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.
 
+### Session Voice Chat
+Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who is in the channel.
+
 ### Spatial Canvas
-Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.
+Design custom layouts like conspiracy boards or quest flowcharts. Sketch with the pencil, remove individual strokes with the eraser, and rotate cards with a two-finger twist or the desktop rotation handle. Drawings and card angles persist with the canvas.
 
 ### The Archive
 Visit our blog for deep dives into data sovereignty and tactical world-building guides. Check out our Comprehensive Help Guide for a full system manual.
@@ -113,7 +158,7 @@ Visit our blog for deep dives into data sovereignty and tactical world-building 
 Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.
 
 ### Entity Explorer
-Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.
+Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases), and sort by name or last edited time in either direction. Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.
 
 ### Navigation Hub
 Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.
@@ -146,23 +191,187 @@ Organize your world hierarchically. Drag and drop entities in the explorer to ne
 When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.
 
 ### Guest Character Chat
-Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.
+Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship.
 
 ### Campaign Generators
-Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.
+Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.
+
+### Secret Societies & Cults
+Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.
+
+### Entity Timeline
+Open any entity's detail panel and click the Timeline tab to see a chronological list of the events linked to that entity — battles, foundings, discoveries, and more. Events are sorted earliest to latest. Undated events appear at the end under an Undated heading. Click any event to open its full detail page. The timeline is read-only; to add an event to an entity's history, link the event using the entity's connections.
+
+### Generators Work Offline
+The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.
+
+### Fictional Languages
+Design structured language profiles (conlangs) with pronunciation guidance, naming structures, example names, phrases, and a glossary. When generating an NPC, faction, settlement, or ship, choose one saved Naming language to apply its rules. No language is applied automatically.
+
+### News Sheets (In-World News)
+Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.
+
+### Dungeon & Delve Generator
+Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.
+
+### Adventure Idea Generator
+Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.
+
+### Quest Hook Generator
+Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.
+
+### Plot Twist & Complication Generator
+Start with an existing premise, scene, or campaign problem and generate a coherent reversal or complication. The generator preserves established facts, identifies an assumption that can be overturned, adds foreshadowing and consequences, and gives the players new choices. Add campaign context or constraints when you need the twist to fit an existing storyline.
+
+### Sci-Fi World Generator
+Create campaign-ready planets, moons, and artificial worlds with a clear physical identity, societies shaped by their environment, resources, dangers, notable locations, mysteries, conflicts, and adventure hooks. Start it from Campaign Generators for a standalone world, or open it with existing system context to develop a world that fits the star, orbit, factions, and conflicts already in your campaign. Drafts remain local until you choose to save them.
+
+### Delve Spatial Canvas Builder
+Transform dungeon concepts into interactive spatial canvas maps. Open a generated dungeon concept and click 'Build Delve on Canvas' to create a .canvas layout with sector group frames, tactical Area role badges, custom passages (hidden, locked, vertical), and context-aware stocking. Every new delve ends with a dedicated Climax Area chosen by AI from the Location's established canon. Its editor records what is at stake, the players' decision, and possible outcomes, so the finale can be a confrontation, negotiation, ritual, revelation, crisis, siege, escape, or another decisive turn rather than a required boss fight. When the layout is ready, use Finalize Dossier to create a linked GM Note containing the original briefing, every populated sector and Area, room-level connections, climax outcomes, a fitted image of the complete map, and a link back to the canvas. Finalize again after edits to refresh the image and update the same Note.
+
+### Presentation Templates
+Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Item and equipment table fields keep repeatable rows together: add items, edit their cells, adjust counters, and roll dice from the table. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
 
 
 ## Help Documentation
 
 ### GETTING STARTED
 
-Codex Cryptica is designed to give you **absolute sovereignty** over your lore. Everything you write is saved as a Markdown file in your local vault.
+![Codex Cryptica Dashboard](/images/rpg-vault-mockup.png)
 
-### Core Concepts
+**In short:** Codex Cryptica is a place to build and run your tabletop campaign — your characters, places, factions, maps, and notes, all in one workspace. Everything you write stays on your own device. No account is needed, it works offline, and nothing is uploaded unless you choose to share it.
 
-- **Entities**: The building blocks of your world (NPCs, Locations, Items).
-- **Chronicles**: The main text content of an entity.
-- **Lore**: Hidden attributes and meta-data used by the Oracle for context.
+You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main description, and **Lore** is your private, GM-only notes. Don't worry about memorising them; they're explained in context the first time they matter.
+
+For power users: your worlds are saved as clean local Markdown files (in the browser's Origin Private File System), so they remain fully yours, portable, and safe from cloud platform lock-in.
+
+---
+
+## Quick Start: Your First 5 Minutes
+
+Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action:
+
+1.  **Initialize your Space**: Click the folder icon in the top-left toolbar, select **New Vault**, and give it a name.
+2.  **Create your First Cast Member**: Click the `+` icon in the explorer sidebar, select the **Character** category, type `Eldrin` as the title, and hit Save.
+3.  **Write and Link**: Double-click Eldrin in the list to open his profile, click the Chronicle text area to edit, and type:
+    `A legendary mage living in [[Kingdom of Aethel]].`
+4.  **Confirm the Location**: The name `Kingdom of Aethel` will automatically create a draft entity link. Click that link in read mode to create the new Faction/Location record.
+5.  **Open the Knowledge Graph**: Select the Graph tab in the main navigation. You will see Eldrin and the Kingdom of Aethel mapped visually, with a connecting edge automatically drawn!
+
+---
+
+## 1. Vaults & The Workspace
+
+Your worldbuilding begins with a **Vault**—a dedicated workspace containing all of your campaign's entities, relationships, custom calendars, and spatial layouts.
+
+- **Absolute Sovereignty**: Vault files reside locally in your browser's **Origin Private File System (OPFS)**.
+- **Opening/Switching Vaults**: Click the vault indicator or the **folder icon** in the top-left toolbar to switch campaigns or initialize a new vault.
+- **Importing existing campaigns**: You can import existing markdown folders or JSON structures using the **Import** utility to seed your Codex instantly.
+
+---
+
+## 2. Core Concepts: Entities, Chronicles, & Lore
+
+Every person, place, or thing in your world is represented as an **Entity**.
+
+- **Entities**: Classified by category (Character, Creature, Location, Item, Event, Faction, or Note).
+- **Chronicles**: The primary, public-facing text field of your entity, written in Markdown. Think of it as the entity's main description or log (which can be styled and custom-renamed under different world themes as a _Tome_, _Log_, or _Journal_ for flavor).
+- **Lore**: Hidden metadata and secrets. The Lore section is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
+- **Hierarchy & Nesting**: In the left-hand Explorer panel, drag and drop entities to nest them (e.g., place a _Tavern_ inside a _City_). CC automatically checks for recursive loops to prevent cycle errors, and deleting a parent automatically promotes child entities to the root level.
+
+---
+
+## 3. Writing & Bidirectional Linking
+
+CC features a bidirectional link editor (built on **Tiptap**). Connecting your notes is seamless and instantaneous.
+
+- **Entity Auto-Links**: In read mode, any text matching an entity's name or its registered **aliases** is automatically highlighted as a clickable link.
+- **Command Bar (Slash Commands)**: Type a forward slash `/` in the chat input or the editor to trigger commands:
+  - `/connect`: Initiate high-speed linking.
+  - `/merge`: Consolidate duplicate entries.
+- **Efficient Connecting**:
+  - _Visual Connector_: Use the **Chain Link** icon in the graph toolbar.
+  - _Quick Connect_: Type `/connect "Eldrin" is the mentor of "Kaelen"` to create a relationship.
+  - _Tab Sequence_: Type `/connect` and press **Enter** to open the wizard, then use `Tab` to cycle from **Source** $\rightarrow$ **Label** $\rightarrow$ **Target** with keyboard auto-completion.
+- **Merging Entities**: Consolidate redundant files via `/merge "Old Notes" into "Kingdom of Aethel"`. CC redirects all incoming/outgoing graph connections automatically. Type `/merge oracle` to open the AI Merge Wizard to synthesize the texts into a single cohesive lore chronicle.
+
+---
+
+## 4. Chronology & Custom Calendars
+
+Browse your campaign history through a month-grid calendar, running agenda list, or linear timeline.
+
+- **Scroll-Wheel Date Picker**: A center-align snapping wheel interface designed for desktop and mobile scroll-snapping.
+  - **Granularity**: Select dates by Year, Month, Day, or **Anchor** (intercalary festival days outside standard months).
+  - **Keyboard Override**: Click the keyboard icon on any wheel to type a year directly.
+  - **Conflict Repair**: If calendar settings are modified, the picker alerts you of invalid dates and prompts an auto-repair.
+- **Custom Campaign Calendars**: Go to **Vault Settings** to disable the standard Gregorian calendar and define custom months, lengths, and epoch suffixes (e.g. "AF" or "BCE").
+- **Undated & Approximate Events**: Approximate events are safely displayed under a special **Undated/Approximate** section in the Agenda to keep the calendar grid clean.
+
+---
+
+## 5. Campaign Views: Graph, Canvas, Map, Calendar, & Table
+
+![Interactive Relational Knowledge Graph](/images/living-lore-graph.png)
+
+Codex Cryptica provides multiple ways to visualize and interact with your lore, allowing you to swap perspectives on the fly:
+
+- **Interactive Knowledge Graph**: The default web showing how character networks, factions, and locations connect. Use `Scroll` to zoom, `Drag` to pan, and click a node to open its details. Swappable layout modes (Redraw, Stable Pin, Orbit, Timeline) help organize your space.
+- **Spatial Canvas**: A whiteboard-style workspace where you can manually place cards, write notes, draw lines, and group entities visually. Perfect for plot-mapping or designing "murder boards."
+- **Tactical Map (VTT)**: Upload high-resolution maps, drop interactive tokens, track positions, draw measurements, and manage player fog-of-war for combat or region exploration.
+- **Chronology Views**: Browse campaign history via a month-grid **Calendar**, a clean running **Agenda** list (which houses undated or approximate events), or a linear chronological **Timeline**.
+- **Entity Table View**: A spreadsheet-style grid to quickly sort, filter, and review attributes and metadata across all entities in a high-density, structured list.
+
+### Graph Interaction Tips
+
+- **Connect Mode**: Press `C` to toggle manual connect mode (click a source node, then click a target node to build a relationship edge).
+- **Node Labels**: Press `L` to toggle node titles on and off.
+- **Fog of War**: Mark nodes or entire sub-branches as GM-only/Private. These nodes fade in your view and are completely omitted from player-facing exports.
+
+---
+
+## 6. The Lore Oracle (AI Assistant)
+
+![The Lore Oracle AI Assistant Chat](/images/oracle-chat-mockup.jpg)
+
+The Lore Oracle is your co-author and worldbuilding assistant, powered by OpenAI/Luna.
+
+- **Context-Aware Chat**: Unlike generic AI chatbots, the Oracle retrieves relevant entities, notes, and local neighbor nodes from your graph to ground its responses in your specific world lore.
+- **Keys**: Configure your private OpenAI/Luna API key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
+- **Oracle Commands**:
+  - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
+  - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.
+  - `/create [concept]`: Ask the Oracle to draft a new entity.
+- **Guest Character Chat**: Let players chat in-character with Characters. GMs can review transcripts to turn conversational roleplay into official lore.
+
+---
+
+## 7. Campaign Generators & Sandbox Hub
+
+Quickly populate your world with rich lore, even when offline.
+
+- **Campaign Generators**: Click the **Wand** icon in the explorer to generate Characters, Creatures, Locations, Items, Factions, or Events directly inside your active campaign vault.
+- **Local vs. Co-Author Mode**: Online, the Oracle writes custom descriptions. Offline, the generators fall back to built-in local random tables, guaranteeing you always get a result.
+- **Generator Hub**: Swap to the standalone **Generator Hub** to generate content in a sandbox workspace. Review, edit, and tweak drafts, then hand them off directly into your active campaign.
+
+---
+
+## 8. Syncing & Sharing Player Snapshots
+
+- **Local Disk Sync**: Use the **File System Access API** to automatically mirror your browser's OPFS vault to a directory on your local hard drive.
+- **Google Drive Cloud Sync**: Sync your campaigns across devices.
+- **Publishing Guest Snapshots**: Share your world with players without spoiling the plot. Under **Settings > Publishing**, publish a read-only snapshot of your campaign to Cloudflare R2.
+  - Redacts all GM-only/Private nodes and maps.
+  - Redacts the `Lore` and `Art Direction` fields.
+  - Replaces links to secret files with `[Redacted]`.
+
+---
+
+## 9. Related Blog Posts
+
+- [Getting Started with Codex Cryptica](/blog/getting-started-guide) — Full walkthrough for GMs and worldbuilders.
+- [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — The spatial, local-first philosophy behind Codex Cryptica.
+- [Lore Oracle: Co-GM, Not the Author](/blog/lore-oracle-not-the-author) — Deep dive into AI worldbuilding memory and co-creation.
 
 ---
 
@@ -188,6 +397,12 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Stable Layout (Pin)**: Prevent nodes from moving automatically.
 - **Link (Chain icon)**: Quickly connect two selected nodes.
 - **Redraw (Refresh)**: Recalculate node positions.
+
+### Related Blog Posts
+
+- [Getting Started with Codex Cryptica](/blog/getting-started-guide) — Core workflows and knowledge graph navigation.
+- [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — Comparing interactive spatial graphs with text-only vaults.
+- [Supercharged Lore Discovery](/blog/supercharged-discovery) — Using graph connections to uncover hidden lore relationships.
 
 ---
 
@@ -228,6 +443,20 @@ Dive deeper into your world:
 - Once attached, pins linked to that entity will show an **ENTER** button, allowing you to dive into the sub-map.
 - Use the breadcrumbs or "Go Back" logic to return to the parent map.
 
+### Starting a VTT Session
+
+Transform any map into a live tactical Virtual Tabletop:
+
+1. Click the **VTT OFF** button in the top-right map controls overlay to activate **VTT ON**.
+2. Drag character or monster notes from **Entity Explorer** directly onto the grid to place tokens.
+3. Track initiative, measure spell/movement ranges (`R`), drop map pings (`Shift` + `Click`), and stream live map updates to players via **Host Session**.
+4. For detailed step-by-step instructions, open the [Starting a VTT Session from Maps](/help#help/vtt-session) help article.
+
+### Related Blog Posts
+
+- [Introducing Tactical VTT Mode](/blog/vtt-introduction) — Overview of zero-overhead, Peer-to-Peer tactical map sessions.
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — Integrating geographic maps, pins, and spatial lore navigation.
+
 ---
 
 ### SPATIAL CANVAS
@@ -238,6 +467,8 @@ The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intent
 
 - **Infinite Workspace**: Pan and zoom across an unlimited board to organize your narrative.
 - **Persistent Layouts**: Your card coordinates and custom links are saved directly to `.canvas` files in your vault.
+- **Freehand Annotations**: Select **Draw on canvas**, choose a color, and sketch notes, routes, or highlights directly on the board. Drawings stay aligned while you pan and zoom and are saved with the canvas. Use the eraser and select a stroke to remove it.
+- **Rotatable Cards**: Twist two fingers over a card to rotate it. On desktop, select a card and drag the rotation handle above it. Rotation is free-form and can continue through multiple turns.
 - **Themed Components**: The **MiniMap** and all UI elements adapt to your active theme (Fantasy, Sci-Fi, etc.), ensuring a cohesive aesthetic.
 - **Readable URLs**: Each canvas uses a name-based **slug** in its URL (e.g., `/canvas/battle-at-the-docks`), making it easy to bookmark and identify specific workspaces.
 
@@ -257,11 +488,85 @@ Click the **workspace name** in the top-left HUD to open the **Canvas Manager**.
 - **Hidden Labels**: To hide a label, simply clear the text in the modal. Empty labels are not rendered, keeping your canvas clean.
 - **Visual Links**: Create lines between any two entities to map out conspiracy boards, family trees, or quest flowcharts.
 
+### Drawing on the Canvas
+
+1. Select the pencil button in the canvas toolbar.
+2. Choose a color with the color picker next to it.
+3. Draw with a mouse, stylus, or touch pointer. Existing node and canvas controls are paused while drawing mode is active.
+4. Select the eraser button, then select an individual stroke to remove it.
+
+### Rotating Canvas Cards
+
+- **Touch**: Place two fingers over the same card and twist.
+- **Desktop**: Select a card, then drag the circular rotation handle above it around the card's center. Focus the handle and use the arrow keys for 15-degree steps, or hold Shift for 45-degree steps.
+- Cards can rotate through any angle, including more than one complete turn.
+
+4. Select the pencil button again, or press **Escape**, to leave drawing mode. Completed strokes are saved automatically.
+
+### Locking Cards in Place
+
+Once a layout is just how you want it, right-click any card (entity, file, or otherwise) and choose **Lock in Place** to prevent it from being accidentally dragged or resized. Right-click again and choose **Unlock** to move it later.
+
 ### Tips for Organization
 
 1. **Use Multiple Canvases**: Create separate boards for different regions, plot lines, or character groups to avoid clutter.
 2. **Drag from Explorer**: Open the Entity Explorer sidebar and drag lore directly onto the board for the fastest workflow.
 3. **Zen Integration**: Double-click any entity card to open it in **Zen Mode** (the full detail panel) for quick editing.
+
+### Related Blog Posts
+
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — How spatial layouts reduce cognitive load and reveal hidden lore connections.
+
+---
+
+### STARTING A VTT SESSION FROM MAPS
+
+Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode directly accessible from your campaign maps. You can launch tactical encounters, place character tokens, track initiative, and host live multiplayer sessions for your gaming group straight from any map canvas.
+
+### How to Start a VTT Session
+
+1. Click the **MAP** tab in the top navigation bar or activity rail.
+2. Select the map or floor plan you wish to use for your session.
+3. In the top-right map control overlay, click the **VTT OFF** button to toggle it to **VTT ON**.
+4. The tactical grid overlay, token management drawer, and encounter controls will immediately activate on your map canvas.
+
+### Core VTT Features
+
+#### 1. Placing & Managing Tokens
+
+- **Drag & Drop Tokens**: Drag characters, NPCs, or monsters directly from the **Entity Explorer** sidebar onto the active map to instantiate tactical tokens linked to your vault notes.
+- **Token Status & Stats**: Right-click or select a token to adjust hit points, apply status conditions (e.g. _Poisoned_, _Blinded_, _Prone_), or toggle player/GM visibility.
+
+#### 2. Encounter & Initiative Tracking
+
+- Activate combat tracking from the VTT control bar to open the **Initiative Tracker**.
+- Add participating characters and monsters, roll initiative, and cycle through active combat turns and rounds seamlessly.
+
+#### 3. Live P2P Multiplayer Hosting
+
+- To share the live VTT session with your players, open the session menu and start a **Host Session** (or click the P2P connection icon in the top header).
+- Copy and share the generated session link or Peer ID with your players.
+- Connected guests view map navigation, live token movements, map pings, and Fog of War revelations in real-time in their browser — no external servers or player accounts required.
+
+#### 4. Measurement & Map Pings
+
+- **Ruler Tool**: Press `R` or select the measurement icon to compute distance across grid tiles for movement or spell area radii.
+- **Map Pings**: Hold `Shift` + `Click` (or double-click) anywhere on the map canvas to broadcast an animated visual ping to all connected players.
+
+#### 5. Fog of War Integration
+
+- Enable **GM MODE** and toggle **FOG** ON in the map controls.
+- Hold `Alt` and **Click-Drag** across the canvas to "paint away" fog, revealing terrain and enemy tokens to players live during play.
+
+### Pausing or Ending a Session
+
+- Click the **VTT ON** toggle button to return to standard map editing mode (**VTT OFF**).
+- All token coordinates, revealed fog regions, and encounter metadata automatically persist in your local vault data for your next session.
+
+### Related Blog Posts
+
+- [Introducing Tactical VTT Mode](/blog/vtt-introduction) — Overview of zero-overhead, Peer-to-Peer tactical map sessions.
+- [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — Integrating geographic maps, pins, and spatial lore navigation.
 
 ---
 
@@ -276,6 +581,15 @@ The fastest way to add a single entity is to drag it directly from the **Entity 
 1. **Open the Explorer**: Click the Explorer icon in the left activity bar.
 2. **Find your entity**: Use the search bar or browse the list.
 3. **Drag onto the canvas**: Click and drag the entity card onto the board. It will be placed wherever you drop it.
+
+### Add Files from Your Device
+
+You can also keep supporting material beside your entities. Drag files from your computer directly onto the canvas, or select **Upload files to canvas** in the canvas header.
+
+- Each file is stored privately in the active vault and shown as a file card where you dropped it.
+- Select **Open file** on a file card to view it in a new tab.
+- Files must be larger than 0 bytes and no more than 10 MB. If you select several files, valid files are still added when another one cannot be saved.
+- For images, check **Show full image** on the card to switch from a cropped thumbnail to the full, uncropped picture, handy for maps and handouts you want to read directly on the board. In this mode, select the card and drag its corner to resize it while keeping its aspect ratio.
 
 ### Right-Click to Add
 
@@ -310,7 +624,7 @@ If the canvas you need isn't in the "Recents" list, select **Choose Canvas...** 
 
 ### THE LORE ORACLE
 
-The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
+The Oracle is powered by **OpenAI/Luna**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
 
 ### Features
 
@@ -318,11 +632,17 @@ The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves
 - **Image Generation**: Type `/draw [description]` to visualize your world.
 - **Instant Visualization**: Advanced Tier users will see a "DRAW VISUAL" button on Oracle responses and empty Entity profiles to quickly generate images based on lore.
 
+### Related Blog Posts
+
+- [Lore Oracle: Co-GM, Not the Author](/blog/lore-oracle-not-the-author) — Why the Oracle is built to help your world answer back rather than replace your authorship.
+- [Lore Oracle Capabilities & Slash Commands](/blog/oracle-capabilities) — Detailed breakdown of deterministic slash commands and context retrieval.
+- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle) — Practical techniques for using AI context to polish entity notes.
+
 ---
 
-### ACQUIRING A GEMINI API KEY
+### ACQUIRING A OPENAI/LUNA API KEY
 
-Codex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps to get a free key:
+Codex Cryptica uses OpenAI/Luna to power the Lore Oracle. Follow these steps to get a free key:
 
 1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).
 2. **Sign In**: Use your standard Google Account.
@@ -332,6 +652,11 @@ Codex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps t
 ### Why do I need this?
 
 Using your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks.
+
+### Related Blog Posts
+
+- [Worldbuilding Tool Without Mandatory AI](/blog/worldbuilding-tool-without-ai) — How Codex Cryptica remains fully functional offline and without AI keys.
+- [Why AI Slop is a Context Failure](/blog/ai-slop-is-context-failure) — How structured vault retrieval ensures OpenAI/Luna produces rich, setting-accurate lore.
 
 ---
 
@@ -393,6 +718,11 @@ If you are unsure how two entities should be related or how they should be combi
 
 Image generation uses Art Direction from your world before falling back to shipped Category Defaults, Default Art Style from the active theme, and the global Codex Cryptica default. To customize it, add normal notes or entity sections titled `Art Direction`, `Default Art Style`, or `Visual Direction`; no separate settings form is required.
 
+## Related Blog Posts
+
+- [Lore Oracle Capabilities & Commands](/blog/oracle-capabilities) — In-depth guide to slash commands, image generation, and deterministic controls.
+- [Drafts Are Not Canon](/blog/drafts-are-not-canon) — Why generated suggestions remain transient until explicit GM approval.
+
 ---
 
 ### IN-APP CAMPAIGN GENERATORS
@@ -429,6 +759,11 @@ When the generator is opened from an entity's detail panel, it automatically inc
 
 When AI generation is enabled, your instruction plus a small, bounded slice of relevant lore (the source entity and its immediate neighbours) is sent to the Lore Oracle to write the draft — your **full vault is never sent**. If you use the free system proxy, that chat context is briefly retained server-side to power Oracle Memory and then expires (see the Oracle Memory help). Prefer to keep everything on your device? Turn AI off (or use a custom API key): generators then run entirely locally from built-in templates, and no content leaves your device.
 
+### Related Blog Posts
+
+- [AI Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice) — How to use generators to accelerate prep while keeping full creative control.
+- [Drafts Are Not Canon](/blog/drafts-are-not-canon) — Why previewing drafts before saving maintains lore integrity.
+
 ---
 
 ### GENERATING RELATED ENTITIES
@@ -451,6 +786,37 @@ Once the draft is generated, you will see a preview screen displaying all genera
 - You can also revise the draft with adjusted guidelines or cancel without making any changes.
 - Clicking **Create Entity** commits the new record to your vault and automatically creates a directed relationship connection from the source entity to your new creation.
 
+### Related Blog Posts
+
+- [Context-Aware Entity Generator](/blog/context-aware-entity-generator) — How OpenAI/Luna uses neighboring graph nodes to generate connected lore.
+- [Worldbuilding AI Needs Your Lore](/blog/worldbuilding-ai-needs-your-lore) — Why context-aware retrieval prevents generic AI slop.
+
+---
+
+### IMPORTING FROM THREAD WEAVER
+
+[Thread Weaver Engine](https://ambiancearchitect.itch.io/thread-weaver-engine) is a standalone campaign generator that builds out characters, factions, and settlements along with the relationships between them. Codex Cryptica can bring one of its exports straight into your vault.
+
+## How it works
+
+1. Export your campaign from Thread Weaver Engine as a `.json` file.
+2. Drop that file into Codex Cryptica's importer — the same **Import** button used for everything else.
+3. The file is recognized automatically and converted to entities in your browser. Nothing is uploaded anywhere; the conversion happens entirely on your device.
+4. Review the discovered characters, factions, and settlements — along with the relationships between them — before anything is written to your vault.
+
+You don't need to run any separate conversion step. If you already have a converted `.cif.json` from an older export, that still works too — Codex Cryptica recognizes both.
+
+## What comes across
+
+- **Settlements** become **Locations**, with population, nation, and any faction cells operating there noted in their lore.
+- **Factions** become **Factions**, with their goals, structure, secrets, and rumours, linked to their headquarters settlement.
+- **Characters** become **Characters**, with their role, personality, motivations, and faction membership, linked to their home settlement.
+- Relationships — faction membership, residency, character-to-character ties, wants, and inter-faction links — are all carried over as connections between entities.
+
+## Re-importing
+
+Re-importing a later export from the same campaign matches existing entries by their stable identity, not by title — so you can update, skip, or create per entry and see exactly what changed, the same as any other CIF import.
+
 ---
 
 ### IMPORTING NOTES
@@ -462,6 +828,15 @@ Codex Cryptica can transform your unstructured notes into a structured Knowledge
 1. **Upload**: Drag and drop your `.txt`, `.docx`, or `.json` files.
 2. **Analysis**: The Oracle breaks your documents into chunks and analyzes them to find characters, locations, and items.
 3. **Review**: You review the discovered entities and their relationships before adding them to your vault.
+
+## Import Files
+
+If you already have Codex Cryptica files on your computer — from another vault, a folder you saved, or a portable backup you unzipped — you can bring specific ones straight in, no AI analysis needed:
+
+- **Drag and drop**: Drag individual files, or a whole folder, onto the **Import Files** area.
+- **Choose Files**: Use the button to pick files from the traditional file upload dialog instead.
+- **Review before anything is written**: You'll see exactly what was picked up, how many files will be added, and how many already exist in this vault (those are always skipped — this flow never overwrites, updates, or merges existing entities).
+- **Images come along automatically**: If a dropped file references an image, that image (and its thumbnail) is included automatically whenever it was part of the same drop — for example when you drag in a whole folder. If it wasn't, you'll be prompted to add the image file directly or, in browsers that support it, grant access to the source folder so it can be found there.
 
 ## Dedicated Importer
 
@@ -480,6 +855,10 @@ Large documents can take time to process. The system automatically tracks your p
 ## Manual Restart
 
 If you want to re-analyze a file from scratch, click the **Restart** button in the import dialog to clear its saved progress.
+
+## Related Blog Posts
+
+- [How Import Works: Local-First Migration](/blog/how-import-works) — Comprehensive guide to converting notes into structured knowledge graphs.
 
 ---
 
@@ -527,7 +906,7 @@ Sometimes duplicate entities appear, especially after importing content. The **M
 ### Merge Strategies
 
 - **Concatenate**: Simply appends the content of all source nodes into the target node.
-- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.
+- **AI Merge**: Uses the Oracle (OpenAI/Luna) to intelligently rewrite and summarize the combined lore into a cohesive entry.
 
 **Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.
 
@@ -627,6 +1006,38 @@ When you're ready to turn a fleeting draft into a formal wiki article, let the L
 
 ---
 
+### ENTITY TIMELINE
+
+The Entity Timeline gives each entity its own focused history view. Open any entity's detail panel and click the **Timeline** tab to see every event linked to that entity, sorted from earliest to latest.
+
+## Reading the Timeline
+
+Each row shows:
+
+- **Event title**
+- **Date or date range**, formatted to your campaign calendar
+- **Category label**, if the event has one
+- **Summary**, a short excerpt from the event's notes
+- **Participants**, other entities linked to the same event
+
+Click any row to open that event's full detail page.
+
+## Undated Events
+
+Events that have no date assigned still appear in the Timeline, grouped under an **Undated** heading at the bottom. No date is invented or guessed — the event is shown as-is.
+
+## Empty State
+
+If an entity has no linked events yet, the Timeline shows a prompt explaining that. To start building the entity's history, open or create an event and link it to the entity using the entity's connections.
+
+## What Counts as Linked
+
+An event appears in the Timeline when there is a direct connection between the entity and the event — either the entity links to the event, or the event links to the entity. Indirect connections (links of links) are not followed.
+
+The Timeline is read-only. It never creates, edits, or infers lore.
+
+---
+
 ### FOG OF WAR
 
 The **Fog of War** system lets you track what your players have discovered. You can hide nodes on the graph so they don't see spoilers during a session.
@@ -692,6 +1103,7 @@ The changes will be applied instantly across the entire application, including t
 - **Ancient Parchment**: Our flagship fantasy theme, designed to feel like an enchanted magic tome with parchment textures and inked typography.
 - **Sci-Fi Terminal**: A high-contrast, neon-green terminal aesthetic for futuristic settings.
 - **Blood & Noir**: A dark, moody theme with crimson accents, ideal for horror or investigative campaigns.
+- **Cosmic Horror**: Sea-green ink, impossible geometry, and deep-sea unease for investigations into the unknown. Unlike Blood & Noir, it focuses on alien scale and forbidden knowledge—not vampires, bloodlines, or gothic-noir intrigue.
 - **Neon Night**: A vibrant, cyberpunk-inspired palette with high-energy colors.
 - **Wasteland**: A rugged, textured theme for post-apocalyptic or industrial worlds.
 - **Clean Modern**: A minimalist, distraction-free aesthetic for general-purpose world-building.
@@ -718,6 +1130,14 @@ By default, all your campaign data is stored in the **Origin Private File System
 
 You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
 
+> **Browser support:** local folder saving relies on the File System Access API.
+>
+> - **Chrome, Edge:** supported out of the box.
+> - **Brave:** ships this feature disabled by default. If "Save to Folder" doesn't work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
+> - **Firefox, Safari:** don't support this feature yet. Your vault still saves automatically to the browser's local storage (OPFS) — you just can't mirror it to a folder on disk until you switch to a Chromium-based browser.
+>
+> On any browser, you can still back up with **Settings → Portable Backup → Export Backup**, which downloads your whole vault as a single `.codex.zip` file you can re-import anywhere.
+
 1.  **External Backups:** Keep a real-time copy of your world in a folder you control.
 2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
 3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.
@@ -739,6 +1159,11 @@ When you open Codex on a new device:
 2.  Click **Open Folder**.
 3.  Select the cloud-synced folder you set up on your first device.
 4.  Codex will load your world and keep it updated with the cloud mirror.
+
+## Related Blog Posts
+
+- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and co-GM collaboration.
+- [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and private cloud backups keep your campaign notes safe.
 
 ---
 
@@ -768,20 +1193,14 @@ If you have vaults already stored in your `CodexCryptica/` Drive folder (from an
 2. Codex lists every vault subfolder it finds under `CodexCryptica/`.
 3. Click **Load** next to any vault. Codex creates a local vault (or finds the existing one), then pulls only the files that are newer than what you have locally.
 
-## Join a Shared Vault (Co-GM Flow)
-
-If your GM has shared their Drive vault folder with you, you can connect to it directly:
-
-1. Ask your GM to share the Drive folder and copy the share link (it looks like `https://drive.google.com/drive/folders/…`).
-2. In the **Vault** settings tab under **Cloud Sync**, paste the link into the **Join a Shared Vault** field and click **Join**.
-3. Google will ask you to grant read access to the shared folder. Once approved, Codex imports the vault locally and you can pull updates any time with **Load from Drive**.
-
-> [!NOTE]
-> The first join asks for broader Drive access so Codex can read folders you don't own. Normal push/pull to your own vaults uses the narrower `drive.file` scope and only accesses files Codex itself created.
-
 ## Disconnect
 
 Click **Disconnect** in the connected state to remove the Drive link from this vault. Your local vault and the files on Drive are both preserved — only the sync mapping is removed.
+
+## Related Blog Posts
+
+- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and restore.
+- [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and private cloud backups keep your campaign notes safe.
 
 ---
 
@@ -849,9 +1268,13 @@ For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high f
 > [!TIP]
 > If you want to _always_ start completely blank for a specific type without untoggling the checkbox, create an empty file at `.cc/templates/{type}.md`. The system respects empty override files as valid, giving you a blank canvas.
 
+## Related Blog Posts
+
+- [Default Entity Templates & Custom Vault Overrides](/blog/default-templates-announcement) — Deep dive into customizing domain structures and custom schema overrides.
+
 ---
 
-### PUBLISHING GUEST SNAPSHOTS
+### SHARING AND PUBLISHING WORLDS
 
 Codex Cryptica allows you to publish a read-only, player-safe snapshot of your campaign lore to the cloud. This lets your players browse the world lore independently, navigate relationship graphs, and read entries even when you are offline or the browser window is closed.
 
@@ -872,7 +1295,7 @@ To publish your campaign:
 1. Click the **Settings** cog in the bottom-right or top-right, and select the **Publishing** tab.
 2. Under **Player-Safe Snapshot Hosting**, click **Publish Guest Snapshot**.
 3. A **Publish Preview** modal will appear showing the numeric count of included vs. excluded elements (NPCs, maps, secrets, drafts, etc.).
-4. Click **Publish Snapshot** to confirm. 
+4. Click **Publish Snapshot** to confirm.
 5. Once the upload finishes in the background, you will receive a shareable link that you can copy and send to your players.
 
 ## Updating a Publication
@@ -892,6 +1315,31 @@ If you wish to retract your campaign and remove it from the cloud:
 3. A warning modal will verify that you want to proceed.
 4. Once confirmed, the system deletes the snapshot bundle and all uploaded assets from the cloud, immediately invalidating the guest link.
 
+## The Visibility Ladder
+
+Sharing and discovery are two separate, owner-controlled consent levels — enabling one does not enable the other:
+
+1. **Private** — the default. Only you and vault editors can access the world.
+2. **Shared Link** — after you publish a snapshot (above), anyone with the guest link can view a read-only copy. The link is not discoverable anywhere; you must send it yourself.
+3. **Public Listing** — an additional, separate opt-in that lists your published world in [**Explore Worlds**](/worlds), Codex Cryptica's public directory, so anyone can browse and find it without a link.
+
+## Listing a World in Explore Worlds
+
+Public listing requires an active Shared Link (you must publish a snapshot first):
+
+1. Open **Settings** -> **Publishing**.
+2. Fill in the **Public Listing** section: a title, short description, at least one label (required), and an optional cover image for the directory entry.
+3. Click **List Publicly**. Your world now appears in [Explore Worlds](/worlds).
+4. Use **View in Explore Worlds** to see your live directory listing at any time.
+
+### What becomes visible
+
+A public listing shows what you entered in the listing form (title, description, labels, cover image), a visible-entry count derived from your Shared Link snapshot, and a link to that same redacted, player-safe snapshot described above — it never exposes anything beyond what's already in your Shared Link snapshot.
+
+### Delisting
+
+Click **Delist World** in the Public Listing section at any time. This removes the world from Explore Worlds immediately; it does not unpublish or delete your Shared Link snapshot — players with the direct link can still access it. To revoke the shared link too, unpublish separately (above).
+
 ---
 
 ### WORLD FRONT PAGE
@@ -910,6 +1358,10 @@ The front page is the first thing you see when a vault opens. It gives you a wor
 - Keep the briefing short and useful. You can always expand it later.
 - If you add more than one `frontpage` tag, the most recently edited entity wins.
 - Recent cards update automatically from the vault’s latest edits, and any `frontpage` entity stays pinned at the top.
+
+### Related Blog Posts
+
+- [The Vault Front Page: Your Campaign Dashboard](/blog/front-page) — Why your setting needs a central command center and how to customize your world briefing.
 
 ---
 
@@ -934,6 +1386,177 @@ The landing page highlights several key "Protocols" that define the application:
 ## Performance & SEO
 
 The landing page is optimised for fast load times and crawlable metadata, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
+
+---
+
+### FAMILY TREE
+
+The Family Tree gives every character a genealogy view built from your existing connections. Open a character's detail panel and click the **Family** tab to see their relatives laid out across generations.
+
+## Reading the tree
+
+The focused character sits in the middle. Around them you'll see:
+
+- **Parents** above
+- **Partner or partners** beside them
+- **Children** below
+- **Siblings** on the same row — worked out automatically from shared parents, and you can also add them directly (handy when the parents aren't recorded)
+
+Each person appears as a card with their portrait, name, lifespan, and whether they are living or deceased. The card also shows how they relate to the focused character — a specific term like "Mother" or "Brother" when one was set, otherwise the general category (Parent, Partner, Sibling, Child). Tag a character with a **Male** or **Female** label and their card shows a small gender icon.
+
+## Building a family
+
+Use the buttons beneath the tree — **Add parent**, **Add partner**, **Add sibling**, **Add child** — to grow the family. For each one you can:
+
+- **Connect** an existing character from your world, or
+- **Create** a brand-new character and link them in one step.
+
+When adding a sibling you can mark them as a **Brother**, **Sister**, or leave it as a generic sibling — the term shows on their card. Siblings can be added even when you haven't recorded any parents.
+
+When you add a parent, the matching "child" link is added to the other character automatically, so both sides always agree. Family links are only allowed between characters, and the app blocks anything that would make a character their own ancestor.
+
+Sharing a parent also links siblings automatically: when a character gets a new parent who already has other children, those children are connected as siblings right away — no extra step needed, and it's never duplicated if the link already exists.
+
+If the parent you just added already has a partner on file, you'll be asked whether to add that partner as a parent too — it's never done automatically, since being partnered doesn't always mean being a co-parent (remarriage, step-parents, and unrelated partners all happen). Add the ones that apply, or dismiss the suggestion.
+
+## Navigating
+
+- **Click a relative's card** to re-centre the tree on them and explore outward.
+- **Collapse** the parents or children branch to keep large trees tidy.
+- Use the **open** icon on a card to jump to that character's full detail panel.
+
+## One source of truth
+
+The Family Tree is just a view of your normal entity connections — it doesn't create a separate family database. Family links you add here also show up in the graph and connection views, and connections you make elsewhere show up here.
+
+---
+
+### STAT SHEETS
+
+Stat Sheets give any entity — a character, NPC, ship, or settlement — a small table of numbers and notes you can adjust during play, without leaving Codex Cryptica or wiring up a rules engine. Open an entity and click the **Stats** tab to see it.
+
+## Field types
+
+- **Counter** — a value with `-`/`+` buttons, ideal for Hit Points or resources. Can have a min, max, and step.
+- **Number** — a plain numeric input, for things like Armor Class.
+- **Text** — a short line, for conditions, movement speed, or skills.
+- **Long Text** — a multiline note, for traits, abilities, or free-form details.
+- **Heading** — a collapsible section divider to group related fields and save screen space during a session.
+- **Dice** — a rollable expression (e.g. `1d20+5`) with a one-tap roll button.
+
+Codex Cryptica doesn't enforce any particular game system — there's no automatic modifier math or damage calculation. You decide what each field means.
+
+## Editing the layout
+
+Click **Edit Layout** to add, relabel, reorder, or delete fields. Deleting a field that already holds a value asks for confirmation first, so you don't lose tracked state by accident.
+
+## Templates
+
+Click **Templates** to apply a saved layout, or save your current layout as a new one to reuse on other entities. Applying a template to an entity that already has stats lets you choose to append the new fields or replace the layout entirely.
+
+Built-in templates cover several common systems out of the box:
+
+- **D&D Character** / **D&D NPC** — HP, AC, ability checks, saves, and a handful of common skills.
+- **Pathfinder Character** — ability checks, the three saving throws, and skills.
+- **World of Darkness / Vampire** — Attributes, a generic d10 dice-pool roll, Willpower, Blood Pool/Hunger, and Disciplines.
+- **Cyberpunk** — core stats, weapon attack/damage, a generic skill check, Humanity, and cyberware.
+- **Mythras Character** / **Mythras Creature / NPC** — Characteristics, derived attributes (AP, LP, MP, DM), hit locations/armor, natural attacks, creature traits, and d100 roll-under skill checks (roll, then compare the result to the skill's listed percentage yourself — Codex Cryptica doesn't judge pass/fail for you).
+- **Ship Systems** / **Settlement Overview** — for vessels and locations rather than characters.
+- **Generic Item** / **D&D Magic Item** / **Cyberpunk Gear** / **Mythras Gear** — quantity/weight/value, rarity/attunement/charges, cost/availability, or ENC/damage/reach/armor points for the Item category.
+
+None of these bake in automatic modifiers or success/failure logic — they just give you the right shape of fields to start from, with rollable dice already wired up where the system supports it.
+
+### Building your own template
+
+Templates are just a saved snapshot of a layout — there's no separate template editor:
+
+1. On any entity, build the fields you want using **Edit Layout** (add fields, set labels/types, set counter bounds or dice formulas).
+2. Open **Templates** and use the **Save current layout as...** box at the bottom to name and save it.
+3. It's now available from the Templates list on every entity in this vault, and can be renamed or deleted later from **Settings → Schema → Stat Sheet Templates** (where you can also preview any built-in or saved template's fields before applying it).
+
+To customize or share a built-in layout without first applying it to an entity, choose **Save copy to Vault** beside it in **Settings → Schema → Stat Sheet Templates**. The new vault copy can then be selected, edited, and published like any other saved template.
+
+Saved templates only capture structure (labels, types, dice formulas, counter bounds) — not the values you'd filled in — so applying one to a new entity always starts blank/default.
+
+### Community templates
+
+You can choose one or more saved layouts to share in the Community Templates
+directory. Before publishing, Codex Cryptica shows the fields and public details
+for every selected template and asks you to confirm how many will become public.
+Entity values, notes, names, vault identifiers, and local asset paths stay in
+your vault. Publishing never happens automatically.
+
+The management key shown for each published template is the key for updating or
+unpublishing that listing. Copy it somewhere safe: it is stored locally and
+shown during publication, but losing both copies means the listing can no longer
+be managed. If browser data is cleared, use the recovery action and enter the
+key again. Unpublishing removes the listing from new directory results but does
+not remove your local template.
+
+Importing a community template creates an independent local copy. It never
+updates the publisher's version and does not send your campaign data to them.
+If a name is already in use, choose a new name or cancel; invalid or unavailable
+packages are rejected before anything is saved.
+
+### Default template per category
+
+In **Settings → Schema → Stat Sheet Templates**, the **Default Template by Category** section lets you pick a template (built-in or saved) for each entity category — e.g. "Character" → D&D Character, "NPC" → D&D NPC. Every new entity of that category then starts with the template's fields already applied, no manual step needed. Leave a category set to "None" if it shouldn't get stats automatically.
+
+## Rolling dice
+
+Tap the roll button on a Dice field to roll it in Codex Cryptica's dice engine. If you're in an active VTT session, the result is also sent to the shared session log automatically.
+
+## Where it's stored
+
+Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter), so it stays with the entity wherever it goes. Saved templates live in your campaign vault, so they're available across all entities in that vault.
+
+## Presentation Templates
+
+Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or create a Markdown-based view with a live preview. Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
+
+## Related reading
+
+- [Build Stat Sheets That Keep Your Table Moving](/blog/custom-stat-sheet-templates) — Design reusable layouts around the information you need during play.
+- [Present Your Stat Sheets Your Way](/blog/presentation-templates) — Build, preview, and share Markdown-based Presentation Templates.
+
+---
+
+### GUEST CHARACTER CHAT
+
+Guest Character Chat lets invited players have an in-character conversation with selected Characters in your world. You choose which Characters are available and what information each one can draw on.
+
+## Turn it on
+
+1. Open the Character you want players to talk to.
+2. Open the **Chats** tab.
+3. Click **Edit** at the bottom of the character panel.
+4. Turn on **Enable Guest Character Chat**.
+5. Choose the character's context and save your changes.
+
+The Character must have a **Personality & Voice** section in its lore. If it is missing, use **Generate** in the chat settings or add your own notes before saving.
+
+## Choose what the character knows
+
+- **Public Lore Only**: the character answers using its public description and labels. Choose this when players should only get information already safe to share.
+- **Public + Private Context**: the character can use GM notes to give more informed hints and responses, but should not repeat private notes directly.
+
+You can also choose whether the host can review chat logs and whether the character remembers conversations between guest visits.
+
+## What players see
+
+Guests can only chat with Characters you have enabled and made visible to them. They can open the Character and choose **Chat with [Character]**, or use the Chats panel when it is available in their shared world.
+
+## Try it yourself as the host
+
+Once Guest Character Chat is enabled, the **Character Chat** panel below it lets you test the conversation as the host. This chat stays local to your browser and is never added to guest logs.
+
+- **Chat as**: Before connecting, choose whether you're speaking as **Yourself** or as one of your other Characters — this helps the character respond to your role and relationship.
+- **Switch who you're chatting as**: Once connected, use **Sessions** above the conversation to start a new chat as a different speaker. Your previous conversation is kept, not erased.
+- **Resume a previous conversation**: The same **Sessions** panel lists every past local conversation you've had with this character, showing who you were speaking as, how many messages, and when it was last updated. Click one to pick up where you left off.
+
+## Review conversations
+
+Open the Character's **Chats** tab as the host to see synced guest conversation logs. You can edit or remove messages, delete a whole session, and promote a useful character response into a rumor draft.
 
 ---
 

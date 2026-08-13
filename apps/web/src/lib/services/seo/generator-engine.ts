@@ -1,5 +1,5 @@
-import { aiClientManager } from "$lib/services/ai/client-manager";
-import { classifyApiError } from "$lib/services/ai/api-error-classifier";
+import { aiClientManager } from "@codex/ai-engine";
+import { classifyApiError } from "@codex/ai-engine";
 import {
   buildNpcPrompt,
   parseNpcResponse,
@@ -13,6 +13,9 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildNomadClanPrompt,
+  parseNomadClanResponse,
+  generateNomadClanLocal,
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
@@ -22,6 +25,17 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildCouncilVoteFoundationPrompt,
+  buildCouncilVoteFoundationRepairPrompt,
+  parseCouncilVoteFoundation,
+  buildCouncilVotePathsPrompt,
+  buildCouncilVotePathsRepairPrompt,
+  parseCouncilVotePathsResponse,
+  mergeCouncilVoteOutput,
+  generateCouncilVoteLocal,
+  buildSecretSocietyPrompt,
+  parseSecretSocietyResponse,
+  generateSecretSocietyLocal,
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
@@ -40,20 +54,64 @@ import {
   buildShipPrompt,
   parseShipResponse,
   generateShipLocal,
+  buildLanguagePrompt,
+  buildLanguageRepairPrompt,
+  classifyAILanguageQuality,
+  parseLanguageGenerationResult,
+  parseLanguageResponse,
+  generateLanguageLocal,
+  validateLanguageInputFidelity,
+  validateLanguageNameBans,
+  buildNewsSheetPrompt,
+  parseNewsSheetResponse,
+  generateNewsSheetLocal,
+  buildDungeonPrompt,
+  buildDungeonRetryMessage,
+  parseDungeonResponseDetailed,
+  generateDungeonLocal,
+  buildAdventurePrompt,
+  buildAdventureRetryMessage,
+  parseAdventureResponseDetailed,
+  generateAdventureLocal,
+  buildPlotTwistPrompt,
+  parsePlotTwistResponse,
+  generatePlotTwistLocal,
+  buildWorldPrompt,
+  parseWorldResponse,
+  generateWorldLocal,
+  buildStarSystemPrompt,
+  parseStarSystemResponse,
+  generateStarSystemLocal,
+  buildAlienRacePrompt,
+  parseAlienRaceResponse,
+  generateAlienRaceLocal,
+  BANNED_NAMES,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type NomadClanGeneratorOptions,
   type SocialHubGeneratorOptions,
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
+  type CouncilVoteGeneratorOptions,
+  type SecretSocietyGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
   type NationGeneratorOptions,
   type PantheonGeneratorOptions,
   type NamesGeneratorOptions,
   type ShipGeneratorOptions,
+  type LanguageGeneratorOptions,
+  type NewsSheetGeneratorOptions,
+  type DungeonGeneratorOptions,
+  type AdventureGeneratorOptions,
+  type PlotTwistGeneratorOptions,
+  type WorldGeneratorOptions,
+  type StarSystemGeneratorOptions,
+  type AlienRaceGeneratorOptions,
   type PublicGeneratorOutput,
+  languageConfig,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
 
@@ -68,18 +126,33 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-// Faction + vampire + settlement content data now live in the package (#1351).
-export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
+// Faction + vampire + nomad + settlement content data now live in the package (#1351).
+export {
+  factionConfig,
+  themeIdToLabel,
+  vampireConfig,
+  nomadClanConfig,
+} from "generator-engine";
 export { settlementConfig } from "generator-engine";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
+export { councilVoteConfig } from "generator-engine";
+export { secretSocietyConfig } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "generator-engine";
 export { nameGeneratorConfig } from "generator-engine";
 export { shipConfig } from "generator-engine";
+export { languageConfig } from "generator-engine";
+export { newsSheetConfig } from "generator-engine";
+export { dungeonConfig, forDungeonGenre } from "generator-engine";
+export { adventureConfig, forAdventureGenre } from "generator-engine";
+export { plotTwistConfig } from "generator-engine";
+export { worldConfig } from "generator-engine";
+export { starSystemConfig } from "generator-engine";
+export { alienRaceConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -93,7 +166,13 @@ function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
 }
 
 /** Single source of truth for the generator model id (#1494). */
-const GENERATOR_MODEL_ID = "gemini-3.1-flash-lite";
+const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
+const LANGUAGE_GENERATION_CONFIG = {
+  temperature: 0.35,
+  topP: 0.8,
+  maxOutputTokens: 8192,
+  responseMimeType: "application/json",
+};
 
 export class DefaultGeneratorEngine {
   constructor(private clientManager = aiClientManager) {}
@@ -144,14 +223,51 @@ export class DefaultGeneratorEngine {
   private async runModel(
     systemInstruction: string,
     userMessage: string,
+    generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
       GENERATOR_MODEL_ID,
       systemInstruction,
     );
-    const response = await model.generateContent(userMessage);
+    const response = await model.generateContent(
+      generationConfig
+        ? {
+            contents: [{ role: "user", parts: [{ text: userMessage }] }],
+            generationConfig,
+          }
+        : userMessage,
+    );
     return response.response.text().trim();
+  }
+
+  /**
+   * Multi-pass AI call over a single real chat session (#2033). Unlike
+   * runModel's one-shot call, each turn sent on the returned session sees
+   * every prior turn's actual text as conversation history — the model reads
+   * its own earlier output instead of us hand-summarizing it back in. Used
+   * where a single long generation has repeatedly contradicted its own
+   * earlier sections (council-vote's paths vs. its own roster).
+   */
+  private async startChat(systemInstruction: string) {
+    const model = await this.clientManager.getModel(
+      "",
+      GENERATOR_MODEL_ID,
+      systemInstruction,
+    );
+    return model.startChat({ history: [] });
+  }
+
+  private async sendChatMessage(
+    chat: Awaited<ReturnType<DefaultGeneratorEngine["startChat"]>>,
+    userMessage: string,
+  ): Promise<string> {
+    const result = await chat.sendMessageStream(userMessage);
+    let text = "";
+    for await (const chunk of result.stream) {
+      text += chunk.text();
+    }
+    return text.trim();
   }
 
   generateName(): string {
@@ -220,6 +336,23 @@ export class DefaultGeneratorEngine {
     );
   }
 
+  /** Nomad clan generation delegates to the generator-engine package (#1570). */
+  async generateNomadClan(
+    options: NomadClanGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...nomadOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildNomadClanPrompt(nomadOptions, getSessionContext());
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseNomadClanResponse(text, resolved);
+      },
+      () => generateNomadClanLocal(nomadOptions),
+    );
+  }
+
   /** Settlement generation delegates to the generator-engine package (#1351). */
   async generateSettlement(
     options: SettlementGeneratorOptions & { useAI?: boolean } = {},
@@ -269,6 +402,91 @@ export class DefaultGeneratorEngine {
         return parseQuestResponse(text, resolved);
       },
       () => generateQuestLocal(questOptions),
+    );
+  }
+
+  async generateCouncilVote(
+    options: CouncilVoteGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...councilVoteOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const {
+          systemInstruction,
+          userMessage: foundationMessage,
+          resolved,
+        } = buildCouncilVoteFoundationPrompt(
+          councilVoteOptions,
+          getSessionContext(),
+        );
+        const chat = await this.startChat(systemInstruction);
+
+        const foundationText = await this.sendChatMessage(
+          chat,
+          foundationMessage,
+        );
+        // A malformed repair reply keeps the pre-repair foundation/paths
+        // rather than discarding an otherwise-good generation over a
+        // cleanup step (mirrors the in-app service's same fallback).
+        // parseCouncilVoteFoundation/parseCouncilVotePathsResponse default
+        // missing fields to "" instead of throwing, so a syntactically valid
+        // but empty repair reply must be rejected explicitly here — the
+        // try/catch alone only catches genuinely unparseable JSON.
+        let foundation = parseCouncilVoteFoundation(foundationText, resolved);
+        try {
+          const repairText = await this.sendChatMessage(
+            chat,
+            buildCouncilVoteFoundationRepairPrompt(resolved.genre),
+          );
+          const repaired = parseCouncilVoteFoundation(repairText, resolved);
+          if (repaired.content.trim() && repaired.lore.trim()) {
+            foundation = repaired;
+          }
+        } catch {
+          // Keep the unrepaired foundation.
+        }
+
+        const { userMessage: pathsMessage } = buildCouncilVotePathsPrompt();
+        const pathsText = await this.sendChatMessage(chat, pathsMessage);
+        let paths = parseCouncilVotePathsResponse(pathsText);
+        try {
+          const pathsRepairText = await this.sendChatMessage(
+            chat,
+            buildCouncilVotePathsRepairPrompt(),
+          );
+          const pathsRepaired = parseCouncilVotePathsResponse(pathsRepairText);
+          if (
+            pathsRepaired.possiblePaths.trim() &&
+            pathsRepaired.followUpHooks.trim()
+          ) {
+            paths = pathsRepaired;
+          }
+        } catch {
+          // Keep the unrepaired paths.
+        }
+
+        return mergeCouncilVoteOutput(foundation, paths);
+      },
+      () => generateCouncilVoteLocal(councilVoteOptions),
+    );
+  }
+
+  async generateSecretSociety(
+    options: SecretSocietyGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...secretSocietyOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildSecretSocietyPrompt(secretSocietyOptions, getSessionContext());
+        return parseSecretSocietyResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateSecretSocietyLocal(secretSocietyOptions),
     );
   }
 
@@ -395,6 +613,328 @@ export class DefaultGeneratorEngine {
         return parseShipResponse(text, resolved);
       },
       () => generateShipLocal(shipOptions),
+    );
+  }
+
+  async generateLanguage(
+    options: Partial<LanguageGeneratorOptions> & {
+      useAI?: boolean;
+      campaignContext?: string;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...rest } = options;
+    const langOptions = {
+      genre: rest.genre || languageConfig.genres[0],
+      tone: rest.tone || languageConfig.tones[0],
+      role: rest.role || languageConfig.roles[0],
+      structure: rest.structure || languageConfig.structures[0],
+      context: rest.context || rest.campaignContext || "",
+    };
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildLanguagePrompt(
+            langOptions,
+            getSessionContext({ excludeLanguageDrafts: true }),
+          );
+        const expected = {
+          genre: resolved.genre,
+          tone: resolved.tone,
+          role: resolved.role,
+          structure: resolved.structure,
+          ...(resolved.context ? { worldContext: resolved.context } : {}),
+        };
+        const assess = (
+          raw: string,
+        ): {
+          output?: PublicGeneratorOutput;
+          blockingIssues: string[];
+          advisoryIssues: string[];
+          issues: string[];
+        } => {
+          try {
+            const output = parseLanguageResponse(raw);
+            const result = parseLanguageGenerationResult({
+              version: output.languageProfileVersion,
+              title: output.title,
+              summary: output.summary,
+              labels: output.labels,
+              profile: output.languageProfile,
+            });
+            const quality = classifyAILanguageQuality(result);
+            const blockingIssues = [
+              ...quality.blockingIssues,
+              ...validateLanguageInputFidelity(result, expected).issues,
+              ...validateLanguageNameBans(result, resolved.bannedNames ?? [])
+                .issues,
+            ];
+            const advisoryIssues = quality.advisoryIssues;
+            return {
+              output,
+              blockingIssues,
+              advisoryIssues,
+              issues: [...blockingIssues, ...advisoryIssues],
+            };
+          } catch (error) {
+            const blockingIssues = [
+              error instanceof Error
+                ? `Structural validation failed: ${error.message}`
+                : "Structural validation failed.",
+            ];
+            return {
+              blockingIssues,
+              advisoryIssues: [],
+              issues: blockingIssues,
+            };
+          }
+        };
+
+        const initialRaw = await this.runModel(
+          systemInstruction,
+          userMessage,
+          LANGUAGE_GENERATION_CONFIG,
+        );
+        const initial = assess(initialRaw);
+        if (initial.output && initial.issues.length === 0) {
+          return initial.output;
+        }
+
+        let candidateRaw = initialRaw;
+        let candidate = initial;
+        let lastAcceptableOutput =
+          initial.output && initial.blockingIssues.length === 0
+            ? initial.output
+            : undefined;
+        const repairBudget = initial.blockingIssues.length ? 2 : 1;
+        for (
+          let repairAttempt = 0;
+          repairAttempt < repairBudget;
+          repairAttempt += 1
+        ) {
+          try {
+            const repairRaw = await this.runModel(
+              systemInstruction,
+              buildLanguageRepairPrompt(
+                candidateRaw,
+                candidate.issues,
+                userMessage,
+              ),
+              LANGUAGE_GENERATION_CONFIG,
+            );
+            candidateRaw = repairRaw;
+            candidate = assess(repairRaw);
+            if (candidate.output && candidate.issues.length === 0) {
+              return candidate.output;
+            }
+            if (candidate.output && candidate.blockingIssues.length === 0) {
+              lastAcceptableOutput = candidate.output;
+              break;
+            }
+          } catch {
+            // Preserve the last parseable candidate for the remaining repair.
+          }
+        }
+        if (lastAcceptableOutput) return lastAcceptableOutput;
+        throw new Error(
+          `AI language output failed validation: ${candidate.issues.join(" ")}`,
+        );
+      },
+      () => generateLanguageLocal(langOptions),
+    );
+  }
+
+  /** News Sheet generation delegates to the generator-engine package (#1639). */
+  async generateNewsSheet(
+    options: NewsSheetGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...sheetOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } = buildNewsSheetPrompt(
+          sheetOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseNewsSheetResponse(text);
+      },
+      () => generateNewsSheetLocal(sheetOptions),
+    );
+  }
+
+  /** Dungeon & Delve generation delegates to the generator-engine package. */
+  async generateDungeon(
+    options: DungeonGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...dungeonOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildDungeonPrompt(dungeonOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        const first = parseDungeonResponseDetailed(
+          text,
+          dungeonOptions,
+          undefined,
+          resolved,
+        );
+        if (first.problems.length === 0) return first.output;
+
+        // Tell the model exactly what it got wrong and let it try once more.
+        // A single retry: two calls is an acceptable cost for a usable result,
+        // an unbounded loop is not. If the retry also fails, `first.output` is
+        // the locally-resolved dungeon the prompt was built from.
+        const retryText = await this.runModel(
+          systemInstruction,
+          buildDungeonRetryMessage(userMessage, first.problems),
+        );
+        const second = parseDungeonResponseDetailed(
+          retryText,
+          dungeonOptions,
+          undefined,
+          resolved,
+        );
+        if (second.problems.length === 0) return second.output;
+
+        // Neither attempt was clean. Prefer whichever is still the model's own
+        // work over the local foundation — a response missing one field, with
+        // that field patched, beats a whole dungeon of table prose.
+        if (!second.rejected) return second.output;
+        return first.output;
+      },
+      () => generateDungeonLocal(dungeonOptions),
+    );
+  }
+
+  /** Adventure Idea generation delegates to the generator-engine package. */
+  async generateAdventure(
+    options: AdventureGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...adventureOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildAdventurePrompt(adventureOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        const first = parseAdventureResponseDetailed(
+          text,
+          adventureOptions,
+          undefined,
+          resolved,
+        );
+        if (first.problems.length === 0) return first.output;
+
+        const retryText = await this.runModel(
+          systemInstruction,
+          buildAdventureRetryMessage(userMessage, first.problems),
+        );
+        const second = parseAdventureResponseDetailed(
+          retryText,
+          adventureOptions,
+          undefined,
+          resolved,
+        );
+        if (second.problems.length === 0) return second.output;
+
+        if (!second.rejected) return second.output;
+        return first.output;
+      },
+      () => generateAdventureLocal(adventureOptions),
+    );
+  }
+
+  /** Plot twist generation preserves established facts while adding playable choices. */
+  async generatePlotTwist(
+    options: PlotTwistGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...plotTwistOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildPlotTwistPrompt(plotTwistOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parsePlotTwistResponse(text, plotTwistOptions);
+      },
+      () => generatePlotTwistLocal(plotTwistOptions),
+    );
+  }
+
+  /** World generation delegates to the shared offline-first generator package. */
+  async generateWorld(
+    options: WorldGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...worldOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildWorldPrompt(worldOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseWorldResponse(text, [
+          ...BANNED_NAMES,
+          ...(worldOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateWorldLocal({
+          ...worldOptions,
+          avoidNames: [...BANNED_NAMES, ...(worldOptions.avoidNames ?? [])],
+        }),
+    );
+  }
+
+  /** Star system generation delegates to the shared offline-first generator package. */
+  async generateStarSystem(
+    options: StarSystemGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...starSystemOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildStarSystemPrompt(starSystemOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseStarSystemResponse(text, [
+          ...BANNED_NAMES,
+          ...(starSystemOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateStarSystemLocal({
+          ...starSystemOptions,
+          avoidNames: [
+            ...BANNED_NAMES,
+            ...(starSystemOptions.avoidNames ?? []),
+          ],
+        }),
+    );
+  }
+
+  /** Alien race generation delegates to the shared offline-first generator package. */
+  async generateAlienRace(
+    options: AlienRaceGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...alienRaceOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage } =
+          buildAlienRacePrompt(alienRaceOptions);
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseAlienRaceResponse(text, [
+          ...BANNED_NAMES,
+          ...(alienRaceOptions.avoidNames ?? []),
+        ]);
+      },
+      () =>
+        generateAlienRaceLocal({
+          ...alienRaceOptions,
+          avoidNames: [...BANNED_NAMES, ...(alienRaceOptions.avoidNames ?? [])],
+        }),
     );
   }
 }

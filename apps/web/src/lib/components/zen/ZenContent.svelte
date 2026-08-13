@@ -8,54 +8,22 @@
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
   import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
+  import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import { isEntityVisible, type Entity } from "schema";
-  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
+  import { goto } from "$app/navigation";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let editingConnectionTarget = $state<string | null>(null);
   let isAddingConnection = $state(false);
-  let newConnectionTargetName = $state("");
-  let newConnectionTargetId = $state<string | null>(null);
-  let newConnectionType = $state("related_to");
-  let newConnectionLabel = $state("");
-  let addConnectionError = $state<string | null>(null);
-  let isConnecting = $state(false);
-
-  const handleAddConnection = async () => {
-    addConnectionError = null;
-    if (!entity) return;
-    if (!newConnectionTargetId) {
-      addConnectionError = "Please select a valid entity.";
-      return;
-    }
-    if (newConnectionTargetId === entity.id) {
-      addConnectionError = "Cannot connect an entity to itself.";
-      return;
-    }
-    if (isConnecting) return;
-
-    try {
-      isConnecting = true;
-      const success = await vault.addConnection(
-        entity.id,
-        newConnectionTargetId,
-        newConnectionType,
-        newConnectionLabel.trim() || undefined,
-      );
-
-      if (success) {
-        isAddingConnection = false;
-        newConnectionTargetName = "";
-        newConnectionTargetId = null;
-        newConnectionType = "related_to";
-        newConnectionLabel = "";
-      } else {
-        addConnectionError = "Failed to create connection.";
-      }
-    } finally {
-      isConnecting = false;
-    }
-  };
+  let prefillConnectionTargetId = $state<string | null>(null);
+  let prefillConnectionTargetName = $state("");
 
   let {
     entity,
@@ -70,6 +38,15 @@
     onNavigate?: (id: string) => void;
     isPopout?: boolean;
   }>();
+
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
+  );
 
   interface ConnectionListItem {
     id: string;
@@ -132,27 +109,27 @@
     }
 
     // Add children if exist
-    const entityId = entity?.id || "";
-    // ⚡ Bolt Optimization: Use vault.allEntities instead of allocating Object.values()
+    const entityId = (entity?.id || "").toLowerCase();
+    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
     const allEntities = vault.allEntities || [];
-    const children = allEntities.filter(
-      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
-    );
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (checkVisibility(child.id)) {
-        const alreadyConnected = result.some((c) => c.id === child.id);
-        if (!alreadyConnected) {
-          result.push({
-            id: child.id,
-            key: `${child.id}-child-${i}`,
-            displayLabel: "Child",
-            rawLabel: "Child",
-            title: child.title,
-            type: "child",
-            isOutbound: false,
-            isChild: true,
-          });
+
+    for (let i = 0; i < allEntities.length; i++) {
+      const child = allEntities[i];
+      if (child.parent && child.parent.toLowerCase() === entityId) {
+        if (checkVisibility(child.id)) {
+          const alreadyConnected = result.some((c) => c.id === child.id);
+          if (!alreadyConnected) {
+            result.push({
+              id: child.id,
+              key: `${child.id}-child-${i}`,
+              displayLabel: "Child",
+              rawLabel: "Child",
+              title: child.title,
+              type: "child",
+              isOutbound: false,
+              isChild: true,
+            });
+          }
         }
       }
     }
@@ -251,7 +228,27 @@
 >
   <div class="max-w-3xl mx-auto space-y-6">
     {#if entity && !editState.isEditing && !vault.isGuest}
-      <div class="flex justify-end">
+      <div class="flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onclick={() => modalUIStore.openRevisionDialog(entity.id)}
+          disabled={revisionService.isRevising}
+          class="text-xs font-bold uppercase tracking-widest bg-theme-surface text-theme-primary border border-theme-primary/50 hover:bg-theme-primary/10 hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Revise Chronicle and Lore with AI"
+          title="Revise Chronicle and Lore with AI"
+        >
+          {#if revisionService.isRevising}
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+            ></span>
+            Revising
+          {:else}
+            <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"
+            ></span>
+            AI Revise
+          {/if}
+        </button>
         <button
           type="button"
           onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
@@ -342,6 +339,82 @@
           <span class="icon-[lucide--book-open] w-5 h-5"></span>
           {themeStore.jargon.chronicle_header}
         </h2>
+        {#if !editState.isEditing && entity && isDelveLocationEntity(entity)}
+          <div
+            class="my-3 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
+          >
+            <div class="flex items-center gap-2.5">
+              <span
+                class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
+              ></span>
+              <div>
+                <span
+                  class="text-xs font-bold text-theme-primary uppercase font-header tracking-wider block"
+                >
+                  Spatial {delveCanvasLabel}
+                </span>
+                <span class="text-[10px] text-theme-muted">
+                  {existingCanvas
+                    ? "Interactive room & sector floor plan on Spatial Canvas."
+                    : "Generate an interactive room & sector floor plan on Spatial Canvas."}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              {#if existingCanvas}
+                <button
+                  type="button"
+                  onclick={() => {
+                    openCanvasFromZen(existingCanvas, goto);
+                  }}
+                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                  Open {delveCanvasLabel}
+                </button>
+                <button
+                  type="button"
+                  title="Rebuild Canvas Map"
+                  aria-label="Rebuild Canvas Map"
+                  onclick={async () => {
+                    try {
+                      const canvasDoc =
+                        dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                      const slug = await canvasRegistry.importCanvas(canvasDoc);
+                      openCanvasFromZen({ slug }, goto);
+                    } catch (err) {
+                      console.error("[DelveCanvas] Rebuild failed:", err);
+                    }
+                  }}
+                  class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
+                >
+                  <span
+                    class="icon-[lucide--rotate-cw] w-3.5 h-3.5"
+                    aria-hidden="true"
+                  ></span>
+                </button>
+              {:else}
+                <button
+                  type="button"
+                  onclick={async () => {
+                    try {
+                      const canvasDoc =
+                        dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                      const slug = await canvasRegistry.importCanvas(canvasDoc);
+                      openCanvasFromZen({ slug }, goto);
+                    } catch (err) {
+                      console.error("[DelveCanvas] Build failed:", err);
+                    }
+                  }}
+                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                  Build {delveCanvasLabel}
+                </button>
+              {/if}
+            </div>
+          </div>
+        {/if}
         {#if editState.isEditing}
           <MarkdownEditor
             content={editState.content}
@@ -440,117 +513,29 @@
               class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
               aria-label="Add new connection"
             >
-              <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+              <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+              ></span>
               ADD
             </button>
           {/if}
         </div>
 
         {#if isAddingConnection}
-          <div
-            class="p-3 bg-theme-bg border border-theme-primary/30 rounded-md space-y-3 shadow-md"
-          >
-            <div class="flex items-center justify-between">
-              <span
-                class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest font-header"
-                >New Connection</span
-              >
-              <button
-                type="button"
-                onclick={() => {
-                  isAddingConnection = false;
-                  newConnectionTargetName = "";
-                  newConnectionTargetId = null;
-                  newConnectionType = "related_to";
-                  newConnectionLabel = "";
-                  addConnectionError = null;
-                }}
-                class="text-theme-muted hover:text-theme-text"
-                aria-label="Cancel adding connection"
-              >
-                <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
-              </button>
-            </div>
-
-            <div class="space-y-1">
-              <label
-                for="new-connection-target-mobile"
-                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-                >Target Entity</label
-              >
-              <Autocomplete
-                bind:value={newConnectionTargetName}
-                bind:selectedId={newConnectionTargetId}
-                placeholder="Search entities..."
-                id="new-connection-target-mobile"
-                ariaLabel="Search target entity"
-              />
-            </div>
-
-            <div class="space-y-1">
-              <label
-                for="new-connection-type-mobile"
-                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-                >Relationship Type</label
-              >
-              <select
-                id="new-connection-type-mobile"
-                bind:value={newConnectionType}
-                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
-              >
-                <option value="related_to">Default (Grey)</option>
-                <option value="neutral">Neutral (Amber)</option>
-                <option value="friendly">Friendly (Blue)</option>
-                <option value="enemy">Enemy (Red)</option>
-              </select>
-            </div>
-
-            <div class="space-y-1">
-              <label
-                for="new-connection-label-mobile"
-                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-                >Custom Label (Optional)</label
-              >
-              <input
-                id="new-connection-label-mobile"
-                type="text"
-                bind:value={newConnectionLabel}
-                placeholder="e.g. Ally, Rivalling, Secret"
-                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
-              />
-            </div>
-
-            {#if addConnectionError}
-              <p class="text-xs text-theme-danger font-semibold">
-                {addConnectionError}
-              </p>
-            {/if}
-
-            <div class="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onclick={() => {
-                  isAddingConnection = false;
-                  newConnectionTargetName = "";
-                  newConnectionTargetId = null;
-                  newConnectionType = "related_to";
-                  newConnectionLabel = "";
-                  addConnectionError = null;
-                }}
-                class="text-[10px] font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isConnecting}
-                onclick={handleAddConnection}
-                class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isConnecting ? "Connecting..." : "Connect"}
-              </button>
-            </div>
-          </div>
+          <ConnectionCreator
+            entityId={entity.id}
+            initialTargetId={prefillConnectionTargetId}
+            initialTargetName={prefillConnectionTargetName}
+            onCancel={() => {
+              isAddingConnection = false;
+              prefillConnectionTargetId = null;
+              prefillConnectionTargetName = "";
+            }}
+            onConnectionAdded={() => {
+              isAddingConnection = false;
+              prefillConnectionTargetId = null;
+              prefillConnectionTargetName = "";
+            }}
+          />
         {/if}
 
         {#if allConnections.length > 0}
@@ -580,12 +565,20 @@
                     class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
                     <span
+                      aria-hidden="true"
                       class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
                         ? 'bg-emerald-500'
                         : conn.isOutbound
                           ? 'bg-theme-primary'
                           : 'bg-blue-500'}"
                     ></span>
+                    <span class="sr-only"
+                      >{conn.isChild
+                        ? "Child of this entity:"
+                        : conn.isOutbound
+                          ? "Outgoing connection:"
+                          : "Incoming connection:"}</span
+                    >
                     <div class="flex-1 min-w-0">
                       <div
                         class="text-xs text-theme-muted uppercase tracking-widest font-header"
@@ -606,10 +599,12 @@
                           type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Edit connection"
+                          aria-label="Edit connection to {conn.title}"
                           title="Edit connection"
                         >
-                          <span class="icon-[lucide--pencil] w-3.5 h-3.5"
+                          <span
+                            aria-hidden="true"
+                            class="icon-[lucide--pencil] w-3.5 h-3.5"
                           ></span>
                         </button>
                       {/if}
@@ -617,17 +612,18 @@
                         <button
                           type="button"
                           onclick={() => {
+                            prefillConnectionTargetId = conn.id;
+                            prefillConnectionTargetName = conn.title;
                             isAddingConnection = true;
-                            newConnectionTargetId = conn.id;
-                            newConnectionTargetName = conn.title;
-                            newConnectionType = "related_to";
-                            newConnectionLabel = "";
                           }}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                          aria-label="Establish custom connection"
+                          aria-label="Establish custom connection to {conn.title}"
                           title="Establish custom connection"
                         >
-                          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+                          <span
+                            aria-hidden="true"
+                            class="icon-[lucide--plus] w-3.5 h-3.5"
+                          ></span>
                         </button>
                       {/if}
                       <button
@@ -652,10 +648,13 @@
                           }
                         }}
                         class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                        aria-label="Delete connection"
+                        aria-label="Delete connection to {conn.title}"
                         title="Delete connection"
                       >
-                        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                        <span
+                          aria-hidden="true"
+                          class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                        ></span>
                       </button>
                     </div>
                   {/if}

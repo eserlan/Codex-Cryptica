@@ -1,7 +1,7 @@
 import type { Entity } from "./entity";
 
 export const TIER_MODES = {
-  lite: "gemini-3.1-flash-lite",
+  lite: "gemini-3.5-flash-lite",
   advanced: "gemini-3-flash-preview",
 };
 
@@ -113,6 +113,8 @@ export interface TextGenerationService {
        * a main-thread module-global flag would never reach it.
        */
       interactionsEnabled?: boolean;
+      /** Guest snapshot view: read-only system prompt, no invention/retcon. */
+      guestMode?: boolean;
     },
   ): Promise<void>;
   generateMergeProposal(
@@ -199,6 +201,29 @@ export interface ImageGenerationOptions {
   provider?: "gemini" | "cloudflare" | "custom";
   baseUrl?: string;
   cloudflareAccountId?: string;
+  /**
+   * Negative direction for providers exposing a dedicated field. Providers
+   * without one receive negatives inline in the prompt instead; see
+   * `formatForProvider` in the schema package.
+   */
+  negativePrompt?: string;
+  /**
+   * Output size for providers that take explicit dimensions. Derived from the
+   * composed aspect ratio so the request matches the framing the prompt asks
+   * for; providers that infer size from the prompt ignore it.
+   */
+  dimensions?: { width: number; height: number };
+}
+
+export interface DistilledVisualSubject {
+  /** The subject layer: physical facts only. */
+  subject: string;
+  /**
+   * Standing the vault canon implies — "worshipped", "prayed to", "a legend
+   * told to children". Only the canon says this; labels and the subject text
+   * usually do not. Absent when unstated, unreadable, or AI is unavailable.
+   */
+  stature?: string;
 }
 
 export interface ImageGenerationService {
@@ -208,13 +233,19 @@ export interface ImageGenerationService {
     modelName: string,
     options?: ImageGenerationOptions,
   ): Promise<Blob>;
-  distillVisualPrompt(
+  /**
+   * Resolves vault canon into a descriptive subject phrase, plus the stature
+   * that canon implies. Art Direction v2 composes category, theme, camera, and
+   * negatives around the result, so this returns the subject layer only —
+   * never a complete image prompt.
+   */
+  distillVisualSubject(
     apiKey: string,
     query: string,
     context: string,
     modelName: string,
     demoMode?: boolean,
-  ): Promise<string>;
+  ): Promise<DistilledVisualSubject>;
 }
 
 // ─── Sound Bite ───────────────────────────────────────────────────────────────

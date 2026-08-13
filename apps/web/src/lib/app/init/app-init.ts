@@ -5,6 +5,17 @@ import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { configureAIEngine } from "@codex/ai-engine";
+import { searchService } from "@codex/search-orchestrator";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
+import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
+import {
+  handleVersionSkewReload,
+  isVersionSkewError,
+} from "../../../hooks.client";
 
 /**
  * Core system bootstrapping.
@@ -16,6 +27,12 @@ export function bootSystem(stores: {
   sessionModeStore: any;
 }): boolean {
   debugStore.log("System booting: Initializing core stores...");
+  browserPerformanceCapture.start();
+  searchService.setPerformanceRecorder(browserPerformanceRecorder);
+  configureAIEngine({
+    searchService,
+    templateResolver: resolveTemplateSync,
+  });
   stores.categories.init();
 
   // Initialize staging state
@@ -43,10 +60,28 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       event.target instanceof HTMLScriptElement ||
       event.target instanceof HTMLLinkElement
     ) {
+      const src =
+        (event.target as HTMLScriptElement).src ||
+        (event.target as HTMLLinkElement).href ||
+        "";
+      if (src.includes("/_app/immutable/")) {
+        console.warn("[VersionSkew] Failed to load immutable asset:", src);
+        handleVersionSkewReload();
+        return;
+      }
       return;
     }
 
     const message = event.message || "";
+    if (isVersionSkewError(event.error || message)) {
+      console.warn(
+        "[VersionSkew] Dynamic import error detected in handleGlobalError:",
+        message,
+      );
+      handleVersionSkewReload();
+      return;
+    }
+
     if (
       message.includes("Script error") ||
       message.includes("Load failed") ||
@@ -71,7 +106,16 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
     const reason = event.reason;
-    const message = reason?.message || "";
+    const message = reason?.message || String(reason || "");
+
+    if (isVersionSkewError(reason || message)) {
+      console.warn(
+        "[VersionSkew] Dynamic import unhandled rejection:",
+        message,
+      );
+      handleVersionSkewReload();
+      return;
+    }
 
     if (
       message.includes("Failed to fetch") ||
@@ -418,7 +462,7 @@ export function setupWindowGlobals(context: {
   }
 
   // Lazy-load dynamic AI services if not already present
-  import("../../services/ai")
+  import("@codex/ai-engine")
     .then((m) => {
       if (m) {
         (window as any).textGeneration = m.textGenerationService;
@@ -465,6 +509,38 @@ export function registerServiceWorker(deps?: {
   }
 
   let isRegistered = false;
+  let isRefreshing = false;
+  let hadController = !!nav.serviceWorker.controller;
+
+  nav.serviceWorker.addEventListener?.("controllerchange", () => {
+    const hasController = !!nav.serviceWorker.controller;
+    if (!hadController) {
+      hadController = hasController;
+      return;
+    }
+    if (!hasController) {
+      hadController = false;
+      return;
+    }
+    if (isRefreshing) return;
+    isRefreshing = true;
+
+    void notificationStore
+      .confirm({
+        title: "App Update Available",
+        message:
+          "A new version of Codex Cryptica has been installed. Would you like to reload the page now to use the update?",
+        confirmLabel: "Reload Now",
+        cancelLabel: "Not Now",
+      })
+      .then((shouldReload) => {
+        if (shouldReload) {
+          win.location.reload();
+        } else {
+          isRefreshing = false;
+        }
+      });
+  });
 
   const cleanup = () => {
     win.removeEventListener("load", tryRegister);
@@ -488,9 +564,22 @@ export function registerServiceWorker(deps?: {
     isRegistered = true;
     cleanup();
 
-    nav.serviceWorker.register(`${base}/service-worker.js`).catch((error) => {
-      console.warn("Service Worker registration failed:", error);
-    });
+    nav.serviceWorker.register(`${base}/service-worker.js`).then(
+      (registration) => {
+        if (registration && typeof registration.update === "function") {
+          void registration.update().catch(() => {});
+
+          doc.addEventListener("visibilitychange", () => {
+            if (doc.visibilityState === "visible") {
+              void registration.update().catch(() => {});
+            }
+          });
+        }
+      },
+      (error) => {
+        console.warn("Service Worker registration failed:", error);
+      },
+    );
   };
 
   if (doc.readyState === "complete") {

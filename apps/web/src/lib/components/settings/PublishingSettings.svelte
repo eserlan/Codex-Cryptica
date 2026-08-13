@@ -1,13 +1,13 @@
 <script lang="ts">
+  import { base } from "$app/paths";
   import { publishingService } from "$lib/services/publishing/PublishingService.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import PublishPreviewModal from "./PublishPreviewModal.svelte";
-  import UnpublishConfirmModal from "./UnpublishConfirmModal.svelte";
   import PublishingDashboard from "./PublishingDashboard.svelte";
+  import PublicListingSettings from "./PublicListingSettings.svelte";
 
   let showPreviewModal = $state(false);
-  let showUnpublishModal = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
   const activeRegistry = $derived(
@@ -25,15 +25,21 @@
     }
   }
 
-  function handleUnpublish() {
+  async function handleUnpublish() {
     if (!activeVaultId || !activeRegistry) return;
-    showUnpublishModal = true;
-  }
+    const vaultId = activeVaultId;
+    const vaultTitle = vault.activeVaultRecord?.name || "this campaign";
+    const confirmed = await notificationStore.confirm({
+      title: "Unpublish Snapshot",
+      message: `Are you sure you want to unpublish ${vaultTitle}? This action will permanently delete the snapshot JSON bundle and all associated asset files (images, maps) from the Cloudflare R2 bucket. Players and guests using the shared link will immediately receive a 404 snapshot error.`,
+      confirmLabel: "Unpublish & Delete",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+    if (!confirmed) return;
 
-  async function handleConfirmUnpublish() {
-    if (!activeVaultId) return;
     try {
-      await publishingService.unpublish(activeVaultId);
+      await publishingService.unpublish(vaultId);
     } catch (err: any) {
       console.error("[PublishingSettings] Unpublish failed:", err);
     }
@@ -82,6 +88,63 @@
           uploads it to Cloudflare R2. This allows your players to browse your
           world asynchronously and offline without exposing your active
           workspace or secrets.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visibility ladder: each level is a separate, owner-controlled consent step -->
+  <div
+    class="bg-theme-bg/30 border border-theme-border/50 rounded-lg divide-y divide-theme-border/40"
+  >
+    <div class="flex items-center gap-3 px-4 py-3">
+      <span
+        class="icon-[lucide--lock] w-4 h-4 shrink-0 {!activeRegistry
+          ? 'text-theme-primary'
+          : 'text-theme-text/40'}"
+      ></span>
+      <div>
+        <span
+          class="text-xs font-bold uppercase tracking-wider {!activeRegistry
+            ? 'text-theme-primary'
+            : 'text-theme-text/60'}">Private</span
+        >
+        <p class="text-xs text-theme-text/50">
+          Only you and vault editors can access this world.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 px-4 py-3">
+      <span
+        class="icon-[lucide--link] w-4 h-4 shrink-0 {activeRegistry
+          ? 'text-theme-primary'
+          : 'text-theme-text/40'}"
+      ></span>
+      <div>
+        <span
+          class="text-xs font-bold uppercase tracking-wider {activeRegistry
+            ? 'text-theme-primary'
+            : 'text-theme-text/60'}">Shared Link</span
+        >
+        <p class="text-xs text-theme-text/50">
+          Anyone with the guest link below can view a read-only snapshot.
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 px-4 py-3">
+      <span class="icon-[lucide--compass] w-4 h-4 shrink-0 text-theme-text/40"
+      ></span>
+      <div>
+        <span
+          class="text-xs font-bold uppercase tracking-wider text-theme-text/60"
+          >Public Listing</span
+        >
+        <p class="text-xs text-theme-text/50">
+          Opt-in below to also list this world in <a
+            href="{base}/worlds"
+            class="underline hover:text-theme-primary transition-colors"
+            >Explore Worlds</a
+          > for anyone to discover.
         </p>
       </div>
     </div>
@@ -270,6 +333,13 @@
     </div>
   {/if}
 
+  <PublicListingSettings
+    publishId={activeRegistry?.publishId}
+    writeToken={activeRegistry?.writeToken}
+    vaultTitle={vault.activeVaultRecord?.name || "Untitled World"}
+    {notificationStore}
+  />
+
   <div class="border-t border-theme-border/50 pt-6 mt-8">
     <PublishingDashboard />
   </div>
@@ -280,13 +350,5 @@
     bind:show={showPreviewModal}
     vaultId={activeVaultId}
     onConfirm={handleConfirmPublish}
-  />
-{/if}
-
-{#if showUnpublishModal && activeVaultId}
-  <UnpublishConfirmModal
-    bind:show={showUnpublishModal}
-    vaultTitle={vault.activeVaultRecord?.name || "this campaign"}
-    onConfirm={handleConfirmUnpublish}
   />
 {/if}

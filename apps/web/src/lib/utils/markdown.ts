@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import { load as yamlLoad, dump as yamlDump } from "js-yaml";
 import type { Entity } from "schema";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -63,10 +63,20 @@ export function parseMarkdown(raw: string): ParseResult {
   if (match) {
     try {
       const yamlContent = match[1];
-      const parsed = yaml.load(yamlContent) as any;
-      if (typeof parsed === "object" && parsed !== null) {
-        metadata = parsed;
+      const parsed = yamlLoad(yamlContent) as any;
+      // Frontmatter must parse to a plain mapping. Reject arrays, scalars,
+      // and degenerate mappings (e.g. an implicit `null` key from malformed
+      // ": foo: bar" input) rather than silently accepting garbage metadata.
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed) ||
+        parsed.constructor !== Object ||
+        "null" in parsed
+      ) {
+        throw new Error("Frontmatter did not parse to a plain mapping");
       }
+      metadata = parsed;
     } catch (e) {
       console.error("Failed to parse frontmatter", e);
     }
@@ -96,13 +106,16 @@ export function stringifyEntity(entity: Entity): string {
   const cleanRest: Record<string, unknown> = { ...metadata };
   delete cleanRest._fsHandle;
   delete cleanRest._lastModified;
+  delete cleanRest.contentPreview;
+  delete cleanRest.contentLoaded;
+  delete cleanRest.contentPreviewVersion;
   delete cleanRest.connections;
 
   Object.assign(orderedMetadata, cleanRest);
   orderedMetadata.connections = entity.connections;
 
   // Use sortKeys: false to preserve our specific order
-  const yamlStr = yaml.dump(orderedMetadata, { sortKeys: false });
+  const yamlStr = yamlDump(orderedMetadata, { sortKeys: false });
   return `---\n${yamlStr}---\n${content || ""}`;
 }
 

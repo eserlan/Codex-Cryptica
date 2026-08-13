@@ -10,13 +10,9 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
+import { type Rng, defaultRng, pickFrom } from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 const FALLBACK_THEME = "Classic Fantasy";
 
@@ -310,6 +306,8 @@ export interface MagicItemGeneratorOptions {
   type?: string;
   rarity?: string;
   theme?: string;
+  /** Free-text world/campaign background from the form's context field. */
+  campaignContext?: string;
 }
 
 interface ResolvedMagicItem {
@@ -380,6 +378,7 @@ Options:
 - Type: ${itemType}
 - Rarity: ${rarity}
 - Genre/Theme: ${theme}
+${formatCampaignContextBlock(options.campaignContext)}
 
 You must return a valid JSON object matching the following structure exactly:
 {
@@ -404,12 +403,7 @@ export function parseMagicItemResponse(
   text: string,
   resolved: ResolvedMagicItem,
 ): PublicGeneratorOutput {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
   return {
     type: "item",
     title: data.title || resolved.name,

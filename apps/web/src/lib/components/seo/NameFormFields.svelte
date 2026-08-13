@@ -47,7 +47,7 @@
     bind:value={theme}
     choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
     className="flex flex-col gap-1.5"
-    labelClass={labelClass}
+    {labelClass}
     inputClass={selectClass}
     customPlaceholder="Enter a custom vibe"
   />
@@ -59,7 +59,7 @@
   bind:value={culture}
   choices={activeCultures.map((c: string) => ({ value: c, label: c }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom culture or style"
 />
@@ -68,9 +68,12 @@
   id="gender-select"
   label="Gender / Presentation"
   bind:value={gender}
-  choices={nameGeneratorConfig.genders.map((g: string) => ({ value: g, label: g }))}
+  choices={nameGeneratorConfig.genders.map((g: string) => ({
+    value: g,
+    label: g,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom gender or presentation"
 />
@@ -79,20 +82,23 @@
   id="name-type-select"
   label="Name Type"
   bind:value={nameType}
-  choices={nameGeneratorConfig.nameTypes.map((t: string) => ({ value: t, label: t }))}
+  choices={nameGeneratorConfig.nameTypes.map((t: string) => ({
+    value: t,
+    label: t,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom name type"
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="name-context" class={labelClass}>Optional Context</label>
+  <label for="name-context" class={labelClass}>Add campaign context</label>
   <textarea
     id="name-context"
     name="context"
     bind:value={context}
-    maxlength="240"
+    maxlength="4000"
     rows="3"
     placeholder="e.g. &quot;Assyrian&quot;, &quot;a reclusive mage&quot;, &quot;harsh and guttural&quot;"
     aria-describedby="name-context-help"

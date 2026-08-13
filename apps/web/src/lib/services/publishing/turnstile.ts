@@ -50,10 +50,24 @@ function loadTurnstile(): Promise<NonNullable<Window["turnstile"]>> {
   });
 }
 
-/** Runs the invisible publication challenge only after the user confirms publishing. */
-export async function getPublishTurnstileToken(): Promise<string> {
+/**
+ * Renders a throwaway invisible widget, executes it, and resolves with the
+ * challenge token.
+ *
+ * Shared by every challenge site so a third caller doesn't mean a third copy
+ * of the render/cleanup/timeout dance. `retryPhrase` completes the sentence
+ * "Please try ___ again." in the user-facing errors.
+ */
+async function solveInvisibleChallenge(
+  action: string,
+  retryPhrase: string,
+  notConfiguredMessage: string,
+): Promise<string> {
   if (!VITE_TURNSTILE_SITE_KEY) {
-    throw new Error("Publishing verification is not configured.");
+    if (import.meta.env.DEV) {
+      return "dev-turnstile-token";
+    }
+    throw new Error(notConfiguredMessage);
   }
 
   const turnstile = await loadTurnstile();
@@ -67,31 +81,59 @@ export async function getPublishTurnstileToken(): Promise<string> {
       if (widgetId) turnstile.remove(widgetId);
       container.remove();
     };
-    const timeout = window.setTimeout(() => {
+    const fail = (reason: string) => () => {
+      window.clearTimeout(timeout);
       cleanup();
-      reject(new Error("Verification timed out. Please try publishing again."));
-    }, 30_000);
+      reject(
+        new Error(`Verification ${reason}. Please try ${retryPhrase} again.`),
+      );
+    };
+    const timeout = window.setTimeout(fail("timed out"), 30_000);
 
     widgetId = turnstile.render(container, {
       sitekey: VITE_TURNSTILE_SITE_KEY,
       execution: "execute",
-      action: "publish_snapshot",
+      action,
       callback: (token: string) => {
         window.clearTimeout(timeout);
         cleanup();
         resolve(token);
       },
-      "error-callback": () => {
-        window.clearTimeout(timeout);
-        cleanup();
-        reject(new Error("Verification failed. Please try publishing again."));
-      },
-      "expired-callback": () => {
-        window.clearTimeout(timeout);
-        cleanup();
-        reject(new Error("Verification expired. Please try publishing again."));
-      },
+      "error-callback": fail("failed"),
+      "expired-callback": fail("expired"),
     });
     turnstile.execute(widgetId);
   });
+}
+
+/** Runs the invisible publication challenge only after the user confirms publishing. */
+export async function getPublishTurnstileToken(): Promise<string> {
+  return solveInvisibleChallenge(
+    "publish_snapshot",
+    "publishing",
+    "Publishing verification is not configured.",
+  );
+}
+
+/** Runs the invisible publication challenge only when submitting a copyright report. */
+export async function getCopyrightReportTurnstileToken(): Promise<string> {
+  return solveInvisibleChallenge(
+    "copyright_report",
+    "reporting",
+    "Verification is not configured.",
+  );
+}
+
+/**
+ * Runs the invisible challenge that backs the LLM session capability token.
+ *
+ * Unlike the other two this fires on app start rather than on a user action,
+ * so the token is already in hand by the time someone generates anything.
+ */
+export async function getSessionTurnstileToken(): Promise<string> {
+  return solveInvisibleChallenge(
+    "llm_session",
+    "generating",
+    "Session verification is not configured.",
+  );
 }

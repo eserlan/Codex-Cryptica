@@ -17,6 +17,8 @@ describe("ExplorerUIStore", () => {
     const store = new ExplorerUIStore(persistence);
 
     expect(store.explorerViewMode).toBe("list");
+    expect(store.explorerSortKey).toBe("name");
+    expect(store.explorerSortDirection).toBe("asc");
     expect(store.labelFilters.size).toBe(0);
   });
 
@@ -108,6 +110,57 @@ describe("ExplorerUIStore", () => {
     );
   });
 
+  it("persists sort choice and uses a sensible default direction", () => {
+    const mockStorage = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    const store = new ExplorerUIStore(
+      new UIPersistence({ storage: mockStorage }),
+    );
+
+    store.setExplorerSortKey("updated");
+
+    expect(store.explorerSortKey).toBe("updated");
+    expect(store.explorerSortDirection).toBe("desc");
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_explorer_sort_key",
+      "updated",
+    );
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_explorer_sort_direction",
+      "desc",
+    );
+
+    store.toggleExplorerSortDirection();
+
+    expect(store.explorerSortDirection).toBe("asc");
+    expect(mockStorage.setItem).toHaveBeenLastCalledWith(
+      "codex_explorer_sort_direction",
+      "asc",
+    );
+  });
+
+  it("restores a valid persisted sort preference", () => {
+    const values: Record<string, string> = {
+      codex_explorer_sort_key: "updated",
+      codex_explorer_sort_direction: "asc",
+    };
+    const mockStorage = {
+      getItem: vi.fn((key: string) => values[key] ?? null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+
+    const store = new ExplorerUIStore(
+      new UIPersistence({ storage: mockStorage }),
+    );
+
+    expect(store.explorerSortKey).toBe("updated");
+    expect(store.explorerSortDirection).toBe("asc");
+  });
+
   it("handles collapsed entity states", () => {
     const mockStorage = {
       getItem: vi.fn().mockReturnValue(null),
@@ -128,5 +181,32 @@ describe("ExplorerUIStore", () => {
 
     store.toggleExplorerEntityCollapse("v1", "e1");
     expect(Array.from(store.getCollapsedEntities("v1"))).toEqual([]);
+  });
+
+  it("avoids Object.values allocations when restoring collapsed label groups from persistence", () => {
+    const collapsedMap = JSON.stringify({
+      v1: ["group1", "group2"],
+      v2: ["group3"],
+    });
+    const mockStorage = {
+      getItem: vi.fn((key: string) => {
+        if (key === "codex_explorer_collapsed_label_groups")
+          return collapsedMap;
+        return null;
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+
+    const spy = vi.spyOn(Object, "values");
+    const persistence = new UIPersistence({ storage: mockStorage });
+    const store = new ExplorerUIStore(persistence);
+
+    expect(Array.from(store.getCollapsedLabelGroups("v1"))).toEqual([
+      "group1",
+      "group2",
+    ]);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

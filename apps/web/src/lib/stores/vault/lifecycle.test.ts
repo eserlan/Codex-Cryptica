@@ -152,6 +152,7 @@ describe("VaultLifecycleManager", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -175,6 +176,7 @@ describe("VaultLifecycleManager", () => {
     });
 
     it("should serialize multiple switchVault calls using a lock", async () => {
+      vi.useFakeTimers();
       const callOrder: string[] = [];
       deps.activeVaultId.mockReturnValue("initial");
 
@@ -190,6 +192,7 @@ describe("VaultLifecycleManager", () => {
       const p1 = manager.switchVault("vault-1");
       const p2 = manager.switchVault("vault-2");
 
+      await vi.runAllTimersAsync();
       await Promise.all([p1, p2]);
 
       expect(callOrder).toEqual([

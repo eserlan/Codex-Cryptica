@@ -21,6 +21,14 @@ By default, all your campaign data is stored in the **Origin Private File System
 
 You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
 
+> **Browser support:** local folder saving relies on the File System Access API.
+>
+> - **Chrome, Edge:** supported out of the box.
+> - **Brave:** ships this feature disabled by default. If "Save to Folder" doesn't work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
+> - **Firefox, Safari:** don't support this feature yet. Your vault still saves automatically to the browser's local storage (OPFS) — you just can't mirror it to a folder on disk until you switch to a Chromium-based browser.
+>
+> On any browser, you can still back up with **Settings → Portable Backup → Export Backup**, which downloads your whole vault as a single `.codex.zip` file you can re-import anywhere.
+
 1.  **External Backups:** Keep a real-time copy of your world in a folder you control.
 2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
 3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.
@@ -42,3 +50,8 @@ When you open Codex on a new device:
 2.  Click **Open Folder**.
 3.  Select the cloud-synced folder you set up on your first device.
 4.  Codex will load your world and keep it updated with the cloud mirror.
+
+## Related Blog Posts
+
+- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and co-GM collaboration.
+- [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and private cloud backups keep your campaign notes safe.

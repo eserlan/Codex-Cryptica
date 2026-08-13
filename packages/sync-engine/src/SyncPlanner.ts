@@ -2,11 +2,13 @@ import { type SyncDirection } from "schema";
 import { DiffAlgorithm, type SyncAction } from "./DiffAlgorithm";
 import { type FileMetadata, type SyncEntry } from "./types";
 import { SyncRegistry } from "./SyncRegistry";
+import { type Clock, systemClock } from "./runtime";
 
 export class SyncPlanner {
   constructor(
     private registry: SyncRegistry,
     private diffAlgorithm = DiffAlgorithm,
+    private clock: Clock = systemClock,
   ) {}
 
   async plan(
@@ -72,7 +74,7 @@ export class SyncPlanner {
       ) {
         opfsMetadata = {
           path,
-          lastModified: Date.now(),
+          lastModified: this.clock.now(),
           size: registryEntry.lastSyncedFsSize || 0,
           handle: registryEntry.remoteId,
           hash: registryEntry.lastSyncedOpfsHash,

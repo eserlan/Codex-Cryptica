@@ -1,8 +1,31 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-06-25
+Auto-generated from all feature plans. Last updated: 2026-08-11
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
+- N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
+
+- TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API (154-llm-session-ratelimit)
+- Cloudflare Rate Limiting binding, client-side `sessionStorage` (154-llm-session-ratelimit)
+
+- TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution) (153-llm-model-registry)
+- N/A — model registry is static in-code config, no database, no persistence this slice (FR-014) (153-llm-model-registry)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Zod/schema, `@codex/stat-sheet-engine`, existing (150-stat-sheet-marketplace)
+- R2 for public listing/package records; IndexedDB vault-scoped (150-stat-sheet-marketplace)
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, `@codex/generator-engine`, `@google/generative-ai` (148-guided-mode-quickstart)
+- OPFS (Vault notes), IndexedDB (via vault stores), `localStorage` (`codex_guided_mode_active` preference) (148-guided-mode-quickstart)
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2 + `@codex/vault-engine`, Svelte 5 runes (`$state`, `$derived`, `$effect`), `diceRollerService`, `vttSessionService` (149-reusable-stat-sheets)
+- Entity frontmatter (`statSheet`) via OPFS/IndexedDB in `vault.svelte.ts`; Stat Sheet templates stored in campaign IndexedDB/OPFS registry (149-reusable-stat-sheets)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), Bun 1.3.14 + SvelteKit 2, `@xyflow/svelte` (Spatial Canvas), `@google/generative-ai` (Gemini SDK via `aiClientManager`), `packages/generator-engine` (145-dungeon-structural-builder)
+- OPFS & IndexedDB (via Vault Repository storing `.canvas` JSON documents and linked Concept notes) (145-dungeon-structural-builder)
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (141-language-generator)
+- OPFS (Vault notes) & IndexedDB (via vault stores) (141-language-generator)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility (135-guest-vault-r2)
 - Cloudflare R2 bucket (`codex-cryptica-statics`) for hosted files, IndexedDB (`PublishRegistry`) for local host settings (135-guest-vault-r2)
@@ -213,9 +236,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 137-standalone-generator-session-hub: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 (Runes), SvelteKit 2, Tailwind 4, `@codex/events`, `generator-engine`
-- 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
-- 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
+- 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
+
+- 154-llm-session-ratelimit: Added TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API
+
+- 153-llm-model-registry: Added TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution)
 
 <!-- MANUAL ADDITIONS START -->
 

@@ -9,7 +9,11 @@ rank: 1
 
 ![Codex Cryptica Dashboard](/images/rpg-vault-mockup.png)
 
-Codex Cryptica (CC) is a **local-first, privacy-first tabletop worldbuilding campaign manager**. It is designed to give you **absolute sovereignty** over your lore. Everything you create is saved directly on your own computer as clean Markdown files, meaning your worlds remain completely yours, fully functional offline, and safe from cloud platform lock-in.
+**In short:** Codex Cryptica is a place to build and run your tabletop campaign — your characters, places, factions, maps, and notes, all in one workspace. Everything you write stays on your own device. No account is needed, it works offline, and nothing is uploaded unless you choose to share it.
+
+You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main description, and **Lore** is your private, GM-only notes. Don't worry about memorising them; they're explained in context the first time they matter.
+
+For power users: your worlds are saved as clean local Markdown files (in the browser's Origin Private File System), so they remain fully yours, portable, and safe from cloud platform lock-in.
 
 ---
 
@@ -100,10 +104,10 @@ Codex Cryptica provides multiple ways to visualize and interact with your lore, 
 
 ![The Lore Oracle AI Assistant Chat](/images/oracle-chat-mockup.jpg)
 
-The Lore Oracle is your co-author and worldbuilding assistant, powered by Google Gemini.
+The Lore Oracle is your co-author and worldbuilding assistant, powered by OpenAI/Luna.
 
 - **Context-Aware Chat**: Unlike generic AI chatbots, the Oracle retrieves relevant entities, notes, and local neighbor nodes from your graph to ground its responses in your specific world lore.
-- **Keys**: Configure your private Google Gemini key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
+- **Keys**: Configure your private OpenAI/Luna API key in Settings (stored locally in IndexedDB) or use the Shared Key (if configured by the host).
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
   - `/revise`: Instruct the Oracle to rewrite or polish a selected entity's Chronicle.
@@ -130,3 +134,11 @@ Quickly populate your world with rich lore, even when offline.
   - Redacts all GM-only/Private nodes and maps.
   - Redacts the `Lore` and `Art Direction` fields.
   - Replaces links to secret files with `[Redacted]`.
+
+---
+
+## 9. Related Blog Posts
+
+- [Getting Started with Codex Cryptica](/blog/getting-started-guide) — Full walkthrough for GMs and worldbuilders.
+- [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — The spatial, local-first philosophy behind Codex Cryptica.
+- [Lore Oracle: Co-GM, Not the Author](/blog/lore-oracle-not-the-author) — Deep dive into AI worldbuilding memory and co-creation.

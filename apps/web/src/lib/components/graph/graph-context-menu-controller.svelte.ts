@@ -7,6 +7,7 @@ import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.s
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
+import { shelf } from "$lib/features/shelf";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
@@ -35,6 +36,9 @@ export class GraphContextMenuController {
 
   targetId = $state<string | null>(null);
   selectedNodes = $state<string[]>([]);
+  targetEdge = $state<{ source: string; target: string; type: string } | null>(
+    null,
+  );
 
   pickerTimeout: number | null = null;
   categoryPickerTimeout: number | null = null;
@@ -74,6 +78,7 @@ export class GraphContextMenuController {
     const openHandler = (evt: EventObject) => {
       const node = evt.target;
       this.targetId = node.id();
+      this.targetEdge = null;
       this.position = evt.renderedPosition || { x: 0, y: 0 };
 
       const selection = this.getCy().$("node:selected");
@@ -86,22 +91,71 @@ export class GraphContextMenuController {
       this.contextMenuOpen = true;
     };
 
+    const edgeContextMenuHandler = (evt: EventObject) => {
+      const edge = evt.target;
+      const data = edge.data();
+      this.targetId = null;
+      this.selectedNodes = [];
+      this.targetEdge = {
+        source: data.source,
+        target: data.target,
+        type: data.connectionType || data.type || "neutral",
+      };
+      this.position = evt.renderedPosition || { x: 0, y: 0 };
+      this.contextMenuOpen = true;
+    };
+
+    const backgroundContextMenuHandler = (evt: EventObject) => {
+      if (evt.target === this.getCy()) {
+        this.targetId = null;
+        this.selectedNodes = [];
+        this.targetEdge = null;
+        this.position = evt.renderedPosition || { x: 0, y: 0 };
+        this.contextMenuOpen = true;
+      }
+    };
+
     const closeHandler = () => {
       this.clearPickerTimeout();
       this.contextMenuOpen = false;
       this.canvasPickerOpen = false;
       this.categoryPickerOpen = false;
       this.imagePickerOpen = false;
+      this.targetEdge = null;
     };
 
     this.getCy().on("cxttap", "node", openHandler);
+    this.getCy().on("cxttap", "edge", edgeContextMenuHandler);
+    this.getCy().on("cxttap", backgroundContextMenuHandler);
     this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
       this.getCy().off("cxttap", "node", openHandler);
+      this.getCy().off("cxttap", "edge", edgeContextMenuHandler);
+      this.getCy().off("cxttap", backgroundContextMenuHandler);
       this.getCy().off("tap", closeHandler);
     };
+  };
+
+  handleCreateNewEntity = () => {
+    this.clearPickerTimeout();
+    this.contextMenuOpen = false;
+    this.canvasPickerOpen = false;
+    this.categoryPickerOpen = false;
+    this.imagePickerOpen = false;
+    if (!this.deps.vault.isGuest) {
+      this.deps.modalUIStore.openIntentCreateMenu();
+    }
+  };
+
+  handleDeleteEdge = async () => {
+    if (!this.targetEdge || this.deps.vault.isGuest) return;
+    const { source, target, type } = this.targetEdge;
+    this.clearPickerTimeout();
+    this.contextMenuOpen = false;
+    this.targetEdge = null;
+    await this.deps.vault.removeConnection(source, target, type);
   };
 
   clearPickerTimeout = () => {
@@ -126,6 +180,13 @@ export class GraphContextMenuController {
     }
   };
 
+  handleOpenZenMode = () => {
+    if (this.selectedNodes.length !== 1) return;
+
+    this.deps.modalUIStore.openZenMode(this.selectedNodes[0]);
+    this.contextMenuOpen = false;
+  };
+
   handleMerge = () => {
     if (this.selectedNodes.length > 1) {
       this.deps.modalUIStore.openMergeDialog(this.selectedNodes);
@@ -138,6 +199,17 @@ export class GraphContextMenuController {
       this.deps.connectionModeStore.startSelectionConnection();
       this.contextMenuOpen = false;
     }
+  };
+
+  /**
+   * Copies the selection onto the Shelf, to be brought into another vault.
+   * Reads this vault only — nothing here is modified.
+   */
+  handleSendToShelf = () => {
+    if (this.selectedNodes.length === 0) return;
+    const ids = $state.snapshot(this.selectedNodes);
+    void shelf.shelve(ids, this.deps.vault.vaultName ?? "This vault");
+    this.contextMenuOpen = false;
   };
 
   handleBulkLabel = () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
@@ -79,7 +79,7 @@ vi.mock("./vault/migration", () => ({
   migrateStructure: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -87,7 +87,7 @@ vi.mock("../services/search.svelte", () => ({
   },
 }));
 
-vi.mock("../services/ai", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     clearStyleCache: vi.fn(),
     retrieveContext: vi.fn(),
@@ -177,6 +177,15 @@ vi.mock("./canvas-registry.svelte", () => ({
   },
 }));
 
+const mockGetDefaultFieldsForCategory = vi.fn().mockReturnValue(null);
+vi.mock("./stat-sheet-templates.svelte", () => ({
+  statSheetTemplates: {
+    getDefaultFieldsForCategory: (category: string) =>
+      mockGetDefaultFieldsForCategory(category),
+    loadForVault: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // Mock BroadcastChannel
 const mockPostMessage = vi.fn();
 class MockBroadcastChannel {
@@ -214,9 +223,16 @@ describe("VaultStore", () => {
     sessionModeStore.isDemoMode = false;
     sessionModeStore.activeDemoTheme = null;
 
-    // Ensure window is defined with dispatchEvent
+    // Ensure window is defined with dispatchEvent. Also needs
+    // addEventListener/removeEventListener: OracleStore's constructor
+    // registers a "vault-switched" listener, and it used to construct lazily
+    // enough (via an incidental eager import chain) to dodge this stub's
+    // gaps — that import was removed by the audio-engine extraction, so the
+    // real construction timing now depends on this stub being complete.
     vi.stubGlobal("window", {
       dispatchEvent: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     });
     vi.stubGlobal(
       "CustomEvent",
@@ -248,6 +264,20 @@ describe("VaultStore", () => {
 
     testVault = new VaultStore(mockRepository);
   });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function scheduleSaveWithoutWaitingForDebounce(
+    entity: Parameters<typeof testVault.scheduleSave>[0],
+    elapsedMs = 400,
+  ) {
+    vi.useFakeTimers();
+    const scheduledSave = testVault.scheduleSave(entity);
+    await vi.advanceTimersByTimeAsync(elapsedMs);
+    await scheduledSave;
+  }
 
   describe("Tiered Loading and Reactivity", () => {
     it("should prioritize Cache for Chronicle, then OPFS for Lore/Chronicle", async () => {
@@ -414,6 +444,7 @@ describe("VaultStore", () => {
     });
 
     it("should abort loading if vault changes during async operations", async () => {
+      vi.useFakeTimers();
       // Mock a slow preload
       vi.mocked(cacheService.preloadVault).mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -425,6 +456,7 @@ describe("VaultStore", () => {
       // Simulate rapid switch before preload finishes
       vi.mocked(vaultRegistry).activeVaultId = "new-vault" as any;
 
+      await vi.advanceTimersByTimeAsync(50);
       await loadPromise;
 
       // Should have aborted and NOT called repository.loadFiles for the old vault
@@ -446,6 +478,53 @@ describe("VaultStore", () => {
 
       expect(testVault.entityStore.isContentLoaded(id)).toBe(true);
       expect(testVault.entityStore.isContentVerified(id)).toBe(true);
+    });
+
+    it("auto-applies the vault's configured default stat sheet template for the entity's category", async () => {
+      const defaultFields = [
+        { id: "hp", label: "Hit Points", type: "counter" },
+      ];
+      mockGetDefaultFieldsForCategory.mockReturnValueOnce(defaultFields);
+      const createSpy = vi
+        .spyOn(testVault.entityStore, "createEntity")
+        .mockResolvedValue("new-npc");
+
+      await testVault.createEntity("npc", "Goblin Scout");
+
+      expect(mockGetDefaultFieldsForCategory).toHaveBeenCalledWith("npc");
+      expect(createSpy).toHaveBeenCalledWith("npc", "Goblin Scout", {
+        statSheet: { templateId: null, fields: defaultFields },
+      });
+    });
+
+    it("does not inject a default stat sheet when the category has none configured", async () => {
+      mockGetDefaultFieldsForCategory.mockReturnValueOnce(null);
+      const createSpy = vi
+        .spyOn(testVault.entityStore, "createEntity")
+        .mockResolvedValue("new-note");
+
+      await testVault.createEntity("note", "Plain Note");
+
+      expect(createSpy).toHaveBeenCalledWith("note", "Plain Note", {});
+    });
+
+    it("does not override a statSheet already provided by the caller (e.g. duplicating an entity)", async () => {
+      const explicitStatSheet = {
+        templateId: null,
+        fields: [{ id: "custom", label: "Custom", type: "text" as const }],
+      };
+      const createSpy = vi
+        .spyOn(testVault.entityStore, "createEntity")
+        .mockResolvedValue("new-char");
+
+      await testVault.createEntity("character", "Copy", {
+        statSheet: explicitStatSheet,
+      });
+
+      expect(mockGetDefaultFieldsForCategory).not.toHaveBeenCalled();
+      expect(createSpy).toHaveBeenCalledWith("character", "Copy", {
+        statSheet: explicitStatSheet,
+      });
     });
 
     it("should handle entity deletion in normal mode", async () => {
@@ -533,7 +612,7 @@ describe("VaultStore", () => {
       mockRepository.entities = { [entity.id]: entity };
       testVault.entityStore.markContentLoaded(entity.id);
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity);
 
       expect(mockRepository.saveToDisk).toHaveBeenCalled();
       expect(cacheService.set).toHaveBeenCalled();
@@ -564,7 +643,7 @@ describe("VaultStore", () => {
     });
 
     it("should handle search index errors in scheduleSave", async () => {
-      const { searchService } = await import("../services/search.svelte");
+      const { searchService } = await import("@codex/search-orchestrator");
       vi.mocked(searchService.index).mockRejectedValueOnce(
         new Error("Search Error"),
       );
@@ -576,7 +655,7 @@ describe("VaultStore", () => {
         search: searchService,
       } as any);
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity);
       expect(mockRepository.saveToDisk).toHaveBeenCalled();
     });
 
@@ -611,7 +690,7 @@ describe("VaultStore", () => {
       const readFileSpy = (await import("../utils/opfs")).readFileAsText;
       vi.mocked(readFileSpy).mockResolvedValue("---\nlore: L\n---\nC");
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity);
 
       expect(testVault.entities["s1"].content).toBe("C");
       expect(testVault.entityStore.isContentLoaded("s1")).toBe(true);
@@ -622,11 +701,11 @@ describe("VaultStore", () => {
       mockRepository.entities = { e1: entity };
       testVault.entityStore.markContentLoaded("e1");
 
-      vi.mocked(mockRepository.saveToDisk).mockRejectedValueOnce(
+      vi.mocked(mockRepository.saveToDisk).mockRejectedValue(
         new Error("Disk Error"),
       );
 
-      await testVault.scheduleSave(entity);
+      await scheduleSaveWithoutWaitingForDebounce(entity, 550);
       expect(testVault.status).toBe("error");
       expect(testVault.errorMessage).toContain("access storage");
     });
@@ -652,6 +731,119 @@ describe("VaultStore", () => {
         undefined,
       );
       expect(removeSpy).toHaveBeenCalledWith("s", "t", "friend");
+    });
+
+    it("redirects a family-alias label between two characters to a real family link", async () => {
+      testVault.entityStore.entities = {
+        alice: {
+          id: "alice",
+          type: "character",
+          title: "Alice",
+          connections: [],
+        } as any,
+        bob: {
+          id: "bob",
+          type: "character",
+          title: "Bob",
+          connections: [],
+        } as any,
+      };
+      const familyLinkSpy = vi
+        .spyOn(testVault, "addFamilyLink")
+        .mockResolvedValue({ ok: true });
+      const updateSpy = vi
+        .spyOn(testVault, "updateConnection")
+        .mockResolvedValue(true);
+      const rawAddSpy = vi
+        .spyOn(testVault.entityStore, "addConnection")
+        .mockResolvedValue(true);
+
+      const result = await testVault.addConnection(
+        "alice",
+        "bob",
+        "related_to",
+        "Mother of",
+      );
+
+      expect(result).toBe(true);
+      expect(familyLinkSpy).toHaveBeenCalledWith("alice", "bob", "parent_of");
+      expect(updateSpy).toHaveBeenCalledWith(
+        "alice",
+        "bob",
+        "parent_of",
+        "parent_of",
+        "Mother",
+      );
+      expect(rawAddSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not redirect a non-alias label, even between two characters", async () => {
+      testVault.entityStore.entities = {
+        alice: {
+          id: "alice",
+          type: "character",
+          title: "Alice",
+          connections: [],
+        } as any,
+        bob: {
+          id: "bob",
+          type: "character",
+          title: "Bob",
+          connections: [],
+        } as any,
+      };
+      const familyLinkSpy = vi.spyOn(testVault, "addFamilyLink");
+      const rawAddSpy = vi
+        .spyOn(testVault.entityStore, "addConnection")
+        .mockResolvedValue(true);
+
+      await testVault.addConnection("alice", "bob", "related_to", "rival");
+
+      expect(familyLinkSpy).not.toHaveBeenCalled();
+      expect(rawAddSpy).toHaveBeenCalledWith(
+        "alice",
+        "bob",
+        "related_to",
+        "rival",
+        undefined,
+      );
+    });
+
+    it("does not redirect a family-alias label when either side is not a character", async () => {
+      testVault.entityStore.entities = {
+        alice: {
+          id: "alice",
+          type: "character",
+          title: "Alice",
+          connections: [],
+        } as any,
+        castle: {
+          id: "castle",
+          type: "location",
+          title: "Castle",
+          connections: [],
+        } as any,
+      };
+      const familyLinkSpy = vi.spyOn(testVault, "addFamilyLink");
+      const rawAddSpy = vi
+        .spyOn(testVault.entityStore, "addConnection")
+        .mockResolvedValue(true);
+
+      await testVault.addConnection(
+        "alice",
+        "castle",
+        "related_to",
+        "Mother of",
+      );
+
+      expect(familyLinkSpy).not.toHaveBeenCalled();
+      expect(rawAddSpy).toHaveBeenCalledWith(
+        "alice",
+        "castle",
+        "related_to",
+        "Mother of",
+        undefined,
+      );
     });
 
     it("should update connections", async () => {

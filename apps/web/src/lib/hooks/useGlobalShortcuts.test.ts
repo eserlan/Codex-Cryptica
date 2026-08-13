@@ -62,6 +62,46 @@ describe("useGlobalShortcuts", () => {
     expect(preventDefaultSpy).toHaveBeenCalled();
   });
 
+  it("should not toggle search when guest access disables it", () => {
+    const mockContext = {
+      canUseSearch: false,
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+    };
+
+    const handleKeydown = useGlobalShortcuts(mockContext)!;
+
+    const event = new KeyboardEvent("keydown", {
+      key: "k",
+      metaKey: true,
+    });
+
+    handleKeydown(event);
+
+    expect(mockContext.searchStore.toggle).not.toHaveBeenCalled();
+  });
+
+  it("should not toggle quicknote when guest access disables it", () => {
+    const mockContext = {
+      canUseQuickNote: false,
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+    };
+
+    const handleKeydown = useGlobalShortcuts(mockContext)!;
+
+    const event = new KeyboardEvent("keydown", {
+      key: "i",
+      metaKey: true,
+    });
+
+    handleKeydown(event);
+
+    expect(mockContext.quickNoteStore.toggle).not.toHaveBeenCalled();
+  });
+
   it("should close search on Escape if open", () => {
     const mockContext = {
       searchStore: { isOpen: true, toggle: vi.fn(), close: vi.fn() },

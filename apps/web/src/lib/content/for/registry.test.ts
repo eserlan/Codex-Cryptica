@@ -1,0 +1,349 @@
+import { describe, it, expect } from "vitest";
+import {
+  getLandingPage,
+  getAllLandingPages,
+  getAllLandingPageSlugs,
+  getLandingPagesForHub,
+} from "./registry";
+import { isHubThemeSlug } from "../hub-themes";
+import type { LandingPageConfig } from "./schema";
+
+describe("Landing Page Registry", () => {
+  const mockRegistry: Record<string, LandingPageConfig> = {
+    "test-system": {
+      slug: "test-system",
+      kind: "system",
+      seo: { title: "SEO Title", description: "SEO Desc" },
+      hero: { title: "Hero", tagline: "Tag", problemStatement: "Prob" },
+      useCases: [],
+      recommendedTools: [],
+      cta: { title: "CTA", buttonText: "Go", buttonHref: "/go" },
+      disclaimer: "Not affiliated.",
+    },
+    "test-genre": {
+      slug: "test-genre",
+      kind: "genre",
+      seo: { title: "SEO Title", description: "SEO Desc" },
+      hero: { title: "Hero 2", tagline: "Tag 2", problemStatement: "Prob 2" },
+      useCases: [],
+      recommendedTools: [],
+      cta: { title: "CTA 2", buttonText: "Go 2", buttonHref: "/go-2" },
+    },
+  };
+
+  describe("getLandingPage", () => {
+    it("returns the page config if it exists", () => {
+      const page = getLandingPage("test-system", mockRegistry);
+      expect(page).toBeDefined();
+      expect(page?.slug).toBe("test-system");
+    });
+
+    it("returns undefined if the page config does not exist", () => {
+      const page = getLandingPage("unknown-slug", mockRegistry);
+      expect(page).toBeUndefined();
+    });
+  });
+
+  describe("getAllLandingPages", () => {
+    it("returns an array of all page configs", () => {
+      const pages = getAllLandingPages(mockRegistry);
+      expect(pages).toHaveLength(2);
+      expect(pages[0].slug).toBe("test-system");
+      expect(pages[1].slug).toBe("test-genre");
+    });
+
+    it("returns an empty array if registry is empty", () => {
+      const pages = getAllLandingPages({});
+      expect(pages).toHaveLength(0);
+    });
+  });
+
+  describe("getAllLandingPageSlugs", () => {
+    it("returns an array of slugs", () => {
+      const slugs = getAllLandingPageSlugs(mockRegistry);
+      expect(slugs).toHaveLength(2);
+      expect(slugs).toContain("test-system");
+      expect(slugs).toContain("test-genre");
+    });
+  });
+
+  describe("Vampire: The Masquerade Pack", () => {
+    it("is registered and has a disclaimer", () => {
+      const vtm = getLandingPage("vampire-the-masquerade");
+      expect(vtm).toBeDefined();
+      expect(vtm?.slug).toBe("vampire-the-masquerade");
+      expect(vtm?.disclaimer).toContain("Paradox Interactive");
+    });
+  });
+
+  describe("Fantasy Worldbuilding Pack", () => {
+    it("is registered and omits a disclaimer", () => {
+      const fantasy = getLandingPage("fantasy-worldbuilding");
+      expect(fantasy).toBeDefined();
+      expect(fantasy?.slug).toBe("fantasy-worldbuilding");
+      expect(fantasy?.disclaimer).toBeUndefined();
+    });
+  });
+
+  describe("Dungeons & Dragons Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const dnd = getLandingPage("dungeons-and-dragons");
+      expect(dnd).toBeDefined();
+      expect(dnd?.slug).toBe("dungeons-and-dragons");
+      expect(dnd?.kind).toBe("system");
+      expect(dnd?.disclaimer).toContain("Wizards of the Coast");
+      expect(dnd?.disclaimer).toContain("Hasbro");
+      expect(dnd?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(
+        dnd?.recommendedTools.some((t) => t.href.includes("dnd-npc")),
+      ).toBe(true);
+      expect(dnd?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Pathfinder 2e Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const pf2 = getLandingPage("pathfinder-2e");
+      expect(pf2).toBeDefined();
+      expect(pf2?.slug).toBe("pathfinder-2e");
+      expect(pf2?.kind).toBe("system");
+      expect(pf2?.disclaimer).toContain("Paizo Inc.");
+      expect(pf2?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(
+        pf2?.recommendedTools.some((t) =>
+          t.href.includes("pantheon-generator"),
+        ),
+      ).toBe(true);
+      expect(pf2?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Call of Cthulhu Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const coc = getLandingPage("call-of-cthulhu");
+      expect(coc).toBeDefined();
+      expect(coc?.slug).toBe("call-of-cthulhu");
+      expect(coc?.kind).toBe("system");
+      expect(coc?.theme).toBe("horror");
+      expect(coc?.disclaimer).toContain("Chaosium Inc.");
+      expect(coc?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(coc?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Gothic Horror Pack", () => {
+    it("is registered as genre and omits non-affiliation disclaimer", () => {
+      const gothic = getLandingPage("gothic-horror");
+      expect(gothic).toBeDefined();
+      expect(gothic?.slug).toBe("gothic-horror");
+      expect(gothic?.kind).toBe("genre");
+      expect(gothic?.theme).toBe("horror");
+      expect(gothic?.disclaimer).toBeUndefined();
+      expect(gothic?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(gothic?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Cyberpunk RED Pack", () => {
+    it("is registered, marked as system, and includes non-affiliation disclaimer", () => {
+      const cp = getLandingPage("cyberpunk-red");
+      expect(cp).toBeDefined();
+      expect(cp?.slug).toBe("cyberpunk-red");
+      expect(cp?.kind).toBe("system");
+      expect(cp?.theme).toBe("cyberpunk");
+      expect(cp?.disclaimer).toContain("R. Talsorian Games");
+      expect(cp?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(cp?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Dystopian Sci-Fi Pack", () => {
+    it("is registered as genre and omits non-affiliation disclaimer", () => {
+      const dystopia = getLandingPage("dystopian-sci-fi");
+      expect(dystopia).toBeDefined();
+      expect(dystopia?.slug).toBe("dystopian-sci-fi");
+      expect(dystopia?.kind).toBe("genre");
+      expect(dystopia?.theme).toBe("cyberpunk");
+      expect(dystopia?.disclaimer).toBeUndefined();
+      expect(dystopia?.useCases.length).toBeGreaterThanOrEqual(4);
+      expect(dystopia?.exampleGraph?.steps.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Example graphs", () => {
+    const pagesWithGraphs = getAllLandingPages().filter((p) => p.exampleGraph);
+
+    it("covers every page that ships a graph", () => {
+      expect(pagesWithGraphs.length).toBeGreaterThan(0);
+    });
+
+    it("gives every node a category so colours come from config, not node text", () => {
+      for (const page of pagesWithGraphs) {
+        for (const step of page.exampleGraph!.steps) {
+          expect(step.category, `${page.slug} / ${step.label}`).toBeDefined();
+        }
+      }
+    });
+
+    it("labels every spoke with its relation to the hub, and leaves the hub unlabelled across all packs", () => {
+      for (const page of pagesWithGraphs) {
+        const [hub, ...spokes] = page.exampleGraph!.steps;
+        expect(
+          hub.relation,
+          `${page.slug} hub (${hub.label}) should not have a relation`,
+        ).toBeUndefined();
+        expect(
+          spokes.length,
+          `${page.slug} should have at least 1 spoke`,
+        ).toBeGreaterThan(0);
+        for (const spoke of spokes) {
+          expect(
+            spoke.relation,
+            `${page.slug} / ${spoke.label} is missing a spoke relation`,
+          ).toBeTruthy();
+        }
+      }
+    });
+
+    it("keeps graph badge copy per-page rather than sharing one horror label", () => {
+      const horrorBadges = getAllLandingPages()
+        .filter((p) => p.theme === "horror" && p.exampleGraph)
+        .map((p) => p.exampleGraph!.badgeLabel);
+
+      expect(horrorBadges.length).toBeGreaterThanOrEqual(3);
+      for (const badge of horrorBadges) {
+        expect(badge).toBeTruthy();
+        expect(badge).not.toMatch(/underworld/i);
+      }
+      expect(new Set(horrorBadges).size).toBeGreaterThan(1);
+    });
+  });
+
+  describe("Theme hub linking", () => {
+    it("points every landing page at a hub that exists", () => {
+      for (const page of getAllLandingPages()) {
+        expect(page.hub, `${page.slug} has no hub`).toBeDefined();
+        expect(isHubThemeSlug(page.hub!), `${page.slug} -> ${page.hub}`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("groups the horror systems under the hub matching their subject", () => {
+      expect(getLandingPage("vampire-the-masquerade")?.hub).toBe("vampire");
+      expect(getLandingPage("gothic-horror")?.hub).toBe("vampire");
+      // Both are theme: "horror", but they belong to different hubs.
+      expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
+    });
+
+    it("returns the pages belonging to a hub", () => {
+      const fantasy = getLandingPagesForHub("fantasy").map((p) => p.slug);
+      expect(fantasy).toContain("dungeons-and-dragons");
+      expect(fantasy).toContain("pathfinder-2e");
+      expect(fantasy).toContain("fantasy-worldbuilding");
+      expect(fantasy).not.toContain("call-of-cthulhu");
+    });
+
+    it("returns nothing for a hub with no landing pages", () => {
+      expect(getLandingPagesForHub("steampunk")).toEqual([]);
+      expect(getLandingPagesForHub("not-a-hub")).toEqual([]);
+    });
+  });
+
+  describe("Copy consistency", () => {
+    it("uses British spellings", () => {
+      const copy = JSON.stringify(getAllLandingPages());
+      expect(copy).not.toMatch(/\bOrganiz/i);
+      expect(copy).not.toMatch(/\bHarbor\b/);
+      expect(copy).not.toMatch(/\bCatalog\b/);
+    });
+  });
+
+  describe("Vampire: The Masquerade graph", () => {
+    const vtm = getLandingPage("vampire-the-masquerade")!;
+    const graph = vtm.exampleGraph!;
+    const clanOf = (sublabel = "") => sublabel.match(/Kindred • (\w+)/)?.[1];
+
+    it("uses sharp surfaces and reveals the graph on a dark ground", () => {
+      expect(vtm.surfaceStyle).toBe("sharp");
+      expect(graph.surface).toBe("dark");
+      expect(graph.palette).toBe("oxblood");
+    });
+
+    it("names the graph without explaining the metaphor", () => {
+      const copy = `${graph.title} ${graph.description ?? ""} ${graph.badgeLabel ?? ""}`;
+      expect(copy).not.toMatch(/underworld|nocturnal|hidden/i);
+      expect(graph.title).toContain("Relationship Web");
+    });
+
+    it("labels every spoke with its relation to the hub, and leaves the hub unlabelled", () => {
+      // LandingPageGraphPreview draws step[i].relation on the edge from the
+      // hub (step 0) to step i, so a relation on the hub itself never renders.
+      const [hub, ...spokes] = graph.steps;
+      expect(hub.relation).toBeUndefined();
+      for (const spoke of spokes) {
+        expect(spoke.relation, spoke.label).toBeTruthy();
+      }
+    });
+
+    it("gives a childe the same clan as their sire", () => {
+      const hub = graph.steps[0];
+      const childe = graph.steps.find((s) => s.relation === "Sire of");
+      expect(childe).toBeDefined();
+      expect(clanOf(childe!.sublabel)).toBe(clanOf(hub.sublabel));
+      expect(clanOf(hub.sublabel)).toBeTruthy();
+    });
+
+    it("only points Kindred-to-Kindred relations at Kindred", () => {
+      const kindredOnly = ["Sire of", "Blood Bond to"];
+      for (const step of graph.steps) {
+        if (step.relation && kindredOnly.includes(step.relation)) {
+          expect(step.category, step.label).toBe("character");
+          expect(step.sublabel).toContain("Kindred");
+        }
+      }
+    });
+
+    it("only lets people and factions act on other entities", () => {
+      // Blackmail, favours and control are things agents do — a domain cannot
+      // blackmail anyone, so the hub must be a character or a faction.
+      expect(["character", "faction"]).toContain(graph.steps[0].category);
+    });
+
+    it("connects Kindred, a domain, a faction and a mortal contact", () => {
+      const categories = new Set(graph.steps.map((s) => s.category));
+      expect(categories).toContain("character");
+      expect(categories).toContain("location");
+      expect(categories).toContain("faction");
+      expect(graph.steps.some((s) => s.sublabel?.startsWith("Mortal"))).toBe(
+        true,
+      );
+    });
+  });
+
+  describe("Extensibility (US3)", () => {
+    it("allows dynamic page addition and handles optional section collapsing", () => {
+      const customConfig: LandingPageConfig = {
+        slug: "custom-system",
+        kind: "system",
+        seo: { title: "Custom", description: "Custom" },
+        hero: {
+          title: "Custom Hero",
+          tagline: "Tag",
+          problemStatement: "Prob",
+        },
+        useCases: [],
+        recommendedTools: [],
+        cta: { title: "Start", buttonText: "Go", buttonHref: "/go" },
+      };
+
+      const customRegistry = { "custom-system": customConfig };
+
+      const page = getLandingPage("custom-system", customRegistry);
+      expect(page).toBeDefined();
+      expect(page?.slug).toBe("custom-system");
+      expect(page?.exampleGraph).toBeUndefined();
+      expect(page?.disclaimer).toBeUndefined();
+    });
+  });
+});

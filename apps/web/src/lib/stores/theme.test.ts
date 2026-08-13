@@ -114,6 +114,24 @@ describe("ThemeStore", () => {
       expect(store.worldThemeId).toBe("horror");
     });
 
+    it("should report no saved vault theme when disk and cache are missing", async () => {
+      expect(await store.hasSavedThemeForVault("v1")).toBe(false);
+    });
+
+    it("should report a saved vault theme from disk", async () => {
+      mockStorage.loadFromDisk = vi.fn().mockResolvedValue("scifi");
+
+      expect(await store.hasSavedThemeForVault("v1")).toBe(true);
+      expect(mockStorage.loadFromCache).not.toHaveBeenCalled();
+    });
+
+    it("should report a saved vault theme from cache when disk is missing", async () => {
+      mockStorage.loadFromDisk = vi.fn().mockResolvedValue(null);
+      mockStorage.loadFromCache = vi.fn().mockResolvedValue("horror");
+
+      expect(await store.hasSavedThemeForVault("v1")).toBe(true);
+    });
+
     it("should save to cache and disk on setTheme", async () => {
       await store.setTheme("cyberpunk");
       expect(store.worldThemeId).toBe("cyberpunk");
@@ -163,6 +181,7 @@ describe("ThemeStore", () => {
         "cyberpunk",
         "apocalyptic",
         "horror",
+        "cosmic_horror",
         "fallout",
         "starwars",
         "startrek",
@@ -171,6 +190,25 @@ describe("ThemeStore", () => {
         await store.setTheme(id);
         expect(store.activeTheme.id).toBe(`${id}_light`);
       }
+    });
+
+    it("should resolve horror to horror_light with Archival Dossier tokens in neutral-light", async () => {
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("horror");
+
+      expect(store.activeTheme.id).toBe("horror_light");
+      expect(store.activeTheme.tokens.primary).toBe("#801414");
+      expect(store.activeTheme.tokens.background).toBe("#e4dfd5");
+      expect(store.activeTheme.tokens.accent).toBe("#801414");
+    });
+
+    it("keeps cosmic horror separate from the gothic-noir horror theme", async () => {
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("cosmic_horror");
+
+      expect(store.activeTheme.name).toBe("Cosmic Horror");
+      expect(store.activeTheme.description).toContain("impossible geometry");
+      expect(store.activeTheme.description).not.toContain("vampires");
     });
 
     it("should keep natively light themes as light in neutral-light, and natively dark as dark in neutral-dark", async () => {

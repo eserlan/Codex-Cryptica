@@ -71,24 +71,6 @@
 			}
 			document.documentElement.dataset.worldTheme = storedTheme;
 
-			const isDark = resolvedAppearance === "neutral-dark";
-			let theme = storedTheme;
-
-			if (isDark) {
-				if (storedTheme === "workspace") theme = "workspace_dark";
-				else if (storedTheme === "fantasy") theme = "fantasy_dark";
-				else if (storedTheme === "modern") theme = "modern_dark";
-				else if (storedTheme === "western") theme = "western_dark";
-			} else {
-				if (storedTheme === "scifi") theme = "scifi_light";
-				else if (storedTheme === "cyberpunk") theme = "cyberpunk_light";
-				else if (storedTheme === "apocalyptic") theme = "apocalyptic_light";
-				else if (storedTheme === "horror") theme = "horror_light";
-				else if (storedTheme === "fallout") theme = "fallout_light";
-				else if (storedTheme === "starwars") theme = "starwars_light";
-				else if (storedTheme === "startrek") theme = "startrek_light";
-			}
-
 			const themes = {
 				workspace:       { bg: "#fafaf9", surface: "#ffffff", text: "#1c1917", primary: "#57534e", secondary: "#78716c", border: "rgba(231, 229, 228, 1)",        muted: "#78716c", dim: "#a8a29e" },
 				workspace_dark:  { bg: "#1c1917", surface: "#292524", text: "#f5f5f4", primary: "#d6d3d1", secondary: "#a8a29e", border: "rgba(68, 64, 60, 1)",           muted: "#a8a29e", dim: "#78716c" },
@@ -114,10 +96,30 @@
 				western_dark:    { bg: "#1a120c", surface: "#2b1e15", text: "#f0e6dc", primary: "#d48227", secondary: "#a0785a", border: "rgba(212, 130, 39, 0.3)", texture: "leather.svg",   muted: "#a0785a", dim: "#805c43" }
 			};
 
-			if (theme && themes[theme]) {
+			function applyTheme(baseTheme) {
+				const isDark = resolvedAppearance === "neutral-dark";
+				let theme = baseTheme;
+
+				if (isDark) {
+					if (baseTheme === "workspace") theme = "workspace_dark";
+					else if (baseTheme === "fantasy") theme = "fantasy_dark";
+					else if (baseTheme === "modern") theme = "modern_dark";
+					else if (baseTheme === "western") theme = "western_dark";
+				} else {
+					if (baseTheme === "scifi") theme = "scifi_light";
+					else if (baseTheme === "cyberpunk") theme = "cyberpunk_light";
+					else if (baseTheme === "apocalyptic") theme = "apocalyptic_light";
+					else if (baseTheme === "horror") theme = "horror_light";
+					else if (baseTheme === "fallout") theme = "fallout_light";
+					else if (baseTheme === "starwars") theme = "starwars_light";
+					else if (baseTheme === "startrek") theme = "startrek_light";
+				}
+
+				if (!themes[theme]) return;
 				const t = themes[theme];
 				const root = document.documentElement;
 				root.dataset.theme = theme;
+				root.dataset.worldTheme = baseTheme;
 				root.style.setProperty("--color-bg-primary", t.bg);
 				root.style.setProperty("--color-bg-surface", t.surface);
 				root.style.setProperty("--color-text-primary", t.text);
@@ -132,8 +134,16 @@
 				if (t.texture) {
 					root.style.setProperty("--bg-texture", `url('/themes/${t.texture}')`);
 					root.style.setProperty("--bg-texture-overlay", `linear-gradient(${t.bg}80, ${t.bg}80), url('/themes/${t.texture}')`);
+				} else {
+					root.style.removeProperty("--bg-texture");
+					root.style.removeProperty("--bg-texture-overlay");
 				}
 			}
+
+			window.__codexApplyTheme = applyTheme;
+			applyTheme(storedTheme);
+			// The themed /for/[slug] page emits a head script that calls this same
+			// function before its body is parsed, preventing a workspace-theme flash.
 		} catch (e) { }
 	</script>
 	%sveltekit.head%

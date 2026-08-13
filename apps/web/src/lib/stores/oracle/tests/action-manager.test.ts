@@ -46,17 +46,20 @@ describe("OracleActionManager", () => {
     manager = new OracleActionManager(mockStore as IOracleStore);
   });
 
-  it("should reuse an existing saved entity image prompt", async () => {
+  it("should compose saved entity art direction rather than sending it raw", async () => {
+    // Art Direction v2: saved art direction is a style override layer, so it
+    // must still go through the composer to pick up subject, framing, camera,
+    // and negatives.
     mockStore.vault.entities["entity-1"].artDirection = "saved prompt";
 
     await manager.drawEntity("entity-1");
 
-    expect(mockExecutor.prepareEntityPrompt).not.toHaveBeenCalled();
+    expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalled();
     expect(modalUIStore.imagePromptReview).toMatchObject({
       open: true,
-      prompt: "saved prompt",
       target: { kind: "entity", id: "entity-1", title: "Entity One" },
     });
+    expect(modalUIStore.imagePromptReview.prompt).not.toBe("saved prompt");
   });
 
   it("should execute undo", async () => {
@@ -96,6 +99,51 @@ describe("OracleActionManager", () => {
       prompt: "prompt",
       target: { kind: "entity", id: "entity-1", title: "Entity One" },
     });
+  });
+
+  it("should reuse a saved composed prompt without recomposing", async () => {
+    mockStore.vault.entities["entity-1"].imageArtDirection = {
+      artDirectionVersion: 2,
+      prompt: "saved composed prompt",
+      negativePrompt: "watermark, blurry",
+      aspectRatio: "3:2",
+    };
+
+    await manager.drawEntity("entity-1");
+
+    expect(mockExecutor.prepareEntityPrompt).not.toHaveBeenCalled();
+    expect(modalUIStore.imagePromptReview).toMatchObject({
+      open: true,
+      prompt: "saved composed prompt",
+      negativeTerms: ["watermark", "blurry"],
+      aspectRatio: "3:2",
+      target: { kind: "entity", id: "entity-1", title: "Entity One" },
+    });
+  });
+
+  it("should defensively parse negativePrompt delimiters and filter invalid aspectRatios", async () => {
+    mockStore.vault.entities["entity-1"].imageArtDirection = {
+      prompt: "saved composed prompt",
+      negativePrompt: "watermark, blurry\n low quality,bad anatomy ",
+      aspectRatio: "invalid-99:99",
+    };
+
+    await manager.drawEntity("entity-1");
+
+    expect(modalUIStore.imagePromptReview).toMatchObject({
+      open: true,
+      prompt: "saved composed prompt",
+      negativeTerms: ["watermark", "blurry", "low quality", "bad anatomy"],
+      aspectRatio: undefined,
+      target: { kind: "entity", id: "entity-1", title: "Entity One" },
+    });
+  });
+
+  it("should recompose when no prompt was previously saved (e.g. never generated, or pre-Art Direction v2)", async () => {
+    // Default mock entity has no imageArtDirection at all.
+    await manager.drawEntity("entity-1");
+
+    expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalled();
   });
 
   it("should not start a duplicate entity draw while one is active", async () => {
@@ -139,7 +187,7 @@ describe("OracleActionManager", () => {
     });
   });
 
-  it("should reuse a linked entity image prompt for message draws", async () => {
+  it("should compose linked entity art direction for message draws", async () => {
     mockStore.vault.entities["entity-1"].artDirection = "linked saved prompt";
     mockStore.chatHistoryService.messages = [
       { id: "message-1", content: "Draw", entityId: "entity-1" },
@@ -147,10 +195,9 @@ describe("OracleActionManager", () => {
 
     await manager.drawMessage("message-1");
 
-    expect(mockExecutor.prepareMessagePrompt).not.toHaveBeenCalled();
+    expect(mockExecutor.prepareMessagePrompt).toHaveBeenCalled();
     expect(modalUIStore.imagePromptReview).toMatchObject({
       open: true,
-      prompt: "linked saved prompt",
       target: {
         kind: "message",
         id: "message-1",
@@ -158,6 +205,9 @@ describe("OracleActionManager", () => {
         entityId: "entity-1",
       },
     });
+    expect(modalUIStore.imagePromptReview.prompt).not.toBe(
+      "linked saved prompt",
+    );
   });
 
   it("should toast message prompt preparation failures instead of throwing", async () => {
@@ -179,34 +229,45 @@ describe("OracleActionManager", () => {
     const context = { uiStore: { activeThemeId: "fantasy" } };
     mockStore.getExecutionContext.mockReturnValue(context);
 
-    await manager.generateEntityFromPrompt("entity-1", "edited prompt");
+    await manager.generateEntityFromPrompt("entity-1", "edited prompt", {
+      negativeTerms: ["watermark"],
+      aspectRatio: "2:3",
+    });
 
     expect(mockStore.ui.visualizingEntityId).toBeNull();
-    expect(mockStore.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
-      artDirection: "edited prompt",
-    });
+    // The composed prompt is not written back to `artDirection`: it would
+    // become a style override and duplicate the category and camera layers on
+    // the next generation.
+    expect(mockStore.vault.updateEntity).not.toHaveBeenCalled();
+    // The negatives and the framing ride with the reviewed text: sending the
+    // string alone dropped both on the path most images take.
     expect(mockExecutor.generateEntityFromPrompt).toHaveBeenCalledWith(
       "entity-1",
-      "edited prompt",
+      {
+        prompt: "edited prompt",
+        negativeTerms: ["watermark"],
+        aspectRatio: "2:3",
+      },
       context,
     );
   });
 
-  it("should save an approved linked message prompt to its entity", async () => {
+  it("should not write an approved message prompt back to its entity", async () => {
     const context = { uiStore: { activeThemeId: "fantasy" } };
     mockStore.getExecutionContext.mockReturnValue(context);
     mockStore.chatHistoryService.messages = [
       { id: "message-1", content: "Draw", entityId: "entity-1" },
     ];
 
-    await manager.generateMessageFromPrompt("message-1", "message prompt");
-
-    expect(mockStore.vault.updateEntity).toHaveBeenCalledWith("entity-1", {
-      artDirection: "message prompt",
+    await manager.generateMessageFromPrompt("message-1", "message prompt", {
+      negativeTerms: ["watermark"],
     });
+
+    // See above: composed prompts are provenance, not style direction.
+    expect(mockStore.vault.updateEntity).not.toHaveBeenCalled();
     expect(mockExecutor.generateMessageFromPrompt).toHaveBeenCalledWith(
       "message-1",
-      "message prompt",
+      { prompt: "message prompt", negativeTerms: ["watermark"] },
       context,
     );
   });
@@ -248,16 +309,61 @@ describe("OracleActionManager", () => {
     mockStore.getExecutionContext.mockReturnValue(context);
     mockExecutor.prepareEntityPrompt.mockResolvedValue({
       prompt: "fresh prompt",
+      negativeTerms: ["watermark"],
     });
 
     const result = await manager.regenerateEntityPrompt("entity-1");
 
-    expect(result).toBe("fresh prompt");
+    expect(result).toEqual({
+      prompt: "fresh prompt",
+      negativeTerms: ["watermark"],
+    });
     expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalledWith(
       "entity-1",
       context,
       { ignoreSavedArtDirection: true },
     );
     expect(modalUIStore.imagePromptReview.open).toBe(false);
+  });
+
+  it("should pass advanced art direction settings when revising", async () => {
+    const context = { uiStore: { activeThemeId: "fantasy" } };
+    mockStore.getExecutionContext.mockReturnValue(context);
+    mockExecutor.prepareEntityPrompt.mockResolvedValue({
+      prompt: "fresh prompt",
+      negativeTerms: [],
+    });
+
+    await manager.regenerateEntityPrompt("entity-1", {
+      cameraVariant: "portrait",
+      styleReferenceMode: "name-free",
+      stature: "divine",
+    });
+
+    expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalledWith(
+      "entity-1",
+      context,
+      {
+        ignoreSavedArtDirection: true,
+        cameraVariant: "portrait",
+        styleReferenceMode: "name-free",
+        stature: "divine",
+      },
+    );
+  });
+
+  it("should report the stature a revised prompt was composed at", async () => {
+    // Stature is normally inferred from labels, so the caller has no other way
+    // to know which one applied.
+    mockStore.getExecutionContext.mockReturnValue({});
+    mockExecutor.prepareEntityPrompt.mockResolvedValue({
+      prompt: "fresh prompt",
+      negativeTerms: [],
+      metadata: { statureId: "divine" },
+    });
+
+    const result = await manager.regenerateEntityPrompt("entity-1");
+
+    expect(result?.statureId).toBe("divine");
   });
 });

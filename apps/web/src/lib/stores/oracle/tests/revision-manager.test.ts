@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { OracleRevisionManager } from "../revision-manager.svelte";
-import { interactionSessions } from "../../../services/ai/interaction-session";
+import { interactionSessions } from "@codex/ai-engine";
 import type { IOracleStore } from "../types";
 
 describe("OracleRevisionManager", () => {
@@ -124,5 +124,50 @@ describe("OracleRevisionManager", () => {
       lore: "old lore",
     });
     expect(mockStore.textGeneration.reviseEntityUpdate).not.toHaveBeenCalled();
+  });
+
+  it("throws insufficient info error when revising an empty entity with no surrounding context", async () => {
+    mockStore.vault.entities.empty1 = {
+      id: "empty1",
+      title: "Empty Node",
+      type: "concept",
+      content: "",
+      lore: "",
+      connections: [],
+    };
+    mockStore.vault.inboundConnections = {};
+
+    await expect(
+      manager.reviseEntity({
+        source: "revise",
+        entityId: "empty1",
+      }),
+    ).rejects.toThrow(
+      "Insufficient information available to generate meaningful content",
+    );
+  });
+
+  it("allows revising an empty entity when surrounding context is present", async () => {
+    mockStore.vault.entities.empty1 = {
+      id: "empty1",
+      title: "Empty Node",
+      type: "concept",
+      content: "",
+      lore: "",
+      connections: [{ target: "e1", type: "related" }],
+    };
+    mockStore.vault.inboundConnections = {};
+    mockStore.textGeneration.reviseEntityUpdate.mockResolvedValue({
+      content: "synthesized chronicle",
+      lore: "synthesized lore",
+    });
+
+    const result = await manager.reviseEntity({
+      source: "revise",
+      entityId: "empty1",
+    });
+
+    expect(result.content).toBe("synthesized chronicle");
+    expect(mockStore.textGeneration.reviseEntityUpdate).toHaveBeenCalled();
   });
 });

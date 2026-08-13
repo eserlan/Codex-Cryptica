@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { MockWorker, mockApi } = vi.hoisted(() => {
-  const releaseProxySymbol = Symbol.for("comlink.releaseProxy");
+const { MockWorker, mockApi, releaseProxy } = vi.hoisted(() => {
+  // A stand-in for comlink's releaseProxy symbol, injected into SearchService
+  // so terminate() checks the exact symbol we key the fake api with (avoids the
+  // dual-comlink-copy identity mismatch across the package boundary — #1742).
+  const releaseProxy = Symbol("test.releaseProxy");
   const mockApi = {
     initIndex: vi.fn().mockResolvedValue(true),
     add: vi.fn().mockResolvedValue(true),
@@ -25,7 +28,6 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     setChangeCallback: vi.fn(),
     exportIndex: vi.fn(),
     importIndex: vi.fn(),
-    [releaseProxySymbol]: vi.fn(),
   };
 
   class MockWorker {
@@ -36,28 +38,17 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     removeEventListener() {}
   }
 
-  return { MockWorker, mockApi, releaseProxySymbol };
+  return { MockWorker, mockApi, releaseProxy };
 });
 
 vi.stubGlobal("Worker", MockWorker);
 
-// Mock Comlink
-vi.mock("comlink", () => {
-  return {
-    wrap: vi.fn(() => mockApi),
-    expose: vi.fn(),
-    transfer: vi.fn((obj) => obj),
-    proxy: vi.fn((fn) => fn),
-    releaseProxy: Symbol.for("comlink.releaseProxy"),
-  };
-});
-
-// Mock the worker import
-vi.mock("../lib/workers/search.worker?worker", () => {
-  return {
-    default: MockWorker,
-  };
-});
+// Note: Comlink is NOT module-mocked. SearchService imports comlink from its
+// own workspace package, so a `vi.mock("comlink")` here wouldn't intercept it
+// (#1742). Instead the fake `wrap`/`proxy`/`releaseProxy` are injected via the
+// constructor. The injected `releaseProxy` symbol (below) is what terminate()
+// checks, so it doesn't matter that comlink's real releaseProxy is a
+// module-unique Symbol() we can't reach from here.
 
 // Mock debugStore
 vi.mock("$lib/stores/debug.svelte", () => ({
@@ -69,7 +60,8 @@ vi.mock("$lib/stores/debug.svelte", () => ({
 }));
 
 // Import after mock
-import { SearchService } from "$lib/services/search.svelte";
+import { SearchService } from "@codex/search-orchestrator";
+import { appEventBus } from "@codex/events";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 
@@ -87,8 +79,20 @@ function persistence(s: SearchService) {
 describe("SearchService", () => {
   let service: SearchService;
 
-  beforeEach(() => {
-    service = new SearchService();
+  beforeEach(async () => {
+    const { entityDb } = await import("$lib/utils/entity-db");
+    service = new SearchService({
+      db: entityDb,
+      debug: debugStore,
+      eventBus: appEventBus,
+      workerFactory: () => new MockWorker() as unknown as Worker,
+      // Inject fake comlink primitives. Mocking the "comlink" module doesn't
+      // reach this service's import across the package boundary, so DI is the
+      // reliable seam (see #1742).
+      wrap: () => mockApi as any,
+      proxy: (fn) => fn,
+      releaseProxy,
+    });
   });
 
   afterEach(() => {
@@ -217,16 +221,17 @@ describe("SearchService", () => {
     expect(putArg.updatedAt).toEqual(expect.any(Number));
 
     const savedData = putArg.data;
-    if (savedData instanceof Blob) {
+    if (savedData instanceof Blob || savedData?.constructor?.name === "Blob") {
       let text: string;
+      const blobData = savedData as any; // Using 'any' to bypass TS stream/arrayBuffer interface errors for this test environment mock
       if (typeof DecompressionStream !== "undefined") {
         const rawStream =
-          typeof savedData.stream === "function"
-            ? savedData.stream()
+          typeof blobData.stream === "function"
+            ? blobData.stream()
             : new ReadableStream({
                 async start(controller) {
                   try {
-                    const arrayBuffer = await savedData.arrayBuffer();
+                    const arrayBuffer = await blobData.arrayBuffer();
                     controller.enqueue(new Uint8Array(arrayBuffer));
                   } catch (err) {
                     controller.error(err);
@@ -239,11 +244,11 @@ describe("SearchService", () => {
         );
         text = await new Response(stream).text();
       } else {
-        text = await savedData.text();
+        text = await blobData.text();
       }
       expect(JSON.parse(text)).toEqual(expectedData);
     } else {
-      expect(savedData).toEqual(expectedData);
+      expect(savedData.constructor.name).toBe("Blob");
     }
   });
 
@@ -275,7 +280,16 @@ describe("SearchService", () => {
   describe("Vault Events", () => {
     beforeEach(async () => {
       vaultEventBus.reset(false);
-      service = new SearchService();
+      const { entityDb } = await import("$lib/utils/entity-db");
+      service = new SearchService({
+        db: entityDb,
+        debug: debugStore,
+        eventBus: appEventBus,
+        workerFactory: () => new MockWorker() as unknown as Worker,
+        wrap: () => mockApi as any,
+        proxy: (fn) => fn,
+        releaseProxy,
+      });
       await (service as any).ensureWorker();
 
       vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "v1" });
@@ -497,7 +511,9 @@ describe("SearchService", () => {
     const releaseSpy = vi.fn();
     (service as any).api = {
       ...mockApi,
-      [Symbol.for("comlink.releaseProxy")]: releaseSpy,
+      // Key with the same symbol injected as `releaseProxy`, which is what
+      // terminate() checks — matches production's Comlink.releaseProxy behavior.
+      [releaseProxy]: releaseSpy,
     };
     const terminateSpy = vi.spyOn((service as any).worker, "terminate");
 

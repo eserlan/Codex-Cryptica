@@ -1,4 +1,4 @@
-import { resolveArtDirection } from "schema";
+import { composeImagePrompt } from "schema";
 
 /**
  * Build an AI prompt for generating a world cover image.
@@ -15,24 +15,18 @@ export function createWorldCoverPrompt(
   const safeName = worldName.trim() || "this world";
   const safeWorldContext =
     worldContext.trim() || "No additional context was retrieved.";
-  const artDirection = resolveArtDirection({
-    subject: safeName,
-    surface: "cover",
-    themeId,
+  // The cover category already supplies portrait framing, the quiet upper
+  // third, and the theme's medium and palette, so none of that is restated
+  // below. The world name is stripped from the subject and used only as
+  // context for the model writing the scene.
+  const { prompt: artDirection, negativeTerms } = composeImagePrompt({
+    subject: safeBriefing,
+    category: "cover",
+    theme: themeId,
+    subjectOptions: { names: [safeName], descriptor: "this setting" },
   });
-  const themeArtDirection = themeId
-    ? resolveArtDirection({
-        subject: safeName,
-        surface: "chat",
-        themeId,
-      })
-    : null;
-  const themeStyleLine =
-    themeArtDirection?.source === "theme-default"
-      ? `- Theme Style: ${themeArtDirection.prompt}\n`
-      : "";
 
-  return `Create atmospheric portrait cover art for "${safeName}".
+  return `Create cover art for a world described below.
 
 Theme:
 - Name: ${themeName}
@@ -44,13 +38,12 @@ World cues:
 ${safeWorldContext}
 
 Art direction:
-- Default Art Style: ${artDirection.prompt}
-${themeStyleLine}- Portrait composition, vertical framing, approximately 2:3 aspect ratio.
-- Focus on the tone, mood, and symbolic atmosphere of the setting.
+${artDirection}
+
+Requirements:
 - Depict the world itself more than a single action scene.
-- Emphasize place, tension, and identity through lighting, silhouette, color, and environment.
-- Make it feel like the frontispiece to a living world.
-- No text, no title lettering, no UI, no borders.`;
+- Do not render the world's name or any other lettering.
+- Avoid: ${negativeTerms.join(", ")}.`;
 }
 
 /**

@@ -187,4 +187,22 @@ describe("Vault Schema Migrations", () => {
       "after migration",
     );
   });
+
+  it("uses injected IdGenerator for migration snapshot name", async () => {
+    const opfsRoot = createMemoryDirectory();
+    const mockClock = { now: () => 1700000000000 };
+    const mockIdGen = { uuid: () => "custom-nonce-abc" };
+
+    await runMigration(
+      opfsRoot,
+      store,
+      5,
+      async () => {},
+      mockClock,
+      mockIdGen,
+    );
+
+    const entry = await store.getEntry(5);
+    expect(entry?.rollbackSnapshotId).toContain("custom-nonce-abc");
+  });
 });

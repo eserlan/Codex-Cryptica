@@ -25,12 +25,14 @@
 
 {#if !sessionModeStore.isDemoMode && !sessionModeStore.isGuestMode}
   <button
+    type="button"
     onclick={() => modalUIStore.toggleSettings("vault")}
     class="flex items-center justify-center p-1.5 rounded-md hover:bg-chrome-accent/10 transition-all group relative"
     title={getStatusLabel()}
     aria-label="Google Drive Sync Status"
   >
     <span
+      aria-hidden="true"
       class="icon-[lucide--cloud] h-5 w-5 {getStatusColor()} transition-colors"
     ></span>
 
@@ -42,6 +44,7 @@
 
     {#if driveStore.status === "error"}
       <span
+        aria-hidden="true"
         class="absolute -bottom-0.5 -right-0.5 icon-[lucide--alert-circle] h-2.5 w-2.5 text-red-500"
       ></span>
     {/if}

@@ -1,5 +1,6 @@
 import { appEventBus } from "@codex/events";
 import { type CloudSyncMetadata } from "@codex/sync-engine";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export type DriveSyncStatus = "idle" | "syncing" | "error" | "connected";
 
@@ -23,7 +24,7 @@ class DriveStore {
       ["SYNC:DRIVE_PUSH_COMPLETE", "SYNC:DRIVE_PULL_COMPLETE"],
       () => {
         this.status = "connected";
-        this.lastSyncTime = Date.now();
+        this.lastSyncTime = systemClock.now();
         this.errorMessage = null;
       },
     );

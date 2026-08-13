@@ -1,3 +1,5 @@
+import type { StarSystemBody } from "generator-engine";
+
 export const nameTable = {
   prefixes: [
     "Ael",
@@ -443,6 +445,11 @@ export interface GeneratorOutput {
     | "event"
     | "faction"
     | "note";
+  /**
+   * Vault entity sub-kind (e.g. "language" on notes) so drafts saved through
+   * the marketing funnel stay detectable by kind-based vault scans.
+   */
+  kind?: string;
   title: string;
   summary?: string;
   content: string;
@@ -454,6 +461,10 @@ export interface GeneratorOutput {
    * local tables, so the layout can show a friendly notice (#1494).
    */
   aiFallback?: boolean;
+  /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
+  bodies?: StarSystemBody[];
+  /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
+  starType?: string;
 }
 
 /**
@@ -464,12 +475,12 @@ export interface GeneratorOutput {
 export type Rng = () => number;
 export const defaultRng: Rng = () => Math.random();
 
-export function pickFrom<T>(arr: T[], rng: Rng = defaultRng): T {
+export function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
   return arr[Math.floor(rng() * arr.length)];
 }
 
 export function getRandomItems<T>(
-  arr: T[],
+  arr: readonly T[],
   count: number,
   rng: Rng = defaultRng,
 ): T[] {

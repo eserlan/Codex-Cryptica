@@ -43,14 +43,14 @@
 
 ### Tests for User Story 1
 
-- [ ] T007 [P] [US1] Write unit tests for client-side exporter logic `GuestExporter.test.ts` verifying GM secrets are physically deleted and dangling links are redacted with `[Redacted]` in `packages/vault-engine/src/services/GuestExporter.test.ts`.
-- [ ] T008 [P] [US1] Write unit tests for client-side publishing service `PublishingService.test.ts` under `apps/web/src/lib/services/publishing/PublishingService.test.ts`.
+- [x] T007 [P] [US1] Write unit tests for client-side exporter logic `GuestExporter.test.ts` verifying GM secrets are physically deleted and dangling links are redacted with `[Redacted]` in `packages/vault-engine/src/services/GuestExporter.test.ts`.
+- [x] T008 [P] [US1] Write unit tests for client-side publishing service `PublishingService.test.ts` under `apps/web/src/lib/services/publishing/PublishingService.test.ts`.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement client-side exporter logic `GuestExporter.ts` under `packages/vault-engine/src/services/GuestExporter.ts`.
-- [ ] T010 [US1] Implement host-side publishing service `PublishingService.svelte.ts` under `apps/web/src/lib/services/publishing/PublishingService.svelte.ts` supporting background uploads.
-- [ ] T011 [US1] Create Publish Preview modal component `PublishPreviewModal.svelte` and integrate the publishing trigger in campaign settings (`apps/web/src/lib/components/settings/PublishingSettings.svelte`).
+- [x] T009 [US1] Implement client-side exporter logic `GuestExporter.ts` under `packages/vault-engine/src/services/GuestExporter.ts`. Extended to also pack `metadata` (description/coverImage) into the bundle (FR-027).
+- [x] T010 [US1] Implement host-side publishing service `PublishingService.svelte.ts` under `apps/web/src/lib/services/publishing/PublishingService.svelte.ts` supporting background uploads. Extended to extract `description`/`coverImage` from `worldStore.metadata` for the exporter (FR-027).
+- [x] T011 [US1] Create Publish Preview modal component `PublishPreviewModal.svelte` and integrate the publishing trigger in campaign settings (`apps/web/src/lib/components/settings/PublishingSettings.svelte`).
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently.
 
@@ -64,13 +64,13 @@
 
 ### Tests for User Story 2
 
-- [ ] T012 [P] [US2] Write unit tests for guest vault store `guest-vault.test.ts` verifying read-only behavior and data mapping in `apps/web/src/lib/stores/guest-vault.test.ts`.
+- [x] T012 [P] [US2] Write unit tests for guest vault store `guest-vault.test.ts` verifying read-only behavior and data mapping in `apps/web/src/lib/stores/guest-vault.test.ts`.
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement `guest-vault.svelte.ts` store in `apps/web/src/lib/stores/guest-vault.svelte.ts` to manage in-memory snapshot state.
-- [ ] T014 [US2] Create SvelteKit route `apps/web/src/routes/(app)/guest/[publishId]/+page.svelte` and route preloader `+page.ts` to fetch snapshot bundle and render it using the main Codex shell with `isGuestMode = true`.
-- [ ] T015 [US2] Update navigation and sidebar components to disable edit buttons, settings panels, and AI actions when `isGuestMode` is active.
+- [x] T013 [US2] Implement `guest-vault.svelte.ts` store in `apps/web/src/lib/stores/guest-vault.svelte.ts` to manage in-memory snapshot state.
+- [x] T014 [US2] Create SvelteKit route `apps/web/src/routes/(app)/guest/[publishId]/+page.svelte` and route preloader `+page.ts` to fetch snapshot bundle and render it using the main Codex shell with `isGuestMode = true`.
+- [x] T015 [US2] Update navigation and sidebar components to disable edit buttons, settings panels, and content-mutating AI actions when `isGuestMode` is active. Hardened in a follow-up pass to also gate front-page cover/briefing edit and generate controls and AI "Proposed Entities" suggestions (FR-028). The general-purpose Oracle AI assistant tool remains available to guests for read-only Q&A (see T035, FR-031/FR-032); only its write-capable sibling actions are blocked.
 
 **Checkpoint**: At this point, User Stories 1 and 2 should both work independently.
 
@@ -84,12 +84,12 @@
 
 ### Tests for User Story 3
 
-- [ ] T016 [P] [US3] Write unit tests for unpublish deletion request logic in `apps/web/src/lib/services/publishing/PublishingService.test.ts`.
+- [x] T016 [P] [US3] Write unit tests for unpublish deletion request logic in `apps/web/src/lib/services/publishing/PublishingService.test.ts`.
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Implement the "Unpublish" action in `PublishingService.svelte.ts` which calls the Worker's DELETE endpoint with the `writeToken`.
-- [ ] T018 [US3] Add warning confirmation modal dialog (`UnpublishConfirmModal.svelte`) for GMs before executing the unpublish action.
+- [x] T017 [US3] Implement the "Unpublish" action in `PublishingService.svelte.ts` which calls the Worker's DELETE endpoint with the `writeToken`.
+- [x] T018 [US3] Add warning confirmation modal dialog (`UnpublishConfirmModal.svelte`) for GMs before executing the unpublish action. Implemented under `apps/web/src/lib/components/settings/UnpublishConfirmModal.svelte`, not the `modals/` directory as originally planned.
 
 **Checkpoint**: Host can successfully retract any published world.
 
@@ -103,8 +103,8 @@
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Create the "Published Snapshots" dashboard view in global settings page `apps/web/src/lib/components/settings/PublishingDashboard.svelte`.
-- [ ] T020 [US4] Integrate the dashboard list to read from local IndexedDB `PublishRegistry` and display status, URL copying, and quick update/unpublish actions.
+- [x] T019 [US4] Create the "Published Snapshots" dashboard view in global settings page `apps/web/src/lib/components/settings/PublishingDashboard.svelte`.
+- [x] T020 [US4] Integrate the dashboard list to read from local IndexedDB `PublishRegistry` and display status, URL copying, and quick update/unpublish actions.
 
 **Checkpoint**: GMs can monitor all shared lore links centrally.
 
@@ -122,8 +122,8 @@
 
 ### Implementation for User Story 5
 
-- [ ] T022 [US5] Implement visited vault history recording in `localStorage` inside the guest page loading logic.
-- [ ] T023 [US5] Render the "Recent Shared Worlds" navigation list on the guest landing route page `apps/web/src/routes/(app)/guest/+page.svelte` and implement self-healing history cleanup if loading returns a 404/410.
+- [x] T022 [US5] Implement visited vault history recording in `localStorage` inside the guest page loading logic.
+- [x] T023 [US5] Render the "Recent Shared Worlds" navigation list on the guest landing route page `apps/web/src/routes/(app)/guest/+page.svelte` and implement self-healing history cleanup if loading returns a 404/410.
 
 **Checkpoint**: All user stories are complete.
 
@@ -133,9 +133,22 @@
 
 **Purpose**: Documentation updates, final code reviews, and validation tests.
 
-- [ ] T024 [P] Write user-facing help documentation guide for the publishing feature in `apps/web/src/lib/config/help-content.ts`.
-- [ ] T025 Run validation commands: check build, run linting (`bun run lint`), and run vitest tests (`bun run test`) to verify all tests pass.
-- [ ] T026 [P] Update the changelog file `apps/web/src/lib/content/changelog/releases.json` with highlights of the new guest snapshots feature.
+- [x] T024 [P] Write user-facing help documentation guide for the publishing feature in `apps/web/src/lib/config/help-content.ts`.
+- [x] T025 Run validation commands: check build, run linting (`bun run lint`), and run vitest tests (`bun run test`) to verify all tests pass.
+- [x] T026 [P] Update the changelog file `apps/web/src/lib/content/changelog/releases.json` with highlights of the new guest snapshots feature.
+
+### Phase 8b: Guest Read-Only Hardening (post-implementation fix-up)
+
+- [x] T027 [P] Mirror world front-page metadata (`description`, `coverImage`) into the guest bundle (schema, `GuestExporter`, `PublishingService`) and render it on the guest front page (FR-027) in `packages/schema/src/publishing.ts`, `packages/vault-engine/src/services/GuestExporter.ts`, `apps/web/src/lib/services/publishing/PublishingService.svelte.ts`, `apps/web/src/lib/components/world/FrontPage.svelte`.
+- [x] T028 Fix front-page entity cards missing images/excerpts for guests by including `image`, `thumbnail`, `excerpt`, `type` in the guest `recentActivity` mapping in `apps/web/src/lib/components/world/FrontPage.svelte`.
+- [x] T029 Fix header brand-click not reopening the guest front page (stale local `showFrontPage` state that SvelteKit didn't reset on same-route navigation) in `apps/web/src/lib/components/layout/AppHeader.svelte` and `apps/web/src/routes/(app)/guest/[publishId]/+page.svelte`.
+- [x] T030 Hide front-page cover image and briefing edit/generate controls for guests (FR-028) in `apps/web/src/lib/components/world/FrontPage.svelte` and `apps/web/src/lib/components/world/FrontPageBriefing.svelte`.
+- [x] T031 Fix front-page header action buttons collapsing to the left instead of staying right-aligned once the header title became `sr-only` in `apps/web/src/lib/components/world/FrontPage.svelte`.
+- [x] T032 Fix entity image lightbox never opening for guests: `VTTSharedImageLightbox.svelte`'s effect was unconditionally calling `modalUIStore.closeLightbox()` on every re-run when no P2P shared token image was active, clobbering the lightbox the entity sidebar/zen mode had just opened. Now only closes state it opened itself (FR-029, new edge case "Guest-Side Reactive State Leakage").
+- [x] T033 Hide AI-authored "Proposed Entities" suggestions from guests (FR-028) in `apps/web/src/lib/components/entity-detail/EntityProposals.svelte`.
+- [x] T034 Fix bolded entity-mention auto-links not being clickable for guests: `vault.titleAndAliasIndex` never delegated to `guestVault`, so the mention index was always empty in guest mode (FR-030) in `apps/web/src/lib/stores/vault.svelte.ts`.
+- [x] T035 Fix the general-purpose Oracle AI assistant tool erroring for guests: its RAG context retrieval called the host's local IndexedDB-backed search-worker (`searchService.search()`), which is never populated in guest sessions and whose dynamic worker import could also fail outright. Added an in-memory `guestSearch()` fallback in `apps/web/src/lib/services/ai/context-retrieval.service.ts` that scans `vault.allEntities` (title/aliases/content) when `vault.isGuest`, so guests — including anonymous public-directory visitors — get real, fog-of-war-filtered context instead of a crash (FR-031). Confirmed content-mutating executors (`create-executor.ts`, `revise-executor.ts`) already reject guest sessions at the execution layer, so exposing the chat panel does not reopen any write path (FR-032). The tool remains visible in `apps/web/src/lib/components/layout/ActivityBar.svelte` for both host and guest.
+- [x] T036 Verify guest Oracle chat reaches real text generation (not just context retrieval) by reproducing the exact same "Interaction request failed" outcome as host in the same local dev environment — traced to a missing `GEMINI_API_KEY` in local `wrangler dev` (no `.dev.vars` in this checkout; the deployed production worker has this as a Cloudflare secret), confirming parity rather than a guest-specific regression.
 
 ---
 

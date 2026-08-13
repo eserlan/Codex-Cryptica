@@ -36,7 +36,7 @@ describe("GDriveSyncService", () => {
     };
     mockDeps = {
       getOpfsHandle: vi.fn().mockResolvedValue({}),
-      now: vi.fn().mockReturnValue(fixedNow),
+      clock: { now: vi.fn().mockReturnValue(fixedNow) },
     };
 
     service = new GDriveSyncService(

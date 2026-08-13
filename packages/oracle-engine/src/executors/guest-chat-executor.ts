@@ -263,6 +263,13 @@ export class GuestChatExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
+  constructor(
+    clock?: import("../runtime").Clock,
+    idGenerator?: import("../runtime").IdGenerator,
+  ) {
+    super(clock, idGenerator);
+  }
+
   private isExecuting = false;
 
   async execute(
@@ -272,7 +279,7 @@ export class GuestChatExecutor
   ): Promise<void> {
     if (this.isExecuting) {
       await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         role: "system",
         content:
           "The Character is already processing a request. Please wait for the current action to complete.",
@@ -295,12 +302,12 @@ export class GuestChatExecutor
 
         if (typeof navigator !== "undefined" && !navigator.onLine) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "user",
             content: query,
           });
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content:
               "You are currently offline. Character chat is temporarily suspended.",
@@ -321,7 +328,7 @@ export class GuestChatExecutor
           lastHistoryMsg?.content !== query
         ) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "user",
             content: query,
           });
@@ -329,7 +336,7 @@ export class GuestChatExecutor
 
         if (context.aiDisabled) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content: "❌ AI features are disabled. Guest chat is unavailable.",
           });
@@ -348,7 +355,7 @@ export class GuestChatExecutor
           !character.guestChatConfig?.isEnabled
         ) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content: "❌ This character is no longer available for guest chat.",
           });
@@ -365,7 +372,7 @@ export class GuestChatExecutor
           "";
         if (!personalityAndVoice) {
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content: "❌ This character is no longer available for guest chat.",
           });
@@ -377,7 +384,7 @@ export class GuestChatExecutor
         }
 
         const assistantMsg: ChatMessage = {
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: "",
           type: "text",
@@ -491,7 +498,7 @@ RULES:
     } catch (err: any) {
       console.error("[GuestChatExecutor] Execution failed:", err);
       await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         role: "system",
         content: `❌ Generation failed: ${err.message || err}`,
       });

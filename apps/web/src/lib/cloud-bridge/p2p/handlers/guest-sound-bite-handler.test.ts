@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GuestSoundBiteHandler } from "./guest-sound-bite-handler";
-import { soundBiteService } from "../../../services/SoundBiteService.svelte";
+import { soundBiteService } from "@codex/audio-engine";
 
-vi.mock("../../../services/SoundBiteService.svelte", () => {
+vi.mock("@codex/audio-engine", () => {
   return {
     soundBiteService: {
       loadFromEntity: vi.fn(),

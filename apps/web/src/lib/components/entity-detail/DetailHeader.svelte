@@ -2,12 +2,13 @@
   import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
-  import { isEntityVisible } from "schema";
+  import { isEntityVisible, resolveStatureFromLabels } from "schema";
   import { fade } from "svelte/transition";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import SidepanelRevisionButton from "$lib/components/entity/SidepanelRevisionButton.svelte";
+  import { shelf } from "$lib/features/shelf";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -17,7 +18,19 @@
   } from "$lib/components/search/search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
+  import { soundBiteService } from "@codex/audio-engine";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { copyGuestEntityLink } from "$lib/services/publishing/guest-link";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
+  import { goto } from "$app/navigation";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import StructuralSuggestionBanner from "$lib/components/guided/StructuralSuggestionBanner.svelte";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let {
     entity,
@@ -33,6 +46,19 @@
     onClose: () => void;
   }>();
 
+  let linkCopied = $state(false);
+
+  const handleCopyGuestLink = async () => {
+    if (!guestVault.publishId) return;
+    try {
+      await copyGuestEntityLink(guestVault.publishId, entity.id);
+      linkCopied = true;
+      setTimeout(() => (linkCopied = false), 2000);
+    } catch {
+      notificationStore.notify("Could not copy the link.", "error");
+    }
+  };
+
   const isGraphView = $derived.by(() => {
     const path = page.url.pathname;
     const normalizedBase = base.endsWith("/") ? base : `${base}/`;
@@ -47,6 +73,19 @@
     });
   });
 
+  let shelvedJustNow = $state(false);
+
+  /**
+   * Copies this entity onto the Shelf so it can be brought into another vault.
+   * Read-only against this vault — nothing here is modified.
+   */
+  const handleSendToShelf = async () => {
+    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
+    if (!ok) return;
+    shelvedJustNow = true;
+    setTimeout(() => (shelvedJustNow = false), 2000);
+  };
+
   const handleFindInGraph = () => {
     const nodeId = vault.selectedEntityId;
     if (!nodeId) return;
@@ -59,8 +98,53 @@
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 
+  // Stature changes how every image of this entity is composed, so it is shown
+  // wherever the thing that caused it can be edited. A label the user typed
+  // wins; otherwise the stature recorded on the last image stands in, which is
+  // the only place an Oracle reading is visible outside the prompt dialog.
+  const statureFromLabel = $derived(resolveStatureFromLabels(entity.labels));
+  const statureFromImage = $derived(
+    (entity as { imageArtDirection?: { statureId?: string } }).imageArtDirection
+      ?.statureId,
+  );
+  const stature = $derived.by(() => {
+    const value = statureFromLabel || statureFromImage;
+    return !value || value === "mundane" ? "" : value;
+  });
+  const statureLabel = $derived(
+    stature ? stature.charAt(0).toUpperCase() + stature.slice(1) : "",
+  );
+  // An Oracle reading is recomputed on every generation. Keeping it as a label
+  // makes it the user's own — stable, searchable, and editable like any other.
+  const canKeepStature = $derived(
+    !!stature && !statureFromLabel && !vault.isGuest,
+  );
+  let isKeepingStature = $state(false);
+
+  const keepStature = async () => {
+    if (!canKeepStature || isKeepingStature) return;
+    isKeepingStature = true;
+    try {
+      await vault.addLabel(entity.id, stature);
+      notificationStore.notify(`Labelled ${stature}`, "success");
+    } catch {
+      notificationStore.notify("Could not add the label.", "error");
+    } finally {
+      isKeepingStature = false;
+    }
+  };
+
   const parentEntity = $derived(
     entity?.parent ? vault.entities[entity.parent] : null,
+  );
+
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
   );
 
   const handleOpenParent = () => {
@@ -103,6 +187,61 @@
 {#snippet headerActions()}
   {#if !isEditing}
     <SidepanelRevisionButton entityId={entity.id} />
+    {#if isDelveLocationEntity(entity)}
+      <button
+        type="button"
+        onclick={async () => {
+          try {
+            if (existingCanvas) {
+              openCanvasFromZen(existingCanvas, goto);
+              return;
+            }
+            const canvasDoc =
+              dungeonDelveService.buildDelveCanvasFromConcept(entity);
+            const slug = await canvasRegistry.importCanvas(canvasDoc);
+            openCanvasFromZen({ slug }, goto);
+          } catch (err) {
+            console.error("[DelveCanvas] Header action failed:", err);
+          }
+        }}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        aria-label={existingCanvas
+          ? `Open ${delveCanvasLabel}`
+          : `Build ${delveCanvasLabel}`}
+        title={existingCanvas
+          ? `Open ${delveCanvasLabel}`
+          : `Build ${delveCanvasLabel}`}
+        data-testid="build-delve-canvas-header-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{existingCanvas
+            ? 'icon-[lucide--external-link]'
+            : 'icon-[lucide--map]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
+    {#if !vault.isGuest}
+      <button
+        type="button"
+        onclick={handleSendToShelf}
+        class="transition flex items-center justify-center p-1 {shelvedJustNow
+          ? 'text-theme-primary'
+          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
+        aria-label="Send to Shelf"
+        title={shelvedJustNow
+          ? "On the Shelf"
+          : "Send to Shelf — to bring into another vault"}
+        data-testid="send-to-shelf-button"
+      >
+        <span
+          aria-hidden="true"
+          class="{shelvedJustNow
+            ? 'icon-[lucide--check]'
+            : 'icon-[lucide--library]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
     {#if isGraphView}
       <button
         type="button"
@@ -112,7 +251,26 @@
         title="Find in Graph"
         data-testid="find-in-graph-button"
       >
-        <span class="icon-[lucide--target] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--target] w-5 h-5"></span>
+      </button>
+    {/if}
+    {#if vault.isGuest && guestVault.publishId}
+      <button
+        type="button"
+        onclick={handleCopyGuestLink}
+        class="transition flex items-center justify-center p-1 {linkCopied
+          ? 'text-theme-primary'
+          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
+        aria-label="Copy link to this entity"
+        title={linkCopied ? "Link copied!" : "Copy link to this entity"}
+        data-testid="copy-guest-link-button"
+      >
+        <span
+          class="{linkCopied
+            ? 'icon-[lucide--check]'
+            : 'icon-[lucide--link]'} w-5 h-5"
+          aria-hidden="true"
+        ></span>
       </button>
     {/if}
     {#if !vault.isGuest || entity.soundBite}
@@ -138,6 +296,7 @@
           class="{entity.soundBite
             ? 'icon-[lucide--volume-2]'
             : 'icon-[lucide--mic]'} w-5 h-5"
+          aria-hidden="true"
         ></span>
       </button>
     {/if}
@@ -150,7 +309,8 @@
         title="Chat with character"
         data-testid="guest-chat-button"
       >
-        <span class="icon-[lucide--messages-square] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-5 h-5"
+        ></span>
       </button>
     {/if}
     <button
@@ -161,7 +321,7 @@
       title="Zen Mode (Full Screen)"
       data-testid="enter-zen-mode-button"
     >
-      <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+      <span aria-hidden="true" class="icon-[lucide--maximize-2] w-5 h-5"></span>
     </button>
   {/if}
 {/snippet}
@@ -179,16 +339,19 @@
       class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
-      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
+      ></span>
     </button>
     <div class="flex items-center gap-1.5">
       {@render headerActions()}
     </div>
   </div>
 
-  <div class="md:flex md:justify-between md:items-center mb-2">
+  <div
+    class="mb-2 min-w-0 md:flex md:flex-wrap md:items-center md:justify-between"
+  >
     <div
-      class="flex items-start md:items-center gap-3 md:gap-4 md:flex-1 min-w-0 w-full"
+      class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
@@ -205,12 +368,12 @@
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal break-words overflow-visible w-full md:truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} w-full break-words whitespace-normal font-bold"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                >*</sup
-              >{/if}
+                aria-hidden="true">*</sup
+              ><span class="sr-only"> (past)</span>{/if}
           </h2>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
@@ -242,8 +405,8 @@
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
                 {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    >*</sup
-                  >{/if}
+                    aria-hidden="true">*</sup
+                  ><span class="sr-only"> (past)</span>{/if}
               </button>
             </div>
           {/if}
@@ -252,7 +415,7 @@
     </div>
 
     <div
-      class="hidden md:flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4"
+      class="ml-2 hidden shrink-0 items-center gap-1.5 md:ml-auto md:flex md:gap-2"
     >
       {@render headerActions()}
 
@@ -264,7 +427,8 @@
         aria-label="Close panel"
         title="Close"
       >
-        <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[heroicons--x-mark] w-6 h-6"
+        ></span>
       </button>
     </div>
   </div>
@@ -279,6 +443,29 @@
           onRemove={async () => await vault.removeLabel(entity.id, label)}
         />
       {/each}
+      {#if statureLabel}
+        <span
+          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider self-center"
+          title={statureFromLabel
+            ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
+            : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
+          data-testid="entity-stature-badge"
+        >
+          Drawn as {statureLabel}
+        </span>
+        {#if canKeepStature}
+          <button
+            type="button"
+            onclick={keepStature}
+            disabled={isKeepingStature}
+            title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
+            data-testid="entity-stature-keep"
+            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-[8px] md:text-[9px] font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+          >
+            Keep
+          </button>
+        {/if}
+      {/if}
       {#if !entity.labels?.length && vault.isGuest}
         <span
           class="text-[9px] text-theme-muted italic uppercase tracking-tighter"
@@ -292,4 +479,8 @@
       <LabelInput entityId={entity.id} />
     {/if}
   </div>
+
+  {#if !vault.isGuest}
+    <StructuralSuggestionBanner entityId={entity.id} />
+  {/if}
 </div>

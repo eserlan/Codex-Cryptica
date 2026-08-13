@@ -1,5 +1,100 @@
-import { describe, it, expect, vi } from "vitest";
-import { walkDirectory } from "./fs";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import {
+  walkDirectory,
+  pickDirectory,
+  isFileSystemAccessSupported,
+  detectFileSystemAccessBrowser,
+  getFileSystemAccessUnsupportedMessage,
+} from "./fs";
+
+describe("pickDirectory", () => {
+  const hadShowDirectoryPicker = "showDirectoryPicker" in window;
+  const originalShowDirectoryPicker = (window as any).showDirectoryPicker;
+
+  afterEach(() => {
+    // Restore exactly: recreate the property only if it originally existed,
+    // otherwise delete it so a leftover `undefined` doesn't leak into other
+    // tests' `"showDirectoryPicker" in window` / typeof checks.
+    if (hadShowDirectoryPicker) {
+      (window as any).showDirectoryPicker = originalShowDirectoryPicker;
+    } else {
+      delete (window as any).showDirectoryPicker;
+    }
+  });
+
+  it("delegates to window.showDirectoryPicker when supported", async () => {
+    const handle = { kind: "directory", name: "root" };
+    (window as any).showDirectoryPicker = vi.fn().mockResolvedValue(handle);
+
+    expect(isFileSystemAccessSupported()).toBe(true);
+    const result = await pickDirectory({ mode: "read" });
+
+    expect(result).toBe(handle);
+    expect(window.showDirectoryPicker).toHaveBeenCalledWith({ mode: "read" });
+  });
+
+  it("treats a non-callable showDirectoryPicker as unsupported", () => {
+    (window as any).showDirectoryPicker = undefined;
+    expect(isFileSystemAccessSupported()).toBe(false);
+  });
+
+  it("throws an actionable NotSupportedError when unsupported", async () => {
+    delete (window as any).showDirectoryPicker;
+
+    expect(isFileSystemAccessSupported()).toBe(false);
+    await expect(pickDirectory()).rejects.toMatchObject({
+      name: "NotSupportedError",
+      message: expect.any(String),
+    });
+  });
+});
+
+describe("detectFileSystemAccessBrowser / getFileSystemAccessUnsupportedMessage", () => {
+  const originalUserAgent = navigator.userAgent;
+  const originalBrave = (navigator as any).brave;
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "userAgent", {
+      value: originalUserAgent,
+      configurable: true,
+    });
+    (navigator as any).brave = originalBrave;
+  });
+
+  it("identifies Brave via navigator.brave and points at the flag", () => {
+    (navigator as any).brave = { isBrave: async () => true };
+
+    expect(detectFileSystemAccessBrowser()).toBe("brave");
+    expect(getFileSystemAccessUnsupportedMessage("brave")).toContain(
+      "brave://flags/#file-system-access-api",
+    );
+  });
+
+  it("identifies Firefox and reassures the vault is saved, pointing at Export Backup", () => {
+    delete (navigator as any).brave;
+    Object.defineProperty(navigator, "userAgent", {
+      value:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
+      configurable: true,
+    });
+
+    expect(detectFileSystemAccessBrowser()).toBe("firefox");
+    const msg = getFileSystemAccessUnsupportedMessage("firefox");
+    expect(msg).toContain("fully saved");
+    expect(msg).toContain("Export Backup");
+  });
+
+  it("identifies Safari from the user agent", () => {
+    delete (navigator as any).brave;
+    Object.defineProperty(navigator, "userAgent", {
+      value:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+      configurable: true,
+    });
+
+    expect(detectFileSystemAccessBrowser()).toBe("safari");
+  });
+});
 
 describe("walkDirectory", () => {
   it("should iterate using values() and recurse", async () => {

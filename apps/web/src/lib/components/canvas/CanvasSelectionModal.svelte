@@ -7,6 +7,7 @@
   import { tick } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let searchQuery = $state("");
   const activeCanvasId = $derived(page.params.slug);
@@ -22,6 +23,28 @@
       (c.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()),
     ),
   );
+
+  function getCanvasKind(c: any): "adventure" | "delve" | "workspace" {
+    if (c?.metadata?.kind === "adventure") return "adventure";
+    if (c?.metadata?.kind === "delve") return "delve";
+
+    const nodes = Array.isArray(c?.nodes) ? c.nodes : [];
+    if (
+      nodes.some((n: any) =>
+        ["situation", "npc", "clue", "threat", "outcome"].includes(n?.type),
+      )
+    ) {
+      return "adventure";
+    }
+    if (
+      nodes.some((n: any) =>
+        ["delveRoom", "delveSectorGroup"].includes(n?.type),
+      )
+    ) {
+      return "delve";
+    }
+    return "workspace";
+  }
 
   function close() {
     modalUIStore.closeCanvasSelection();
@@ -152,7 +175,7 @@
           class="p-2 rounded-lg hover:bg-theme-bg text-theme-muted hover:text-theme-text transition-colors"
           aria-label="Close modal"
         >
-          <span class="icon-[lucide--x] w-5 h-5"></span>
+          <span class="icon-[lucide--x] w-5 h-5" aria-hidden="true"></span>
         </button>
       </div>
 
@@ -206,15 +229,18 @@
               onclick={confirmCreate}
               class="p-2 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
               title="Confirm Creation"
+              aria-label="Confirm creation"
             >
-              <span class="icon-[lucide--check] w-4 h-4"></span>
+              <span class="icon-[lucide--check] w-4 h-4" aria-hidden="true"
+              ></span>
             </button>
             <button
               onclick={() => (isCreating = false)}
               class="p-2 text-theme-muted hover:text-theme-text"
               title="Cancel"
+              aria-label="Cancel creation"
             >
-              <span class="icon-[lucide--x] w-4 h-4"></span>
+              <span class="icon-[lucide--x] w-4 h-4" aria-hidden="true"></span>
             </button>
           </div>
         {/if}
@@ -267,12 +293,28 @@
             <div
               class="w-10 h-10 rounded-lg bg-theme-bg flex items-center justify-center shrink-0 border border-theme-border group-hover:border-theme-primary/30 transition-colors"
             >
-              <span
-                class="icon-[lucide--layout] w-5 h-5 {activeCanvasId ===
-                canvas.slug
-                  ? 'text-theme-primary'
-                  : 'text-theme-muted'}"
-              ></span>
+              {#if getCanvasKind(canvas) === "adventure"}
+                <span
+                  class="icon-[lucide--compass] w-5 h-5 {activeCanvasId ===
+                  canvas.slug
+                    ? 'text-amber-400'
+                    : 'text-theme-muted'}"
+                ></span>
+              {:else if getCanvasKind(canvas) === "delve"}
+                <span
+                  class="icon-[lucide--castle] w-5 h-5 {activeCanvasId ===
+                  canvas.slug
+                    ? 'text-emerald-400'
+                    : 'text-theme-muted'}"
+                ></span>
+              {:else}
+                <span
+                  class="icon-[lucide--layout] w-5 h-5 {activeCanvasId ===
+                  canvas.slug
+                    ? 'text-theme-primary'
+                    : 'text-theme-muted'}"
+                ></span>
+              {/if}
             </div>
 
             <div class="flex-1 min-w-0">
@@ -297,27 +339,47 @@
                   <button
                     onclick={() => canvas.id && confirmRename(canvas.id)}
                     class="p-1.5 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
+                    title="Confirm Rename"
+                    aria-label="Confirm rename"
                   >
-                    <span class="icon-[lucide--check] w-3 h-3"></span>
+                    <span
+                      class="icon-[lucide--check] w-3 h-3"
+                      aria-hidden="true"
+                    ></span>
                   </button>
                 </div>
               {:else}
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span
                     class="text-sm font-bold text-theme-text truncate group-hover:text-theme-primary transition-colors"
                   >
                     {canvas.name || "Untitled Canvas"}
                   </span>
+                  {#if getCanvasKind(canvas) === "adventure"}
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[8px] font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
+                    >
+                      <span class="icon-[lucide--compass] w-2.5 h-2.5"></span>
+                      Adventure
+                    </span>
+                  {:else if getCanvasKind(canvas) === "delve"}
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[8px] font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
+                    >
+                      <span class="icon-[lucide--castle] w-2.5 h-2.5"></span>
+                      Delve
+                    </span>
+                  {/if}
                   {#if activeCanvasId === canvas.slug}
                     <span
-                      class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase font-header tracking-widest"
+                      class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase font-header tracking-widest shrink-0"
                       >Active</span
                     >
                   {/if}
                 </div>
                 <div class="text-[10px] text-theme-muted font-mono mt-0.5">
                   Last updated: {new Date(
-                    canvas.lastModified || Date.now(),
+                    canvas.lastModified ?? systemClock.now(),
                   ).toLocaleString()}
                 </div>
               {/if}
@@ -334,7 +396,8 @@
                   title="Rename Workspace"
                   aria-label={`Rename ${canvas.name || "Canvas"}`}
                 >
-                  <span class="icon-[lucide--edit-2] w-4 h-4"></span>
+                  <span class="icon-[lucide--edit-2] w-4 h-4" aria-hidden="true"
+                  ></span>
                 </button>
                 <button
                   onclick={(e) => canvas.id && deleteCanvas(canvas.id, e)}
@@ -342,7 +405,10 @@
                   title="Delete Workspace"
                   aria-label={`Delete ${canvas.name || "Canvas"}`}
                 >
-                  <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+                  <span
+                    class="icon-[lucide--trash-2] w-4 h-4"
+                    aria-hidden="true"
+                  ></span>
                 </button>
               {/if}
             </div>

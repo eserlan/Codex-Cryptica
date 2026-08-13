@@ -2,7 +2,7 @@ import { BaseHandler } from "./base-handler";
 import type { GuestHandlerContext } from "./guest-handler-context";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
-import { soundBiteService } from "../../../services/SoundBiteService.svelte";
+import { soundBiteService } from "@codex/audio-engine";
 
 export class GuestSoundBiteHandler extends BaseHandler<GuestHandlerContext> {
   canHandle(message: P2PMessage): boolean {

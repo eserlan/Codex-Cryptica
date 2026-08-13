@@ -117,11 +117,12 @@
           </p>
         </div>
         <button
+          type="button"
           class="text-theme-muted hover:text-theme-text"
           onclick={close}
           aria-label="Close token dialog"
         >
-          <span class="icon-[lucide--x] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
         </button>
       </div>
 
@@ -168,8 +169,8 @@
             >
               <div class="text-sm font-bold text-theme-text">
                 {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    >*</sup
-                  >{/if}
+                    aria-hidden="true">*</sup
+                  ><span class="sr-only"> (past)</span>{/if}
               </div>
               <div
                 class="text-[10px] uppercase tracking-widest text-theme-muted"

@@ -1,18 +1,23 @@
 import type {
+  AIGeneratorChatSession,
   AIGeneratorCompleteOptions,
   AIGeneratorGateway,
 } from "generator-engine";
 import {
   aiClientManager,
   InteractionExpiredError,
+  GENERATOR_INTERACTION_MODEL_KEY,
   type DefaultAIClientManager,
-} from "$lib/services/ai/client-manager";
+} from "@codex/ai-engine";
 
-const GENERATOR_MODEL = "gemini-3.1-flash-lite";
+// Only matters for the non-interaction Gemini-SDK-shaped path below —
+// the Interactions path uses GENERATOR_INTERACTION_MODEL_KEY instead, which
+// is deliberately separate from the chat/revision key (see client-manager).
+const GENERATOR_MODEL = "gemini-3.5-flash-lite";
 const GENERATOR_GENERATION_CONFIG = {
   temperature: 0.85,
   topP: 0.95,
-  maxOutputTokens: 2048,
+  maxOutputTokens: 4096,
   responseMimeType: "application/json",
 };
 
@@ -59,15 +64,19 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     options?: AIGeneratorCompleteOptions,
   ) {
     const interaction = options?.interaction;
+    const generationConfig = {
+      ...GENERATOR_GENERATION_CONFIG,
+      ...options?.generationConfig,
+    };
     if (interaction) {
       try {
         const result = await this.clientManager.sendInteraction({
-          model: GENERATOR_MODEL,
+          model: GENERATOR_INTERACTION_MODEL_KEY,
           input: interaction.input,
           systemInstruction,
           previousInteractionId: interaction.previousInteractionId,
           storeConversation: interaction.store ?? true,
-          generationConfig: GENERATOR_GENERATION_CONFIG,
+          generationConfig,
         });
         return {
           text: extractJsonObject(result.text),
@@ -77,12 +86,12 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       } catch (err) {
         if (!(err instanceof InteractionExpiredError)) throw err;
         const result = await this.clientManager.sendInteraction({
-          model: GENERATOR_MODEL,
+          model: GENERATOR_INTERACTION_MODEL_KEY,
           input: interaction.replayPrompt ?? prompt,
           systemInstruction,
           previousInteractionId: null,
           storeConversation: interaction.store ?? true,
-          generationConfig: GENERATOR_GENERATION_CONFIG,
+          generationConfig,
         });
         return {
           text: extractJsonObject(result.text),
@@ -104,14 +113,31 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     // object so generationConfig reaches both the proxy and direct-key paths.)
     const response = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        ...GENERATOR_GENERATION_CONFIG,
-      },
+      generationConfig,
     });
     // Salvage the JSON object even if the model appends trailing garbage (a
     // known degenerate-repetition failure mode) — JSON mode isn't reliably
     // enforced through the proxy.
     return extractJsonObject(response.response.text());
+  }
+
+  async startChat(systemInstruction: string): Promise<AIGeneratorChatSession> {
+    const model = await this.clientManager.getModel(
+      "",
+      GENERATOR_MODEL,
+      systemInstruction,
+    );
+    const chat = model.startChat({ history: [] });
+    return {
+      async send(userMessage: string): Promise<string> {
+        const result = await chat.sendMessageStream(userMessage);
+        let text = "";
+        for await (const chunk of result.stream) {
+          text += chunk.text();
+        }
+        return extractJsonObject(text.trim());
+      },
+    };
   }
 }
 

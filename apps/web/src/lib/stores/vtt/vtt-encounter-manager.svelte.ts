@@ -9,6 +9,11 @@ import type {
   MeasurementState,
 } from "../../../types/vtt";
 import { cloneMeasurement } from "$lib/utils/vtt-helpers";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export interface VTTEncounterManagerDependencies {
   service: VTTSessionService;
@@ -31,11 +36,14 @@ export interface VTTEncounterManagerDependencies {
 export class VTTEncounterManager {
   sessionId = $state<string | null>(null);
   name = $state("Encounter");
-  createdAt = $state(Date.now());
+  createdAt = $state(systemClock.now());
   savedAt = $state<number | null>(null);
   snapshots = $state<EncounterSnapshotSummary[]>([]);
 
-  constructor(private deps: VTTEncounterManagerDependencies) {}
+  constructor(
+    private deps: VTTEncounterManagerDependencies,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   startNewEncounter(name = this.name) {
     const mapId = this.deps.getMapId();
@@ -43,7 +51,7 @@ export class VTTEncounterManager {
 
     const session = createEncounterSession(
       mapId,
-      crypto.randomUUID(),
+      this.idGenerator.uuid(),
       name.trim() || this.name || "Encounter",
     );
 
@@ -86,7 +94,7 @@ export class VTTEncounterManager {
   }
 
   async saveEncounterSnapshot(
-    encounterId = this.sessionId ?? crypto.randomUUID(),
+    encounterId = this.sessionId ?? this.idGenerator.uuid(),
   ) {
     const mapId = this.deps.getMapId();
     if (!mapId) return null;
@@ -94,7 +102,7 @@ export class VTTEncounterManager {
       this.deps.createSnapshot(),
       encounterId,
     );
-    this.savedAt = Date.now();
+    this.savedAt = systemClock.now();
     this.snapshots = [
       result.summary,
       ...this.snapshots.filter((s) => s.id !== encounterId),
@@ -116,7 +124,7 @@ export class VTTEncounterManager {
   reset() {
     this.sessionId = null;
     this.name = "Encounter";
-    this.createdAt = Date.now();
+    this.createdAt = systemClock.now();
     this.savedAt = null;
     this.snapshots = [];
   }

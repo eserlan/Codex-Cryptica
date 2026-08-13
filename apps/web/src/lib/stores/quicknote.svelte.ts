@@ -4,11 +4,12 @@ import {
   type QuickNoteRecord,
 } from "../services/QuickNoteService";
 import { vaultRegistry as defaultVaultRegistry } from "./vault-registry.svelte";
-import { textGenerationService } from "../services/ai/text-generation.service.svelte";
-import { contextRetrievalService } from "../services/ai/context-retrieval.service";
+import { textGenerationService } from "@codex/ai-engine";
+import { contextRetrievalService } from "@codex/ai-engine";
 import { vaultEventBus } from "./vault/events.svelte";
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * Reactive Svelte 5 Store to manage the state of the QuickNote Fast Scratchpad.
@@ -163,7 +164,7 @@ export class QuickNoteStore {
       vaultId: activeId,
       content: "",
       status: "active",
-      createdAt: Date.now(),
+      createdAt: systemClock.now(),
     };
   }
 
@@ -271,7 +272,7 @@ export class QuickNoteStore {
 
     try {
       const apiKey = oracle.effectiveApiKey || "";
-      const modelName = oracle.modelName || "gemini-3.1-flash-lite";
+      const modelName = oracle.modelName || "gemini-3.5-flash-lite";
 
       // 1. Retrieve semantic context based on note content to feed into LLM
       let context = "";

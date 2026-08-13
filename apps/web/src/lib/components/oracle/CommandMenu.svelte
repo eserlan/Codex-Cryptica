@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chatCommands, type ChatCommand } from "../../config/chat-commands";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
-  import { searchService } from "../../services/search.svelte";
+  import { searchService } from "@codex/search-orchestrator";
   import { categories } from "../../stores/categories.svelte";
   import { getIconClass } from "../../utils/icon";
   import { vault } from "../../stores/vault.svelte";

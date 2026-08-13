@@ -46,6 +46,36 @@ describe("setupGraphEvents", () => {
     expect(mockElements.removeClass).toHaveBeenCalledWith("lod-medium");
   });
 
+  it("should apply lod classes during setup for the initial zoom", () => {
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.zoom = vi.fn().mockReturnValue(0.1);
+    mockCy.batch = vi.fn((cb) => cb());
+
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    expect(mockElements.addClass).toHaveBeenCalledWith("lod-low");
+    expect(mockElements.removeClass).toHaveBeenCalledWith("lod-medium");
+  });
+
+  it("should not notify viewport listeners during initial lod setup", () => {
+    const onViewportChange = vi.fn();
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.zoom = vi.fn().mockReturnValue(0.1);
+    mockCy.batch = vi.fn((cb) => cb());
+
+    setupGraphEvents(mockCy as unknown as Core, { onViewportChange });
+
+    expect(onViewportChange).not.toHaveBeenCalled();
+  });
+
   it("should register a double-click node handler", () => {
     const onNodeDoubleTap = vi.fn();
     setupGraphEvents(mockCy as unknown as Core, { onNodeDoubleTap });

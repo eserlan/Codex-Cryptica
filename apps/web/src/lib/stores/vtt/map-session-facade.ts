@@ -360,6 +360,22 @@ export abstract class MapSessionFacade {
     return this.tokenManager.requestTokenMove(tokenId, x, y, persistent);
   }
 
+  rotateToken(tokenId: string, rotation: number, silent = false) {
+    return this.tokenManager.rotateToken(tokenId, rotation, silent);
+  }
+
+  requestTokenRotation(tokenId: string, rotation: number, persistent = false) {
+    return this.tokenManager.requestTokenRotation(
+      tokenId,
+      rotation,
+      persistent,
+    );
+  }
+
+  confirmTokenRotation(tokenId: string) {
+    this.tokenManager.confirmTokenRotation(tokenId);
+  }
+
   confirmTokenMove(tokenId: string) {
     this.tokenManager.confirmTokenMove(tokenId);
   }

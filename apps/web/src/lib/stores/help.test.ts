@@ -1,45 +1,58 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Hoist mocks to run before imports
-vi.hoisted(() => {
-  (global as any).localStorage = {
-    getItem: vi.fn().mockReturnValue(null),
-    setItem: vi.fn(),
-    clear: vi.fn(),
-  };
-});
-
 vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
-import { helpStore, HelpStore } from "./help.svelte";
+import { HelpStore } from "./help.svelte";
 import { HELP_ARTICLES } from "$lib/config/help-content";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("HelpStore", () => {
+  let mockStorage: any;
+  let helpStore: HelpStore;
+
   beforeEach(async () => {
-    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    mockStorage = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    helpStore = new HelpStore(undefined, undefined, undefined, mockStorage);
     await helpStore.init();
     helpStore.reset();
   });
 
-  it("should support constructor injection for UI and Search stores", () => {
+  it("should support constructor injection for UI, Search, and Storage stores", () => {
     const mockOnboardingStore = {
       dismissedLandingPage: false,
     } as any;
     const mockModalUIStore = { closeSettings: vi.fn() } as any;
     const mockSearchStore = { open: vi.fn() } as any;
+    const customMockStorage = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    } as any;
+
     const store = new HelpStore(
       mockOnboardingStore,
       mockModalUIStore,
       mockSearchStore,
+      customMockStorage,
     );
 
     // Test that it uses the injected UI store
     store.startTour("initial-onboarding");
     expect(mockOnboardingStore.dismissedLandingPage).toBe(true);
     expect(mockModalUIStore.closeSettings).toHaveBeenCalled();
+
+    // Test that it uses the injected storage
+    store.dismissHint("new-hint");
+    expect(customMockStorage.setItem).toHaveBeenCalledWith(
+      "codex-cryptica-help-state",
+      expect.stringContaining("new-hint"),
+    );
   });
 
   it("should initialize with all help articles", () => {
@@ -49,6 +62,13 @@ describe("HelpStore", () => {
   it("should search articles by title", () => {
     helpStore.setSearchQuery("Graph");
     expect(helpStore.searchResults.some((a) => a.title.includes("Graph"))).toBe(
+      true,
+    );
+  });
+
+  it("should search articles by a word prefix", () => {
+    helpStore.setSearchQuery("fam");
+    expect(helpStore.searchResults.some((a) => a.id === "family-tree")).toBe(
       true,
     );
   });
@@ -64,32 +84,77 @@ describe("HelpStore", () => {
   });
 
   it("should manage tour lifecycle (next, prev, skip, complete)", () => {
+    // The tour prunes steps whose target is missing from the DOM (#1778), so
+    // mount the ActivityBar targets the onboarding tour points at.
+    const ids = [
+      "graph-empty-state-cta",
+      "activity-bar-graph",
+      "activity-bar-oracle",
+    ];
+    ids.forEach((id) => {
+      const el = document.createElement("div");
+      el.setAttribute("data-testid", id);
+      document.body.appendChild(el);
+    });
+
+    try {
+      helpStore.startTour("initial-onboarding");
+      expect(helpStore.activeTour).toBeDefined();
+      expect(helpStore.activeTour?.currentStepIndex).toBe(0);
+
+      helpStore.nextStep();
+      expect(helpStore.activeTour?.currentStepIndex).toBe(1);
+
+      helpStore.prevStep();
+      expect(helpStore.activeTour?.currentStepIndex).toBe(0);
+
+      helpStore.skipTour();
+      expect(helpStore.activeTour).toBeNull();
+      expect(helpStore.hasSeen("initial-onboarding")).toBe(true);
+    } finally {
+      ids.forEach((id) =>
+        document.querySelector(`[data-testid="${id}"]`)?.remove(),
+      );
+    }
+  });
+
+  it("pruneStepsToDom keeps body steps and drops steps with missing targets (#1778)", () => {
+    const steps = [
+      { id: "welcome", targetSelector: "body" } as any,
+      { id: "present", targetSelector: '[data-testid="present-el"]' } as any,
+      { id: "absent", targetSelector: '[data-testid="absent-el"]' } as any,
+    ];
+    const doc = {
+      querySelector: (sel: string) =>
+        sel === '[data-testid="present-el"]' ? ({} as Element) : null,
+    };
+
+    const pruned = helpStore.pruneStepsToDom(steps, doc);
+    expect(pruned.map((s) => s.id)).toEqual(["welcome", "present"]);
+  });
+
+  it("startTour marks the tour seen and does not start when no steps resolve (#1778)", () => {
+    // No ActivityBar targets are mounted, so only the body 'welcome' step would
+    // normally survive — force an all-missing scenario by pruning against an
+    // empty document to prove the empty-tour guard.
+    vi.spyOn(helpStore, "pruneStepsToDom").mockReturnValue([]);
     helpStore.startTour("initial-onboarding");
-    expect(helpStore.activeTour).toBeDefined();
-    expect(helpStore.activeTour?.currentStepIndex).toBe(0);
-
-    helpStore.nextStep();
-    expect(helpStore.activeTour?.currentStepIndex).toBe(1);
-
-    helpStore.prevStep();
-    expect(helpStore.activeTour?.currentStepIndex).toBe(0);
-
-    helpStore.skipTour();
     expect(helpStore.activeTour).toBeNull();
     expect(helpStore.hasSeen("initial-onboarding")).toBe(true);
   });
 
-  it("should handle persistence and initialization from localStorage", async () => {
+  it("should handle persistence and initialization from injected storage", async () => {
     const savedState = JSON.stringify({
       completedTours: ["test-tour"],
       dismissedHints: ["test-hint"],
       lastSeenVersion: "0.0.1",
     });
-    vi.mocked(localStorage.getItem).mockReturnValue(savedState);
+    mockStorage.getItem.mockReturnValue(savedState);
 
-    await helpStore.init();
-    expect(helpStore.hasSeen("test-tour")).toBe(true);
-    expect(helpStore.isHintDismissed("test-hint")).toBe(true);
+    const store = new HelpStore(undefined, undefined, undefined, mockStorage);
+    await store.init();
+    expect(store.hasSeen("test-tour")).toBe(true);
+    expect(store.isHintDismissed("test-hint")).toBe(true);
   });
 
   it("should handle help center operations", () => {
@@ -103,6 +168,12 @@ describe("HelpStore", () => {
     helpStore.openHelpToArticle("intro");
     expect((helpStore as any).expandedId).toBe("intro");
     expect(modalUIStore.openSettings).toHaveBeenCalledWith("help");
+  });
+
+  it("should safely reject an unknown direct Help article", () => {
+    helpStore.selectArticle("intro");
+    expect(helpStore.selectArticle("missing-article")).toBe(false);
+    expect((helpStore as any).expandedId).toBeNull();
   });
 
   it("should open help window", () => {
@@ -127,7 +198,7 @@ describe("HelpStore", () => {
     expect(helpStore.isHintDismissed("hint-1")).toBe(false);
     helpStore.dismissHint("hint-1");
     expect(helpStore.isHintDismissed("hint-1")).toBe(true);
-    expect(localStorage.setItem).toHaveBeenCalled();
+    expect(mockStorage.setItem).toHaveBeenCalled();
   });
 
   it("should force rebuild index", async () => {
@@ -146,5 +217,16 @@ describe("HelpStore", () => {
     expect(
       helpStore.searchResults.some((a) => a.id === "in-app-generators"),
     ).toBe(true);
+  });
+
+  it("vtt-session help article is present in HELP_ARTICLES", () => {
+    expect(HELP_ARTICLES.some((a) => a.id === "vtt-session")).toBe(true);
+  });
+
+  it("vtt-session article is discoverable by search", () => {
+    helpStore.setSearchQuery("vtt session");
+    expect(helpStore.searchResults.some((a) => a.id === "vtt-session")).toBe(
+      true,
+    );
   });
 });

@@ -140,7 +140,8 @@
       onclick={close}
       aria-label="Cancel"
     >
-      <span class="icon-[heroicons--x-mark] w-5 h-5 block"></span>
+      <span aria-hidden="true" class="icon-[heroicons--x-mark] w-5 h-5 block"
+      ></span>
     </button>
   </div>
 

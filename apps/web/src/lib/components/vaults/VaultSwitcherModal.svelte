@@ -1,15 +1,30 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import ModalShell from "$lib/components/ui/ModalShell.svelte";
+  import { pickDirectory } from "$lib/utils/fs";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
   let isLoading = $state(false);
   let showCreate = $state(false);
+
+  // Quick Start is mounted once, globally, via GlobalModalProvider (not
+  // duplicated inline here) so only one instance ever exists. Close this
+  // switcher too once Quick Start finishes/cancels, matching the previous
+  // "close both together" behavior.
+  let wasQuickStartOpen = $state(false);
+  $effect(() => {
+    if (modalUIStore.showQuickStartModal) {
+      wasQuickStartOpen = true;
+    } else if (wasQuickStartOpen) {
+      wasQuickStartOpen = false;
+      onClose();
+    }
+  });
 
   // Honor the intent the switcher was opened with (e.g. from the welcome screen
   // "Create New Vault" action), then consume it so it doesn't re-fire.
@@ -19,6 +34,7 @@
       modalUIStore.vaultSwitcherIntent = null;
     }
   });
+
   let newVaultName = $state("");
   let editingId = $state<string | null>(null);
   let editName = $state("");
@@ -26,7 +42,7 @@
   const handleLoadFromFolder = async () => {
     isLoading = true;
     try {
-      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      const handle = await pickDirectory({ mode: "readwrite" });
       const success = await vault.importFromFolder(handle);
       if (success) {
         onClose();
@@ -36,6 +52,10 @@
       }
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "NotSupportedError") {
+        notificationStore.notify(e.message, "error", true);
+        return;
+      }
       console.error(e);
     } finally {
       isLoading = false;
@@ -105,6 +125,11 @@
       onClose();
     } catch (e) {
       console.error(e);
+      const message =
+        e instanceof Error && e.message
+          ? e.message
+          : "Failed to create vault. Your browser may be blocking storage access.";
+      notificationStore.notify(message, "error", true);
     } finally {
       isLoading = false;
     }
@@ -115,10 +140,10 @@
     isLoading = true;
     try {
       // 1. Get handle immediately (must be user triggered)
-      const handle = await window.showDirectoryPicker({ mode: "read" });
+      const handle = await pickDirectory({ mode: "read" });
 
       // 2. Create the vault
-      const _id = await vault.createVault(newVaultName);
+      await vault.createVault(newVaultName);
 
       // 3. Trigger import into that vault using the handle we already got
       // Note: vault.switchVault is called inside createVault,
@@ -130,6 +155,11 @@
         onClose();
       }
     } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "NotSupportedError") {
+        notificationStore.notify(e.message, "error", true);
+        return;
+      }
       console.error(e);
       // Errors are primarily handled by vault.errorMessage now
     } finally {
@@ -140,13 +170,17 @@
   const handleImportToVault = async (v: VaultRecord) => {
     isLoading = true;
     try {
-      const handle = await window.showDirectoryPicker({ mode: "read" });
+      const handle = await pickDirectory({ mode: "read" });
       if (v.id !== vaultRegistry.activeVaultId) {
         await vault.switchVault(v.id);
       }
       await vault.importFromFolder(handle);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "NotSupportedError") {
+        notificationStore.notify(e.message, "error", true);
+        return;
+      }
       console.error(e);
     } finally {
       isLoading = false;
@@ -166,39 +200,22 @@
   const focusNode = (node: HTMLElement) => {
     node.focus();
   };
+
+  const openCreate = () => {
+    showCreate = true;
+  };
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
-
-<div
-  class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-  transition:fade
-  role="button"
-  tabindex="0"
-  onclick={(e) => {
-    if (e.target === e.currentTarget) onClose();
-  }}
-  onkeydown={(e) => {
-    if (
-      e.target === e.currentTarget &&
-      (e.key === "Enter" ||
-        e.key === " " ||
-        e.key === "Spacebar" ||
-        e.key === "Escape")
-    ) {
-      e.preventDefault();
-      onClose();
-    }
-  }}
+<ModalShell
+  open={true}
+  {onClose}
+  labelledBy="vault-selector-title"
+  backdropClass="bg-black/50 backdrop-blur-sm"
+  zIndexClass="z-[90]"
+  class="bg-theme-surface border border-theme-border rounded-lg max-h-[80vh] flex flex-col"
+  maxWidthClass="max-w-lg"
 >
-  <div
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="vault-selector-title"
-    class="bg-theme-surface border border-theme-border rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
-    transition:scale
-    data-testid="vault-switcher-modal"
-  >
+  <div data-testid="vault-switcher-modal" class="contents">
     <div
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg"
     >
@@ -209,12 +226,13 @@
         VAULT SELECTOR
       </h2>
       <button
+        type="button"
         onclick={onClose}
         class="text-theme-muted hover:text-theme-text"
         title="Close Selector"
         aria-label="Close Selector"
       >
-        <span class="icon-[lucide--x] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>
     </div>
 
@@ -248,7 +266,8 @@
                 title="Save Name"
                 aria-label="Save Name"
               >
-                <span class="icon-[lucide--check] w-4 h-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--check] w-4 h-4"
+                ></span>
               </button>
               <button
                 type="button"
@@ -257,7 +276,8 @@
                 title="Cancel Rename"
                 aria-label="Cancel Rename"
               >
-                <span class="icon-[lucide--x] w-4 h-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"
+                ></span>
               </button>
             </form>
           {:else}
@@ -305,11 +325,13 @@
                   type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => vault.loadFromFolder()}
-                  title="Load from Folder — pulls changes from your linked folder into the archive."
+                  title="Load from Folder - pulls changes from your linked folder into the archive."
                   aria-label="Load from Folder"
                   disabled={isLoading || !!editingId}
                 >
-                  <span class="icon-[lucide--download-cloud] w-3.5 h-3.5"
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--download-cloud] w-3.5 h-3.5"
                   ></span>
                 </button>
 
@@ -318,9 +340,9 @@
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                   onclick={() => vault.saveToFolder()}
                   title={!vault.hasFolderHandle
-                    ? "No folder linked — select a local folder to enable saving."
+                    ? "No folder linked - select a local folder to enable saving."
                     : vault.isDirty
-                      ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                      ? "Save to folder - writes all changes from the internal archive to your linked folder."
                       : "Up to date with local folder."}
                   aria-label="Save to Folder"
                   aria-busy={vault.status === "saving"}
@@ -331,46 +353,64 @@
                 >
                   {#if vault.status === "saving"}
                     <span
+                      aria-hidden="true"
                       class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
                     ></span>
                   {:else if !vault.isDirty && vault.hasFolderHandle}
-                    <span class="icon-[lucide--cloud-check] w-3.5 h-3.5"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--cloud-check] w-3.5 h-3.5"
+                    ></span>
                   {:else}
-                    <span class="icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--upload-cloud] w-3.5 h-3.5"
                     ></span>
                   {/if}
                 </button>
               {:else}
                 <button
+                  type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => handleImportToVault(v)}
                   title="Restore from Folder"
                   aria-label="Restore {v.name} from Folder"
                   disabled={isLoading || !!editingId}
                 >
-                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--folder-up] w-3.5 h-3.5"
+                  ></span>
                 </button>
               {/if}
 
               <button
+                type="button"
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => startRename(v)}
                 title="Rename"
                 aria-label="Rename"
                 disabled={isLoading || !!editingId}
               >
-                <span class="icon-[lucide--edit-2] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--edit-2] w-3.5 h-3.5"
+                ></span>
               </button>
 
               {#if v.id !== vaultRegistry.activeVaultId}
                 <button
+                  type="button"
                   class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => handleDelete(v.id)}
                   title="Delete"
                   aria-label="Delete"
                   disabled={isLoading || !!editingId}
                 >
-                  <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                  ></span>
                 </button>
               {/if}
             </div>
@@ -380,11 +420,11 @@
     </div>
 
     <div
-      class="p-4 border-t border-theme-border bg-theme-surface flex justify-between gap-2 items-center min-h-[4rem]"
+      class="p-4 border-t border-theme-border bg-theme-surface flex flex-wrap justify-between gap-x-4 gap-y-2 items-center min-h-[4rem]"
     >
       {#if showCreate}
         <form
-          class="flex gap-2 flex-1 animate-in fade-in slide-in-from-bottom-1"
+          class="flex flex-col sm:flex-row gap-2 flex-1 w-full animate-in fade-in slide-in-from-bottom-1"
           onsubmit={(e) => {
             e.preventDefault();
             handleCreate();
@@ -394,78 +434,101 @@
             bind:value={newVaultName}
             aria-label="New Vault Name"
             placeholder="Vault Name..."
-            class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
+            class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 min-w-0 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
           />
           {#if vault.errorMessage}
             <div
-              class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2"
+              class="p-2.5 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-xs flex items-center gap-2 w-full"
             >
-              <span class="icon-[lucide--alert-circle] w-4 h-4 shrink-0"></span>
+              <span
+                class="icon-[lucide--alert-circle] w-4 h-4 shrink-0"
+                aria-hidden="true"
+              ></span>
               <p>{vault.errorMessage}</p>
             </div>
           {/if}
 
-          <div class="flex justify-end gap-3 mt-8">
+          <div class="flex flex-wrap items-center justify-end gap-2 shrink-0">
             <button
               type="button"
-              class="px-4 py-2 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
+              class="px-3 py-1.5 text-sm font-medium text-theme-text-muted hover:text-theme-text transition-colors"
               onclick={() => (showCreate = false)}
               disabled={isLoading}
             >
               CANCEL
             </button>
-            <div class="flex gap-2">
-              <button
-                type="submit"
-                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                disabled={isLoading || !newVaultName.trim()}
-                aria-busy={isLoading}
-              >
-                {#if isLoading}
-                  <span
-                    class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-                    aria-hidden="true"
-                  ></span>
-                  CREATING...
-                {:else}
-                  CREATE
-                {/if}
-              </button>
-              <button
-                type="button"
-                class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                onclick={handleImport}
-                disabled={isLoading || !newVaultName.trim()}
-              >
-                {#if isLoading && vault.status === "loading"}
-                  <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
-                  ></span>
-                  IMPORTING...
-                {:else}
-                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
-                  IMPORT
-                {/if}
-              </button>
-            </div>
+            <button
+              type="submit"
+              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={isLoading || !newVaultName.trim()}
+              aria-busy={isLoading}
+            >
+              {#if isLoading}
+                <span
+                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                  aria-hidden="true"
+                ></span>
+                CREATING...
+              {:else}
+                CREATE
+              {/if}
+            </button>
+            <button
+              type="button"
+              class="px-4 py-1.5 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onclick={handleImport}
+              disabled={isLoading || !newVaultName.trim()}
+            >
+              {#if isLoading && vault.status === "loading"}
+                <span
+                  class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                  aria-hidden="true"
+                ></span>
+                IMPORTING...
+              {:else}
+                <span
+                  class="icon-[lucide--folder-up] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
+                IMPORT
+              {/if}
+            </button>
           </div>
         </form>
       {:else}
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
+          <button
+            type="button"
+            class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+            onclick={openCreate}
+            data-testid="empty-workspace-button"
+          >
+            <span class="icon-[lucide--plus] w-4 h-4" aria-hidden="true"></span> NEW
+            VAULT
+          </button>
+          <button
+            type="button"
+            class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+            onclick={() => modalUIStore.openQuickStartModal()}
+            data-testid="quick-start-world-button"
+          >
+            <span class="icon-[lucide--sparkles] w-4 h-4" aria-hidden="true"
+            ></span> QUICK START WORLD
+          </button>
+          <button
+            type="button"
+            class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+            onclick={handleLoadFromFolder}
+            disabled={isLoading}
+            title="Open a local folder as a new vault"
+          >
+            <span class="icon-[lucide--folder-open] w-4 h-4" aria-hidden="true"
+            ></span> OPEN FOLDER
+          </button>
+        </div>
         <button
-          class="text-theme-primary text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={() => (showCreate = true)}
-        >
-          <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
-        </button>
-        <button
-          class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
-          onclick={handleLoadFromFolder}
-          disabled={isLoading}
-          title="Open a local folder as a new vault"
-        >
-          <span class="icon-[lucide--folder-open] w-4 h-4"></span> OPEN FOLDER
-        </button>
-        <button
-          class="px-4 py-2 bg-theme-surface border border-theme-border rounded text-sm hover:text-theme-primary transition-colors"
+          type="button"
+          class="px-4 py-2 bg-theme-surface border border-theme-border rounded text-sm hover:text-theme-primary transition-colors shrink-0 ml-auto"
           onclick={onClose}
         >
           DONE
@@ -473,4 +536,4 @@
       {/if}
     </div>
   </div>
-</div>
+</ModalShell>

@@ -11,7 +11,9 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "@codex/oracle-engine": "workspace:*"
+    "@codex/oracle-engine": "workspace:*",
+    "@codex/runtime": "workspace:*",
+    "schema": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.7",

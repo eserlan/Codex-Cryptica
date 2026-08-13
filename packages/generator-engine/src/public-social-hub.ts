@@ -10,28 +10,14 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function generateName(rng: Rng = defaultRng): string {
-  const prefixes = [
-    "Ael",
-    "Bran",
-    "Cael",
-    "Dax",
-    "Kael",
-    "Morg",
-    "Thor",
-    "Vael",
-  ];
-  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
-  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  generatePlaceholderName as generateName,
+} from "./random-utils";
+import { parseFencedJson, asString } from "./llm-response-utils";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 const VENUE_ADJECTIVES = [
   "Sullen",
@@ -106,6 +92,7 @@ export const socialHubConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
@@ -156,6 +143,13 @@ export const socialHubConfig = {
       "Speakeasy",
       "Blood Bar",
       "Private Lounge",
+    ],
+    "Cosmic Horror": [
+      "Expedition Mess Hall",
+      "Restricted Reading Room",
+      "Weather Station Canteen",
+      "Diving Bell Lounge",
+      "Museum Staff Common Room",
     ],
     "Post-Apocalyptic": [
       "Trade Shack",
@@ -266,6 +260,13 @@ export const socialHubConfig = {
       "Curious investigators",
       "Predators in disguise",
       "Frightened locals",
+    ],
+    "Cosmic Horror": [
+      "Field researchers and survey crews",
+      "Anxious locals with half-told stories",
+      "Archive staff and visiting scholars",
+      "Divers, sailors, and salvage teams",
+      "Investigators following an unsettling lead",
     ],
     "Post-Apocalyptic": [
       "Scavengers and traders",
@@ -465,7 +466,7 @@ ${sessionContext}`;
 - Venue Type: ${resolved.venueType}
 - Atmosphere: ${resolved.atmosphere}
 - Wealth Level: ${resolved.wealthLevel}
-- Primary Clientele: ${resolved.clientele}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }
@@ -502,23 +503,18 @@ ${sessionContext}
 - Atmosphere: ${resolved.atmosphere}
 - Settlement Type: ${resolved.settlementType}
 - Wealth Level: ${resolved.wealthLevel}
-- Primary Clientele: ${resolved.clientele}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}
+- Primary Clientele: ${resolved.clientele}${formatCampaignContextBlock(resolved.campaignContext)}
 - Naming Directive: ${resolved.namingDirective}`;
 
   return { systemInstruction, userMessage, resolved };
 }
 
 function parseJson(text: string): Record<string, unknown> {
-  const cleanText = text
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  return JSON.parse(cleanText) as Record<string, unknown>;
+  return parseFencedJson<Record<string, unknown>>(text);
 }
 
 function stringField(data: Record<string, unknown>, key: string): string {
-  return typeof data[key] === "string" ? data[key] : "";
+  return asString(data[key]);
 }
 
 export function parseSocialHubResponse(text: string): PublicGeneratorOutput {
@@ -614,6 +610,7 @@ ${trouble}. ${pickFrom(hubTroubleClosers, rng)}
 ${pickFrom(hubHowToUseVariants, rng)}`;
 
   const lore = `### At a Glance
+- **Theme / Genre**: ${resolved.genre}
 - **Type**: ${resolved.venueType}
 - **Atmosphere**: ${resolved.atmosphere}
 - **Owner / Operator**: ${ownerName} — competent, guarded, and owed favours by the wrong people

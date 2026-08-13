@@ -141,8 +141,63 @@
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(vault.entities) to pre-cached vault.allEntities]
 
 **Learning:** Invoking `Object.values(vault.entities)` in component `$derived` blocks or hot functions triggers an `O(N)` object keys iteration and creates a new intermediate array on every evaluation. When `vault.entities` is large, this leads to significant redundant memory allocations and garbage collection pauses. While some components started caching arrays natively via the Store (`vault.allEntities`), many continued allocating `Object.values` inline. Also, chaining `.filter().slice().map()` or just `.filter()` onto those inline values causes even more intermediate allocations.
-**Action:** Always replace `Object.values(vault.entities)` with `vault.allEntities` in Svelte components. For chained array operations (like `.filter().slice()`), use an imperative `for...of` or `for (let i = 0; i < allEntities.length; i++)` loop with `break` limits to avoid redundant array creation and full dataset traversal.
+**Action:** Prefer `vault.allEntities` when a component needs entity values, especially when the store exposes it as cached derived state. For hot paths that repeatedly inspect the same entities, cache derived indexes such as slug sets and reuse them across calls. When a fresh traversal is required, use an imperative loop to avoid intermediate arrays; this still performs the necessary O(N) pass, but avoids repeated `Object.values()` allocations and redundant work.
 
 ## 2026-06-25 - [Performance Insight: Refactoring Object.values(guestStore.guestRoster) to pre-cached guestStore.allGuests]
+
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2025-06-30 - Replace chained array methods with early-exit imperative loops
+
+**Learning:** In `apps/web/src/lib/services/generators/generator-vault-context.ts`, building context samples via `Object.values(allEntities).filter(...).slice(0, MAX)` forces intermediate array allocations and full `O(N)` traversal of vaults. When vaults contain thousands of items, mapping and filtering the entire dataset just to capture a `MAX_TITLES` size slice severely spikes GC pressure on hot rendering/generation paths.
+**Action:** When deriving subsets of objects by limits (like `MAX_WORLD_SAMPLE` or `MAX_NEIGHBORS`), always replace `Object.values(obj).filter().slice()` with imperative loops (`for (const id in allEntities)`) combined with explicit capacity limits and early returns (e.g., `if (results.length >= MAX) break;`). This guarantees `O(K)` performance bounded to the sample size limit.
+
+## 2026-06-29 - [Performance Insight: Array allocation in object fromEntries]
+
+**Learning:** When generating lookup objects from an array of items (like connection counts per entity) in a `$derived` block, using `Object.fromEntries(vault.allEntities.map(...))` creates two intermediate arrays: one for the mapped tuples, and another internally by `fromEntries`. This creates unnecessary memory pressure during frequent reactive updates.
+**Action:** Replace `Object.fromEntries(array.map(...))` with an imperative `for...of` loop that constructs a new `Record` natively to reduce garbage collection pressure.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** In VTT applications, `graph.entities` payloads can be exceptionally large (containing thousands of items). Chaining methods like `Object.entries().map().map()` followed by `Object.fromEntries()` allocates multiple large, short-lived arrays. These intermediate allocations place immense pressure on the garbage collector during data sync/initialization, leading to jank and latency spikes. Replacing these chains with a single imperative loop (`for...in`) directly building the target dictionary avoids these array allocations entirely.
+**Action:** When transforming large data collections (especially dictionaries like `entities`), actively look for `Object.keys/values/entries` combined with `.map()` or `.filter()`, and refactor them into a single imperative loop.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** When generating a specific entity ID by resolving against a username across all entities (such as in `resolveGuestCharacterId`), using `Object.values(entities)` inline will allocate a new intermediate array on every resolution. Since `resolveGuestCharacterId` can be called frequently (e.g. per message, on connection setup), doing full allocations adds unnecessary memory pressure and garbage collection overhead.
+**Action:** Replace `Object.values(obj)` iterations with imperative `for...in` loops accessing `obj[key]` to process objects directly without intermediate array allocation when performing matching or transforming subsets that run frequently.
+
+## 2026-06-30 - [Performance Insight: Replace .filter() array methods with imperative loops over allEntities]
+
+**Learning:** When navigating connections or locating children nodes, invoking `.filter()` on the large `vault.allEntities` array triggers full O(N) traversal and allocates a new intermediate array on every evaluation (such as in `DetailStatusTab` and `ZenContent`). This places pressure on the garbage collector during rendering.
+**Action:** Replace `allEntities.filter(...)` with an imperative `for...of` (or traditional `for`) loop that checks conditions and constructs the necessary subsets or result shapes directly in a single pass.
+
+## 2026-07-02 - [Performance Insight: Replace chained array methods (Array.from().map().filter()) with imperative loops]
+
+**Learning:** In `apps/web/src/lib/services/dungeon-delve-service.ts`, using `Array.from(narrative.matchAll(...)).filter()` allocates multiple intermediate arrays for the regex matches, the mapped strings, and the filtered results. In hot paths or large narratives, this creates unnecessary GC pressure.
+**Action:** Replace chained array generation methods over iterators with imperative `for...of` loops that push valid results directly into the final array.
+
+## 2026-08-08 - [Verify Production Code Before Modifying Test Mocks]
+
+**Learning:** Replacing an expensive `.filter()` operation on `Object.values(entities)` with an imperative loop on `allEntities` is a good performance pattern. However, you must first verify that `allEntities` actually exists on the production object being modified (e.g. `vault`). If it does exist in production, it is correct to update the test mock to include it. If it does not exist, adding it only to the test mock will cause a `TypeError: Cannot read properties of undefined` in production, leading to a crash.
+**Action:** When refactoring to use a pre-calculated property (like `allEntities`), explicitly verify its existence in the real production code (not just the mock) before changing the test. Do not artificially mask errors by adding missing properties to test mocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing Chained Array Methods with Imperative Loops for Performance
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline allocate a new array on every evaluation, causing unnecessary garbage collection. This pattern was identified in several components fetching `guestStore.guestRoster`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2024-05-18 - Replacing inline array .filter().length with imperative counting in Svelte derived states
+
+**Learning:** In Svelte `$derived` blocks, chaining `.filter(...).length` on potentially large arrays creates an entirely new intermediate array in memory just to count its elements. This causes unnecessary garbage collection pressure and CPU overhead on every reactive update.
+**Action:** Replace inline `.filter(...).length` derivations with `$derived.by()` utilizing an imperative `for` loop that iterates over the original array and increments a counter based on the filter logic. This reduces the memory complexity of the count from O(N) to O(1).

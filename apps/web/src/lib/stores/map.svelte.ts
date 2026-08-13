@@ -4,7 +4,13 @@ import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { guestVault } from "./guest-vault.svelte";
+import {
+  browserStorage,
+  type StorageLike,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
@@ -64,6 +70,7 @@ export class MapStore {
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
   private static _vaultSwitchHandler: (() => void) | null = null;
   private storage: StorageLike;
+  private idGenerator: IdGenerator;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -87,8 +94,12 @@ export class MapStore {
     return this.activeMap?.pins || [];
   });
 
-  constructor(storage: StorageLike = browserStorage) {
+  constructor(
+    storage: StorageLike = browserStorage,
+    idGenerator: IdGenerator = systemIdGenerator,
+  ) {
     this.storage = storage;
+    this.idGenerator = idGenerator;
     if (typeof window !== "undefined") {
       this.applySettings(null);
       this.restorePageState();
@@ -140,12 +151,15 @@ export class MapStore {
           const hasLoadedMaps = Object.keys(maps).length > 0;
           const isInvalid =
             hasLoadedMaps && this.activeMapId ? !maps[this.activeMapId] : false;
-          if (
-            (!this.activeMapId || isInvalid) &&
-            !pendingMapId &&
-            this.worldMap
-          ) {
-            this.selectMap(this.worldMap.id);
+          if ((!this.activeMapId || isInvalid) && !pendingMapId) {
+            if (this.worldMap) {
+              this.selectMap(this.worldMap.id);
+            } else if (
+              hasLoadedMaps &&
+              (!sessionModeStore.isGuestMode || guestVault.publishId)
+            ) {
+              this.selectMap(Object.keys(maps)[0]);
+            }
           }
         });
       });
@@ -424,7 +438,7 @@ export class MapStore {
       return undefined;
     }
 
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     const storageName = `${id}.webp`;
 
     // 1. Convert to WebP and Save to OPFS
@@ -563,7 +577,7 @@ export class MapStore {
     }
 
     const newPin: MapPin = {
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       mapId: this.activeMapId,
       entityId,
       coordinates,

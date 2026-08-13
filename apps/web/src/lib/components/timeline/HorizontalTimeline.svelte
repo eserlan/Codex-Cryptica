@@ -1,15 +1,48 @@
 <script lang="ts">
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import TimelineEntryItem from "./TimelineEntryItem.svelte";
+  import { getRenderWindow, sliceRenderWindow } from "./utils/render-window";
   import { fade } from "svelte/transition";
+  import { onMount } from "svelte";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
   let container = $state<HTMLDivElement>();
+  let scrollLeft = $state(0);
+  let viewportWidth = $state(1200);
+  const timelineOpenSpan = browserPerformanceRecorder.start("timeline_open");
+
+  onMount(() => {
+    requestAnimationFrame(() => {
+      timelineOpenSpan.complete(() => ({
+        resultCount: timelineStore.filteredEntries.length,
+        domNodeCount: container?.querySelectorAll("*").length ?? 0,
+      }));
+    });
+  });
+
+  const renderWindow = $derived(
+    getRenderWindow(
+      timelineStore.filteredEntries.length,
+      scrollLeft,
+      viewportWidth,
+      340,
+    ),
+  );
+  const visibleEntries = $derived(
+    sliceRenderWindow(timelineStore.filteredEntries, renderWindow),
+  );
 
   const handleWheel = (e: WheelEvent) => {
     if (container && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       e.preventDefault();
       container.scrollLeft += e.deltaY;
     }
+  };
+
+  const handleScroll = () => {
+    if (!container) return;
+    scrollLeft = container.scrollLeft;
+    viewportWidth = container.clientWidth || viewportWidth;
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
@@ -31,16 +64,25 @@
   bind:this={container}
   onwheel={handleWheel}
   onkeydown={handleKeydown}
+  onscroll={handleScroll}
   role="region"
   aria-label="Horizontal Timeline"
   tabindex="0"
   class="h-full flex items-center overflow-x-auto overflow-y-hidden custom-scrollbar bg-[radial-gradient(circle_at_center,_#0a0a0a_0%,_#000_100%)] p-8 gap-12 select-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none focus-visible:ring-inset"
   transition:fade
 >
-  {#each timelineStore.filteredEntries as entry, i}
+  {#if renderWindow.topSpacer > 0}
+    <div
+      aria-hidden="true"
+      class="shrink-0"
+      style:width={`${renderWindow.topSpacer}px`}
+    ></div>
+  {/if}
+
+  {#each visibleEntries as entry, i (entry.entityId + entry.title)}
     <div class="relative flex flex-col items-center min-w-[280px] group">
       <!-- Connecting Line -->
-      {#if i < timelineStore.filteredEntries.length - 1}
+      {#if renderWindow.start + i < timelineStore.filteredEntries.length - 1}
         <div
           class="absolute top-[50%] left-1/2 w-[calc(100%+48px)] h-px bg-gradient-to-r from-green-900/50 via-green-500/20 to-green-900/50 z-0"
         ></div>
@@ -57,6 +99,14 @@
       </div>
     </div>
   {/each}
+
+  {#if renderWindow.bottomSpacer > 0}
+    <div
+      aria-hidden="true"
+      class="shrink-0"
+      style:width={`${renderWindow.bottomSpacer}px`}
+    ></div>
+  {/if}
 </div>
 
 <style>

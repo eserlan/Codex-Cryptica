@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { comparisons } from "$lib/config/seo-pages";
+import { comparisons } from "$lib/config/seo-comparisons";
 import type { EntryGenerator, PageLoad } from "./$types";
 
 export const prerender = true;

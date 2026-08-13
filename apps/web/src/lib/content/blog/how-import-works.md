@@ -90,7 +90,7 @@ The final step is where your lore becomes part of the permanent record. Discover
 
 ## **Privacy First**
 
-No file is ever uploaded to a Codex Cryptica server. This is a **local-first** pipeline: analysis runs via your browser and Gemini API, and the final results live exclusively in your local storage.
+No file is ever uploaded to a Codex Cryptica server. This is a **local-first** pipeline: analysis runs via your browser and OpenAI/Luna API, and the final results live exclusively in your local storage.
 
 ---
 

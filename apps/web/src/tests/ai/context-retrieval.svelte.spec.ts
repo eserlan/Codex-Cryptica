@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../lib/services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
   },
 }));
 
-import { DefaultContextRetrievalService } from "../../lib/services/ai/context-retrieval.service";
+import { DefaultContextRetrievalService } from "@codex/ai-engine";
 
 describe("ContextRetrievalService", () => {
   let mockVault: any;

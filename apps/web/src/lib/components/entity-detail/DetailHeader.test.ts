@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
-import { render } from "@testing-library/svelte";
+import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import DetailHeader from "./DetailHeader.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 // Mock stores
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
@@ -163,5 +164,75 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     const indicator = getByTestId("sidebar-parent-indicator");
     expect(indicator).toBeTruthy();
     expect(getByText("Mock Parent Entity")).toBeTruthy();
+  });
+});
+
+describe("DetailHeader stature badge", () => {
+  const renderEntity = (entity: Record<string, unknown>) =>
+    render(DetailHeader, {
+      entity: { id: "entity-1", title: "Test Entity", ...entity } as any,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+  const renderWithLabels = (labels: string[]) => renderEntity({ labels });
+
+  it("shows how an entity's images will be drawn when a label sets it", () => {
+    const { getByTestId } = renderWithLabels(["elven", "deity"]);
+    expect(getByTestId("entity-stature-badge").textContent).toContain("Divine");
+  });
+
+  it("stays quiet for ordinary labels", () => {
+    // The badge exists so a stature is never inferred invisibly; showing one
+    // where none applies would be the same noise in reverse.
+    const { queryByTestId } = renderWithLabels(["ancient", "ruined"]);
+    expect(queryByTestId("entity-stature-badge")).toBeNull();
+  });
+
+  it("shows a stature the Oracle read, which no label records", () => {
+    // Without this the ordinary DRAW path infers a stature and shows nothing.
+    const { getByTestId } = renderEntity({
+      labels: ["elven"],
+      imageArtDirection: { statureId: "divine" },
+    });
+
+    expect(getByTestId("entity-stature-badge").textContent).toContain("Divine");
+    expect(getByTestId("entity-stature-keep")).toBeTruthy();
+  });
+
+  it("keeps an inferred stature as a label on request", async () => {
+    const { getByTestId } = renderEntity({
+      labels: [],
+      imageArtDirection: { statureId: "mythic" },
+    });
+
+    await fireEvent.click(getByTestId("entity-stature-keep"));
+
+    expect(vault.addLabel).toHaveBeenCalledWith("entity-1", "mythic");
+  });
+
+  it("offers nothing to keep when a label already says it", () => {
+    const { getByTestId, queryByTestId } = renderEntity({
+      labels: ["deity"],
+      imageArtDirection: { statureId: "divine" },
+    });
+
+    expect(getByTestId("entity-stature-badge")).toBeTruthy();
+    expect(queryByTestId("entity-stature-keep")).toBeNull();
+  });
+
+  it("never offers to write to a vault the viewer does not own", () => {
+    (vault as any).isGuest = true;
+    try {
+      const { queryByTestId } = renderEntity({
+        labels: [],
+        imageArtDirection: { statureId: "divine" },
+      });
+      expect(queryByTestId("entity-stature-keep")).toBeNull();
+    } finally {
+      (vault as any).isGuest = false;
+    }
   });
 });

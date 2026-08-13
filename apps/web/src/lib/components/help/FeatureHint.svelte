@@ -22,12 +22,13 @@
         >{hint.title}</span
       >
       <button
+        type="button"
         onclick={() => helpStore.dismissHint(hintId)}
         class="text-theme-muted hover:text-theme-primary transition-colors"
         data-testid="dismiss-hint-button"
         aria-label="Dismiss hint"
       >
-        <span class="icon-[lucide--x] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3"></span>
       </button>
     </div>
     <p class="text-[10px] leading-tight break-words text-theme-text/80">

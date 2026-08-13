@@ -15,6 +15,11 @@ import { loadHelpArticles, type HelpArticle } from "$lib/content/loader";
 
 export type { HelpArticle };
 
+/** Help articles linked directly from feature entry points. */
+export const FEATURE_HELP_ARTICLES = {
+  COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
+} as const;
+
 export interface FeatureHint {
   id: string;
   title: string;
@@ -30,100 +35,196 @@ export interface FeatureHint {
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
+  CREATURE_PACKS: "creature-packs-hint-seen",
 } as const;
 
+/**
+ * First-run guided tour.
+ *
+ * Deliberately short (≤4 steps) and built around the core loop a newcomer
+ * should complete first: create something → link it → see it connect. Targets
+ * are chosen to exist in BOTH layouts without an extra interaction (opening a
+ * menu) to reveal them:
+ * - The ActivityBar renders as a side rail on desktop and a bottom bar on
+ *   phones, but keeps the same `activity-bar-*` testids either way.
+ * - The "create your first character" step targets the graph's own
+ *   empty-state CTA rather than the header's "New Entity" button — that
+ *   button is desktop-only in the header and sits inside a closed hamburger
+ *   menu on mobile, so it isn't reliably present either. The empty-state CTA
+ *   only renders while the vault has zero entities, which is exactly when
+ *   this step is relevant; for a vault that already has entities the step is
+ *   pruned and the tour skips straight to "graph" (#1778).
+ *
+ * (#1777: #1779, #1784, #1787).
+ *
+ * The longer feature catalogue that used to live here now belongs in the Help
+ * center ("What else can Codex Cryptica do?"), not the first-run path.
+ *
+ * `helpStore.startTour` prunes any step whose target is missing from the DOM
+ * before the tour begins, so a layout that happens to hide a target never
+ * produces an unanchored tooltip (#1778).
+ */
 export const ONBOARDING_TOUR: GuideStep[] = [
   {
     id: "welcome",
     targetSelector: "body",
-    title: "Welcome to Codex Cryptica",
+    title: "Welcome — this is your world",
+    // Deliberately agnostic about whether the vault is empty or already
+    // populated (e.g. a converted demo already has characters in it) — this
+    // step always shows regardless of entity count, so it must not presuppose
+    // either state. The next step's own copy handles the empty-vault case.
     content:
-      "This tool gives you absolute control over your world notes. Everything stays on your computer for total privacy.",
+      "Everything you create here stays on your device. No account, nothing uploaded. Let's take a quick look at how your world comes together.",
     position: "bottom",
   },
   {
-    id: "vault",
-    targetSelector: '[data-testid="open-vault-button"]',
-    title: "Vault Management",
+    // Targets the graph's own empty-state CTA, which only exists while the
+    // vault has zero entities — exactly when this instruction is relevant.
+    // For a vault that already has entities (e.g. a converted demo), this
+    // step is pruned by pruneStepsToDom() and the tour skips straight to
+    // "graph" (#1778) — that user doesn't need to be told how to create an
+    // entity. Deliberately NOT targeting the header's "New Entity" button:
+    // it's desktop-only in the header and lives inside a closed hamburger
+    // menu on mobile, so it isn't a reliable, always-visible target either.
+    id: "create-entity",
+    targetSelector: '[data-testid="graph-empty-state-cta"]',
+    title: "Create your first character",
     content:
-      "This is your active story. Click here to switch between different worlds or create a new vault.",
-    position: "bottom",
+      "Click here to add a character, place, or faction. That's all it takes to start — one person or place is enough.",
+    position: "right",
   },
   {
     id: "graph",
-    targetSelector: '[data-testid="nav-graph"]',
-    title: "Knowledge Graph",
+    targetSelector: '[data-testid="activity-bar-graph"]',
+    title: "Watch it connect",
     content:
-      "The primary view of your world. See how Character, Locations, and Events connect through an interactive web.",
-    position: "bottom",
-  },
-  {
-    id: "map",
-    targetSelector: '[data-testid="nav-map"]',
-    title: "Tactical Maps",
-    content:
-      "Plot your world data onto geographic or tactical canvases with persistent pins and Fog of War.",
-    position: "bottom",
-  },
-  {
-    id: "canvas",
-    targetSelector: '[data-testid="nav-canvas"]',
-    title: "Spatial Canvas",
-    content:
-      "Design custom layouts like conspiracy boards or quest flowcharts on an infinite board.",
-    position: "bottom",
-  },
-  {
-    id: "search",
-    targetSelector: '[data-testid="search-input"]',
-    title: "Quick Search",
-    content:
-      "Find anything instantly. Press `Cmd+K` from anywhere to search NPCs, locations, and lore.",
-    position: "bottom",
+      "Mention another name in your notes — like a home town or an ally — and Codex Cryptica suggests a connection. Accept it, then open the Graph to see it appear.",
+    position: "right",
   },
   {
     id: "oracle",
     targetSelector: '[data-testid="activity-bar-oracle"]',
-    title: "Lore Oracle",
+    title: "Optional AI help — and more when you want it",
+    // Closes the tour with two "optional depth" mentions rather than adding a
+    // 5th step: the Oracle, and a pointer to the Help Center. A dedicated
+    // step here would re-inflate the ≤4-step tour we deliberately trimmed
+    // (#1779) — this keeps the tour itself minimal while still surfacing the
+    // fuller guides for anyone who wants them, per the assessment's
+    // recommendation to move the exhaustive feature list out of onboarding
+    // and into an optional Help gallery.
     content:
-      "Consult the AI about your world or perform utility tasks like /roll and /create.",
+      "Stuck for ideas? The Oracle can suggest names, plot hooks, and summaries whenever you want it — always optional, your world works fully without it. For deeper guides (family trees, calendars, generators, sharing with players), the Help Center is in Settings any time.",
     position: "right",
   },
+];
+
+export interface CoachMark {
+  id: string;
+  icon: string;
+  title: string;
+  body: string;
+  targetSelector: string;
+}
+
+/**
+ * Mobile-only graph coach marks (GraphView.svelte).
+ *
+ * Deliberately `isMobile`-scoped, NOT extended to touch tablets: this content
+ * and its targets are mobile-chrome-specific — the bottom ActivityBar,
+ * GraphToolbar's collapsed FAB, and AppHeader's collapsed search icon all
+ * only render in that exact form below the `md` (768px) breakpoint. A touch
+ * tablet (769-1279px) gets the desktop side-rail ActivityBar, GraphToolbar's
+ * full inline toolbar (no FAB — it only collapses on `isMobile`), and —
+ * depending on width — either the collapsed or full search input (AppHeader
+ * collapses at `lg`, 1024px, which cuts through the middle of the tablet
+ * range). None of that matches what these marks describe.
+ *
+ * `targetSelector` identifies the real element each mark describes, so it
+ * can be spotlighted — otherwise the card is just floating text with nothing
+ * visually tying it to the button/bar in question (#1785 follow-up: a user
+ * couldn't tell which "dark button" the graph-controls step meant, and the
+ * card was even briefly found to sit ON TOP of that exact button).
+ *
+ * Lives here (not inline in GraphView.svelte) so a selector-drift contract
+ * test can assert every targetSelector still resolves to a real element —
+ * the exact bug class that broke the main tour (#1787).
+ */
+export const COACH_MARKS: CoachMark[] = [
   {
-    id: "explorer",
-    targetSelector: '[data-testid="activity-bar-explorer"]',
-    title: "Entity Explorer",
-    content:
-      "Quickly find and filter your characters and locations via the persistent sidebar.",
-    position: "right",
+    id: "activity-bar",
+    icon: "icon-[lucide--layout-grid]",
+    title: "Views & tools",
+    body: "Switch between Graph, Map, Canvas and more from the bar at the bottom.",
+    targetSelector: '[data-testid="activity-bar"]',
   },
   {
-    id: "dice",
-    targetSelector: '[data-testid="dice-roller-button"]',
-    title: "Polyhedral Dice",
-    content:
-      "Quick access to the Die Roller modal for all your standard RPG dice needs.",
-    position: "bottom",
+    id: "graph-fab",
+    icon: "icon-[lucide--sliders-horizontal]",
+    title: "Graph controls",
+    body: "The dark button opens layout, filters, and display options. Drag to pan, pinch to zoom, and tap a node to open it.",
+    targetSelector: '[data-testid="graph-controls-fab"]',
   },
   {
-    id: "importer",
-    targetSelector: '[data-testid="import-vault-button"]',
-    title: "Archive Importer",
-    content:
-      "Quickly bring your existing notes or JSON data into the Codex via the dedicated importer.",
-    position: "bottom",
-  },
-  {
-    id: "settings",
-    targetSelector: '[data-testid="settings-button"]',
-    title: "System Settings",
-    content:
-      "Configure your AI keys, adjust visual themes, and manage NPC categories.",
-    position: "bottom",
+    id: "graph-search",
+    icon: "icon-[lucide--search]",
+    title: "Find anything",
+    body: "Tap the search icon to jump to any entity by name.",
+    targetSelector: '[data-testid="mobile-search-button"]',
   },
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  // The browser-local caveat is the whole point of this hint (156-entity-shelf,
+  // FR-024): people will otherwise assume the Shelf is a backup or a way to
+  // send an entity to a co-GM, and find out it is neither at the worst moment.
+  "entity-shelf": {
+    id: "entity-shelf",
+    title: "The Shelf",
+    content:
+      "Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
+    icon: "icon-[lucide--library]",
+  },
+  "touch-graph-gestures": {
+    id: "touch-graph-gestures",
+    title: "Touch gestures",
+    content: "Drag to pan, pinch to zoom, and tap a node to open it.",
+    icon: "icon-[lucide--hand]",
+  },
+  "getting-started": {
+    id: "getting-started",
+    title: "New here?",
+    content:
+      "Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
+    icon: "icon-[lucide--compass]",
+  },
+  "guided-mode-quick-start": {
+    id: "guided-mode-quick-start",
+    title: "Quick Start a world",
+    content:
+      "Pick 'Quick Start World' when creating a vault to generate a ready-to-explore 4-6 entity constellation. One choice sets both the genre of the generated world and your workspace appearance, and the dialog previews what you'll get before you commit. Works fully offline.",
+    icon: "icon-[lucide--sparkles]",
+  },
+  "guided-mode-toggle": {
+    id: "guided-mode-toggle",
+    title: "Guided Mode",
+    content:
+      "Guided Mode simplifies the interface and surfaces a single '+ Create' action. Switch to Full Toolbox any time in the header — nothing you've created is ever hidden or lost.",
+    icon: "icon-[lucide--compass]",
+  },
+  "guided-mode-intent-create": {
+    id: "guided-mode-intent-create",
+    title: "+ Create",
+    content:
+      "Pick Character, Place, Faction, Event, or Item and Codex Cryptica infers the current context and generates a draft immediately. Click Customize on the draft to reveal the full generator options.",
+    icon: "icon-[lucide--plus]",
+  },
+  "guided-mode-suggestions": {
+    id: "guided-mode-suggestions",
+    title: "Next-step suggestions",
+    content:
+      "A subtle banner at the bottom of an entity's detail panel suggests logical next steps, like adding a leader to a faction. Click the suggestion, or dismiss it if it doesn't apply.",
+    icon: "icon-[lucide--lightbulb]",
+  },
   "lore-oracle": {
     id: "lore-oracle",
     title: "AI Oracle",
@@ -135,21 +236,35 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "oracle-connection-modes",
     title: "Oracle Connection Modes",
     content:
-      "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.",
+      "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to OpenAI/Luna). The status badge in the Oracle sidebar shows which mode is active.",
     icon: "icon-[lucide--cloud]",
   },
   "oracle-memory": {
     id: "oracle-memory",
     title: "Oracle Memory",
     content:
-      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
+      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
     icon: "icon-[lucide--brain]",
+  },
+  "family-tree": {
+    id: "family-tree",
+    title: "Family Tree",
+    content:
+      "Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.",
+    icon: "icon-[lucide--network]",
+  },
+  "lineage-controls": {
+    id: "lineage-controls",
+    title: "Explore the lineage",
+    content:
+      "Drag to pan, scroll or pinch to zoom, and use ⊞ to expand a branch. Choose Show all generations to reveal the whole recorded lineage.",
+    icon: "icon-[lucide--git-branch]",
   },
   "visual-graph": {
     id: "visual-graph",
     title: "Visual Graph",
     content:
-      "Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
+      "Navigate your lore through a dynamic, interactive web. On a phone, the graph starts near a useful entity; use Fit to Screen in the graph controls whenever you want an overview. Drag to pan, pinch to zoom, and tap a node to open it. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance. The drawing needs a pointer and a screen, so Browse as table in the graph controls opens the same entities as a keyboard-friendly list, and each entity page names its connections and their direction.",
     icon: "icon-[lucide--share-2]",
   },
   "world-chronology": {
@@ -173,6 +288,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.",
     icon: "icon-[lucide--folder-sync]",
   },
+  "cif-importer": {
+    id: "cif-importer",
+    title: "Codex Interchange Format (CIF) Import",
+    content:
+      "Drop a .cif.json or .cif.zip file exported by another compatible worldbuilding tool to bring its entities, hierarchy, links, and images into your vault — entirely offline, with nothing sent anywhere. A raw Thread Weaver campaign export works too — it's converted to CIF in your browser automatically before the same review step. ZIP packages carry pictures: each one is checked against its declared fingerprint before import, attached to its entity, and stored once even if you re-import. Broken files are rejected before you ever see a review screen, naming what's wrong. Re-importing a later export matches existing entries by their stable identity (never by title), so you can update, skip, or create per entry and see exactly what changed. Relationship labels like 'mother of' become real family links, the same as anywhere else in the app.",
+    icon: "icon-[lucide--file-json-2]",
+  },
   "search-indexing": {
     id: "search-indexing",
     title: "Search Indexing",
@@ -193,6 +315,27 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.",
     icon: "icon-[lucide--download-cloud]",
+  },
+  "public-world-directory": {
+    id: "public-world-directory",
+    title: "Public World Directory",
+    content:
+      "Sharing by link and listing publicly are separate choices. A guest snapshot stays unlisted until you open Publishing Settings, review the public preview, and save a directory listing. The public directory exposes only the saved title, description, labels, optional cover image, optional owner name, and the read-only guest link. All listed worlds display a provenance and copyright notice confirming they are user-created and independently published without rights-holder endorsement. Authors must confirm they have the legal right to publish their content, and visitors may report potential copyright concerns for moderation review.",
+    icon: "icon-[lucide--globe]",
+  },
+  "guest-entity-links": {
+    id: "guest-entity-links",
+    title: "Sharing a Link to an Entry",
+    content:
+      "In a shared world, every entry has a link button (next to the entry title in the side panel and in the full-screen view). It copies a direct link that opens that entry full-screen for anyone you send it to. While browsing a shared world, the address bar also carries the current entry, so copying the address works too.",
+    icon: "icon-[lucide--link]",
+  },
+  "table-view-filters": {
+    id: "table-view-filters",
+    title: "Table View Filters",
+    content:
+      "In table view, click a type badge or a label chip on any row to filter the table down to matching entries; click again (or use Clear) to remove the filter. Active label filters appear next to the type pills above the table. Every column header with an arrow, including Labels, can be clicked to sort.",
+    icon: "icon-[lucide--filter]",
   },
   "total-privacy": {
     id: "total-privacy",
@@ -264,6 +407,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
     icon: "icon-[lucide--file-up]",
   },
+  "creature-packs": {
+    id: "creature-packs",
+    title: "Creature Packs",
+    content:
+      "Populate a new vault fast with Creature Packs — curated sets of ready-to-use creatures. Open the Importer, scroll to the Creature Packs section, click a pack to preview every creature, deselect any you don't want, then import the rest. Each creature lands as a normal, fully editable entity in your vault. Works without an AI connection.",
+    icon: "icon-[lucide--book-open]",
+  },
   themes: {
     id: "themes",
     title: "Themes",
@@ -277,6 +427,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.",
     icon: "icon-[lucide--brush]",
+  },
+  "image-stature": {
+    id: "image-stature",
+    title: "Drawing Gods and Legends",
+    content:
+      "A picture of a god should not look like a picture of a villager. Label an entity 'deity', 'god', 'divine', 'immortal' or 'titan' and its images are drawn in materials beyond mortal making, lit from within, and framed from below. 'legendary' or 'demigod' does the same a step down. Everything else is drawn as ordinary, and the entity panel shows which one is in effect. You can also set it for a single picture under Advanced art direction when you review a prompt.",
+    icon: "icon-[lucide--sparkles]",
   },
   "demo-mode": {
     id: "demo-mode",
@@ -310,7 +467,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vtt-mode",
     title: "VTT Mode",
     content:
-      "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.",
+      "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map. Select a token and drag the handle above it or its facing indicator ring to rotate its facing; Alt+Left/Right rotates it in 45-degree steps. Right-click a token and open Appearance to show its facing indicator or switch between circle and square bases.",
     icon: "icon-[lucide--swords]",
   },
   "vtt-entity-list": {
@@ -320,11 +477,18 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.",
     icon: "icon-[lucide--panel-right]",
   },
+  "voice-chat": {
+    id: "voice-chat",
+    title: "Session Voice Chat",
+    content:
+      "Talk to your players without leaving the app. While hosting a live session, press the Voice button in the header to open a voice channel. Connected players can join from their own header, mute their microphone, and see who is in the channel.",
+    icon: "icon-[lucide--mic]",
+  },
   "spatial-canvas": {
     id: "spatial-canvas",
     title: "Spatial Canvas",
     content:
-      "Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.",
+      "Design custom layouts like conspiracy boards or quest flowcharts. Sketch with the pencil, remove individual strokes with the eraser, and rotate cards with a two-finger twist or the desktop rotation handle. Drawings and card angles persist with the canvas.",
     icon: "icon-[lucide--layout-dashboard]",
   },
   "the-archive": {
@@ -345,7 +509,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases), and sort by name or last edited time in either direction. Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {
@@ -422,15 +586,22 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "guest-character-chat",
     title: "Guest Character Chat",
     content:
-      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.",
+      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship.",
     icon: "icon-[lucide--messages-square]",
   },
   "in-app-generators": {
     id: "in-app-generators",
     title: "Campaign Generators",
     content:
-      "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+      "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
+  },
+  "secret-society-generator": {
+    id: "secret-society-generator",
+    title: "Secret Societies & Cults",
+    content:
+      "Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.",
+    icon: "icon-[lucide--eye]",
   },
   "entity-timeline": {
     id: "entity-timeline",
@@ -445,6 +616,69 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
     icon: "icon-[lucide--wifi-off]",
+  },
+  "language-generator": {
+    id: "language-generator",
+    title: "Fictional Languages",
+    content:
+      "Design structured language profiles (conlangs) with pronunciation guidance, naming structures, example names, phrases, and a glossary. When generating an NPC, faction, settlement, or ship, choose one saved Naming language to apply its rules. No language is applied automatically.",
+    icon: "icon-[lucide--languages]",
+  },
+  "news-sheet-generator": {
+    id: "news-sheet-generator",
+    title: "News Sheets (In-World News)",
+    content:
+      "Create an in-world news sheet for your campaign — a lead headline, short articles, street rumours, classifieds, and adverts, all written the way the publication's owner would allow. The handout part is safe to show players; the GM section keeps the truth behind the stories and the adventure hooks. Generated inside a vault, the sheet reports on your existing places, factions, and events.",
+    icon: "icon-[lucide--newspaper]",
+  },
+  "dungeon-generator": {
+    id: "dungeon-generator",
+    title: "Dungeon & Delve Generator",
+    content:
+      "Draft multi-sector subterranean complexes, ancient ruins, precursor alien vaults, or cybernetic facilities. Each output includes architectural atmosphere, key sectors/levels, inhabitant factions, central secrets, hazards, treasures, and adventure hooks.",
+    icon: "icon-[lucide--castle]",
+  },
+  "adventure-generator": {
+    id: "adventure-generator",
+    title: "Adventure Idea Generator",
+    content:
+      "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
+    icon: "icon-[lucide--map]",
+  },
+  "quest-generator": {
+    id: "quest-generator",
+    title: "Quest Hook Generator",
+    content:
+      "Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.",
+    icon: "icon-[lucide--scroll-text]",
+  },
+  "plot-twist-generator": {
+    id: "plot-twist-generator",
+    title: "Plot Twist & Complication Generator",
+    content:
+      "Start with an existing premise, scene, or campaign problem and generate a coherent reversal or complication. The generator preserves established facts, identifies an assumption that can be overturned, adds foreshadowing and consequences, and gives the players new choices. Add campaign context or constraints when you need the twist to fit an existing storyline.",
+    icon: "icon-[lucide--shuffle]",
+  },
+  "world-generator": {
+    id: "world-generator",
+    title: "Sci-Fi World Generator",
+    content:
+      "Create campaign-ready planets, moons, and artificial worlds with a clear physical identity, societies shaped by their environment, resources, dangers, notable locations, mysteries, conflicts, and adventure hooks. Start it from Campaign Generators for a standalone world, or open it with existing system context to develop a world that fits the star, orbit, factions, and conflicts already in your campaign. Drafts remain local until you choose to save them.",
+    icon: "icon-[lucide--earth]",
+  },
+  "delve-structural-builder": {
+    id: "delve-structural-builder",
+    title: "Delve Spatial Canvas Builder",
+    content:
+      "Transform dungeon concepts into interactive spatial canvas maps. Open a generated dungeon concept and click 'Build Delve on Canvas' to create a .canvas layout with sector group frames, tactical Area role badges, custom passages (hidden, locked, vertical), and context-aware stocking. Every new delve ends with a dedicated Climax Area chosen by AI from the Location's established canon. Its editor records what is at stake, the players' decision, and possible outcomes, so the finale can be a confrontation, negotiation, ritual, revelation, crisis, siege, escape, or another decisive turn rather than a required boss fight. When the layout is ready, use Finalize Dossier to create a linked GM Note containing the original briefing, every populated sector and Area, room-level connections, climax outcomes, a fitted image of the complete map, and a link back to the canvas. Finalize again after edits to refresh the image and update the same Note.",
+    icon: "icon-[lucide--map]",
+  },
+  "presentation-templates": {
+    id: "presentation-templates",
+    title: "Presentation Templates",
+    content:
+      "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Item and equipment table fields keep repeatable rows together: add items, edit their cells, adjust counters, and roll dice from the table. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
+    icon: "icon-[lucide--layout-template]",
   },
 };
 

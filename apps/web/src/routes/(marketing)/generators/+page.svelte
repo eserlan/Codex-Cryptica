@@ -42,6 +42,13 @@
           icon: "icon-[lucide--moon]",
         },
         {
+          href: "/generators/nomad-clan",
+          label: "Nomad Clan Generator",
+          summary:
+            "Build cyberpunk nomad convoys with territory routes, clan codes, corporate enemies, and road-ready hooks.",
+          icon: "icon-[lucide--truck]",
+        },
+        {
           href: "/generators/names",
           label: "RPG Name Generator",
           summary:
@@ -87,11 +94,60 @@
           icon: "icon-[lucide--scroll-text]",
         },
         {
+          href: "/generators/plot-twist-generator",
+          label: "Plot Twist & Complication Generator",
+          summary:
+            "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+          icon: "icon-[lucide--shuffle]",
+        },
+        {
+          href: "/generators/council-vote",
+          label: "Council Vote Generator",
+          summary:
+            "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+          icon: "icon-[lucide--gavel]",
+        },
+        {
+          href: "/generators/secret-society",
+          label: "Secret Society Generator",
+          summary:
+            "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+          icon: "icon-[lucide--eye]",
+        },
+        {
           href: "/generators/settlement",
           label: "Settlement Generator",
           summary:
             "Draft towns and villages with economy, government, notable locations, and factions.",
           icon: "icon-[lucide--landmark]",
+        },
+        {
+          href: "/generators/star-system",
+          label: "Star System Generator",
+          summary:
+            "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
+          icon: "icon-[lucide--orbit]",
+        },
+        {
+          href: "/generators/alien-race",
+          label: "Alien Race Generator",
+          summary:
+            "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+          icon: "icon-[lucide--dna]",
+        },
+        {
+          href: "/generators/dungeon-generator",
+          label: "Dungeon & Delve Generator",
+          summary:
+            "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
+          icon: "icon-[lucide--layers]",
+        },
+        {
+          href: "/generators/adventure-generator",
+          label: "Adventure Idea Generator",
+          summary:
+            "Create campaign-ready adventure concepts with initial situation, primary pressure, key locations, threats, and non-linear outcomes.",
+          icon: "icon-[lucide--map]",
         },
         {
           href: "/generators/magic-item",
@@ -129,6 +185,20 @@
           icon: "icon-[lucide--globe]",
         },
         {
+          href: "/generators/news-sheet-generator",
+          label: "News Sheet Generator",
+          summary:
+            "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, propaganda, and GM-only hooks.",
+          icon: "icon-[lucide--newspaper]",
+        },
+        {
+          href: "/generators/language-generator",
+          label: "Fictional Language Generator",
+          summary:
+            "Generate a conlang profile with pronunciation, naming rules, example names, and a starter glossary.",
+          icon: "icon-[lucide--languages]",
+        },
+        {
           href: "/generators/random",
           label: "Surprise Me",
           summary:
@@ -146,6 +216,13 @@
       summary:
         "All fantasy generators in one place — NPCs, factions, kingdoms, magic items, pantheons, and more.",
       icon: "icon-[lucide--wand-sparkles]",
+    },
+    {
+      href: "/generators/pirate",
+      label: "Pirate Hub",
+      summary:
+        "Weathered charts, storm-dark harbours, free companies, and strange-sea adventures.",
+      icon: "icon-[lucide--ship-wheel]",
     },
     {
       href: "/generators/cyberpunk",
@@ -181,6 +258,13 @@
       summary:
         "Vampire clans, gothic factions, undead NPCs, and dark quest hooks for horror campaigns.",
       icon: "icon-[lucide--moon]",
+    },
+    {
+      href: "/generators/cosmic-horror",
+      label: "Cosmic Horror Hub",
+      summary:
+        "Impossible mysteries, remote outposts, unsettling investigators, and eldritch adventure hooks.",
+      icon: "icon-[lucide--brain]",
     },
     {
       href: "/generators/western",
@@ -270,19 +354,12 @@
     `ipt>`}
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{base}/?ref=generators"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        Codex Cryptica
-      </a>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -290,7 +367,7 @@
           Generator Hub
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Generators
         </h1>
@@ -303,11 +380,11 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-12">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-12">
     <section aria-labelledby="theme-hubs-heading">
       <h2
         id="theme-hubs-heading"
-        class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+        class="font-header text-sm font-bold text-theme-text mb-4"
       >
         Browse by Theme
       </h2>
@@ -321,7 +398,7 @@
               <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
               ></span>
               <span
-                class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
               >
                 {hub.label}
               </span>
@@ -338,7 +415,7 @@
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
           id={`${section.group}-heading`}
-          class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+          class="font-header text-sm font-bold text-theme-text mb-4"
         >
           {section.group}
         </h2>
@@ -352,7 +429,7 @@
                 <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
                 ></span>
                 <span
-                  class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                  class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                 >
                   {gen.label}
                 </span>
@@ -366,4 +443,4 @@
       </section>
     {/each}
   </div>
-</main>
+</div>

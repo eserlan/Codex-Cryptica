@@ -1,5 +1,49 @@
 [
   {
+    "version": "0.31.0",
+    "title": "The Guided Worldbuilding Update",
+    "date": "2026-07-30",
+    "type": "minor",
+    "highlights": [
+      "Guided Mode Assistance: Toggleable workflow assistant that dynamically analyzes your campaign vault to suggest structural next steps and lore connections.",
+      "Quick Start Wizard: Onboard new campaigns in seconds with theme selection, genre styling, and pre-seeded starter constellations.",
+      "Intent-Driven Entity Creation: Draft new characters, factions, locations, and lore based on narrative intent rather than bare category forms.",
+      "Starter Constellation Seeds: Pre-connected lore networks that give new worlds immediate depth and relationship links out of the box.",
+      "Contextual Structural Banners: Non-intrusive workspace banners highlighting missing connections and logical next steps for your active setting."
+    ]
+  },
+  {
+    "version": "0.30.0",
+    "title": "The Dungeon & Delve Update",
+    "date": "2026-07-28",
+    "type": "minor",
+    "highlights": [
+      "Dungeon / Delve Generator: Generate a fully realized explorable location — a haunted crypt, a corporate blacksite, a pirate hideout, whatever fits your world's theme — complete with history, current conflict, factions, hazards, a central secret, and adventure hooks.",
+      "Dungeon & Delve Structural Builder: Turn a generated delve into a room-by-room map with connected areas, loops, and hidden routes you can explore and edit on an interactive canvas.",
+      "Layered Art Direction: Character portraits and scene art now pick up a faction's visual identity automatically, respect a subject's stature and scale, and keep canon details intact even when a description gets compressed.",
+      "Smoother First Run: A redesigned onboarding tour and Getting Started hub walk new worldbuilders through their first steps, with better tablet support.",
+      "Import From Other Tools, Phase 2: Bring in a full exported world package — images included, not just the text.",
+      "Thread Weaver Import: Import directly from Thread Weaver and Scabard exports with wiki links and cell relationships preserved, backed by a new in-app migration guide.",
+      "Mobile Image Uploads: Attach or replace an entity's image straight from your phone."
+    ]
+  },
+  {
+    "version": "0.29.0",
+    "title": "The Voice & Lineage Update",
+    "date": "2026-07-19",
+    "type": "minor",
+    "highlights": [
+      "Session Voice Chat: Talk with your players without leaving the app. Start a voice channel from the header while hosting a live session — players join with one click, can mute themselves, and everyone sees who's in the channel.",
+      "Family Trees & Lineages: Open a full family tree for any character, then zoom out to a multi-generation lineage view. Siblings and relatives are linked up automatically as you record parents and partners.",
+      "Language Generator: Give your world its own tongues. Generate languages grounded in your existing lore, with naming styles that follow your world's genre.",
+      "Entity Table View: See your whole vault as a sortable, filterable table — perfect for quick audits, label cleanups, and finding what's missing.",
+      "Entity Timeline: A new Timeline tab on every entity shows the events it took part in, and you can link events from either side.",
+      "Creature Packs: Fill your bestiary in a couple of clicks with ready-made creature packs themed to your world's setting.",
+      "Import Worlds from Other Tools: Bring an exported world file into your vault with a guided review step — you decide what gets added or updated, and re-importing a newer export later is safe.",
+      "Discover & Share Fairly: Browse the searchable directory of public worlds, and shared worlds now carry fan-content notices with a simple way to report copyright concerns."
+    ]
+  },
+  {
     "version": "0.28.0",
     "title": "Share Your World with Guests",
     "date": "2026-06-22",
@@ -21,7 +65,7 @@
       "Calendar & Agenda View: Explore your world's chronology in a full calendar and agenda layout, with mobile swipe-to-navigate, a year-wheel picker, and double-click a date cell to create a pre-filled event.",
       "Themed Generator Hubs: Dedicated generator landing pages and content packs for Western, Steampunk, Lancer, Space Opera, Optimistic Sci-Fi, Cyberpunk, and Vampire settings, reachable via nested /generators/[theme] routes.",
       "Entity Explorer Workspace: A dedicated desktop explorer workspace with entity navigation history and keyboard shortcuts for fast back-and-forth movement through your vault.",
-      "Entity Revision via Oracle: Revise existing entities through the Gemini Interactions API, keeping edits grounded in your established lore.",
+      "Entity Revision via Oracle: Revise existing entities through the Oracle Interactions API, keeping edits grounded in your established lore.",
       "Theme Polish: New and enhanced world textures plus an authentic Pip-Boy CRT theme with scanlines, phosphor glow, and vignette.",
       "Smoother Graph Loading: Re-engineered the graph load pipeline for more reliable layout and fixed graph controls overlapping the footer."
     ]

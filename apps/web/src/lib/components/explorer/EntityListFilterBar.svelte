@@ -78,7 +78,8 @@
       typeFilters.size === 0,
     )}"
   >
-    <span class="icon-[lucide--layout-grid] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--layout-grid] w-3.5 h-3.5"
+    ></span>
   </button>
 
   {#each visibleCategories as cat (cat.id)}
@@ -121,7 +122,7 @@
       effectiveViewMode === 'list',
     )}"
   >
-    <span class="icon-[lucide--list] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--list] w-3.5 h-3.5"></span>
   </button>
 
   <button
@@ -134,7 +135,7 @@
       effectiveViewMode === 'label',
     )}"
   >
-    <span class="icon-[lucide--tag] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--tag] w-3.5 h-3.5"></span>
   </button>
 
   <button
@@ -151,7 +152,8 @@
       categoryGroupingDisabled,
     )}"
   >
-    <span class="icon-[lucide--folder-tree] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--folder-tree] w-3.5 h-3.5"
+    ></span>
   </button>
 </div>
 
@@ -170,7 +172,7 @@
           class="hover:text-theme-text transition-colors flex items-center justify-center"
           aria-label={`Remove ${label} filter`}
         >
-          <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"></span>
         </button>
       </div>
     {/each}

@@ -8,6 +8,7 @@ import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type { OracleGenerator } from "../oracle-generator";
 import { buildRelatedEntityContext } from "../revision-context";
+import type { Clock, IdGenerator } from "../runtime";
 
 export class ReviseExecutor
   extends BaseExecutor
@@ -15,8 +16,12 @@ export class ReviseExecutor
 {
   private isExecuting = false;
 
-  constructor(private generator?: OracleGenerator) {
-    super();
+  constructor(
+    private generator?: OracleGenerator,
+    clock?: Clock,
+    idGenerator?: IdGenerator,
+  ) {
+    super(clock, idGenerator);
   }
 
   async execute(
@@ -26,7 +31,7 @@ export class ReviseExecutor
   ): Promise<void> {
     if (this.isExecuting) {
       await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
+        id: this.idGenerator.uuid(),
         role: "system",
         content:
           "Revision is already in progress. Please wait for it to finish.",
@@ -57,7 +62,7 @@ export class ReviseExecutor
             throw new Error("Guest users cannot revise content.");
 
           const assistantMsg: ChatMessage = {
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "assistant",
             content: "",
             entityId,
@@ -132,7 +137,7 @@ export class ReviseExecutor
         } catch (err: any) {
           const error = err.message || "Revision failed";
           await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
+            id: this.idGenerator.uuid(),
             role: "system",
             content: `❌ ${error}`,
           });

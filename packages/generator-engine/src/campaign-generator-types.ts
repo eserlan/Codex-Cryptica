@@ -5,6 +5,8 @@
  * app builds the bounded {@link GeneratorVaultContext} and injects vault
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
+import type { LanguageProfileV1 } from "schema";
+import type { StarSystemBody } from "./public-star-system";
 
 export type GeneratorId =
   | "npc"
@@ -12,7 +14,18 @@ export type GeneratorId =
   | "settlement"
   | "magic-item"
   | "event"
-  | "ship";
+  | "ship"
+  | "language"
+  | "news-sheet"
+  | "dungeon"
+  | "adventure"
+  | "quest"
+  | "plot-twist"
+  | "world"
+  | "council-vote"
+  | "secret-society"
+  | "star-system"
+  | "alien-race";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -21,6 +34,17 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "magic-item",
   "event",
   "ship",
+  "language",
+  "news-sheet",
+  "dungeon",
+  "adventure",
+  "quest",
+  "plot-twist",
+  "world",
+  "council-vote",
+  "secret-society",
+  "star-system",
+  "alien-race",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -32,6 +56,11 @@ export interface GeneratorOptionDefinition {
   choices?: Array<{ value: string; label: string }>;
   required?: boolean;
   defaultValue?: unknown;
+  visibleWhen?: {
+    optionId: string;
+    values?: string[];
+    notValues?: string[];
+  };
 }
 
 /**
@@ -62,6 +91,16 @@ export interface GeneratorOutput {
   connections?: SuggestedConnection[];
   /** Generated details that do not map onto a known template heading. */
   unmappedDetails?: string;
+  /** Canonical rules for language generators; markdown fields are derived. */
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  /**
+   * Structured major-body data for the star-system generator, driving its
+   * orbital diagram. Absent for every other generator.
+   */
+  bodies?: StarSystemBody[];
+  /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
+  starType?: string;
 }
 
 /** An excerpt of an existing entity included in {@link GeneratorVaultContext}. */
@@ -75,6 +114,13 @@ export interface VaultContextEntityExcerpt {
   labels?: string[];
 }
 
+/** One explicitly selected saved language, structured or legacy-readable. */
+export interface SelectedLanguageContext extends VaultContextEntityExcerpt {
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  legacy: boolean;
+}
+
 export type IncludedContextCategory =
   | "theme"
   | "categories"
@@ -82,7 +128,8 @@ export type IncludedContextCategory =
   | "neighbors"
   | "world"
   | "titles"
-  | "labels";
+  | "labels"
+  | "languages";
 
 export type TemplateSource = "none" | "system" | "vault-custom";
 
@@ -109,6 +156,8 @@ export interface GeneratorVaultContext {
   bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
+  /** Authoritative only after an explicit user selection. */
+  selectedLanguage?: SelectedLanguageContext;
 }
 
 export type LaunchMode = "workspace" | "contextual";
@@ -128,6 +177,8 @@ export interface GeneratorRunRequest {
   launchMode?: LaunchMode;
   sourceEntityId?: string;
   relationshipLabel?: string;
+  /** Explicit primary language choice; absent means no authoritative profile. */
+  primaryLanguageId?: string;
   vaultContext?: GeneratorVaultContext;
   interaction?: GeneratorInteractionRequest;
 }
@@ -149,6 +200,15 @@ export interface GeneratedDraft {
   templateOutline?: string;
   templateApplied: boolean;
   unmappedDetails?: string;
+  /** Canonical language rules carried unchanged through review and save. */
+  languageProfile?: LanguageProfileV1;
+  languageProfileVersion?: 1;
+  primaryLanguageId?: string;
+  primaryLanguageTitle?: string;
+  /** Carried through from {@link GeneratorOutput.bodies} for the star-system generator's orbital diagram. */
+  bodies?: StarSystemBody[];
+  /** Carried through from {@link GeneratorOutput.starType}. */
+  starType?: string;
 }
 
 /** The user's explicit decision to save a reviewed draft. */
@@ -198,6 +258,25 @@ export interface AIGeneratorGateway {
     systemInstruction: string,
     options?: AIGeneratorCompleteOptions,
   ): Promise<string | AIGeneratorCompleteResult>;
+  /**
+   * Opens a real multi-turn chat session (#2033/#2034/#2035): each `send()`
+   * on the returned session is a turn on the same underlying conversation, so
+   * a later pass sees an earlier pass's actual output as history rather than
+   * a hand-summarized re-injection of it. Distinct from `complete()`'s
+   * `interaction`/`previousInteractionId` option, which is server-side state
+   * scoped to continuity across separate `generateDraft()` calls (e.g. UI
+   * re-rolls) — this is in-process state for chaining passes within a single
+   * generation, and the two should not be mixed. Optional so existing
+   * `complete()`-only gateway implementations and test doubles keep working;
+   * generators requiring a chat session should treat its absence the same as
+   * `aiGateway` being unset (AI path unavailable, fall back to local tables).
+   */
+  startChat?(systemInstruction: string): Promise<AIGeneratorChatSession>;
+}
+
+export interface AIGeneratorChatSession {
+  /** Sends one turn and returns its text, awaiting the full response. */
+  send(userMessage: string): Promise<string>;
 }
 
 export interface GeneratorInteractionRequest {
@@ -213,6 +292,12 @@ export interface GeneratorInteractionRequest {
 
 export interface AIGeneratorCompleteOptions {
   interaction?: GeneratorInteractionRequest;
+  generationConfig?: {
+    temperature?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+    responseMimeType?: string;
+  };
 }
 
 export interface AIGeneratorCompleteResult {

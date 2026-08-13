@@ -88,6 +88,113 @@ describe("MapInteractionManager", () => {
     expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 10, y: 20 }, 1);
   });
 
+  it("should pan with pointer events used by touch devices", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId: 1,
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(pointer("pointerdown", 200, 200));
+    manager.onPointerMove(pointer("pointermove", 214, 225));
+
+    expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 14, y: 25 }, 1);
+  });
+
+  it("should ignore touch jitter until the drag threshold is crossed", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const pointer = (type: string, clientX: number, clientY: number) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId: 1,
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(pointer("pointerdown", 200, 200));
+    manager.onPointerMove(pointer("pointermove", 202, 203));
+
+    expect(mapStore.updateViewport).not.toHaveBeenCalled();
+
+    manager.onPointerMove(pointer("pointermove", 210, 210));
+
+    expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 10, y: 10 }, 1);
+  });
+
+  it("should pinch-zoom with two touch pointers", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const touch = (
+      type: string,
+      pointerId: number,
+      clientX: number,
+      clientY: number,
+    ) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId,
+        pointerType: "touch",
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(touch("pointerdown", 1, 300, 300));
+    manager.onPointerDown(touch("pointerdown", 2, 500, 300));
+    expect(manager.isPanning).toBe(false);
+
+    // Pinch distance doubles from 200 to 400 -> zoom doubles. A single move
+    // keeps this independent of the mocked store re-reading its own zoom,
+    // so we assert on the call args instead of mutating the store mock.
+    manager.onPointerMove(touch("pointermove", 2, 700, 300));
+
+    expect(mapStore.updateViewport).toHaveBeenCalled();
+    const [, zoom] = (mapStore.updateViewport as any).mock.calls.at(-1);
+    expect(zoom).toBeCloseTo(2, 5);
+  });
+
+  it("should not pan or click after lifting fingers from a pinch gesture", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const touch = (
+      type: string,
+      pointerId: number,
+      clientX: number,
+      clientY: number,
+    ) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId,
+        pointerType: "touch",
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(touch("pointerdown", 1, 300, 300));
+    manager.onPointerDown(touch("pointerdown", 2, 500, 300));
+    manager.onPointerMove(touch("pointermove", 1, 250, 300));
+    manager.onPointerMove(touch("pointermove", 2, 550, 300));
+    (mapStore.updateViewport as any).mockClear();
+
+    await manager.onPointerUp(touch("pointerup", 1, 250, 300));
+    await manager.onPointerUp(touch("pointerup", 2, 550, 300));
+
+    expect(manager.isPanning).toBe(false);
+  });
+
+  it("should pan again with one finger after a pinch ends", async () => {
+    const { mapStore } = await import("../../stores/map.svelte");
+    const touch = (
+      type: string,
+      pointerId: number,
+      clientX: number,
+      clientY: number,
+    ) =>
+      Object.assign(new MouseEvent(type, { clientX, clientY, button: 0 }), {
+        pointerId,
+        pointerType: "touch",
+      }) as unknown as PointerEvent;
+
+    manager.onPointerDown(touch("pointerdown", 1, 300, 300));
+    manager.onPointerDown(touch("pointerdown", 2, 500, 300));
+    await manager.onPointerUp(touch("pointerup", 1, 300, 300));
+    await manager.onPointerUp(touch("pointerup", 2, 500, 300));
+    (mapStore.updateViewport as any).mockClear();
+
+    manager.onPointerDown(touch("pointerdown", 3, 200, 200));
+    manager.onPointerMove(touch("pointermove", 3, 220, 225));
+
+    expect(mapStore.updateViewport).toHaveBeenCalledWith({ x: 20, y: 25 }, 1);
+  });
+
   it("should start box selection when Ctrl is pressed on GM mode", () => {
     const event = new MouseEvent("mousedown", {
       clientX: 200,
@@ -138,6 +245,68 @@ describe("MapInteractionManager", () => {
     expect(manager.pinDragState).not.toBeNull();
     expect(manager.pinDragState?.pinId).toBe("pin-a");
     expect(manager.isPanning).toBe(false);
+  });
+
+  it("should open the health bar popover when double-clicking a token", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [
+      {
+        id: "token-1",
+        x: 100,
+        y: 100,
+        width: 50,
+        height: 50,
+        zIndex: 0,
+      } as any,
+    ];
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 110, clientY: 110 }),
+    );
+
+    expect(manager.healthBarPopoverTokenId).toBe("token-1");
+    (mapSession as any).allTokens = [];
+  });
+
+  it("should toggle the health bar popover closed on a second double-click of the same token", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [
+      {
+        id: "token-1",
+        x: 100,
+        y: 100,
+        width: 50,
+        height: 50,
+        zIndex: 0,
+      } as any,
+    ];
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 110, clientY: 110 }),
+    );
+    expect(manager.healthBarPopoverTokenId).toBe("token-1");
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 110, clientY: 110 }),
+    );
+    expect(manager.healthBarPopoverTokenId).toBeNull();
+    (mapSession as any).allTokens = [];
+  });
+
+  it("should fall through to token/pin creation when double-clicking empty space", async () => {
+    const { mapSession } = await import("../../stores/map-session.svelte");
+    (mapSession as any).allTokens = [];
+    (mapSession as any).pendingTokenCoords = null;
+
+    manager.onDoubleClick(
+      new MouseEvent("dblclick", { clientX: 400, clientY: 400 }),
+    );
+
+    expect(manager.healthBarPopoverTokenId).toBeNull();
+    expect((mapSession as any).pendingTokenCoords).toEqual({
+      x: 400,
+      y: 400,
+    });
   });
 
   it("should update pin coordinates on mouse move when dragging a pin", async () => {
@@ -206,5 +375,24 @@ describe("MapInteractionManager", () => {
 
     expect(manager.selectedPinId).toBe("pin-a");
     expect(vault.selectedEntityId).toBe("entity-123");
+  });
+
+  it("ignores double-clicks originating from interactive UI buttons or sidebar elements", () => {
+    const handleDoubleClickSpy = vi.spyOn(
+      manager.creationInteractions,
+      "handleDoubleClick",
+    );
+
+    const button = document.createElement("button");
+    const event = new MouseEvent("dblclick", {
+      clientX: 50,
+      clientY: 50,
+      bubbles: true,
+    });
+    Object.defineProperty(event, "target", { value: button });
+
+    manager.onDoubleClick(event);
+
+    expect(handleDoubleClickSpy).not.toHaveBeenCalled();
   });
 });

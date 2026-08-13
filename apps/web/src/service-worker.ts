@@ -3,42 +3,41 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
-import { build, files, version } from "$service-worker";
+import { build, files, prerendered, version } from "$service-worker";
+import {
+  activateBuild,
+  getPrecacheAssets,
+  precacheBuild,
+} from "$lib/service-worker/lifecycle";
 
-const CACHE_VERSION = "412";
+const CACHE_VERSION = "524";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
-const ASSETS = [
-  ...build, // the app itself
-  ...files, // everything in `static`
-];
+const ASSETS = getPrecacheAssets({ build, files, prerendered });
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 sw.addEventListener("install", (event) => {
-  async function addFilesToCache() {
-    const cache = await caches.open(CACHE);
-    // Be resilient: add assets individually so one failure doesn't block everything
-    for (const asset of ASSETS) {
-      try {
-        await cache.add(asset);
-      } catch (err) {
-        console.warn(`[SW] Failed to cache asset: ${asset}`, err);
-      }
-    }
-  }
-
-  event.waitUntil(addFilesToCache());
+  event.waitUntil(
+    precacheBuild({
+      cacheName: CACHE,
+      assets: ASSETS,
+      cacheStorage: caches,
+      skipWaiting: () => sw.skipWaiting(),
+      warn: (message, error) => console.warn(message, error),
+    }),
+  );
 });
 
 sw.addEventListener("activate", (event) => {
-  async function deleteOldCaches() {
-    for (const key of await caches.keys()) {
-      if (key !== CACHE) await caches.delete(key);
-    }
-  }
-
-  event.waitUntil(deleteOldCaches());
+  event.waitUntil(
+    activateBuild({
+      cacheName: CACHE,
+      cacheStorage: caches,
+      claimClients: () => sw.clients.claim(),
+      warn: (message, error) => console.warn(message, error),
+    }),
+  );
 });
 
 sw.addEventListener("fetch", (event) => {
@@ -88,6 +87,22 @@ sw.addEventListener("fetch", (event) => {
     // for everything else, try the network first, but fall back to the cache if we're offline
     try {
       const response = await fetch(event.request);
+
+      const contentType = response.headers.get("content-type") || "";
+      const isJsOrCss =
+        url.pathname.endsWith(".js") ||
+        url.pathname.endsWith(".css") ||
+        url.pathname.includes("/_app/immutable/");
+
+      // If a JS/CSS asset request returns HTML (e.g., Cloudflare SPA 404 fallback),
+      // return a 404 text response so script error handlers fail cleanly rather than throwing syntax errors.
+      if (isJsOrCss && contentType.includes("text/html")) {
+        return new Response("Asset missing (Version Skew)", {
+          status: 404,
+          statusText: "Not Found",
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
 
       // Only cache valid successful responses from our own origin
       if (response.status === 200 && url.origin === location.origin) {

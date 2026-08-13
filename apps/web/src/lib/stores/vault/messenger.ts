@@ -6,9 +6,16 @@ export interface MessengerDependencies {
   broadcastCallback: () => void;
 }
 
+// Cross-window RELOAD_VAULT messages arrive in bursts — e.g. an import in
+// another window emits one per batch. Reloading on each would stampede
+// loadFiles and race in-flight writes. Coalesce them into a single reload once
+// the burst settles.
+const RELOAD_DEBOUNCE_MS = 600;
+
 export class VaultMessenger {
   private channel: BroadcastChannel | null = null;
   private unsubscribe: (() => void) | null = null;
+  private reloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private deps: MessengerDependencies) {
     if (typeof window !== "undefined") {
@@ -18,7 +25,7 @@ export class VaultMessenger {
           event.data.type === "RELOAD_VAULT" &&
           event.data.vaultId === this.deps.activeVaultId()
         ) {
-          this.deps.loadFiles();
+          this.scheduleReload();
         }
       };
 
@@ -26,7 +33,12 @@ export class VaultMessenger {
         this.unsubscribe = vaultEventBus.subscribe((event) => {
           if (
             event.type === "BATCH_CREATED" ||
-            event.type === "ENTITY_DELETED"
+            event.type === "ENTITY_DELETED" ||
+            event.type === "ENTITY_UPDATED" ||
+            event.type === "BATCH_UPDATED" ||
+            event.type === "CONNECTION_ADDED" ||
+            event.type === "CONNECTION_UPDATED" ||
+            event.type === "CONNECTION_REMOVED"
           ) {
             this.deps.broadcastCallback();
           }
@@ -38,7 +50,12 @@ export class VaultMessenger {
             this.unsubscribe = bus.subscribe((event) => {
               if (
                 event.type === "BATCH_CREATED" ||
-                event.type === "ENTITY_DELETED"
+                event.type === "ENTITY_DELETED" ||
+                event.type === "ENTITY_UPDATED" ||
+                event.type === "BATCH_UPDATED" ||
+                event.type === "CONNECTION_ADDED" ||
+                event.type === "CONNECTION_UPDATED" ||
+                event.type === "CONNECTION_REMOVED"
               ) {
                 this.deps.broadcastCallback();
               }
@@ -47,6 +64,14 @@ export class VaultMessenger {
         });
       }
     }
+  }
+
+  private scheduleReload() {
+    if (this.reloadTimer) clearTimeout(this.reloadTimer);
+    this.reloadTimer = setTimeout(() => {
+      this.reloadTimer = null;
+      void this.deps.loadFiles();
+    }, RELOAD_DEBOUNCE_MS);
   }
 
   broadcastVaultUpdate() {
@@ -60,6 +85,10 @@ export class VaultMessenger {
   }
 
   destroy() {
+    if (this.reloadTimer) {
+      clearTimeout(this.reloadTimer);
+      this.reloadTimer = null;
+    }
     if (this.channel) {
       this.channel.close();
       this.channel = null;

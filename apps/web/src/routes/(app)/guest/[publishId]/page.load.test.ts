@@ -62,4 +62,38 @@ describe("guest bundle loader", () => {
     expect(fetchedUrl).toContain(uuid);
     expect(result.publishId).toBe(uuid);
   });
+
+  it("extracts notice sidecar when fanContent is boolean true", async () => {
+    const noticeData = {
+      fanContent: true,
+      fanContentDisclaimer: "Custom disclaimer",
+    };
+    const result: any = await load({
+      params: { publishId: "published-1" },
+      fetch: async (url: string) => {
+        if (url.endsWith("/notice")) {
+          return new Response(JSON.stringify(noticeData));
+        }
+        return new Response(JSON.stringify(validBundle));
+      },
+    } as any);
+
+    expect(result.status).toBe(200);
+    expect(result.notice).toEqual(noticeData);
+  });
+
+  it("returns 451 error status when bundle status is 451 or notice is suspended", async () => {
+    const result: any = await load({
+      params: { publishId: "published-1" },
+      fetch: async (url: string) => {
+        if (url.endsWith("/notice")) {
+          return new Response(JSON.stringify({ suspended: true }));
+        }
+        return new Response(JSON.stringify(validBundle));
+      },
+    } as any);
+
+    expect(result.status).toBe(451);
+    expect(result.error).toBe("This world is temporarily unavailable.");
+  });
 });

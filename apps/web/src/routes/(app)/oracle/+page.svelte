@@ -38,11 +38,13 @@
     <div class="flex items-center gap-2">
       {#if oracle.messages.length > 0}
         <button
+          type="button"
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
           onclick={() => oracle.clearMessages()}
           aria-label="Clear conversation history"
         >
-          <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-3.5 h-3.5"
+          ></span>
           Clear Chat
         </button>
       {/if}

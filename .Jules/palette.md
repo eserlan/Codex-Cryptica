@@ -64,3 +64,58 @@
 **Action:** Add Tailwind focus-visible utilities to ensure accessibility without degrading the mouse user experience.
 
 ## 2024-06-17 - Button Toggle State Accessibility\n\n**Learning:** Found custom toggle buttons (like the App Appearance theme switchers) that changed visual state via classes but didn't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode was active.\n**Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.\n
+
+## 2026-07-01 - Tiptap BubbleMenu Accessibility
+
+**Learning:** Interactive toolbar components like Tiptap BubbleMenus need buttons to be explicitly marked with `type="button"` to prevent unexpected form submissions, and require `aria-label` and `title` tooltips for icon-only buttons so mouse and keyboard users receive standard hints. Inner icons should also be marked `aria-hidden="true"` to avoid redundant announcements.
+**Action:** Add `type="button"`, `title` tooltips matching keyboard shortcuts (e.g., 'Bold (Cmd+B)'), and `aria-hidden="true"` on inner icon elements for all formatting buttons in Tiptap bubble menus, matching the main editor toolbar standards.
+
+## 2024-11-20 - Full-Screen Overlay Cursors
+
+**Learning:** When converting full-screen clickable `<div>` backdrops (like modal or menu dismiss overlays) to semantic `<button>` elements to resolve accessibility warnings, the entire screen gets a pointer cursor because it's technically a button, which is confusing UX.
+**Action:** Always add the `cursor-default` utility class to full-screen backdrop buttons to ensure the mouse cursor remains a standard arrow over the non-interactive areas.
+
+## 2024-11-20 - Icon-only Button Accessibility in SessionHubWidget
+
+**Learning:** Found multiple icon-only buttons (like zap, pin, and trash) in `SessionHubWidget.svelte` that lacked `aria-label` attributes and had their inner `span` icons visible to screen readers. This makes them opaque or confusing for assistive technology users.
+**Action:** Added `aria-label` to these icon-only `<button>` elements matching their visual `title` tooltips, and added `aria-hidden="true"` to the inner decorative icon `<span class="icon-[...]">` elements.
+
+## 2026-07-09 - Add aria-hidden to decorative icons
+
+**Learning:** Icon-only buttons with `aria-label` should also have `aria-hidden="true"` applied to the inner icon spans (e.g. `<span class="icon-[...]" aria-hidden="true">`) to prevent screen readers from reading confusing redundant class names and ensure they only announce the parent's `aria-label`.
+**Action:** Always add `aria-hidden="true"` to icon spans within `aria-label` buttons during UI creation or accessibility passes.
+
+## 2026-07-09 - ARIA hidden on Icon Buttons
+
+**Learning:** Found that custom icon-only buttons often had `aria-label` attributes on the button element but were missing `aria-hidden="true"` on the inner icon element, causing screen readers to potentially announce the icon element redundantly or confusingly.
+**Action:** When creating buttons with an `aria-label` or visible text, explicitly add `aria-hidden="true"` to any inner decorative icon elements (e.g., `<span class="icon-[...]">`) to prevent screen readers from announcing redundant or confusing elements.
+
+## 2025-07-14 - Add type button to toolbar buttons
+
+**Learning:** Interactive toolbar components, especially within editors, should explicitly define type="button" to avoid inadvertently submitting surrounding forms.
+**Action:** When adding new toolbar components or buttons to existing toolbars, always include type="button" to ensure correct component behavior regardless of its surrounding context.
+
+## 2026-07-16 - Add aria-busy to async buttons
+
+**Learning:** Found multiple buttons with loading states (animate-spin) that correctly disabled interactions but were missing aria-busy attributes, making the loading state opaque to screen readers.
+**Action:** Always add aria-busy={isLoading} to buttons that trigger async actions to provide clear, accessible feedback to assistive technologies.
+
+## 2026-07-19 - Add aria-busy to async buttons
+
+**Learning:** Buttons handling asynchronous actions (like saving or generating) need to correctly communicate their loading state to screen readers, even if they're visually disabled or show a loading spinner.
+**Action:** Always add `aria-busy={isLoading}` to buttons executing async operations to ensure screen readers are aware of the busy state.
+
+## 2026-07-20 - Add aria-hidden and type button to Graph Toolbar
+
+**Learning:** Found multiple icon-only buttons in `GraphToolbar.svelte` that relied on outer `aria-label` attributes but didn't hide their inner SVG-based span icons (`aria-hidden="true"`) and lacked explicit `type="button"` attributes. This can cause redundant screen reader announcements and risk accidental form submission if the toolbar is ever wrapped in a form.
+**Action:** Always add `aria-hidden="true"` to inner decorative icons within icon-only buttons, and ensure all toolbar buttons have `type="button"`.
+
+## 2026-07-21 - ARIA hidden on decorative icons inside components
+
+**Learning:** Found decorative icons (like `icon-[lucide--sparkles]` or category icons) used inside `Autocomplete.svelte` option buttons and `InlinePreviewOverlay.svelte` status indicators that lacked `aria-hidden="true"`. Without this, screen readers might announce these decorative spans redundantly.
+**Action:** Always add `aria-hidden="true"` to inner decorative icon spans, even if they are dynamically rendered (like category icons) or part of complex status overlays, to ensure a clean screen reader experience.
+
+## 2026-07-22 - Missing aria-hidden on contextual chat actions
+
+**Learning:** Found multiple icon-only contextual action buttons in chat transcripts (like `startEditMessage` and `deleteHostTranscript`) that lacked both explicit `aria-label` attributes (relying solely on `title` which is insufficient for screen readers) and `aria-hidden="true"` on their inner decorative icons.
+**Action:** Always add explicit `aria-label`s to icon-only action buttons (even if they have `title` tooltips) and add `aria-hidden="true"` to inner icon elements, especially inside complex, repetitive lists like chat transcripts.

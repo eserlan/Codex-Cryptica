@@ -1,19 +1,9 @@
-## 2025-06-16 - SEOGeneratorLayout Markdown Rendering Extraction
+## 2025-02-14 - Extract Pure Transformation Functions
 
-**Learning:** Pure string transformation and mapping rules (like `replaceEmojisWithIcons`, `labelValueHtml`) are often mixed directly into the `script` tags of Svelte components because they close over reactive state (like `variant`). Extracting them early makes components lighter, more testable, and strictly separates view logic from string generation logic.
-**Action:** When finding complex formatting or view-model prep logic in `.svelte` files, look to extract them to adjacent `.ts` helper files, converting closed-over state into explicit function arguments.
+**Learning:** When a large Svelte or component controller file (`import-settings-controller.svelte.ts`) contains pure transformation functions (`mapThemeToGenre`) alongside stateful class/component logic, these functions can safely be extracted to sibling `.ts` files to reduce the god file's size and improve component scanability. Also if there are duplicate implementations of this pure function in test files (`ImportSettings.pack.test.ts`), they can be removed and all places updated to import from the newly created reusable file (`theme-mapper.ts`).
+**Action:** Extract pure transformation functions into sibling `.ts` files and deduplicate them in tests.
 
-## 2025-06-16 - Markdown Formatter Extraction
+## 2024-05-18 - Extract Presentation Template Parser
 
-**Learning:** Svelte UI component files (like `DetailStatusTab.svelte`) can bloat rapidly by keeping pure logic functions that don't depend on component scope, like formatting markdown sections (`upsertMarkdownSection`), within the `<script>` tag. Since they act on isolated strings, they should be immediately moved to utility modules.
-**Action:** Always scan for generic pure text/formatting functions in overgrown Svelte scripts and extract them to `src/lib/utils/` to improve Svelte file readability and simplify tests.
-
-## 2024-06-18 - Extract Pronoun Resolution Logic
-
-**Learning:** AI service files (like `text-generation.service.svelte.ts`) can grow rapidly by accumulating pure text-processing logic (like NLP pronoun resolution) alongside stateful AI integration logic.
-**Action:** When a pure text-processing helper function grows large (>100 lines) and relies on dynamic imports (`compromise`), it should be extracted to its own file (e.g., `resolve-pronouns.ts`) in the same directory to improve readability of the main service file without breaking testing conventions.
-
-## 2025-06-22 - Extracted State-dependent Prompts
-
-**Learning:** When extracting logic from a Svelte component that relies on reactive `$state` (e.g. `editLore` being updated while an async AI generation streams in), be careful not to create state closure traps. Passing the raw string value creates a snapshot.
-**Action:** When extracting async generation functions from UI components, pass reactive state getters (`getEditLore: () => string`) rather than static snapshot variables (`editLore: string`) to preserve the component's original closure-updating behavior.
+**Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant inline parsing and AST walking logic (`parseCardsFromSource`) that maps data to a visual builder, this pure parsing logic can be safely extracted to a sibling `.ts` file (`visual-card-parser.ts`) to dramatically reduce the god file's size and improve component scanability. State dependencies (like `schema.fields`) should be refactored into function parameters.
+**Action:** Extract AST walking and parsing functions into sibling `.ts` files, passing any component state as explicit parameters.

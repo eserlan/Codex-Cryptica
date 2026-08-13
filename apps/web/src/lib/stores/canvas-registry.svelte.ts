@@ -6,10 +6,21 @@ import {
   deleteCanvasFromDisk,
 } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
-import type { Canvas, CanvasNode } from "@codex/canvas-engine";
+import {
+  CanvasSchema,
+  type Canvas,
+  type CanvasNode,
+} from "@codex/canvas-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
+import { updateLastInternalChange } from "./vault/registry";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
+import { toRouteSlug } from "$lib/utils/slug";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -18,7 +29,7 @@ export interface CanvasAddResult {
   errors: Array<{ entityId: string; error: string }>;
 }
 
-class CanvasRegistryStore {
+export class CanvasRegistryStore {
   _canvases = $state<Record<string, Canvas>>({});
   get canvases() {
     if (sessionModeStore.isGuestMode) {
@@ -39,6 +50,11 @@ class CanvasRegistryStore {
     { id: string; position?: { x: number; y: number } }[]
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
+  private idGenerator: IdGenerator;
+
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
+  }
 
   allCanvases = $derived.by(() => {
     if (sessionModeStore.isGuestMode) {
@@ -87,18 +103,23 @@ class CanvasRegistryStore {
   }
 
   private generateSlug(name: string, id: string): string {
-    const base = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    const base = toRouteSlug(name);
 
     // If base is empty (e.g. name only had symbols), fallback to ID
     if (!base) return id.slice(0, 8);
 
     // Check for collisions with other canvases (excluding current ID)
-    const exists = Object.values(this.canvases).some(
-      (c) => c.slug === base && c.id !== id,
-    );
+    // ⚡ Bolt Optimization: Loop over keys instead of Object.values() to avoid array allocation
+    let exists = false;
+    for (const key in this.canvases) {
+      if (Object.prototype.hasOwnProperty.call(this.canvases, key)) {
+        const c = this.canvases[key];
+        if (c.slug === base && c.id !== id) {
+          exists = true;
+          break;
+        }
+      }
+    }
 
     if (exists) {
       // Append short ID to ensure uniqueness
@@ -109,7 +130,7 @@ class CanvasRegistryStore {
   }
 
   async create(name: string): Promise<string | null> {
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     const slug = this.generateSlug(name, id);
 
     this.canvases[id] = {
@@ -118,7 +139,7 @@ class CanvasRegistryStore {
       slug,
       nodes: [],
       edges: [],
-      lastModified: Date.now(),
+      lastModified: systemClock.now(),
     };
 
     await this.saveCanvas(id);
@@ -159,10 +180,7 @@ class CanvasRegistryStore {
       );
       await deleteCanvasFromDisk(vaultDir, id);
 
-      // Update dirty tracking timestamp
-      import("./vault/registry").then((m) =>
-        m.updateLastInternalChange(vaultRegistry.activeVaultId!),
-      );
+      await updateLastInternalChange(vaultRegistry.activeVaultId!);
 
       const nextCanvases = { ...this.canvases };
       delete nextCanvases[id];
@@ -184,7 +202,7 @@ class CanvasRegistryStore {
 
     canvas.name = newName;
     canvas.slug = this.generateSlug(newName, id);
-    canvas.lastModified = Date.now();
+    canvas.lastModified = systemClock.now();
 
     await this.saveCanvas(id);
     return canvas.slug;
@@ -193,7 +211,7 @@ class CanvasRegistryStore {
   async touch(id: string) {
     const canvas = this.canvases[id];
     if (canvas) {
-      canvas.lastModified = Date.now();
+      canvas.lastModified = systemClock.now();
     }
   }
 
@@ -212,10 +230,7 @@ class CanvasRegistryStore {
         const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveCanvasToDisk(vaultDir, id, data);
 
-        // Update dirty tracking timestamp
-        import("./vault/registry").then((m) =>
-          m.updateLastInternalChange(vaultId),
-        );
+        await updateLastInternalChange(vaultId);
 
         this.status = "idle";
       } catch (err) {
@@ -247,7 +262,11 @@ class CanvasRegistryStore {
       return { canvasId, added: [], skipped: [], errors: [] };
     }
 
-    const existingEntityIds = new Set(canvas.nodes.map((n) => n.entityId));
+    const existingEntityIds = new Set(
+      canvas.nodes
+        .filter((node) => node.type === "entity")
+        .map((node) => node.entityId),
+    );
     const added: string[] = [];
     const skipped: string[] = [];
     const errors: Array<{ entityId: string; error: string }> = [];
@@ -270,7 +289,7 @@ class CanvasRegistryStore {
         const col = index % itemsPerRow;
 
         const newNode: CanvasNode = {
-          id: `node-${crypto.randomUUID()}`,
+          id: `node-${this.idGenerator.uuid()}`,
           type: "entity",
           entityId,
           position: {
@@ -285,7 +304,7 @@ class CanvasRegistryStore {
     }
     canvas.nodes = newNodes;
 
-    canvas.lastModified = Date.now();
+    canvas.lastModified = systemClock.now();
     await this.saveCanvas(canvasId);
 
     return { canvasId, added, skipped, errors };
@@ -313,7 +332,7 @@ class CanvasRegistryStore {
       `${normalizedEntityIds.length} ${
         normalizedEntityIds.length === 1 ? "entity" : "entities"
       }`;
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     const slug = this.generateSlug(name, id);
 
     const spacing = 250;
@@ -322,7 +341,7 @@ class CanvasRegistryStore {
       const row = Math.floor(index / itemsPerRow);
       const col = index % itemsPerRow;
       return {
-        id: `node-${crypto.randomUUID()}`,
+        id: `node-${this.idGenerator.uuid()}`,
         type: "entity",
         entityId,
         position: {
@@ -338,11 +357,48 @@ class CanvasRegistryStore {
       slug,
       nodes,
       edges: [],
-      lastModified: Date.now(),
+      lastModified: systemClock.now(),
     };
 
     await this.saveCanvas(id);
     return { id, slug, name };
+  }
+
+  findCanvasForEntity(entityId: string, title?: string): Canvas | undefined {
+    const list = this.allCanvases;
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      if ((c as any).metadata?.sourceEntityId === entityId) return c;
+      if (c.id === entityId || c.slug === entityId) return c;
+      if (title && c.name?.toLowerCase() === title.toLowerCase()) return c;
+    }
+    return undefined;
+  }
+
+  async importCanvas(doc: any): Promise<string> {
+    const id = doc.id || this.idGenerator.uuid();
+    const name = doc.name || doc.title || "Delve Canvas Map";
+    const slug = doc.slug || this.generateSlug(name, id);
+
+    const canvasData = CanvasSchema.parse({
+      id,
+      name,
+      slug,
+      nodes: doc.nodes || [],
+      edges: doc.edges || [],
+      metadata: doc.metadata || {},
+      lastModified: doc.lastModified || systemClock.now(),
+    });
+
+    this.canvases[id] = canvasData;
+
+    const { vault } = await import("./vault.svelte");
+    if (vault.activeVaultId) {
+      vault.canvases[id] = canvasData;
+    }
+
+    await this.saveCanvas(id);
+    return slug;
   }
 }
 

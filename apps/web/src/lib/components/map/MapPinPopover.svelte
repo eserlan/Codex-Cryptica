@@ -40,8 +40,8 @@
         onclick={() => onOpenEntity(entity.id)}
       >
         {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-            >*</sup
-          >{/if}
+            aria-hidden="true">*</sup
+          ><span class="sr-only"> (past)</span>{/if}
       </button>
     {/if}
 

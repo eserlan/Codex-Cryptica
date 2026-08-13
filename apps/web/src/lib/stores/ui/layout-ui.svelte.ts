@@ -8,10 +8,15 @@ export const MIN_LEFT_SIDEBAR_WIDTH = 240;
 export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
 export const MAX_SIDEBAR_VW = 40;
 
-export type SidebarTool = "oracle" | "explorer" | "none";
+export type SidebarTool = "oracle" | "explorer" | "shelf" | "none";
 
 function isSidebarTool(value: string): value is SidebarTool {
-  return value === "oracle" || value === "explorer" || value === "none";
+  return (
+    value === "oracle" ||
+    value === "explorer" ||
+    value === "shelf" ||
+    value === "none"
+  );
 }
 export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
@@ -53,6 +58,8 @@ export class LayoutUIStore {
   private rightSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
   private cleanupWideWatch: (() => void) | null = null;
+  private cleanupTabletWatch: (() => void) | null = null;
+  private cleanupTouchWatch: (() => void) | null = null;
   private workspaceFocusActive = $state(false);
 
   #leftSidebarOpen = $state(false);
@@ -80,9 +87,16 @@ export class LayoutUIStore {
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
   isWideViewport = $state(false);
+  /** Tablet-range viewport (769–1279px): gets the desktop layout but is often
+   *  touch-driven and space-constrained. Tracked so tablet-specific affordances
+   *  (touch coaching, header reflow) can key off it (#1785). */
+  isTablet = $state(false);
+  /** Coarse pointer (touch-first device). */
+  isTouch = $state(false);
   vttSidebarCollapsed = $state(false);
   vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
+  autoFullscreen = $state(true);
   findNodeCounter = $state(0);
   lastSelectedNodePosition = $state<{ x: number; y: number } | null>(null);
 
@@ -93,6 +107,8 @@ export class LayoutUIStore {
     this.loadPersistedState();
     this.cleanupMobileWatch = this.watchMobileState();
     this.cleanupWideWatch = this.watchWideViewportState();
+    this.cleanupTabletWatch = this.watchTabletState();
+    this.cleanupTouchWatch = this.watchTouchState();
   }
 
   get isEntityExplorerWorkspace() {
@@ -123,6 +139,10 @@ export class LayoutUIStore {
     this.cleanupMobileWatch = null;
     this.cleanupWideWatch?.();
     this.cleanupWideWatch = null;
+    this.cleanupTabletWatch?.();
+    this.cleanupTabletWatch = null;
+    this.cleanupTouchWatch?.();
+    this.cleanupTouchWatch = null;
     if (this.leftSidebarSaveTimeout !== null) {
       this.viewport?.clearTimeout(this.leftSidebarSaveTimeout);
     }
@@ -178,6 +198,11 @@ export class LayoutUIStore {
     );
   }
 
+  setAutoFullscreen(enabled: boolean) {
+    this.autoFullscreen = enabled;
+    this.persistence.write(UI_STORAGE_KEYS.AUTO_FULLSCREEN, enabled, String);
+  }
+
   findInGraph() {
     this.findNodeCounter++;
   }
@@ -227,6 +252,10 @@ export class LayoutUIStore {
       ? savedSidebarTool
       : "none";
 
+    if (this.#leftSidebarOpen && this.#activeSidebarTool === "none") {
+      this.leftSidebarOpen = false;
+    }
+
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,
       (raw) => raw === "true",
@@ -236,6 +265,11 @@ export class LayoutUIStore {
       UI_STORAGE_KEYS.VTT_ENTITY_LIST_COLLAPSED,
       (raw) => raw === "true",
       false,
+    );
+    this.autoFullscreen = this.persistence.read(
+      UI_STORAGE_KEYS.AUTO_FULLSCREEN,
+      (raw) => raw === "true",
+      true,
     );
   }
 
@@ -255,6 +289,35 @@ export class LayoutUIStore {
     return this.watchMediaQuery(mediaQuery, (matches) => {
       this.isWideViewport = matches;
     });
+  }
+
+  private watchTabletState(): (() => void) | null {
+    const mediaQuery = this.viewport?.matchMedia?.(
+      "(min-width: 769px) and (max-width: 1279px)",
+    );
+    if (!mediaQuery) return null;
+    this.isTablet = mediaQuery.matches;
+    return this.watchMediaQuery(mediaQuery, (matches) => {
+      this.isTablet = matches;
+    });
+  }
+
+  private watchTouchState(): (() => void) | null {
+    const mediaQuery = this.viewport?.matchMedia?.("(pointer: coarse)");
+    if (!mediaQuery) return null;
+    this.isTouch = mediaQuery.matches;
+    return this.watchMediaQuery(mediaQuery, (matches) => {
+      this.isTouch = matches;
+    });
+  }
+
+  /**
+   * Whether to show touch-oriented coaching (e.g. the graph pan/zoom coach
+   * marks). True on phones, and on tablet-range viewports that are touch-first,
+   * so iPad users get the same guidance phones already had (#1785).
+   */
+  get prefersTouchCoaching() {
+    return this.isMobile || (this.isTablet && this.isTouch);
   }
 
   private watchMediaQuery(
@@ -294,3 +357,11 @@ export class LayoutUIStore {
 const KEY = "__codex_layout_ui_store__";
 export const layoutUIStore: LayoutUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new LayoutUIStore());
+
+if (
+  typeof window !== "undefined" &&
+  (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+    .__CODEX_PERFORMANCE_CAPTURE__ === true
+) {
+  (window as any).layoutUIStore = layoutUIStore;
+}

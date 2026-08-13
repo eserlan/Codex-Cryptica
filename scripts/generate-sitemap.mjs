@@ -1,7 +1,9 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { solutions, comparisons } from "../apps/web/src/lib/config/seo-pages.ts";
+import { solutions } from "../apps/web/src/lib/config/seo-pages.ts";
+import { comparisons } from "../apps/web/src/lib/config/seo-comparisons.ts";
+import { getAllLandingPageSlugs } from "../apps/web/src/lib/content/for/registry.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -75,7 +77,7 @@ const listBlogEntries = async () => {
   );
 };
 
-const buildXml = (entries) => {
+const buildXml = async (entries) => {
   const urls = entries
     .map(
       (entry) => `  <url>
@@ -110,11 +112,28 @@ const buildXml = (entries) => {
     }),
   );
 
+  // Landing pages (/for/[slug])
+  let landingPageRoutes = [{ path: "/for", changefreq: "weekly", priority: "0.9" }];
+
+  try {
+    const slugs = getAllLandingPageSlugs();
+    for (const slug of slugs) {
+      landingPageRoutes.push({
+        path: `/for/${slug}`,
+        changefreq: "weekly",
+        priority: "0.8",
+      });
+    }
+  } catch (e) {
+    console.warn("[generate-sitemap] Could not read landing page registry:", e);
+  }
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
     ...comparisonRoutes,
     ...generatorRoutes,
+    ...landingPageRoutes,
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -136,7 +155,7 @@ ${allStatic
 
 async function main() {
   const entries = await listBlogEntries();
-  const xml = buildXml(entries);
+  const xml = await buildXml(entries);
 
   await mkdir(dirname(outputFile), { recursive: true });
   await writeFile(outputFile, xml, "utf8");

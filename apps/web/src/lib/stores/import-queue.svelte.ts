@@ -1,7 +1,8 @@
 import { calculateFileHash } from "@codex/importer";
 import type { ImportQueueItem } from "@codex/importer";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
-class ImportQueueStore {
+export class ImportQueueStore {
   queue = $state<ImportQueueItem[]>([]);
   activeItemId = $state<string | null>(null);
 
@@ -9,6 +10,12 @@ class ImportQueueStore {
   activeItemChunks = $state<
     Record<number, "pending" | "active" | "completed" | "skipped">
   >({});
+
+  private idGenerator: IdGenerator;
+
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
+  }
 
   get activeItem() {
     return this.queue.find((item) => item.id === this.activeItemId) || null;
@@ -19,7 +26,7 @@ class ImportQueueStore {
   }
 
   async addToQueue(file: File) {
-    const id = crypto.randomUUID();
+    const id = this.idGenerator.uuid();
     const hash = await calculateFileHash(file);
 
     const newItem: ImportQueueItem = {

@@ -119,12 +119,13 @@
       </div>
     </div>
     <button
+      type="button"
       onclick={() => layoutUIStore.toggleSidebarTool("explorer")}
       class="p-1.5 rounded-md transition-all"
       style:color="var(--theme-icon-default)"
       aria-label="Close Explorer"
     >
-      <span class="icon-[lucide--x] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
     </button>
   </div>
 

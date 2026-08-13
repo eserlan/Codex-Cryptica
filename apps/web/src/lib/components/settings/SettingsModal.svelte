@@ -6,6 +6,7 @@
   import ThemeSelector from "./ThemeSelector.svelte";
   import CategorySettings from "./CategorySettings.svelte";
   import LabelSettings from "./LabelSettings.svelte";
+  import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
   import HelpTab from "../help/HelpTab.svelte";
   import VaultSettings from "./VaultSettings.svelte";
   import PublishingSettings from "./PublishingSettings.svelte";
@@ -13,6 +14,7 @@
   import { base } from "$app/paths";
   import { VERSION, CODENAME } from "$lib/config";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
@@ -27,6 +29,11 @@
       icon: "icon-[lucide--brain]",
     },
     { id: "schema", label: "Schema", icon: "icon-[lucide--tags]" },
+    {
+      id: "templates",
+      label: "Templates",
+      icon: "icon-[lucide--layout-template]",
+    },
     {
       id: "theme",
       label: "Theme",
@@ -60,43 +67,10 @@
     modalUIStore.closeSettings();
   };
 
-  let previousActiveElement: HTMLElement | null = null;
-  let modalElement: HTMLElement | undefined = $state();
-
-  $effect(() => {
-    if (modalUIStore.showSettings) {
-      previousActiveElement = document.activeElement as HTMLElement;
-      // Focus the first tab button after a short delay to allow for transition
-      setTimeout(() => {
-        const firstTab = modalElement?.querySelector(
-          '[role="tab"]',
-        ) as HTMLElement;
-        firstTab?.focus();
-      }, 100);
-    } else if (previousActiveElement) {
-      previousActiveElement.focus();
-      previousActiveElement = null;
-    }
-  });
-
+  // Focus management (initial focus, Tab cycling, restore-on-close) is
+  // handled by the shared focusTrap action on the dialog element.
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") close();
-    if (e.key === "Tab") {
-      if (!modalElement) return;
-      const focusables = modalElement.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      const first = focusables[0] as HTMLElement;
-      const last = focusables[focusables.length - 1] as HTMLElement;
-
-      if (e.shiftKey && document.activeElement === first) {
-        last.focus();
-        e.preventDefault();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        first.focus();
-        e.preventDefault();
-      }
-    }
   };
 </script>
 
@@ -113,7 +87,7 @@
   ></button>
 
   <div
-    bind:this={modalElement}
+    use:focusTrap
     class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-chrome-bg border border-chrome-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body"
     role="dialog"
     aria-modal="true"
@@ -195,6 +169,7 @@
           {tabs.find((t) => t.id === modalUIStore.activeSettingsTab)?.label}
         </h2>
         <button
+          type="button"
           onclick={close}
           aria-disabled={modalUIStore.isImporting ? "true" : "false"}
           title={modalUIStore.isImporting
@@ -205,7 +180,7 @@
             : ''}"
           aria-label="Close Settings"
         >
-          <span class="icon-[lucide--x] w-6 h-6"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] w-6 h-6"></span>
         </button>
       </div>
 
@@ -314,9 +289,9 @@
                   : ''}"
               >
                 <p class="text-sm text-chrome-text/70 leading-relaxed">
-                  Manage AI integration settings. Codex Cryptica uses Google
-                  Gemini to provide context-aware reasoning, automated tagging,
-                  and image generation.
+                  Manage AI integration settings. Codex Cryptica uses the Oracle
+                  to provide context-aware reasoning, automated tagging, and
+                  image generation.
                 </p>
                 <AISettings />
               </div>
@@ -363,6 +338,20 @@
               label here will update all labeled files project-wide.
             </p>
             <LabelSettings />
+          </div>
+        {:else if modalUIStore.activeSettingsTab === "templates"}
+          <div
+            role="tabpanel"
+            id="settings-panel-templates"
+            aria-labelledby="settings-tab-templates"
+            class="space-y-6 max-w-3xl mx-auto"
+          >
+            <p class="text-sm text-chrome-text/70 leading-relaxed">
+              Manage reusable stat sheet layouts you can apply to any entity
+              from its Stats tab. Built-in templates are always available;
+              custom templates you save are scoped to this vault.
+            </p>
+            <StatSheetTemplateSettings />
           </div>
         {:else if modalUIStore.activeSettingsTab === "theme"}
           <div

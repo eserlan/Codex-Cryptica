@@ -1,5 +1,9 @@
 import type { MapPin, ViewportTransform } from "schema";
 import { imageToViewport } from "./math";
+import {
+  TOKEN_ROTATION_HANDLE_DISTANCE,
+  TOKEN_ROTATION_HANDLE_RADIUS,
+} from "./token-geometry";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const m = hex.replace("#", "").match(/.{2}/g);
@@ -36,13 +40,17 @@ export interface RenderToken {
   width: number;
   height: number;
   rotation: number;
+  baseShape?: "circle" | "square";
+  facingIndicator?: boolean;
   color: string;
   label: string;
   image?: HTMLImageElement | null;
   selected?: boolean;
+  primarySelected?: boolean;
   active?: boolean;
   visible?: boolean;
   statusEffects?: string[];
+  healthBar?: { value: number; max: number } | null;
 }
 
 export interface RenderMeasurement {
@@ -140,6 +148,138 @@ function drawRoundedRectPath(
   ctx.rect(x, y, width, height);
 }
 
+function traceTokenShape(
+  ctx: CanvasRenderingContext2D,
+  shape: "circle" | "square",
+  width: number,
+  height: number,
+) {
+  ctx.beginPath();
+  if (shape === "square") {
+    ctx.rect(-width / 2, -height / 2, width, height);
+  } else {
+    ctx.arc(0, 0, Math.min(width, height) / 2, 0, TAU);
+  }
+  ctx.closePath();
+}
+
+function drawFacingIndicator(
+  ctx: CanvasRenderingContext2D,
+  radius: number,
+  rotation: number,
+) {
+  const front = "#22c55e";
+  const side = "#f59e0b";
+  const rear = "#ef4444";
+  const ringRadius = radius + 2;
+  const ringWidth = Math.max(3, radius * 0.1);
+  const north = -Math.PI / 2;
+
+  ctx.save();
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.lineWidth = ringWidth;
+  ctx.lineCap = "butt";
+  for (const [color, start, end] of [
+    [front, north - Math.PI / 4, north + Math.PI / 4],
+    [side, north + Math.PI / 4, north + (3 * Math.PI) / 4],
+    [rear, north + (3 * Math.PI) / 4, north + (5 * Math.PI) / 4],
+    [side, north + (5 * Math.PI) / 4, north + (7 * Math.PI) / 4],
+  ] as const) {
+    ctx.beginPath();
+    ctx.arc(0, 0, ringRadius, start, end);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = front;
+  ctx.beginPath();
+  ctx.moveTo(0, -radius * 0.92);
+  ctx.lineTo(-radius * 0.13, -radius * 0.62);
+  ctx.lineTo(radius * 0.13, -radius * 0.62);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Returns the bar's height in image-space so callers can push other overlays
+// (e.g. the name label) below it and avoid overlapping.
+function drawHealthBar(
+  ctx: CanvasRenderingContext2D,
+  center: { x: number; y: number },
+  tokenWidth: number,
+  radius: number,
+  bar: { value: number; max: number },
+): number {
+  const ratio = Math.max(0, Math.min(1, bar.value / bar.max));
+  const fillColor =
+    ratio >= 0.5 ? "#22c55e" : ratio >= 0.25 ? "#facc15" : "#ef4444";
+  const barWidth = tokenWidth;
+  const barHeight = Math.max(4, Math.min(7, radius * 0.18));
+  const barX = center.x - barWidth / 2;
+  const barY = center.y + radius + 4;
+
+  ctx.save();
+  drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fill();
+  if (ratio > 0) {
+    drawRoundedRectPath(
+      ctx,
+      barX,
+      barY,
+      barWidth * ratio,
+      barHeight,
+      barHeight / 2,
+    );
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 1;
+  drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
+  ctx.stroke();
+  ctx.restore();
+
+  return barHeight;
+}
+
+function drawRotationHandle(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  width: number,
+  height: number,
+  rotation: number,
+  accentColor: string,
+  handleDistance: number,
+) {
+  const handleX = centerX;
+  const handleY = centerY - Math.max(width, height) / 2 - handleDistance;
+
+  ctx.save();
+  ctx.strokeStyle = accentColor;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - Math.max(width, height) / 2);
+  ctx.lineTo(handleX, handleY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(handleX, handleY, TOKEN_ROTATION_HANDLE_RADIUS, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(handleX, handleY);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, -Math.PI / 2, Math.PI);
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+
 function getCache(canvas: HTMLCanvasElement): CanvasCache {
   let cache = canvasCaches.get(canvas);
   if (!cache) {
@@ -170,7 +310,7 @@ export function renderMap(options: RenderOptions) {
   // Clear canvas
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-  if (!image) return;
+  if (!image || image.width === 0 || image.height === 0) return;
 
   const center = imageToViewport(
     originPt,
@@ -265,14 +405,13 @@ export function renderMap(options: RenderOptions) {
     center.y = minY + height / 2;
     const diameter = Math.max(1, Math.min(width, height));
     const radius = diameter / 2;
+    const shape = token.baseShape ?? "circle";
 
     ctx.save();
     ctx.translate(center.x, center.y);
     ctx.rotate((token.rotation * Math.PI) / 180);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, TAU);
-    ctx.closePath();
+    traceTokenShape(ctx, shape, width, height);
     ctx.clip();
 
     if (token.image && token.image.width > 0 && token.image.height > 0) {
@@ -305,10 +444,11 @@ export function renderMap(options: RenderOptions) {
       const borderWidth = token.active ? 8 : 5;
 
       ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
 
       // Outer drop shadow (outside only)
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, TAU);
+      traceTokenShape(ctx, shape, width + borderWidth, height + borderWidth);
       ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       ctx.lineWidth = borderWidth + 4;
       ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
@@ -316,8 +456,7 @@ export function renderMap(options: RenderOptions) {
       ctx.stroke();
 
       // Main thick border
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, TAU);
+      traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = accent;
       ctx.lineWidth = borderWidth;
       ctx.shadowColor = accent;
@@ -325,8 +464,7 @@ export function renderMap(options: RenderOptions) {
       ctx.stroke();
 
       // Thin bright highlight on top
-      ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, TAU);
+      traceTokenShape(ctx, shape, width, height);
       ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
       ctx.lineWidth = 2;
       ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
@@ -336,15 +474,33 @@ export function renderMap(options: RenderOptions) {
       ctx.restore();
     }
 
+    if (token.facingIndicator) {
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      drawFacingIndicator(ctx, radius, token.rotation);
+      ctx.restore();
+    }
+
+    if (token.primarySelected ?? token.selected) {
+      drawRotationHandle(
+        ctx,
+        center.x,
+        center.y,
+        width,
+        height,
+        token.rotation,
+        options.accentColor || "#3b82f6",
+        TOKEN_ROTATION_HANDLE_DISTANCE * transform.zoom,
+      );
+    }
+
     // Draw dead status: red X ON the token + dark overlay
     if (token.statusEffects && token.statusEffects.includes("dead")) {
       ctx.save();
       // Dark overlay on token
       ctx.translate(center.x, center.y);
       ctx.rotate((token.rotation * Math.PI) / 180);
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, TAU);
-      ctx.closePath();
+      traceTokenShape(ctx, shape, width, height);
       ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.fill();
       // Red X
@@ -486,6 +642,17 @@ export function renderMap(options: RenderOptions) {
       }
     }
 
+    let healthBarHeight = 0;
+    if (token.healthBar && token.healthBar.max > 0) {
+      healthBarHeight = drawHealthBar(
+        ctx,
+        center,
+        width,
+        radius,
+        token.healthBar,
+      );
+    }
+
     if (token.label) {
       ctx.save();
       const font = "12px ui-sans-serif, system-ui, sans-serif";
@@ -493,7 +660,11 @@ export function renderMap(options: RenderOptions) {
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       const labelX = center.x;
-      const labelY = center.y + height / 2 + 6;
+      const labelY =
+        center.y +
+        height / 2 +
+        6 +
+        (healthBarHeight > 0 ? healthBarHeight + 4 : 0);
       const metrics = measureTextCached(ctx, token.label, font, cache);
       const paddingX = 8;
       const boxWidth = metrics.width + paddingX * 2;
@@ -520,11 +691,18 @@ export function renderMap(options: RenderOptions) {
   // 6. Draw Fog of War above pins and tokens so the reveal state masks them.
   // Applying destination-out directly on the main canvas would erase the map
   // image itself, not just the fog layer on top of it.
-  if (showFog && maskCanvas) {
+  if (
+    showFog &&
+    maskCanvas &&
+    maskCanvas.width > 0 &&
+    maskCanvas.height > 0 &&
+    canvasSize.width > 0 &&
+    canvasSize.height > 0
+  ) {
     const fog = getFogCanvas(canvasSize.width, canvasSize.height, cache);
     const fogCtx = fog.getContext("2d");
 
-    if (fogCtx) {
+    if (fogCtx && fog.width > 0 && fog.height > 0) {
       // 1. Clear the entire offscreen buffer so there's no stale fog outside the map
       fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 

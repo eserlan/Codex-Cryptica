@@ -1,6 +1,7 @@
 <script lang="ts">
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { fade } from "svelte/transition";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   // Formatter for timestamps
   function formatTime(timestamp: number): string {
@@ -38,11 +39,12 @@
       />
       {#if quickNoteStore.filterText}
         <button
+          type="button"
           onclick={() => (quickNoteStore.filterText = "")}
           aria-label="Clear filter"
           class="absolute right-2 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-text"
         >
-          <span class="icon-[lucide--x] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] h-3.5 w-3.5"></span>
         </button>
       {/if}
     </div>
@@ -51,8 +53,11 @@
   <!-- Notes List -->
   <div class="flex-1 overflow-y-auto min-h-0 p-2 space-y-1.5 custom-scrollbar">
     {#if quickNoteStore.filteredNotes.length === 0}
-      <div class="p-6 text-center text-theme-muted text-xs" transition:fade>
-        No notes found
+      <div transition:fade>
+        <EmptyState
+          icon="icon-[lucide--notebook-pen]"
+          headline="No notes found"
+        />
       </div>
     {:else}
       {#each quickNoteStore.filteredNotes as note (note.id)}

@@ -2,7 +2,7 @@ import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
-import { interactionSessions } from "../../services/ai/interaction-session";
+import { interactionSessions } from "@codex/ai-engine";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
 
 export class OracleContextManager {
@@ -82,8 +82,8 @@ export class OracleContextManager {
         ),
       },
       imageGeneration: {
-        distillVisualPrompt: wrap(
-          s.imageGeneration.distillVisualPrompt?.bind(s.imageGeneration),
+        distillVisualSubject: wrap(
+          s.imageGeneration.distillVisualSubject?.bind(s.imageGeneration),
         ),
         generateImage: wrap(
           s.imageGeneration.generateImage?.bind(s.imageGeneration),
@@ -112,6 +112,7 @@ export class OracleContextManager {
             loreEntries?: import("@codex/oracle-engine").LoreEntry[];
             conversationId?: string;
             interactionsEnabled?: boolean;
+            guestMode?: boolean;
           },
         ) => {
           const callback = isWorker
@@ -129,6 +130,7 @@ export class OracleContextManager {
             categories ? $state.snapshot(categories) : undefined,
             {
               ...options,
+              guestMode: s.sessionModeStore.isGuestMode,
               requestId: options?.requestId || undefined,
               vaultId: options?.vaultId || s.vault.activeVaultId || undefined,
               existingEntities: options?.existingEntities
@@ -210,9 +212,11 @@ export class OracleContextManager {
       customImageApiKey: s.settings?.customImageApiKey,
       customImageModel: s.settings?.customImageModel,
       isDemoMode: s.sessionModeStore.isDemoMode,
-      automationPolicy: $state.snapshot(
-        s.discoveryPolicyStore.oracleAutomationPolicy,
-      ),
+      // Guests can't accept proposals, and guest vault entities are $state
+      // proxies that fail structured cloning across the worker boundary.
+      automationPolicy: s.sessionModeStore.isGuestMode
+        ? { entityDiscovery: "off", connectionDiscovery: "off" }
+        : $state.snapshot(s.discoveryPolicyStore.oracleAutomationPolicy),
       proposeConnectionsForEntity: wrap(
         async (
           entityId: string,

@@ -1,10 +1,25 @@
+vi.mock("@codex/ai-engine", () => ({
+  textGenerationService: {
+    generateRelatedEntity: vi.fn().mockResolvedValue({
+      name: "Generated Name",
+      type: "character",
+      summary: "Generated summary.",
+      description: "Generated description.",
+      labels: ["generated-label"],
+      plotHook: "Generated plot hook",
+      relationshipBack: "rival",
+    }),
+  },
+  isAIEnabled: vi.fn().mockReturnValue(true),
+}));
+
 /** @vitest-environment jsdom */
 
 import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RelatedEntityModal from "./RelatedEntityModal.svelte";
 import { vault } from "$lib/stores/vault.svelte";
-import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+import { textGenerationService } from "@codex/ai-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 const mockDiscoveryPolicyStore = vi.hoisted(() => ({
@@ -60,6 +75,15 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: mockOracle,
 }));
 
+const mockThemeStore = vi.hoisted(() => ({
+  worldThemeId: "scifi",
+  activeTheme: { name: "Sci-Fi Terminal" },
+}));
+
+vi.mock("$lib/stores/theme.svelte", () => ({
+  themeStore: mockThemeStore,
+}));
+
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
@@ -70,28 +94,10 @@ vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: mockDiscoveryPolicyStore,
 }));
 
-vi.mock("$lib/services/ai/text-generation.service.svelte", () => ({
-  textGenerationService: {
-    generateRelatedEntity: vi.fn().mockResolvedValue({
-      name: "Generated Name",
-      type: "character",
-      summary: "Generated summary.",
-      description: "Generated description.",
-      labels: ["generated-label"],
-      plotHook: "Generated plot hook",
-      relationshipBack: "rival",
-    }),
-  },
-}));
-
 vi.mock("$lib/services/EntityTemplateService.svelte", () => ({
   entityTemplateService: {
     resolveTemplate: vi.fn().mockResolvedValue("Resolved template outline"),
   },
-}));
-
-vi.mock("$lib/services/ai/capability-guard", () => ({
-  isAIEnabled: vi.fn().mockReturnValue(true),
 }));
 
 describe("RelatedEntityModal", () => {
@@ -101,8 +107,6 @@ describe("RelatedEntityModal", () => {
     mockOracle.effectiveApiKey = "test-api-key";
     mockOracle.settingsManager.apiKey = "test-api-key";
     (vault as any).isGuest = false;
-
-    // Polyfill Element.prototype.animate for jsdom / Svelte transitions
     if (typeof window !== "undefined") {
       Element.prototype.animate = vi.fn().mockReturnValue({
         finished: Promise.resolve(),
@@ -162,7 +166,10 @@ describe("RelatedEntityModal", () => {
       expect.any(Array),
       expect.any(Array),
       expect.any(String),
-      expect.objectContaining({ aiDisabled: false }),
+      expect.objectContaining({
+        aiDisabled: false,
+        worldThemeName: "Sci-Fi Terminal",
+      }),
     );
 
     await waitFor(() => {
@@ -191,6 +198,34 @@ describe("RelatedEntityModal", () => {
       ) as HTMLInputElement;
       expect(relationBackInput.value).toBe("rival");
     });
+  });
+
+  it("omits worldThemeName when the vault has no world theme set", async () => {
+    mockThemeStore.worldThemeId = "workspace";
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    const generateBtn = screen.getByText("Generate");
+    await fireEvent.click(generateBtn);
+
+    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+      "test-api-key",
+      expect.any(String),
+      expect.any(Object),
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      expect.any(Array),
+      expect.any(Array),
+      expect.any(String),
+      expect.objectContaining({ worldThemeName: undefined }),
+    );
+
+    mockThemeStore.worldThemeId = "scifi";
   });
 
   it("does not call generation and shows settings prompt when AI is disabled", async () => {
@@ -244,7 +279,10 @@ describe("RelatedEntityModal", () => {
       expect.any(Array),
       expect.any(Array),
       expect.any(String),
-      expect.objectContaining({ aiDisabled: false }),
+      expect.objectContaining({
+        aiDisabled: false,
+        worldThemeName: "Sci-Fi Terminal",
+      }),
     );
   });
 
@@ -288,5 +326,41 @@ describe("RelatedEntityModal", () => {
       "success",
     );
     expect(onCloseMock).toHaveBeenCalled();
+  });
+
+  it("marks the Create Entity button busy and disabled while saving", async () => {
+    let releaseSave!: (id: string) => void;
+    vi.mocked(vault.createEntity).mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          releaseSave = resolve;
+        }),
+    );
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    await fireEvent.click(screen.getByText("Generate"));
+    await waitFor(() => {
+      expect(screen.getByText("Create Entity")).toBeDefined();
+    });
+
+    const createBtn = screen
+      .getByText("Create Entity")
+      .closest("button") as HTMLButtonElement;
+    await fireEvent.click(createBtn);
+
+    await waitFor(() => {
+      expect(createBtn.getAttribute("aria-busy")).toBe("true");
+      expect(createBtn.disabled).toBe(true);
+    });
+
+    releaseSave("new-entity-id");
+    await waitFor(() => {
+      expect(vault.addConnection).toHaveBeenCalled();
+    });
   });
 });

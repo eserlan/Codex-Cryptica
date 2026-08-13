@@ -149,8 +149,8 @@ test.describe("Guest Mode (P2P Share)", () => {
     );
     expect(title).toBe("Shared Mountain");
 
-    // 3. Verify editing is disabled (e.g., no "NEW ENTITY" button)
-    await expect(page.getByTestId("new-entity-button")).not.toBeVisible();
+    // 3. Verify editing is disabled (e.g., no "+ Create" button)
+    await expect(page.getByTestId("header-create-button")).not.toBeVisible();
 
     // 4. Select an entity and verify detail panel is read-only
     await page.evaluate(() => {

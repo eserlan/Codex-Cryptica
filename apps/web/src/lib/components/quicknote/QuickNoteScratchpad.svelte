@@ -90,11 +90,12 @@
           {saveStatus}
         </span>
         <button
+          type="button"
           onclick={() => quickNoteStore.close()}
           class="p-1.5 rounded-lg text-theme-muted hover:text-theme-text hover:bg-theme-border/25 transition-all"
           aria-label="Close scratchpad"
         >
-          <span class="icon-[lucide--x] h-4 w-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
         </button>
       </div>
     </div>

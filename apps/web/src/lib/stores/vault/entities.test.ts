@@ -11,6 +11,7 @@ import {
   bulkAddLabel,
   bulkRemoveLabel,
   batchCreateEntities,
+  applyBatchDelete,
   detectCycle,
 } from "./entities";
 import type { LocalEntity, BatchCreateInput } from "./types";
@@ -101,6 +102,16 @@ describe("Vault Entities Operations", () => {
         entities,
       );
       expect(entity.parent).toBe("parent-id");
+    });
+
+    it("keeps the explicit type when initialData carries an unrelated `kind` sub-classification (e.g. SEO language drafts)", () => {
+      const entity = createEntity(
+        "Elvish Glossary",
+        "note",
+        { kind: "language" } as any,
+        {},
+      );
+      expect(entity.type).toBe("note");
     });
   });
 
@@ -335,6 +346,60 @@ describe("Vault Entities Operations", () => {
       const { deletedEntity } = await deleteEntity(mockVaultDir, { e1 }, "e1");
       expect(deletedEntity).toBe(e1);
       expect(deleteOpfsEntry).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("applyBatchDelete", () => {
+    it("removes a batch and cleans inbound connections and parents once", () => {
+      const entities = {
+        parent: {
+          id: "parent",
+          title: "Parent",
+          connections: [],
+        },
+        child: {
+          id: "child",
+          title: "Child",
+          parent: "parent",
+          connections: [{ target: "removed", type: "knows" }],
+        },
+        source: {
+          id: "source",
+          title: "Source",
+          connections: [{ target: "removed", type: "knows" }],
+        },
+        removed: {
+          id: "removed",
+          title: "Removed",
+          connections: [],
+        },
+      } as any;
+
+      const result = applyBatchDelete(
+        entities,
+        ["parent", "removed"],
+        {
+          removed: [{ sourceId: "source", connection: { type: "knows" } }],
+        },
+        { parent: ["child"] },
+      );
+
+      expect(result.deletedIds).toEqual(["parent", "removed"]);
+      expect(result.entities.parent).toBeUndefined();
+      expect(result.entities.removed).toBeUndefined();
+      expect(result.modified.child.parent).toBeUndefined();
+      expect(result.modified.child.connections).toEqual([]);
+      expect(result.modified.source.connections).toEqual([]);
+    });
+
+    it("does not mutate the input map or include unknown IDs", () => {
+      const entity = { id: "known", title: "Known", connections: [] } as any;
+      const entities = { known: entity };
+      const result = applyBatchDelete(entities, ["missing"]);
+
+      expect(result.deletedIds).toEqual([]);
+      expect(result.entities).toBe(entities);
+      expect(entities.known).toBe(entity);
     });
   });
 

@@ -8,6 +8,12 @@ import { fileIOAdapter } from "./adapters.svelte";
 import type { VaultRecord } from "../../utils/idb";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
+import {
+  browserPerformanceCapture,
+  browserPerformanceRecorder,
+} from "$lib/services/performance/browser-performance-capture";
+import type { PerformanceOperationHandle } from "@codex/performance-observability";
 
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
@@ -69,10 +75,18 @@ export class SyncStore {
 
   private syncAbortController: AbortController | null = null;
   private savedTimer: any = null;
+  /**
+   * The vault whose entities are currently seeded in memory. Used to tell a
+   * same-vault reload (where in-memory may hold fresher writes than the cache,
+   * e.g. mid-import) apart from a vault switch (where in-memory is stale and
+   * must be fully replaced).
+   */
+  private _lastSeededVaultId: string | null = null;
 
   private unsubscribe: (() => void) | null = null;
 
   constructor(private deps: SyncStoreDependencies) {
+    browserPerformanceCapture.start();
     this.unsubscribe = appEventBus.subscribe(
       "SYNC:DRIVE_PULL_COMPLETE",
       async (event) => {
@@ -169,6 +183,31 @@ export class SyncStore {
       progress: 0,
     };
     this.failedFiles = [];
+    let vaultOpenSpan: PerformanceOperationHandle | null = null;
+    let vaultOpenRecorded = false;
+    let vaultOpenCacheState: "warm" | "cold" | null = null;
+    const completeVaultOpen = () => {
+      if (!vaultOpenSpan || vaultOpenRecorded) return;
+      vaultOpenRecorded = true;
+      vaultOpenSpan.complete(() => ({
+        cacheState: vaultOpenCacheState ?? "not_applicable",
+        entityCount: Object.keys(this.deps.repository.entities).length,
+      }));
+    };
+    const staleVaultOpen = () => {
+      if (!vaultOpenSpan || vaultOpenRecorded) return;
+      vaultOpenRecorded = true;
+      vaultOpenSpan.stale(() => ({
+        cacheState: vaultOpenCacheState ?? "not_applicable",
+      }));
+    };
+    const failVaultOpen = () => {
+      if (!vaultOpenSpan || vaultOpenRecorded) return;
+      vaultOpenRecorded = true;
+      vaultOpenSpan.fail("unexpected", () => ({
+        cacheState: vaultOpenCacheState ?? "not_applicable",
+      }));
+    };
 
     try {
       vaultEventBus.reset();
@@ -177,7 +216,16 @@ export class SyncStore {
         vaultId: vaultIdAtStart,
       });
 
-      this.deps.repository.entities = {};
+      // On a same-vault reload, keep the current in-memory entities until the
+      // cache snapshot is ready instead of blanking them. This closes the race
+      // where a concurrent reload (e.g. the cross-tab RELOAD_VAULT broadcast
+      // firing mid-import) would clear the store and reseed from a stale cache,
+      // dropping freshly-written data such as connections. A vault switch still
+      // fully clears, since the old vault's entities must not leak.
+      const isSameVault = vaultIdAtStart === this._lastSeededVaultId;
+      if (!isSameVault) {
+        this.deps.repository.entities = {};
+      }
 
       const isDemo =
         sessionModeStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
@@ -185,14 +233,40 @@ export class SyncStore {
         ? await cacheService.preloadVault(vaultIdAtStart)
         : new Map();
 
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      vaultOpenCacheState = cachedMap.size > 0 ? "warm" : "cold";
+      vaultOpenSpan = browserPerformanceRecorder.start(
+        cachedMap.size > 0 ? "vault_open_warm" : "vault_open_cold",
+      );
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       if (cachedMap.size > 0) {
+        // Read the LIVE map at seed time (not a pre-await snapshot): on a
+        // same-vault reload it still holds any writes that landed during the
+        // async preload above.
+        const liveEntities = isSameVault ? this.deps.repository.entities : {};
         const entityMap: Record<string, LocalEntity> = {};
         for (const { entity } of cachedMap.values()) {
-          entityMap[entity.id] = { ...entity };
+          // If the live entity is newer than the cached copy, the cache is
+          // stale (a debounced save hasn't landed yet) — keep the live one so
+          // we never clobber fresher in-memory writes (e.g. import connections).
+          const live = liveEntities[entity.id];
+          if (live && (live.updatedAt ?? 0) > (entity.updatedAt ?? 0)) {
+            entityMap[entity.id] = live;
+          } else {
+            entityMap[entity.id] = { ...entity };
+          }
+        }
+        // Preserve live entities created during this reload that the cache
+        // snapshot hasn't captured yet (e.g. an in-flight import), so the
+        // reseed can't drop brand-new entities either.
+        for (const id in liveEntities) {
+          if (!(id in entityMap)) entityMap[id] = liveEntities[id];
         }
         this.deps.repository.entities = entityMap;
+        this._lastSeededVaultId = vaultIdAtStart;
 
         vaultEventBus.emit({
           type: "CACHE_LOADED",
@@ -235,20 +309,28 @@ export class SyncStore {
         await this.deps.loadMaps(vaultIdAtStart);
         await this.deps.loadCanvases(vaultIdAtStart);
         void this.deps.getActiveVaultHandle();
+        completeVaultOpen();
         return;
       }
 
       const vaultDir = await this.deps.getActiveVaultHandle();
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       if (!vaultDir) {
         if (!isDemo) {
           this.setStatus(cachedMap.size > 0 ? "idle" : "error");
           if ((this._status as string) === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
+            failVaultOpen();
+          } else {
+            completeVaultOpen();
           }
         } else {
           this.setStatus("idle");
+          completeVaultOpen();
         }
         return;
       }
@@ -296,14 +378,20 @@ export class SyncStore {
                 },
               },
             );
-            if (signal.aborted) return;
+            if (signal.aborted) {
+              staleVaultOpen();
+              return;
+            }
             debugStore.log("[SyncStore] Local sync complete.");
 
             appEventBus.emit({
               type: "SYNC:LOCAL_PULL_COMPLETE",
               domain: "sync",
               payload: { vaultId: vaultIdAtStart },
-              metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+              metadata: {
+                timestamp: systemClock.now(),
+                vaultId: vaultIdAtStart,
+              },
             });
           } catch (err) {
             debugStore.error("[SyncStore] Local sync failed", err);
@@ -311,7 +399,10 @@ export class SyncStore {
         }
       }
 
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       if (cachedMap.size > 0) {
         this._status = "idle";
@@ -331,12 +422,21 @@ export class SyncStore {
 
             const changedIds = Object.keys(newOrChanged);
             if (changedIds.length > 0) {
+              const chunkSpan =
+                browserPerformanceRecorder.start("vault_sync_chunk");
               vaultEventBus.emit({
                 type: "SYNC_CHUNK_READY",
                 vaultId: vaultIdAtStart,
-                entities: this.deps.repository.entities,
+                // Keep chunk events proportional to changed files. The repository
+                // still owns the complete accumulated map; consumers only need the
+                // parsed records from this chunk.
+                entities: newOrChanged,
                 newOrChangedIds: changedIds,
               });
+              chunkSpan.complete(() => ({
+                changedEntityCount: changedIds.length,
+                entityCount: Object.keys(this.deps.repository.entities).length,
+              }));
             }
           },
         )
@@ -353,7 +453,10 @@ export class SyncStore {
 
       await syncPromise;
 
-      if (this.isStale(vaultIdAtStart, signal)) return;
+      if (this.isStale(vaultIdAtStart, signal)) {
+        staleVaultOpen();
+        return;
+      }
 
       await Promise.all([
         this.deps.loadMaps(vaultIdAtStart),
@@ -371,8 +474,13 @@ export class SyncStore {
         type: "SYNC_COMPLETE",
         vaultId: vaultIdAtStart,
       });
+      completeVaultOpen();
     } catch (err: any) {
-      if (err.name === "AbortError" || err.message === "AbortError") return;
+      if (err.name === "AbortError" || err.message === "AbortError") {
+        staleVaultOpen();
+        return;
+      }
+      failVaultOpen();
       debugStore.error("[SyncStore] Load failed", err);
       this.setStatus("error");
       this.errorMessage = err.message;
@@ -388,6 +496,13 @@ export class SyncStore {
       }
       if (this._status === "loading" && !signal.aborted) {
         this.setStatus("idle");
+      }
+      if (!vaultOpenRecorded && vaultOpenSpan) {
+        if (signal.aborted || this.isStale(vaultIdAtStart, signal)) {
+          staleVaultOpen();
+        } else {
+          completeVaultOpen();
+        }
       }
     }
   }
@@ -439,7 +554,7 @@ export class SyncStore {
           type: "SYNC:LOCAL_PUSH_COMPLETE",
           domain: "sync",
           payload: { vaultId: vaultIdAtStart },
-          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+          metadata: { timestamp: systemClock.now(), vaultId: vaultIdAtStart },
         });
 
         this.setStatus("saved");
@@ -514,7 +629,7 @@ export class SyncStore {
           type: "SYNC:LOCAL_PULL_COMPLETE",
           domain: "sync",
           payload: { vaultId: vaultIdAtStart },
-          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+          metadata: { timestamp: systemClock.now(), vaultId: vaultIdAtStart },
         });
 
         await this.loadFiles();

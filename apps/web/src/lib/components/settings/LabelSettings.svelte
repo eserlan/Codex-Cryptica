@@ -53,12 +53,14 @@
                   onkeydown={(e) => e.key === "Enter" && handleRename()}
                 />
                 <button
+                  type="button"
                   onclick={handleRename}
                   class="px-3 py-1 bg-theme-primary text-theme-bg text-[11px] font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
                 </button>
                 <button
+                  type="button"
                   onclick={() => (editingLabel = null)}
                   class="px-3 py-1 border border-theme-border text-theme-muted text-[11px] font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
                 >
@@ -82,20 +84,26 @@
               class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
             >
               <button
+                type="button"
                 onclick={() => startRename(label)}
                 class="p-2 text-theme-muted hover:text-theme-primary transition-colors"
                 title="Rename Label"
                 aria-label="Rename {label} label"
               >
-                <span class="icon-[heroicons--pencil-square] w-4 h-4"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[heroicons--pencil-square] w-4 h-4"
+                ></span>
               </button>
               <button
+                type="button"
                 onclick={() => handleDelete(label)}
                 class="p-2 text-red-900/60 hover:text-red-500 transition-colors"
                 title="Delete Label Project-wide"
                 aria-label="Delete {label} label project-wide"
               >
-                <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+                ></span>
               </button>
             </div>
           {/if}

@@ -871,6 +871,100 @@ describe("LayoutManager", () => {
     expect(capturedPostMessage).not.toBeNull();
   });
 
+  it("reveals the seed spiral immediately for a large fresh randomized solve", async () => {
+    // 600+ unplaced nodes → a fresh-vault randomized solve, which is slow enough
+    // to seed-then-refine: the spiral must be applied to cy (and un-hidden)
+    // before/independent of the worker result so it isn't an invisible clump.
+    const positions = Array.from({ length: 600 }, () => ({ x: 0, y: 0 }));
+    const bigNodes = makeNodes(positions);
+    (bigNodes as any).removeData = vi.fn();
+    (bigNodes as any).removeClass = vi.fn();
+    (bigNodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (bigNodes as any).not = vi.fn().mockReturnValue({
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      length: 0,
+    });
+    const pending = makeNodes(positions);
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? pending : bigNodes,
+    );
+
+    const seedNode = {
+      length: 1,
+      position: vi.fn(),
+      removeData: vi.fn(),
+      removeClass: vi.fn(),
+    };
+    mockCy.$id = vi.fn().mockReturnValue(seedNode);
+
+    await layoutManager.apply(
+      { reason: "Load Finalized", isInitial: true, isForced: true },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    // Randomized solve dispatched to the worker, and the seed spiral was placed
+    // + un-hidden on cy and fit, rather than left as a pending (opacity 0) clump.
+    expect(capturedPostMessage?.options.randomize).toBe(true);
+    expect(seedNode.position).toHaveBeenCalled();
+    expect(seedNode.removeClass).toHaveBeenCalledWith("pending-layout");
+    expect(seedNode.removeData).toHaveBeenCalledWith("isPendingLayout");
+    expect(mockCy.fit).toHaveBeenCalled();
+  });
+
+  it("does not seed-reveal for a small randomized solve", async () => {
+    // Two unplaced nodes — the worker is fast, so no seed-first reveal.
+    const pendingNodes = makeNodes([
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+    (pendingNodes as any).removeData = vi.fn();
+    (pendingNodes as any).removeClass = vi.fn();
+    (pendingNodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (pendingNodes as any).not = vi.fn().mockReturnValue({
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      length: 0,
+    });
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? pendingNodes : pendingNodes,
+    );
+
+    const seedNode = {
+      length: 1,
+      position: vi.fn(),
+      removeData: vi.fn(),
+      removeClass: vi.fn(),
+    };
+    mockCy.$id = vi.fn().mockReturnValue(seedNode);
+
+    await layoutManager.apply(
+      { reason: "Load Finalized", isInitial: true, isForced: true },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    // Worker still ran, but no pre-worker seed reveal happened.
+    expect(capturedPostMessage?.options.randomize).toBe(true);
+    expect(seedNode.removeClass).not.toHaveBeenCalledWith("pending-layout");
+  });
+
   it("keeps fit-only on initial load when nodes already have saved positions", async () => {
     // No .pending-layout nodes; positions are spread (not at origin)
     const placedNodes = makeNodes([

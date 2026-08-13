@@ -90,7 +90,9 @@ describe("OracleSettingsService", () => {
 
   describe("setTier", () => {
     it("should save tier to database and broadcast", async () => {
-      const service = new OracleSettingsService();
+      const service = new OracleSettingsService(undefined, {
+        now: () => 1234567890,
+      });
       await service.init(mockDb as any);
 
       await service.setTier("lite");
@@ -99,14 +101,16 @@ describe("OracleSettingsService", () => {
       expect(mockDb.appSettings.put).toHaveBeenCalledWith({
         key: "ai_tier",
         value: "lite",
-        updatedAt: expect.any(Number),
+        updatedAt: 1234567890,
       });
     });
   });
 
   describe("setKey", () => {
     it("should save api key to database and broadcast", async () => {
-      const service = new OracleSettingsService();
+      const service = new OracleSettingsService(undefined, {
+        now: () => 1234567890,
+      });
       await service.init(mockDb as any);
 
       await service.setKey("new-key");
@@ -115,7 +119,7 @@ describe("OracleSettingsService", () => {
       expect(mockDb.appSettings.put).toHaveBeenCalledWith({
         key: "ai_api_key",
         value: "new-key",
-        updatedAt: expect.any(Number),
+        updatedAt: 1234567890,
       });
     });
   });
@@ -185,11 +189,11 @@ describe("OracleSettingsService", () => {
       expect(service.modelName).toBe("gemini-3-flash-preview");
     });
 
-    it("should return gemini-3.1-flash-lite for lite tier", () => {
+    it("should return gemini-3.5-flash-lite for lite tier", () => {
       const service = new OracleSettingsService();
       service.tier = "lite";
 
-      expect(service.modelName).toBe("gemini-3.1-flash-lite");
+      expect(service.modelName).toBe("gemini-3.5-flash-lite");
     });
   });
 });

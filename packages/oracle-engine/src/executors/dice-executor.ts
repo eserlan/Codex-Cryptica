@@ -10,6 +10,13 @@ export class DiceExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
+  constructor(
+    clock?: import("../runtime").Clock,
+    idGenerator?: import("../runtime").IdGenerator,
+  ) {
+    super(clock, idGenerator);
+  }
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -24,7 +31,7 @@ export class DiceExecutor
       if (!formula) {
         const error = "❌ Please specify a roll formula (e.g. /roll 1d20).";
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: error,
         });
@@ -41,7 +48,7 @@ export class DiceExecutor
         await context.diceHistory.addResult(result, "chat");
 
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: "",
           type: "roll",
@@ -55,7 +62,7 @@ export class DiceExecutor
       } catch (err: any) {
         const error = err.message || "Unknown roll error";
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: `❌ Roll failed: ${error}`,
         });

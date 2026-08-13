@@ -1,21 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { load, entries } from "./+page";
+import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
 
 describe("Generator Theme Hub Route", () => {
   describe("load", () => {
-    it.each([
-      "fantasy",
-      "cyberpunk",
-      "sci-fi",
-      "post-apocalyptic",
-      "modern",
-      "vampire",
-      "western",
-      "steampunk",
-      "lancer",
-      "space-opera-resistance",
-      "optimistic-exploration-sci-fi",
-    ])("should load valid theme: %s", (theme) => {
+    it.each(HUB_THEME_SLUGS)("should load valid theme: %s", (theme) => {
       const res = load({ params: { theme } } as any) as any;
       expect(res.theme).toBe(theme);
     });
@@ -32,21 +21,10 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 11 theme slugs", () => {
-      const res = (entries as any)();
-      expect(res).toEqual([
-        { theme: "fantasy" },
-        { theme: "cyberpunk" },
-        { theme: "sci-fi" },
-        { theme: "post-apocalyptic" },
-        { theme: "modern" },
-        { theme: "vampire" },
-        { theme: "western" },
-        { theme: "steampunk" },
-        { theme: "lancer" },
-        { theme: "space-opera-resistance" },
-        { theme: "optimistic-exploration-sci-fi" },
-      ]);
+    it("prerenders exactly the hubs declared in hub-themes, in order", () => {
+      expect((entries as any)()).toEqual(
+        HUB_THEME_SLUGS.map((theme) => ({ theme })),
+      );
     });
   });
 });

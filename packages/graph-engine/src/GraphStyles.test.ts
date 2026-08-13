@@ -62,4 +62,56 @@ describe("getGraphStyles", () => {
     );
     expect(nodeLabelStyle).toBeDefined();
   });
+
+  it("should simplify expensive styles in performance mode", () => {
+    const styles = getGraphStyles(
+      mockTemplate,
+      mockCategories,
+      true,
+      false,
+      true,
+      true,
+    );
+
+    const performanceNodeStyle = styles.find(
+      (s) =>
+        s.selector === "node" &&
+        s.style.label === "" &&
+        s.style["background-image"] === "none",
+    );
+    const performanceEdgeStyle = styles.find(
+      (s) =>
+        s.selector === "edge" &&
+        s.style.label === "" &&
+        s.style["curve-style"] === "haystack",
+    );
+    const selectedLabelStyle = styles.find(
+      (s) => s.selector === "node:selected, .neighborhood",
+    );
+
+    expect(performanceNodeStyle).toBeDefined();
+    expect(performanceEdgeStyle).toBeDefined();
+    expect(performanceEdgeStyle?.style["haystack-radius"]).toBe(0.5);
+    expect(performanceEdgeStyle?.style["target-arrow-shape"]).toBe("none");
+    expect(selectedLabelStyle?.style.label).toBe("data(label)");
+  });
+
+  it("keeps relationship labels horizontal and clears dimmed background labels", () => {
+    const styles = getGraphStyles(
+      mockTemplate,
+      mockCategories,
+      true,
+      false,
+      true,
+    );
+    const edgeStyle = styles.find((s) => s.selector === "edge");
+    const dimmedEdgeStyle = styles.find((s) => s.selector === "edge.dimmed");
+
+    expect(edgeStyle?.style["text-rotation"]).toBe("none");
+    expect(edgeStyle?.style["text-background-opacity"]).toBe(0.92);
+    expect(edgeStyle?.style["text-background-padding"]).toBe("3px");
+    expect(edgeStyle?.style["text-max-width"]).toBe(120);
+    expect(edgeStyle?.style["text-wrap"]).toBe("ellipsis");
+    expect(dimmedEdgeStyle?.style.label).toBe("");
+  });
 });

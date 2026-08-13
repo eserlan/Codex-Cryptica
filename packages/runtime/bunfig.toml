@@ -1,0 +1,13 @@
+[test]
+watch = false
+preload = ["../../tests/bun-preload.ts"]
+coverageSkipTestFiles = true
+coveragePathIgnorePatterns = [
+  "node_modules/**",
+  "tests/**",
+  "**/*.test.ts",
+  "**/*.spec.ts",
+  "**/*.config.ts",
+  "../*/src/**",
+  "../../tests/**",
+]

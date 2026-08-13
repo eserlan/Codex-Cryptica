@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ASPECT_RATIO_DIMENSIONS } from "schema";
 import { OracleGenerator } from "./oracle-generator";
 
 describe("OracleGenerator", () => {
@@ -25,7 +26,7 @@ describe("OracleGenerator", () => {
         }),
       },
       imageGeneration: {
-        distillVisualPrompt: vi.fn().mockResolvedValue("prompt"),
+        distillVisualSubject: vi.fn().mockResolvedValue({ subject: "prompt" }),
         generateImage: vi.fn().mockResolvedValue(new Blob([])),
       },
       vault: {
@@ -97,7 +98,31 @@ describe("OracleGenerator", () => {
       expect(mockContext.imageGeneration.generateImage).toHaveBeenCalled();
     });
 
+    // Art Direction v2 inverts the old flow: the model writes only the
+    // subject, and category/theme/camera are composed around it afterwards.
+    // These assert the composed output, not what was sent to the distiller.
     it("should apply category and theme defaults to entity visualization prompts", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Almos",
+        type: "character",
+        labels: [],
+      };
+      mockContext.uiStore.activeThemeId = "fantasy";
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("full-body character concept art");
+      expect(prepared.prompt).toContain("painterly oil rendering");
+      expect(prepared.metadata.categoryId).toBe("character");
+      expect(prepared.metadata.themeId).toBe("fantasy");
+      expect(prepared.negativeTerms).toContain("stiff A-pose");
+    });
+
+    it("should ask the distiller for description only, not art direction", async () => {
       mockContext.vault.entities.e1 = {
         id: "e1",
         title: "Almos",
@@ -108,15 +133,14 @@ describe("OracleGenerator", () => {
 
       await generator.generateEntityVisualization("e1", mockContext);
 
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining("full-body character concept art"),
-        "ctx",
-        "model",
-        false,
-      );
+      const seed = (mockContext.imageGeneration.distillVisualSubject as any)
+        .mock.calls[0][1];
+
+      expect(seed).toContain("physically looks like");
+      // Composition and medium are supplied deterministically afterwards; the
+      // model must not be primed with them or it will emit them twice.
+      expect(seed).not.toContain("full-body character concept art");
+      expect(seed).not.toContain("painterly oil rendering");
     });
 
     it("should prefer entity art direction from normal content", async () => {
@@ -128,18 +152,19 @@ describe("OracleGenerator", () => {
         content:
           "Chronicle text\n\n## Art Direction\nink wash portrait with a silver mask\n\n## Notes\nOther text",
       };
+      mockContext.uiStore.activeThemeId = "fantasy";
 
-      await generator.generateEntityVisualization("e1", mockContext);
-
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining("Almos. ink wash portrait"),
-        "ctx",
-        "model",
-        false,
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
       );
+
+      expect(prepared.prompt).toContain("ink wash portrait with a silver mask");
+      expect(prepared.metadata.styleOverridden).toBe(true);
+      // Vault direction replaces the shipped theme rather than stacking on it.
+      expect(prepared.prompt).not.toContain("painterly oil rendering");
+      // Category framing and negatives still apply.
+      expect(prepared.prompt).toContain("full-body character concept art");
     });
 
     it("should ignore saved entity art direction when requested", async () => {
@@ -152,28 +177,38 @@ describe("OracleGenerator", () => {
       };
       mockContext.uiStore.activeThemeId = "cyberpunk";
 
-      await generator.prepareEntityVisualizationPrompt("e1", mockContext, {
-        ignoreSavedArtDirection: true,
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+        { ignoreSavedArtDirection: true },
+      );
+
+      expect(prepared.prompt).toContain("dense signage");
+      expect(prepared.prompt).not.toContain("old saved prompt");
+      expect(prepared.metadata.styleOverridden).toBe(false);
+    });
+
+    it("should strip the entity name from the composed prompt", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Almos",
+        type: "character",
+        labels: [],
+      };
+      (
+        mockContext.imageGeneration.distillVisualSubject as any
+      ).mockResolvedValue({
+        subject: "Almos, a scarred courier in a patched leather coat",
       });
 
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining("Cyberpunk digital concept art style"),
-        "ctx",
-        "model",
-        false,
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
       );
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).not.toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining("old saved prompt"),
-        "ctx",
-        "model",
-        false,
-      );
+
+      expect(prepared.prompt).not.toContain("Almos");
+      expect(prepared.prompt).toContain("scarred courier");
+      expect(prepared.metadata.removedNames).toContain("Almos");
     });
 
     it("should prioritize entity labels in entity visualization prompts", async () => {
@@ -182,7 +217,7 @@ describe("OracleGenerator", () => {
       await generator.generateEntityVisualization("e1", mockContext);
 
       expect(
-        mockContext.imageGeneration.distillVisualPrompt,
+        mockContext.imageGeneration.distillVisualSubject,
       ).toHaveBeenCalledWith(
         "key",
         expect.stringContaining("HIGH-PRIORITY VISUAL LABELS"),
@@ -191,7 +226,7 @@ describe("OracleGenerator", () => {
         false,
       );
       expect(
-        mockContext.imageGeneration.distillVisualPrompt,
+        mockContext.imageGeneration.distillVisualSubject,
       ).toHaveBeenCalledWith(
         "key",
         expect.stringContaining("- necromancy"),
@@ -211,7 +246,7 @@ describe("OracleGenerator", () => {
     });
 
     it("should apply chat art direction for unlinked message visualization", async () => {
-      await generator.generateMessageVisualization(
+      const prepared = await generator.prepareMessageVisualizationPrompt(
         {
           content:
             "Draw the moon gate\n\n## Art Direction\nflat ink and gold leaf icon",
@@ -219,34 +254,18 @@ describe("OracleGenerator", () => {
         mockContext,
       );
 
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining(
-          "Draw the moon gate. flat ink and gold leaf icon",
-        ),
-        "ctx",
-        "model",
-        false,
-      );
+      expect(prepared.prompt).toContain("flat ink and gold leaf icon");
+      expect(prepared.metadata.styleOverridden).toBe(true);
     });
 
     it("should use /draw category hints when no entity is linked", async () => {
-      await generator.generateMessageVisualization(
+      const prepared = await generator.prepareMessageVisualizationPrompt(
         { content: "/draw character Almos" } as any,
         mockContext,
       );
 
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining("Almos, full-body character concept art"),
-        "ctx",
-        "model",
-        false,
-      );
+      expect(prepared.metadata.categoryId).toBe("character");
+      expect(prepared.prompt).toContain("full-body character concept art");
     });
 
     it("should let linked entity metadata win over /draw category hints", async () => {
@@ -257,20 +276,267 @@ describe("OracleGenerator", () => {
         labels: [],
       };
 
-      await generator.generateMessageVisualization(
+      const prepared = await generator.prepareMessageVisualizationPrompt(
         { content: "/draw character Almos", entityId: "e1" } as any,
         mockContext,
       );
 
-      expect(
-        mockContext.imageGeneration.distillVisualPrompt,
-      ).toHaveBeenCalledWith(
-        "key",
-        expect.stringContaining("Almos, establishing environment art"),
-        "ctx",
-        "model",
-        false,
+      expect(prepared.metadata.categoryId).toBe("location");
+      expect(prepared.prompt).toContain("establishing environment art");
+    });
+
+    it("should attach negatives to the provider that exposes a field", async () => {
+      mockContext.imageProvider = "cloudflare";
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      const options = (mockContext.imageGeneration.generateImage as any).mock
+        .calls[0][3];
+      expect(options.negativePrompt).toContain("watermark");
+    });
+
+    it("should request the dimensions the composed framing asks for", async () => {
+      mockContext.imageProvider = "cloudflare";
+      mockContext.vault.entities.e1.type = "character";
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      const options = (mockContext.imageGeneration.generateImage as any).mock
+        .calls[0][3];
+      // A prompt that states 2:3 must not be rendered as a square.
+      expect(options.dimensions).toEqual(ASPECT_RATIO_DIMENSIONS["2:3"]);
+    });
+
+    it("should read stature from the entity's labels", async () => {
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.vault.entities.e1.labels = ["elven", "deity"];
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
       );
+
+      expect(prepared.metadata.statureId).toBe("divine");
+      expect(prepared.prompt).toContain("divine presence");
+    });
+
+    it("should use the stature the distiller read when no label says", async () => {
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.imageGeneration.distillVisualSubject.mockResolvedValue({
+        subject: "a tall figure in flowing garments",
+        stature: "divine",
+      });
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("divine");
+      expect(prepared.metadata.statureSource).toBe("inferred");
+    });
+
+    it("should let a label beat the distiller's reading", async () => {
+      // The user typed the label; the model only guessed.
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.vault.entities.e1.labels = ["legendary"];
+      mockContext.imageGeneration.distillVisualSubject.mockResolvedValue({
+        subject: "a tall figure in flowing garments",
+        stature: "divine",
+      });
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("mythic");
+      expect(prepared.metadata.statureSource).toBe("labels");
+    });
+
+    it("should keep the stature recorded on the entity's last image", async () => {
+      // Otherwise a re-classification drifts and the entity's images stop
+      // matching each other.
+      mockContext.vault.entities.e1.type = "character";
+      mockContext.vault.entities.e1.imageArtDirection = { statureId: "mythic" };
+      mockContext.imageGeneration.distillVisualSubject.mockResolvedValue({
+        subject: "a tall figure in flowing garments",
+        stature: "divine",
+      });
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.metadata.statureId).toBe("mythic");
+    });
+
+    it("should inherit a look from the entity's parent", async () => {
+      // A knight of a faction drawn alone otherwise gets the plain vault theme
+      // and looks nothing like the faction portrait beside it.
+      mockContext.vault.entities.faction1 = {
+        id: "faction1",
+        title: "The Order",
+        type: "faction",
+        artDirection: "Palette: black, oxblood and bone-ash",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        parent: "faction1",
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("black, oxblood and bone-ash");
+      expect(prepared.metadata.styleOverrideSource).toBe("inherited");
+    });
+
+    it("should inherit from a connected faction when there is no parent", async () => {
+      mockContext.vault.entities.faction1 = {
+        id: "faction1",
+        title: "The Order",
+        type: "faction",
+        artDirection: "Palette: black, oxblood and bone-ash",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        connections: [{ target: "faction1" }],
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("black, oxblood and bone-ash");
+    });
+
+    it("should not inherit a look from an arbitrary connection", async () => {
+      // Being linked to a character is not a reason to look like them.
+      mockContext.vault.entities.rival = {
+        id: "rival",
+        title: "A Rival",
+        type: "character",
+        artDirection: "Palette: hot pink",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        connections: [{ target: "rival" }],
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).not.toContain("hot pink");
+      expect(prepared.metadata.styleOverrideSource).toBeUndefined();
+    });
+
+    it("should prefer the entity's own look over an inherited one", async () => {
+      mockContext.vault.entities.faction1 = {
+        id: "faction1",
+        title: "The Order",
+        type: "faction",
+        artDirection: "Palette: black, oxblood and bone-ash",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        parent: "faction1",
+        artDirection: "Palette: hot pink",
+      };
+
+      const prepared = await generator.prepareEntityVisualizationPrompt(
+        "e1",
+        mockContext,
+      );
+
+      expect(prepared.prompt).toContain("hot pink");
+      expect(prepared.prompt).not.toContain("bone-ash");
+      expect(prepared.metadata.styleOverrideSource).toBeUndefined();
+    });
+
+    it("should survive a parent cycle", async () => {
+      mockContext.vault.entities.a = {
+        id: "a",
+        title: "A",
+        type: "faction",
+        parent: "e1",
+      };
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "A Knight",
+        type: "character",
+        labels: [],
+        parent: "a",
+      };
+
+      await expect(
+        generator.prepareEntityVisualizationPrompt("e1", mockContext),
+      ).resolves.toBeDefined();
+    });
+
+    it("should keep the negatives and framing of a reviewed prompt", async () => {
+      // The review dialog sends text the user may have edited; neither the
+      // negatives nor the aspect ratio can be recovered from it, and sending
+      // the string alone dropped both on the path most images take.
+      mockContext.imageProvider = "cloudflare";
+
+      await generator.generateVisualizationFromPrompt(
+        {
+          prompt: "an edited prompt",
+          negativeTerms: ["watermark", "extra fingers"],
+          aspectRatio: "2:3",
+        },
+        mockContext,
+      );
+
+      const [, , , options] = (mockContext.imageGeneration.generateImage as any)
+        .mock.calls[0];
+      expect(options.negativePrompt).toContain("watermark");
+      expect(options.dimensions).toEqual(ASPECT_RATIO_DIMENSIONS["2:3"]);
+    });
+
+    it("should leave dimensions to the provider for a hand-edited prompt", async () => {
+      mockContext.imageProvider = "cloudflare";
+
+      await generator.generateVisualizationFromPrompt(
+        "a hand-written prompt",
+        mockContext,
+      );
+
+      const options = (mockContext.imageGeneration.generateImage as any).mock
+        .calls[0][3];
+      expect(options.dimensions).toBeUndefined();
+    });
+
+    it("should inline negatives for a provider without a negative field", async () => {
+      mockContext.imageProvider = "gemini";
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      const [, prompt, , options] = (
+        mockContext.imageGeneration.generateImage as any
+      ).mock.calls[0];
+      expect(prompt).toContain("Avoid:");
+      expect(prompt).toContain("watermark");
+      expect(options.negativePrompt).toBeUndefined();
     });
 
     it("should prioritize linked entity labels in message visualization prompts", async () => {
@@ -282,7 +548,7 @@ describe("OracleGenerator", () => {
       );
 
       expect(
-        mockContext.imageGeneration.distillVisualPrompt,
+        mockContext.imageGeneration.distillVisualSubject,
       ).toHaveBeenCalledWith(
         "key",
         expect.stringContaining("- desert"),

@@ -1,5 +1,6 @@
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { debugStore } from "../../stores/debug.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface ConnectionState {
   status:
@@ -92,6 +93,11 @@ export class PeerJSConnectionManager {
 
   get state(): ConnectionState {
     return this._state;
+  }
+
+  /** The underlying PeerJS Peer, used for voice media calls. */
+  get rawPeer(): unknown {
+    return this.peer;
   }
 
   /**
@@ -251,7 +257,7 @@ export class PeerJSConnectionManager {
     const msg: PeerJSMessage = {
       type: messageType,
       senderId: this._state.peerId || "",
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
       payload,
     };
 
@@ -293,7 +299,7 @@ export class PeerJSConnectionManager {
         const handshake: PeerJSMessage = {
           type: "handshake",
           senderId: this._state.peerId || "",
-          timestamp: Date.now(),
+          timestamp: systemClock.now(),
           payload: {
             clientPeerId: this._state.peerId || "",
           },
@@ -321,7 +327,7 @@ export class PeerJSConnectionManager {
         const msg: PeerJSMessage = {
           type: data.type,
           senderId: conn.peer || "unknown",
-          timestamp: Date.now(),
+          timestamp: systemClock.now(),
           payload: data,
         };
         this.handleMessage(msg);
@@ -362,7 +368,7 @@ export class PeerJSConnectionManager {
           const ack: PeerJSMessage = {
             type: "handshake_ack",
             senderId: this._state.peerId || "",
-            timestamp: Date.now(),
+            timestamp: systemClock.now(),
             payload: null,
           };
           try {
@@ -422,7 +428,7 @@ export class PeerJSConnectionManager {
     if (msg.type === "pong") {
       this.isAwaitingPong = false;
       this.clearHeartbeatTimeout();
-      const RTT = Date.now() - msg.timestamp;
+      const RTT = systemClock.now() - msg.timestamp;
       this._state.latencyMs = RTT;
       return;
     }
@@ -465,7 +471,7 @@ export class PeerJSConnectionManager {
           // Already waiting for pong of previous ping, do not send another
           return;
         }
-        this.lastPingTime = Date.now();
+        this.lastPingTime = systemClock.now();
         const ping: PeerJSMessage = {
           type: "ping",
           senderId: this._state.peerId || "",

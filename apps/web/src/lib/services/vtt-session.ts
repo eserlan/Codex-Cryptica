@@ -110,7 +110,7 @@ export class VTTSessionService {
 
     const payload = sanitizeEncounterSession({
       ...session,
-      savedAt: Date.now(),
+      savedAt: systemClock.now(),
     });
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",

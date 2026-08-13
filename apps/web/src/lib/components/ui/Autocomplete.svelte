@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-  import { searchService } from "$lib/services/search.svelte";
+  import { searchService } from "@codex/search-orchestrator";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
@@ -224,6 +224,7 @@
                 categories.getCategory(result.type)?.icon,
               )} w-3.5 h-3.5 shrink-0"
               style="color: {categories.getColor(result.type)}"
+              aria-hidden="true"
             ></span>
           {/if}
           <span class="truncate text-xs">{result.title}</span>

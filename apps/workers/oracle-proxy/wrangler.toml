@@ -21,7 +21,14 @@ ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 
 # Secrets (must be set via `wrangler secret put`)
 # - GEMINI_API_KEY: Your Google Gemini API key
+# - OPENAI_API_KEY: OpenAI API key, used by the OpenAI-compatible LLM adaptor
+#   (src/llm/adaptors/openai-adaptor.ts) for GPT-5.6 Luna and any other
+#   OpenAI-family models registered in src/llm/registry.ts
 # - TURNSTILE_SECRET_KEY: Server-side secret for publish verification
+# - SESSION_TOKEN_SECRET: HMAC signing secret for LLM session capability
+#   tokens (src/session.ts). Until this is set the session guard fails open
+#   and generation behaves exactly as before, so the worker can be deployed
+#   ahead of the secret without an outage.
 
 # Development configuration
 [dev]
@@ -33,7 +40,7 @@ local_protocol = "http"
 command = ""  # No build step needed for TypeScript
 
 [observability]
-enabled = false
+enabled = true
 head_sampling_rate = 1
 
 [observability.logs]
@@ -63,10 +70,35 @@ namespace_id = "1351"
   limit = 5
   period = 60
 
+# Writes require a valid writeToken, so this mainly bounds runaway clients.
+# Image-heavy vaults can exceed 100 asset uploads on first publish.
 [[ratelimits]]
 name = "PUBLISH_WRITE_RATE_LIMITER"
 namespace_id = "1352"
 
   [ratelimits.simple]
-  limit = 60
+  limit = 300
+  period = 60
+
+# LLM generation limits, keyed by session capability token id.
+#
+# The binding only supports period = 10 or 60, and is a permissive,
+# eventually-consistent limiter rather than an exact counter — so these are two
+# native windows, not one long sliding window. Burst kills tight loops; the
+# per-minute cap bounds sustained volume. Tune the limits freely; the periods
+# are fixed by the platform.
+[[ratelimits]]
+name = "LLM_BURST_RATE_LIMITER"
+namespace_id = "1353"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 10
+
+[[ratelimits]]
+name = "LLM_GENERATION_RATE_LIMITER"
+namespace_id = "1354"
+
+  [ratelimits.simple]
+  limit = 20
   period = 60

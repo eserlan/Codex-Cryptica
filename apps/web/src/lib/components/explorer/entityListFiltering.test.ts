@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { filterEntities, countEntityTypes } from "./entityListFiltering";
+import {
+  filterEntities,
+  countEntityTypes,
+  createEntityTextSearchRunner,
+  parseEntitySearchQuery,
+  searchEntityText,
+} from "./entityListFiltering";
 import type { Entity } from "schema";
 
 const mockEntities: Entity[] = [
@@ -78,6 +84,32 @@ describe("entityListFiltering pure functions", () => {
       expect(result.map((r) => r.id)).toEqual(["e2", "e1"]); // Sorted alphabetically by title: "Castle Guard", "City Guard"
     });
 
+    it("should safely sort entities with missing or undefined titles without throwing", () => {
+      const entitiesWithUndefinedTitles = [
+        ...mockEntities,
+        {
+          id: "e-no-title",
+          title: undefined as any,
+          type: "npc",
+          status: "active" as const,
+          content: "",
+          labels: [],
+          tags: [],
+          aliases: [],
+          connections: [],
+          updatedAt: 0,
+        },
+      ];
+      const result = filterEntities(entitiesWithUndefinedTitles, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+      });
+      expect(result.length).toBe(5);
+    });
+
     it("should filter by typeFilters", () => {
       const result = filterEntities(mockEntities, {
         searchQuery: "",
@@ -98,6 +130,52 @@ describe("entityListFiltering pure functions", () => {
         showDraftsOnly: false,
       });
       expect(result.map((r) => r.id)).toEqual(["e1"]);
+    });
+
+    it("matches legacy tags as labels when an entity has no labels", () => {
+      const legacy: Entity = {
+        id: "legacy",
+        title: "Old Timer",
+        type: "npc",
+        labels: [],
+        status: "active",
+        content: "Predates labels.",
+        tags: ["Guard"],
+        aliases: [],
+        connections: [],
+        updatedAt: 0,
+      } as Entity;
+      const result = filterEntities([...mockEntities, legacy], {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(["Guard"]),
+        allowedTypes: null,
+        showDraftsOnly: false,
+      });
+      expect(result.map((r) => r.id).sort()).toEqual(["e1", "e2", "legacy"]);
+    });
+
+    it("matches legacy tags as labels for #label search tokens", () => {
+      const legacy: Entity = {
+        id: "legacy",
+        title: "Old Timer",
+        type: "npc",
+        labels: [],
+        status: "active",
+        content: "Predates labels.",
+        tags: ["Guard"],
+        aliases: [],
+        connections: [],
+        updatedAt: 0,
+      } as Entity;
+      const result = filterEntities([...mockEntities, legacy], {
+        searchQuery: "#Guard",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+      });
+      expect(result.map((r) => r.id)).toContain("legacy");
     });
 
     it("should extract search tag queries starting with # or @", () => {
@@ -140,6 +218,94 @@ describe("entityListFiltering pure functions", () => {
         showDraftsOnly: false,
       });
       expect(result).toHaveLength(0);
+    });
+
+    it("uses worker match IDs without scanning entity content", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "guard",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textMatchIds: new Set(["e3"]),
+      });
+
+      expect(result.map((entity) => entity.id)).toEqual(["e3"]);
+    });
+
+    it("falls back to metadata-only matching when the worker is unavailable", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "patrolling",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textSearchUnavailable: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+
+    it("avoids scanning content while a worker query is pending", () => {
+      const result = filterEntities(mockEntities, {
+        searchQuery: "patrolling",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        textSearchPending: true,
+      });
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("worker query helpers", () => {
+    it("separates structured label tokens from the text query", () => {
+      expect(parseEntitySearchQuery("Dallan #Past @npc")).toEqual({
+        labelTokens: ["past", "npc"],
+        textQuery: "dallan",
+      });
+    });
+
+    it("requests all matching worker results and returns their IDs", async () => {
+      const search = async (query: string, options?: { limit?: number }) => {
+        expect(query).toBe("guard");
+        expect(options?.limit).toBe(mockEntities.length);
+        return [{ id: "e1" }, { id: "e2" }] as any;
+      };
+
+      await expect(
+        searchEntityText("guard", mockEntities.length, { search }),
+      ).resolves.toEqual({ matchIds: new Set(["e1", "e2"]), error: null });
+    });
+
+    it("returns an explicit error result when worker search fails", async () => {
+      const search = async () => {
+        throw new Error("worker unavailable");
+      };
+
+      const result = await searchEntityText("guard", 10, { search });
+      expect(result.matchIds).toEqual(new Set());
+      expect(result.error?.message).toBe("worker unavailable");
+    });
+
+    it("ignores a stale result after a newer query starts", async () => {
+      let resolveFirst!: (value: any[]) => void;
+      const first = new Promise<any[]>((resolve) => (resolveFirst = resolve));
+      const search = (query: string) =>
+        query === "first" ? first : Promise.resolve([{ id: "new" }]);
+      const runner = createEntityTextSearchRunner({ search });
+
+      const stale = runner.search("first", 10);
+      const current = runner.search("second", 10);
+      resolveFirst([{ id: "old" }]);
+
+      await expect(current).resolves.toEqual({
+        matchIds: new Set(["new"]),
+        error: null,
+      });
+      await expect(stale).resolves.toBeNull();
     });
   });
 

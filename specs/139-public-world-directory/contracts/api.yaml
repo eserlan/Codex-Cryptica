@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: Codex Cryptica Public World Directory API
+  description: Endpoints for owner-approved public directory listings that point to read-only guest vault snapshots.
+  version: 1.0.0
+servers:
+  - url: https://oracle-proxy.espen-erlandsen.workers.dev
+    description: Production Worker Environment
+paths:
+  /api/directory/listings:
+    get:
+      summary: Browse and search public world listings
+      description: Returns public directory results derived only from saved owner-approved listing metadata.
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+          description: Search term matched against public title and description only.
+        - name: labels
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Comma-separated public labels used to filter results.
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Pagination cursor from a previous response.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 48
+            default: 24
+      responses:
+        "200":
+          description: Public directory page
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: Must not exceed public max-age of 15 seconds.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryPage"
+        "400":
+          description: Invalid query
+  /api/published/{publishId}/listing:
+    get:
+      summary: Fetch public listing for a published snapshot
+      description: Returns the saved public listing if the snapshot is listed; returns 404 if unlisted.
+      parameters:
+        - $ref: "#/components/parameters/PublishId"
+      responses:
+        "200":
+          description: Public listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicListing"
+        "404":
+          description: Listing not found
+    put:
+      summary: Enable or update a public listing
+      description: Creates or replaces the saved owner-approved public listing record. Requires the snapshot write token.
+      parameters:
+        - $ref: "#/components/parameters/PublishId"
+      security:
+        - WriteToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingDraft"
+      responses:
+        "200":
+          description: Listing saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicListing"
+        "400":
+          description: Invalid listing metadata
+        "401":
+          description: Missing or invalid write token
+        "404":
+          description: Published guest snapshot not found
+    delete:
+      summary: Disable public listing
+      description: Deletes the listing record without deleting the underlying guest snapshot. Requires the snapshot write token.
+      parameters:
+        - $ref: "#/components/parameters/PublishId"
+      security:
+        - WriteToken: []
+      responses:
+        "200":
+          description: Listing deleted or already absent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required:
+                  - success
+        "401":
+          description: Missing or invalid write token
+        "404":
+          description: Published guest snapshot not found
+components:
+  securitySchemes:
+    WriteToken:
+      type: http
+      scheme: bearer
+      description: Existing write token from the published guest snapshot registry.
+  parameters:
+    PublishId:
+      name: publishId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    ListingDraft:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 280
+        labels:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+        coverImageAssetId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        coverImageAlt:
+          type: string
+          maxLength: 120
+        ownerDisplayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+      required:
+        - title
+        - description
+        - labels
+    PublicListing:
+      type: object
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        publishId:
+          type: string
+        guestUrl:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          minLength: 1
+          maxLength: 280
+        labels:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+        coverImageAssetId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        coverImageAlt:
+          type: string
+          maxLength: 120
+        ownerDisplayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        visibleEntityCount:
+          type: integer
+          minimum: 0
+        snapshotPublishedAt:
+          type: string
+          format: date-time
+        listingCreatedAt:
+          type: string
+          format: date-time
+        listingUpdatedAt:
+          type: string
+          format: date-time
+      required:
+        - schemaVersion
+        - publishId
+        - guestUrl
+        - title
+        - description
+        - labels
+        - visibleEntityCount
+        - snapshotPublishedAt
+        - listingCreatedAt
+        - listingUpdatedAt
+    DirectoryResult:
+      type: object
+      additionalProperties: false
+      properties:
+        publishId:
+          type: string
+        guestUrl:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        coverImageUrl:
+          type: string
+        coverImageAlt:
+          type: string
+        ownerDisplayName:
+          type: string
+        visibleEntityCount:
+          type: integer
+          minimum: 0
+        listingUpdatedAt:
+          type: string
+          format: date-time
+      required:
+        - publishId
+        - guestUrl
+        - title
+        - description
+        - labels
+        - visibleEntityCount
+        - listingUpdatedAt
+    DirectoryPage:
+      type: object
+      additionalProperties: false
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/DirectoryResult"
+        nextCursor:
+          type: string
+      required:
+        - results

@@ -39,6 +39,8 @@ describe("GraphContextMenuController", () => {
         openCanvasSelection: vi.fn(),
         openLightbox: vi.fn(),
         openRevisionDialog: vi.fn(),
+        openIntentCreateMenu: vi.fn(),
+        openZenMode: vi.fn(),
       },
       connectionModeStore: { startSelectionConnection: vi.fn() },
       notificationStore: {
@@ -47,7 +49,7 @@ describe("GraphContextMenuController", () => {
       },
     };
 
-    controller = new GraphContextMenuController(cy, deps);
+    controller = new GraphContextMenuController(() => cy, deps);
   });
 
   it("should set central node and close menu", () => {
@@ -58,6 +60,26 @@ describe("GraphContextMenuController", () => {
 
     expect(deps.graph.setCentralNode).toHaveBeenCalledWith("node-1");
     expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should open a single node in Zen Mode and close the menu", () => {
+    controller.selectedNodes = ["node-1"];
+    controller.contextMenuOpen = true;
+
+    controller.handleOpenZenMode();
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not open Zen Mode for multiple selected nodes", () => {
+    controller.selectedNodes = ["node-1", "node-2"];
+    controller.contextMenuOpen = true;
+
+    controller.handleOpenZenMode();
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+    expect(controller.contextMenuOpen).toBe(true);
   });
 
   it("should open merge dialog for multiple nodes", () => {
@@ -247,5 +269,110 @@ describe("GraphContextMenuController", () => {
 
     expect(deps.notificationStore.confirm).toHaveBeenCalled();
     expect(deps.vault.deleteEntity).toHaveBeenCalledWith("node-1");
+  });
+
+  it("should open context menu at cursor position when right clicking empty space", () => {
+    let bgHandler: any;
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "cxttap" && args.length === 1) {
+        bgHandler = args[0];
+      }
+    });
+
+    controller.setupEvents();
+
+    expect(bgHandler).toBeDefined();
+
+    bgHandler({ target: cy, renderedPosition: { x: 150, y: 250 } });
+
+    expect(controller.targetId).toBeNull();
+    expect(controller.selectedNodes).toEqual([]);
+    expect(controller.position).toEqual({ x: 150, y: 250 });
+    expect(controller.contextMenuOpen).toBe(true);
+  });
+
+  it("should handle handleCreateNewEntity by closing menu and opening create modal", () => {
+    controller.contextMenuOpen = true;
+
+    controller.handleCreateNewEntity();
+
+    expect(controller.contextMenuOpen).toBe(false);
+    expect(deps.modalUIStore.openIntentCreateMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not open create modal from handleCreateNewEntity in guest mode", () => {
+    deps.vault.isGuest = true;
+    controller.contextMenuOpen = true;
+
+    controller.handleCreateNewEntity();
+
+    expect(controller.contextMenuOpen).toBe(false);
+    expect(deps.modalUIStore.openIntentCreateMenu).not.toHaveBeenCalled();
+  });
+
+  it("should open context menu for edge right-click with connection metadata", () => {
+    let edgeHandler: any;
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "cxttap" && args[0] === "edge") {
+        edgeHandler = args[1];
+      }
+    });
+
+    controller.setupEvents();
+    expect(edgeHandler).toBeDefined();
+
+    const mockEdge = {
+      data: () => ({
+        source: "node-a",
+        target: "node-b",
+        connectionType: "ally",
+      }),
+    };
+
+    edgeHandler({ target: mockEdge, renderedPosition: { x: 100, y: 200 } });
+
+    expect(controller.targetId).toBeNull();
+    expect(controller.targetEdge).toEqual({
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    });
+    expect(controller.position).toEqual({ x: 100, y: 200 });
+    expect(controller.contextMenuOpen).toBe(true);
+  });
+
+  it("should instantly delete edge connection via vault.removeConnection", async () => {
+    deps.vault.removeConnection = vi.fn().mockResolvedValue(true);
+    controller.targetEdge = {
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    };
+    controller.contextMenuOpen = true;
+
+    await controller.handleDeleteEdge();
+
+    expect(deps.vault.removeConnection).toHaveBeenCalledWith(
+      "node-a",
+      "node-b",
+      "ally",
+    );
+    expect(controller.targetEdge).toBeNull();
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not delete edge connection in guest mode", async () => {
+    deps.vault.isGuest = true;
+    deps.vault.removeConnection = vi.fn();
+    controller.targetEdge = {
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    };
+    controller.contextMenuOpen = true;
+
+    await controller.handleDeleteEdge();
+
+    expect(deps.vault.removeConnection).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { load, entries } from "./+page";
 
-vi.mock("$lib/config/seo-pages", () => ({
+vi.mock("$lib/config/seo-comparisons", () => ({
   comparisons: {
     "test-comp": {
       slug: "test-comp",
@@ -38,15 +38,15 @@ describe("Comparisons SvelteKit Route", () => {
 describe("Responsible AI trust banner config", () => {
   it("world-anvil comparison has aiTrustSection enabled", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "$lib/config/seo-pages",
-    )) as typeof import("$lib/config/seo-pages");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     expect(realComparisons["world-anvil"].aiTrustSection).toBe(true);
   });
 
   it("non-World-Anvil comparisons do not have aiTrustSection", async () => {
     const { comparisons: realComparisons } = (await vi.importActual(
-      "$lib/config/seo-pages",
-    )) as typeof import("$lib/config/seo-pages");
+      "$lib/config/seo-comparisons",
+    )) as typeof import("$lib/config/seo-comparisons");
     const others = Object.entries(realComparisons).filter(
       ([slug]) => slug !== "world-anvil",
     );

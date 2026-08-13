@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { GraphTransformer, getGraphStyle } from "../src/transformer";
 import { CONNECTION_COLORS } from "../src/defaults";
 import type { Entity, StylingTemplate } from "schema";
@@ -330,13 +330,7 @@ describe("GraphTransformer", () => {
     expect(baseNodeStyle?.style["background-image"]).toBeUndefined();
   });
 
-  it("should include a random texture variant for graph nodes", () => {
-    const randomSpy = vi
-      .spyOn(Math, "random")
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(0.33)
-      .mockReturnValueOnce(0.66)
-      .mockReturnValueOnce(0.99);
+  it("should include a stable per-id texture variant for graph nodes", () => {
     const mockEntities: Entity[] = [
       {
         id: "node-alpha",
@@ -368,11 +362,19 @@ describe("GraphTransformer", () => {
       },
     ];
 
-    const nodes = GraphTransformer.entitiesToElements(mockEntities).filter(
-      (el) => el.group === "nodes",
-    );
+    const variantsOf = () =>
+      GraphTransformer.entitiesToElements(mockEntities)
+        .filter((el) => el.group === "nodes")
+        .map((node) => node.data.textureVariant);
 
-    expect(nodes.map((node) => node.data.textureVariant)).toEqual([0, 1, 2, 3]);
-    randomSpy.mockRestore();
+    const first = variantsOf();
+    // Deterministic: rebuilding the elements must not reshuffle variants —
+    // random variants caused a full node-data patch + style pass on every
+    // rebuild, which wedged large vaults (#1576).
+    expect(variantsOf()).toEqual(first);
+    for (const variant of first) {
+      expect(variant).toBeGreaterThanOrEqual(0);
+      expect(variant).toBeLessThan(4);
+    }
   });
 });

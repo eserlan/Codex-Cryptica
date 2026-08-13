@@ -6,6 +6,12 @@
     SortState,
   } from "./entityTableSort";
   import EntityTableRow from "./EntityTableRow.svelte";
+  import {
+    clampEntityTablePage,
+    ENTITY_TABLE_PAGE_SIZE,
+    getEntityTablePageCount,
+    getEntityTablePageItems,
+  } from "./entityTablePagination";
 
   let {
     entities,
@@ -18,6 +24,9 @@
     someSelected = false,
     onToggleRow,
     onToggleAll,
+    onFilterType,
+    onFilterLabel,
+    onRowContextMenu,
   }: {
     entities: Entity[];
     vaultId: string;
@@ -27,9 +36,78 @@
     selectedIds?: Set<string>;
     allSelected?: boolean;
     someSelected?: boolean;
-    onToggleRow?: (id: string) => void;
+    onToggleRow?: (
+      id: string,
+      options?: { shift?: boolean; ctrl?: boolean },
+    ) => void;
     onToggleAll?: () => void;
+    onFilterType?: (type: string) => void;
+    onFilterLabel?: (label: string) => void;
+    onRowContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
+
+  const pageSize = ENTITY_TABLE_PAGE_SIZE;
+  let page = $state(1);
+  let previousEntities: Entity[] | null = null;
+  let restoredStorageKey: string | null = null;
+
+  const pageCount = $derived(
+    getEntityTablePageCount(entities.length, pageSize),
+  );
+  const pageItems = $derived(getEntityTablePageItems(entities, page, pageSize));
+  const firstItem = $derived(
+    entities.length === 0 ? 0 : (page - 1) * pageSize + 1,
+  );
+  const lastItem = $derived(Math.min(page * pageSize, entities.length));
+
+  // Filtering and sorting replace the input array. Return to the first page
+  // for those operations, while clamping when entities disappear in-place.
+  $effect(() => {
+    if (previousEntities !== entities) {
+      previousEntities = entities;
+      page = 1;
+    }
+    page = clampEntityTablePage(page, entities.length, pageSize);
+  });
+
+  function goToPage(nextPage: number) {
+    page = clampEntityTablePage(nextPage, entities.length, pageSize);
+  }
+
+  function readStoredPage(storageKey: string): number | null {
+    if (typeof sessionStorage === "undefined") return null;
+    try {
+      const storedPage = Number(sessionStorage.getItem(storageKey));
+      return Number.isFinite(storedPage) && storedPage > 0 ? storedPage : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStoredPage(storageKey: string, value: number) {
+    if (typeof sessionStorage === "undefined") return;
+    try {
+      sessionStorage.setItem(storageKey, String(value));
+    } catch {
+      // Storage can be blocked or full; pagination remains usable in memory.
+    }
+  }
+
+  // Keep the current page for browser-back navigation from an entity detail.
+  // sessionStorage is transient, tab-local, and guarded for SSR.
+  $effect(() => {
+    const currentPage = page;
+    const storageKey = `codex.entity-table.page.${vaultId}`;
+    if (restoredStorageKey !== storageKey) {
+      restoredStorageKey = storageKey;
+      const storedPage = readStoredPage(storageKey);
+      if (storedPage !== null) {
+        page = clampEntityTablePage(storedPage, entities.length, pageSize);
+      }
+      return;
+    }
+    writeStoredPage(storageKey, currentPage);
+  });
 
   // <input indeterminate> can't be set via attribute — bind the element.
   let selectAllEl = $state<HTMLInputElement | null>(null);
@@ -49,7 +127,7 @@
     { key: "type", label: "Type", class: "min-w-[8rem]" },
     { key: "connections", label: "Connections", class: "min-w-[9rem]" },
     { key: null, label: "Summary", class: "min-w-[16rem]" },
-    { key: null, label: "Tags", class: "min-w-[8rem]" },
+    { key: "labels", label: "Labels", class: "min-w-[8rem]" },
     { key: "created", label: "Created", class: "min-w-[7rem]" },
     { key: "modified", label: "Modified", class: "min-w-[7rem]" },
   ];
@@ -112,12 +190,15 @@
       </tr>
     </thead>
     <tbody>
-      {#each entities as entity (entity.id)}
+      {#each pageItems as entity (entity.id)}
         <EntityTableRow
           {entity}
           {vaultId}
+          {onFilterType}
+          {onFilterLabel}
           selected={selectedIds.has(entity.id)}
           onToggleSelect={onToggleRow}
+          onContextMenu={onRowContextMenu}
           connectionSummary={connectionCounts[entity.id] ?? {
             inbound: 0,
             outbound: 0,
@@ -127,4 +208,63 @@
       {/each}
     </tbody>
   </table>
+  {#if pageCount > 1}
+    <nav
+      class="flex flex-wrap items-center justify-between gap-2 border-t border-theme-border bg-theme-surface px-3 py-2"
+      aria-label="Entity table pages"
+      data-testid="entity-table-pagination"
+    >
+      <p class="text-xs text-theme-muted" aria-live="polite">
+        Showing {firstItem}–{lastItem} of {entities.length} filtered entities
+      </p>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="rounded px-2 py-1 text-xs text-theme-muted hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+          onclick={() => goToPage(1)}
+          disabled={page === 1}
+          aria-label="First page"
+        >
+          <span class="icon-[lucide--chevrons-left] h-4 w-4" aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          class="rounded px-2 py-1 text-xs text-theme-muted hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+          onclick={() => goToPage(page - 1)}
+          disabled={page === 1}
+          aria-label="Previous page"
+        >
+          <span class="icon-[lucide--chevron-left] h-4 w-4" aria-hidden="true"
+          ></span>
+        </button>
+        <span
+          class="px-2 text-xs font-medium text-theme-text"
+          aria-label="Current page"
+        >
+          Page {page} of {pageCount}
+        </span>
+        <button
+          type="button"
+          class="rounded px-2 py-1 text-xs text-theme-muted hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+          onclick={() => goToPage(page + 1)}
+          disabled={page === pageCount}
+          aria-label="Next page"
+        >
+          <span class="icon-[lucide--chevron-right] h-4 w-4" aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          class="rounded px-2 py-1 text-xs text-theme-muted hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+          onclick={() => goToPage(pageCount)}
+          disabled={page === pageCount}
+          aria-label="Last page"
+        >
+          <span class="icon-[lucide--chevrons-right] h-4 w-4" aria-hidden="true"
+          ></span>
+        </button>
+      </div>
+    </nav>
+  {/if}
 </div>

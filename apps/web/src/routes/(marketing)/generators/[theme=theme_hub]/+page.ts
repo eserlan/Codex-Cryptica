@@ -6,11 +6,13 @@ export const prerender = true;
 
 export type ThemeSlug =
   | "fantasy"
+  | "pirate"
   | "cyberpunk"
   | "sci-fi"
   | "post-apocalyptic"
   | "modern"
   | "vampire"
+  | "cosmic-horror"
   | "western"
   | "steampunk"
   | "lancer"
@@ -25,11 +27,13 @@ export const load: PageLoad = ({ params }) => {
 
 export const entries: EntryGenerator = () => [
   { theme: "fantasy" },
+  { theme: "pirate" },
   { theme: "cyberpunk" },
   { theme: "sci-fi" },
   { theme: "post-apocalyptic" },
   { theme: "modern" },
   { theme: "vampire" },
+  { theme: "cosmic-horror" },
   { theme: "western" },
   { theme: "steampunk" },
   { theme: "lancer" },

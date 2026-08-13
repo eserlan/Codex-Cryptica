@@ -2,6 +2,42 @@ import { describe, expect, it } from "vitest";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
 
 describe("getGeneratorDocumentLayout", () => {
+  it("splits world narrative from GM reference without duplicating either column", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "location",
+      title: "Meridian",
+      content: "",
+      lore: `## World Profile
+Meridian is a storm-wrapped colony world.
+
+## Environment
+The habitable belt shifts with the season.
+
+## History
+A failed weather engine still controls the storms.
+
+## Current Conflicts
+A mining guild is hiding who reactivated it.
+
+## Mysteries
+The weather engine may be receiving off-world commands.
+
+## Adventure Hooks
+- Find the lost weather-engine controls.`,
+      labels: ["world", "hard-sci-fi"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## World Profile");
+    expect(layout.content).toContain("## Environment");
+    expect(layout.content).not.toContain("## History");
+    expect(layout.lore).toContain("## History");
+    expect(layout.lore).toContain("## Current Conflicts");
+    expect(layout.lore).toContain("## Mysteries");
+    expect(layout.lore).toContain("## Adventure Hooks");
+    expect(layout.lore).not.toContain("## World Profile");
+  });
+
   it("moves vampire clan prose sections into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "faction",
@@ -338,5 +374,65 @@ The mayor is skimming grain taxes and the harvest is already short.
 
     expect(layout.content).toBe("Plain prose without headings.");
     expect(layout.lore).toBe("Plain lore without headings.");
+  });
+
+  it("leaves lore in the 3rd column rail for adventure generator UI card", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "event",
+      kind: "adventure",
+      title: "Blood on the Siding",
+      content:
+        "## Initial Situation\nThe locomotive limped into town.\n\n## Primary Objective & Pressure\nRecover the silver.",
+      lore: "### Complications & Escalating Pressures\n- A flash flood washes out the bridge.\n\n### Possible Outcomes\n- Marshal Galt is stripped of his badge.",
+      labels: ["adventure", "event", "western"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## Initial Situation");
+    expect(layout.lore).toContain("### Complications & Escalating Pressures");
+    expect(layout.lore).toContain("### Possible Outcomes");
+  });
+
+  it("keeps council-vote's quick-reference sections in the rail and moves the narrative payoff to the main document", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "event",
+      title: "The Vote for the Salt Road Levy",
+      content: "### The Proposal\nApprove the harbour levy.",
+      lore: `### Voting Procedure
+Simple majority, 5 seats.
+
+### Current Vote Estimate
+Two in favour, one opposed, two undecided.
+
+### Council Members
+- **Ossian Thale** (Traditionalist) — wants an audit first.
+
+### Antagonist Influence
+Entrenched — a rival power has bought one seat outright.
+
+### Investigation Leads
+The harbourmaster's manifest shows unusual payments.
+
+### Possible Paths
+Win Ossian and Brant for a clean majority, or expose Devrin instead.
+
+### Follow-Up Hooks
+Yeva will remember who paid better.`,
+      labels: ["council-vote", "political-intrigue"],
+      status: "active",
+    });
+
+    expect(layout.lore).toContain("### Voting Procedure");
+    expect(layout.lore).toContain("### Current Vote Estimate");
+    expect(layout.lore).toContain("### Antagonist Influence");
+    expect(layout.lore).not.toContain("### Council Members");
+    expect(layout.lore).not.toContain("### Investigation Leads");
+    expect(layout.lore).not.toContain("### Possible Paths");
+    expect(layout.lore).not.toContain("### Follow-Up Hooks");
+
+    expect(layout.content).toContain("### Council Members");
+    expect(layout.content).toContain("### Investigation Leads");
+    expect(layout.content).toContain("### Possible Paths");
+    expect(layout.content).toContain("### Follow-Up Hooks");
   });
 });

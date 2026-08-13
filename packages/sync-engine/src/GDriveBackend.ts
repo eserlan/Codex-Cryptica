@@ -3,6 +3,7 @@ import {
   type FileMetadata,
   type IGDriveAuthService,
 } from "./types";
+import { type Clock, systemClock } from "./runtime";
 
 /**
  * Custom error class for Google Drive operations.
@@ -36,6 +37,7 @@ export class GDriveBackend implements ISyncBackend {
     // Injected for tests; default wraps the global `fetch` lazily.
     private readonly fetcher: typeof fetch = (input, init) =>
       fetch(input, init),
+    private readonly clock: Clock = systemClock,
   ) {}
 
   /**
@@ -111,7 +113,9 @@ export class GDriveBackend implements ISyncBackend {
             } else {
               allFiles.push({
                 path: currentPath,
-                lastModified: new Date(f.modifiedTime || Date.now()).getTime(),
+                lastModified: new Date(
+                  f.modifiedTime || this.clock.now(),
+                ).getTime(),
                 size: parseInt(f.size || "0"),
                 handle: f.id,
               });
@@ -189,7 +193,7 @@ export class GDriveBackend implements ISyncBackend {
 
     return {
       path,
-      lastModified: Date.now(),
+      lastModified: this.clock.now(),
       size: content.size,
       handle: data.id,
     };

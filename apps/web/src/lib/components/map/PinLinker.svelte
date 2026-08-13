@@ -3,6 +3,7 @@
   import { vault } from "../../stores/vault.svelte";
   import { fade, scale } from "svelte/transition";
   import type { Entity } from "schema";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let { onSelect, onCancel } = $props<{
     onSelect: (entityId: string) => void;
@@ -58,11 +59,12 @@
         Link Lore Pin
       </h3>
       <button
+        type="button"
         onclick={onCancel}
         class="text-theme-muted hover:text-theme-primary"
         aria-label="Cancel pin linking"
       >
-        <span class="icon-[lucide--x] w-5 h-5"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-5 h-5"></span>
       </button>
     </header>
 
@@ -94,8 +96,8 @@
                 class="text-xs font-bold text-theme-text group-hover:text-theme-primary"
               >
                 {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    >*</sup
-                  >{/if}
+                    aria-hidden="true">*</sup
+                  ><span class="sr-only"> (past)</span>{/if}
               </div>
               <div
                 class="text-[10px] text-theme-muted uppercase tracking-tighter"
@@ -105,9 +107,11 @@
             </div>
           </button>
         {:else}
-          <div class="text-center py-8 text-theme-muted text-xs italic">
-            No entities found matching "{query}"
-          </div>
+          <EmptyState
+            icon="icon-[lucide--search-x]"
+            headline="No entities found"
+            body={`Nothing matches "${query}"`}
+          />
         {/each}
       </div>
     </div>

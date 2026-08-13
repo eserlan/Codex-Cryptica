@@ -184,6 +184,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.vaultThemePrompt.open}
+      {#await loadModal(() => import("$lib/components/vaults/VaultThemePromptModal.svelte"), "VaultThemePromptModal") then VaultThemePromptModal}
+        {#if VaultThemePromptModal}
+          <VaultThemePromptModal />
+        {/if}
+      {/await}
+    {/if}
+
     {#if modalUIStore.showShare}
       {#await loadModal(() => import("$lib/components/ShareModal.svelte"), "ShareModal") then ShareModal}
         {#if ShareModal}
@@ -216,6 +224,24 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.showIntentCreateMenu}
+      {#await loadModal(() => import("$lib/components/guided/IntentCreateModal.svelte"), "IntentCreateModal") then IntentCreateModal}
+        {#if IntentCreateModal}
+          <IntentCreateModal />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if modalUIStore.showQuickStartModal}
+      {#await loadModal(() => import("$lib/components/guided/QuickStartModal.svelte"), "QuickStartModal") then QuickStartModal}
+        {#if QuickStartModal}
+          <QuickStartModal
+            onClose={() => modalUIStore.closeQuickStartModal()}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
@@ -224,6 +250,33 @@
             bind:show={modalUIStore.lightbox.show}
             imageUrl={modalUIStore.lightbox.imageUrl}
             title={modalUIStore.lightbox.title}
+          />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Presentation Template Manager -->
+    {#if modalUIStore.activePresentationManagerSchema}
+      {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateManager.svelte"), "PresentationTemplateManager") then PresentationTemplateManager}
+        {#if PresentationTemplateManager}
+          <PresentationTemplateManager
+            schema={modalUIStore.activePresentationManagerSchema}
+            onClose={() =>
+              (modalUIStore.activePresentationManagerSchema = null)}
+          />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Presentation Template Editor -->
+    {#if modalUIStore.presentationEditorState.open && modalUIStore.presentationEditorState.schema}
+      {#await loadModal(() => import("$lib/components/stats/presentation/PresentationTemplateEditor.svelte"), "PresentationTemplateEditor") then PresentationTemplateEditor}
+        {#if PresentationTemplateEditor}
+          <PresentationTemplateEditor
+            schema={modalUIStore.presentationEditorState.schema}
+            template={modalUIStore.presentationEditorState.template}
+            duplicate={modalUIStore.presentationEditorState.duplicate}
+            onClose={() => (modalUIStore.presentationEditorState.open = false)}
           />
         {/if}
       {/await}

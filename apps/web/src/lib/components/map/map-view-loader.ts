@@ -40,7 +40,6 @@ export class MapViewAssetLoader {
     this.deps.onClear();
 
     const image = this.deps.createImage();
-    image.crossOrigin = "anonymous";
 
     this.deps.vault
       .resolveImageUrl(requestedAssetPath)
@@ -56,6 +55,10 @@ export class MapViewAssetLoader {
             requestedAssetPath,
           );
           return;
+        }
+
+        if (/^https?:\/\//i.test(url)) {
+          image.crossOrigin = "anonymous";
         }
 
         this.currentBlobUrl = url;

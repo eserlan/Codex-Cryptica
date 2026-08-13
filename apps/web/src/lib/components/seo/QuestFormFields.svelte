@@ -45,6 +45,9 @@
   const activeThreats = $derived(
     questConfig.threatsByTheme[theme] ?? questConfig.threats,
   );
+  const activeTwists = $derived(
+    questConfig.twistsByTheme[theme] ?? questConfig.twists,
+  );
   const activeRewards = $derived(
     questConfig.rewardsByTheme[theme] ?? questConfig.rewards,
   );
@@ -52,6 +55,7 @@
   const builtInScopes = questConfig.scopes;
   const builtInLocationTypes = questConfig.locationTypes;
   const builtInThreats = questConfig.threats;
+  const builtInTwists = questConfig.twists;
   const builtInRewards = questConfig.rewards;
 
   $effect(() => {
@@ -66,6 +70,8 @@
       locationType = activeLocationTypes[0];
     if (builtInThreats.includes(threat) && !activeThreats.includes(threat))
       threat = activeThreats[0];
+    if (builtInTwists.includes(twist) && !activeTwists.includes(twist))
+      twist = activeTwists[0];
     if (builtInRewards.includes(reward) && !activeRewards.includes(reward))
       reward = activeRewards[0];
   });
@@ -77,7 +83,7 @@
   bind:value={theme}
   choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom vibe"
 />
@@ -88,7 +94,7 @@
   bind:value={tone}
   choices={activeTones.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom tone"
 />
@@ -99,7 +105,7 @@
   bind:value={scope}
   choices={activeScopes.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom scope"
 />
@@ -110,7 +116,7 @@
   bind:value={locationType}
   choices={activeLocationTypes.map((l: string) => ({ value: l, label: l }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom location type"
 />
@@ -121,7 +127,7 @@
   bind:value={threat}
   choices={activeThreats.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom main threat"
 />
@@ -130,9 +136,9 @@
   id="twist-select"
   label="Twist"
   bind:value={twist}
-  choices={questConfig.twists.map((t: string) => ({ value: t, label: t }))}
+  choices={activeTwists.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom twist"
 />
@@ -143,7 +149,7 @@
   bind:value={reward}
   choices={activeRewards.map((r: string) => ({ value: r, label: r }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom reward"
 />
@@ -156,7 +162,7 @@
       scope = pickFrom(activeScopes);
       locationType = pickFrom(activeLocationTypes);
       threat = pickFrom(activeThreats);
-      twist = pickFrom(questConfig.twists);
+      twist = pickFrom(activeTwists);
       reward = pickFrom(activeRewards);
       if (onSurprise) onSurprise();
     }}
@@ -176,7 +182,7 @@
     id="quest-campaign-context"
     name="campaign_context"
     bind:value={campaignContext}
-    maxlength="240"
+    maxlength="4000"
     rows="3"
     aria-describedby="quest-campaign-context-help"
     class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"

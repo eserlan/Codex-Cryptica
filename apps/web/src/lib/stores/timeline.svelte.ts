@@ -15,6 +15,7 @@ import type { Entity, Era } from "schema";
 import { graph } from "./graph.svelte";
 import { vault, type VaultStore } from "./vault.svelte";
 import { calendarStore, type CalendarStore } from "./calendar.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export interface TimelineEntry {
   entityId: string;
@@ -25,10 +26,7 @@ export interface TimelineEntry {
 }
 
 export type TimelineViewMode =
-  | "calendar"
-  | "agenda"
-  | "vertical"
-  | "horizontal";
+  "calendar" | "agenda" | "vertical" | "horizontal";
 
 interface TimelineStoreDependencies {
   vault: Pick<
@@ -146,8 +144,8 @@ function toCalendarEntry(
 export class TimelineStore {
   includeUndated = $state(false);
   viewMode = $state<TimelineViewMode>("calendar");
-  activeYear = $state(new Date().getFullYear());
-  activeMonth = $state(new Date().getMonth() + 1);
+  activeYear = $state(0);
+  activeMonth = $state(1);
   typeFilters = $state<Set<string>>(new Set());
   labelFilters = $state<Set<string>>(new Set());
   selectedRelatedEntityId = $state<string | null>(null);
@@ -161,7 +159,13 @@ export class TimelineStore {
       graph,
       calendarStore,
     },
-  ) {}
+  ) {
+    // Read the clock here rather than in the field initializers so a fake
+    // systemClock installed before construction is honored.
+    const now = new Date(systemClock.now());
+    this.activeYear = now.getFullYear();
+    this.activeMonth = now.getMonth() + 1;
+  }
 
   entries = $derived.by(() => {
     const config = this.deps.calendarStore.config;
@@ -244,11 +248,11 @@ export class TimelineStore {
       const aSort = a.sortKey ?? Number.MAX_SAFE_INTEGER;
       const bSort = b.sortKey ?? Number.MAX_SAFE_INTEGER;
       if (aSort !== bSort) return aSort - bSort;
-      const t = a.title.localeCompare(b.title, undefined, {
+      const t = (a.title ?? "").localeCompare(b.title ?? "", undefined, {
         sensitivity: "base",
       });
       if (t !== 0) return t;
-      return a.entityId.localeCompare(b.entityId, undefined, {
+      return (a.entityId ?? "").localeCompare(b.entityId ?? "", undefined, {
         sensitivity: "base",
       });
     });
@@ -260,7 +264,7 @@ export class TimelineStore {
       for (const label of entry.labels ?? []) labels.add(label);
     }
     return [...labels].sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" }),
+      (a ?? "").localeCompare(b ?? "", undefined, { sensitivity: "base" }),
     );
   });
 
@@ -281,7 +285,9 @@ export class TimelineStore {
       }
     }
     return [...items.values()].sort((a, b) =>
-      a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+      (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+        sensitivity: "base",
+      }),
     );
   });
 
@@ -312,27 +318,32 @@ export class TimelineStore {
     });
   });
 
-  filteredEntries = $derived.by(() =>
-    this.filteredCalendarEntries
-      .filter((entry) => entry.date !== null)
-      .map((entry) => ({
-        entityId: entry.entityId,
-        title: entry.title,
-        type: entry.entityType,
-        date: entry.exactDate ?? (entry.date as TemporalMetadata),
-        eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
-      })),
-  );
+  filteredEntries = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
+    // to avoid intermediate array allocation when computing filteredEntries.
+    const results: TimelineEntry[] = [];
+    for (const entry of this.filteredCalendarEntries) {
+      if (entry.date !== null) {
+        results.push({
+          entityId: entry.entityId,
+          title: entry.title,
+          type: entry.entityType,
+          date: entry.exactDate ?? (entry.date as TemporalMetadata),
+          eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
+        });
+      }
+    }
+    return results;
+  });
 
-  calendarMonthView = $derived.by(
-    (): CalendarMonthViewModel =>
-      buildCalendarMonth(
-        this.filteredCalendarEntries,
-        this.activeYear,
-        this.activeMonth,
-        this.deps.calendarStore.config,
-        this.maxVisiblePerDay,
-      ),
+  calendarMonthView = $derived.by((): CalendarMonthViewModel =>
+    buildCalendarMonth(
+      this.filteredCalendarEntries,
+      this.activeYear,
+      this.activeMonth,
+      this.deps.calendarStore.config,
+      this.maxVisiblePerDay,
+    ),
   );
 
   agendaSections = $derived.by((): AgendaSection[] =>
@@ -368,8 +379,7 @@ export class TimelineStore {
         exactDate,
         dateKind: exactDate ? "exact" : primaryDate ? "approximate" : "missing",
         createdAt: (e as Record<string, unknown>).createdAt as
-          | string
-          | undefined,
+          string | undefined,
       };
     });
 

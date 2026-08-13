@@ -1,10 +1,12 @@
 import { type ISyncBackend, type FileMetadata } from "./types";
+import { type Clock, systemClock } from "./runtime";
 
 export class FileSystemBackend implements ISyncBackend {
   constructor(
     private handle: FileSystemDirectoryHandle,
     private readonly wait = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms)),
+    private readonly clock: Clock = systemClock,
   ) {}
 
   async scan(_vaultId: string): Promise<{ files: FileMetadata[] }> {
@@ -12,7 +14,8 @@ export class FileSystemBackend implements ISyncBackend {
     const start = performance.now();
     let scannedCount = 0;
 
-    const getTs = () => new Date().toISOString().split("T")[1].split("Z")[0];
+    const getTs = () =>
+      new Date(this.clock.now()).toISOString().split("T")[1].split("Z")[0];
     console.log(
       `[${getTs()}] [Sync] FileSystemBackend: Starting to read local folder contents... (This may take a while for large folders)`,
     );

@@ -9,20 +9,40 @@ describe("GuestVaultStore", () => {
     vaultTitle: "My Campaign",
     publishedAt: "2026-06-22T22:00:00Z",
     entities: [
-      { id: "e1", title: "Public Place", content: "A cool town.", labels: ["village"] },
-      { id: "e2", title: "Public Character", content: "An ally.", aliases: ["Bob"] },
+      {
+        id: "e1",
+        title: "Public Place",
+        content: "A cool town.",
+        labels: ["village"],
+      },
+      {
+        id: "e2",
+        title: "Public Character",
+        content: "An ally.",
+        aliases: ["Bob"],
+      },
     ],
     relationships: [
-      { id: "r1", sourceId: "e1", targetId: "e2", label: "home" }
+      { id: "r1", sourceId: "e1", targetId: "e2", label: "home" },
     ],
     maps: [
-      { id: "map-1", name: "World Map", playerVisible: true, assetPath: "images/world.webp" }
+      {
+        id: "map-1",
+        name: "World Map",
+        playerVisible: true,
+        assetPath: "images/world.webp",
+      },
     ],
     canvases: [],
     assetManifest: [
-      { assetId: "images_world_webp", filename: "images/world.webp", mimeType: "image/webp", hash: "hash123" }
+      {
+        assetId: "images_world_webp",
+        filename: "images/world.webp",
+        mimeType: "image/webp",
+        hash: "hash123",
+      },
     ],
-    activeTheme: { id: "fantasy", primaryColor: "#ff0000" }
+    activeTheme: { id: "fantasy", primaryColor: "#ff0000" },
   };
 
   beforeEach(() => {
@@ -45,7 +65,10 @@ describe("GuestVaultStore", () => {
     expect(store.entities).toHaveLength(2);
     expect(store.relationships).toHaveLength(1);
     expect(store.maps).toHaveLength(1);
-    expect(store.activeTheme).toEqual({ id: "fantasy", primaryColor: "#ff0000" });
+    expect(store.activeTheme).toEqual({
+      id: "fantasy",
+      primaryColor: "#ff0000",
+    });
   });
 
   it("should build search results and perform client-side searches", async () => {
@@ -76,12 +99,61 @@ describe("GuestVaultStore", () => {
     expect(store.searchResults[0].id).toBe("e1");
   });
 
+  it("matches partial guest queries consistently", async () => {
+    await store.loadBundle({
+      ...mockBundle,
+      entities: [
+        {
+          id: "bg",
+          title: "Baldur's Gate",
+          content: "A grim port city.",
+          aliases: ["The Gate"],
+          labels: ["city"],
+          _path: ["locations", "baldurs-gate.md"],
+        },
+      ],
+    });
+
+    expect(store.search("bald")).toHaveLength(1);
+    expect(store.search("bald")[0].id).toBe("bg");
+    expect(store.search("gate")[0].matchType).toBe("title");
+    expect(store.search("city")[0].matchType).toBe("aliases");
+  });
+
+  it("does not flood single-character guest searches with body-text matches", async () => {
+    await store.loadBundle({
+      ...mockBundle,
+      entities: [
+        {
+          id: "e1",
+          title: "Skullport",
+          content: "A settlement on the Sargauth level.",
+        },
+        {
+          id: "e2",
+          title: "Baldur's Gate",
+          content: "A famous Sword Coast city.",
+        },
+        {
+          id: "e3",
+          title: "Harbor",
+          content: "Secrets sleep under silent stones.",
+        },
+      ],
+    });
+
+    const results = store.search("s");
+    expect(results.map((result) => result.id)).toEqual(["e1", "e2"]);
+  });
+
   it("should resolve local paths to proxy asset URLs based on manifest mapping", async () => {
     await store.loadBundle(mockBundle);
 
     // Existing asset in manifest
     const url1 = store.resolveImageUrl("images/world.webp");
-    expect(url1).toBe("https://oracle-proxy.espen-erlandsen.workers.dev/api/published/snapshot-123/assets/images_world_webp");
+    expect(url1).toBe(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/api/published/snapshot-123/assets/images_world_webp",
+    );
 
     // Non-existing asset returns empty string
     const url2 = store.resolveImageUrl("images/non-existing.webp");

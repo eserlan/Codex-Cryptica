@@ -1,11 +1,14 @@
 /** @vitest-environment jsdom */
 
 import { render, fireEvent, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import EntityTable from "../EntityTable.svelte";
 import type { ConnectionSummary, SortKey, SortState } from "../entityTableSort";
 import { goto } from "$app/navigation";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
@@ -92,6 +95,78 @@ describe("EntityTable", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
+  describe("filter chips", () => {
+    it("calls onFilterLabel and onFilterType when chips are clicked, without navigating", async () => {
+      const onFilterLabel = vi.fn<(label: string) => void>();
+      const onFilterType = vi.fn<(type: string) => void>();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          onSort: vi.fn(),
+          onFilterLabel,
+          onFilterType,
+        },
+      });
+
+      await fireEvent.click(screen.getByText("hero"));
+      expect(onFilterLabel).toHaveBeenCalledWith("hero");
+
+      await fireEvent.click(
+        screen.getAllByTestId("entity-table-row-type-filter")[0],
+      );
+      expect(onFilterType).toHaveBeenCalledWith("character");
+
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    it("renders labels as plain text when no filter callback is provided", () => {
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "v1", sort, onSort: vi.fn() },
+      });
+
+      expect(screen.getByText("hero").closest("button")).toBeNull();
+    });
+  });
+
+  describe("guest mode", () => {
+    afterEach(() => {
+      sessionModeStore.isGuestMode = false;
+      vi.restoreAllMocks();
+    });
+
+    it("links titles to the guest deep-link URL instead of the vault entity route", () => {
+      sessionModeStore.isGuestMode = true;
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "pub1", sort, onSort: vi.fn() },
+      });
+
+      const link = screen.getByText("Aldric").closest("a");
+      expect(link?.getAttribute("href")).toBe("/guest/pub1?entity=e1");
+    });
+
+    it("opens zen mode in place instead of navigating on row and title clicks", async () => {
+      sessionModeStore.isGuestMode = true;
+      const openZenMode = vi
+        .spyOn(modalUIStore, "openZenMode")
+        .mockImplementation(() => {});
+      render(EntityTable, {
+        props: { entities: rows, vaultId: "pub1", sort, onSort: vi.fn() },
+      });
+
+      // Double-click row background opens Zen Mode
+      await fireEvent.dblClick(screen.getAllByTestId("entity-table-row")[0]);
+      expect(openZenMode).toHaveBeenCalledWith("e1");
+
+      // Clicking title link opens Zen Mode
+      await fireEvent.click(screen.getByText("Brindlewood"));
+      expect(openZenMode).toHaveBeenCalledWith("e2");
+      expect(vault.selectedEntityId).toBe("e2");
+      expect(goto).not.toHaveBeenCalled();
+    });
+  });
+
   it("calls onSort with the column key when a sortable header is clicked", async () => {
     const onSort = vi.fn<(key: SortKey) => void>();
     render(EntityTable, {
@@ -130,6 +205,63 @@ describe("EntityTable", () => {
 
     expect(screen.getByTestId("entity-table-select-all")).toBeTruthy();
     expect(screen.getAllByTestId("entity-table-row-select")).toHaveLength(2);
+  });
+
+  it("bounds large vault rendering and exposes accessible page navigation", async () => {
+    const manyRows = Array.from({ length: 1600 }, (_, index) =>
+      entity({ id: `entity-${index}`, title: `Entity ${index}` }),
+    );
+
+    render(EntityTable, {
+      props: { entities: manyRows, vaultId: "v1", sort, onSort: vi.fn() },
+    });
+
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    expect(
+      screen.getByTestId("entity-table-pagination").getAttribute("aria-label"),
+    ).toBe("Entity table pages");
+    expect(screen.getByText("Page 1 of 32")).toBeTruthy();
+    expect(
+      screen.getByText("Showing 1–50 of 1600 filtered entities"),
+    ).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    expect(screen.getByText("Page 2 of 32")).toBeTruthy();
+    expect(screen.getByText("Entity 50")).toBeTruthy();
+    expect(screen.queryByText("Entity 0")).toBeNull();
+  });
+
+  it("keeps pagination usable when session storage is unavailable", () => {
+    const getItem = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+
+    try {
+      const manyRows = Array.from({ length: 100 }, (_, index) =>
+        entity({ id: `storage-${index}`, title: `Storage ${index}` }),
+      );
+      render(EntityTable, {
+        props: {
+          entities: manyRows,
+          vaultId: "storage-v1",
+          sort,
+          onSort: vi.fn(),
+        },
+      });
+
+      expect(screen.getAllByTestId("entity-table-row")).toHaveLength(50);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
   });
 
   it("reflects the selected set and toggles a row without navigating", async () => {
@@ -195,5 +327,41 @@ describe("EntityTable", () => {
       "entity-table-select-all",
     ) as HTMLInputElement;
     expect(selectAll.indeterminate).toBe(true);
+  });
+
+  it("triggers onToggleRow when row background is clicked, forwarding modifiers", async () => {
+    const onToggleRow = vi.fn();
+    render(EntityTable, {
+      props: {
+        entities: rows,
+        vaultId: "v1",
+        sort,
+        onSort: vi.fn(),
+        onToggleRow,
+      },
+    });
+
+    const renderedRows = screen.getAllByTestId("entity-table-row");
+
+    // Normal click
+    await fireEvent.click(renderedRows[0]);
+    expect(onToggleRow).toHaveBeenCalledWith("e1", {
+      shift: false,
+      ctrl: false,
+    });
+
+    // Shift click
+    await fireEvent.click(renderedRows[1], { shiftKey: true });
+    expect(onToggleRow).toHaveBeenCalledWith("e2", {
+      shift: true,
+      ctrl: false,
+    });
+
+    // Ctrl click
+    await fireEvent.click(renderedRows[0], { ctrlKey: true });
+    expect(onToggleRow).toHaveBeenCalledWith("e1", {
+      shift: false,
+      ctrl: true,
+    });
   });
 });

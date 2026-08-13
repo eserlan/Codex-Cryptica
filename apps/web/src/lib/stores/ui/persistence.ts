@@ -2,6 +2,8 @@ export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
+  length?: number;
+  key?(index: number): string | null;
 }
 
 export const UI_STORAGE_KEYS = {
@@ -15,6 +17,8 @@ export const UI_STORAGE_KEYS = {
     "codex_explorer_collapsed_category_groups",
   EXPLORER_COLLAPSED_LABEL_GROUPS: "codex_explorer_collapsed_label_groups",
   EXPLORER_COLLAPSED_ENTITY_IDS: "codex_explorer_collapsed_entity_ids",
+  EXPLORER_SORT_DIRECTION: "codex_explorer_sort_direction",
+  EXPLORER_SORT_KEY: "codex_explorer_sort_key",
   EXPLORER_VIEW_MODE: "codex_explorer_view_mode",
   LAST_CONNECTION_LABEL: "codex_last_connection_label",
   LAST_SEEN_VERSION: "codex_last_seen_version",
@@ -29,6 +33,10 @@ export const UI_STORAGE_KEYS = {
   VTT_SIDEBAR_COLLAPSED: "codex_vtt_sidebar_collapsed",
   WORLD_PAGE_DISMISSED_AT: "codex_world_page_dismissed_at",
   MOBILE_GRAPH_COACH_MARKS_SEEN: "codex_mobile_graph_coach_marks_seen",
+  GUIDED_MODE_ACTIVE: "codex_guided_mode_active",
+  GUIDED_MODE_DISMISSED_RECOMMENDATIONS:
+    "codex_guided_mode_dismissed_recommendations",
+  AUTO_FULLSCREEN: "codex_auto_fullscreen",
 } as const;
 
 export type UIStorageKey =

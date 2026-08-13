@@ -1,7 +1,11 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
+  import {
+    FOCUS_DETAIL_STEP,
+    FOCUS_EDGE_CAP,
+    graph,
+  } from "$lib/stores/graph.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import type { Entity } from "schema";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
@@ -24,6 +28,24 @@
     graph.activeCategories.size > 0 ||
       graph.activeLabels.size > 0 ||
       graph.timelineMode,
+  );
+  const isLargeGraph = $derived(graph.isLargeGraph);
+  const focusViewActive = $derived(graph.focusViewActive);
+  const focusViewMessage = $derived(
+    `Focus view: showing ${graph.stats.nodeCount} of ${graph.fullGraphSize.nodeCount} entities (detail level ${graph.focusDepth}).`,
+  );
+  const focusDetailHint = $derived(
+    graph.canIncreaseFocusDetail
+      ? `Zoom in or choose Show more detail to reveal up to ${FOCUS_DETAIL_STEP} more entities. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view.`
+      : `This is the maximum focus detail. Connections are limited to ${FOCUS_EDGE_CAP.toLocaleString()} in focus view; use Show full graph for all visible entities.`,
+  );
+  const fullGraphMessage = $derived(
+    `Full graph performance mode: ${graph.fullGraphSize.nodeCount} entities and ${graph.fullGraphSize.edgeCount} connections.`,
+  );
+  const focusCountLabel = $derived(
+    focusViewActive
+      ? `${graph.stats.nodeCount}/${graph.fullGraphSize.nodeCount}`
+      : `${graph.fullGraphSize.nodeCount}`,
   );
 
   function addFilteredToCanvas() {
@@ -58,6 +80,7 @@
   }
 
   let isFiltersExpanded = $state(false);
+  let isFocusInfoExpanded = $state(false);
 </script>
 
 <div class="absolute inset-4 md:inset-6 z-20 pointer-events-none">
@@ -141,7 +164,10 @@
               title="Add all results to workspace"
               aria-label="Add all filtered results to active workspace"
             >
-              <span class="icon-[lucide--layout-grid] w-4 h-4"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--layout-grid] w-4 h-4"
+              ></span>
             </button>
           {/if}
         </div>
@@ -174,11 +200,11 @@
   {/if}
 
   <div
-    class="absolute bottom-0 left-0 flex flex-col items-start gap-2 md:gap-3"
+    class="absolute bottom-14 left-0 flex flex-col items-start gap-2 md:bottom-16 md:gap-3"
   >
     {#if graph.timelineMode}
       <div
-        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>
@@ -193,7 +219,7 @@
 
     {#if isLayoutRunning}
       <div
-        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--cpu] w-3 h-3 animate-spin"></span>
@@ -204,9 +230,26 @@
       </div>
     {/if}
 
+    {#if isLargeGraph}
+      <!-- Desktop: full inline alert. Mobile uses the compact top-right chip below. -->
+      <div
+        class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 hidden max-w-[min(26rem,calc(100vw-2rem))] items-start gap-2 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase pointer-events-auto md:flex"
+        transition:fade
+      >
+        <span
+          class="mt-0.5 h-3 w-3 shrink-0 {focusViewActive
+            ? 'icon-[lucide--focus]'
+            : 'icon-[lucide--gauge]'}"
+        ></span>
+        <span class="flex flex-col items-start">
+          {@render focusDetail()}
+        </span>
+      </div>
+    {/if}
+
     {#if connectionModeStore.isConnecting}
       <div
-        class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-xs font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-xs font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--link] w-3.5 h-3.5 animate-pulse"></span>
@@ -227,4 +270,65 @@
       </div>
     {/if}
   </div>
+
+  {#if isLargeGraph}
+    <!-- Mobile: compact focus chip pinned top-right, tap to reveal detail. -->
+    <div
+      class="absolute right-0 top-0 flex flex-col items-end gap-1 md:hidden pointer-events-auto"
+    >
+      <button
+        type="button"
+        onclick={() => (isFocusInfoExpanded = !isFocusInfoExpanded)}
+        aria-expanded={isFocusInfoExpanded}
+        aria-label={isFocusInfoExpanded
+          ? "Hide focus view detail"
+          : "Show focus view detail"}
+        class="flex items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95 {isFocusInfoExpanded
+          ? 'border-theme-primary'
+          : 'border-theme-border'}"
+      >
+        <span
+          class="h-3.5 w-3.5 shrink-0 {focusViewActive
+            ? 'icon-[lucide--focus]'
+            : 'icon-[lucide--gauge]'}"
+        ></span>
+        <span>{focusCountLabel}</span>
+      </button>
+
+      {#if isFocusInfoExpanded}
+        <div
+          class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(20rem,calc(100vw-2rem))] flex-col gap-1 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase"
+          transition:fade
+        >
+          {@render focusDetail()}
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>
+
+<!-- Shared focus-view detail: message, hint, and full-graph toggle (desktop alert + mobile popover). -->
+{#snippet focusDetail()}
+  <span>{focusViewActive ? focusViewMessage : fullGraphMessage}</span>
+  <span class="block text-theme-muted">
+    {focusViewActive
+      ? focusDetailHint
+      : "Labels, images, and edge detail are simplified for speed."}
+  </span>
+  {#if focusViewActive && graph.canIncreaseFocusDetail}
+    <button
+      type="button"
+      class="mt-1 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
+      onclick={() => graph.increaseFocusDetail()}
+    >
+      Show more detail
+    </button>
+  {/if}
+  <button
+    type="button"
+    class="mt-1 self-start underline decoration-dotted underline-offset-2 hover:text-theme-primary/80"
+    onclick={() => graph.toggleFullGraph()}
+  >
+    {focusViewActive ? "Show full graph" : "Back to focus view"}
+  </button>
+{/snippet}

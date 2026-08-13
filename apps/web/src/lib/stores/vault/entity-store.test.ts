@@ -23,6 +23,8 @@ vi.mock("./entities", () => ({
   createEntity: vi.fn(),
   updateEntity: vi.fn(),
   deleteEntity: vi.fn(),
+  deleteEntityFiles: vi.fn(),
+  applyBatchDelete: vi.fn(),
   addConnection: vi.fn(),
   updateConnection: vi.fn(),
   removeConnection: vi.fn(),
@@ -70,6 +72,8 @@ describe("EntityStore", () => {
     entities: Record<string, LocalEntity>;
     saveQueue: any;
     enqueueSave: ReturnType<typeof vi.fn>;
+    saveToDisk?: ReturnType<typeof vi.fn>;
+    waitForAllSaves?: ReturnType<typeof vi.fn>;
   };
   let store: EntityStore;
 
@@ -106,6 +110,8 @@ describe("EntityStore", () => {
         enqueue: vi.fn((_key, fn) => fn()),
       },
       enqueueSave: vi.fn(),
+      saveToDisk: vi.fn().mockResolvedValue(undefined),
+      waitForAllSaves: vi.fn().mockResolvedValue(undefined),
     };
     // Delegate enqueueSave → saveQueue.enqueue so existing assertions on saveQueue.enqueue still pass.
     repository.enqueueSave.mockImplementation((_key: any, fn: any) =>
@@ -261,6 +267,26 @@ describe("EntityStore", () => {
     expect(repository.saveQueue.enqueue).toHaveBeenCalled();
   });
 
+  it("returns per-entity bulk update results and commits successful deltas", async () => {
+    repository.saveToDisk!.mockImplementation(
+      async (_handle: unknown, _vaultId: string, entity: LocalEntity) => {
+        if (entity.id === "place") throw new Error("write failed");
+      },
+    );
+
+    const result = await store.bulkUpdate({
+      hero: { type: "npc" },
+      place: { type: "landmark" },
+      missing: { type: "note" },
+    });
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.failedIds).toEqual(["place"]);
+    expect(result.skippedIds).toEqual(["missing"]);
+    expect(store.entities.hero.type).toBe("npc");
+    expect(store.entities.place.type).toBe("location");
+  });
+
   it("deletes an entity", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
       entities: { place: repository.entities.place },
@@ -281,6 +307,27 @@ describe("EntityStore", () => {
     );
   });
 
+  it("uses one batch delete path and reports missing IDs", async () => {
+    vi.mocked(vaultEntities.deleteEntityFiles).mockResolvedValue(undefined);
+    vi.mocked(vaultEntities.applyBatchDelete).mockReturnValue({
+      entities: { place: repository.entities.place },
+      deletedIds: ["hero"],
+      modified: {},
+    });
+
+    const result = await store.bulkDelete(["hero", "missing"]);
+
+    expect(result.succeededIds).toEqual(["hero"]);
+    expect(result.skippedIds).toEqual(["missing"]);
+    expect(vaultEntities.deleteEntityFiles).toHaveBeenCalledTimes(1);
+    expect(vaultEntities.applyBatchDelete).toHaveBeenCalledWith(
+      expect.anything(),
+      ["hero"],
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it("handles connection operations", async () => {
     const updatedSource = {
       ...repository.entities.hero,
@@ -294,6 +341,110 @@ describe("EntityStore", () => {
     const success = await store.addConnection("hero", "place", "ref");
     expect(success).toBe(true);
     expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    expect(vaultEventBus.emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CONNECTION_ADDED",
+        sourceId: "hero",
+        targetId: "place",
+        connectionType: "ref",
+      }),
+    );
+  });
+
+  it("replaces graph-facing entity arrays for connection-only updates", async () => {
+    const updatedSource = {
+      ...repository.entities.hero,
+      connections: [{ target: "place", type: "ref", strength: 1 }],
+    };
+    vi.mocked(vaultEntities.addConnection).mockReturnValue({
+      entities: { ...repository.entities, hero: updatedSource },
+      updatedSource,
+    });
+
+    const previousAllEntities = store.allEntities;
+    const previousActiveEntities = store.allActiveEntities;
+
+    const success = await store.addConnection("hero", "place", "ref");
+
+    expect(success).toBe(true);
+    expect(store.allEntities).not.toBe(previousAllEntities);
+    expect(store.allActiveEntities).not.toBe(previousActiveEntities);
+    expect(
+      store.allEntities.find((entity) => entity.id === "hero")?.connections,
+    ).toEqual([{ target: "place", type: "ref", strength: 1 }]);
+  });
+
+  it("does not advance graph structure for content-only updates", () => {
+    const initialMap = { ...repository.entities };
+    const heroUpdated = {
+      ...initialMap.hero,
+      content: "Only prose changed",
+      updatedAt: Date.now(),
+      modifiedAt: Date.now(),
+    } as unknown as LocalEntity;
+    const newMap = { ...initialMap, hero: heroUpdated };
+    const previousGraphEntities = store.graphEntities;
+    const previousVersion = store.graphStructureVersion;
+
+    store.handleEntitiesUpdate(initialMap, newMap);
+
+    expect(store.graphEntities).toBe(previousGraphEntities);
+    expect(store.graphStructureVersion).toBe(previousVersion);
+    expect(store.allEntities.find((entity) => entity.id === "hero")).toEqual(
+      heroUpdated,
+    );
+  });
+
+  it("keeps graphEntities independent from allEntities after rebuilds", () => {
+    const rebuiltAllEntities = store.allEntities;
+    const rebuiltGraphEntities = store.graphEntities;
+
+    expect(rebuiltGraphEntities).not.toBe(rebuiltAllEntities);
+
+    const newEntity = {
+      id: "villain",
+      title: "Villain",
+      content: "",
+      lore: "",
+      type: "character",
+      status: "active",
+      labels: [],
+      aliases: [],
+      connections: [],
+    } as unknown as LocalEntity;
+
+    store.handleEntitiesUpdate(repository.entities, {
+      ...repository.entities,
+      villain: newEntity,
+    });
+
+    expect(
+      store.allEntities.filter((entity) => entity.id === "villain"),
+    ).toHaveLength(1);
+    expect(
+      store.graphEntities.filter((entity) => entity.id === "villain"),
+    ).toHaveLength(1);
+  });
+
+  it("advances graph structure for graph-relevant updates", () => {
+    const initialMap = { ...repository.entities };
+    const heroUpdated = {
+      ...initialMap.hero,
+      metadata: { coordinates: { x: 10, y: 20 } },
+      updatedAt: Date.now(),
+      modifiedAt: Date.now(),
+    } as unknown as LocalEntity;
+    const newMap = { ...initialMap, hero: heroUpdated };
+    const previousGraphEntities = store.graphEntities;
+    const previousVersion = store.graphStructureVersion;
+
+    store.handleEntitiesUpdate(initialMap, newMap);
+
+    expect(store.graphEntities).not.toBe(previousGraphEntities);
+    expect(store.graphStructureVersion).toBe(previousVersion + 1);
+    expect(store.graphEntities.find((entity) => entity.id === "hero")).toEqual(
+      heroUpdated,
+    );
   });
 
   it("handles label operations", async () => {

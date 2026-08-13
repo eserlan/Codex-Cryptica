@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { initGraph } from "./index";
+import type { Core } from "cytoscape";
+import {
+  initGraph,
+  applyLargeGraphRenderHints,
+  isLargeGraphSize,
+} from "./index";
 
 describe("initGraph adaptive zoom", () => {
   it("should calculate higher minZoom for small graphs", async () => {
@@ -54,5 +59,89 @@ describe("initGraph adaptive zoom", () => {
     });
 
     expect((cy as any)._private?.options?.wheelSensitivity).toBe(1.0);
+  });
+
+  it("should enable large-graph viewport render shortcuts", async () => {
+    const manyEdges = Array.from({ length: 1801 }, (_, i) => ({
+      group: "edges",
+      data: {
+        id: `edge-${i}`,
+        source: "source",
+        target: "target",
+      },
+    }));
+
+    const cy = await initGraph({
+      headless: true,
+      elements: [
+        { group: "nodes", data: { id: "source" } },
+        { group: "nodes", data: { id: "target" } },
+        ...manyEdges,
+      ] as any,
+    });
+
+    expect((cy as any)._private?.options?.hideEdgesOnViewport).toBe(true);
+    expect((cy as any)._private?.options?.motionBlur).toBe(true);
+  });
+});
+
+describe("isLargeGraphSize", () => {
+  it("flags graphs above the node threshold", () => {
+    expect(isLargeGraphSize(701, 0)).toBe(true);
+    expect(isLargeGraphSize(700, 0)).toBe(false);
+  });
+
+  it("flags graphs above the edge threshold", () => {
+    expect(isLargeGraphSize(0, 1801)).toBe(true);
+    expect(isLargeGraphSize(0, 1800)).toBe(false);
+  });
+});
+
+describe("applyLargeGraphRenderHints", () => {
+  const makeCy = (overrides: Record<string, unknown> = {}) => {
+    const renderer = {
+      hideEdgesOnViewport: false,
+      motionBlurEnabled: false,
+      motionBlur: false,
+    };
+    const cy = {
+      container: () => ({}) as unknown,
+      renderer: () => renderer,
+      ...overrides,
+    } as unknown as Core;
+    return { cy, renderer };
+  };
+
+  it("patches the live renderer flags when the graph is large", () => {
+    const { cy, renderer } = makeCy();
+
+    const applied = applyLargeGraphRenderHints(cy, true);
+
+    expect(applied).toBe(true);
+    expect(renderer.hideEdgesOnViewport).toBe(true);
+    expect(renderer.motionBlurEnabled).toBe(true);
+    expect(renderer.motionBlur).toBe(true);
+  });
+
+  it("clears the flags when the graph is no longer large", () => {
+    const { cy, renderer } = makeCy();
+    renderer.hideEdgesOnViewport = true;
+    renderer.motionBlurEnabled = true;
+    renderer.motionBlur = true;
+
+    applyLargeGraphRenderHints(cy, false);
+
+    expect(renderer.hideEdgesOnViewport).toBe(false);
+    expect(renderer.motionBlurEnabled).toBe(false);
+    expect(renderer.motionBlur).toBe(false);
+  });
+
+  it("is a no-op for headless graphs without a container", () => {
+    const { cy, renderer } = makeCy({ container: () => null });
+
+    const applied = applyLargeGraphRenderHints(cy, true);
+
+    expect(applied).toBe(false);
+    expect(renderer.hideEdgesOnViewport).toBe(false);
   });
 });

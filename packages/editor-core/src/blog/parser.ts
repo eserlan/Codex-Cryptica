@@ -34,7 +34,8 @@ export function parseBlogArticle(
       return null;
     }
 
-    const { title, description, keywords, publishedAt } = metadata;
+    const { title, description, keywords, publishedAt, author, topic } =
+      metadata;
 
     if (typeof title !== "string" || title.trim() === "") {
       console.error(
@@ -61,22 +62,37 @@ export function parseBlogArticle(
       return null;
     }
 
-    if (
-      (typeof publishedAt !== "string" && !(publishedAt instanceof Date)) ||
-      Number.isNaN(
-        publishedAt instanceof Date
-          ? publishedAt.getTime()
-          : Date.parse(publishedAt),
-      )
-    ) {
+    if (typeof publishedAt !== "string" && !(publishedAt instanceof Date)) {
       console.error(
         `Missing or invalid 'publishedAt' in frontmatter for blog article: ${path}`,
       );
       return null;
     }
 
-    const finalPublishedAt =
-      publishedAt instanceof Date ? publishedAt.toISOString() : publishedAt;
+    // Normalize explicitly instead of relying on the YAML parser having
+    // already coerced this into a Date (js-yaml's implicit timestamp
+    // resolution isn't something to depend on staying consistent across
+    // versions/environments) -- always parse and re-serialize ourselves.
+    const publishedAtDate = new Date(publishedAt as string | Date);
+    if (Number.isNaN(publishedAtDate.getTime())) {
+      console.error(
+        `Missing or invalid 'publishedAt' in frontmatter for blog article: ${path}`,
+      );
+      return null;
+    }
+
+    const finalPublishedAt = publishedAtDate.toISOString();
+
+    const rawUpdatedAt = metadata.updatedAt;
+    let updatedAtIso: string | undefined;
+    if (rawUpdatedAt) {
+      const parsed = new Date(rawUpdatedAt as string | Date);
+      if (Number.isNaN(parsed.getTime())) {
+        console.error(`Invalid 'updatedAt' in frontmatter for: ${path}`);
+      } else {
+        updatedAtIso = parsed.toISOString();
+      }
+    }
 
     return {
       id: String(metadata.id),
@@ -85,6 +101,19 @@ export function parseBlogArticle(
       description,
       keywords,
       publishedAt: finalPublishedAt,
+      // Deliberately not required: omitting it means "the site's own author",
+      // resolved at render time, so a new post doesn't have to repeat it and
+      // changing the name is a one-line edit rather than 22.
+      ...(typeof author === "string" && author.trim()
+        ? { author: author.trim() }
+        : {}),
+      // Same treatment as `author`: absent stays absent. An updatedAt silently
+      // defaulted to the publication date would tell every reader that every
+      // post was revised today it was written, which is worse than silence.
+      ...(updatedAtIso ? { updatedAt: updatedAtIso } : {}),
+      ...(typeof topic === "string" && topic.trim()
+        ? { topic: topic.trim() }
+        : {}),
       content,
     };
   } catch (e) {

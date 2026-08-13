@@ -23,6 +23,14 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set(["GM Reference Information"]),
   },
   {
+    label: "nomad-clan",
+    railSections: new Set(["Clan Profile", "Notable Members", "Rival Faction"]),
+    documentBullets: {
+      labels: new Set(["Secret", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
+  {
     label: "faction-generator",
     railSections: new Set(["At the Table", "Notable NPCs", "Rival Faction"]),
     documentBullets: {
@@ -126,6 +134,35 @@ const LAYOUT_RULES: LayoutRule[] = [
       "Controlling Factions",
     ]),
   },
+  {
+    label: "world",
+    railSections: new Set([
+      "History",
+      "Current Conflicts",
+      "Mysteries",
+      "Adventure Hooks",
+    ]),
+  },
+  {
+    label: "star-system",
+    railSections: new Set([
+      "History",
+      "System-Wide Conflict or Mystery",
+      "Adventure Hooks",
+    ]),
+  },
+  {
+    label: "council-vote",
+    // Council Members is deliberately NOT in the rail: each entry is a full
+    // paragraph (public position, true agenda, persuasion angle, secret),
+    // not a compact bullet — it's the generator's narrative payoff, not a
+    // quick-lookup reference, so it belongs in the main column.
+    railSections: new Set([
+      "Voting Procedure",
+      "Current Vote Estimate",
+      "Antagonist Influence",
+    ]),
+  },
 ];
 
 interface MarkdownSection {
@@ -137,7 +174,7 @@ function splitMarkdownSections(markdown: string): MarkdownSection[] {
   const normalized = markdown.trim();
   if (!normalized) return [];
 
-  const matches = Array.from(normalized.matchAll(/^###\s+(.+)$/gm));
+  const matches = Array.from(normalized.matchAll(/^#{2,3}\s+(.+)$/gm));
   if (matches.length === 0) {
     return [];
   }

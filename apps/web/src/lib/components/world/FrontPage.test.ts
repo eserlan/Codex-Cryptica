@@ -127,7 +127,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/ai/context-retrieval.service", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     retrieveContext: mocks.retrieveContext,
     getConsolidatedContext: vi.fn((entity: any) =>
@@ -385,7 +385,7 @@ describe("FrontPage", () => {
 
     await waitFor(() =>
       expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-        expect.stringContaining("Create atmospheric portrait cover art"),
+        expect.stringContaining("Create cover art"),
       ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
@@ -393,31 +393,24 @@ describe("FrontPage", () => {
         "Thematic scope: Cyberpunk, neon-noir, corporate control",
       ),
     );
+    // Portrait framing now comes from the cover camera preset.
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "Portrait composition, vertical framing, approximately 2:3 aspect ratio.",
-      ),
+      expect.stringContaining("2:3 portrait framing"),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining("Default Art Style: Moonfall"),
+      expect.stringContaining("atmospheric cover art"),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining("atmospheric world cover art"),
-    );
-    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "Theme Style: Moonfall. Cyberpunk digital concept art style",
-      ),
+      expect.stringContaining("dense signage"),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
         "Briefing: A broken moon hangs over the **capital**.",
       ),
     );
-    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'Create atmospheric portrait cover art for "Moonfall".',
-      ),
+    // Art Direction v2 strips proper names from the prompt.
+    expect(mocks.generateCoverImage).not.toHaveBeenCalledWith(
+      expect.stringContaining("Moonfall"),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining("Sky-market politics and drone wars."),
@@ -925,15 +918,8 @@ describe("FrontPage", () => {
 
     resolveGenerate?.("New briefing text.");
 
-    // Wait for the promise chain to settle and Svelte to re-render
-    await vi.waitFor(
-      async () => {
-        await new Promise((r) => setTimeout(r, 50));
-        expect(
-          screen.queryByTestId("briefing-generating-indicator"),
-        ).toBeNull();
-      },
-      { timeout: 3000 },
+    await vi.waitFor(() =>
+      expect(screen.queryByTestId("briefing-generating-indicator")).toBeNull(),
     );
     expect(
       screen.getByTestId("briefing-preview").getAttribute("aria-busy"),

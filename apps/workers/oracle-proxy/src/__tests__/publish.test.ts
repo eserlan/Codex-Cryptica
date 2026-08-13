@@ -562,6 +562,24 @@ describe("R2 Publish Endpoints", () => {
     });
     await bucket.put(`published/${publishId}/assets/img1`, "img1-data");
     await bucket.put(`published/${publishId}/assets/img2`, "img2-data");
+    await bucket.put(
+      `directory/listings/${publishId}.json`,
+      JSON.stringify({
+        schemaVersion: 1,
+        publishId,
+        guestUrl: `/guest/${publishId}`,
+        title: "Night Market",
+        description: "Find smugglers and rumors.",
+        labels: ["cyberpunk"],
+        visibleEntityCount: 1,
+        snapshotPublishedAt: "2026-06-30T12:00:00.000Z",
+        listingCreatedAt: "2026-06-30T12:00:00.000Z",
+        listingUpdatedAt: "2026-06-30T12:00:00.000Z",
+      }),
+      {
+        contentType: "application/json",
+      },
+    );
 
     const res = await worker.fetch(
       createRequest(
@@ -583,6 +601,9 @@ describe("R2 Publish Endpoints", () => {
     expect(bucket.store.has(`published/${publishId}/bundle.json`)).toBe(false);
     expect(bucket.store.has(`published/${publishId}/assets/img1`)).toBe(false);
     expect(bucket.store.has(`published/${publishId}/assets/img2`)).toBe(false);
+    expect(bucket.store.has(`directory/listings/${publishId}.json`)).toBe(
+      false,
+    );
   });
 
   it("should allow deleting individual assets with a valid token", async () => {

@@ -9,12 +9,14 @@ import {
   SyncActionExecutor,
   type SyncExecutionContext,
 } from "./SyncActionExecutor";
+import { type Clock, systemClock } from "./runtime";
 
 export type SyncServiceDependencies = {
   planner?: SyncPlanner;
   comparator?: SyncContentComparator;
   persistence?: SyncPersistence;
   executor?: SyncActionExecutor;
+  clock?: Clock;
 };
 
 export class SyncService {
@@ -22,6 +24,7 @@ export class SyncService {
   private readonly comparator: SyncContentComparator;
   private readonly persistence: SyncPersistence;
   private readonly executor: SyncActionExecutor;
+  private readonly clock: Clock;
 
   constructor(
     protected registry: SyncRegistry,
@@ -33,10 +36,11 @@ export class SyncService {
     this.executor =
       deps.executor ??
       new SyncActionExecutor(registry, this.comparator, this.persistence);
+    this.clock = deps.clock ?? systemClock;
   }
 
   private getTs() {
-    return new Date().toISOString().split("T")[1].split("Z")[0];
+    return new Date(this.clock.now()).toISOString().split("T")[1].split("Z")[0];
   }
 
   async sync(

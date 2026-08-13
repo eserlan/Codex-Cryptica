@@ -51,7 +51,8 @@ export interface DiscoveredLink {
 export interface DiscoveredEntity {
   id: string; // Temp ID
   suggestedTitle: string;
-  suggestedType: "Character" | "Location" | "Item" | "Lore" | "Unknown";
+  suggestedType:
+    "Character" | "Location" | "Item" | "Lore" | "Creature" | "Unknown";
   chronicle: string; // Short Markdown summary
   lore: string; // Detailed background
   content: string; // Markdown body (full combined content)
@@ -96,7 +97,10 @@ export interface AnalysisOptions {
   signal?: AbortSignal;
   onProgress?: (current: number, total: number) => void;
   onChunkActive?: (index: number) => void;
-  onChunkProcessed?: (index: number, result: AnalysisResult) => void;
+  onChunkProcessed?: (
+    index: number,
+    result: AnalysisResult,
+  ) => void | Promise<void>;
 }
 
 export interface AnalysisResult {

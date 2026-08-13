@@ -159,6 +159,21 @@ describe("sortEntities", () => {
     ).toEqual(["Yak", "Zed", "Xeno"]);
   });
 
+  it("sorts by first label alphabetically; unlabeled entities always last", () => {
+    const labeled: Entity[] = [
+      entity({ id: "n", title: "Nomad" }), // no labels
+      entity({ id: "h", title: "Hero", labels: ["villain", "hero"] }),
+      entity({ id: "m", title: "Mystic", labels: ["arcane"] }),
+      entity({ id: "l", title: "Legacy", labels: [], tags: ["old-tag"] }),
+    ];
+    expect(
+      titles(sortEntities(labeled, { key: "labels", direction: "asc" })),
+    ).toEqual(["Mystic", "Hero", "Legacy", "Nomad"]);
+    expect(
+      titles(sortEntities(labeled, { key: "labels", direction: "desc" })),
+    ).toEqual(["Legacy", "Hero", "Mystic", "Nomad"]);
+  });
+
   it("does not mutate the input array", () => {
     const input = [...items];
     sortEntities(input, { key: "title", direction: "desc" });

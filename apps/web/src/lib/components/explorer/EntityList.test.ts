@@ -24,7 +24,7 @@ const mockVault = vi.hoisted(() => {
         labels: ["Quest"],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 300,
       },
       {
         id: "npc-only",
@@ -34,7 +34,7 @@ const mockVault = vi.hoisted(() => {
         labels: ["NPC"],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 100,
       },
       {
         id: "both",
@@ -44,7 +44,7 @@ const mockVault = vi.hoisted(() => {
         labels: ["NPC", "Quest"],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 200,
       },
       {
         id: "parent-1",
@@ -54,7 +54,7 @@ const mockVault = vi.hoisted(() => {
         labels: [],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 400,
       },
       {
         id: "child-1",
@@ -64,7 +64,7 @@ const mockVault = vi.hoisted(() => {
         labels: [],
         connections: [],
         content: "",
-        updatedAt: 0,
+        updatedAt: 500,
         parent: "parent-1",
       },
       {
@@ -116,6 +116,8 @@ vi.mock("$lib/utils/icon", () => ({
 describe("EntityList", () => {
   beforeEach(() => {
     explorerUIStore.explorerViewMode = "list";
+    explorerUIStore.explorerSortKey = "name";
+    explorerUIStore.explorerSortDirection = "asc";
     explorerUIStore.clearLabelFilters();
     explorerUIStore.explorerCollapsedCategoryGroups = {};
     explorerUIStore.explorerCollapsedLabelGroups = {};
@@ -236,6 +238,43 @@ describe("EntityList", () => {
     expect(input.value).toBe("");
   });
 
+  it("sorts tree siblings by last edited time in either direction", async () => {
+    render(EntityList);
+
+    await fireEvent.change(screen.getByLabelText("Sort"), {
+      target: { value: "updated" },
+    });
+    await tick();
+
+    const ids = () =>
+      screen
+        .getAllByTestId("entity-list-item")
+        .map((item) => item.getAttribute("data-entity-id"));
+
+    expect(ids()).toEqual([
+      "parent-1",
+      "child-1",
+      "quest-only",
+      "both",
+      "npc-only",
+    ]);
+
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sort last edited oldest first",
+      }),
+    );
+    await tick();
+
+    expect(ids()).toEqual([
+      "npc-only",
+      "both",
+      "quest-only",
+      "parent-1",
+      "child-1",
+    ]);
+  });
+
   it("automatically applies the label in the graph filter when an autocomplete option is selected", async () => {
     explorerUIStore.clearLabelFilters();
     expect(explorerUIStore.labelFilters.has("Quest")).toBe(false);
@@ -246,9 +285,8 @@ describe("EntityList", () => {
     await fireEvent.focus(input);
     await fireEvent.input(input, { target: { value: "#Qu" } });
 
-    // Wait for Svelte 5 to process state updates and render the autocomplete dropdown
+    // Flush Svelte's pending state updates and render the autocomplete dropdown.
     await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Find the autocomplete option for "Quest" (which displays as "#Quest")
     const buttons = screen.getAllByRole("button");
@@ -259,9 +297,8 @@ describe("EntityList", () => {
 
     await fireEvent.click(questOption!);
 
-    // Wait for Svelte reactive effect synchronization
+    // Flush Svelte's pending reactive updates.
     await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Verify label is auto-applied to active filters
     expect(explorerUIStore.labelFilters.has("Quest")).toBe(true);
@@ -397,6 +434,30 @@ describe("EntityList", () => {
     render(EntityList);
 
     expect(screen.queryByText("Pending Draft")).toBeNull();
+  });
+
+  it("bounds flat rendering for a large vault and paginates the visible rows", () => {
+    const originalEntities = mockVault.allEntities;
+    mockVault.allEntities = Array.from({ length: 1600 }, (_, index) => ({
+      id: `large-${index}`,
+      title: `Large Entity ${index}`,
+      type: "npc",
+      tags: [],
+      labels: [],
+      connections: [],
+      content: "",
+      updatedAt: index,
+      status: "active",
+    }));
+
+    try {
+      render(EntityList);
+      expect(screen.getAllByTestId("entity-list-item")).toHaveLength(100);
+      expect(screen.getByTestId("entity-explorer-pagination")).toBeTruthy();
+      expect(screen.getByText("Page 1 of 16")).toBeTruthy();
+    } finally {
+      mockVault.allEntities = originalEntities;
+    }
   });
 
   it("shows draft entities in review mode and wires approve and reject actions", async () => {

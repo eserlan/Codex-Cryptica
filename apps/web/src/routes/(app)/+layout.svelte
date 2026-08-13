@@ -4,6 +4,7 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
+  import { shelf } from "$lib/features/shelf";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -16,15 +17,17 @@
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
-  import { initGDriveSync } from "$lib/services/gdrive-sync";
+  import { initAiSessionEager } from "$lib/services/ai/session-bootstrap";
+  import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
+  import { getDB, DB_NAME, DB_VERSION } from "$lib/utils/idb";
   import { HELP_ARTICLES } from "$lib/config/help-content";
+  import { getHelpArticleIdFromHash } from "$lib/components/help/help-direct-link";
   import { VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
-  import AppFooter from "$lib/components/layout/AppFooter.svelte";
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
@@ -43,16 +46,30 @@
     setupWindowGlobals,
     registerServiceWorker,
   } from "$lib/app/init/app-init";
+  import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
+  import {
+    decideFirstRunAction,
+    hasUnseenMinorRelease,
+  } from "$lib/app/onboarding/onboarding-orchestrator";
+  import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { vaultThemePromptStore } from "$lib/stores/ui/vault-theme-prompt.svelte";
   import { worldStore } from "$lib/stores/world.svelte";
+  import { initAudioEngine } from "@codex/audio-engine";
+  import { debugStore } from "$lib/stores/debug.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+  import { aiClientManager } from "@codex/ai-engine";
+  import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
 
   let { children } = $props();
 
@@ -66,11 +83,13 @@
     null;
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
+  let isDocumentVisible = $state(true);
 
   // Derived
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
       page.url.pathname === `${base}/help` ||
+      page.url.pathname.startsWith(`${base}/help/`) ||
       page.url.pathname === `${base}/import`,
   );
   const anyModalOpen = $derived(
@@ -114,6 +133,7 @@
   onDestroy(() => {
     crossTabBroadcaster?.destroy();
     crossTabBroadcaster = null;
+    vaultThemePromptStore.stopTracking();
   });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
@@ -123,6 +143,64 @@
     }
   });
 
+  onMount(() => {
+    if (!browser) return;
+    if (!layoutUIStore.autoFullscreen) return;
+    return initFullscreenOnFirstInteraction();
+  });
+
+  // Pre-solve the LLM capability token, so the first generation isn't waiting
+  // on a Turnstile handshake. Only the eager warm is scoped here — the wiring
+  // itself happens in the root layout, because the public generators under
+  // (marketing) share the same client singleton and generate without ever
+  // mounting this layout.
+  onMount(() => {
+    initAiSessionEager();
+  });
+
+  // The Shelf is shared by every vault in this browser, so it starts listening
+  // once here rather than per-vault. Any import that never finished — a crashed
+  // tab, a browser closed mid-write — is rolled back before the Shelf becomes
+  // usable, so a half-written import cannot be mistaken for real content
+  // (156-entity-shelf, FR-020).
+  onMount(() => {
+    if (!browser) return;
+    shelf.start();
+    void shelf.recoverCrashedImports().then(() => shelf.refresh());
+    return () => shelf.stop();
+  });
+
+  // `100dvh` (app.css's --app-viewport-height fallback) is supposed to track
+  // the real visible viewport as mobile browser chrome (address bar, toolbar)
+  // shows/hides, but its live-recalculation is inconsistently timed across
+  // Android browsers — it can report a taller height than what's actually
+  // visible right after the chrome expands, leaving a blank gap below the
+  // app between it and the browser UI. VisualViewport is older, more
+  // consistently supported, and reports the actual visible height directly,
+  // so once mounted we override the CSS unit with a measured pixel value.
+  onMount(() => {
+    if (!browser || !window.visualViewport) return;
+
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+
+    let lastHeight: number | null = null;
+    const setViewportHeight = () => {
+      if (lastHeight === vv.height) return;
+      lastHeight = vv.height;
+      root.style.setProperty("--app-viewport-height", `${vv.height}px`);
+    };
+
+    setViewportHeight();
+    vv.addEventListener("resize", setViewportHeight);
+    vv.addEventListener("scroll", setViewportHeight);
+
+    return () => {
+      vv.removeEventListener("resize", setViewportHeight);
+      vv.removeEventListener("scroll", setViewportHeight);
+    };
+  });
+
   $effect(() => {
     if (!browser) return;
 
@@ -130,12 +208,20 @@
       page.url.pathname.startsWith(`${base}/map`) ||
       sessionModeStore.isGuestMode
     ) {
-      import("$lib/stores/map-session.svelte").then((m) => {
-        mapSession = m.mapSession;
-      });
-      import("$lib/components/vtt/VTTSharedImageLightbox.svelte").then((m) => {
-        VTTSharedImageLightbox = m.default;
-      });
+      import("$lib/stores/map-session.svelte")
+        .then((m) => {
+          mapSession = m.mapSession;
+        })
+        .catch((err) => {
+          console.error("Failed to lazy-load map-session store", err);
+        });
+      import("$lib/components/vtt/VTTSharedImageLightbox.svelte")
+        .then((m) => {
+          VTTSharedImageLightbox = m.default;
+        })
+        .catch((err) => {
+          console.error("Failed to lazy-load VTTSharedImageLightbox", err);
+        });
     }
   });
 
@@ -157,9 +243,42 @@
   });
 
   onMount(() => {
+    initAudioEngine({
+      vault,
+      oracle,
+      debugStore,
+      oracleBridge,
+      aiClientManager,
+      writeOpfsFile,
+      deleteOpfsEntry,
+    });
+
     (async () => {
+      isDocumentVisible = !document.hidden;
+      initOnboardingFunnel();
       helpStore.init();
       await themeStore.init();
+      configureGDriveSync({
+        getDB,
+        dbName: DB_NAME,
+        dbVersion: DB_VERSION,
+        appEventBus,
+        vault: {
+          get activeVaultId() {
+            return vault.activeVaultId;
+          },
+          get activeVaultRecord() {
+            return vault.activeVaultRecord ?? null;
+          },
+          createVault: (name) => vault.createVault(name),
+          switchVault: (id) => vault.switchVault(id),
+          getActiveVaultHandle: async () =>
+            (await vault.getActiveVaultHandle()) ?? null,
+          getSpecificVaultHandle: async (id) =>
+            (await vault.getSpecificVaultHandle(id)) ?? null,
+        },
+        listVaults: () => vaultRegistry.listVaults(),
+      });
       void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant
@@ -201,6 +320,45 @@
     })();
   });
 
+  const shouldConsiderVaultThemePrompt = (
+    activeVaultId: string,
+    hasCompletedInitialGuide: boolean,
+  ) =>
+    browser &&
+    vault.isInitialized &&
+    isDocumentVisible &&
+    !!activeVaultId &&
+    !sessionModeStore.isDemoMode &&
+    !sessionModeStore.isGuestMode &&
+    !onboardingStore.isLandingPageVisible &&
+    onboardingStore.dismissedWorldPage &&
+    !onboardingStore.showChangelog &&
+    hasCompletedInitialGuide &&
+    !helpStore.activeTour &&
+    !modalUIStore.isAnyModalOpen;
+
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+
+    if (
+      !browser ||
+      !vault.isInitialized ||
+      !activeVaultId ||
+      sessionModeStore.isDemoMode ||
+      sessionModeStore.isGuestMode
+    ) {
+      vaultThemePromptStore.stopTracking();
+      return;
+    }
+
+    if (!isDocumentVisible) {
+      vaultThemePromptStore.pauseTracking();
+      return;
+    }
+
+    vaultThemePromptStore.startTracking(activeVaultId);
+  });
+
   async function loadFeatureWindowGlobals() {
     const isSpecialEnv =
       import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
@@ -220,20 +378,15 @@
 
   // Help Hash Navigation
   $effect(() => {
-    if (!helpStore.isInitialized) return;
-    const hash = page.url.hash;
-    if (hash && hash.startsWith("#help/")) {
-      const articleId = hash.replace("#help/", "");
-      if (articleId) {
-        const exists = HELP_ARTICLES.some(
-          (article) => article.id === articleId,
-        );
-        if (exists) {
-          setTimeout(() => {
-            helpStore.openHelpToArticle(articleId);
-          }, 100);
-        }
-      }
+    if (!helpStore.isInitialized || isPopup) return;
+    const articleId = getHelpArticleIdFromHash(page.url.hash);
+    if (
+      articleId &&
+      HELP_ARTICLES.some((article) => article.id === articleId)
+    ) {
+      setTimeout(() => {
+        helpStore.openHelpToArticle(articleId);
+      }, 100);
     }
   });
 
@@ -272,50 +425,53 @@
     }
   });
 
-  // Automatic Tour/Demo Trigger
-  $effect(() => {
-    if (vault.isInitialized && !onboardingStore.isLandingPageVisible) {
-      if (
-        !helpStore.hasSeen("initial-onboarding") &&
-        !page.url.searchParams.has("demo")
-      ) {
-        if (
-          vault.allEntities.length === 0 &&
-          !sessionModeStore.isDemoMode &&
-          !onboardingStore.dismissedLandingPage
-        ) {
-          demoService.startDemo("fantasy");
-        } else {
-          helpStore.startTour("initial-onboarding");
-        }
-      }
-    }
-  });
-
-  // Automatic Release Note Trigger
+  // First-time user: silently record the latest release as seen so brand-new
+  // users never get a changelog popup on their very first launch.
   $effect(() => {
     if (
       browser &&
-      !onboardingStore.showChangelog &&
+      vault.isInitialized &&
       !sessionModeStore.isDemoMode &&
-      !onboardingStore.isLandingPageVisible
+      !onboardingStore.isLandingPageVisible &&
+      !onboardingStore.lastSeenVersion
     ) {
-      const lastSeenStr = onboardingStore.lastSeenVersion;
+      onboardingStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
+    }
+  });
 
-      // First-time user: no changelog popup, silently mark latest known release as seen
-      if (!lastSeenStr) {
-        onboardingStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
-        return;
-      }
+  // Unified first-run orchestrator (#1780). One decision function owns what a
+  // first-time user sees first, so the tour, guided empty state, and changelog
+  // never stack or compete. See onboarding-orchestrator.ts.
+  $effect(() => {
+    if (!browser) return;
 
-      const currentStoredMinor = parseInt(lastSeenStr.split(".")[1] || "0", 10);
-      const hasUnseenMinorRelease = releases.some((r) => {
-        const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
-        return releaseMinor > currentStoredMinor;
-      });
+    const action = decideFirstRunAction({
+      isInitialized: vault.isInitialized,
+      isGuestMode: sessionModeStore.isGuestMode,
+      isDemoMode: sessionModeStore.isDemoMode,
+      isLandingVisible: onboardingStore.isLandingPageVisible,
+      vaultSwitcherOpen: modalUIStore.showVaultSwitcher,
+      hasDemoQueryParam: page.url.searchParams.has("demo"),
+      hasSeenTour: helpStore.hasSeen("initial-onboarding"),
+      entityCount: vault.allEntities.length,
+      activeTour: !!helpStore.activeTour,
+      anyModalOpen: modalUIStore.isAnyModalOpen || modalUIStore.showZenMode,
+      hasUnseenRelease: hasUnseenMinorRelease(
+        onboardingStore.lastSeenVersion,
+        releases.map((r) => r.version),
+      ),
+    });
 
-      if (hasUnseenMinorRelease) {
-        // Delay to not conflict with tour/demo triggers
+    switch (action.kind) {
+      case "tour":
+      case "guided-empty":
+        // Both start the short, task-focused tour. In the empty-vault case the
+        // graph's guided empty state teaches the "create your first entity"
+        // step, and we deliberately do NOT auto-load a demo (#1782).
+        helpStore.startTour("initial-onboarding");
+        break;
+      case "changelog": {
+        // Small delay so it never races an overlay that is about to open.
         const timeout = setTimeout(() => {
           if (
             !helpStore.activeTour &&
@@ -328,7 +484,46 @@
         }, 2000);
         return () => clearTimeout(timeout);
       }
+      case "none":
+      default:
+        break;
     }
+  });
+
+  // Theme discovery should happen after the user has some real time in the
+  // vault, not immediately after creation or a single first edit.
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    const entityCount = vault.allEntities.length;
+    const hasCompletedInitialGuide = helpStore.hasSeen("initial-onboarding");
+
+    if (
+      !activeVaultId ||
+      !shouldConsiderVaultThemePrompt(
+        activeVaultId,
+        hasCompletedInitialGuide,
+      ) ||
+      !vaultThemePromptStore.shouldAutoPrompt(activeVaultId, entityCount)
+    ) {
+      return;
+    }
+
+    void themeStore.hasSavedThemeForVault(activeVaultId).then((hasTheme) => {
+      if (
+        !hasTheme &&
+        vault.activeVaultId === activeVaultId &&
+        shouldConsiderVaultThemePrompt(
+          activeVaultId,
+          helpStore.hasSeen("initial-onboarding"),
+        ) &&
+        vaultThemePromptStore.shouldAutoPrompt(
+          activeVaultId,
+          vault.allEntities.length,
+        )
+      ) {
+        modalUIStore.openVaultThemePrompt(activeVaultId);
+      }
+    });
   });
 
   let lastRestoredVaultId = $state<string | null>(null);
@@ -441,6 +636,7 @@
 
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
+    canUseQuickNote: !sessionModeStore.isGuestMode,
     searchStore,
     modalUIStore,
     quickNoteStore,
@@ -448,6 +644,9 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+<svelte:document
+  onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
+/>
 <NavigationShortcuts />
 
 <div
@@ -471,7 +670,7 @@
     <div
       class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
     >
-      {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      {#if !isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
         <ActivityBar />
         <SidebarPanelHost />
       {/if}
@@ -480,7 +679,7 @@
         class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         <div
-          class="min-h-0 min-w-0 flex-1 overflow-y-auto"
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||
             undefined}
@@ -502,10 +701,6 @@
         {/if}
       </main>
     </div>
-
-    {#if !isPopup && !isVttFullscreen && !isZenPopout}
-      <AppFooter />
-    {/if}
   </div>
 
   <!-- Modals rendered outside the inert wrapper -->
@@ -513,7 +708,7 @@
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
 
-  {#if !isPopup}
+  {#if !isPopup && !sessionModeStore.isGuestMode}
     <QuickNoteScratchpad />
   {/if}
 

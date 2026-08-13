@@ -1,7 +1,13 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
 import type { SyncEntry, OpfsStateEntry } from "@codex/sync-engine";
-import type { GuestChatTranscript, PublishRegistry } from "schema";
+import type {
+  GuestChatTranscript,
+  PublishRegistry,
+  StatSheetTemplate,
+  PresentationTemplate,
+} from "schema";
+import type { ImportJournal, ShelfEntry } from "@codex/entity-shelf";
 // ... (rest of imports unchanged)
 export interface VaultRecord {
   id: string;
@@ -122,15 +128,62 @@ interface CodexDB extends DBSchema {
     key: string; // vaultId
     value: PublishRegistry;
   };
+  stat_sheet_templates: {
+    key: string; // id
+    value: StatSheetTemplate & { vaultId: string };
+    indexes: {
+      "by-vault": string;
+    };
+  };
+  stat_sheet_presentation_templates: {
+    key: string; // id
+    value: PresentationTemplate;
+    indexes: {
+      "by-vault": string;
+      "by-schema-template-id": string;
+    };
+  };
+  // The Shelf (156-entity-shelf). Deliberately NOT vault-scoped: unlike every
+  // other store here it carries no vaultId key and no by-vault index, because
+  // being readable from whichever vault is open is the whole feature.
+  shelf_entries: {
+    key: string; // entry id
+    value: ShelfEntry;
+    indexes: {
+      "by-group": string;
+    };
+  };
+  // Present only while an import is in flight. Anything found at startup is a
+  // crashed import whose artifacts need rolling back.
+  shelf_journal: {
+    key: string; // importId
+    value: ImportJournal;
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 19 to support publish registry.
-export const DB_VERSION = 19;
+// DB_VERSION was bumped to 21 (not 20 — some browsers already reached 20
+// during local dev/testing before the stat_sheet_templates store existed in
+// the upgrade() callback below, so 20 was a consumed no-op for them and the
+// store never got created) to support vault-scoped stat sheet templates.
+// Bumped to 22 to add stat_sheet_presentation_templates (152-stat-sheet-templates).
+// Bumped to 23 to add shelf_entries and shelf_journal (156-entity-shelf).
+export const DB_VERSION = 23;
 
-let dbPromise: Promise<IDBPDatabase<CodexDB>> | null = null;
+// Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
+// update to this file can't leave two separate connection-promise slots
+// floating around — one held by importers still referencing the pre-HMR
+// module instance, another by anything importing the fresh one. A stale
+// slot's `openDB` call captured whatever `DB_VERSION` was in effect at the
+// moment it first ran, so it can silently keep serving a connection that
+// predates a schema change (missing object stores) for the rest of the
+// session even though the file on disk has since moved on.
+const DB_PROMISE_KEY = "__codex_idb_db_promise__";
 
 export function getDB() {
+  let dbPromise: Promise<IDBPDatabase<CodexDB>> | undefined = (
+    globalThis as any
+  )[DB_PROMISE_KEY];
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion, _newVersion, transaction) {
@@ -221,22 +274,54 @@ export function getDB() {
             keyPath: "vaultId",
           });
         }
+
+        if (!db.objectStoreNames.contains("stat_sheet_templates")) {
+          const store = db.createObjectStore("stat_sheet_templates", {
+            keyPath: "id",
+          });
+          store.createIndex("by-vault", "vaultId");
+        }
+
+        if (
+          !db.objectStoreNames.contains("stat_sheet_presentation_templates")
+        ) {
+          const store = db.createObjectStore(
+            "stat_sheet_presentation_templates",
+            { keyPath: "id" },
+          );
+          store.createIndex("by-vault", "vaultId");
+          store.createIndex("by-schema-template-id", "schemaTemplateId");
+        }
+
+        if (!db.objectStoreNames.contains("shelf_entries")) {
+          const store = db.createObjectStore("shelf_entries", {
+            keyPath: "id",
+          });
+          store.createIndex("by-group", "groupId");
+        }
+
+        if (!db.objectStoreNames.contains("shelf_journal")) {
+          db.createObjectStore("shelf_journal", { keyPath: "importId" });
+        }
       },
       blocked() {
         console.warn("[IDB] Database Open Blocked");
       },
       blocking() {
         console.warn("[IDB] Database Open Blocking - closing older connection");
-        if (dbPromise) {
-          const promiseToClose = dbPromise;
-          dbPromise = null;
-          promiseToClose.then((db) => db.close()).catch(() => {});
+        const promiseToClose = (globalThis as any)[DB_PROMISE_KEY];
+        if (promiseToClose) {
+          (globalThis as any)[DB_PROMISE_KEY] = undefined;
+          promiseToClose
+            .then((db: IDBPDatabase<CodexDB>) => db.close())
+            .catch(() => {});
         }
       },
       terminated() {
         console.error("[IDB] Database Connection Terminated");
       },
     });
+    (globalThis as any)[DB_PROMISE_KEY] = dbPromise;
   }
   return dbPromise;
 }

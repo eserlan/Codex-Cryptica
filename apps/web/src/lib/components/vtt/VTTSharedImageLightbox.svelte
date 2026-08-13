@@ -13,9 +13,11 @@
 
   $effect(() => {
     if (!imageState) {
+      if (resolvedImageUrl) {
+        modalUIStore.closeLightbox();
+      }
       resolvedImageUrl = "";
       lastResolvedPath = null;
-      modalUIStore.closeLightbox();
       return;
     }
 

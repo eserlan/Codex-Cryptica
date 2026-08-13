@@ -10,44 +10,43 @@
   import { SCHEMA_ORG } from "$lib/config";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { DEFAULT_CATEGORIES } from "schema";
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { seoImportService } from "$lib/services/seo/import-handler";
+  import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
+  import {
+    trackWelcomeFirstClick,
+    type WelcomeAction,
+  } from "$lib/services/analytics/welcome-first-click";
 
-  // Entity-type colors for the welcome graph preview, sourced from the same
-  // canonical palette the real graph uses so the teaser matches the product.
-  const typeColor = (id: string) =>
-    DEFAULT_CATEGORIES.find((c) => c.id === id)?.color ?? "#94a3b8";
-  const PREVIEW_COLORS = {
-    character: typeColor("character"),
-    faction: typeColor("faction"),
-    location: typeColor("location"),
-    event: typeColor("event"),
-  };
-  // Brand accent used purely to denote the *selected* node (matches the CTA),
-  // not an entity type.
-  const SELECT_ACCENT = "#e6b450";
-
-  // Secondary welcome actions (create / open) — both dismiss the landing page
-  // and open the vault switcher with the matching intent.
-  const openVaultFromWelcome = (intent: "create" | "open") => {
+  // "Open Existing Vault" dismisses the landing page and opens the vault
+  // switcher with the matching intent.
+  const openVaultFromWelcome = (intent: "open") => {
+    trackWelcomeFirstClick("open_vault");
     onboardingStore.dismissLandingPage();
     modalUIStore.openVaultSwitcher(intent);
   };
-  const secondaryActions = [
-    {
-      intent: "create" as const,
-      label: "Create New Vault",
-      testid: "welcome-create-button",
-    },
-    {
-      intent: "open" as const,
-      label: "Open Existing Vault",
-      testid: "welcome-open-button",
-    },
-  ];
+
+  // Which of the five things on this screen a visitor picks first, once per
+  // visitor, and nothing after it. See welcome-first-click.ts for why this one
+  // surface is instrumented when the rest of the app is not.
+  const startDemoFromWelcome = (theme: string, action: WelcomeAction) => {
+    trackWelcomeFirstClick(action);
+    demoService.startDemo(theme);
+  };
+
+  // Guided Mode (#1909): the primary "create" path leans into Quick Start
+  // rather than jumping straight to the vault switcher's blank-vault form. A
+  // fully empty vault is still reachable via "Open Existing Vault" → NEW VAULT.
+  // Tracked on modalUIStore (not local state) so the first-run orchestrator
+  // sees it and doesn't stack the onboarding tour on top of Quick Start.
+  const openQuickStartFromWelcome = (action: WelcomeAction = "quick_start") => {
+    trackWelcomeFirstClick(action);
+    onboardingStore.dismissLandingPage();
+    modalUIStore.openQuickStartModal();
+  };
 
   const isSpecialEnv =
     import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
@@ -181,6 +180,11 @@
   const isGuestMode = $derived(!!shareId);
 
   onMount(() => {
+    // Funnel: the welcome/marketing layer is the top of the onboarding funnel.
+    if (!isGuestMode && onboardingStore.isLandingPageVisible) {
+      onboardingFunnel.track("welcome_shown");
+    }
+
     // Suppress guide immediately if arriving from the importer — before the
     // async import completes, so the guide never flashes over the vault.
     if (
@@ -357,27 +361,16 @@
               ></span>
               Local-first RPG campaign manager • Private by default
             </div>
-            <p
-              class="mb-2 text-sm md:text-base font-mono font-semibold uppercase tracking-[0.2em] text-theme-primary/90"
-            >
-              Welcome to Codex Cryptica
-            </p>
             <h1
               class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
             >
               Private RPG Lore Vault
             </h1>
-            <h2
-              class="text-xs sm:text-sm font-mono uppercase tracking-widest text-theme-primary/60 mb-3"
-            >
-              RPG Campaign Manager &amp; Worldbuilding Tool
-            </h2>
             <p
               class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
-              A free, local-first campaign manager for GMs: private Markdown
-              notes, visual lore graphs, timelines, offline prep, and optional
-              AI in one browser workspace.
+              Private Markdown notes, visual lore graphs, and timelines for GMs.
+              Free, offline-capable, no account.
             </p>
           </div>
 
@@ -387,8 +380,8 @@
           >
             <button
               type="button"
-              onclick={() => demoService.startDemo("fantasy")}
-              class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary/70 hover:shadow-theme-primary/20 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
+              onclick={() => openQuickStartFromWelcome("graph_preview")}
+              class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-primary/50 bg-theme-surface/60 shadow-2xl shadow-theme-primary/10 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary hover:shadow-theme-primary/30 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
               aria-labelledby="living-lore-graph"
               aria-describedby="living-lore-graph-copy living-lore-graph-preview"
               data-testid="welcome-preview-button"
@@ -408,265 +401,45 @@
                     class="mt-1 text-[11px] text-theme-muted"
                   >
                     See how characters, factions, secrets, and places connect.
+                    Click the graph and Quick Start builds one like this for you
+                    in seconds.
                   </p>
                 </div>
                 <span
-                  class="ml-auto flex shrink-0 items-center gap-1 text-[10px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
+                  class="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg border border-theme-primary/60 bg-theme-primary/10 px-3 py-2 text-xs font-bold font-header text-theme-primary transition-colors group-hover:bg-theme-primary group-hover:text-theme-bg"
+                  data-testid="welcome-preview-cue"
                 >
-                  Explore
+                  <span
+                    class="icon-[lucide--sparkles] h-3.5 w-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Build one like this
                   <span
                     class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
                   ></span>
                 </span>
               </div>
               <div id="living-lore-graph-preview" class="sr-only">
-                Interactive lore graph preview showing Captain Veyra connected
-                to factions, secrets, places, and unresolved plot threads.
+                Interactive lore graph preview showing Eldrin the Wise connected
+                to the Gilded Hand, the Black Iron Tavern, an ancient forest
+                dragon, and a prophecy he is studying. Activates Quick Start,
+                which builds a world like this one.
               </div>
-              <div
-                class="flex h-[16.5rem] sm:h-[19rem] md:h-[22rem] lg:h-[26rem] xl:h-[28rem]"
-              >
-                <!-- Graph canvas -->
-                <div class="relative flex-1">
-                  <svg
-                    viewBox="0 0 480 260"
-                    class="absolute inset-0 w-full h-full"
-                    preserveAspectRatio="xMidYMid meet"
-                    aria-hidden="true"
-                  >
-                    <!-- peripheral edges (dim) -->
-                    <g
-                      stroke="#8a8175"
-                      stroke-opacity="0.25"
-                      stroke-width="1.2"
-                    >
-                      <line x1="130" y1="66" x2="358" y2="74" />
-                      <line x1="138" y1="196" x2="350" y2="198" />
-                      <line x1="52" y1="134" x2="130" y2="66" />
-                      <line x1="52" y1="134" x2="138" y2="196" />
-                      <line x1="430" y1="140" x2="358" y2="74" />
-                      <line x1="430" y1="140" x2="350" y2="198" />
-                    </g>
-                    <!-- edges from the selected node (selection accent) -->
-                    <g
-                      stroke={SELECT_ACCENT}
-                      stroke-opacity="0.5"
-                      stroke-width="2"
-                    >
-                      <line x1="240" y1="130" x2="130" y2="66" />
-                      <line x1="240" y1="130" x2="358" y2="74" />
-                      <line x1="240" y1="130" x2="138" y2="196" />
-                      <line x1="240" y1="130" x2="350" y2="198" />
-                    </g>
-
-                    <!-- hover-only glow boost on the selected node -->
-                    <circle
-                      cx="240"
-                      cy="130"
-                      r="32"
-                      fill={SELECT_ACCENT}
-                      fill-opacity="0.18"
-                      class="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    ></circle>
-                    <!-- selected-node glow halo -->
-                    <circle
-                      cx="240"
-                      cy="130"
-                      r="24"
-                      fill={SELECT_ACCENT}
-                      opacity="0.14"
-                    >
-                      <animate
-                        attributeName="opacity"
-                        values="0.1;0.22;0.1"
-                        dur="3.2s"
-                        repeatCount="indefinite"
-                      />
-                      <animate
-                        attributeName="r"
-                        values="22;27;22"
-                        dur="3.2s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-
-                    <!-- peripheral nodes, colored by entity type (canonical palette) -->
-                    <circle
-                      cx="52"
-                      cy="134"
-                      r="8"
-                      fill={PREVIEW_COLORS.location}
-                      fill-opacity="0.85"
-                    ></circle>
-                    <circle
-                      cx="430"
-                      cy="140"
-                      r="8"
-                      fill={PREVIEW_COLORS.event}
-                      fill-opacity="0.85"
-                    ></circle>
-                    <circle
-                      cx="130"
-                      cy="66"
-                      r="9"
-                      fill={PREVIEW_COLORS.faction}
-                      fill-opacity="0.85"
-                    ></circle>
-                    <circle
-                      cx="358"
-                      cy="74"
-                      r="9"
-                      fill={PREVIEW_COLORS.location}
-                      fill-opacity="0.85"
-                    ></circle>
-                    <circle
-                      cx="138"
-                      cy="196"
-                      r="9"
-                      fill={PREVIEW_COLORS.event}
-                      fill-opacity="0.85"
-                    ></circle>
-                    <circle
-                      cx="350"
-                      cy="198"
-                      r="9"
-                      fill={PREVIEW_COLORS.faction}
-                      fill-opacity="0.85"
-                    ></circle>
-
-                    <!-- selection bounding box -->
-                    <rect
-                      x="220"
-                      y="110"
-                      width="40"
-                      height="40"
-                      rx="9"
-                      fill="none"
-                      stroke={SELECT_ACCENT}
-                      stroke-opacity="0.55"
-                      stroke-width="1.2"
-                      stroke-dasharray="4 3"
-                    ></rect>
-                    <!-- selected node (character) with brand-accent selection ring -->
-                    <circle
-                      cx="240"
-                      cy="130"
-                      r="13"
-                      fill={PREVIEW_COLORS.character}
-                    ></circle>
-                    <circle
-                      cx="240"
-                      cy="130"
-                      r="13"
-                      fill="none"
-                      stroke={SELECT_ACCENT}
-                      stroke-opacity="0.9"
-                      stroke-width="2"
-                    ></circle>
-
-                    <!-- node labels (color-keyed to type) -->
-                    <g
-                      font-family="var(--font-body, sans-serif)"
-                      text-anchor="middle"
-                    >
-                      <text
-                        x="240"
-                        y="160"
-                        font-size="11"
-                        font-weight="700"
-                        fill="#f6dca0">Captain Veyra</text
-                      >
-                      <text
-                        x="130"
-                        y="51"
-                        font-size="9.5"
-                        font-weight="600"
-                        fill="#d7d2c8"
-                        fill-opacity="0.92">Glass Rebellion</text
-                      >
-                      <text
-                        x="358"
-                        y="59"
-                        font-size="9.5"
-                        font-weight="600"
-                        fill="#d7d2c8"
-                        fill-opacity="0.92">Sunken Archive</text
-                      >
-                      <text
-                        x="138"
-                        y="216"
-                        font-size="9.5"
-                        font-weight="600"
-                        fill="#d7d2c8"
-                        fill-opacity="0.92">Crown Secret</text
-                      >
-                      <text
-                        x="350"
-                        y="218"
-                        font-size="9.5"
-                        font-weight="600"
-                        fill="#d7d2c8"
-                        fill-opacity="0.92">Blackspire Compact</text
-                      >
-                      <text
-                        x="52"
-                        y="155"
-                        font-size="9"
-                        font-weight="600"
-                        fill="#d7d2c8"
-                        fill-opacity="0.85">Ironhold</text
-                      >
-                      <text
-                        x="430"
-                        y="161"
-                        font-size="9"
-                        font-weight="600"
-                        fill="#d7d2c8"
-                        fill-opacity="0.85">The Vow</text
-                      >
-                    </g>
-                  </svg>
-                </div>
-                <!-- Entity panel -->
+              <div class="relative">
+                <WelcomeGraphPreview />
+                <!-- The whole card has always been clickable and nothing said
+                     so. Decorative: the button's own accessible name and
+                     description already carry this for screen readers. -->
                 <div
-                  class="w-32 sm:w-40 md:w-48 shrink-0 border-l border-theme-border bg-theme-bg/50 p-3 text-left"
+                  aria-hidden="true"
+                  class="pointer-events-none absolute inset-0 flex items-center justify-center bg-theme-bg/50 opacity-0 backdrop-blur-[1px] transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
                 >
-                  <div
-                    class="w-10 h-10 rounded-lg mb-2 flex items-center justify-center"
-                    style="background-color: {PREVIEW_COLORS.character}2e"
+                  <span
+                    class="rounded-lg bg-theme-primary px-5 py-3 text-sm font-bold font-header text-theme-bg shadow-lg"
                   >
-                    <span
-                      class="icon-[lucide--user-round] w-5 h-5"
-                      style="color: {PREVIEW_COLORS.character}"
-                    ></span>
-                  </div>
-                  <div class="text-xs font-bold text-theme-text leading-tight">
-                    Captain Veyra
-                  </div>
-                  <div
-                    class="text-[9px] font-mono uppercase tracking-[0.15em] mb-3"
-                    style="color: {PREVIEW_COLORS.character}"
-                  >
-                    Character
-                  </div>
-                  <div
-                    class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug"
-                  >
-                    <div class="text-theme-muted">
-                      Faction: <span class="text-theme-text">Red Concordat</span
-                      >
-                    </div>
-                    <div class="text-theme-muted">
-                      Status: <span class="text-theme-text">Missing</span>
-                    </div>
-                    <div
-                      class="flex items-center gap-1 text-theme-primary pt-0.5"
-                    >
-                      <span class="icon-[lucide--eye-off] w-3 h-3 shrink-0"
-                      ></span>
-                      2 unresolved secrets
-                    </div>
-                  </div>
+                    Build a world like this
+                  </span>
                 </div>
               </div>
             </button>
@@ -676,29 +449,36 @@
             >
               <button
                 type="button"
-                onclick={() => demoService.startDemo("fantasy")}
-                class="w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
+                onclick={() => openQuickStartFromWelcome("quick_start")}
+                class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
+                data-testid="welcome-quick-start-button"
+              >
+                <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+                Quick Start World
+              </button>
+              <button
+                type="button"
+                onclick={() => startDemoFromWelcome("fantasy", "demo")}
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
                 data-testid="welcome-demo-button"
               >
                 Explore Demo Vault
               </button>
-              {#each secondaryActions as action (action.intent)}
-                <button
-                  type="button"
-                  onclick={() => openVaultFromWelcome(action.intent)}
-                  class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
-                  data-testid={action.testid}
-                >
-                  {action.label}
-                </button>
-              {/each}
+              <button
+                type="button"
+                onclick={() => openVaultFromWelcome("open")}
+                class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                data-testid="welcome-open-button"
+              >
+                Open Existing Vault
+              </button>
             </div>
             <p
               class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center"
             >
-              Opens a prebuilt sample world instantly. No setup required.
-              Optional AI is available when you want it; your vault works fully
-              without it.
+              Quick Start generates a ready-to-explore world in seconds — pick a
+              theme, add an optional premise, done. Optional AI is available
+              when you want it; your vault works fully without it.
             </p>
           </section>
         </section>
@@ -736,7 +516,7 @@
           <div class="flex flex-wrap justify-center gap-4">
             {#each demoThemes as theme (theme)}
               <button
-                onclick={() => demoService.startDemo(theme)}
+                onclick={() => startDemoFromWelcome(theme, "themed_demo")}
                 class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
               >
                 {theme}
@@ -779,6 +559,22 @@
               <span class="icon-[lucide--history] w-3 h-3" aria-hidden="true"
               ></span>
               Changelog
+            </a>
+            <a
+              href="https://groupfinder.gg/library/codex-cryptica"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center opacity-70 hover:opacity-100 transition-opacity"
+              aria-label="Codex Cryptica on Groupfinder"
+            >
+              <img
+                src="https://groupfinder.gg/images/badges/gf-badge-light.svg"
+                alt="Codex Cryptica on Groupfinder"
+                width="164"
+                height="45"
+                loading="lazy"
+                class="h-5 w-auto"
+              />
             </a>
           </div>
 

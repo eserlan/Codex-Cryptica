@@ -62,3 +62,8 @@ If you are unsure how two entities should be related or how they should be combi
 ## Art Direction
 
 Image generation uses Art Direction from your world before falling back to shipped Category Defaults, Default Art Style from the active theme, and the global Codex Cryptica default. To customize it, add normal notes or entity sections titled `Art Direction`, `Default Art Style`, or `Visual Direction`; no separate settings form is required.
+
+## Related Blog Posts
+
+- [Lore Oracle Capabilities & Commands](/blog/oracle-capabilities) — In-depth guide to slash commands, image generation, and deterministic controls.
+- [Drafts Are Not Canon](/blog/drafts-are-not-canon) — Why generated suggestions remain transient until explicit GM approval.

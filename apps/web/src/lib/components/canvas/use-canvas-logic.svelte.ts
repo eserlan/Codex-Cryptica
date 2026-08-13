@@ -6,7 +6,11 @@ import {
   type Edge,
   type Connection,
 } from "@xyflow/svelte";
-import { CanvasStore } from "@codex/canvas-engine";
+import {
+  CanvasStore,
+  type Canvas,
+  type CanvasDrawing,
+} from "@codex/canvas-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
@@ -14,17 +18,29 @@ import {
   buildCanvasSavePayload,
   createFlowEdgeFromConnection,
   createFlowEntityNode,
+  flowEdgeToCanvasEdge,
+  flowNodesToCanvasNodes,
   hydrateCanvasGraph,
   pruneCanvasGraph,
+  reconnectFlowEdge,
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
+import {
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
-export function createCanvasLogic(getEngine: () => CanvasStore) {
+export function createCanvasLogic(
+  getEngine: () => CanvasStore,
+  idGenerator: IdGenerator = systemIdGenerator,
+) {
   const svelteFlow = useSvelteFlow();
   const screenToFlowPosition = $derived(svelteFlow?.screenToFlowPosition);
 
   let nodes = $state<Node[]>([]);
   let edges = $state<Edge[]>([]);
+  let drawings = $state<CanvasDrawing[]>([]);
   let activeCategories = $state(new Set<string>());
   let isConnecting = $state(false);
   let hasInitialized = $state(false);
@@ -64,6 +80,14 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     }
   }
 
+  function saveNow() {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    untrack(() => saveCanvas());
+  }
+
   function debouncedSave() {
     if (skipLoadingSaves > 0) {
       skipLoadingSaves--;
@@ -81,30 +105,57 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     explicitVaultId?: string,
     explicitCanvasId?: string,
   ) {
-    await tick();
     const currentVaultId =
       explicitVaultId || targetVaultId || vault.activeVaultId;
     const currentCanvasId = explicitCanvasId || targetCanvasId;
+    const currentNodes = untrack(() => nodes);
+    const currentEdges = untrack(() => edges);
+    const currentDrawings = untrack(() => drawings);
 
-    if (!currentVaultId || !currentCanvasId) {
+    await tick();
+
+    if (
+      !currentVaultId ||
+      !currentCanvasId ||
+      (!canvasRegistry.canvases[currentCanvasId] &&
+        !vault.canvases[currentCanvasId] &&
+        !canvasRegistry.allCanvases.some(
+          (c) => c.id === currentCanvasId || c.slug === currentCanvasId,
+        ))
+    ) {
       debugStore.warn(
-        "[CanvasLogic] saveCanvas called before canvas initialization; skipping.",
+        "[CanvasLogic] saveCanvas called for deleted or uninitialized canvas; skipping.",
       );
       return;
     }
 
-    const exportData = getEngine().export();
-    const existing = untrack(() => vault.canvases[currentCanvasId] || {});
-    const canvas = canvasRegistry.allCanvases.find(
-      (c) => c.id === currentCanvasId,
+    const canvasNodes = flowNodesToCanvasNodes(currentNodes);
+    const canvasEdges = currentEdges.map((e) =>
+      flowEdgeToCanvasEdge(e, () => `edge-${idGenerator.uuid()}`),
     );
+
+    const existing = untrack(() => vault.canvases[currentCanvasId] || {});
+    const canvasRegistryMeta = canvasRegistry.allCanvases.find(
+      (c) => c.id === currentCanvasId || c.slug === currentCanvasId,
+    );
+
+    const exportData: Canvas = {
+      ...existing,
+      id: currentCanvasId,
+      nodes: canvasNodes,
+      edges: canvasEdges,
+      drawings: currentDrawings,
+      metadata: {
+        ...(existing.metadata || {}),
+      },
+    };
 
     vault.canvases[currentCanvasId] = buildCanvasSavePayload({
       existing,
-      currentCanvas: canvas,
+      currentCanvas: canvasRegistryMeta,
       exported: exportData,
       canvasId: currentCanvasId,
-      lastModified: Date.now(),
+      lastModified: systemClock.now(),
     });
 
     await vault.saveCanvas(currentCanvasId, {
@@ -129,9 +180,69 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
 
   // Mutations
   function onConnect(connection: Connection) {
-    const edgeId = `edge-${crypto.randomUUID()}`;
-    edges = addXyEdge(createFlowEdgeFromConnection(connection, edgeId), edges);
+    const edgeId = `edge-${idGenerator.uuid()}`;
+    const sourceNode = nodes.find((n) => n.id === connection.source);
+    const targetNode = nodes.find((n) => n.id === connection.target);
+    const flowEdge = createFlowEdgeFromConnection(
+      connection,
+      edgeId,
+      sourceNode,
+      targetNode,
+    );
+
+    edges = addXyEdge(flowEdge, edges);
     untrack(() => saveCanvas());
+  }
+
+  function onReconnect(oldEdge: Edge, newConnection: Connection) {
+    edges = edges.map((edge) =>
+      edge.id === oldEdge.id ? reconnectFlowEdge(edge, newConnection) : edge,
+    );
+    untrack(() => saveCanvas());
+  }
+
+  let draftAdventureNode = $state<Node | null>(null);
+
+  function handleAddAdventureNode(
+    type: "location" | "npc" | "clue" | "threat" | "outcome" | "situation",
+    screenPos?: { x: number; y: number },
+  ) {
+    const position =
+      (screenPos && screenToFlowPosition(screenPos)) ||
+      resolveSpawnPosition({
+        screenToFlowPosition,
+        windowSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+      });
+
+    const nodeId = `node-${type}-${idGenerator.uuid()}`;
+    draftAdventureNode = {
+      id: nodeId,
+      type: "adventureNode",
+      position,
+      data: {
+        title: "",
+        type,
+        description: "",
+      },
+    };
+  }
+
+  function handleSaveAdventureNode(node: Node) {
+    const existingIndex = nodes.findIndex((n) => n.id === node.id);
+    if (existingIndex >= 0) {
+      nodes = nodes.map((n) => (n.id === node.id ? node : n));
+    } else {
+      nodes = [...nodes, node];
+    }
+    draftAdventureNode = null;
+    untrack(() => saveCanvas());
+  }
+
+  function handleCancelDraftAdventureNode() {
+    draftAdventureNode = null;
   }
 
   async function handleCreateEntity(type: string) {
@@ -174,6 +285,32 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     const { edgeId } = labelModal;
     edges = edges.map((e) => (e.id === edgeId ? { ...e, label: newLabel } : e));
     saveCanvas();
+  }
+
+  function addDrawing(drawing: CanvasDrawing) {
+    drawings = [...drawings, drawing];
+    getEngine().drawings = drawings;
+    untrack(() => saveCanvas());
+  }
+
+  function removeDrawing(drawingId: string) {
+    if (!drawings.some((drawing) => drawing.id === drawingId)) return false;
+    drawings = drawings.filter((drawing) => drawing.id !== drawingId);
+    getEngine().drawings = drawings;
+    untrack(() => saveCanvas());
+    return true;
+  }
+
+  function updateNodeRotation(nodeId: string, rotation: number) {
+    if (!Number.isFinite(rotation)) return false;
+    const node = nodes.find((candidate) => candidate.id === nodeId);
+    if (!node) return false;
+    nodes = nodes.map((candidate) =>
+      candidate.id === nodeId
+        ? { ...candidate, data: { ...candidate.data, rotation } }
+        : candidate,
+    );
+    return true;
   }
 
   function handleQuickSpawn(
@@ -245,22 +382,49 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
         }
 
         targetVaultId = vault.activeVaultId;
-        targetCanvasId = canvasId;
-
-        const data = vault.canvases[canvasId];
+        const matchedCanvas =
+          vault.canvases[canvasId] ||
+          canvasRegistry.allCanvases.find(
+            (c) => c.slug === canvasId || c.id === canvasId,
+          );
+        const realCanvasId = matchedCanvas ? matchedCanvas.id : canvasId;
+        const data = vault.canvases[realCanvasId] || matchedCanvas;
+        targetCanvasId = realCanvasId;
 
         if (data) {
           for (const node of data.nodes || []) {
-            vault.loadEntityContent(node.entityId);
+            if (node.entityId) {
+              vault.loadEntityContent(node.entityId);
+            }
           }
 
           skipLoadingSaves = 2;
           const graph = hydrateCanvasGraph(data);
+
           nodes = graph.nodes;
           edges = graph.edges;
+          drawings = data.drawings ?? [];
+
+          try {
+            getEngine().nodes = flowNodesToCanvasNodes(graph.nodes);
+            getEngine().edges = graph.edges.map((e) =>
+              flowEdgeToCanvasEdge(e, () => `edge-${idGenerator.uuid()}`),
+            );
+            getEngine().drawings = drawings;
+          } catch {
+            // Ignore engine sync errors if facade not loaded
+          }
         } else {
           nodes = [];
           edges = [];
+          drawings = [];
+          try {
+            getEngine().nodes = [];
+            getEngine().edges = [];
+            getEngine().drawings = [];
+          } catch {
+            // Ignore engine sync errors if facade not loaded
+          }
         }
         hasInitialized = true;
       });
@@ -284,29 +448,32 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
 
     // Sync edges
     const currentEdges = edges;
-    getEngine().edges = currentEdges.map((e: Edge) => ({
-      id: e.id || `edge-${crypto.randomUUID()}`,
-      source: e.source,
-      target: e.target,
-      sourceHandle: undefined,
-      targetHandle: undefined,
-      label: (e.label as string) || "",
-      type: "straight",
-      style: (e.style as string) || "",
-    }));
+    getEngine().edges = currentEdges.map((edge) =>
+      flowEdgeToCanvasEdge(edge, () => `edge-${idGenerator.uuid()}`),
+    );
 
     // Sync nodes
     const currentNodes = nodes;
-    getEngine().nodes = currentNodes.map((n: Node) => ({
-      id: n.id,
-      type: n.type as "entity",
-      position: n.position,
-      entityId: (n.data?.entityId as string) || "",
-      width: n.data?.width as number,
-      height: n.data?.height as number,
-    }));
+    getEngine().nodes = flowNodesToCanvasNodes(currentNodes);
+
+    getEngine().drawings = drawings;
 
     debouncedSave();
+  }
+
+  async function fitGraphForExport() {
+    const viewport = svelteFlow.getViewport();
+    await svelteFlow.fitView({
+      nodes,
+      padding: 0.08,
+      duration: 0,
+      includeHiddenNodes: true,
+    });
+    await tick();
+    return async () => {
+      await svelteFlow.setViewport(viewport, { duration: 0 });
+      await tick();
+    };
   }
 
   return {
@@ -321,6 +488,12 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     },
     set edges(val) {
       edges = val;
+    },
+    get drawings() {
+      return drawings;
+    },
+    set drawings(val) {
+      drawings = val;
     },
     get activeCategories() {
       return activeCategories;
@@ -343,6 +516,12 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     set labelModal(val) {
       labelModal = val;
     },
+    get draftAdventureNode() {
+      return draftAdventureNode;
+    },
+    set draftAdventureNode(val) {
+      draftAdventureNode = val;
+    },
     get hasInitialized() {
       return hasInitialized;
     },
@@ -353,14 +532,23 @@ export function createCanvasLogic(getEngine: () => CanvasStore) {
     toggleCategoryFilter,
     clearCategoryFilters,
     onConnect,
+    onReconnect,
+    handleAddAdventureNode,
+    handleSaveAdventureNode,
+    handleCancelDraftAdventureNode,
     handleCreateEntity,
     handleDelete,
     saveLabelModal,
+    addDrawing,
+    removeDrawing,
+    updateNodeRotation,
     handleQuickSpawn,
     handleBatchSpawn,
     initializeCanvas,
     pruneNodes,
     syncEngine,
+    fitGraphForExport,
     flushSave,
+    saveNow,
   };
 }

@@ -24,6 +24,7 @@ import type {
 import { LocalSyncService, SyncRegistry } from "@codex/sync-engine";
 import { getDB } from "../../utils/idb";
 import { readOpfsBlob, getDirHandle } from "../../utils/opfs";
+import { pickDirectory } from "../../utils/fs";
 import { convertToWebP, generateThumbnail } from "../../utils/image-processing";
 import { DEFAULT_ENTITY_TYPE } from "schema";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -144,8 +145,7 @@ export const syncIOAdapter: ISyncIOAdapter = {
     await db.delete("settings", `syncHandle_${vaultId}`);
   },
   parseMarkdown: (text) => parseMarkdown(text) as any,
-  showDirectoryPicker: async () =>
-    await window.showDirectoryPicker({ mode: "readwrite" }),
+  showDirectoryPicker: async () => await pickDirectory({ mode: "readwrite" }),
   readOpfsBlob: readOpfsBlob as any,
   getDirectoryHandle: getDirHandle as any,
   isNotFoundError: (err) => isNotFoundError(err),

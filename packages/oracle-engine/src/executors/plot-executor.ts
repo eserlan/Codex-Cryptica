@@ -6,13 +6,18 @@ import type {
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type { OracleGenerator } from "../oracle-generator";
+import type { Clock, IdGenerator } from "../runtime";
 
 export class PlotExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
-  constructor(private generator?: OracleGenerator) {
-    super();
+  constructor(
+    private generator?: OracleGenerator,
+    clock?: Clock,
+    idGenerator?: IdGenerator,
+  ) {
+    super(clock, idGenerator);
   }
 
   async execute(
@@ -94,7 +99,7 @@ export class PlotExecutor
         );
 
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "assistant",
           content: analysis,
           entityId,
@@ -108,7 +113,7 @@ export class PlotExecutor
       } catch (err: any) {
         const error = err.message || "Plot analysis failed";
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: `❌ ${error}`,
         });

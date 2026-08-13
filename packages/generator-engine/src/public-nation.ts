@@ -10,89 +10,15 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import { NAME_BAN_PROMPT } from "./public-npc";
-
-export type Rng = () => number;
-const defaultRng: Rng = () => Math.random();
-
-function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
-  return arr[Math.floor(rng() * arr.length)];
-}
-
-function generateName(rng: Rng = defaultRng): string {
-  const prefixes = [
-    "Ael",
-    "Bran",
-    "Cael",
-    "Dax",
-    "Kael",
-    "Morg",
-    "Thor",
-    "Vael",
-  ];
-  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
-  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
-}
-
-const REALM_ROOTS = [
-  "Ashenveil",
-  "Stonemark",
-  "Duskwall",
-  "Irongate",
-  "Coldmere",
-  "Blackthorn",
-  "Salthaven",
-  "Greymarch",
-  "Embervale",
-  "Cinderfall",
-  "Hollowreach",
-  "Dunmere",
-  "Thornwall",
-  "Wraithfen",
-  "Brokenridge",
-  "Dawnspire",
-  "Moorholt",
-  "Saltfang",
-  "Stormbreak",
-  "Halveth",
-  "Vorreth",
-  "Kaelthas",
-  "Myreth",
-  "Vorath",
-  "Dunrath",
-  "Solvane",
-  "Krethis",
-  "Aelvorn",
-  "Norrith",
-  "Caldreth",
-];
-
-const CAPITAL_WORDS = [
-  "Veth",
-  "Dorn",
-  "Rath",
-  "Moor",
-  "Holt",
-  "Fen",
-  "Wick",
-  "Crest",
-  "Gate",
-  "Hold",
-  "Keep",
-  "Reach",
-  "Wall",
-  "Ford",
-  "Vale",
-];
-
-function buildRealmName(polityType: string, rng: Rng): string {
-  return `The ${pickFrom(REALM_ROOTS, rng)} ${polityType}`;
-}
-
-function buildCapitalName(rng: Rng): string {
-  const a = pickFrom(REALM_ROOTS, rng).replace(/\s.*/, "").slice(0, 5);
-  const b = pickFrom(CAPITAL_WORDS, rng);
-  return `${a}${b.toLowerCase()}`;
-}
+import {
+  type Rng,
+  defaultRng,
+  pickFrom,
+  generatePlaceholderName as generateName,
+} from "./random-utils";
+import { parseFencedJson } from "./llm-response-utils";
+import { buildRealmName, buildCapitalName } from "./realm-names";
+import { formatCampaignContextBlock } from "./campaign-context";
 
 export const nationConfig = {
   genres: [
@@ -103,6 +29,7 @@ export const nationConfig = {
     "Sci-Fi",
     "Modern",
     "Horror",
+    "Cosmic Horror",
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
@@ -162,6 +89,13 @@ export const nationConfig = {
       "Isolated Community",
       "Shadow Government",
       "Quarantine Zone",
+    ],
+    "Cosmic Horror": [
+      "Restricted Research Territory",
+      "Quarantined Expedition Zone",
+      "Remote Survey Protectorate",
+      "Submerged Archive District",
+      "Astronomical Observation Enclave",
     ],
     "Post-Apocalyptic": [
       "Warlord Territory",
@@ -319,17 +253,13 @@ ${sessionContext}`;
 - Polity Type: ${resolved.polityType}
 - Government Style: ${resolved.governmentStyle}
 - Scale: ${resolved.scale}
-- Conflict Level: ${resolved.conflictLevel}${resolved.campaignContext ? `\n- Campaign Context: ${resolved.campaignContext}` : ""}`;
+- Conflict Level: ${resolved.conflictLevel}${formatCampaignContextBlock(resolved.campaignContext)}`;
 
   return { systemInstruction, userMessage, resolved };
 }
 
 export function parseNationResponse(text: string): PublicGeneratorOutput {
-  const cleanText = text
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const data = JSON.parse(cleanText);
+  const data = parseFencedJson(text);
 
   return {
     type: "faction",
@@ -416,6 +346,7 @@ ${pickFrom(societyDescriptions, rng)}
 ${pickFrom(nationHowToUse, rng)(stateName)}`;
 
   const lore = `### At a Glance
+- **Theme / Genre**: ${resolved.genre}
 - **Type**: ${resolved.polityType}
 - **Leader / Authority**: ${leaderName} — in control, for now
 - **Centre of Power**: ${capitalName}

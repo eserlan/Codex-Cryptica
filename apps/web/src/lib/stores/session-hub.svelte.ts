@@ -1,4 +1,10 @@
 import { type SessionEntity, type ProvenanceRecord } from "generator-engine";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+  browserSessionStorage,
+  type StorageLike,
+} from "$lib/utils/runtime-deps";
 
 export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
 
@@ -9,29 +15,30 @@ export interface SessionHubState {
   nextOrder: number;
 }
 
-// Ensure unique IDs
-function generateId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).substring(2, 15);
-}
-
 export class SessionHubStore {
   entities = $state<SessionEntity[]>([]);
   provenance = $state<Record<string, ProvenanceRecord>>({});
   nextOrder = $state(1);
 
-  constructor() {
-    // Only access sessionStorage in browser environments
-    if (typeof window !== "undefined") {
+  private idGenerator: IdGenerator;
+  private storage: StorageLike;
+
+  constructor(
+    idGenerator: IdGenerator = systemIdGenerator,
+    storage: StorageLike = browserSessionStorage,
+  ) {
+    this.idGenerator = idGenerator;
+    this.storage = storage;
+
+    // Only load if not SSR (or if mock storage is provided)
+    if (typeof window !== "undefined" || storage !== browserSessionStorage) {
       this.load();
     }
   }
 
   load() {
     try {
-      const data = sessionStorage.getItem(SESSION_DRAFTS_KEY);
+      const data = this.storage.getItem(SESSION_DRAFTS_KEY);
       if (!data) return;
 
       const parsed = JSON.parse(data);
@@ -40,7 +47,7 @@ export class SessionHubStore {
         // Migration from version 1 (SessionDraft[])
         let order = 1;
         this.entities = parsed.map((draft: any) => ({
-          id: draft.id || generateId(),
+          id: draft.id || this.idGenerator.uuid(),
           type: draft.type || "note",
           title: draft.title || "Untitled",
           summary: draft.summary,
@@ -50,23 +57,30 @@ export class SessionHubStore {
           status: draft.status || "draft",
           reuseEnabled: true,
           pinned: false,
+          selectedForSave: true,
           createdOrder: order++,
         }));
         this.provenance = {};
         this.nextOrder = order;
         this.save();
       } else if (parsed && parsed.version === 2) {
-        this.entities = parsed.entities || [];
+        this.entities = (parsed.entities || []).map(
+          (entity: SessionEntity) => ({
+            ...entity,
+            selectedForSave: entity.selectedForSave ?? true,
+          }),
+        );
         this.provenance = parsed.provenance || {};
         this.nextOrder = parsed.nextOrder || 1;
       }
     } catch (err) {
-      console.warn("[SessionHubStore] Failed to load from sessionStorage", err);
+      console.warn("[SessionHubStore] Failed to load from storage", err);
     }
   }
 
   save() {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" && this.storage === browserSessionStorage)
+      return;
     try {
       const state: SessionHubState = {
         version: 2,
@@ -74,16 +88,17 @@ export class SessionHubStore {
         provenance: $state.snapshot(this.provenance),
         nextOrder: this.nextOrder,
       };
-      sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(state));
+      this.storage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(state));
     } catch (err) {
-      console.warn("[SessionHubStore] Failed to save to sessionStorage", err);
+      console.warn("[SessionHubStore] Failed to save to storage", err);
     }
   }
 
   addEntity(entityData: Omit<SessionEntity, "id" | "createdOrder">): string {
-    const id = generateId();
+    const id = this.idGenerator.uuid();
     const newEntity: SessionEntity = {
       ...entityData,
+      selectedForSave: entityData.selectedForSave ?? true,
       id,
       createdOrder: this.nextOrder++,
     };

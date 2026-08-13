@@ -147,6 +147,22 @@
       cellTimers.set(key, t);
     }
   }
+
+  // Keyboard equivalent for the click handler above. Doesn't replicate the
+  // mouse-only double-click-to-create debounce — a keyboard Enter/Space is
+  // already an unambiguous single activation, so it creates directly.
+  function handleCellKeydown(
+    e: KeyboardEvent,
+    date: { year: number; month: number; day: number },
+  ) {
+    if (!onCreateAtDate) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const target = e.target instanceof Element ? e.target : null;
+    if (target?.closest("[data-entry]") || target?.closest("[data-overflow]"))
+      return;
+    e.preventDefault();
+    onCreateAtDate(date);
+  }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -169,6 +185,13 @@
       {#each week.days as day (`${day.date.year}-${day.date.month}-${day.date.day}`)}
         {@const key = dayKey(day.date.year, day.date.month, day.date.day ?? 0)}
         {@const isDropTarget = dragOverDay === key && !!onDropEntity}
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -- role/tabindex
+             below are correctly conditional (only set for clickable
+             current-month days with a role="button"); the linter can't
+             statically evaluate that ternary and just sees a bare <section>
+             gaining tabindex. Making them unconditional instead would
+             regress accessibility the other way — announcing empty padding
+             cells as buttons that do nothing. -->
         <section
           class={[
             "relative flex min-h-16 flex-col gap-1 border p-1 align-top rounded-none sm:rounded-2xl sm:min-h-32 sm:gap-2 sm:p-3 transition-all duration-150",
@@ -218,6 +241,16 @@
                   day: day.date.day!,
                 })
             : undefined}
+          onkeydown={day.date.day && day.inCurrentMonth
+            ? (e) =>
+                handleCellKeydown(e, {
+                  year: day.date.year,
+                  month: day.date.month,
+                  day: day.date.day!,
+                })
+            : undefined}
+          role={day.date.day && day.inCurrentMonth ? "button" : undefined}
+          tabindex={day.date.day && day.inCurrentMonth ? 0 : undefined}
         >
           {#if isDropTarget}
             <div

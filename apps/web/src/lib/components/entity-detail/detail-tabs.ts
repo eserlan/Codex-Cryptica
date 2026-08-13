@@ -3,6 +3,8 @@ export const entityDetailTabs = [
   "lore",
   "map",
   "chats",
+  "family",
+  "stats",
   "timeline",
 ] as const;
 
@@ -57,9 +59,15 @@ export function getNextEntityDetailTabInList(
 }
 
 export function getTemporalLabel(
-  type: string,
+  type: string | undefined | null,
   field: "date" | "start" | "end",
 ): string {
+  if (!type) {
+    if (field === "date") return "Occurrence";
+    if (field === "start") return "Started";
+    if (field === "end") return "Ended";
+    return "Date";
+  }
   const t = type.toLowerCase();
   if (field === "date") return "Occurrence";
   if (field === "start") {

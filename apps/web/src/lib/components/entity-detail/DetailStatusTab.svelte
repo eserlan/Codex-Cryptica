@@ -1,13 +1,12 @@
 <script lang="ts">
-  import type { Entity, GuestChatConfig } from "schema";
+  import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
-  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
+  import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -15,101 +14,45 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
-  import { generatePersonality } from "./generate-personality";
-
-  let isGeneratingPersonality = $state(false);
-  let personalityError = $state<string | null>(null);
-
-  const hasPersonalitySection = $derived.by(() => {
-    const lore = isEditing ? editLore || entity.lore || "" : entity.lore || "";
-    return /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore);
-  });
-
-  async function handleGeneratePersonality() {
-    if (isGeneratingPersonality) return false;
-    return generatePersonality({
-      entity,
-      editContent,
-      getEditLore: () => editLore,
-      setEditLore: (lore: string) => {
-        editLore = lore;
-      },
-      setGenerating: (generating: boolean) => {
-        isGeneratingPersonality = generating;
-      },
-      setError: (error: string | null) => {
-        personalityError = error;
-      },
-    });
-  }
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import {
+    dungeonDelveService,
+    isDelveLocationEntity,
+  } from "$lib/services/dungeon-delve-service";
+  import { goto } from "$app/navigation";
+  import { openCanvasFromZen } from "$lib/stores/ui/navigation";
+  import { getDelveCanvasLabel } from "$lib/utils/delve-terminology";
 
   let {
     entity,
     isEditing,
     editType,
     editContent = $bindable(),
-    editLore = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
-    editGuestChatConfig = $bindable(),
   } = $props<{
     entity: Entity;
     isEditing: boolean;
     editType: string;
     editContent: string;
-    editLore?: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
-    editGuestChatConfig?: GuestChatConfig;
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
 
   let isAddingConnection = $state(false);
-  let newConnectionTargetName = $state("");
-  let newConnectionTargetId = $state<string | null>(null);
-  let newConnectionType = $state("related_to");
-  let newConnectionLabel = $state("");
-  let addConnectionError = $state<string | null>(null);
-  let isConnecting = $state(false);
+  let prefillConnectionTargetId = $state<string | null>(null);
+  let prefillConnectionTargetName = $state("");
 
-  async function handleAddConnection() {
-    if (!newConnectionTargetId) {
-      addConnectionError = "Please select a target entity.";
-      return;
-    }
-    if (newConnectionTargetId === entity.id) {
-      addConnectionError = "Cannot connect an entity to itself.";
-      return;
-    }
-    if (isConnecting) return;
-
-    try {
-      isConnecting = true;
-      const success = await vault.addConnection(
-        entity.id,
-        newConnectionTargetId,
-        newConnectionType,
-        newConnectionLabel.trim() || undefined,
-      );
-
-      if (success) {
-        // Reset state
-        isAddingConnection = false;
-        newConnectionTargetName = "";
-        newConnectionTargetId = null;
-        newConnectionType = "related_to";
-        newConnectionLabel = "";
-        addConnectionError = null;
-      } else {
-        addConnectionError = "Failed to add connection.";
-      }
-    } catch (err: any) {
-      addConnectionError = err.message || "Failed to add connection.";
-    } finally {
-      isConnecting = false;
-    }
-  }
+  // The "*" suffix on a name marks a past-labelled entity. It's a purely
+  // visual footnote with no legend anywhere in the app, so the `sr-only`
+  // spans below pair it with text. Other surfaces rendering the same marker
+  // (DetailHeader, NodeReadModal, EntityListItem, MapPinPopover, PinLinker,
+  // TokenAddDialog) do the same.
+  const entityIsPast = $derived(
+    entity?.labels?.some((l: string) => l.toLowerCase() === "past") ?? false,
+  );
 
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
@@ -172,27 +115,27 @@
     }
 
     // Add children if exist
-    const entityId = entity.id;
-    // ⚡ Bolt Optimization: Use vault.allEntities instead of allocating Object.values()
+    const entityId = entity.id.toLowerCase();
+    // ⚡ Bolt Optimization: Use vault.allEntities and an imperative loop instead of allocating Object.values() or .filter() arrays
     const allEntities = vault.allEntities || [];
-    const children = allEntities.filter(
-      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
-    );
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (checkVisibility(child.id)) {
-        const alreadyConnected = result.some((c) => c.targetId === child.id);
-        if (!alreadyConnected) {
-          result.push({
-            targetId: child.id,
-            type: "child",
-            label: "Child",
-            isOutbound: false,
-            isChild: true,
-            displayTitle: child.title,
-            hasPastLabel:
-              child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
-          });
+
+    for (let i = 0; i < allEntities.length; i++) {
+      const child = allEntities[i];
+      if (child.parent && child.parent.toLowerCase() === entityId) {
+        if (checkVisibility(child.id)) {
+          const alreadyConnected = result.some((c) => c.targetId === child.id);
+          if (!alreadyConnected) {
+            result.push({
+              targetId: child.id,
+              type: "child",
+              label: "Child",
+              isOutbound: false,
+              isChild: true,
+              displayTitle: child.title,
+              hasPastLabel:
+                child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
+            });
+          }
         }
       }
     }
@@ -219,6 +162,15 @@
       ? revisionService.pendingDraft
       : null,
   );
+
+  const existingCanvas = $derived.by(() => {
+    if (!entity) return undefined;
+    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
+  });
+
+  const delveCanvasLabel = $derived(
+    getDelveCanvasLabel(themeStore.activeTheme.id),
+  );
 </script>
 
 <div class="space-y-4 md:space-y-6">
@@ -232,18 +184,6 @@
         >
           <span class="icon-[lucide--sparkles] w-4 h-4"></span>
           Generate Related
-        </button>
-      </div>
-    {:else if entity.type === "character" && entity.guestChatConfig?.isEnabled && hasPersonalitySection}
-      <div class="flex justify-end">
-        <button
-          type="button"
-          onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-          data-testid="status-tab-guest-chat-button"
-        >
-          <span class="icon-[lucide--messages-square] w-4 h-4"></span>
-          Chat with {entity.title}
         </button>
       </div>
     {/if}
@@ -265,10 +205,81 @@
       </div>
     </div>
   {/if}
-
   <!-- Chronicle -->
   {#if isEditing || isVisible}
     <div>
+      {#if !isEditing && isDelveLocationEntity(entity)}
+        <div
+          class="mb-4 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
+            ></span>
+            <div>
+              <span
+                class="text-xs font-bold text-theme-primary uppercase font-header tracking-wider block"
+              >
+                Spatial {delveCanvasLabel}
+              </span>
+              <span class="text-[10px] text-theme-muted">
+                {existingCanvas
+                  ? "Interactive room & sector floor plan on Spatial Canvas."
+                  : "Generate an interactive room & sector floor plan on Spatial Canvas."}
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            {#if existingCanvas}
+              <button
+                type="button"
+                onclick={() => {
+                  openCanvasFromZen(existingCanvas, goto);
+                }}
+                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                Open {delveCanvasLabel}
+              </button>
+              <button
+                type="button"
+                title="Rebuild Canvas Map"
+                onclick={async () => {
+                  try {
+                    const canvasDoc =
+                      dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                    const slug = await canvasRegistry.importCanvas(canvasDoc);
+                    openCanvasFromZen({ slug }, goto);
+                  } catch (err) {
+                    console.error("[DelveCanvas] Rebuild failed:", err);
+                  }
+                }}
+                class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
+              >
+                <span class="icon-[lucide--rotate-cw] w-3.5 h-3.5"></span>
+              </button>
+            {:else}
+              <button
+                type="button"
+                onclick={async () => {
+                  try {
+                    const canvasDoc =
+                      dungeonDelveService.buildDelveCanvasFromConcept(entity);
+                    const slug = await canvasRegistry.importCanvas(canvasDoc);
+                    openCanvasFromZen({ slug }, goto);
+                  } catch (err) {
+                    console.error("[DelveCanvas] Build failed:", err);
+                  }
+                }}
+                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                Build {delveCanvasLabel}
+              </button>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       <div
         class="prose-content {draft
           ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
@@ -333,117 +344,29 @@
           class="text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
         >
-          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
+          ></span>
           ADD
         </button>
       {/if}
     </div>
 
     {#if isAddingConnection}
-      <div
-        class="mb-4 p-3 bg-theme-surface border border-theme-primary/30 rounded-md space-y-3 shadow-md"
-      >
-        <div class="flex items-center justify-between">
-          <span
-            class="text-xs font-bold text-theme-secondary uppercase tracking-widest font-header"
-            >New Connection</span
-          >
-          <button
-            type="button"
-            onclick={() => {
-              isAddingConnection = false;
-              newConnectionTargetName = "";
-              newConnectionTargetId = null;
-              newConnectionType = "related_to";
-              newConnectionLabel = "";
-              addConnectionError = null;
-            }}
-            class="text-theme-muted hover:text-theme-text"
-            aria-label="Cancel adding connection"
-          >
-            <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
-          </button>
-        </div>
-
-        <div class="space-y-1">
-          <label
-            for="new-connection-target"
-            class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-            >Target Entity</label
-          >
-          <Autocomplete
-            bind:value={newConnectionTargetName}
-            bind:selectedId={newConnectionTargetId}
-            placeholder="Search entities..."
-            id="new-connection-target"
-            ariaLabel="Search target entity"
-          />
-        </div>
-
-        <div class="space-y-1">
-          <label
-            for="new-connection-type"
-            class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-            >Relationship Type</label
-          >
-          <select
-            id="new-connection-type"
-            bind:value={newConnectionType}
-            class="w-full bg-theme-bg text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
-          >
-            <option value="related_to">Default (Grey)</option>
-            <option value="neutral">Neutral (Amber)</option>
-            <option value="friendly">Friendly (Blue)</option>
-            <option value="enemy">Enemy (Red)</option>
-          </select>
-        </div>
-
-        <div class="space-y-1">
-          <label
-            for="new-connection-label"
-            class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
-            >Custom Label (Optional)</label
-          >
-          <input
-            id="new-connection-label"
-            type="text"
-            bind:value={newConnectionLabel}
-            placeholder="e.g. Ally, Rivalling, Secret"
-            class="w-full bg-theme-bg text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
-          />
-        </div>
-
-        {#if addConnectionError}
-          <p class="text-xs text-theme-danger font-semibold">
-            {addConnectionError}
-          </p>
-        {/if}
-
-        <div class="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onclick={() => {
-              isAddingConnection = false;
-              newConnectionTargetName = "";
-              newConnectionTargetId = null;
-              newConnectionType = "related_to";
-              newConnectionLabel = "";
-              addConnectionError = null;
-            }}
-            class="text-[10px] font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={isConnecting}
-            onclick={handleAddConnection}
-            class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isConnecting ? "Connecting..." : "Connect"}
-          </button>
-        </div>
-      </div>
+      <ConnectionCreator
+        entityId={entity.id}
+        initialTargetId={prefillConnectionTargetId}
+        initialTargetName={prefillConnectionTargetName}
+        onCancel={() => {
+          isAddingConnection = false;
+          prefillConnectionTargetId = null;
+          prefillConnectionTargetName = "";
+        }}
+        onConnectionAdded={() => {
+          isAddingConnection = false;
+          prefillConnectionTargetId = null;
+          prefillConnectionTargetName = "";
+        }}
+      />
     {/if}
 
     <ul class="space-y-3">
@@ -460,6 +383,7 @@
         {:else}
           <li class="flex gap-3 text-sm text-theme-muted items-start group">
             <span
+              aria-hidden="true"
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
                 ? 'icon-[lucide--chevron-down]'
                 : conn.isOutbound
@@ -471,6 +395,13 @@
                   ? "var(--theme-icon-active)"
                   : "var(--theme-icon-default)"}
             ></span>
+            <span class="sr-only"
+              >{conn.isChild
+                ? "Child of this entity:"
+                : conn.isOutbound
+                  ? "Outgoing connection:"
+                  : "Incoming connection:"}</span
+            >
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
                 onclick={(e) => {
@@ -484,51 +415,72 @@
               >
                 {#if conn.isChild}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >Child</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else if conn.isOutbound}
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {:else}
                   <span class="text-theme-text"
-                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
-                      >{/if}</span
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup
+                        aria-hidden="true">*</sup
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
-                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span
+                    aria-hidden="true"
+                    class="relation-arrow icon-[lucide--move-right]"
+                  ></span>
                   <span class="text-theme-secondary"
-                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >{entity.title}{#if entityIsPast}<sup aria-hidden="true"
                         >*</sup
-                      >{/if}</span
+                      ><span class="sr-only"> (past)</span>{/if}</span
                   >
                 {/if}
               </button>
@@ -537,31 +489,38 @@
                 <div class="flex items-center gap-1">
                   {#if conn.isOutbound && !conn.isChild}
                     <button
+                      type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => (editingConnectionTarget = conn.targetId)}
-                      aria-label="Edit connection"
+                      aria-label="Edit connection to {conn.displayTitle}"
                       title="Edit connection"
                     >
-                      <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--pencil] w-3 h-3"
+                      ></span>
                     </button>
                   {/if}
                   {#if conn.isChild}
                     <button
+                      type="button"
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => {
+                        prefillConnectionTargetId = conn.targetId;
+                        prefillConnectionTargetName = conn.displayTitle;
                         isAddingConnection = true;
-                        newConnectionTargetId = conn.targetId;
-                        newConnectionTargetName = conn.displayTitle;
-                        newConnectionType = "related_to";
-                        newConnectionLabel = "";
                       }}
-                      aria-label="Establish custom connection"
+                      aria-label="Establish custom connection to {conn.displayTitle}"
                       title="Establish custom connection"
                     >
-                      <span class="icon-[lucide--plus] w-3 h-3"></span>
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--plus] w-3 h-3"
+                      ></span>
                     </button>
                   {/if}
                   <button
+                    type="button"
                     class="text-theme-muted hover:text-theme-danger transition p-1"
                     onclick={() => {
                       if (conn.isChild) {
@@ -582,10 +541,13 @@
                         );
                       }
                     }}
-                    aria-label="Delete connection"
+                    aria-label="Delete connection to {conn.displayTitle}"
                     title="Delete connection"
                   >
-                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--trash-2] w-3 h-3"
+                    ></span>
                   </button>
                 </div>
               {/if}
@@ -599,231 +561,12 @@
     </ul>
   </div>
 
-  <!-- Guest Character Chat Settings (Host Only, Type must be character) -->
-  {#if !vault.isGuest && (editType === "character" || entity.type === "character")}
-    <div
-      class="border border-theme-border rounded-xl p-4 bg-theme-surface/5 space-y-4"
-    >
-      <div
-        class="flex items-center justify-between border-b border-theme-border pb-2"
-      >
-        <h4
-          class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
-        >
-          <span
-            class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
-          ></span>
-          Guest Character Chat
-        </h4>
-        {#if !isEditing}
-          <span
-            class="text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider {entity
-              .guestChatConfig?.isEnabled
-              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-              : 'bg-theme-muted/10 text-theme-muted border border-theme-border'}"
-          >
-            {entity.guestChatConfig?.isEnabled ? "Enabled" : "Disabled"}
-          </span>
-        {/if}
-      </div>
-
-      {#if isEditing}
-        <div class="space-y-4 text-sm">
-          <!-- Toggle Availability -->
-          <label class="flex items-center gap-3 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={!!editGuestChatConfig?.isEnabled}
-              onchange={(e) => {
-                if (editGuestChatConfig) {
-                  editGuestChatConfig.isEnabled = e.currentTarget.checked;
-                  editGuestChatConfig = { ...editGuestChatConfig };
-                  if (editGuestChatConfig.isEnabled && !hasPersonalitySection) {
-                    void handleGeneratePersonality();
-                  }
-                }
-              }}
-              class="w-4 h-4 accent-theme-primary rounded border-theme-border bg-theme-bg"
-            />
-            <span class="font-bold text-theme-text"
-              >Enable Guest Character Chat</span
-            >
-          </label>
-
-          {#if editGuestChatConfig?.isEnabled}
-            <div
-              class="pl-7 space-y-4 border-l-2 border-theme-border/50 transition-all"
-            >
-              <!-- Context Scope Option -->
-              <div class="space-y-1">
-                <span
-                  class="block text-xs font-bold uppercase tracking-wider text-theme-muted"
-                  >Context & Knowledge Scope</span
-                >
-                <div class="flex gap-4">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="contextScope"
-                      value="public"
-                      checked={editGuestChatConfig?.contextScope === "public"}
-                      onchange={() => {
-                        if (editGuestChatConfig) {
-                          editGuestChatConfig.contextScope = "public";
-                          editGuestChatConfig = { ...editGuestChatConfig };
-                        }
-                      }}
-                      class="accent-theme-primary"
-                    />
-                    <span>Public Lore Only</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="contextScope"
-                      value="hybrid"
-                      checked={editGuestChatConfig?.contextScope === "hybrid"}
-                      onchange={() => {
-                        if (editGuestChatConfig) {
-                          editGuestChatConfig.contextScope = "hybrid";
-                          editGuestChatConfig = { ...editGuestChatConfig };
-                        }
-                      }}
-                      class="accent-theme-primary"
-                    />
-                    <span>Public + Private Context</span>
-                  </label>
-                </div>
-                <p class="text-xs text-theme-muted mt-1 leading-normal">
-                  {editGuestChatConfig?.contextScope === "public"
-                    ? "Guests can only query this character using their public description and tags/labels."
-                    : "Allows the AI to guide hints/responses using hidden GM notes, but strictly prohibits repeating them directly."}
-                </p>
-              </div>
-
-              <!-- Personality & Voice section status -->
-              <div class="flex items-center justify-between text-xs">
-                <span
-                  class="font-bold uppercase tracking-wider text-theme-muted"
-                  >Personality & Voice</span
-                >
-                {#if hasPersonalitySection}
-                  <span
-                    class="flex items-center gap-1 text-emerald-500 font-semibold"
-                  >
-                    <span class="icon-[lucide--check-circle] w-3.5 h-3.5"
-                    ></span>
-                    Found in character lore
-                  </span>
-                {:else}
-                  <div class="flex items-center gap-2">
-                    <span
-                      class="flex items-center gap-1 text-amber-500 font-semibold"
-                    >
-                      <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
-                      ></span>
-                      Missing from lore
-                    </span>
-                    <button
-                      type="button"
-                      onclick={handleGeneratePersonality}
-                      disabled={isGeneratingPersonality}
-                      class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
-                    >
-                      <span
-                        class={isGeneratingPersonality
-                          ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
-                          : "icon-[lucide--sparkles] w-3 h-3"}
-                      ></span>
-                      {isGeneratingPersonality ? "Generating..." : "Generate"}
-                    </button>
-                  </div>
-                {/if}
-              </div>
-              {#if personalityError}
-                <p
-                  class="text-[10px] text-theme-danger flex items-center gap-1 font-semibold"
-                >
-                  <span class="icon-[lucide--circle-alert] w-3.5 h-3.5"></span>
-                  {personalityError}
-                </p>
-              {/if}
-
-              <!-- Additional Settings -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <label
-                  class="flex items-center gap-2 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!editGuestChatConfig?.isHostReviewable}
-                    onchange={(e) => {
-                      if (editGuestChatConfig) {
-                        editGuestChatConfig.isHostReviewable =
-                          e.currentTarget.checked;
-                        editGuestChatConfig = { ...editGuestChatConfig };
-                      }
-                    }}
-                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
-                  />
-                  <span class="text-xs text-theme-text"
-                    >Host can review logs (P2P Sync)</span
-                  >
-                </label>
-
-                <label
-                  class="flex items-center gap-2 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!editGuestChatConfig?.keepMemory}
-                    onchange={(e) => {
-                      if (editGuestChatConfig) {
-                        editGuestChatConfig.keepMemory =
-                          e.currentTarget.checked;
-                        editGuestChatConfig = { ...editGuestChatConfig };
-                      }
-                    }}
-                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
-                  />
-                  <span class="text-xs text-theme-text"
-                    >Retain memory between guest visits</span
-                  >
-                </label>
-              </div>
-            </div>
-          {/if}
-        </div>
-      {:else if entity.guestChatConfig?.isEnabled}
-        <!-- Read-only Info for Host -->
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <span class="text-theme-muted block">Context Scope:</span>
-            <span class="font-bold text-theme-text capitalize"
-              >{entity.guestChatConfig.contextScope} Lore</span
-            >
-          </div>
-          <div>
-            <span class="text-theme-muted block">Synced Review:</span>
-            <span class="font-bold text-theme-text"
-              >{entity.guestChatConfig.isHostReviewable
-                ? "Active"
-                : "Disabled"}</span
-            >
-          </div>
-        </div>
-      {:else}
-        <p class="text-xs text-theme-muted italic">
-          Guest Character Chat is disabled. Click the "EDIT" button at the top
-          of this panel to enable it and let invited players chat with this
-          character.
-        </p>
-      {/if}
-    </div>
-  {/if}
-
   <DetailProposals {isEditing} />
-  <EntityProposals content={entity.content || ""} {isEditing} entityId={entity.id} />
+  <EntityProposals
+    content={entity.content || ""}
+    {isEditing}
+    entityId={entity.id}
+  />
 </div>
 
 <style>

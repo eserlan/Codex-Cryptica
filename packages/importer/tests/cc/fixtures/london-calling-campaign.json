@@ -1,0 +1,2206 @@
+{
+  "conns": [
+    {
+      "from": "Adventuring Group",
+      "fromid": 5625209,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891469,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891469
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Group Category",
+      "toid": 5625232
+    },
+    {
+      "from": "Adventuring Group",
+      "fromid": 5625209,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891587,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891587
+      },
+      "relationship": "GROUP_CATEGORY_OF",
+      "to": "The Coterie",
+      "toid": 5271180
+    },
+    {
+      "from": "Adventuring Guild",
+      "fromid": 5625235,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateCreatedUnix": 1760546882427,
+        "dateLastEdited": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateLastEditedUnix": 1760546882427,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Group Category",
+      "toid": 5625232
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Alignment",
+      "toid": 5625230
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Class",
+      "toid": 5556483
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Cultural Trait",
+      "toid": 5556484
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Event Category",
+      "toid": 5626260
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Gender",
+      "toid": 5625231
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Group Category",
+      "toid": 5625232
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Item Category",
+      "toid": 5625233
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Language",
+      "toid": 5625234
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Place Category",
+      "toid": 5626261
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Race",
+      "toid": 5626262
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Role",
+      "toid": 5626263
+    },
+    {
+      "from": "Attribute",
+      "fromid": 271393,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Vehicle Type",
+      "toid": 5626264
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891475,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891475
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Adventuring Group",
+      "toid": 5625209
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:47:59 PDT 2025",
+        "dateCreatedUnix": 1760546879599,
+        "dateLastEdited": "Wed Oct 15 09:47:59 PDT 2025",
+        "dateLastEditedUnix": 1760546879599,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Adventuring Guild",
+      "toid": 5625235
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateCreatedUnix": 1760546883712,
+        "dateLastEdited": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateLastEditedUnix": 1760546883712,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Alignment",
+      "toid": 5625230
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateCreatedUnix": 1760546880628,
+        "dateLastEdited": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateLastEditedUnix": 1760546880628,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "City",
+      "toid": 5626265
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateCreatedUnix": 1760546885000,
+        "dateLastEdited": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateLastEditedUnix": 1760546885000,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Class",
+      "toid": 5556483
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:47:59 PDT 2025",
+        "dateCreatedUnix": 1760546879857,
+        "dateLastEdited": "Wed Oct 15 09:47:59 PDT 2025",
+        "dateLastEditedUnix": 1760546879857,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Crime Syndicate",
+      "toid": 5626266
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateCreatedUnix": 1760546881656,
+        "dateLastEdited": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateLastEditedUnix": 1760546881656,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Cultural Trait",
+      "toid": 5556484
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateCreatedUnix": 1760546883454,
+        "dateLastEdited": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateLastEditedUnix": 1760546883454,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Event Category",
+      "toid": 5626260
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateCreatedUnix": 1760546886286,
+        "dateLastEdited": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateLastEditedUnix": 1760546886286,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Female",
+      "toid": 5626267
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateCreatedUnix": 1760546886801,
+        "dateLastEdited": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateLastEditedUnix": 1760546886801,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Gender",
+      "toid": 5625231
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateCreatedUnix": 1760546882940,
+        "dateLastEdited": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateLastEditedUnix": 1760546882940,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Group Category",
+      "toid": 5625232
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateCreatedUnix": 1760546881913,
+        "dateLastEdited": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateLastEditedUnix": 1760546881913,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Item Category",
+      "toid": 5625233
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:04 PDT 2025",
+        "dateCreatedUnix": 1760546884742,
+        "dateLastEdited": "Wed Oct 15 09:48:04 PDT 2025",
+        "dateLastEditedUnix": 1760546884742,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Language",
+      "toid": 5625234
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateCreatedUnix": 1760546886544,
+        "dateLastEdited": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateLastEditedUnix": 1760546886544,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Male",
+      "toid": 5626268
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateCreatedUnix": 1760546880372,
+        "dateLastEdited": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateLastEditedUnix": 1760546880372,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "NPC",
+      "toid": 5626269
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateCreatedUnix": 1760546881399,
+        "dateLastEdited": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateLastEditedUnix": 1760546881399,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "PC",
+      "toid": 5626276
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateCreatedUnix": 1760546885772,
+        "dateLastEdited": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateLastEditedUnix": 1760546885772,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Place Category",
+      "toid": 5626261
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateCreatedUnix": 1760546886028,
+        "dateLastEdited": "Wed Oct 15 09:48:06 PDT 2025",
+        "dateLastEditedUnix": 1760546886028,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Race",
+      "toid": 5626262
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:47:59 PDT 2025",
+        "dateCreatedUnix": 1760546879343,
+        "dateLastEdited": "Wed Oct 15 09:47:59 PDT 2025",
+        "dateLastEditedUnix": 1760546879343,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Religion",
+      "toid": 5625801
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:04 PDT 2025",
+        "dateCreatedUnix": 1760546884485,
+        "dateLastEdited": "Wed Oct 15 09:48:04 PDT 2025",
+        "dateLastEditedUnix": 1760546884485,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Role",
+      "toid": 5626263
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateCreatedUnix": 1760546880115,
+        "dateLastEdited": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateLastEditedUnix": 1760546880115,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Session Log",
+      "toid": 5626270
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateCreatedUnix": 1760546880885,
+        "dateLastEdited": "Wed Oct 15 09:48:00 PDT 2025",
+        "dateLastEditedUnix": 1760546880885,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Town",
+      "toid": 5556485
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891439,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891439
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Vampire",
+      "toid": 5625208
+    },
+    {
+      "from": "Attributes and Categories",
+      "fromid": 5626313,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateCreatedUnix": 1760546881142,
+        "dateLastEdited": "Wed Oct 15 09:48:01 PDT 2025",
+        "dateLastEditedUnix": 1760546881142,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "FOLDER_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "FOLDER_OF",
+      "to": "Vehicle Type",
+      "toid": 5626264
+    },
+    {
+      "from": "Benjamin Bowman",
+      "fromid": 4543966,
+      "r": {
+        "dateCreated": "Wed Sep 17 14:14:38 PDT 2025",
+        "dateCreatedUnix": 1758143678556,
+        "dateLastEdited": "Wed Sep 17 14:14:38 PDT 2025",
+        "dateLastEditedUnix": 1758143678556,
+        "isFormer": false,
+        "isSecret": false
+      },
+      "relationship": "MEMBER_OF",
+      "to": "The Coterie",
+      "toid": 5271180
+    },
+    {
+      "from": "Benjamin Bowman",
+      "fromid": 4543966,
+      "r": {
+        "dateCreated": "Sun Mar 09 07:33:55 PDT 2025",
+        "dateCreatedUnix": 1741530835599,
+        "dateLastEdited": "Sun Mar 09 07:33:55 PDT 2025",
+        "dateLastEditedUnix": 1741530835599
+      },
+      "relationship": "PARTICIPANT_OF",
+      "to": "1 - Chapter One: The Ghost Town",
+      "toid": 4543885
+    },
+    {
+      "from": "Bill",
+      "fromid": 4878471,
+      "r": {
+        "dateCreated": "Wed Sep 17 14:14:03 PDT 2025",
+        "dateCreatedUnix": 1758143643260,
+        "dateLastEdited": "Wed Sep 17 14:14:03 PDT 2025",
+        "dateLastEditedUnix": 1758143643260,
+        "isFormer": false,
+        "isSecret": false
+      },
+      "relationship": "MEMBER_OF",
+      "to": "The Coterie",
+      "toid": 5271180
+    },
+    {
+      "from": "Brandr the Captain",
+      "fromid": 5271202,
+      "r": {
+        "dateCreated": "Wed Sep 17 14:19:28 PDT 2025",
+        "dateCreatedUnix": 1758143968876,
+        "dateLastEdited": "Wed Sep 17 14:19:28 PDT 2025",
+        "dateLastEditedUnix": 1758143968876,
+        "isFormer": false,
+        "isSecret": false
+      },
+      "relationship": "LEADER_OF",
+      "to": "The Oathbound",
+      "toid": 5274040
+    },
+    {
+      "from": "Brandr the Captain",
+      "fromid": 5271202,
+      "r": {
+        "dateCreated": "Wed Sep 17 14:14:25 PDT 2025",
+        "dateCreatedUnix": 1758143665782,
+        "dateLastEdited": "Wed Sep 17 14:14:25 PDT 2025",
+        "dateLastEditedUnix": 1758143665782,
+        "isFormer": false,
+        "isSecret": false
+      },
+      "relationship": "MEMBER_OF",
+      "to": "The Coterie",
+      "toid": 5271180
+    },
+    {
+      "from": "Brandr the myth, the lengend, the man",
+      "fromid": 5274634,
+      "r": {
+        "dateCreated": "Wed Sep 17 14:37:36 PDT 2025",
+        "dateCreatedUnix": 1758145056393,
+        "dateLastEdited": "Wed Sep 17 14:37:36 PDT 2025",
+        "dateLastEditedUnix": 1758145056393,
+        "isFormer": false,
+        "isSecret": false
+      },
+      "relationship": "NOTE_OF",
+      "to": "Brandr the Captain",
+      "toid": 5271202
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Adventuring Group",
+      "toid": 5625209
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Adventuring Guild",
+      "toid": 5625235
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "City",
+      "toid": 5626265
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Crime Syndicate",
+      "toid": 5626266
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Female",
+      "toid": 5626267
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Male",
+      "toid": 5626268
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "NPC",
+      "toid": 5626269
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "PC",
+      "toid": 5626276
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Religion",
+      "toid": 5625801
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Session Log",
+      "toid": 5626270
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Town",
+      "toid": 5556485
+    },
+    {
+      "from": "CCategory",
+      "fromid": 271394,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Vampire",
+      "toid": 5625208
+    },
+    {
+      "from": "Character",
+      "fromid": 65,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Benjamin Bowman",
+      "toid": 4543966
+    },
+    {
+      "from": "Character",
+      "fromid": 65,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Bill",
+      "toid": 4878471
+    },
+    {
+      "from": "Character",
+      "fromid": 65,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Brandr the Captain",
+      "toid": 5271202
+    },
+    {
+      "from": "Character",
+      "fromid": 65,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Toreador Anna Hyde of the Queen's Knights",
+      "toid": 4543862
+    },
+    {
+      "from": "City",
+      "fromid": 5626265,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateCreatedUnix": 1760546885257,
+        "dateLastEdited": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateLastEditedUnix": 1760546885257,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Place Category",
+      "toid": 5626261
+    },
+    {
+      "from": "Crime Syndicate",
+      "fromid": 5626266,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateCreatedUnix": 1760546882683,
+        "dateLastEdited": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateLastEditedUnix": 1760546882683,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Group Category",
+      "toid": 5625232
+    },
+    {
+      "from": "Event",
+      "fromid": 523,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "1 - Chapter One: The Ghost Town",
+      "toid": 4543885
+    },
+    {
+      "from": "Event",
+      "fromid": 523,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Conclave of Prague",
+      "toid": 4543861
+    },
+    {
+      "from": "Event",
+      "fromid": 523,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Fall of London",
+      "toid": 4543963
+    },
+    {
+      "from": "Event",
+      "fromid": 523,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Second Convention of Prague",
+      "toid": 4543983
+    },
+    {
+      "from": "Event",
+      "fromid": 523,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Second Inquisition",
+      "toid": 4543965
+    },
+    {
+      "from": "Event",
+      "fromid": 523,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Second Inquisition",
+      "toid": 4543964
+    },
+    {
+      "from": "Female",
+      "fromid": 5626267,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:07 PDT 2025",
+        "dateCreatedUnix": 1760546887059,
+        "dateLastEdited": "Wed Oct 15 09:48:07 PDT 2025",
+        "dateLastEditedUnix": 1760546887059,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Gender",
+      "toid": 5625231
+    },
+    {
+      "from": "Folder",
+      "fromid": 85403,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Attributes and Categories",
+      "toid": 5626313
+    },
+    {
+      "from": "Group",
+      "fromid": 73,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Camarilla",
+      "toid": 4543917
+    },
+    {
+      "from": "Group",
+      "fromid": 73,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Coterie",
+      "toid": 5271180
+    },
+    {
+      "from": "Group",
+      "fromid": 73,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Oathbound",
+      "toid": 5274040
+    },
+    {
+      "from": "Group",
+      "fromid": 73,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Vampire Club",
+      "toid": 4543984
+    },
+    {
+      "from": "Male",
+      "fromid": 5626268,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:07 PDT 2025",
+        "dateCreatedUnix": 1760546887317,
+        "dateLastEdited": "Wed Oct 15 09:48:07 PDT 2025",
+        "dateLastEditedUnix": 1760546887317,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Gender",
+      "toid": 5625231
+    },
+    {
+      "from": "Male",
+      "fromid": 5626268,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891549,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891549
+      },
+      "relationship": "GENDER_OF",
+      "to": "Brandr the Captain",
+      "toid": 5271202
+    },
+    {
+      "from": "NPC",
+      "fromid": 5626269,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateCreatedUnix": 1760546883970,
+        "dateLastEdited": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateLastEditedUnix": 1760546883970,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Role",
+      "toid": 5626263
+    },
+    {
+      "from": "Note",
+      "fromid": 57771,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Brandr the myth, the lengend, the man",
+      "toid": 5274634
+    },
+    {
+      "from": "PC",
+      "fromid": 5626276,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:04 PDT 2025",
+        "dateCreatedUnix": 1760546884227,
+        "dateLastEdited": "Wed Oct 15 09:48:04 PDT 2025",
+        "dateLastEditedUnix": 1760546884227,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Role",
+      "toid": 5626263
+    },
+    {
+      "from": "Place",
+      "fromid": 66,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "London",
+      "toid": 4543860
+    },
+    {
+      "from": "Place",
+      "fromid": 66,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "Southbank",
+      "toid": 4543941
+    },
+    {
+      "from": "Place",
+      "fromid": 66,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The British Empire",
+      "toid": 4543942
+    },
+    {
+      "from": "Place",
+      "fromid": 66,
+      "r": {},
+      "relationship": "CONCEPT_OF",
+      "to": "The Strand",
+      "toid": 4543940
+    },
+    {
+      "from": "Religion",
+      "fromid": 5625801,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateCreatedUnix": 1760546882170,
+        "dateLastEdited": "Wed Oct 15 09:48:02 PDT 2025",
+        "dateLastEditedUnix": 1760546882170,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Group Category",
+      "toid": 5625232
+    },
+    {
+      "from": "Session Log",
+      "fromid": 5626270,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateCreatedUnix": 1760546883197,
+        "dateLastEdited": "Wed Oct 15 09:48:03 PDT 2025",
+        "dateLastEditedUnix": 1760546883197,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Event Category",
+      "toid": 5626260
+    },
+    {
+      "from": "Session Log",
+      "fromid": 5626270,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891615,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891615
+      },
+      "relationship": "EVENT_CATEGORY_OF",
+      "to": "1 - Chapter One: The Ghost Town",
+      "toid": 4543885
+    },
+    {
+      "from": "The Toreador Anna Hyde of the Queen's Knights",
+      "fromid": 4543862,
+      "r": {
+        "dateCreated": "Sun Mar 09 07:35:47 PDT 2025",
+        "dateCreatedUnix": 1741530947056,
+        "dateLastEdited": "Sun Mar 09 07:35:47 PDT 2025",
+        "dateLastEditedUnix": 1741530947056
+      },
+      "relationship": "PARTICIPANT_OF",
+      "to": "1 - Chapter One: The Ghost Town",
+      "toid": 4543885
+    },
+    {
+      "from": "Town",
+      "fromid": 5556485,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateCreatedUnix": 1760546885514,
+        "dateLastEdited": "Wed Oct 15 09:48:05 PDT 2025",
+        "dateLastEditedUnix": 1760546885514,
+        "isDirected": true,
+        "isFormer": false,
+        "isSecret": false,
+        "name": "CATEGORY_OF",
+        "sourceCardinality": "many",
+        "targetCardinality": "many"
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Place Category",
+      "toid": 5626261
+    },
+    {
+      "from": "Vampire",
+      "fromid": 5625208,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891433,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891433
+      },
+      "relationship": "CATEGORY_OF",
+      "to": "Race",
+      "toid": 5626262
+    },
+    {
+      "from": "Vampire",
+      "fromid": 5625208,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891576,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891576
+      },
+      "relationship": "RACE_OF",
+      "to": "Bill",
+      "toid": 4878471
+    },
+    {
+      "from": "Vampire",
+      "fromid": 5625208,
+      "r": {
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891568,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891568
+      },
+      "relationship": "RACE_OF",
+      "to": "Brandr the Captain",
+      "toid": 5271202
+    },
+    {
+      "fromid": 493211,
+      "fromu": "espene",
+      "r": {},
+      "relationship": "PLAYER_OF",
+      "to": "Brandr the Captain",
+      "toid": 5271202
+    }
+  ],
+  "pages": [
+    {
+      "concept": "Event",
+      "id": 4543885,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Event",
+        "customDateBegin": "{\"month\":1,\"year\":2025,\"day\":3}",
+        "customDateEnd": "{}",
+        "dateCreated": "Sun Mar 09 07:26:15 PDT 2025",
+        "dateCreatedUnix": 1741530375155,
+        "dateLastEdited": "Sun Mar 09 07:33:21 PDT 2025",
+        "dateLastEditedUnix": 1741530801427,
+        "description": "<p>Fragments of the coterie, the Egyptologist and Bill, once the heirs to the British Empire, drifts back to London after years in hiding to assess whatever they can salvage of their once vast resources.</p> \n<p><br>The past century-or-so have been nothing but a decline since the height of their promise, at their introduction to the Vampire Club on the Strand in 1899, with a sharp downturn at the end.<br>The Second Inquisition, the Fall of London, and the Conclave of Prague in 2012 shattered the Camarilla, and thus the coterie. The fallout of the Second Convention of Prague in 2021 destroyed whatever remained. More than a hundred years of work down the drain, with a bitter aftertaste of betrayal.</p> \n<p>The Egyptologist and Bill have chosen to crawl out of hiding because they have made contact with one of their peers -- the Toreador Anna Hyde of the Queen&rsquo;s Knights -- who has agreed to meet them on Southbank if they adhere to her rules: no cells phones or electronic devices, and they will talk for less than fifteen minutes.</p> \n<p>As the Egyptologist and Bill prepare to seek out Hyde, they spend a few nights reminiscing about their grand past as empire builders, and learn the rules of their once grand domain, now a desolate ghost town overrun by the living.</p>",
+        "gmSecrets": "",
+        "id": 4543885,
+        "imageURL": "/assets/rf_images/event/30118617_s_1.jpg",
+        "isBiggerImage": "33",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "1 - Chapter One: The Ghost Town",
+        "score": 57.73386490563534,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/event/4543885"
+      },
+      "uri": "/campaign/4543909/event/4543885"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5625209,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Category",
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891458,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891458,
+        "description": "don't care",
+        "gmSecrets": "",
+        "imageURL": "",
+        "isBiggerImage": "false",
+        "isSecret": false,
+        "jsonStr": "{\"wf\": {\n    \"briefSummary\": \"Gather your party and embark on an epic journey\",\n    \"catSlug\": \"adventuring-group\",\n    \"description\": \"In the world of RPGs, adventuring groups are a common sight. These diverse groups of individuals come together for various reasons, united by a common goal. They must navigate through treacherous landscapes, overcome powerful foes, and overcome personal conflicts in order to achieve their objectives. The dynamics of an adventuring group can greatly vary depending on the genre of the RPG world.\",\n    \"genre\": {\n        \"cyberpunk\": {\n            \"description\": \"In a dystopian future ruled by powerful corporations, the adventuring group in a cyberpunk RPG may consist of hackers, mercenaries, or rebels fighting against the system. They must use their technological skills and street smarts to survive in a dangerous and corrupt world.\",\n            \"prevalence\": \"Rare\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"To dismantle corrupt corporations\",\n                        \"To acquire rare and valuable technology\",\n                        \"To protect the underprivileged and oppressed\",\n                        \"To uncover hidden government secrets\",\n                        \"To establish a new world order\"\n                    ],\n                    \"prompt\": \"What is the primary goal or mission of your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Stealth and infiltration\",\n                        \"Diplomacy and negotiation\",\n                        \"Brute force and intimidation\",\n                        \"Hacking and electronic warfare\",\n                        \"Guerrilla warfare and sabotage\"\n                    ],\n                    \"prompt\": \"What is the group's preferred method of dealing with obstacles?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Feared by many\",\n                        \"Respected by peers\",\n                        \"Known for their cunning\",\n                        \"Infamous for their past deeds\",\n                        \"Trusted by the local communities\"\n                    ],\n                    \"prompt\": \"What kind of reputation does your Adventuring Group have in the cyberpunk world?\"\n                }\n            ]\n        },\n        \"fantasy\": {\n            \"description\": \"Fantasy RPGs are set in a world of magic, mythical creatures, and epic quests. Adventuring groups in this genre often consist of brave warriors, powerful mages, cunning rogues, and wise clerics. Together, they must defeat evil forces and protect the innocent from harm.\",\n            \"prevalence\": \"Ubiquitous\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Treasure hunting\",\n                        \"Defending the realm\",\n                        \"Seeking knowledge\",\n                        \"Revenge\",\n                        \"Exploration\"\n                    ],\n                    \"prompt\": \"What is the primary motivation of your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Forests and wilderness\",\n                        \"Underground dungeons\",\n                        \"Urban environments\",\n                        \"High seas and islands\",\n                        \"Ancient ruins\"\n                    ],\n                    \"prompt\": \"What is the preferred setting for your Adventuring Group's quests?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Lawful Good\",\n                        \"Neutral Good\",\n                        \"Chaotic Good\",\n                        \"Lawful Neutral\",\n                        \"Chaotic Neutral\"\n                    ],\n                    \"prompt\": \"What is the alignment of your Adventuring Group?\"\n                }\n            ]\n        },\n        \"horror\": {\n            \"description\": \"Horror RPGs are all about fear, suspense, and survival. The adventuring group in this genre may consist of ordinary people who have stumbled upon supernatural events, or they may be a team of paranormal investigators. They must stick together and use their wits to survive against terrifying creatures and supernatural forces.\",\n            \"prevalence\": \"Common\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Unravel ancient mysteries\",\n                        \"Defeat supernatural entities\",\n                        \"Protect the innocent\",\n                        \"Explore haunted locations\",\n                        \"Seek forbidden knowledge\"\n                    ],\n                    \"prompt\": \"What is the primary goal of your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Arisen from a cursed bloodline\",\n                        \"Formed by survivors of a ghost attack\",\n                        \"Gathered by an ancient prophecy\",\n                        \"United by a shared nightmare\",\n                        \"Bound by a mysterious artifact\"\n                    ],\n                    \"prompt\": \"What is the origin or background theme of your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Ritualistic banishment\",\n                        \"Physical confrontation\",\n                        \"Strategic evasion\",\n                        \"Psychological manipulation\",\n                        \"Collaborative investigation\"\n                    ],\n                    \"prompt\": \"What is the preferred method of dealing with threats for your Adventuring Group?\"\n                }\n            ]\n        },\n        \"modern-spy\": {\n            \"description\": \"In this genre, the adventuring group is comprised of skilled agents, spies, and assassins. They work for a secretive organization, taking on dangerous missions to protect their country or uncover a conspiracy. Each member brings their unique set of skills and must rely on each other to complete their missions successfully.\",\n            \"prevalence\": \"Uncommon\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Espionage\",\n                        \"Counter-terrorism\",\n                        \"Cybersecurity\",\n                        \"Intelligence gathering\",\n                        \"Undercover operations\"\n                    ],\n                    \"prompt\": \"What is the primary mission focus of your adventuring group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"North America\",\n                        \"Europe\",\n                        \"Asia\",\n                        \"Middle East\",\n                        \"South America\"\n                    ],\n                    \"prompt\": \"Which region or country does your adventuring group primarily operate in?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Stealth and infiltration\",\n                        \"Combat and tactics\",\n                        \"Tech and gadgets\",\n                        \"Negotiation and diplomacy\",\n                        \"Analysis and strategy\"\n                    ],\n                    \"prompt\": \"What is the defining trait or specialty of your adventuring group?\"\n                }\n            ]\n        },\n        \"pulp-fiction\": {\n            \"description\": \"Pulp-fiction RPGs are all about fast-paced action, intrigue, and larger-than-life characters. The adventuring group may consist of detectives, treasure hunters, or mercenaries, embarking on thrilling adventures and facing off against ruthless villains. Each member must use their skills and cunning to overcome obstacles and complete their mission.\",\n            \"prevalence\": \"Common\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Seek fame and glory\",\n                        \"Recover lost artifacts\",\n                        \"Protect the innocent\",\n                        \"Uncover hidden truths\",\n                        \"Accumulate wealth and treasure\"\n                    ],\n                    \"prompt\": \"What is the primary motivation driving your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Dense jungles\",\n                        \"Desolate deserts\",\n                        \"Mysterious ruins\",\n                        \"High seas\",\n                        \"Urban landscapes\"\n                    ],\n                    \"prompt\": \"What is the main environment your Adventuring Group specializes in?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Ingenious problem solvers\",\n                        \"Fearless daredevils\",\n                        \"Stealthy operatives\",\n                        \"Masterful negotiators\",\n                        \"Mystical explorers\"\n                    ],\n                    \"prompt\": \"What is a key characteristic that defines your Adventuring Group?\"\n                }\n            ]\n        },\n        \"sci-fi\": {\n            \"description\": \"In the vast and futuristic world of sci-fi RPGs, adventuring groups may consist of space explorers, intergalactic smugglers, or rebels fighting against an oppressive regime. They must navigate through unknown galaxies, encounter strange aliens, and use advanced technology to achieve their goals.\",\n            \"prevalence\": \"Ubiquitous\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Exploration\",\n                        \"Wealth\",\n                        \"Knowledge\",\n                        \"Justice\",\n                        \"Survival\"\n                    ],\n                    \"prompt\": \"What is the primary motivation of your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Deep Space\",\n                        \"Urban Cities\",\n                        \"Desolate Wastelands\",\n                        \"Alien Planets\",\n                        \"Underwater Realms\"\n                    ],\n                    \"prompt\": \"Which environment does your Adventuring Group primarily operate in?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Lawful Good\",\n                        \"Neutral Good\",\n                        \"Chaotic Good\",\n                        \"True Neutral\",\n                        \"Chaotic Neutral\"\n                    ],\n                    \"prompt\": \"What is the general alignment of your Adventuring Group?\"\n                }\n            ]\n        },\n        \"supers\": {\n            \"description\": \"Supers RPGs are all about heroes with extraordinary abilities and powers. The adventuring group may consist of a team of superheroes or a group of individuals with unique abilities. Together, they must use their powers to protect the world from super villains and other threats.\",\n            \"prevalence\": \"Rare\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Justice and protection\",\n                        \"Rebellion and freedom\",\n                        \"Knowledge and discovery\",\n                        \"Wealth and power\",\n                        \"Survival and safety\"\n                    ],\n                    \"prompt\": \"What is the primary motivation driving your Adventuring Group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Urban metropolis\",\n                        \"Mystical wilderness\",\n                        \"Cosmic realms\",\n                        \"Underwater kingdoms\",\n                        \"Desert wastelands\"\n                    ],\n                    \"prompt\": \"What is the predominant environment or setting your Adventuring Group operates in?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Non-lethal and diplomatic\",\n                        \"Stealth and deception\",\n                        \"Direct combat and aggression\",\n                        \"Magic and technology\",\n                        \"Befriending and converting\"\n                    ],\n                    \"prompt\": \"What is the team's approach to dealing with adversaries?\"\n                }\n            ]\n        },\n        \"western\": {\n            \"description\": \"In the rugged and lawless world of the Wild West, the adventuring group may consist of outlaws, gunslingers, or lawmen. They must navigate through dangerous territories, face off against bandits and outlaws, and survive in a harsh and unforgiving environment.\",\n            \"prevalence\": \"Uncommon\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Seeking treasure\",\n                        \"Bringing justice\",\n                        \"Exploring the unknown\",\n                        \"Revenge\",\n                        \"Gaining fame\"\n                    ],\n                    \"prompt\": \"What is the primary motivation driving your adventuring group?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Ruthless and feared\",\n                        \"Honorable and respected\",\n                        \"Mysterious and enigmatic\",\n                        \"Loyal and trustworthy\",\n                        \"Bold and adventurous\"\n                    ],\n                    \"prompt\": \"What kind of reputation does your group want to cultivate?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Deserts\",\n                        \"Forests\",\n                        \"Mountains\",\n                        \"Canyons\",\n                        \"Towns and cities\"\n                    ],\n                    \"prompt\": \"What type of environment does your group prefer to operate in?\"\n                }\n            ]\n        }\n    },\n    \"name\": \"Adventuring Group\"\n}}",
+        "largeImageURL": "",
+        "name": "Adventuring Group",
+        "score": 5.363585661014858,
+        "secrets": "",
+        "stats_isSecret": "cat.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5625209"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5625235,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:47 PDT 2025",
+        "dateCreatedUnix": 1760546867861,
+        "dateLastEdited": "Wed Oct 15 09:47:47 PDT 2025",
+        "dateLastEditedUnix": 1760546867861,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Adventuring Guild",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5625235"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5625230,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Character from D&D",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:41 PDT 2025",
+        "dateCreatedUnix": 1760546861687,
+        "dateLastEdited": "Wed Oct 15 09:47:41 PDT 2025",
+        "dateLastEditedUnix": 1760546861687,
+        "description": "",
+        "imageURL": "/user/stolph/image/Screen%20Shot%202019-05-02%20at%207.46.10%20PM.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "largeImageURL": "/user/stolph/image/Screen%20Shot%202019-05-02%20at%207.46.10%20PM.png",
+        "name": "Alignment",
+        "score": 6,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5625230"
+    },
+    {
+      "concept": "Folder",
+      "id": 5626313,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "Folder",
+        "dateCreated": "Wed Oct 15 09:47:52 PDT 2025",
+        "dateCreatedUnix": 1760546872995,
+        "dateLastEdited": "Wed Oct 15 09:47:52 PDT 2025",
+        "dateLastEditedUnix": 1760546872995,
+        "description": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Attributes and Categories",
+        "score": 2,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/folder/5626313"
+    },
+    {
+      "concept": "Character",
+      "id": 4543966,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "The Egyptologist",
+        "briefSummary": "",
+        "concept": "Character",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Sun Mar 09 07:33:49 PDT 2025",
+        "dateCreatedUnix": 1741530829114,
+        "dateLastEdited": "Wed Sep 17 14:56:53 PDT 2025",
+        "dateLastEditedUnix": 1758146213435,
+        "description": "",
+        "gmSecrets": "",
+        "id": 4543966,
+        "imageURL": "https://img.alchemyrpg.com/users/6448af0b5ae9a95f29b36d0c/characters/67c9f54736c8fa8f1ef54391/m7z88k07.jpg",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "Benjamin Bowman",
+        "score": 4,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/character/4543966"
+      },
+      "uri": "/campaign/4543909/character/4543966"
+    },
+    {
+      "concept": "Character",
+      "id": 4878471,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "Character",
+        "dateCreated": "Wed Sep 17 14:13:58 PDT 2025",
+        "dateCreatedUnix": 1758143638080,
+        "dateLastEdited": "Wed Sep 17 14:14:03 PDT 2025",
+        "dateLastEditedUnix": 1758143643033,
+        "description": "",
+        "id": 4878471,
+        "imageURL": "",
+        "isSecret": false,
+        "name": "Bill",
+        "score": 2,
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/character/4878471"
+      },
+      "uri": "/campaign/4543909/character/4878471"
+    },
+    {
+      "concept": "Character",
+      "id": 5271202,
+      "isGoldStar": true,
+      "page": {
+        "aliases": "",
+        "briefSummary": "A viking captain reborn in leather and steel, outlaw and noble, a relic of storm and sea who still burns with the need for loyalty, fury",
+        "concept": "Character",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Sep 17 14:14:22 PDT 2025",
+        "dateCreatedUnix": 1758143662630,
+        "dateGoldStarUnix": 1758144935633,
+        "dateLastEdited": "Thu Sep 18 08:38:12 PDT 2025",
+        "dateLastEditedUnix": 1758209892479,
+        "description": "<p>Brandr walks into a room like the tide coming in &mdash; slow, unstoppable, carrying the weight of centuries. Broad-shouldered and bearded, with long hair tied back and streaked with silver, he has the look of a man who once commanded a ship in stormy seas. His skin is weathered like old oak, his eyes glinting with the fire of a hearth and the fury of a battlefield.</p> \n<p>Across his arms, throat, and knuckles coil tattoos: Norse runes, longships, wolves, and scars of faith inked into his flesh across a thousand nights. His clothes are anachronistic but powerful &mdash; a heavy leather jacket that fits him like armour, tailored shirts beneath, silver rings and chains that gleam like trophies. He could be mistaken for a biker warlord, or perhaps an eccentric collector &mdash; but something about him feels older, truer, more dangerous.</p> \n<p>He is both <strong>sword and spark</strong>: a warrior with brutal strength, and a firebrand who ignites passion and rebellion in those around him. His voice can rise like thunder to command a crowd, or fall to a low growl that makes men lean in closer without knowing why.</p> \n<p>Brandr has always been <strong>the Captain</strong> &mdash; never the king, never the chieftain, but the trusted second-in-command whose loyalty bound men together. Across a millennium he has outlived jarls, lords, and princes, but he still seeks that bond of blood and trust: a crew worth fighting for. He cannot abide betrayal, and when provoked, his fury is as sudden and violent as a storm at sea.</p> \n<p>In modern London, Brandr has carved out a following of bikers, pagans, and outcasts who wear his wolf-and-axes patch as a badge of loyalty. To the world they are just another gang &mdash; but to him they are his <strong>modern longship crew</strong>, The Oathbound. They call him Captain, and he answers with a mix of rough affection and iron discipline.</p> \n<p>Yet beneath the leather and steel, Brandr harbors an unexpected fondness: <strong>medieval fairs and historical reenactments</strong>. Among the tents and the clash of blunted swords, he feels echoes of the old world and a fleeting sense of belonging. It was in this world that he met his Touchstone, Edward &ldquo;Ned&rdquo; Ashcroft &mdash; a wealthy lawyer playing Viking &mdash; and where he often finds recruits among neo-pagans and romantics hungry for meaning. For a few moments at these events, the Captain is more than a predator; he is a man remembering who he once was.</p> \n<p>There is a strange duality in him. On one hand, he is a relic &mdash; a Viking mariner who carries the weight of forgotten raids and lost jarls. On the other, he is fully present in the neon glow of 2025, a leather-clad outlaw who thrives in the chaos of the streets. He is both beast and gentleman, both pagan and philosopher, a man who can toast you in an East London dive bar or break your jaw in the alley outside.</p> \n<p>Above all, Brandr is loyal &mdash; to his crew, to his word, to the idea that a man&rsquo;s worth is proven not by wealth or lineage but by what he can hold together when the storm breaks.</p> \n<hr> \n<p>⚡ <strong>Theme &amp; Flair in Short</strong>:<br><em>Brandr is a Viking captain reborn in leather and steel, equal parts outlaw and noble, a relic of storm and sea who still burns with the need for loyalty, fury, and the eternal fire of rebellion &mdash; with fleeting solace found in the echoes of medieval fairs and the mortals who chase the past.</em></p> \n<p>&nbsp;</p> \n<p>&nbsp;</p> \n<p>&nbsp;</p> \n<h1>⚔️ Character Sheet: Brandr the Captain (V5)</h1> \n<p><strong>Name</strong>: Brandr Sveinsson<br><strong>Clan</strong>: Brujah<br><strong>Sire</strong>: Unknown (fellow raider)<br><strong>Generation</strong>: 10th<br><strong>Predator Type</strong>: Osiris (leader of The Oathbound biker gang)<br><strong>Chronicle Tenet Tie</strong>: Loyalty above all else</p> \n<hr> \n<h2>Attributes</h2> \n<p><strong>Physical</strong></p> \n<ul> \n <li> <p>Strength &bull;&bull;&bull;&bull;</p> </li> \n <li> <p>Dexterity &bull;&bull;&bull;</p> </li> \n <li> <p>Stamina &bull;&bull;&bull;</p> </li> \n</ul> \n<p><strong>Social</strong></p> \n<ul> \n <li> <p>Charisma &bull;&bull;&bull;</p> </li> \n <li> <p>Manipulation &bull;&bull;</p> </li> \n <li> <p>Composure &bull;&bull;</p> </li> \n</ul> \n<p><strong>Mental</strong></p> \n<ul> \n <li> <p>Intelligence &bull;&bull;</p> </li> \n <li> <p>Wits &bull;&bull;&bull;</p> </li> \n <li> <p>Resolve &bull;&bull;&bull;</p> </li> \n</ul> \n<hr> \n<h2>Skills</h2> \n<p><strong>Physical</strong></p> \n<ul> \n <li> <p>Athletics &bull;&bull;</p> </li> \n <li> <p>Brawl &bull;&bull;&bull;</p> </li> \n <li> <p>Drive &bull;&bull;</p> </li> \n <li> <p>Melee &bull;&bull;&bull;</p> </li> \n</ul> \n<p><strong>Social</strong></p> \n<ul> \n <li> <p>Intimidation &bull;&bull;&bull;</p> </li> \n <li> <p>Leadership &bull;&bull;&bull;</p> </li> \n <li> <p>Persuasion &bull;&bull;</p> </li> \n <li> <p>Streetwise &bull;&bull;</p> </li> \n</ul> \n<p><strong>Mental</strong></p> \n<ul> \n <li> <p>Awareness &bull;&bull;</p> </li> \n <li> <p>Occult &bull;</p> </li> \n <li> <p>Academics &bull;&bull; (Specialty: Norse/Victorian History)</p> </li> \n</ul> \n<hr> \n<h2>Disciplines</h2> \n<ul> \n <li> <p><strong>Potence &bull;&bull;</strong> &mdash; Soaring Leap, Lethal Body</p> </li> \n <li> <p><strong>Celerity &bull;&bull;</strong> &mdash; Cat&rsquo;s Grace, Rapid Reflexes</p> </li> \n <li> <p><strong>Presence &bull;</strong> &mdash; Awe</p> </li> \n</ul> \n<hr> \n<h2>Advantages</h2> \n<p><strong>Backgrounds</strong></p> \n<ul> \n <li> <p>Allies &bull;&bull; (The Oathbound inner circle)</p> </li> \n <li> <p>Haven &bull;&bull; (Abandoned Thames warehouse, fortified)</p> </li> \n <li> <p>Resources &bull; (Gang hustles and smuggling)</p> </li> \n <li> <p>Fame &bull; (Within London biker/pagan subculture)</p> </li> \n <li> <p>Herd &bull;&bull;&bull; (The Oathbound and their hangers-on)</p> </li> \n</ul> \n<hr> \n<h2>Predator Type: Osiris</h2> \n<ul> \n <li> <p><strong>Benefit</strong>: Herd &bull;&bull;&bull;, extra dots in Presence</p> </li> \n <li> <p><strong>Drawback</strong>: Constant scrutiny &mdash; followers attract attention from rivals, authorities, and hunters.</p> </li> \n</ul> \n<hr> \n<h2>Clan Bane (Brujah)</h2> \n<p>Quick to anger &mdash; difficulty to resist frenzy increases when insulted, restrained, or witnessing betrayal.</p> \n<hr> \n<h2>Convictions &amp; Touchstones</h2> \n<ul> \n <li> <p><strong>Conviction 1</strong>: Never betray your crew.</p> </li> \n <li> <p><strong>Conviction 2</strong>: Strength must be proven, not bought.</p> </li> \n <li> <p><strong>Touchstone</strong>: Edward &ldquo;Ned&rdquo; Ashcroft &mdash; wealthy lawyer and Viking reenactor, fragile mirror of Brandr&rsquo;s past.</p> </li> \n</ul> \n<hr> \n<h2>Ambition &amp; Desire</h2> \n<ul> \n <li> <p><strong>Ambition</strong>: To rise from Captain to Jarl &mdash; to lead in his own right.</p> </li> \n <li> <p><strong>Desire</strong>: To command loyalty and protect a crew bound by blood.</p> </li> \n</ul> \n<hr> \n<h2>Humanity</h2> \n<ul> \n <li> <p><strong>Score</strong>: 6 (anchored by loyalty and Ned Ashcroft)</p> </li> \n <li> <p><strong>Stains</strong>: Violence against innocents, betrayal of trust.</p> </li> \n</ul> \n<hr> \n<h2>Willpower</h2> \n<ul> \n <li> <p><strong>Dots</strong>: 6 (Resolve &bull;&bull;&bull; + Composure &bull;&bull;)</p> </li> \n <li> <p><strong>Current</strong>: To be tracked in play.</p> </li> \n</ul> \n<hr> \n<h2>Health &amp; Hunger</h2> \n<ul> \n <li> <p><strong>Health</strong>: 6</p> </li> \n <li> <p><strong>Hunger</strong>: Starts at 1, max 5.</p> </li> \n</ul> \n<hr> \n<h2>Equipment &amp; Style</h2> \n<ul> \n <li> <p>Leather biker jacket with The Oathbound wolf-and-axes patch.</p> </li> \n <li> <p>Silver rings, chain, tattoos across arms and throat.</p> </li> \n <li> <p>Weapons: Modern combat knife, occasional axe (personal flair).</p> </li> \n</ul> \n<hr> \n<h2>Notes for Play</h2> \n<ul> \n <li> <p>Brandr is not subtle &mdash; his power lies in presence, loyalty, and raw force.</p> </li> \n <li> <p>His gang functions as Herd and Allies but are also his greatest vulnerability.</p> </li> \n <li> <p>Frenzy triggers: betrayal, insults to loyalty, threats against his crew.</p> </li> \n</ul> \n<hr> \n<p><strong>Summary</strong>:<br><em>Brujah Viking captain, leather-clad outlaw, and firebrand leader. Wields fists, fury, and charisma with equal force. Anchored by loyalty, haunted by centuries, he walks London as both warrior and spark.</em></p>",
+        "gmSecrets": "",
+        "id": 5271202,
+        "imageURL": "https://cdn.midjourney.com/126cb034-7b08-49a3-a376-0c4f914f54fc/0_0.png",
+        "isCloneable": true,
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "Brandr the Captain",
+        "pendingPlayer": "",
+        "player": "espene",
+        "score": 594.6674406182556,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/character/5271202"
+      },
+      "uri": "/campaign/4543909/character/5271202"
+    },
+    {
+      "concept": "Note",
+      "id": 5274634,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "How he might be spoken of by others and by himself",
+        "concept": "Note",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Sep 17 14:37:31 PDT 2025",
+        "dateCreatedUnix": 1758145051426,
+        "dateLastEdited": "Wed Sep 17 14:40:42 PDT 2025",
+        "dateLastEditedUnix": 1758145242815,
+        "description": "<p>Here&rsquo;s <strong>how Brandr might be spoken of by others</strong>, giving him that mythic, street-level presence in both mortal and Kindred circles:</p> \n<hr> \n<h3>🗣️ How Mortals Talk About Him</h3> \n<ul> \n <li> <p><em>&ldquo;That bloke down by the docks? The one with the wolf patch crew? They call him Captain. Don&rsquo;t cross him. Don&rsquo;t even look at him too long.&rdquo;</em></p> </li> \n <li> <p><em>&ldquo;He&rsquo;s into all that Viking shit &mdash; tattoos, runes, the lot. But when he talks, you feel it. Like he believes it, like he lived it.&rdquo;</em></p> </li> \n <li> <p><em>&ldquo;He&rsquo;s not like the other biker bosses. Most of &lsquo;em are loudmouths. Him? He&rsquo;s quiet until he isn&rsquo;t &mdash; and when he snaps, you&rsquo;ll pray you&rsquo;re not in his way.&rdquo;</em></p> </li> \n <li> <p><em>&ldquo;Some say he&rsquo;s a re-enactor, others say he&rsquo;s descended from raiders. All I know is, he fights like a man who&rsquo;s done it before. For real.&rdquo;</em></p> </li> \n</ul> \n<hr> \n<h3>🩸 How Kindred Talk About Him</h3> \n<ul> \n <li> <p><em>&ldquo;The Captain? That one&rsquo;s old. You can smell the salt air on him, like he&rsquo;s been at sea for a thousand years.&rdquo;</em></p> </li> \n <li> <p><em>&ldquo;He&rsquo;s Brujah, no doubt. Quick to anger, quick to inspire. The kind who can rally a mob or tear it apart with his bare hands.&rdquo;</em></p> </li> \n <li> <p><em>&ldquo;Funny thing about him &mdash; he plays at being just another Anarch with a gang, but I&rsquo;ve seen elders listen when he speaks. He has the weight of ages in him.&rdquo;</em></p> </li> \n <li> <p><em>&ldquo;Call him Captain if you like. But don&rsquo;t forget &mdash; he&rsquo;s been waiting to be Jarl for a very, very long time.&rdquo;</em></p> </li> \n</ul> \n<hr> \n<h3>🌊 His Myth in the Streets</h3> \n<p>Among mortals, Brandr is a <strong>whispered legend</strong> &mdash; the &ldquo;Viking biker,&rdquo; the Captain who never loses a fight and always takes care of his crew. Among Kindred, he&rsquo;s a <strong>respected anachronism</strong> &mdash; too stubborn to die, too dangerous to dismiss, and too charismatic to ignore.</p> \n<hr> \n<p>⚡ <strong>Street-Level Impression in Short</strong>:<br><em>To mortals, he&rsquo;s a dangerous outlaw with Viking fire in his blood. To Kindred, he&rsquo;s a relic-warrior with the weight of the old world &mdash; a Captain who might one night finally claim the title of Jarl.</em></p> \n<p>&nbsp;</p> \n<hr> \n<h3>🩸 Brandr&rsquo;s Voice</h3> \n<p><em>\"They call me Captain. Not King, not Jarl &mdash; Captain. I&rsquo;ve been that since the old days, when I took a longship west with thirty men who trusted me with their lives. I was never the one with the crown, but I was the one who brought them home. Loyalty, that&rsquo;s what mattered then. Still does.</em></p> \n<p><em>Now it&rsquo;s bikes instead of ships, concrete instead of sea, but the crew is the same. Men and women who&rsquo;ll bleed with you, stand when the storm hits. That&rsquo;s all I ever wanted &mdash; not thrones, not crowns. Just a crew that holds the line.</em></p> \n<p><em>So hear me clear: I don&rsquo;t care who you kneel to in this city, or what titles you whisper in Elysium. If you break your word, if you betray your own&hellip; you&rsquo;ll answer to me. And I&rsquo;ve been collecting debts a very long time.\"</em></p> \n<hr> \n<p>⚡ Shorter tagline-style version (if you need it for quick flavour):<br><em>&ldquo;Not a king. Not a prince. I am the Captain. Break your oath, and you&rsquo;ll learn what that means.&rdquo;</em></p> \n<p>&nbsp;</p> \n<p>Here&rsquo;s how Brandr might pitch himself to <strong>mortals and his gang</strong>, stripped of the undead politics but still raw, commanding, and magnetic:</p> \n<hr> \n<h3>🔥 Brandr to Mortals / The Oathbound</h3> \n<p><em>\"You can call me Captain. Always have, always will. I don&rsquo;t need a throne, I don&rsquo;t need a crown &mdash; I need people who stand their ground when the world comes swinging. That&rsquo;s the only law I live by: loyalty.</em></p> \n<p><em>The weak buy it with money. The loud shout it with words. Me? I prove it with blood and fire. You ride with me, you fight with me, you bleed with me &mdash; and I&rsquo;ll make damn sure no one touches you without going through me first.</em></p> \n<p><em>So don&rsquo;t talk about family unless you mean it. Don&rsquo;t wear the wolf unless you&rsquo;re ready to bare your teeth. Break your oath, and you&rsquo;re nothing. Keep it, and you&rsquo;ll live forever in the roar of the storm.\"</em></p> \n<hr> \n<p>⚡ Short, street-flavoured tagline:<br><em>&ldquo;Loyalty isn&rsquo;t words. It&rsquo;s blood. You keep your oath, and I&rsquo;ll keep you standing.&rdquo;</em></p> \n<p>&nbsp;</p> \n<p>&nbsp;</p>",
+        "gmSecrets": "",
+        "id": 5274634,
+        "imageURL": "/assets/rf_images/note/54039828_s.jpg",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "Brandr the myth, the lengend, the man",
+        "score": 280.56906970181825,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/note/5274634"
+      },
+      "uri": "/campaign/4543909/note/5274634"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626265,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:48 PDT 2025",
+        "dateCreatedUnix": 1760546868375,
+        "dateLastEdited": "Wed Oct 15 09:47:48 PDT 2025",
+        "dateLastEditedUnix": 1760546868375,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "City",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626265"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5556483,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Character",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:42 PDT 2025",
+        "dateCreatedUnix": 1760546862212,
+        "dateLastEdited": "Wed Oct 15 09:47:42 PDT 2025",
+        "dateLastEditedUnix": 1760546862212,
+        "description": "",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Class",
+        "score": 6,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5556483"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626266,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:48 PDT 2025",
+        "dateCreatedUnix": 1760546868888,
+        "dateLastEdited": "Wed Oct 15 09:47:48 PDT 2025",
+        "dateLastEditedUnix": 1760546868888,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Crime Syndicate",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626266"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5556484,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Place",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:42 PDT 2025",
+        "dateCreatedUnix": 1760546862727,
+        "dateLastEdited": "Wed Oct 15 09:47:42 PDT 2025",
+        "dateLastEditedUnix": 1760546862727,
+        "description": "A common trait people from a particular place have.",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Cultural Trait",
+        "score": 18.588457268119896,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5556484"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5626260,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Event",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:43 PDT 2025",
+        "dateCreatedUnix": 1760546863239,
+        "dateLastEdited": "Wed Oct 15 09:47:43 PDT 2025",
+        "dateLastEditedUnix": 1760546863239,
+        "description": "",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Event Category",
+        "score": 6,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5626260"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626267,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:49 PDT 2025",
+        "dateCreatedUnix": 1760546869403,
+        "dateLastEdited": "Wed Oct 15 09:47:49 PDT 2025",
+        "dateLastEditedUnix": 1760546869403,
+        "description": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Female",
+        "score": 2,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626267"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5625231,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Character",
+        "concept": "Attribute",
+        "dateCreated": "Wed Oct 15 09:47:43 PDT 2025",
+        "dateCreatedUnix": 1760546863755,
+        "dateLastEdited": "Wed Oct 15 09:47:43 PDT 2025",
+        "dateLastEditedUnix": 1760546863755,
+        "description": "",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Gender",
+        "score": 4,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5625231"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5625232,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Group",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:44 PDT 2025",
+        "dateCreatedUnix": 1760546864269,
+        "dateLastEdited": "Wed Oct 15 09:47:44 PDT 2025",
+        "dateLastEditedUnix": 1760546864269,
+        "description": "",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Group Category",
+        "score": 6,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5625232"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5625233,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Item",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:44 PDT 2025",
+        "dateCreatedUnix": 1760546864783,
+        "dateLastEdited": "Wed Oct 15 09:47:44 PDT 2025",
+        "dateLastEditedUnix": 1760546864783,
+        "description": "",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Item Category",
+        "score": 6,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5625233"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5625234,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Character",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:45 PDT 2025",
+        "dateCreatedUnix": 1760546865295,
+        "dateLastEdited": "Wed Oct 15 09:47:45 PDT 2025",
+        "dateLastEditedUnix": 1760546865295,
+        "description": "Languages a Character can speak.",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Language",
+        "score": 13.031104574646331,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5625234"
+    },
+    {
+      "concept": "Place",
+      "id": 4543860,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:34:47 PDT 2025",
+        "dateCreatedUnix": 1741530887110,
+        "dateLastEdited": "Sun Mar 09 07:34:47 PDT 2025",
+        "dateLastEditedUnix": 1741530887110,
+        "isSecret": false,
+        "name": "London",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/place/4543860"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626268,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "A category of the gender attribute",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:49 PDT 2025",
+        "dateCreatedUnix": 1760546869916,
+        "dateLastEdited": "Wed Oct 15 09:47:49 PDT 2025",
+        "dateLastEditedUnix": 1760546869916,
+        "description": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Male",
+        "score": 4,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626268"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626269,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:50 PDT 2025",
+        "dateCreatedUnix": 1760546870429,
+        "dateLastEdited": "Wed Oct 15 09:47:50 PDT 2025",
+        "dateLastEditedUnix": 1760546870429,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "NPC",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626269"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626276,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:50 PDT 2025",
+        "dateCreatedUnix": 1760546870942,
+        "dateLastEdited": "Wed Oct 15 09:47:50 PDT 2025",
+        "dateLastEditedUnix": 1760546870942,
+        "description": "",
+        "isAtt": false,
+        "isSecret": false,
+        "largeImageURL": "",
+        "name": "PC",
+        "score": 2,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626276"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5626261,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Place",
+        "concept": "Attribute",
+        "dateCreated": "Wed Oct 15 09:47:45 PDT 2025",
+        "dateCreatedUnix": 1760546865808,
+        "dateLastEdited": "Wed Oct 15 09:47:45 PDT 2025",
+        "dateLastEditedUnix": 1760546865808,
+        "description": "",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Place Category",
+        "score": 4,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5626261"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5626262,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Character",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:46 PDT 2025",
+        "dateCreatedUnix": 1760546866321,
+        "dateLastEdited": "Wed Oct 15 09:47:46 PDT 2025",
+        "dateLastEditedUnix": 1760546866321,
+        "description": "",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Race",
+        "score": 6,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5626262"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5625801,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:51 PDT 2025",
+        "dateCreatedUnix": 1760546871455,
+        "dateLastEdited": "Wed Oct 15 09:47:51 PDT 2025",
+        "dateLastEditedUnix": 1760546871455,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Religion",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5625801"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5626263,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "An attribute of Character",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:46 PDT 2025",
+        "dateCreatedUnix": 1760546866835,
+        "dateLastEdited": "Wed Oct 15 09:47:46 PDT 2025",
+        "dateLastEditedUnix": 1760546866835,
+        "description": "For example, PC, NPC, Animal Companion, Monster",
+        "imageURL": "/images/DefaultAttribute1.webp",
+        "isAtt": true,
+        "isSecret": false,
+        "name": "Role",
+        "score": 15.910551211976552,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5626263"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5626270,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:51 PDT 2025",
+        "dateCreatedUnix": 1760546871969,
+        "dateLastEdited": "Wed Oct 15 09:47:51 PDT 2025",
+        "dateLastEditedUnix": 1760546871969,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Session Log",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5626270"
+    },
+    {
+      "concept": "Place",
+      "id": 4543941,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:34:21 PDT 2025",
+        "dateCreatedUnix": 1741530861151,
+        "dateLastEdited": "Sun Mar 09 07:34:21 PDT 2025",
+        "dateLastEditedUnix": 1741530861151,
+        "isSecret": false,
+        "name": "Southbank",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/place/4543941"
+    },
+    {
+      "concept": "Place",
+      "id": 4543942,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:34:31 PDT 2025",
+        "dateCreatedUnix": 1741530871477,
+        "dateLastEdited": "Sun Mar 09 07:34:31 PDT 2025",
+        "dateLastEditedUnix": 1741530871477,
+        "isSecret": false,
+        "name": "The British Empire",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/place/4543942"
+    },
+    {
+      "concept": "Group",
+      "id": 4543917,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:35:01 PDT 2025",
+        "dateCreatedUnix": 1741530901087,
+        "dateLastEdited": "Sun Mar 09 07:35:01 PDT 2025",
+        "dateLastEditedUnix": 1741530901087,
+        "isSecret": false,
+        "name": "The Camarilla",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/group/4543917"
+    },
+    {
+      "concept": "Event",
+      "id": 4543861,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Event",
+        "customDateBegin": "{\"year\":2012}",
+        "customDateEnd": "{}",
+        "dateCreated": "Sun Mar 09 07:34:54 PDT 2025",
+        "dateCreatedUnix": 1741530894599,
+        "dateLastEdited": "Sun Mar 09 07:37:43 PDT 2025",
+        "dateLastEditedUnix": 1741531063179,
+        "description": "",
+        "gmSecrets": "",
+        "id": 4543861,
+        "imageURL": "/assets/rf_images/event/30118617_s_1.jpg",
+        "isBiggerImage": "33",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "The Conclave of Prague",
+        "score": 2,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/event/4543861"
+      },
+      "uri": "/campaign/4543909/event/4543861"
+    },
+    {
+      "concept": "Group",
+      "id": 5271180,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Group",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Sep 17 14:13:24 PDT 2025",
+        "dateCreatedUnix": 1758143604838,
+        "dateLastEdited": "Wed Sep 17 14:55:51 PDT 2025",
+        "dateLastEditedUnix": 1758146151916,
+        "description": "",
+        "gmSecrets": "",
+        "id": 5271180,
+        "imageURL": "/assets/rf_images/group/121513479_s.jpg",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "The Coterie",
+        "score": 2,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/group/5271180"
+      },
+      "uri": "/campaign/4543909/group/5271180"
+    },
+    {
+      "concept": "Event",
+      "id": 4543963,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:33:32 PDT 2025",
+        "dateCreatedUnix": 1741530812045,
+        "dateLastEdited": "Sun Mar 09 07:33:32 PDT 2025",
+        "dateLastEditedUnix": 1741530812045,
+        "isSecret": false,
+        "name": "The Fall of London",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/event/4543963"
+    },
+    {
+      "concept": "Group",
+      "id": 5274040,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "A modern outlaw biker gang with Viking flair. The Oathbound are half-gang, half-cult — loyal to Brandr as their Captain",
+        "concept": "Group",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Sep 17 14:19:26 PDT 2025",
+        "dateCreatedUnix": 1758143966024,
+        "dateLastEdited": "Wed Sep 17 14:30:51 PDT 2025",
+        "dateLastEditedUnix": 1758144651088,
+        "description": "<h1>⚓ Brandr&rsquo;s Crew: The Oathbound</h1> \n<p><strong>Theme</strong>: A modern outlaw biker gang with Viking flair. The Oathbound are half-gang, half-cult &mdash; loyal to Brandr as their Captain, and infused with Norse myth and imagery. To mortals, they are a rough band of bikers; to Kindred, they are a living reflection of a Brujah Viking&rsquo;s need for loyalty, battle, and fire.</p> \n<hr> \n<h2>🔥 The Inner Circle &mdash; <em>The Oathbound Proper</em></h2> \n<p>Brandr&rsquo;s closest companions, treated as a modern longship crew:</p> \n<ul> \n <li> <p><strong>Skald (Jamie Kerr)</strong><br><em>Role</em>: Storyteller and hype-man. Runs social media, curates music, spins tales of Brandr&rsquo;s glory.<br><em>Look</em>: Lean, tattooed, sharp-tongued, always with a phone in hand.<br><em>Function</em>: Turns Brandr into a legend among mortals.</p> </li> \n <li> <p><strong>Bear (Connor Doyle)</strong><br><em>Role</em>: Muscle and enforcer.<br><em>Look</em>: Huge, bald, covered in tattoos; terrifying in a fight, soft-spoken in private.<br><em>Function</em>: The shieldman, Brandr&rsquo;s most loyal protector.</p> </li> \n <li> <p><strong>Witch (Sasha Mikelson)</strong><br><em>Role</em>: Occultist and spiritualist.<br><em>Look</em>: Gothic-pagan, ritual scars, always surrounded by incense.<br><em>Function</em>: Dabbles in Norse rites and magic, giving the gang spiritual depth.</p> </li> \n <li> <p><strong>Rat (Lewis Harker)</strong><br><em>Role</em>: Scavenger and fixer.<br><em>Look</em>: Scrawny, twitchy, always chewing gum, a streetwise hustler.<br><em>Function</em>: Secures bikes, weapons, safehouses, and information.</p> </li> \n <li> <p><strong>Shieldmaiden (Kelly Grant)</strong><br><em>Role</em>: Second-in-command, fiercely loyal lieutenant.<br><em>Look</em>: Tattooed, strong, sharp-eyed; leather jacket adorned with runes.<br><em>Function</em>: Brandr&rsquo;s right hand, future ghoul or Embrace candidate.</p> </li> \n</ul> \n<hr> \n<h2>⚓ The Outer Circle &mdash; <em>The Deckhands</em></h2> \n<p>Mortals who orbit the gang, providing resources, admiration, and cover:</p> \n<ul> \n <li> <p><strong>Hangarounds</strong>: Young bikers and street punks desperate for recognition. Run errands and prove loyalty.</p> </li> \n <li> <p><strong>Enthusiasts</strong>: Viking reenactors, neo-pagans, and history buffs drawn to the crew&rsquo;s imagery. They see Brandr as living heritage.</p> </li> \n <li> <p><strong>Sympathisers</strong>: Bartenders, mechanics, and small-time criminals who support the gang for protection or profit.</p> </li> \n</ul> \n<hr> \n<h2>🌊 The Fringe &mdash; <em>The Wake</em></h2> \n<p>The broader following, more fanbase than gang:</p> \n<ul> \n <li> <p><strong>Festival Fans</strong>: Admirers from fairs, fight reenactments, or Skald&rsquo;s online presence.</p> </li> \n <li> <p><strong>Romantics</strong>: Lovers and admirers swept up by the outlaw myth.</p> </li> \n <li> <p><strong>Wannabes</strong>: People who wear wolf patches or Norse tattoos to signal affiliation, though they&rsquo;re not true members.</p> </li> \n</ul> \n<hr> \n<h2>🪓 Symbols &amp; Identity</h2> \n<ul> \n <li> <p><strong>Name</strong>: <em>The Oathbound</em> &mdash; loyalty above all.</p> </li> \n <li> <p><strong>Patch/Symbol</strong>: A wolf&rsquo;s head with crossed axes.</p> </li> \n <li> <p><strong>Territory</strong>: Old warehouses and pubs near the Thames, with influence stretching into East London.</p> </li> \n <li> <p><strong>Activities</strong>: Smuggling, protection rackets, biker runs, reenactment festivals as cover, underground fights.</p> </li> \n</ul> \n<hr> \n<h2>🎭 Function in Play</h2> \n<ul> \n <li> <p><strong>Feeding Ground</strong>: Provides a steady flow of mortals for Brandr&rsquo;s Hunger, framed as loyalty rituals.</p> </li> \n <li> <p><strong>Muscle</strong>: Ready to back Brandr or the coterie in street-level conflicts.</p> </li> \n <li> <p><strong>Weak Spot</strong>: Their numbers and visibility draw attention from rivals, police, or hunters.</p> </li> \n <li> <p><strong>Story Hooks</strong>: Witch&rsquo;s occult dabbling, Shieldmaiden&rsquo;s ambition for Embrace, Skald&rsquo;s media drawing too much heat.</p> </li> \n</ul> \n<h3>🩸 What They Believe</h3> \n<ul> \n <li> <p>They call Brandr &ldquo;Captain,&rdquo; believing he&rsquo;s just a charismatic, half-mad outlaw with deep Viking obsession.</p> </li> \n <li> <p>Skald spreads the myth that he&rsquo;s descended from raiders, which everyone half-believes.</p> </li> \n <li> <p>Witch whispers that he&rsquo;s more than mortal &mdash; Brandr neither confirms nor denies.</p> </li> \n</ul> \n<hr> \n<h3>🪓 Gang Structure</h3> \n<ul> \n <li> <p><strong>Symbol</strong>: A wolf&rsquo;s head with crossed axes (painted on jackets and bikes).</p> </li> \n <li> <p><strong>Territory</strong>: Old warehouses and pubs by the Thames, with routes into East London.</p> </li> \n <li> <p><strong>Activities</strong>: Low-level smuggling, &ldquo;protection&rdquo; rackets, reenactment festivals as cover, occasional underground fights.</p> </li> \n</ul> \n<hr> \n<p>👉 In gameplay, they&rsquo;re not just flavour &mdash; they give Brandr:</p> \n<ul> \n <li> <p><strong>Feeding ground</strong> (Osiris Predator Type).</p> </li> \n <li> <p><strong>Muscle</strong> for physical conflict.</p> </li> \n <li> <p><strong>Weak spot</strong> (threats to his &ldquo;crew&rdquo; are Frenzy triggers).</p> </li> \n <li> <p><strong>Story hooks</strong> (Witch dabbling in real occult, Shieldmaiden demanding Embrace, Skald attracting police or press attention).</p> </li> \n</ul> \n<hr> \n<p><strong>Summary</strong>:<br><em>The Oathbound are more than a gang &mdash; they are Brandr&rsquo;s modern warband. With a tight inner circle and a wider orbit of followers, they are both his strength and his greatest vulnerability, reflecting the eternal struggle of loyalty, fire, and rebellion that defines a Brujah Viking Captain.</em></p>",
+        "gmSecrets": "",
+        "id": 5274040,
+        "imageURL": "https://cdn.midjourney.com/876767ac-552d-4728-be19-8feb5d48f1db/0_1.png",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "The Oathbound",
+        "score": 412.5790633399177,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/group/5274040"
+      },
+      "uri": "/campaign/4543909/group/5274040"
+    },
+    {
+      "concept": "Event",
+      "id": 4543983,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Event",
+        "customDateBegin": "{\"year\":2021}",
+        "customDateEnd": "{}",
+        "dateCreated": "Sun Mar 09 07:34:38 PDT 2025",
+        "dateCreatedUnix": 1741530878970,
+        "dateLastEdited": "Sun Mar 09 07:38:23 PDT 2025",
+        "dateLastEditedUnix": 1741531103157,
+        "description": "",
+        "gmSecrets": "",
+        "id": 4543983,
+        "imageURL": "/assets/rf_images/event/30118617_s_1.jpg",
+        "isBiggerImage": "33",
+        "isSecret": false,
+        "isTemplate": false,
+        "largeImageURL": "",
+        "name": "The Second Convention of Prague",
+        "score": 2,
+        "secrets": "",
+        "stats_isSecret": "n.stats-isSecret",
+        "uri": "/campaign/4543909/event/4543983"
+      },
+      "uri": "/campaign/4543909/event/4543983"
+    },
+    {
+      "concept": "Event",
+      "id": 4543965,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:33:40 PDT 2025",
+        "dateCreatedUnix": 1741530820452,
+        "dateLastEdited": "Sun Mar 09 07:33:40 PDT 2025",
+        "dateLastEditedUnix": 1741530820452,
+        "isSecret": false,
+        "name": "The Second Inquisition",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/event/4543965"
+    },
+    {
+      "concept": "Event",
+      "id": 4543964,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:33:39 PDT 2025",
+        "dateCreatedUnix": 1741530819791,
+        "dateLastEdited": "Sun Mar 09 07:33:39 PDT 2025",
+        "dateLastEditedUnix": 1741530819791,
+        "isSecret": false,
+        "name": "The Second Inquisition",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/event/4543964"
+    },
+    {
+      "concept": "Place",
+      "id": 4543940,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:34:11 PDT 2025",
+        "dateCreatedUnix": 1741530851079,
+        "dateLastEdited": "Sun Mar 09 07:34:11 PDT 2025",
+        "dateLastEditedUnix": 1741530851079,
+        "isSecret": false,
+        "name": "The Strand",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/place/4543940"
+    },
+    {
+      "concept": "Character",
+      "id": 4543862,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:35:40 PDT 2025",
+        "dateCreatedUnix": 1741530940101,
+        "dateLastEdited": "Sun Mar 09 07:35:40 PDT 2025",
+        "dateLastEditedUnix": 1741530940101,
+        "isSecret": false,
+        "name": "The Toreador Anna Hyde of the Queen's Knights",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/character/4543862"
+    },
+    {
+      "concept": "Group",
+      "id": 4543984,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "dateCreated": "Sun Mar 09 07:35:21 PDT 2025",
+        "dateCreatedUnix": 1741530921648,
+        "dateLastEdited": "Sun Mar 09 07:35:21 PDT 2025",
+        "dateLastEditedUnix": 1741530921648,
+        "isSecret": false,
+        "name": "The Vampire Club",
+        "score": 2
+      },
+      "uri": "/campaign/4543909/group/4543984"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5556485,
+      "isGoldStar": false,
+      "page": {
+        "briefSummary": "",
+        "concept": "CCategory",
+        "dateCreated": "Wed Oct 15 09:47:52 PDT 2025",
+        "dateCreatedUnix": 1760546872482,
+        "dateLastEdited": "Wed Oct 15 09:47:52 PDT 2025",
+        "dateLastEditedUnix": 1760546872482,
+        "description": "",
+        "imageURL": "",
+        "isAtt": false,
+        "isSecret": false,
+        "name": "Town",
+        "score": 4,
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5556485"
+    },
+    {
+      "concept": "CCategory",
+      "id": 5625208,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Category",
+        "dateCreated": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateCreatedUnix": 1760546891422,
+        "dateLastEdited": "Wed Oct 15 09:48:11 PDT 2025",
+        "dateLastEditedUnix": 1760546891422,
+        "description": "<p>The vampires of Ixalan are similar to the classic tales of the immortal undead. Unlike their counterparts in other realms, however, these creatures are not bound only to nighttime roaming.</p>",
+        "gmSecrets": "",
+        "imageURL": "",
+        "isBiggerImage": "false",
+        "isSecret": false,
+        "isUpdateSilently": true,
+        "jsonStr": "{\"wf\": {\n    \"briefSummary\": \"Creatures of the Night\",\n    \"catSlug\": \"vampire\",\n    \"description\": \"Vampires are immortal beings who feed on the blood of the living. They possess supernatural strength, speed, and glamour, and are often depicted as seductive and alluring. In RPGs, vampires are a popular choice for players who want to explore themes of power, immortality, and morality.\",\n    \"genre\": {\n        \"cyberpunk\": {\n            \"description\": \"In cyberpunk RPGs, vampires are often portrayed as powerful and influential figures in the world of high-tech corporations and underground organizations. They may possess advanced cybernetic enhancements or control vast networks of information.\",\n            \"prevalence\": \"Common\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Victorian\",\n                        \"Roaring Twenties\",\n                        \"1980s Punk\",\n                        \"Futuristic\",\n                        \"Medieval\"\n                    ],\n                    \"prompt\": \"What era most influences your Vampire's style and personality?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Power\",\n                        \"Knowledge\",\n                        \"Revenge\",\n                        \"Immortality\",\n                        \"Adventure\"\n                    ],\n                    \"prompt\": \"What is your Vampire's primary motivation?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Urban Streets\",\n                        \"Gothic Mansions\",\n                        \"Underground Nightclubs\",\n                        \"Industrial Complexes\",\n                        \"Neon-lit Rooftops\"\n                    ],\n                    \"prompt\": \"What environment do they prefer to lurk in?\"\n                }\n            ]\n        },\n        \"fantasy\": {\n            \"description\": \"In fantasy settings, vampires are often portrayed as ancient and powerful beings, with connections to magic and the supernatural. They may be rulers of dark kingdoms or feared enemies of the light.\",\n            \"prevalence\": \"Common\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Noble\",\n                        \"Peasant\",\n                        \"Warrior\",\n                        \"Scholar\",\n                        \"Artist\"\n                    ],\n                    \"prompt\": \"What type of human was your Vampire before they turned?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Draining blood directly from the victim\",\n                        \"Manipulating the victim's emotions to willingly give blood\",\n                        \"Using mind control to force the victim to give blood\",\n                        \"Tricking the victim into drinking the Vampire's blood\",\n                        \"Feeding on animals instead of humans\"\n                    ],\n                    \"prompt\": \"What is your Vampire's preferred method of feeding?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Less than 100 years old\",\n                        \"Between 100 and 500 years old\",\n                        \"Between 500 and 1000 years old\",\n                        \"More than 1000 years old\",\n                        \"Eternally old, as they are the first Vampire\"\n                    ],\n                    \"prompt\": \"How old is your Vampire?\"\n                }\n            ]\n        },\n        \"horror\": {\n            \"description\": \"Horror RPGs featuring vampires often focus on the terror and fear that these creatures inspire. They may be monstrous and bloodthirsty, or cunning and manipulative, but in either case, they are a force to be reckoned with.\",\n            \"prevalence\": \"Ubiquitous\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Ancient Egyptian\",\n                        \"Eastern European\",\n                        \"Far Eastern\",\n                        \"Mediterranean\",\n                        \"Nordic\"\n                    ],\n                    \"prompt\": \"What is the origin of your Vampire's lineage?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Charismatic\",\n                        \"Brooding\",\n                        \"Cruel\",\n                        \"Mysterious\",\n                        \"Seductive\"\n                    ],\n                    \"prompt\": \"What is the primary personality trait of your Vampire?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Urban alleyways\",\n                        \"Gothic castles\",\n                        \"Dense forests\",\n                        \"Bustling nightclubs\",\n                        \"Secluded graveyards\"\n                    ],\n                    \"prompt\": \"What is your Vampire's preferred hunting ground?\"\n                }\n            ]\n        },\n        \"modern-spy\": {\n            \"description\": \"In modern-spy RPGs, vampires often play the role of shadowy conspirators, pulling the strings from the shadows. They possess advanced technology and influence in high society, making them formidable opponents for the players.\",\n            \"prevalence\": \"Uncommon\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Cunning\",\n                        \"Charismatic\",\n                        \"Ruthless\",\n                        \"Mysterious\",\n                        \"Sophisticated\"\n                    ],\n                    \"prompt\": \"What is your Vampire's predominant personality trait?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Victorian\",\n                        \"Renaissance\",\n                        \"Ancient Roman\",\n                        \"Medieval\",\n                        \"20th Century\"\n                    ],\n                    \"prompt\": \"What era is most influential to your Vampire's personal history?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Manipulation\",\n                        \"Seduction\",\n                        \"Stealth\",\n                        \"Direct Confrontation\",\n                        \"Technology Hacking\"\n                    ],\n                    \"prompt\": \"What is your Vampire's preferred method of operation in espionage?\"\n                }\n            ]\n        },\n        \"pulp-fiction\": {\n            \"description\": \"Pulp-fiction RPGs often feature vampires as larger-than-life villains, with exaggerated abilities and personalities. They may be the masterminds behind nefarious plots or the ultimate challenge for the daring heroes.\",\n            \"prevalence\": \"Rare\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Medieval\",\n                        \"Renaissance\",\n                        \"Victorian\",\n                        \"Edwardian\",\n                        \"Modern\"\n                    ],\n                    \"prompt\": \"What era does your Vampire originate from?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Gothic mansion\",\n                        \"Urban cityscape\",\n                        \"Ancient castle\",\n                        \"Forgotten forest\",\n                        \"Seaside cliff\"\n                    ],\n                    \"prompt\": \"What is your Vampire's preferred setting?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Charismatic\",\n                        \"Brooding\",\n                        \"Manipulative\",\n                        \"Mysterious\",\n                        \"Savage\"\n                    ],\n                    \"prompt\": \"What is your Vampire's dominant personality trait?\"\n                }\n            ]\n        },\n        \"sci-fi\": {\n            \"description\": \"In sci-fi RPGs, vampires are often depicted as alien beings with advanced technology and abilities. They may be invaders from another world or a hidden society within human civilization.\",\n            \"prevalence\": \"Uncommon\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Charismatic\",\n                        \"Brooding\",\n                        \"Ruthless\",\n                        \"Mysterious\",\n                        \"Intellectual\"\n                    ],\n                    \"prompt\": \"What is the primary personality trait of your vampire?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Medieval\",\n                        \"Victorian\",\n                        \"Renaissance\",\n                        \"Roaring Twenties\",\n                        \"Cyberpunk Future\"\n                    ],\n                    \"prompt\": \"What era is your vampire originally from?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Revenge\",\n                        \"Immortality\",\n                        \"Power\",\n                        \"Redemption\",\n                        \"Knowledge\"\n                    ],\n                    \"prompt\": \"What is your vampire's motivation or goal?\"\n                }\n            ]\n        },\n        \"supers\": {\n            \"description\": \"In supers RPGs, vampires are often depicted as super-powered beings with a thirst for domination. They may possess a wide range of abilities, from shape-shifting to mind control, making them formidable opponents for even the strongest of heroes.\",\n            \"prevalence\": \"Rare\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Hypnotic gaze\",\n                        \"Shadow manipulation\",\n                        \"Telekinesis\",\n                        \"Shape-shifting\",\n                        \"Supernatural speed\"\n                    ],\n                    \"prompt\": \"What is your Vampire's primary ability or power?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Revenge\",\n                        \"Immortality\",\n                        \"Knowledge\",\n                        \"Power\",\n                        \"Redemption\"\n                    ],\n                    \"prompt\": \"What is your Vampire's primary motivation or goal?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Victorian\",\n                        \"Renaissance\",\n                        \"Medieval\",\n                        \"Ancient Roman\",\n                        \"Modern\"\n                    ],\n                    \"prompt\": \"Which era does your Vampire primarily identify with?\"\n                }\n            ]\n        },\n        \"western\": {\n            \"description\": \"In western RPGs, vampires are often portrayed as outlaws and bandits, using their supernatural abilities to terrorize the old frontier. They may be lone predators or part of a larger gang, but in either case, they are a dangerous threat to the players.\",\n            \"prevalence\": \"Uncommon\",\n            \"prompts\": [\n                {\n                    \"possibleAnswers\": [\n                        \"Transylvanian Highlands\",\n                        \"Cajun Bayous\",\n                        \"Spanish Missions\",\n                        \"Dusty Frontier Towns\",\n                        \"Old European Villages\"\n                    ],\n                    \"prompt\": \"What is your Vampire's origin or place of birth?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Seduction\",\n                        \"Ambush\",\n                        \"Stalking\",\n                        \"Illusions and Trickery\",\n                        \"Intimidation\"\n                    ],\n                    \"prompt\": \"What is your Vampire's preferred method of hunting?\"\n                },\n                {\n                    \"possibleAnswers\": [\n                        \"Charismatic\",\n                        \"Cunning\",\n                        \"Ruthless\",\n                        \"Melancholic\",\n                        \"Reclusive\"\n                    ],\n                    \"prompt\": \"What is your Vampire's dominant personality trait?\"\n                }\n            ]\n        }\n    },\n    \"name\": \"Vampire\"\n}}",
+        "largeImageURL": "",
+        "name": "Vampire",
+        "score": 27.637220383774043,
+        "secrets": "",
+        "stats_isSecret": "cat.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/ccategory/5625208"
+    },
+    {
+      "concept": "Attribute",
+      "id": 5626264,
+      "isGoldStar": false,
+      "page": {
+        "aliases": "",
+        "briefSummary": "",
+        "concept": "Attribute",
+        "customDateBegin": "{}",
+        "customDateEnd": "{}",
+        "dateCreated": "Wed Oct 15 09:47:47 PDT 2025",
+        "dateCreatedUnix": 1760546867348,
+        "dateLastEdited": "Wed Oct 15 09:47:47 PDT 2025",
+        "dateLastEditedUnix": 1760546867348,
+        "description": "",
+        "gmSecrets": "",
+        "isAtt": true,
+        "isSecret": false,
+        "isTemplate": false,
+        "name": "Vehicle Type",
+        "score": 2,
+        "secrets": "",
+        "silent": true,
+        "stats_isSecret": "m.stats-isSecret"
+      },
+      "uri": "/campaign/4543909/attribute/5626264"
+    }
+  ]
+}

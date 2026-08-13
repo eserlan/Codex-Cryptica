@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   buildVaultContext,
+  detectVaultLanguages,
+  findSingleQuestHook,
   latestTemporalYear,
+  suggestPrimaryLanguageId,
 } from "./generator-vault-context";
 import type { Entity } from "schema";
 
@@ -41,6 +44,40 @@ describe("latestTemporalYear", () => {
     const a = entity({ id: "a", title: "A", type: "character" });
     expect(latestTemporalYear({ a })).toBeUndefined();
     expect(latestTemporalYear({})).toBeUndefined();
+  });
+});
+
+describe("findSingleQuestHook", () => {
+  it("returns the only quest-generator entry in memory", () => {
+    const hook = entity({
+      id: "quest-1",
+      title: "The Silent Bell",
+      type: "event",
+      labels: ["rpg-quest", "quest-generator"],
+    });
+    expect(findSingleQuestHook({ hook })).toBe(hook);
+  });
+
+  it("returns undefined when there are zero or multiple quest hooks", () => {
+    const first = entity({
+      id: "quest-1",
+      title: "First",
+      type: "event",
+      labels: ["quest-generator"],
+    });
+    const second = entity({
+      id: "quest-2",
+      title: "Second",
+      type: "event",
+      labels: ["rpg-quest"],
+    });
+    expect(findSingleQuestHook({})).toBeUndefined();
+    expect(findSingleQuestHook({ first, second })).toBeUndefined();
+  });
+
+  it("does not classify an ordinary event as a quest hook", () => {
+    const event = entity({ id: "event-1", title: "Festival", type: "event" });
+    expect(findSingleQuestHook({ event })).toBeUndefined();
   });
 });
 
@@ -120,6 +157,62 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     const n = ctx.neighbors.find((e) => e.id === "n1");
     expect(n?.contentExcerpt.length).toBeLessThanOrEqual(304);
+  });
+
+  it("truncates prose at the last complete sentence boundary, not mid-sentence", () => {
+    // Two short sentences, then a long run-on well past the 300-char excerpt
+    // cap — the excerpt must end after "second sentence." (a real sentence
+    // boundary within the limit), never mid-word/mid-sentence into the run-on.
+    const prose =
+      "This is the first sentence. This is the second sentence. " +
+      "This is a very long run-on sentence that goes on and on ".repeat(6) +
+      "and finally ends.";
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const neighbor = entity({
+      id: "n1",
+      title: "Big",
+      type: "character",
+      content: prose,
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, n1: neighbor },
+      connectedIds: new Set(["n1"]),
+    });
+    const excerpt = ctx.neighbors.find((e) => e.id === "n1")?.contentExcerpt;
+    expect(excerpt).toBe(
+      "This is the first sentence. This is the second sentence.",
+    );
+    expect(excerpt?.endsWith("sentence.")).toBe(true);
+    expect(excerpt).not.toContain("…");
+  });
+
+  it("falls back to a word boundary (not a sentence one) for a single long run-on with no earlier break", () => {
+    const words = Array.from({ length: 100 }, (_, i) => `word${i}`).join(" ");
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const neighbor = entity({
+      id: "n1",
+      title: "Big",
+      type: "character",
+      content: words,
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, n1: neighbor },
+      connectedIds: new Set(["n1"]),
+    });
+    const excerpt = ctx.neighbors.find((e) => e.id === "n1")?.contentExcerpt;
+    expect(excerpt?.endsWith("…")).toBe(true);
+    const withoutEllipsis = excerpt!.slice(0, -1);
+    // The cut must land exactly on a word boundary in the source text — the
+    // character immediately after it in the original is a space, proving no
+    // word was sliced mid-token.
+    expect(words.startsWith(withoutEllipsis)).toBe(true);
+    expect(words[withoutEllipsis.length]).toBe(" ");
   });
 
   it("keeps a generous source excerpt but caps extreme length", () => {
@@ -329,5 +422,165 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(sampleIds).not.toContain("src");
     expect(sampleIds).not.toContain("n1");
     expect(sampleIds).toContain("o1");
+  });
+
+  it("detects structured and legacy languages without selecting either", () => {
+    const lang1 = entity({
+      id: "l1",
+      title: "Elvish",
+      type: "note",
+      kind: "language",
+      languageProfileVersion: 1,
+      languageProfile: {
+        inputs: {
+          genre: "Fantasy",
+          tone: "Lyrical",
+          role: "Common Speech",
+          structure: "Suffix-heavy",
+        },
+        phonology: {
+          consonants: ["l"],
+          vowels: ["e"],
+          phonotactics: ["CV"],
+        },
+        naming: {
+          examples: [{ name: "Ela", meaning: "light", use: "person" }],
+        },
+        lexicon: [{ word: "el", pronunciation: "ELL", meaning: "light" }],
+        grammar: {
+          examples: [
+            {
+              text: "El na",
+              pronunciation: "ELL nah",
+              translation: "Light comes",
+            },
+          ],
+        },
+        register: { role: "Common Speech" },
+        tableUseTips: ["Use open vowels."],
+      },
+    });
+    const lang2 = entity({
+      id: "l2",
+      title: "Dwarvish",
+      type: "custom-cat-id",
+    });
+    const other = entity({ id: "o1", title: "Commoner", type: "character" });
+
+    const languageCategories = [
+      ...categories,
+      { id: "custom-cat-id", label: "Language" },
+    ];
+    const languages = detectVaultLanguages(
+      { l1: lang1, l2: lang2, o1: other },
+      languageCategories,
+    );
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: languageCategories,
+      allEntities: { l1: lang1, l2: lang2, o1: other },
+    });
+
+    expect(languages).toEqual([
+      { id: "l2", title: "Dwarvish", structured: false, legacy: true },
+      { id: "l1", title: "Elvish", structured: true, legacy: false },
+    ]);
+    expect(ctx.selectedLanguage).toBeUndefined();
+    expect(ctx.includedContext).not.toContain("languages");
+  });
+
+  it("includes only the explicitly selected structured language", () => {
+    const selected = entity({
+      id: "l1",
+      title: "Elvish",
+      type: "note",
+      kind: "language",
+      languageProfileVersion: 1,
+      languageProfile: {
+        inputs: {
+          genre: "Fantasy",
+          tone: "Lyrical",
+          role: "Common Speech",
+          structure: "Suffix-heavy",
+        },
+        phonology: {
+          consonants: ["l"],
+          vowels: ["e"],
+          phonotactics: ["CV"],
+        },
+        naming: {
+          examples: [{ name: "Ela", meaning: "light", use: "person" }],
+        },
+        lexicon: [{ word: "el", pronunciation: "ELL", meaning: "light" }],
+        grammar: {
+          examples: [
+            {
+              text: "El na",
+              pronunciation: "ELL nah",
+              translation: "Light comes",
+            },
+          ],
+        },
+        register: { role: "Common Speech" },
+        tableUseTips: ["Use open vowels."],
+      },
+    });
+    const other = entity({
+      id: "l2",
+      title: "Dwarvish",
+      type: "note",
+      kind: "language",
+      lore: "Legacy naming notes.",
+    });
+
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities: { l1: selected, l2: other },
+      primaryLanguageId: "l1",
+    });
+
+    expect(ctx.selectedLanguage?.id).toBe("l1");
+    expect(ctx.selectedLanguage?.legacy).toBe(false);
+    expect(ctx.selectedLanguage?.languageProfile?.lexicon[0].word).toBe("el");
+    expect(ctx.includedContext).toContain("languages");
+  });
+
+  it("keeps an explicitly selected legacy language readable-only", () => {
+    const legacy = entity({
+      id: "l1",
+      title: "Old Speech",
+      type: "note",
+      kind: "language",
+      lore: "Names end in -ar.",
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities: { l1: legacy },
+      primaryLanguageId: "l1",
+    });
+
+    expect(ctx.selectedLanguage?.legacy).toBe(true);
+    expect(ctx.selectedLanguage?.languageProfile).toBeUndefined();
+    expect(ctx.selectedLanguage?.loreExcerpt).toContain("Names end in -ar");
+  });
+
+  it("suggests a connected language without selecting it", () => {
+    const source = entity({
+      id: "c1",
+      title: "Hero",
+      type: "character",
+    });
+    const languages = [
+      { id: "l1", title: "Elvish", structured: true, legacy: false },
+    ];
+
+    expect(suggestPrimaryLanguageId(languages, source, new Set(["l1"]))).toBe(
+      "l1",
+    );
+    expect(
+      suggestPrimaryLanguageId(languages, source, new Set()),
+    ).toBeUndefined();
   });
 });

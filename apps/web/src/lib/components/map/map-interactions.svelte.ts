@@ -2,6 +2,9 @@ import { mapStore } from "../../stores/map.svelte";
 import { mapSession } from "../../stores/map-session.svelte";
 import {
   getKeyboardViewportUpdate,
+  getPinchDistance,
+  getPinchMidpoint,
+  getZoomAtPointUpdate,
   getZoomViewportUpdate,
   isClickGesture,
   shouldIgnoreMapKeyboardEvent,
@@ -14,11 +17,14 @@ import {
 } from "./interactions/map-interaction-handler-factory";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
+type MapInputEvent = MouseEvent | PointerEvent;
+
 export class MapInteractionManager {
   painter: MapFogPainter;
   getContainer: () => HTMLElement | null;
   tokenSelection!: MapInteractionHandlers["tokenSelection"];
   tokenDrag!: MapInteractionHandlers["tokenDrag"];
+  tokenRotation!: MapInteractionHandlers["tokenRotation"];
   pinInteractions!: MapInteractionHandlers["pinInteractions"];
   gridInteractions!: MapInteractionHandlers["gridInteractions"];
   measurementInteractions!: MapInteractionHandlers["measurementInteractions"];
@@ -55,9 +61,13 @@ export class MapInteractionManager {
     this.contextMenuInteractions.contextMenu = value;
   }
   selectedPinId = $state<string | null>(null);
+  healthBarPopoverTokenId = $state<string | null>(null);
   mapAnnouncement = $state("");
 
   cachedRect: DOMRect | null = null;
+  private activePointerId: number | null = null;
+  private activeTouches = new Map<number, { x: number; y: number }>();
+  private pinchLastDistance: number | null = null;
   KEYBOARD_PAN_STEP = 50;
   KEYBOARD_ZOOM_STEP = 0.1;
 
@@ -91,6 +101,17 @@ export class MapInteractionManager {
     const viewport = mapStore.viewport;
 
     if (!viewport) return;
+
+    if (
+      altKey &&
+      (key === "ArrowLeft" || key === "ArrowRight") &&
+      this.tokenRotation.rotateByStep(key === "ArrowRight" ? 1 : -1)
+    ) {
+      this.mapAnnouncement = `Token rotated ${key === "ArrowRight" ? "clockwise" : "counterclockwise"}`;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
 
     const update = getKeyboardViewportUpdate(key, viewport, {
       panStep: this.KEYBOARD_PAN_STEP,
@@ -132,7 +153,99 @@ export class MapInteractionManager {
     this.isAltPressed = event.altKey;
   };
 
-  onMouseDown = (e: MouseEvent) => {
+  private isTouchPointer(e: MapInputEvent): e is PointerEvent {
+    return "pointerType" in e && e.pointerType === "touch";
+  }
+
+  private getTouchPoint(e: PointerEvent) {
+    if (!this.cachedRect) this.updateCachedRect();
+    return {
+      x: e.clientX - (this.cachedRect?.left ?? 0),
+      y: e.clientY - (this.cachedRect?.top ?? 0),
+    };
+  }
+
+  private beginPinch() {
+    const points = [...this.activeTouches.values()];
+    if (points.length < 2) return;
+    this.pinchLastDistance = getPinchDistance(points[0], points[1]);
+
+    this.isPanning = false;
+    if (this.tokenDrag.dragState) this.tokenDrag.end();
+    if (this.tokenRotation.rotationState) this.tokenRotation.end();
+    if (this.pinDragState) {
+      void this.pinInteractions.end(this.mouseDownPos, this.mouseDownPos);
+    }
+    if (this.gridFitStart) this.gridInteractions.cancelGridFit();
+    if (this.boxSelectStart) this.boxSelection.clear();
+  }
+
+  private updatePinch() {
+    const points = [...this.activeTouches.values()];
+    if (points.length < 2 || this.pinchLastDistance === null) return;
+
+    const distance = getPinchDistance(points[0], points[1]);
+    if (this.pinchLastDistance <= 0) {
+      this.pinchLastDistance = distance;
+      return;
+    }
+
+    const midpoint = getPinchMidpoint(points[0], points[1]);
+    const nextZoom =
+      mapStore.viewport.zoom * (distance / this.pinchLastDistance);
+    const update = getZoomAtPointUpdate({
+      point: midpoint,
+      canvasSize: mapStore.canvasSize,
+      viewport: mapStore.viewport,
+      nextZoom,
+    });
+
+    mapStore.updateViewport(update.pan, update.zoom);
+    this.mapAnnouncement = update.announcement;
+    this.pinchLastDistance = distance;
+  }
+
+  private handlePointerDown = (e: MapInputEvent) => {
+    const target = e.target as Element | null;
+    if (
+      target?.closest(
+        'button, input, select, textarea, a, [role="dialog"], [data-sidebar], .pointer-events-auto',
+      )
+    ) {
+      return;
+    }
+
+    if (this.isTouchPointer(e)) {
+      this.activeTouches.set(e.pointerId, this.getTouchPoint(e));
+      const container = this.getContainer();
+      if (container?.setPointerCapture) {
+        container.setPointerCapture(e.pointerId);
+      }
+      if (this.activeTouches.size === 2) {
+        this.beginPinch();
+        e.preventDefault();
+        return;
+      }
+      if (this.activeTouches.size > 2) {
+        e.preventDefault();
+        return;
+      }
+    }
+
+    if ("pointerId" in e) {
+      if (
+        this.activePointerId !== null &&
+        this.activePointerId !== e.pointerId
+      ) {
+        return;
+      }
+      this.activePointerId = e.pointerId;
+      const container = this.getContainer();
+      if (container?.setPointerCapture) {
+        container.setPointerCapture(e.pointerId);
+      }
+    }
+
     this.contextMenuInteractions.clear();
     this.updateCachedRect();
     if (this.cachedRect) {
@@ -143,6 +256,17 @@ export class MapInteractionManager {
     }
     this.mouseDownPos = { x: e.clientX, y: e.clientY };
     this.isAltPressed = e.altKey;
+
+    if (
+      e.button === 0 &&
+      mapSession.vttEnabled &&
+      this.cachedRect &&
+      this.tokenRotation.begin(this.lastMousePos)
+    ) {
+      e.preventDefault();
+      this.isPanning = false;
+      return;
+    }
 
     if (this.cachedRect && this.boxSelection.begin(this.lastMousePos, e)) {
       e.preventDefault();
@@ -198,7 +322,26 @@ export class MapInteractionManager {
     }
   };
 
-  onMouseMove = (e: MouseEvent) => {
+  onPointerDown = (e: PointerEvent) => this.handlePointerDown(e);
+  onMouseDown = (e: MouseEvent) => this.handlePointerDown(e);
+
+  private handlePointerMove = (e: MapInputEvent) => {
+    if (this.isTouchPointer(e) && this.activeTouches.has(e.pointerId)) {
+      this.activeTouches.set(e.pointerId, this.getTouchPoint(e));
+      if (this.activeTouches.size >= 2) {
+        this.updatePinch();
+        return;
+      }
+    }
+
+    if (
+      "pointerId" in e &&
+      this.activePointerId !== null &&
+      e.pointerId !== this.activePointerId
+    ) {
+      return;
+    }
+
     if (!this.cachedRect) this.updateCachedRect();
     if (!this.cachedRect) return;
 
@@ -214,6 +357,12 @@ export class MapInteractionManager {
 
     if (this.tokenDrag.dragState) {
       this.tokenDrag.move({ x: mouseX, y: mouseY });
+      this.lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
+    if (this.tokenRotation.rotationState) {
+      this.tokenRotation.move({ x: mouseX, y: mouseY });
       this.lastMousePos = { x: mouseX, y: mouseY };
       return;
     }
@@ -246,6 +395,18 @@ export class MapInteractionManager {
       this.isPanning &&
       !this.isAltPressed
     ) {
+      // Keep a tap from nudging the map on touch screens. Once the pointer
+      // crosses the click threshold, use the original down position so the
+      // first real drag movement is preserved.
+      if (
+        isClickGesture(
+          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+          { x: mouseX, y: mouseY },
+        )
+      ) {
+        return;
+      }
+
       const dx = mouseX - this.lastMousePos.x;
       const dy = mouseY - this.lastMousePos.y;
       mapStore.updateViewport(
@@ -256,6 +417,9 @@ export class MapInteractionManager {
     this.lastMousePos = { x: mouseX, y: mouseY };
   };
 
+  onPointerMove = (e: PointerEvent) => this.handlePointerMove(e);
+  onMouseMove = (e: MouseEvent) => this.handlePointerMove(e);
+
   onMouseEnter = () => {
     this.isPointerOver = true;
     this.updateCachedRect();
@@ -265,48 +429,82 @@ export class MapInteractionManager {
     this.isPointerOver = false;
   };
 
-  onMouseUp = async (e: MouseEvent) => {
-    await this.fogInteractions.finish();
-
-    if (this.boxSelection.commit()) {
-      return;
-    }
-
-    if (this.tokenDrag.dragState) {
-      this.tokenDrag.end();
-      this.isPanning = false;
-      return;
-    }
-
-    if (this.pinDragState) {
-      const result = await this.pinInteractions.end(
-        { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
-        { x: e.clientX, y: e.clientY },
-      );
-
-      if (result.type === "selected") {
-        this.selectedPinId = result.pinId;
+  private handlePointerUp = async (e: MapInputEvent) => {
+    if (this.isTouchPointer(e) && this.activeTouches.has(e.pointerId)) {
+      const wasPinching = this.activeTouches.size >= 2;
+      this.activeTouches.delete(e.pointerId);
+      if (wasPinching) {
+        this.pinchLastDistance = null;
+        this.activePointerId = null;
+        return;
       }
-      this.isPanning = false;
+    }
+
+    if (
+      "pointerId" in e &&
+      this.activePointerId !== null &&
+      e.pointerId !== this.activePointerId
+    ) {
       return;
     }
 
-    if (this.gridInteractions.commitGridFit()) {
-      return;
-    }
+    try {
+      await this.fogInteractions.finish();
 
-    if (this.isPanning) {
-      if (
-        isClickGesture(
+      if (this.boxSelection.commit()) {
+        return;
+      }
+
+      if (this.tokenDrag.dragState) {
+        this.tokenDrag.end();
+        this.isPanning = false;
+        return;
+      }
+
+      if (this.tokenRotation.rotationState) {
+        this.tokenRotation.end();
+        this.isPanning = false;
+        return;
+      }
+
+      if (this.pinDragState) {
+        const result = await this.pinInteractions.end(
           { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
           { x: e.clientX, y: e.clientY },
-        )
-      ) {
-        this.handleMapClick(e);
+        );
+
+        if (result.type === "selected") {
+          this.selectedPinId = result.pinId;
+        }
+        this.isPanning = false;
+        return;
+      }
+
+      if (this.gridInteractions.commitGridFit()) {
+        return;
+      }
+
+      if (this.isPanning) {
+        if (
+          isClickGesture(
+            { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+            { x: e.clientX, y: e.clientY },
+          )
+        ) {
+          this.handleMapClick(e);
+        }
+      }
+      this.isPanning = false;
+    } finally {
+      if ("pointerId" in e) {
+        this.activePointerId = null;
       }
     }
-    this.isPanning = false;
   };
+
+  onPointerUp = (e: PointerEvent) => this.handlePointerUp(e);
+  onPointerCancel = (e: PointerEvent) => this.handlePointerUp(e);
+  onMouseUp = (e: MouseEvent) => this.handlePointerUp(e);
 
   handleMapClick = (e: MouseEvent) => {
     const el = this.getContainer();
@@ -325,6 +523,7 @@ export class MapInteractionManager {
       }
 
       this.tokenSelection.clearSelection();
+      this.healthBarPopoverTokenId = null;
       this.measurementInteractions.handleClick({ x, y });
       return;
     }
@@ -343,11 +542,30 @@ export class MapInteractionManager {
     const el = this.getContainer();
     if (!el) return;
 
+    const target = e.target as HTMLElement | null;
+    if (
+      target &&
+      target.closest(
+        'button, input, select, textarea, a, [role="dialog"], [data-sidebar], .pointer-events-auto',
+      )
+    ) {
+      return;
+    }
+
     const rect = el.getBoundingClientRect();
-    this.creationInteractions.handleDoubleClick({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (mapSession.vttEnabled) {
+      const hitToken = this.tokenSelection.hitTest({ x, y });
+      if (hitToken) {
+        this.healthBarPopoverTokenId =
+          this.healthBarPopoverTokenId === hitToken.id ? null : hitToken.id;
+        return;
+      }
+    }
+
+    this.creationInteractions.handleDoubleClick({ x, y });
   };
 
   onContextMenu = (e: MouseEvent) => {

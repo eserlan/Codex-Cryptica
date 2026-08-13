@@ -1,10 +1,12 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
-import { buildSearchKeywords } from "../../services/search-entry-fields";
+import { buildSearchKeywords } from "@codex/search-orchestrator";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
 import { vaultEventBus } from "./events.svelte";
+import { statSheetTemplates } from "../stat-sheet-templates.svelte";
+import { presentationTemplates } from "../presentation-templates.svelte";
 
 export interface VaultLifecycleDependencies {
   syncStore: SyncStore;
@@ -214,6 +216,8 @@ export class VaultLifecycleManager {
         await oracle.loadForVault(id);
 
         await this.deps.themeStore.loadForVault(id);
+        await statSheetTemplates.loadForVault(id);
+        await presentationTemplates.loadForVault(id);
         await this.deps.loadFiles();
         this.deps.setInitialized(true);
         if (this.deps.syncStore.status === "loading") {

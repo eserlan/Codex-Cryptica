@@ -1,7 +1,9 @@
 import { getDB, type VaultRecord } from "../../utils/idb";
 import { createVaultDir, deleteVaultDir, getVaultDir } from "../../utils/opfs";
 import { sanitizeId } from "../../utils/markdown";
+import { debounce } from "../../utils/debounce";
 import type { PublishRegistry } from "schema";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export { getVaultDir, createVaultDir };
 
@@ -19,7 +21,7 @@ export async function createVault(
 
   // Generate simple unique ID
   const slug = sanitizeId(name) || "vault";
-  const id = `${slug}-${Date.now().toString(36).slice(-4)}`;
+  const id = `${slug}-${systemClock.now().toString(36).slice(-4)}`;
 
   const db = await getDB();
 
@@ -30,10 +32,10 @@ export async function createVault(
   const record: VaultRecord = {
     id,
     name,
-    createdAt: Date.now(),
-    lastOpenedAt: Date.now(),
+    createdAt: systemClock.now(),
+    lastOpenedAt: systemClock.now(),
     entityCount: 0,
-    lastInternalChange: Date.now(),
+    lastInternalChange: systemClock.now(),
     lastSavedToFolder: 0,
     syncState: {
       lastSyncMs: null,
@@ -87,28 +89,23 @@ export async function updateLastOpened(id: string): Promise<void> {
   const db = await getDB();
   const vault = await db.get("vaults", id);
   if (vault) {
-    vault.lastOpenedAt = Date.now();
+    vault.lastOpenedAt = systemClock.now();
     await db.put("vaults", vault);
   }
 }
 
-let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
-async function triggerRefresh() {
-  if (refreshTimeout) clearTimeout(refreshTimeout);
-  refreshTimeout = setTimeout(async () => {
-    const { vaultRegistry } = await import("../vault-registry.svelte");
-    if (vaultRegistry) {
-      await vaultRegistry.refreshVaults();
-    }
-    refreshTimeout = null;
-  }, 100);
-}
+const triggerRefresh = debounce(async () => {
+  const { vaultRegistry } = await import("../vault-registry.svelte");
+  if (vaultRegistry) {
+    await vaultRegistry.refreshVaults();
+  }
+}, 100);
 
 export async function updateLastInternalChange(id: string): Promise<void> {
   const db = await getDB();
   const vault = await db.get("vaults", id);
   if (vault) {
-    vault.lastInternalChange = Date.now();
+    vault.lastInternalChange = systemClock.now();
     await db.put("vaults", vault);
 
     // Trigger debounced refresh
@@ -120,7 +117,7 @@ export async function updateLastSavedToFolder(id: string): Promise<void> {
   const db = await getDB();
   const vault = await db.get("vaults", id);
   if (vault) {
-    vault.lastSavedToFolder = Date.now();
+    vault.lastSavedToFolder = systemClock.now();
     await db.put("vaults", vault);
 
     // Trigger debounced refresh
@@ -128,12 +125,16 @@ export async function updateLastSavedToFolder(id: string): Promise<void> {
   }
 }
 
-export async function getPublishRegistry(vaultId: string): Promise<PublishRegistry | undefined> {
+export async function getPublishRegistry(
+  vaultId: string,
+): Promise<PublishRegistry | undefined> {
   const db = await getDB();
   return await db.get("publish_registry", vaultId);
 }
 
-export async function savePublishRegistry(registry: PublishRegistry): Promise<void> {
+export async function savePublishRegistry(
+  registry: PublishRegistry,
+): Promise<void> {
   const db = await getDB();
   await db.put("publish_registry", registry);
 }

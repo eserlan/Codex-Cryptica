@@ -76,149 +76,228 @@
   <div
     bind:this={menuEl}
     role="menu"
-    aria-label="Node actions"
+    aria-label={controller.targetEdge ? "Connection actions" : "Node actions"}
     tabindex="-1"
     class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col"
     style:top="{controller.position.y}px"
     style:left="{controller.position.x}px"
     onkeydown={handleMenuKeydown}
   >
-    <button
-      role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition whitespace-nowrap"
-      onclick={controller.setCentralNode}
-      aria-label="Set as Central Node"
-    >
-      Set as Central Node
-    </button>
-    {#if !vault.isGuest}
-      {#if controller.selectedNodes.length === 2}
+    {#if controller.targetEdge}
+      {#if !vault.isGuest}
         <button
           role="menuitem"
-          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-          onclick={controller.handleConnectSelection}
-          aria-label="Connect 2 Nodes"
+          class="w-full text-left px-4 py-2 text-sm text-theme-danger hover:bg-theme-danger/10 transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleDeleteEdge}
+          aria-label="Delete Connection"
         >
-          Connect 2 Nodes
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--trash-2] h-3.5 w-3.5 opacity-70 text-theme-danger"
+          ></span>
+          <span>Delete Connection</span>
         </button>
       {/if}
-      {#if controller.selectedNodes.length > 1}
+    {:else if controller.targetId === null && controller.selectedNodes.length === 0}
+      {#if !vault.isGuest}
         <button
           role="menuitem"
-          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-          onclick={controller.handleMerge}
-          aria-label="Merge {controller.selectedNodes.length} Nodes"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleCreateNewEntity}
+          aria-label="Create Entity"
         >
-          Merge {controller.selectedNodes.length} Nodes
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--plus] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>Create Entity…</span>
         </button>
       {/if}
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-        onclick={controller.handleBulkLabel}
-        aria-label="Apply / Remove Label"
-      >
-        {controller.selectedNodes.length > 1
-          ? `Label ${controller.selectedNodes.length} Nodes…`
-          : "Label…"}
-      </button>
-
-      <button
-        type="button"
-        role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap flex items-center gap-2"
-        onclick={controller.handleMarkImportant}
-        aria-label={controller.importantActionLabel}
-      >
-        <span class="icon-[lucide--star] h-3.5 w-3.5 opacity-70"></span>
-        <span>{controller.importantActionLabel}</span>
-      </button>
-
+    {:else}
       {#if controller.selectedNodes.length === 1}
         <button
-          bind:this={controller.imagePickerAnchor}
+          type="button"
           role="menuitem"
-          class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-          onmouseenter={controller.showImagePicker}
-          onmouseleave={controller.hideImagePicker}
-          onclick={controller.handleImageMainClick}
-          aria-label="Image actions"
-          aria-expanded={controller.imagePickerOpen}
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleOpenZenMode}
+          aria-label="Open in Zen Mode"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--maximize-2] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>Open in Zen Mode</span>
+        </button>
+      {/if}
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition whitespace-nowrap"
+        onclick={controller.setCentralNode}
+        aria-label="Set as Central Node"
+      >
+        Set as Central Node
+      </button>
+      {#if !vault.isGuest}
+        {#if controller.selectedNodes.length === 2}
+          <button
+            role="menuitem"
+            class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+            onclick={controller.handleConnectSelection}
+            aria-label="Connect 2 Nodes"
+          >
+            Connect 2 Nodes
+          </button>
+        {/if}
+        {#if controller.selectedNodes.length > 1}
+          <button
+            role="menuitem"
+            class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+            onclick={controller.handleMerge}
+            aria-label="Merge {controller.selectedNodes.length} Nodes"
+          >
+            Merge {controller.selectedNodes.length} Nodes
+          </button>
+        {/if}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+          onclick={controller.handleBulkLabel}
+          aria-label="Apply / Remove Label"
+        >
+          {controller.selectedNodes.length > 1
+            ? `Label ${controller.selectedNodes.length} Nodes…`
+            : "Label…"}
+        </button>
+
+        <button
+          type="button"
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap flex items-center gap-2"
+          onclick={controller.handleMarkImportant}
+          aria-label={controller.importantActionLabel}
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--star] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>{controller.importantActionLabel}</span>
+        </button>
+
+        <!-- Send to Shelf: copies the selection so it can be brought into
+             another vault. Read-only against this one. -->
+        <button
+          type="button"
+          role="menuitem"
+          class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center gap-3 whitespace-nowrap"
+          data-testid="graph-send-to-shelf"
+          onclick={controller.handleSendToShelf}
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--library] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>
+            Send {controller.selectedNodes.length > 1
+              ? `${controller.selectedNodes.length} `
+              : ""}to Shelf
+          </span>
+        </button>
+
+        {#if controller.selectedNodes.length === 1}
+          <button
+            type="button"
+            bind:this={controller.imagePickerAnchor}
+            role="menuitem"
+            class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+            onmouseenter={controller.showImagePicker}
+            onmouseleave={controller.hideImagePicker}
+            onclick={controller.handleImageMainClick}
+            aria-label="Image actions"
+            aria-expanded={controller.imagePickerOpen}
+            aria-haspopup="true"
+          >
+            <span>Image</span>
+            <div class="flex items-center gap-2">
+              {#if controller.hasImage}
+                <span
+                  class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
+                >
+                  click to view
+                </span>
+              {/if}
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+              ></span>
+            </div>
+          </button>
+        {/if}
+
+        <button
+          type="button"
+          bind:this={controller.categoryPickerAnchor}
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+          onmouseenter={controller.showCategoryPicker}
+          onmouseleave={controller.hideCategoryPicker}
+          onclick={controller.toggleCategoryPicker}
+          aria-label="Change Category"
+          aria-expanded={controller.categoryPickerOpen}
           aria-haspopup="true"
         >
-          <span>Image</span>
-          <div class="flex items-center gap-2">
-            {#if controller.hasImage}
-              <span
-                class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
-              >
-                click to view
-              </span>
-            {/if}
-            <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
-            ></span>
-          </div>
+          Change Category
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+          ></span>
+        </button>
+
+        <button
+          type="button"
+          bind:this={controller.pickerAnchor}
+          role="menuitem"
+          data-testid="add-to-canvas-button"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+          onmouseenter={controller.showCanvasPicker}
+          onmouseleave={controller.hideCanvasPicker}
+          onclick={() =>
+            (controller.canvasPickerOpen = !controller.canvasPickerOpen)}
+          aria-label="Add to Canvas"
+          aria-expanded={controller.canvasPickerOpen}
+          aria-haspopup="true"
+        >
+          Add to Canvas
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+          ></span>
+        </button>
+      {:else if controller.hasImage}
+        <!-- Guest view only image action -->
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+          onclick={controller.handleViewImage}
+          aria-label="View Image"
+        >
+          View Image
         </button>
       {/if}
 
-      <button
-        bind:this={controller.categoryPickerAnchor}
-        role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-        onmouseenter={controller.showCategoryPicker}
-        onmouseleave={controller.hideCategoryPicker}
-        onclick={controller.toggleCategoryPicker}
-        aria-label="Change Category"
-        aria-expanded={controller.categoryPickerOpen}
-        aria-haspopup="true"
-      >
-        Change Category
-        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
-        ></span>
-      </button>
-
-      <button
-        bind:this={controller.pickerAnchor}
-        role="menuitem"
-        data-testid="add-to-canvas-button"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-        onmouseenter={controller.showCanvasPicker}
-        onmouseleave={controller.hideCanvasPicker}
-        onclick={() =>
-          (controller.canvasPickerOpen = !controller.canvasPickerOpen)}
-        aria-label="Add to Canvas"
-        aria-expanded={controller.canvasPickerOpen}
-        aria-haspopup="true"
-      >
-        Add to Canvas
-        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
-        ></span>
-      </button>
-    {:else if controller.hasImage}
-      <!-- Guest view only image action -->
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-        onclick={controller.handleViewImage}
-        aria-label="View Image"
-      >
-        View Image
-      </button>
-    {/if}
-
-    {#if !vault.isGuest}
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border whitespace-nowrap"
-        onclick={controller.deleteNodes}
-        aria-label="Delete {controller.selectedNodes.length > 1
-          ? `${controller.selectedNodes.length} Nodes`
-          : 'Node'}"
-      >
-        Delete {controller.selectedNodes.length > 1
-          ? `${controller.selectedNodes.length} Nodes`
-          : "Node"}
-      </button>
+      {#if !vault.isGuest}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border whitespace-nowrap"
+          onclick={controller.deleteNodes}
+          aria-label="Delete {controller.selectedNodes.length > 1
+            ? `${controller.selectedNodes.length} Nodes`
+            : 'Node'}"
+        >
+          Delete {controller.selectedNodes.length > 1
+            ? `${controller.selectedNodes.length} Nodes`
+            : "Node"}
+        </button>
+      {/if}
     {/if}
   </div>
 

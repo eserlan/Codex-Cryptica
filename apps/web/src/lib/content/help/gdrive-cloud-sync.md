@@ -1,7 +1,7 @@
 ---
 id: gdrive-cloud-sync
 title: Google Drive Cloud Sync
-tags: [sync, cloud, vault, google-drive, co-gm]
+tags: [sync, cloud, vault, google-drive]
 rank: 17
 ---
 
@@ -31,17 +31,11 @@ If you have vaults already stored in your `CodexCryptica/` Drive folder (from an
 2. Codex lists every vault subfolder it finds under `CodexCryptica/`.
 3. Click **Load** next to any vault. Codex creates a local vault (or finds the existing one), then pulls only the files that are newer than what you have locally.
 
-## Join a Shared Vault (Co-GM Flow)
-
-If your GM has shared their Drive vault folder with you, you can connect to it directly:
-
-1. Ask your GM to share the Drive folder and copy the share link (it looks like `https://drive.google.com/drive/folders/…`).
-2. In the **Vault** settings tab under **Cloud Sync**, paste the link into the **Join a Shared Vault** field and click **Join**.
-3. Google will ask you to grant read access to the shared folder. Once approved, Codex imports the vault locally and you can pull updates any time with **Load from Drive**.
-
-> [!NOTE]
-> The first join asks for broader Drive access so Codex can read folders you don't own. Normal push/pull to your own vaults uses the narrower `drive.file` scope and only accesses files Codex itself created.
-
 ## Disconnect
 
 Click **Disconnect** in the connected state to remove the Drive link from this vault. Your local vault and the files on Drive are both preserved — only the sync mapping is removed.
+
+## Related Blog Posts
+
+- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and restore.
+- [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and private cloud backups keep your campaign notes safe.

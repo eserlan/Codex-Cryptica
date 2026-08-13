@@ -10,6 +10,13 @@ export class CreateExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
+  constructor(
+    clock?: import("../runtime").Clock,
+    idGenerator?: import("../runtime").IdGenerator,
+  ) {
+    super(clock, idGenerator);
+  }
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -53,7 +60,7 @@ export class CreateExecutor
               : "";
 
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: `✅ Created node: **${name}** (${type.toUpperCase()})${connectionSuffix}`,
         });
@@ -72,7 +79,7 @@ export class CreateExecutor
       } catch (err: any) {
         const error = err.message || "Creation failed";
         await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
+          id: this.idGenerator.uuid(),
           role: "system",
           content: `❌ ${error}`,
         });

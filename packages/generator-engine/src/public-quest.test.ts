@@ -52,6 +52,27 @@ describe("generateQuestLocal", () => {
       generateQuestLocal({}, seededRng(9)),
     );
   });
+
+  it("uses dedicated Cosmic Horror pools in local generation", () => {
+    const out = generateQuestLocal({ genre: "Cosmic Horror" }, seededRng(7));
+    const cosmicTones = questConfig.tonesByTheme["Cosmic Horror"];
+    const cosmicRewards = questConfig.rewardsByTheme["Cosmic Horror"];
+
+    expect(
+      cosmicTones.some((tone) =>
+        out.content.toLowerCase().includes(tone.toLowerCase()),
+      ),
+    ).toBe(true);
+    expect(cosmicRewards.some((reward) => out.lore.includes(reward))).toBe(
+      true,
+    );
+    expect(
+      questConfig.twistsByTheme["Cosmic Horror"].some((twist) =>
+        out.lore.includes(twist),
+      ),
+    ).toBe(true);
+    expect(out.lore).not.toContain("Coin plus a local power's favor");
+  });
 });
 
 describe("buildQuestPrompt", () => {
@@ -80,6 +101,23 @@ describe("buildQuestPrompt", () => {
   it("keeps the public theme mapping", () => {
     expect(themeToQuestGenre["Cyberpunk / Corporate"]).toBe("Cyberpunk");
     expect(themeToQuestGenre["Western / Frontier"]).toBe("Western");
+    expect(themeToQuestGenre["Cosmic Horror"]).toBe("Cosmic Horror");
+    expect(questConfig.genres).toContain("Cosmic Horror");
+    expect(questConfig.tonesByTheme["Cosmic Horror"]).toContain(
+      "Investigative",
+    );
+    expect(questConfig.locationTypesByTheme["Cosmic Horror"]).toContain(
+      "Flooded Archive",
+    );
+    expect(questConfig.threatsByTheme["Cosmic Horror"]).toContain(
+      "Dream Contagion",
+    );
+    expect(questConfig.rewardsByTheme["Cosmic Horror"]).toContain(
+      "A calibrated instrument that detects the anomaly before it manifests",
+    );
+    expect(questConfig.twistsByTheme["Cosmic Horror"]).toContain(
+      "The missing expedition returned before it left",
+    );
     expect(questConfig.tonesByTheme["Western / Frontier"]).toContain("Lawless");
     expect(questConfig.scopesByTheme["Western / Frontier"]).toContain(
       "Territory-scale (frontier)",

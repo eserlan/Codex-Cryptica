@@ -13,17 +13,20 @@ import {
   createMeasurementInteractionDependencies,
   createPinInteractionDependencies,
   createTokenDragDependencies,
+  createTokenRotationDependencies,
   createTokenSelectionDependencies,
 } from "./interaction-adapters";
 import { MeasurementInteractionHandler } from "./measurement-interaction-handler";
 import { PinInteractionHandler } from "./pin-interaction-handler";
 import { TokenDragHandler } from "./token-drag-handler";
 import { TokenResizeHandler } from "./token-resize-handler";
+import { TokenRotationHandler } from "./token-rotation-handler";
 import { TokenSelectionManager } from "./token-selection-manager";
 
 export interface MapInteractionHandlers {
   tokenSelection: TokenSelectionManager;
   tokenDrag: TokenDragHandler;
+  tokenRotation: TokenRotationHandler;
   pinInteractions: PinInteractionHandler;
   gridInteractions: GridInteractionHandler;
   measurementInteractions: MeasurementInteractionHandler;
@@ -53,6 +56,9 @@ export function createMapInteractionHandlers(
     tokenDrag:
       overrides.tokenDrag ??
       new TokenDragHandler(createTokenDragDependencies()),
+    tokenRotation:
+      overrides.tokenRotation ??
+      new TokenRotationHandler(createTokenRotationDependencies()),
     pinInteractions:
       overrides.pinInteractions ??
       new PinInteractionHandler(createPinInteractionDependencies()),

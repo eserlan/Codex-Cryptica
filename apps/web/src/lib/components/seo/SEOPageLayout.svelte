@@ -2,10 +2,8 @@
   import { base } from "$app/paths";
   const cleanBase = base === "/" ? "" : base;
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import type {
-    SEOPageData,
-    SEOComparisonPageData,
-  } from "$lib/config/seo-pages";
+  import type { SEOPageData } from "$lib/config/seo-pages";
+  import type { SEOComparisonPageData } from "$lib/config/seo-comparisons";
 
   let {
     data,
@@ -137,14 +135,20 @@
   <meta property="og:title" content={data.title} />
   <meta property="og:description" content={data.description} />
   <meta property="og:url" content={pageUrl} />
-  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
-  <meta property="og:image:width" content="1024" />
-  <meta property="og:image:height" content="1024" />
+  <meta
+    property="og:image"
+    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  />
+  <meta property="og:image:width" content="1600" />
+  <meta property="og:image:height" content="1000" />
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content={data.title} />
   <meta name="twitter:description" content={data.description} />
-  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
+  <meta
+    name="twitter:image"
+    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  />
   <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
@@ -160,67 +164,10 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Marketing Header -->
-  <header
-    class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
-  >
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-      <a
-        href="{cleanBase}/"
-        class="flex items-center gap-2 group min-w-0"
-        id="logo-link"
-      >
-        <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
-        ></span>
-        <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
-        >
-          Codex<span class="hidden sm:inline"> Cryptica</span>
-        </span>
-      </a>
-      <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
-      >
-        <a
-          href="{cleanBase}/free-rpg-campaign-manager"
-          class="hover:text-theme-primary transition-colors"
-          >Free RPG campaign manager</a
-        >
-        <a
-          href="{cleanBase}/worldbuilding-tool"
-          class="hover:text-theme-primary transition-colors"
-          >worldbuilding tool</a
-        >
-        <a
-          href="{cleanBase}/features"
-          class="hover:text-theme-primary transition-colors">Features</a
-        >
-        <a
-          href="{cleanBase}/blog"
-          class="hover:text-theme-primary transition-colors">Devlog</a
-        >
-        <a
-          href="{cleanBase}/tools/dnd-npc-generator"
-          class="hover:text-theme-primary transition-colors">Generators</a
-        >
-      </nav>
-      <div class="shrink-0">
-        <a
-          href="{cleanBase}/?ref={type === 'comparison'
-            ? 'vs-nav'
-            : 'solution-nav'}"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
-          id="nav-cta-btn"
-        >
-          Open Codex
-        </a>
-      </div>
-    </div>
-  </header>
-
   <!-- Hero Section -->
-  <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center flex-grow">
+  <section
+    class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center flex-grow"
+  >
     <div
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-10 uppercase tracking-wider"
     >
@@ -259,9 +206,9 @@
     {/each}
     <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
       <a
-        href="{cleanBase}/?ref={type === 'comparison'
+        href="{cleanBase}/?utm_source={type === 'comparison'
           ? 'vs-hero'
-          : 'solution-hero'}"
+          : 'solution-hero'}&utm_medium=hero-cta&utm_campaign=seo-funnel"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap"
         id="hero-primary-cta"
       >
@@ -312,7 +259,7 @@
 
   <!-- Features Grid -->
   <section class="border-t border-theme-border/30 bg-theme-surface/10 py-16">
-    <div class="max-w-5xl mx-auto px-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-xl uppercase tracking-[0.2em] text-theme-primary mb-12"
       >
@@ -344,7 +291,7 @@
   <!-- Comparison Section (If comparison type) -->
   {#if type === "comparison" && comparisonData}
     <section class="border-t border-theme-border/30 py-16">
-      <div class="max-w-4xl mx-auto px-6">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <h2
           class="text-center font-header text-2xl uppercase tracking-widest text-theme-primary mb-10"
         >
@@ -512,7 +459,7 @@
   <!-- Related Links Section -->
   {#if data.relatedLinks && data.relatedLinks.length > 0}
     <section class="border-t border-theme-border/30 py-10">
-      <div class="max-w-4xl mx-auto px-6">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <h2
           class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
         >
@@ -539,7 +486,7 @@
   <!-- Responsible AI Trust Banner -->
   {#if data.aiTrustSection}
     <section class="border-t border-theme-border/30 py-10">
-      <div class="max-w-3xl mx-auto px-6 text-center">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
         <p class="text-sm text-theme-muted leading-relaxed mb-3">
           Responsible AI, not replacement authorship. The Lore Oracle is
           optional, vault-aware, and draft-based. Your vault remains the source
@@ -561,7 +508,7 @@
 
   <!-- FAQ Accordion Section -->
   <section class="border-t border-theme-border/30 bg-theme-surface/10 py-16">
-    <div class="max-w-3xl mx-auto px-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
       <h2
         class="text-center font-header text-xl uppercase tracking-[0.2em] text-theme-primary mb-10"
       >
@@ -606,7 +553,7 @@
   <section
     class="border-t border-theme-border/30 bg-gradient-to-b from-theme-bg to-theme-surface/30 py-16 text-center"
   >
-    <div class="max-w-2xl mx-auto px-6">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6">
       <h2 class="text-2xl font-bold font-header mb-4 uppercase tracking-wider">
         {type === "comparison"
           ? "Try Codex Cryptica Free"
@@ -618,9 +565,9 @@
           : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
       <a
-        href="{cleanBase}/?ref={type === 'comparison'
+        href="{cleanBase}/?utm_source={type === 'comparison'
           ? 'vs-footer'
-          : 'solution-footer'}"
+          : 'solution-footer'}&utm_medium=footer-cta&utm_campaign=seo-funnel"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all whitespace-nowrap"
         id="footer-cta-btn"
       >
@@ -628,47 +575,4 @@
       </a>
     </div>
   </section>
-
-  <!-- Marketing Footer -->
-  <footer
-    class="border-t border-theme-border/60 bg-theme-surface/20 px-6 py-8 mt-auto text-center text-[10px] text-theme-muted tracking-wider uppercase font-header"
-  >
-    <div
-      class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
-    >
-      <div>© 2026 Codex Cryptica. All rights reserved.</div>
-      <div class="flex gap-6">
-        <a
-          href="{cleanBase}/free-rpg-campaign-manager"
-          class="hover:text-theme-primary transition-colors"
-          >Free RPG campaign manager</a
-        >
-        <a
-          href="{cleanBase}/worldbuilding-tool"
-          class="hover:text-theme-primary transition-colors"
-          >worldbuilding tool</a
-        >
-        <a
-          href="{cleanBase}/terms"
-          class="hover:text-theme-primary transition-colors">Terms</a
-        >
-        <a
-          href="{cleanBase}/privacy"
-          class="hover:text-theme-primary transition-colors">Privacy</a
-        >
-        <a
-          href="{cleanBase}/tools"
-          class="hover:text-theme-primary transition-colors">Tools</a
-        >
-        <a
-          href="{cleanBase}/sitemap.xml"
-          class="hover:text-theme-primary transition-colors">Sitemap</a
-        >
-        <a
-          href="{cleanBase}/llms.txt"
-          class="hover:text-theme-primary transition-colors">LLM Docs</a
-        >
-      </div>
-    </div>
-  </footer>
 </div>

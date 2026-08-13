@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 import { VaultRepository } from "./repository.svelte";
 import type { IFileIOAdapter } from "./repository.svelte";
 
@@ -17,6 +17,10 @@ describe("VaultRepository", () => {
     } as any;
 
     repository = new VaultRepository(mockAdapter);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("should initialize empty entities", () => {
@@ -99,6 +103,7 @@ describe("VaultRepository", () => {
   });
 
   it("should queue scheduled saves", async () => {
+    vi.useFakeTimers();
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockEntity = { id: "e1", title: "Test" } as any;
     const onStatusChange = vi.fn();
@@ -119,6 +124,7 @@ describe("VaultRepository", () => {
     expect(onStatusChange).toHaveBeenCalledWith("saving");
     expect(repository.pendingSaveCount).toBe(1);
 
+    await vi.advanceTimersByTimeAsync(10);
     await savePromise;
 
     expect(onStatusChange).toHaveBeenCalledWith("idle");
@@ -316,7 +322,7 @@ describe("VaultRepository", () => {
     expect(repository.entities["e1"].lore).toBe("New Lore");
   });
 
-  it("should yield when total files exceed CHUNK_SIZE", async () => {
+  it("should yield between chunks without imposing a fixed delay", async () => {
     const mockHandle = {} as FileSystemDirectoryHandle;
     // CHUNK_SIZE is 40
     const mockFiles = Array.from({ length: 45 }, (_, i) => ({
@@ -330,12 +336,13 @@ describe("VaultRepository", () => {
       entity: { id: "some-id", type: "note", title: "title" } as any,
     });
 
-    const start = Date.now();
-    await repository.loadFiles("vault-1", mockHandle);
-    const duration = Date.now() - start;
-
-    // Should have waited at least 50ms due to setTimeout
-    expect(duration).toBeGreaterThanOrEqual(45);
+    const yieldSpy = vi.spyOn(globalThis, "setTimeout");
+    try {
+      await repository.loadFiles("vault-1", mockHandle);
+      expect(yieldSpy).toHaveBeenCalledWith(expect.any(Function), 0);
+    } finally {
+      yieldSpy.mockRestore();
+    }
   });
 
   it("should clear entities", () => {

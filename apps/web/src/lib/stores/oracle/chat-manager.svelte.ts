@@ -1,10 +1,18 @@
 import { OracleCommandParser, type ChatMessage } from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
+import {
+  systemClock,
+  type IdGenerator,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 export class OracleChatManager {
   isChatHistoryReady = $state(false);
 
-  constructor(private store: IOracleStore) {}
+  constructor(
+    private store: IOracleStore,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   get messages(): ChatMessage[] {
     return this.store.chatHistoryService?.messages ?? [];
@@ -30,6 +38,34 @@ export class OracleChatManager {
       content,
       this.store.discoveryPolicyStore.aiDisabled,
     );
+
+    // Guests get read-only Q&A only (FR-031/FR-032): block vault-mutating
+    // commands and image generation. /draw parses as a chat intent and is
+    // detected downstream, so it's checked on the raw input here.
+    if (this.store.sessionModeStore.isGuestMode) {
+      const blockedIntents = [
+        "create",
+        "connect",
+        "connect-ai",
+        "merge",
+        "merge-ai",
+        "revise",
+        "wizard",
+        "draw",
+      ];
+      if (
+        blockedIntents.includes(intent.type) ||
+        OracleCommandParser.detectImageIntent(content)
+      ) {
+        await this.store.chatHistoryService.addMessage({
+          id: this.idGenerator.uuid(),
+          role: "system",
+          content: "❌ This command isn't available in guest view.",
+          timestamp: systemClock.now(),
+        });
+        return;
+      }
+    }
 
     await this.store.executor.execute(intent, this.store.getExecutionContext());
   }

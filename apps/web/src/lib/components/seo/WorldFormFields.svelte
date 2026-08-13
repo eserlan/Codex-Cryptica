@@ -1,0 +1,246 @@
+<script lang="ts">
+  import { pickFrom, worldConfig } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+
+  let {
+    worldType = $bindable(worldConfig.worldTypes[0]),
+    habitability = $bindable(worldConfig.habitability[0]),
+    civilisation = $bindable(worldConfig.civilisations[0]),
+    societalModel = $bindable(worldConfig.societalModels[0]),
+    worldTagOne = $bindable(worldConfig.defaultWorldTags[0]),
+    worldTagTwo = $bindable(worldConfig.defaultWorldTags[1]),
+    genre = $bindable(worldConfig.genres[0]),
+    lancerWorldFrame = $bindable(worldConfig.lancerWorldFrames[0]),
+    campaignPressure = $bindable(worldConfig.campaignPressures[0]),
+    dominantFeature = $bindable(""),
+    campaignContext = $bindable(""),
+    onGenreChange = undefined,
+    onSurprise = undefined,
+  }: {
+    worldType: string;
+    habitability: string;
+    civilisation: string;
+    societalModel: string;
+    worldTagOne: string;
+    worldTagTwo: string;
+    genre: string;
+    lancerWorldFrame: string;
+    campaignPressure: string;
+    dominantFeature: string;
+    campaignContext?: string;
+    onGenreChange?: (genre: string) => void;
+    onSurprise?: () => void;
+  } = $props();
+
+  const selectClass =
+    "w-full min-h-12 rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2.5 text-base text-theme-text focus:border-theme-primary/60 focus:outline-none md:text-sm";
+  const labelClass =
+    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+
+  function chooseDifferentTag(excluded: string): string {
+    const available = worldConfig.worldTags.filter(
+      (value) => value !== excluded,
+    );
+    return pickFrom(available);
+  }
+
+  function handleWorldTagOneChange(value: string): void {
+    if (value === worldTagTwo) worldTagTwo = chooseDifferentTag(value);
+  }
+
+  function handleWorldTagTwoChange(value: string): void {
+    if (value === worldTagOne) worldTagTwo = chooseDifferentTag(value);
+  }
+
+  function handleGenreChange(value: string): void {
+    const choices: readonly string[] =
+      value === "Lancer"
+        ? worldConfig.lancerConflicts
+        : worldConfig.campaignPressures;
+    if (!choices.includes(campaignPressure)) {
+      campaignPressure = choices[0] ?? "";
+    }
+    onGenreChange?.(value);
+  }
+</script>
+
+<SelectWithCustomOption
+  id="world-genre-select"
+  label="Genre / Tone"
+  bind:value={genre}
+  choices={worldConfig.genres.map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom genre or tone"
+  onvaluechange={handleGenreChange}
+/>
+
+{#if genre === "Lancer"}
+  <SelectWithCustomOption
+    id="lancer-world-frame-select"
+    label="Lancer World Frame"
+    bind:value={lancerWorldFrame}
+    choices={worldConfig.lancerWorldFrames.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+  />
+{:else}
+  <SelectWithCustomOption
+    id="world-societal-model-select"
+    label="Primary Societal Model"
+    bind:value={societalModel}
+    choices={worldConfig.societalModels.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom societal model"
+  />
+{/if}
+
+<SelectWithCustomOption
+  id="campaign-pressure-select"
+  label="Campaign Pressure"
+  bind:value={campaignPressure}
+  choices={(genre === "Lancer"
+    ? worldConfig.lancerConflicts
+    : worldConfig.campaignPressures
+  ).map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom campaign pressure"
+/>
+
+<SelectWithCustomOption
+  id="world-type-select"
+  label="World Type"
+  bind:value={worldType}
+  choices={worldConfig.worldTypes.map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom world type"
+/>
+
+<SelectWithCustomOption
+  id="world-tag-one-select"
+  label="World Tag 1"
+  bind:value={worldTagOne}
+  choices={worldConfig.worldTags.map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom first world tag"
+  onvaluechange={handleWorldTagOneChange}
+/>
+
+<SelectWithCustomOption
+  id="world-tag-two-select"
+  label="World Tag 2"
+  bind:value={worldTagTwo}
+  choices={worldConfig.worldTags.map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom second world tag"
+  onvaluechange={handleWorldTagTwoChange}
+/>
+
+<SelectWithCustomOption
+  id="world-habitability-select"
+  label="Habitability"
+  bind:value={habitability}
+  choices={worldConfig.habitability.map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter custom habitability"
+/>
+
+<SelectWithCustomOption
+  id="world-civilisation-select"
+  label="Civilisation"
+  bind:value={civilisation}
+  choices={worldConfig.civilisations.map((value) => ({ value, label: value }))}
+  className="flex flex-col gap-1.5"
+  {labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom civilisation"
+/>
+
+<div class="flex flex-col gap-1.5">
+  <label for="world-dominant-feature" class={labelClass}
+    >Dominant feature (optional)</label
+  >
+  <input
+    id="world-dominant-feature"
+    bind:value={dominantFeature}
+    maxlength="4000"
+    placeholder="e.g. A migrating storm belt hides an ancient orbital elevator"
+    class={selectClass}
+  />
+  <p
+    class="text-sm leading-6 text-theme-text/70 md:text-[13px] md:leading-relaxed"
+  >
+    Add the feature, mystery, or condition that should shape the world.
+  </p>
+</div>
+
+<div class="flex justify-end pt-2">
+  <button
+    type="button"
+    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
+    title="Randomize all options and generate a draft from the result"
+    onclick={() => {
+      worldType = pickFrom(worldConfig.worldTypes);
+      habitability = pickFrom(worldConfig.habitability);
+      civilisation = pickFrom(worldConfig.civilisations);
+      societalModel = pickFrom(worldConfig.societalModels);
+      worldTagOne = pickFrom(worldConfig.worldTags);
+      worldTagTwo = pickFrom(
+        worldConfig.worldTags.filter((value) => value !== worldTagOne),
+      );
+      if (genre === "Lancer") {
+        lancerWorldFrame = pickFrom(worldConfig.lancerWorldFrames);
+        campaignPressure = pickFrom(worldConfig.lancerConflicts);
+      } else {
+        campaignPressure = pickFrom(worldConfig.campaignPressures);
+      }
+      dominantFeature = "";
+      onSurprise?.();
+    }}
+  >
+    <span class="icon-[lucide--dices] h-3.5 w-3.5"></span>
+    Surprise Me
+  </button>
+</div>
+
+<div class="flex flex-col gap-1.5">
+  <label for="world-campaign-context" class={labelClass}
+    >Add campaign context</label
+  >
+  <textarea
+    id="world-campaign-context"
+    name="campaign_context"
+    bind:value={campaignContext}
+    maxlength="4000"
+    rows="4"
+    aria-describedby="world-campaign-context-help"
+    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+  ></textarea>
+  <p
+    id="world-campaign-context-help"
+    class="text-[10px] text-theme-text/60 leading-relaxed"
+  >
+    Name the system, campaign, or neighbouring powers this world sits among.
+    Anything you name here is kept and the world is built to fit it.
+  </p>
+</div>

@@ -44,6 +44,26 @@ vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
 }));
 
 describe("ZenSidebar labels addition when not editing", () => {
+  it("does not render a duplicate alias editor while editing", () => {
+    (vault as any).isGuest = false;
+
+    const { queryByText } = render(ZenSidebar, {
+      entity: {
+        id: "entity-1",
+        title: "Test Entity",
+        labels: [],
+        aliases: ["Existing Alias"],
+      } as any,
+      editState: { isEditing: true, aliases: ["Existing Alias"] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    expect(queryByText("Aliases")).toBeNull();
+  });
+
   it("renders LabelInput when not editing, user is not a guest, and entity has labels", () => {
     (vault as any).isGuest = false;
 

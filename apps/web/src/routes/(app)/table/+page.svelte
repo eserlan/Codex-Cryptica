@@ -1,29 +1,106 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import {
     filterEntities,
     countEntityTypes,
+    createEntityTextSearchRunner,
+    parseEntitySearchQuery,
   } from "$lib/components/explorer/entityListFiltering";
+  import { searchService } from "@codex/search-orchestrator";
+  import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
+  import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import {
     sortEntities,
     nextSortState,
     type SortKey,
     type SortState,
+    type ConnectionSummary,
   } from "$lib/components/table/entityTableSort";
+  import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
+  import type {
+    PerformanceOperation,
+    PerformanceOperationHandle,
+  } from "@codex/performance-observability";
 
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
   const vaultId = $derived(vault.activeVaultId);
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
+  let labelFilters = $state<Set<string>>(new Set());
+  let textMatchIds = $state<Set<string> | null>(null);
+  let textSearchPending = $state(false);
+  let textSearchUnavailable = $state(false);
+  let textSearchError = $state<string | null>(null);
+  let indexProgress = $state<SearchIndexProgress>(
+    searchService.getIndexProgress(),
+  );
+  let latestIndexStatus = searchService.getIndexProgress().status;
+  let indexStatusVersion = $state(0);
+  const parsedSearchQuery = $derived(parseEntitySearchQuery(searchQuery));
   let sort = $state<SortState>({ key: "title", direction: "asc" });
+  let tableOpenRecorded = false;
+  const tableOpenSpan = browserPerformanceRecorder.start("table_open");
 
   const totalEntities = $derived(vault.allEntities.length);
+
+  $effect(() => {
+    const unsubscribe = searchService.subscribeIndexProgress((progress) => {
+      if (progress.status !== latestIndexStatus) {
+        latestIndexStatus = progress.status;
+        indexStatusVersion += 1;
+      }
+      indexProgress = progress;
+    });
+    return unsubscribe;
+  });
+
+  $effect(() => {
+    const query = searchQuery;
+    const entityCount = vault.allEntities.length;
+    void indexStatusVersion;
+    const indexStatus = latestIndexStatus;
+    const { textQuery } = parsedSearchQuery;
+    if (!textQuery) {
+      textMatchIds = null;
+      textSearchPending = false;
+      textSearchUnavailable = false;
+      textSearchError = null;
+      return;
+    }
+
+    if (indexStatus === "idle") {
+      textMatchIds = null;
+      textSearchPending = false;
+      textSearchUnavailable = true;
+      textSearchError = null;
+      return;
+    }
+
+    textMatchIds = null;
+    textSearchPending = true;
+    textSearchUnavailable = false;
+    textSearchError = null;
+    const searchRunner = createEntityTextSearchRunner(searchService);
+    void searchRunner.search(query, entityCount).then((result) => {
+      if (!result) return;
+      textSearchPending = false;
+      textMatchIds = result.error ? null : result.matchIds;
+      textSearchUnavailable = result.error !== null;
+      textSearchError = result.error?.message ?? null;
+    });
+
+    return () => {
+      searchRunner.cancel();
+    };
+  });
 
   const typeCounts = $derived(
     countEntityTypes(vault.allEntities, {
@@ -36,31 +113,95 @@
     filterEntities(vault.allEntities, {
       searchQuery,
       typeFilters,
-      labelFilters: new Set<string>(),
+      labelFilters,
       allowedTypes: null,
       showDraftsOnly: false,
+      textMatchIds,
+      textSearchPending,
+      textSearchUnavailable,
     }),
+  );
+
+  const searchStatusMessage = $derived(
+    textSearchPending
+      ? "Searching indexed content…"
+      : textSearchError
+        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
+        : indexProgress.isPartial && parsedSearchQuery.textQuery
+          ? "Search is still indexing; results will update as indexing finishes."
+          : null,
   );
 
   const connectionCounts = $derived.by(() => {
     const inboundConnections = vault.inboundConnections ?? {};
 
-    return Object.fromEntries(
-      vault.allEntities.map((entity) => {
-        const inbound = inboundConnections[entity.id]?.length ?? 0;
-        const outbound =
-          entity.connections?.filter((connection) => connection.target)
-            .length ?? 0;
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(vault.allEntities.map(...)) with an imperative loop.
+    // Also replaces entity.connections?.filter(...).length with an imperative loop
+    // to prevent intermediate array allocations and reduce GC overhead during reactive updates.
+    const result: Record<string, ConnectionSummary> = {};
+    const entities = vault.allEntities;
+    const len = entities.length;
 
-        return [entity.id, { inbound, outbound, total: inbound + outbound }];
-      }),
-    );
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
+      const inbound = inboundConnections[entity.id]?.length ?? 0;
+
+      let outbound = 0;
+      if (entity.connections) {
+        const connLen = entity.connections.length;
+        for (let j = 0; j < connLen; j++) {
+          if (entity.connections[j].target) {
+            outbound++;
+          }
+        }
+      }
+
+      result[entity.id] = { inbound, outbound, total: inbound + outbound };
+    }
+
+    return result;
   });
 
   const rows = $derived(sortEntities(filtered, sort, connectionCounts));
 
+  async function completeAfterRender(span: PerformanceOperationHandle) {
+    await tick();
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+    span.complete(() => ({
+      entityCount: totalEntities,
+      resultCount: rows.length,
+      domNodeCount: document.querySelectorAll("[data-testid=entity-table-row]")
+        .length,
+    }));
+  }
+
+  function measureTableOperation(
+    operation: PerformanceOperation,
+    update: () => void,
+  ) {
+    const span = browserPerformanceRecorder.start(operation);
+    update();
+    void completeAfterRender(span);
+  }
+
+  $effect(() => {
+    if (!tableOpenRecorded && vault.isInitialized && vaultId) {
+      tableOpenRecorded = true;
+      void completeAfterRender(tableOpenSpan);
+    }
+  });
+
   // ─── Row selection + bulk actions ───────────────────────────────────────
   let selectedIds = $state<Set<string>>(new Set());
+  let lastSelectedId = $state<string | null>(null);
+  let contextMenu = $state<{
+    x: number;
+    y: number;
+    targetIds: string[];
+  } | null>(null);
+  let isCommitting = $state(false);
 
   // Selection respects the current filtered set: clear it whenever the filters
   // change so we never act on rows the user can no longer see. (Sorting keeps
@@ -68,7 +209,10 @@
   $effect(() => {
     void searchQuery;
     void typeFilters;
+    void labelFilters;
     selectedIds = new Set();
+    lastSelectedId = null;
+    contextMenu = null;
   });
 
   const selectedVisible = $derived(rows.filter((e) => selectedIds.has(e.id)));
@@ -77,23 +221,169 @@
   );
   const someSelected = $derived(selectedVisible.length > 0 && !allSelected);
 
-  function toggleRow(id: string) {
+  function toggleRow(
+    id: string,
+    options?: { shift?: boolean; ctrl?: boolean },
+  ) {
     const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
+    const isSelected = next.has(id);
+
+    if (options?.shift && lastSelectedId && lastSelectedId !== id) {
+      const currentIndex = rows.findIndex((e) => e.id === id);
+      const anchorIndex = rows.findIndex((e) => e.id === lastSelectedId);
+
+      if (currentIndex !== -1 && anchorIndex !== -1) {
+        const start = Math.min(currentIndex, anchorIndex);
+        const end = Math.max(currentIndex, anchorIndex);
+        const shouldSelect = selectedIds.has(lastSelectedId);
+
+        for (let i = start; i <= end; i++) {
+          const rowId = rows[i].id;
+          if (shouldSelect) {
+            next.add(rowId);
+          } else {
+            next.delete(rowId);
+          }
+        }
+      }
+    } else {
+      if (isSelected) {
+        next.delete(id);
+        if (lastSelectedId === id) lastSelectedId = null;
+      } else {
+        next.add(id);
+        lastSelectedId = id;
+      }
+    }
     selectedIds = next;
   }
 
   function toggleAll() {
     if (allSelected) {
       selectedIds = new Set();
+      lastSelectedId = null;
     } else {
       selectedIds = new Set(rows.map((e) => e.id));
+      lastSelectedId = rows.length > 0 ? rows[0].id : null;
     }
   }
 
   function clearSelection() {
     selectedIds = new Set();
+    lastSelectedId = null;
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      if (contextMenu) {
+        contextMenu = null;
+      } else {
+        clearSelection();
+      }
+    }
+  }
+
+  function handleRowContextMenu(id: string, x: number, y: number) {
+    const next = new Set(selectedIds);
+    if (!next.has(id)) {
+      next.clear();
+      next.add(id);
+      lastSelectedId = id;
+      selectedIds = next;
+    }
+    contextMenu = {
+      x,
+      y,
+      targetIds: Array.from(selectedIds),
+    };
+  }
+
+  function handleManageLabels() {
+    if (!contextMenu) return;
+    modalUIStore.openBulkLabelDialog(contextMenu.targetIds);
+  }
+
+  async function handleChangeType(type: string) {
+    if (isCommitting) return;
+    if (!contextMenu || contextMenu.targetIds.length === 0) return;
+    const targetIds = contextMenu.targetIds;
+
+    const confirmed = await notificationStore.confirm({
+      title: "Change Entity Type",
+      message: `Are you sure you want to change the type of ${
+        targetIds.length > 1 ? `${targetIds.length} entities` : "this entity"
+      } to "${type}"? This may result in some type-specific metadata layout updates.`,
+      confirmLabel: "Change type",
+      cancelLabel: "Cancel",
+      isDangerous: false,
+    });
+
+    if (confirmed) {
+      isCommitting = true;
+      try {
+        const result = await vault.bulkUpdate(
+          Object.fromEntries(targetIds.map((id) => [id, { type }])),
+        );
+        if (result.failedIds.length > 0 || result.skippedIds.length > 0) {
+          notificationStore.notify(
+            `Changed ${result.succeededIds.length} entities; ${
+              result.failedIds.length + result.skippedIds.length
+            } could not be changed.`,
+            "error",
+          );
+        }
+      } catch (err: any) {
+        console.error("Failed to change type", err);
+        notificationStore.notify(`Error: ${err.message}`, "error");
+      } finally {
+        isCommitting = false;
+      }
+    }
+  }
+
+  async function handleDeleteSelected() {
+    if (isCommitting) return;
+    if (!contextMenu || contextMenu.targetIds.length === 0) return;
+    const targetIds = contextMenu.targetIds;
+
+    const confirmed = await notificationStore.confirm({
+      title:
+        targetIds.length > 1 ? "Delete Selected Entities" : "Delete Entity",
+      message: `Are you sure you want to permanently delete ${
+        targetIds.length > 1
+          ? `these ${targetIds.length} entities`
+          : "this entity"
+      }? This action cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+
+    if (confirmed) {
+      isCommitting = true;
+      try {
+        const result = await vault.bulkDelete(targetIds);
+        const succeededIds = new Set(result.succeededIds);
+        selectedIds = new Set(
+          [...selectedIds].filter((id) => !succeededIds.has(id)),
+        );
+        if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
+          notificationStore.notify(
+            `Deleted ${result.succeededIds.length} entities; ${
+              result.failedIds.length + result.cancelledIds.length
+            } remain selected for retry.`,
+            "error",
+          );
+        } else {
+          clearSelection();
+        }
+      } catch (err: any) {
+        console.error("Failed to delete", err);
+        notificationStore.notify(`Error: ${err.message}`, "error");
+      } finally {
+        isCommitting = false;
+      }
+    }
   }
 
   function openBulkLabels() {
@@ -102,32 +392,61 @@
   }
 
   function handleSort(key: SortKey) {
-    sort = nextSortState(sort, key);
+    measureTableOperation("table_sort", () => {
+      sort = nextSortState(sort, key);
+    });
   }
 
   function toggleType(type: string) {
-    const next = new Set(typeFilters);
-    if (next.has(type)) {
-      next.delete(type);
-    } else {
-      next.add(type);
-    }
-    typeFilters = next;
+    measureTableOperation("table_filter", () => {
+      const next = new Set(typeFilters);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      typeFilters = next;
+    });
+  }
+
+  function toggleLabel(label: string) {
+    measureTableOperation("table_filter", () => {
+      const next = new Set(labelFilters);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      labelFilters = next;
+    });
   }
 
   function clearFilters() {
-    searchQuery = "";
-    typeFilters = new Set();
+    measureTableOperation("table_filter", () => {
+      searchQuery = "";
+      typeFilters = new Set();
+      labelFilters = new Set();
+    });
+  }
+
+  function setSearchQuery(value: string) {
+    measureTableOperation("table_filter", () => {
+      searchQuery = value;
+    });
   }
 
   const hasActiveFilters = $derived(
-    searchQuery.trim().length > 0 || typeFilters.size > 0,
+    searchQuery.trim().length > 0 ||
+      typeFilters.size > 0 ||
+      labelFilters.size > 0,
   );
 </script>
 
 <svelte:head>
   <title>Entity Table</title>
 </svelte:head>
+
+<svelte:window onkeydown={handleKeyDown} />
 
 <div
   class="flex h-full flex-col gap-4 bg-theme-bg p-4 md:p-6"
@@ -175,17 +494,23 @@
         ></span>
         <input
           type="search"
-          bind:value={searchQuery}
+          value={searchQuery}
+          oninput={(event) => setSearchQuery(event.currentTarget.value)}
           placeholder="Search by name, content, or #label…"
           aria-label="Search entities"
           data-testid="entity-table-search"
           class="w-full rounded-lg border border-theme-border bg-theme-surface py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
         />
       </div>
+      {#if searchStatusMessage}
+        <p class="text-[10px] text-theme-muted" aria-live="polite">
+          {searchStatusMessage}
+        </p>
+      {/if}
 
       {#if typeCounts.size > 0}
         <div class="flex flex-wrap items-center gap-1.5">
-          {#each [...typeCounts.entries()].sort( (a, b) => a[0].localeCompare(b[0]), ) as [type, count] (type)}
+          {#each [...typeCounts.entries()].sort( (a, b) => (a[0] ?? "").localeCompare(b[0] ?? "") ) as [type, count] (type)}
             {@const cat = categories.getCategory(type)}
             {@const active = typeFilters.has(type)}
             <button
@@ -205,6 +530,21 @@
               {/if}
               {cat?.label ?? type}
               <span class="text-theme-muted/60">{count}</span>
+            </button>
+          {/each}
+          {#each [...labelFilters].sort() as label (label)}
+            <button
+              type="button"
+              onclick={() => toggleLabel(label)}
+              aria-pressed="true"
+              title="Remove label filter"
+              data-testid="entity-table-label-filter"
+              class="inline-flex items-center gap-1 rounded-full border border-theme-primary bg-theme-primary/10 px-2.5 py-1 text-xs text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+            >
+              <span class="icon-[lucide--tag] h-3 w-3" aria-hidden="true"
+              ></span>
+              {label}
+              <span class="icon-[lucide--x] h-3 w-3" aria-hidden="true"></span>
             </button>
           {/each}
           {#if hasActiveFilters}
@@ -281,8 +621,25 @@
           {someSelected}
           onToggleRow={toggleRow}
           onToggleAll={toggleAll}
+          onFilterType={toggleType}
+          onFilterLabel={toggleLabel}
+          onRowContextMenu={handleRowContextMenu}
         />
       {/if}
     </div>
   {/if}
 </div>
+
+{#if contextMenu}
+  <TableContextMenu
+    x={contextMenu.x}
+    y={contextMenu.y}
+    selectedIds={contextMenu.targetIds}
+    onManageLabels={handleManageLabels}
+    onChangeType={handleChangeType}
+    onDelete={handleDeleteSelected}
+    onClose={() => {
+      contextMenu = null;
+    }}
+  />
+{/if}

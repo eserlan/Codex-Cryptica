@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { render, fireEvent } from "@testing-library/svelte";
+import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import type { Snippet } from "svelte";
+import { tick, type Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
+import { runShellCtaHandler } from "./marketing-shell";
 
 const noopSnippet = (() => {}) as unknown as Snippet;
 
@@ -14,6 +15,14 @@ vi.mock("$app/environment", () => ({
 
 vi.mock("$app/paths", () => ({
   base: "",
+  resolve: (path: string) => path,
+}));
+
+const trackEventMock = vi.hoisted(() => vi.fn());
+const trackPublicGeneratorActionMock = vi.hoisted(() => vi.fn());
+vi.mock("$lib/services/analytics/zaraz-analytics", () => ({
+  trackEvent: trackEventMock,
+  trackPublicGeneratorAction: trackPublicGeneratorActionMock,
 }));
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
@@ -179,8 +188,14 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         },
       });
 
-      // Let mount effects run
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await vi.waitFor(() => {
+        expect(mockGenerate).toHaveBeenCalled();
+        expect(
+          [...document.querySelectorAll('script[type="application/ld+json"]')]
+            .map((script) => JSON.parse(script.innerHTML))
+            .some((schema) => schema["@type"] === "Person"),
+        ).toBe(true);
+      });
 
       const scripts = document.querySelectorAll(
         'script[type="application/ld+json"]',
@@ -291,8 +306,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         },
       });
 
-      // Let onMount sync isOnline from navigator.onLine.
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await tick();
       mockGenerate.mockClear();
 
       const button = container.querySelector(
@@ -315,7 +329,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         },
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await tick();
       mockGenerate.mockClear();
 
       const button = container.querySelector(
@@ -352,10 +366,263 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       });
 
       expect(container.querySelector("script")).toBeNull();
-      expect(container.querySelector("img")).toBeNull();
       expect(container.querySelector("[onerror]")).toBeNull();
+      expect(container.querySelector('img[src="x"]')).toBeNull();
       expect(container.innerHTML).not.toContain("<script>alert(1)</script>");
       expect(container.textContent).toContain("Tone");
+    });
+  });
+
+  describe("Generator funnel tracking (#1796)", () => {
+    beforeEach(() => {
+      trackEventMock.mockClear();
+      trackPublicGeneratorActionMock.mockClear();
+    });
+
+    it("does not fire generator_started/generator_completed for the silent on-mount auto-draft", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "character",
+        title: "Auto Draft",
+        content: "auto",
+        lore: "",
+        labels: [],
+        status: "draft",
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalled());
+
+      expect(trackEventMock).not.toHaveBeenCalledWith(
+        "generator_started",
+        expect.anything(),
+      );
+      expect(trackEventMock).not.toHaveBeenCalledWith(
+        "generator_completed",
+        expect.anything(),
+      );
+    });
+
+    it("fires generator_started then generator_completed on an explicit Generate click", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        content: "seed",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+      const mockGenerate = vi.fn().mockResolvedValue(seedDraft);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      trackEventMock.mockClear();
+      mockGenerate.mockClear();
+
+      const button = container.querySelector(
+        "#generate-button",
+      ) as HTMLButtonElement;
+      await fireEvent.click(button);
+      await vi.waitFor(() => expect(mockGenerate).toHaveBeenCalled());
+
+      expect(trackEventMock).toHaveBeenCalledWith("generator_started", {
+        generator_type: "npc",
+      });
+      expect(trackEventMock).toHaveBeenCalledWith("generator_completed", {
+        generator_type: "npc",
+      });
+    });
+
+    it("offers a Plot Twist only after the user generates a Quest Hook", async () => {
+      const seedDraft = {
+        type: "event" as const,
+        title: "Example Quest",
+        content: "An example quest hook.",
+        lore: "",
+        labels: ["rpg-quest"],
+        status: "draft" as const,
+      };
+      const generatedQuest = {
+        ...seedDraft,
+        title: "The Bell Beneath Blackwater",
+        content: "The newly generated quest hook.",
+      };
+      const onGeneratePlotTwist = vi.fn();
+      const mockGenerate = vi.fn().mockResolvedValue(generatedQuest);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/quest",
+          eyebrow: "Quest Hook Generator",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          onGeneratePlotTwist,
+        },
+      });
+
+      expect(
+        screen.queryByRole("button", { name: "Generate Plot Twist" }),
+      ).toBeNull();
+
+      await fireEvent.click(
+        container.querySelector("#generate-button") as HTMLButtonElement,
+      );
+
+      const plotTwistButton = await screen.findByRole("button", {
+        name: "Generate Plot Twist",
+      });
+      await fireEvent.click(plotTwistButton);
+
+      expect(onGeneratePlotTwist).toHaveBeenCalledWith(generatedQuest);
+    });
+
+    it("keeps the Quest Hook example and hides Plot Twist after generation fails", async () => {
+      const seedDraft = {
+        type: "event" as const,
+        title: "Example Quest",
+        content: "An example quest hook.",
+        lore: "",
+        labels: ["rpg-quest"],
+        status: "draft" as const,
+      };
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/quest",
+          eyebrow: "Quest Hook Generator",
+          generate: vi.fn().mockRejectedValue(new Error("Generation failed")),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+          onGeneratePlotTwist: vi.fn(),
+        },
+      });
+
+      await fireEvent.click(
+        container.querySelector("#generate-button") as HTMLButtonElement,
+      );
+      await screen.findByText("Failed to generate: Generation failed");
+
+      expect(screen.getByText("Example")).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Generate Plot Twist" }),
+      ).toBeNull();
+    });
+
+    it("tracks public Save, Copy, and Open Codex actions", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "### Secret\nA secret.",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "copy",
+        expect.objectContaining({
+          generator_type: "npc",
+          copy_target: "markdown",
+        }),
+      );
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "save_to_codex",
+        expect.objectContaining({ generator_type: "npc" }),
+      );
+
+      // The header CTA is the shell's button now, so this layout registers its
+      // tracking instead of binding it. Running the registered handler is what
+      // the shell's onclick does.
+      runShellCtaHandler();
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "open_codex",
+        expect.objectContaining({
+          generator_type: "npc",
+          source: "header",
+        }),
+      );
+    });
+
+    it("navigates in the same tab to Codex for the saved draft", async () => {
+      const seedDraft = {
+        type: "character" as const,
+        title: "Seed",
+        summary: "A useful NPC.",
+        content: "### Who they are\nA useful NPC.",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      };
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/npc",
+          generate: vi.fn().mockResolvedValue(seedDraft),
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+
+      const openCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(openCodexLink).not.toBeUndefined();
+      expect(openCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
+
+      await fireEvent.click(openCodexLink!);
+
+      expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+        "open_codex",
+        expect.objectContaining({
+          generator_type: "npc",
+          source: "save_confirmation",
+        }),
+      );
+
+      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+      const secondOpenCodexLink = document.querySelector(
+        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      );
+      expect(secondOpenCodexLink).not.toBeUndefined();
+      expect(secondOpenCodexLink?.getAttribute("href")).toContain(
+        "utm_medium=save-to-vault",
+      );
+
+      await fireEvent.click(secondOpenCodexLink!);
     });
   });
 });

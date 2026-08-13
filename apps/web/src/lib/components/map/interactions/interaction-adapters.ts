@@ -3,12 +3,14 @@ import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { mapStore } from "$lib/stores/map.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import type { GridInteractionDependencies } from "./grid-interaction-handler.svelte";
 import type { MeasurementInteractionDependencies } from "./measurement-interaction-handler";
 import type { PinInteractionDependencies } from "./pin-interaction-handler";
 import type { TokenDragDependencies } from "./token-drag-handler";
+import type { TokenRotationDependencies } from "./token-rotation-handler";
 import type { TokenSelectionDependencies } from "./token-selection-manager";
 
 export function createTokenSelectionDependencies(): TokenSelectionDependencies {
@@ -44,6 +46,25 @@ export function createTokenDragDependencies(): TokenDragDependencies {
   };
 }
 
+export function createTokenRotationDependencies(): TokenRotationDependencies {
+  return {
+    getSelectedToken: () => mapSession.selectedToken,
+    project: (point) => mapStore.project(point),
+    unproject: (point) => mapStore.unproject(point),
+    isHostMode: () => mapStore.isGMMode,
+    getPeerId: () => p2pGuestService.peerId,
+    canMoveToken: (tokenId, peerId, isHost) =>
+      mapSession.canMoveToken(tokenId, peerId, isHost),
+    rotateToken: (tokenId, rotation) =>
+      mapSession.rotateToken(tokenId, rotation),
+    requestTokenRotation: (tokenId, rotation, persistent) =>
+      mapSession.requestTokenRotation(tokenId, rotation, persistent),
+    sendTokenRotation: (tokenId, rotation) =>
+      p2pGuestService.requestTokenRotation(tokenId, rotation),
+    confirmTokenRotation: (tokenId) => mapSession.confirmTokenRotation(tokenId),
+  };
+}
+
 export function createPinInteractionDependencies(): PinInteractionDependencies {
   return {
     getPins: () => mapStore.pins,
@@ -53,7 +74,8 @@ export function createPinInteractionDependencies(): PinInteractionDependencies {
     updatePinCoordinates: (pinId, point) =>
       mapStore.updatePinCoordinatesInMemory(pinId, point),
     saveMaps: () => vault.saveMaps(),
-    selectEntity: (entityId) => {
+    selectEntity: (entityId, selectionPoint) => {
+      layoutUIStore.setLastSelectedNodePosition(selectionPoint);
       vault.selectedEntityId = entityId;
     },
   };

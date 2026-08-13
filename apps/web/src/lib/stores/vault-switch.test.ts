@@ -71,11 +71,11 @@ vi.mock("./canvas-registry.svelte", () => ({
 }));
 
 // Mock Services
-vi.mock("../services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: mockSearchService,
 }));
 
-vi.mock("../services/ai", () => ({
+vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {
     clearStyleCache: vi.fn(),
     retrieveContext: vi.fn(),

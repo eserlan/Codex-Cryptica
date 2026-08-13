@@ -1,0 +1,46 @@
+{
+  "format": "codex-world-interchange",
+  "version": "1.0",
+  "source": {
+    "system": "example-export-script",
+    "worldKey": "shattered-coast",
+    "exportedAt": "2026-07-16T12:00:00Z"
+  },
+  "world": {
+    "title": "The Shattered Coast",
+    "labels": ["fantasy", "campaign"]
+  },
+  "entities": [
+    {
+      "key": "characters/captain-lyra",
+      "kind": "character",
+      "title": "Captain Lyra Venn",
+      "content": {
+        "format": "markdown",
+        "body": "## Appearance\n\nLyra wears a weathered blue coat."
+      },
+      "labels": ["pirates"],
+      "source": { "id": "npc-42" }
+    },
+    {
+      "key": "factions/crown-navy",
+      "kind": "faction",
+      "title": "The Crown Navy",
+      "content": {
+        "format": "markdown",
+        "body": "The royal fleet."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "key": "lyra-serves-crown-navy",
+      "from": "characters/captain-lyra",
+      "to": "factions/crown-navy",
+      "kind": "serves",
+      "label": "Privateer charter",
+      "directed": true
+    }
+  ],
+  "assets": []
+}

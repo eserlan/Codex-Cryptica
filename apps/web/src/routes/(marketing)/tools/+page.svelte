@@ -100,6 +100,27 @@
           title: "Adventure & Worldbuilding",
           links: [
             {
+              href: "/generators/star-system",
+              label: "Star System Generator",
+              summary:
+                "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, travel hazards, and a system-wide conflict or mystery with adventure hooks.",
+              icon: "icon-[lucide--orbit]",
+            },
+            {
+              href: "/generators/alien-race",
+              label: "Alien Race Generator",
+              summary:
+                "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+              icon: "icon-[lucide--dna]",
+            },
+            {
+              href: "/generators/world",
+              label: "Sci-Fi World Generator",
+              summary:
+                "Create coherent, campaign-ready planets, moons, habitats, and artificial worlds with factions, conflicts, mysteries, and adventure hooks.",
+              icon: "icon-[lucide--globe-2]",
+            },
+            {
               href: "/tools/quest-hook-generator",
               label: "Quest Hook Generator",
               summary:
@@ -107,11 +128,46 @@
               icon: "icon-[lucide--scroll-text]",
             },
             {
+              href: "/generators/plot-twist-generator",
+              label: "Plot Twist & Complication Generator",
+              summary:
+                "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+              icon: "icon-[lucide--shuffle]",
+            },
+            {
+              href: "/generators/council-vote",
+              label: "Council Vote Generator",
+              summary:
+                "Generate a political vote quest — a named council of voters with distinct agendas that the party must sway before a deadline decision.",
+              icon: "icon-[lucide--gavel]",
+            },
+            {
+              href: "/generators/secret-society",
+              label: "Secret Society Generator",
+              summary:
+                "Create cults, sects, conspiracies, and hidden orders with doctrine, rituals, a public face, and adventure hooks.",
+              icon: "icon-[lucide--eye]",
+            },
+            {
               href: "/generators/settlement",
               label: "Settlement Generator",
               summary:
                 "Draft towns and villages with population, economy, government, locations, and factions.",
               icon: "icon-[lucide--landmark]",
+            },
+            {
+              href: "/generators/dungeon-generator",
+              label: "Dungeon & Delve Generator",
+              summary:
+                "Generate multi-layered dungeons, ancient ruins, subterranean vaults, alien complexes, or cybernetic facilities.",
+              icon: "icon-[lucide--layers]",
+            },
+            {
+              href: "/generators/adventure-generator",
+              label: "Adventure Idea Generator",
+              summary:
+                "Generate campaign-ready adventure situations with primary pressure, key actors, discoveries, complications, and non-linear outcomes.",
+              icon: "icon-[lucide--map]",
             },
             {
               href: "/generators/magic-item",
@@ -149,6 +205,20 @@
               icon: "icon-[lucide--globe]",
             },
             {
+              href: "/generators/news-sheet-generator",
+              label: "News Sheet Generator",
+              summary:
+                "Generate an in-world news sheet for any genre — cyberpunk screamsheets, fantasy broadsheets, station newsfeeds — with rumours, classifieds, and GM-only hooks.",
+              icon: "icon-[lucide--newspaper]",
+            },
+            {
+              href: "/generators/language-generator",
+              label: "Fictional Language Generator",
+              summary:
+                "Generate a conlang profile with pronunciation guidelines, naming rules, example names, and a starter vocabulary glossary.",
+              icon: "icon-[lucide--languages]",
+            },
+            {
               href: "/generators/random",
               label: "Surprise Me",
               summary:
@@ -184,7 +254,7 @@
               href: "/ai-rpg-campaign-manager",
               label: "AI RPG Campaign Manager",
               summary:
-                "Review the AI-assisted campaign workflow built around local notes and BYO Gemini access.",
+                "Review the AI-assisted campaign workflow built around local notes and BYO OpenAI/Luna access.",
               icon: "icon-[lucide--wand-sparkles]",
             },
             {
@@ -279,10 +349,17 @@
     {
       title: "Migration & Imports",
       description:
-        "Client-side drag-and-drop parsers to preview and import campaign vaults from other services.",
+        "Client-side drag-and-drop parsers to preview and import campaign vaults from other services. See the full Migration Hub for every option in one place.",
       groups: [
         {
           links: [
+            {
+              href: "/migrations",
+              label: "Migration Hub",
+              summary:
+                "Every supported import source in one place — pick the tool you're migrating from.",
+              icon: "icon-[lucide--folder-input]",
+            },
             {
               href: "/import/obsidian-vault",
               label: "Obsidian Vault Importer",
@@ -311,44 +388,19 @@
                 "Extract LegendKeeper visual maps and slate blocks into clean, parent-child markdown folders.",
               icon: "icon-[lucide--folder-tree]",
             },
-          ],
-        },
-      ],
-    },
-    {
-      title: "Migration & Importer Hubs",
-      description:
-        "Migrate your campaign notes, wikis, and databases from other worldbuilding tools into local Codex Cryptica vaults.",
-      groups: [
-        {
-          links: [
             {
-              href: "/import/obsidian-vault",
-              label: "Obsidian Vault Importer",
+              href: "/import/scabard",
+              label: "Scabard Importer",
               summary:
-                "Import your Obsidian campaign vault. Convert Markdown files, wiki-links, and YAML frontmatter into Codex.",
-              icon: "icon-[lucide--folder-down]",
+                "Convert Scabard campaign JSON exports — pages, categories, and connections — into your vault.",
+              icon: "icon-[lucide--shapes]",
             },
             {
-              href: "/import/world-anvil-export",
-              label: "World Anvil Importer",
+              href: "/import/thread-weaver",
+              label: "Thread Weaver Importer",
               summary:
-                "Extract your campaign lore from World Anvil backup JSON exports and preview them offline.",
-              icon: "icon-[lucide--download-cloud]",
-            },
-            {
-              href: "/import/kanka-json",
-              label: "Kanka Importer",
-              summary:
-                "Upload your Kanka campaign JSON export to import characters, locations, factions, and items.",
-              icon: "icon-[lucide--download]",
-            },
-            {
-              href: "/import/legendkeeper-json",
-              label: "LegendKeeper Importer",
-              summary:
-                "Convert your LegendKeeper JSON project backups into offline campaign notes.",
-              icon: "icon-[lucide--file-archive]",
+                "Bring a Thread Weaver Engine campaign export's characters, factions, and settlements into Codex.",
+              icon: "icon-[lucide--network]",
             },
           ],
         },
@@ -367,19 +419,12 @@
   <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 
-<main
+<div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
   style:background-image="var(--bg-texture-overlay)"
 >
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
-      <a
-        href="{base}/?ref=tools"
-        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
-      >
-        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
-        Codex Cryptica
-      </a>
       <div class="max-w-3xl">
         <p
           class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
@@ -387,7 +432,7 @@
           Tools Directory
         </p>
         <h1
-          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide mb-5"
         >
           RPG Tools, Generators, and Comparisons
         </h1>
@@ -399,13 +444,13 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-14">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16 space-y-14">
     {#each toolSections as section (section.title)}
       <section aria-labelledby={`${section.title}-heading`}>
         <div class="max-w-3xl mb-6">
           <h2
             id={`${section.title}-heading`}
-            class="font-header text-2xl font-bold uppercase tracking-wider text-theme-primary mb-2"
+            class="font-header text-2xl font-bold text-theme-primary mb-2"
           >
             {section.title}
           </h2>
@@ -418,9 +463,7 @@
           {#each section.groups as group, groupIndex (`${section.title}-${groupIndex}`)}
             <div>
               {#if group.title}
-                <h3
-                  class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
-                >
+                <h3 class="font-header text-sm font-bold text-theme-text mb-4">
                   {group.title}
                 </h3>
               {/if}
@@ -436,7 +479,7 @@
                         class="{link.icon} h-5 w-5 text-theme-primary mb-4 block"
                       ></span>
                       <span
-                        class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                        class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
                       >
                         {link.label}
                       </span>
@@ -455,4 +498,4 @@
       </section>
     {/each}
   </div>
-</main>
+</div>

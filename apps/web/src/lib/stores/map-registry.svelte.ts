@@ -6,6 +6,7 @@ import type { KeyedTaskQueue } from "@codex/vault-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
+import { updateLastInternalChange } from "./vault/registry";
 
 class MapRegistryStore {
   _maps = $state<Record<string, Map>>({});
@@ -64,10 +65,7 @@ class MapRegistryStore {
         const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveMapsToDisk(vaultDir, this.maps);
 
-        // Update dirty tracking timestamp
-        import("./vault/registry").then((m) =>
-          m.updateLastInternalChange(vaultId),
-        );
+        await updateLastInternalChange(vaultId);
 
         this.status = "idle";
       } catch (err) {
@@ -120,10 +118,7 @@ class MapRegistryStore {
 
         await saveMapsToDisk(vaultDir, this.maps);
 
-        // Update dirty tracking timestamp
-        import("./vault/registry").then((m) =>
-          m.updateLastInternalChange(activeVaultId),
-        );
+        await updateLastInternalChange(activeVaultId);
       } catch (err: any) {
         console.error("[MapRegistryStore] Failed to delete map files", err);
         this.status = "error";

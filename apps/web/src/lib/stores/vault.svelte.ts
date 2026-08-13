@@ -6,6 +6,7 @@ import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
 import type { Entity, GuestChatTranscript } from "schema";
+import type { BulkMutationResult } from "./vault/bulk-results";
 import {
   saveTranscriptToDisk,
   loadTranscriptsForCharacterFromDisk,
@@ -16,14 +17,25 @@ import { EntityStore } from "./vault/entity-store.svelte";
 import { EntityContentLoader } from "./vault/entity-content-loader.svelte";
 import { EntityPersistenceService } from "./vault/entity-persistence";
 import { EntityMutationService } from "./vault/entity-mutations";
+import {
+  addFamilyLink as addFamilyLinkMutation,
+  removeFamilyLink as removeFamilyLinkMutation,
+} from "./vault/family-mutations";
+import {
+  isFamilyType,
+  resolveFamilyAlias,
+  type FamilyConnectionType,
+} from "@codex/family-engine";
 import { SyncStore } from "./vault/sync-store.svelte";
 import { AssetStore } from "./vault/asset-store.svelte";
+import { FileStore } from "./vault/file-store.svelte";
 import { ServiceRegistry } from "./vault/service-registry";
 import { SearchStore } from "./vault/search-store.svelte";
 import {
   VaultRepository,
   SyncCoordinator,
   AssetManager,
+  FileManager,
 } from "@codex/vault-engine";
 import {
   fileIOAdapter,
@@ -40,10 +52,25 @@ import { VaultStorageManager } from "./vault/storage";
 import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
+import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+import { statSheetTemplates } from "./stat-sheet-templates.svelte";
+import { presentationTemplates } from "./presentation-templates.svelte";
+import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
   // Reactive State
-  isInitialized = $state(false);
+  _isInitialized = $state(false);
+  get isInitialized() {
+    if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      // Viewing a published snapshot: don't let host-vault init leak through
+      // and trigger app effects before the snapshot has loaded.
+      return guestVault.isInitialized;
+    }
+    return this._isInitialized;
+  }
+  set isInitialized(v: boolean) {
+    this._isInitialized = v;
+  }
   selectedEntityId = $state<string | null>(null);
   demoVaultName = $state<string | null>(null);
   migrationRequired = $state(false);
@@ -58,6 +85,7 @@ export class VaultStore {
   public entityStore: EntityStore;
   public syncStore: SyncStore;
   public assetStore: AssetStore;
+  public fileStore: FileStore;
   public serviceRegistry: ServiceRegistry;
   public searchStore: SearchStore;
   private lifecycleManager: VaultLifecycleManager;
@@ -67,33 +95,88 @@ export class VaultStore {
   // Delegated Getters
   get entities() {
     if (sessionModeStore.isGuestMode) {
-      return guestVault.entitiesMap;
+      return { ...guestVault.entitiesMap, ...this.entityStore.entities };
     }
     return this.entityStore.entities;
   }
   get allEntities() {
     if (sessionModeStore.isGuestMode) {
-      return guestVault.entities;
+      const allEnts = this.entityStore.allEntities;
+      const extraEntities: typeof allEnts = [];
+      for (let i = 0; i < allEnts.length; i++) {
+        const e = allEnts[i];
+        if (!guestVault.entitiesMap[e.id]) extraEntities.push(e);
+      }
+      return guestVault.entities.concat(extraEntities);
     }
     return this.entityStore.allEntities;
   }
+  get graphEntities() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.entities;
+    }
+    return this.entityStore.graphEntities;
+  }
+  get graphStructureVersion() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.entities.length;
+    }
+    return this.entityStore.graphStructureVersion;
+  }
   get titleAndAliasIndex() {
+    if (sessionModeStore.isGuestMode) {
+      const result: Array<{
+        lowercaseText: string;
+        entityId: string;
+        actualTitle: string;
+        isAlias: boolean;
+        visibility?: string;
+        labels?: string[];
+        status: string;
+      }> = [];
+      for (const entity of guestVault.entities) {
+        result.push({
+          lowercaseText: entity.title.toLowerCase(),
+          entityId: entity.id,
+          actualTitle: entity.title,
+          isAlias: false,
+          visibility: entity.visibility,
+          labels: entity.labels,
+          status: entity.status || "active",
+        });
+        for (const alias of entity.aliases || []) {
+          if (!alias) continue;
+          result.push({
+            lowercaseText: alias.toLowerCase(),
+            entityId: entity.id,
+            actualTitle: entity.title,
+            isAlias: true,
+            visibility: entity.visibility,
+            labels: entity.labels,
+            status: entity.status || "active",
+          });
+        }
+      }
+      return result.sort(
+        (a, b) => b.lowercaseText.length - a.lowercaseText.length,
+      );
+    }
     return this.entityStore.titleAndAliasIndex;
   }
   get allTitlesString() {
     return this.entityStore.allEntities.map((e) => e.title).join(", ");
   }
   get status() {
+    if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      // Guest snapshots don't sync; the host syncStore may be stuck in
+      // "loading" from an interrupted bootstrap.
+      return guestVault.isInitialized ? "idle" : "loading";
+    }
     return this.syncStore.status;
   }
   set status(
     value:
-      | "idle"
-      | "loading"
-      | "saving"
-      | "saved"
-      | "needs-permission"
-      | "error",
+      "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
     this.syncStore.setStatus(value);
   }
@@ -206,6 +289,9 @@ export class VaultStore {
     return canvasRegistry.canvases;
   }
   get activeVaultId() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.publishId;
+    }
     return vaultRegistry.activeVaultId;
   }
   get activeVaultRecord() {
@@ -230,6 +316,7 @@ export class VaultStore {
   constructor(
     public repository = new VaultRepository(fileIOAdapter),
     private assetManager = new AssetManager(assetIOAdapter, imageProcessor),
+    private fileManager = new FileManager({ ioAdapter: assetIOAdapter }),
     public syncCoordinator: SyncCoordinator | null = null,
   ) {
     this.serviceRegistry = new ServiceRegistry();
@@ -297,6 +384,7 @@ export class VaultStore {
     });
 
     const mutations = new EntityMutationService({
+      performanceRecorder: browserPerformanceRecorder,
       repository: this.repository,
       persistence,
       loader,
@@ -323,6 +411,11 @@ export class VaultStore {
       assetManager: this.assetManager,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
       getActiveFolderHandle: () => this.getActiveFolderHandle(),
+      isGuest: () => this.isGuest,
+    });
+    this.fileStore = new FileStore({
+      fileManager: this.fileManager,
+      getActiveVaultHandle: () => this.getActiveVaultHandle(),
       isGuest: () => this.isGuest,
     });
 
@@ -397,6 +490,8 @@ export class VaultStore {
 
       if (this.activeVaultId) {
         await themeStore.loadForVault(this.activeVaultId);
+        await statSheetTemplates.loadForVault(this.activeVaultId);
+        await presentationTemplates.loadForVault(this.activeVaultId);
       }
 
       if (this.activeVaultId) {
@@ -466,7 +561,10 @@ export class VaultStore {
 
   // --- Entity Management (Delegated) ---
 
-  loadEntityContent(id: string) {
+  loadEntityContent(id: string): Promise<void> {
+    if (sessionModeStore.isGuestMode) {
+      return Promise.resolve();
+    }
     return this.entityStore.loadEntityContent(id);
   }
   createEntity(
@@ -474,6 +572,19 @@ export class VaultStore {
     title: string,
     initialData: Partial<Entity> = {},
   ) {
+    // Auto-apply the vault's configured default stat sheet template for this
+    // category, unless the caller already supplied one (e.g. duplicating an
+    // entity, or an import that carries its own statSheet).
+    if (!initialData.statSheet) {
+      const defaultFields =
+        statSheetTemplates.getDefaultFieldsForCategory(type);
+      if (defaultFields) {
+        initialData = {
+          ...initialData,
+          statSheet: { templateId: null, fields: defaultFields },
+        };
+      }
+    }
     return this.entityStore.createEntity(type, title, initialData);
   }
   updateEntity(id: string, updates: Partial<LocalEntity>) {
@@ -482,20 +593,83 @@ export class VaultStore {
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
   }
+  bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    return this.entityStore.bulkUpdate(updates);
+  }
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
   }
-  addConnection(
+  bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    return this.entityStore.bulkDelete(ids);
+  }
+  /**
+   * Freeform relationship phrases like "Mother of" are redirected to a real
+   * family link (reciprocal write + cycle check) instead of a one-sided
+   * generic connection, so text typed outside the Family tab (Related Entity
+   * modal, AI-generated connections) still surfaces in Family/Lineage views.
+   * Only applies between two characters and when `type` isn't already a
+   * family type, so it can never re-trigger on the family link it writes.
+   */
+  async addConnection(
     sId: string,
     tId: string,
     type: string,
     label?: string,
     strength?: number,
   ) {
+    if (!isFamilyType(type) && label) {
+      const alias = resolveFamilyAlias(label);
+      if (
+        alias &&
+        this.entities[sId]?.type === "character" &&
+        this.entities[tId]?.type === "character"
+      ) {
+        const result = await this.addFamilyLink(sId, tId, alias.type);
+        if (!result.ok) return false;
+        // Best-effort: the family link itself is already written and
+        // correct at this point, so a failure to attach the display term
+        // (e.g. "Mother") must not report the whole redirect as failed.
+        try {
+          const labelled = await this.updateConnection(
+            sId,
+            tId,
+            alias.type,
+            alias.type,
+            alias.label,
+          );
+          if (labelled === false) {
+            console.warn(
+              `addConnection: family link ${sId}->${tId} (${alias.type}) created, but attaching its display label "${alias.label}" failed.`,
+            );
+          }
+        } catch (err) {
+          console.warn(
+            `addConnection: family link ${sId}->${tId} (${alias.type}) created, but attaching its display label "${alias.label}" threw.`,
+            err,
+          );
+        }
+        return true;
+      }
+    }
     return this.entityStore.addConnection(sId, tId, type, label, strength);
   }
   removeConnection(sId: string, tId: string, type: string) {
     return this.entityStore.removeConnection(sId, tId, type);
+  }
+  /** Add a family link, writing both sides and blocking circular ancestry. */
+  addFamilyLink(
+    sId: string,
+    tId: string,
+    type: FamilyConnectionType,
+    targetLabel?: string,
+  ) {
+    return addFamilyLinkMutation(sId, tId, type, targetLabel, this);
+  }
+  /** Remove a family link from both entities. */
+  removeFamilyLink(sId: string, tId: string, type: FamilyConnectionType) {
+    return removeFamilyLinkMutation(sId, tId, type, this);
   }
   updateConnection(
     sId: string,
@@ -545,6 +719,9 @@ export class VaultStore {
   saveImageToVault(blob: Blob | File, entityId: string, name?: string) {
     return this.assetStore.saveImageToVault(blob, entityId, name);
   }
+  importFileToVault(file: File) {
+    return this.fileStore.importFile(file);
+  }
   ensureAssetPersisted(path: string, handle: FileSystemDirectoryHandle) {
     return this.assetStore.ensureAssetPersisted(path, handle);
   }
@@ -582,6 +759,7 @@ export class VaultStore {
     return this.lifecycleManager.switchVault(id);
   }
   createVault(name: string) {
+    onboardingFunnel.track("vault_created");
     return this.lifecycleManager.createVault(name);
   }
   deleteVault(id: string) {
@@ -632,6 +810,19 @@ export class VaultStore {
     const db = await getDB();
     await db.put("settings", v, "defaultVisibility");
   }
+
+  async flushPendingSaves(timeoutMs?: number): Promise<void> {
+    await this.entityStore?.flushPendingSaves(timeoutMs);
+    this.broadcastVaultUpdate();
+  }
+
+  suspendSaving() {
+    this.entityStore?.suspendSaving();
+  }
+
+  resumeSaving() {
+    this.entityStore?.resumeSaving();
+  }
 }
 
 const VAULT_KEY = "__codex_vault_instance__";
@@ -639,7 +830,12 @@ export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());
 
-if (typeof window !== "undefined" && import.meta.env.DEV) {
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV ||
+    (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+      .__CODEX_PERFORMANCE_CAPTURE__ === true)
+) {
   (window as any).vault = vault;
   debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

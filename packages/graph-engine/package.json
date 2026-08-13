@@ -11,6 +11,7 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/performance-observability": "workspace:*",
     "comlink": "^4.4.1",
     "cytoscape": "^3.33.4",
     "cytoscape-fcose": "^2.2.0",
@@ -18,7 +19,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.7",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   }

@@ -1,8 +1,8 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
-import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
-import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service.svelte";
-import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
-import { searchService as defaultSearchService } from "../services/search.svelte";
+import { contextRetrievalService as defaultContextRetrieval } from "@codex/ai-engine";
+import { textGenerationService as defaultTextGeneration } from "@codex/ai-engine";
+import { imageGenerationService as defaultImageGeneration } from "@codex/ai-engine";
+import { searchService as defaultSearchService } from "@codex/search-orchestrator";
 import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
@@ -35,6 +35,9 @@ import {
   type EntityRevisionRequest,
   type EntityRevisionResult,
   type IOracleStore,
+  type PromptRegenerationOptions,
+  type ReviewedPromptOptions,
+  type RegeneratedPrompt,
 } from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
 import { OracleChatManager } from "./oracle/chat-manager.svelte";
@@ -390,20 +393,34 @@ export class OracleStore implements IOracleStore {
     await this.actions.drawMessage(messageId);
   }
 
-  async generateEntityFromPrompt(entityId: string, prompt: string) {
-    await this.actions.generateEntityFromPrompt(entityId, prompt);
+  async generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ) {
+    await this.actions.generateEntityFromPrompt(entityId, prompt, options);
   }
 
-  async generateMessageFromPrompt(messageId: string, prompt: string) {
-    await this.actions.generateMessageFromPrompt(messageId, prompt);
+  async generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    options?: ReviewedPromptOptions,
+  ) {
+    await this.actions.generateMessageFromPrompt(messageId, prompt, options);
   }
 
-  async regenerateEntityPrompt(entityId: string): Promise<string | null> {
-    return this.actions.regenerateEntityPrompt(entityId);
+  async regenerateEntityPrompt(
+    entityId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null> {
+    return this.actions.regenerateEntityPrompt(entityId, options);
   }
 
-  async regenerateMessagePrompt(messageId: string): Promise<string | null> {
-    return this.actions.regenerateMessagePrompt(messageId);
+  async regenerateMessagePrompt(
+    messageId: string,
+    options?: PromptRegenerationOptions,
+  ): Promise<RegeneratedPrompt | null> {
+    return this.actions.regenerateMessagePrompt(messageId, options);
   }
 
   isVisualizingEntity(entityId: string | null | undefined) {

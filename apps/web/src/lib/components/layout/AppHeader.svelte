@@ -6,10 +6,15 @@
   import VaultControls from "../VaultControls.svelte";
   import DriveStatus from "./DriveStatus.svelte";
   import P2PStatus from "./P2PStatus.svelte";
+  import VoiceChatControls from "../vtt/VoiceChatControls.svelte";
   import { openFrontPage } from "./app-header-actions";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
+  import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -23,6 +28,9 @@
 
   const handleBrandClick = () => {
     if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      modalUIStore.closeZenMode();
+      vault.selectedEntityId = null;
+      onboardingStore.restoreWorldPage();
       void goto(`${base}/guest/${guestVault.publishId}`);
       return;
     }
@@ -65,21 +73,24 @@
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
         aria-label="Toggle menu"
       >
-        <span class="icon-[lucide--menu] w-6 h-6"></span>
+        <span class="icon-[lucide--menu] w-6 h-6" aria-hidden="true"></span>
       </button>
 
-      <!-- Die Roller Toggle -->
-      <button
-        class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
-        onclick={() => (modalUIStore.showDiceModal = true)}
-        aria-label="Open Die Roller"
-        title="Open Die Roller"
-        data-testid="dice-roller-button"
-      >
-        <span
-          class="icon-[lucide--dices] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
-        ></span>
-      </button>
+      <!-- Die Roller Toggle — advanced RPG utility, hidden in Guided Mode -->
+      {#if !guidedModeStore.isGuidedMode}
+        <button
+          class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
+          onclick={() => (modalUIStore.showDiceModal = true)}
+          aria-label="Open Die Roller"
+          title="Open Die Roller"
+          data-testid="dice-roller-button"
+        >
+          <span
+            class="icon-[lucide--dices] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
+            aria-hidden="true"
+          ></span>
+        </button>
+      {/if}
 
       <h1
         class="text-lg md:text-xl font-bold text-chrome-text font-sans tracking-wide flex items-center gap-2 md:gap-3 shrink-0 transition-colors"
@@ -93,7 +104,10 @@
           title="Go to front page"
           data-testid="header-front-page-button"
         >
-          <span class="icon-[lucide--book-open] w-5 h-5 text-chrome-accent">
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--book-open] w-5 h-5 text-chrome-accent"
+          >
           </span>
           <span class="hidden sm:inline">Codex Cryptica</span>
           <span class="sm:hidden text-chrome-accent">CC</span>
@@ -101,9 +115,10 @@
       </h1>
     </div>
 
-    <!-- Search (Desktop: Input, Mobile: Button) -->
-    <div class="flex-1 max-w-xl md:px-4 flex justify-end md:justify-center">
-      <div class="hidden md:block w-full relative group">
+    <!-- Search — full input at lg+, compact icon button below (frees space on
+         tablet-range viewports where the right cluster is crowded, #1785). -->
+    <div class="flex-1 max-w-xl lg:px-4 flex justify-end lg:justify-center">
+      <div class="hidden lg:block w-full relative group">
         <span
           class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-chrome-muted group-focus-within:text-chrome-accent transition-colors"
         ></span>
@@ -119,21 +134,36 @@
         />
       </div>
       <button
-        class="md:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
+        type="button"
+        class="lg:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => searchStore.open()}
         aria-label="Search"
+        data-testid="mobile-search-button"
       >
-        <span class="icon-[heroicons--magnifying-glass] w-6 h-6"></span>
+        <span
+          class="icon-[heroicons--magnifying-glass] w-6 h-6"
+          aria-hidden="true"
+        ></span>
       </button>
     </div>
 
     <!-- Desktop: Right Controls -->
     <div class="hidden md:flex items-center gap-4 shrink-0">
       {#if sessionModeStore.isGuestMode}
-        <span class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5">
+        <span
+          class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5"
+        >
           <span class="icon-[lucide--eye] h-3.5 w-3.5"></span>
           READ-ONLY GUEST
         </span>
+        <VoiceChatControls />
+        <a
+          href="{base}/worlds"
+          class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
+        >
+          <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+          Explore Worlds
+        </a>
         <button
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all"
           onclick={() => {
@@ -144,10 +174,47 @@
         >
           Exit Guest Mode
         </button>
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
+          onclick={() => modalUIStore.openSettings("help")}
+          title="Help and legal information"
+          aria-label="Open Help and legal information"
+          data-testid="guest-settings-button"
+        >
+          <span class="icon-[lucide--circle-help] h-5 w-5" aria-hidden="true"
+          ></span>
+        </button>
       {:else}
-        <DriveStatus />
-        <P2PStatus />
+        <button
+          type="button"
+          class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+          onclick={() => modalUIStore.openIntentCreateMenu()}
+          data-testid="header-create-button"
+          aria-label="Create new entity"
+          title="Create"
+        >
+          <span class="icon-[lucide--plus] w-4 h-4" aria-hidden="true"></span>
+          Create
+        </button>
+        <GuidedModeToggle />
+        {#if !guidedModeStore.isGuidedMode}
+          <DriveStatus />
+          <P2PStatus />
+          <VoiceChatControls />
+        {/if}
         <VaultControls />
+        {#if !guidedModeStore.isGuidedMode}
+          <a
+            href="{base}/worlds"
+            class="w-8 h-8 flex items-center justify-center border border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent transition-all"
+            title="Explore public worlds"
+            aria-label="Explore public worlds"
+          >
+            <span class="w-5 h-5 icon-[lucide--compass]" aria-hidden="true"
+            ></span>
+          </a>
+        {/if}
         <button
           class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
             ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'
@@ -157,7 +224,8 @@
           aria-label="Open Application Settings"
           data-testid="settings-button"
         >
-          <span class="w-5 h-5 icon-[lucide--settings]"></span>
+          <span class="w-5 h-5 icon-[lucide--settings]" aria-hidden="true"
+          ></span>
         </button>
       {/if}
     </div>

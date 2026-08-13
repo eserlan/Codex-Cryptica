@@ -39,6 +39,14 @@ describe("ModalUIStore", () => {
     store.closeSettings();
     expect(store.showSettings).toBe(false);
 
+    store.openSettings("templates");
+    expect(store.showSettings).toBe(true);
+    expect(store.activeSettingsTab).toBe("templates");
+
+    // Toggling the active Templates tab closes the settings modal.
+    store.toggleSettings("templates");
+    expect(store.showSettings).toBe(false);
+
     store.toggleSettings("theme");
     expect(store.showSettings).toBe(true);
     expect(store.activeSettingsTab).toBe("theme");
@@ -59,6 +67,10 @@ describe("ModalUIStore", () => {
     store.closeZenMode();
     expect(store.showZenMode).toBe(false);
     expect(store.zenModeEntityId).toBeNull();
+
+    // Zen mode supports the Family tab too.
+    store.openZenMode("789", "family");
+    expect(store.zenModeActiveTab).toBe("family");
 
     store.openReadMode("456");
     expect(store.showZenMode).toBe(true);
@@ -131,6 +143,8 @@ describe("ModalUIStore", () => {
       sourceEntityId: null,
       generatorId: "npc",
       prefillDate: null,
+      autoGenerate: false,
+      initialPrompt: null,
     });
     store.closeGeneratorWorkflow();
     expect(store.generatorWorkflow.open).toBe(false);
@@ -153,7 +167,64 @@ describe("ModalUIStore", () => {
       sourceEntityId: "src-42",
       generatorId: "faction",
       prefillDate: null,
+      autoGenerate: false,
+      initialPrompt: null,
     });
+  });
+
+  it("openIntentGeneratorWorkflow auto-generates with contextual launch and initialPrompt when given", () => {
+    const store = new ModalUIStore();
+    store.openIntentGeneratorWorkflow("npc", "src-1", "Cyberpunk hacker");
+    expect(store.generatorWorkflow).toEqual({
+      open: true,
+      launchMode: "contextual",
+      sourceEntityId: "src-1",
+      generatorId: "npc",
+      prefillDate: null,
+      autoGenerate: true,
+      initialPrompt: "Cyberpunk hacker",
+    });
+  });
+
+  it("openIntentGeneratorWorkflow uses workspace launch mode without a source entity", () => {
+    const store = new ModalUIStore();
+    store.openIntentGeneratorWorkflow("faction");
+    expect(store.generatorWorkflow.launchMode).toBe("workspace");
+    expect(store.generatorWorkflow.autoGenerate).toBe(true);
+    expect(store.generatorWorkflow.initialPrompt).toBeNull();
+  });
+
+  it("openIntentCreateMenu and closeIntentCreateMenu toggle the intent menu", () => {
+    const store = new ModalUIStore();
+    expect(store.showIntentCreateMenu).toBe(false);
+    store.openIntentCreateMenu();
+    expect(store.showIntentCreateMenu).toBe(true);
+    store.closeIntentCreateMenu();
+    expect(store.showIntentCreateMenu).toBe(false);
+  });
+
+  it("openQuickStartModal and closeQuickStartModal toggle Quick Start visibility", () => {
+    const store = new ModalUIStore();
+    expect(store.showQuickStartModal).toBe(false);
+    store.openQuickStartModal();
+    expect(store.showQuickStartModal).toBe(true);
+    store.closeQuickStartModal();
+    expect(store.showQuickStartModal).toBe(false);
+  });
+
+  it("isAnyModalOpen reports true while Quick Start or the intent menu is open, so the first-run tour doesn't stack on top", () => {
+    const store = new ModalUIStore();
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openQuickStartModal();
+    expect(store.isAnyModalOpen).toBe(true);
+    store.closeQuickStartModal();
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openIntentCreateMenu();
+    expect(store.isAnyModalOpen).toBe(true);
+    store.closeIntentCreateMenu();
+    expect(store.isAnyModalOpen).toBe(false);
   });
 
   it("requestCreateEntity sets pendingCreateEntity and clears date when none given", () => {
@@ -201,6 +272,29 @@ describe("ModalUIStore", () => {
       open: false,
       entityId: null,
       instructions: "",
+    });
+    expect(store.isAnyModalOpen).toBe(false);
+  });
+
+  it("handles vault theme prompt", () => {
+    const store = new ModalUIStore();
+    expect(store.vaultThemePrompt).toEqual({
+      open: false,
+      vaultId: null,
+    });
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openVaultThemePrompt("v1");
+    expect(store.vaultThemePrompt).toEqual({
+      open: true,
+      vaultId: "v1",
+    });
+    expect(store.isAnyModalOpen).toBe(true);
+
+    store.closeVaultThemePrompt();
+    expect(store.vaultThemePrompt).toEqual({
+      open: false,
+      vaultId: null,
     });
     expect(store.isAnyModalOpen).toBe(false);
   });

@@ -1,7 +1,14 @@
 import { appEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import type { IOracleStore } from "./types";
+import type {
+  IOracleStore,
+  PromptRegenerationOptions,
+  RegeneratedPrompt,
+  ReviewedPromptOptions,
+} from "./types";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { systemClock } from "$lib/utils/runtime-deps";
+import { ASPECT_RATIO_DIMENSIONS, type AspectRatio } from "schema";
 
 export class OracleActionManager {
   constructor(private store: IOracleStore) {}
@@ -21,7 +28,7 @@ export class OracleActionManager {
           type: ORACLE_EVENTS.UNDO_PERFORMED,
           domain: "oracle",
           payload: { messageId: action.messageId },
-          metadata: { timestamp: Date.now(), sync: true },
+          metadata: { timestamp: systemClock.now(), sync: true },
         });
       }
     });
@@ -39,10 +46,30 @@ export class OracleActionManager {
       const entity = this.store.vault.entities[entityId];
       if (!entity) return;
 
-      if (entity.artDirection?.trim()) {
+      // Opening the review reuses the last composed prompt as-is when one is
+      // saved, instead of re-running the (AI-call-backed) subject distiller +
+      // composer on every click. "Revise Prompt" in the modal
+      // (regenerateEntityPrompt below) is the explicit way to force a fresh
+      // recompute when the entity's lore/category/camera has actually changed.
+      const saved = entity.imageArtDirection;
+      if (saved?.prompt) {
+        const negativeTerms = saved.negativePrompt
+          ? saved.negativePrompt
+              .split(/[\n,]+/)
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+          : [];
+
+        const validAspectRatio: AspectRatio | undefined =
+          saved.aspectRatio && saved.aspectRatio in ASPECT_RATIO_DIMENSIONS
+            ? (saved.aspectRatio as AspectRatio)
+            : undefined;
+
         modalUIStore.openImagePromptReview(
           { kind: "entity", id: entityId, title: entity.title },
-          entity.artDirection.trim(),
+          saved.prompt,
+          negativeTerms,
+          validAspectRatio,
         );
         return;
       }
@@ -55,6 +82,8 @@ export class OracleActionManager {
         modalUIStore.openImagePromptReview(
           { kind: "entity", id: entityId, title: entity.title },
           result.prompt,
+          result.negativeTerms,
+          result.metadata?.aspectRatio,
         );
       }
     } catch (err) {
@@ -77,19 +106,7 @@ export class OracleActionManager {
       const linkedEntity = message?.entityId
         ? this.store.vault.entities[message.entityId]
         : null;
-      if (message && linkedEntity?.artDirection?.trim()) {
-        modalUIStore.openImagePromptReview(
-          {
-            kind: "message",
-            id: messageId,
-            title: linkedEntity.title,
-            entityId: message.entityId,
-          },
-          linkedEntity.artDirection.trim(),
-        );
-        return;
-      }
-
+      // See drawEntity: saved art direction is composed, never sent raw.
       const result = await this.store.executor.prepareMessagePrompt(
         messageId,
         this.store.getExecutionContext(),
@@ -103,6 +120,8 @@ export class OracleActionManager {
             entityId: message.entityId,
           },
           result.prompt,
+          result.negativeTerms,
+          result.metadata?.aspectRatio,
         );
       }
     } catch (err) {
@@ -114,15 +133,23 @@ export class OracleActionManager {
     }
   }
 
-  async generateEntityFromPrompt(entityId: string, prompt: string) {
+  async generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    options: ReviewedPromptOptions = {},
+  ) {
     if (this.store.ui.visualizingEntityId === entityId) return;
 
     this.store.ui.visualizingEntityId = entityId;
     try {
-      await this.store.vault.updateEntity(entityId, { artDirection: prompt });
+      // The composed prompt is not written back to `artDirection`: that field
+      // is user-authored style direction and now overrides the theme layer, so
+      // storing a full prompt there would duplicate the category and camera
+      // layers on the next generation. Provenance is kept in
+      // `imageArtDirection` when the image is saved.
       await this.store.executor.generateEntityFromPrompt(
         entityId,
-        prompt,
+        { prompt, ...options },
         this.store.getExecutionContext(),
       );
     } catch (err) {
@@ -134,22 +161,20 @@ export class OracleActionManager {
     }
   }
 
-  async generateMessageFromPrompt(messageId: string, prompt: string) {
+  async generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    options: ReviewedPromptOptions = {},
+  ) {
     if (this.store.ui.visualizingMessageId === messageId) return;
 
     this.store.ui.visualizingMessageId = messageId;
     try {
-      const message = this.store.chatHistoryService.messages.find(
-        (m: any) => m.id === messageId,
-      );
-      if (message?.entityId) {
-        await this.store.vault.updateEntity(message.entityId, {
-          artDirection: prompt,
-        });
-      }
+      // See generateEntityFromPrompt: composed prompts are not written back
+      // to `artDirection`.
       await this.store.executor.generateMessageFromPrompt(
         messageId,
-        prompt,
+        { prompt, ...options },
         this.store.getExecutionContext(),
       );
     } catch (err) {
@@ -161,21 +186,42 @@ export class OracleActionManager {
     }
   }
 
-  async regenerateEntityPrompt(entityId: string): Promise<string | null> {
+  async regenerateEntityPrompt(
+    entityId: string,
+    options: PromptRegenerationOptions = {},
+  ): Promise<RegeneratedPrompt | null> {
     const result = await this.store.executor.prepareEntityPrompt(
       entityId,
       this.store.getExecutionContext(),
-      { ignoreSavedArtDirection: true },
+      { ignoreSavedArtDirection: true, ...options },
     );
-    return result?.prompt ?? null;
+    return result
+      ? {
+          prompt: result.prompt,
+          negativeTerms: result.negativeTerms,
+          statureId: result.metadata?.statureId,
+          statureSource: result.metadata?.statureSource,
+        }
+      : null;
   }
 
-  async regenerateMessagePrompt(messageId: string): Promise<string | null> {
+  async regenerateMessagePrompt(
+    messageId: string,
+    options: PromptRegenerationOptions = {},
+  ): Promise<RegeneratedPrompt | null> {
     const result = await this.store.executor.prepareMessagePrompt(
       messageId,
       this.store.getExecutionContext(),
+      options,
     );
-    return result?.prompt ?? null;
+    return result
+      ? {
+          prompt: result.prompt,
+          negativeTerms: result.negativeTerms,
+          statureId: result.metadata?.statureId,
+          statureSource: result.metadata?.statureSource,
+        }
+      : null;
   }
 
   pushUndoAction(

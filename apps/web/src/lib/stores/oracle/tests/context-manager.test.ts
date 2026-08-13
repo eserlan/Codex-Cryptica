@@ -23,7 +23,7 @@ describe("OracleContextManager", () => {
       themeStore: { activeTheme: { id: "default" } },
       chatHistoryService: { messages: [] },
       contextRetrieval: { retrieveContext: vi.fn() },
-      imageGeneration: { distillVisualPrompt: vi.fn() },
+      imageGeneration: { distillVisualSubject: vi.fn() },
       textGeneration: { expandQuery: vi.fn() },
       searchService: { search: vi.fn() },
       diceParser: { parse: vi.fn() },

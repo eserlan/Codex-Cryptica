@@ -3,13 +3,20 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { searchService } from "$lib/services/search.svelte";
+  import { searchService } from "@codex/search-orchestrator";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { ProposerService } from "@codex/proposer";
-  import { loadIgnoredEntityProposals, saveIgnoredEntityProposals } from "$lib/utils/entity-proposal-ignores";
+  import {
+    loadIgnoredEntityProposals,
+    saveIgnoredEntityProposals,
+  } from "$lib/utils/entity-proposal-ignores";
 
-  let { content, isEditing = false, entityId } = $props<{
+  let {
+    content,
+    isEditing = false,
+    entityId,
+  } = $props<{
     content: string;
     isEditing?: boolean;
     entityId?: string;
@@ -17,17 +24,22 @@
 
   const existingTitles = $derived.by(() => {
     const names = new Set<string>();
-    for (const entity of Object.values(vault.entities)) {
-      names.add(entity.title);
-      for (const alias of entity.aliases ?? []) names.add(alias);
+    for (const entity of vault.allEntities) {
+      if (entity.title) names.add(entity.title);
+      for (const alias of entity.aliases ?? []) {
+        if (alias) names.add(alias);
+      }
     }
     return names;
   });
-  let ignoredTitles = $state<Set<string>>(loadIgnoredEntityProposals(vault.activeVaultId));
+  let ignoredTitles = $state<Set<string>>(
+    loadIgnoredEntityProposals(vault.activeVaultId),
+  );
   const proposals = $derived(
-    extractProposals(content, existingTitles).filter(
-      (title) => !title.toLowerCase().endsWith("'s"),
-    ).filter((title) => !ignoredTitles.has(title.toLowerCase())),
+    extractProposals(content, existingTitles)
+      .filter((title) => Boolean(title))
+      .filter((title) => !(title ?? "").toLowerCase().endsWith("'s"))
+      .filter((title) => !ignoredTitles.has((title ?? "").toLowerCase())),
   );
   let draftingTitle = $state<string | null>(null);
 
@@ -68,14 +80,15 @@
         let type = "related_to";
         let label = "Related";
         if (source && oracle.apiKey) {
-          const proposal = await new ProposerService().generateConnectionProposal(
-            oracle.apiKey,
-            "gemini-2.5-flash",
-            `${source.content || ""}\n${source.lore || ""}`,
-            revisionService.pendingDraft.chronicle,
-            source.title,
-            title,
-          );
+          const proposal =
+            await new ProposerService().generateConnectionProposal(
+              oracle.apiKey,
+              "gemini-2.5-flash",
+              `${source.content || ""}\n${source.lore || ""}`,
+              revisionService.pendingDraft.chronicle,
+              source.title,
+              title,
+            );
           type = proposal.type;
           label = proposal.label;
         }
@@ -92,21 +105,30 @@
   }
 </script>
 
-{#if !isEditing && proposals.length > 0}
+{#if !vault.isGuest && !isEditing && proposals.length > 0}
   <section class="mt-8 border-t border-theme-border pt-6">
     <div class="mb-4 flex items-center justify-between">
-      <h3 class="flex items-center gap-2 font-body text-lg italic text-theme-secondary">
-        <span class="icon-[lucide--file-plus-2] h-4 w-4 text-theme-primary" aria-hidden="true"></span>
+      <h3
+        class="flex items-center gap-2 font-body text-lg italic text-theme-secondary"
+      >
+        <span
+          class="icon-[lucide--file-plus-2] h-4 w-4 text-theme-primary"
+          aria-hidden="true"
+        ></span>
         Proposed Entities
       </h3>
-      <span class="rounded-full border border-theme-border bg-theme-bg/50 px-2 py-1 text-xs text-theme-muted">
+      <span
+        class="rounded-full border border-theme-border bg-theme-bg/50 px-2 py-1 text-xs text-theme-muted"
+      >
         {proposals.length} New
       </span>
     </div>
 
     <div class="space-y-3">
       {#each proposals as title (title)}
-        <div class="flex items-center justify-between gap-3 rounded-lg border border-theme-border/50 bg-theme-bg/30 p-3">
+        <div
+          class="flex items-center justify-between gap-3 rounded-lg border border-theme-border/50 bg-theme-bg/30 p-3"
+        >
           <span class="text-sm font-bold text-theme-text">{title}</span>
           <div class="flex items-center gap-2">
             <button
@@ -116,7 +138,10 @@
               aria-label="Ignore proposed entity {title}"
               title="Ignore this proposal"
             >
-              <span class="icon-[lucide--eye-off] h-3.5 w-3.5" aria-hidden="true"></span>
+              <span
+                class="icon-[lucide--eye-off] h-3.5 w-3.5"
+                aria-hidden="true"
+              ></span>
             </button>
             <button
               type="button"

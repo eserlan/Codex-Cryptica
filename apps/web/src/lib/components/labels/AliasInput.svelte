@@ -54,7 +54,7 @@
         class="hover:text-theme-text transition-colors flex items-center justify-center"
         aria-label={`Remove alias ${alias}`}
       >
-        <span class="icon-[lucide--x] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3"></span>
       </button>
     </div>
   {/each}

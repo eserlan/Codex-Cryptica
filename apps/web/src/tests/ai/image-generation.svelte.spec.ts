@@ -9,7 +9,7 @@ vi.hoisted(() => {
   (global as any).$effect = (v: any) => v;
 });
 
-import { DefaultImageGenerationService } from "../../lib/services/ai/image-generation.service";
+import { DefaultImageGenerationService } from "@codex/ai-engine";
 import { discoveryPolicyStore } from "../../lib/stores/ui/discovery-policy.svelte";
 
 describe("ImageGenerationService", () => {
@@ -52,30 +52,30 @@ describe("ImageGenerationService", () => {
           response: { text: () => "Final Prompt" },
         });
 
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "api-key",
         "query",
         "context",
         "model",
       );
-      expect(result).toBe("Final Prompt");
+      expect(result.subject).toBe("Final Prompt");
       expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
     });
 
     it("should return query as is when no context is provided", async () => {
-      const result = await service.distillVisualPrompt(
+      const result = await service.distillVisualSubject(
         "api-key",
         "query",
         "",
         "model",
       );
-      expect(result).toBe("query");
+      expect(result.subject).toBe("query");
     });
 
     it("should return query immediately if isAIEnabled is false", async () => {
       localStorage.setItem("codex_ai_disabled", "true");
-      const result = await service.distillVisualPrompt("key", "q", "c", "m");
-      expect(result).toBe("q");
+      const result = await service.distillVisualSubject("key", "q", "c", "m");
+      expect(result.subject).toBe("q");
     });
   });
 });

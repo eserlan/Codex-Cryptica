@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ConnectionSchema } from "./connection";
+import { LanguageProfileV1Schema } from "./language-profile";
+import { StatSheetSchema } from "./stat-sheet";
 
 export const DEFAULT_ICON = "lucide:circle";
 
@@ -127,6 +129,7 @@ export const GuestChatTranscriptSchema = z.object({
   id: z.string(),
   guestId: z.string(),
   guestName: z.string(),
+  speakerCharacterId: z.string().optional(),
   characterId: z.string(),
   characterTitle: z.string(),
   messages: z.array(GuestChatMessageSchema),
@@ -135,6 +138,34 @@ export const GuestChatTranscriptSchema = z.object({
 
 export type GuestChatMessage = z.infer<typeof GuestChatMessageSchema>;
 export type GuestChatTranscript = z.infer<typeof GuestChatTranscriptSchema>;
+
+/**
+ * Reproducibility record for a generated image: the Art Direction inputs plus
+ * the exact prompts sent to the provider.
+ */
+export const ImageArtDirectionRecordSchema = z.object({
+  artDirectionVersion: z.number(),
+  prompt: z.string(),
+  negativePrompt: z.string().optional(),
+  categoryId: z.string().optional(),
+  themeId: z.string().optional(),
+  cameraPresetId: z.string().optional(),
+  cameraVariant: z.string().optional(),
+  styleReferenceMode: z.string().optional(),
+  styleOverridden: z.boolean().optional(),
+  styleOverrideMode: z.string().optional(),
+  statureId: z.string().optional(),
+  statureSource: z.string().optional(),
+  figureInFrame: z.boolean().optional(),
+  aspectRatio: z.string().optional(),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  generatedAt: z.number().optional(),
+});
+
+export type ImageArtDirectionRecord = z.infer<
+  typeof ImageArtDirectionRecordSchema
+>;
 
 export const EntitySchema = z.object({
   id: z.string().min(1),
@@ -150,6 +181,12 @@ export const EntitySchema = z.object({
   artDirection: z.string().optional(),
   image: z.string().optional(),
   thumbnail: z.string().optional(),
+  /**
+   * Art Direction inputs and composed prompts for the current image, kept so a
+   * generation can be reproduced or explained. Absent on images generated
+   * before Art Direction v2; those need no migration.
+   */
+  imageArtDirection: ImageArtDirectionRecordSchema.optional(),
   date: TemporalMetadataSchema.optional(),
   start_date: TemporalMetadataSchema.optional(),
   end_date: TemporalMetadataSchema.optional(),
@@ -174,6 +211,10 @@ export const EntitySchema = z.object({
   soundBite: SoundBiteSchema.optional(),
   guestChatConfig: GuestChatConfigSchema.optional(),
   visibility: z.enum(["visible", "hidden"]).optional(),
+  kind: z.string().optional(),
+  languageProfileVersion: z.literal(1).optional(),
+  languageProfile: LanguageProfileV1Schema.optional(),
+  statSheet: StatSheetSchema.optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

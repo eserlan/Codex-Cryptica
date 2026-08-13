@@ -1,0 +1,294 @@
+import { getDB } from "../utils/idb";
+import type { PresentationTemplate, StatSheetTemplateField } from "schema";
+import { vaultRegistry } from "./vault-registry.svelte";
+import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import { getBuiltInPresentationTemplates } from "@codex/stat-sheet-engine";
+import { statSheetTemplates } from "./stat-sheet-templates.svelte";
+
+const ENTITY_LOCAL_SCHEMA_PREFIX = "entity-local-stat-sheet:";
+
+function entityLocalDefaultPresentation(
+  schemaTemplateId: string,
+  fields: StatSheetTemplateField[],
+  entityType?: string,
+): PresentationTemplate {
+  const references = fields
+    .filter((field) => field.type !== "heading")
+    .map((field) => `{{stat.${field.id}}}`)
+    .join("\n\n");
+  const normalizedEntityType = entityType?.toLowerCase();
+  const isNpcOrMonster = ["npc", "monster", "creature"].includes(
+    normalizedEntityType ?? "",
+  );
+  const isCharacter = normalizedEntityType === "character";
+  const title = isNpcOrMonster
+    ? "NPC / Monster Sheet"
+    : isCharacter
+      ? "Character Sheet"
+      : "Custom Stat Sheet";
+  const columns = isNpcOrMonster ? 4 : 3;
+  return {
+    id: `builtin-presentation-custom-${schemaTemplateId}`,
+    vaultId: null,
+    schemaTemplateId,
+    name: isNpcOrMonster
+      ? "Standard NPC / Monster Sheet"
+      : isCharacter
+        ? "Standard Character Sheet"
+        : "Standard Custom Sheet",
+    description: isNpcOrMonster
+      ? "A simple NPC or monster presentation generated from this sheet's fields."
+      : isCharacter
+        ? "A simple character presentation generated from this sheet's fields."
+        : "A simple presentation generated from this sheet's fields.",
+    source: `:::card
+### ${title}
+:::stat-group columns=${columns}
+${references}
+:::
+:::`,
+    formatVersion: 1,
+    isBuiltIn: true,
+    createdAt: "2026-08-06T00:00:00.000Z",
+    updatedAt: "2026-08-06T00:00:00.000Z",
+  };
+}
+
+function entityLocalNpcPresentation(
+  schemaTemplateId: string,
+  fields: StatSheetTemplateField[],
+): PresentationTemplate {
+  const base = entityLocalDefaultPresentation(schemaTemplateId, fields, "npc");
+  return {
+    ...base,
+    id: `builtin-presentation-custom-npc-${schemaTemplateId}`,
+  };
+}
+
+/**
+ * Vault-scoped store for Markdown presentation templates
+ * (152-stat-sheet-templates), mirroring StatSheetTemplateStore's
+ * load/init/DI pattern (stat-sheet-templates.svelte.ts).
+ */
+export class PresentationTemplateStore {
+  templates = $state<PresentationTemplate[]>([]);
+  private _initPromise: Promise<void> | null = null;
+  private idGenerator: IdGenerator;
+
+  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+    this.idGenerator = idGenerator;
+    if (typeof window !== "undefined") void this.init();
+  }
+
+  init(force = false): Promise<void> {
+    if (this._initPromise && !force) return this._initPromise;
+    const vaultId = vaultRegistry.activeVaultId;
+    this._initPromise = vaultId ? this.load(vaultId) : Promise.resolve();
+    return this._initPromise;
+  }
+
+  loadForVault(vaultId: string): Promise<void> {
+    this._initPromise = this.load(vaultId);
+    return this._initPromise;
+  }
+
+  private async load(vaultId: string) {
+    try {
+      const db = await getDB();
+      this.templates = await db.getAllFromIndex(
+        "stat_sheet_presentation_templates",
+        "by-vault",
+        vaultId,
+      );
+    } catch (e) {
+      console.error("[PresentationTemplateStore] Failed to load templates:", e);
+    }
+  }
+
+  /** Built-ins for a schema plus this vault's own templates targeting it,
+   * exact-matched by `schemaTemplateId` (Clarifications: no cross-schema
+   * reuse in V1). */
+  availableTemplatesForSchema(
+    schemaTemplateId: string,
+    fields?: StatSheetTemplateField[],
+    entityType?: string,
+  ): PresentationTemplate[] {
+    const vaultTemplates = this.templates.filter(
+      (t) => t.schemaTemplateId === schemaTemplateId,
+    );
+    // A manually assembled stat sheet has an entity-local schema rather
+    // than a reusable Stat Sheet template. Its presentations must stay
+    // local too: generic built-ins would reference fields it does not have.
+    if (schemaTemplateId.startsWith(ENTITY_LOCAL_SCHEMA_PREFIX)) {
+      if (!fields) return vaultTemplates;
+      const builtIns = this.generatedLayoutsForSchema(
+        schemaTemplateId,
+        fields,
+        entityType,
+      );
+      const generalLayouts = getBuiltInPresentationTemplates(
+        schemaTemplateId,
+      ).filter((template) =>
+        ["Standard Form", "Compact Stat Block"].includes(template.name),
+      );
+      return [...builtIns, ...generalLayouts, ...vaultTemplates];
+    }
+    return [
+      ...getBuiltInPresentationTemplates(schemaTemplateId),
+      ...vaultTemplates,
+    ];
+  }
+
+  /** Field-aware built-ins for a schema. They use the schema's real field
+   * ids, so they are safe for both reusable templates and manually assembled
+   * sheets. Character layouts also expose the NPC/monster stat-block option. */
+  generatedLayoutsForSchema(
+    schemaTemplateId: string,
+    fields: StatSheetTemplateField[],
+    entityType = "character",
+  ): PresentationTemplate[] {
+    const primary = entityLocalDefaultPresentation(
+      schemaTemplateId,
+      fields,
+      entityType,
+    );
+    return entityType.toLowerCase() === "character"
+      ? [primary, entityLocalNpcPresentation(schemaTemplateId, fields)]
+      : [primary];
+  }
+
+  findById(id: string): PresentationTemplate | null {
+    const builtIn = this.templates.find((t) => t.id === id);
+    if (builtIn) return builtIn;
+    // Built-ins are namespaced by schema id (built-ins.ts), so a direct
+    // lookup requires knowing the schema; callers resolving an unknown id
+    // against a specific schema should prefer availableTemplatesForSchema.
+    return null;
+  }
+
+  async saveTemplate(input: {
+    id?: string;
+    schemaTemplateId: string;
+    name: string;
+    description?: string | null;
+    source: string;
+    formatVersion: number;
+  }): Promise<PresentationTemplate | null> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) return null;
+    const now = new Date().toISOString();
+    const existing = input.id
+      ? this.templates.find((t) => t.id === input.id)
+      : undefined;
+    // Per-schema name uniqueness (data-model.md Validation Rules): a save
+    // that collides with another template's name auto-suffixes rather than
+    // silently producing two identically-named templates for the schema.
+    const uniqueName = this.uniqueNameForSchema(
+      input.name,
+      input.schemaTemplateId,
+      existing?.id,
+    );
+    const template: PresentationTemplate = {
+      id: input.id ?? `presentation-${this.idGenerator.uuid()}`,
+      vaultId,
+      schemaTemplateId: input.schemaTemplateId,
+      name: uniqueName,
+      description: input.description ?? null,
+      source: input.source,
+      formatVersion: input.formatVersion,
+      isBuiltIn: false,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    };
+    try {
+      const db = await getDB();
+      await db.put("stat_sheet_presentation_templates", template);
+      this.templates = existing
+        ? this.templates.map((t) => (t.id === template.id ? template : t))
+        : [...this.templates, template];
+      return template;
+    } catch (e) {
+      console.error("[PresentationTemplateStore] Failed to save template:", e);
+      return null;
+    }
+  }
+
+  /** Per-schema name uniqueness (Clarifications): appends " (2)", " (3)",
+   * etc. until the name is free within `(vaultId, schemaTemplateId)`.
+   * `excludeId` lets a rename check against every *other* template without
+   * flagging a collision against its own current name. */
+  uniqueNameForSchema(
+    desiredName: string,
+    schemaTemplateId: string,
+    excludeId?: string,
+  ): string {
+    const existingNames = new Set(
+      this.templates
+        .filter(
+          (t) => t.schemaTemplateId === schemaTemplateId && t.id !== excludeId,
+        )
+        .map((t) => t.name),
+    );
+    if (!existingNames.has(desiredName)) return desiredName;
+    let n = 2;
+    while (existingNames.has(`${desiredName} (${n})`)) n++;
+    return `${desiredName} (${n})`;
+  }
+
+  /** Deletes a vault-owned template. Per data-model.md Validation Rules: if
+   * it was a schema's default, that default is reset (FR-017); any entity
+   * override pointing at it is left as a now-dangling id, which
+   * `resolvePresentationTemplate`/`isTemplateUsable` treat as invalid and
+   * fall back on next render (no migration needed). */
+  /**
+   * Writes a template exactly as given, id and timestamps included.
+   *
+   * Distinct from `saveTemplate`, which mints ids and stamps `updatedAt`: an
+   * imported template must land under the identifier the import planned for,
+   * since that is what its rollback journal names (156-entity-shelf).
+   */
+  async putTemplateRecord(template: PresentationTemplate): Promise<void> {
+    const vaultId = vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+    const record = { ...template, vaultId };
+    const db = await getDB();
+    await db.put("stat_sheet_presentation_templates", record);
+    this.templates = [
+      ...this.templates.filter((t) => t.id !== template.id),
+      record,
+    ];
+  }
+
+  async deleteTemplate(id: string): Promise<boolean> {
+    try {
+      const db = await getDB();
+      await db.delete("stat_sheet_presentation_templates", id);
+      const deleted = this.templates.find((t) => t.id === id);
+      this.templates = this.templates.filter((t) => t.id !== id);
+      if (
+        deleted &&
+        statSheetTemplates.getDefaultPresentationTemplateId(
+          deleted.schemaTemplateId,
+        ) === id
+      ) {
+        await statSheetTemplates.setDefaultPresentationTemplate(
+          deleted.schemaTemplateId,
+          null,
+        );
+      }
+      return true;
+    } catch (e) {
+      console.error(
+        "[PresentationTemplateStore] Failed to delete template:",
+        e,
+      );
+      return false;
+    }
+  }
+}
+
+const PRESENTATION_TEMPLATE_STORE_KEY = "__codex_presentation_template_store__";
+export const presentationTemplates: PresentationTemplateStore =
+  (globalThis as any)[PRESENTATION_TEMPLATE_STORE_KEY] ??
+  ((globalThis as any)[PRESENTATION_TEMPLATE_STORE_KEY] =
+    new PresentationTemplateStore());

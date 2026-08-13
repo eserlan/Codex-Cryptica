@@ -2,6 +2,11 @@ import { z } from "zod";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import { dataUrlToFile } from "$lib/utils/svg-export";
+import {
+  entityMapLinkingService,
+  type EntityMapLinkingService,
+} from "$lib/services/entity-map-linking";
 
 export const ImportDraftSchema = z.object({
   type: z.enum([
@@ -13,12 +18,21 @@ export const ImportDraftSchema = z.object({
     "faction",
     "note",
   ]),
+  /** Vault entity sub-kind (e.g. "language" on notes), used by vault scans. */
+  kind: z.string().optional(),
   title: z.string().min(1),
   content: z.string().default(""),
   lore: z.string().optional(),
   labels: z.array(z.string()).default(["imported-draft"]),
   status: z.enum(["active", "draft"]).default("active"),
   references: z.array(z.string()).optional(),
+  /**
+   * A rasterized diagram (e.g. the star-system generator's orbital diagram)
+   * as a `data:image/png` URL, linked to the created entity's Map tab on
+   * import (#1935 follow-up). localStorage can only hold strings, hence the
+   * data-URL encoding rather than passing a Blob/File directly.
+   */
+  mapImageDataUrl: z.string().startsWith("data:image/").optional(),
 });
 
 export type ImportDraft = z.infer<typeof ImportDraftSchema>;
@@ -28,6 +42,7 @@ export class SeoImportService {
     private vaultStore = vault,
     private registryStore = vaultRegistry,
     private storage: StorageLike = browserStorage,
+    private mapLinker: EntityMapLinkingService = entityMapLinkingService,
   ) {}
 
   /**
@@ -95,14 +110,18 @@ export class SeoImportService {
           let counter = 1;
           const titleLower = title.toLowerCase();
 
-          const isDuplicate = Object.values(this.vaultStore.entities).some(
+          // ⚡ Bolt Optimization: use the pre-cached allEntities array instead
+          // of reallocating via Object.values(entities) — the while loop
+          // below re-checks this on every duplicate-suffix attempt, so the
+          // old version allocated a fresh array on every iteration.
+          const isDuplicate = this.vaultStore.allEntities.some(
             (e) => e.title.toLowerCase() === titleLower,
           );
 
           if (isDuplicate) {
             let uniqueTitle = title;
             while (
-              Object.values(this.vaultStore.entities).some(
+              this.vaultStore.allEntities.some(
                 (e) => e.title.toLowerCase() === uniqueTitle.toLowerCase(),
               )
             ) {
@@ -120,6 +139,7 @@ export class SeoImportService {
               lore: draft.lore || "",
               labels: draft.labels,
               status: draft.status,
+              ...(draft.kind ? { kind: draft.kind } : {}),
             },
           );
 
@@ -127,6 +147,20 @@ export class SeoImportService {
           // Also index by original draft title in case it was de-duped
           titleToId.set(draft.title.toLowerCase(), entityId);
           lastImportedId = entityId;
+
+          if (draft.mapImageDataUrl) {
+            try {
+              const file = dataUrlToFile(draft.mapImageDataUrl, `${title}.png`);
+              await this.mapLinker.linkImageToEntity(
+                file,
+                `${title} Map`,
+                entityId,
+              );
+            } catch (err) {
+              // Non-fatal: the entity itself already imported successfully.
+              console.error("Failed to link generated map image:", err);
+            }
+          }
         }
       } finally {
         // Remove only after all creates attempted — if we fail mid-loop the

@@ -11,17 +11,21 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/runtime": "workspace:*",
     "@google/generative-ai": "^0.24.1",
     "@types/turndown": "^5.0.6",
+    "fflate": "^0.8.3",
     "idb": "^8.0.3",
+    "js-yaml": "^5.2.1",
     "mammoth": "^1.12.0",
+    "schema": "workspace:*",
     "turndown": "^7.2.4"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.1.0",
     "@vitest/coverage-v8": "^4.1.7",
     "fake-indexeddb": "^6.0.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
   }

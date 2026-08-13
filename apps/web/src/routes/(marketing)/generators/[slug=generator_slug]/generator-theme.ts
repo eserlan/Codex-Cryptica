@@ -19,6 +19,7 @@ const GENERATOR_SLUGS = new Set([
 
 const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   fantasy: "Fantasy",
+  pirate: "Pirate",
   cyberpunk: "Cyberpunk",
   "sci-fi": "Sci-Fi",
   "post-apocalyptic": "Post-Apocalyptic",

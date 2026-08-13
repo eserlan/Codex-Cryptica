@@ -50,6 +50,16 @@ describe("DiceHistoryStore", () => {
     expect(all[0].total).toBe(15);
   });
 
+  it("persists optional roll context labels", async () => {
+    await store.addResult(createRollResult(15), "modal", { label: "Attack" });
+
+    expect(store.history[0].label).toBe("Attack");
+
+    const db = await getDB();
+    const all = await db.getAll("dice_history");
+    expect(all[0].label).toBe("Attack");
+  });
+
   it("should separate chat and modal history", async () => {
     await store.addResult(createRollResult(10), "chat");
     await store.addResult(createRollResult(20), "modal");
@@ -147,19 +157,15 @@ describe("DiceHistoryStore", () => {
     consoleSpy.mockRestore();
   });
 
-  it("should use fallback for ID generation if crypto.randomUUID is not available", async () => {
-    const originalUUID = crypto.randomUUID;
-    delete (crypto as any).randomUUID;
+  it("uses the injected id generator instead of the global crypto object", async () => {
+    const mockIdGenerator = { uuid: vi.fn(() => "mock-id-1") };
+    const injectedStore = new DiceHistoryStore(mockIdGenerator);
 
     const result = createRollResult(15);
-    await store.addResult(result, "chat");
+    await injectedStore.addResult(result, "chat");
 
-    expect(store.history).toHaveLength(1);
-    expect(store.history[0].id).toBeDefined();
-    expect(typeof store.history[0].id).toBe("string");
-
-    // Restore
-    crypto.randomUUID = originalUUID;
+    expect(mockIdGenerator.uuid).toHaveBeenCalled();
+    expect(injectedStore.history[0].id).toBe("mock-id-1");
   });
 
   it("should not re-initialize if already started and force is false", async () => {

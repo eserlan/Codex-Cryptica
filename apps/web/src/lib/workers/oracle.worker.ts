@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
-import { aiClientManager } from "../services/ai/client-manager";
-import { DefaultTextGenerationService } from "../services/ai/text-generation.service.svelte";
+import { aiClientManager } from "@codex/ai-engine";
+import { DefaultTextGenerationService } from "@codex/ai-engine";
+import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
 import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
 import type {
   OracleWorkerEvent,
@@ -16,10 +17,24 @@ import type { LoreContextEntry } from "schema";
 class OracleWorker {
   private textGeneration: DefaultTextGenerationService;
   private eventBus: BroadcastChannel;
+  private sessionToken: RelayedSessionToken;
 
   constructor() {
     this.textGeneration = new DefaultTextGenerationService(aiClientManager);
     this.eventBus = new BroadcastChannel("codex-oracle-events");
+
+    // This worker has its own isolated aiClientManager instance (Workers
+    // don't share module state with the main thread) and no DOM, so it can't
+    // solve a Turnstile challenge itself. The main thread's real session
+    // manager relays its token here via setSessionToken() — see
+    // session-bootstrap.ts and OracleBridge.setSessionToken().
+    this.sessionToken = new RelayedSessionToken();
+    aiClientManager.setSessionManager(this.sessionToken);
+  }
+
+  /** Called via Comlink whenever the main thread mints/refreshes/clears its session token. */
+  setSessionToken(token: CachedToken | null): void {
+    this.sessionToken.setToken(token);
   }
 
   private emit(event: OracleWorkerEvent) {
@@ -207,7 +222,11 @@ class OracleWorker {
     connectedEntities: any[] = [],
     categories: any[] = [],
     templateOutline = "",
-    options?: { isGuest?: boolean; aiDisabled?: boolean },
+    options?: {
+      isGuest?: boolean;
+      aiDisabled?: boolean;
+      worldThemeName?: string;
+    },
   ): Promise<any> {
     return this.textGeneration.generateRelatedEntity(
       apiKey,

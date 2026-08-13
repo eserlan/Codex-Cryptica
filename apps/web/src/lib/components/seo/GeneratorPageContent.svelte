@@ -1,20 +1,38 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
+  import { afterNavigate, goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
+  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import { collectSessionNames, collectSessionTraits } from "generator-engine";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
-  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
+  import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
+  import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
+  import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
   import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
   import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
+  import NomadClanFormFields from "$lib/components/seo/NomadClanFormFields.svelte";
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
+  import ShipFormFields from "$lib/components/seo/ShipFormFields.svelte";
+  import LanguageFormFields from "$lib/components/seo/LanguageFormFields.svelte";
+  import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
+  import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
+  import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
+  import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
+  import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
+  import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
+  import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -23,110 +41,86 @@
     magicItemConfig,
     factionConfig,
     questConfig,
+    councilVoteConfig,
+    secretSocietyConfig,
     socialHubConfig,
     kingdomConfig,
     nationConfig,
     vampireConfig,
+    nomadClanConfig,
     nameGeneratorConfig,
     pantheonConfig,
     shipConfig,
+    languageConfig,
+    newsSheetConfig,
+    dungeonConfig,
+    adventureConfig,
+    plotTwistConfig,
+    worldConfig,
+    starSystemConfig,
+    alienRaceConfig,
     themeIdToLabel,
     themeToQuestGenre,
-    pickFrom,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
-
-  // Inlined from [slug=generator_slug]/generator-theme.ts
-  const GENERATOR_SLUGS_WITH_THEME = new Set([
-    "npc",
-    "settlement",
-    "magic-item",
-    "faction",
-    "quest",
-    "item",
-    "tavern",
-    "social-hub",
-    "kingdom",
-    "nation",
-    "vampire-clan",
-    "names",
-    "fantasy-names",
-    "dnd-npc",
-    "pantheon-generator",
-    "god-generator",
-    "ship-generator",
-  ]);
-
-  const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
-    fantasy: "Fantasy",
-    cyberpunk: "Cyberpunk",
-    "sci-fi": "Sci-Fi",
-    "post-apocalyptic": "Post-Apocalyptic",
-    modern: "Modern",
-    vampire: "Horror",
-    western: "Western",
-    steampunk: "Steampunk",
-    lancer: "Lancer",
-    "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
-  };
-
-  // Genres not supported by the settlement generator are mapped to the nearest equivalent.
-  const SETTLEMENT_GENRE_FOR_HUB: Record<string, string> = {
-    Lancer: "Sci-Fi",
-  };
-
-  function shouldSyncGeneratorTheme(s: string) {
-    return GENERATOR_SLUGS_WITH_THEME.has(s);
-  }
-
-  function resolveHubGeneratorGenre(theme: string | null): string | null {
-    if (!theme) return null;
-    return HUB_THEME_TO_GENERATOR_GENRE[theme] ?? null;
-  }
-
-  export type ValidSlug =
-    | "npc"
-    | "settlement"
-    | "magic-item"
-    | "faction"
-    | "quest"
-    | "item"
-    | "tavern"
-    | "social-hub"
-    | "kingdom"
-    | "nation"
-    | "vampire-clan"
-    | "names"
-    | "fantasy-names"
-    | "dnd-npc"
-    | "pantheon-generator"
-    | "god-generator"
-    | "ship-generator";
+  import {
+    type SlugMetaEntry,
+    type ValidSlug,
+    slugMeta,
+  } from "./generator-page-meta";
+  import { slugDrafts } from "./generator-page-drafts";
+  import {
+    buildPlotTwistPremise,
+    resolvePlotTwistPremiseForGeneration,
+  } from "$lib/services/seo/generator-handoffs";
+  import {
+    HUB_LABELS,
+    HUB_SLUG_TO_THEME_ID,
+    SETTLEMENT_GENRE_FOR_HUB,
+    SLUGS_USING_STORED_THEME,
+    SOCIAL_HUB_GENRE_TO_THEME,
+    mapHubGenreToShipGenre,
+    mapShipGenreToTheme,
+    mapWorldGenreToTheme,
+    mapStarSystemGenreToTheme,
+    mapAlienRaceGenreToTheme,
+    resolveHubGeneratorGenre,
+    shouldSyncGeneratorTheme,
+  } from "./generator-theme-maps";
 
   let {
     slug,
     urlHubTheme = undefined,
-  }: { slug: ValidSlug; urlHubTheme?: string } = $props();
+    metaOverrides = undefined,
+    initialDraftOverride = undefined,
+  }: {
+    slug: ValidSlug;
+    urlHubTheme?: string;
+    /**
+     * Page copy that differs from the slug's own, for routes that present the
+     * same generator under a different URL and pitch.
+     *
+     * The `/tools/*` pages each hand-wired their own state, generate call and
+     * form bindings to say the same thing this component already says for
+     * their slug. They now render this and pass their title, description,
+     * FAQs, related links and canonical here, so the generator wiring exists
+     * once while the pages keep their distinct content and URLs.
+     */
+    metaOverrides?: Partial<SlugMetaEntry>;
+    /**
+     * Replaces the slug's default initial draft (from slugDrafts) when provided.
+     * Used by alternative routes that need a different default draft on first load.
+     */
+    initialDraftOverride?: GeneratorOutput;
+  } = $props();
 
   // When arriving via a themed URL, seed hubContext immediately so derived
   // values (backHref, initialHubGenre) compute correctly on first render.
+  const _initialSlug = untrack(() => slug);
   const _initialUrlHubTheme = untrack(() => urlHubTheme);
   if (_initialUrlHubTheme) {
     hubContext.set(_initialUrlHubTheme);
   }
-
-  const HUB_LABELS: Record<string, string> = {
-    fantasy: "Fantasy Hub",
-    cyberpunk: "Cyberpunk Hub",
-    "sci-fi": "Sci-Fi Hub",
-    "post-apocalyptic": "Post-Apocalyptic Hub",
-    modern: "Modern Hub",
-    vampire: "Vampire Hub",
-    western: "Western Hub",
-    steampunk: "Steampunk Hub",
-    lancer: "Lancer Hub",
-    "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi Hub",
-  };
 
   const backHref = $derived(
     hubContext.theme && HUB_LABELS[hubContext.theme]
@@ -138,290 +132,17 @@
   );
   const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
 
-  type SlugMetaEntry = {
-    pageTitle: string;
-    metaDescription: string;
-    introTitle: string;
-    eyebrow: string;
-    introText: string;
-    canonicalPath: string;
-    faqs?: { question: string; answer: string }[];
-    relatedLinks?: { href: string; label: string }[];
-  };
+  function worldGenreForHub(hubGenre: string | null): string {
+    if (hubGenre === "Cyberpunk") return "Cyberpunk";
+    if (hubGenre === "Optimistic Exploration Sci-Fi") return "Hopeful Sci-Fi";
+    if (hubGenre === "Space Opera Resistance") return "Space Opera";
+    if (hubGenre === "Lancer") return "Lancer";
+    return "Hard Sci-Fi";
+  }
 
-  const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
-    npc: {
-      pageTitle:
-        "RPG NPC Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Characters | Codex Cryptica",
-      metaDescription:
-        "Generate NPCs across any genre — fantasy, cyberpunk, gothic horror, sci-fi, modern conspiracy, and post-apocalyptic. Each NPC has a secret, faction tie, and table-ready hook.",
-      introTitle: "RPG NPC Generator",
-      eyebrow: "RPG NPC Generator",
-      introText:
-        "Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.",
-      canonicalPath: "/generators/npc",
-      faqs: [
-        {
-          question: "Does the D&D NPC generator require an account?",
-          answer:
-            "No. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
-        },
-        {
-          question: "What does the RPG NPC generator create?",
-          answer:
-            "It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook — structured for immediate use.",
-        },
-        {
-          question: "Can I use it outside D&D?",
-          answer:
-            "Yes. The output works for D&D, Pathfinder, OSR games, cyberpunk, and any genre. The generator is system-agnostic.",
-        },
-        {
-          question: "How does saving a generated NPC work?",
-          answer:
-            "Clicking 'Save to Codex' stores the NPC draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Character entity, ready to link to factions, locations, and campaign notes.",
-        },
-      ],
-      relatedLinks: [
-        { href: "/solutions/ai-gm-assistant", label: "AI GM assistant" },
-        {
-          href: "/free-rpg-campaign-manager",
-          label: "Free RPG campaign manager",
-        },
-      ],
-    },
-    settlement: {
-      pageTitle:
-        "Settlement Generator | RPG Inhabited Place Creator | Codex Cryptica",
-      metaDescription:
-        "Generate campaign-ready settlements, districts, colonies, and communities for any RPG genre. Set the function, environment, tone, and tension — get a place with a reason to exist and a problem worth solving.",
-      introTitle: "Settlement Generator",
-      eyebrow: "Settlement Generator",
-      introText:
-        "Generate an inhabited place that answers three questions: why does it exist, who really controls it, and what is about to go wrong. Works for any genre — fantasy, cyberpunk, sci-fi, horror, post-apocalyptic, and more.",
-      canonicalPath: "/generators/settlement",
-    },
-    "magic-item": {
-      pageTitle:
-        "Magic Item Generator | Free Fantasy RPG Loot Tool | Codex Cryptica",
-      metaDescription:
-        "Generate fantasy RPG magic items with lore, abilities, quirks, and campaign hooks. Copy the draft or save it into your local campaign vault.",
-      introTitle: "Magic Item Generator",
-      eyebrow: "Magic Item Generator",
-      introText:
-        "Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.",
-      canonicalPath: "/generators/magic-item",
-    },
-    faction: {
-      pageTitle:
-        "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica",
-      metaDescription:
-        "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault.",
-      introTitle: "RPG Faction Generator",
-      eyebrow: "Faction Generator",
-      introText:
-        "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
-      canonicalPath: "/generators/faction",
-      faqs: [
-        {
-          question: "What does the faction generator create?",
-          answer:
-            "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
-        },
-        {
-          question: "Can I use it without an account?",
-          answer:
-            "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
-        },
-        {
-          question: "Can I aim the faction at my current campaign?",
-          answer:
-            "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
-        },
-        {
-          question: "How does saving a generated faction work?",
-          answer:
-            "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
-        },
-      ],
-      relatedLinks: [
-        { href: "/tools/dnd-npc-generator", label: "D&D NPC Generator" },
-        { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
-      ],
-    },
-    quest: {
-      pageTitle:
-        "RPG Quest Hook Generator | Free Fantasy & Cyberpunk Adventure Tool | Codex Cryptica",
-      metaDescription:
-        "Generate detailed RPG quest hooks with complications, twists, rewards, and key NPCs. Perfect for fantasy, cyberpunk, or sci-fi tabletop campaigns.",
-      introTitle: "RPG Quest Generator",
-      eyebrow: "Quest Hook Generator",
-      introText:
-        "Create campaign-ready adventure seeds and quest hooks. Set the genre, tone, threat, and twist, then import into your local vault.",
-      canonicalPath: "/generators/quest",
-    },
-    item: {
-      pageTitle:
-        "RPG Loot & Magic Item Generator | Free Fantasy Equipment Tool | Codex Cryptica",
-      metaDescription:
-        "Generate custom RPG loot, magic items, weapons, and relics. Features customizable rarities, properties, and lore backstories.",
-      introTitle: "RPG Item Generator",
-      eyebrow: "Item Generator",
-      introText:
-        "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
-      canonicalPath: "/generators/item",
-    },
-    "social-hub": {
-      pageTitle:
-        "Social Hub Generator | RPG Venue Generator for Any Genre | Codex Cryptica",
-      metaDescription:
-        "Generate a genre-agnostic social gathering location — from cyberpunk noodle bars to western saloons to fantasy inns. Works without login. Save into your Codex Cryptica campaign vault.",
-      introTitle: "Social Hub Generator",
-      eyebrow: "Social Hub Generator",
-      introText:
-        "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
-      canonicalPath: "/generators/social-hub",
-    },
-    kingdom: {
-      pageTitle:
-        "Kingdom Generator | Free Fantasy Realm & Empire Creator | Codex Cryptica",
-      metaDescription:
-        "Generate a detailed fantasy kingdom or empire with ruler, factions, geography, conflict, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
-      introTitle: "Kingdom Generator",
-      eyebrow: "Kingdom Generator",
-      introText:
-        "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
-      canonicalPath: "/generators/kingdom",
-    },
-    nation: {
-      pageTitle:
-        "Nation Generator | RPG Political Entity Creator for Any Genre | Codex Cryptica",
-      metaDescription:
-        "Generate a political entity for any RPG genre — fantasy kingdoms, cyberpunk megacorp-states, sci-fi federations, post-apoc warlord territories. Works without login.",
-      introTitle: "Nation Generator",
-      eyebrow: "Nation Generator",
-      introText:
-        "Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.",
-      canonicalPath: "/generators/nation",
-    },
-    tavern: {
-      pageTitle:
-        "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
-      metaDescription:
-        "Generate a detailed RPG tavern or inn with owner, patrons, rumours, trouble, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
-      introTitle: "Tavern Generator",
-      eyebrow: "Tavern Generator",
-      introText:
-        "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
-      canonicalPath: "/generators/tavern",
-    },
-    "vampire-clan": {
-      pageTitle:
-        "Vampire Clan Generator | Free RPG Bloodline & Coven Tool | Codex Cryptica",
-      metaDescription:
-        "Create detailed vampire clans, bloodlines, occult covens, and secret societies. Generate history, feeding habits, weaknesses, and plot hooks for your campaign.",
-      introTitle: "Vampire Clan Generator",
-      eyebrow: "Vampire Clan Generator",
-      introText:
-        "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
-      canonicalPath: "/generators/vampire-clan",
-    },
-    names: {
-      pageTitle:
-        "RPG Name Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Names | Codex Cryptica",
-      metaDescription:
-        "Generate names for characters, places, factions, and items across any genre — fantasy, cyberpunk, gothic horror, sci-fi, and more. Free for any tabletop RPG.",
-      introTitle: "RPG Name Generator",
-      eyebrow: "Name Generator",
-      introText:
-        "Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.",
-      canonicalPath: "/generators/names",
-    },
-    "fantasy-names": {
-      pageTitle:
-        "Fantasy Name Generator | Free RPG & Worldbuilding Name Tool | Codex Cryptica",
-      metaDescription:
-        "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Free for D&D, Pathfinder, worldbuilding, and any tabletop RPG.",
-      introTitle: "Fantasy Name Generator",
-      eyebrow: "Fantasy Name Generator",
-      introText:
-        "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.",
-      canonicalPath: "/generators/fantasy-names",
-    },
-    "dnd-npc": {
-      pageTitle:
-        "D&D NPC Generator | Free Fantasy Character Creator | Codex Cryptica",
-      metaDescription:
-        "Create a fantasy NPC with ancestry, role, personality, secret, faction tie, and plot hook. Works without login. Save into your Codex Cryptica campaign vault.",
-      introTitle: "D&D NPC Generator",
-      eyebrow: "D&D NPC Generator",
-      introText:
-        "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
-      canonicalPath: "/generators/dnd-npc",
-    },
-    "pantheon-generator": {
-      pageTitle:
-        "RPG Pantheon Generator | Free Deity & Divine Assembly Tool | Codex Cryptica",
-      metaDescription:
-        "Generate detailed RPG pantheons with alliances, rivalries, myths, and hooks. Save drafts directly to your Codex campaign vault.",
-      introTitle: "RPG Pantheon Generator",
-      eyebrow: "Pantheon Generator",
-      introText:
-        "Create a campaign-ready pantheon with alliances, cosmic conflicts, and detailed member deities. Works without login, then imports into your local vault.",
-      canonicalPath: "/generators/pantheon-generator",
-    },
-    "god-generator": {
-      pageTitle:
-        "RPG God & Deity Generator | Free Tabletop Worldbuilding Tool | Codex Cryptica",
-      metaDescription:
-        "Generate fantasy RPG deities, saints, spirits, and demons with domains, taboos, symbols, and hooks. Save drafts directly to your campaign vault.",
-      introTitle: "RPG God & Deity Generator",
-      eyebrow: "Deity Generator",
-      introText:
-        "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
-      canonicalPath: "/generators/god-generator",
-    },
-    "ship-generator": {
-      pageTitle:
-        "RPG Ship Generator | Starships, Galleons & Vessels for Any Genre | Codex Cryptica",
-      metaDescription:
-        "Generate campaign-ready ships for any RPG genre — sci-fi starships, fantasy galleons, pirate sloops, steampunk airships, and more. Each vessel has a crew, a complication, and a secret. No login required.",
-      introTitle: "RPG Ship Generator",
-      eyebrow: "Ship Generator",
-      introText:
-        "Create a campaign-ready vessel for any RPG genre. Sci-fi starships, fantasy galleons, pirate sloops, steampunk airships — pick the role, scale, and condition and get a ship with a crew, a mission, a problem, and a secret.",
-      canonicalPath: "/generators/ship-generator",
-      faqs: [
-        {
-          question: "What does the ship generator create?",
-          answer:
-            "It generates a complete RPG ship — name, role, scale, condition, owner, current mission, crew type, dominant complication, hidden secret, key zones, and three adventure hooks. The result is immediately usable as a location, a quest seed, or a faction asset.",
-        },
-        {
-          question: "Does it work without an account?",
-          answer:
-            "Yes. Generate and copy ship notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
-        },
-        {
-          question: "What genres does the ship generator support?",
-          answer:
-            "Sci-Fi, Space Opera, Cyberpunk, Optimistic Exploration Sci-Fi, Space Opera Resistance, Lancer, Post-Apocalyptic, Fantasy, Pirate / Age of Sail, Steampunk, Dark Fantasy, and Western (River & Rail). Each genre has its own roles, names, crew types, and complications.",
-        },
-        {
-          question: "Can I use it for D&D or fantasy RPGs?",
-          answer:
-            "Yes — select Fantasy for merchant galleons, war galleys, and arcane transports, or Pirate / Age of Sail for frigates, sloops, and buccaneers. The output is system-neutral and saves into any Codex vault as a location entity.",
-        },
-      ],
-      relatedLinks: [
-        { href: "/generators/faction", label: "Faction Generator" },
-        { href: "/generators/settlement", label: "Settlement Generator" },
-        { href: "/generators/npc", label: "NPC Generator" },
-      ],
-    },
-  };
+  const initialWorldGenre = worldGenreForHub(initialHubGenre);
 
-  const meta = $derived(slugMeta[slug]);
+  const meta = $derived({ ...slugMeta[slug], ...(metaOverrides ?? {}) });
 
   let npc = $state({
     theme: factionConfig.themes[0],
@@ -456,6 +177,7 @@
   let magicItem = $state({
     type: magicItemConfig.typesByTheme["Classic Fantasy"][0],
     rarity: magicItemConfig.rarities[1],
+    campaignContext: "",
   });
 
   let faction = $state({
@@ -474,6 +196,28 @@
     threat: questConfig.threats[0],
     twist: questConfig.twists[0],
     reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+
+  let councilVote = $state({
+    genre: factionConfig.themes[0],
+    proposal: "",
+    governingBodyType: councilVoteConfig.bodyTypes[0],
+    councilSize: councilVoteConfig.sizes[1],
+    votingRule: councilVoteConfig.votingRules[0],
+    deadline: "",
+    scope: councilVoteConfig.scopes[0],
+    tone: councilVoteConfig.tones[0],
+    antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
+    campaignContext: "",
+  });
+  let secretSociety = $state({
+    theme: factionConfig.themes[0],
+    tone: secretSocietyConfig.tones[0],
+    scale: secretSocietyConfig.scales[0],
+    publicFace: secretSocietyConfig.publicFaces[0],
+    dangerLevel: secretSocietyConfig.dangers[0],
+    truthRelationship: secretSocietyConfig.truths[0],
     campaignContext: "",
   });
 
@@ -531,6 +275,14 @@
     campaignContext: "",
   });
 
+  let nomadClan = $state({
+    role: nomadClanConfig.roles[0],
+    tone: nomadClanConfig.tones[0],
+    territory: nomadClanConfig.territories[0],
+    conflict: nomadClanConfig.conflicts[0],
+    campaignContext: "",
+  });
+
   let names = $state({
     culture: nameGeneratorConfig.cultures[0],
     gender: nameGeneratorConfig.genders[0],
@@ -560,23 +312,9 @@
     campaignContext: "",
   });
 
-  const _shipInitialGenre = (() => {
-    const g = initialHubGenre;
-    if (!g) return "Sci-Fi";
-    if (g === "Cyberpunk") return "Cyberpunk";
-    if (g === "Post-Apocalyptic") return "Post-Apocalyptic";
-    if (g === "Lancer") return "Lancer";
-    if (g === "Space Opera Resistance") return "Space Opera Resistance";
-    if (g === "Optimistic Exploration Sci-Fi")
-      return "Optimistic Exploration Sci-Fi";
-    if (g === "Space Opera") return "Space Opera";
-    if (g === "Fantasy") return "Fantasy";
-    if (g === "Dark Fantasy") return "Dark Fantasy";
-    if (g === "Steampunk") return "Steampunk";
-    if (g === "Western") return "Western (River & Rail)";
-    if (g === "Horror") return "Dark Fantasy";
-    return "Sci-Fi";
-  })();
+  const _shipInitialGenre = initialHubGenre
+    ? mapHubGenreToShipGenre(initialHubGenre)
+    : "Sci-Fi";
 
   let ship = $state({
     genre: _shipInitialGenre,
@@ -588,55 +326,148 @@
     campaignContext: "",
   });
 
-  const socialHubGenreToTheme: Record<string, string> = {
-    Fantasy: "Classic Fantasy",
-    "Dark Fantasy": "Vampire / Gothic Noir",
-    Pirate: "Classic Fantasy",
-    Cyberpunk: "Cyberpunk / Corporate",
-    "Sci-Fi": "Sci-Fi / Space Opera",
-    Modern: "Modern Conspiracy",
-    Horror: "Vampire / Gothic Noir",
-    "Post-Apocalyptic": "Post-Apocalyptic",
-    Western: "Western / Frontier",
-    Steampunk: "Steampunk",
-    Lancer: "Lancer",
-  };
+  let language = $state({
+    genre: languageConfig.genres[0],
+    tone: languageConfig.tones[0],
+    role: languageConfig.roles[0],
+    structure: languageConfig.structures[0],
+    campaignContext: "",
+  });
 
-  // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids
-  // in several cases, e.g. "sci-fi" → "scifi", "vampire" → "horror").
-  const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
-    fantasy: "fantasy",
-    cyberpunk: "cyberpunk",
-    "sci-fi": "scifi",
-    "post-apocalyptic": "apocalyptic",
-    modern: "modern",
-    vampire: "horror",
-    western: "western",
-    steampunk: "steampunk",
-    lancer: "lancer",
-    "optimistic-exploration-sci-fi": "startrek",
-  };
+  const _newsSheetInitialGenre =
+    initialHubGenre && newsSheetConfig.genres.includes(initialHubGenre)
+      ? initialHubGenre
+      : newsSheetConfig.genres[0];
 
-  const SLUGS_USING_STORED_THEME = new Set([
-    "npc",
-    "faction",
-    "quest",
-    "settlement",
-    "magic-item",
-    "item",
-    "names",
-  ]);
+  let newsSheet = $state({
+    genre: _newsSheetInitialGenre,
+    publicationType: (newsSheetConfig.publicationTypesByGenre[
+      _newsSheetInitialGenre
+    ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0],
+    tone: newsSheetConfig.tones[1],
+    bias: newsSheetConfig.biases[0],
+    censorLevel: newsSheetConfig.censorLevels[0],
+    hookDensity: newsSheetConfig.hookDensities[1],
+    placeName: "",
+    headlineEvent: "",
+    campaignContext: "",
+  });
+
+  let dungeon = $state({
+    genre: factionConfig.themes[0],
+    purpose: dungeonConfig.purposes[0],
+    currentState: dungeonConfig.currentStates[0],
+    scale: dungeonConfig.scales[1],
+    campaignContext: "",
+  });
+
+  let adventure = $state({
+    genre: factionConfig.themes[0],
+    archetype: adventureConfig.archetypes[0],
+    scale: adventureConfig.scales[1],
+    tone: adventureConfig.tones[0],
+    seed: "",
+    campaignContext: "",
+  });
+
+  const initialHandedOffQuestPremise =
+    browser && _initialSlug === "plot-twist-generator"
+      ? (new URLSearchParams(window.location.search).get("questPremise") ?? "")
+      : "";
+  let handedOffQuestPremise = $state(initialHandedOffQuestPremise);
+
+  let plotTwist = $state({
+    genre: factionConfig.themes[0],
+    twistType: plotTwistConfig.twistTypes[0],
+    impact: plotTwistConfig.impacts[1],
+    timing: plotTwistConfig.timings[4],
+    foreshadowing: plotTwistConfig.foreshadowing[0],
+    premise: initialHandedOffQuestPremise,
+    constraints: "",
+    campaignContext: "",
+  });
+
+  // Dynamic generator routes reuse this component during client navigation.
+  // Read the URL only in the browser so static prerendering remains valid.
+  afterNavigate(({ to }) => {
+    const premise =
+      slug === "plot-twist-generator"
+        ? (to?.url.searchParams.get("questPremise") ?? "")
+        : "";
+    handedOffQuestPremise = premise;
+    if (premise) plotTwist.premise = premise;
+  });
+
+  let world = $state({
+    worldType: worldConfig.worldTypes[0],
+    habitability: worldConfig.habitability[0],
+    civilisation: worldConfig.civilisations[0],
+    societalModel: worldConfig.societalModels[0],
+    worldTagOne: worldConfig.defaultWorldTags[0],
+    worldTagTwo: worldConfig.defaultWorldTags[1],
+    genre: initialWorldGenre,
+    lancerWorldFrame: worldConfig.lancerWorldFrames[0],
+    campaignPressure:
+      initialWorldGenre === "Lancer"
+        ? worldConfig.lancerConflicts[0]
+        : worldConfig.campaignPressures[0],
+    dominantFeature: "",
+    campaignContext: "",
+  });
+
+  let starSystem = $state<{
+    systemType: string;
+    genre: string;
+    civilisationLevel: string;
+    systemCharacter: string;
+    scientificRealism: string;
+    campaignContext: string;
+  }>({
+    systemType: starSystemConfig.systemTypes[0],
+    genre: starSystemConfig.genres[0],
+    civilisationLevel: starSystemConfig.civilisationLevels[0],
+    systemCharacter: starSystemConfig.systemCharacters[0],
+    scientificRealism: starSystemConfig.scientificRealism[0],
+    campaignContext: "",
+  });
+
+  let alienRace = $state<{
+    genre: string;
+    generationMode: string;
+    homeEnvironment: string;
+    bodyPlan: string;
+    psychology: string;
+    socialOrganisation: string;
+    technologyLevel: string;
+    relationToOutsiders: string;
+    campaignContext: string;
+  }>({
+    genre: alienRaceConfig.genres[0],
+    generationMode: alienRaceConfig.generationModes[0],
+    homeEnvironment: alienRaceConfig.homeEnvironments[0],
+    bodyPlan: alienRaceConfig.bodyPlans[0],
+    psychology: alienRaceConfig.psychologies[0],
+    socialOrganisation: alienRaceConfig.socialOrganisations[0],
+    technologyLevel: alienRaceConfig.technologyLevels[0],
+    relationToOutsiders: alienRaceConfig.relationsToOutsiders[0],
+    campaignContext: "",
+  });
 
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
-  const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
       ? localStorage.getItem("codex-cryptica-active-theme")
       : null);
+  const _worldInitialTheme = _initialUrlHubTheme
+    ? (SOCIAL_HUB_GENRE_TO_THEME[
+        resolveHubGeneratorGenre(_initialUrlHubTheme) ?? ""
+      ] ?? null)
+    : null;
 
   let activeTheme = $state(
-    (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
+    _worldInitialTheme ||
+      (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
       factionConfig.themes[0],
   );
   let lastSlug = $state(_initialSlug);
@@ -653,25 +484,76 @@
     else if (slug === "faction") faction.theme = activeTheme;
     else if (slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
+    else if (slug === "council-vote") councilVote.genre = activeTheme;
+    else if (slug === "secret-society") secretSociety.theme = activeTheme;
     else if (slug === "social-hub")
-      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
     else if (slug === "nation")
-      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
     else if (slug === "pantheon-generator" || slug === "god-generator")
       activeTheme = pantheon.genre;
+    // Language genre is a fixed select using the theme labels directly
+    // (Classic Fantasy, …), so it maps straight to activeTheme.
+    else if (slug === "language-generator") activeTheme = language.genre;
+    else if (slug === "news-sheet-generator")
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+    else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
+    else if (slug === "star-system")
+      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    else if (slug === "alien-race")
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
+    else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
+    else if (
+      slug === "adventure-generator" ||
+      slug === "adventure-idea-generator"
+    )
+      adventure.genre = activeTheme;
+    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
   });
+
+  // Consumes the "Develop this world" handoff from a generated star system
+  // (#1935): a linked major body opens this page with its name, type, and
+  // system context in the query string so the World Generator draft starts
+  // pre-populated instead of blank. Cleans the URL after reading it.
+  function applyPendingDevelopWorld(): void {
+    const params = page.url.searchParams;
+    const systemTitle = params.get("developSystem");
+    const bodyName = params.get("developBody");
+    if (!systemTitle && !bodyName) return;
+    const bodyType = params.get("developBodyType");
+    const context = params.get("developContext");
+    world.dominantFeature = bodyName
+      ? `${bodyName}${bodyType ? ` (${bodyType})` : ""} — ${context || `part of the ${systemTitle} system.`}`
+      : (context ?? "");
+
+    const cleanUrl = new URL(page.url);
+    for (const key of [
+      "developSystem",
+      "developBody",
+      "developBodyType",
+      "developContext",
+    ]) {
+      cleanUrl.searchParams.delete(key);
+    }
+    goto(cleanUrl, { replaceState: true, noScroll: true, keepFocus: true });
+  }
 
   onMount(() => {
     if (slug === "nation") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) nation.genre = hubGenre;
-      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[nation.genre] ?? "Classic Fantasy";
       return;
     }
     if (slug === "social-hub") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) socialHub.genre = hubGenre;
-      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[socialHub.genre] ?? "Classic Fantasy";
       return;
     }
     if (slug === "settlement") {
@@ -700,13 +582,17 @@
       // Use raw hub genre (before settlement remapping) so e.g. Lancer hub
       // keeps Lancer theming even though settlement.genre is mapped to Sci-Fi.
       activeTheme =
-        (rawHubGenre ? socialHubGenreToTheme[rawHubGenre] : "") ||
-        socialHubGenreToTheme[settlement.genre] ||
+        (rawHubGenre ? SOCIAL_HUB_GENRE_TO_THEME[rawHubGenre] : "") ||
+        SOCIAL_HUB_GENRE_TO_THEME[settlement.genre] ||
         "Classic Fantasy";
       return;
     }
     if (slug === "vampire-clan") {
       activeTheme = "Vampire / Gothic Noir";
+      return;
+    }
+    if (slug === "nomad-clan") {
+      activeTheme = "Cyberpunk / Corporate";
       return;
     }
     if (slug === "pantheon-generator" || slug === "god-generator") {
@@ -720,28 +606,69 @@
     if (slug === "ship-generator") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) {
-        const mapped = (() => {
-          if (hubGenre === "Cyberpunk") return "Cyberpunk";
-          if (hubGenre === "Post-Apocalyptic") return "Post-Apocalyptic";
-          if (hubGenre === "Lancer") return "Lancer";
-          if (hubGenre === "Space Opera Resistance")
-            return "Space Opera Resistance";
-          if (hubGenre === "Optimistic Exploration Sci-Fi")
-            return "Optimistic Exploration Sci-Fi";
-          if (hubGenre === "Space Opera") return "Space Opera";
-          if (hubGenre === "Fantasy") return "Fantasy";
-          if (hubGenre === "Dark Fantasy") return "Dark Fantasy";
-          if (hubGenre === "Steampunk") return "Steampunk";
-          if (hubGenre === "Western") return "Western (River & Rail)";
-          if (hubGenre === "Horror") return "Dark Fantasy";
-          return "Sci-Fi";
-        })();
+        const mapped = mapHubGenreToShipGenre(hubGenre);
         ship.genre = mapped;
         ship.role = (shipConfig.rolesByGenre[mapped] ??
           shipConfig.rolesByGenre["Sci-Fi"])[0];
       }
-      activeTheme = "Sci-Fi / Space Opera";
+      activeTheme =
+        (hubGenre ? SOCIAL_HUB_GENRE_TO_THEME[hubGenre] : "") ||
+        "Sci-Fi / Space Opera";
       return;
+    }
+    if (slug === "world") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      world.genre = worldGenreForHub(hubGenre);
+      activeTheme = mapWorldGenreToTheme(world.genre);
+      applyPendingDevelopWorld();
+      return;
+    }
+    if (slug === "star-system") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (starSystemConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        starSystem.genre = hubGenre;
+      }
+      activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+      return;
+    }
+    if (slug === "alien-race") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (alienRaceConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        alienRace.genre = hubGenre;
+      }
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
+      return;
+    }
+    if (slug === "news-sheet-generator") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
+        newsSheet.genre = hubGenre;
+        newsSheet.publicationType = (newsSheetConfig.publicationTypesByGenre[
+          hubGenre
+        ] ?? newsSheetConfig.publicationTypesByGenre["Fantasy"])[0];
+      }
+      activeTheme =
+        SOCIAL_HUB_GENRE_TO_THEME[newsSheet.genre] ?? "Classic Fantasy";
+      return;
+    }
+    if (slug === "language-generator") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre) {
+        // Language genres follow the theme labels (Classic Fantasy,
+        // Cyberpunk / Corporate, …); the genre select only offers a fixed
+        // list, so hubs without a matching language genre (e.g. Western,
+        // Steampunk) are left on the default rather than an unselectable value.
+        const mapped = SOCIAL_HUB_GENRE_TO_THEME[hubGenre] ?? hubGenre;
+        if ((languageConfig.genres as string[]).includes(mapped)) {
+          language.genre = mapped;
+        }
+      }
     }
     // For quest/npc/faction on flat URL: read localStorage.
     // On themed URL: urlHubTheme already seeded activeTheme above — skip.
@@ -753,220 +680,130 @@
     }
   });
 
-  async function generate({ useAI }: { useAI: boolean }) {
-    if (slug === "npc") {
-      return generatorEngine.generateNPC({ ...npc, useAI });
-    } else if (slug === "settlement") {
-      return generatorEngine.generateSettlement({ ...settlement, useAI });
-    } else if (slug === "magic-item" || slug === "item") {
-      return generatorEngine.generateMagicItem({ ...magicItem, useAI });
-    } else if (slug === "faction") {
-      return generatorEngine.generateFaction({ ...faction, useAI });
-    } else if (slug === "quest") {
-      return generatorEngine.generateQuestHook({ ...quest, useAI });
-    } else if (slug === "tavern") {
-      return generatorEngine.generateTavern({ ...tavern, useAI });
-    } else if (slug === "kingdom") {
-      return generatorEngine.generateKingdom({ ...kingdom, useAI });
-    } else if (slug === "nation") {
-      return generatorEngine.generateNation({ ...nation, useAI });
-    } else if (slug === "social-hub") {
-      return generatorEngine.generateSocialHub({ ...socialHub, useAI });
-    } else if (slug === "vampire-clan") {
-      return generatorEngine.generateVampireClan({ ...vampireClan, useAI });
-    } else if (slug === "names") {
-      return generatorEngine.generateNames({
-        ...names,
-        theme: activeTheme,
-        useAI,
-      });
-    } else if (slug === "fantasy-names") {
-      return generatorEngine.generateNames({
+  const GENERATE_HANDLERS: Record<
+    ValidSlug,
+    (useAI: boolean) => Promise<GeneratorOutput>
+  > = {
+    npc: (useAI) => generatorEngine.generateNPC({ ...npc, useAI }),
+    settlement: (useAI) =>
+      generatorEngine.generateSettlement({ ...settlement, useAI }),
+    "magic-item": (useAI) =>
+      generatorEngine.generateMagicItem({ ...magicItem, useAI }),
+    item: (useAI) => generatorEngine.generateMagicItem({ ...magicItem, useAI }),
+    faction: (useAI) => generatorEngine.generateFaction({ ...faction, useAI }),
+    quest: (useAI) => generatorEngine.generateQuestHook({ ...quest, useAI }),
+    "council-vote": (useAI) =>
+      generatorEngine.generateCouncilVote({ ...councilVote, useAI }),
+    "secret-society": (useAI) =>
+      generatorEngine.generateSecretSociety({ ...secretSociety, useAI }),
+    tavern: (useAI) => generatorEngine.generateTavern({ ...tavern, useAI }),
+    kingdom: (useAI) => generatorEngine.generateKingdom({ ...kingdom, useAI }),
+    nation: (useAI) => generatorEngine.generateNation({ ...nation, useAI }),
+    "social-hub": (useAI) =>
+      generatorEngine.generateSocialHub({ ...socialHub, useAI }),
+    "vampire-clan": (useAI) =>
+      generatorEngine.generateVampireClan({ ...vampireClan, useAI }),
+    "nomad-clan": (useAI) =>
+      generatorEngine.generateNomadClan({ ...nomadClan, useAI }),
+    names: (useAI) =>
+      generatorEngine.generateNames({ ...names, theme: activeTheme, useAI }),
+    "fantasy-names": (useAI) =>
+      generatorEngine.generateNames({
         ...names,
         theme: "Classic Fantasy",
         useAI,
-      });
-    } else if (slug === "dnd-npc") {
-      return generatorEngine.generateNPC({
+      }),
+    "dnd-npc": (useAI) =>
+      generatorEngine.generateNPC({
         ...dndNpc,
         includeDndQuickStats: true,
         useAI,
-      });
-    } else if (slug === "pantheon-generator" || slug === "god-generator") {
-      return generatorEngine.generatePantheon({ ...pantheon, useAI });
-    } else if (slug === "ship-generator") {
-      return generatorEngine.generateShip({ ...ship, useAI });
-    } else {
-      throw new Error(`No generator implemented for slug: ${slug}`);
-    }
-  }
-
-  const slugDrafts: Record<string, GeneratorOutput> = {
-    npc: {
-      type: "character",
-      title: "Zephyrus Gray",
-      summary: "A mysterious rogue with a dark past.",
-      content:
-        "### Description\nZephyrus wears a hooded leather cloak and speaks in low whispers. He operates in the shadow of the docks.\n\n### Secret\nHe carries a silver key that opens a vault he refuses to talk about.",
-      lore: "",
-      labels: ["rpg-npc", "Rogue", "Mysterious"],
-      status: "draft",
-    },
-    settlement: {
-      type: "location",
-      title: "Cinderveil",
-      summary: "A fortified mining town built into a dormant volcanic ridge.",
-      content:
-        "### Geography\nPerched above a network of ash-grey tunnels, the town's foundries run day and night.\n\n### Economy\nOre refining, black-market gems, and a militia that charges tolls on three mountain passes.",
-      lore: "",
-      labels: ["rpg-settlement", "Mining", "Fortified"],
-      status: "draft",
-    },
-    "magic-item": {
-      type: "item",
-      title: "Frostbite Blade",
-      summary: "A longsword etched with cold runes.",
-      content:
-        "### Properties\nDeals additional cold damage on a critical strike and glows with a faint blue light in the presence of undead.\n\n### Lore\nForged in the northern wastes by the frost smiths of old.",
-      lore: "",
-      labels: ["rpg-item", "Sword", "Runes"],
-      status: "draft",
-    },
-    faction: {
-      type: "faction",
-      title: "The Iron Syndicate",
-      summary:
-        "A powerful merchants' guild that controls the city's trade routes.",
-      content:
-        "### Operations\nThey maintain a private army to secure their investments and lobby local lords.\n\n### Secret agenda\nThey seek to overthrow the local duke to install a puppet senate.",
-      lore: "",
-      labels: ["rpg-faction", "Guild", "Mercantile"],
-      status: "draft",
-    },
-    kingdom: {
-      type: "faction",
-      title: "The Kingdom of Vaelthorn",
-      summary:
-        "A mid-sized kingdom held together by old oaths and a ruler who is running out of allies.",
-      content:
-        "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses — three of which are quietly negotiating a change of leadership.",
-      lore: "",
-      labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
-      status: "draft",
-    },
-    nation: {
-      type: "faction",
-      title: "Axiom Industrial Authority",
-      summary:
-        "A cyberpunk megacorp-state that controls three districts and is aggressively expanding into a fourth.",
-      content:
-        "### The State\nAxiom controls food, water, and network access across its territory. Citizens are employees. Dissent is a performance review issue.\n\n### Power Structure\nCEO-Governor Reyes holds executive authority but the board is restless.",
-      lore: "",
-      labels: ["rpg-nation", "nation-generator", "imported-draft"],
-      status: "draft",
-    },
-    "social-hub": {
-      type: "location",
-      title: "Reyes' Noodle Hole",
-      summary:
-        "A cramped cyberpunk noodle bar where fixers and off-duty security share bad ramen and worse secrets.",
-      content:
-        "### The Place\nA steam-filled counter joint wedged under a transit overpass. Neon flickers, the broth is good, the owner asks nothing.\n\n### The Trouble\nThe owner is sitting on surveillance footage that would get someone very powerful arrested.",
-      lore: "",
-      labels: ["rpg-location", "social-hub-generator", "imported-draft"],
-      status: "draft",
-    },
-    tavern: {
-      type: "location",
-      title: "The Copper Boar",
-      summary:
-        "A rowdy crossroads tavern where travellers and locals share rumours and old grudges.",
-      content:
-        "### The Place\nA low-ceilinged roadside inn with smoke-stained rafters and a fire that runs all year. The house ale is cheap and reliable.\n\n### The Trouble\nThe owner owes a debt to someone who has just arrived in town.",
-      lore: "",
-      labels: ["rpg-location", "tavern-generator", "imported-draft"],
-      status: "draft",
-    },
-    "vampire-clan": {
-      type: "faction",
-      title: "House of Thorn",
-      summary:
-        "An aristocratic bloodline that controls the city's banking houses from behind a veil of old money and older secrets.",
-      content:
-        "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power — they avoid both with practised care.",
-      lore: "",
-      labels: ["rpg-faction", "vampire-clan", "imported-draft"],
-      status: "draft",
-    },
-    names: {
-      type: "character",
-      title: "Generic Fantasy Names — Person",
-      summary: "",
-      content:
-        "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
-      lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
-      labels: ["fantasy-name", "name-generator", "imported-draft"],
-      status: "draft",
-    },
-    "fantasy-names": {
-      type: "character",
-      title: "Generic Fantasy Names — Person",
-      summary: "",
-      content:
-        "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
-      lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
-      labels: ["fantasy-name", "name-generator", "imported-draft"],
-      status: "draft",
-    },
-    "dnd-npc": {
-      type: "character",
-      title: "Elowen Ashford",
-      summary: "A half-elf rogue with a talent for leverage.",
-      content:
-        "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine — mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
-      lore: "",
-      labels: ["rpg-npc", "Rogue", "Half-Elf"],
-      status: "draft",
-    },
-    "pantheon-generator": {
-      type: "faction",
-      title: "The Silent Maw",
-      summary: "A small pantheon of forgotten deities.",
-      content:
-        "### Origin & Dogma\nThe Silent Maw is a collection of ancient entities who hold sway over the dark and forgotten corners of the world.\n\n### Divine Portfolio\nTheir tenets demand absolute silence and devotion to secrets.",
-      lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult",
-      labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
-      status: "draft",
-    },
-    "god-generator": {
-      type: "character",
-      title: "Oros, the Light of Dawn",
-      summary: "A deity of the rising sun and new beginnings.",
-      content:
-        "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
-      lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
-      labels: ["rpg-deity", "deity-generator", "imported-draft"],
-      status: "draft",
-    },
-    "ship-generator": {
-      type: "location",
-      title: "CSV Meridian",
-      summary:
-        "A worn freighter operating under a registry that does not quite hold up to scrutiny.",
-      content:
-        "## Core Concept\nThe Meridian is a small crew freighter in worn condition — functional, lived-in, and carrying more history than its logbook admits. Independent in name, it earns its living on routes other captains decline.\n\n## First Look\nThe approach is all geometry — hard angles, running lights on slow rotation, hull plating scarred by re-entry or something worse. The docking bay smells of recycled air and machine oil.\n\n## History\nThe Meridian has served as a freighter long enough that its original documentation no longer tells the whole story. The current operator holds the registration, though how that arrangement came about is a matter of some discretion.",
-      lore: "### Ship Profile\n- **Class**: Freighter / Small crew ship\n- **Condition**: Worn — lived-in, functional but showing age\n- **Owner / Affiliation**: Independent operator\n- **Current Mission**: Cargo delivery — manifest details undisclosed\n- **Crew Complement**: Mixed-species crew\n- **Tone**: Tense\n\n### Key Zones\n- **🚀 Cargo Hold**: The real story is in here — if you know how to look\n- **🚀 Bridge**: Small, cluttered, with a pilot who watches the rear sensors\n- **🚀 Crew Quarters**: Three bunks for four people; someone is sleeping in shifts\n\n### Complication\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts. The crew is managing it, but the window is narrowing.\n\n### Secret\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\n\n### Adventure Hooks\n- The party learns the manifest is fiction — and they are the only ones who can act before the ship jumps\n- Someone on the docks knows the ship's real registration history and is selling that information\n- A faction needs something delivered to a location only the Meridian's captain knows how to reach",
-      labels: ["rpg-ship", "rpg-location", "ship-generator", "imported-draft"],
-      status: "draft",
-    },
+      }),
+    "pantheon-generator": (useAI) =>
+      generatorEngine.generatePantheon({ ...pantheon, useAI }),
+    "god-generator": (useAI) =>
+      generatorEngine.generatePantheon({ ...pantheon, useAI }),
+    "ship-generator": (useAI) =>
+      generatorEngine.generateShip({ ...ship, useAI }),
+    "language-generator": (useAI) =>
+      generatorEngine.generateLanguage({ ...language, useAI }),
+    "news-sheet-generator": (useAI) =>
+      generatorEngine.generateNewsSheet({ ...newsSheet, useAI }),
+    "dungeon-generator": (useAI) =>
+      generatorEngine.generateDungeon({
+        ...dungeon,
+        useAI,
+        // Names already drafted this session, so the model does not fall back
+        // on the same faction it invented for the last delve.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+        avoidTraits: collectSessionTraits(sessionHubStore.entities),
+      }),
+    "adventure-generator": (useAI) =>
+      generatorEngine.generateAdventure({
+        ...adventure,
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "adventure-idea-generator": (useAI) =>
+      generatorEngine.generateAdventure({
+        ...adventure,
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "plot-twist-generator": (useAI) =>
+      generatorEngine.generatePlotTwist({
+        ...plotTwist,
+        premise: resolvePlotTwistPremiseForGeneration(
+          plotTwist.premise,
+          handedOffQuestPremise,
+        ),
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+      }),
+    world: (useAI) =>
+      generatorEngine.generateWorld({
+        ...world,
+        useAI,
+        // Keep world titles and named factions varied within the current session.
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "star-system": (useAI) =>
+      generatorEngine.generateStarSystem({
+        ...starSystem,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
+    "alien-race": (useAI) =>
+      generatorEngine.generateAlienRace({
+        ...alienRace,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
   };
 
-  const initialDraft = $derived(slugDrafts[slug]);
+  async function generate({ useAI }: { useAI: boolean }) {
+    const handler = GENERATE_HANDLERS[slug];
+    if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
+    return handler(useAI);
+  }
 
-  const selectClass =
-    "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
-  const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+  function openPlotTwistFromQuest(draft: GeneratorOutput) {
+    const params = new URLSearchParams({
+      questPremise: buildPlotTwistPremise(draft),
+    });
+    void goto(resolve(`/generators/plot-twist-generator?${params}`));
+  }
+
+  const initialDraft = $derived(
+    handedOffQuestPremise && slug === "plot-twist-generator"
+      ? null
+      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
+  );
 </script>
 
 <SEOGeneratorLayout
@@ -985,6 +822,7 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
+  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
 >
   {#snippet formFields(trigger)}
     {#if slug === "npc"}
@@ -997,175 +835,21 @@
         onSurprise={trigger}
       />
     {:else if slug === "settlement"}
-      <SelectWithCustomOption
-        id="size-select"
-        label="Scale"
-        bind:value={settlement.size}
-        choices={(
-          settlementConfig.sizesByGenre[settlement.genre] ??
-          settlementConfig.sizesByGenre["Fantasy"]
-        ).map((s: { name: string; range: string }) => ({
-          value: s.name,
-          label: `${s.name} (${s.range})`,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom scale"
+      <SettlementFormFields
+        genre={settlement.genre}
+        bind:size={settlement.size}
+        bind:environment={settlement.environment}
+        bind:primaryFunction={settlement.primaryFunction}
+        bind:tone={settlement.tone}
+        bind:mainTension={settlement.mainTension}
+        bind:campaignContext={settlement.campaignContext}
+        onSurprise={trigger}
       />
-
-      <SelectWithCustomOption
-        id="environment-select"
-        label="Environment"
-        bind:value={settlement.environment}
-        choices={(
-          settlementConfig.environmentsByGenre[settlement.genre] ??
-          settlementConfig.environmentsByGenre["Fantasy"]
-        ).map((e: string) => ({
-          value: e,
-          label: e,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom environment"
-      />
-
-      <SelectWithCustomOption
-        id="function-select"
-        label="Primary Function"
-        bind:value={settlement.primaryFunction}
-        choices={(
-          settlementConfig.primaryFunctionsByGenre[settlement.genre] ??
-          settlementConfig.primaryFunctionsByGenre["Fantasy"]
-        ).map((f: string) => ({
-          value: f,
-          label: f,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom function"
-      />
-
-      <SelectWithCustomOption
-        id="tone-select"
-        label="Tone"
-        bind:value={settlement.tone}
-        choices={(
-          settlementConfig.tonesByGenre[settlement.genre] ??
-          settlementConfig.tonesByGenre["Fantasy"]
-        ).map((t: string) => ({
-          value: t,
-          label: t,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom tone"
-      />
-
-      <SelectWithCustomOption
-        id="tension-select"
-        label="Dominant Tension"
-        bind:value={settlement.mainTension}
-        choices={(
-          settlementConfig.mainTensionsByGenre[settlement.genre] ??
-          settlementConfig.mainTensionsByGenre["Fantasy"]
-        ).map((t: string) => ({
-          value: t,
-          label: t,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom tension"
-      />
-
-      <div class="flex flex-col gap-1.5">
-        <label for="settlement-context" class={labelClass}
-          >Campaign context (optional)</label
-        >
-        <textarea
-          id="settlement-context"
-          bind:value={settlement.campaignContext}
-          maxlength="240"
-          rows="4"
-          aria-describedby="settlement-context-help"
-          class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
-        ></textarea>
-        <p
-          id="settlement-context-help"
-          class="text-[10px] text-theme-text/60 leading-relaxed"
-        >
-          Add a region name, nearby factions, or ongoing conflict to aim the
-          result at your world.
-        </p>
-      </div>
-
-      <div class="pt-2 flex justify-end">
-        <button
-          type="button"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
-          title="Randomize all options and generate a draft from the result"
-          onclick={() => {
-            const g = settlement.genre;
-            const sizes =
-              settlementConfig.sizesByGenre[g] ??
-              settlementConfig.sizesByGenre["Fantasy"];
-            settlement.size = pickFrom(sizes).name;
-            settlement.environment = pickFrom(
-              settlementConfig.environmentsByGenre[g] ??
-                settlementConfig.environmentsByGenre["Fantasy"],
-            );
-            settlement.primaryFunction = pickFrom(
-              settlementConfig.primaryFunctionsByGenre[g] ??
-                settlementConfig.primaryFunctionsByGenre["Fantasy"],
-            );
-            settlement.tone = pickFrom(
-              settlementConfig.tonesByGenre[g] ??
-                settlementConfig.tonesByGenre["Fantasy"],
-            );
-            settlement.mainTension = pickFrom(
-              settlementConfig.mainTensionsByGenre[g] ??
-                settlementConfig.mainTensionsByGenre["Fantasy"],
-            );
-            trigger();
-          }}
-        >
-          <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
-          Surprise Me
-        </button>
-      </div>
     {:else if slug === "magic-item" || slug === "item"}
-      <SelectWithCustomOption
-        id="item-type-select"
-        label="Item Type"
-        bind:value={magicItem.type}
-        choices={magicItemConfig.typesByTheme["Classic Fantasy"].map(
-          (t: string) => ({
-            value: t,
-            label: t,
-          }),
-        )}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom item type"
-      />
-
-      <SelectWithCustomOption
-        id="rarity-select"
-        label="Rarity"
-        bind:value={magicItem.rarity}
-        choices={magicItemConfig.rarities.map((r: string) => ({
-          value: r,
-          label: r,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom rarity"
+      <MagicItemFormFields
+        bind:type={magicItem.type}
+        bind:rarity={magicItem.rarity}
+        bind:campaignContext={magicItem.campaignContext}
       />
     {:else if slug === "faction"}
       <FactionFormFields
@@ -1186,6 +870,31 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "council-vote"}
+      <CouncilVoteFormFields
+        bind:theme={activeTheme}
+        bind:proposal={councilVote.proposal}
+        bind:governingBodyType={councilVote.governingBodyType}
+        bind:councilSize={councilVote.councilSize}
+        bind:votingRule={councilVote.votingRule}
+        bind:deadline={councilVote.deadline}
+        bind:scope={councilVote.scope}
+        bind:tone={councilVote.tone}
+        bind:antagonistInfluence={councilVote.antagonistInfluence}
+        bind:campaignContext={councilVote.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "secret-society"}
+      <SecretSocietyFormFields
+        bind:theme={activeTheme}
+        bind:tone={secretSociety.tone}
+        bind:scale={secretSociety.scale}
+        bind:publicFace={secretSociety.publicFace}
+        bind:dangerLevel={secretSociety.dangerLevel}
+        bind:truthRelationship={secretSociety.truthRelationship}
+        bind:campaignContext={secretSociety.campaignContext}
         onSurprise={trigger}
       />
     {:else if slug === "kingdom"}
@@ -1238,6 +947,15 @@
         bind:campaignContext={vampireClan.campaignContext}
         onSurprise={trigger}
       />
+    {:else if slug === "nomad-clan"}
+      <NomadClanFormFields
+        bind:role={nomadClan.role}
+        bind:tone={nomadClan.tone}
+        bind:territory={nomadClan.territory}
+        bind:conflict={nomadClan.conflict}
+        bind:campaignContext={nomadClan.campaignContext}
+        onSurprise={trigger}
+      />
     {:else if slug === "names"}
       <NameFormFields
         bind:theme={activeTheme}
@@ -1277,115 +995,120 @@
         onSurprise={trigger}
       />
     {:else if slug === "ship-generator"}
-      <SelectWithCustomOption
-        id="ship-genre-select"
-        label="Genre"
-        bind:value={ship.genre}
-        choices={shipConfig.genres.map((g: string) => ({ value: g, label: g }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom genre"
-        onvaluechange={(g) => {
-          ship.role = (shipConfig.rolesByGenre[g] ??
-            shipConfig.rolesByGenre["Sci-Fi"])[0];
+      <ShipFormFields
+        bind:genre={ship.genre}
+        bind:role={ship.role}
+        bind:scale={ship.scale}
+        bind:condition={ship.condition}
+        bind:tone={ship.tone}
+        bind:campaignContext={ship.campaignContext}
+        onGenreChange={(genre) => {
+          const mappedTheme = mapShipGenreToTheme(genre);
+          if (mappedTheme) activeTheme = mappedTheme;
         }}
+        onSurprise={trigger}
       />
-
-      <SelectWithCustomOption
-        id="ship-role-select"
-        label="Ship Role"
-        bind:value={ship.role}
-        choices={(
-          shipConfig.rolesByGenre[ship.genre] ??
-          shipConfig.rolesByGenre["Sci-Fi"]
-        ).map((r: string) => ({
-          value: r,
-          label: r,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom role"
+    {:else if slug === "language-generator"}
+      <LanguageFormFields
+        bind:genre={language.genre}
+        bind:tone={language.tone}
+        bind:role={language.role}
+        bind:structure={language.structure}
+        bind:campaignContext={language.campaignContext}
+        preserveGenreOnSurprise={Boolean(urlHubTheme)}
+        onSurprise={trigger}
       />
-
-      <SelectWithCustomOption
-        id="ship-scale-select"
-        label="Scale"
-        bind:value={ship.scale}
-        choices={shipConfig.scales.map((s: string) => ({ value: s, label: s }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom scale"
+    {:else if slug === "news-sheet-generator"}
+      <NewsSheetFormFields
+        bind:genre={newsSheet.genre}
+        bind:publicationType={newsSheet.publicationType}
+        bind:tone={newsSheet.tone}
+        bind:bias={newsSheet.bias}
+        bind:censorLevel={newsSheet.censorLevel}
+        bind:hookDensity={newsSheet.hookDensity}
+        bind:placeName={newsSheet.placeName}
+        bind:headlineEvent={newsSheet.headlineEvent}
+        bind:campaignContext={newsSheet.campaignContext}
+        onSurprise={trigger}
       />
-
-      <SelectWithCustomOption
-        id="ship-condition-select"
-        label="Condition"
-        bind:value={ship.condition}
-        choices={shipConfig.conditions.map((c: string) => ({
-          value: c,
-          label: c,
-        }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom condition"
+    {:else if slug === "dungeon-generator"}
+      <DungeonFormFields
+        bind:theme={activeTheme}
+        bind:purpose={dungeon.purpose}
+        bind:currentState={dungeon.currentState}
+        bind:scale={dungeon.scale}
+        bind:campaignContext={dungeon.campaignContext}
+        onSurprise={trigger}
       />
-
-      <SelectWithCustomOption
-        id="ship-tone-select"
-        label="Tone"
-        bind:value={ship.tone}
-        choices={shipConfig.tones.map((t: string) => ({ value: t, label: t }))}
-        className="flex flex-col gap-1.5"
-        {labelClass}
-        inputClass={selectClass}
-        customPlaceholder="Enter a custom tone"
+    {:else if slug === "adventure-generator" || slug === "adventure-idea-generator"}
+      <AdventureFormFields
+        bind:theme={activeTheme}
+        bind:archetype={adventure.archetype}
+        bind:scale={adventure.scale}
+        bind:tone={adventure.tone}
+        bind:seed={adventure.seed}
+        bind:campaignContext={adventure.campaignContext}
+        onSurprise={trigger}
       />
-
-      <div class="flex flex-col gap-1.5">
-        <label for="ship-context" class={labelClass}
-          >Campaign context (optional)</label
-        >
-        <textarea
-          id="ship-context"
-          bind:value={ship.campaignContext}
-          maxlength="240"
-          rows="4"
-          aria-describedby="ship-context-help"
-          class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
-        ></textarea>
-        <p
-          id="ship-context-help"
-          class="text-[10px] text-theme-text/60 leading-relaxed"
-        >
-          Add a faction, system, conflict, or any detail to aim the ship at your
-          world.
-        </p>
-      </div>
-
-      <div class="pt-2 flex justify-end">
-        <button
-          type="button"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
-          title="Randomize all options and generate a draft from the result"
-          onclick={() => {
-            const g = ship.genre;
-            const roles =
-              shipConfig.rolesByGenre[g] ?? shipConfig.rolesByGenre["Sci-Fi"];
-            ship.role = pickFrom(roles);
-            ship.scale = pickFrom(shipConfig.scales);
-            ship.condition = pickFrom(shipConfig.conditions);
-            ship.tone = pickFrom(shipConfig.tones);
-            trigger();
-          }}
-        >
-          <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
-          Surprise Me
-        </button>
-      </div>
+    {:else if slug === "plot-twist-generator"}
+      <PlotTwistFormFields
+        bind:theme={activeTheme}
+        bind:twistType={plotTwist.twistType}
+        bind:impact={plotTwist.impact}
+        bind:timing={plotTwist.timing}
+        bind:foreshadowing={plotTwist.foreshadowing}
+        bind:premise={plotTwist.premise}
+        bind:constraints={plotTwist.constraints}
+        bind:campaignContext={plotTwist.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if slug === "world"}
+      <WorldFormFields
+        bind:worldType={world.worldType}
+        bind:habitability={world.habitability}
+        bind:civilisation={world.civilisation}
+        bind:societalModel={world.societalModel}
+        bind:worldTagOne={world.worldTagOne}
+        bind:worldTagTwo={world.worldTagTwo}
+        bind:genre={world.genre}
+        bind:lancerWorldFrame={world.lancerWorldFrame}
+        bind:campaignPressure={world.campaignPressure}
+        bind:dominantFeature={world.dominantFeature}
+        bind:campaignContext={world.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapWorldGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "star-system"}
+      <StarSystemFormFields
+        bind:systemType={starSystem.systemType}
+        bind:genre={starSystem.genre}
+        bind:civilisationLevel={starSystem.civilisationLevel}
+        bind:systemCharacter={starSystem.systemCharacter}
+        bind:scientificRealism={starSystem.scientificRealism}
+        bind:campaignContext={starSystem.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapStarSystemGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "alien-race"}
+      <AlienRaceFormFields
+        bind:genre={alienRace.genre}
+        bind:generationMode={alienRace.generationMode}
+        bind:homeEnvironment={alienRace.homeEnvironment}
+        bind:bodyPlan={alienRace.bodyPlan}
+        bind:psychology={alienRace.psychology}
+        bind:socialOrganisation={alienRace.socialOrganisation}
+        bind:technologyLevel={alienRace.technologyLevel}
+        bind:relationToOutsiders={alienRace.relationToOutsiders}
+        bind:campaignContext={alienRace.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapAlienRaceGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
     {/if}
   {/snippet}
 </SEOGeneratorLayout>

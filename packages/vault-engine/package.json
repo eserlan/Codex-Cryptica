@@ -12,9 +12,10 @@
   },
   "dependencies": {
     "@codex/events": "workspace:*",
+    "@codex/runtime": "workspace:*",
     "dexie": "^4.4.2",
     "idb": "^8.0.3",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.2.1",
     "schema": "workspace:*"
   },
   "devDependencies": {
@@ -22,7 +23,7 @@
     "@types/js-yaml": "^4.0.9",
     "@vitest/coverage-v8": "^4.1.7",
     "fake-indexeddb": "^6.2.5",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "svelte": "^5.55.9",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",

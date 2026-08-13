@@ -3,10 +3,21 @@
   import { graph } from "$lib/stores/graph.svelte";
   import type { TemporalMetadata } from "schema";
   import type { DateSelection } from "chronology-engine";
-  import { calendarEngine, parseDirectDateInput } from "chronology-engine";
+  import { calendarEngine } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick, untrack } from "svelte";
   import { scale, slide } from "svelte/transition";
+  import { toDateSelection } from "./utils/toDateSelection";
+  import TemporalPickerEras from "./TemporalPickerEras.svelte";
+  import TemporalPickerFooter from "./TemporalPickerFooter.svelte";
+  import {
+    formatDirectDateInput,
+    normalizedSelectionForSave,
+    optionPatch,
+    parsePickerDateInput,
+    precisionPatch,
+  } from "./utils/temporal-picker-selection";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   let {
     value = $bindable(),
@@ -21,74 +32,12 @@
   } = $props();
 
   let pickerElement = $state<HTMLElement>();
+
   let x = $state(0);
   let y = $state(0);
 
-  // Conversion from legacy TemporalMetadata to activeSelection DateSelection
-  function toDateSelection(
-    val: TemporalMetadata | DateSelection | undefined,
-    refVal: TemporalMetadata | DateSelection | undefined,
-  ): DateSelection {
-    const config = calendarStore.config;
-    const months = calendarEngine.getMonths(config);
-    const revision = config.revision || 1;
-
-    const hasValidYear = val && "year" in val && val.year !== undefined;
-
-    if (!val || !hasValidYear) {
-      if (refVal && "year" in refVal && refVal.year !== undefined) {
-        return {
-          precision:
-            "precision" in refVal && refVal.precision
-              ? (refVal.precision as any)
-              : "year",
-          year: refVal.year,
-          calendarRevision: revision,
-          label: val?.label || undefined,
-        };
-      }
-      return {
-        precision: "year",
-        year: config.presentYear || 0,
-        calendarRevision: revision,
-        label: val?.label || undefined,
-      };
-    }
-
-    if ("precision" in val && val.precision) {
-      return { ...val } as DateSelection;
-    }
-
-    let precision: "year" | "unit" | "day" = "year";
-    let unitId: string | undefined = undefined;
-    let day: number | undefined = undefined;
-
-    const month = val && "month" in val ? (val as any).month : undefined;
-    if (month !== undefined) {
-      precision = val.day !== undefined ? "day" : "unit";
-      const mIndex = month - 1;
-      if (mIndex >= 0 && mIndex < months.length) {
-        unitId = months[mIndex].id;
-      } else {
-        unitId = months[0]?.id;
-      }
-      if (val.day !== undefined) {
-        day = val.day;
-      }
-    }
-
-    return {
-      precision,
-      year: val.year,
-      unitId,
-      day,
-      calendarRevision: revision,
-      label: val.label,
-    };
-  }
-
   let activeSelection = $state<DateSelection>(
-    untrack(() => toDateSelection(value, referenceValue)),
+    untrack(() => toDateSelection(value, referenceValue, calendarStore.config)),
   );
 
   let directDateInput = $state("");
@@ -121,21 +70,12 @@
     calendarEngine.getRepairState(activeSelection, calendarStore.getSnapshot()),
   );
 
-  const formatDirectDateInput = (sel: DateSelection) => {
-    if (sel.precision === "day" && sel.day !== undefined && sel.unitId) {
-      const config = calendarStore.config;
-      const months = calendarEngine.getMonths(config);
-      const mIndex = months.findIndex((m) => m.id === sel.unitId) + 1;
-      if (mIndex > 0) {
-        return `${String(sel.day).padStart(2, "0")}${String(mIndex).padStart(2, "0")}${sel.year}`;
-      }
-    }
-    return "";
-  };
-
   $effect(() => {
     if (!isDirectDateEditing) {
-      directDateInput = formatDirectDateInput(activeSelection);
+      directDateInput = formatDirectDateInput(
+        activeSelection,
+        calendarStore.config,
+      );
       directDateError = "";
     }
   });
@@ -151,7 +91,7 @@
           if (index !== -1) {
             const targetScrollTop = index * 40;
             if (Math.abs(container.scrollTop - targetScrollTop) > 2) {
-              lastProgrammaticScroll[col.id] = Date.now();
+              lastProgrammaticScroll[col.id] = systemClock.now();
               container.scrollTop = targetScrollTop;
             }
           }
@@ -251,20 +191,7 @@
     if (directDateError) return;
 
     // Normalize properties according to precision to keep saved structures clean and unambiguous
-    const cleanSelection = { ...activeSelection };
-    if (cleanSelection.precision === "year") {
-      delete cleanSelection.unitId;
-      delete cleanSelection.day;
-      delete cleanSelection.anchorId;
-    } else if (cleanSelection.precision === "unit") {
-      delete cleanSelection.day;
-      delete cleanSelection.anchorId;
-    } else if (cleanSelection.precision === "day") {
-      delete cleanSelection.anchorId;
-    } else if (cleanSelection.precision === "anchor") {
-      delete cleanSelection.unitId;
-      delete cleanSelection.day;
-    }
+    const cleanSelection = normalizedSelectionForSave(activeSelection);
 
     // Save as rich DateSelection structure
     value = {
@@ -292,49 +219,22 @@
       return;
     }
 
-    const parsed = parseDirectDateInput(directDateInput, calendarStore.config);
-    if (!parsed) {
-      directDateError = "Use DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
-      return;
-    }
-
-    const months = calendarEngine.getMonths(calendarStore.config);
-    let unitId = months[0]?.id;
-    if (parsed.month !== undefined) {
-      unitId = months[parsed.month - 1]?.id || months[0]?.id;
-    }
-
-    activeSelection = {
-      precision: "day",
-      year: parsed.year,
-      unitId,
-      day: parsed.day,
-      calendarRevision: calendarStore.config.revision || 1,
-    };
-    directDateError = "";
+    const result = parsePickerDateInput(directDateInput, calendarStore.config);
+    if (result.selection) activeSelection = result.selection;
+    directDateError = result.error ?? "";
   };
 
   const selectOption = (colId: string, optionId: string) => {
-    let patch: Partial<DateSelection> = {};
-    if (colId === "year") {
-      patch = { year: Number(optionId) };
-    } else if (colId === "unit") {
-      patch = { unitId: optionId };
-    } else if (colId === "day") {
-      patch = { day: Number(optionId) };
-    } else if (colId === "anchor") {
-      patch = { anchorId: optionId };
-    }
     activeSelection = calendarEngine.applyParentChange(
       activeSelection,
-      patch,
+      optionPatch(colId, optionId),
       calendarStore.getSnapshot(),
     );
   };
 
   const onWheelScroll = (colId: string, event: Event) => {
     // Ignore scroll events for 150ms after a programmatic scroll
-    if (Date.now() - (lastProgrammaticScroll[colId] || 0) < 150) {
+    if (systemClock.now() - (lastProgrammaticScroll[colId] || 0) < 150) {
       return;
     }
     const container = event.currentTarget as HTMLDivElement;
@@ -536,42 +436,7 @@
   <!-- Content -->
   <div class="p-3 max-h-[360px] overflow-y-auto custom-scrollbar space-y-3">
     {#if activeTab === "era"}
-      <div
-        id="era-panel"
-        role="tabpanel"
-        aria-labelledby="era-tab"
-        class="space-y-1"
-      >
-        {#each graph.eras as era}
-          <button
-            type="button"
-            class="w-full text-left p-2 rounded hover:bg-theme-primary/10 border border-transparent hover:border-theme-primary/20 transition-all group"
-            data-testid="era-select-button"
-            onclick={() => selectEra(era)}
-          >
-            <div class="flex items-center gap-2">
-              <div
-                class="w-1 h-4 rounded-full"
-                style:background-color={era.color}
-              ></div>
-              <span
-                class="text-xs font-bold text-theme-text group-hover:text-theme-primary"
-                >{era.name}</span
-              >
-            </div>
-            <div class="text-[9px] text-theme-muted ml-3 font-header">
-              Year {era.start_year}
-              {era.end_year ? `→ ${era.end_year}` : "→ Present"}
-            </div>
-          </button>
-        {:else}
-          <div
-            class="py-8 text-center text-theme-muted text-[10px] uppercase tracking-widest"
-          >
-            No Eras Defined
-          </div>
-        {/each}
-      </div>
+      <TemporalPickerEras eras={graph.eras} onSelect={selectEra} />
     {:else}
       <div
         id="manual-panel"
@@ -583,7 +448,7 @@
         <div
           class="flex bg-theme-bg p-0.5 rounded-md border border-theme-border/30"
         >
-          {#each ["year", "unit", "day", ...(calendarStore.config.anchors?.length ? ["anchor"] : [])] as p}
+          {#each ["year", "unit", "day", ...(calendarStore.config.anchors?.length ? ["anchor"] : [])] as p (p)}
             <button
               type="button"
               class="flex-1 py-1 text-[9px] font-bold uppercase font-header tracking-tighter transition-all rounded {activeSelection.precision ===
@@ -591,23 +456,13 @@
                 ? 'bg-theme-primary text-theme-bg shadow-sm'
                 : 'text-theme-muted hover:text-theme-text'}"
               onclick={() => {
-                let newPrec = p as any;
-                let patch: Partial<DateSelection> = { precision: newPrec };
-                if (newPrec === "unit" && !activeSelection.unitId) {
-                  patch.unitId = calendarStore.config.months[0]?.id;
-                } else if (newPrec === "day") {
-                  if (!activeSelection.unitId) {
-                    patch.unitId = calendarStore.config.months[0]?.id;
-                  }
-                  if (activeSelection.day === undefined) {
-                    patch.day = 1;
-                  }
-                } else if (newPrec === "anchor" && !activeSelection.anchorId) {
-                  patch.anchorId = calendarStore.config.anchors?.[0]?.id;
-                }
                 activeSelection = calendarEngine.applyParentChange(
                   activeSelection,
-                  patch,
+                  precisionPatch(
+                    p as DateSelection["precision"],
+                    activeSelection,
+                    calendarStore.config,
+                  ),
                   calendarStore.getSnapshot(),
                 );
               }}
@@ -634,7 +489,7 @@
             class="w-full bg-theme-bg border {directDateError
               ? 'border-red-500/70'
               : 'border-theme-border'} rounded px-3 py-1.5 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
-            placeholder="DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY"
+            placeholder="YYYY, -YYYY, DDMMYYYY, or DD/MM/-YYYY"
             aria-invalid={!!directDateError}
             aria-describedby={directDateError ? "direct-date-error" : undefined}
           />
@@ -669,7 +524,7 @@
 
           <!-- Side-by-side Wheels -->
           <div class="flex w-full divide-x divide-theme-border/10">
-            {#each columns as col}
+            {#each columns as col (col.id)}
               <div class="flex-1 flex flex-col items-center relative min-w-0">
                 <!-- Header -->
                 <div
@@ -720,7 +575,7 @@
                     <!-- Top spacer -->
                     <div class="h-[45px]" aria-hidden="true"></div>
 
-                    {#each col.options as option}
+                    {#each col.options as option (option.id)}
                       <button
                         type="button"
                         id="opt-{col.id}-{option.id}"
@@ -752,7 +607,10 @@
                       class="absolute bottom-1 right-1 p-0.5 bg-theme-surface/80 hover:bg-theme-primary/10 hover:text-theme-primary border border-theme-border/30 rounded text-theme-muted transition-all z-20"
                       aria-label="Direct jump to {col.label}"
                     >
-                      <span class="icon-[lucide--keyboard] w-3 h-3"></span>
+                      <span
+                        aria-hidden="true"
+                        class="icon-[lucide--keyboard] w-3 h-3"
+                      ></span>
                     </button>
                   {/if}
                 {/if}
@@ -822,27 +680,11 @@
     {/if}
   </div>
 
-  <!-- Footer Actions -->
-  <div
-    class="p-3 border-t border-theme-border flex gap-2 bg-theme-bg/30 shrink-0"
-  >
-    <button
-      type="button"
-      class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
-      onclick={onClose}
-    >
-      Cancel
-    </button>
-    <button
-      type="button"
-      class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
-      data-testid="apply-date-button"
-      disabled={!!directDateError || !!repairState}
-      onclick={save}
-    >
-      Apply
-    </button>
-  </div>
+  <TemporalPickerFooter
+    isDisabled={!!directDateError || !!repairState}
+    onCancel={onClose}
+    onApply={save}
+  />
 </div>
 
 <style>

@@ -6,6 +6,7 @@
   import DOMPurify from "dompurify";
   import { slide } from "svelte/transition";
   import HelpHeader from "./HelpHeader.svelte";
+  import GettingStartedChecklist from "./GettingStartedChecklist.svelte";
 
   let { isStandalone = false } = $props();
 
@@ -36,6 +37,7 @@
 
 <div class="help-tab-container" class:p-2={!isStandalone}>
   <HelpHeader {isStandalone} />
+  <GettingStartedChecklist />
 
   <div class="space-y-3">
     {#each helpStore.searchResults as article (article.id)}
@@ -73,12 +75,14 @@
           </button>
 
           <button
+            type="button"
             onclick={() => helpStore.copyShareLink(article.id)}
             class="px-4 text-theme-muted hover:text-theme-primary transition-colors border-l border-theme-border/50"
             title="Copy direct link"
             aria-label="Copy direct link to {article.title}"
           >
-            <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+            <span aria-hidden="true" class="icon-[lucide--link] w-3.5 h-3.5"
+            ></span>
           </button>
         </div>
 

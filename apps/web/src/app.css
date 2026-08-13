@@ -2,6 +2,7 @@
 @source "./**/*.{svelte,ts,html}";
 @source "../../packages/*/src/**/*.{svelte,ts}";
 @plugin "@iconify/tailwind4";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --breakpoint-xs: 475px;
@@ -130,10 +131,14 @@
     color-scheme: light dark;
     --header-height: 65px;
     --app-viewport-height: 100vh;
-    --app-content-height: calc(var(--app-viewport-height) - var(--header-height));
+    --app-content-height: calc(
+      var(--app-viewport-height) - var(--header-height)
+    );
     --color-bg-primary: #fdf6e3;
     --chrome-bg: #fafaf9;
-    --frontpage-vignette: radial-gradient(circle at top, transparent, transparent), linear-gradient(to bottom, transparent, transparent);
+    --frontpage-vignette:
+      radial-gradient(circle at top, transparent, transparent),
+      linear-gradient(to bottom, transparent, transparent);
     --chrome-surface: #ffffff;
     --chrome-border: #e7e5e0;
     --chrome-text: #1c1917;
@@ -233,22 +238,84 @@
   }
 
   /* Per-theme muted/dim overrides — CSS fallback; script inline styles take precedence at runtime */
-  [data-theme="workspace_dark"]   { --color-text-muted: #a8a29e; --color-text-dim: #78716c; }
-  [data-theme="fantasy_dark"]     { --color-text-muted: #a08870; --color-text-dim: #7a6450; }
-  [data-theme="modern_dark"]      { --color-text-muted: #a1a1aa; --color-text-dim: #71717a; }
-  [data-theme="scifi"]            { --color-text-muted: #4ade80; --color-text-dim: #22c55e; }
-  [data-theme="cyberpunk"]        { --color-text-muted: #67e8f9; --color-text-dim: #38bdf8; }
-  [data-theme="apocalyptic"]      { --color-text-muted: #a8a29e; --color-text-dim: #78716c; }
-  [data-theme="horror"]           { --color-text-muted: #9ca3af; --color-text-dim: #6b7280; }
-  [data-theme="fallout"]          { --color-text-muted: #78c900; --color-text-dim: #4ade80; }
-  [data-theme="starwars"]         { --color-text-muted: #94a3b8; --color-text-dim: #64748b; }
-  [data-theme="startrek"]         { --color-text-muted: #d1d5db; --color-text-dim: #9ca3af; }
-  [data-theme="western"]        { --color-text-muted: #8c5a3c; --color-text-dim: #5c4033; }
-  [data-theme="western_dark"]   { --color-text-muted: #a0785a; --color-text-dim: #805c43; }
-  [data-theme="steampunk"]        { --color-text-muted: #b8a070; --color-text-dim: #8a7050; }
-  [data-theme="steampunk_dark"]   { --color-text-muted: #c8b080; --color-text-dim: #9a8060; }
-  [data-theme="space-opera-resistance"]        { --color-text-muted: #94a3b8; --color-text-dim: #64748b; }
-  [data-theme="space-opera-resistance_dark"]   { --color-text-muted: #64748b; --color-text-dim: #475569; }
+  [data-theme="workspace_dark"] {
+    --color-text-muted: #a8a29e;
+    --color-text-dim: #78716c;
+  }
+  [data-theme="fantasy_dark"] {
+    --color-text-muted: #a08870;
+    --color-text-dim: #7a6450;
+  }
+  [data-theme="pirate_dark"] {
+    --color-text-muted: #b2c0c0;
+    --color-text-dim: #91a5aa;
+  }
+  [data-theme="modern_dark"] {
+    --color-text-muted: #a1a1aa;
+    --color-text-dim: #71717a;
+  }
+  [data-theme="scifi"] {
+    --color-text-muted: #4ade80;
+    --color-text-dim: #22c55e;
+  }
+  [data-theme="cyberpunk"] {
+    --color-text-muted: #67e8f9;
+    --color-text-dim: #38bdf8;
+  }
+  [data-theme="apocalyptic"] {
+    --color-text-muted: #a8a29e;
+    --color-text-dim: #78716c;
+  }
+  [data-theme="horror"][data-app-appearance="neutral-dark"],
+  html[data-app-appearance="neutral-dark"] [data-theme="horror"] {
+    --color-text-muted: #9ca3af;
+    --color-text-dim: #6b7280;
+  }
+  [data-theme="horror_light"],
+  html[data-app-appearance="neutral-light"] [data-world-theme="horror"] {
+    --color-text-muted: #5c5652;
+    --color-text-dim: #4a4543;
+  }
+  [data-theme="cosmic_horror"] {
+    --color-text-muted: #9adbd2;
+    --color-text-dim: #69aaa1;
+  }
+  [data-theme="fallout"] {
+    --color-text-muted: #78c900;
+    --color-text-dim: #4ade80;
+  }
+  [data-theme="starwars"] {
+    --color-text-muted: #94a3b8;
+    --color-text-dim: #64748b;
+  }
+  [data-theme="startrek"] {
+    --color-text-muted: #d1d5db;
+    --color-text-dim: #9ca3af;
+  }
+  [data-theme="western"] {
+    --color-text-muted: #8c5a3c;
+    --color-text-dim: #5c4033;
+  }
+  [data-theme="western_dark"] {
+    --color-text-muted: #a0785a;
+    --color-text-dim: #805c43;
+  }
+  [data-theme="steampunk"] {
+    --color-text-muted: #b8a070;
+    --color-text-dim: #8a7050;
+  }
+  [data-theme="steampunk_dark"] {
+    --color-text-muted: #c8b080;
+    --color-text-dim: #9a8060;
+  }
+  [data-theme="space-opera-resistance"] {
+    --color-text-muted: #94a3b8;
+    --color-text-dim: #64748b;
+  }
+  [data-theme="space-opera-resistance_dark"] {
+    --color-text-muted: #64748b;
+    --color-text-dim: #475569;
+  }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;
@@ -265,6 +332,7 @@
   [data-theme="cyberpunk"],
   [data-theme="apocalyptic"],
   [data-theme="horror"],
+  [data-theme="cosmic_horror"],
   [data-theme="fallout"],
   [data-theme="starwars"],
   [data-theme="startrek"],
@@ -273,7 +341,15 @@
   [data-theme="steampunk_dark"],
   [data-theme="space-opera-resistance"],
   [data-theme="space-opera-resistance_dark"] {
-    --frontpage-vignette: radial-gradient(circle at top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.85)), linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+    --frontpage-vignette:
+      radial-gradient(circle at top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.85)),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+  }
+
+  [data-theme="pirate"] .svelte-flow__node > div,
+  [data-theme="pirate_dark"] .svelte-flow__node > div {
+    box-shadow: 0 4px 12px
+      color-mix(in srgb, var(--color-theme-primary), transparent 78%);
   }
 
   /* Shield app chrome from world theme colors and fonts */
@@ -281,9 +357,22 @@
   footer,
   .bg-chrome-surface,
   .bg-chrome-bg {
-    --font-header: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    --font-header:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    --font-body:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif !important;
 
     /* Restore standard Tailwind neutral colors inside chrome elements to prevent world theme bleed */
     --color-gray-50: #fafafa;
@@ -392,7 +481,6 @@
     overflow: hidden;
     padding-top: env(safe-area-inset-top, 0px);
     padding-right: env(safe-area-inset-right, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px);
   }
 
@@ -462,8 +550,6 @@
     outline-offset: 2px !important;
   }
 
-
-
   [data-theme="fantasy"] .btnSecondary {
     border-color: var(--theme-selected-border);
     background-color: var(--theme-action-bg);
@@ -474,26 +560,6 @@
   [data-theme="fantasy"] .btnSecondary:hover {
     background-color: var(--theme-action-hover);
     color: var(--theme-action-text);
-  }
-
-  /* Global prose and code styling */
-  .prose {
-    --tw-prose-body: var(--color-text-primary);
-    --tw-prose-headings: var(--color-text-primary);
-    --tw-prose-lead: var(--color-text-muted);
-    --tw-prose-links: var(--color-accent-primary);
-    --tw-prose-bold: var(--color-text-primary);
-    --tw-prose-counters: var(--color-text-muted);
-    --tw-prose-bullets: var(--color-accent-dim);
-    --tw-prose-hr: var(--color-border-primary);
-    --tw-prose-quotes: var(--color-text-muted);
-    --tw-prose-quote-borders: var(--color-accent-dim);
-    --tw-prose-captions: var(--color-text-dim);
-    --tw-prose-code: var(--color-text-primary);
-    --tw-prose-pre-code: var(--color-text-primary);
-    --tw-prose-pre-bg: var(--color-bg-surface);
-    --tw-prose-th-borders: var(--color-border-primary);
-    --tw-prose-td-borders: var(--color-border-primary);
   }
 
   code {
@@ -537,4 +603,34 @@
   .pt-safe {
     padding-top: calc(env(safe-area-inset-top, 0px));
   }
+}
+
+/*
+ * Typography emits its default prose tokens in Tailwind's utilities layer.
+ * Keep these unlayered and after Tailwind so every Markdown surface uses the
+ * active world-theme tokens instead of Typography's fixed gray palette.
+ */
+.prose {
+  --tw-prose-body: var(--color-text-primary);
+  --tw-prose-headings: var(--color-text-primary);
+  --tw-prose-lead: var(--color-text-muted);
+  --tw-prose-links: var(--color-accent-primary);
+  --tw-prose-bold: var(--color-text-primary);
+  --tw-prose-counters: var(--color-text-muted);
+  --tw-prose-bullets: var(--color-accent-dim);
+  --tw-prose-hr: var(--color-border-primary);
+  --tw-prose-quotes: var(--color-text-muted);
+  --tw-prose-quote-borders: var(--color-accent-dim);
+  --tw-prose-captions: var(--color-text-dim);
+  --tw-prose-kbd: var(--color-text-primary);
+  --tw-prose-kbd-shadows: color-mix(
+    in srgb,
+    var(--color-text-primary),
+    transparent 88%
+  );
+  --tw-prose-code: var(--color-text-primary);
+  --tw-prose-pre-code: var(--color-text-primary);
+  --tw-prose-pre-bg: var(--color-bg-surface);
+  --tw-prose-th-borders: var(--color-border-primary);
+  --tw-prose-td-borders: var(--color-border-primary);
 }

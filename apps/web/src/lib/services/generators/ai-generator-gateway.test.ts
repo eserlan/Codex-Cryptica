@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { InteractionExpiredError } from "$lib/services/ai/client-manager";
+import {
+  InteractionExpiredError,
+  INTERACTION_MODEL_KEY,
+  GENERATOR_INTERACTION_MODEL_KEY,
+} from "@codex/ai-engine";
 import {
   ProxyAIGeneratorGateway,
   extractJsonObject,
@@ -41,17 +45,27 @@ describe("extractJsonObject", () => {
 });
 
 describe("ProxyAIGeneratorGateway", () => {
+  it("routes generator interactions to a different model than chat and revision", () => {
+    // The whole point of the split (2026-08-11): generators sit on Gemini for
+    // latency, while Oracle chat and entity revision stay on Luna. If these
+    // ever converge again, the split has been undone by accident.
+    expect(GENERATOR_INTERACTION_MODEL_KEY).not.toBe(INTERACTION_MODEL_KEY);
+    expect(GENERATOR_INTERACTION_MODEL_KEY).toBe("gemini-flash-lite");
+    expect(INTERACTION_MODEL_KEY).toBe("luna-fast");
+  });
+
   it("uses the Interactions API when interaction options are provided", async () => {
     const client = {
       sendInteraction: async (params: unknown) => {
         expect(params).toEqual(
           expect.objectContaining({
+            model: GENERATOR_INTERACTION_MODEL_KEY,
             input: "delta request",
             previousInteractionId: "interaction-1",
             storeConversation: true,
             generationConfig: expect.objectContaining({
               responseMimeType: "application/json",
-              maxOutputTokens: 2048,
+              maxOutputTokens: 4096,
             }),
           }),
         );
@@ -106,6 +120,7 @@ describe("ProxyAIGeneratorGateway", () => {
     expect(calls).toHaveLength(2);
     expect(calls[1]).toEqual(
       expect.objectContaining({
+        model: GENERATOR_INTERACTION_MODEL_KEY,
         input: "full replay",
         previousInteractionId: null,
         generationConfig: expect.objectContaining({
@@ -118,6 +133,69 @@ describe("ProxyAIGeneratorGateway", () => {
       interactionId: "fresh",
       usedInteraction: true,
       replayed: true,
+    });
+  });
+
+  it("applies per-request decoding overrides to stateless generation", async () => {
+    const generateContent = async (request: unknown) => {
+      expect(request).toEqual(
+        expect.objectContaining({
+          generationConfig: {
+            temperature: 0.35,
+            topP: 0.8,
+            maxOutputTokens: 8192,
+            responseMimeType: "application/json",
+          },
+        }),
+      );
+      return { response: { text: () => '{"title":"Stable"}' } };
+    };
+    const client = {
+      getModel: async () => ({ generateContent }),
+    };
+    const gateway = new ProxyAIGeneratorGateway(client as never);
+
+    await expect(
+      gateway.complete("full prompt", "system", {
+        generationConfig: {
+          temperature: 0.35,
+          topP: 0.8,
+          maxOutputTokens: 8192,
+        },
+      }),
+    ).resolves.toBe('{"title":"Stable"}');
+  });
+
+  describe("startChat", () => {
+    it("opens one session and lets multiple turns share it, extracting JSON from each reply", async () => {
+      const responses = [
+        '{"title":"Foundation"} trailing garbage',
+        '{"possiblePaths":"paths"}',
+      ];
+      let call = 0;
+      const sendMessageStream = async (message: string) => {
+        expect(message).toBeTruthy();
+        const text = responses[call++];
+        return {
+          stream: (async function* () {
+            yield { text: () => text };
+          })(),
+        };
+      };
+      const chatSession = { sendMessageStream };
+      const client = {
+        getModel: async () => ({
+          startChat: () => chatSession,
+        }),
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never);
+
+      const chat = await gateway.startChat("system instruction");
+      const first = await chat.send("foundation turn");
+      const second = await chat.send("paths turn");
+
+      expect(JSON.parse(first)).toEqual({ title: "Foundation" });
+      expect(JSON.parse(second)).toEqual({ possiblePaths: "paths" });
     });
   });
 });

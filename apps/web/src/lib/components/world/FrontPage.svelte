@@ -19,6 +19,8 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { base } from "$app/paths";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -34,15 +36,34 @@
 
   const activeVaultId = $derived(vault.activeVaultId);
   const themeTokens = $derived(themeStore.activeTheme.tokens);
-  const metadata = $derived(worldStore.metadata);
+  const metadata = $derived(
+    sessionModeStore.isGuestMode ? guestVault.metadata : worldStore.metadata,
+  );
   const briefingSource = $derived(
-    worldStore.metadata?.description?.trim() ||
-      worldStore.frontPageEntity?.chronicle?.trim() ||
-      worldStore.frontPageEntity?.content?.trim() ||
-      "",
+    metadata?.description?.trim() ||
+      (sessionModeStore.isGuestMode
+        ? ""
+        : worldStore.frontPageEntity?.chronicle?.trim() ||
+          worldStore.frontPageEntity?.content?.trim() ||
+          ""),
   );
   let recentLimit = $state(DEFAULT_RECENT_LIMIT);
-  const recentActivity = $derived(worldStore.recentActivity);
+  const recentActivity = $derived(
+    sessionModeStore.isGuestMode
+      ? guestVault.entities.map((e) => ({
+          id: e.id,
+          title: e.title,
+          path: "",
+          tags: e.tags,
+          labels: e.labels,
+          image: e.image,
+          thumbnail: e.thumbnail,
+          excerpt: e.content,
+          type: e.type,
+          lastModified: e.updatedAt ? new Date(e.updatedAt).getTime() : 0,
+        }))
+      : worldStore.recentActivity,
+  );
   const displayedRecentActivity = $derived(
     partitionAndSortRecentActivity(recentActivity, recentLimit),
   );
@@ -53,9 +74,11 @@
   const hasBriefing = $derived(
     !!(
       draftDescription.trim() ||
-      worldStore.metadata?.description?.trim() ||
-      worldStore.frontPageEntity?.chronicle?.trim() ||
-      worldStore.frontPageEntity?.content?.trim()
+      metadata?.description?.trim() ||
+      (sessionModeStore.isGuestMode
+        ? false
+        : worldStore.frontPageEntity?.chronicle?.trim() ||
+          worldStore.frontPageEntity?.content?.trim())
     ),
   );
 
@@ -377,43 +400,52 @@
 
         {#if coverImage}
           <div
-            class="flex items-center gap-2 max-xl:absolute max-xl:right-0 max-xl:top-0"
+            class="flex items-center gap-2 max-xl:absolute max-xl:right-0 max-xl:top-0 xl:ml-auto"
           >
+            {#if !sessionModeStore.isGuestMode}
+              <button
+                class="inline-flex h-9 items-center rounded-full border border-theme-primary/45 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60 disabled:opacity-50"
+                onclick={openCoverEditor}
+                disabled={worldStore.isSaving}
+              >
+                Change Image
+              </button>
+            {/if}
             <button
-              class="inline-flex h-9 items-center rounded-full border border-theme-primary/45 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60 disabled:opacity-50"
-              onclick={openCoverEditor}
-              disabled={worldStore.isSaving}
-            >
-              Change Image
-            </button>
-            <button
+              type="button"
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={openCoverLightbox}
               aria-label="Open cover image lightbox"
               title="Open cover image"
             >
-              <span class="icon-[lucide--maximize-2] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--maximize-2] h-4 w-4"
+              ></span>
             </button>
             {#if onClose}
               <button
+                type="button"
                 class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
                 onclick={onClose}
                 aria-label="Close front page"
                 title="Close front page"
               >
-                <span class="icon-[lucide--x] h-4 w-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"
+                ></span>
               </button>
             {/if}
           </div>
         {:else if onClose}
-          <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
+          <div
+            class="flex justify-end xl:absolute xl:right-0 xl:top-0 xl:ml-auto"
+          >
             <button
+              type="button"
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
               onclick={onClose}
               aria-label="Close front page"
               title="Close front page"
             >
-              <span class="icon-[lucide--x] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
             </button>
           </div>
         {/if}
@@ -447,7 +479,7 @@
             <div class="flex flex-wrap gap-3 mt-2">
               <button
                 class="inline-flex items-center gap-2 rounded-full bg-theme-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-bg hover:opacity-90 transition-opacity"
-                onclick={() => modalUIStore.requestCreateEntity()}
+                onclick={() => modalUIStore.openIntentCreateMenu()}
               >
                 <span class="icon-[lucide--plus] h-4 w-4"></span>
                 Create Entity
@@ -480,7 +512,7 @@
               {/if}
             </div>
           </div>
-        {:else if showCoverEditor || !coverImage}
+        {:else if !sessionModeStore.isGuestMode && (showCoverEditor || !coverImage)}
           <FrontPageHero
             {coverImageUrl}
             {coverImage}
@@ -519,12 +551,25 @@
           {hasBriefing}
           isSaving={worldStore.isSaving}
           isRevising={isRevisingBriefing}
+          isReadOnly={sessionModeStore.isGuestMode}
           onSave={handleSaveDescription}
           onCancel={cancelEditingBriefing}
           onGenerate={handleGenerateBriefing}
           onEdit={startEditingBriefing}
           onDraftChange={handleDraftDescriptionChange}
         />
+
+        {#if sessionModeStore.isGuestMode}
+          <div class="flex justify-center pt-2">
+            <a
+              href="{base}/worlds"
+              class="inline-flex items-center gap-2 text-xs font-medium text-theme-muted hover:text-theme-primary transition-colors"
+            >
+              <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+              Made with Codex Cryptica &middot; Explore more public worlds
+            </a>
+          </div>
+        {/if}
       </div>
     </div>
   {/if}

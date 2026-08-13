@@ -95,7 +95,8 @@
         timelineStore.typeFilters.size === 0,
       )}"
     >
-      <span class="icon-[lucide--layout-grid] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--layout-grid] w-3.5 h-3.5"
+      ></span>
     </button>
 
     {#each categories.list as cat (cat.id)}
@@ -142,7 +143,8 @@
         timelineStore.includeUndated,
       )}"
     >
-      <span class="icon-[lucide--calendar-x-2] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--calendar-x-2] w-3.5 h-3.5"
+      ></span>
     </button>
   </div>
 

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import DetailStatusTab from "./DetailStatusTab.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -136,7 +136,7 @@ describe("DetailStatusTab", () => {
     expect(screen.getByText("Target 1")).toBeTruthy();
     expect(screen.getByText("Source 1")).toBeTruthy();
 
-    const deleteButtons = screen.getAllByLabelText("Delete connection");
+    const deleteButtons = screen.getAllByLabelText(/^Delete connection to /);
     expect(deleteButtons).toHaveLength(3);
   });
 
@@ -150,9 +150,11 @@ describe("DetailStatusTab", () => {
       editEndDate: undefined as any,
     });
 
-    const deleteButtons = screen.getAllByLabelText("Delete connection");
-    // Outbound is typically first in the list as per code: [...outbound, ...inbound]
-    await fireEvent.click(deleteButtons[0]);
+    // Each row's action is named after its target, so the test can address a
+    // specific connection instead of relying on list order.
+    await fireEvent.click(
+      screen.getByLabelText("Delete connection to Target 1"),
+    );
 
     expect(vault.removeConnection).toHaveBeenCalledWith(
       "entity-1",
@@ -171,9 +173,9 @@ describe("DetailStatusTab", () => {
       editEndDate: undefined as any,
     });
 
-    const deleteButtons = screen.getAllByLabelText("Delete connection");
-    // Inbound is second
-    await fireEvent.click(deleteButtons[1]);
+    await fireEvent.click(
+      screen.getByLabelText("Delete connection to Source 1"),
+    );
 
     expect(vault.removeConnection).toHaveBeenCalledWith(
       "source-1",
@@ -194,7 +196,7 @@ describe("DetailStatusTab", () => {
       editEndDate: undefined as any,
     });
 
-    expect(screen.queryByLabelText("Delete connection")).toBeNull();
+    expect(screen.queryByLabelText(/^Delete connection to /)).toBeNull();
   });
 
   it("renders child connection successfully but not parent in connection list", () => {
@@ -216,6 +218,41 @@ describe("DetailStatusTab", () => {
     expect(screen.getByText("Child Entity")).toBeTruthy();
     expect(screen.queryByText("Parent")).toBeNull();
     expect(screen.getByText("Child")).toBeTruthy();
+  });
+
+  it("states each connection's direction in text, not only by icon and colour", () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.getByText("Outgoing connection:")).toBeTruthy();
+    expect(screen.getByText("Incoming connection:")).toBeTruthy();
+  });
+
+  it("spells out the past-label asterisk, which has no visible legend", () => {
+    (vault as any).entities["target-1"] = {
+      id: "target-1",
+      title: "Target 1",
+      labels: ["past"],
+    };
+
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.getByText("(past)")).toBeTruthy();
+
+    (vault as any).entities["target-1"] = { id: "target-1", title: "Target 1" };
   });
 
   it("toggles inline connection form and can cancel or connect", async () => {
@@ -296,7 +333,7 @@ describe("DetailStatusTab", () => {
     });
 
     const establishButtons = screen.getAllByLabelText(
-      "Establish custom connection",
+      /^Establish custom connection to /,
     );
     expect(establishButtons.length).toBeGreaterThan(0);
 
@@ -358,24 +395,7 @@ describe("DetailStatusTab", () => {
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 
-  const mockCharacterEntity = {
-    id: "char-1",
-    title: "Character 1",
-    type: "character",
-    content: "He is a blacksmith.",
-    lore: "Secretly related to the king.",
-    connections: [],
-    tags: [],
-    guestChatConfig: {
-      isEnabled: true,
-      contextScope: "hybrid",
-      extraInstructions: "Speaks with a lisp.",
-      isHostReviewable: true,
-      keepMemory: true,
-    },
-  } as any;
-
-  it("does not render Guest Character Chat for non-character entities", () => {
+  it("does not render Guest Character Chat settings in the status tab", () => {
     render(DetailStatusTab, {
       entity: mockEntity,
       isEditing: false,
@@ -383,130 +403,8 @@ describe("DetailStatusTab", () => {
       editContent: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
-      editGuestChatConfig: undefined,
     });
+
     expect(screen.queryByText("Guest Character Chat")).toBeNull();
-  });
-
-  it("renders Guest Character Chat read-only config for character entities when not editing", () => {
-    render(DetailStatusTab, {
-      entity: mockCharacterEntity,
-      isEditing: false,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: undefined,
-    });
-    expect(screen.getByText("Guest Character Chat")).toBeDefined();
-    expect(screen.getByText(/hybrid lore/i)).toBeDefined();
-    expect(screen.queryByText("Personality Rules:")).toBeNull();
-    expect(screen.queryByText("Speaks with a lisp.")).toBeNull();
-  });
-
-  it("renders Guest Character Chat edit panel when editing a character entity", async () => {
-    const mockConfig = {
-      isEnabled: true,
-      contextScope: "hybrid" as const,
-      extraInstructions: "Speaks with a lisp.",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-    render(DetailStatusTab, {
-      entity: mockCharacterEntity,
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editLore: "## Secrets\nSecretly related to the king.",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    expect(screen.getByText("Guest Character Chat")).toBeDefined();
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    expect(checkbox.checked).toBe(true);
-
-    // Toggle check
-    await fireEvent.click(checkbox);
-    expect(mockConfig.isEnabled).toBe(false);
-  });
-
-  it("calls generatedPersonality logic when chat is enabled without rules", async () => {
-    const { generatePersonality } = await import("./generate-personality");
-    vi.mocked(generatePersonality).mockImplementationOnce(
-      async ({ setEditLore }) => {
-        setEditLore("## Personality & Voice\n- Mocked rule");
-        return true;
-      },
-    );
-
-    const mockConfig = {
-      isEnabled: false,
-      contextScope: "public" as const,
-      extraInstructions: "",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-
-    render(DetailStatusTab, {
-      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    await fireEvent.click(checkbox);
-
-    expect(mockConfig.isEnabled).toBe(true);
-    await waitFor(() => {
-      expect(screen.getByText("Found in character lore")).toBeTruthy();
-    });
-    expect(generatePersonality).toHaveBeenCalledOnce();
-  });
-
-  it("keeps prompting for manual personality rules when AI generation fails", async () => {
-    const { generatePersonality } = await import("./generate-personality");
-    vi.mocked(generatePersonality).mockImplementationOnce(
-      async ({ setError }) => {
-        setError("AI generation failed.");
-        return false;
-      },
-    );
-    const mockConfig = {
-      isEnabled: false,
-      contextScope: "public" as const,
-      extraInstructions: "",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-
-    render(DetailStatusTab, {
-      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    await fireEvent.click(checkbox);
-
-    expect(mockConfig.isEnabled).toBe(true);
-    await waitFor(() => {
-      expect(screen.getByText(/AI generation failed/i)).toBeTruthy();
-    });
   });
 });

@@ -3,6 +3,7 @@ import {
   type EntityDb,
   type QuickNoteRecord,
 } from "../utils/entity-db";
+import { type Clock, systemClock } from "../utils/runtime-deps";
 
 /**
  * Service to manage local persistence of QuickNote fleeting scratchpad entries.
@@ -10,9 +11,11 @@ import {
  */
 export class QuickNoteService {
   private db: EntityDb;
+  private clock: Clock;
 
-  constructor(db: EntityDb = entityDb) {
+  constructor(db: EntityDb = entityDb, clock: Clock = systemClock) {
     this.db = db;
+    this.clock = clock;
   }
 
   /**
@@ -46,7 +49,7 @@ export class QuickNoteService {
   ): Promise<number> {
     const toSave: QuickNoteRecord = {
       ...note,
-      createdAt: note.createdAt || Date.now(),
+      createdAt: note.createdAt || this.clock.now(),
     };
 
     const id = await this.db.quickNotes.put(toSave);

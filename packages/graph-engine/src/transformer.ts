@@ -69,7 +69,19 @@ const formatDate = (date?: TemporalMetadata) => {
 
 const EMPTY_LABELS: string[] = [];
 
-const getTextureVariant = () => Math.floor(Math.random() * 4);
+// Deterministic per entity id. This used to be Math.random(), which meant every
+// elements rebuild produced a different variant for ~75% of nodes — each rebuild
+// then patched hundreds of nodes' data and triggered a full style/render pass
+// (there are `node[textureVariant = N]` selectors), costing >1s per sync on
+// large vaults. A stable hash keeps the visual variety without the churn.
+const getTextureVariant = (id: string) => {
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    hash ^= id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 4;
+};
 
 const hasImportantLabel = (labels?: string[]) => {
   if (!labels) return false;
@@ -85,6 +97,7 @@ export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
     validIds?: Set<string>,
+    maxEdges = Number.POSITIVE_INFINITY,
   ): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
     if (!validIds) {
@@ -102,6 +115,9 @@ export class GraphTransformer {
 
     // Precompute rendered degree so node sizing matches the graph after
     // connections to hidden or missing targets have been filtered out.
+    // Keep weight calculation aligned with the edges that are actually
+    // rendered when a caller applies an edge budget.
+    let weightedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
@@ -110,11 +126,13 @@ export class GraphTransformer {
       if (!connections) continue;
 
       for (let j = 0; j < connections.length; j++) {
+        if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
         if (!validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
+        weightedEdgeCount++;
       }
     }
 
@@ -125,6 +143,7 @@ export class GraphTransformer {
     // solves cleanly. This keeps the bad coordinates from flashing on screen
     // during the load before the heal runs.
     const savedPositions: { x: number; y: number }[] = [];
+    let renderedEdgeCount = 0;
     for (let i = 0; i < count; i++) {
       const c = entities[i]?.metadata?.coordinates;
       if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
@@ -178,7 +197,7 @@ export class GraphTransformer {
       );
       const nodeData: GraphNode["data"] = {
         id: entity.id,
-        label: entity.title,
+        label: entity.title || entity.id || "Untitled",
         type: entity.type,
         status: entity.status,
         weight: weights.get(entity.id) ?? 0,
@@ -187,7 +206,7 @@ export class GraphTransformer {
         end_date: entity.end_date,
         dateLabel,
         labels: entity.labels ?? EMPTY_LABELS,
-        textureVariant: getTextureVariant(),
+        textureVariant: getTextureVariant(entity.id),
       };
       if (hasPast) nodeData.isPast = true;
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
@@ -234,6 +253,7 @@ export class GraphTransformer {
       const connections = entity.connections;
       if (connections) {
         for (let l = 0; l < connections.length; l++) {
+          if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
           // Skip edges to non-existent targets
           if (!validIds.has(conn.target)) continue;
@@ -247,11 +267,12 @@ export class GraphTransformer {
               id: edgeId,
               source: entity.id,
               target: conn.target,
-              label: conn.label || conn.type,
+              label: conn.label || conn.type || "",
               connectionType: conn.type,
               strength: conn.strength,
             },
           });
+          renderedEdgeCount++;
         }
       }
     }
@@ -426,8 +447,11 @@ export const getGraphStyle = (
         width: 32,
         height: 32,
         shape: graph.nodeShape,
-        label: (node: any) =>
-          node.data("isPast") ? `${node.data("label")}*` : node.data("label"),
+        label: (node: any) => {
+          const l = node.data("label");
+          if (l === null || l === undefined) return "";
+          return node.data("isPast") ? `${l}*` : String(l);
+        },
         color: tokens.text,
         "font-family": sanitizeFontForCytoscape(tokens.fontHeader),
         "font-size": 10,
@@ -502,17 +526,26 @@ export const getGraphStyle = (
         "curve-style": "bezier",
         "target-arrow-shape": "triangle",
         "arrow-scale": 0.6,
-        opacity: 0.35,
+        // Edges need to stay legible against dark backgrounds. At 0.35 the
+        // default (non-friendly/enemy/neutral) edge color washes out to
+        // invisible — semantic connection types like member_of/participant_of
+        // hit this default path, so keep base opacity high enough to read.
+        opacity: 0.6,
         label: "data(label)",
-        "text-rotation": "autorotate",
-        "font-size": 8,
+        // Keep relationship labels horizontal. Autorotation turns labels on
+        // steep or reciprocal edges into hard-to-scan text and makes crowded
+        // clusters look denser than they are.
+        "text-rotation": "none",
+        "font-size": 9,
         "min-zoomed-font-size": 8,
         "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         color: tokens.text,
         "text-background-color": tokens.background,
-        "text-background-opacity": 0.8,
-        "text-background-padding": "2px",
-        "text-margin-y": -8,
+        "text-background-opacity": 0.92,
+        "text-background-padding": "3px",
+        "text-margin-y": -10,
+        "text-max-width": 120,
+        "text-wrap": "ellipsis",
         "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
         ...getFantasyEdgeStyle(template),
@@ -545,6 +578,16 @@ export const getGraphStyle = (
         opacity: 0.08,
         "text-opacity": 0.08,
         events: "no",
+      },
+    },
+    {
+      // When an entity is selected, retain labels for its immediate
+      // neighbourhood and remove the dimmed background labels. This avoids
+      // labels competing with the entity-detail panel without trying to route
+      // canvas text around a DOM overlay.
+      selector: "edge.dimmed",
+      style: {
+        label: "",
       },
     },
     {

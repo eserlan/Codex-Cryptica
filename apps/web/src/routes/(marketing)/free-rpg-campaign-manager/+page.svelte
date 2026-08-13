@@ -3,6 +3,7 @@
   import { browser } from "$app/environment";
   import { fly } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { systemClock } from "$lib/utils/runtime-deps";
 
   async function startDemo(theme: string) {
     if (browser) {
@@ -45,7 +46,7 @@
         name: "How does the AI GM assistant work?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own Google Gemini API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
+          text: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own OpenAI/Luna API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
         },
       },
     ],
@@ -71,7 +72,7 @@
     },
     {
       title: "AI-Powered Lore Oracle",
-      desc: "Co-author stories, parse draft summaries, and generate visual character art using local Gemini models.",
+      desc: "Co-author stories, parse draft summaries, and generate visual character art using local Luna models.",
       icon: "icon-[lucide--sparkles]",
     },
     {
@@ -139,12 +140,12 @@
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg transition-colors duration-300 overflow-y-auto"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <div class="max-w-6xl mx-auto px-6 py-16 md:py-24">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24">
     <!-- Header Navigation -->
     <nav class="flex justify-between items-center mb-16">
       <a
         href="{base}/?ref=landing"
-        class="font-mono text-xs uppercase tracking-[0.2em] text-theme-primary hover:opacity-80 transition-opacity flex items-center gap-2"
+        class="font-mono text-xs text-theme-primary hover:opacity-80 transition-opacity flex items-center gap-2"
       >
         <span class="icon-[lucide--shield] w-4 h-4"></span>
         Codex Cryptica
@@ -152,12 +153,12 @@
       <div class="flex gap-6">
         <a
           href="{base}/features"
-          class="text-xs uppercase font-mono tracking-widest hover:text-theme-primary transition-colors"
+          class="text-xs font-mono hover:text-theme-primary transition-colors"
           >Features</a
         >
         <a
           href="{base}/blog"
-          class="text-xs uppercase font-mono tracking-widest hover:text-theme-primary transition-colors"
+          class="text-xs font-mono hover:text-theme-primary transition-colors"
           >Blog</a
         >
       </div>
@@ -173,7 +174,7 @@
       <p
         class="text-lg md:text-2xl text-theme-muted mb-12 font-light leading-relaxed"
       >
-        Stop fighting scattered folders. Organize campaign notes, characters,
+        Stop fighting scattered folders. Organise campaign notes, characters,
         locations, and timelines inside a private, local-first database with
         connected knowledge graphs.
       </p>
@@ -181,14 +182,14 @@
       <div class="flex flex-wrap justify-center gap-4">
         <a
           href="{base}/?ref=landing"
-          class="px-8 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-lg hover:bg-theme-primary/95 transition-all shadow-lg hover:shadow-theme-primary/20 active:scale-95"
+          class="px-8 py-4 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:bg-theme-primary/95 transition-all shadow-lg hover:shadow-theme-primary/20 active:scale-95"
         >
           Enter the Codex
         </a>
         <button
           type="button"
           onclick={() => startDemo("fantasy")}
-          class="px-8 py-4 bg-theme-surface border border-theme-border text-theme-text font-bold uppercase font-header tracking-widest text-xs rounded-lg hover:border-theme-primary/60 transition-all active:scale-95"
+          class="px-8 py-4 bg-theme-surface border border-theme-border text-theme-text font-bold font-header text-xs rounded-lg hover:border-theme-primary/60 transition-all active:scale-95"
         >
           Launch Fantasy Demo
         </button>
@@ -255,7 +256,7 @@
         <table class="w-full border-collapse text-left text-sm md:text-base">
           <thead>
             <tr
-              class="border-b border-theme-border bg-theme-surface/50 font-header font-bold uppercase tracking-wider text-theme-muted text-xs"
+              class="border-b border-theme-border bg-theme-surface/50 font-header font-bold text-theme-muted text-xs"
             >
               <th class="p-6">Feature</th>
               <th class="p-6">Spreadsheets / Docs</th>
@@ -369,7 +370,7 @@
         <div class="flex flex-wrap justify-center gap-4">
           <a
             href="{base}/?ref=landing"
-            class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
+            class="px-12 py-5 bg-theme-primary text-theme-bg font-bold font-header text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
           >
             Create Your Vault
           </a>
@@ -402,7 +403,8 @@
         >
       </div>
       <p>
-        © {new Date().getFullYear()} Codex Cryptica. Your world is your own.
+        © {new Date(systemClock.now()).getFullYear()} Codex Cryptica. Your world is
+        your own.
       </p>
     </footer>
   </div>

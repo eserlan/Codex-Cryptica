@@ -1,5 +1,10 @@
 import type { EncounterSession, VTTMessage } from "../../../types/vtt";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import {
+  browserSessionStorage,
+  browserStorage,
+  type StorageLike,
+} from "$lib/utils/runtime-deps";
 
 const STORAGE_PREFIX = "codex.vtt.session";
 const POPOUT_STORAGE_PREFIX = "codex.vtt.popout";
@@ -17,6 +22,8 @@ export interface VTTPersistenceDependencies {
   getRestoring: () => boolean;
   setRestoring: (restoring: boolean) => void;
   setHasHydratedSession: (hydrated: boolean) => void;
+  sessionStorage?: StorageLike;
+  localStorage?: StorageLike;
 }
 
 export class VTTPersistenceManager {
@@ -24,6 +31,14 @@ export class VTTPersistenceManager {
   private draftPersistTimeout: number | null = null;
 
   constructor(private deps: VTTPersistenceDependencies) {}
+
+  private get sessionStorage(): StorageLike {
+    return this.deps.sessionStorage ?? browserSessionStorage;
+  }
+
+  private get localStorage(): StorageLike {
+    return this.deps.localStorage ?? browserStorage;
+  }
 
   clearPendingSessionSnapshotBroadcast() {
     if (this.sessionSnapshotBroadcastTimeout === null) return;
@@ -54,8 +69,7 @@ export class VTTPersistenceManager {
 
   persistDraft() {
     const mapId = this.deps.getMapId();
-    if (typeof window === "undefined" || !mapId || this.deps.getRestoring())
-      return;
+    if (!mapId || this.deps.getRestoring()) return;
 
     const snapshot = this.deps.createSnapshot();
     const payload = JSON.stringify({
@@ -65,8 +79,8 @@ export class VTTPersistenceManager {
         : {}),
       snapshot,
     });
-    window.sessionStorage.setItem(this.getDraftKey(mapId), payload);
-    window.localStorage.setItem(this.getPopoutKey(mapId), payload);
+    this.sessionStorage.setItem(this.getDraftKey(mapId), payload);
+    this.localStorage.setItem(this.getPopoutKey(mapId), payload);
   }
 
   refreshPopoutSnapshot() {
@@ -109,10 +123,11 @@ export class VTTPersistenceManager {
   }
 
   findPopoutDraftKey() {
-    if (typeof window === "undefined") return null;
+    const storage = this.localStorage;
+    const len = storage.length ?? 0;
 
-    for (let i = window.localStorage.length - 1; i >= 0; i--) {
-      const key = window.localStorage.key(i);
+    for (let i = len - 1; i >= 0; i--) {
+      const key = storage.key?.(i);
       if (key?.startsWith(`${POPOUT_STORAGE_PREFIX}:`)) {
         return key;
       }
@@ -122,21 +137,24 @@ export class VTTPersistenceManager {
   }
 
   restoreDraft(mapId: string): boolean {
-    if (typeof window === "undefined") return false;
     const raw =
-      window.sessionStorage.getItem(this.getDraftKey(mapId)) ??
-      window.localStorage.getItem(this.getPopoutKey(mapId));
+      this.sessionStorage.getItem(this.getDraftKey(mapId)) ??
+      this.localStorage.getItem(this.getPopoutKey(mapId));
     if (!raw) return false;
 
     try {
       const parsed = JSON.parse(raw) as {
         vttEnabled?: boolean;
+        myPeerId?: string | null;
         snapshot?: EncounterSession;
       };
       if (!parsed.snapshot || parsed.snapshot.mapId !== mapId) return false;
       this.deps.setRestoring(true);
       this.deps.applySnapshot(parsed.snapshot, true);
       this.deps.setVttEnabled(!!parsed.vttEnabled);
+      if (parsed.myPeerId !== undefined) {
+        this.deps.setMyPeerId(parsed.myPeerId);
+      }
       this.deps.setHasHydratedSession(true);
       return true;
     } catch {
@@ -147,12 +165,10 @@ export class VTTPersistenceManager {
   }
 
   restoreAnyPopoutDraft(): boolean {
-    if (typeof window === "undefined") return false;
-
     const key = this.findPopoutDraftKey();
     if (!key) return false;
 
-    const raw = window.localStorage.getItem(key);
+    const raw = this.localStorage.getItem(key);
     if (!raw) return false;
 
     try {

@@ -24,6 +24,7 @@ vi.mock("../../config", () => ({
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     setGlobalError: vi.fn(),
+    confirm: vi.fn(),
   },
 }));
 
@@ -153,7 +154,7 @@ describe("app-init", () => {
       );
     });
 
-    it("should ignore noisy script/link errors", () => {
+    it("should ignore noisy script/link errors unless they are immutable version assets", () => {
       const mockCalendarStore = { init: vi.fn() };
       const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
@@ -163,6 +164,23 @@ describe("app-init", () => {
         message: "Script error",
       });
       // Mock target to be script element
+      Object.defineProperty(errorEvent, "target", { value: scriptElement });
+
+      window.dispatchEvent(errorEvent);
+      expect(notificationStore.setGlobalError).not.toHaveBeenCalled();
+    });
+
+    it("should handle version skew error on immutable asset script load failure", () => {
+      const mockCalendarStore = { init: vi.fn() };
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
+      listenersCleanup.push(cleanup);
+
+      const scriptElement = document.createElement("script");
+      scriptElement.src =
+        "https://codexcryptica.com/_app/immutable/nodes/4.n_OyOYNg.js";
+      const errorEvent = new ErrorEvent("error", {
+        message: "Load failed",
+      });
       Object.defineProperty(errorEvent, "target", { value: scriptElement });
 
       window.dispatchEvent(errorEvent);
@@ -316,6 +334,145 @@ describe("app-init", () => {
       });
 
       expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
+    });
+
+    it("should prompt user and reload once when a new worker takes control and user confirms", async () => {
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      const serviceWorkerListeners = new Map<string, EventListener>();
+      const reloadSpy = vi.fn();
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        location: { reload: reloadSpy },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      const confirmSpy = vi
+        .spyOn(notificationStore, "confirm")
+        .mockResolvedValue(true);
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            controller: {},
+            register: registerSpy,
+            addEventListener: vi.fn((event: string, handler: EventListener) => {
+              serviceWorkerListeners.set(event, handler);
+            }),
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      const controllerChange = serviceWorkerListeners.get("controllerchange");
+      expect(controllerChange).toBeDefined();
+
+      controllerChange?.(new Event("controllerchange"));
+      controllerChange?.(new Event("controllerchange"));
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(confirmSpy).toHaveBeenCalledOnce();
+      expect(confirmSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "App Update Available",
+          confirmLabel: "Reload Now",
+          cancelLabel: "Not Now",
+        }),
+      );
+      expect(reloadSpy).toHaveBeenCalledOnce();
+      confirmSpy.mockRestore();
+    });
+
+    it("should not reload when the user cancels the update prompt", async () => {
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      const serviceWorkerListeners = new Map<string, EventListener>();
+      const reloadSpy = vi.fn();
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        location: { reload: reloadSpy },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      const confirmSpy = vi
+        .spyOn(notificationStore, "confirm")
+        .mockResolvedValue(false);
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            controller: {},
+            register: registerSpy,
+            addEventListener: vi.fn((event: string, handler: EventListener) => {
+              serviceWorkerListeners.set(event, handler);
+            }),
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      const controllerChange = serviceWorkerListeners.get("controllerchange");
+      expect(controllerChange).toBeDefined();
+
+      controllerChange?.(new Event("controllerchange"));
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(confirmSpy).toHaveBeenCalledOnce();
+      expect(reloadSpy).not.toHaveBeenCalled();
+      confirmSpy.mockRestore();
+    });
+
+    it("should not reload when the first worker takes control", () => {
+      const serviceWorkerListeners = new Map<string, EventListener>();
+      const reloadSpy = vi.fn();
+      const serviceWorker = {
+        controller: null as ServiceWorker | null,
+        register: vi.fn().mockResolvedValue(undefined),
+        addEventListener: vi.fn((event: string, handler: EventListener) => {
+          serviceWorkerListeners.set(event, handler);
+        }),
+      };
+
+      registerServiceWorker({
+        document: {
+          readyState: "complete",
+          visibilityState: "visible",
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        navigator: { serviceWorker } as any,
+        window: {
+          location: { reload: reloadSpy },
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        } as any,
+        isDev: false,
+      });
+
+      serviceWorker.controller = {} as ServiceWorker;
+      serviceWorkerListeners.get("controllerchange")?.(
+        new Event("controllerchange"),
+      );
+
+      expect(reloadSpy).not.toHaveBeenCalled();
     });
 
     it("should defer registration until the document becomes active", () => {

@@ -1,9 +1,15 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
+const {
+  mockSearchStore,
+  mockVault,
+  mockCategories,
+  mockPage,
+  mockModalUIStore,
+} = vi.hoisted(() => ({
   mockSearchStore: {
     isOpen: true,
     query: "",
@@ -12,7 +18,12 @@ const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
     setQuery: vi.fn(),
     setSelectedIndex: vi.fn(),
     selectCurrent: vi.fn(),
-    close: vi.fn(),
+    // A plain method (not an arrow function) that relies on `this`, so a
+    // regression to an unbound `onclick={searchStore.close}` reference
+    // fails to flip `isOpen` here just as it did against the real store.
+    close: vi.fn(function (this: { isOpen: boolean }) {
+      this.isOpen = false;
+    }),
     retryIndexing: vi.fn(),
     indexProgress: {
       status: "idle",
@@ -32,6 +43,12 @@ const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
   mockCategories: {
     getCategory: vi.fn(() => ({ icon: "lucide:file-text", label: "Note" })),
     getColor: vi.fn(() => "#888888"),
+  },
+  mockPage: {
+    url: new URL("http://localhost/"),
+  },
+  mockModalUIStore: {
+    openZenMode: vi.fn(),
   },
 }));
 
@@ -56,15 +73,17 @@ vi.mock("$lib/utils/markdown", () => ({
 }));
 
 vi.mock("$app/state", () => ({
-  page: {
-    url: new URL("http://localhost/"),
-  },
+  page: mockPage,
 }));
 
 vi.mock("./search-focus", () => ({
   DEFAULT_SEARCH_ENTITY_ZOOM: 2,
   dispatchSearchEntityFocus: vi.fn(),
   resolveSearchResultEntityId: vi.fn((result) => result.id),
+}));
+
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: mockModalUIStore,
 }));
 
 import SearchModal from "./SearchModal.svelte";
@@ -79,7 +98,7 @@ describe("SearchModal", () => {
     mockSearchStore.setQuery.mockReset();
     mockSearchStore.setSelectedIndex.mockReset();
     mockSearchStore.selectCurrent.mockReset();
-    mockSearchStore.close.mockReset();
+    mockSearchStore.close.mockClear();
     mockSearchStore.retryIndexing.mockReset();
     mockSearchStore.indexProgress = {
       status: "idle",
@@ -94,6 +113,8 @@ describe("SearchModal", () => {
     };
     layoutUIStore.leftSidebarOpen = false;
     mockVault.selectedEntityId = null;
+    mockPage.url = new URL("http://localhost/");
+    mockModalUIStore.openZenMode.mockReset();
   });
 
   it("anchors to the main area when the left sidebar is open", () => {
@@ -167,5 +188,116 @@ describe("SearchModal", () => {
     render(SearchModal);
 
     expect(screen.getByRole("button", { name: "Retry indexing" })).toBeTruthy();
+  });
+
+  it("opens zen mode for table selections triggered by Enter", async () => {
+    mockPage.url = new URL("http://localhost/table");
+    mockSearchStore.query = "ald";
+    mockSearchStore.results = [
+      {
+        id: "entity-1",
+        title: "Aldric",
+        path: "characters/aldric",
+        score: 10,
+        matchType: "title",
+        type: "character",
+      },
+    ];
+    mockSearchStore.selectCurrent.mockReturnValue(mockSearchStore.results[0]);
+
+    render(SearchModal);
+
+    await fireEvent.keyDown(screen.getByTestId("search-modal-input"), {
+      key: "Enter",
+    });
+
+    expect(mockVault.selectedEntityId).toBe("entity-1");
+    expect(mockModalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
+    expect(mockSearchStore.close).toHaveBeenCalled();
+  });
+
+  it("increments selectedIndex by 1 per ArrowDown keydown", async () => {
+    mockSearchStore.results = [
+      {
+        id: "entity-1",
+        title: "Aldric",
+        path: "characters/aldric",
+        score: 10,
+        matchType: "title",
+        type: "character",
+      },
+      {
+        id: "entity-2",
+        title: "Balthazar",
+        path: "characters/balthazar",
+        score: 8,
+        matchType: "title",
+        type: "character",
+      },
+    ];
+    mockSearchStore.selectedIndex = 0;
+
+    render(SearchModal);
+
+    const input = screen.getByTestId("search-modal-input");
+    await fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledTimes(1);
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledWith(1);
+  });
+
+  it("decrements selectedIndex by 1 per ArrowUp keydown", async () => {
+    mockSearchStore.results = [
+      {
+        id: "entity-1",
+        title: "Aldric",
+        path: "characters/aldric",
+        score: 10,
+        matchType: "title",
+        type: "character",
+      },
+      {
+        id: "entity-2",
+        title: "Balthazar",
+        path: "characters/balthazar",
+        score: 8,
+        matchType: "title",
+        type: "character",
+      },
+    ];
+    mockSearchStore.selectedIndex = 1;
+
+    render(SearchModal);
+
+    const input = screen.getByTestId("search-modal-input");
+    await fireEvent.keyDown(input, { key: "ArrowUp" });
+
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledTimes(1);
+    expect(mockSearchStore.setSelectedIndex).toHaveBeenCalledWith(0);
+  });
+
+  it("closes modal when header close button or backdrop button is clicked", async () => {
+    const { container } = render(SearchModal);
+
+    const closeBtn = screen.getByTestId("search-modal-close");
+    await fireEvent.click(closeBtn);
+
+    expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
+    // Guards against a regression to an unbound `onclick={searchStore.close}`
+    // reference: that would still register as "called" but would run with
+    // the wrong `this` and never actually flip `isOpen`.
+    expect(mockSearchStore.isOpen).toBe(false);
+
+    mockSearchStore.close.mockClear();
+    mockSearchStore.isOpen = true;
+    const backdropBtn = container.querySelector(
+      'button[aria-label="Close search"][tabindex="-1"]',
+    ) as HTMLButtonElement | null;
+    if (!backdropBtn) throw new Error("Backdrop close button not found");
+
+    await fireEvent.click(backdropBtn);
+
+    expect(mockSearchStore.close).toHaveBeenCalledTimes(1);
+    expect(mockSearchStore.isOpen).toBe(false);
   });
 });

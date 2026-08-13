@@ -15,12 +15,24 @@ const validSlugs = new Set([
   "kingdom",
   "nation",
   "vampire-clan",
+  "nomad-clan",
   "names",
   "fantasy-names",
   "dnd-npc",
   "pantheon-generator",
   "god-generator",
   "ship-generator",
+  "language-generator",
+  "news-sheet-generator",
+  "dungeon-generator",
+  "adventure-generator",
+  "adventure-idea-generator",
+  "plot-twist-generator",
+  "world",
+  "council-vote",
+  "secret-society",
+  "star-system",
+  "alien-race",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -40,12 +52,24 @@ export const load: PageLoad = ({ params }) => {
       | "kingdom"
       | "nation"
       | "vampire-clan"
+      | "nomad-clan"
       | "names"
       | "fantasy-names"
       | "dnd-npc"
       | "pantheon-generator"
       | "god-generator"
-      | "ship-generator",
+      | "ship-generator"
+      | "language-generator"
+      | "news-sheet-generator"
+      | "dungeon-generator"
+      | "adventure-generator"
+      | "adventure-idea-generator"
+      | "plot-twist-generator"
+      | "world"
+      | "council-vote"
+      | "secret-society"
+      | "star-system"
+      | "alien-race",
   };
 };
 
@@ -62,11 +86,23 @@ export const entries: EntryGenerator = () => {
     { slug: "kingdom" },
     { slug: "nation" },
     { slug: "vampire-clan" },
+    { slug: "nomad-clan" },
     { slug: "names" },
     { slug: "fantasy-names" },
     { slug: "dnd-npc" },
     { slug: "pantheon-generator" },
     { slug: "god-generator" },
     { slug: "ship-generator" },
+    { slug: "language-generator" },
+    { slug: "news-sheet-generator" },
+    { slug: "dungeon-generator" },
+    { slug: "adventure-generator" },
+    { slug: "adventure-idea-generator" },
+    { slug: "plot-twist-generator" },
+    { slug: "world" },
+    { slug: "council-vote" },
+    { slug: "secret-society" },
+    { slug: "star-system" },
+    { slug: "alien-race" },
   ];
 };

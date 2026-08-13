@@ -6,6 +6,13 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+
+  // A published-vault reader browses maps on their own (no host), unlike a
+  // live VTT guest who only sees whatever map the host is currently sharing.
+  const isPublishedVaultReader = $derived(
+    sessionModeStore.isGuestMode && !!guestVault.publishId,
+  );
 
   let {
     chatSidebarOffset,
@@ -36,7 +43,28 @@
       </button>
     {/if}
 
-    {#if sessionModeStore.isGuestMode}
+    {#if isPublishedVaultReader}
+      {#if vault.allMaps.length > 1}
+        <select
+          class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          aria-label="Select Map"
+          value={mapStore.activeMapId}
+          onchange={(e) => mapStore.selectMap(e.currentTarget.value)}
+        >
+          {#each vault.allMaps as map (map.id)}
+            <option value={map.id}>
+              {map.isWorldMap ? "★ " : ""}{map.name}
+            </option>
+          {/each}
+        </select>
+      {:else if mapStore.activeMap}
+        <div
+          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
+        >
+          {mapStore.activeMap.isWorldMap ? "★ " : ""}{mapStore.activeMap.name}
+        </div>
+      {/if}
+    {:else if sessionModeStore.isGuestMode}
       {#if mapStore.activeMap}
         <div
           class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"

@@ -1,5 +1,9 @@
 import type { Entity } from "schema";
 import { sanitizeId } from "../../utils/markdown";
+import {
+  compareExplorerEntities,
+  type EntitySortOptions,
+} from "./entityListSorting";
 
 export interface TreeNode {
   entity: Entity;
@@ -7,9 +11,40 @@ export interface TreeNode {
   isMatchingQuery: boolean;
 }
 
+export interface FlattenedTreeNode {
+  node: TreeNode;
+  depth: number;
+}
+
+/** Return only the currently visible tree rows, preserving their depth. */
+export function flattenVisibleEntityTree(
+  nodes: TreeNode[],
+  collapsedIds: ReadonlySet<string>,
+  forceExpand = false,
+): FlattenedTreeNode[] {
+  const result: FlattenedTreeNode[] = [];
+  const visit = (items: TreeNode[], depth: number) => {
+    for (const node of items) {
+      result.push({ node, depth });
+      if (
+        node.children.length > 0 &&
+        (forceExpand || !collapsedIds.has(node.entity.id))
+      ) {
+        visit(node.children, depth + 1);
+      }
+    }
+  };
+  visit(nodes, 0);
+  return result;
+}
+
 export function buildEntityTree(
   entities: Entity[],
   filteredEntities: Entity[],
+  sortOptions: EntitySortOptions = {
+    key: "name",
+    direction: "asc",
+  },
 ): TreeNode[] {
   // 1. Build a lookup record of all entities in the vault by SANITIZED ID
   const allEntitiesMap = new Map<string, Entity>();
@@ -74,7 +109,7 @@ export function buildEntityTree(
             content: "",
             lore: "",
             _path: path,
-            updatedAt: Date.now(),
+            updatedAt: 0,
             isVirtual: true,
           } as any);
 
@@ -138,7 +173,9 @@ export function buildEntityTree(
 
   // Helper to sort tree nodes recursively
   const sortTreeNodes = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => a.entity.title.localeCompare(b.entity.title));
+    nodes.sort((a, b) =>
+      compareExplorerEntities(a.entity, b.entity, sortOptions),
+    );
     for (const node of nodes) {
       if (node.children.length > 0) {
         sortTreeNodes(node.children);

@@ -5,6 +5,7 @@ import {
   type LoreEntry,
   type LorePartition,
 } from "@codex/oracle-engine";
+import { templateGuidanceBlock, templateGuidanceInstruction } from "schema";
 import type {
   GeneratedDraft,
   GeneratorVaultContext,
@@ -66,7 +67,7 @@ export function buildGeneratorLoreEntries(
       ? `Categories: ${context.categoryLabels.map((c) => `${c.label} (${c.id})`).join(", ")}`
       : "",
     context.applyTemplate && context.templateOutline
-      ? `Template outline:\n${context.templateOutline}`
+      ? `Template guidance:\n${templateGuidanceInstruction("lore")}\n${templateGuidanceBlock(context.templateOutline)}`
       : "",
     renderList("Existing titles to avoid", context.existingTitles),
     renderList("Banned names to avoid", context.bannedNames ?? []),

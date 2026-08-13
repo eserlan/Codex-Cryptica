@@ -1,0 +1,187 @@
+import type { DungeonGenreTables } from "../genre-types";
+
+export const darkFantasyTables: DungeonGenreTables = {
+  hint: "Emphasize body-horror corruption, weeping stone walls, eldritch sacrificial altars, decaying heraldry, and maddening whispers.",
+  purposes: [
+    "Temple & Shrine",
+    "Tomb & Catacomb",
+    "Ancestral Mausoleum",
+    "Prison & Vault",
+    "Fortress & Citadel",
+    "Natural Cavern Network",
+    "Planar Anomaly",
+  ],
+  currentStates: [
+    "Active Monster Lair",
+    "Abandoned Ruins",
+    "Cursed Ruin",
+    "Sealed Vault",
+    "Occupied Stronghold",
+    "Buried & Forgotten",
+  ],
+  sampleTitles: [
+    "The Weeping Catacombs of Saint Vael",
+    "Rot-Hollow Sepulchre",
+    "The Blood-Drained Repository",
+    "Iron-Cage Pit of the Flagellants",
+    "Ashen Vault of the Unburied",
+  ],
+  builders: [
+    "a flagellant order sworn to a bleeding saint",
+    "a lineage of witch-judges",
+    "a plague-cult of the Hollow Choir",
+    "the last loyalists of a dethroned tyrant",
+    "a covenant of grave-binders",
+  ],
+  originalUses: [
+    "a penance-house for the unconfessed",
+    "a quarantine ward for the first plague-born",
+    "a sacrificial repository beneath a cathedral",
+    "an archive of confessions no one was meant to read",
+    "a breeding pit for war-hounds bred on fear",
+  ],
+  entrances: [
+    "a mausoleum door fused shut with old wax",
+    "a well that no longer echoes when you drop a stone",
+    "a confessional booth with a false floor",
+    "a crack behind the altar of an abandoned chapel",
+    "a drainage tunnel beneath a plague-house",
+  ],
+  compositions: [
+    "mortar mixed with ash and bone-meal",
+    "stone that sweats a faint red damp",
+    "warped iron that never fully rusts",
+    "stitched leather stretched over a wooden frame",
+    "glass blackened from some old, unrecorded fire",
+  ],
+  conditions: [
+    "silent but for a heartbeat sound in the deep walls",
+    "overgrown with a fungus that smells faintly of copper",
+    "kept unnervingly clean by unseen hands",
+    "sagging under the weight of its own guilt-carved reliefs",
+    "frozen mid-collapse, as if time itself flinched",
+  ],
+  causes: [
+    "a mass suicide that consecrated the lowest floor",
+    "an inquisition that purged its own founders",
+    "a famine that turned the faithful to worse things",
+    "an oath broken at the worst possible moment",
+    "the slow, patient work of something that only whispers",
+  ],
+  sectors: [
+    {
+      name: "The Hall of Flagellants",
+      description:
+        "Chamber filled with iron cages suspended over pit chasms of jagged obsidian spikes.",
+    },
+    {
+      name: "The Weeping Ossuary",
+      description:
+        "Walls constructed entirely of catacomb bones, leaking dark viscous fluid into central gutters.",
+    },
+    {
+      name: "The Altar of Unmade Vows",
+      description:
+        "Sacrificial dais surrounded by defaced statues of forgotten holy saints.",
+    },
+    {
+      name: "The Pit of Abominations",
+      description:
+        "Sunken arena where failed alchemical amalgamations were cast down.",
+    },
+    {
+      name: "The Choir Loft",
+      description:
+        "Collapsed balcony overlooking the nave, its organ pipes clogged with dried viscera.",
+    },
+    {
+      name: "The Penitent's Cellar",
+      description:
+        "Rows of stone cells with rusted manacles bolted to sweating walls.",
+    },
+  ],
+  inhabitants: [
+    "A horde of Ghoul Scavengers led by a Necromantic Revenant hunting for unburied bones.",
+    "Corrupted Templars whose minds were broken by subterranean eldritch whispers.",
+    "A swarm of Chitinous Burrowers that nest in the damp ossuary walls.",
+    "A silent congregation of Flesh-Bound Penitents still performing the rites that damned them.",
+    "A pack of Rot-Hounds bred to hunt by scent of old blood.",
+  ],
+  factionNames: [
+    "the Ghoul Scavenger Pack",
+    "the Corrupted Templar Remnant",
+    "the Flagellant Zealots",
+    "the Chitinous Burrower Swarm",
+    "the Grave-Binder Cabal",
+    "the Rot-Hound Pack",
+    "the Choir of the Hollow Saints",
+    "the Penitent Cellar Wardens",
+    "the Blight-Touched Villagers",
+    "the Witch-Judge Tribunal",
+  ],
+  factionObstacles: [
+    "a hunger none of them will name aloud",
+    "a rival congregation claiming the same altar",
+    "a penance they are bound to complete first",
+    "the rot spreading through their own ranks",
+    "a saint's curse that takes one of them each month",
+    "cracked foundations that groan a warning whenever they gather in numbers",
+    "a blood-price owed to the abbey that once sheltered their order",
+    "a holy day approaching faster than their preparations",
+  ],
+  loreFinds: [
+    "A confession scratched into the underside of a pew, unsigned and unfinished.",
+    "A martyrology with the same name entered a dozen times across three centuries.",
+    "A reliquary label describing contents that are conspicuously absent.",
+    "A penitent's chain measured to a wrist far too small.",
+    "A ledger of tithes paid in something the scribe declines to specify.",
+  ],
+  roomEncounters: [
+    "A revenant that only rises when the room is left in darkness.",
+    "A knot of grave-worms working through a collapsed niche.",
+    "A flayed hound, patient and entirely silent.",
+    "A choir of shades repeating the last verse they ever sang.",
+    "A corpse-candle drifting ahead of whoever follows it.",
+  ],
+  secrets: [
+    "The altar at the bottom requires a voluntary sacrifice to prevent the surrounding province from succumbing to blight.",
+    "The ancient saint entombed here was actually the first demon harbinger who corrupted the kingdom.",
+    "The weeping walls are formed from the compressed bodies of a betrayed holy crusade.",
+    "The rite performed here every year was never stopped, only moved, and someone is still keeping the calendar.",
+    "The bodies in the lower ossuary are all the same person, interred a dozen times across three centuries.",
+    "The corruption is not spreading outward from the altar. It is spreading toward it, and something is drinking.",
+    "The order that built this place is still chartered, still funded, and still meets four times a year.",
+    "The relic everyone comes looking for was removed generations ago and replaced with a very good forgery.",
+  ],
+  hazards: [
+    "Rooms filled with intoxicating spore mist causing hallucinations of lost loved ones.",
+    "Curse-carved doorways that drain 10% of a caster's vital energy upon entry.",
+    "Floors that buckle into subterranean chasms of boiling pitch.",
+    "Whispering walls that inflict creeping madness on those who linger too long.",
+    "A censer of grave-dust that ignites into caustic black flame when disturbed.",
+  ],
+  treasures: [
+    "A tome of bound shadow-parchment containing dark incantations.",
+    "A relic chalice carved from obsidian that turns water into wine or poison into nectar.",
+    "An iron ring engraved with runes that ward off fear and madness.",
+    "A reliquary finger-bone that stills the whispers within arm's reach of its bearer.",
+    "A confessor's ledger naming every patron who paid for a name to be removed from it.",
+    "A censer whose smoke shows the dead as they were, not as they ended.",
+    "A flagellant's scourge, barbs blessed, that draws blood only from the wielder's enemies.",
+    "A sealed confession naming the saint's true crime, signed by three witnesses who died the same night.",
+  ],
+  hooks: [
+    "A weeping mother begs the party to rescue her daughter, kidnapped for a ritual in the ossuary.",
+    "The local bishop offers a royal reward to cleanse the corrupted altar before the lunar eclipse.",
+    "A strange curse has turned the village well water to blood, originating from the subterranean complex.",
+    "A defrocked priest seeks the party's help to destroy a relic he once helped consecrate.",
+    "Pilgrims keep entering the ruin and returning changed, speaking in a language no one recognizes.",
+  ],
+  signatureFeatures: [
+    "The Bleeding Stone Arch: A monolithic gateway of porous granite that perpetually drips dark viscous crimson fluid into a channel.",
+    "The Cage of Screaming Iron: A colossal iron cage suspended over a pit chasm, resonating with faint trapped voices.",
+    "The Obsidian Altar of Tears: A polished black altar surrounded by glass jars containing preserved eyes.",
+    "The Hollow Choir: A ring of headless statues that hum a discordant hymn when disturbed.",
+    "The Marrow Well: A deep shaft lined with fused bone, warm to the touch despite the cold.",
+  ],
+};

@@ -3,7 +3,11 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { parseWaExport } from "$lib/services/seo/wa-parser";
+  import {
+    parseObsidianFiles,
+    parseJsonExport,
+    traverseEntry,
+  } from "$lib/services/seo/import-parser";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -71,7 +75,7 @@
 
     try {
       if (pageData.slug === "obsidian-vault") {
-        await parseObsidianFiles(list);
+        filesParsed = await parseObsidianFiles(list);
       } else {
         // JSON based imports (World Anvil, Kanka, LegendKeeper)
         const jsonFile = list.find((f) => f.name.endsWith(".json"));
@@ -82,157 +86,11 @@
               " export.",
           );
         }
-        await parseJsonExport(jsonFile, pageData.slug);
+        filesParsed = await parseJsonExport(jsonFile, pageData.slug);
       }
     } catch (err: any) {
       errorMessage = err.message || "Failed to parse files.";
     }
-  }
-
-  // HTML to markdown converter
-  function cleanHtml(html: string): string {
-    if (!html) return "";
-    return html
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/p>/gi, "\n\n")
-      .replace(/<p>/gi, "")
-      .replace(/<strong>(.*?)<\/strong>/gi, "**$1**")
-      .replace(/<em>(.*?)<\/em>/gi, "*$1*")
-      .replace(
-        /<a\s+(?:[^>]*?\s+)?href="([^"]*)"[^>]*>(.*?)<\/a>/gi,
-        "[$2]($1)",
-      )
-      .replace(/<[^>]*>/g, ""); // strip remaining tags
-  }
-
-  // Parses Obsidian vault files (.md)
-  async function parseObsidianFiles(files: File[]) {
-    const mdFiles = files.filter((f) => f.name.endsWith(".md"));
-    if (mdFiles.length === 0) {
-      throw new Error(
-        "No Markdown (.md) files found. Please select or drop markdown files.",
-      );
-    }
-
-    const parsed: typeof filesParsed = [];
-    for (const file of mdFiles) {
-      const text = await file.text();
-      let title = file.name.replace(/\.md$/, "");
-      let content = text;
-      let type = "note";
-      let labels = ["obsidian-import"];
-
-      // Simple Frontmatter Extraction
-      const fmMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-      if (fmMatch) {
-        content = text.slice(fmMatch[0].length).trim();
-        const lines = fmMatch[1].split("\n");
-        for (const line of lines) {
-          const colonIdx = line.indexOf(":");
-          if (colonIdx !== -1) {
-            const key = line.slice(0, colonIdx).trim().toLowerCase();
-            const val = line
-              .slice(colonIdx + 1)
-              .trim()
-              .replace(/^['"]|['"]$/g, "");
-            if (key === "title") title = val;
-            if (key === "type") {
-              const cleanType = val.toLowerCase();
-              if (
-                [
-                  "character",
-                  "creature",
-                  "location",
-                  "item",
-                  "event",
-                  "faction",
-                  "note",
-                ].includes(cleanType)
-              ) {
-                type = cleanType;
-              }
-            }
-            if (key === "tags" || key === "labels") {
-              const tags = val
-                .replaceAll("[", "")
-                .replaceAll("]", "")
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean);
-              labels.push(...tags);
-            }
-          }
-        }
-      }
-
-      parsed.push({ type, title, content, labels });
-    }
-    filesParsed = parsed;
-  }
-
-  // Parses JSON formats client-side
-  async function parseJsonExport(file: File, slug: string) {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    const parsed: typeof filesParsed = [];
-
-    if (slug === "world-anvil-export") {
-      parsed.push(...parseWaExport(data));
-    } else if (slug === "kanka-json") {
-      // Kanka campaign exports
-      const entities =
-        data.entities || (Array.isArray(data) ? data : Object.values(data));
-      for (const item of entities) {
-        if (!item || typeof item !== "object") continue;
-        const title = item.name || "Untitled Entity";
-        const body = cleanHtml(
-          item.entry || item.entry_parsed || item.history || "",
-        );
-        let type = "note";
-        const kankaType = String(item.type || "").toLowerCase();
-        if (kankaType === "character") type = "character";
-        else if (kankaType === "location") type = "location";
-        else if (kankaType === "item") type = "item";
-        else if (kankaType === "organisation" || kankaType === "faction")
-          type = "faction";
-
-        parsed.push({
-          type,
-          title,
-          content: body,
-          labels: ["kanka-import", kankaType].filter(Boolean),
-        });
-      }
-    } else if (slug === "legendkeeper-json") {
-      // LegendKeeper JSON schema
-      const pages =
-        data.pages ||
-        data.documents ||
-        (Array.isArray(data) ? data : Object.values(data));
-      for (const item of pages) {
-        if (!item || typeof item !== "object") continue;
-        const title = item.name || item.title || "Untitled Page";
-        const rawContent = item.content || item.blocks || "";
-        const body =
-          typeof rawContent === "string"
-            ? rawContent
-            : JSON.stringify(rawContent);
-
-        parsed.push({
-          type: "note",
-          title,
-          content: body,
-          labels: ["legendkeeper-import"],
-        });
-      }
-    }
-
-    if (parsed.length === 0) {
-      throw new Error(
-        "No importable articles or pages found in the JSON backup.",
-      );
-    }
-    filesParsed = parsed;
   }
 
   // Handle Drag & Drop Drop
@@ -253,31 +111,6 @@
     } else {
       await handleFiles(e.dataTransfer.files);
     }
-  }
-
-  // Helper to recursively fetch files from entries
-  async function traverseEntry(entry: any): Promise<File[]> {
-    return new Promise((resolve) => {
-      if (entry.isFile) {
-        entry.file((file: File) => resolve([file]));
-      } else if (entry.isDirectory) {
-        const reader = entry.createReader();
-        const read = () => {
-          reader.readEntries(async (entries: any[]) => {
-            if (entries.length === 0) {
-              resolve([]);
-            } else {
-              const promises = entries.map((e) => traverseEntry(e));
-              const res = await Promise.all(promises);
-              resolve(res.flat());
-            }
-          });
-        };
-        read();
-      } else {
-        resolve([]);
-      }
-    });
   }
 
   // Saves parsed import package to localStorage and redirects to import handler
@@ -402,7 +235,7 @@
   >
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
       <a
-        href="{cleanBase}/"
+        href="{cleanBase}/?utm_source=importer-logo&utm_medium=nav&utm_campaign=seo-funnel"
         class="flex items-center gap-2 group min-w-0"
         id="logo-link"
       >
@@ -416,7 +249,7 @@
         </span>
       </a>
       <nav
-        class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
+        class="hidden md:flex items-center gap-6 text-xs font-bold font-header text-theme-muted"
       >
         <a
           href="{cleanBase}/features"
@@ -433,8 +266,8 @@
       </nav>
       <div class="shrink-0">
         <a
-          href="{cleanBase}/?ref=import-nav"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
+          href="{cleanBase}/?utm_source=importer-nav&utm_medium=nav&utm_campaign=seo-funnel"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -443,19 +276,20 @@
     </div>
   </header>
 
-  <main
-    class="max-w-4xl mx-auto px-6 py-16 flex-grow w-full flex flex-col justify-center"
+  <div
+    class="max-w-4xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full flex flex-col justify-center"
   >
     <div class="text-center mb-12">
-      <div
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
+      <a
+        href="{cleanBase}/migrations"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
         Migration Hub
-      </div>
+      </a>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide uppercase text-theme-primary mb-4"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary mb-4"
       >
         {pageData.h1}
       </h1>
@@ -464,6 +298,17 @@
       >
         {pageData.subheading}
       </p>
+      {#if pageData.toolUrl}
+        <a
+          href={pageData.toolUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
+        >
+          <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+          Get {pageData.toolLabel ?? pageData.competitorName}
+        </a>
+      {/if}
     </div>
 
     <!-- Features Grid -->
@@ -477,9 +322,7 @@
           >
             <span class="{feat.icon} w-4 h-4"></span>
           </div>
-          <h3
-            class="font-header font-bold text-xs uppercase tracking-wider text-theme-text"
-          >
+          <h3 class="font-header font-bold text-xs text-theme-text">
             {feat.title}
           </h3>
           <p class="text-xs text-theme-muted leading-relaxed">
@@ -505,7 +348,7 @@
       ></span>
 
       <div>
-        <h3 class="font-header font-bold text-sm uppercase tracking-wider mb-2">
+        <h3 class="font-header font-bold text-sm mb-2">
           Drag & Drop {pageData.slug === "obsidian-vault"
             ? "markdown files or vault folders"
             : "your export JSON"} here
@@ -521,7 +364,7 @@
       <div class="flex items-center gap-4">
         <label
           for="file-upload"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
         >
           Select File
         </label>
@@ -553,21 +396,17 @@
           class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-theme-border/60 pb-4 gap-4"
         >
           <div>
-            <h3
-              class="font-header font-bold text-base uppercase tracking-wider text-theme-primary"
-            >
+            <h3 class="font-header font-bold text-base text-theme-primary">
               Parsed Preview
             </h3>
-            <p
-              class="text-[10px] uppercase font-mono tracking-widest text-theme-muted mt-1"
-            >
+            <p class="text-[10px] font-mono text-theme-muted mt-1">
               Review extracted campaign data
             </p>
           </div>
           <button
             type="button"
             onclick={executeImport}
-            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           >
             Import {parseStats.total} Entries into Codex
           </button>
@@ -685,7 +524,7 @@
 
               <!-- Type select -->
               <select
-                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono uppercase rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
+                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
                 bind:value={filesParsed[idx].type}
                 aria-label="Entity type"
               >
@@ -701,17 +540,15 @@
 
     {#if pageData.relatedLinks && pageData.relatedLinks.length > 0}
       <section class="border-t border-theme-border/30 py-10">
-        <div class="max-w-4xl mx-auto px-6">
-          <h2
-            class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
-          >
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+          <h2 class="font-header text-sm text-theme-muted mb-6 text-center">
             Related Pages
           </h2>
           <div class="flex flex-wrap justify-center gap-3">
             {#each pageData.relatedLinks as link (link.href)}
               <a
                 href="{cleanBase}{link.href}"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
               >
                 <span
                   class="icon-[lucide--arrow-right] w-3 h-3"
@@ -735,7 +572,7 @@
         </p>
         <a
           href="{cleanBase}/responsible-ai-worldbuilding"
-          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+          class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary hover:underline"
         >
           <span
             class="icon-[lucide--shield-check] w-3.5 h-3.5"
@@ -749,7 +586,7 @@
     <!-- FAQ Section -->
     <section class="border-t border-theme-border/60 mt-16 pt-16">
       <h2
-        class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary mb-8 text-center"
+        class="font-header font-bold text-xl text-theme-primary mb-8 text-center"
       >
         Frequently Asked Questions
       </h2>
@@ -758,9 +595,7 @@
           <article
             class="border border-theme-border/60 bg-theme-surface/30 rounded-2xl p-5"
           >
-            <h3
-              class="font-header font-bold text-sm uppercase tracking-wider mb-2"
-            >
+            <h3 class="font-header font-bold text-sm mb-2">
               {faqItem.question}
             </h3>
             <p class="text-sm text-theme-muted leading-relaxed">
@@ -770,38 +605,5 @@
         {/each}
       </div>
     </section>
-  </main>
-
-  <!-- Marketing Footer -->
-  <footer
-    class="border-t border-theme-border/60 bg-theme-surface/20 px-6 py-8 mt-auto text-center text-[10px] text-theme-muted tracking-wider uppercase font-header"
-  >
-    <div
-      class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
-    >
-      <div>© 2026 Codex Cryptica. All rights reserved.</div>
-      <div class="flex gap-6">
-        <a
-          href="{cleanBase}/terms"
-          class="hover:text-theme-primary transition-colors">Terms</a
-        >
-        <a
-          href="{cleanBase}/privacy"
-          class="hover:text-theme-primary transition-colors">Privacy</a
-        >
-        <a
-          href="{cleanBase}/tools"
-          class="hover:text-theme-primary transition-colors">Tools</a
-        >
-        <a
-          href="{cleanBase}/sitemap.xml"
-          class="hover:text-theme-primary transition-colors">Sitemap</a
-        >
-        <a
-          href="{cleanBase}/llms.txt"
-          class="hover:text-theme-primary transition-colors">LLM Docs</a
-        >
-      </div>
-    </div>
-  </footer>
+  </div>
 </div>

@@ -50,14 +50,17 @@ export class ProposerService implements IProposerService {
 
   private dbName: string;
   private dbVersion: number;
+  private now: () => number;
 
   constructor(
     dbName: string = DB_NAME,
     dbVersion: number = DB_VERSION,
     externalDbPromise?: Promise<IDBPDatabase<any>>,
+    now: () => number = Date.now,
   ) {
     this.dbName = dbName;
     this.dbVersion = dbVersion;
+    this.now = now;
     if (externalDbPromise) {
       this.dbPromise = externalDbPromise;
     }
@@ -252,7 +255,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
           reason: p.reason || "AI detected semantic link",
           confidence: p.confidence,
           status: "pending",
-          timestamp: Date.now(),
+          timestamp: this.now(),
         };
         proposals.push(proposal);
       }
@@ -317,7 +320,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
     proposal.status = "accepted";
-    proposal.timestamp = Date.now();
+    proposal.timestamp = this.now();
     await db.put(PROPOSAL_STORE, proposal);
   }
 
@@ -327,7 +330,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
     proposal.status = "rejected";
-    proposal.timestamp = Date.now();
+    proposal.timestamp = this.now();
     await db.put(PROPOSAL_STORE, proposal);
   }
 
@@ -347,7 +350,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
     }
 
     proposal.status = "verified";
-    proposal.timestamp = Date.now();
+    proposal.timestamp = this.now();
     await db.put(PROPOSAL_STORE, proposal);
   }
 
@@ -491,7 +494,7 @@ Output JSON:
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
     proposal.status = "pending";
-    proposal.timestamp = Date.now();
+    proposal.timestamp = this.now();
     await db.put(PROPOSAL_STORE, proposal);
   }
 

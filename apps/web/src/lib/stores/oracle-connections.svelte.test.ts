@@ -36,7 +36,7 @@ vi.mock("@codex/oracle-engine", async (importOriginal) => {
   };
 });
 
-vi.mock("../../lib/services/search.svelte", () => ({
+vi.mock("@codex/search-orchestrator", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
   },

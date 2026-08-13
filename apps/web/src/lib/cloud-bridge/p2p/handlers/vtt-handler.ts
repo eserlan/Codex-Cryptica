@@ -2,6 +2,7 @@ import { BaseHandler, type P2PHandlerContext } from "./base-handler";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
 import { isVTTMessage } from "../p2p-protocol";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 export class VTTHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
@@ -25,8 +26,7 @@ export class VTTHandler extends BaseHandler {
 
       const entity = message.entityId
         ? (context.vault.entities[message.entityId] as
-            | { image?: string }
-            | undefined)
+            { image?: string } | undefined)
         : null;
       const roster = context.guestStore.guestRoster as Record<
         string,
@@ -58,6 +58,24 @@ export class VTTHandler extends BaseHandler {
             type: "TOKEN_STATE_UPDATE",
             tokenId: message.tokenId,
             delta: { x: message.x, y: message.y },
+          },
+          connection.peer,
+        );
+      }
+    } else if (message.type === "TOKEN_ROTATE") {
+      if (
+        typeof message.tokenId !== "string" ||
+        typeof message.rotation !== "number" ||
+        !Number.isFinite(message.rotation)
+      )
+        return;
+      if (mapSession.canMoveToken(message.tokenId, connection.peer, false)) {
+        mapSession.rotateToken(message.tokenId, message.rotation, true);
+        transport.broadcast(
+          {
+            type: "TOKEN_STATE_UPDATE",
+            tokenId: message.tokenId,
+            delta: { rotation: mapSession.tokens[message.tokenId]?.rotation },
           },
           connection.peer,
         );
@@ -110,7 +128,7 @@ export class VTTHandler extends BaseHandler {
           y: message.y,
           peerId: message.peerId ?? connection.peer,
           color: message.color,
-          timestamp: message.timestamp ?? Date.now(),
+          timestamp: message.timestamp ?? systemClock.now(),
         },
         connection.peer,
       );

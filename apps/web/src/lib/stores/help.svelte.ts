@@ -10,6 +10,7 @@ import {
 import { searchStore as defaultSearchStore } from "./search.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -45,6 +46,7 @@ export class HelpStore {
   private onboardingStore: typeof onboardingStore;
   private modalUIStore: typeof modalUIStore;
   private searchStore: typeof defaultSearchStore;
+  private storage: StorageLike;
 
   /**
    * searchResults is an explicit derived property to ensure caching
@@ -84,16 +86,18 @@ export class HelpStore {
     onboarding: typeof onboardingStore = onboardingStore,
     modal: typeof modalUIStore = modalUIStore,
     searchStore: typeof defaultSearchStore = defaultSearchStore,
+    storage: StorageLike = browserStorage,
   ) {
     this.onboardingStore = onboarding;
     this.modalUIStore = modal;
     this.searchStore = searchStore;
+    this.storage = storage;
     // Init handled explicitly in layout
   }
 
   async init() {
     if (!browser) return;
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = this.storage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const loaded = JSON.parse(saved);
@@ -141,6 +145,7 @@ export class HelpStore {
 
     const FlexSearch = (await import("flexsearch")).default;
     this.index = new FlexSearch.Document({
+      tokenize: "forward",
       document: {
         id: "id",
         index: SEARCH_FIELDS,
@@ -154,11 +159,37 @@ export class HelpStore {
 
   private save() {
     if (browser) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+      this.storage.setItem(STORAGE_KEY, JSON.stringify(this.state));
     }
   }
 
   // --- Tour Methods ---
+
+  /**
+   * Keeps only the steps whose target is actually present in the DOM (steps
+   * that target "body" always pass). This prevents the spotlight overlay from
+   * rendering an unanchored tooltip pointing at nothing when a layout hides a
+   * target — e.g. desktop-only chrome on a phone (#1778). Skipped steps are
+   * logged so missing targets are noticeable during development.
+   *
+   * `doc` is injectable for testing; defaults to the global document.
+   */
+  pruneStepsToDom(
+    steps: GuideStep[],
+    doc: Pick<Document, "querySelector"> | undefined = globalThis.document,
+  ): GuideStep[] {
+    if (!doc) return steps;
+    return steps.filter((step) => {
+      if (step.targetSelector === "body") return true;
+      const exists = !!doc.querySelector(step.targetSelector);
+      if (!exists) {
+        debugStore.log(
+          `[HelpStore] Skipping tour step "${step.id}": target "${step.targetSelector}" not found in DOM.`,
+        );
+      }
+      return exists;
+    });
+  }
 
   startTour(id: string) {
     if (id === "initial-onboarding") {
@@ -166,11 +197,28 @@ export class HelpStore {
       this.onboardingStore.dismissedLandingPage = true;
       this.modalUIStore.closeSettings();
 
+      const steps = this.pruneStepsToDom(ONBOARDING_TOUR);
+
+      // Nothing to show (e.g. chrome not mounted yet) — mark seen so we don't
+      // loop, and bail rather than starting an empty tour.
+      if (steps.length === 0) {
+        this.completeTourById(id);
+        return;
+      }
+
       this.activeTour = {
         id,
         currentStepIndex: 0,
-        steps: ONBOARDING_TOUR,
+        steps,
       };
+    }
+  }
+
+  /** Marks a tour completed without requiring it to be the active tour. */
+  private completeTourById(id: string) {
+    if (!this.state.completedTours.includes(id)) {
+      this.state.completedTours.push(id);
+      this.save();
     }
   }
 
@@ -216,11 +264,23 @@ export class HelpStore {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
+  selectArticle(id: string): boolean {
+    const articleExists = HELP_ARTICLES.some((article) => article.id === id);
+    if (!articleExists) {
+      this.clearArticleSelection();
+      return false;
+    }
+
+    this.expandedId = id;
+    return true;
+  }
+
+  clearArticleSelection() {
+    this.expandedId = null;
+  }
+
   openHelpToArticle(id: string) {
-    // Find article to verify it exists
-    const article = HELP_ARTICLES.find((a) => a.id === id);
-    if (article) {
-      this.expandedId = id;
+    if (this.selectArticle(id)) {
       this.modalUIStore.openSettings("help");
     }
   }

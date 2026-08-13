@@ -10,6 +10,8 @@ export interface RandomIdeaCategory {
     | "nation"
     | "npc"
     | "quest"
+    | "council-vote"
+    | "secret-society"
     | "social-hub"
     | "pantheon"
     | "deity";
@@ -25,8 +27,10 @@ export interface RandomIdeaCategory {
 // shared genre vocabulary instead, so map theme -> genre for those.
 export const themeToHubGenre: Record<string, string> = {
   "Classic Fantasy": "Fantasy",
+  Pirate: "Pirate",
   "Cyberpunk / Corporate": "Cyberpunk",
   "Vampire / Gothic Noir": "Horror",
+  "Cosmic Horror": "Cosmic Horror",
   "Sci-Fi / Space Opera": "Sci-Fi",
   "Modern Conspiracy": "Modern",
   "Post-Apocalyptic": "Post-Apocalyptic",
@@ -80,6 +84,17 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Quest Hook",
     generate: (engine, useAI, theme) =>
       engine.generateQuestHook({ genre: themeToQuestGenre[theme], useAI }),
+  },
+  {
+    key: "council-vote",
+    label: "Council Vote",
+    generate: (engine, useAI) => engine.generateCouncilVote({ useAI }),
+  },
+  {
+    key: "secret-society",
+    label: "Secret Society",
+    generate: (engine, useAI, theme) =>
+      engine.generateSecretSociety({ theme, useAI }),
   },
   {
     key: "social-hub",

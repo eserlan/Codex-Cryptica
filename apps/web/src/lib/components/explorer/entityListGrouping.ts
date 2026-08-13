@@ -16,8 +16,7 @@ export type CategoryGroupedEntities = {
 };
 
 export type ExplorerGroupedEntities =
-  | LabelGroupedEntities
-  | CategoryGroupedEntities;
+  LabelGroupedEntities | CategoryGroupedEntities;
 
 export function groupEntitiesForExplorer(
   entities: Entity[],
@@ -38,7 +37,7 @@ export function groupEntitiesForExplorer(
     }
 
     const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-      a.localeCompare(b),
+      (a ?? "").localeCompare(b ?? ""),
     );
 
     return {
@@ -70,7 +69,7 @@ export function groupEntitiesForExplorer(
   }
 
   const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-    a.localeCompare(b),
+    (a ?? "").localeCompare(b ?? ""),
   );
 
   return {

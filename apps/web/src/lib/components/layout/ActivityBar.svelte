@@ -7,6 +7,7 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 
   interface NavItem {
     id: string;
@@ -70,22 +71,38 @@
         title: "Entity Explorer",
         action: () => layoutUIStore.toggleSidebarTool("explorer"),
       },
-      {
-        id: "oracle",
-        icon: "icon-[lucide--sparkles]",
-        label: "Oracle",
+    ];
+
+    list.push({
+      id: "oracle",
+      icon: "icon-[lucide--sparkles]",
+      label: "Oracle",
+      title: vault.isGuest
+        ? "Lore Oracle — ask about the world lore you can see. AI is an assistive layer, never required."
+        : "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
+      action: () => layoutUIStore.toggleSidebarTool("oracle"),
+    });
+
+    if (!sessionModeStore.isGuestMode) {
+      list.push({
+        id: "shelf",
+        icon: "icon-[lucide--library]",
+        label: "Shelf",
         title:
-          "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
-        action: () => layoutUIStore.toggleSidebarTool("oracle"),
-      },
-      {
+          "The Shelf — carry entities between your vaults. Held in this browser; not a backup.",
+        action: () => layoutUIStore.toggleSidebarTool("shelf"),
+      });
+    }
+
+    if (!sessionModeStore.isGuestMode) {
+      list.push({
         id: "quicknote",
         icon: "icon-[lucide--zap]",
         label: "Notes",
         title: "QuickNote Scratchpad",
         action: () => quickNoteStore.toggle(),
-      },
-    ];
+      });
+    }
 
     if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
       list.push({
@@ -94,6 +111,14 @@
         label: "Chat",
         title: "Guest Chat — speak with enabled characters in-character.",
         action: () => {
+          if (sessionModeStore.isGuestMode) {
+            guestChatStore.showChatModal = !guestChatStore.showChatModal;
+            if (guestChatStore.showChatModal) {
+              layoutUIStore.leftSidebarOpen = false;
+            }
+            return;
+          }
+
           if (layoutUIStore.mainViewMode === "guest-chat") {
             layoutUIStore.mainViewMode = "visualization";
           } else {
@@ -116,8 +141,8 @@
 
 <nav
   class="bg-chrome-surface border-chrome-border flex shrink-0 z-[80]
-    flex-row md:flex-col items-center justify-center md:justify-start py-2 md:py-4 gap-2 md:gap-4
-    w-full md:w-14 h-14 md:h-full border-t md:border-t-0 md:border-r"
+    flex-row md:flex-col items-center justify-center md:justify-start pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] md:py-4 gap-2 md:gap-4
+    w-full md:w-14 min-h-14 h-auto md:h-full border-t md:border-t-0 md:border-r"
   aria-label="Activity Bar"
   data-testid="activity-bar"
 >
@@ -126,7 +151,7 @@
     {@const active = isViewActive(view)}
     <a
       href={view.href}
-      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+      class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={view.label}
@@ -157,11 +182,13 @@
   {#each tools as tool}
     {@const active =
       tool.id === "guest-chat"
-        ? layoutUIStore.mainViewMode === "guest-chat"
+        ? sessionModeStore.isGuestMode
+          ? guestChatStore.showChatModal
+          : layoutUIStore.mainViewMode === "guest-chat"
         : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
-      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+      class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={tool.label}

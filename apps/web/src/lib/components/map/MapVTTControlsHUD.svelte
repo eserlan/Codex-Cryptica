@@ -13,6 +13,12 @@
   }: {
     chatSidebarOffset: string;
   } = $props();
+
+  function openGridSettings(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    mapSession.showGridSettings = true;
+  }
 </script>
 
 {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
@@ -41,6 +47,7 @@
         }`}
       >
         <span
+          aria-hidden="true"
           class={`icon-[lucide--ruler] w-4 h-4 transition-colors ${
             mapSession.measurement.active
               ? "text-theme-primary"
@@ -105,10 +112,7 @@
           type="button"
           class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
-          oncontextmenu={(e) => {
-            e.preventDefault();
-            mapSession.showGridSettings = true;
-          }}
+          oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
         >
           GRID: {mapStore.showGrid ? "ON" : "OFF"}

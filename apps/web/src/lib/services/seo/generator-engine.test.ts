@@ -1,7 +1,11 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
-import { BANNED_NAMES, NAME_BAN_PROMPT } from "generator-engine";
+import {
+  BANNED_NAMES,
+  NAME_BAN_PROMPT,
+  generateLanguageLocal,
+} from "generator-engine";
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 describe("DefaultGeneratorEngine", () => {
@@ -312,7 +316,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(mockClientManager.getModel).toHaveBeenCalled();
       expect(mockClientManager.getModel).toHaveBeenCalledWith(
         "",
-        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
         "You are an assistant that generates detailed RPG campaign elements in JSON format.",
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(
@@ -517,6 +521,210 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("- **📅 Threat**");
       expect(res.lore).toContain("- **👤");
       expect(res.labels).toContain("imported-draft");
+    });
+  });
+
+  describe("generateCouncilVote", () => {
+    it("should generate council vote details locally when useAI is false", async () => {
+      const res = await engine.generateCouncilVote({
+        councilSize: "3",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("event");
+      expect(res.content).toContain("### The Proposal");
+      expect(res.lore).toContain("### Council Members");
+      expect(res.labels).toContain("council-vote");
+    });
+
+    it("should run four chat turns on the same session (foundation, repair, paths, paths-repair) and merge the repaired outputs", async () => {
+      const foundationJson = JSON.stringify({
+        title: "The Salt Road Levy",
+        content: "### The Proposal\nfoundation content (unrepaired)",
+        lore: "### Voting Procedure\nSimple majority.",
+        labels: ["council-vote", "political-intrigue"],
+      });
+      const repairedJson = JSON.stringify({
+        title: "The Salt Road Levy",
+        content: "### The Proposal\nfoundation content",
+        lore: "### Voting Procedure\nSimple majority.",
+        labels: ["council-vote", "political-intrigue"],
+      });
+      const pathsJson = JSON.stringify({
+        possiblePaths:
+          "### Possible Paths\nsmallest coalition first (unrepaired)",
+        followUpHooks: "### Follow-Up Hooks\nthey remember (unrepaired)",
+      });
+      const pathsRepairedJson = JSON.stringify({
+        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        followUpHooks: "### Follow-Up Hooks\nthey remember",
+      });
+
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(foundationJson))
+          .mockResolvedValueOnce(stream(repairedJson))
+          .mockResolvedValueOnce(stream(pathsJson))
+          .mockResolvedValueOnce(stream(pathsRepairedJson)),
+      };
+      const mockModel = { startChat: vi.fn().mockReturnValue(mockChat) };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "5",
+        useAI: true,
+      });
+
+      expect(mockModel.startChat).toHaveBeenCalledTimes(1);
+      expect(mockChat.sendMessageStream).toHaveBeenCalledTimes(4);
+      // The foundation repair turn must ask for a fix, not a fresh generation.
+      expect(mockChat.sendMessageStream.mock.calls[1][0]).toContain(
+        "proofread and repair the scenario you just wrote above",
+      );
+      // The paths turn must not re-embed the roster/procedure — it relies
+      // on the chat session's own history for that (#2033).
+      expect(mockChat.sendMessageStream.mock.calls[2][0]).toContain(
+        "Treat everything already established there",
+      );
+      // The paths repair turn must ask for a fix, not new paths.
+      expect(mockChat.sendMessageStream.mock.calls[3][0]).toContain(
+        'proofread and repair the "Possible Paths" and "Follow-Up Hooks" you just wrote above',
+      );
+      // The merged output uses the REPAIRED foundation and REPAIRED paths.
+      expect(res.title).toBe("The Salt Road Levy");
+      expect(res.content).toBe("### The Proposal\nfoundation content");
+      expect(res.lore).toBe(
+        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+      );
+      expect(res.labels).toContain("council-vote");
+      expect(res.aiFallback).toBeUndefined();
+    });
+
+    it("should fall back to local tables if the chat session fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "3",
+        useAI: true,
+      });
+
+      expect(res.aiFallback).toBe(true);
+      expect(res.lore).toContain("### Council Members");
+    });
+
+    it("should keep the unrepaired foundation and paths when a repair reply is syntactically valid but empty", async () => {
+      const foundationJson = JSON.stringify({
+        title: "The Salt Road Levy",
+        content: "### The Proposal\nfoundation content",
+        lore: "### Voting Procedure\nSimple majority.",
+        labels: ["council-vote", "political-intrigue"],
+      });
+      const pathsJson = JSON.stringify({
+        possiblePaths: "### Possible Paths\nsmallest coalition first",
+        followUpHooks: "### Follow-Up Hooks\nthey remember",
+      });
+      // Valid JSON, but empty of content — parseCouncilVoteFoundation and
+      // parseCouncilVotePathsResponse don't throw on this; they'd normally
+      // default every field to "", silently blanking a good generation if
+      // adopted without a content-presence gate.
+      const emptyRepair = JSON.stringify({});
+
+      const stream = (text: string) => ({
+        stream: (async function* () {
+          yield { text: () => text };
+        })(),
+      });
+      const mockChat = {
+        sendMessageStream: vi
+          .fn()
+          .mockResolvedValueOnce(stream(foundationJson))
+          .mockResolvedValueOnce(stream(emptyRepair))
+          .mockResolvedValueOnce(stream(pathsJson))
+          .mockResolvedValueOnce(stream(emptyRepair)),
+      };
+      const mockModel = { startChat: vi.fn().mockReturnValue(mockChat) };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateCouncilVote({
+        councilSize: "5",
+        useAI: true,
+      });
+
+      expect(res.title).toBe("The Salt Road Levy");
+      expect(res.content).toBe("### The Proposal\nfoundation content");
+      expect(res.lore).toBe(
+        "### Voting Procedure\nSimple majority.\n\n### Possible Paths\nsmallest coalition first\n\n### Follow-Up Hooks\nthey remember",
+      );
+    });
+  });
+
+  describe("generateSecretSociety", () => {
+    it("generates a faction locally with the requested society inputs", async () => {
+      const result = await engine.generateSecretSociety({
+        theme: "Cosmic Horror",
+        publicFace: "Academic society",
+        dangerLevel: "Supernatural threat",
+        useAI: false,
+      });
+
+      expect(result.type).toBe("faction");
+      expect(result.content).toContain("### Secret truth");
+      expect(result.lore).toContain("**Sacred Object**");
+      expect(result.labels).toContain("secret-society");
+    });
+
+    it("uses a valid AI response and falls back when the provider is unavailable", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Glass Choir",
+                summary: "A choir that hears a signal beneath the city.",
+                content: "### What they believe\\nThe signal is mercy.",
+                lore: "### At the Table\\n- **Leader**: Orra Venn.",
+                labels: ["cosmic-horror"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const aiResult = await engine.generateSecretSociety({ useAI: true });
+      expect(aiResult.title).toBe("The Glass Choir");
+      expect(aiResult.labels).toEqual(
+        expect.arrayContaining(["secret-society", "cosmic-horror"]),
+      );
+      expect(aiResult.aiFallback).toBeUndefined();
+
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+      const fallbackResult = await engine.generateSecretSociety({
+        useAI: true,
+      });
+      expect(fallbackResult.aiFallback).toBe(true);
+      expect(fallbackResult.lore).toContain("### Follow-Up Suggestions");
+    });
+
+    it("falls back to a local draft when the AI response is malformed", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => "not valid JSON" },
+        }),
+      });
+
+      const result = await engine.generateSecretSociety({ useAI: true });
+
+      expect(result.aiFallback).toBe(true);
+      expect(result.labels).toEqual(
+        expect.arrayContaining(["secret-society", "imported-draft"]),
+      );
+      expect(result.content).toContain("### Secret truth");
     });
   });
 
@@ -1316,6 +1524,80 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(res.type).toBe("character");
       expect(res.content).toContain("Deity Description");
+    });
+  });
+
+  describe("generateLanguage", () => {
+    it("keeps parseable AI output when only advisory quality issues remain", async () => {
+      const language = generateLanguageLocal(
+        {
+          genre: "Classic Fantasy",
+          tone: "Lyrical & Vowel-rich",
+          role: "Common Speech",
+          structure: "Compound Words",
+        },
+        () => 0.42,
+      );
+      const raw = JSON.stringify({
+        version: language.languageProfileVersion,
+        title: language.title,
+        summary: language.summary,
+        labels: language.labels,
+        profile: language.languageProfile,
+      });
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => raw },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const result = await engine.generateLanguage({
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Common Speech",
+        structure: "Compound Words",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
+      expect(result.title).toBe(language.title);
+      expect(result.aiFallback).toBeUndefined();
+    });
+
+    it("applies two targeted AI-quality repairs before local fallback", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => "{}" },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const result = await engine.generateLanguage({
+        genre: "Classic Fantasy",
+        tone: "Lyrical & Vowel-rich",
+        role: "Sacred / Ritual Tongue",
+        structure: "Compound Words",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(3);
+      expect(mockModel.generateContent.mock.calls[0][0]).toMatchObject({
+        generationConfig: {
+          temperature: 0.35,
+          topP: 0.8,
+          maxOutputTokens: 8192,
+          responseMimeType: "application/json",
+        },
+      });
+      expect(
+        JSON.stringify(mockModel.generateContent.mock.calls[1][0]),
+      ).toContain("Repair the following language-generator response");
+      expect(
+        JSON.stringify(mockModel.generateContent.mock.calls[2][0]),
+      ).toContain("Repair the following language-generator response");
+      expect(result.content).toContain("## Pronunciation & Phonology");
+      expect(result.aiFallback).toBe(true);
     });
   });
 

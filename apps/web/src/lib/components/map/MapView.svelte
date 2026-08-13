@@ -10,8 +10,9 @@
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
-  import { measureDistance } from "$lib/utils/vtt-helpers";
+  import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
+  import { resolveHealthBar } from "./map-view-helpers";
 
   function hashToColor(input: string) {
     let hash = 0;
@@ -149,8 +150,14 @@
           label: token.name,
           image: tokenImageCache[token.id] ?? null,
           selected: mapSession.selection === token.id || selected.has(token.id),
+          primarySelected: mapSession.selection === token.id,
           active: mapSession.activeTokenId === token.id,
           visible: true,
+          healthBar: resolveHealthBar(
+            token.entityId
+              ? vault.entities[token.entityId]?.statSheet?.fields
+              : undefined,
+          ),
         });
       }
     }
@@ -164,11 +171,13 @@
     }
 
     const dimensions = activeMap.dimensions;
-    const valid =
-      preview.x >= 0 &&
-      preview.y >= 0 &&
-      preview.x <= dimensions.width &&
-      preview.y <= dimensions.height;
+    const tokenSize = mapStore.gridSize || 50;
+    const bounded = clampPointToBounds(
+      { x: preview.x, y: preview.y },
+      dimensions,
+      { width: tokenSize, height: tokenSize },
+    );
+    const valid = bounded.x === preview.x && bounded.y === preview.y;
 
     return {
       ...preview,
@@ -254,15 +263,17 @@
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
   style:background-image="var(--bg-texture)"
+  style:touch-action="none"
   role="application"
   aria-roledescription="map"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="0"
   onmouseenter={interactions.onMouseEnter}
   onmouseleave={interactions.onMouseLeave}
-  onmousedown={interactions.onMouseDown}
-  onmousemove={interactions.onMouseMove}
-  onmouseup={interactions.onMouseUp}
+  onpointerdown={interactions.onPointerDown}
+  onpointermove={interactions.onPointerMove}
+  onpointerup={interactions.onPointerUp}
+  onpointercancel={interactions.onPointerCancel}
   ondblclick={interactions.onDoubleClick}
   oncontextmenu={interactions.onContextMenu}
   onwheel={interactions.onWheel}

@@ -1,7 +1,15 @@
 <script lang="ts">
   import {
+    dungeonConfig,
+    factionTypesForTheme,
+    forDungeonGenre,
     getGenerator,
     listGenerators,
+    npcRacesForTheme,
+    npcRolesForTheme,
+    settlementTypesForTheme,
+    themeIdToLabel,
+    worldConfig,
   } from "generator-engine";
   import type {
     AIPolicy,
@@ -9,18 +17,27 @@
     GeneratorRunRequest,
   } from "generator-engine";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
+  import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
+  import type { DetectedVaultLanguage } from "$lib/services/generators/generator-vault-context";
 
   interface Props {
     generatorId: GeneratorId | null;
     onsubmit: (
       req: Pick<
         GeneratorRunRequest,
-        "generatorId" | "options" | "useAI" | "instructions"
+        | "generatorId"
+        | "options"
+        | "useAI"
+        | "instructions"
+        | "primaryLanguageId"
       >,
     ) => void;
     disabled?: boolean;
     aiPolicy?: AIPolicy;
     categoryLabels?: Array<{ id: string; label: string }>;
+    themeId?: string;
+    languages?: DetectedVaultLanguage[];
+    suggestedLanguageId?: string;
   }
 
   let {
@@ -29,10 +46,20 @@
     disabled = false,
     aiPolicy,
     categoryLabels = [],
+    themeId = "workspace",
+    languages = [],
+    suggestedLanguageId,
   }: Props = $props();
 
-  function resolveLabel(gen: { label: string; entityType: string }): string {
+  function resolveLabel(gen: {
+    id: GeneratorId;
+    label: string;
+    entityType: string;
+  }): string {
     const match = categoryLabels.find((c) => c.id === gen.entityType);
+    if (gen.id === "dungeon" && gen.entityType === "location") {
+      return getDelveLocationTypeLabel(themeId);
+    }
     return match?.label ?? gen.label;
   }
 
@@ -52,9 +79,83 @@
   let selectedId = $state<GeneratorId>(generators[0].id);
   let useAI = $state(true);
   let instructions = $state("");
+  let primaryLanguageId = $state("");
   let optionValues = $state<Record<string, unknown>>({});
   let lastOptionsGeneratorId = $state<GeneratorId | null>(null);
   const selectedGenerator = $derived(getGenerator(selectedId));
+  const supportsPrimaryLanguage = $derived(
+    ["npc", "faction", "settlement", "ship"].includes(selectedId),
+  );
+  const suggestedLanguage = $derived(
+    languages.find((language) => language.id === suggestedLanguageId),
+  );
+  const dungeonGenre = $derived(themeIdToLabel[themeId] ?? "Classic Fantasy");
+  const availableDungeonPurposes = $derived(
+    forDungeonGenre(dungeonConfig.purposesByGenre, dungeonGenre),
+  );
+  const availableDungeonStates = $derived(
+    forDungeonGenre(dungeonConfig.currentStatesByGenre, dungeonGenre),
+  );
+  const visibleOptions = $derived(
+    selectedGenerator.options.filter((option) => {
+      if (!option.visibleWhen) return true;
+      const currentValue = stringValue(option.visibleWhen.optionId);
+      if (
+        option.visibleWhen.values &&
+        !option.visibleWhen.values.includes(currentValue)
+      ) {
+        return false;
+      }
+      if (option.visibleWhen.notValues?.includes(currentValue)) return false;
+      return true;
+    }),
+  );
+
+  function choicesForOption(option: {
+    id: string;
+    choices?: Array<{ value: string; label: string }>;
+  }): Array<{ value: string; label: string }> {
+    if (selectedId === "world" && option.id === "campaignPressure") {
+      const values =
+        stringValue("genre") === "Lancer"
+          ? worldConfig.lancerConflicts
+          : worldConfig.campaignPressures;
+      return values.map((value) => ({ value, label: value }));
+    }
+    if (selectedId === "npc" && option.id === "race") {
+      return npcRacesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "npc" && option.id === "role") {
+      return npcRolesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "faction" && option.id === "type") {
+      return factionTypesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId === "settlement" && option.id === "type") {
+      return settlementTypesForTheme(themeId).map((value) => ({
+        value,
+        label: value,
+      }));
+    }
+    if (selectedId !== "dungeon") return option.choices ?? [];
+    if (option.id === "purpose") {
+      return availableDungeonPurposes.map((value) => ({ value, label: value }));
+    }
+    if (option.id === "currentState") {
+      return availableDungeonStates.map((value) => ({ value, label: value }));
+    }
+    return option.choices ?? [];
+  }
+
   $effect(() => {
     if (generatorId) selectedId = generatorId;
   });
@@ -63,21 +164,65 @@
     lastOptionsGeneratorId = selectedId;
     const definition = getGenerator(selectedId);
     const previousValues = optionValues;
-    optionValues = Object.fromEntries(
-      definition.options.map((option: { id: string; defaultValue?: unknown }) => [
-        option.id,
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
+    // to prevent intermediate array allocations and reduce GC overhead.
+    const nextValues: Record<string, unknown> = {};
+    for (const option of definition.options) {
+      nextValues[option.id] =
         typeof previousValues[option.id] !== "undefined"
           ? previousValues[option.id]
-          : (definition.defaults[option.id] ?? option.defaultValue ?? ""),
-      ]),
-    );
+          : (definition.defaults[option.id] ?? option.defaultValue ?? "");
+    }
+    optionValues = nextValues;
   });
-
+  $effect(() => {
+    if (selectedId !== "dungeon") return;
+    const nextValues = { ...optionValues };
+    let changed = false;
+    const purpose = nextValues.purpose;
+    if (
+      typeof purpose === "string" &&
+      dungeonConfig.purposes.includes(purpose) &&
+      !availableDungeonPurposes.includes(purpose)
+    ) {
+      nextValues.purpose = availableDungeonPurposes[0] ?? "";
+      changed = true;
+    }
+    const currentState = nextValues.currentState;
+    if (
+      typeof currentState === "string" &&
+      dungeonConfig.currentStates.includes(currentState) &&
+      !availableDungeonStates.includes(currentState)
+    ) {
+      nextValues.currentState = availableDungeonStates[0] ?? "";
+      changed = true;
+    }
+    if (changed) optionValues = nextValues;
+  });
   function updateOptionValue(optionId: string, value: unknown) {
-    optionValues = {
+    const nextValues = {
       ...optionValues,
       [optionId]: value,
     };
+    if (selectedId === "world" && optionId === "genre") {
+      const availablePressures: readonly string[] =
+        value === "Lancer"
+          ? worldConfig.lancerConflicts
+          : worldConfig.campaignPressures;
+      const currentPressure = optionValues.campaignPressure;
+      const knownPressures: readonly string[] = [
+        ...worldConfig.campaignPressures,
+        ...worldConfig.lancerConflicts,
+      ];
+      if (
+        typeof currentPressure !== "string" ||
+        (knownPressures.includes(currentPressure) &&
+          !availablePressures.includes(currentPressure))
+      ) {
+        nextValues.campaignPressure = availablePressures[0] ?? "";
+      }
+    }
+    optionValues = nextValues;
   }
 
   function stringValue(optionId: string): string {
@@ -98,6 +243,10 @@
       options: optionValues,
       useAI: aiAvailable && useAI,
       instructions: instructions.trim() || undefined,
+      primaryLanguageId:
+        supportsPrimaryLanguage && primaryLanguageId
+          ? primaryLanguageId
+          : undefined,
     });
   }
 </script>
@@ -124,14 +273,14 @@
     {/each}
   </fieldset>
 
-  {#if selectedGenerator.options.length > 0}
+  {#if visibleOptions.length > 0}
     <fieldset class="flex flex-col gap-3">
       <legend
         class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
       >
         Generator options
       </legend>
-      {#each selectedGenerator.options as option (option.id)}
+      {#each visibleOptions as option (option.id)}
         {@const inputId = `generator-option-${option.id}`}
         {#if option.control === "select" && option.choices}
           <SelectWithCustomOption
@@ -141,8 +290,8 @@
             value={stringValue(option.id)}
             onvaluechange={(nextValue) =>
               updateOptionValue(option.id, nextValue)}
-            choices={option.choices}
-            disabled={disabled}
+            choices={choicesForOption(option)}
+            {disabled}
             className="flex flex-col gap-1.5"
             labelClass="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
             inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
@@ -198,7 +347,8 @@
               type="number"
               value={numberValue(option.id)}
               oninput={(event) => {
-                const rawValue = (event.currentTarget as HTMLInputElement).value;
+                const rawValue = (event.currentTarget as HTMLInputElement)
+                  .value;
                 updateOptionValue(
                   option.id,
                   rawValue === "" ? "" : Number(rawValue),
@@ -232,6 +382,46 @@
         {/if}
       {/each}
     </fieldset>
+  {/if}
+
+  {#if supportsPrimaryLanguage && languages.length}
+    <div class="flex flex-col gap-1.5">
+      <label
+        for="generator-primary-language"
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Naming language
+      </label>
+      <select
+        id="generator-primary-language"
+        name="primaryLanguageId"
+        bind:value={primaryLanguageId}
+        aria-describedby="generator-primary-language-help"
+        {disabled}
+        class="min-h-12 w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-base leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+      >
+        <option value="">No saved language</option>
+        {#each languages as language (language.id)}
+          <option value={language.id}>
+            {language.title}{language.legacy ? " (legacy notes)" : ""}
+          </option>
+        {/each}
+      </select>
+      <p
+        id="generator-primary-language-help"
+        class="text-xs leading-relaxed text-chrome-muted"
+      >
+        {#if suggestedLanguage && !primaryLanguageId}
+          Suggested from the source relationship: {suggestedLanguage.title}.
+          Select it above to apply its rules.
+        {:else if primaryLanguageId}
+          Only this language supplies authoritative naming and terminology
+          rules.
+        {:else}
+          No saved language rules will be applied.
+        {/if}
+      </p>
+    </div>
   {/if}
 
   <div class="flex flex-col gap-1">

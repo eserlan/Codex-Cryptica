@@ -6,6 +6,7 @@ import type {
 } from "../../../types/vtt";
 import type { Point } from "schema";
 import { hashToColor, cloneMeasurement } from "$lib/utils/vtt-helpers";
+import { systemClock } from "$lib/utils/runtime-deps";
 
 /**
  * How long a ping stays alive — both for visual animation in MapCanvas and
@@ -177,7 +178,7 @@ export class VTTMeasurementManager {
       y,
       peerId,
       color,
-      timestamp: Date.now(),
+      timestamp: systemClock.now(),
     };
     this.registerPing(pingObj);
     this.deps.emit({
@@ -206,7 +207,7 @@ export class VTTMeasurementManager {
       y,
       peerId,
       color: resolvedColor,
-      timestamp: timestamp ?? Date.now(),
+      timestamp: timestamp ?? systemClock.now(),
     });
   }
 
