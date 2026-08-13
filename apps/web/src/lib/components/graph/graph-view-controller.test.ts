@@ -270,7 +270,7 @@ describe("GraphViewController", () => {
     });
   });
 
-  it("suppresses mobile tap Zen Mode navigation when cxttap recently occurred", async () => {
+  it("suppresses mobile tap Zen Mode navigation after a context gesture", async () => {
     deps.layoutUIStore.isMobile = true;
     const container = document.createElement("div");
     await controller.init(container, {});

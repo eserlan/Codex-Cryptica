@@ -341,7 +341,7 @@ export class GraphViewController {
           const cyInstance =
             typeof node?.cy === "function" ? node.cy() : this.cy;
           const lastCxtTap =
-            (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) || 0;
+            (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) ?? 0;
           if (Date.now() - lastCxtTap < 400) {
             return;
           }

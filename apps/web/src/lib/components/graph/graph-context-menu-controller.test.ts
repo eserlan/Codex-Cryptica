@@ -221,8 +221,10 @@ describe("GraphContextMenuController", () => {
     expect(controller.imagePickerOpen).toBe(false);
   });
 
-  it("should not close context menu on tap release immediately following cxttap", () => {
-    let cxtHandler: any;
+  it("keeps the context menu open when tap releases a long press", () => {
+    let contextHandler: any;
+    let tapStartHandler: any;
+    let tapEndHandler: any;
     let tapHandler: any;
     const scratchData: Record<string, any> = {};
     cy.scratch = vi.fn((key: string, val?: any) => {
@@ -231,15 +233,21 @@ describe("GraphContextMenuController", () => {
     });
 
     cy.on.mockImplementation((event: string, ...args: any[]) => {
-      if (event === "cxttap" && args[0] === "node") {
-        cxtHandler = args[1];
+      if (event === "cxttap taphold" && args[0] === "node") {
+        contextHandler = args[1];
+      } else if (event === "tapstart" && args.length === 1) {
+        tapStartHandler = args[0];
+      } else if (event === "tapend" && args.length === 1) {
+        tapEndHandler = args[0];
       } else if (event === "tap" && args.length === 1) {
         tapHandler = args[0];
       }
     });
 
     controller.setupEvents();
-    expect(cxtHandler).toBeDefined();
+    expect(contextHandler).toBeDefined();
+    expect(tapStartHandler).toBeDefined();
+    expect(tapEndHandler).toBeDefined();
     expect(tapHandler).toBeDefined();
 
     const mockNode = {
@@ -248,12 +256,43 @@ describe("GraphContextMenuController", () => {
       renderedPosition: () => ({ x: 50, y: 50 }),
     };
 
-    cxtHandler({ target: mockNode, renderedPosition: { x: 50, y: 50 } });
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000);
+    tapStartHandler({});
+    contextHandler({
+      type: "taphold",
+      target: mockNode,
+      renderedPosition: { x: 50, y: 50 },
+    });
     expect(controller.contextMenuOpen).toBe(true);
 
-    // Immediate tap release should NOT close menu
+    now.mockReturnValue(2_000);
+    tapEndHandler({});
+    now.mockReturnValue(2_001);
     tapHandler({});
+
     expect(controller.contextMenuOpen).toBe(true);
+    expect(scratchData._lastCxtTap).toBe(2_000);
+    now.mockRestore();
+  });
+
+  it("closes the context menu for an ordinary tap", () => {
+    let tapHandler: any;
+    const scratchData: Record<string, any> = {};
+    cy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchData[key] = val;
+      return scratchData[key];
+    });
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "tap" && args.length === 1) {
+        tapHandler = args[0];
+      }
+    });
+
+    controller.setupEvents();
+    controller.contextMenuOpen = true;
+    tapHandler({});
+
+    expect(controller.contextMenuOpen).toBe(false);
   });
 
   it("should not mark important when no nodes are selected", async () => {
@@ -309,7 +348,7 @@ describe("GraphContextMenuController", () => {
   it("should open context menu at cursor position when right clicking empty space", () => {
     let bgHandler: any;
     cy.on.mockImplementation((event: string, ...args: any[]) => {
-      if (event === "cxttap" && args.length === 1) {
+      if (event === "cxttap taphold" && args.length === 1) {
         bgHandler = args[0];
       }
     });
@@ -348,7 +387,7 @@ describe("GraphContextMenuController", () => {
   it("should open context menu for edge right-click with connection metadata", () => {
     let edgeHandler: any;
     cy.on.mockImplementation((event: string, ...args: any[]) => {
-      if (event === "cxttap" && args[0] === "edge") {
+      if (event === "cxttap taphold" && args[0] === "edge") {
         edgeHandler = args[1];
       }
     });

@@ -79,8 +79,26 @@ export class GraphContextMenuController {
       this.getCy().scratch?.("_lastCxtTap", Date.now());
     };
 
-    const openHandler = (evt: EventObject) => {
+    const recordContextGesture = (evt: EventObject) => {
       recordCxtTap();
+      if (evt.type === "taphold") {
+        this.getCy().scratch?.("_tapHoldActive", true);
+      }
+    };
+
+    const recordTapHoldRelease = () => {
+      if (this.getCy().scratch?.("_tapHoldActive") !== true) return;
+
+      this.getCy().scratch?.("_tapHoldActive", false);
+      recordCxtTap();
+    };
+
+    const resetTapHold = () => {
+      this.getCy().scratch?.("_tapHoldActive", false);
+    };
+
+    const openHandler = (evt: EventObject) => {
+      recordContextGesture(evt);
       const node = evt.target;
       this.targetId = node.id();
       this.targetEdge = null;
@@ -97,7 +115,7 @@ export class GraphContextMenuController {
     };
 
     const edgeContextMenuHandler = (evt: EventObject) => {
-      recordCxtTap();
+      recordContextGesture(evt);
       const edge = evt.target;
       const data = edge.data();
       this.targetId = null;
@@ -113,7 +131,7 @@ export class GraphContextMenuController {
 
     const backgroundContextMenuHandler = (evt: EventObject) => {
       if (evt.target === this.getCy()) {
-        recordCxtTap();
+        recordContextGesture(evt);
         this.targetId = null;
         this.selectedNodes = [];
         this.targetEdge = null;
@@ -124,7 +142,7 @@ export class GraphContextMenuController {
 
     const closeHandler = () => {
       const lastCxtTap =
-        (this.getCy().scratch?.("_lastCxtTap") as number | undefined) || 0;
+        (this.getCy().scratch?.("_lastCxtTap") as number | undefined) ?? 0;
       if (Date.now() - lastCxtTap < 400) {
         return;
       }
@@ -137,16 +155,20 @@ export class GraphContextMenuController {
       this.targetEdge = null;
     };
 
-    this.getCy().on("cxttap", "node", openHandler);
-    this.getCy().on("cxttap", "edge", edgeContextMenuHandler);
-    this.getCy().on("cxttap", backgroundContextMenuHandler);
+    this.getCy().on("cxttap taphold", "node", openHandler);
+    this.getCy().on("cxttap taphold", "edge", edgeContextMenuHandler);
+    this.getCy().on("cxttap taphold", backgroundContextMenuHandler);
+    this.getCy().on("tapstart", resetTapHold);
+    this.getCy().on("tapend", recordTapHoldRelease);
     this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
-      this.getCy().off("cxttap", "node", openHandler);
-      this.getCy().off("cxttap", "edge", edgeContextMenuHandler);
-      this.getCy().off("cxttap", backgroundContextMenuHandler);
+      this.getCy().off("cxttap taphold", "node", openHandler);
+      this.getCy().off("cxttap taphold", "edge", edgeContextMenuHandler);
+      this.getCy().off("cxttap taphold", backgroundContextMenuHandler);
+      this.getCy().off("tapstart", resetTapHold);
+      this.getCy().off("tapend", recordTapHoldRelease);
       this.getCy().off("tap", closeHandler);
     };
   };
