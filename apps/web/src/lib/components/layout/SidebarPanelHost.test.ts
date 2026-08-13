@@ -69,4 +69,13 @@ describe("SidebarPanelHost", () => {
     expect(screen.queryByTestId("sidebar-panel-host")).toBeNull();
     expect(screen.queryByTestId("oracle-sidebar-panel")).toBeNull();
   });
+
+  it("does not render the host when left sidebar is open but active tool is none", () => {
+    layoutUIStore.leftSidebarOpen = true;
+    layoutUIStore.activeSidebarTool = "none";
+
+    render(SidebarPanelHost);
+
+    expect(screen.queryByTestId("sidebar-panel-host")).toBeNull();
+  });
 });

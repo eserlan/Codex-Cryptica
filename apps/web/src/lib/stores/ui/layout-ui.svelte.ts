@@ -11,7 +11,12 @@ export const MAX_SIDEBAR_VW = 40;
 export type SidebarTool = "oracle" | "explorer" | "shelf" | "none";
 
 function isSidebarTool(value: string): value is SidebarTool {
-  return value === "oracle" || value === "explorer" || value === "none";
+  return (
+    value === "oracle" ||
+    value === "explorer" ||
+    value === "shelf" ||
+    value === "none"
+  );
 }
 export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
@@ -246,6 +251,10 @@ export class LayoutUIStore {
     this.#activeSidebarTool = isSidebarTool(savedSidebarTool)
       ? savedSidebarTool
       : "none";
+
+    if (this.#leftSidebarOpen && this.#activeSidebarTool === "none") {
+      this.#leftSidebarOpen = false;
+    }
 
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,

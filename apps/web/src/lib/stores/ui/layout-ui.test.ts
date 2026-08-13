@@ -289,6 +289,34 @@ describe("LayoutUIStore", () => {
     expect(store.activeSidebarTool).toBe("oracle");
   });
 
+  it("supports shelf as a persisted sidebar tool", () => {
+    const backing = storage({
+      codex_left_sidebar_open: "true",
+      codex_active_sidebar_tool: "shelf",
+    });
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: backing.storage }),
+      null,
+    );
+
+    expect(store.leftSidebarOpen).toBe(true);
+    expect(store.activeSidebarTool).toBe("shelf");
+  });
+
+  it("closes leftSidebarOpen on load if activeSidebarTool is none", () => {
+    const backing = storage({
+      codex_left_sidebar_open: "true",
+      codex_active_sidebar_tool: "none",
+    });
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: backing.storage }),
+      null,
+    );
+
+    expect(store.leftSidebarOpen).toBe(false);
+    expect(store.activeSidebarTool).toBe("none");
+  });
+
   it("defaults autoFullscreen to true and persists changes via setAutoFullscreen", () => {
     const { storage: memStorage, values } = storage();
     const store = new LayoutUIStore(
