@@ -50,6 +50,13 @@
   } from "$lib/services/analytics/generator-save-tracking";
   import { registerShellCtaHandler } from "./marketing-shell";
 
+  // Link-preview fallback for generators without a capture of their own. Plain
+  // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
+  const DEFAULT_OG_IMAGE =
+    "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
+  const DEFAULT_OG_IMAGE_ALT =
+    "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
+
   let {
     canonicalPath,
     pageTitle = "Free RPG Generator | Codex Cryptica",
@@ -57,6 +64,8 @@
     eyebrow = "Free RPG Tool",
     introTitle = "RPG Generator",
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
+    ogImage = DEFAULT_OG_IMAGE,
+    ogImageAlt = DEFAULT_OG_IMAGE_ALT,
     relatedLinks = [],
     faqs = [],
     theme = $bindable("Classic Fantasy"),
@@ -75,6 +84,8 @@
     canonicalPath?: string;
     pageTitle?: string;
     metaDescription?: string;
+    ogImage?: string;
+    ogImageAlt?: string;
     eyebrow?: string;
     introTitle?: string;
     introText?: string;
@@ -616,20 +627,16 @@
       content="https://codexcryptica.com{canonicalPath}"
     />
   {/if}
-  <meta
-    property="og:image"
-    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
-  />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:image:alt" content={ogImageAlt} />
   <meta property="og:image:width" content="1600" />
   <meta property="og:image:height" content="1000" />
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={metaDescription} />
-  <meta
-    name="twitter:image"
-    content="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
-  />
+  <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:image:alt" content={ogImageAlt} />
   <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
