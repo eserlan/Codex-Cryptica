@@ -6,7 +6,7 @@ import { ShelfStore } from "./shelf.svelte";
 import type { ShelfVaultDeps } from "./web-shelf-vault";
 
 export { ShelfStore } from "./shelf.svelte";
-export { IdbShelfStore, idbShelfStore } from "./idb-shelf-store";
+export { IdbShelfStore, idbShelfStore } from "./idb-shelf-store.svelte";
 export { WebShelfVault, vaultRecordCodec } from "./web-shelf-vault";
 export type { ShelfVaultDeps } from "./web-shelf-vault";
 

@@ -7,7 +7,7 @@ import {
 } from "@codex/entity-shelf";
 import { appEventBus as defaultAppEventBus } from "@codex/events";
 import { SHELF_EVENTS } from "$lib/events/shelf";
-import { idbShelfStore } from "./idb-shelf-store";
+import { idbShelfStore } from "./idb-shelf-store.svelte";
 import {
   vaultRecordCodec,
   WebShelfVault,
