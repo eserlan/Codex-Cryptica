@@ -36,7 +36,7 @@ Entries stay on the Shelf after you import them. Shelve a monster once and drop 
 
 ## What actually comes across
 
-This is where "export to a file" tends to disappoint. You get the text and lose everything that made the entity worth reusing.
+This is the part normal file export usually loses. You get the text, and everything that made the entity worth reusing stays behind.
 
 The Shelf carries:
 
@@ -46,17 +46,17 @@ The Shelf carries:
 - **Labels, aliases, dates, lore, and your notes.**
 - **Links between entities**, with some care about how — see below.
 
-Nothing is flattened into a lowest-common-denominator format on the way through, because there is no format. The entity is copied as your vault already stores it.
+Nothing gets flattened into a generic interchange format. The Shelf copies the entity as Codex already stores it.
 
 ## Links, and why we refuse to guess
 
-Say you shelve a faction and four of its members together. The links between those five are rebuilt in the destination. That much is straightforward.
+Say you shelve a faction and four of its members together. The links between those five are rebuilt in the destination.
 
 Harder: your Goblin King links to a **Shrine of Ash** you did not shelve. If the destination vault has a Shrine of Ash, the link reconnects to it.
 
 If the destination has *two* things called Shrine of Ash, the Shelf leaves the link off and tells you.
 
-That is deliberate. A missing link is annoying and you will notice it. A link silently attached to the wrong shrine is worse — nothing about it looks wrong, so you have no reason to go looking, and it quietly misinforms every session until someone trips over it. We would rather hand you a short list of "these did not reconnect" than a world with plausible-looking mistakes in it.
+That is deliberate. A missing link is annoying, but you will notice it. A link silently attached to the wrong shrine is worse. Nothing about it looks wrong, so you never go looking, and it quietly misinforms every session until someone trips over it.
 
 The same principle applies to names. Importing a Goblin into a vault that already has one never overwrites the original. You get both, the new one numbered, and a note saying which was renamed.
 
@@ -72,7 +72,7 @@ Worth being blunt, because this shapes whether it fits how you work.
 
 Think of it as a workbench you carry things across on, not a place to store them. It shows how much space it is using, and you can clear it whenever you like.
 
-We built it this way on purpose. Everything in Codex Cryptica already lives in one place on your machine, which means your vaults can simply hand entities to each other — no export format to version, no file to lose track of, no download folder to dig through on a phone. The tradeoff is that it stays on the device it was made on. For "I want this monster in my other campaign", that is the right trade. For "I want to send this to a friend", it is not, and we would rather say so than let you find out later.
+This is intentional. Your Codex vaults already live locally on the same device, so they can hand entities directly to each other. There is no export format to manage and no temporary file to keep track of. The trade-off is that the Shelf stays on that device. It is built for "put this monster in my other campaign", not "send this monster to someone else".
 
 No AI is involved anywhere in this, and nothing touches the network.
 
