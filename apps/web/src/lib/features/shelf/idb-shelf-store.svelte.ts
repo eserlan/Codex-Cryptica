@@ -47,8 +47,15 @@ export class IdbShelfStore implements ShelfStore {
    * Re-shelving the same entity replaces its snapshot rather than adding a
    * near-duplicate: the Shelf is a transfer buffer, not a version history
    * (FR-009, invariant I2).
+   *
+   * The entry is snapshotted first. Templates come from `$state` stores and
+   * aliases from the reactive entity map, so an entry can arrive holding
+   * Svelte proxies — and IndexedDB's structured clone rejects a Proxy with a
+   * DataCloneError. `$state.snapshot` returns a deep non-reactive POJO, the
+   * same guard CacheService uses on its write path.
    */
   async putEntry(entry: ShelfEntry): Promise<void> {
+    const plain = $state.snapshot(entry) as ShelfEntry;
     const db = await this.db();
     const tx = db.transaction("shelf_entries", "readwrite");
 
@@ -61,7 +68,7 @@ export class IdbShelfStore implements ShelfStore {
       }
     }
 
-    await tx.store.put(entry);
+    await tx.store.put(plain);
     await tx.done;
   }
 
