@@ -34,8 +34,16 @@ export function parseBlogArticle(
       return null;
     }
 
-    const { title, description, keywords, publishedAt, author, topic } =
-      metadata;
+    const {
+      title,
+      description,
+      keywords,
+      publishedAt,
+      author,
+      topic,
+      image,
+      imageAlt,
+    } = metadata;
 
     if (typeof title !== "string" || title.trim() === "") {
       console.error(
@@ -113,6 +121,17 @@ export function parseBlogArticle(
       ...(updatedAtIso ? { updatedAt: updatedAtIso } : {}),
       ...(typeof topic === "string" && topic.trim()
         ? { topic: topic.trim() }
+        : {}),
+      // A post without its own card image gets the site's default rather than a
+      // broken one, so an absent or empty value stays absent. Alt text without
+      // an image would describe nothing, so it only survives alongside one.
+      ...(typeof image === "string" && image.trim()
+        ? {
+            image: image.trim(),
+            ...(typeof imageAlt === "string" && imageAlt.trim()
+              ? { imageAlt: imageAlt.trim() }
+              : {}),
+          }
         : {}),
       content,
     };
