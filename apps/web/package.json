@@ -17,6 +17,7 @@
     "test:e2e:all": "playwright test --reporter=list,./tests/success-tracker-reporter.ts",
     "test:e2e:failed": "playwright test --reporter=list,./tests/success-tracker-reporter.ts --last-failed",
     "test:e2e:clear": "rm -f .e2e-success.json",
+    "test:performance": "playwright test --config=playwright.performance.config.ts",
     "lint": "eslint .",
     "lint:types": "svelte-check --tsconfig ./tsconfig.json",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -32,6 +33,7 @@
     "@codex/gdrive-sync": "workspace:*",
     "@codex/importer": "workspace:*",
     "@codex/oracle-engine": "workspace:*",
+    "@codex/performance-observability": "workspace:*",
     "@codex/proposer": "workspace:*",
     "@codex/runtime": "workspace:*",
     "@codex/search-engine": "workspace:*",
@@ -81,7 +83,8 @@
     "schema": "workspace:*",
     "svelte-tiptap": "^3.0.1",
     "tiptap-markdown": "^0.9.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@codex/entity-shelf": "workspace:*"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

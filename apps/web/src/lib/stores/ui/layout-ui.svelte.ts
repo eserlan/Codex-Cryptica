@@ -8,10 +8,15 @@ export const MIN_LEFT_SIDEBAR_WIDTH = 240;
 export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
 export const MAX_SIDEBAR_VW = 40;
 
-export type SidebarTool = "oracle" | "explorer" | "none";
+export type SidebarTool = "oracle" | "explorer" | "shelf" | "none";
 
 function isSidebarTool(value: string): value is SidebarTool {
-  return value === "oracle" || value === "explorer" || value === "none";
+  return (
+    value === "oracle" ||
+    value === "explorer" ||
+    value === "shelf" ||
+    value === "none"
+  );
 }
 export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
@@ -247,6 +252,10 @@ export class LayoutUIStore {
       ? savedSidebarTool
       : "none";
 
+    if (this.#leftSidebarOpen && this.#activeSidebarTool === "none") {
+      this.leftSidebarOpen = false;
+    }
+
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,
       (raw) => raw === "true",
@@ -348,3 +357,11 @@ export class LayoutUIStore {
 const KEY = "__codex_layout_ui_store__";
 export const layoutUIStore: LayoutUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new LayoutUIStore());
+
+if (
+  typeof window !== "undefined" &&
+  (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+    .__CODEX_PERFORMANCE_CAPTURE__ === true
+) {
+  (window as any).layoutUIStore = layoutUIStore;
+}

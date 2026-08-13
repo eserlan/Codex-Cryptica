@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { GeneratedDraft } from "generator-engine";
 import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
@@ -111,5 +111,43 @@ describe("GeneratorDraftReview", () => {
     expect(
       screen.getByTestId("primary-language-context").textContent,
     ).toContain("Naming language: Lemari");
+  });
+
+  it("shows and invokes the Plot Twist handoff action", async () => {
+    const onGeneratePlotTwist = vi.fn();
+    render(GeneratorDraftReview, {
+      props: {
+        draft: dungeonDraft({ labels: ["rpg-quest"] }),
+        categories,
+        saving: false,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+        onGeneratePlotTwist,
+      },
+    });
+
+    const button = screen.getByTestId("generate-plot-twist-from-quest");
+    expect(button.getAttribute("disabled")).toBeNull();
+    await fireEvent.click(button);
+    expect(onGeneratePlotTwist).toHaveBeenCalledOnce();
+  });
+
+  it("disables the Plot Twist handoff while saving", () => {
+    render(GeneratorDraftReview, {
+      props: {
+        draft: dungeonDraft({ labels: ["rpg-quest"] }),
+        categories,
+        saving: true,
+        onsave: vi.fn(),
+        onback: vi.fn(),
+        onGeneratePlotTwist: vi.fn(),
+      },
+    });
+
+    expect(
+      screen
+        .getByTestId("generate-plot-twist-from-quest")
+        .getAttribute("disabled"),
+    ).not.toBeNull();
   });
 });

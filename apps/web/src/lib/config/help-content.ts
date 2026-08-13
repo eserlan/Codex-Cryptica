@@ -174,6 +174,16 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  // The browser-local caveat is the whole point of this hint (156-entity-shelf,
+  // FR-024): people will otherwise assume the Shelf is a backup or a way to
+  // send an entity to a co-GM, and find out it is neither at the worst moment.
+  "entity-shelf": {
+    id: "entity-shelf",
+    title: "The Shelf",
+    content:
+      "Send an entity — or a whole selection — to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.",
+    icon: "icon-[lucide--library]",
+  },
   "touch-graph-gestures": {
     id: "touch-graph-gestures",
     title: "Touch gestures",
@@ -634,6 +644,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Generate campaign-ready adventure concepts tailored to your world theme. Each scenario features an initial situation, primary pressure, key locations, important NPCs & factions, threats, discoveries, complications, stakes, and non-linear outcomes.",
     icon: "icon-[lucide--map]",
+  },
+  "quest-generator": {
+    id: "quest-generator",
+    title: "Quest Hook Generator",
+    content:
+      "Create a playable quest hook with a clear inciting event, threat, complication, twist, and meaningful reward. After generating a hook, choose Generate Plot Twist to carry that exact result into the Plot Twist generator and develop its next reversal.",
+    icon: "icon-[lucide--scroll-text]",
+  },
+  "plot-twist-generator": {
+    id: "plot-twist-generator",
+    title: "Plot Twist & Complication Generator",
+    content:
+      "Start with an existing premise, scene, or campaign problem and generate a coherent reversal or complication. The generator preserves established facts, identifies an assumption that can be overturned, adds foreshadowing and consequences, and gives the players new choices. Add campaign context or constraints when you need the twist to fit an existing storyline.",
+    icon: "icon-[lucide--shuffle]",
   },
   "world-generator": {
     id: "world-generator",

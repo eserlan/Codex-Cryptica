@@ -9,6 +9,7 @@
     height?: number;
     absolute?: boolean;
     isExpanded?: boolean;
+    isSuspended?: boolean;
   }
 
   let {
@@ -17,6 +18,7 @@
     height = 150,
     absolute = true,
     isExpanded = false,
+    isSuspended = false,
   }: Props = $props();
 
   interface MinimapNode {
@@ -128,7 +130,7 @@
   };
 
   const draw = (timestamp: number) => {
-    if (!ctx || !canvas || !cy) {
+    if (isSuspended || !ctx || !canvas || !cy) {
       animationFrameId = null;
       return;
     }
@@ -192,6 +194,7 @@
   };
 
   const requestRedraw = () => {
+    if (isSuspended) return;
     if (animationFrameId === null) {
       animationFrameId = requestAnimationFrame(draw);
     }
@@ -287,17 +290,27 @@
   };
 
   const handleGraphUpdate = () => {
+    if (isSuspended) return;
     syncGraphToMinimap();
     updateProjection();
     requestRedraw();
   };
 
   const handleViewportUpdate = () => {
+    if (isSuspended) return;
     requestRedraw();
   };
 
   $effect(() => {
     ctx = canvas.getContext("2d");
+
+    if (isSuspended) {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      return;
+    }
 
     // Listeners
     if (cy) {

@@ -27,10 +27,12 @@ const validSlugs = new Set([
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "plot-twist-generator",
   "world",
   "council-vote",
   "secret-society",
   "star-system",
+  "alien-race",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -62,10 +64,12 @@ export const load: PageLoad = ({ params }) => {
       | "dungeon-generator"
       | "adventure-generator"
       | "adventure-idea-generator"
+      | "plot-twist-generator"
       | "world"
       | "council-vote"
       | "secret-society"
-      | "star-system",
+      | "star-system"
+      | "alien-race",
   };
 };
 
@@ -94,9 +98,11 @@ export const entries: EntryGenerator = () => {
     { slug: "dungeon-generator" },
     { slug: "adventure-generator" },
     { slug: "adventure-idea-generator" },
+    { slug: "plot-twist-generator" },
     { slug: "world" },
     { slug: "council-vote" },
     { slug: "secret-society" },
     { slug: "star-system" },
+    { slug: "alien-race" },
   ];
 };

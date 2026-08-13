@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
-  import { goto } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
@@ -28,8 +29,10 @@
   import NewsSheetFormFields from "$lib/components/seo/NewsSheetFormFields.svelte";
   import DungeonFormFields from "$lib/components/seo/DungeonFormFields.svelte";
   import AdventureFormFields from "$lib/components/seo/AdventureFormFields.svelte";
+  import PlotTwistFormFields from "$lib/components/seo/PlotTwistFormFields.svelte";
   import WorldFormFields from "$lib/components/seo/WorldFormFields.svelte";
   import StarSystemFormFields from "$lib/components/seo/StarSystemFormFields.svelte";
+  import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -52,8 +55,10 @@
     newsSheetConfig,
     dungeonConfig,
     adventureConfig,
+    plotTwistConfig,
     worldConfig,
     starSystemConfig,
+    alienRaceConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -65,6 +70,10 @@
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
   import {
+    buildPlotTwistPremise,
+    resolvePlotTwistPremiseForGeneration,
+  } from "$lib/services/seo/generator-handoffs";
+  import {
     HUB_LABELS,
     HUB_SLUG_TO_THEME_ID,
     SETTLEMENT_GENRE_FOR_HUB,
@@ -74,6 +83,7 @@
     mapShipGenreToTheme,
     mapWorldGenreToTheme,
     mapStarSystemGenreToTheme,
+    mapAlienRaceGenreToTheme,
     resolveHubGeneratorGenre,
     shouldSyncGeneratorTheme,
   } from "./generator-theme-maps";
@@ -106,6 +116,7 @@
 
   // When arriving via a themed URL, seed hubContext immediately so derived
   // values (backHref, initialHubGenre) compute correctly on first render.
+  const _initialSlug = untrack(() => slug);
   const _initialUrlHubTheme = untrack(() => urlHubTheme);
   if (_initialUrlHubTheme) {
     hubContext.set(_initialUrlHubTheme);
@@ -359,6 +370,34 @@
     campaignContext: "",
   });
 
+  const initialHandedOffQuestPremise =
+    browser && _initialSlug === "plot-twist-generator"
+      ? (new URLSearchParams(window.location.search).get("questPremise") ?? "")
+      : "";
+  let handedOffQuestPremise = $state(initialHandedOffQuestPremise);
+
+  let plotTwist = $state({
+    genre: factionConfig.themes[0],
+    twistType: plotTwistConfig.twistTypes[0],
+    impact: plotTwistConfig.impacts[1],
+    timing: plotTwistConfig.timings[4],
+    foreshadowing: plotTwistConfig.foreshadowing[0],
+    premise: initialHandedOffQuestPremise,
+    constraints: "",
+    campaignContext: "",
+  });
+
+  // Dynamic generator routes reuse this component during client navigation.
+  // Read the URL only in the browser so static prerendering remains valid.
+  afterNavigate(({ to }) => {
+    const premise =
+      slug === "plot-twist-generator"
+        ? (to?.url.searchParams.get("questPremise") ?? "")
+        : "";
+    handedOffQuestPremise = premise;
+    if (premise) plotTwist.premise = premise;
+  });
+
   let world = $state({
     worldType: worldConfig.worldTypes[0],
     habitability: worldConfig.habitability[0],
@@ -392,8 +431,29 @@
     campaignContext: "",
   });
 
+  let alienRace = $state<{
+    genre: string;
+    generationMode: string;
+    homeEnvironment: string;
+    bodyPlan: string;
+    psychology: string;
+    socialOrganisation: string;
+    technologyLevel: string;
+    relationToOutsiders: string;
+    campaignContext: string;
+  }>({
+    genre: alienRaceConfig.genres[0],
+    generationMode: alienRaceConfig.generationModes[0],
+    homeEnvironment: alienRaceConfig.homeEnvironments[0],
+    bodyPlan: alienRaceConfig.bodyPlans[0],
+    psychology: alienRaceConfig.psychologies[0],
+    socialOrganisation: alienRaceConfig.socialOrganisations[0],
+    technologyLevel: alienRaceConfig.technologyLevels[0],
+    relationToOutsiders: alienRaceConfig.relationsToOutsiders[0],
+    campaignContext: "",
+  });
+
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
-  const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
     (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
@@ -443,12 +503,15 @@
     else if (slug === "world") activeTheme = mapWorldGenreToTheme(world.genre);
     else if (slug === "star-system")
       activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
+    else if (slug === "alien-race")
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
     else if (slug === "dungeon-generator") dungeon.genre = activeTheme;
     else if (
       slug === "adventure-generator" ||
       slug === "adventure-idea-generator"
     )
       adventure.genre = activeTheme;
+    else if (slug === "plot-twist-generator") plotTwist.genre = activeTheme;
   });
 
   // Consumes the "Develop this world" handoff from a generated star system
@@ -571,6 +634,17 @@
       activeTheme = mapStarSystemGenreToTheme(starSystem.genre);
       return;
     }
+    if (slug === "alien-race") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (
+        hubGenre &&
+        (alienRaceConfig.genres as readonly string[]).includes(hubGenre)
+      ) {
+        alienRace.genre = hubGenre;
+      }
+      activeTheme = mapAlienRaceGenreToTheme(alienRace.genre);
+      return;
+    }
     if (slug === "news-sheet-generator") {
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre && newsSheetConfig.genres.includes(hubGenre)) {
@@ -680,6 +754,17 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
+    "plot-twist-generator": (useAI) =>
+      generatorEngine.generatePlotTwist({
+        ...plotTwist,
+        premise: resolvePlotTwistPremiseForGeneration(
+          plotTwist.premise,
+          handedOffQuestPremise,
+        ),
+        themeId: activeTheme,
+        genre: activeTheme,
+        useAI,
+      }),
     world: (useAI) =>
       generatorEngine.generateWorld({
         ...world,
@@ -693,6 +778,12 @@
         useAI,
         avoidNames: collectSessionNames(sessionHubStore.entities),
       }),
+    "alien-race": (useAI) =>
+      generatorEngine.generateAlienRace({
+        ...alienRace,
+        useAI,
+        avoidNames: collectSessionNames(sessionHubStore.entities),
+      }),
   };
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -701,8 +792,17 @@
     return handler(useAI);
   }
 
+  function openPlotTwistFromQuest(draft: GeneratorOutput) {
+    const params = new URLSearchParams({
+      questPremise: buildPlotTwistPremise(draft),
+    });
+    void goto(resolve(`/generators/plot-twist-generator?${params}`));
+  }
+
   const initialDraft = $derived(
-    initialDraftOverride ?? slugDrafts[slug] ?? null,
+    handedOffQuestPremise && slug === "plot-twist-generator"
+      ? null
+      : (initialDraftOverride ?? slugDrafts[slug] ?? null),
   );
 </script>
 
@@ -722,6 +822,7 @@
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
+  onGeneratePlotTwist={slug === "quest" ? openPlotTwistFromQuest : undefined}
 >
   {#snippet formFields(trigger)}
     {#if slug === "npc"}
@@ -949,6 +1050,18 @@
         bind:campaignContext={adventure.campaignContext}
         onSurprise={trigger}
       />
+    {:else if slug === "plot-twist-generator"}
+      <PlotTwistFormFields
+        bind:theme={activeTheme}
+        bind:twistType={plotTwist.twistType}
+        bind:impact={plotTwist.impact}
+        bind:timing={plotTwist.timing}
+        bind:foreshadowing={plotTwist.foreshadowing}
+        bind:premise={plotTwist.premise}
+        bind:constraints={plotTwist.constraints}
+        bind:campaignContext={plotTwist.campaignContext}
+        onSurprise={trigger}
+      />
     {:else if slug === "world"}
       <WorldFormFields
         bind:worldType={world.worldType}
@@ -977,6 +1090,22 @@
         bind:campaignContext={starSystem.campaignContext}
         onGenreChange={(genre) => {
           activeTheme = mapStarSystemGenreToTheme(genre);
+        }}
+        onSurprise={trigger}
+      />
+    {:else if slug === "alien-race"}
+      <AlienRaceFormFields
+        bind:genre={alienRace.genre}
+        bind:generationMode={alienRace.generationMode}
+        bind:homeEnvironment={alienRace.homeEnvironment}
+        bind:bodyPlan={alienRace.bodyPlan}
+        bind:psychology={alienRace.psychology}
+        bind:socialOrganisation={alienRace.socialOrganisation}
+        bind:technologyLevel={alienRace.technologyLevel}
+        bind:relationToOutsiders={alienRace.relationToOutsiders}
+        bind:campaignContext={alienRace.campaignContext}
+        onGenreChange={(genre) => {
+          activeTheme = mapAlienRaceGenreToTheme(genre);
         }}
         onSurprise={trigger}
       />

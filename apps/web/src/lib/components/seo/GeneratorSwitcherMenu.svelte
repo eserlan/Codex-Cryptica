@@ -45,6 +45,7 @@
         { label: "Faction Generator", path: "/generators/faction" },
         { label: "Settlement Generator", path: "/generators/settlement" },
         { label: "Star System Generator", path: "/generators/star-system" },
+        { label: "Alien Race Generator", path: "/generators/alien-race" },
         { label: "Ship Generator", path: "/generators/ship-generator" },
         {
           label: "Language Profile Generator",
@@ -68,6 +69,10 @@
           path: "/generators/adventure-generator",
         },
         { label: "Quest Hook Generator", path: "/generators/quest" },
+        {
+          label: "Plot Twist & Complication Generator",
+          path: "/generators/plot-twist-generator",
+        },
         { label: "Council Vote Generator", path: "/generators/council-vote" },
         {
           label: "Secret Society Generator",

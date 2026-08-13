@@ -40,17 +40,19 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.31.57",
+      "version": "0.31.58",
       "dependencies": {
         "@codex/ai-engine": "workspace:*",
         "@codex/audio-engine": "workspace:*",
         "@codex/canvas-engine": "workspace:*",
         "@codex/content-packs": "workspace:*",
+        "@codex/entity-shelf": "workspace:*",
         "@codex/events": "workspace:*",
         "@codex/family-engine": "workspace:*",
         "@codex/gdrive-sync": "workspace:*",
         "@codex/importer": "workspace:*",
         "@codex/oracle-engine": "workspace:*",
+        "@codex/performance-observability": "workspace:*",
         "@codex/proposer": "workspace:*",
         "@codex/runtime": "workspace:*",
         "@codex/search-engine": "workspace:*",
@@ -251,6 +253,19 @@
         "vitest": "^4.1.7",
       },
     },
+    "packages/entity-shelf": {
+      "name": "@codex/entity-shelf",
+      "version": "0.0.0",
+      "dependencies": {
+        "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
+        "eslint": "^10.8.0",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
     "packages/events": {
       "name": "@codex/events",
       "version": "0.0.0",
@@ -310,6 +325,7 @@
       "name": "graph-engine",
       "version": "0.0.0",
       "dependencies": {
+        "@codex/performance-observability": "workspace:*",
         "comlink": "^4.4.1",
         "cytoscape": "^3.33.4",
         "cytoscape-fcose": "^2.2.0",
@@ -379,6 +395,15 @@
         "vitest": "^4.1.7",
       },
     },
+    "packages/performance-observability": {
+      "name": "@codex/performance-observability",
+      "version": "0.0.0",
+      "devDependencies": {
+        "eslint": "^10.8.0",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
     "packages/proposer": {
       "name": "@codex/proposer",
       "version": "0.0.0",
@@ -419,6 +444,7 @@
       "version": "0.0.0",
       "dependencies": {
         "comlink": "^4.4.1",
+        "fflate": "^0.8.3",
         "flexsearch": "^0.8.212",
         "schema": "workspace:*",
       },
@@ -433,6 +459,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@codex/events": "workspace:*",
+        "@codex/performance-observability": "workspace:*",
         "@codex/runtime": "workspace:*",
         "@codex/search-engine": "workspace:*",
         "@codex/vault-engine": "workspace:*",
@@ -552,6 +579,8 @@
 
     "@codex/content-packs": ["@codex/content-packs@workspace:packages/content-packs"],
 
+    "@codex/entity-shelf": ["@codex/entity-shelf@workspace:packages/entity-shelf"],
+
     "@codex/events": ["@codex/events@workspace:packages/events"],
 
     "@codex/family-engine": ["@codex/family-engine@workspace:packages/family-engine"],
@@ -561,6 +590,8 @@
     "@codex/importer": ["@codex/importer@workspace:packages/importer"],
 
     "@codex/oracle-engine": ["@codex/oracle-engine@workspace:packages/oracle-engine"],
+
+    "@codex/performance-observability": ["@codex/performance-observability@workspace:packages/performance-observability"],
 
     "@codex/proposer": ["@codex/proposer@workspace:packages/proposer"],
 

@@ -174,7 +174,7 @@
       <p
         class="text-lg md:text-2xl text-theme-muted mb-12 font-light leading-relaxed"
       >
-        Stop fighting scattered folders. Organize campaign notes, characters,
+        Stop fighting scattered folders. Organise campaign notes, characters,
         locations, and timelines inside a private, local-first database with
         connected knowledge graphs.
       </p>

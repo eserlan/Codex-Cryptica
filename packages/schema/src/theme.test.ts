@@ -60,6 +60,18 @@ describe("Theme Schema & Definitions", () => {
     expect(() => StylingTemplateSchema.parse(PIRATE_DARK)).not.toThrow();
   });
 
+  it("defines HORROR_LIGHT as an Archival Dossier in cold aged ivory, charcoal, and oxblood", () => {
+    expect(HORROR_LIGHT.id).toBe("horror_light");
+    expect(HORROR_LIGHT.name).toBe("Archival Dossier");
+    expect(HORROR_LIGHT.tokens.primary).toBe("#801414");
+    expect(HORROR_LIGHT.tokens.accent).toBe("#801414");
+    expect(HORROR_LIGHT.tokens.background).toBe("#e4dfd5");
+    expect(HORROR_LIGHT.tokens.text).toBe("#1c1917");
+    expect(HORROR_LIGHT.tokens.secondary).toBe("#4a4543");
+    expect(HORROR_LIGHT.tokens.borderRadius).toBe("0px");
+    expect(() => StylingTemplateSchema.parse(HORROR_LIGHT)).not.toThrow();
+  });
+
   it("defines light and dark counterparts for all world themes", () => {
     const counterparts: Record<string, { light: any; dark: any }> = {
       workspace: { light: THEMES.workspace, dark: WORKSPACE_DARK },

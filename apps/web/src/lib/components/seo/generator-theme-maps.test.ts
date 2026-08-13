@@ -3,6 +3,7 @@ import {
   mapHubGenreToShipGenre,
   mapShipGenreToTheme,
   mapStarSystemGenreToTheme,
+  mapAlienRaceGenreToTheme,
   mapWorldGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
@@ -32,6 +33,7 @@ describe("shouldSyncGeneratorTheme", () => {
     expect(shouldSyncGeneratorTheme("world")).toBe(true);
     expect(shouldSyncGeneratorTheme("council-vote")).toBe(true);
     expect(shouldSyncGeneratorTheme("secret-society")).toBe(true);
+    expect(shouldSyncGeneratorTheme("plot-twist-generator")).toBe(true);
   });
 
   it("is false for an unrecognized slug", () => {
@@ -98,5 +100,25 @@ describe("mapStarSystemGenreToTheme", () => {
     expect(mapStarSystemGenreToTheme("Post-Apocalyptic")).toBe(
       "Post-Apocalyptic",
     );
+  });
+});
+
+describe("mapAlienRaceGenreToTheme", () => {
+  it("maps every alien race genre to a real theme skin", () => {
+    expect(mapAlienRaceGenreToTheme("Hard Sci-Fi")).toBe(
+      "Sci-Fi / Space Opera",
+    );
+    expect(mapAlienRaceGenreToTheme("Space Opera")).toBe(
+      "Sci-Fi / Space Opera",
+    );
+    expect(mapAlienRaceGenreToTheme("Cyberpunk")).toBe("Cyberpunk / Corporate");
+    expect(mapAlienRaceGenreToTheme("Cosmic Horror")).toBe("Cosmic Horror");
+    expect(mapAlienRaceGenreToTheme("Post-Apocalyptic")).toBe(
+      "Post-Apocalyptic",
+    );
+  });
+
+  it("falls back to the general sci-fi skin for a custom genre", () => {
+    expect(mapAlienRaceGenreToTheme("Biopunk")).toBe("Sci-Fi / Space Opera");
   });
 });

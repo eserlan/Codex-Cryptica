@@ -94,6 +94,13 @@
           icon: "icon-[lucide--scroll-text]",
         },
         {
+          href: "/generators/plot-twist-generator",
+          label: "Plot Twist & Complication Generator",
+          summary:
+            "Turn an established situation into a coherent twist with fair foreshadowing, consequences, and new player choices.",
+          icon: "icon-[lucide--shuffle]",
+        },
+        {
           href: "/generators/council-vote",
           label: "Council Vote Generator",
           summary:
@@ -120,6 +127,13 @@
           summary:
             "Generate a coherent sci-fi star system — star(s), major bodies, factions, resources, hazards, and a system-wide conflict or mystery.",
           icon: "icon-[lucide--orbit]",
+        },
+        {
+          href: "/generators/alien-race",
+          label: "Alien Race Generator",
+          summary:
+            "Generate a coherent alien species — biology, homeworld, senses, culture, technology, and weaknesses that all follow from each other.",
+          icon: "icon-[lucide--dna]",
         },
         {
           href: "/generators/dungeon-generator",

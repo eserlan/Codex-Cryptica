@@ -6,6 +6,7 @@ import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
 import type { Entity, GuestChatTranscript } from "schema";
+import type { BulkMutationResult } from "./vault/bulk-results";
 import {
   saveTranscriptToDisk,
   loadTranscriptsForCharacterFromDisk,
@@ -54,6 +55,7 @@ import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
+import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
   // Reactive State
@@ -382,6 +384,7 @@ export class VaultStore {
     });
 
     const mutations = new EntityMutationService({
+      performanceRecorder: browserPerformanceRecorder,
       repository: this.repository,
       persistence,
       loader,
@@ -590,8 +593,16 @@ export class VaultStore {
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
   }
+  bulkUpdate(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<BulkMutationResult> {
+    return this.entityStore.bulkUpdate(updates);
+  }
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
+  }
+  bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+    return this.entityStore.bulkDelete(ids);
   }
   /**
    * Freeform relationship phrases like "Mother of" are redirected to a real
@@ -819,7 +830,12 @@ export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());
 
-if (typeof window !== "undefined" && import.meta.env.DEV) {
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV ||
+    (globalThis as { __CODEX_PERFORMANCE_CAPTURE__?: boolean })
+      .__CODEX_PERFORMANCE_CAPTURE__ === true)
+) {
   (window as any).vault = vault;
   debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }
