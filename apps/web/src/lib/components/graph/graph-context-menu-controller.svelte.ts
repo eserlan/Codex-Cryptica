@@ -75,7 +75,12 @@ export class GraphContextMenuController {
   });
 
   setupEvents = () => {
+    const recordCxtTap = () => {
+      this.getCy().scratch?.("_lastCxtTap", Date.now());
+    };
+
     const openHandler = (evt: EventObject) => {
+      recordCxtTap();
       const node = evt.target;
       this.targetId = node.id();
       this.targetEdge = null;
@@ -92,6 +97,7 @@ export class GraphContextMenuController {
     };
 
     const edgeContextMenuHandler = (evt: EventObject) => {
+      recordCxtTap();
       const edge = evt.target;
       const data = edge.data();
       this.targetId = null;
@@ -107,6 +113,7 @@ export class GraphContextMenuController {
 
     const backgroundContextMenuHandler = (evt: EventObject) => {
       if (evt.target === this.getCy()) {
+        recordCxtTap();
         this.targetId = null;
         this.selectedNodes = [];
         this.targetEdge = null;
@@ -116,6 +123,12 @@ export class GraphContextMenuController {
     };
 
     const closeHandler = () => {
+      const lastCxtTap =
+        (this.getCy().scratch?.("_lastCxtTap") as number | undefined) || 0;
+      if (Date.now() - lastCxtTap < 400) {
+        return;
+      }
+
       this.clearPickerTimeout();
       this.contextMenuOpen = false;
       this.canvasPickerOpen = false;

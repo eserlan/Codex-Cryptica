@@ -338,6 +338,16 @@ export class GraphViewController {
           this.hoverPosition = null;
         },
         onNodeTap: async (id, node) => {
+          const cyInstance =
+            typeof (node as any).cy === "function"
+              ? (node as any).cy()
+              : this.cy;
+          const lastCxtTap =
+            (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) || 0;
+          if (Date.now() - lastCxtTap < 400) {
+            return;
+          }
+
           const container = this.cy?.container();
           if (container) {
             const rect = container.getBoundingClientRect();

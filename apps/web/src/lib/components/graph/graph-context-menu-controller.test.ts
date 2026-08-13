@@ -221,6 +221,41 @@ describe("GraphContextMenuController", () => {
     expect(controller.imagePickerOpen).toBe(false);
   });
 
+  it("should not close context menu on tap release immediately following cxttap", () => {
+    let cxtHandler: any;
+    let tapHandler: any;
+    const scratchData: Record<string, any> = {};
+    cy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchData[key] = val;
+      return scratchData[key];
+    });
+
+    cy.on.mockImplementation((event: string, ...args: any[]) => {
+      if (event === "cxttap" && args[0] === "node") {
+        cxtHandler = args[1];
+      } else if (event === "tap" && args.length === 1) {
+        tapHandler = args[0];
+      }
+    });
+
+    controller.setupEvents();
+    expect(cxtHandler).toBeDefined();
+    expect(tapHandler).toBeDefined();
+
+    const mockNode = {
+      id: () => "node-1",
+      selected: () => false,
+      renderedPosition: () => ({ x: 50, y: 50 }),
+    };
+
+    cxtHandler({ target: mockNode, renderedPosition: { x: 50, y: 50 } });
+    expect(controller.contextMenuOpen).toBe(true);
+
+    // Immediate tap release should NOT close menu
+    tapHandler({});
+    expect(controller.contextMenuOpen).toBe(true);
+  });
+
   it("should not mark important when no nodes are selected", async () => {
     controller.selectedNodes = [];
 
