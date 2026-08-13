@@ -46,7 +46,7 @@ The Shelf carries:
 - **Labels, aliases, dates, lore, and your notes.**
 - **Links between entities**, with some care about how — see below.
 
-Nothing gets flattened into a generic interchange format. The Shelf copies the entity as Codex already stores it.
+Nothing gets flattened into a generic export format. The Shelf copies the entity as your vault already stores it.
 
 ## Links, and why we refuse to guess
 
@@ -54,7 +54,7 @@ Say you shelve a faction and four of its members together. The links between tho
 
 Harder: your Goblin King links to a **Shrine of Ash** you did not shelve. If the destination vault has a Shrine of Ash, the link reconnects to it.
 
-If the destination has *two* things called Shrine of Ash, the Shelf leaves the link off and tells you.
+If the destination has _two_ things called Shrine of Ash, the Shelf leaves the link off and tells you.
 
 That is deliberate. A missing link is annoying, but you will notice it. A link silently attached to the wrong shrine is worse. Nothing about it looks wrong, so you never go looking, and it quietly misinforms every session until someone trips over it.
 
