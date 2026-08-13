@@ -2,6 +2,7 @@
   import type { ImportPlan } from "@codex/entity-shelf";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { shelf as defaultShelf } from "$lib/features/shelf";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import type { ShelfStore } from "$lib/features/shelf/shelf.svelte";
   import ShelfEntryCard from "./ShelfEntryCard.svelte";
   import ImportOutcomeSummary from "./ImportOutcomeSummary.svelte";
@@ -70,9 +71,26 @@
 
 <section class="flex flex-col gap-4" data-testid="shelf-panel">
   <header class="space-y-1">
-    <h2 class="text-sm uppercase tracking-widest text-theme-text-muted">
-      The Shelf
-    </h2>
+    <div class="flex items-start justify-between gap-2">
+      <h2 class="text-sm uppercase tracking-widest text-theme-text-muted">
+        The Shelf
+      </h2>
+      <!--
+        On a phone the sidebar fills the screen, so without this the panel is a
+        dead end: the activity bar it was opened from is no longer visible.
+        Matches the close control the Explorer and Oracle panels already carry.
+      -->
+      <button
+        type="button"
+        onclick={() => layoutUIStore.closeSidebar()}
+        class="p-1.5 -mt-1 -mr-1 rounded-md transition-all shrink-0"
+        style:color="var(--theme-icon-default)"
+        aria-label="Close the Shelf"
+        data-testid="shelf-close"
+      >
+        <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
+      </button>
+    </div>
     <p class="text-xs text-theme-text-muted">
       Entities waiting to be brought into a vault. The Shelf lives in this
       browser — it is not a backup, and it cannot send anything to anyone else.

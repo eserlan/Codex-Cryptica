@@ -82,6 +82,21 @@ describe("ShelfPanel", () => {
     expect(getByTestId("shelf-import").hasAttribute("disabled")).toBe(true);
   });
 
+  it("offers a way out — on a phone the panel fills the screen (#2101)", () => {
+    // Without this the Shelf is a dead end on mobile: the sidebar covers the
+    // activity bar it was opened from, so there is nothing left to tap.
+    const { getByTestId } = render(ShelfPanel, { shelf: fakeShelf([entry()]) });
+
+    const close = getByTestId("shelf-close");
+    expect(close.getAttribute("aria-label")).toBe("Close the Shelf");
+  });
+
+  it("offers a way out from the empty state too", () => {
+    const { getByTestId } = render(ShelfPanel, { shelf: fakeShelf([]) });
+
+    expect(getByTestId("shelf-close")).toBeTruthy();
+  });
+
   it("never says “tags” in user-facing copy (principle XII)", () => {
     const { getByTestId } = render(ShelfPanel, { shelf: fakeShelf([entry()]) });
 
