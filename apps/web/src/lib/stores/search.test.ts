@@ -1,4 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  type Mock,
+} from "vitest";
+import type { StorageLike } from "$lib/utils/runtime-deps";
+
+interface MockStorage extends StorageLike {
+  getItem: Mock<(key: string) => string | null>;
+  setItem: Mock<(key: string, value: string) => void>;
+  removeItem: Mock<(key: string) => void>;
+  length: number;
+  key: Mock<(index: number) => string | null>;
+}
 
 vi.hoisted(() => {
   // Mock Svelte 5 Runes
@@ -77,7 +94,7 @@ describe("SearchStore", () => {
   let store: SearchStore;
   let mockVault: any;
   let mockSearchService: any;
-  let mockStorage: any;
+  let mockStorage: MockStorage;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -103,7 +120,7 @@ describe("SearchStore", () => {
       mockVault,
       sessionModeStore,
       mockSearchService,
-      mockStorage
+      mockStorage,
     );
   });
 
@@ -135,7 +152,7 @@ describe("SearchStore", () => {
       mockVault,
       sessionModeStore,
       mockSearchService,
-      mockStorage
+      mockStorage,
     );
     store.open();
 
@@ -153,7 +170,7 @@ describe("SearchStore", () => {
       mockVault,
       sessionModeStore,
       mockSearchService,
-      mockStorage
+      mockStorage,
     );
 
     expect(store.recents).toEqual([]);
@@ -168,7 +185,7 @@ describe("SearchStore", () => {
       mockVault,
       sessionModeStore,
       mockSearchService,
-      mockStorage
+      mockStorage,
     );
     expect(store.recents).toEqual([]);
   });
@@ -231,7 +248,7 @@ describe("SearchStore", () => {
         mockVault,
         sessionModeStore,
         mockSearchService,
-        mockStorage
+        mockStorage,
       );
       expect(store.recents).toHaveLength(1);
       expect(store.recents[0].id).toBe("valid");
@@ -291,7 +308,7 @@ describe("SearchStore", () => {
       mockVault,
       sessionModeStore,
       mockSearchService,
-      mockStorage
+      mockStorage,
     );
 
     expect(store.indexProgress).toEqual(progress);
