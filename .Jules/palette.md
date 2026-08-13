@@ -114,3 +114,8 @@
 
 **Learning:** Found multiple icon-only contextual action buttons in chat transcripts (like `startEditMessage` and `deleteHostTranscript`) that lacked both explicit `aria-label` attributes (relying solely on `title` which is insufficient for screen readers) and `aria-hidden="true"` on their inner decorative icons.
 **Action:** Always add explicit `aria-label`s to icon-only action buttons (even if they have `title` tooltips) and add `aria-hidden="true"` to inner icon elements, especially inside complex, repetitive lists like chat transcripts.
+
+## 2026-08-13 - StatSheetTemplateSettings Accessible Loading State
+
+**Learning:** Found the Save button in `StatSheetTemplateSettings.svelte` was relying on an inaccessible text-only class ("Saving copy...") without a visual spinner and lacking an `aria-busy` state, making the loading state less obvious.
+**Action:** Replaced text-only pulse with the standard SVG spinner (`icon-[lucide--loader-2] animate-spin`) next to static "Saving copy..." text, and explicitly bound `aria-busy={isSavingVaultCopy}` on the parent button.
