@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 vi.hoisted(() => {
-  (global as any).localStorage = {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn(),
-  };
-
   // Mock Svelte 5 Runes
   (global as any).$state = (v: any) => v;
   (global as any).$state.raw = (v: any) => v;
@@ -84,6 +77,7 @@ describe("SearchStore", () => {
   let store: SearchStore;
   let mockVault: any;
   let mockSearchService: any;
+  let mockStorage: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -97,7 +91,20 @@ describe("SearchStore", () => {
     vi.mocked(guestVault.search).mockReset();
     vi.mocked(guestVault.search).mockReturnValue([]);
 
-    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+    mockStorage = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      length: 0,
+      key: vi.fn(),
+    };
+
+    store = new SearchStore(
+      mockVault,
+      sessionModeStore,
+      mockSearchService,
+      mockStorage
+    );
   });
 
   afterEach(() => {
@@ -120,11 +127,16 @@ describe("SearchStore", () => {
       },
     ];
 
-    vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(recents));
+    mockStorage.getItem.mockReturnValue(JSON.stringify(recents));
 
     // Need to re-instantiate to trigger loadRecents in constructor
     store?.destroy();
-    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+    store = new SearchStore(
+      mockVault,
+      sessionModeStore,
+      mockSearchService,
+      mockStorage
+    );
     store.open();
 
     expect(store.recents).toHaveLength(1);
@@ -133,11 +145,16 @@ describe("SearchStore", () => {
   });
 
   it("handles malformed JSON in localStorage", () => {
-    vi.mocked(localStorage.getItem).mockReturnValue("invalid-json");
+    mockStorage.getItem.mockReturnValue("invalid-json");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     store?.destroy();
-    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+    store = new SearchStore(
+      mockVault,
+      sessionModeStore,
+      mockSearchService,
+      mockStorage
+    );
 
     expect(store.recents).toEqual([]);
     expect(spy).toHaveBeenCalled();
@@ -145,16 +162,19 @@ describe("SearchStore", () => {
   });
 
   it("handles non-array JSON in localStorage", () => {
-    vi.mocked(localStorage.getItem).mockReturnValue(
-      JSON.stringify({ not: "an array" }),
-    );
+    mockStorage.getItem.mockReturnValue(JSON.stringify({ not: "an array" }));
     store?.destroy();
-    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+    store = new SearchStore(
+      mockVault,
+      sessionModeStore,
+      mockSearchService,
+      mockStorage
+    );
     expect(store.recents).toEqual([]);
   });
 
   it("normalizes selected results missing IDs before saving recents", () => {
-    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    mockStorage.getItem.mockReturnValue(null);
 
     store.isOpen = true;
     store.results = [
@@ -170,7 +190,7 @@ describe("SearchStore", () => {
 
     store.selectCurrent();
 
-    const [[, stored]] = vi.mocked(localStorage.setItem).mock.calls;
+    const [[, stored]] = mockStorage.setItem.mock.calls;
     const parsed = JSON.parse(stored as string);
     expect(parsed[0].id).toBe("alpha");
     expect(parsed[0].path).toBe("alpha.md");
@@ -199,7 +219,7 @@ describe("SearchStore", () => {
     });
 
     it("filters out nulls and invalid entries in loadRecents", () => {
-      vi.mocked(localStorage.getItem).mockReturnValue(
+      mockStorage.getItem.mockReturnValue(
         JSON.stringify([
           { id: "valid", path: "valid.md" },
           { id: "", path: "" }, // normalized to null
@@ -207,7 +227,12 @@ describe("SearchStore", () => {
         ]),
       );
       store?.destroy();
-      store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+      store = new SearchStore(
+        mockVault,
+        sessionModeStore,
+        mockSearchService,
+        mockStorage
+      );
       expect(store.recents).toHaveLength(1);
       expect(store.recents[0].id).toBe("valid");
     });
@@ -216,13 +241,13 @@ describe("SearchStore", () => {
   it("uses vault-specific storage key", () => {
     mockVault.activeVaultId = "vault-a";
     store.open();
-    expect(localStorage.getItem).toHaveBeenCalledWith("search_recents_vault-a");
+    expect(mockStorage.getItem).toHaveBeenCalledWith("search_recents_vault-a");
   });
 
   it("uses 'default' storage key if activeVaultId is missing", () => {
     mockVault.activeVaultId = undefined;
     store.open();
-    expect(localStorage.getItem).toHaveBeenCalledWith("search_recents_default");
+    expect(mockStorage.getItem).toHaveBeenCalledWith("search_recents_default");
   });
 
   it("resets state", () => {
@@ -262,7 +287,12 @@ describe("SearchStore", () => {
     );
 
     store?.destroy();
-    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+    store = new SearchStore(
+      mockVault,
+      sessionModeStore,
+      mockSearchService,
+      mockStorage
+    );
 
     expect(store.indexProgress).toEqual(progress);
   });
@@ -487,7 +517,7 @@ describe("SearchStore", () => {
 
       expect(returned).toStrictEqual(result);
       expect(store.recents[0].id).toBe("1");
-      expect(localStorage.setItem).toHaveBeenCalled();
+      expect(mockStorage.setItem).toHaveBeenCalled();
     });
 
     it("limits recents to 5 items", () => {
