@@ -36,30 +36,39 @@ if (!slug) {
   process.exit(1);
 }
 const baseIndex = args.indexOf("--base");
-const base =
-  baseIndex === -1 ? "https://codexcryptica.com" : args[baseIndex + 1];
+let base = "https://codexcryptica.com";
+if (baseIndex !== -1) {
+  const customBase = args[baseIndex + 1];
+  if (!customBase || customBase.startsWith("--")) {
+    console.error("Error: --base requires a URL argument");
+    process.exit(1);
+  }
+  base = customBase.replace(/\/+$/, "");
+}
 
 const outputDir = path.join(repoRoot, "blogPics/og");
 fs.mkdirSync(outputDir, { recursive: true });
 const outputPath = path.join(outputDir, `generator-${slug}.jpg`);
 
 const browser = await chromium.launch();
-const page = await browser.newPage({
-  viewport: { width: WIDTH, height: HEIGHT },
-  deviceScaleFactor: 1,
-});
+try {
+  const page = await browser.newPage({
+    viewport: { width: WIDTH, height: HEIGHT },
+    deviceScaleFactor: 1,
+  });
 
-await page.goto(`${base}/generators/${slug}`, {
-  waitUntil: "networkidle",
-  timeout: 60_000,
-});
-// The seeded example draft renders a beat after hydration.
-await page.waitForTimeout(3000);
+  await page.goto(`${base}/generators/${slug}`, {
+    waitUntil: "networkidle",
+    timeout: 60_000,
+  });
+  // The seeded example draft renders a beat after hydration.
+  await page.waitForTimeout(3000);
 
-// Shot from the top of the page, deliberately: scrolling past the site header
-// only half-hides it (the nav is sticky) and clips the panels mid-card, while
-// at rest the frame reads as generator title, inputs, and the example result.
-await page.screenshot({ path: outputPath, type: "jpeg", quality: 88 });
-await browser.close();
-
-console.log(`Wrote ${path.relative(repoRoot, outputPath)}`);
+  // Shot from the top of the page, deliberately: scrolling past the site header
+  // only half-hides it (the nav is sticky) and clips the panels mid-card, while
+  // at rest the frame reads as generator title, inputs, and the example result.
+  await page.screenshot({ path: outputPath, type: "jpeg", quality: 88 });
+  console.log(`Wrote ${path.relative(repoRoot, outputPath)}`);
+} finally {
+  await browser.close();
+}

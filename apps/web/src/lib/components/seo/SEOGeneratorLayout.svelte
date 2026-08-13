@@ -65,7 +65,7 @@
     introTitle = "RPG Generator",
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
     ogImage = DEFAULT_OG_IMAGE,
-    ogImageAlt = DEFAULT_OG_IMAGE_ALT,
+    ogImageAlt = undefined,
     relatedLinks = [],
     faqs = [],
     theme = $bindable("Classic Fantasy"),
@@ -273,6 +273,11 @@
   );
 
   const resultJsonLd = $derived(buildResultJsonLd(generatedData));
+
+  const resolvedOgImageAlt = $derived(
+    ogImageAlt ??
+      (ogImage === DEFAULT_OG_IMAGE ? DEFAULT_OG_IMAGE_ALT : undefined),
+  );
 
   async function handleGenerate() {
     if (isGenerating) return;
@@ -628,7 +633,9 @@
     />
   {/if}
   <meta property="og:image" content={ogImage} />
-  <meta property="og:image:alt" content={ogImageAlt} />
+  {#if resolvedOgImageAlt}
+    <meta property="og:image:alt" content={resolvedOgImageAlt} />
+  {/if}
   <meta property="og:image:width" content="1600" />
   <meta property="og:image:height" content="1000" />
   <!-- Twitter Card -->
@@ -636,7 +643,9 @@
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={metaDescription} />
   <meta name="twitter:image" content={ogImage} />
-  <meta name="twitter:image:alt" content={ogImageAlt} />
+  {#if resolvedOgImageAlt}
+    <meta name="twitter:image:alt" content={resolvedOgImageAlt} />
+  {/if}
   <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
