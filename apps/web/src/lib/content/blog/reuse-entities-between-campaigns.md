@@ -32,6 +32,8 @@ Three ways to put something on the Shelf:
 
 Then switch vault, open the Shelf from the sidebar, tick what you want, and import.
 
+![The Shelf holding three entities carried over from another campaign, each showing which vault it came from](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/entity-shelf/shelf-panel.png)
+
 Entries stay on the Shelf after you import them. Shelve a monster once and drop it into three campaigns.
 
 ## What actually comes across
@@ -55,6 +57,8 @@ Say you shelve a faction and four of its members together. The links between tho
 Harder: your Goblin King links to a **Shrine of Ash** you did not shelve. If the destination vault has a Shrine of Ash, the link reconnects to it.
 
 If the destination has _two_ things called Shrine of Ash, the Shelf leaves the link off and tells you.
+
+![The Shelf reporting what an import created, with the entry still in place afterwards](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/entity-shelf/shelf-import-outcome.png)
 
 That is deliberate. A missing link is annoying, but you will notice it. A link silently attached to the wrong shrine is worse. Nothing about it looks wrong, so you never go looking, and it quietly misinforms every session until someone trips over it.
 
