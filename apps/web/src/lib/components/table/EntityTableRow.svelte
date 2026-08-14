@@ -20,6 +20,7 @@
     entity,
     vaultId,
     selected = false,
+    showIncompleteOnly = false,
     onToggleSelect,
     connectionSummary,
     onFilterType,
@@ -29,6 +30,7 @@
     entity: Entity;
     vaultId: string;
     selected?: boolean;
+    showIncompleteOnly?: boolean;
     onToggleSelect?: (
       id: string,
       options?: { shift?: boolean; ctrl?: boolean },
@@ -183,11 +185,18 @@
     class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
     data-testid="entity-table-connections-{entity.id}"
   >
-    <span class="font-medium text-theme-text">{connectionSummary.total}</span>
     {#if connectionSummary.total > 0}
+      <span class="font-medium text-theme-text">{connectionSummary.total}</span>
       <span class="text-theme-muted">
         {connectionSummary.inbound} in · {connectionSummary.outbound} out
       </span>
+    {:else if showIncompleteOnly}
+      <span
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        >0 connections</span
+      >
+    {:else}
+      <span class="font-medium text-theme-text">0</span>
     {/if}
   </td>
 
@@ -195,6 +204,11 @@
   <td class="px-3 py-2 align-top">
     {#if snippet}
       <span class="line-clamp-2 text-xs text-theme-muted/90">{snippet}</span>
+    {:else if showIncompleteOnly}
+      <span
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        aria-label="No summary">Missing summary</span
+      >
     {:else}
       <span class="text-theme-muted/50" aria-label="No summary">—</span>
     {/if}
@@ -225,6 +239,11 @@
           <span class="text-[10px] text-theme-muted/60">+{extraChips}</span>
         {/if}
       </span>
+    {:else if showIncompleteOnly}
+      <span
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        aria-label="No labels">No labels</span
+      >
     {:else}
       <span class="text-theme-muted/50" aria-label="No labels">—</span>
     {/if}

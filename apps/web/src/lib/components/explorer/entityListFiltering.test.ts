@@ -5,6 +5,7 @@ import {
   createEntityTextSearchRunner,
   parseEntitySearchQuery,
   searchEntityText,
+  evaluateEntityMissingFields,
 } from "./entityListFiltering";
 import type { Entity } from "schema";
 
@@ -324,6 +325,170 @@ describe("entityListFiltering pure functions", () => {
         showDraftsOnly: true,
       });
       expect(counts.get("npc")).toBe(1);
+    });
+  });
+
+  describe("evaluateEntityMissingFields", () => {
+    it("identifies missing summary, labels, and connections", () => {
+      const emptyEntity: Entity = {
+        id: "e-empty",
+        title: "Empty Node",
+        type: "npc",
+        labels: [],
+        tags: [],
+        aliases: [],
+        connections: [],
+        content: "",
+        summary: "",
+        status: "active",
+        updatedAt: 0,
+      };
+
+      const result = evaluateEntityMissingFields(emptyEntity, { total: 0 });
+      expect(result.summary).toBe(true);
+      expect(result.labels).toBe(true);
+      expect(result.connections).toBe(true);
+      expect(result.isIncomplete).toBe(true);
+    });
+
+    it("identifies complete entity when all fields are present", () => {
+      const completeEntity: Entity = {
+        id: "e-complete",
+        title: "Complete Node",
+        type: "npc",
+        labels: ["Hero"],
+        tags: [],
+        aliases: [],
+        connections: [],
+        content: "Detailed backstory.",
+        status: "active",
+        updatedAt: 0,
+      };
+
+      const result = evaluateEntityMissingFields(completeEntity, { total: 2 });
+      expect(result.summary).toBe(false);
+      expect(result.labels).toBe(false);
+      expect(result.connections).toBe(false);
+      expect(result.isIncomplete).toBe(false);
+    });
+  });
+
+  describe("showIncompleteOnly and columnFilters", () => {
+    const testEntities: Entity[] = [
+      {
+        id: "t1",
+        title: "Alpha",
+        type: "npc",
+        labels: ["Hero"],
+        tags: [],
+        aliases: [],
+        connections: [],
+        content: "Story of Alpha",
+        summary: "Alpha summary",
+        status: "active",
+        createdAt: 1000,
+        updatedAt: 2000,
+      },
+      {
+        id: "t2",
+        title: "Beta",
+        type: "location",
+        labels: [],
+        tags: [],
+        aliases: [],
+        connections: [],
+        content: "Story of Beta",
+        status: "active",
+        updatedAt: 2000,
+      },
+      {
+        id: "t3",
+        title: "Gamma",
+        type: "item",
+        labels: ["Relic"],
+        tags: [],
+        aliases: [],
+        connections: [],
+        content: "",
+        status: "active",
+        updatedAt: 2000,
+      },
+    ];
+
+    const connectionCounts = {
+      t1: { inbound: 1, outbound: 1, total: 2 },
+      t2: { inbound: 0, outbound: 0, total: 0 },
+      t3: { inbound: 0, outbound: 0, total: 0 },
+    };
+
+    it("filters only incomplete entities when showIncompleteOnly is true", () => {
+      const result = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        showIncompleteOnly: true,
+        connectionCounts,
+      });
+
+      // t1 is complete. t2 is missing labels and connections. t3 is missing content/summary and connections.
+      expect(result.map((e) => e.id)).toEqual(["t2", "t3"]);
+    });
+
+    it("filters by column filters (labels, connections, summary, dates)", () => {
+      // Missing labels
+      const missingLabelsResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          labelMode: "missing",
+        },
+      });
+      expect(missingLabelsResult.map((e) => e.id)).toEqual(["t2"]);
+
+      // Zero connections
+      const zeroConnectionsResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        connectionCounts,
+        columnFilters: {
+          connectionsMode: "zero",
+        },
+      });
+      expect(zeroConnectionsResult.map((e) => e.id)).toEqual(["t2", "t3"]);
+
+      // Missing summary
+      const missingSummaryResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          summaryMode: "missing_summary",
+        },
+      });
+      expect(missingSummaryResult.map((e) => e.id)).toEqual(["t3"]);
+
+      // Created date filter
+      const hasDateResult = filterEntities(testEntities, {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          createdMode: "has_date",
+        },
+      });
+      expect(hasDateResult.map((e) => e.id)).toEqual(["t1"]);
     });
   });
 });
