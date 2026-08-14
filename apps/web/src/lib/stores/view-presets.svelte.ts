@@ -62,7 +62,6 @@ export class ViewPresetsStore {
       this.loadedVaultId = vaultId;
       return this.presets;
     } catch (error) {
-      console.error("[GraphStore] Failed to load graph view presets:", error);
       console.error("[ViewPresetsStore] Failed to load view presets:", error);
       this.presets = [];
       this.loadedVaultId = vaultId;

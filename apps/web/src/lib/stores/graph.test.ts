@@ -729,7 +729,7 @@ describe("GraphStore", () => {
 
       expect(graph.viewPresets).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Failed to load graph view presets"),
+        expect.stringContaining("Failed to load view presets"),
         expect.anything(),
       );
     });

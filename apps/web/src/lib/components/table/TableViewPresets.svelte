@@ -85,7 +85,9 @@
         labelFilterMode: "AND",
         searchQuery: currentFilterState.searchQuery || undefined,
         showIncompleteOnly: currentFilterState.showIncompleteOnly,
-        columnFilters: currentFilterState.columnFilters,
+        columnFilters: currentFilterState.columnFilters
+          ? { ...currentFilterState.columnFilters }
+          : undefined,
         tableSort: currentFilterState.sort
           ? { ...currentFilterState.sort }
           : undefined,
@@ -137,7 +139,8 @@
     onclick={() => (isOpen = !isOpen)}
     title="Saved Views"
     aria-label="Saved Views"
-    aria-pressed={isOpen}
+    aria-haspopup="dialog"
+    aria-expanded={isOpen}
     data-testid="table-view-presets-toggle"
   >
     <span aria-hidden="true" class="icon-[lucide--bookmark] h-3.5 w-3.5"></span>
@@ -160,7 +163,8 @@
       <div
         class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px] mb-2"
       >
-        <span class="icon-[lucide--bookmark] w-3.5 h-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--bookmark] w-3.5 h-3.5"
+        ></span>
         Saved Views
       </div>
 
