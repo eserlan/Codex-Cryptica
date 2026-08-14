@@ -173,4 +173,48 @@ Body`;
     ).toBe("Product updates");
     expect(parseBlogArticle("t.md", front(""))?.topic).toBeUndefined();
   });
+
+  it("keeps a card image and its alt text when set", () => {
+    const article = parseBlogArticle(
+      "t.md",
+      front('image: "https://cdn.example/card.png"\nimageAlt: "A card"'),
+    );
+    expect(article?.image).toBe("https://cdn.example/card.png");
+    expect(article?.imageAlt).toBe("A card");
+  });
+
+  it("leaves the card image absent so the site default applies", () => {
+    const article = parseBlogArticle("t.md", front(""));
+    expect(article?.image).toBeUndefined();
+    expect(article?.imageAlt).toBeUndefined();
+  });
+
+  it("drops alt text that has no image to describe", () => {
+    const article = parseBlogArticle("t.md", front('imageAlt: "Orphaned"'));
+    expect(article?.image).toBeUndefined();
+    expect(article?.imageAlt).toBeUndefined();
+  });
+
+  it("drops non-absolute or invalid image URLs along with their alt text", () => {
+    const relativeArticle = parseBlogArticle(
+      "t.md",
+      front('image: "/relative/path.png"\nimageAlt: "A relative image"'),
+    );
+    expect(relativeArticle?.image).toBeUndefined();
+    expect(relativeArticle?.imageAlt).toBeUndefined();
+
+    const invalidArticle = parseBlogArticle(
+      "t.md",
+      front('image: "not a valid url"\nimageAlt: "Invalid"'),
+    );
+    expect(invalidArticle?.image).toBeUndefined();
+    expect(invalidArticle?.imageAlt).toBeUndefined();
+
+    const ftpArticle = parseBlogArticle(
+      "t.md",
+      front('image: "ftp://example.com/card.png"\nimageAlt: "FTP image"'),
+    );
+    expect(ftpArticle?.image).toBeUndefined();
+    expect(ftpArticle?.imageAlt).toBeUndefined();
+  });
 });

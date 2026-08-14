@@ -88,9 +88,9 @@ describe("ContextMenu", () => {
         selectorOrHandler: string | (() => void),
         handler?: () => void,
       ) => {
-        if (event === "cxttap" && selectorOrHandler === "node") {
+        if (event === "cxttap taphold" && selectorOrHandler === "node") {
           cxttapHandler = handler as (event: any) => void;
-        } else if (event === "cxttap" && selectorOrHandler === "edge") {
+        } else if (event === "cxttap taphold" && selectorOrHandler === "edge") {
           edgeCxttapHandler = handler as (event: any) => void;
         }
       },

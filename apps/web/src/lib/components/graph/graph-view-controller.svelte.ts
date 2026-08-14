@@ -338,7 +338,20 @@ export class GraphViewController {
           this.hoverPosition = null;
         },
         onNodeTap: async (id, node) => {
-          const container = this.cy?.container();
+          const cyInstance =
+            typeof node?.cy === "function" ? node.cy() : this.cy;
+          const lastCxtTap =
+            (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) ?? 0;
+          if (Date.now() - lastCxtTap < 400) {
+            return;
+          }
+
+          const container =
+            typeof cyInstance?.container === "function"
+              ? cyInstance.container()
+              : typeof this.cy?.container === "function"
+                ? this.cy.container()
+                : null;
           if (container) {
             const rect = container.getBoundingClientRect();
             const renderedPos = node.renderedPosition();
@@ -670,7 +683,7 @@ export class GraphViewController {
     renderedNodeCount: this.cy?.nodes().length,
   });
 
-  private clearRenderReadyMeasurement = () => {
+  private clearRenderReadyMeasurement = (clearFocusDepth = true) => {
     if (this.renderReadyFrameOne !== null) {
       cancelAnimationFrame(this.renderReadyFrameOne);
       this.renderReadyFrameOne = null;
@@ -681,9 +694,11 @@ export class GraphViewController {
     }
     this.renderReadySpan?.cancel();
     this.renderReadySpan = null;
-    this.focusDepthSpan?.cancel();
-    this.focusDepthSpan = null;
-    this.focusDepthStartCounts = null;
+    if (clearFocusDepth) {
+      this.focusDepthSpan?.cancel();
+      this.focusDepthSpan = null;
+      this.focusDepthStartCounts = null;
+    }
   };
 
   private startFocusDepthMeasurement = () => {
@@ -712,7 +727,7 @@ export class GraphViewController {
   };
 
   private scheduleRenderReadyMeasurement = () => {
-    this.clearRenderReadyMeasurement();
+    this.clearRenderReadyMeasurement(false);
     this.renderReadySpan = browserPerformanceRecorder.start(
       "graph_sync_render_ready",
     );

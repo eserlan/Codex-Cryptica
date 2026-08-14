@@ -633,7 +633,9 @@
               data-testid="save-builtin-stat-sheet-template-copy"
             >
               <span
-                class="icon-[lucide--copy-plus] h-3.5 w-3.5"
+                class="h-3.5 w-3.5 {isSavingVaultCopy
+                  ? 'icon-[lucide--loader-2] animate-spin'
+                  : 'icon-[lucide--copy-plus]'}"
                 aria-hidden="true"
               ></span>
               {isSavingVaultCopy ? "Saving copy..." : "Save copy to Vault"}
