@@ -313,3 +313,58 @@ describe("VaultDeckStateStore", () => {
     expect(await deckStore.read("d1")).toBeUndefined();
   });
 });
+
+describe("filename collisions", () => {
+  it("keeps two sources whose names slugify alike as two files", async () => {
+    // Uniqueness is enforced on the name, but the filename is a slug of it and
+    // the slug is lossier. Both of these are legal, distinct names.
+    await store.save(store.create("table", "Forest Encounters"));
+    await store.save(store.create("table", "Forest-Encounters"));
+
+    expect(store.sources).toHaveLength(2);
+    expect(files.data.size).toBe(2);
+  });
+
+  it("survives a reload with both sources intact", async () => {
+    await store.save(store.create("table", "Forest Encounters"));
+    await store.save(store.create("table", "Forest Encounters!"));
+
+    const reloaded = new RandomSourceStore(files, { uuid: () => "unused" });
+    await reloaded.load();
+
+    expect(reloaded.names.sort()).toEqual([
+      "Forest Encounters",
+      "Forest Encounters!",
+    ]);
+  });
+
+  it("leaves an uncontested name on its readable path", async () => {
+    await store.save(store.create("table", "Forest Encounters"));
+    expect(files.data.has("_tables/forest-encounters.md")).toBe(true);
+  });
+});
+
+describe("rename durability", () => {
+  it("does not leave the old file behind", async () => {
+    const table = store.create("table", "Forest");
+    await store.save(table);
+    await store.rename(table, "Woods");
+
+    expect(files.data.has("_tables/forest.md")).toBe(false);
+    expect(files.data.has("_tables/woods.md")).toBe(true);
+  });
+
+  it("keeps the source on disk when the write fails", async () => {
+    // Removing before writing meant a failed write lost the source outright,
+    // with nothing left to recover from.
+    const table = store.create("table", "Forest");
+    await store.save(table);
+
+    files.write = async () => {
+      throw new Error("vault handle is stale");
+    };
+
+    await expect(store.rename(table, "Woods")).rejects.toThrow();
+    expect(files.data.has("_tables/forest.md")).toBe(true);
+  });
+});

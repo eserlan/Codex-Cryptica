@@ -138,7 +138,7 @@ export class DeckService {
             selectIndex(
               all.map(() => 1),
               this.dice,
-            )
+            ).index
           ],
         );
       }
@@ -158,7 +158,7 @@ export class DeckService {
     const picked: Card[] = [];
     const pool = [...available];
     while (picked.length < count && pool.length > 0) {
-      const index = selectIndex(
+      const { index } = selectIndex(
         pool.map(() => 1),
         this.dice,
       );
@@ -188,7 +188,8 @@ export class DeckService {
     allowReversals: boolean,
     ctx: ResolutionContext,
   ): DrawnCard {
-    const reversed = allowReversals && selectIndex([1, 1], this.dice) === 1;
+    const reversed =
+      allowReversals && selectIndex([1, 1], this.dice).index === 1;
     const text =
       reversed && card.reversedMeaning ? card.reversedMeaning : card.body;
     const asSource: RandomSource = {

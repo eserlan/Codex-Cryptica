@@ -61,3 +61,20 @@ Verification performed:
 **T102 is not done and is the one gap.** The manual quickstart pass needs a Google Drive push on one device and a pull on another to confirm deck draw state travels with the vault, plus a timed from-scratch table-creation run against the two-minute budget (SC-001). Neither is automatable here; both need a human on two real devices.
 
 A defect the completion pass turned up and fixed: `ensureRandomSourcesLoaded` was fired and abandoned by both of its call sites, so a failed vault read surfaced as an unhandled promise rejection rather than as anything the user could act on. It now absorbs the failure, warns, and clears its loaded marker so a later mount retries instead of recording the failed read as a completed load.
+
+### Review remediation 2026-08-15
+
+A `codex-review` pass over the branch raised ten items; all ten are fixed. The re-run after remediation: lint clean across 21 packages, `svelte-check` 0 errors, full suite 440 web test files / 3,594 passing, `random-source-engine` coverage up from 93.75% to 94.35% statements.
+
+Defects, in the order they would bite a user:
+
+1. **A blank or zero weight crashed rolling.** `min="1"` on the editor's weight input blocks neither typing `0` nor the `oninput` that follows, and a cleared field reads as `Number("") === 0`. Zeroing the weights made `selectIndex` throw out of a method documented as total. A typed letter was worse: `NaN` passed the positive-total guard and then matched no cursor band, silently biasing every roll to the last entry. `weightsOf` is now the single normalisation point, and a fully-zeroed table degrades to a notice that says so rather than claiming the table is empty.
+2. **Two differently-named sources could overwrite each other on disk.** Uniqueness is enforced on the name, but the filename is a slug, and the slug is lossier — "Forest Encounters" and "Forest-Encounters" both became `forest-encounters.md`. The second save clobbered the first, which then vanished on reload. Paths now disambiguate on actual collision only, so ordinary files keep readable names.
+3. **`/deck <name> 999999` locked the thread.** The draw count was unbounded and a with-replacement draw loops once per card. Capped at 100.
+4. **A rename deleted the old file before writing the new one**, so a failed write lost the source outright. Write now precedes remove.
+5. **The Oracle parser sliced an untrimmed string it had matched trimmed**, so `" /table Forest"` parsed as a table named "ble Forest".
+6. **`reshuffle()` was the one async handler without a reentrancy guard**, and its confirm button was not disabled while busy.
+7. **Weighted rolls reported a die value that was never rolled** — the winning band's floor rather than the actual roll, which FR-011 asks for. `selectIndex` now returns the roll alongside the index.
+8. **`rerollFragment` reset the cycle guard**, so a re-rolled fragment expanded one level further than a fresh roll before catching the same loop, and reported the depth limit for what is really a cycle (R8 distinguishes them deliberately).
+9. **T093 claimed a reuse that did not happen** — see the amended task for why `search-engine` was not reusable and where the matcher now lives.
+10. **`toRanged` produced inverted ranges from zero weights** (`{min: n, max: n-1}`), which match nothing, pass validation, and still compete for nearest-entry fallback.

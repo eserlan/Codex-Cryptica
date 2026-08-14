@@ -70,10 +70,7 @@ export class RandomSourceEngine {
       outcome.notices.push({
         kind: "unresolved",
         sourceName: source.name,
-        message:
-          source.kind === "table"
-            ? `"${source.name}" has no entries to roll.`
-            : `"${source.name}" has no cards to draw.`,
+        message: describeNothingToPick(source),
       });
       return node;
     }
@@ -97,11 +94,11 @@ export class RandomSourceEngine {
       if (cards.length === 0) return undefined;
       // A deck reached this way is sampled *with replacement* and never
       // depleted — only an explicit draw touches DeckState (FR-012a).
-      const idx = selectIndex(
+      const { index } = selectIndex(
         cards.map(() => 1),
         this.dice,
       );
-      return cards[idx].body || cards[idx].title;
+      return cards[index].body || cards[index].title;
     }
 
     const entries = source.entries ?? [];
@@ -120,8 +117,13 @@ export class RandomSourceEngine {
     }
 
     const weights = weightsOf(entries);
-    const index = selectIndex(weights, this.dice);
-    node.dieValue = weights.slice(0, index).reduce((a, b) => a + b, 1);
+    // Every weight zeroed is a table mid-edit, not a crash. Selection would
+    // throw on a non-positive total, and this method's callers treat a missing
+    // pick as a notice, which is the right outcome for both.
+    if (weights.reduce((a, b) => a + b, 0) <= 0) return undefined;
+
+    const { index, roll } = selectIndex(weights, this.dice);
+    node.dieValue = roll;
     return entries[index].text;
   }
 
@@ -224,11 +226,17 @@ export class RandomSourceEngine {
       notices: [],
     };
 
-    // Walk to the parent of the target node.
+    // Walk to the parent of the target node, collecting the names on the way.
+    // The ancestors have to travel with the re-roll: starting from an empty set
+    // would let a fragment expand back into a source already on its own path,
+    // reporting the depth limit for what is really a cycle — and those two are
+    // told apart deliberately (R8).
     let parentChildren = next.chain;
+    const ancestors = new Set<string>();
     for (const index of nodePath.slice(0, -1)) {
       const step = parentChildren[index];
       if (!step) return outcome;
+      ancestors.add(key(step.sourceName));
       parentChildren = step.children;
     }
 
@@ -243,7 +251,7 @@ export class RandomSourceEngine {
       source,
       ctx,
       next,
-      new Set(),
+      ancestors,
       nodePath.length - 1,
     );
 
@@ -280,6 +288,20 @@ function renderNode(node: ResolutionNode): string {
 
 function key(name: string): string {
   return name.trim().toLowerCase();
+}
+
+/**
+ * Why a source yielded nothing.
+ *
+ * A table with entries that all weigh nothing is a different problem from a
+ * table with no entries, and telling a user "this has no entries to roll" while
+ * they are looking at a screen full of entries is worse than saying nothing.
+ */
+function describeNothingToPick(source: RandomSource): string {
+  if (source.kind === "deck") return `"${source.name}" has no cards to draw.`;
+  const entries = source.entries ?? [];
+  if (entries.length === 0) return `"${source.name}" has no entries to roll.`;
+  return `Every entry in "${source.name}" has a weight of 0, so there is nothing to pick.`;
 }
 
 /** Closest entry by range midpoint, used when coverage has a gap. */

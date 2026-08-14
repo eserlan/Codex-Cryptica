@@ -145,3 +145,56 @@ describe("OracleCommandParser", () => {
     });
   });
 });
+
+describe("OracleCommandParser: /table and /deck (#2247)", () => {
+  const parse = (q: string) => OracleCommandParser.parse(q, false);
+
+  it("parses a table name", () => {
+    expect(parse("/table Forest Encounters")).toEqual({
+      type: "roll-table",
+      sourceName: "Forest Encounters",
+    });
+  });
+
+  it("asks for a name when given none", () => {
+    expect(parse("/table").type).toBe("error");
+    expect(parse("/deck  ").type).toBe("error");
+  });
+
+  it("does not eat the name when the input has leading whitespace", () => {
+    // Commands match on the trimmed form, so slicing the raw input by the
+    // matched prefix's length was off by the whitespace — "/table Forest"
+    // typed with a leading space came back as "ble Forest".
+    expect(parse("  /table Forest Encounters")).toEqual({
+      type: "roll-table",
+      sourceName: "Forest Encounters",
+    });
+    expect(parse("\t/deck Complications")).toMatchObject({
+      type: "draw-deck",
+      sourceName: "Complications",
+    });
+  });
+
+  it("reports both readings of a trailing number, since either may be the name", () => {
+    expect(parse("/deck Tarot 3")).toEqual({
+      type: "draw-deck",
+      sourceName: "Tarot 3",
+      countedName: "Tarot",
+      drawCount: 3,
+    });
+  });
+
+  it("caps a draw count so a typo cannot lock the thread", () => {
+    // A with-replacement draw loops once per card, each a rejection-sampled
+    // roll, so an unbounded count is a freeze rather than a silly result.
+    expect(parse("/deck Tarot 999999")).toMatchObject({ drawCount: 100 });
+  });
+
+  it("floors a zero count at one card", () => {
+    expect(parse("/deck Tarot 0")).toMatchObject({ drawCount: 1 });
+  });
+
+  it("does not treat /tables as a table command", () => {
+    expect(parse("/tables").type).not.toBe("roll-table");
+  });
+});

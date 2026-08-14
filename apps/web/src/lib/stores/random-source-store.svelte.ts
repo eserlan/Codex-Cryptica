@@ -2,6 +2,7 @@ import {
   parseRandomSource,
   serialiseRandomSource,
   validateSource,
+  suggestNames,
   RandomSourceEngine,
   type Diagnostic,
   type RandomSource,
@@ -103,17 +104,7 @@ export class RandomSourceStore {
 
   /** Close name matches, for the "did you mean" reply to a failed lookup. */
   suggestNames(name: string, limit = 3): string[] {
-    const key = name.trim().toLowerCase();
-    if (!key) return [];
-    return this.sources
-      .map((s) => ({
-        name: s.name,
-        score: similarity(key, s.name.toLowerCase()),
-      }))
-      .filter((c) => c.score > 0.4)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map((c) => c.name);
+    return suggestNames(name, this.names, limit);
   }
 
   /** Name → source lookup used when resolving `{reference}` tokens. */
@@ -180,7 +171,7 @@ export class RandomSourceStore {
     const diagnostics = this.validate(source);
     if (diagnostics.some((d) => d.severity === "error")) return diagnostics;
 
-    await this.files.write(pathOf(source), serialiseRandomSource(source));
+    await this.files.write(this.pathFor(source), serialiseRandomSource(source));
     const index = this.sources.findIndex((s) => s.id === source.id);
     if (index === -1) this.sources = [...this.sources, source];
     else
@@ -201,9 +192,35 @@ export class RandomSourceStore {
     const diagnostics = this.validate(renamed);
     if (diagnostics.some((d) => d.severity === "error")) return diagnostics;
 
-    // The slug is derived from the name, so a rename moves the file.
-    await this.files.remove(pathOf(source));
-    return this.saveNow(renamed);
+    // The slug is derived from the name, so a rename moves the file. Write the
+    // new copy before removing the old one: removing first means a failed write
+    // — a revoked handle, a full disk — leaves nothing on disk at all, and the
+    // source is gone rather than merely misnamed.
+    const oldPath = this.pathFor(source);
+    const result = await this.saveNow(renamed);
+    const newPath = this.pathFor(renamed);
+    if (oldPath !== newPath) await this.files.remove(oldPath);
+    return result;
+  }
+
+  /**
+   * The file a source is stored at, disambiguated on collision.
+   *
+   * Uniqueness is enforced on the name, but the filename is a slug of it, and
+   * the slug is lossier: "Forest Encounters", "Forest-Encounters", and
+   * "forest encounters!" are three legal names that collapse to one path. Left
+   * alone, saving the second silently overwrites the first, which then vanishes
+   * on the next load. The id suffix is only added when a collision actually
+   * exists, so ordinary files keep their readable names.
+   */
+  private pathFor(source: RandomSource): string {
+    const path = pathOf(source);
+    const collides = this.sources.some(
+      (s) => s.id !== source.id && pathOf(s) === path,
+    );
+    return collides
+      ? path.replace(/\.md$/, `-${source.id.slice(0, 8)}.md`)
+      : path;
   }
 
   duplicate(source: RandomSource): Promise<RandomSource> {
@@ -222,7 +239,10 @@ export class RandomSourceStore {
 
   remove(source: RandomSource): Promise<void> {
     return this.serialise(async () => {
-      await this.files.remove(pathOf(source));
+      // Resolved before the source leaves the list, since the collision check
+      // that picks the path reads the list.
+      const path = this.pathFor(source);
+      await this.files.remove(path);
       this.sources = this.sources.filter((s) => s.id !== source.id);
     });
   }
@@ -287,25 +307,4 @@ export function slugify(name: string): string {
 export function pathOf(source: RandomSource): string {
   const dir = source.kind === "table" ? TABLE_DIR : DECK_DIR;
   return `${dir}/${slugify(source.name)}.md`;
-}
-
-/** Dice-coefficient similarity over character bigrams, for name suggestions. */
-function similarity(a: string, b: string): number {
-  if (a === b) return 1;
-  if (a.length < 2 || b.length < 2) return 0;
-  const bigrams = (s: string) => {
-    const out = new Map<string, number>();
-    for (let i = 0; i < s.length - 1; i++) {
-      const g = s.slice(i, i + 2);
-      out.set(g, (out.get(g) ?? 0) + 1);
-    }
-    return out;
-  };
-  const first = bigrams(a);
-  const second = bigrams(b);
-  let shared = 0;
-  for (const [gram, count] of first) {
-    shared += Math.min(count, second.get(gram) ?? 0);
-  }
-  return (2 * shared) / (a.length - 1 + b.length - 1);
 }

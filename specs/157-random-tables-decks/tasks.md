@@ -228,7 +228,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T090 [US6] Parse `/table` and `/deck` in `packages/oracle-engine/src/oracle-parser.ts` — **not** `/draw`, which is already routed to `visualizationExecutor`
 - [x] T091 [US6] Create `packages/oracle-engine/src/executors/random-source-executor.ts` following the `dice-executor.ts` shape: extend `BaseExecutor`, emit `COMMAND_STARTED`/`COMPLETED`/`FAILED`, push a typed chat message, write to history
 - [x] T092 [US6] Route both intents in `packages/oracle-engine/src/oracle-executor.ts`
-- [x] T093 [US6] Return close matches for unknown names using existing fuzzy matching from `search-engine` rather than a new implementation (FR-040, Constitution III)
+- [x] T093 [US6] Return close matches for unknown names (FR-040) — **amended**: the task assumed `search-engine` exposed reusable fuzzy matching, and it does not. It is a FlexSearch index over vault _entities_, built and persisted per vault, with no standalone string-similarity function. Indexing table names into it to answer one "did you mean" is more machinery than the question needs (Constitution III, YAGNI), so `suggestNames` in `random-source-engine/src/suggest.ts` implements bigram matching directly. It lives in the package rather than the web app so the app layer stays a thin shell (Constitution I).
 - [x] T094 [US6] Render table and deck results inline in the chat transcript, reusing `RollMessage.svelte` where possible
 - [x] T095 [US6] Implement "send result into entity creation or a generator as context" (FR-041)
 - [x] T096 [P] [US6] Extend `apps/web/tests/random-tables.spec.ts` with an Oracle-chat roll asserting the result appears in both the transcript and roll history

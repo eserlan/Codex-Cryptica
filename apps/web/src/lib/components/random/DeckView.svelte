@@ -131,6 +131,10 @@
   }
 
   async function reshuffle() {
+    // Guarded like draw() and drawSpread(): without it, a double-click starts
+    // two resets, and whichever finishes first clears `busy` while the other is
+    // still running — re-enabling Draw mid-operation.
+    if (busy) return;
     busy = true;
     try {
       await service.reset(deck);
@@ -253,6 +257,7 @@
           type="button"
           class="rounded bg-amber-500 px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-white"
           onclick={reshuffle}
+          disabled={busy}
           data-testid="confirm-reshuffle"
         >
           Reshuffle

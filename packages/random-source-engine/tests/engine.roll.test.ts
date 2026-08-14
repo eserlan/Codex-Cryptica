@@ -93,3 +93,67 @@ describe("RandomSourceEngine.rollMany", () => {
     expect(out.chain).toHaveLength(0);
   });
 });
+
+describe("RandomSourceEngine.roll with unusable weights", () => {
+  it("reports a notice instead of throwing when every entry weighs nothing", () => {
+    // Clearing the editor's weight input reads as `Number("") === 0`, so a
+    // table in this state is ordinary mid-edit, not a corrupt file. Rolling is
+    // documented as total, and a throw here escapes into the roller.
+    const src = table([
+      { id: "a", text: "Alpha", weight: 0 },
+      { id: "b", text: "Beta", weight: 0 },
+    ]);
+
+    const out = engine().roll(src, emptyCtx);
+
+    expect(out.chain[0].status).toBe("unresolved");
+    expect(out.notices).toHaveLength(1);
+    expect(out.notices[0].message).toContain("weight of 0");
+  });
+
+  it("distinguishes a zeroed table from an empty one in the notice", () => {
+    const out = engine().roll(table([]), emptyCtx);
+    expect(out.notices[0].message).toContain("no entries to roll");
+  });
+
+  it("skips a zero-weighted entry but still rolls the rest", () => {
+    const src = table([
+      { id: "a", text: "Alpha", weight: 0 },
+      { id: "b", text: "Beta", weight: 1 },
+    ]);
+    for (let i = 0; i < 20; i++) {
+      expect(engine().roll(src, emptyCtx).finalText).toBe("Beta");
+    }
+  });
+
+  it("survives a NaN weight rather than silently biasing to the last entry", () => {
+    const src = table([
+      { id: "a", text: "Alpha" },
+      { id: "b", text: "Beta", weight: NaN },
+      { id: "c", text: "Gamma" },
+    ]);
+    const seen = new Set<string>();
+    const e = engine();
+    for (let i = 0; i < 200; i++) seen.add(e.roll(src, emptyCtx).finalText);
+    expect([...seen].sort()).toEqual(["Alpha", "Gamma"]);
+  });
+
+  it("reports the actual roll as the die value, not the winning band's floor", () => {
+    const src = table([
+      { id: "a", text: "Alpha", weight: 5 },
+      { id: "b", text: "Beta", weight: 5 },
+    ]);
+    const e = engine();
+    const values = new Set<number>();
+    for (let i = 0; i < 300; i++) {
+      const out = e.roll(src, emptyCtx);
+      values.add(out.chain[0].dieValue!);
+    }
+    // Band floors would only ever be 1 and 6. A real 1d10 visits far more.
+    expect(values.size).toBeGreaterThan(2);
+    for (const v of values) {
+      expect(v).toBeGreaterThanOrEqual(1);
+      expect(v).toBeLessThanOrEqual(10);
+    }
+  });
+});

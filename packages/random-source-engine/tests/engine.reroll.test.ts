@@ -94,3 +94,30 @@ describe("rerollFragment (FR-019)", () => {
     expect(JSON.stringify(deck)).toBe(snapshot);
   });
 });
+
+describe("rerollFragment cycle guard", () => {
+  it("carries the ancestor path into the re-roll, so the loop is cut at the same place a fresh roll cuts it", () => {
+    // "outer" expands "inner", and "inner" points back at "outer". Re-rolling
+    // the inner fragment used to start from an empty visited set, so "outer"
+    // looked unvisited and expanded one extra time before the loop was caught
+    // — the re-rolled fragment came back longer than the original.
+    const outer = table("outer", ["outer holds {inner}"]);
+    const inner = table("inner", ["inner holds {outer}"]);
+    const ctx = ctxOf(outer, inner);
+
+    const e = engine();
+    const first = e.roll(outer, ctx);
+    expect(first.notices.map((n) => n.kind)).toContain("cycle");
+
+    // Path [0, 0] is the "inner" child of the top-level "outer" node.
+    const next = e.rerollFragment(first, [0, 0], ctx);
+    const rerolled = next.chain[0].children[0];
+
+    expect(rerolled.sourceName).toBe("inner");
+    expect(rerolled.text).toBe("inner holds {outer}");
+    // The giveaway for a reset visited set: "outer" expanding a second time.
+    expect(rerolled.text).not.toContain("outer holds");
+    expect(rerolled.children[0].status).toBe("cycle");
+    expect(rerolled.children[0].sourceName).toBe("outer");
+  });
+});

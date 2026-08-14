@@ -7,4 +7,5 @@ export * from "./validation";
 export * from "./mode-conversion";
 export * from "./deck-state";
 export * from "./deck-service";
+export * from "./suggest";
 export * from "./import";
