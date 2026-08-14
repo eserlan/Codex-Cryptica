@@ -6,6 +6,7 @@
     randomSources,
   } from "$lib/features/random";
   import TableEditor from "$lib/components/random/TableEditor.svelte";
+  import ImportWizard from "$lib/components/random/ImportWizard.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   /**
@@ -25,6 +26,7 @@
   let writes: Promise<unknown> = Promise.resolve();
   let inFlight = 0;
   let deleteImpact = $state<RandomSource[] | undefined>();
+  let importing = $state(false);
   let pendingRename = $state<
     { name: string; referencedBy: RandomSource[] } | undefined
   >();
@@ -67,6 +69,13 @@
     // the first thing typed lands in the table the author just left.
     select(created);
     enqueue(() => randomSources.save(created));
+  }
+
+  /** An imported table lands selected, so the author sees what arrived. */
+  function completeImport(source: RandomSource) {
+    importing = false;
+    select(source);
+    enqueue(() => randomSources.save(source));
   }
 
   function uniqueName(base: string): string {
@@ -245,6 +254,19 @@
         New table
       </button>
 
+      <button
+        type="button"
+        onclick={() => (importing = true)}
+        class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+        data-testid="open-import"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--clipboard-paste] h-3.5 w-3.5"
+        ></span>
+        Import
+      </button>
+
       <ul class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {#each visible as table (table.id)}
           <li>
@@ -268,7 +290,12 @@
     </aside>
 
     <section class="min-h-0 flex-1 overflow-y-auto p-4">
-      {#if draft}
+      {#if importing}
+        <ImportWizard
+          onImport={completeImport}
+          onCancel={() => (importing = false)}
+        />
+      {:else if draft}
         <div class="mb-3 flex justify-end">
           <button
             type="button"

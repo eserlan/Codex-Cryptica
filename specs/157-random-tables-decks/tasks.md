@@ -146,10 +146,10 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T056 [P] [US3] Implement `packages/random-source-engine/src/import/delimited.ts`
 - [x] T057 [P] [US3] Implement `packages/random-source-engine/src/import/markdown-table.ts`
 - [x] T058 [US3] Implement `detectFormat` and `parseImport` in `packages/random-source-engine/src/import/detect.ts` returning `ImportPreview` per the contract
-- [ ] T059 [US3] Build `apps/web/src/lib/components/random/ImportWizard.svelte`: paste → preview → correct column mapping → save (FR-034)
-- [ ] T060 [US3] Show per-row problems in the preview with fix / skip / accept actions that never abandon the batch (FR-035)
-- [ ] T061 [US3] Add the name-collision prompt offering replace, merge, or save-as-new (FR-037)
-- [ ] T062 [P] [US3] Add a Playwright spec `apps/web/tests/random-tables-import.spec.ts` importing a 100-row d100 table and rolling it (SC-002), with the import performed offline to confirm no request is issued (FR-038)
+- [x] T059 [US3] Build `apps/web/src/lib/components/random/ImportWizard.svelte`: paste → preview → correct column mapping → save (FR-034)
+- [x] T060 [US3] Show per-row problems in the preview with fix / skip / accept actions that never abandon the batch (FR-035)
+- [x] T061 [US3] Add the name-collision prompt offering replace, merge, or save-as-new (FR-037)
+- [x] T062 [P] [US3] Add a Playwright spec `apps/web/tests/random-tables-import.spec.ts` importing a 100-row d100 table and rolling it (SC-002), with the import performed offline to confirm no request is issued (FR-038)
 
 **Checkpoint**: Adoption path is complete — users can bring tables they already own
 
