@@ -124,3 +124,8 @@
 
 **Learning:** Found the Save copy button in `StatSheetTemplateSettings.svelte` lacked a visual loading spinner during asynchronous saving operations, relying solely on text change while preserving `aria-busy={isSavingVaultCopy}`.
 **Action:** Swapped the static icon for standard animated spinner (`icon-[lucide--loader-2] animate-spin`) during active save states while maintaining `aria-busy` and disabled states on the parent button.
+
+## 2026-08-14 - Dropdown Button Types in Autocomplete
+
+**Learning:** Svelte dropdown items acting as options (like those in Autocomplete) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads.
+**Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere.
