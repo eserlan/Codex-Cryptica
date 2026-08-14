@@ -172,7 +172,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 - [x] T067 [US4] Implement deck state read/derive helpers in `packages/random-source-engine/src/deck-state.ts` per data-model.md: remaining = cards minus `drawn`, absent file means untouched deck
 - [x] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
-- [x] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
+- [x] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/state/<deckId>.json` — keyed on id, not slug, so a rename cannot orphan the discard pile — serialising writes so two rapid draws cannot interleave
 - [x] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
 - [x] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options, including reorder and remove for individual cards (FR-008)
 - [x] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle. Mount it at a `/decks` route in `apps/web/src/routes/(app)/decks/+page.svelte` with the same searchable, label-filterable list T031 gives tables — without this, decks are built but unreachable (FR-003, FR-009)

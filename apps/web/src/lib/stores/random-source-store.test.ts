@@ -301,6 +301,26 @@ describe("VaultDeckStateStore", () => {
     expect([...files.data.keys()][0].startsWith("_decks/")).toBe(true);
   });
 
+  it("keys the state file on the deck id, so a rename cannot orphan the discard pile", async () => {
+    // The exact path is documented in data-model.md and the two had already
+    // drifted apart once. Pinning it here means the next drift fails a test
+    // rather than only misleading whoever reads the doc.
+    const deckStore = new VaultDeckStateStore(files);
+    await deckStore.write({ deckId: "d1", drawn: ["c1"], updatedAt: 0 });
+    expect([...files.data.keys()]).toEqual(["_decks/state/d1.json"]);
+  });
+
+  it("keeps the discard pile across a rename of the deck", async () => {
+    const deck = store.create("deck", "Complications");
+    await store.save(deck);
+    const deckStore = new VaultDeckStateStore(files);
+    await deckStore.write({ deckId: deck.id, drawn: ["c1"], updatedAt: 0 });
+
+    await store.rename(deck, "Setbacks");
+
+    expect((await deckStore.read(deck.id))?.drawn).toEqual(["c1"]);
+  });
+
   it("treats a corrupt state file as an untouched deck", async () => {
     await files.write("_decks/state/d1.json", "{ not json");
     const deckStore = new VaultDeckStateStore(files);

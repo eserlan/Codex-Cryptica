@@ -120,8 +120,13 @@ interface DeckOptions {
 **Not** part of the RandomSource file. One JSON file per deck (R2, R3):
 
 ```
-_decks/<deck-slug>/state.json
+_decks/state/<deckId>.json
 ```
+
+Keyed on the deck's id rather than its slug: renaming a deck moves its Markdown
+file, and a slug-keyed state file would be orphaned by that move, silently
+emptying the discard pile. The `state/` subdirectory is skipped when the store
+lists `_decks/`, so these never reach the Markdown parser.
 
 | Field       | Type       | Notes                                   |
 | ----------- | ---------- | --------------------------------------- |

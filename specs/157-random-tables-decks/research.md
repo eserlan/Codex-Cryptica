@@ -59,7 +59,7 @@ binary vault file (breaks readability and diffability).
 **Decision**: Deck state is a single JSON file per deck in the vault:
 
 ```
-_decks/<deck-slug>/state.json
+_decks/state/<deckId>.json
 ```
 
 It is written by whichever device is being played on and travels with the vault
