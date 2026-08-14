@@ -34,5 +34,18 @@ export async function ensureRandomSourcesLoaded(force = false): Promise<void> {
   // Reading then would find nothing and, worse, remember that as loaded.
   if (!vaultId) return;
   loadedVaultId = vaultId;
-  await randomSources.load();
+  try {
+    await randomSources.load();
+  } catch (error) {
+    // Every call site fires this and walks away, so a rejection here would
+    // surface as an unhandled rejection rather than as anything the user can
+    // act on. Tables are one panel of the app: a vault whose handle has gone
+    // stale should cost the user their tables, not the whole workspace.
+    //
+    // Clearing the marker matters as much as swallowing the error — leaving it
+    // set would record a failed read as a completed load, and no later mount
+    // would ever retry.
+    loadedVaultId = undefined;
+    console.warn("[RandomSources] Load failed:", error);
+  }
 }

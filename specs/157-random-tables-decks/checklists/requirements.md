@@ -46,3 +46,18 @@
 ### Clarification session 2026-08-14
 
 Five questions asked and answered; all findings integrated into `spec.md` under `## Clarifications`. Resulting requirement changes: FR-003a (name uniqueness), FR-004/FR-004a/FR-005/FR-006 (selection modes), FR-012/FR-012a (reference scope), FR-024a (deck state merge), FR-031/FR-032 (import mode selection), SC-010 (rewritten).
+
+### Implementation completion 2026-08-15
+
+All 104 tasks in `tasks.md` are implemented and verified, with one exception recorded below.
+
+Verification performed:
+
+- **Coverage (T099)**: `random-source-engine` at 93.75% statements, 80.39% branches, 95.09% functions, 95.47% lines — comfortably past the 70% goal (Constitution X).
+- **Roll budget (T100)**: `packages/random-source-engine/tests/engine.performance.test.ts` asserts p95 under 50 ms over 200 rolls of a 1,000-entry table resolving to the full depth cap (SC-003, R7). It is a budget, not a benchmark: it catches an accidental quadratic, not normal variation.
+- **Plain language (T101)**: no "tag" wording anywhere in the feature's source or user-facing strings; the model calls them labels throughout (Constitution IX, XII).
+- **Lint and tests (T103)**: `bun run lint` clean across all 21 packages; `bun run test` green — 439 web test files, 3,587 passing, 3 skipped.
+
+**T102 is not done and is the one gap.** The manual quickstart pass needs a Google Drive push on one device and a pull on another to confirm deck draw state travels with the vault, plus a timed from-scratch table-creation run against the two-minute budget (SC-001). Neither is automatable here; both need a human on two real devices.
+
+A defect the completion pass turned up and fixed: `ensureRandomSourcesLoaded` was fired and abandoned by both of its call sites, so a failed vault read surfaced as an unhandled promise rejection rather than as anything the user could act on. It now absorbs the failure, warns, and clears its loaded marker so a later mount retries instead of recording the failed read as a completed load.

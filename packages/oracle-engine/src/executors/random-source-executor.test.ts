@@ -210,12 +210,12 @@ describe("RandomSourceExecutor", () => {
         },
       },
     });
-    await expect(
-      executor.execute(
-        { type: "roll-table", sourceName: "Forest Encounters" },
-        ctx,
-      ),
-    ).resolves.not.toThrow();
+    // Resolving, not rejecting, is the assertion: a failed roll reports itself
+    // in the transcript and the command completes.
+    await executor.execute(
+      { type: "roll-table", sourceName: "Forest Encounters" },
+      ctx,
+    );
     const message = (ctx.chatHistory.addMessage as any).mock.calls[0][0]
       .content;
     expect(message).toContain("Could not roll");

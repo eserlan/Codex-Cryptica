@@ -240,13 +240,13 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 ## Phase 9: Polish & Cross-Cutting Concerns
 
 - [x] T097 Add a help article for tables and decks to `apps/web/src/lib/config/help-content.ts`, covering reference syntax and deck reset (Constitution VII)
-- [ ] T098 [P] Add a `FeatureHint` for first-time use of the table editor, since reference syntax is exactly the complex interaction that clause names
-- [ ] T099 [P] Confirm `packages/random-source-engine` meets the 70% coverage goal via `bun run test:coverage --filter random-source-engine` (Constitution X)
-- [ ] T100 Verify the p95 roll budget of under 50 ms in-process on a 1,000-entry table at full depth (SC-003, R7)
-- [ ] T101 [P] Confirm every user-facing string uses plain language and that no "tag" wording appears anywhere (Constitution IX, XII)
-- [ ] T102 Run the full manual verification list in quickstart.md, including a Google Drive push on one device and pull on another to confirm deck state travels with the vault, and time a from-scratch table creation to first roll against the two-minute budget (SC-001)
-- [ ] T103 Run `bun run lint` and `bun run test` across the repo and confirm both pass (Constitution VI.3)
-- [ ] T104 Update `specs/157-random-tables-decks/checklists/requirements.md` to record implementation completion
+- [x] T098 [P] Add a `FeatureHint` for first-time use of the table editor, since reference syntax is exactly the complex interaction that clause names
+- [x] T099 [P] Confirm `packages/random-source-engine` meets the 70% coverage goal via `bun run test:coverage --filter random-source-engine` (Constitution X)
+- [x] T100 Verify the p95 roll budget of under 50 ms in-process on a 1,000-entry table at full depth (SC-003, R7)
+- [x] T101 [P] Confirm every user-facing string uses plain language and that no "tag" wording appears anywhere (Constitution IX, XII)
+- [ ] T102 Run the full manual verification list in quickstart.md, including a Google Drive push on one device and pull on another to confirm deck state travels with the vault, and time a from-scratch table creation to first roll against the two-minute budget (SC-001) — **still open**: needs a human on two real devices, not automatable
+- [x] T103 Run `bun run lint` and `bun run test` across the repo and confirm both pass (Constitution VI.3)
+- [x] T104 Update `specs/157-random-tables-decks/checklists/requirements.md` to record implementation completion
 
 ---
 
