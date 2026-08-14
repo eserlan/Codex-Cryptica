@@ -431,6 +431,46 @@ describe("GraphViewController", () => {
 
       expect(layoutSpy).not.toHaveBeenCalled();
     });
+
+    it("preserves active focusDepthSpan when scheduling render-ready measurement and completes it on frame two", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+
+      const rafCallbacks: FrameRequestCallback[] = [];
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+
+      // Trigger focus depth transition measurement
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      const focusSpan = (controller as any).focusDepthSpan;
+      const renderReadySpan = (controller as any).renderReadySpan;
+
+      expect(focusSpan).not.toBeNull();
+      expect(renderReadySpan).not.toBeNull();
+
+      const focusCancelSpy = vi.spyOn(focusSpan, "cancel");
+      const focusCompleteSpy = vi.spyOn(focusSpan, "complete");
+      const renderReadyCompleteSpy = vi.spyOn(renderReadySpan, "complete");
+
+      // Verify clearRenderReadyMeasurement(false) called by scheduleRenderReadyMeasurement
+      // does not cancel the active focusDepthSpan
+      expect(focusCancelSpy).not.toHaveBeenCalled();
+
+      // Advance through the two requestAnimationFrame cycles
+      expect(rafCallbacks.length).toBe(1);
+      rafCallbacks[0](16);
+      expect(rafCallbacks.length).toBe(2);
+      rafCallbacks[1](32);
+
+      expect(renderReadyCompleteSpy).toHaveBeenCalled();
+      expect(focusCompleteSpy).toHaveBeenCalled();
+      expect((controller as any).focusDepthSpan).toBeNull();
+      expect((controller as any).renderReadySpan).toBeNull();
+    });
   });
 
   describe("render hints", () => {
