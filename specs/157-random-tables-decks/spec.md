@@ -11,6 +11,13 @@ Game masters and solo players keep collections of random content — encounter t
 
 This feature makes random tables and card decks first-class, user-authored content inside the vault: authored and edited in the app, rolled or drawn in one action, resolvable into composed results through nested references, and importable in bulk so nobody has to hand-type a hundred rows.
 
+## Clarifications
+
+### Session 2026-08-14
+
+- Q: How should a brace reference like `{creature}` bind to its target Random Source? → A: Random Source names are unique per vault; references resolve by name at roll time.
+- Q: Can references target decks, and can card text contain references? → A: Both. A deck reached through a reference is always sampled with replacement and is never depleted; only explicit draws deplete a deck.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Author and roll a simple table (Priority: P1)
@@ -136,6 +143,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **Renaming a referenced table**: existing references to the old name are reported so the user can update or accept them.
 - **Deleting a referenced table**: the user is warned which tables reference it before deletion proceeds.
 - **Concurrent draws**: two rapid draws from the same deck never return the same card twice when drawing without replacement.
+- **Repeatedly re-rolling a fragment backed by a deck**: because referenced deck draws are non-depleting (FR-012a), re-rolling the same fragment many times may repeat a card and never exhausts the deck or alters its discard pile.
 - **Storage exhaustion during card image import**: the import fails cleanly with a message, leaving the deck in a consistent state rather than half-imported.
 - **Offline**: all authoring, rolling, drawing, importing, and resetting work with no network connection.
 
@@ -148,6 +156,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **FR-001**: Users MUST be able to create, rename, edit, duplicate, and delete random tables and card decks within a vault.
 - **FR-002**: The system MUST store tables and decks as vault content, so they are saved, exported, backed up, and synced by the same mechanisms as the user's other vault content.
 - **FR-003**: Tables and decks MUST be browsable and searchable by name and by their content.
+- **FR-003a**: Random Source names MUST be unique within a vault. The system MUST prevent a user from saving a table or deck under a name already in use and offer a non-colliding alternative.
 - **FR-004**: A table MUST support entries consisting of result text plus an optional weight or numeric range.
 - **FR-005**: A table MUST support a die specification, either derived automatically from the number and weighting of its entries or set explicitly by the user.
 - **FR-006**: The system MUST validate range coverage when a table is saved and report gaps, overlaps, and unreachable entries to the user without blocking the save.
@@ -159,7 +168,8 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 
 - **FR-010**: Users MUST be able to roll a table from the table's own view and receive exactly one result per roll.
 - **FR-011**: The system MUST show the die value that produced each result alongside the result itself.
-- **FR-012**: Table entries MUST be able to reference other tables, and the system MUST resolve those references by rolling the referenced table.
+- **FR-012**: Table entries and card body text MUST be able to reference other Random Sources, and the system MUST resolve those references by rolling or sampling the referenced source.
+- **FR-012a**: A reference MAY name a deck. A deck reached through a reference MUST be sampled with replacement regardless of the deck's own draw mode, so resolving a reference never moves a card to the discard pile and never mutates deck state. Only an explicit draw (FR-021) depletes a deck.
 - **FR-013**: The system MUST support multiple references within a single entry, resolving each and composing them into one continuous result.
 - **FR-014**: Reference resolution MUST be cycle-safe: a self-reference or a reference loop MUST terminate, produce a usable result, and inform the user that resolution was cut short.
 - **FR-015**: Reference resolution MUST be depth-limited, with the limit reported to the user when reached.
@@ -204,8 +214,8 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 
 - **Random Source**: The shared concept behind both features — a named, user-authored collection of possible results that lives in the vault and can produce one or more results on demand. It has a name, an optional description, organisational metadata, and a set of entries. Tables and decks are the two modes of a Random Source rather than two unrelated things; they differ in how results are selected and presented, not in how they are stored, imported, searched, or exported.
 - **Table Entry**: One possible outcome in a table. Carries result text, an optional weight or numeric range, and zero or more references to other Random Sources embedded in its text.
-- **Card**: One possible outcome in a deck. Carries a title, body text, an optional image, and an optional reversed meaning.
-- **Reference**: A pointer embedded in an entry's text naming another Random Source, resolved at roll time by rolling that source and substituting its result.
+- **Card**: One possible outcome in a deck. Carries a title, body text, an optional image, an optional reversed meaning, and zero or more references embedded in its text, resolved when the card is drawn.
+- **Reference**: A pointer embedded in an entry's text naming another Random Source, resolved **by name** at roll time by rolling that source and substituting its result. References store the target's name rather than an internal identifier, so entry text stays readable in exports and portable through paste-import.
 - **Deck State**: The per-deck record of what has been drawn and what remains, persisting between sessions until reset. Belongs to the deck within the vault rather than to a transient session.
 - **Spread**: A named set of positions a draw fills, each with a label describing that position's meaning.
 - **Roll Record**: The record of one completed roll or draw, capturing the source, the die value or drawn cards, the final result, and the resolution chain of any nested rolls.
@@ -231,7 +241,7 @@ These decisions were made in the absence of explicit direction and should be con
 
 - **Decks and tables share one content model.** Issue #2247 raised this as an open question. This spec resolves it in favour of a shared "Random Source" model with two modes, because authoring, organising, searching, importing, exporting, and history are identical across both; only selection semantics (weighted roll vs. draw with depletion) and presentation (text vs. card with optional image) differ. Duplicating the model would duplicate the import and editor surfaces for no user-visible gain.
 - **Tables and decks are vault content, but not lore entities.** They are stored and exported alongside the user's other vault content so they are portable and sync automatically, but they are excluded by default from the relationship graph and other views intended for world lore, because an encounter table is a tool the GM uses rather than a thing that exists in the world. They remain searchable and linkable.
-- **Reference syntax is brace-delimited** (for example `{creature}`), matching common convention in existing table tools and remaining readable in exported files. Unmatched or empty braces are treated as literal text.
+- **Reference syntax is brace-delimited** (for example `{creature}`), matching common convention in existing table tools and remaining readable in exported files. Unmatched or empty braces are treated as literal text. References bind by name, which is why names are unique per vault (FR-003a); renaming a referenced source is handled by the warning in FR-042 rather than by silent rebinding.
 - **The nesting depth limit is a fixed, generous constant** rather than a user setting — deep enough that no realistic table hits it, shallow enough to guarantee termination.
 - **Deck state is per-deck and per-vault**, not per-campaign or per-session. A user wanting a fresh deck resets it explicitly. Per-session deck state is deferred until there is evidence users want the same deck depleted differently in parallel campaigns.
 - **Cross-table rolling is a rolling mode over existing tables**, not a new stored artefact. Users select multiple tables to roll together at roll time; if saved multi-table rolls prove desirable, they can be added later as a table whose entry is purely references.
