@@ -59,6 +59,13 @@
         title: "Entity Table — overview, filter, and sort all entities",
         href: `${base}/table`,
       },
+      {
+        id: "tables",
+        icon: "icon-[lucide--list-tree]",
+        label: "Tables",
+        title: "Random Tables — author and roll your own tables",
+        href: `${base}/tables`,
+      },
     ];
   });
 

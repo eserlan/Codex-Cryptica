@@ -1,0 +1,385 @@
+<script lang="ts">
+  import type {
+    Diagnostic,
+    RandomSource,
+    TableEntry,
+  } from "random-source-engine";
+  import { toRanged, toWeighted } from "random-source-engine";
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import { computeWindow } from "./virtual-window";
+  import TableRoller from "./TableRoller.svelte";
+
+  /**
+   * Authoring surface for one table (#2247, FR-005).
+   *
+   * Controlled: every edit hands the parent a new source rather than mutating
+   * in place, so persistence, rename, and undo stay the route's business.
+   */
+  let {
+    source,
+    diagnostics = [],
+    onChange,
+    idGenerator = systemIdGenerator,
+  }: {
+    source: RandomSource;
+    diagnostics?: Diagnostic[];
+    onChange: (next: RandomSource) => void;
+    idGenerator?: IdGenerator;
+  } = $props();
+
+  const ROW_HEIGHT = 60;
+
+  let scrollTop = $state(0);
+  let viewportHeight = $state(600);
+  let labelDraft = $state("");
+
+  const entries = $derived(source.entries ?? []);
+  const isRanged = $derived(source.selection?.mode === "ranged");
+  const dieSides = $derived(
+    source.selection?.mode === "ranged" ? source.selection.die.sides : 100,
+  );
+
+  /** Diagnostics that belong to no particular entry, shown above the list. */
+  const generalDiagnostics = $derived(diagnostics.filter((d) => !d.entryId));
+
+  const diagnosticsByEntry = $derived.by(() => {
+    const map = new Map<string, Diagnostic[]>();
+    for (const d of diagnostics) {
+      if (!d.entryId) continue;
+      map.set(d.entryId, [...(map.get(d.entryId) ?? []), d]);
+    }
+    return map;
+  });
+
+  // Only the visible slice is rendered: a 1,000-entry table is an ordinary
+  // import result, and a thousand live inputs would blow the frame budget
+  // (SC-004, R7).
+  const view = $derived(
+    computeWindow({
+      itemCount: entries.length,
+      rowHeight: ROW_HEIGHT,
+      scrollTop,
+      viewportHeight,
+    }),
+  );
+
+  function update(changes: Partial<RandomSource>) {
+    onChange({ ...source, ...changes });
+  }
+
+  function updateEntries(next: TableEntry[]) {
+    update({ entries: next });
+  }
+
+  function patchEntry(id: string, changes: Partial<TableEntry>) {
+    updateEntries(entries.map((e) => (e.id === id ? { ...e, ...changes } : e)));
+  }
+
+  function addEntry() {
+    const entry: TableEntry = { id: idGenerator.uuid(), text: "" };
+    if (isRanged) {
+      const highest = entries.reduce(
+        (max, e) => Math.max(max, e.range?.max ?? 0),
+        0,
+      );
+      entry.range = { min: highest + 1, max: highest + 1 };
+    } else {
+      entry.weight = 1;
+    }
+    updateEntries([...entries, entry]);
+  }
+
+  function removeEntry(id: string) {
+    updateEntries(entries.filter((e) => e.id !== id));
+  }
+
+  /** Moves an entry one place. Ranges stay with their entry, so a ranged
+   *  table's coverage is unchanged by a reorder. */
+  function move(index: number, delta: number) {
+    const target = index + delta;
+    if (target < 0 || target >= entries.length) return;
+    const next = [...entries];
+    [next[index], next[target]] = [next[target], next[index]];
+    updateEntries(next);
+  }
+
+  function setMode(mode: "weighted" | "ranged") {
+    if (mode === (isRanged ? "ranged" : "weighted")) return;
+    onChange(mode === "ranged" ? toRanged(source) : toWeighted(source));
+  }
+
+  function setDie(sides: number) {
+    if (!Number.isFinite(sides) || sides < 1) return;
+    update({ selection: { mode: "ranged", die: { sides } } });
+  }
+
+  function addLabel() {
+    const label = labelDraft.trim();
+    labelDraft = "";
+    if (!label || source.labels.includes(label)) return;
+    update({ labels: [...source.labels, label] });
+  }
+
+  function removeLabel(label: string) {
+    update({ labels: source.labels.filter((l) => l !== label) });
+  }
+</script>
+
+<div class="flex flex-col gap-4" data-testid="table-editor">
+  <label class="flex flex-col gap-1">
+    <span
+      class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+      >Name</span
+    >
+    <input
+      class="rounded border border-theme-border bg-theme-bg px-3 py-2 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
+      value={source.name}
+      oninput={(e) => update({ name: e.currentTarget.value })}
+      data-testid="table-name"
+    />
+  </label>
+
+  <div class="flex flex-col gap-1">
+    <span
+      class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+      >Labels</span
+    >
+    <div class="flex flex-wrap items-center gap-1.5">
+      {#each source.labels as label}
+        <span
+          class="flex items-center gap-1 rounded bg-theme-primary/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-theme-primary"
+        >
+          {label}
+          <button
+            type="button"
+            onclick={() => removeLabel(label)}
+            aria-label="Remove label {label}"
+            class="opacity-60 transition-opacity hover:opacity-100"
+          >
+            <span aria-hidden="true" class="icon-[lucide--x] h-3 w-3"></span>
+          </button>
+        </span>
+      {/each}
+      <input
+        class="min-w-[8rem] flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1 font-body text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+        placeholder="Add label..."
+        bind:value={labelDraft}
+        onkeydown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addLabel();
+          }
+        }}
+        onblur={addLabel}
+        data-testid="table-label-input"
+      />
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-end gap-4">
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+        >How entries are picked</span
+      >
+      <div class="flex overflow-hidden rounded border border-theme-border">
+        {#each [{ mode: "weighted" as const, help: "Each entry has a weight" }, { mode: "ranged" as const, help: "Each entry covers die numbers" }] as option}
+          <button
+            type="button"
+            title={option.help}
+            class="px-3 py-1.5 font-header text-[10px] uppercase tracking-widest transition-colors {(isRanged
+              ? 'ranged'
+              : 'weighted') === option.mode
+              ? 'bg-theme-primary text-theme-bg'
+              : 'bg-theme-bg text-theme-muted hover:text-theme-text'}"
+            onclick={() => setMode(option.mode)}
+            data-testid="mode-{option.mode}"
+          >
+            {option.mode}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    {#if isRanged}
+      <label class="flex flex-col gap-1">
+        <span
+          class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+          >Die</span
+        >
+        <div class="flex items-center gap-1">
+          <span class="font-header text-sm text-theme-muted">d</span>
+          <input
+            type="number"
+            min="1"
+            class="w-24 rounded border border-theme-border bg-theme-bg px-2 py-1.5 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
+            value={dieSides}
+            oninput={(e) => setDie(Number(e.currentTarget.value))}
+            data-testid="table-die"
+          />
+        </div>
+      </label>
+    {/if}
+  </div>
+
+  {#each generalDiagnostics as diagnostic}
+    <p
+      class="rounded border px-3 py-2 font-body text-xs {diagnostic.severity ===
+      'error'
+        ? 'border-red-500/40 bg-red-500/10 text-red-500'
+        : 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'}"
+      data-testid="table-diagnostic"
+    >
+      {diagnostic.message}
+    </p>
+  {/each}
+
+  <div class="flex items-center justify-between">
+    <span
+      class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+    >
+      Entries ({entries.length})
+    </span>
+    <button
+      type="button"
+      class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+      onclick={addEntry}
+      data-testid="add-entry"
+    >
+      <span aria-hidden="true" class="icon-[lucide--plus] h-3 w-3"></span>
+      Add entry
+    </button>
+  </div>
+
+  <div
+    class="max-h-[26rem] overflow-y-auto rounded border border-theme-border"
+    onscroll={(e) => (scrollTop = e.currentTarget.scrollTop)}
+    bind:clientHeight={viewportHeight}
+    data-testid="entry-list"
+  >
+    <div style="height: {view.paddingTop}px"></div>
+    {#each entries.slice(view.start, view.end) as entry, offset (entry.id)}
+      {@const index = view.start + offset}
+      {@const problems = diagnosticsByEntry.get(entry.id) ?? []}
+      <div
+        class="flex items-center gap-2 border-b border-theme-border/40 px-2"
+        style="height: {ROW_HEIGHT}px"
+      >
+        <span
+          class="w-8 shrink-0 text-right font-mono text-[10px] text-theme-muted/60"
+          >{index + 1}</span
+        >
+
+        {#if isRanged}
+          <div class="flex shrink-0 items-center gap-1">
+            <input
+              type="number"
+              aria-label="Lowest number for entry {index + 1}"
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+              value={entry.range?.min ?? 1}
+              oninput={(e) =>
+                patchEntry(entry.id, {
+                  range: {
+                    min: Number(e.currentTarget.value),
+                    max: entry.range?.max ?? Number(e.currentTarget.value),
+                  },
+                })}
+            />
+            <span class="text-[10px] text-theme-muted">–</span>
+            <input
+              type="number"
+              aria-label="Highest number for entry {index + 1}"
+              class="w-14 rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+              value={entry.range?.max ?? 1}
+              oninput={(e) =>
+                patchEntry(entry.id, {
+                  range: {
+                    min: entry.range?.min ?? Number(e.currentTarget.value),
+                    max: Number(e.currentTarget.value),
+                  },
+                })}
+            />
+          </div>
+        {:else}
+          <input
+            type="number"
+            min="1"
+            aria-label="Weight for entry {index + 1}"
+            class="w-16 shrink-0 rounded border border-theme-border bg-theme-bg px-1.5 py-1 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+            value={entry.weight ?? 1}
+            oninput={(e) =>
+              patchEntry(entry.id, { weight: Number(e.currentTarget.value) })}
+          />
+        {/if}
+
+        <div class="flex min-w-0 flex-1 flex-col">
+          <input
+            aria-label="Text for entry {index + 1}"
+            class="w-full rounded border border-theme-border bg-theme-bg px-2 py-1 font-body text-sm text-theme-text focus:border-theme-primary focus:outline-none"
+            value={entry.text}
+            oninput={(e) =>
+              patchEntry(entry.id, { text: e.currentTarget.value })}
+            data-testid="entry-text"
+          />
+          {#if problems.length > 0}
+            <span
+              class="truncate text-[10px] {problems.some(
+                (p) => p.severity === 'error',
+              )
+                ? 'text-red-500'
+                : 'text-amber-600 dark:text-amber-400'}"
+              data-testid="entry-diagnostic"
+            >
+              {problems[0].message}
+            </span>
+          {/if}
+        </div>
+
+        <div class="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            aria-label="Move entry {index + 1} up"
+            disabled={index === 0}
+            onclick={() => move(index, -1)}
+            class="rounded p-1 text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-25"
+          >
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--chevron-up] h-3.5 w-3.5"
+            ></span>
+          </button>
+          <button
+            type="button"
+            aria-label="Move entry {index + 1} down"
+            disabled={index === entries.length - 1}
+            onclick={() => move(index, 1)}
+            class="rounded p-1 text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-25"
+          >
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--chevron-down] h-3.5 w-3.5"
+            ></span>
+          </button>
+          <button
+            type="button"
+            aria-label="Delete entry {index + 1}"
+            onclick={() => removeEntry(entry.id)}
+            class="rounded p-1 text-theme-muted transition-colors hover:text-red-500"
+          >
+            <span aria-hidden="true" class="icon-[lucide--trash-2] h-3.5 w-3.5"
+            ></span>
+          </button>
+        </div>
+      </div>
+    {/each}
+    <div style="height: {view.paddingBottom}px"></div>
+  </div>
+
+  <!-- Rolling belongs beside authoring: a table is checked by rolling it, not
+       by reading it (SC-010). -->
+  <TableRoller {source} />
+</div>
+
+<style>
+  @reference "../../../app.css";
+</style>

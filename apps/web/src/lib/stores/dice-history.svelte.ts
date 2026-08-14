@@ -89,19 +89,31 @@ export class DiceHistoryStore {
   }
 
   chatHistory = $derived(this.history.filter((r) => r.context === "chat"));
-  modalHistory = $derived(this.history.filter((r) => r.context === "modal"));
+  /**
+   * The die roller's log, which carries table rolls and deck draws alongside
+   * ordinary rolls: the roller is where a GM looks for what they just got, and
+   * splitting the two would hide half the answer (#2247, FR-018).
+   */
+  modalHistory = $derived(
+    this.history.filter((r) => r.context === "modal" || r.context === "table"),
+  );
 
-  async clearHistory(context?: "chat" | "modal") {
+  /** Clears one context, several, or — with no argument — the whole history. */
+  async clearHistory(
+    context?:
+      ContextualRollResult["context"] | ContextualRollResult["context"][],
+  ) {
     const db = await getDB();
     if (!context) {
       this.history = [];
       await db.clear("dice_history");
     } else {
+      const contexts = new Set(Array.isArray(context) ? context : [context]);
       const toRemove: ContextualRollResult[] = [];
       const newHistory: ContextualRollResult[] = [];
 
       for (const r of this.history) {
-        if (r.context === context) {
+        if (contexts.has(r.context)) {
           toRemove.push(r);
         } else {
           newHistory.push(r);

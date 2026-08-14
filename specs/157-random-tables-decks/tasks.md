@@ -80,15 +80,15 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T022 [US1] Export engine, validation, and conversion from `packages/random-source-engine/src/index.ts`, exporting **both the class and a default singleton** for `RandomSourceEngine` — matching `dice-engine`'s exported `diceEngine` (Constitution VIII)
 - [x] T023 [P] [US1] Write failing tests in `apps/web/src/lib/stores/random-source-store.test.ts` covering create, rename, duplicate, delete, and rejection of a colliding name
 - [x] T024 [US1] Create `apps/web/src/lib/stores/random-source-store.svelte.ts`: vault-backed CRUD over `_tables/` and `_decks/`, name-uniqueness enforcement (FR-003a), constructor-injected vault dependency with a production default (Constitution VIII)
-- [ ] T025 [US1] Build `apps/web/src/lib/components/random/TableEditor.svelte` — name, labels, entry list with add/edit/reorder/delete, mode toggle, explicit die entry when in ranged mode (FR-005), inline diagnostics from `validateSource`
-- [ ] T026 [US1] Virtualise the entry list in `TableEditor.svelte` so a 1,000-entry table stays inside the frame budget (SC-004, R7)
-- [ ] T027 [US1] Build `apps/web/src/lib/components/random/TableRoller.svelte` showing the result, the die value, and a re-roll control
+- [x] T025 [US1] Build `apps/web/src/lib/components/random/TableEditor.svelte` — name, labels, entry list with add/edit/reorder/delete, mode toggle, explicit die entry when in ranged mode (FR-005), inline diagnostics from `validateSource`
+- [x] T026 [US1] Virtualise the entry list in `TableEditor.svelte` so a 1,000-entry table stays inside the frame budget (SC-004, R7)
+- [x] T027 [US1] Build `apps/web/src/lib/components/random/TableRoller.svelte` showing the result, the die value, and a re-roll control
 - [x] T028 [US1] Extend `ContextualRollResult` in `apps/web/src/lib/stores/dice-history.svelte.ts` with an optional `source: RandomSourceRollPayload` and widen `context` to `"chat" | "modal" | "table"` (R6 — additive, no IndexedDB version bump)
-- [ ] T029 [US1] Write the roll through to `DiceHistoryStore.addResult` from `TableRoller.svelte` (FR-018)
-- [ ] T030 [P] [US1] Update `apps/web/src/lib/components/dice/RollLog.svelte` to render a table-sourced entry (source name, die value, result text)
-- [ ] T031 [US1] Add the `/tables` route in `apps/web/src/routes/(app)/tables/+page.svelte` with a searchable, label-filterable list (FR-003, FR-009)
-- [ ] T032 [P] [US1] Add a Playwright spec `apps/web/tests/random-tables.spec.ts` covering create → add entries → roll → verify history, following the shape of `apps/web/tests/dice-roll.spec.ts`
-- [ ] T033 [US1] Verify offline behaviour: roll with the network disconnected and confirm no request is issued (FR-020, SC-005)
+- [x] T029 [US1] Write the roll through to `DiceHistoryStore.addResult` from `TableRoller.svelte` (FR-018)
+- [x] T030 [P] [US1] Update `apps/web/src/lib/components/dice/RollLog.svelte` to render a table-sourced entry (source name, die value, result text)
+- [x] T031 [US1] Add the `/tables` route in `apps/web/src/routes/(app)/tables/+page.svelte` with a searchable, label-filterable list (FR-003, FR-009)
+- [x] T032 [P] [US1] Add a Playwright spec `apps/web/tests/random-tables.spec.ts` covering create → add entries → roll → verify history, following the shape of `apps/web/tests/dice-roll.spec.ts`
+- [x] T033 [US1] Verify offline behaviour: roll with the network disconnected and confirm no request is issued (FR-020, SC-005)
 
 **Checkpoint**: US1 is a shippable MVP — a GM can author and roll a table tonight
 
