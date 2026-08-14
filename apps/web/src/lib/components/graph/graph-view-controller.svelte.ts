@@ -683,7 +683,7 @@ export class GraphViewController {
     renderedNodeCount: this.cy?.nodes().length,
   });
 
-  private clearRenderReadyMeasurement = () => {
+  private clearRenderReadyMeasurement = (clearFocusDepth = true) => {
     if (this.renderReadyFrameOne !== null) {
       cancelAnimationFrame(this.renderReadyFrameOne);
       this.renderReadyFrameOne = null;
@@ -694,9 +694,11 @@ export class GraphViewController {
     }
     this.renderReadySpan?.cancel();
     this.renderReadySpan = null;
-    this.focusDepthSpan?.cancel();
-    this.focusDepthSpan = null;
-    this.focusDepthStartCounts = null;
+    if (clearFocusDepth) {
+      this.focusDepthSpan?.cancel();
+      this.focusDepthSpan = null;
+      this.focusDepthStartCounts = null;
+    }
   };
 
   private startFocusDepthMeasurement = () => {
@@ -725,7 +727,7 @@ export class GraphViewController {
   };
 
   private scheduleRenderReadyMeasurement = () => {
-    this.clearRenderReadyMeasurement();
+    this.clearRenderReadyMeasurement(false);
     this.renderReadySpan = browserPerformanceRecorder.start(
       "graph_sync_render_ready",
     );
