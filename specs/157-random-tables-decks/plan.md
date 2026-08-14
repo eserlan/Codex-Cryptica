@@ -86,8 +86,11 @@ packages/random-source-engine/
 │   ├── index.ts
 │   ├── types.ts              # RandomSource, TableEntry, Card, DeckState, ResolutionNode
 │   ├── engine.ts             # RandomSourceEngine: roll, rollMany, rerollFragment
+│   ├── selection.ts          # selectIndex over DiceEngine (never Math.random)
 │   ├── resolver.ts           # reference parsing, visited-set cycles, depth cap
+│   ├── mode-conversion.ts    # weighted ↔ ranged (FR-004a)
 │   ├── deck-service.ts       # DeckService + DeckStateStore interface
+│   ├── deck-state.ts         # deck state read/derive helpers
 │   ├── parser.ts             # parseRandomSource / serialiseRandomSource
 │   ├── validation.ts         # validateSource → Diagnostic[]
 │   └── import/
@@ -110,7 +113,7 @@ apps/web/src/lib/
 │   ├── CardEditor.svelte
 │   └── ImportWizard.svelte             # paste → preview → remap → save
 ├── config/help-content.ts              # EXTENDED: help article (Const. VII)
-└── routes/(app)/tables/
+└── routes/(app)/tables/ and routes/(app)/decks/
 
 packages/oracle-engine/src/
 ├── types.ts                            # EXTENDED: roll-table, draw-deck intents

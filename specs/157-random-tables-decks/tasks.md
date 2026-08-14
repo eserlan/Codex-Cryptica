@@ -77,10 +77,10 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T019 [US1] Implement `RandomSourceEngine.roll()` in `packages/random-source-engine/src/engine.ts` for flat tables (no reference resolution yet), returning `RollOutcome` with a single-node `chain`
 - [ ] T020 [US1] Implement `validateSource()` in `packages/random-source-engine/src/validation.ts` producing `Diagnostic[]`; only `duplicate-name` is an error, every coverage finding is a warning (FR-006 must not block save)
 - [ ] T021 [US1] Implement weighted↔ranged conversion in `packages/random-source-engine/src/mode-conversion.ts` (FR-004a)
-- [ ] T022 [US1] Export engine, validation, and conversion from `packages/random-source-engine/src/index.ts`
-- [ ] T023 [US1] Create `apps/web/src/lib/stores/random-source-store.svelte.ts`: vault-backed CRUD over `_tables/` and `_decks/`, name-uniqueness enforcement (FR-003a), constructor-injected vault dependency with a production default (Constitution VIII)
-- [ ] T024 [P] [US1] Write failing tests in `apps/web/src/lib/stores/random-source-store.test.ts` covering create, rename, duplicate, delete, and rejection of a colliding name
-- [ ] T025 [US1] Build `apps/web/src/lib/components/random/TableEditor.svelte` — name, labels, entry list with add/edit/reorder/delete, mode toggle, inline diagnostics from `validateSource`
+- [ ] T022 [US1] Export engine, validation, and conversion from `packages/random-source-engine/src/index.ts`, exporting **both the class and a default singleton** for `RandomSourceEngine` — matching `dice-engine`'s exported `diceEngine` (Constitution VIII)
+- [ ] T023 [P] [US1] Write failing tests in `apps/web/src/lib/stores/random-source-store.test.ts` covering create, rename, duplicate, delete, and rejection of a colliding name
+- [ ] T024 [US1] Create `apps/web/src/lib/stores/random-source-store.svelte.ts`: vault-backed CRUD over `_tables/` and `_decks/`, name-uniqueness enforcement (FR-003a), constructor-injected vault dependency with a production default (Constitution VIII)
+- [ ] T025 [US1] Build `apps/web/src/lib/components/random/TableEditor.svelte` — name, labels, entry list with add/edit/reorder/delete, mode toggle, explicit die entry when in ranged mode (FR-005), inline diagnostics from `validateSource`
 - [ ] T026 [US1] Virtualise the entry list in `TableEditor.svelte` so a 1,000-entry table stays inside the frame budget (SC-004, R7)
 - [ ] T027 [US1] Build `apps/web/src/lib/components/random/TableRoller.svelte` showing the result, the die value, and a re-roll control
 - [ ] T028 [US1] Extend `ContextualRollResult` in `apps/web/src/lib/stores/dice-history.svelte.ts` with an optional `source: RandomSourceRollPayload` and widen `context` to `"chat" | "modal" | "table"` (R6 — additive, no IndexedDB version bump)
@@ -112,7 +112,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T038 [US2] Implement recursive resolution in `packages/random-source-engine/src/resolver.ts` with a visited-set on the resolution path for cycles and a separate depth counter, so the two failures report distinctly (R8)
 - [ ] T039 [US2] Build the `ResolutionNode` tree during resolution and attach it to `RollOutcome.chain`
 - [ ] T040 [US2] Wire `RandomSourceEngine.roll()` to the resolver and accept a `ResolutionContext` with case-insensitive name `lookup` (clarification 1)
-- [ ] T041 [US2] Implement `RandomSourceEngine.rollMany()` for multi-table rolls presented as one outcome (FR-017)
+- [ ] T041 [US2] Implement `RandomSourceEngine.rollMany()` for multi-table rolls presented as one outcome, and add the multi-select control in `TableRoller.svelte` that lets a user pick two or more tables to roll together — FR-017 requires the user-facing action, not just the capability
 - [ ] T042 [US2] Implement `RandomSourceEngine.rerollFragment(outcome, nodePath, ctx)` re-resolving one node while leaving siblings intact (FR-019)
 - [ ] T043 [US2] Build `apps/web/src/lib/components/random/ResolutionChain.svelte` showing which source produced each fragment, inline in the result view (SC-009)
 - [ ] T044 [US2] Add per-fragment re-roll controls to `TableRoller.svelte` wired to `rerollFragment`
@@ -149,7 +149,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T059 [US3] Build `apps/web/src/lib/components/random/ImportWizard.svelte`: paste → preview → correct column mapping → save (FR-034)
 - [ ] T060 [US3] Show per-row problems in the preview with fix / skip / accept actions that never abandon the batch (FR-035)
 - [ ] T061 [US3] Add the name-collision prompt offering replace, merge, or save-as-new (FR-037)
-- [ ] T062 [P] [US3] Add a Playwright spec `apps/web/tests/random-tables-import.spec.ts` importing a 100-row d100 table and rolling it (SC-002)
+- [ ] T062 [P] [US3] Add a Playwright spec `apps/web/tests/random-tables-import.spec.ts` importing a 100-row d100 table and rolling it (SC-002), with the import performed offline to confirm no request is issued (FR-038)
 
 **Checkpoint**: Adoption path is complete — users can bring tables they already own
 
@@ -166,7 +166,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T063 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-state.test.ts`: a missing state file reads as a full deck with an empty discard pile, `drawn` accumulates across draws, and reset clears it (FR-024, FR-025)
 - [ ] T064 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-service.test.ts`: draw without replacement never repeats a card, two back-to-back draws never collide (Edge Cases: concurrent draws), draw with replacement may repeat and leaves the pile untouched
 - [ ] T065 [P] [US4] Write a failing test asserting card ids in `drawn` that no longer exist in the deck are ignored on read and pruned on the next write (data-model invariant)
-- [ ] T066 [P] [US4] Write failing tests for exhaustion: drawing from an empty deck returns `exhausted: true` with no partial mutation, and reset restores every card (FR-026, FR-025)
+- [ ] T066 [P] [US4] Write failing tests for exhaustion: drawing from a fully drawn deck returns `exhausted: true` with no partial mutation, and reset restores every card (FR-026, FR-025). Cover the distinct zero-card case too — a deck with no cards authored reports that it is empty and offers to add cards, rather than reporting exhaustion (Edge Cases)
 
 ### Implementation for User Story 4
 
@@ -174,11 +174,11 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
 - [ ] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
 - [ ] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
-- [ ] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options
-- [ ] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle
+- [ ] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options, including reorder and remove for individual cards (FR-008)
+- [ ] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle. Mount it at a `/decks` route in `apps/web/src/routes/(app)/decks/+page.svelte` with the same searchable, label-filterable list T031 gives tables — without this, decks are built but unreachable (FR-003, FR-009)
 - [ ] T073 [US4] Record draws in history with drawn card ids and titles (FR-029)
 - [ ] T074 [US4] Ensure `Card.id` is assigned once at creation and preserved through edit and re-import — regenerating ids would silently reset every deck (quickstart gotchas)
-- [ ] T075 [P] [US4] Add a Playwright spec `apps/web/tests/random-decks.spec.ts` covering draw → reload → discard pile intact → reset → full deck (SC-007)
+- [ ] T075 [P] [US4] Add a Playwright spec `apps/web/tests/random-decks.spec.ts` covering draw → reload → discard pile intact → reset → full deck (SC-007), with the draws performed offline to confirm no request is issued (FR-030, SC-005)
 
 **Checkpoint**: Decks work standalone, and deck state is sync-safe by construction
 
@@ -244,7 +244,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T099 [P] Confirm `packages/random-source-engine` meets the 70% coverage goal via `bun run test:coverage --filter random-source-engine` (Constitution X)
 - [ ] T100 Verify the p95 roll budget of under 50 ms in-process on a 1,000-entry table at full depth (SC-003, R7)
 - [ ] T101 [P] Confirm every user-facing string uses plain language and that no "tag" wording appears anywhere (Constitution IX, XII)
-- [ ] T102 Run the full manual verification list in quickstart.md, including a Google Drive push on one device and pull on another to confirm deck state travels with the vault
+- [ ] T102 Run the full manual verification list in quickstart.md, including a Google Drive push on one device and pull on another to confirm deck state travels with the vault, and time a from-scratch table creation to first roll against the two-minute budget (SC-001)
 - [ ] T103 Run `bun run lint` and `bun run test` across the repo and confirm both pass (Constitution VI.3)
 - [ ] T104 Update `specs/157-random-tables-decks/checklists/requirements.md` to record implementation completion
 
