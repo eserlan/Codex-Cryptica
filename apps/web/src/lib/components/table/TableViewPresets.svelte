@@ -155,7 +155,7 @@
     <div
       bind:this={panelEl}
       tabindex="-1"
-      class="absolute top-full mt-1 left-0 w-72 rounded-lg border border-theme-border bg-theme-surface/95 p-3 text-xs text-theme-text shadow-xl backdrop-blur z-40 focus:outline-none"
+      class="absolute top-full mt-1 left-0 w-72 max-w-[calc(100vw-2.5rem)] rounded-lg border border-theme-border bg-theme-surface/95 p-3 text-xs text-theme-text shadow-xl backdrop-blur z-40 focus:outline-none"
       data-testid="table-view-presets-panel"
     >
       <div
