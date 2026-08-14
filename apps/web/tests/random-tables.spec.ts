@@ -181,4 +181,40 @@ test.describe("Random tables", () => {
       /refers back to itself/,
     );
   });
+
+  test("rolls from the Oracle chat and lands in both places", async ({
+    page,
+  }) => {
+    await newTable(page, "Tavern rumours", "The miller is missing.");
+    await expect(page.getByTestId("workspace-saving")).toBeHidden();
+
+    // The Oracle lives beside every view, so the command works from the graph.
+    await page.goto("/");
+    const oracleSidebar = page.getByTestId("oracle-sidebar-panel");
+    if (!(await oracleSidebar.isVisible())) {
+      await page.getByTestId("activity-bar-oracle").click();
+    }
+    await expect(oracleSidebar).toBeVisible({ timeout: 15000 });
+
+    const input = page.getByTestId("oracle-input");
+    await input.fill("/table Tavern rumours");
+    await input.press("Enter");
+
+    // In the transcript...
+    const result = page.getByTestId("source-result").last();
+    await expect(result).toBeVisible({ timeout: 15000 });
+    await expect(result.getByTestId("source-result-name")).toHaveText(
+      "Tavern rumours",
+    );
+    await expect(result.getByTestId("source-result-text")).toHaveText(
+      "The miller is missing.",
+    );
+
+    // ...and in the roll history, which is one record for the whole session.
+    await page.getByTestId("dice-roller-button").click();
+    const modal = page.getByTestId("dice-modal");
+    await expect(modal.getByTestId("roll-source-name").first()).toHaveText(
+      "Tavern rumours",
+    );
+  });
 });

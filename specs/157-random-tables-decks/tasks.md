@@ -229,9 +229,9 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T091 [US6] Create `packages/oracle-engine/src/executors/random-source-executor.ts` following the `dice-executor.ts` shape: extend `BaseExecutor`, emit `COMMAND_STARTED`/`COMPLETED`/`FAILED`, push a typed chat message, write to history
 - [x] T092 [US6] Route both intents in `packages/oracle-engine/src/oracle-executor.ts`
 - [x] T093 [US6] Return close matches for unknown names using existing fuzzy matching from `search-engine` rather than a new implementation (FR-040, Constitution III)
-- [ ] T094 [US6] Render table and deck results inline in the chat transcript, reusing `RollMessage.svelte` where possible
-- [ ] T095 [US6] Implement "send result into entity creation or a generator as context" (FR-041)
-- [ ] T096 [P] [US6] Extend `apps/web/tests/random-tables.spec.ts` with an Oracle-chat roll asserting the result appears in both the transcript and roll history
+- [x] T094 [US6] Render table and deck results inline in the chat transcript, reusing `RollMessage.svelte` where possible
+- [x] T095 [US6] Implement "send result into entity creation or a generator as context" (FR-041)
+- [x] T096 [P] [US6] Extend `apps/web/tests/random-tables.spec.ts` with an Oracle-chat roll asserting the result appears in both the transcript and roll history
 
 **Checkpoint**: All six stories complete
 
