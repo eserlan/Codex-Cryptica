@@ -37,6 +37,7 @@ const reporters: any[] = [
 
 export default defineConfig({
   testDir: "./tests",
+  testMatch: "**/*.spec.ts",
   testIgnore,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
