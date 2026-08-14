@@ -31,6 +31,10 @@ async function addCard(page: Page, index: number, title: string, body: string) {
 }
 
 test.describe("Card decks", () => {
+  // These journeys touch the vault on disk and, on a cold dev server, wait on
+  // first compiles: the default 30s is tight enough to fail on load alone.
+  test.describe.configure({ timeout: 60_000 });
+
   test.beforeEach(async ({ page }) => {
     await openDecks(page);
   });
@@ -84,6 +88,15 @@ test.describe("Card decks", () => {
     await page.getByTestId("deck-name").press("Enter");
     await addCard(page, 0, "Eclipse", "A day without noon.");
 
+    // The die roller is a lazily loaded chunk, and the dev server cannot serve
+    // it while the page is offline. Loading it first keeps the test about the
+    // draw rather than about module loading.
+    await page.getByTestId("dice-roller-button").click();
+    const modal = page.getByTestId("dice-modal");
+    await expect(modal).toBeVisible({ timeout: 15000 });
+    await modal.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(modal).toBeHidden();
+
     const offsite: string[] = [];
     page.on("request", (request) => {
       if (!request.url().startsWith("http://localhost:")) {
@@ -98,7 +111,6 @@ test.describe("Card decks", () => {
     expect(offsite).toEqual([]);
 
     await page.getByTestId("dice-roller-button").click();
-    const modal = page.getByTestId("dice-modal");
     await expect(modal.getByTestId("roll-source-name").first()).toHaveText(
       "Portents",
     );
@@ -124,5 +136,67 @@ test.describe("Card decks", () => {
 
     await page.getByTestId("confirm-reshuffle").click();
     await expect(page.getByTestId("deck-remaining")).toHaveText("2");
+  });
+
+  test("deals a spread into named positions", async ({ page }) => {
+    await page.getByTestId("new-deck").click();
+    await page.getByTestId("deck-name").fill("Tarot");
+    await page.getByTestId("deck-name").press("Enter");
+    for (const [index, title] of ["Tower", "Star", "Moon"].entries()) {
+      await addCard(page, index, title, `The ${title} speaks.`);
+    }
+
+    await page.getByTestId("add-spread").click();
+    await page.getByTestId("spread-name").fill("Three fates");
+    await page.getByTestId("spread-positions").fill("Past, Present, Future");
+
+    await page.getByTestId("draw-spread").click();
+
+    // A layout, not a list: every position is named beside its card (FR-028).
+    await expect(page.getByTestId("spread-layout")).toBeVisible();
+    await expect(page.getByTestId("drawn-card")).toHaveCount(3);
+    await expect(page.getByTestId("drawn-position")).toHaveText([
+      "Past",
+      "Present",
+      "Future",
+    ]);
+  });
+
+  test("refuses to half-deal a spread the deck cannot fill", async ({
+    page,
+  }) => {
+    await page.getByTestId("new-deck").click();
+    await page.getByTestId("deck-name").fill("Thin deck");
+    await page.getByTestId("deck-name").press("Enter");
+    await addCard(page, 0, "Only", "The only card.");
+
+    await page.getByTestId("add-spread").click();
+    await page.getByTestId("spread-positions").fill("One, Two, Three");
+    await page.getByTestId("draw-spread").click();
+
+    await expect(page.getByTestId("deck-exhausted")).toBeVisible();
+    await expect(page.getByTestId("drawn-card")).toHaveCount(0);
+    await expect(page.getByTestId("deck-remaining")).toHaveText("1");
+  });
+
+  test("imports a pile of cards in one paste", async ({ page }) => {
+    await page.getByTestId("open-import").click();
+    await page.getByTestId("import-name").fill("Omen deck");
+    await page
+      .getByTestId("import-paste")
+      .fill("The Tower\tSudden ruin.\nThe Star\tHope worth walking to.");
+
+    await expect(page.getByTestId("import-summary")).toContainText("2 ready");
+    await page.getByTestId("import-confirm").click();
+
+    await expect(page.getByTestId("deck-editor")).toBeVisible();
+    await expect(page.getByTestId("card-title").first()).toHaveValue(
+      "The Tower",
+    );
+    await expect(page.getByTestId("card-title").nth(1)).toHaveValue("The Star");
+
+    // The body came across too, not just the title.
+    await page.getByTestId("toggle-card").first().click();
+    await expect(page.getByTestId("card-body")).toHaveValue("Sudden ruin.");
   });
 });

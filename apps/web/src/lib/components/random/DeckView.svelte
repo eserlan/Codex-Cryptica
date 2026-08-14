@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { Card, DrawOutcome, RandomSource } from "random-source-engine";
+  import type {
+    Card,
+    DrawOutcome,
+    RandomSource,
+    Spread,
+  } from "random-source-engine";
   import { DeckService } from "random-source-engine";
   import { deckService, randomSources } from "$lib/features/random";
   import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
@@ -7,6 +12,8 @@
     diceHistory,
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
 
   /**
@@ -18,14 +25,19 @@
    */
   let {
     deck,
+    onChange,
     service = deckService,
     sources = randomSources,
     history = diceHistory,
+    idGenerator = systemIdGenerator,
   }: {
     deck: RandomSource;
+    /** Present when spreads can be edited here; absent in a read-only view. */
+    onChange?: (next: RandomSource) => void;
     service?: DeckService;
     sources?: RandomSourceStore;
     history?: DiceHistoryStore;
+    idGenerator?: IdGenerator;
   } = $props();
 
   let remaining = $state<Card[]>([]);
@@ -34,6 +46,7 @@
   let busy = $state(false);
 
   const cards = $derived(deck.cards ?? []);
+  const spreads = $derived(deck.spreads ?? []);
   const withReplacement = $derived(
     deck.deckOptions?.drawMode === "with-replacement",
   );
@@ -72,6 +85,49 @@
     } finally {
       busy = false;
     }
+  }
+
+  /** Deals a named layout. Capacity is checked before anything is dealt. */
+  async function drawSpread(spread: Spread) {
+    if (busy || cards.length === 0) return;
+    busy = true;
+    try {
+      const result = await service.drawSpread(
+        deck,
+        spread,
+        sources.resolutionContext(),
+      );
+      outcome = result;
+      await refresh();
+      if (result.cards.length > 0) await record(result);
+    } finally {
+      busy = false;
+    }
+  }
+
+  function addSpread() {
+    onChange?.({
+      ...deck,
+      spreads: [
+        ...spreads,
+        {
+          id: idGenerator.uuid(),
+          name: "New spread",
+          positions: ["Past", "Present", "Future"],
+        },
+      ],
+    });
+  }
+
+  function patchSpread(id: string, changes: Partial<Spread>) {
+    onChange?.({
+      ...deck,
+      spreads: spreads.map((s) => (s.id === id ? { ...s, ...changes } : s)),
+    });
+  }
+
+  function removeSpread(id: string) {
+    onChange?.({ ...deck, spreads: spreads.filter((s) => s.id !== id) });
   }
 
   async function reshuffle() {
@@ -206,42 +262,61 @@
   {/if}
 
   {#if outcome && outcome.cards.length > 0}
-    <ul class="flex flex-col gap-2" in:fade={{ duration: 150 }}>
+    <!-- A spread is a layout, not a list: each card sits in its position, with
+         the position named beside it (FR-028). -->
+    <ul
+      class="{outcome.positions
+        ? 'grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]'
+        : 'flex flex-col'} gap-2"
+      in:fade={{ duration: 150 }}
+      data-testid={outcome.positions ? "spread-layout" : "draw-results"}
+    >
       {#each outcome.cards as drawn, index}
         <li
           class="rounded border border-theme-border bg-theme-bg p-3"
           data-testid="drawn-card"
         >
-          <div class="mb-1 flex items-center gap-2">
-            {#if outcome.positions?.[index]}
-              <span
-                class="font-mono text-[9px] uppercase tracking-widest text-theme-primary"
-                data-testid="drawn-position"
-              >
-                {outcome.positions[index]}
-              </span>
-            {/if}
+          {#if outcome.positions?.[index]}
             <span
-              class="font-header text-sm font-bold text-theme-text"
-              data-testid="drawn-title"
+              class="mb-1 block font-mono text-[9px] uppercase tracking-widest text-theme-primary"
+              data-testid="drawn-position"
             >
-              {drawn.card.title}
+              {outcome.positions[index]}
             </span>
-            {#if drawn.reversed}
-              <span
-                class="rounded bg-theme-primary/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-theme-primary"
-                data-testid="drawn-reversed"
+          {/if}
+          <div class="flex items-start gap-3">
+            <CardImage
+              path={drawn.card.imagePath}
+              alt="Picture on {drawn.card.title}"
+              className="h-20 w-20 shrink-0 rounded object-cover {drawn.reversed
+                ? 'rotate-180'
+                : ''}"
+            />
+            <div class="min-w-0 flex-1">
+              <div class="mb-1 flex flex-wrap items-center gap-2">
+                <span
+                  class="font-header text-sm font-bold text-theme-text"
+                  data-testid="drawn-title"
+                >
+                  {drawn.card.title}
+                </span>
+                {#if drawn.reversed}
+                  <span
+                    class="rounded bg-theme-primary/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-theme-primary"
+                    data-testid="drawn-reversed"
+                  >
+                    Reversed
+                  </span>
+                {/if}
+              </div>
+              <p
+                class="whitespace-pre-wrap font-body text-xs leading-relaxed text-theme-text"
+                data-testid="drawn-body"
               >
-                Reversed
-              </span>
-            {/if}
+                {drawn.resolved.finalText}
+              </p>
+            </div>
           </div>
-          <p
-            class="whitespace-pre-wrap font-body text-xs leading-relaxed text-theme-text"
-            data-testid="drawn-body"
-          >
-            {drawn.resolved.finalText}
-          </p>
         </li>
       {/each}
     </ul>
@@ -254,6 +329,86 @@
         {notice.message}
       </p>
     {/each}
+  {/if}
+
+  {#if spreads.length > 0 || onChange}
+    <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
+      <div class="flex items-center justify-between">
+        <h4
+          class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+        >
+          Spreads
+        </h4>
+        {#if onChange}
+          <button
+            type="button"
+            class="rounded border border-theme-border px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+            onclick={addSpread}
+            data-testid="add-spread"
+          >
+            Add spread
+          </button>
+        {/if}
+      </div>
+
+      {#each spreads as spread (spread.id)}
+        <div class="flex flex-wrap items-center gap-2" data-testid="spread-row">
+          {#if onChange}
+            <input
+              aria-label="Name of this spread"
+              class="w-40 rounded border border-theme-border bg-theme-bg px-2 py-1 font-header text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+              value={spread.name}
+              oninput={(e) =>
+                patchSpread(spread.id, { name: e.currentTarget.value })}
+              data-testid="spread-name"
+            />
+            <input
+              aria-label="Positions in {spread.name}, separated by commas"
+              placeholder="Past, Present, Future"
+              class="min-w-[12rem] flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1 font-body text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+              value={spread.positions.join(", ")}
+              oninput={(e) =>
+                patchSpread(spread.id, {
+                  positions: e.currentTarget.value
+                    .split(",")
+                    .map((p) => p.trim())
+                    .filter(Boolean),
+                })}
+              data-testid="spread-positions"
+            />
+          {:else}
+            <span class="font-header text-xs text-theme-text"
+              >{spread.name}</span
+            >
+            <span class="font-mono text-[10px] text-theme-muted"
+              >{spread.positions.join(" · ")}</span
+            >
+          {/if}
+          <button
+            type="button"
+            class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg disabled:opacity-40"
+            onclick={() => drawSpread(spread)}
+            disabled={busy || spread.positions.length === 0}
+            data-testid="draw-spread"
+          >
+            Deal {spread.positions.length}
+          </button>
+          {#if onChange}
+            <button
+              type="button"
+              class="rounded p-1 text-theme-muted transition-colors hover:text-red-500"
+              onclick={() => removeSpread(spread.id)}
+              aria-label="Delete the {spread.name} spread"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--trash-2] h-3.5 w-3.5"
+              ></span>
+            </button>
+          {/if}
+        </div>
+      {/each}
+    </div>
   {/if}
 
   {#if discarded.length > 0 && !withReplacement}

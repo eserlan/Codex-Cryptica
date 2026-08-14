@@ -59,6 +59,10 @@ async function newTable(page: Page, name: string, ...entries: string[]) {
 }
 
 test.describe("Random tables", () => {
+  // These journeys touch the vault on disk and, on a cold dev server, wait on
+  // first compiles: the default 30s is tight enough to fail on load alone.
+  test.describe.configure({ timeout: 60_000 });
+
   test.beforeEach(async ({ page }) => {
     await bootVault(page);
     await page.goto("/tables");

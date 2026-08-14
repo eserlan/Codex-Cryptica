@@ -2,6 +2,7 @@
   import {
     detectFormat,
     parseImport,
+    type Card,
     type ColumnMapping,
     type ImportFormat,
     type RandomSource,
@@ -10,6 +11,8 @@
   import { randomSources } from "$lib/features/random";
   import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   /**
    * Paste a table in, look at what came out, fix what did not (#2247, FR-034).
@@ -19,11 +22,13 @@
    * anything is the adoption barrier this feature exists to remove (FR-035).
    */
   let {
+    kind = "table",
     sources = randomSources,
     onImport,
     onCancel,
     idGenerator = systemIdGenerator,
   }: {
+    kind?: "table" | "deck";
     sources?: RandomSourceStore;
     /** Hands the finished source to the parent, which owns persistence. */
     onImport: (source: RandomSource) => void;
@@ -34,6 +39,12 @@
   type RowChoice = { text?: string; skipped?: boolean };
 
   const PLACEHOLDER = "01-05\tA lone wolf\n06-10\tA broken cart";
+  const CARD_PLACEHOLDER =
+    "The Tower\tSudden, necessary ruin.\nThe Star\tA hope worth walking towards.";
+
+  /** Pictures waiting to be matched to a card by filename (FR-036). */
+  let images = $state<File[]>([]);
+  let imageProblems = $state<string[]>([]);
 
   let pasted = $state("");
   let name = $state("");
@@ -45,8 +56,33 @@
   const preview = $derived.by(() =>
     pasted.trim().length === 0
       ? undefined
-      : parseImport(pasted, format ?? detectFormat(pasted), mapping),
+      : kind === "deck"
+        ? parseImport(pasted, "lines")
+        : parseImport(pasted, format ?? detectFormat(pasted), mapping),
   );
+
+  /**
+   * A card row is "Title<tab>What it means" — one obvious separator rather
+   * than a guess, because a card body is prose and commas belong in it.
+   */
+  function splitCard(text: string): { title: string; body: string } {
+    const parts = text.includes("\t") ? text.split("\t") : text.split("|");
+    const title = (parts[0] ?? "").trim();
+    return { title, body: parts.slice(1).join(" ").trim() };
+  }
+
+  /** Matches "the-tower.png" to the card called "The Tower". */
+  function normalise(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+
+  function imageFor(title: string): File | undefined {
+    const key = normalise(title);
+    if (!key) return undefined;
+    return images.find(
+      (file) => normalise(file.name.replace(/\.[^.]+$/, "")) === key,
+    );
+  }
 
   const columnCount = $derived.by(() => {
     const rows = preview?.rows ?? [];
@@ -122,9 +158,53 @@
     choices = {};
   }
 
+  const builtCards = $derived.by<Card[]>(() =>
+    entries.map((entry) => {
+      const { title, body } = splitCard(entry.text);
+      return { id: entry.id, title, body };
+    }),
+  );
+
+  const matchedImages = $derived(
+    builtCards.filter((card) => imageFor(card.title)).length,
+  );
+
+  /**
+   * Saves each matched picture, then attaches it.
+   *
+   * A picture that will not save — a full vault is the usual reason — is
+   * reported and skipped, leaving a deck whose cards are all there rather than
+   * a half-written import (Edge Cases: storage exhaustion).
+   */
+  async function attachImages(cards: Card[]): Promise<Card[]> {
+    const problems: string[] = [];
+    const withImages: Card[] = [];
+
+    for (const card of cards) {
+      const file = imageFor(card.title);
+      if (!file) {
+        withImages.push(card);
+        continue;
+      }
+      try {
+        const saved = await vault.saveImageToVault(file, card.id, file.name);
+        withImages.push({ ...card, imagePath: saved.image });
+      } catch (err) {
+        console.error("[RandomSources] Card image failed", err);
+        problems.push(file.name);
+        withImages.push(card);
+      }
+    }
+
+    imageProblems = problems;
+    return withImages;
+  }
+
   function build(): RandomSource | undefined {
     const current = preview;
     if (!current || entries.length === 0) return undefined;
+
+    if (kind === "deck") return buildDeck();
 
     const selection: RandomSource["selection"] =
       current.mode === "ranged"
@@ -148,6 +228,20 @@
     };
   }
 
+  function buildDeck(): RandomSource {
+    const target = existing;
+    if (target && collision === "merge") {
+      return { ...target, cards: [...(target.cards ?? []), ...builtCards] };
+    }
+    if (target && collision === "replace") {
+      return { ...target, cards: builtCards };
+    }
+    return {
+      ...sources.create("deck", target ? uniqueName(name.trim()) : name.trim()),
+      cards: builtCards,
+    };
+  }
+
   /** A ranged import's die is the highest number any row claims. */
   function highestValue(list: TableEntry[]): number {
     return Math.max(1, ...list.map((e) => e.range?.max ?? 0));
@@ -159,9 +253,24 @@
     return `${base} ${n}`;
   }
 
-  function confirm() {
+  async function confirm() {
     const built = build();
-    if (built) onImport(built);
+    if (!built) return;
+    if (built.kind !== "deck") {
+      onImport(built);
+      return;
+    }
+
+    const cards = await attachImages(built.cards ?? []);
+    // Pictures that failed are worth saying out loud, but never worth holding
+    // the cards back for.
+    if (imageProblems.length > 0) {
+      notificationStore.notify(
+        `${imageProblems.length} picture${imageProblems.length === 1 ? "" : "s"} could not be saved — your vault may be out of space. The cards imported without them.`,
+        "error",
+      );
+    }
+    onImport({ ...built, cards });
   }
 </script>
 
@@ -207,12 +316,37 @@
       rows="6"
       class="rounded border border-theme-border bg-theme-bg px-3 py-2 font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
       bind:value={pasted}
-      placeholder={PLACEHOLDER}
+      placeholder={kind === "deck" ? CARD_PLACEHOLDER : PLACEHOLDER}
       data-testid="import-paste"
     ></textarea>
   </label>
 
-  {#if preview}
+  {#if preview && kind === "deck"}
+    <label class="flex flex-col gap-1">
+      <span
+        class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+        >Pictures (matched to cards by file name)</span
+      >
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        class="font-body text-xs text-theme-text"
+        onchange={(e) => (images = Array.from(e.currentTarget.files ?? []))}
+        data-testid="import-images"
+      />
+      {#if images.length > 0}
+        <span
+          class="font-mono text-[10px] text-theme-muted"
+          data-testid="import-image-match"
+        >
+          {matchedImages} of {images.length} matched a card
+        </span>
+      {/if}
+    </label>
+  {/if}
+
+  {#if preview && kind === "table"}
     <div class="flex flex-wrap items-end gap-4">
       <div class="flex flex-col gap-1">
         <span
@@ -267,7 +401,9 @@
         {/each}
       {/if}
     </div>
+  {/if}
 
+  {#if preview}
     <div class="flex items-center justify-between">
       <span
         class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
@@ -406,7 +542,8 @@
       class="rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg disabled:cursor-not-allowed disabled:opacity-40"
       data-testid="import-confirm"
     >
-      Import {entries.length} entries
+      Import {entries.length}
+      {kind === "deck" ? "cards" : "entries"}
     </button>
   </div>
 </div>

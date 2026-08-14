@@ -338,6 +338,7 @@
     <section class="min-h-0 flex-1 overflow-y-auto p-4">
       {#if importing}
         <ImportWizard
+          {kind}
           onImport={completeImport}
           onCancel={() => (importing = false)}
         />

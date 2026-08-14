@@ -30,6 +30,10 @@ async function openTables(page: Page) {
 }
 
 test.describe("Random table import", () => {
+  // These journeys touch the vault on disk and, on a cold dev server, wait on
+  // first compiles: the default 30s is tight enough to fail on load alone.
+  test.describe.configure({ timeout: 60_000 });
+
   test.beforeEach(async ({ page }) => {
     await openTables(page);
   });

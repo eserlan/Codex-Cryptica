@@ -2,7 +2,9 @@
   import type { Card, Diagnostic, RandomSource } from "random-source-engine";
   import { parseReferences } from "random-source-engine";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+  import { vault } from "$lib/stores/vault.svelte";
   import SourceIdentityFields from "./SourceIdentityFields.svelte";
+  import CardImage from "./CardImage.svelte";
   import DeckView from "./DeckView.svelte";
 
   /**
@@ -48,6 +50,26 @@
   });
 
   let expanded = $state<string | undefined>();
+  let imageError = $state("");
+
+  /**
+   * Attaches a picture to one card through the vault's asset handling.
+   *
+   * A full disk is the expected failure here, and it must leave the card as it
+   * was rather than half-attached: the path is only written after the image is
+   * safely in the vault (Edge Cases: storage exhaustion).
+   */
+  async function attachImage(card: Card, file: File | undefined) {
+    if (!file) return;
+    imageError = "";
+    try {
+      const saved = await vault.saveImageToVault(file, card.id, file.name);
+      patchCard(card.id, { imagePath: saved.image });
+    } catch (err) {
+      console.error("[RandomSources] Card image failed", err);
+      imageError = `"${file.name}" could not be saved. Your vault may be out of space; the card is unchanged.`;
+    }
+  }
 
   function update(changes: Partial<RandomSource>) {
     onChange({ ...source, ...changes });
@@ -127,6 +149,15 @@
       </span>
     </label>
   </div>
+
+  {#if imageError}
+    <p
+      class="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 font-body text-xs text-red-500"
+      data-testid="card-image-error"
+    >
+      {imageError}
+    </p>
+  {/if}
 
   {#each generalDiagnostics as diagnostic}
     <p
@@ -246,6 +277,36 @@
                 patchCard(card.id, { body: e.currentTarget.value })}
               data-testid="card-body"
             ></textarea>
+            <div class="flex items-center gap-2">
+              <CardImage
+                path={card.imagePath}
+                alt="Picture on {card.title || 'this card'}"
+              />
+              <label
+                class="cursor-pointer rounded border border-theme-border px-2 py-1 font-header text-[9px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+              >
+                {card.imagePath ? "Replace picture" : "Add picture"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  onchange={(e) =>
+                    attachImage(card, e.currentTarget.files?.[0])}
+                  data-testid="card-image-input"
+                />
+              </label>
+              {#if card.imagePath}
+                <button
+                  type="button"
+                  class="rounded border border-theme-border px-2 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
+                  onclick={() => patchCard(card.id, { imagePath: undefined })}
+                  data-testid="remove-card-image"
+                >
+                  Remove picture
+                </button>
+              {/if}
+            </div>
+
             {#if options.allowReversals}
               <textarea
                 rows="2"
@@ -283,7 +344,7 @@
   </ul>
 
   <!-- Drawing sits beside authoring, exactly as rolling does for tables. -->
-  <DeckView deck={source} />
+  <DeckView deck={source} {onChange} />
 </div>
 
 <style>

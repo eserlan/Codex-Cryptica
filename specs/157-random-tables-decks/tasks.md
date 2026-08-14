@@ -199,11 +199,11 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 - [x] T078 [US5] Implement reversal orientation in `deck-service.ts`, drawn through `DiceEngine` rather than `Math.random()`
 - [x] T079 [US5] Implement `drawSpread()` with a capacity pre-check so no partial spread is ever dealt
-- [ ] T080 [US5] Add spread definition UI to `DeckView.svelte` (named, ordered positions)
-- [ ] T081 [US5] Render spreads as a positional layout with each position label beside its card, not a flat list
-- [ ] T082 [US5] Wire card images through `AssetManager` in `packages/vault-engine/src/asset-manager.ts`, inheriting its size limits and export behaviour
-- [ ] T083 [US5] Extend `ImportWizard.svelte` to bulk-import cards with images, matching each image to its card (FR-036)
-- [ ] T084 [US5] Handle storage exhaustion during image import: fail cleanly with a message, leaving the deck consistent rather than half-imported (Edge Cases)
+- [x] T080 [US5] Add spread definition UI to `DeckView.svelte` (named, ordered positions)
+- [x] T081 [US5] Render spreads as a positional layout with each position label beside its card, not a flat list
+- [x] T082 [US5] Wire card images through `AssetManager` in `packages/vault-engine/src/asset-manager.ts`, inheriting its size limits and export behaviour
+- [x] T083 [US5] Extend `ImportWizard.svelte` to bulk-import cards with images, matching each image to its card (FR-036)
+- [x] T084 [US5] Handle storage exhaustion during image import: fail cleanly with a message, leaving the deck consistent rather than half-imported (Edge Cases)
 - [x] T085 [US5] Resolve `{reference}` tokens in card body text at draw time via `RandomSourceEngine` (FR-012)
 - [x] T086 [US5] Ensure a deck reached _through a reference_ is sampled with replacement and never depleted (FR-012a), with a test proving 20 fragment re-rolls leave the discard pile empty
 
