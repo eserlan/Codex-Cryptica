@@ -5,6 +5,7 @@
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
@@ -119,32 +120,29 @@
     class="flex items-center gap-3 md:gap-4 flex-1 min-w-0 w-full md:w-auto order-2 md:order-1"
   >
     <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-3 mb-0.5 md:mb-1">
-        <span
-          class="{getIconClass(
-            categories.getCategory(
-              editState.isEditing ? editState.type : entity?.type || '',
-            )?.icon,
-          )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
-        ></span>
-        {#if editState.isEditing}
-          <select
+      {#if editState.isEditing}
+        <div class="mb-1.5">
+          <CategoryRadioGroup
             bind:value={editState.type}
-            aria-label="Entity Type"
-            class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] md:text-xs font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-1 md:ml-2"
-          >
-            {#each categories.list as cat (cat.id)}
-              <option value={cat.id}>{cat.label || cat.id.toUpperCase()}</option
-              >
-            {/each}
-          </select>
-        {:else}
+            ariaLabel="Entity Type"
+            showLabel={false}
+            compact
+            idPrefix="zen-entity-type"
+          />
+        </div>
+      {:else}
+        <div class="flex items-center gap-2 mb-0.5 md:mb-1">
+          <span
+            class="{getIconClass(
+              categories.getCategory(entity?.type || '')?.icon,
+            )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
+          ></span>
           <span
             class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
             >{entity?.type || ""}</span
           >
-        {/if}
-      </div>
+        </div>
+      {/if}
       {#if editState.isEditing}
         <div class="space-y-2">
           <input
