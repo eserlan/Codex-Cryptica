@@ -6,6 +6,19 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-08-14 — The Shelf (ad hoc)
+
+- **Text:** I built the Shelf because I kept recreating NPCs and monsters that were already good.
+
+  Send an entity from one Codex Cryptica vault to the Shelf, switch campaigns, and import it with its stat sheet, artwork, notes, and links intact. It stays in your browser.
+
+  https://codexcryptica.com/
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/reuse-entities-between-campaigns/shelf-in-context.png`
+- **Alt:** The Shelf open beside a second campaign, holding three entities carried over from another vault
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt2mnm3ejd2j
+- **Note:** Posted ad hoc at the user's request. The Shelf is intentionally browser-local: it is for carrying entities between vaults on one device, not backup or sharing.
+
 ### 2026-08-08 — World Generator (queue #3)
 
 - **Text:** I wanted a world I could start running tonight, not a setting summary I still had to build out.
