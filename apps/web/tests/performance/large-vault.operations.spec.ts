@@ -115,7 +115,7 @@ test("records repeatable large-vault operations in a production preview", async 
     const selectionStart = (await getSamples()).length;
     for (let index = 0; index < 10; index += 1) {
       const sampleStart = (await getSamples()).length;
-      const position = await page.evaluate((nodeIndex) => {
+      await page.evaluate((nodeIndex) => {
         const cy = (window as any).cy;
         const rect = cy.container().getBoundingClientRect();
         const nodes = cy
@@ -125,18 +125,16 @@ test("records repeatable large-vault operations in a production preview", async 
             if (!candidate.visible()) return false;
             const rendered = candidate.renderedPosition();
             return (
-              rendered.x >= 0 &&
-              rendered.x <= rect.width &&
-              rendered.y >= 0 &&
-              rendered.y <= rect.height
+              rendered.x >= 20 &&
+              rendered.x <= rect.width - 20 &&
+              rendered.y >= 20 &&
+              rendered.y <= rect.height - 20
             );
           });
         if (nodes.length === 0) throw new Error("no rendered graph nodes");
         const node = nodes[nodeIndex % nodes.length];
-        const rendered = node.renderedPosition();
-        return { x: rect.left + rendered.x, y: rect.top + rendered.y };
+        node.emit("tap");
       }, index);
-      await page.mouse.click(position.x, position.y);
       await page.waitForFunction(
         (startAt) =>
           ((window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [])

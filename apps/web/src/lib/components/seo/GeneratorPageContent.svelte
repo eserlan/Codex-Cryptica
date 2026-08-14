@@ -813,6 +813,8 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  ogImage={meta.ogImage}
+  ogImageAlt={meta.ogImageAlt}
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}

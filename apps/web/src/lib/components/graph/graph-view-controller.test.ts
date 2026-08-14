@@ -136,6 +136,7 @@ describe("GraphViewController", () => {
       },
       layoutUIStore: {
         isMobile: false,
+        setLastSelectedNodePosition: vi.fn(),
       },
       connectionModeStore: {
         isConnecting: false,
@@ -269,6 +270,60 @@ describe("GraphViewController", () => {
     });
   });
 
+  it("suppresses mobile tap Zen Mode navigation after a context gesture", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", Date.now());
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).not.toHaveBeenCalled();
+  });
+
+  it("opens Zen Mode on mobile node tap when cxttap did not recently occur", async () => {
+    deps.layoutUIStore.isMobile = true;
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const mockCy = controller.cy!;
+    const scratchStore: Record<string, any> = {};
+    mockCy.scratch = vi.fn((key: string, val?: any) => {
+      if (val !== undefined) scratchStore[key] = val;
+      return scratchStore[key];
+    }) as any;
+    mockCy.scratch("_lastCxtTap", 0);
+
+    const mockNode = {
+      id: () => "node-1",
+      renderedPosition: () => ({ x: 10, y: 10 }),
+      cy: () => mockCy,
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+    } as any;
+
+    const handlers = vi.mocked(setupGraphEvents).mock.calls.at(-1)?.[1];
+    await handlers?.onNodeTap?.("node-1", mockNode);
+
+    expect(deps.modalUIStore.openZenMode).toHaveBeenCalledWith("node-1");
+  });
+
   it("should reset to idle when vault starts loading", () => {
     deps.vault.status = "loading";
     deps.vault.allEntities = [];
@@ -375,6 +430,46 @@ describe("GraphViewController", () => {
       });
 
       expect(layoutSpy).not.toHaveBeenCalled();
+    });
+
+    it("preserves active focusDepthSpan when scheduling render-ready measurement and completes it on frame two", () => {
+      deps.graph.focusViewActive = true;
+      controller.loadPhase = "ready";
+
+      const rafCallbacks: FrameRequestCallback[] = [];
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+
+      // Trigger focus depth transition measurement
+      deps.graph.focusDepth = 2;
+      controller.syncElements();
+
+      const focusSpan = (controller as any).focusDepthSpan;
+      const renderReadySpan = (controller as any).renderReadySpan;
+
+      expect(focusSpan).not.toBeNull();
+      expect(renderReadySpan).not.toBeNull();
+
+      const focusCancelSpy = vi.spyOn(focusSpan, "cancel");
+      const focusCompleteSpy = vi.spyOn(focusSpan, "complete");
+      const renderReadyCompleteSpy = vi.spyOn(renderReadySpan, "complete");
+
+      // Verify clearRenderReadyMeasurement(false) called by scheduleRenderReadyMeasurement
+      // does not cancel the active focusDepthSpan
+      expect(focusCancelSpy).not.toHaveBeenCalled();
+
+      // Advance through the two requestAnimationFrame cycles
+      expect(rafCallbacks.length).toBe(1);
+      rafCallbacks[0](16);
+      expect(rafCallbacks.length).toBe(2);
+      rafCallbacks[1](32);
+
+      expect(renderReadyCompleteSpy).toHaveBeenCalled();
+      expect(focusCompleteSpy).toHaveBeenCalled();
+      expect((controller as any).focusDepthSpan).toBeNull();
+      expect((controller as any).renderReadySpan).toBeNull();
     });
   });
 

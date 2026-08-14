@@ -220,6 +220,129 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
   });
 
+  describe("Open Graph & Twitter Card Meta Tags", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("renders default OG and Twitter meta tags with fallback image and alt", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const ogWidth = document.querySelector('meta[property="og:image:width"]');
+      const ogHeight = document.querySelector(
+        'meta[property="og:image:height"]',
+      );
+      const twitterCard = document.querySelector('meta[name="twitter:card"]');
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+      );
+      expect(ogImageAlt?.getAttribute("content")).toBe(
+        "A Codex Cryptica campaign vault showing an entity graph beside an open character record",
+      );
+      expect(ogWidth?.getAttribute("content")).toBe("1600");
+      expect(ogHeight?.getAttribute("content")).toBe("1000");
+      expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
+      );
+      expect(twitterImageAlt?.getAttribute("content")).toBe(
+        "A Codex Cryptica campaign vault showing an entity graph beside an open character record",
+      );
+    });
+
+    it("renders custom OG and Twitter image and alt text when provided", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Alien Race Generator | Codex Cryptica",
+          metaDescription: "Build unique non-human species.",
+          canonicalPath: "/generators/alien-race",
+          ogImage:
+            "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+          ogImageAlt: "Alien race generator preview",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+      );
+      expect(ogImageAlt?.getAttribute("content")).toBe(
+        "Alien race generator preview",
+      );
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+      );
+      expect(twitterImageAlt?.getAttribute("content")).toBe(
+        "Alien race generator preview",
+      );
+    });
+
+    it("omits image alt tags when custom ogImage is provided without ogImageAlt to prevent mismatched descriptions", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Custom Generator | Codex Cryptica",
+          metaDescription: "Custom description.",
+          canonicalPath: "/generators/custom",
+          ogImage:
+            "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+        },
+      });
+
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogImageAlt = document.querySelector(
+        'meta[property="og:image:alt"]',
+      );
+      const twitterImage = document.querySelector('meta[name="twitter:image"]');
+      const twitterImageAlt = document.querySelector(
+        'meta[name="twitter:image:alt"]',
+      );
+
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+      );
+      expect(ogImageAlt).toBeNull();
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://assets.codexcryptica.com/screenshots/generator-custom.jpg",
+      );
+      expect(twitterImageAlt).toBeNull();
+    });
+  });
+
   describe("Names variant rendering", () => {
     it("renders names as beautiful cards with copy buttons when variant is 'names'", () => {
       const mockGenerate = vi.fn().mockResolvedValue({});
