@@ -42,6 +42,10 @@ export class ViewPresetsStore {
       return [];
     }
 
+    if (vaultId !== this.loadedVaultId) {
+      this.activePresetId = null;
+    }
+
     try {
       const db = await this.getDb();
       const primaryKey = viewPresetsSettingsKey(vaultId);

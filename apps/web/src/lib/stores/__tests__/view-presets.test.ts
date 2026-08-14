@@ -213,4 +213,46 @@ describe("ViewPresetsStore", () => {
       "has_connections",
     );
   });
+
+  it("resets activePresetId when switching between different vaults", async () => {
+    mockDb.get.mockImplementation(async (_storeName, key) => {
+      if (key === "viewPresets:vault-A") {
+        return [
+          {
+            id: "preset-A",
+            name: "Vault A View",
+            createdAt: 1000,
+            updatedAt: 1000,
+            state: { activeLabels: [], activeCategories: [] },
+          },
+        ];
+      }
+      if (key === "viewPresets:vault-B") {
+        return [
+          {
+            id: "preset-B",
+            name: "Vault B View",
+            createdAt: 1000,
+            updatedAt: 1000,
+            state: { activeLabels: [], activeCategories: [] },
+          },
+        ];
+      }
+      return null;
+    });
+
+    await store.loadPresets("vault-A");
+    store.applyPreset("preset-A");
+    expect(store.activePresetId).toBe("preset-A");
+
+    // Switching to vault-B should clear active preset
+    await store.loadPresets("vault-B");
+    expect(store.activePresetId).toBeNull();
+    expect(store.presets[0].name).toBe("Vault B View");
+
+    // Unloading vault should clear active preset and preset list
+    await store.loadPresets(null);
+    expect(store.activePresetId).toBeNull();
+    expect(store.presets).toEqual([]);
+  });
 });

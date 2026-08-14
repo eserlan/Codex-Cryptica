@@ -37,9 +37,7 @@
   let panelEl = $state<HTMLDivElement>();
 
   $effect(() => {
-    if (activeVaultId) {
-      void presetsStore.loadPresets(activeVaultId);
-    }
+    void presetsStore.loadPresets(activeVaultId);
   });
 
   const close = () => {
@@ -82,7 +80,7 @@
       const state: ViewPresetState = {
         activeCategories: Array.from(currentFilterState.typeFilters),
         activeLabels: Array.from(currentFilterState.labelFilters),
-        labelFilterMode: "AND",
+        labelFilterMode: "OR",
         searchQuery: currentFilterState.searchQuery || undefined,
         showIncompleteOnly: currentFilterState.showIncompleteOnly,
         columnFilters: currentFilterState.columnFilters

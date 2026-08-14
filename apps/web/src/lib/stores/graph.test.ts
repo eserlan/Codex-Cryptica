@@ -469,8 +469,15 @@ describe("GraphStore", () => {
     await graph.init();
 
     expect(getAllSpy).toHaveBeenCalledTimes(1);
-    // 5 global graph settings + vault-scoped view presets keys
-    expect(getSpy.mock.calls.length).toBeGreaterThanOrEqual(6);
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphShowLabels");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphShowImages");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphStableLayout");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphRecentLabels");
+    expect(getSpy).toHaveBeenCalledWith("settings", "graphLabelFilterMode");
+    expect(getSpy).toHaveBeenCalledWith(
+      "settings",
+      expect.stringMatching(/^viewPresets:/),
+    );
     expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
 
     addEventListenerSpy.mockRestore();
