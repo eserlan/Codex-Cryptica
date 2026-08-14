@@ -292,11 +292,14 @@ export function buildVaultContext(
   let neighbors: VaultContextEntityExcerpt[] = [];
   if (sourceEntity) {
     if (connectedIds && connectedIds.size > 0) {
-      neighbors = [...connectedIds]
-        .map((id) => allEntities[id])
-        .filter((e): e is Entity => !!e)
-        .slice(0, MAX_NEIGHBORS)
-        .map((e) => entityToExcerpt(e));
+      // ⚡ Bolt Optimization: Replace chained .map().filter().slice().map() with an imperative loop
+      for (const id of connectedIds) {
+        if (neighbors.length >= MAX_NEIGHBORS) break;
+        const e = allEntities[id];
+        if (e) {
+          neighbors.push(entityToExcerpt(e));
+        }
+      }
     } else {
       // ⚡ Bolt Optimization: Replace inline Object.values().filter().slice().map()
       // with imperative loop and early exit
