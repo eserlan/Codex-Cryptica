@@ -31,12 +31,12 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 **Purpose**: Scaffold the new workspace package
 
-- [ ] T001 Create `packages/random-source-engine/package.json` mirroring `packages/dice-engine/package.json` (name `random-source-engine`, private, `main`/`types` → `./src/index.ts`, scripts `test`/`test:coverage`/`lint`), with a workspace dependency on `dice-engine`
-- [ ] T002 [P] Create `packages/random-source-engine/tsconfig.json` copied from `packages/dice-engine/tsconfig.json`
-- [ ] T003 [P] Create `packages/random-source-engine/vitest.config.ts` from the `dice-engine` config, keeping the 70/60/60/70 coverage thresholds required for new packages (Constitution X)
-- [ ] T004 [P] Create `packages/random-source-engine/bunfig.toml` matching `packages/dice-engine/bunfig.toml`
-- [ ] T005 Create `packages/random-source-engine/src/index.ts` re-exporting `./types` (barrel grows as modules land)
-- [ ] T006 Run `bun install` from the repo root so the workspace picks up the new package, then confirm `bun run test --filter random-source-engine` executes (zero tests is a pass)
+- [x] T001 Create `packages/random-source-engine/package.json` mirroring `packages/dice-engine/package.json` (name `random-source-engine`, private, `main`/`types` → `./src/index.ts`, scripts `test`/`test:coverage`/`lint`), with a workspace dependency on `dice-engine`
+- [x] T002 [P] Create `packages/random-source-engine/tsconfig.json` copied from `packages/dice-engine/tsconfig.json`
+- [x] T003 [P] Create `packages/random-source-engine/vitest.config.ts` from the `dice-engine` config, keeping the 70/60/60/70 coverage thresholds required for new packages (Constitution X)
+- [x] T004 [P] Create `packages/random-source-engine/bunfig.toml` matching `packages/dice-engine/bunfig.toml`
+- [x] T005 Create `packages/random-source-engine/src/index.ts` re-exporting `./types` (barrel grows as modules land)
+- [x] T006 Run `bun install` from the repo root so the workspace picks up the new package, then confirm `bun run test --filter random-source-engine` executes (zero tests is a pass)
 
 ---
 
@@ -46,15 +46,15 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T007 Define all core types in `packages/random-source-engine/src/types.ts` per data-model.md: `RandomSource`, `SelectionMode`, `TableEntry`, `Card`, `DeckOptions`, `DeckState`, `Spread`, `Reference`, `ResolutionNode`, `RollOutcome`, `Notice`, `Diagnostic`, `DieSpec`, `Range`
-- [ ] T008 Export `MAX_RESOLUTION_DEPTH = 8` from `packages/random-source-engine/src/types.ts` (R8)
-- [ ] T009 [P] Write failing tests in `packages/random-source-engine/tests/selection.test.ts` for weighted index selection: equal weights spread across the full range, a weight of 3 chosen ~3× as often as 1 over 1,000 draws with a seeded provider (SC-008), and single-entry tables always returning index 0
-- [ ] T010 Implement `selectIndex(weights: number[], dice: DiceEngine): number` in `packages/random-source-engine/src/selection.ts`, delegating to `DiceEngine` — never `Math.random()` (R1)
-- [ ] T011 [P] Write failing tests in `packages/random-source-engine/tests/reference-parser.test.ts`: single reference, multiple references in one string, unclosed `{`, empty `{}`, nested braces, and correct `start`/`end` offsets
-- [ ] T012 Implement `parseReferences(text: string): Reference[]` in `packages/random-source-engine/src/resolver.ts`, treating unmatched and empty braces as literal text (spec Assumptions)
-- [ ] T013 [P] Write failing round-trip tests in `packages/random-source-engine/tests/parser.test.ts`: `parseRandomSource(serialiseRandomSource(x))` deep-equals `x` for a weighted table, a ranged table, and a deck
-- [ ] T014 Implement `parseRandomSource` / `serialiseRandomSource` in `packages/random-source-engine/src/parser.ts` using the YAML-frontmatter-plus-Markdown-body shape in data-model.md
-- [ ] T015 Add a deterministic `CryptoProvider` test helper in `packages/random-source-engine/tests/helpers/seeded-crypto.ts` so every distribution and cycle test is reproducible
+- [x] T007 Define all core types in `packages/random-source-engine/src/types.ts` per data-model.md: `RandomSource`, `SelectionMode`, `TableEntry`, `Card`, `DeckOptions`, `DeckState`, `Spread`, `Reference`, `ResolutionNode`, `RollOutcome`, `Notice`, `Diagnostic`, `DieSpec`, `Range`
+- [x] T008 Export `MAX_RESOLUTION_DEPTH = 8` from `packages/random-source-engine/src/types.ts` (R8)
+- [x] T009 [P] Write failing tests in `packages/random-source-engine/tests/selection.test.ts` for weighted index selection: equal weights spread across the full range, a weight of 3 chosen ~3× as often as 1 over 1,000 draws with a seeded provider (SC-008), and single-entry tables always returning index 0
+- [x] T010 Implement `selectIndex(weights: number[], dice: DiceEngine): number` in `packages/random-source-engine/src/selection.ts`, delegating to `DiceEngine` — never `Math.random()` (R1)
+- [x] T011 [P] Write failing tests in `packages/random-source-engine/tests/reference-parser.test.ts`: single reference, multiple references in one string, unclosed `{`, empty `{}`, nested braces, and correct `start`/`end` offsets
+- [x] T012 Implement `parseReferences(text: string): Reference[]` in `packages/random-source-engine/src/resolver.ts`, treating unmatched and empty braces as literal text (spec Assumptions)
+- [x] T013 [P] Write failing round-trip tests in `packages/random-source-engine/tests/parser.test.ts`: `parseRandomSource(serialiseRandomSource(x))` deep-equals `x` for a weighted table, a ranged table, and a deck
+- [x] T014 Implement `parseRandomSource` / `serialiseRandomSource` in `packages/random-source-engine/src/parser.ts` using the YAML-frontmatter-plus-Markdown-body shape in data-model.md
+- [x] T015 Add a deterministic `CryptoProvider` test helper in `packages/random-source-engine/tests/helpers/seeded-crypto.ts` so every distribution and cycle test is reproducible
 
 **Checkpoint**: Content model, randomness, reference parsing, and file round-trip are in place — user stories can begin
 
@@ -68,16 +68,16 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T016 [P] [US1] Write failing tests in `packages/random-source-engine/tests/engine.roll.test.ts`: rolling returns exactly one entry, the reported `dieValue` matches the selected entry, and a single-entry table always returns that entry
-- [ ] T017 [P] [US1] Write failing tests in `packages/random-source-engine/tests/validation.test.ts`: duplicate name is `severity: "error"`, range gaps/overlaps/unreachable entries are `severity: "warning"`, and an empty table is reported rather than thrown
-- [ ] T018 [P] [US1] Write failing tests in `packages/random-source-engine/tests/mode-conversion.test.ts` for FR-004a: weighted→ranged produces contiguous ranges of width equal to each weight, ranged→weighted produces weights equal to range widths, and both directions round-trip
+- [x] T016 [P] [US1] Write failing tests in `packages/random-source-engine/tests/engine.roll.test.ts`: rolling returns exactly one entry, the reported `dieValue` matches the selected entry, and a single-entry table always returns that entry
+- [x] T017 [P] [US1] Write failing tests in `packages/random-source-engine/tests/validation.test.ts`: duplicate name is `severity: "error"`, range gaps/overlaps/unreachable entries are `severity: "warning"`, and an empty table is reported rather than thrown
+- [x] T018 [P] [US1] Write failing tests in `packages/random-source-engine/tests/mode-conversion.test.ts` for FR-004a: weighted→ranged produces contiguous ranges of width equal to each weight, ranged→weighted produces weights equal to range widths, and both directions round-trip
 
 ### Implementation for User Story 1
 
-- [ ] T019 [US1] Implement `RandomSourceEngine.roll()` in `packages/random-source-engine/src/engine.ts` for flat tables (no reference resolution yet), returning `RollOutcome` with a single-node `chain`
-- [ ] T020 [US1] Implement `validateSource()` in `packages/random-source-engine/src/validation.ts` producing `Diagnostic[]`; only `duplicate-name` is an error, every coverage finding is a warning (FR-006 must not block save)
-- [ ] T021 [US1] Implement weighted↔ranged conversion in `packages/random-source-engine/src/mode-conversion.ts` (FR-004a)
-- [ ] T022 [US1] Export engine, validation, and conversion from `packages/random-source-engine/src/index.ts`, exporting **both the class and a default singleton** for `RandomSourceEngine` — matching `dice-engine`'s exported `diceEngine` (Constitution VIII)
+- [x] T019 [US1] Implement `RandomSourceEngine.roll()` in `packages/random-source-engine/src/engine.ts` for flat tables (no reference resolution yet), returning `RollOutcome` with a single-node `chain`
+- [x] T020 [US1] Implement `validateSource()` in `packages/random-source-engine/src/validation.ts` producing `Diagnostic[]`; only `duplicate-name` is an error, every coverage finding is a warning (FR-006 must not block save)
+- [x] T021 [US1] Implement weighted↔ranged conversion in `packages/random-source-engine/src/mode-conversion.ts` (FR-004a)
+- [x] T022 [US1] Export engine, validation, and conversion from `packages/random-source-engine/src/index.ts`, exporting **both the class and a default singleton** for `RandomSourceEngine` — matching `dice-engine`'s exported `diceEngine` (Constitution VIII)
 - [ ] T023 [P] [US1] Write failing tests in `apps/web/src/lib/stores/random-source-store.test.ts` covering create, rename, duplicate, delete, and rejection of a colliding name
 - [ ] T024 [US1] Create `apps/web/src/lib/stores/random-source-store.svelte.ts`: vault-backed CRUD over `_tables/` and `_decks/`, name-uniqueness enforcement (FR-003a), constructor-injected vault dependency with a production default (Constitution VIII)
 - [ ] T025 [US1] Build `apps/web/src/lib/components/random/TableEditor.svelte` — name, labels, entry list with add/edit/reorder/delete, mode toggle, explicit die entry when in ranged mode (FR-005), inline diagnostics from `validateSource`
@@ -102,18 +102,18 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T034 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.test.ts`: single reference resolves, multiple references in one entry all resolve into continuous text, and the chain records which source produced each fragment (SC-009)
-- [ ] T035 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.cycles.test.ts`: direct self-reference and an A→B→A loop both terminate with `status: "cycle"`, a usable result, and a notice — never a throw or a hang (FR-014, SC-006)
-- [ ] T036 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.depth.test.ts`: a chain deeper than `MAX_RESOLUTION_DEPTH` stops with `status: "depth-limit"` and a _different_ notice from the cycle case (FR-015, R8)
-- [ ] T037 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.unresolved.test.ts`: a reference to a missing or deleted source is preserved visibly with `status: "unresolved"` and never replaced with empty text (FR-016)
+- [x] T034 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.test.ts`: single reference resolves, multiple references in one entry all resolve into continuous text, and the chain records which source produced each fragment (SC-009)
+- [x] T035 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.cycles.test.ts`: direct self-reference and an A→B→A loop both terminate with `status: "cycle"`, a usable result, and a notice — never a throw or a hang (FR-014, SC-006)
+- [x] T036 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.depth.test.ts`: a chain deeper than `MAX_RESOLUTION_DEPTH` stops with `status: "depth-limit"` and a _different_ notice from the cycle case (FR-015, R8)
+- [x] T037 [P] [US2] Write failing tests in `packages/random-source-engine/tests/resolver.unresolved.test.ts`: a reference to a missing or deleted source is preserved visibly with `status: "unresolved"` and never replaced with empty text (FR-016)
 
 ### Implementation for User Story 2
 
-- [ ] T038 [US2] Implement recursive resolution in `packages/random-source-engine/src/resolver.ts` with a visited-set on the resolution path for cycles and a separate depth counter, so the two failures report distinctly (R8)
-- [ ] T039 [US2] Build the `ResolutionNode` tree during resolution and attach it to `RollOutcome.chain`
-- [ ] T040 [US2] Wire `RandomSourceEngine.roll()` to the resolver and accept a `ResolutionContext` with case-insensitive name `lookup` (clarification 1)
-- [ ] T041 [US2] Implement `RandomSourceEngine.rollMany()` for multi-table rolls presented as one outcome, and add the multi-select control in `TableRoller.svelte` that lets a user pick two or more tables to roll together — FR-017 requires the user-facing action, not just the capability
-- [ ] T042 [US2] Implement `RandomSourceEngine.rerollFragment(outcome, nodePath, ctx)` re-resolving one node while leaving siblings intact (FR-019)
+- [x] T038 [US2] Implement recursive resolution in `packages/random-source-engine/src/resolver.ts` with a visited-set on the resolution path for cycles and a separate depth counter, so the two failures report distinctly (R8)
+- [x] T039 [US2] Build the `ResolutionNode` tree during resolution and attach it to `RollOutcome.chain`
+- [x] T040 [US2] Wire `RandomSourceEngine.roll()` to the resolver and accept a `ResolutionContext` with case-insensitive name `lookup` (clarification 1)
+- [x] T041 [US2] Implement `RandomSourceEngine.rollMany()` for multi-table rolls presented as one outcome, and add the multi-select control in `TableRoller.svelte` that lets a user pick two or more tables to roll together — FR-017 requires the user-facing action, not just the capability
+- [x] T042 [US2] Implement `RandomSourceEngine.rerollFragment(outcome, nodePath, ctx)` re-resolving one node while leaving siblings intact (FR-019)
 - [ ] T043 [US2] Build `apps/web/src/lib/components/random/ResolutionChain.svelte` showing which source produced each fragment, inline in the result view (SC-009)
 - [ ] T044 [US2] Add per-fragment re-roll controls to `TableRoller.svelte` wired to `rerollFragment`
 - [ ] T045 [US2] Render cycle, depth-limit, and unresolved notices in `TableRoller.svelte` as plain-language messages (Constitution IX)
