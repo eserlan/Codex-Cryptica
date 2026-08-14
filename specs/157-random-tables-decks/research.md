@@ -128,6 +128,14 @@ goal is trying to avoid. `/table` and `/deck` are unclaimed and read naturally
 `BaseExecutor`, emit `COMMAND_STARTED` / `COMMAND_COMPLETED` / `COMMAND_FAILED`,
 push a typed message onto `chatHistory`, and write through to history.
 
+**Correction found during implementation**: this document originally said the
+"did you mean" suggestions for FR-040 would reuse "existing fuzzy matching in
+`search-engine`". No such helper exists — `search-engine` wraps FlexSearch for
+full-text document indexing and exposes nothing for comparing two short names.
+The store therefore carries a small bigram-similarity function of its own.
+That is not a Constitution III violation, because there was no existing
+implementation to reuse; the original claim was simply wrong.
+
 ---
 
 ## R6. Roll history — extend, do not fork

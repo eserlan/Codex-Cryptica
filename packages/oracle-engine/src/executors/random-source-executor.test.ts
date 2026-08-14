@@ -30,14 +30,6 @@ describe("OracleCommandParser — /table and /deck (#2247)", () => {
     });
   });
 
-  it("reads a trailing number as a card count", () => {
-    expect(OracleCommandParser.parse("/deck Tarot 3", false)).toEqual({
-      type: "draw-deck",
-      sourceName: "Tarot",
-      drawCount: 3,
-    });
-  });
-
   it("errors when /table is given no name", () => {
     expect(OracleCommandParser.parse("/table", false).type).toBe("error");
   });
@@ -50,6 +42,25 @@ describe("OracleCommandParser — /table and /deck (#2247)", () => {
     // Regression guard: taking /draw for cards would break image generation.
     const intent = OracleCommandParser.parse("/draw a castle", false);
     expect(intent.type).not.toBe("draw-deck");
+  });
+
+  it("does not match a command that merely starts with /table", () => {
+    expect(OracleCommandParser.parse("/tables", false).type).not.toBe(
+      "roll-table",
+    );
+  });
+
+  it("does not match a command that merely starts with /deck", () => {
+    expect(OracleCommandParser.parse("/decking", false).type).not.toBe(
+      "draw-deck",
+    );
+  });
+
+  it("reports both readings of a trailing number so the executor can choose", () => {
+    const intent = OracleCommandParser.parse("/deck Tarot 3", false);
+    expect(intent.sourceName).toBe("Tarot 3");
+    expect(intent.countedName).toBe("Tarot");
+    expect(intent.drawCount).toBe(3);
   });
 
   it("still parses /roll as a dice roll", () => {
@@ -99,13 +110,44 @@ describe("RandomSourceExecutor", () => {
   it("passes the requested card count through", async () => {
     const draw = vi.fn(async () => ({ text: "x", record: {} }));
     const ctx = makeContext({
-      randomSources: { findByName: () => deck, draw },
+      randomSources: {
+        findByName: (n: string) => (n === "Complications" ? deck : undefined),
+        draw,
+      },
     });
     await executor.execute(
-      { type: "draw-deck", sourceName: "Complications", drawCount: 3 },
+      {
+        type: "draw-deck",
+        sourceName: "Complications 3",
+        countedName: "Complications",
+        drawCount: 3,
+      },
       ctx,
     );
     expect(draw).toHaveBeenCalledWith(deck, 3);
+  });
+
+  it("prefers a deck whose name genuinely ends in a number", async () => {
+    // "/deck Deck 52" must draw one card from "Deck 52", not 52 cards from
+    // a deck called "Deck".
+    const numbered = { id: "d2", name: "Deck 52", kind: "deck" };
+    const draw = vi.fn(async () => ({ text: "x", record: {} }));
+    const ctx = makeContext({
+      randomSources: {
+        findByName: (n: string) => (n === "Deck 52" ? numbered : undefined),
+        draw,
+      },
+    });
+    await executor.execute(
+      {
+        type: "draw-deck",
+        sourceName: "Deck 52",
+        countedName: "Deck",
+        drawCount: 52,
+      },
+      ctx,
+    );
+    expect(draw).toHaveBeenCalledWith(numbered, 1);
   });
 
   it("names close matches when nothing matches (FR-040)", async () => {

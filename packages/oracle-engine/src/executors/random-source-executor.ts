@@ -50,7 +50,16 @@ export class RandomSourceExecutor
       }
 
       const wantDeck = intent.type === "draw-deck";
-      const source = sources.findByName?.(name);
+
+      // "/deck Tarot 3" is ambiguous: the deck may be called "Tarot" and want
+      // three cards, or may genuinely be called "Tarot 3". Prefer the exact
+      // full name, then fall back to the name-plus-count reading.
+      let source = sources.findByName?.(name);
+      let count = 1;
+      if (!source && wantDeck && intent.countedName) {
+        source = sources.findByName?.(intent.countedName);
+        if (source) count = intent.drawCount ?? 1;
+      }
 
       if (!source) {
         // A near miss mid-session is far more likely than a typo the user wants
@@ -87,7 +96,7 @@ export class RandomSourceExecutor
 
       try {
         const result = wantDeck
-          ? await sources.draw(source, intent.drawCount ?? 1)
+          ? await sources.draw(source, count)
           : await sources.roll(source);
 
         await context.chatHistory.addMessage({

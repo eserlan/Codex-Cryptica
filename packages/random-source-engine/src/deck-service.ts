@@ -44,16 +44,17 @@ export interface DrawOutcome {
 export class DeckService {
   private queue: Promise<unknown> = Promise.resolve();
 
+  private engine: RandomSourceEngine;
+
   constructor(
     private store: DeckStateStore,
     private dice: DiceEngine = defaultDice,
-    private engine: RandomSourceEngine = new RandomSourceEngine(defaultDice),
+    engine?: RandomSourceEngine,
   ) {
-    // Keep the engine on the same dice instance when one is injected, so a
-    // seeded provider makes both selection and resolution deterministic.
-    if (dice !== defaultDice) {
-      this.engine = new RandomSourceEngine(dice);
-    }
+    // The engine defaults to one sharing this service's dice, so a seeded
+    // provider makes both card selection and reference resolution
+    // deterministic together.
+    this.engine = engine ?? new RandomSourceEngine(dice);
   }
 
   /** Draws `count` cards, respecting the deck's configured draw mode. */
@@ -212,9 +213,12 @@ export class DeckService {
   }
 }
 
-/** Class plus default singleton (Constitution VIII). The store is required, so
- * the singleton is created by the app layer; this factory keeps that one-liner
- * in one place. */
+/**
+ * Convenience constructor for the app layer.
+ *
+ * There is no module-level singleton here, unlike the other engines: a
+ * DeckService is meaningless without a store, and the store is vault-scoped.
+ */
 export function createDeckService(store: DeckStateStore): DeckService {
   return new DeckService(store);
 }

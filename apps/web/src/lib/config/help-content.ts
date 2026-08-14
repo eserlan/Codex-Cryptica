@@ -673,6 +673,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Transform dungeon concepts into interactive spatial canvas maps. Open a generated dungeon concept and click 'Build Delve on Canvas' to create a .canvas layout with sector group frames, tactical Area role badges, custom passages (hidden, locked, vertical), and context-aware stocking. Every new delve ends with a dedicated Climax Area chosen by AI from the Location's established canon. Its editor records what is at stake, the players' decision, and possible outcomes, so the finale can be a confrontation, negotiation, ritual, revelation, crisis, siege, escape, or another decisive turn rather than a required boss fight. When the layout is ready, use Finalize Dossier to create a linked GM Note containing the original briefing, every populated sector and Area, room-level connections, climax outcomes, a fitted image of the complete map, and a link back to the canvas. Finalize again after edits to refresh the image and update the same Note.",
     icon: "icon-[lucide--map]",
   },
+  "random-tables-and-decks": {
+    id: "random-tables-and-decks",
+    title: "Random Tables & Card Decks",
+    content:
+      "Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight, so a common result comes up more often than a rare one, or give explicit ranges when you are copying a d100 table you already own. Paste a spreadsheet, a block of text, or a Markdown table to build one in seconds: you see how every row was read before anything is saved, and you can fix or skip rows that did not come through cleanly. Write {creature} inside an entry to pull a result from another table, so one roll can produce a whole sentence, and you can see which table produced each part or re-roll just the part you did not like. Decks work the same way but deal cards instead: draw without replacement and drawn cards stay in the discard pile until you shuffle, even after you close the app. Decks can carry artwork, a reversed meaning for each card, and named spreads. Roll or draw from the Oracle chat with /table and /deck followed by the name. Everything works offline and never involves AI.",
+    icon: "icon-[lucide--dices]",
+  },
   "presentation-templates": {
     id: "presentation-templates",
     title: "Presentation Templates",

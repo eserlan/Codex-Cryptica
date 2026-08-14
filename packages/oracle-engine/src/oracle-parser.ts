@@ -20,7 +20,7 @@ export class OracleCommandParser {
 
     // `/table` and `/deck` rather than `/draw`: `draw` is already routed to
     // the visualization executor for image generation (#2247, research R5).
-    if (q.startsWith("/table")) {
+    if (q === "/table" || q.startsWith("/table ")) {
       const sourceName = query.slice("/table".length).trim();
       if (!sourceName) {
         return {
@@ -32,7 +32,7 @@ export class OracleCommandParser {
       return { type: "roll-table", sourceName };
     }
 
-    if (q.startsWith("/deck")) {
+    if (q === "/deck" || q.startsWith("/deck ")) {
       const rest = query.slice("/deck".length).trim();
       if (!rest) {
         return {
@@ -41,12 +41,16 @@ export class OracleCommandParser {
             "Please name a deck to draw from (e.g. /deck Complications).",
         };
       }
-      // A trailing number is a card count: "/deck Tarot 3".
+      // A trailing number *may* be a card count ("/deck Tarot 3"), but it may
+      // equally be part of the name ("/deck Deck 52"). The parser cannot tell,
+      // so it reports both readings and lets the executor prefer whichever
+      // actually names a deck.
       const withCount = rest.match(/^(.*?)\s+(\d+)$/);
       if (withCount) {
         return {
           type: "draw-deck",
-          sourceName: withCount[1].trim(),
+          sourceName: rest,
+          countedName: withCount[1].trim(),
           drawCount: Number(withCount[2]),
         };
       }

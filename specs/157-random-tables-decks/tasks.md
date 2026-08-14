@@ -239,7 +239,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T097 Add a help article for tables and decks to `apps/web/src/lib/config/help-content.ts`, covering reference syntax and deck reset (Constitution VII)
+- [x] T097 Add a help article for tables and decks to `apps/web/src/lib/config/help-content.ts`, covering reference syntax and deck reset (Constitution VII)
 - [ ] T098 [P] Add a `FeatureHint` for first-time use of the table editor, since reference syntax is exactly the complex interaction that clause names
 - [ ] T099 [P] Confirm `packages/random-source-engine` meets the 70% coverage goal via `bun run test:coverage --filter random-source-engine` (Constitution X)
 - [ ] T100 Verify the p95 roll budget of under 50 ms in-process on a 1,000-entry table at full depth (SC-003, R7)
