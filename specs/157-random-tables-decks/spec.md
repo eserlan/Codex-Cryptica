@@ -260,7 +260,7 @@ These decisions were made in the absence of explicit direction and should be con
 - Conditional logic — entries that appear only when a condition holds, or rolls branching on prior results.
 - Shared or public table repositories, community table browsing, and table publishing.
 - Importing directly from third-party table services via their APIs or URLs.
-- AI generation of table or card content.
+- AI generation of table or card content. Tracked as a later expansion in issue #2250, where generated rows would arrive as ordinary entries through the import preview rather than as a new content kind.
 - Probability analysis tooling beyond validating range coverage.
 - Per-campaign or per-session deck state isolation.
 - **Guest access in a host/guest VTT session.** Tables and decks are host-only in this feature: they are not published into the guest vault snapshot, and guests cannot roll or draw. This is a deliberate deferral, not an oversight — guest support needs P2P protocol additions and a host-authoritative draw path (see R11 and issue #2249), and decks should prove themselves single-player first.
@@ -277,3 +277,4 @@ These decisions were made in the absence of explicit direction and should be con
 - GitHub issue #2247 — the originating feature request.
 - GitHub issue #2033 — VTT random room tile decks. Overlaps conceptually with card decks; planning should determine whether the room tile decks can be expressed as a Random Source or should remain separate. Resolved in R9: they stay separate, with a named revisit trigger.
 - GitHub issue #2249 — guest access to tables and decks in a host/guest VTT session. Deferred out of this feature; the mechanism is settled in R11.
+- GitHub issue #2250 — AI-generated world-aware tables. A later expansion that populates tables from the user's own entities. Deliberately excluded here so this feature works fully offline; generated rows would arrive as ordinary entries through the existing import preview.
