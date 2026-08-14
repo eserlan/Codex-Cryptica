@@ -5,3 +5,6 @@ export * from "./resolver";
 export * from "./parser";
 export * from "./validation";
 export * from "./mode-conversion";
+export * from "./deck-state";
+export * from "./deck-service";
+export * from "./import";

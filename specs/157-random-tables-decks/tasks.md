@@ -134,18 +134,18 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T050 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/lines.test.ts`: one entry per line, blank lines skipped, all equal weight, producing weighted mode (FR-031)
-- [ ] T051 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/delimited.test.ts`: comma- and tab-separated input, a range column producing ranged mode, a weight column producing weighted mode (FR-032)
-- [ ] T052 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/markdown-table.test.ts`: header row recognised, data rows become entries, alignment rows ignored (FR-033)
-- [ ] T053 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/detect.test.ts` for `detectFormat` across all three shapes plus ambiguous input
-- [ ] T054 [P] [US3] Write failing tests asserting a batch containing unparseable rows still returns a preview, with `problem` set per bad row and good rows intact (FR-035)
+- [x] T050 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/lines.test.ts`: one entry per line, blank lines skipped, all equal weight, producing weighted mode (FR-031)
+- [x] T051 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/delimited.test.ts`: comma- and tab-separated input, a range column producing ranged mode, a weight column producing weighted mode (FR-032)
+- [x] T052 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/markdown-table.test.ts`: header row recognised, data rows become entries, alignment rows ignored (FR-033)
+- [x] T053 [P] [US3] Write failing tests in `packages/random-source-engine/tests/import/detect.test.ts` for `detectFormat` across all three shapes plus ambiguous input
+- [x] T054 [P] [US3] Write failing tests asserting a batch containing unparseable rows still returns a preview, with `problem` set per bad row and good rows intact (FR-035)
 
 ### Implementation for User Story 3
 
-- [ ] T055 [P] [US3] Implement `packages/random-source-engine/src/import/lines.ts`
-- [ ] T056 [P] [US3] Implement `packages/random-source-engine/src/import/delimited.ts`
-- [ ] T057 [P] [US3] Implement `packages/random-source-engine/src/import/markdown-table.ts`
-- [ ] T058 [US3] Implement `detectFormat` and `parseImport` in `packages/random-source-engine/src/import/detect.ts` returning `ImportPreview` per the contract
+- [x] T055 [P] [US3] Implement `packages/random-source-engine/src/import/lines.ts`
+- [x] T056 [P] [US3] Implement `packages/random-source-engine/src/import/delimited.ts`
+- [x] T057 [P] [US3] Implement `packages/random-source-engine/src/import/markdown-table.ts`
+- [x] T058 [US3] Implement `detectFormat` and `parseImport` in `packages/random-source-engine/src/import/detect.ts` returning `ImportPreview` per the contract
 - [ ] T059 [US3] Build `apps/web/src/lib/components/random/ImportWizard.svelte`: paste → preview → correct column mapping → save (FR-034)
 - [ ] T060 [US3] Show per-row problems in the preview with fix / skip / accept actions that never abandon the batch (FR-035)
 - [ ] T061 [US3] Add the name-collision prompt offering replace, merge, or save-as-new (FR-037)
@@ -163,17 +163,17 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T063 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-state.test.ts`: a missing state file reads as a full deck with an empty discard pile, `drawn` accumulates across draws, and reset clears it (FR-024, FR-025)
-- [ ] T064 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-service.test.ts`: draw without replacement never repeats a card, two back-to-back draws never collide (Edge Cases: concurrent draws), draw with replacement may repeat and leaves the pile untouched
-- [ ] T065 [P] [US4] Write a failing test asserting card ids in `drawn` that no longer exist in the deck are ignored on read and pruned on the next write (data-model invariant)
-- [ ] T066 [P] [US4] Write failing tests for exhaustion: drawing from a fully drawn deck returns `exhausted: true` with no partial mutation, and reset restores every card (FR-026, FR-025). Cover the distinct zero-card case too — a deck with no cards authored reports that it is empty and offers to add cards, rather than reporting exhaustion (Edge Cases)
+- [x] T063 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-state.test.ts`: a missing state file reads as a full deck with an empty discard pile, `drawn` accumulates across draws, and reset clears it (FR-024, FR-025)
+- [x] T064 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-service.test.ts`: draw without replacement never repeats a card, two back-to-back draws never collide (Edge Cases: concurrent draws), draw with replacement may repeat and leaves the pile untouched
+- [x] T065 [P] [US4] Write a failing test asserting card ids in `drawn` that no longer exist in the deck are ignored on read and pruned on the next write (data-model invariant)
+- [x] T066 [P] [US4] Write failing tests for exhaustion: drawing from a fully drawn deck returns `exhausted: true` with no partial mutation, and reset restores every card (FR-026, FR-025). Cover the distinct zero-card case too — a deck with no cards authored reports that it is empty and offers to add cards, rather than reporting exhaustion (Edge Cases)
 
 ### Implementation for User Story 4
 
-- [ ] T067 [US4] Implement deck state read/derive helpers in `packages/random-source-engine/src/deck-state.ts` per data-model.md: remaining = cards minus `drawn`, absent file means untouched deck
-- [ ] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
+- [x] T067 [US4] Implement deck state read/derive helpers in `packages/random-source-engine/src/deck-state.ts` per data-model.md: remaining = cards minus `drawn`, absent file means untouched deck
+- [x] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
 - [ ] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
-- [ ] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
+- [x] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
 - [ ] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options, including reorder and remove for individual cards (FR-008)
 - [ ] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle. Mount it at a `/decks` route in `apps/web/src/routes/(app)/decks/+page.svelte` with the same searchable, label-filterable list T031 gives tables — without this, decks are built but unreachable (FR-003, FR-009)
 - [ ] T073 [US4] Record draws in history with drawn card ids and titles (FR-029)
@@ -192,20 +192,20 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T076 [P] [US5] Write failing tests in `packages/random-source-engine/tests/deck-service.reversals.test.ts`: reversal-enabled decks assign an orientation and surface the matching meaning; reversal-disabled decks show no orientation (FR-027)
-- [ ] T077 [P] [US5] Write failing tests in `packages/random-source-engine/tests/deck-service.spreads.test.ts`: each position gets exactly one card, and a spread larger than the remaining deck warns _before_ dealing anything (FR-028, US5 scenario 5)
+- [x] T076 [P] [US5] Write failing tests in `packages/random-source-engine/tests/deck-service.reversals.test.ts`: reversal-enabled decks assign an orientation and surface the matching meaning; reversal-disabled decks show no orientation (FR-027)
+- [x] T077 [P] [US5] Write failing tests in `packages/random-source-engine/tests/deck-service.spreads.test.ts`: each position gets exactly one card, and a spread larger than the remaining deck warns _before_ dealing anything (FR-028, US5 scenario 5)
 
 ### Implementation for User Story 5
 
-- [ ] T078 [US5] Implement reversal orientation in `deck-service.ts`, drawn through `DiceEngine` rather than `Math.random()`
-- [ ] T079 [US5] Implement `drawSpread()` with a capacity pre-check so no partial spread is ever dealt
+- [x] T078 [US5] Implement reversal orientation in `deck-service.ts`, drawn through `DiceEngine` rather than `Math.random()`
+- [x] T079 [US5] Implement `drawSpread()` with a capacity pre-check so no partial spread is ever dealt
 - [ ] T080 [US5] Add spread definition UI to `DeckView.svelte` (named, ordered positions)
 - [ ] T081 [US5] Render spreads as a positional layout with each position label beside its card, not a flat list
 - [ ] T082 [US5] Wire card images through `AssetManager` in `packages/vault-engine/src/asset-manager.ts`, inheriting its size limits and export behaviour
 - [ ] T083 [US5] Extend `ImportWizard.svelte` to bulk-import cards with images, matching each image to its card (FR-036)
 - [ ] T084 [US5] Handle storage exhaustion during image import: fail cleanly with a message, leaving the deck consistent rather than half-imported (Edge Cases)
-- [ ] T085 [US5] Resolve `{reference}` tokens in card body text at draw time via `RandomSourceEngine` (FR-012)
-- [ ] T086 [US5] Ensure a deck reached _through a reference_ is sampled with replacement and never depleted (FR-012a), with a test proving 20 fragment re-rolls leave the discard pile empty
+- [x] T085 [US5] Resolve `{reference}` tokens in card body text at draw time via `RandomSourceEngine` (FR-012)
+- [x] T086 [US5] Ensure a deck reached _through a reference_ is sampled with replacement and never depleted (FR-012a), with a test proving 20 fragment re-rolls leave the discard pile empty
 
 **Checkpoint**: Oracle and Tarot decks are fully supported
 
