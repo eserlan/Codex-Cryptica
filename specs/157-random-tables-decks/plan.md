@@ -142,16 +142,21 @@ Full reasoning in [research.md](./research.md).
 7. **Cycle detection is a visited set, not just a depth counter** (R8), because
    FR-014 and FR-015 require _different_ messages for loops and deep nesting.
 8. **#2033 VTT room tile decks stay separate** (R9), with a named revisit trigger.
+9. **Host-only; no guest access in a VTT session** (R11). Guests get a read-only
+   vault snapshot with no write path, so tables and decks are simply absent for
+   them. Guest support is issue #2249, with the design already settled: tables
+   follow the stateless dice pattern, draws must be host-authoritative.
 
 ## Risks
 
-| Risk                                              | Mitigation                                                                                                    |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Two rapid draws interleave and lose one           | `DeckStateStore` serialises writes; covered by a unit test for back-to-back draws                             |
-| Name-based references break on rename             | FR-042 warns and offers to rewrite referencing entries; `duplicate-name` is the only save-blocking diagnostic |
-| 1,000-entry authoring jank (SC-004)               | Virtualised entry list; the budget in R7 names rendering, not sampling, as the real risk                      |
-| Card id churn silently resetting decks            | Ids assigned once at creation, preserved through edit and re-import; called out in quickstart gotchas         |
-| Import ambiguity between weight and range columns | `detectFormat` is only a suggestion; the preview always allows remapping before save (FR-034)                 |
+| Risk                                                | Mitigation                                                                                                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two rapid draws interleave and lose one             | `DeckStateStore` serialises writes; covered by a unit test for back-to-back draws                                                                         |
+| Name-based references break on rename               | FR-042 warns and offers to rewrite referencing entries; `duplicate-name` is the only save-blocking diagnostic                                             |
+| 1,000-entry authoring jank (SC-004)                 | Virtualised entry list; the budget in R7 names rendering, not sampling, as the real risk                                                                  |
+| Card id churn silently resetting decks              | Ids assigned once at creation, preserved through edit and re-import; called out in quickstart gotchas                                                     |
+| Import ambiguity between weight and range columns   | `detectFormat` is only a suggestion; the preview always allows remapping before save (FR-034)                                                             |
+| Guest support later forces a redesign of deck draws | R11 settles the mechanism up front: `DECK_DRAW_REQUEST` to the host, matching the existing `TOKEN_ADD_REQUEST` pattern. Nothing in this feature blocks it |
 
 ## Complexity Tracking
 

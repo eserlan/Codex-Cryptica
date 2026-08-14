@@ -197,6 +197,58 @@ is the signal it wants to be a Random Source mode.
 
 ---
 
+## R11. Host/guest sessions — host-only for now, and why decks cannot copy dice
+
+**Decision**: Tables and decks are **host-only** in this feature. They are not
+added to the guest vault snapshot, and guests cannot roll or draw. Guest support
+is deferred to a follow-up (issue #2249) with the design below already settled.
+
+**Rationale**: The guest surface is read-only by construction.
+`GuestExporter.export` takes an explicit allow-list — entities, maps, canvases,
+assetManifest — so a new content kind is simply absent from the published
+snapshot. `GuestVaultStore` holds that snapshot, and the P2P protocol carries
+vault mutations host→guest only (`ENTITY_UPDATE`, `GRAPH_SYNC`, `MAP_SYNC`).
+Guests have no vault write path at all. Shipping as planned therefore degrades
+cleanly: guests do not see tables or decks, and nothing breaks.
+
+When guest support is built, tables and decks need **different** mechanisms, and
+the codebase already contains both patterns:
+
+- **Dice pattern (stateless).** `vtt-chat-manager.svelte.ts` resolves `/roll`
+  locally on the sender's machine via `diceEngine.evaluate` and broadcasts only
+  the result as a chat payload. Safe because a roll consumes nothing shared.
+- **Token pattern (mutates shared state).** A guest sends `TOKEN_ADD_REQUEST`;
+  the host validates, mutates, and broadcasts `TOKEN_STATE_UPDATE`. Guests
+  request, the host decides.
+
+**Rolling a table is stateless**, so it fits the dice pattern: publish tables
+into the guest snapshot and let guests resolve locally. The wrinkle is nested
+references — a guest can only resolve `{creature}` if that table was published
+too, so the export must include the reference closure of every published table
+or mark unresolved fragments.
+
+**Drawing a card cannot use the dice pattern.** The discard pile is shared
+mutable state and only the host has a vault to persist it to. Local guest
+resolution would let two guests draw the same card while the host's `state.json`
+learned of neither. Draws must be host-authoritative: `DECK_DRAW_REQUEST` →
+host draws against its own state → host writes and broadcasts the result.
+
+Worth recording explicitly: **this is the genuine concurrency case in this
+feature.** The cross-device merge an earlier draft designed (see R3) was
+imaginary, but two guests pressing draw in the same second is real. It is
+resolved by host authority rather than by a merge — simpler, and already the
+established pattern in this codebase.
+
+**Alternatives rejected**:
+
+- _Adding a seventh user story now_: needs protocol additions, a new handler,
+  and `GuestExporter` changes, all sitting behind a P2 story. Expanding scope
+  mid-feature for an audience that does not exist until decks ship.
+- _Letting guests resolve draws locally_: silently duplicates cards across
+  guests and loses every draw the host never hears about.
+
+---
+
 ## R10. Testing approach
 
 **Decision**: Vitest unit tests in `packages/random-source-engine` with an
