@@ -114,3 +114,7 @@
 
 **Learning:** Found multiple icon-only contextual action buttons in chat transcripts (like `startEditMessage` and `deleteHostTranscript`) that lacked both explicit `aria-label` attributes (relying solely on `title` which is insufficient for screen readers) and `aria-hidden="true"` on their inner decorative icons.
 **Action:** Always add explicit `aria-label`s to icon-only action buttons (even if they have `title` tooltips) and add `aria-hidden="true"` to inner icon elements, especially inside complex, repetitive lists like chat transcripts.
+## 2024-11-20 - Dropdown Button Types in Autocomplete
+
+**Learning:** Svelte dropdown items acting as options (like those in Autocomplete) rendered as generic `<button>` elements without explicit `type="button"` can unintentionally trigger forms if their parent component is wrapped inside one, causing disruptive page reloads.
+**Action:** Always add `type="button"` to non-submit buttons, particularly in reusable components that might be embedded anywhere.
