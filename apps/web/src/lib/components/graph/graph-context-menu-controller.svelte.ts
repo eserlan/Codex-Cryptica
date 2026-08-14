@@ -8,6 +8,7 @@ import type { connectionModeStore as connectionModeStoreType } from "$lib/stores
 import type { notificationStore as notificationStoreType } from "$lib/stores/ui/notification.svelte";
 import type { Core, EventObject, NodeSingular } from "cytoscape";
 import { shelf } from "$lib/features/shelf";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
@@ -18,6 +19,7 @@ export interface GraphContextMenuDependencies {
   modalUIStore: typeof modalUIStoreType;
   connectionModeStore: typeof connectionModeStoreType;
   notificationStore: typeof notificationStoreType;
+  clock?: Clock;
 }
 
 export class GraphContextMenuController {
@@ -48,9 +50,12 @@ export class GraphContextMenuController {
   categoryPickerAnchor = $state<HTMLButtonElement>();
   imagePickerAnchor = $state<HTMLButtonElement>();
 
+  private clock: Clock;
+
   constructor(getCy: () => Core, deps: GraphContextMenuDependencies) {
     this.getCy = getCy;
     this.deps = deps;
+    this.clock = deps.clock ?? systemClock;
   }
 
   hasImage = $derived.by(() => {
@@ -76,7 +81,7 @@ export class GraphContextMenuController {
 
   setupEvents = () => {
     const recordCxtTap = () => {
-      this.getCy().scratch?.("_lastCxtTap", Date.now());
+      this.getCy().scratch?.("_lastCxtTap", this.clock.now());
     };
 
     const recordContextGesture = (evt: EventObject) => {
@@ -143,7 +148,7 @@ export class GraphContextMenuController {
     const closeHandler = () => {
       const lastCxtTap =
         (this.getCy().scratch?.("_lastCxtTap") as number | undefined) ?? 0;
-      if (Date.now() - lastCxtTap < 400) {
+      if (this.clock.now() - lastCxtTap < 400) {
         return;
       }
 

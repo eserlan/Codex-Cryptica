@@ -139,3 +139,8 @@
 
 **Learning:** When a module already supports dependency injection (e.g., `SearchStore` accepting a `StorageLike` argument), its corresponding test suite should avoid hoisted global mocks (like `vi.hoisted(() => { global.localStorage = ... })`). Hoisted mocks are brittle, prone to cross-test pollution, and hide the actual dependency usage.
 **Action:** Remove hoisted global mocks and create explicit mock objects to inject into constructors during test setup. Ensure the implementation actually uses the injected property (e.g., `this.storage.getItem()`) to safely evaluate behavior.
+
+## 2024-08-14 - Injecting Clock into GraphContextMenuController
+
+**Learning:** Found hardcoded `Date.now()` usage in `GraphContextMenuController` within `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` which handles context menu gesture timing. This creates a hidden dependency on the global system clock that makes testing gesture logic brittle.
+**Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Add `clock` to the `GraphContextMenuDependencies` interface to keep behavior deterministic without vitest global pollution.
