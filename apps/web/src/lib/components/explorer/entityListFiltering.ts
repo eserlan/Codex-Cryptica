@@ -90,6 +90,11 @@ export function createEntityTextSearchRunner(
   };
 }
 
+export type EntityWithPreview = Entity & {
+  contentPreview?: string;
+  summary?: string;
+};
+
 export interface EntityMissingFields {
   summary: boolean;
   labels: boolean;
@@ -120,7 +125,7 @@ export interface ConnectionSummaryLike {
 }
 
 export function evaluateEntityMissingFields(
-  entity: Entity & { contentPreview?: string },
+  entity: EntityWithPreview,
   connectionSummary?: ConnectionSummaryLike,
 ): EntityMissingFields {
   const hasSummary = Boolean(
@@ -128,7 +133,7 @@ export function evaluateEntityMissingFields(
     entity.contentPreview?.trim() ||
     entity.content?.trim(),
   );
-  const effectiveLabels = entity.labels?.length
+  const effectiveLabels: string[] = entity.labels?.length
     ? entity.labels
     : (entity.tags ?? []);
   const hasLabels = effectiveLabels.length > 0;
@@ -206,16 +211,18 @@ export function filterEntities(
 
     // AND logic for sidebar label pills. Legacy entities without labels fall
     // back to tags, matching how label chips are rendered (Constitution XII).
-    const effectiveLabels = e.labels?.length ? e.labels : (e.tags ?? []);
+    const effectiveLabels: string[] = e.labels?.length
+      ? e.labels
+      : (e.tags ?? []);
     const matchesLabels =
       activeLabels.length === 0 ||
-      activeLabels.every((f) => effectiveLabels.includes(f));
+      activeLabels.every((f: string) => effectiveLabels.includes(f));
     if (!matchesLabels) continue;
 
     // Filter by specified label tokens (#label or @label). Legacy entities
     // without labels fall back to tags, matching the sidebar pill logic above.
-    const matchesLabelTokens = labelTokens.every((l) =>
-      effectiveLabels.some((label) => label.toLowerCase() === l),
+    const matchesLabelTokens = labelTokens.every((l: string) =>
+      effectiveLabels.some((label: string) => label.toLowerCase() === l),
     );
     if (!matchesLabelTokens) continue;
 
@@ -253,7 +260,7 @@ export function filterEntities(
         if (
           colFilters.labelValues &&
           colFilters.labelValues.size > 0 &&
-          !effectiveLabels.some((l) => colFilters.labelValues!.has(l))
+          !effectiveLabels.some((l: string) => colFilters.labelValues!.has(l))
         ) {
           continue;
         }
@@ -307,18 +314,20 @@ export function filterEntities(
         ? options.textMatchIds.has(e.id)
         : options.textSearchUnavailable || options.textSearchPending
           ? e.title.toLowerCase().includes(remainingTextQuery) ||
-            e.labels?.some((l) =>
+            e.labels?.some((l: string) =>
               l.toLowerCase().includes(remainingTextQuery),
             ) ||
-            e.aliases?.some((a) => a.toLowerCase().includes(remainingTextQuery))
+            e.aliases?.some((a: string) =>
+              a.toLowerCase().includes(remainingTextQuery),
+            )
           : e.title.toLowerCase().includes(remainingTextQuery) ||
             (e.contentPreview ?? e.content)
               .toLowerCase()
               .includes(remainingTextQuery) ||
-            e.labels?.some((l) =>
+            e.labels?.some((l: string) =>
               l.toLowerCase().includes(remainingTextQuery),
             ) ||
-            e.aliases?.some((a) =>
+            e.aliases?.some((a: string) =>
               a.toLowerCase().includes(remainingTextQuery),
             ));
 

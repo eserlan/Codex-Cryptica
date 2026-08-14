@@ -30,18 +30,27 @@
   let menuEl = $state<HTMLDivElement>();
 
   $effect(() => {
+    menuEl?.focus();
     const handleOutsideClick = (e: MouseEvent) => {
       if (menuEl && !menuEl.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
         onClose();
       }
     };
     const timer = setTimeout(() => {
       window.addEventListener("click", handleOutsideClick);
     }, 10);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       clearTimeout(timer);
       window.removeEventListener("click", handleOutsideClick);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   });
 

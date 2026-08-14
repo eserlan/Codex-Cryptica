@@ -6,6 +6,7 @@ import {
   parseEntitySearchQuery,
   searchEntityText,
   evaluateEntityMissingFields,
+  type EntityWithPreview,
 } from "./entityListFiltering";
 import type { Entity } from "schema";
 
@@ -330,7 +331,7 @@ describe("entityListFiltering pure functions", () => {
 
   describe("evaluateEntityMissingFields", () => {
     it("identifies missing summary, labels, and connections", () => {
-      const emptyEntity: Entity = {
+      const emptyEntity: EntityWithPreview = {
         id: "e-empty",
         title: "Empty Node",
         type: "npc",
@@ -352,7 +353,7 @@ describe("entityListFiltering pure functions", () => {
     });
 
     it("identifies complete entity when all fields are present", () => {
-      const completeEntity: Entity = {
+      const completeEntity: EntityWithPreview = {
         id: "e-complete",
         title: "Complete Node",
         type: "npc",
@@ -374,7 +375,7 @@ describe("entityListFiltering pure functions", () => {
   });
 
   describe("showIncompleteOnly and columnFilters", () => {
-    const testEntities: Entity[] = [
+    const testEntities: EntityWithPreview[] = [
       {
         id: "t1",
         title: "Alpha",
