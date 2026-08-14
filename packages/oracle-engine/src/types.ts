@@ -65,6 +65,8 @@ export type OracleIntentType =
   | "help"
   | "clear"
   | "draw"
+  | "roll-table"
+  | "draw-deck"
   | "error";
 
 /**
@@ -84,6 +86,8 @@ export interface OracleIntent {
   formula?: string;
   sourceName?: string;
   targetName?: string;
+  /** Number of cards to draw for a `draw-deck` intent. Defaults to 1. */
+  drawCount?: number;
   label?: string;
   message?: string;
   instructions?: string;
@@ -182,6 +186,8 @@ export interface OracleExecutionContext {
   diceParser?: any;
   diceEngine?: any;
   diceHistory?: any;
+  /** Random table and deck access for the /table and /deck commands (#2247). */
+  randomSources?: any;
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;

@@ -78,12 +78,12 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T020 [US1] Implement `validateSource()` in `packages/random-source-engine/src/validation.ts` producing `Diagnostic[]`; only `duplicate-name` is an error, every coverage finding is a warning (FR-006 must not block save)
 - [x] T021 [US1] Implement weighted↔ranged conversion in `packages/random-source-engine/src/mode-conversion.ts` (FR-004a)
 - [x] T022 [US1] Export engine, validation, and conversion from `packages/random-source-engine/src/index.ts`, exporting **both the class and a default singleton** for `RandomSourceEngine` — matching `dice-engine`'s exported `diceEngine` (Constitution VIII)
-- [ ] T023 [P] [US1] Write failing tests in `apps/web/src/lib/stores/random-source-store.test.ts` covering create, rename, duplicate, delete, and rejection of a colliding name
-- [ ] T024 [US1] Create `apps/web/src/lib/stores/random-source-store.svelte.ts`: vault-backed CRUD over `_tables/` and `_decks/`, name-uniqueness enforcement (FR-003a), constructor-injected vault dependency with a production default (Constitution VIII)
+- [x] T023 [P] [US1] Write failing tests in `apps/web/src/lib/stores/random-source-store.test.ts` covering create, rename, duplicate, delete, and rejection of a colliding name
+- [x] T024 [US1] Create `apps/web/src/lib/stores/random-source-store.svelte.ts`: vault-backed CRUD over `_tables/` and `_decks/`, name-uniqueness enforcement (FR-003a), constructor-injected vault dependency with a production default (Constitution VIII)
 - [ ] T025 [US1] Build `apps/web/src/lib/components/random/TableEditor.svelte` — name, labels, entry list with add/edit/reorder/delete, mode toggle, explicit die entry when in ranged mode (FR-005), inline diagnostics from `validateSource`
 - [ ] T026 [US1] Virtualise the entry list in `TableEditor.svelte` so a 1,000-entry table stays inside the frame budget (SC-004, R7)
 - [ ] T027 [US1] Build `apps/web/src/lib/components/random/TableRoller.svelte` showing the result, the die value, and a re-roll control
-- [ ] T028 [US1] Extend `ContextualRollResult` in `apps/web/src/lib/stores/dice-history.svelte.ts` with an optional `source: RandomSourceRollPayload` and widen `context` to `"chat" | "modal" | "table"` (R6 — additive, no IndexedDB version bump)
+- [x] T028 [US1] Extend `ContextualRollResult` in `apps/web/src/lib/stores/dice-history.svelte.ts` with an optional `source: RandomSourceRollPayload` and widen `context` to `"chat" | "modal" | "table"` (R6 — additive, no IndexedDB version bump)
 - [ ] T029 [US1] Write the roll through to `DiceHistoryStore.addResult` from `TableRoller.svelte` (FR-018)
 - [ ] T030 [P] [US1] Update `apps/web/src/lib/components/dice/RollLog.svelte` to render a table-sourced entry (source name, die value, result text)
 - [ ] T031 [US1] Add the `/tables` route in `apps/web/src/routes/(app)/tables/+page.svelte` with a searchable, label-filterable list (FR-003, FR-009)
@@ -172,7 +172,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 - [x] T067 [US4] Implement deck state read/derive helpers in `packages/random-source-engine/src/deck-state.ts` per data-model.md: remaining = cards minus `drawn`, absent file means untouched deck
 - [x] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
-- [ ] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
+- [x] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
 - [x] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
 - [ ] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options, including reorder and remove for individual cards (FR-008)
 - [ ] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle. Mount it at a `/decks` route in `apps/web/src/routes/(app)/decks/+page.svelte` with the same searchable, label-filterable list T031 gives tables — without this, decks are built but unreachable (FR-003, FR-009)
@@ -219,16 +219,16 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T087 [P] [US6] Write failing tests in `packages/oracle-engine/src/oracle-parser.test.ts` for `/table <name>` → `roll-table` and `/deck <name> [count]` → `draw-deck`, plus an assertion that `/draw` still routes to the visualization intent (R5)
-- [ ] T088 [P] [US6] Write failing tests in `packages/oracle-engine/src/executors/random-source-executor.test.ts` covering a successful roll, a successful draw, and an unknown name returning close matches
+- [x] T087 [P] [US6] Write failing tests in `packages/oracle-engine/src/oracle-parser.test.ts` for `/table <name>` → `roll-table` and `/deck <name> [count]` → `draw-deck`, plus an assertion that `/draw` still routes to the visualization intent (R5)
+- [x] T088 [P] [US6] Write failing tests in `packages/oracle-engine/src/executors/random-source-executor.test.ts` covering a successful roll, a successful draw, and an unknown name returning close matches
 
 ### Implementation for User Story 6
 
-- [ ] T089 [US6] Add `roll-table` and `draw-deck` to `OracleIntent` in `packages/oracle-engine/src/types.ts`
-- [ ] T090 [US6] Parse `/table` and `/deck` in `packages/oracle-engine/src/oracle-parser.ts` — **not** `/draw`, which is already routed to `visualizationExecutor`
-- [ ] T091 [US6] Create `packages/oracle-engine/src/executors/random-source-executor.ts` following the `dice-executor.ts` shape: extend `BaseExecutor`, emit `COMMAND_STARTED`/`COMPLETED`/`FAILED`, push a typed chat message, write to history
-- [ ] T092 [US6] Route both intents in `packages/oracle-engine/src/oracle-executor.ts`
-- [ ] T093 [US6] Return close matches for unknown names using existing fuzzy matching from `search-engine` rather than a new implementation (FR-040, Constitution III)
+- [x] T089 [US6] Add `roll-table` and `draw-deck` to `OracleIntent` in `packages/oracle-engine/src/types.ts`
+- [x] T090 [US6] Parse `/table` and `/deck` in `packages/oracle-engine/src/oracle-parser.ts` — **not** `/draw`, which is already routed to `visualizationExecutor`
+- [x] T091 [US6] Create `packages/oracle-engine/src/executors/random-source-executor.ts` following the `dice-executor.ts` shape: extend `BaseExecutor`, emit `COMMAND_STARTED`/`COMPLETED`/`FAILED`, push a typed chat message, write to history
+- [x] T092 [US6] Route both intents in `packages/oracle-engine/src/oracle-executor.ts`
+- [x] T093 [US6] Return close matches for unknown names using existing fuzzy matching from `search-engine` rather than a new implementation (FR-040, Constitution III)
 - [ ] T094 [US6] Render table and deck results inline in the chat transcript, reusing `RollMessage.svelte` where possible
 - [ ] T095 [US6] Implement "send result into entity creation or a generator as context" (FR-041)
 - [ ] T096 [P] [US6] Extend `apps/web/tests/random-tables.spec.ts` with an Oracle-chat roll asserting the result appears in both the transcript and roll history

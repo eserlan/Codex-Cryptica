@@ -18,6 +18,41 @@ export class OracleCommandParser {
       return { type: "roll", formula };
     }
 
+    // `/table` and `/deck` rather than `/draw`: `draw` is already routed to
+    // the visualization executor for image generation (#2247, research R5).
+    if (q.startsWith("/table")) {
+      const sourceName = query.slice("/table".length).trim();
+      if (!sourceName) {
+        return {
+          type: "error",
+          message:
+            "Please name a table to roll (e.g. /table Forest Encounters).",
+        };
+      }
+      return { type: "roll-table", sourceName };
+    }
+
+    if (q.startsWith("/deck")) {
+      const rest = query.slice("/deck".length).trim();
+      if (!rest) {
+        return {
+          type: "error",
+          message:
+            "Please name a deck to draw from (e.g. /deck Complications).",
+        };
+      }
+      // A trailing number is a card count: "/deck Tarot 3".
+      const withCount = rest.match(/^(.*?)\s+(\d+)$/);
+      if (withCount) {
+        return {
+          type: "draw-deck",
+          sourceName: withCount[1].trim(),
+          drawCount: Number(withCount[2]),
+        };
+      }
+      return { type: "draw-deck", sourceName: rest };
+    }
+
     if (q.startsWith("/create")) {
       const quotedRegex =
         /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?\s*$/i;

@@ -2,10 +2,29 @@ import { getDB } from "../utils/idb";
 import type { RollResult } from "dice-engine";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
+/**
+ * A roll or draw sourced from a random table or card deck (#2247).
+ *
+ * Additive: `dice_history` is keyed by id with no index over this field, so
+ * carrying it needs no IndexedDB version bump.
+ */
+export interface RandomSourceRollPayload {
+  sourceId: string;
+  sourceName: string;
+  kind: "table" | "deck";
+  finalText: string;
+  /** Which sub-table produced which fragment, for the resolution chain view. */
+  chain?: unknown[];
+  drawnCards?: Array<{ cardId: string; title: string; reversed: boolean }>;
+  spreadPositions?: Array<{ label: string; cardId: string }>;
+}
+
 export interface ContextualRollResult extends RollResult {
   id: string;
-  context: "chat" | "modal";
+  context: "chat" | "modal" | "table";
   label?: string;
+  /** Present when the entry came from a table roll or deck draw. */
+  source?: RandomSourceRollPayload;
 }
 
 export class DiceHistoryStore {
@@ -43,8 +62,8 @@ export class DiceHistoryStore {
 
   async addResult(
     result: RollResult,
-    context: "chat" | "modal",
-    metadata?: { label?: string },
+    context: "chat" | "modal" | "table",
+    metadata?: { label?: string; source?: RandomSourceRollPayload },
   ) {
     const id = this.idGenerator.uuid();
     const contextual: ContextualRollResult = {
