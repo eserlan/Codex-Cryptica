@@ -6,6 +6,68 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-08-13 — Alien Race Generator prompt (reconciled)
+
+- **Text:** Do you have an idea about an alien for your #scifi #ttrpg or #worldbuilding setting? Flesh it out with the help of the alien race generator in cc codexcryptica.com/generators/a...
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msy5mxzhos2n
+
+### 2026-08-13 — Alien Race Generator release (reconciled)
+
+- **Text:** The alien race generator is now ready for all to use! codexcryptica.com/generators/a... Create (generate) a star system, a world, then a race. All in CC Perfect for #scifi #ttrpg or #worldbuilding
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msxhrrlrms2w
+
+### 2026-08-12 — Plot Twist Generator preview (reconciled)
+
+- **Text:** Was in such a good flow with the generators, so a plot twist generator is in the works too now Will soon be available on. codexcryptica.com/generators If you already have an idea for a quest or adventure, you can use the new generator to propose new twists or complications. Perfect for #ttrpg
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msvfwkv3q225
+
+### 2026-08-11 — Alien Race Generator preview (reconciled)
+
+- **Text:** Working on a alien race generator now. Coming to codexcryptica.com/generators suddenly. Can be used with the star system and world system generators. Most excellent for your #scifi #ttrpg or #worldbuilding needs
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mst2o7rg5c2s
+
+### 2026-08-10 — Guided micro-settings reply (reconciled)
+
+- **Text:** This gave me a great idea for making a guided generator for micro settings 👍
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mspqhfzpok2d
+- **Note:** Reply to another account's post.
+
+### 2026-08-10 — Plot Twist Generator idea (reconciled)
+
+- **Text:** Reading this great article bsky.app/profile/worl... gave me an idea of of having a generator that could assist in coming up with plot twists and complications for your adventures. ​What do you think? Good idea or a dead end? #ttrpg #worldbuilding #generator #plottwist
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mspojhtg5k2u
+
+### 2026-08-10 — Plot Twist Generator reply (reconciled)
+
+- **Text:** This gave me a great idea about making a plot twist generator 😅
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mspo4qgy522u
+- **Note:** Reply to the preceding Plot Twist Generator idea post.
+
+### 2026-08-09 — Secret Society Generator release (reconciled)
+
+- **Text:** The Secret Society Generator is now out and available for all. Need an idea for a cult, hidden order, clandestine cabal or conspiracy? Generate its beliefs, goals, hierarchy, secrets and more. codexcryptica.com/generators/s... #ttrpg #worldbuilding #cult
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mso6l6vigk2v
+
+### 2026-08-09 — Secret Society Generator preview (reconciled)
+
+- **Text:** Instead of the alien race generator, I did the secret society generator instead. Soon available on codexcryptica.com/generators #ttrpg #worldbuilding
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mso3s2ufz223
+
+### 2026-08-09 — Alien Race Generator idea (reconciled)
+
+- **Text:** Now that we have a star system generator and a world generator, an alien race generator is a natural next step. Agree? codexcryptica.com/generators/s... #ttrpg #worldbuilding #scifi
+- **Image:** None
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3msnkhzqqq225
+
 ### 2026-08-14 — The Shelf (ad hoc)
 
 - **Text:** I built the Shelf because I kept recreating NPCs and monsters that were already good.
