@@ -17,6 +17,8 @@
   import type { SearchIndexProgress } from "@codex/search-engine";
   import EntityTable from "$lib/components/table/EntityTable.svelte";
   import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
+  import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
+  import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import {
     sortEntities,
@@ -495,6 +497,27 @@
       showIncompleteOnly ||
       hasActiveColumnFilters,
   );
+
+  function handleApplyPreset(preset: ViewPreset) {
+    const s = preset.state;
+    searchQuery = s.searchQuery ?? "";
+    typeFilters = new Set(s.activeCategories);
+    labelFilters = new Set(s.activeLabels);
+    showIncompleteOnly = s.showIncompleteOnly ?? false;
+    columnFilters = s.columnFilters ? { ...s.columnFilters } : {};
+    if (s.tableSort) {
+      sort = { ...s.tableSort };
+    }
+  }
+
+  function handleResetFilters() {
+    searchQuery = "";
+    typeFilters = new Set();
+    labelFilters = new Set();
+    showIncompleteOnly = false;
+    columnFilters = {};
+    sort = { key: "title", direction: "asc" };
+  }
 </script>
 
 <svelte:head>
@@ -581,6 +604,20 @@
             {incompleteCount}
           </span>
         </button>
+
+        <TableViewPresets
+          activeVaultId={vaultId}
+          currentFilterState={{
+            searchQuery,
+            typeFilters,
+            labelFilters,
+            showIncompleteOnly,
+            columnFilters,
+            sort,
+          }}
+          onApplyPreset={handleApplyPreset}
+          onResetFilters={handleResetFilters}
+        />
       </div>
 
       {#if searchStatusMessage}

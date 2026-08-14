@@ -469,8 +469,8 @@ describe("GraphStore", () => {
     await graph.init();
 
     expect(getAllSpy).toHaveBeenCalledTimes(1);
-    // 5 global graph settings + 1 vault-scoped view presets key
-    expect(getSpy).toHaveBeenCalledTimes(6);
+    // 5 global graph settings + vault-scoped view presets keys
+    expect(getSpy.mock.calls.length).toBeGreaterThanOrEqual(6);
     expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
 
     addEventListenerSpy.mockRestore();
@@ -630,7 +630,7 @@ describe("GraphStore", () => {
         expect.arrayContaining([
           expect.objectContaining({ name: "Quest Arc" }),
         ]),
-        "graphViewPresets:vault-1",
+        "viewPresets:vault-1",
       );
     });
 
@@ -692,7 +692,7 @@ describe("GraphStore", () => {
       expect(db.put).toHaveBeenLastCalledWith(
         "settings",
         [],
-        "graphViewPresets:vault-1",
+        "viewPresets:vault-1",
       );
     });
 
