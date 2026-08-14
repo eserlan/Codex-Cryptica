@@ -115,45 +115,33 @@ interface DeckOptions {
 
 ---
 
-## DeckState — the sync-critical type
+## DeckState
 
-**Not** part of the RandomSource file. One JSON file per device per deck (R3):
+**Not** part of the RandomSource file. One JSON file per deck (R2, R3):
 
 ```
-_decks/<deck-slug>/state/<deviceId>.json
+_decks/<deck-slug>/state.json
 ```
 
-| Field        | Type       | Notes                                                    |
-| ------------ | ---------- | -------------------------------------------------------- |
-| `deckId`     | `string`   | Owning RandomSource id.                                  |
-| `deviceId`   | `string`   | Writer identity. This device only ever writes this file. |
-| `generation` | `number`   | Monotonic. Bumped by reset (FR-024a).                    |
-| `drawn`      | `string[]` | Card ids drawn by this device at this generation.        |
-| `updatedAt`  | `number`   | Epoch ms; diagnostics only, never merge input.           |
-
-**Effective state** is derived, never stored:
-
-```ts
-function resolveDeckState(files: DeckState[]): {
-  generation: number;
-  drawn: Set<string>;
-} {
-  const generation = Math.max(0, ...files.map((f) => f.generation));
-  const drawn = new Set(
-    files.filter((f) => f.generation === generation).flatMap((f) => f.drawn),
-  );
-  return { generation, drawn };
-}
-```
+| Field       | Type       | Notes                                   |
+| ----------- | ---------- | --------------------------------------- |
+| `deckId`    | `string`   | Owning RandomSource id.                 |
+| `drawn`     | `string[]` | Card ids currently in the discard pile. |
+| `updatedAt` | `number`   | Epoch ms. Diagnostics only.             |
 
 **Invariants**
 
-- Union is over the maximum generation only; older-generation files are ignored
-  and may be garbage-collected on next write.
-- `drawn` is grow-only within a generation. Nothing but a reset removes an id.
-- A device mutates only the file whose `deviceId` is its own — the property that
-  makes ADR 006's last-version-wins safe here.
-- Remaining deck = `cards.filter((c) => !drawn.has(c.id))`.
+- `drawn` only grows until a reset, which clears it (FR-025).
+- Remaining deck = `cards.filter((c) => !drawn.includes(c.id))`.
+- Card ids in `drawn` that no longer exist in the deck (a card was deleted) are
+  ignored on read and pruned on the next write.
+
+**Why a separate file, and why no merge rule**: draws happen constantly during
+play, so keeping state out of the deck's authored Markdown avoids rewriting the
+definition on every draw. And because Google Drive transfer is an explicit
+whole-vault `push` / `pull` rather than live sync, two devices never hold the
+same deck at once — the file needs no device identity, no generation counter,
+and no merge (R3).
 
 ---
 
@@ -234,7 +222,7 @@ drawing (FR-028 / US5 scenario 5), so no partial spread is ever dealt.
 RandomSource (1) ──< TableEntry        (kind: table)
 RandomSource (1) ──< Card              (kind: deck)
 RandomSource (1) ──< Spread            (kind: deck)
-RandomSource (1) ──< DeckState         (one per device, kind: deck)
+RandomSource (1) ──  DeckState         (one per deck, kind: deck)
 TableEntry/Card   ──< Reference ──> RandomSource   (by name, resolved at roll time)
 RollRecord        ──> ResolutionNode tree
 ```

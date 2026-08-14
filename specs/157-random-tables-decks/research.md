@@ -31,8 +31,12 @@ violates Constitution III).
 
 **Decision**: A Random Source definition is a Markdown file with YAML
 frontmatter in the vault, exactly like an entity. Deck draw state is a
-**separate per-device JSON file**, also in the vault. Nothing about a table or
+**separate JSON file per deck**, also in the vault. Nothing about a table or
 deck lives only in IndexedDB.
+
+Draw state is a separate file rather than extra frontmatter on the deck so that
+a draw — which happens constantly during play — never rewrites the deck
+definition, keeping the authored file stable and diff-friendly.
 
 **Rationale**: FR-002 requires tables and decks to be saved, exported, backed
 up, and synced by the same mechanisms as other vault content. The vault is
@@ -50,46 +54,44 @@ binary vault file (breaks readability and diffability).
 
 ---
 
-## R3. Deck state across devices — per-device files, not a merge algorithm
+## R3. Deck state is ordinary vault content — no merge rule needed
 
-**Decision**: Deck state is stored one file per device per deck:
+**Decision**: Deck state is a single JSON file per deck in the vault:
 
 ```
-_decks/<deck-slug>/state/<deviceId>.json
+_decks/<deck-slug>/state.json
 ```
 
-Each device writes **only its own file, ever**. Effective deck state is computed
-by reading every `state/*.json` for that deck, taking the maximum `generation`
-across them, and unioning the `drawn` arrays of only those files at that maximum
-generation. Reset bumps the local file's `generation` and clears its `drawn`.
+It is written by whichever device is being played on and travels with the vault
+like any other file. There is no merge algorithm, no generation counter, and no
+device identity.
 
-**Rationale**: This is the single most consequential finding of Phase 0. ADR 006
-committed the sync engine to file-level **"last version wins"** with no
-per-file merge hook — `SyncActionExecutor` copies whole files, and
-`SyncContentComparator` only decides _which_ whole file survives. So FR-024a's
-union-merge cannot be implemented as a merge strategy; there is nowhere to put
-one without reopening ADR 006.
+**Rationale**: An earlier draft of this document specified per-device state
+files with a grow-only union merge, on the assumption that two devices could
+hold the same deck concurrently. That assumption was wrong. There is no live
+cross-device sync in this product: `GDriveSyncService` exposes an explicit
+`push(vaultId)` and `pull(vaultId)`, both user-initiated and whole-vault. A user
+saves the vault to Drive on one device and loads it on another. The two are
+never live at once, so there is no concurrent write to reconcile.
 
-Making each file single-writer sidesteps this entirely: two devices never write
-the same path, so "last version wins" never has a conflict to resolve, and the
-union FR-024a requires emerges from _reading_ the set of files rather than from
-merging them. The generation counter gives reset a total order, so a reset on
-one device wins over concurrent draws on another instead of being silently
-re-unioned away.
+That makes ADR 006's file-level "last version wins" exactly the right
+behaviour rather than a hazard to design around: pulling a vault replaces local
+content wholesale, and deck state riding along with it is precisely what a user
+expects — the deck is where they left it in the vault they just loaded.
 
-File count stays bounded at devices × decks (a handful), unlike an
-append-one-file-per-draw log, which would also work but would litter the vault
-and slow every sync scan.
+Dropping the merge removes a device-id concept, a generation counter, a
+multi-file read path, and the invariant tests guarding all three, in exchange
+for no loss of user-visible behaviour (Constitution III).
 
 **Alternatives rejected**:
 
-- _Single shared state file per deck_: last-version-wins would drop a device's
-  draws wholesale and resurrect drawn cards — the exact failure SC-007 forbids.
-- _Append-only draw log (one file per draw)_: correct, but unbounded file growth
-  in a vault that syncs on every pass; ADR 006 explicitly optimised for not
-  re-scanning thousands of files.
-- _Teaching `sync-engine` a per-type merge hook_: reopens an accepted ADR and
-  makes a general-purpose change to serve one feature (Constitution III, XI.3).
+- _Per-device files with union merge_ (the earlier draft): solves a concurrency
+  problem this product does not have. Pure complexity.
+- _Deck state inside the deck's frontmatter_: every draw would rewrite the
+  authored definition file, churning diffs and risking a draw clobbering a
+  concurrent edit to the deck's cards.
+- _Deck state in IndexedDB only_: would not travel on a Drive push/pull, so a
+  loaded vault would show a full deck the user had already drawn from.
 
 ---
 

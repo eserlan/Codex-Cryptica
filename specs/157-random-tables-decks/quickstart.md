@@ -51,7 +51,7 @@ Slices are independently shippable and map to the spec's user stories.
    detection and depth cap, chain display, fragment re-roll.
 3. **US3 — paste import** (P2). Three parsers, preview with per-row problems,
    column remap, name-collision prompt.
-4. **US4 — decks + discard pile** (P2). `DeckService`, per-device state files,
+4. **US4 — decks + discard pile** (P2). `DeckService`, the per-deck state file,
    reset/shuffle, exhaustion handling.
 5. **US5 — images, reversals, spreads** (P3). `AssetManager` wiring, bulk card
    import, spread definition and capacity pre-check.
@@ -67,16 +67,17 @@ yet resolve references would produce files needing a second pass.
 
 Each maps to a success criterion the automated tests cannot fully cover.
 
-**SC-007 — deck state survives restart and sync**
+**SC-007 — deck state survives restart and travels with the vault**
 
 1. Create a deck of 10 cards, draw 3.
 2. Hard-reload. Remaining shows 7, discard shows the same 3.
-3. With a second device (or a second browser profile on the same synced vault),
-   draw 2 there, then sync both.
-4. Both devices show 5 remaining and the same 5 discarded — **no card
-   reappears** and neither device's draws are lost. This is the FR-024a union.
-5. Reset on one device, sync. Both show 10 remaining — the reset generation wins
-   over the other device's older draws rather than being re-unioned away.
+3. Push the vault to Google Drive, then pull it on another device (or into a
+   second browser profile). The deck arrives with 7 remaining and the same 3
+   discarded — draw state travelled with the vault.
+4. Reset, and confirm all 10 return.
+
+Note there is no concurrent-device case to test: Drive transfer is an explicit
+whole-vault push and pull, so two devices never hold the same deck live.
 
 **SC-006 — cycle safety**
 
@@ -103,8 +104,9 @@ without navigating away.
 
 ## Gotchas
 
-- **Never write another device's state file.** Single-writer-per-file is the
-  whole reason deck state survives ADR 006's last-version-wins sync. See R3.
+- **Deck state is a plain per-deck file with no merge rule.** Drive transfer is
+  an explicit whole-vault push/pull, not live sync, so there is no concurrent
+  writer to design around. See R3 — an earlier draft over-built this.
 - **`/draw` is taken** by image generation. Use `/table` and `/deck`.
 - **`Card.id` must be stable across edits** — DeckState references cards by id,
   so regenerating ids silently resets every deck.

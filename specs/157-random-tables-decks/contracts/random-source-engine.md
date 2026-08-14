@@ -66,7 +66,7 @@ class DeckService {
 
   draw(deck: RandomSource, count: number): Promise<DrawOutcome>;
   drawSpread(deck: RandomSource, spread: Spread): Promise<DrawOutcome>;
-  reset(deck: RandomSource): Promise<void>; // bumps generation, clears drawn
+  reset(deck: RandomSource): Promise<void>; // clears the discard pile
   remaining(deck: RandomSource): Promise<Card[]>;
 }
 
@@ -91,22 +91,20 @@ interface DrawOutcome {
 
 ## `DeckStateStore`
 
-The seam over per-device state files (R3). Implemented in `apps/web` against the
-vault; mocked in package tests.
+The seam over the per-deck state file (R3). Implemented in `apps/web` against
+the vault; mocked in package tests.
 
 ```ts
 interface DeckStateStore {
-  /** All device files for this deck, including this device's. */
-  readAll(deckId: string): Promise<DeckState[]>;
-  /** Writes THIS DEVICE's file only. Implementations must never write another's. */
-  writeLocal(state: DeckState): Promise<void>;
-  deviceId(): string;
+  read(deckId: string): Promise<DeckState | undefined>;
+  write(state: DeckState): Promise<void>;
 }
 ```
 
-**Contract note**: `writeLocal` writing a file whose `deviceId` differs from
-`deviceId()` is a defect — it reintroduces the multi-writer conflict that
-ADR 006's last-version-wins cannot resolve. Worth an explicit unit test.
+**Contract note**: `read` returning `undefined` means an untouched deck — a full
+deck with an empty discard pile — not an error. Implementations must serialise
+writes so two rapid draws cannot interleave and lose one (Edge Cases: concurrent
+draws).
 
 ---
 

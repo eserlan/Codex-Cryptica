@@ -17,7 +17,7 @@ This feature makes random tables and card decks first-class, user-authored conte
 
 - Q: How should a brace reference like `{creature}` bind to its target Random Source? → A: Random Source names are unique per vault; references resolve by name at roll time.
 - Q: Can references target decks, and can card text contain references? → A: Both. A deck reached through a reference is always sampled with replacement and is never depleted; only explicit draws deplete a deck.
-- Q: How should deck draw state behave across two synced devices? → A: The discard pile merges as a grow-only set (union of draws); reset bumps a generation counter, and the highest generation wins and clears the pile.
+- Q: How should deck draw state behave across two synced devices? → A: The question was based on a false premise and is withdrawn. There is no live cross-device sync — Google Drive is an explicit whole-vault push on one device and pull on another, so two devices never hold the same deck concurrently. Deck state is ordinary vault content and needs no merge rule.
 - Q: Can one table mix weighted entries and explicit-range entries? → A: No. A table is in exactly one selection mode — weighted or ranged — chosen per table and convertible either way.
 - Q: Is SC-010 (90% of table authors roll in the same session) measurable? → A: No. In-app analytics do not exist by design, so SC-010 is replaced with a design-verifiable discoverability criterion.
 
@@ -189,7 +189,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **FR-022**: Decks MUST support drawing with replacement and drawing without replacement, selectable by the user.
 - **FR-023**: When drawing without replacement, drawn cards MUST move to a discard pile and be unavailable until the deck is shuffled or reset.
 - **FR-024**: The discard pile and remaining deck state MUST persist across application restarts until explicitly reset.
-- **FR-024a**: Deck state MUST merge across synced devices without losing a draw or resurrecting a drawn card. The discard pile MUST behave as a grow-only set: a card drawn on any device is drawn on all of them. A reset MUST bump a per-deck generation counter; when generations differ the higher generation wins and clears the pile, and discard piles MUST be unioned only within the same generation.
+- **FR-024a**: Deck state MUST travel with the vault, so pushing a vault to Google Drive and pulling it on another device carries the discard pile with it. No merge rule is required: transfer is an explicit whole-vault push and pull, never concurrent, so the pulled vault's deck state simply replaces the local one along with the rest of the vault.
 - **FR-025**: Users MUST be able to shuffle or reset a deck, returning all discarded cards.
 - **FR-026**: Drawing from an exhausted deck MUST inform the user and offer a reshuffle rather than returning an empty result.
 - **FR-027**: Decks MUST optionally support reversed draws, with the orientation shown and the corresponding meaning displayed.
@@ -221,7 +221,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **Table Entry**: One possible outcome in a table. Carries result text, an optional weight or numeric range, and zero or more references to other Random Sources embedded in its text.
 - **Card**: One possible outcome in a deck. Carries a title, body text, an optional image, an optional reversed meaning, and zero or more references embedded in its text, resolved when the card is drawn.
 - **Reference**: A pointer embedded in an entry's text naming another Random Source, resolved **by name** at roll time by rolling that source and substituting its result. References store the target's name rather than an internal identifier, so entry text stays readable in exports and portable through paste-import.
-- **Deck State**: The per-deck record of what has been drawn and what remains, persisting between sessions until reset. Belongs to the deck within the vault rather than to a transient session. Modelled as a grow-only set of drawn cards plus a reset generation counter, so it merges across devices without a conflict prompt (FR-024a) rather than as a snapshot that would overwrite.
+- **Deck State**: The per-deck record of what has been drawn and what remains, persisting between sessions until reset. Belongs to the deck within the vault rather than to a transient session, so it travels with the vault on export and on a Google Drive push/pull (FR-024a).
 - **Spread**: A named set of positions a draw fills, each with a label describing that position's meaning.
 - **Roll Record**: The record of one completed roll or draw, capturing the source, the die value or drawn cards, the final result, and the resolution chain of any nested rolls.
 

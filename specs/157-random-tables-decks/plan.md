@@ -16,24 +16,24 @@ inherit vault export, sync, backup, and search for free. Randomness comes from
 the existing `DiceEngine`, whose rejection sampling already provides the
 unbiased distribution SC-008 demands.
 
-The one genuinely hard problem is deck draw state. FR-024a requires draws to
-union across synced devices with no card ever resurrected, but ADR 006 committed
-the sync engine to file-level _last version wins_ with no per-file merge hook.
-Rather than reopen that ADR, deck state is stored **one file per device**, so no
-two devices ever write the same path, and the required union emerges from
-reading the file set instead of from merging it.
+Deck draw state is a plain JSON file per deck, sitting beside the deck's
+definition so it travels with the vault but does not rewrite the authored file on
+every draw. It needs no merge rule: Google Drive transfer is an explicit
+whole-vault `push` / `pull`, never live sync, so two devices are never holding
+the same deck at once and ADR 006's file-level last-version-wins is exactly the
+behaviour a user expects when loading a vault.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14
 **Primary Dependencies**: `dice-engine` (selection), `vault-engine` (file CRUD, `AssetManager` for card images), `oracle-engine` (chat commands), `search-engine` (name matching for FR-040)
-**Storage**: Vault Markdown + YAML frontmatter for definitions; per-device JSON files for deck state; existing `dice_history` IndexedDB store for history (no version bump)
+**Storage**: Vault Markdown + YAML frontmatter for definitions; one JSON file per deck for draw state; existing `dice_history` IndexedDB store for history (no version bump)
 **Testing**: Vitest with an injected deterministic `CryptoProvider`; Playwright for authoring→roll and deck-persistence journeys
 **Target Platform**: Browser, local-first, fully offline
 **Project Type**: Web application — workspace package + SvelteKit UI
 **Performance Goals**: p95 roll under 50 ms in-process for a 1,000-entry table at full depth; authoring stays inside the 16 ms frame budget at 1,000 entries via list virtualisation (resolves SC-003, R7)
-**Constraints**: No network and no AI on any path (FR-020/030/038); deck state must merge under file-level last-version-wins sync without losing a draw or resurrecting a card
-**Scale/Scope**: 1,000 entries per table (SC-004); ~78 cards per deck; deck state files bounded at devices × decks
+**Constraints**: No network and no AI on any path (FR-020/030/038); deck state must survive a restart and travel with the vault on a Drive push/pull
+**Scale/Scope**: 1,000 entries per table (SC-004); ~78 cards per deck; one state file per deck
 
 ## Constitution Check
 
@@ -54,10 +54,11 @@ _GATE: passed before Phase 0; re-checked after Phase 1 design._
 | XI. Agent Operational Protocol | PASS   | Slices are surgical and independently shippable; no unrelated refactors. Deferred items named rather than silently guessed.                                                   |
 | XII. Labels Over Tags          | PASS   | `RandomSource.labels`; no "tags" anywhere — the vault frontmatter parser rejects that key outright.                                                                           |
 
-**Post-Phase 1 re-check**: still passing. The design added no new dependency, no
-new persistence layer, and no change to shared infrastructure. The per-device
-deck state file is the one novel mechanism, and it was chosen specifically to
-_avoid_ modifying the shared sync engine (III, XI.3).
+**Post-Phase 1 re-check**: still passing. The design adds no new dependency, no
+new persistence layer, and no change to shared infrastructure. An earlier draft
+carried a per-device deck-state merge scheme; it was removed once the sync model
+turned out to be explicit whole-vault push/pull rather than live sync, which
+makes the merge unnecessary (III, XI.2).
 
 ## Project Structure
 
@@ -99,7 +100,7 @@ packages/random-source-engine/
 apps/web/src/lib/
 ├── stores/
 │   ├── random-source-store.svelte.ts   # vault-backed CRUD, name-uniqueness check
-│   ├── deck-state-store.ts             # DeckStateStore over per-device vault files
+│   ├── deck-state-store.ts             # DeckStateStore over the per-deck state file
 │   └── dice-history.svelte.ts          # EXTENDED: optional `source` payload
 ├── components/random/
 │   ├── TableEditor.svelte              # virtualised entry list
@@ -132,8 +133,8 @@ Full reasoning in [research.md](./research.md).
    SC-008 _testable_.
 2. **Definitions are vault Markdown files** (R2), giving export, sync, backup,
    and search for free, and keeping files hand-editable and import-round-trippable.
-3. **Deck state is one file per device** (R3) — the load-bearing decision. See
-   the risk table below.
+3. **Deck state is one plain JSON file per deck** (R3), needing no merge rule
+   because Drive transfer is explicit whole-vault push/pull, not live sync.
 4. **New package rather than extending `dice-engine`** (R4).
 5. **`/table` and `/deck`, never `/draw`** (R5) — `/draw` already routes to image
    generation.
@@ -144,17 +145,19 @@ Full reasoning in [research.md](./research.md).
 
 ## Risks
 
-| Risk                                                                                                      | Mitigation                                                                                                                                     |
-| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| A future contributor writes deck state as one shared file, reintroducing the conflict ADR 006 can't solve | `DeckStateStore.writeLocal` documents the single-writer rule; a unit test asserts it rejects a foreign `deviceId`; noted in quickstart gotchas |
-| Name-based references break on rename                                                                     | FR-042 warns and offers to rewrite referencing entries; `duplicate-name` is the only save-blocking diagnostic                                  |
-| 1,000-entry authoring jank (SC-004)                                                                       | Virtualised entry list; the budget in R7 names rendering, not sampling, as the real risk                                                       |
-| Card id churn silently resetting decks                                                                    | Ids assigned once at creation, preserved through edit and re-import; called out in quickstart gotchas                                          |
-| Import ambiguity between weight and range columns                                                         | `detectFormat` is only a suggestion; the preview always allows remapping before save (FR-034)                                                  |
+| Risk                                              | Mitigation                                                                                                    |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Two rapid draws interleave and lose one           | `DeckStateStore` serialises writes; covered by a unit test for back-to-back draws                             |
+| Name-based references break on rename             | FR-042 warns and offers to rewrite referencing entries; `duplicate-name` is the only save-blocking diagnostic |
+| 1,000-entry authoring jank (SC-004)               | Virtualised entry list; the budget in R7 names rendering, not sampling, as the real risk                      |
+| Card id churn silently resetting decks            | Ids assigned once at creation, preserved through edit and re-import; called out in quickstart gotchas         |
+| Import ambiguity between weight and range columns | `detectFormat` is only a suggestion; the preview always allows remapping before save (FR-034)                 |
 
 ## Complexity Tracking
 
-No constitution violations to justify. The one non-obvious mechanism —
-per-device deck state files — exists specifically to _avoid_ the more complex
-alternative of adding a per-type merge hook to the shared sync engine, and is
-documented in R3 with its rejected alternatives.
+No constitution violations to justify, and no non-obvious mechanism left. An
+earlier draft of this plan introduced per-device deck-state files with a
+grow-only union merge; that was removed once the sync model proved to be
+explicit whole-vault push/pull rather than live sync, taking a device-id
+concept, a generation counter, and a multi-file read path with it. R3 records
+the reversal and its rejected alternatives.

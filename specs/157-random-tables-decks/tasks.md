@@ -157,23 +157,23 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 
 ## Phase 6: User Story 4 - Card decks with a persistent discard pile (Priority: P2)
 
-**Goal**: Draw without replacement, with the discard pile surviving restarts and merging correctly across synced devices.
+**Goal**: Draw without replacement, with the discard pile surviving restarts and travelling with the vault.
 
 **Independent Test**: Create a deck, draw until several cards are gone, reload, confirm the discard pile survived; reset and confirm the full deck returns.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T063 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-state.test.ts` for `resolveDeckState`: union across same-generation device files, older generations ignored, highest generation wins and clears (FR-024a, R3)
+- [ ] T063 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-state.test.ts`: a missing state file reads as a full deck with an empty discard pile, `drawn` accumulates across draws, and reset clears it (FR-024, FR-025)
 - [ ] T064 [P] [US4] Write failing tests in `packages/random-source-engine/tests/deck-service.test.ts`: draw without replacement never repeats a card, two back-to-back draws never collide (Edge Cases: concurrent draws), draw with replacement may repeat and leaves the pile untouched
-- [ ] T065 [P] [US4] Write a failing test asserting `DeckStateStore.writeLocal` rejects a `DeckState` whose `deviceId` differs from `deviceId()` — the single-writer invariant that makes ADR 006's last-version-wins safe (contract note)
+- [ ] T065 [P] [US4] Write a failing test asserting card ids in `drawn` that no longer exist in the deck are ignored on read and pruned on the next write (data-model invariant)
 - [ ] T066 [P] [US4] Write failing tests for exhaustion: drawing from an empty deck returns `exhausted: true` with no partial mutation, and reset restores every card (FR-026, FR-025)
 
 ### Implementation for User Story 4
 
-- [ ] T067 [US4] Implement `resolveDeckState()` in `packages/random-source-engine/src/deck-state.ts` exactly as specified in data-model.md
+- [ ] T067 [US4] Implement deck state read/derive helpers in `packages/random-source-engine/src/deck-state.ts` per data-model.md: remaining = cards minus `drawn`, absent file means untouched deck
 - [ ] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
-- [ ] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` reading every `_decks/<slug>/state/*.json` and writing **only** this device's file
-- [ ] T070 [US4] Add stable device-id generation (persisted in the `settings` IndexedDB store) for `deviceId()`
+- [ ] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
+- [ ] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
 - [ ] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options
 - [ ] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle
 - [ ] T073 [US4] Record draws in history with drawn card ids and titles (FR-029)
@@ -244,7 +244,7 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [ ] T099 [P] Confirm `packages/random-source-engine` meets the 70% coverage goal via `bun run test:coverage --filter random-source-engine` (Constitution X)
 - [ ] T100 Verify the p95 roll budget of under 50 ms in-process on a 1,000-entry table at full depth (SC-003, R7)
 - [ ] T101 [P] Confirm every user-facing string uses plain language and that no "tag" wording appears anywhere (Constitution IX, XII)
-- [ ] T102 Run the full manual verification list in quickstart.md, especially the two-device deck sync walkthrough — the one behaviour no automated test in this repo covers
+- [ ] T102 Run the full manual verification list in quickstart.md, including a Google Drive push on one device and pull on another to confirm deck state travels with the vault
 - [ ] T103 Run `bun run lint` and `bun run test` across the repo and confirm both pass (Constitution VI.3)
 - [ ] T104 Update `specs/157-random-tables-decks/checklists/requirements.md` to record implementation completion
 
@@ -316,7 +316,7 @@ another takes the deck path (US4 → US5). They converge at US6.
 
 ## Notes
 
-- **Never write another device's deck state file** (T065, T069). Single-writer-per-file is the entire reason deck state survives ADR 006's last-version-wins sync; a "simplification" to one shared file silently resurrects drawn cards
+- **Deck state is one plain file per deck with no merge rule** (T067, T069). Drive transfer is an explicit whole-vault push/pull, not live sync, so there is no concurrent writer to design around
 - **`Card.id` must be stable across edits** (T074) or every deck silently resets
 - **Use `DiceEngine`, never `Math.random()`** (T010, T078) — SC-008 is tested against a seeded provider and will fail otherwise
 - **Coverage diagnostics never block save** (T020); only a duplicate name does
