@@ -16,6 +16,22 @@
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
   );
 
+  // Every post had a bare link card before this: the root layout declares
+  // twitter:card but no image anywhere, so there was nothing to show. A post
+  // names its own capture in frontmatter; the rest fall back to the product
+  // screenshot. Plain R2 URLs — social crawlers don't negotiate formats, so
+  // these must not go through the cdn-cgi transform.
+  const DEFAULT_CARD_IMAGE =
+    "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
+  const DEFAULT_CARD_IMAGE_ALT =
+    "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
+  const cardImage = $derived(article.image?.trim() || DEFAULT_CARD_IMAGE);
+  const cardImageAlt = $derived(
+    article.image?.trim()
+      ? (article.imageAlt?.trim() ?? article.title)
+      : DEFAULT_CARD_IMAGE_ALT,
+  );
+
   const jsonLdString = $derived(
     safeJsonLd({
       "@context": "https://schema.org",
@@ -60,7 +76,16 @@
   <meta property="og:title" content={article.title} />
   <meta property="og:description" content={article.description} />
   <meta property="og:type" content="article" />
+  <meta property="og:url" content={data.canonicalUrl} />
+  <meta property="og:image" content={cardImage} />
+  <meta property="og:image:alt" content={cardImageAlt} />
   <meta property="article:published_time" content={article.publishedAt} />
+
+  <!-- Twitter Card — the root layout declares summary_large_image for the site -->
+  <meta name="twitter:title" content={article.title} />
+  <meta name="twitter:description" content={article.description} />
+  <meta name="twitter:image" content={cardImage} />
+  <meta name="twitter:image:alt" content={cardImageAlt} />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${jsonLdString}</scr` +

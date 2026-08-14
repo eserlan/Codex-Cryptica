@@ -36,6 +36,14 @@ export type SlugMetaEntry = {
   eyebrow: string;
   introText: string;
   canonicalPath: string;
+  /**
+   * Link-preview image for this generator, as a plain (untransformed) R2 URL —
+   * social crawlers do not negotiate formats, so they must not go through
+   * `cdn-cgi/image`. Falls back to the shared product screenshot when unset.
+   * Capture new ones with `scripts/og-images/capture-generator-og.mjs`.
+   */
+  ogImage?: string;
+  ogImageAlt?: string;
   faqs?: {
     question: string;
     answer: string;
@@ -693,6 +701,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Build an alien species that is genuinely non-human. Every biological and environmental trait changes something else — six limbs reach their tools and architecture, chemical speech changes what privacy means, a long life reshapes their politics.",
     canonicalPath: "/generators/alien-race",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
+    ogImageAlt:
+      "The Codex Cryptica alien race generator with an example species drafted: overview, evolutionary origin, homeworld, biology, weaknesses, naming conventions, and archetypes beside the input controls",
     faqs: [
       {
         question: "What does the alien race generator create?",
