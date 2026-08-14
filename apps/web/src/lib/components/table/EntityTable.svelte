@@ -5,7 +5,9 @@
     SortKey,
     SortState,
   } from "./entityTableSort";
+  import type { TableColumnFilters } from "$lib/components/explorer/entityListFiltering";
   import EntityTableRow from "./EntityTableRow.svelte";
+  import TableColumnFilterMenu from "./TableColumnFilterMenu.svelte";
   import {
     clampEntityTablePage,
     ENTITY_TABLE_PAGE_SIZE,
@@ -22,6 +24,9 @@
     selectedIds = new Set<string>(),
     allSelected = false,
     someSelected = false,
+    showIncompleteOnly = false,
+    columnFilters = {},
+    onUpdateColumnFilters,
     onToggleRow,
     onToggleAll,
     onFilterType,
@@ -36,6 +41,9 @@
     selectedIds?: Set<string>;
     allSelected?: boolean;
     someSelected?: boolean;
+    showIncompleteOnly?: boolean;
+    columnFilters?: TableColumnFilters;
+    onUpdateColumnFilters?: (filters: TableColumnFilters) => void;
     onToggleRow?: (
       id: string,
       options?: { shift?: boolean; ctrl?: boolean },
@@ -45,6 +53,13 @@
     onFilterLabel?: (label: string) => void;
     onRowContextMenu?: (id: string, x: number, y: number) => void;
   } = $props();
+
+  let activeFilterMenu = $state<{
+    key: string;
+    label: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const pageSize = ENTITY_TABLE_PAGE_SIZE;
   let page = $state(1);
@@ -116,25 +131,94 @@
   });
 
   interface Column {
+    id: string;
     key: SortKey | null;
     label: string;
+    filterable?: boolean;
     /** Tailwind width / layout hints for the header cell. */
     class?: string;
   }
 
   const columns: Column[] = [
-    { key: "title", label: "Name", class: "min-w-[12rem]" },
-    { key: "type", label: "Type", class: "min-w-[8rem]" },
-    { key: "connections", label: "Connections", class: "min-w-[9rem]" },
-    { key: null, label: "Summary", class: "min-w-[16rem]" },
-    { key: "labels", label: "Labels", class: "min-w-[8rem]" },
-    { key: "created", label: "Created", class: "min-w-[7rem]" },
-    { key: "modified", label: "Modified", class: "min-w-[7rem]" },
+    { id: "title", key: "title", label: "Name", class: "min-w-[12rem]" },
+    { id: "type", key: "type", label: "Type", class: "min-w-[8rem]" },
+    {
+      id: "connections",
+      key: "connections",
+      label: "Connections",
+      filterable: true,
+      class: "min-w-[9rem]",
+    },
+    {
+      id: "summary",
+      key: null,
+      label: "Summary",
+      filterable: true,
+      class: "min-w-[16rem]",
+    },
+    {
+      id: "labels",
+      key: "labels",
+      label: "Labels",
+      filterable: true,
+      class: "min-w-[8rem]",
+    },
+    {
+      id: "created",
+      key: "created",
+      label: "Created",
+      filterable: true,
+      class: "min-w-[7rem]",
+    },
+    {
+      id: "modified",
+      key: "modified",
+      label: "Modified",
+      filterable: true,
+      class: "min-w-[7rem]",
+    },
   ];
 
   function ariaSort(key: SortKey | null): "ascending" | "descending" | "none" {
     if (key === null || sort.key !== key) return "none";
     return sort.direction === "asc" ? "ascending" : "descending";
+  }
+
+  function isColumnFiltered(id: string): boolean {
+    if (id === "connections")
+      return Boolean(
+        columnFilters.connectionsMode &&
+        columnFilters.connectionsMode !== "all",
+      );
+    if (id === "summary")
+      return Boolean(
+        columnFilters.summaryMode && columnFilters.summaryMode !== "all",
+      );
+    if (id === "labels")
+      return Boolean(
+        (columnFilters.labelMode && columnFilters.labelMode !== "all") ||
+        (columnFilters.labelValues && columnFilters.labelValues.size > 0),
+      );
+    if (id === "created")
+      return Boolean(
+        columnFilters.createdMode && columnFilters.createdMode !== "all",
+      );
+    if (id === "modified")
+      return Boolean(
+        columnFilters.modifiedMode && columnFilters.modifiedMode !== "all",
+      );
+    return false;
+  }
+
+  function openFilterMenu(col: Column, event: MouseEvent) {
+    event.stopPropagation();
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    activeFilterMenu = {
+      key: col.id,
+      label: col.label,
+      x: rect.left,
+      y: rect.bottom + 4,
+    };
   }
 </script>
 
@@ -154,37 +238,60 @@
           />
         </th>
         {#each columns as col (col.label)}
+          {@const hasActiveFilter = isColumnFiltered(col.id)}
           <th
             scope="col"
             aria-sort={ariaSort(col.key)}
             class="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-muted {col.class ??
               ''}"
           >
-            {#if col.key}
-              <button
-                type="button"
-                onclick={() => onSort(col.key as SortKey)}
-                class="inline-flex items-center gap-1 hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded"
-                data-testid="entity-table-sort-{col.key}"
-              >
-                {col.label}
-                {#if sort.key === col.key}
+            <div class="inline-flex items-center gap-1.5">
+              {#if col.key}
+                <button
+                  type="button"
+                  onclick={() => onSort(col.key as SortKey)}
+                  class="inline-flex items-center gap-1 hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded"
+                  data-testid="entity-table-sort-{col.key}"
+                >
+                  {col.label}
+                  {#if sort.key === col.key}
+                    <span
+                      class="{sort.direction === 'asc'
+                        ? 'icon-[lucide--arrow-up]'
+                        : 'icon-[lucide--arrow-down]'} h-3 w-3"
+                      aria-hidden="true"
+                    ></span>
+                  {:else}
+                    <span
+                      class="icon-[lucide--chevrons-up-down] h-3 w-3 opacity-30"
+                      aria-hidden="true"
+                    ></span>
+                  {/if}
+                </button>
+              {:else}
+                <span>{col.label}</span>
+              {/if}
+
+              {#if col.filterable}
+                <button
+                  type="button"
+                  onclick={(e) => openFilterMenu(col, e)}
+                  title="Filter by {col.label}"
+                  aria-label="Filter by {col.label}"
+                  data-testid="column-filter-btn-{col.id}"
+                  class="rounded p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {hasActiveFilter
+                    ? 'bg-theme-primary/20 text-theme-primary'
+                    : 'text-theme-muted/40 hover:text-theme-text'}"
+                >
                   <span
-                    class="{sort.direction === 'asc'
-                      ? 'icon-[lucide--arrow-up]'
-                      : 'icon-[lucide--arrow-down]'} h-3 w-3"
+                    class="icon-[lucide--filter] h-3 w-3 {hasActiveFilter
+                      ? 'stroke-[2.5]'
+                      : ''}"
                     aria-hidden="true"
                   ></span>
-                {:else}
-                  <span
-                    class="icon-[lucide--chevrons-up-down] h-3 w-3 opacity-30"
-                    aria-hidden="true"
-                  ></span>
-                {/if}
-              </button>
-            {:else}
-              {col.label}
-            {/if}
+                </button>
+              {/if}
+            </div>
           </th>
         {/each}
       </tr>
@@ -196,6 +303,7 @@
           {vaultId}
           {onFilterType}
           {onFilterLabel}
+          {showIncompleteOnly}
           selected={selectedIds.has(entity.id)}
           onToggleSelect={onToggleRow}
           onContextMenu={onRowContextMenu}
@@ -208,6 +316,18 @@
       {/each}
     </tbody>
   </table>
+
+  {#if activeFilterMenu && onUpdateColumnFilters}
+    <TableColumnFilterMenu
+      columnKey={activeFilterMenu.key}
+      columnLabel={activeFilterMenu.label}
+      x={activeFilterMenu.x}
+      y={activeFilterMenu.y}
+      {columnFilters}
+      onUpdateFilters={onUpdateColumnFilters}
+      onClose={() => (activeFilterMenu = null)}
+    />
+  {/if}
   {#if pageCount > 1}
     <nav
       class="flex flex-wrap items-center justify-between gap-2 border-t border-theme-border bg-theme-surface px-3 py-2"

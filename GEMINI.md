@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-11
+Auto-generated from all feature plans. Last updated: 2026-08-14
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator` (1515-table-missing-filters)
+- Transient client-side reactive state (persisted preset views deferred to #1518) (1515-table-missing-filters)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest (2147-timeline-agenda-bounded-rendering)
 - N/A; deterministic benchmark data is synthetic and transient (2147-timeline-agenda-bounded-rendering)
@@ -236,11 +239,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 1515-table-missing-filters: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator`
+
 - 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
 
 - 154-llm-session-ratelimit: Added TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API
-
-- 153-llm-model-registry: Added TypeScript, Cloudflare Workers runtime (no Node built-ins) + None new — Workers runtime `fetch`/`crypto` globals only, same as today's Gemini forwarding (`apps/workers/oracle-proxy` has no `package.json` of its own; built via Bun workspaces path resolution)
 
 <!-- MANUAL ADDITIONS START -->
 

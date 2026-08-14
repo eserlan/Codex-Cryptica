@@ -364,4 +364,44 @@ describe("EntityTable", () => {
       ctrl: true,
     });
   });
+
+  describe("missing-data mode & column filtering", () => {
+    it("highlights missing summary and connections when showIncompleteOnly is true", () => {
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          showIncompleteOnly: true,
+          onSort: vi.fn(),
+        },
+      });
+
+      // e2 is missing summary, labels, and connections
+      expect(screen.getByText("Missing summary")).toBeTruthy();
+      expect(screen.getByText("No labels")).toBeTruthy();
+      expect(screen.getByText("0 connections")).toBeTruthy();
+    });
+
+    it("opens column filter menu on clicking filter trigger", async () => {
+      const onUpdateColumnFilters = vi.fn();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          onSort: vi.fn(),
+          onUpdateColumnFilters,
+        },
+      });
+
+      const filterBtn = screen.getByTestId("column-filter-btn-connections");
+      await fireEvent.click(filterBtn);
+
+      expect(screen.getByTestId("column-filter-menu-connections")).toBeTruthy();
+      expect(screen.getByText("Zero connections (0)")).toBeTruthy();
+    });
+  });
 });
