@@ -136,17 +136,13 @@
         onclick={() => selectOption(cat.id, index)}
         onkeydown={(e) => handleKeyDown(e, index)}
         data-testid="category-radio-{cat.id}"
-        class={[
-          "inline-flex items-center transition-all duration-150 rounded border cursor-pointer select-none font-header tracking-wide uppercase",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60 focus-visible:border-theme-primary",
-          compact
-            ? "px-2 py-1 text-[10px] md:text-xs gap-1.5"
-            : "px-2.5 py-1.5 text-xs gap-2",
-          isSelected
-            ? "border-theme-primary bg-theme-primary/15 text-theme-primary font-bold shadow-sm"
-            : "border-theme-border bg-theme-bg/60 text-theme-muted hover:text-theme-text hover:bg-theme-surface hover:border-theme-border/80",
-          disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "",
-        ]}
+        class="inline-flex items-center transition-all duration-150 rounded border cursor-pointer select-none font-header tracking-wide uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60 focus-visible:border-theme-primary {compact
+          ? 'px-2 py-1 text-[10px] md:text-xs gap-1.5'
+          : 'px-2.5 py-1.5 text-xs gap-2'} {isSelected
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary font-bold shadow-sm'
+          : 'border-theme-border bg-theme-bg/60 text-theme-muted hover:text-theme-text hover:bg-theme-surface hover:border-theme-border/80'} {disabled
+          ? 'opacity-50 cursor-not-allowed pointer-events-none'
+          : ''}"
       >
         <!-- Category Icon -->
         <span
