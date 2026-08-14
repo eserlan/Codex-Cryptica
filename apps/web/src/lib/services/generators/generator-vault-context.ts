@@ -289,7 +289,7 @@ export function buildVaultContext(
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
-  let neighbors: VaultContextEntityExcerpt[] = [];
+  const neighbors: VaultContextEntityExcerpt[] = [];
   if (sourceEntity) {
     if (connectedIds && connectedIds.size > 0) {
       // ⚡ Bolt Optimization: Replace chained .map().filter().slice().map() with an imperative loop
