@@ -66,6 +66,13 @@
         title: "Random Tables — author and roll your own tables",
         href: `${base}/tables`,
       },
+      {
+        id: "decks",
+        icon: "icon-[lucide--layers]",
+        label: "Decks",
+        title: "Card Decks — draw from your own decks, discard pile and all",
+        href: `${base}/decks`,
+      },
     ];
   });
 

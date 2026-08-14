@@ -174,11 +174,11 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T068 [US4] Define the `DeckStateStore` interface and implement `DeckService` (`draw`, `reset`, `remaining`) in `packages/random-source-engine/src/deck-service.ts`, serialising writes so concurrent draws cannot collide
 - [x] T069 [US4] Implement `apps/web/src/lib/stores/deck-state-store.ts` over `_decks/<slug>/state.json`, serialising writes so two rapid draws cannot interleave
 - [x] T070 [US4] Prune card ids from `drawn` that no longer exist in the deck when writing state, so deleting a card cannot corrupt the discard pile
-- [ ] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options, including reorder and remove for individual cards (FR-008)
-- [ ] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle. Mount it at a `/decks` route in `apps/web/src/routes/(app)/decks/+page.svelte` with the same searchable, label-filterable list T031 gives tables — without this, decks are built but unreachable (FR-003, FR-009)
-- [ ] T073 [US4] Record draws in history with drawn card ids and titles (FR-029)
-- [ ] T074 [US4] Ensure `Card.id` is assigned once at creation and preserved through edit and re-import — regenerating ids would silently reset every deck (quickstart gotchas)
-- [ ] T075 [P] [US4] Add a Playwright spec `apps/web/tests/random-decks.spec.ts` covering draw → reload → discard pile intact → reset → full deck (SC-007), with the draws performed offline to confirm no request is issued (FR-030, SC-005)
+- [x] T071 [US4] Build `apps/web/src/lib/components/random/CardEditor.svelte` for title, body, and draw-mode options, including reorder and remove for individual cards (FR-008)
+- [x] T072 [US4] Build `apps/web/src/lib/components/random/DeckView.svelte`: draw one or many, remaining count, discard pile, shuffle/reset, exhaustion prompt offering a reshuffle. Mount it at a `/decks` route in `apps/web/src/routes/(app)/decks/+page.svelte` with the same searchable, label-filterable list T031 gives tables — without this, decks are built but unreachable (FR-003, FR-009)
+- [x] T073 [US4] Record draws in history with drawn card ids and titles (FR-029)
+- [x] T074 [US4] Ensure `Card.id` is assigned once at creation and preserved through edit and re-import — regenerating ids would silently reset every deck (quickstart gotchas)
+- [x] T075 [P] [US4] Add a Playwright spec `apps/web/tests/random-decks.spec.ts` covering draw → reload → discard pile intact → reset → full deck (SC-007), with the draws performed offline to confirm no request is issued (FR-030, SC-005)
 
 **Checkpoint**: Decks work standalone, and deck state is sync-safe by construction
 

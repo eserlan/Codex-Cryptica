@@ -30,6 +30,9 @@ let loadedVaultId: string | null | undefined;
 export async function ensureRandomSourcesLoaded(force = false): Promise<void> {
   const vaultId = vault.activeVaultId ?? null;
   if (!force && vaultId === loadedVaultId) return;
+  // A view can mount before the vault is open — on a reload, it usually does.
+  // Reading then would find nothing and, worse, remember that as loaded.
+  if (!vaultId) return;
   loadedVaultId = vaultId;
   await randomSources.load();
 }

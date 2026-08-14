@@ -5,9 +5,9 @@
     TableEntry,
   } from "random-source-engine";
   import { parseReferences, toRanged, toWeighted } from "random-source-engine";
-  import { untrack } from "svelte";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import { computeWindow } from "./virtual-window";
+  import SourceIdentityFields from "./SourceIdentityFields.svelte";
   import TableRoller from "./TableRoller.svelte";
 
   /**
@@ -26,14 +26,7 @@
     source: RandomSource;
     diagnostics?: Diagnostic[];
     onChange: (next: RandomSource) => void;
-    /**
-     * Committed on blur or Enter rather than per keystroke: a rename moves the
-     * file and may break other tables' references, so it is a decision, not a
-     * side effect of typing (FR-042).
-     *
-     * Returns false when the parent needs to ask the user first, which puts the
-     * field back to the stored name until the answer comes.
-     */
+    /** Passed through to the name field; see `SourceIdentityFields`. */
     onRename?: (name: string) => boolean;
     idGenerator?: IdGenerator;
   } = $props();
@@ -42,27 +35,6 @@
 
   let scrollTop = $state(0);
   let viewportHeight = $state(600);
-  let labelDraft = $state("");
-  let nameDraft = $state(source.name);
-
-  // Follows the source: another table selected, or a rename that landed.
-  $effect(() => {
-    const name = source.name;
-    untrack(() => (nameDraft = name));
-  });
-
-  function commitName() {
-    const name = nameDraft.trim();
-    if (!name || name === source.name) {
-      nameDraft = source.name;
-      return;
-    }
-    if (!onRename) {
-      update({ name });
-      return;
-    }
-    if (!onRename(name)) nameDraft = source.name;
-  }
 
   const entries = $derived(source.entries ?? []);
   const isRanged = $derived(source.selection?.mode === "ranged");
@@ -148,72 +120,10 @@
     if (!Number.isFinite(sides) || sides < 1) return;
     update({ selection: { mode: "ranged", die: { sides } } });
   }
-
-  function addLabel() {
-    const label = labelDraft.trim();
-    labelDraft = "";
-    if (!label || source.labels.includes(label)) return;
-    update({ labels: [...source.labels, label] });
-  }
-
-  function removeLabel(label: string) {
-    update({ labels: source.labels.filter((l) => l !== label) });
-  }
 </script>
 
 <div class="flex flex-col gap-4" data-testid="table-editor">
-  <label class="flex flex-col gap-1">
-    <span
-      class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
-      >Name</span
-    >
-    <input
-      class="rounded border border-theme-border bg-theme-bg px-3 py-2 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
-      bind:value={nameDraft}
-      onblur={commitName}
-      onkeydown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
-      }}
-      data-testid="table-name"
-    />
-  </label>
-
-  <div class="flex flex-col gap-1">
-    <span
-      class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
-      >Labels</span
-    >
-    <div class="flex flex-wrap items-center gap-1.5">
-      {#each source.labels as label}
-        <span
-          class="flex items-center gap-1 rounded bg-theme-primary/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-theme-primary"
-        >
-          {label}
-          <button
-            type="button"
-            onclick={() => removeLabel(label)}
-            aria-label="Remove label {label}"
-            class="opacity-60 transition-opacity hover:opacity-100"
-          >
-            <span aria-hidden="true" class="icon-[lucide--x] h-3 w-3"></span>
-          </button>
-        </span>
-      {/each}
-      <input
-        class="min-w-[8rem] flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1 font-body text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-        placeholder="Add label..."
-        bind:value={labelDraft}
-        onkeydown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            addLabel();
-          }
-        }}
-        onblur={addLabel}
-        data-testid="table-label-input"
-      />
-    </div>
-  </div>
+  <SourceIdentityFields {source} {onChange} {onRename} />
 
   <div class="flex flex-wrap items-end gap-4">
     <div class="flex flex-col gap-1">

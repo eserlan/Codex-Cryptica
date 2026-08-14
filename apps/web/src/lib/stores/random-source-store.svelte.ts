@@ -39,6 +39,15 @@ export class RandomSourceStore {
   sources = $state<RandomSource[]>([]);
   loading = $state(false);
 
+  /**
+   * Every read-modify-write of the collection runs one at a time.
+   *
+   * Reading the vault while a save is still in flight would replace the list
+   * with what is on disk and lose the newer copy — and the vault opens *after*
+   * a view mounts, so that ordering is the normal case, not a rare one.
+   */
+  private queue: Promise<unknown> = Promise.resolve();
+
   constructor(
     private files: RandomSourceFiles,
     private idGenerator: IdGenerator = systemIdGenerator,
@@ -58,7 +67,11 @@ export class RandomSourceStore {
     return this.sources.map((s) => s.name);
   }
 
-  async load(): Promise<void> {
+  load(): Promise<void> {
+    return this.serialise(() => this.loadNow());
+  }
+
+  private async loadNow(): Promise<void> {
     this.loading = true;
     try {
       const loaded: RandomSource[] = [];
@@ -159,7 +172,11 @@ export class RandomSourceStore {
    * by name, so allowing two would make resolution non-deterministic (FR-003a).
    * Every other diagnostic is a warning the editor surfaces without blocking.
    */
-  async save(source: RandomSource): Promise<Diagnostic[]> {
+  save(source: RandomSource): Promise<Diagnostic[]> {
+    return this.serialise(() => this.saveNow(source));
+  }
+
+  private async saveNow(source: RandomSource): Promise<Diagnostic[]> {
     const diagnostics = this.validate(source);
     if (diagnostics.some((d) => d.severity === "error")) return diagnostics;
 
@@ -172,29 +189,51 @@ export class RandomSourceStore {
     return diagnostics;
   }
 
-  async rename(source: RandomSource, newName: string): Promise<Diagnostic[]> {
+  rename(source: RandomSource, newName: string): Promise<Diagnostic[]> {
+    return this.serialise(() => this.renameNow(source, newName));
+  }
+
+  private async renameNow(
+    source: RandomSource,
+    newName: string,
+  ): Promise<Diagnostic[]> {
     const renamed = { ...source, name: newName };
     const diagnostics = this.validate(renamed);
     if (diagnostics.some((d) => d.severity === "error")) return diagnostics;
 
     // The slug is derived from the name, so a rename moves the file.
     await this.files.remove(pathOf(source));
-    return this.save(renamed);
+    return this.saveNow(renamed);
   }
 
-  async duplicate(source: RandomSource): Promise<RandomSource> {
+  duplicate(source: RandomSource): Promise<RandomSource> {
+    return this.serialise(() => this.duplicateNow(source));
+  }
+
+  private async duplicateNow(source: RandomSource): Promise<RandomSource> {
     const copy: RandomSource = {
       ...structuredClone(source),
       id: this.idGenerator.uuid(),
       name: this.uniqueName(`${source.name} copy`),
     };
-    await this.save(copy);
+    await this.saveNow(copy);
     return copy;
   }
 
-  async remove(source: RandomSource): Promise<void> {
-    await this.files.remove(pathOf(source));
-    this.sources = this.sources.filter((s) => s.id !== source.id);
+  remove(source: RandomSource): Promise<void> {
+    return this.serialise(async () => {
+      await this.files.remove(pathOf(source));
+      this.sources = this.sources.filter((s) => s.id !== source.id);
+    });
+  }
+
+  /** Runs `op` after every operation already queued. */
+  private serialise<T>(op: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(op, op);
+    // The queue itself must survive a failed operation, or one bad write would
+    // wedge every later one.
+    this.queue = run.catch(() => undefined);
+    return run;
   }
 
   /**
