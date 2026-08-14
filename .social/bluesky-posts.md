@@ -168,6 +168,20 @@ The remaining topics from #2086, resequenced to satisfy its own cadence rule ("r
 
 ## Drafted (not yet posted)
 
+### Faction Generator (queue #4)
+
+- **Text:** I needed factions that gave players something to push against, not just a name and a crest.
+
+  So I built the Faction Generator in Codex Cryptica. It gives a group an agenda, conflict, rivals, and people tied to it.
+
+  codexcryptica.com/generators/faction
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png
+- **Alt:** Codex Cryptica's RPG Faction Generator showing the example merchant guild The Iron Syndicate, its configurable inputs, and generated operations and secret agenda
+- **Note:** Captured from the live generator page and cropped to remove the empty Session Hub panel. Validated at 285 characters with a 566 KB PNG image.
+
 ### Genre/theme breadth (ad hoc, not from #2086's numbered queue)
 
 - **Text:** Fantasy-flavored generators do not work if your table is running cyberpunk, cosmic horror, or a western.
