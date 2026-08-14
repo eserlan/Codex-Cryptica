@@ -124,3 +124,32 @@ describe("validateSource", () => {
     expect(diags.find((d) => d.code === "broken-reference")).toBeUndefined();
   });
 });
+
+describe("validateSource — malformed reference syntax", () => {
+  const table = (text: string): RandomSource => ({
+    id: "t1",
+    name: "Rumours",
+    kind: "table",
+    labels: [],
+    selection: { mode: "weighted" },
+    entries: [{ id: "e1", text, weight: 1 }],
+  });
+
+  it("warns about an unclosed brace without blocking a save", () => {
+    const found = validateSource(table("A {creature appears"), [], []);
+    const malformed = found.filter((d) => d.code === "malformed-reference");
+    expect(malformed).toHaveLength(1);
+    expect(malformed[0].severity).toBe("warning");
+    expect(malformed[0].entryId).toBe("e1");
+  });
+
+  it("warns about empty braces", () => {
+    const found = validateSource(table("Nothing {} here"), [], []);
+    expect(found.some((d) => d.code === "malformed-reference")).toBe(true);
+  });
+
+  it("says nothing about well-formed references", () => {
+    const found = validateSource(table("A {creature} appears"), [], []);
+    expect(found.some((d) => d.code === "malformed-reference")).toBe(false);
+  });
+});

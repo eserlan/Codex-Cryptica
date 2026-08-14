@@ -29,6 +29,12 @@ export interface RandomSourceFiles {
   remove(path: string): Promise<void>;
 }
 
+/** What a rename or delete would break, for the confirmation prompt. */
+export interface ImpactReport {
+  referencedBy: RandomSource[];
+  safe: boolean;
+}
+
 export class RandomSourceStore {
   sources = $state<RandomSource[]>([]);
   loading = $state(false);
@@ -205,6 +211,20 @@ export class RandomSourceStore {
       ];
       return texts.some((t) => t.toLowerCase().includes(key));
     });
+  }
+
+  /**
+   * What renaming or deleting `source` would break (FR-042).
+   *
+   * References bind by name, so a rename is not a silent rebind: the sources
+   * pointing at the old name have to be named before the user commits, or the
+   * breakage only shows up on the next roll.
+   */
+  impactOf(source: RandomSource): ImpactReport {
+    const referencedBy = this.referencesTo(source.name).filter(
+      (s) => s.id !== source.id,
+    );
+    return { referencedBy, safe: referencedBy.length === 0 };
   }
 
   private uniqueName(candidate: string): string {

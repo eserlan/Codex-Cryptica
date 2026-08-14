@@ -44,6 +44,20 @@ async function addEntry(page: Page, index: number, text: string) {
   await page.getByTestId("entry-text").nth(index).fill(text);
 }
 
+/** A rename commits on Enter, so a name has to be pressed home to stick. */
+async function nameTable(page: Page, name: string) {
+  await page.getByTestId("table-name").fill(name);
+  await page.getByTestId("table-name").press("Enter");
+}
+
+async function newTable(page: Page, name: string, ...entries: string[]) {
+  await page.getByTestId("new-table").click();
+  await nameTable(page, name);
+  for (const [index, text] of entries.entries()) {
+    await addEntry(page, index, text);
+  }
+}
+
 test.describe("Random tables", () => {
   test.beforeEach(async ({ page }) => {
     await bootVault(page);
@@ -55,10 +69,8 @@ test.describe("Random tables", () => {
     page,
   }) => {
     await page.getByTestId("new-table").click();
-
-    const editor = page.getByTestId("table-editor");
-    await expect(editor).toBeVisible();
-    await page.getByTestId("table-name").fill("Tavern rumours");
+    await expect(page.getByTestId("table-editor")).toBeVisible();
+    await nameTable(page, "Tavern rumours");
 
     await addEntry(page, 0, "The miller has not been seen for a week.");
     await addEntry(page, 1, "A cold light burns in the old chapel.");
@@ -83,9 +95,7 @@ test.describe("Random tables", () => {
   });
 
   test("rolls with no network request in flight", async ({ page, context }) => {
-    await page.getByTestId("new-table").click();
-    await page.getByTestId("table-name").fill("Offline table");
-    await addEntry(page, 0, "It still works.");
+    await newTable(page, "Offline table", "It still works.");
 
     // The dev server keeps serving its own module graph over localhost, which
     // is not what FR-020 is about: nothing may leave the machine.
@@ -106,13 +116,13 @@ test.describe("Random tables", () => {
 
   test("filters the list by name and by label", async ({ page }) => {
     await page.getByTestId("new-table").click();
-    await page.getByTestId("table-name").fill("Weather");
+    await nameTable(page, "Weather");
     await page.getByTestId("table-label-input").fill("outdoors");
     await page.getByTestId("table-label-input").press("Enter");
     await addEntry(page, 0, "Rain, steady and grey.");
 
     await page.getByTestId("new-table").click();
-    await page.getByTestId("table-name").fill("Loot");
+    await nameTable(page, "Loot");
     await addEntry(page, 0, "A tarnished silver ring.");
 
     await expect(page.getByTestId("table-list-item")).toHaveCount(2);
@@ -123,5 +133,48 @@ test.describe("Random tables", () => {
     await page.getByTestId("table-search").fill("");
     await page.getByRole("button", { name: "outdoors", exact: true }).click();
     await expect(page.getByTestId("table-list-item")).toHaveText(/Weather/);
+  });
+
+  test("composes a result from a referenced table and shows the chain", async ({
+    page,
+  }) => {
+    await newTable(page, "creature", "troll");
+    await newTable(page, "Encounter", "A {creature} guards the ford.");
+
+    await expect(page.getByTestId("entry-references")).toContainText(
+      "creature",
+    );
+
+    await page.getByTestId("roll-table").click();
+    await expect(page.getByTestId("roll-result")).toHaveText(
+      "A troll guards the ford.",
+    );
+
+    // Which source produced which fragment, without leaving the result (SC-009).
+    const chain = page.getByTestId("resolution-chain").first();
+    await expect(chain).toBeVisible();
+    await expect(chain.getByTestId("chain-source")).toContainText([
+      /Encounter/,
+      /creature/,
+    ]);
+
+    // A fragment re-rolls on its own, leaving the sentence around it intact.
+    await page.getByTestId("chain-reroll").last().click();
+    await expect(page.getByTestId("roll-result")).toHaveText(
+      "A troll guards the ford.",
+    );
+  });
+
+  test("cuts a reference loop short instead of hanging", async ({ page }) => {
+    await newTable(page, "Alpha", "alpha then {Beta}");
+    await newTable(page, "Beta", "beta then {Alpha}");
+
+    await page.getByTestId("roll-table").click();
+
+    const result = page.getByTestId("roll-result");
+    await expect(result).toContainText("beta then");
+    await expect(page.getByTestId("roll-notice").first()).toContainText(
+      /refers back to itself/,
+    );
   });
 });

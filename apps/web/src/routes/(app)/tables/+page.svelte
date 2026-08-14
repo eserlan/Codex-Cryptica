@@ -25,6 +25,9 @@
   let writes: Promise<unknown> = Promise.resolve();
   let inFlight = 0;
   let deleteImpact = $state<RandomSource[] | undefined>();
+  let pendingRename = $state<
+    { name: string; referencedBy: RandomSource[] } | undefined
+  >();
 
   onMount(() => {
     void ensureRandomSourcesLoaded();
@@ -55,6 +58,7 @@
     draft = $state.snapshot(table) as RandomSource;
     diagnostics = randomSources.validate(draft);
     deleteImpact = undefined;
+    pendingRename = undefined;
   }
 
   function createTable() {
@@ -118,6 +122,46 @@
               next.name,
             )
           : await randomSources.save(next);
+    });
+  }
+
+  /**
+   * A rename is not a rebind: sources point at the old name and keep pointing
+   * at it. So the tables that would break are named before it happens (FR-042).
+   */
+  function requestRename(name: string): boolean {
+    // Judged from the draft, not the stored copy: a table created a moment ago
+    // may still be in the write queue, and renaming it must not have to wait.
+    if (!draft || draft.name === name) return false;
+
+    const impact = randomSources.impactOf(draft);
+    if (impact.safe) {
+      commitRename(name);
+      return true;
+    }
+    pendingRename = { name, referencedBy: impact.referencedBy };
+    return false;
+  }
+
+  function commitRename(name: string) {
+    if (!draft) return;
+    // Pending edits land under the old name first, so the rename moves a file
+    // whose contents are already current.
+    flushPendingSave();
+    const id = draft.id;
+    draft = { ...draft, name };
+    pendingRename = undefined;
+
+    enqueue(async () => {
+      const stored = randomSources.findById(id);
+      if (!stored) return;
+      const result = await randomSources.rename(stored, name);
+      diagnostics = result;
+      // A rejected rename must not leave the editor showing a name the vault
+      // does not have.
+      if (result.some((d) => d.severity === "error") && draft?.id === id) {
+        draft = { ...draft, name: stored.name };
+      }
     });
   }
 
@@ -272,7 +316,43 @@
           </div>
         {/if}
 
-        <TableEditor source={draft} {diagnostics} {onChange} />
+        {#if pendingRename}
+          <div
+            class="mb-3 rounded border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400"
+            data-testid="rename-impact"
+          >
+            <p class="mb-2">
+              {pendingRename.referencedBy.map((s) => s.name).join(", ")}
+              {pendingRename.referencedBy.length === 1 ? "refers" : "refer"} to "{draft.name}"
+              by name. Renaming it to "{pendingRename.name}" leaves those
+              references pointing at nothing.
+            </p>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="rounded bg-amber-500 px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-white"
+                onclick={() => commitRename(pendingRename!.name)}
+                data-testid="confirm-rename"
+              >
+                Rename anyway
+              </button>
+              <button
+                type="button"
+                class="rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-muted"
+                onclick={() => (pendingRename = undefined)}
+              >
+                Keep the name
+              </button>
+            </div>
+          </div>
+        {/if}
+
+        <TableEditor
+          source={draft}
+          {diagnostics}
+          {onChange}
+          onRename={requestRename}
+        />
       {:else}
         <EmptyState
           icon="icon-[lucide--list-tree]"

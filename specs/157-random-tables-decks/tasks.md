@@ -114,13 +114,13 @@ Oracle integration in `packages/oracle-engine/src/`, per plan.md.
 - [x] T040 [US2] Wire `RandomSourceEngine.roll()` to the resolver and accept a `ResolutionContext` with case-insensitive name `lookup` (clarification 1)
 - [x] T041 [US2] Implement `RandomSourceEngine.rollMany()` for multi-table rolls presented as one outcome, and add the multi-select control in `TableRoller.svelte` that lets a user pick two or more tables to roll together — FR-017 requires the user-facing action, not just the capability
 - [x] T042 [US2] Implement `RandomSourceEngine.rerollFragment(outcome, nodePath, ctx)` re-resolving one node while leaving siblings intact (FR-019)
-- [ ] T043 [US2] Build `apps/web/src/lib/components/random/ResolutionChain.svelte` showing which source produced each fragment, inline in the result view (SC-009)
-- [ ] T044 [US2] Add per-fragment re-roll controls to `TableRoller.svelte` wired to `rerollFragment`
-- [ ] T045 [US2] Render cycle, depth-limit, and unresolved notices in `TableRoller.svelte` as plain-language messages (Constitution IX)
-- [ ] T046 [US2] Persist the full chain into history via the `source.chain` payload (FR-018)
-- [ ] T047 [US2] Highlight references and flag malformed brace syntax inline in `TableEditor.svelte` (Edge Cases: malformed reference syntax)
-- [ ] T048 [US2] Implement rename/delete impact reporting in `random-source-store.svelte.ts`: warn and list referencing sources before proceeding (FR-042)
-- [ ] T049 [P] [US2] Extend `apps/web/tests/random-tables.spec.ts` with a nested-resolution journey including a deliberately cyclic table
+- [x] T043 [US2] Build `apps/web/src/lib/components/random/ResolutionChain.svelte` showing which source produced each fragment, inline in the result view (SC-009)
+- [x] T044 [US2] Add per-fragment re-roll controls to `TableRoller.svelte` wired to `rerollFragment`
+- [x] T045 [US2] Render cycle, depth-limit, and unresolved notices in `TableRoller.svelte` as plain-language messages (Constitution IX)
+- [x] T046 [US2] Persist the full chain into history via the `source.chain` payload (FR-018)
+- [x] T047 [US2] Highlight references and flag malformed brace syntax inline in `TableEditor.svelte` (Edge Cases: malformed reference syntax)
+- [x] T048 [US2] Implement rename/delete impact reporting in `random-source-store.svelte.ts`: warn and list referencing sources before proceeding (FR-042)
+- [x] T049 [P] [US2] Extend `apps/web/tests/random-tables.spec.ts` with a nested-resolution journey including a deliberately cyclic table
 
 **Checkpoint**: US1 + US2 deliver the complete table system the original request asked for
 

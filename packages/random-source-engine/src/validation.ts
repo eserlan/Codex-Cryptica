@@ -1,5 +1,5 @@
 import type { Diagnostic, RandomSource } from "./types";
-import { parseReferences } from "./resolver";
+import { findBraceProblems, parseReferences } from "./resolver";
 
 /**
  * Source validation.
@@ -85,16 +85,32 @@ export function validateSource(
     }
   }
 
+  const texts = [
+    ...entries.map((e) => ({ id: e.id, text: e.text })),
+    ...cards.map((c) => ({
+      id: c.id,
+      text: `${c.body} ${c.reversedMeaning ?? ""}`,
+    })),
+  ];
+
+  // Brace syntax that looks like a reference but will roll as literal text.
+  for (const { id, text } of texts) {
+    for (const problem of findBraceProblems(text)) {
+      diagnostics.push({
+        severity: "warning",
+        code: "malformed-reference",
+        message:
+          problem.kind === "unclosed"
+            ? "A { has no closing }, so that part will read as plain text."
+            : "Empty braces name no table, so they will read as plain text.",
+        entryId: id,
+      });
+    }
+  }
+
   // Reference health, when the caller supplies the vault's source names.
   if (knownSourceNames.length > 0) {
     const known = new Set(knownSourceNames.map((n) => n.trim().toLowerCase()));
-    const texts = [
-      ...entries.map((e) => ({ id: e.id, text: e.text })),
-      ...cards.map((c) => ({
-        id: c.id,
-        text: `${c.body} ${c.reversedMeaning ?? ""}`,
-      })),
-    ];
     for (const { id, text } of texts) {
       for (const ref of parseReferences(text)) {
         if (!known.has(ref.name.trim().toLowerCase())) {

@@ -206,6 +206,42 @@ describe("references", () => {
   });
 });
 
+describe("rename and delete impact (FR-042)", () => {
+  it("names the sources that would break", async () => {
+    const creature = {
+      ...store.create("table", "creature"),
+      entries: [{ id: "e1", text: "troll" }],
+    };
+    await store.save(creature);
+    await store.save({
+      ...store.create("table", "Encounter"),
+      entries: [{ id: "e1", text: "A {creature} appears" }],
+    });
+
+    const impact = store.impactOf(creature);
+    expect(impact.safe).toBe(false);
+    expect(impact.referencedBy.map((s) => s.name)).toEqual(["Encounter"]);
+  });
+
+  it("reports a source nothing points at as safe", async () => {
+    const lonely = {
+      ...store.create("table", "Lonely"),
+      entries: [{ id: "e1", text: "nothing" }],
+    };
+    await store.save(lonely);
+    expect(store.impactOf(lonely)).toEqual({ referencedBy: [], safe: true });
+  });
+
+  it("ignores a source that only references itself", async () => {
+    const recursive = {
+      ...store.create("table", "Loop"),
+      entries: [{ id: "e1", text: "and then {Loop}" }],
+    };
+    await store.save(recursive);
+    expect(store.impactOf(recursive).safe).toBe(true);
+  });
+});
+
 describe("name suggestions (FR-040)", () => {
   beforeEach(async () => {
     await store.save(store.create("table", "Forest Encounters"));

@@ -4,7 +4,8 @@
     RandomSource,
     TableEntry,
   } from "random-source-engine";
-  import { toRanged, toWeighted } from "random-source-engine";
+  import { parseReferences, toRanged, toWeighted } from "random-source-engine";
+  import { untrack } from "svelte";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import { computeWindow } from "./virtual-window";
   import TableRoller from "./TableRoller.svelte";
@@ -19,11 +20,21 @@
     source,
     diagnostics = [],
     onChange,
+    onRename,
     idGenerator = systemIdGenerator,
   }: {
     source: RandomSource;
     diagnostics?: Diagnostic[];
     onChange: (next: RandomSource) => void;
+    /**
+     * Committed on blur or Enter rather than per keystroke: a rename moves the
+     * file and may break other tables' references, so it is a decision, not a
+     * side effect of typing (FR-042).
+     *
+     * Returns false when the parent needs to ask the user first, which puts the
+     * field back to the stored name until the answer comes.
+     */
+    onRename?: (name: string) => boolean;
     idGenerator?: IdGenerator;
   } = $props();
 
@@ -32,6 +43,26 @@
   let scrollTop = $state(0);
   let viewportHeight = $state(600);
   let labelDraft = $state("");
+  let nameDraft = $state(source.name);
+
+  // Follows the source: another table selected, or a rename that landed.
+  $effect(() => {
+    const name = source.name;
+    untrack(() => (nameDraft = name));
+  });
+
+  function commitName() {
+    const name = nameDraft.trim();
+    if (!name || name === source.name) {
+      nameDraft = source.name;
+      return;
+    }
+    if (!onRename) {
+      update({ name });
+      return;
+    }
+    if (!onRename(name)) nameDraft = source.name;
+  }
 
   const entries = $derived(source.entries ?? []);
   const isRanged = $derived(source.selection?.mode === "ranged");
@@ -62,6 +93,11 @@
       viewportHeight,
     }),
   );
+
+  /** The `{names}` an entry pulls in, shown beneath its text. */
+  function references(text: string): string[] {
+    return parseReferences(text).map((r) => r.name);
+  }
 
   function update(changes: Partial<RandomSource>) {
     onChange({ ...source, ...changes });
@@ -133,8 +169,11 @@
     >
     <input
       class="rounded border border-theme-border bg-theme-bg px-3 py-2 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
-      value={source.name}
-      oninput={(e) => update({ name: e.currentTarget.value })}
+      bind:value={nameDraft}
+      onblur={commitName}
+      onkeydown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+      }}
       data-testid="table-name"
     />
   </label>
@@ -331,6 +370,15 @@
               data-testid="entry-diagnostic"
             >
               {problems[0].message}
+            </span>
+          {:else if references(entry.text).length > 0}
+            <!-- References are invisible inside a plain input, so the names
+                 this entry pulls in are named under it (FR-013). -->
+            <span
+              class="truncate font-mono text-[10px] text-theme-primary/80"
+              data-testid="entry-references"
+            >
+              pulls in {references(entry.text).join(", ")}
             </span>
           {/if}
         </div>

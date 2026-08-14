@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseReferences } from "../src/resolver";
+import { findBraceProblems, parseReferences } from "../src/resolver";
 
 describe("parseReferences", () => {
   it("finds a single reference with correct offsets", () => {
@@ -45,5 +45,38 @@ describe("parseReferences", () => {
 
   it("returns nothing for text with no braces", () => {
     expect(parseReferences("An abandoned shrine")).toEqual([]);
+  });
+});
+
+describe("findBraceProblems", () => {
+  it("reports nothing for well-formed text", () => {
+    expect(findBraceProblems("A {creature} guarding {treasure}")).toEqual([]);
+  });
+
+  it("reports nothing for text with no braces at all", () => {
+    expect(findBraceProblems("A plain sentence")).toEqual([]);
+  });
+
+  it("reports an unclosed brace", () => {
+    expect(findBraceProblems("A {creature appears")).toEqual([
+      { kind: "unclosed", index: 2 },
+    ]);
+  });
+
+  it("reports the abandoned brace when a second one restarts the token", () => {
+    expect(findBraceProblems("{a{b}")).toEqual([
+      { kind: "unclosed", index: 0 },
+    ]);
+  });
+
+  it("reports empty and whitespace-only braces", () => {
+    expect(findBraceProblems("Nothing {} or {   } here")).toEqual([
+      { kind: "empty", index: 8 },
+      { kind: "empty", index: 14 },
+    ]);
+  });
+
+  it("ignores a stray closing brace, which reads as ordinary text", () => {
+    expect(findBraceProblems("a } b")).toEqual([]);
   });
 });

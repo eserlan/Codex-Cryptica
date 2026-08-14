@@ -7,6 +7,7 @@
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
   import { fade } from "svelte/transition";
+  import ResolutionChain from "./ResolutionChain.svelte";
 
   /**
    * Rolls one table and shows the result, the die value behind it, and a way to
@@ -41,8 +42,24 @@
 
   const hasEntries = $derived((source.entries ?? []).length > 0);
 
+  /** True once a result was composed from more than one source. */
+  const isComposed = $derived(
+    (outcome?.chain ?? []).some((node) => node.children.length > 0),
+  );
+
   async function roll() {
     const result = sources.roll(source);
+    outcome = result;
+    await record(result);
+  }
+
+  /**
+   * Re-rolls one fragment, keeping its siblings (FR-019). The recomposed
+   * result is a new result, so it goes into history like any other.
+   */
+  async function rerollFragment(nodePath: number[]) {
+    if (!outcome) return;
+    const result = sources.rerollFragment(outcome, nodePath);
     outcome = result;
     await record(result);
   }
@@ -125,6 +142,17 @@
         {outcome.finalText}
       </p>
     </div>
+
+    {#if isComposed}
+      <div class="border-t border-theme-border/40 pt-3">
+        <h4
+          class="mb-2 font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+        >
+          Where this came from
+        </h4>
+        <ResolutionChain nodes={outcome.chain} onReroll={rerollFragment} />
+      </div>
+    {/if}
 
     {#each outcome.notices as notice}
       <p
