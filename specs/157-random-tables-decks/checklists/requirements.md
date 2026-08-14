@@ -40,5 +40,9 @@
 ### Carried into planning
 
 - The six user stories map to independently shippable slices in the priority order given. US1 alone is a viable MVP.
-- SC-010 (90% of users who create a table roll it in the same session) requires product analytics that may not exist. Confirm measurability during planning, or downgrade it to a qualitative usability check.
+- ~~SC-010 requires product analytics that may not exist.~~ **Resolved in clarification (2026-08-14)**: analytics are wired only from the `(marketing)` route group and deliberately never fire inside the app, so the behavioural target was not measurable. SC-010 is now a design-verifiable discoverability criterion.
 - Overlap with issue #2033 (VTT random room tile decks) is flagged under Related Work and needs a decision in `plan.md`: express room tile decks as a Random Source, or keep them separate.
+
+### Clarification session 2026-08-14
+
+Five questions asked and answered; all findings integrated into `spec.md` under `## Clarifications`. Resulting requirement changes: FR-003a (name uniqueness), FR-004/FR-004a/FR-005/FR-006 (selection modes), FR-012/FR-012a (reference scope), FR-024a (deck state merge), FR-031/FR-032 (import mode selection), SC-010 (rewritten).

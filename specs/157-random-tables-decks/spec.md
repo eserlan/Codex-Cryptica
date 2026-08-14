@@ -17,6 +17,9 @@ This feature makes random tables and card decks first-class, user-authored conte
 
 - Q: How should a brace reference like `{creature}` bind to its target Random Source? → A: Random Source names are unique per vault; references resolve by name at roll time.
 - Q: Can references target decks, and can card text contain references? → A: Both. A deck reached through a reference is always sampled with replacement and is never depleted; only explicit draws deplete a deck.
+- Q: How should deck draw state behave across two synced devices? → A: The discard pile merges as a grow-only set (union of draws); reset bumps a generation counter, and the highest generation wins and clears the pile.
+- Q: Can one table mix weighted entries and explicit-range entries? → A: No. A table is in exactly one selection mode — weighted or ranged — chosen per table and convertible either way.
+- Q: Is SC-010 (90% of table authors roll in the same session) measurable? → A: No. In-app analytics do not exist by design, so SC-010 is replaced with a design-verifiable discoverability criterion.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -157,9 +160,10 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **FR-002**: The system MUST store tables and decks as vault content, so they are saved, exported, backed up, and synced by the same mechanisms as the user's other vault content.
 - **FR-003**: Tables and decks MUST be browsable and searchable by name and by their content.
 - **FR-003a**: Random Source names MUST be unique within a vault. The system MUST prevent a user from saving a table or deck under a name already in use and offer a non-colliding alternative.
-- **FR-004**: A table MUST support entries consisting of result text plus an optional weight or numeric range.
-- **FR-005**: A table MUST support a die specification, either derived automatically from the number and weighting of its entries or set explicitly by the user.
-- **FR-006**: The system MUST validate range coverage when a table is saved and report gaps, overlaps, and unreachable entries to the user without blocking the save.
+- **FR-004**: A table MUST be in exactly one selection mode: **weighted**, where each entry carries a weight defaulting to 1 and the die is derived from the total; or **ranged**, where the table carries an explicit die specification and each entry carries a numeric range over it. A single table MUST NOT mix weighted and ranged entries.
+- **FR-004a**: Users MUST be able to convert a table between selection modes. Converting weighted → ranged assigns contiguous ranges proportional to the weights; converting ranged → weighted assigns each entry a weight equal to the width of its range.
+- **FR-005**: In weighted mode the die specification MUST be derived automatically from the entries; in ranged mode the user MUST set it explicitly.
+- **FR-006**: For tables in ranged mode, the system MUST validate range coverage when the table is saved and report gaps, overlaps, and unreachable entries to the user without blocking the save. Weighted-mode tables cannot have coverage gaps and are exempt.
 - **FR-007**: A deck MUST support cards consisting of a title, body text, an optional image, and an optional second meaning used when the card is drawn reversed.
 - **FR-008**: Users MUST be able to reorder, edit, and remove individual entries and cards after creation.
 - **FR-009**: Tables and decks MUST be organisable — at minimum groupable or taggable — so users with many of them can find the one they need mid-session.
@@ -185,6 +189,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **FR-022**: Decks MUST support drawing with replacement and drawing without replacement, selectable by the user.
 - **FR-023**: When drawing without replacement, drawn cards MUST move to a discard pile and be unavailable until the deck is shuffled or reset.
 - **FR-024**: The discard pile and remaining deck state MUST persist across application restarts until explicitly reset.
+- **FR-024a**: Deck state MUST merge across synced devices without losing a draw or resurrecting a drawn card. The discard pile MUST behave as a grow-only set: a card drawn on any device is drawn on all of them. A reset MUST bump a per-deck generation counter; when generations differ the higher generation wins and clears the pile, and discard piles MUST be unioned only within the same generation.
 - **FR-025**: Users MUST be able to shuffle or reset a deck, returning all discarded cards.
 - **FR-026**: Drawing from an exhausted deck MUST inform the user and offer a reshuffle rather than returning an empty result.
 - **FR-027**: Decks MUST optionally support reversed draws, with the orientation shown and the corresponding meaning displayed.
@@ -194,8 +199,8 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 
 #### Import
 
-- **FR-031**: Users MUST be able to create a table by pasting plain text with one entry per line.
-- **FR-032**: Users MUST be able to create a table by pasting delimited content (comma- or tab-separated) with a recognised range or weight column.
+- **FR-031**: Users MUST be able to create a table by pasting plain text with one entry per line, producing a weighted-mode table with equal weights.
+- **FR-032**: Users MUST be able to create a table by pasting delimited content (comma- or tab-separated) with a recognised range or weight column. A recognised range column MUST produce a ranged-mode table; a weight column MUST produce a weighted-mode table.
 - **FR-033**: Users MUST be able to create a table by pasting Markdown table syntax.
 - **FR-034**: The import flow MUST show a preview of the interpreted rows and allow the user to correct column mapping before saving.
 - **FR-035**: Rows that cannot be interpreted MUST be flagged individually, and the user MUST be able to fix, skip, or accept them without abandoning the import.
@@ -216,7 +221,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **Table Entry**: One possible outcome in a table. Carries result text, an optional weight or numeric range, and zero or more references to other Random Sources embedded in its text.
 - **Card**: One possible outcome in a deck. Carries a title, body text, an optional image, an optional reversed meaning, and zero or more references embedded in its text, resolved when the card is drawn.
 - **Reference**: A pointer embedded in an entry's text naming another Random Source, resolved **by name** at roll time by rolling that source and substituting its result. References store the target's name rather than an internal identifier, so entry text stays readable in exports and portable through paste-import.
-- **Deck State**: The per-deck record of what has been drawn and what remains, persisting between sessions until reset. Belongs to the deck within the vault rather than to a transient session.
+- **Deck State**: The per-deck record of what has been drawn and what remains, persisting between sessions until reset. Belongs to the deck within the vault rather than to a transient session. Modelled as a grow-only set of drawn cards plus a reset generation counter, so it merges across devices without a conflict prompt (FR-024a) rather than as a snapshot that would overwrite.
 - **Spread**: A named set of positions a draw fills, each with a label describing that position's meaning.
 - **Roll Record**: The record of one completed roll or draw, capturing the source, the die value or drawn cards, the final result, and the resolution chain of any nested rolls.
 
@@ -233,7 +238,7 @@ Mid-session, without leaving the conversation they are having with the Oracle, t
 - **SC-007**: After closing and reopening the application, a partially drawn deck reports exactly the same remaining cards and discard pile as before, in 100% of cases.
 - **SC-008**: Over 1,000 rolls of a weighted table, observed result distribution matches the configured weights within normal statistical variance.
 - **SC-009**: A user viewing a composed result can identify which sub-table produced each fragment without leaving the result view.
-- **SC-010**: 90% of users who create a table roll it at least once in the same session, indicating the path from authoring to payoff is discoverable.
+- **SC-010**: The path from authoring to payoff is discoverable without navigation: rolling a table is possible from within the table's own authoring view, so a user who has just added entries can roll them without leaving the screen they are on. (Replaces an earlier behavioural target of "90% of table authors roll in the same session", which the product cannot measure — analytics are wired only on marketing pages and deliberately never fire inside the app.)
 
 ## Assumptions
 
