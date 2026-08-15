@@ -177,6 +177,51 @@
     };
   }
 
+  let longPressTimer: ReturnType<typeof setTimeout> | undefined;
+  let longPressTriggered = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  function handleItemTouchStart(e: TouchEvent, source: RandomSource) {
+    const touch = e.touches?.[0];
+    const clientX = touch ? touch.clientX : 0;
+    const clientY = touch ? touch.clientY : 0;
+    touchStartX = clientX;
+    touchStartY = clientY;
+    longPressTriggered = false;
+    clearTimeout(longPressTimer);
+
+    longPressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+          navigator.vibrate(40);
+        } catch {
+          // ignore
+        }
+      }
+      contextMenu = {
+        x: clientX,
+        y: clientY,
+        source,
+      };
+    }, 450);
+  }
+
+  function handleItemTouchMove(e: TouchEvent) {
+    const touch = e.touches[0];
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - touchStartX);
+    const dy = Math.abs(touch.clientY - touchStartY);
+    if (dx > 10 || dy > 10) {
+      clearTimeout(longPressTimer);
+    }
+  }
+
+  function handleItemTouchEnd() {
+    clearTimeout(longPressTimer);
+  }
+
   function closeContextMenu() {
     contextMenu = null;
   }
@@ -639,14 +684,24 @@
         {#each visible as source (source.id)}
           {@const isSelected = selectedId === source.id}
           <li
-            class="group relative flex items-center justify-between rounded px-2 py-1.5 text-xs transition-colors {isSelected
+            class="group relative flex items-center justify-between rounded px-2 py-1.5 text-xs transition-colors select-none {isSelected
               ? 'bg-theme-primary/15 text-theme-primary font-medium'
               : 'text-theme-text hover:bg-theme-surface'}"
             oncontextmenu={(e) => openContextMenu(e, source)}
+            ontouchstart={(e) => handleItemTouchStart(e, source)}
+            ontouchmove={handleItemTouchMove}
+            ontouchend={handleItemTouchEnd}
+            ontouchcancel={handleItemTouchEnd}
           >
             <button
               type="button"
-              onclick={() => select(source)}
+              onclick={() => {
+                if (longPressTriggered) {
+                  longPressTriggered = false;
+                  return;
+                }
+                select(source);
+              }}
               class="flex flex-1 min-w-0 items-center justify-between text-left focus:outline-none"
               data-testid="{noun}-list-item"
             >
@@ -668,7 +723,7 @@
                   source,
                 };
               }}
-              class="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded p-1 text-theme-muted opacity-0 transition-opacity hover:bg-theme-bg hover:text-theme-text group-hover:opacity-100 focus:opacity-100"
+              class="ml-1 flex h-7 w-7 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded p-1 text-theme-muted opacity-100 sm:opacity-0 transition-opacity hover:bg-theme-bg hover:text-theme-text group-hover:opacity-100 focus:opacity-100 active:scale-95"
               aria-label="Actions for {source.name}"
               data-testid="item-actions-{source.id}"
             >
@@ -903,10 +958,19 @@
       }}
     >
       <div
-        class="fixed z-50 flex min-w-[160px] flex-col rounded-lg border border-theme-border bg-theme-surface p-1 shadow-xl backdrop-blur-sm animate-in fade-in zoom-in-95 duration-100"
-        style="left: {Math.min(contextMenu.x, 600)}px; top: {Math.min(
-          contextMenu.y,
-          600,
+        class="fixed z-50 flex min-w-[170px] max-w-[calc(100vw-32px)] flex-col rounded-xl border border-theme-border bg-theme-surface p-1.5 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-100"
+        style="left: {Math.max(
+          16,
+          Math.min(
+            contextMenu.x,
+            (typeof window !== 'undefined' ? window.innerWidth : 600) - 190,
+          ),
+        )}px; top: {Math.max(
+          16,
+          Math.min(
+            contextMenu.y,
+            (typeof window !== 'undefined' ? window.innerHeight : 600) - 220,
+          ),
         )}px;"
         onclick={(e) => e.stopPropagation()}
         role="menu"

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { RandomSource } from "random-source-engine";
 import SourceWorkspace from "./SourceWorkspace.svelte";
 
@@ -81,6 +81,10 @@ describe("SourceWorkspace Organization and Actions", () => {
     mockRandomSources.tables = [...mockTables];
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("renders table items with visible action trigger buttons", () => {
     render(SourceWorkspace, {
       props: {
@@ -117,6 +121,30 @@ describe("SourceWorkspace Organization and Actions", () => {
     expect(screen.getByTestId("ctx-rename")).toBeDefined();
     expect(screen.getByTestId("ctx-duplicate")).toBeDefined();
     expect(screen.getByTestId("ctx-export")).toBeDefined();
+    expect(screen.getByTestId("ctx-delete")).toBeDefined();
+  });
+
+  it("opens context menu on mobile long-press", async () => {
+    vi.useFakeTimers();
+    render(SourceWorkspace, {
+      props: {
+        kind: "table",
+        heading: "Random Tables",
+        icon: "icon-[lucide--list-tree]",
+        emptyBody: "No table open",
+        editor: vi.fn(),
+        player: vi.fn(),
+      } as never,
+    });
+
+    const item = screen.getByText("Wilderness Encounters").closest("li")!;
+    await fireEvent.touchStart(item, {
+      touches: [{ clientX: 100, clientY: 150 }],
+    });
+
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(screen.getByTestId("ctx-open")).toBeDefined();
     expect(screen.getByTestId("ctx-delete")).toBeDefined();
   });
 
