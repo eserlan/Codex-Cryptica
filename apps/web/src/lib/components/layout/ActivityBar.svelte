@@ -59,6 +59,20 @@
         title: "Entity Table — overview, filter, and sort all entities",
         href: `${base}/table`,
       },
+      {
+        id: "tables",
+        icon: "icon-[lucide--list-tree]",
+        label: "Tables",
+        title: "Random Tables — author and roll your own tables",
+        href: `${base}/tables`,
+      },
+      {
+        id: "decks",
+        icon: "icon-[lucide--layers]",
+        label: "Decks",
+        title: "Card Decks — draw from your own decks, discard pile and all",
+        href: `${base}/decks`,
+      },
     ];
   });
 

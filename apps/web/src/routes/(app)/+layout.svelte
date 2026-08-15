@@ -5,6 +5,7 @@
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
   import { shelf } from "$lib/features/shelf";
+  import { ensureRandomSourcesLoaded } from "$lib/features/random";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -223,6 +224,13 @@
           console.error("Failed to lazy-load VTTSharedImageLightbox", err);
         });
     }
+  });
+
+  // Tables and decks are needed wherever /table and /deck can be typed, which
+  // is anywhere the Oracle is — not only on their own routes (#2247, FR-039).
+  $effect(() => {
+    void vault.activeVaultId;
+    void ensureRandomSourcesLoaded();
   });
 
   // Initialization Logic
