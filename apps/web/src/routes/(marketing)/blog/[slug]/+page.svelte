@@ -6,6 +6,7 @@
   import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { SITE_AUTHOR } from "$lib/config";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   let { data } = $props();
   const article = $derived(data.article);
@@ -66,31 +67,19 @@
   );
 </script>
 
-<svelte:head>
-  <title>{article.title} | Codex Cryptica Blog</title>
-  <meta name="description" content={article.description} />
-  <meta name="keywords" content={article.keywords.join(", ")} />
-  <link rel="canonical" href={data.canonicalUrl} />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content={article.title} />
-  <meta property="og:description" content={article.description} />
-  <meta property="og:type" content="article" />
-  <meta property="og:url" content={data.canonicalUrl} />
-  <meta property="og:image" content={cardImage} />
-  <meta property="og:image:alt" content={cardImageAlt} />
-  <meta property="article:published_time" content={article.publishedAt} />
-
-  <!-- Twitter Card — the root layout declares summary_large_image for the site -->
-  <meta name="twitter:title" content={article.title} />
-  <meta name="twitter:description" content={article.description} />
-  <meta name="twitter:image" content={cardImage} />
-  <meta name="twitter:image:alt" content={cardImageAlt} />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${jsonLdString}</scr` +
-    `ipt>`}
-</svelte:head>
+<SeoHead
+  title="{article.title} | Codex Cryptica Blog"
+  description={article.description}
+  canonicalUrl={data.canonicalUrl}
+  type="article"
+  image={cardImage}
+  imageAlt={cardImageAlt}
+  keywords={article.keywords}
+  publishedTime={article.publishedAt}
+  author={authorName}
+  twitterCard="summary_large_image"
+  jsonLd={jsonLdString}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text selection:bg-theme-primary selection:text-theme-bg"

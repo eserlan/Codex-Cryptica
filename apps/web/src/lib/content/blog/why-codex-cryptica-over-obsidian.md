@@ -13,6 +13,8 @@ keywords:
     "World Design",
   ]
 publishedAt: 2026-04-05T12:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/cc-over-obsidian/cc-over-obsidian-hero.jpg"
+imageAlt: "Why Codex Cryptica Takes a Different Approach Than Obsidian"
 ---
 
 ![Why Codex Cryptica](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/cc-over-obsidian/cc-over-obsidian-hero.jpg)

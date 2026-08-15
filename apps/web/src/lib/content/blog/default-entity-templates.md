@@ -11,6 +11,8 @@ keywords:
   - "Codex Cryptica Templates"
   - "Local-First Markdown Note"
 publishedAt: 2026-05-28T14:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/default-templates/creation-dialog.png"
+imageAlt: "Create Entity Dialog with default format option in Codex Cryptica"
 ---
 
 Starting a new character, location, or faction shouldn't start with staring at a blinking cursor on a blank screen. That cognitive friction—the "blank page syndrome"—is the enemy of creative flow.

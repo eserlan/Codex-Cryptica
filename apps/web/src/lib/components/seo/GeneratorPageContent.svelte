@@ -815,6 +815,7 @@
   canonicalPath={meta.canonicalPath}
   ogImage={meta.ogImage}
   ogImageAlt={meta.ogImageAlt}
+  keywords={meta.keywords ?? []}
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}

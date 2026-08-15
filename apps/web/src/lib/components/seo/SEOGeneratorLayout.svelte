@@ -23,6 +23,7 @@
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
   import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
+  import SeoHead from "./SeoHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
   import {
     createPendingDelveTransfer,
@@ -66,6 +67,7 @@
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
     ogImage = DEFAULT_OG_IMAGE,
     ogImageAlt = undefined,
+    keywords = [],
     relatedLinks = [],
     faqs = [],
     theme = $bindable("Classic Fantasy"),
@@ -86,6 +88,7 @@
     metaDescription?: string;
     ogImage?: string;
     ogImageAlt?: string;
+    keywords?: string[];
     eyebrow?: string;
     introTitle?: string;
     introText?: string;
@@ -614,58 +617,22 @@
   }
 </script>
 
-<svelte:head>
-  <title>{pageTitle}</title>
-  <meta name="description" content={metaDescription} />
-  <meta name="robots" content="index, follow" />
-  {#if canonicalPath}
-    <link rel="canonical" href="https://codexcryptica.com{canonicalPath}" />
-  {/if}
-  <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Codex Cryptica" />
-  <meta property="og:title" content={pageTitle} />
-  <meta property="og:description" content={metaDescription} />
-  {#if canonicalPath}
-    <meta
-      property="og:url"
-      content="https://codexcryptica.com{canonicalPath}"
-    />
-  {/if}
-  <meta property="og:image" content={ogImage} />
-  {#if resolvedOgImageAlt}
-    <meta property="og:image:alt" content={resolvedOgImageAlt} />
-  {/if}
-  <meta property="og:image:width" content="1600" />
-  <meta property="og:image:height" content="1000" />
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={pageTitle} />
-  <meta name="twitter:description" content={metaDescription} />
-  <meta name="twitter:image" content={ogImage} />
-  {#if resolvedOgImageAlt}
-    <meta name="twitter:image:alt" content={resolvedOgImageAlt} />
-  {/if}
-  <link rel="help" href="{cleanBase}/llms.txt" />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${softwareApplicationJsonLd}</scr` +
-    `ipt>`}
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
-    `ipt>`}
-  {#if faqJsonLd}
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html `<scr` + `ipt type="application/ld+json">${faqJsonLd}</scr` + `ipt>`}
-  {/if}
-  {#if resultJsonLd}
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html `<scr` +
-      `ipt type="application/ld+json">${resultJsonLd}</scr` +
-      `ipt>`}
-  {/if}
-</svelte:head>
+<SeoHead
+  title={pageTitle}
+  description={metaDescription}
+  canonicalUrl={canonicalPath
+    ? `https://codexcryptica.com${canonicalPath}`
+    : undefined}
+  image={ogImage}
+  imageAlt={resolvedOgImageAlt}
+  {keywords}
+  jsonLd={[
+    softwareApplicationJsonLd,
+    breadcrumbJsonLd,
+    faqJsonLd,
+    resultJsonLd,
+  ]}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"

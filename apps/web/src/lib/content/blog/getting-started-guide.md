@@ -14,6 +14,8 @@ keywords:
     "Data Sovereignty",
   ]
 publishedAt: 2026-06-25T14:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/getting-started/getting-started-hero.jpg"
+imageAlt: "Getting Started with Codex Cryptica campaign manager"
 ---
 
 ![Getting Started with Codex Cryptica](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/getting-started/getting-started-hero.jpg)
