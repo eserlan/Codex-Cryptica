@@ -391,6 +391,7 @@
         class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
         onclick={addResultToChat}
         disabled={isAddingToChat}
+        aria-busy={isAddingToChat}
         data-testid="add-draw-result-to-chat"
       >
         <span

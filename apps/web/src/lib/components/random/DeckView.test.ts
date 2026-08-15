@@ -133,8 +133,10 @@ describe("DeckView result actions", () => {
     const text = "Past: Card 0 (reversed): A sudden reversal";
     await waitFor(() => expect(addToChat).toHaveBeenCalledWith(text));
     expect(copyText).toHaveBeenCalledWith(text);
-    expect(screen.getByTestId("copy-draw-result").textContent).toContain(
-      "Copied",
+    await waitFor(() =>
+      expect(screen.getByTestId("copy-draw-result").textContent).toContain(
+        "Copied",
+      ),
     );
   });
 });

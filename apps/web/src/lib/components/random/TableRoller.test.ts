@@ -65,8 +65,10 @@ describe("TableRoller result actions", () => {
       expect(addToChat).toHaveBeenCalledWith("The bridge collapses"),
     );
     expect(copyText).toHaveBeenCalledWith("The bridge collapses");
-    expect(screen.getByTestId("copy-roll-result").textContent).toContain(
-      "Copied",
+    await waitFor(() =>
+      expect(screen.getByTestId("copy-roll-result").textContent).toContain(
+        "Copied",
+      ),
     );
   });
 
