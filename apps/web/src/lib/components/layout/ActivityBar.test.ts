@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ActivityBar from "./ActivityBar.svelte";
+import { page } from "$app/state";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -42,6 +43,60 @@ describe("ActivityBar", () => {
     layoutUIStore.toggleSidebarTool = vi.fn();
     guestChatStore.showChatModal = false;
     sessionModeStore.isGuestMode = false;
+    page.url.pathname = "/";
+  });
+
+  /** The accent bar only renders on the active item. */
+  const isActive = (id: string) =>
+    screen.getByTestId(`activity-bar-${id}`).querySelector("div") !== null;
+
+  describe("active view", () => {
+    it("keeps tables and decks in a single slot", () => {
+      render(ActivityBar);
+
+      expect(screen.getByTestId("activity-bar-random")).toBeDefined();
+      expect(screen.queryByTestId("activity-bar-tables")).toBeNull();
+      expect(screen.queryByTestId("activity-bar-decks")).toBeNull();
+    });
+
+    it("lights the random slot on both of the routes behind it", () => {
+      page.url.pathname = "/tables";
+      const tables = render(ActivityBar);
+      expect(isActive("random")).toBe(true);
+      tables.unmount();
+
+      page.url.pathname = "/decks";
+      render(ActivityBar);
+      expect(isActive("random")).toBe(true);
+    });
+
+    // /tables starts with /table, and a bare prefix test lit up both (#2247).
+    it("does not light the entity table on the random tables route", () => {
+      page.url.pathname = "/tables";
+
+      render(ActivityBar);
+
+      expect(isActive("table")).toBe(false);
+      expect(isActive("random")).toBe(true);
+    });
+
+    it("still lights the entity table on its own route", () => {
+      page.url.pathname = "/table";
+
+      render(ActivityBar);
+
+      expect(isActive("table")).toBe(true);
+      expect(isActive("random")).toBe(false);
+    });
+
+    it("ignores a trailing slash when matching", () => {
+      page.url.pathname = "/decks/";
+
+      render(ActivityBar);
+
+      expect(isActive("random")).toBe(true);
+      expect(isActive("table")).toBe(false);
+    });
   });
 
   it("does not render the AI Assessment shortcut", () => {

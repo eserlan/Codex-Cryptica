@@ -16,6 +16,11 @@
     /** Optional richer hover tooltip; falls back to `label` when unset. */
     title?: string;
     href?: string;
+    /**
+     * Extra paths that should light this item up. Used where one entry fronts
+     * more than one route, rather than spending a second slot in the bar.
+     */
+    alsoActiveFor?: string[];
     action?: () => void;
   }
 
@@ -60,18 +65,15 @@
         href: `${base}/table`,
       },
       {
-        id: "tables",
-        icon: "icon-[lucide--list-tree]",
-        label: "Tables",
-        title: "Random Tables — author and roll your own tables",
+        // Tables and decks are two modes of one workspace, so they share one
+        // slot here and switch inside it. On a phone this bar is already at the
+        // width of the viewport, and a second entry pushed Graph off the edge.
+        id: "random",
+        icon: "icon-[lucide--dices]",
+        label: "Random",
+        title: "Random Tables & Card Decks — roll and draw from your own",
         href: `${base}/tables`,
-      },
-      {
-        id: "decks",
-        icon: "icon-[lucide--layers]",
-        label: "Decks",
-        title: "Card Decks — draw from your own decks, discard pile and all",
-        href: `${base}/decks`,
+        alsoActiveFor: [`${base}/decks`],
       },
     ];
   });
@@ -146,10 +148,24 @@
     return list;
   });
 
+  const stripSlash = (path: string) => path.replace(/\/+$/, "");
+
+  /**
+   * Matched per path segment, not by bare prefix: `/tables` starts with
+   * `/table`, so a prefix test lit up the Entity Table alongside it.
+   */
+  const matchesPath = (href: string, pathname: string) => {
+    const target = stripSlash(href);
+    const current = stripSlash(pathname);
+    return current === target || current.startsWith(`${target}/`);
+  };
+
   const isViewActive = (item: NavItem) => {
     if (!item.href) return false;
     if (item.id === "graph") return page.url.pathname === `${base}/`;
-    return page.url.pathname.startsWith(item.href);
+    return [item.href, ...(item.alsoActiveFor ?? [])].some((href) =>
+      matchesPath(href, page.url.pathname),
+    );
   };
 </script>
 
