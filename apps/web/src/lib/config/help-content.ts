@@ -36,6 +36,7 @@ export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
   CREATURE_PACKS: "creature-packs-hint-seen",
+  ADVENTURE: "adventure-hint-seen",
 } as const;
 
 /**
@@ -245,6 +246,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
     icon: "icon-[lucide--brain]",
+  },
+  adventure: {
+    id: "adventure",
+    title: "Solo Adventure Mode",
+    content:
+      "Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner.",
+    icon: "icon-[lucide--map]",
   },
   "family-tree": {
     id: "family-tree",

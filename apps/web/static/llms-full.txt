@@ -49,6 +49,9 @@ The Oracle works in two modes: System Proxy (free, uses shared access) or Custom
 ### Oracle Memory
 The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
 
+### Solo Adventure Mode
+Let Oracle run a grounded, system-light adventure from your vault. Your session stays separate from normal Oracle chat, and GM notes are hidden from the play surface but not encrypted from the vault owner.
+
 ### Family Tree
 Open the Family tab on any character to see their parents, partner, children, and siblings laid out as a tree. Add family from the buttons below the tree — connect an existing character or create a new one — and the matching link is added to both people automatically. In the full-screen view, choose Lineage to explore every recorded generation. Drag to pan, scroll or pinch to zoom, and use the branch controls or Show all generations to reveal more. The tree is built from your normal connections, so nothing is stored twice.
 
@@ -1741,5 +1744,21 @@ Here you will find deep dives into:
 You can access the blog at any time by visiting [/blog](/blog).
 
 Read our latest dispatch: **The GM’s Guide to Data Sovereignty**.
+
+---
+
+### SOLO ADVENTURE MODE
+
+Adventure Mode gives you a persistent, system-light solo session grounded in the
+records in your current vault. You control one character; Oracle presents the
+situation, portrays the world, and responds to your choices.
+
+Adventure state is stored with your vault and remains readable offline. A typed
+action or recorded roll result is kept for retry when you reconnect. A recorded
+roll is never silently replaced or rolled again.
+
+GM notes are hidden from the play surface, but they are not encrypted from the
+vault owner. Material invented during play stays provisional and is not added to
+your canonical vault automatically.
 
 ---

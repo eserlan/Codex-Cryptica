@@ -3,6 +3,8 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import AdventureSurface from "$lib/components/oracle/adventure/AdventureSurface.svelte";
+  let adventureMode = $state(false);
 
   onMount(() => {
     oracle.init();
@@ -36,7 +38,7 @@
       >
     </div>
     <div class="flex items-center gap-2">
-      {#if oracle.messages.length > 0}
+      {#if !adventureMode && oracle.messages.length > 0}
         <button
           type="button"
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
@@ -56,14 +58,29 @@
     </div>
   </div>
 
-  <OracleChat
-    onOpenSettings={() => {
-      notificationStore.notify(
-        "To update Oracle settings, open the Settings panel in the main Codex Cryptica window.",
-        "error",
-      );
-    }}
-  />
+  <div class="border-b border-oracle-dim/30 px-4 py-2">
+    <button
+      type="button"
+      class="rounded px-3 py-2 text-xs text-oracle-primary {adventureMode
+        ? 'bg-oracle-primary/15'
+        : ''}"
+      onclick={() => (adventureMode = !adventureMode)}
+      aria-pressed={adventureMode}>Adventure</button
+    >
+  </div>
+
+  {#if adventureMode}
+    <AdventureSurface />
+  {:else}
+    <OracleChat
+      onOpenSettings={() => {
+        notificationStore.notify(
+          "To update Oracle settings, open the Settings panel in the main Codex Cryptica window.",
+          "error",
+        );
+      }}
+    />
+  {/if}
 </div>
 
 <style>

@@ -207,6 +207,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/blog/reuse-entities-between-campaigns</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-08-13T10:00:00.000Z</lastmod>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/presentation-templates</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
