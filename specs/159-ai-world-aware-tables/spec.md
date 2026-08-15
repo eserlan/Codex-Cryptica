@@ -25,6 +25,12 @@ This feature is strictly additive and opt-in: all random table authoring, rollin
   → **A:** Generated entries always route through the existing batch import review preview table (`packages/random-source-engine`), allowing per-row acceptance, inline editing, and exclusion.
 - **Q: How does the generator discover sub-table references?**  
   → **A:** The system injects the list of existing vault table and deck names into the generator prompt context, instructing the model to emit `{table_name}` tokens whenever a generated outcome naturally aligns with an existing table.
+- **Q: How should generated table rows be assigned weights or ranges when added to a table?**  
+  → **A:** Generated rows automatically match the target table's mode (equal weights with `weight: 1` for weighted tables, and contiguous ranges calculated automatically across total count for ranged tables).
+- **Q: What row count options should be provided in the table generation dialog?**  
+  → **A:** The generation dialog offers standard tabletop dice presets (d6, d8, d10, d12, d20) along with a custom count input bounded between 2 and 50 entries per generation run.
+- **Q: How should entity mentions inside generated table entries be formatted?**  
+  → **A:** Entries contain clean, plain natural entity names without markdown wikilink syntax clutter (e.g. "Sera Voight"). Recognized entities are highlighted and clickable dynamically in the UI and roll results.
 
 ---
 
