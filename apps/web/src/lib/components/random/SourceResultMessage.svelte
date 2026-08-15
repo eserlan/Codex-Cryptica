@@ -56,18 +56,27 @@
         typeof e.title === "string" &&
         e.title.trim().length > 1,
     );
-    if (activeEntities.length === 0) {
+    if (activeEntities.length === 0 || !raw) {
+      return [{ type: "text", text: raw }];
+    }
+
+    const rawLower = raw.toLowerCase();
+    const candidateEntities = activeEntities.filter((e: any) =>
+      rawLower.includes(e.title.toLowerCase()),
+    );
+
+    if (candidateEntities.length === 0) {
       return [{ type: "text", text: raw }];
     }
 
     // Sort entities by title length descending to match longest matches first
-    const sorted = [...activeEntities].sort(
+    const sorted = [...candidateEntities].sort(
       (a, b) => b.title.length - a.title.length,
     );
 
     // Escape regex special chars
     const pattern = new RegExp(
-      `\\b(${sorted.map((e) => e.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`,
+      `\\b(${sorted.map((e) => e.title.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")).join("|")})\\b`,
       "gi",
     );
 

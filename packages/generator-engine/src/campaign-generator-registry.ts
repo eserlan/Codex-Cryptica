@@ -8,7 +8,6 @@ import {
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 import {
-  buildRandomTablePrompt,
   generateRandomTableLocal,
   parseRandomTableResponse,
 } from "./public-random-table";
@@ -541,6 +540,16 @@ function languagePrompt(request: GeneratorRunRequest): string {
     ],
   });
   return result.userMessage;
+}
+
+function randomTablePrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+Generate a campaign random table — a numbered list of thematic encounters, occurrences, or findings. Return ONLY a JSON object matching this schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock(request, "random-table")}${groundingNote(request)}
+${syntheticAdaptationNote(request)}
+${loreGuidance(request, "a numbered list of distinct thematic entries with details and hooks")}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -2301,16 +2310,40 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       rawText?: string,
     ): GeneratorOutput => {
       if (rawText) {
-        const parsed = parseRandomTableResponse(rawText);
+        try {
+          const parsed = JSON.parse(rawText) as Partial<GeneratorOutput>;
+          if (
+            typeof parsed.title === "string" &&
+            typeof parsed.summary === "string" &&
+            typeof parsed.lore === "string"
+          ) {
+            return {
+              title: parsed.title,
+              summary: parsed.summary,
+              lore: parsed.lore,
+              content:
+                typeof parsed.content === "string"
+                  ? parsed.content
+                  : parsed.lore,
+              labels: Array.isArray(parsed.labels)
+                ? parsed.labels
+                : ["random-table", "table"],
+              connections: parsed.connections ?? [],
+            };
+          }
+        } catch {
+          // Fall through to parseRandomTableResponse
+        }
+        const parsedTable = parseRandomTableResponse(rawText);
         return {
-          title: parsed.title,
+          title: parsedTable.title,
           summary:
-            parsed.description ??
+            parsedTable.description ??
             `Random table for ${optionString(request, "topic", "encounters")}.`,
-          lore: parsed.entries
+          lore: parsedTable.entries
             .map((e, idx) => `${idx + 1}. ${e.text}`)
             .join("\n"),
-          content: parsed.entries
+          content: parsedTable.entries
             .map((e, idx) => `${idx + 1}. ${e.text}`)
             .join("\n"),
           labels: ["random-table", "table"],
@@ -2337,18 +2370,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       };
     },
     mapOutputToDraft: mapOutputToDraft("random-table"),
-    buildPrompt: (request: GeneratorRunRequest): string => {
-      const prompt = buildRandomTablePrompt({
-        topic: optionString(request, "topic", "Random Events & Encounters"),
-        count:
-          typeof request.options.count === "number"
-            ? request.options.count
-            : 10,
-        campaignContext: request.instructions,
-        theme: request.themeId,
-      });
-      return prompt.userPrompt;
-    },
+    buildPrompt: randomTablePrompt,
   },
 };
 

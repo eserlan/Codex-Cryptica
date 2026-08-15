@@ -41,11 +41,15 @@
   let topic = $state("");
   let count = $state(10);
   let campaignContext = $state("");
-  let generatedTitle = $state("");
-  let generatedDescription = $state<string | undefined>();
+  let generatedTitle = $state<string>("");
+  let generatedDescription = $state<string | undefined>(undefined);
   let candidates = $state<CandidateTableEntry[]>([]);
+  let isFallback = $state<boolean>(false);
   let errorMessage = $state<string | null>(null);
+
+  // Rotate thematic loading phrases
   let loadingMessageIndex = $state(0);
+  let loadingInterval: ReturnType<typeof setInterval> | null = null;
 
   const loadingMessages = $derived(getThemeLoadingMessages(themeId));
 
@@ -62,11 +66,14 @@
 
   $effect(() => {
     if (step === "generating") {
-      const interval = setInterval(() => {
+      loadingMessageIndex = 0;
+      loadingInterval = setInterval(() => {
         loadingMessageIndex =
           (loadingMessageIndex + 1) % loadingMessages.length;
       }, 2000);
-      return () => clearInterval(interval);
+    } else if (loadingInterval) {
+      clearInterval(loadingInterval);
+      loadingInterval = null;
     }
   });
 
@@ -87,6 +94,7 @@
       generatedTitle = result.title;
       generatedDescription = result.description;
       candidates = result.candidates;
+      isFallback = result.isFallback;
       step = "review";
     } catch (err: any) {
       errorMessage = err?.message || "Failed to generate table entries.";
@@ -262,6 +270,17 @@
             </div>
           </div>
         {:else if step === "review"}
+          {#if isFallback}
+            <div
+              class="mb-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300"
+            >
+              <span class="icon-[lucide--wifi-off] h-4 w-4 shrink-0"></span>
+              <span
+                >Generated using offline deterministic tables (AI unavailable or
+                disabled).</span
+              >
+            </div>
+          {/if}
           <TableStagingPreview
             {candidates}
             {selectionMode}

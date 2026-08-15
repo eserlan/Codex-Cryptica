@@ -144,7 +144,11 @@ export class TableGenerationService {
         typeof response === "string" ? response : (response?.text ?? "");
       const parsed = parseRandomTableResponse(rawText);
 
-      return this.mapToResult(parsed, context, false);
+      return this.mapToResult(
+        parsed,
+        { ...context, worldEntities, availableTables },
+        false,
+      );
     } catch {
       // On network/LLM failure, fallback to local generation
       const fallback = generateRandomTableLocal(context);
