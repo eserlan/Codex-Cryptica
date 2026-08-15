@@ -29,9 +29,7 @@
       if (session.vttEnabled) {
         session.sendChatMessage(text);
       }
-      if (!addToOracleChatInput(text)) {
-        throw new Error("The Oracle chat is not available.");
-      }
+      addToOracleChatInput(text);
     },
     copyText = async (text) => {
       const copied = await copyTextToClipboard(text, navigator.clipboard);
