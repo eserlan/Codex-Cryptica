@@ -114,7 +114,7 @@
 </script>
 
 <tr
-  class="group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5 {selected
+  class="grid grid-cols-[1fr_auto] items-start gap-x-2 gap-y-1 p-3 md:table-row md:p-0 group cursor-pointer border-b border-theme-border/60 transition-colors hover:bg-theme-primary/5 {selected
     ? 'bg-theme-primary/10'
     : ''}"
   data-testid="entity-table-row"
@@ -124,7 +124,7 @@
   oncontextmenu={handleContextMenu}
 >
   <!-- Select -->
-  <td class="px-3 py-2 align-top" data-row-select>
+  <td class="hidden md:table-cell px-3 py-2 align-top" data-row-select>
     <input
       type="checkbox"
       checked={selected}
@@ -136,11 +136,11 @@
   </td>
 
   <!-- Name -->
-  <td class="px-3 py-2 align-top">
+  <td class="col-span-1 p-0 md:table-cell md:px-3 md:py-2 align-top min-w-0">
     <a
       {href}
       onclick={handleTitleClick}
-      class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded"
+      class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded block truncate md:inline"
       data-testid="entity-table-row-link"
     >
       {entity.title}
@@ -148,7 +148,9 @@
   </td>
 
   <!-- Type -->
-  <td class="px-3 py-2 align-top whitespace-nowrap">
+  <td
+    class="col-span-1 p-0 md:table-cell md:px-3 md:py-2 align-top whitespace-nowrap justify-self-end md:justify-self-auto"
+  >
     {#if onFilterType}
       <button
         type="button"
@@ -182,7 +184,7 @@
 
   <!-- Connections -->
   <td
-    class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+    class="hidden md:table-cell px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
     data-testid="entity-table-connections-{entity.id}"
   >
     {#if connectionSummary.total > 0}
@@ -201,7 +203,7 @@
   </td>
 
   <!-- Summary snippet -->
-  <td class="px-3 py-2 align-top">
+  <td class="col-span-2 p-0 md:table-cell md:px-3 md:py-2 align-top">
     {#if snippet}
       <span class="line-clamp-2 text-xs text-theme-muted/90">{snippet}</span>
     {:else if showIncompleteOnly}
@@ -210,12 +212,14 @@
         aria-label="No summary">Missing summary</span
       >
     {:else}
-      <span class="text-theme-muted/50" aria-label="No summary">—</span>
+      <span class="text-theme-muted/50 hidden md:inline" aria-label="No summary"
+        >—</span
+      >
     {/if}
   </td>
 
   <!-- Labels -->
-  <td class="px-3 py-2 align-top">
+  <td class="hidden md:table-cell px-3 py-2 align-top">
     {#if chips.length}
       <span class="flex flex-wrap gap-1">
         {#each chips as chip (chip)}
@@ -250,7 +254,9 @@
   </td>
 
   <!-- Created -->
-  <td class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90">
+  <td
+    class="hidden md:table-cell px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+  >
     {#if createdAt}
       {formatDate(createdAt)}
     {:else}
@@ -259,7 +265,9 @@
   </td>
 
   <!-- Modified -->
-  <td class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90">
+  <td
+    class="hidden md:table-cell px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+  >
     {#if modifiedAt}
       {formatDate(modifiedAt)}
     {:else}
