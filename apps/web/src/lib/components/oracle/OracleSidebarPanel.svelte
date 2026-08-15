@@ -166,22 +166,22 @@
           aria-label={`${activityCount} activity events`}>{activityCount}</span
         >
       {/if}
-      <button
-        onclick={() => (activeTab = "chat")}
-        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+    </button>
+    <button
+      onclick={() => (activeTab = "chat")}
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
              {activeTab === 'chat'
-          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
-          : 'text-theme-muted hover:text-theme-text'}"
-      >
-        VTT Chat
-        {#if mapSession.chatMessages.length > 0}
-          <span
-            class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
-            aria-label={`${mapSession.chatMessages.length} chat messages`}
-            >{mapSession.chatMessages.length}</span
-          >
-        {/if}
-      </button>
+        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+        : 'text-theme-muted hover:text-theme-text'}"
+    >
+      VTT Chat
+      {#if mapSession.chatMessages.length > 0}
+        <span
+          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+          aria-label={`${mapSession.chatMessages.length} chat messages`}
+          >{mapSession.chatMessages.length}</span
+        >
+      {/if}
     </button>
   </div>
 
