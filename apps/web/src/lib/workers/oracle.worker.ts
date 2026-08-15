@@ -276,7 +276,7 @@ class OracleWorker {
 
   async generateAdventureTurn(
     request: any,
-    options?: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+    options?: { apiKey?: string; modelName?: string },
   ): Promise<any> {
     return this.adventureGeneration.generate(request, options);
   }
