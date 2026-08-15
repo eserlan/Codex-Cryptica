@@ -5,7 +5,12 @@
   import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
   import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { SITE_AUTHOR } from "$lib/config";
+  import {
+    SITE_AUTHOR,
+    DISCORD_URL,
+    REDDIT_URL,
+    GITHUB_URL,
+  } from "$lib/config";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   let { data } = $props();
@@ -180,7 +185,62 @@
       </div>
 
       <div
-        class="mt-16 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
+        class="mt-12 p-6 rounded-lg bg-theme-surface/40 border border-theme-border/70 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-header"
+      >
+        <div class="text-center sm:text-left">
+          <span class="font-bold text-theme-text block sm:inline"
+            >Join the discussion:</span
+          >
+          <span class="text-theme-muted ml-0 sm:ml-1"
+            >Share campaign notes, ask questions, or report issues.</span
+          >
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-4 shrink-0">
+          {#if DISCORD_URL}
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              <span
+                class="icon-[lucide--message-square] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              Discord
+            </a>
+          {/if}
+          {#if REDDIT_URL}
+            <a
+              href={REDDIT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              <span
+                class="icon-[lucide--message-circle] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              Reddit
+            </a>
+          {/if}
+          {#if GITHUB_URL}
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-theme-muted hover:text-theme-primary transition-colors inline-flex items-center gap-1.5"
+            >
+              <span class="icon-[lucide--github] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
+              GitHub
+            </a>
+          {/if}
+        </div>
+      </div>
+
+      <div
+        class="mt-8 p-8 rounded-lg bg-theme-surface/30 border border-theme-border flex flex-col md:flex-row items-center justify-between gap-8"
       >
         <div class="text-center md:text-left">
           <h3 class="text-lg font-header font-bold mb-2">

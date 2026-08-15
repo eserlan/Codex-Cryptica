@@ -21,6 +21,7 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { afterNavigate } from "$app/navigation";
+  import { DISCORD_URL, GITHUB_URL, REDDIT_URL } from "$lib/config";
   import MarketingFooter from "./MarketingFooter.svelte";
   import {
     MARKETING_NAV,
@@ -41,7 +42,7 @@
      * the path-derived set, preserving what SEOPageLayout used to pass.
      */
     footerLinks?: { href: string; label: string }[];
-    children: import("svelte").Snippet;
+    children?: import("svelte").Snippet;
   } = $props();
 
   const cleanBase = $derived(base === "/" ? "" : base);
@@ -101,6 +102,36 @@
       </nav>
 
       <div class="flex items-center gap-2 shrink-0">
+        {#if DISCORD_URL}
+          <a
+            href={DISCORD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden sm:flex items-center justify-center p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors"
+            aria-label="Discord Community"
+            title="Discord Community"
+            data-testid="shell-discord-link"
+          >
+            <span
+              class="icon-[lucide--message-square] w-4 h-4"
+              aria-hidden="true"
+            ></span>
+          </a>
+        {/if}
+        {#if GITHUB_URL}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden sm:flex items-center justify-center p-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 transition-colors"
+            aria-label="GitHub Repository"
+            title="GitHub Repository"
+            data-testid="shell-github-link"
+          >
+            <span class="icon-[lucide--github] w-4 h-4" aria-hidden="true"
+            ></span>
+          </a>
+        {/if}
         <a
           href={ctaHref}
           class="px-4 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
@@ -146,12 +177,58 @@
             aria-current={isCurrent(item.href)}>{item.label}</a
           >
         {/each}
+        <div
+          class="pt-3 mt-2 border-t border-theme-border/60 flex items-center gap-4 text-xs font-header"
+        >
+          {#if DISCORD_URL}
+            <a
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="py-1 text-theme-muted hover:text-theme-primary transition-colors flex items-center gap-1.5"
+            >
+              <span
+                class="icon-[lucide--message-square] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              Discord
+            </a>
+          {/if}
+          {#if GITHUB_URL}
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="py-1 text-theme-muted hover:text-theme-primary transition-colors flex items-center gap-1.5"
+            >
+              <span class="icon-[lucide--github] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
+              GitHub
+            </a>
+          {/if}
+          {#if REDDIT_URL}
+            <a
+              href={REDDIT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="py-1 text-theme-muted hover:text-theme-primary transition-colors flex items-center gap-1.5"
+            >
+              <span
+                class="icon-[lucide--message-circle] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              Reddit
+            </a>
+          {/if}
+        </div>
       </nav>
     {/if}
   </header>
 
   <main class="flex-grow w-full">
-    {@render children()}
+    {#if children}
+      {@render children()}
+    {/if}
   </main>
 
   <MarketingFooter

@@ -36,8 +36,13 @@ vi.mock("$lib/stores/theme.svelte", () => ({
     },
   },
 }));
-vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
-vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
+vi.mock("$lib/config", () => ({
+  SCHEMA_ORG: {},
+  DISCORD_URL: "https://discord.gg/5UUMCChF2u",
+  REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",
+  GITHUB_URL: "https://github.com/eserlan/Codex-Cryptica",
+  PATREON_URL: "https://patreon.com/EspenE",
+}));
 
 // Stub out the lazily-imported heavy components so dynamic imports resolve instantly
 vi.mock("../../lib/components/GraphView.svelte", async () => ({
@@ -119,6 +124,10 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByText("Local-first vault")).toBeTruthy();
     expect(screen.getByText("Spatial lore graph")).toBeTruthy();
     expect(screen.getByText("Optional AI")).toBeTruthy();
+
+    expect(screen.getByRole("link", { name: /discord/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /reddit/i })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /github/i })).toBeTruthy();
   });
 
   it("sizes the app route shell to its parent instead of recomputing viewport height", () => {

@@ -7,7 +7,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
-  import { SCHEMA_ORG } from "$lib/config";
+  import { SCHEMA_ORG, DISCORD_URL, REDDIT_URL, GITHUB_URL } from "$lib/config";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
@@ -560,6 +560,46 @@
               ></span>
               Changelog
             </a>
+            {#if DISCORD_URL}
+              <a
+                href={DISCORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              >
+                <span
+                  class="icon-[lucide--message-square] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                Discord
+              </a>
+            {/if}
+            {#if REDDIT_URL}
+              <a
+                href={REDDIT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              >
+                <span
+                  class="icon-[lucide--message-circle] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                Reddit
+              </a>
+            {/if}
+            {#if GITHUB_URL}
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+              >
+                <span class="icon-[lucide--github] w-3 h-3" aria-hidden="true"
+                ></span>
+                GitHub
+              </a>
+            {/if}
             <a
               href="https://groupfinder.gg/library/codex-cryptica"
               target="_blank"
