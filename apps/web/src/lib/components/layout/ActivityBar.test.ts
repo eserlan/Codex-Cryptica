@@ -143,6 +143,16 @@ describe("ActivityBar", () => {
       expect(bar.className).toContain("justify-center-safe");
     });
 
+    // The 44px button is mostly padding around a 20px icon, so removing the
+    // gap costs no visual separation between glyphs but buys 42px of width —
+    // the difference between fitting a 320px phone and scrolling on one.
+    it("packs the phone row edge to edge, without gaps between buttons", () => {
+      render(ActivityBar);
+
+      const bar = screen.getByTestId("activity-bar");
+      expect(bar.className).toContain("gap-0 md:gap-4");
+    });
+
     // Without this the row squashes below the 44px minimum tap target long
     // before it overflows, so the scroll above never engages.
     it("holds every item at its full size rather than letting it squash", () => {
