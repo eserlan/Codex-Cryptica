@@ -3,7 +3,11 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { browser } from "$app/environment";
-  import type { Diagnostic, RandomSource } from "random-source-engine";
+  import type {
+    Diagnostic,
+    ExportFormat,
+    RandomSource,
+  } from "random-source-engine";
   import {
     ensureRandomSourcesLoaded,
     randomSources,
@@ -141,6 +145,10 @@
   let deleteImpact = $state<RandomSource[] | undefined>();
   let importing = $state(false);
   let exporting = $state(false);
+  // Held here rather than inside ExportDialog so it survives switching to
+  // Import and back — the two share one panel, and the format choice is the
+  // one bit of export state worth keeping.
+  let exportFormat = $state<ExportFormat>("codex");
   let generatingTable = $state(false);
   let pendingRename = $state<
     { name: string; referencedBy: RandomSource[] } | undefined
@@ -670,6 +678,11 @@
           type="button"
           onclick={() => {
             importing = true;
+            // Import and Export occupy the same panel, so opening one has to
+            // close the other — otherwise Export's `&& draft` check wins and
+            // the click does nothing visible (issue: import button no-op
+            // while Export is open).
+            exporting = false;
             listOpen = false;
           }}
           class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
@@ -690,6 +703,7 @@
         type="button"
         onclick={() => {
           exporting = true;
+          importing = false;
           listOpen = false;
         }}
         disabled={!draft}
@@ -757,7 +771,11 @@
 
     <section class="min-h-0 flex-1 overflow-y-auto p-4">
       {#if exporting && draft}
-        <ExportDialog source={draft} onClose={() => (exporting = false)} />
+        <ExportDialog
+          source={draft}
+          bind:format={exportFormat}
+          onClose={() => (exporting = false)}
+        />
       {:else if importing}
         <ImportWizard
           {kind}

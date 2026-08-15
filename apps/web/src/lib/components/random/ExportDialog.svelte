@@ -21,12 +21,17 @@
   let {
     source,
     onClose,
+    format = $bindable("codex"),
   }: {
     source: RandomSource;
     onClose: () => void;
+    /**
+     * Owned by the parent so the choice survives switching to Import and back
+     * (issue: Import/Export share one panel; the format picked shouldn't reset
+     * just because the author changed their mind mid-export).
+     */
+    format?: ExportFormat;
   } = $props();
-
-  let format = $state<ExportFormat>("codex");
 
   const noun = $derived(source.kind === "table" ? "table" : "deck");
   const chosen = $derived(
