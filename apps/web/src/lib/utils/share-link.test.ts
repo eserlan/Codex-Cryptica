@@ -25,6 +25,27 @@ describe("share-link helpers", () => {
     await expect(copyTextToClipboard("hello", undefined)).resolves.toBe(false);
   });
 
+  it("falls back to a temporary textarea when the Clipboard API is unavailable", async () => {
+    const textArea = {
+      value: "",
+      style: {},
+      setAttribute: vi.fn(),
+      select: vi.fn(),
+      remove: vi.fn(),
+    };
+    const documentRef = {
+      body: { append: vi.fn() },
+      createElement: vi.fn(() => textArea),
+      execCommand: vi.fn(() => true),
+    } as unknown as Document;
+
+    await expect(
+      copyTextToClipboard("hello", undefined, documentRef),
+    ).resolves.toBe(true);
+    expect(documentRef.execCommand).toHaveBeenCalledWith("copy");
+    expect(textArea.remove).toHaveBeenCalled();
+  });
+
   it("should copy the share link before waiting for host readiness", async () => {
     const onLink = vi.fn();
     const onCopied = vi.fn();

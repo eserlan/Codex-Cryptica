@@ -18,15 +18,35 @@ export function buildP2PShareLink(
 export async function copyTextToClipboard(
   text: string,
   clipboard?: Pick<Clipboard, "writeText">,
+  documentRef: Document | undefined = typeof document === "undefined"
+    ? undefined
+    : document,
 ) {
-  if (!clipboard?.writeText) return false;
-
   try {
-    await clipboard.writeText(text);
-    return true;
+    if (clipboard?.writeText) {
+      await clipboard.writeText(text);
+      return true;
+    }
   } catch (err) {
     console.warn("[share-link] Clipboard copy failed", err);
+  }
+
+  if (!documentRef?.body || typeof documentRef.execCommand !== "function") {
     return false;
+  }
+
+  const textArea = documentRef.createElement("textarea");
+  textArea.value = text;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.opacity = "0";
+  documentRef.body.append(textArea);
+  textArea.select();
+
+  try {
+    return documentRef.execCommand("copy");
+  } finally {
+    textArea.remove();
   }
 }
 

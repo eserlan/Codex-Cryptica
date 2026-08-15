@@ -8,6 +8,7 @@
   import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { ORACLE_CHAT_INPUT_EVENT } from "./oracle-chat-input";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -198,6 +199,23 @@
     if (!scrollContainer) return;
     wasNearBottom = isChatNearBottom(scrollContainer);
   };
+
+  $effect(() => {
+    const addResultToInput = (event: Event) => {
+      const text = (event as CustomEvent<string>).detail?.trim();
+      if (!text) return;
+
+      input = input.trim() ? `${input}\n${text}` : text;
+      tick().then(() => {
+        adjustHeight();
+        textArea?.focus();
+      });
+    };
+
+    window.addEventListener(ORACLE_CHAT_INPUT_EVENT, addResultToInput);
+    return () =>
+      window.removeEventListener(ORACLE_CHAT_INPUT_EVENT, addResultToInput);
+  });
 </script>
 
 {#if !oracle.isEnabled}

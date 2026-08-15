@@ -6,8 +6,9 @@
     diceHistory,
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
+  import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { copyTextToClipboard } from "$lib/utils/share-link";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
 
@@ -22,8 +23,15 @@
     source,
     sources = randomSources,
     history = diceHistory,
-    addToChat = (text) => oracle.chat.sendMessage(text),
-    copyText = (text) => navigator.clipboard.writeText(text),
+    addToChat = async (text) => {
+      if (!addToOracleChatInput(text)) {
+        throw new Error("The Oracle chat is not available.");
+      }
+    },
+    copyText = async (text) => {
+      const copied = await copyTextToClipboard(text, navigator.clipboard);
+      if (!copied) throw new Error("Clipboard access was denied.");
+    },
   }: {
     source: RandomSource;
     sources?: RandomSourceStore;
@@ -80,7 +88,7 @@
     isAddingToChat = true;
     try {
       await addToChat(resultText);
-      notificationStore.notify("Result added to chat.", "success");
+      notificationStore.notify("Result added to chat input.", "success");
     } catch (error) {
       console.error("[RandomSources] Could not add result to chat", error);
       notificationStore.notify(
