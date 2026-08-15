@@ -244,6 +244,44 @@
       content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
     />
     <link rel="canonical" href="https://codexcryptica.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Codex Cryptica" />
+    <meta
+      property="og:title"
+      content="Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool"
+    />
+    <meta
+      property="og:description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <meta property="og:url" content="https://codexcryptica.com/" />
+    <meta
+      property="og:image"
+      content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="Codex Cryptica campaign vault showing an interactive knowledge graph and note editor"
+    />
+    <meta property="og:image:width" content="1600" />
+    <meta property="og:image:height" content="1000" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool"
+    />
+    <meta
+      name="twitter:description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <meta
+      name="twitter:image"
+      content="https://assets.codexcryptica.com/screenshots/living-lore-graph.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Codex Cryptica campaign vault showing an interactive knowledge graph and note editor"
+    />
   {/if}
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
