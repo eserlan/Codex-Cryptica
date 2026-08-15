@@ -12,6 +12,8 @@
     diceHistory,
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import CardImage from "./CardImage.svelte";
   import { fade } from "svelte/transition";
@@ -30,6 +32,8 @@
     sources = randomSources,
     history = diceHistory,
     idGenerator = systemIdGenerator,
+    addToChat = (text) => oracle.chat.sendMessage(text),
+    copyText = (text) => navigator.clipboard.writeText(text),
   }: {
     deck: RandomSource;
     /** Present when spreads can be edited here; absent in a read-only view. */
@@ -38,17 +42,31 @@
     sources?: RandomSourceStore;
     history?: DiceHistoryStore;
     idGenerator?: IdGenerator;
+    addToChat?: (text: string) => Promise<void>;
+    copyText?: (text: string) => Promise<void>;
   } = $props();
 
   let remaining = $state<Card[]>([]);
   let outcome = $state<DrawOutcome | undefined>();
   let count = $state(1);
   let busy = $state(false);
+  let isAddingToChat = $state(false);
+  let copied = $state(false);
 
   const cards = $derived(deck.cards ?? []);
   const spreads = $derived(deck.spreads ?? []);
   const withReplacement = $derived(
     deck.deckOptions?.drawMode === "with-replacement",
+  );
+  const resultText = $derived(
+    outcome?.cards
+      .map((drawn, index) => {
+        const position = outcome?.positions?.[index];
+        const title = `${drawn.card.title}${drawn.reversed ? " (reversed)" : ""}`;
+        const text = drawn.resolved.finalText || drawn.card.title;
+        return `${position ? `${position}: ` : ""}${title}: ${text}`;
+      })
+      .join("\n") ?? "",
   );
 
   const discarded = $derived.by(() => {
@@ -80,6 +98,7 @@
         sources.resolutionContext(),
       );
       outcome = result;
+      copied = false;
       await refresh();
       if (result.cards.length > 0) await record(result);
     } finally {
@@ -98,6 +117,7 @@
         sources.resolutionContext(),
       );
       outcome = result;
+      copied = false;
       await refresh();
       if (result.cards.length > 0) await record(result);
     } finally {
@@ -139,9 +159,39 @@
     try {
       await service.reset(deck);
       outcome = undefined;
+      copied = false;
       await refresh();
     } finally {
       busy = false;
+    }
+  }
+
+  async function addResultToChat() {
+    if (!resultText || isAddingToChat) return;
+    isAddingToChat = true;
+    try {
+      await addToChat(resultText);
+      notificationStore.notify("Result added to chat.", "success");
+    } catch (error) {
+      console.error("[RandomSources] Could not add result to chat", error);
+      notificationStore.notify(
+        "That result could not be added to chat.",
+        "error",
+      );
+    } finally {
+      isAddingToChat = false;
+    }
+  }
+
+  async function copyResult() {
+    if (!resultText) return;
+    try {
+      await copyText(resultText);
+      copied = true;
+      notificationStore.notify("Result copied to clipboard.", "success");
+    } catch (error) {
+      console.error("[RandomSources] Could not copy result", error);
+      notificationStore.notify("That result could not be copied.", "error");
     }
   }
 
@@ -334,6 +384,31 @@
         {notice.message}
       </p>
     {/each}
+
+    <div class="flex flex-wrap gap-2 border-t border-theme-border/40 pt-3">
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        onclick={addResultToChat}
+        disabled={isAddingToChat}
+        data-testid="add-draw-result-to-chat"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--message-square-plus] h-3.5 w-3.5"
+        ></span>
+        {isAddingToChat ? "Adding…" : "Add to chat"}
+      </button>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        onclick={copyResult}
+        data-testid="copy-draw-result"
+      >
+        <span aria-hidden="true" class="icon-[lucide--copy] h-3.5 w-3.5"></span>
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   {/if}
 
   {#if spreads.length > 0 || onChange}
