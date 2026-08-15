@@ -71,8 +71,11 @@ if (baseIndex !== -1) {
 const outputDir = path.join(repoRoot, "blogPics/og");
 fs.mkdirSync(outputDir, { recursive: true });
 
-console.log(`Starting OG capture for ${ALL_SLUGS.length} generators using baseUrl: ${baseUrl}`);
+console.log(
+  `Starting OG capture for ${ALL_SLUGS.length} generators using baseUrl: ${baseUrl}`,
+);
 
+const failedSlugs = [];
 const browser = await chromium.launch();
 
 try {
@@ -87,7 +90,9 @@ try {
     const outputPath = path.join(outputDir, `generator-${slug}.jpg`);
     const targetUrl = `${baseUrl}/generators/${slug}`;
 
-    console.log(`[${i + 1}/${ALL_SLUGS.length}] Capturing ${slug} from ${targetUrl}...`);
+    console.log(
+      `[${i + 1}/${ALL_SLUGS.length}] Capturing ${slug} from ${targetUrl}...`,
+    );
 
     try {
       await page.goto(targetUrl, {
@@ -122,10 +127,21 @@ try {
       }
     } catch (err) {
       console.error(`  Error processing ${slug}:`, err);
+      failedSlugs.push(slug);
     }
   }
 } finally {
   await browser.close();
 }
 
-console.log("All done!");
+if (failedSlugs.length > 0) {
+  console.error(
+    `\nFinished with ${failedSlugs.length} error(s). Failed slugs: ${failedSlugs.join(", ")}`,
+  );
+  process.exitCode = 1;
+} else {
+  console.log(
+    `\nAll done! Successfully captured and processed all ${ALL_SLUGS.length} generators.`,
+  );
+}
+
