@@ -174,6 +174,74 @@ describe("SourceWorkspace Organization and Actions", () => {
     );
   });
 
+  it("keeps the selected source open when deleting another source", async () => {
+    render(SourceWorkspace, {
+      props: {
+        kind: "table",
+        heading: "Random Tables",
+        icon: "icon-[lucide--list-tree]",
+        emptyBody: "No table open",
+        editor: vi.fn(),
+        player: vi.fn(),
+      } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("item-actions-table-2"));
+    await fireEvent.click(screen.getByTestId("ctx-open"));
+
+    await fireEvent.click(screen.getByTestId("item-actions-table-1"));
+    await fireEvent.click(screen.getByTestId("ctx-delete"));
+    await fireEvent.click(screen.getByTestId("modal-delete-confirm"));
+
+    await fireEvent.click(screen.getByTestId("open-export"));
+    expect(screen.getByTestId("export-dialog").textContent).toContain(
+      "Dungeon Hazards",
+    );
+  });
+
+  it("selects a context-menu export target before opening the export dialog", async () => {
+    render(SourceWorkspace, {
+      props: {
+        kind: "table",
+        heading: "Random Tables",
+        icon: "icon-[lucide--list-tree]",
+        emptyBody: "No table open",
+        editor: vi.fn(),
+        player: vi.fn(),
+      } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("item-actions-table-1"));
+    await fireEvent.click(screen.getByTestId("ctx-export"));
+
+    expect(screen.getByTestId("export-dialog").textContent).toContain(
+      "Wilderness Encounters",
+    );
+  });
+
+  it("dismisses the rename and delete modals with Escape", async () => {
+    render(SourceWorkspace, {
+      props: {
+        kind: "table",
+        heading: "Random Tables",
+        icon: "icon-[lucide--list-tree]",
+        emptyBody: "No table open",
+        editor: vi.fn(),
+        player: vi.fn(),
+      } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("item-actions-table-1"));
+    await fireEvent.click(screen.getByTestId("ctx-delete"));
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByTestId("modal-delete-confirm")).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("item-actions-table-1"));
+    await fireEvent.click(screen.getByTestId("ctx-rename"));
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByTestId("modal-rename-confirm")).toBeNull();
+  });
+
   it("opens rename modal and executes rename with unique name", async () => {
     render(SourceWorkspace, {
       props: {
