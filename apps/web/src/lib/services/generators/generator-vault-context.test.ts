@@ -305,6 +305,45 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(ctx.neighbors.map((n) => n.id)).not.toContain("u1");
   });
 
+  it("caps neighbors from connectedIds at 5 and skips missing entity IDs", () => {
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const entities: Record<string, Entity> = { src };
+    for (let i = 0; i < 7; i++) {
+      entities[`c${i}`] = entity({
+        id: `c${i}`,
+        title: `Connected ${i}`,
+        type: "character",
+      });
+    }
+    const connectedIds = new Set([
+      "missing-1",
+      "c0",
+      "missing-2",
+      "c1",
+      "c2",
+      "c3",
+      "missing-3",
+      "c4",
+      "c5",
+      "c6",
+    ]);
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: entities,
+      connectedIds,
+    });
+    expect(ctx.neighbors).toHaveLength(5);
+    expect(ctx.neighbors.map((n) => n.id)).toEqual([
+      "c0",
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+    ]);
+  });
+
   it("falls back to same-type selection when connectedIds is empty", () => {
     const src = entity({ id: "src", title: "Hero", type: "character" });
     const sameType = entity({ id: "s1", title: "Guard", type: "character" });
