@@ -10,6 +10,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
+  import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
 
@@ -33,6 +34,7 @@
       const copied = await copyTextToClipboard(text, navigator.clipboard);
       if (!copied) throw new Error("Clipboard copy is unavailable.");
     },
+    clock = systemClock,
   }: {
     source: RandomSource;
     sources?: RandomSourceStore;
@@ -40,6 +42,7 @@
     session?: typeof mapSession;
     addToChat?: (text: string) => Promise<void>;
     copyText?: (text: string) => Promise<void>;
+    clock?: Clock;
   } = $props();
 
   let outcome = $state<RollOutcome | undefined>();
@@ -67,6 +70,7 @@
   );
 
   async function roll() {
+    if (!hasEntries) return;
     const result = sources.roll(source);
     outcome = result;
     copied = false;
@@ -125,7 +129,7 @@
             ? []
             : [{ type: "dice", sides: dieSides, rolls: [value], value }],
         formula: `d${dieSides}`,
-        timestamp: Date.now(),
+        timestamp: clock.now(),
       },
       "table",
       {

@@ -144,3 +144,9 @@
 
 **Learning:** Found hardcoded `Date.now()` usage in `GraphContextMenuController` within `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` which handles context menu gesture timing. This creates a hidden dependency on the global system clock that makes testing gesture logic brittle.
 **Action:** Replaced direct `Date.now()` usage with explicit dependency injection of `Clock`, defaulting to `systemClock` from `$lib/utils/runtime-deps`. Add `clock` to the `GraphContextMenuDependencies` interface to keep behavior deterministic without Vitest global pollution.
+
+## 2026-08-15 - Clock Interface Return Type
+
+**Learning:** The `Clock` interface from `@codex/runtime` defines `now()` as returning a `number` (milliseconds since epoch), identical to `Date.now()`. This allows seamless injection of `clock.now()` without altering timestamp type definitions downstream.
+
+**Action:** When injecting `systemClock` to replace `Date.now()`, safely use `clock.now()` directly without converting it to a Date object.
