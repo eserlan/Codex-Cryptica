@@ -223,8 +223,13 @@
 </script>
 
 <div class="overflow-x-auto rounded-lg border border-theme-border">
-  <table class="w-full border-collapse text-left" data-testid="entity-table">
-    <thead class="sticky top-0 z-10 bg-theme-surface">
+  <table
+    class="block md:table w-full border-collapse text-left"
+    data-testid="entity-table"
+  >
+    <thead
+      class="hidden md:table-header-group sticky top-0 z-10 bg-theme-surface"
+    >
       <tr class="border-b border-theme-border">
         <th scope="col" class="px-3 py-2 w-10">
           <input
@@ -296,7 +301,9 @@
         {/each}
       </tr>
     </thead>
-    <tbody>
+    <tbody
+      class="block md:table-row-group divide-y divide-theme-border/60 md:divide-y-0"
+    >
       {#each pageItems as entity (entity.id)}
         <EntityTableRow
           {entity}
