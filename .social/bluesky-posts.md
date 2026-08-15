@@ -6,6 +6,20 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 
 ## Posted
 
+### 2026-08-15 — Faction Generator (queue #4)
+
+- **Text:** I needed factions that gave players something to push against, not just a name and a crest.
+
+  So I built the Faction Generator in Codex Cryptica. It gives a group an agenda, conflict, rivals, and people tied to it.
+
+  codexcryptica.com/generators/faction
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png`
+- **Alt:** Codex Cryptica's RPG Faction Generator showing the example merchant guild The Iron Syndicate, its configurable inputs, and generated operations and secret agenda
+- **URL:** https://bsky.app/profile/codexcryptica.bsky.social/post/3mt4gllsnd22d
+
 ### 2026-08-14 — Spatial Canvas (queue #10)
 
 - **Text:** I needed a place to lay out a conspiracy before it became a pile of disconnected notes.
@@ -156,31 +170,46 @@ The topic backlog, message-format template, and posting rules live in GitHub iss
 The remaining topics from #2086, resequenced to satisfy its own cadence rule ("rotate between generation, organization, visualization, and play so consecutive posts don't feel like repetitions of the same pitch") — the issue's numeric order clusters 5+ generator posts in a row before hitting anything else. Generation is spread through in runs of 3, broken up by an organization/visualization/play post every 4th slot; "Generator ecosystem" stays last per its own explicit gating note. Original queue numbers kept for reference.
 
 1. **Related Entity Generation** _(orig #2, generation)_ — Need: NPCs, factions and locations that actually relate to the existing setting. Tags: `#TTRPG #Worldbuilding #RPGDesign`. **Blocked on an image** — no screenshot of this feature exists in `apps/web/static/` or in any announcement discussion. Needs a fresh capture: an entity's connections section plus a generated related entity (dev server + seeded vault + a live AI call). Was skipped on 2026-08-08 for this reason; still next once an asset exists.
-2. **Faction Generator** _(orig #4, generation)_ — Need: factions with motives, conflicts and relationships rather than isolated descriptions. Tags: `#TTRPG #Worldbuilding #RPGDesign`
-3. **NPC / Character Generator** _(orig #5, generation)_ — Need: usable characters with hooks and relationships, not just names and appearance. Tags: `#TTRPG #Worldbuilding`
-4. **Settlement Generator** _(orig #7, generation)_ — Need: settlements containing reasons for characters to visit and interact with them. Tags: `#TTRPG #Worldbuilding`
-5. **Timeline** _(orig #11, organization)_ — Need: to understand how events in a setting affect one another over time. Tags: `#TTRPG #Worldbuilding`
-6. **Religion / Pantheon Generation** _(orig #8, generation)_ — Need: religions that influence the world rather than existing as background lore. Tags: `#TTRPG #Worldbuilding #Fantasy`
+2. **NPC / Character Generator** _(orig #5, generation)_ — Need: usable characters with hooks and relationships, not just names and appearance. Tags: `#TTRPG #Worldbuilding`
+3. **Settlement Generator** _(orig #7, generation)_ — Need: settlements containing reasons for characters to visit and interact with them. Tags: `#TTRPG #Worldbuilding`
+4. **Timeline** _(orig #11, organization)_ — Need: to understand how events in a setting affect one another over time. Tags: `#TTRPG #Worldbuilding`
+5. **Religion / Pantheon Generation** _(orig #8, generation)_ — Need: religions that influence the world rather than existing as background lore. Tags: `#TTRPG #Worldbuilding #Fantasy`
+6. **Random Tables & Interactive Decks** _(spec #157, play/generation)_ — Need: quick random tables and card draws without leaving campaign notes. Tags: `#TTRPG #Worldbuilding #RPGDesign`
 7. **Adventure / Scenario Generation** _(orig #9, generation)_ — Need: something playable from the worldbuilding already created. Tags: `#TTRPG #RPGDesign`
-8. **Context-aware generation** _(orig #13, generation)_ — Need: generated material that knows about the world already created. Tags: `#TTRPG #Worldbuilding`
-9. **VTT** _(orig #12, play)_ — Need: to move from building the campaign into actually playing it without leaving the same environment. Tags: `#TTRPG #VTT`. Deliberately placed last before the ecosystem post — "now go play it" as the capstone of the individual-feature run.
-10. **Generator ecosystem / breadth** _(orig #14, gated — only after individual generators demonstrated)_ — Show how several generators chain together to build a campaign or setting. Tags: `#TTRPG #Worldbuilding`
+8. **Custom Stat Sheet Templates** _(spec #152, play/customization)_ — Need: reusable character/monster sheets tailored to any game system with inline rolls. Tags: `#TTRPG #Worldbuilding #RPGDesign`
+9. **Context-aware generation** _(orig #13, generation)_ — Need: generated material that knows about the world already created. Tags: `#TTRPG #Worldbuilding`
+10. **VTT** _(orig #12, play)_ — Need: to move from building the campaign into actually playing it without leaving the same environment. Tags: `#TTRPG #VTT`. Deliberately placed last before the ecosystem post — "now go play it" as the capstone of the individual-feature run.
+11. **Generator ecosystem / breadth** _(orig #14, gated — only after individual generators demonstrated)_ — Show how several generators chain together to build a campaign or setting. Tags: `#TTRPG #Worldbuilding`
 
 ## Drafted (not yet posted)
 
-### Faction Generator (queue #4)
+### Random Tables & Interactive Decks (spec #157)
 
-- **Text:** I needed factions that gave players something to push against, not just a name and a crest.
+- **Text:** I needed quick random encounter tables and card draws without leaving my campaign notes.
 
-  So I built the Faction Generator in Codex Cryptica. It gives a group an agenda, conflict, rivals, and people tied to it.
+  So I built Random Tables & Decks in Codex Cryptica. Roll weighted loot tables, draw tarot hands, and resolve nested references in your browser.
 
-  codexcryptica.com/generators/faction
+  codexcryptica.com/tables
 
   #TTRPG #Worldbuilding #RPGDesign
 
-- **Image:** https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png
-- **Alt:** Codex Cryptica's RPG Faction Generator showing the example merchant guild The Iron Syndicate, its configurable inputs, and generated operations and secret agenda
-- **Note:** Captured from the live generator page and cropped to remove the empty Session Hub panel. Validated at 285 characters with a 566 KB PNG image.
+- **Image:** `https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png`
+- **Alt:** Codex Cryptica showing interactive table and deck rolling in the campaign workspace
+- **Note:** Spec #157 implementation. Supports markdown import, weighted entries, and interactive card spreads with zero backend dependencies.
+
+### Custom Stat Sheet Templates (ad hoc)
+
+- **Text:** Every RPG system needs different character and monster sheets, and generic templates never quite fit.
+
+  So I built custom Stat Sheet Templates in Codex Cryptica. Design reusable Markdown templates tailored to your game system with inline dice rolls.
+
+  codexcryptica.com/blog/custom-stat-sheet-templates
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png`
+- **Alt:** Stat Sheet Templates manager in Codex Cryptica showing vault availability and default templates by category
+- **Note:** Sourced from official blog guide. Image is 450 KB PNG on CDN.
 
 ### Genre/theme breadth (ad hoc, not from #2086's numbered queue)
 
