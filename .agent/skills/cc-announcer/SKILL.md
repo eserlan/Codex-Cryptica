@@ -96,7 +96,7 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 - **Human List Rhythms.** Keep feature lists loose and unadorned without heavy adjective pairing on every bullet point. Use simple bullet points under clear introductory headers (`It can generate:`).
 - **No Emojis or Em Dashes (Hard Rule).** NEVER use emojis (e.g. ✨, 🪐, 🚀) or em dashes (`—`). They look artificial and overly polished/AI-generated. Use plain punctuation (hyphens `-`, colons `:`, or parentheticals) instead.
 - **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
-- **Scannable but clean formatting.** Short paragraphs, light bullet points, and clean bold lead-ins (e.g., `### What's improved`, `### Where to find it`, `### What you can create`).
+- **Scannable but clean formatting.** Short paragraphs and light bullet points. Add a heading only when it genuinely improves scanning; a short announcement usually does not need one.
 - **Visuals and Image Support.** Include image placeholders or embedded screenshots where relevant (e.g. `![Character Chat Mobile View](...)` or `[Image: Cosmic Horror Hub Theme preview]`). Show direct interface/visual proof of changes.
 - **Concrete over abstract.** A specific example or screenshot beats a paragraph of adjectives every time.
 - **One question at the end.** A genuine question that invites discussion. Not a CTA, not "what do you think?" — something the reader could actually answer.
@@ -114,24 +114,38 @@ LLM-generated posts often share a recognizable rhythm: paragraphs of similar len
 
 ---
 
+## Short Announcement Default
+
+For GitHub Discussions and small feature announcements, default to this lean shape unless the user asks for a devlog or detailed release note:
+
+1. Open with one specific GM, player, or builder problem in plain language.
+2. State the feature's single distinct idea in one sentence.
+3. Put one desktop screenshot immediately after that opening.
+4. Use one direct link and a loose list of three to five concrete outputs or benefits. Do not repeat the same value in prose, captions, or a second image.
+5. End with one specific question readers can answer from their own table or workflow.
+
+Cut secondary detail by default: exhaustive input lists, implementation notes, extra screenshots, and a closing recap. Keep only what helps someone understand the feature before they click.
+
+---
+
 ## Image & Asset Workflow (Cloudflare R2)
 
 When preparing screenshots and visual assets for announcements, devlogs, or discussions:
 
 1. **Bucket Name**: `codex-cryptica-statics`
-2. **Public CDN Domain / Path**: `https://static.codexcryptica.com/discussions/<feature-name>/...` (or `blog/assets/...` / `announcements/...`).
+2. **Public CDN Domain / Path**: `https://assets.codexcryptica.com/<key>`. Use `announcements/<feature-name>-<version>.png` for announcement images. See `docs/deployment/assets.md` for the current asset policy.
 3. **Capture via Chrome DevTools MCP or Playwright**:
    - Drive the browser using Chrome DevTools MCP tools (`navigate_page`, `resize_page`, `take_screenshot`) or Playwright E2E automation (`--reporter=list`).
-   - Capture clean, high-resolution desktop and mobile viewport screenshots of the live feature or local dev server (`http://localhost:5173`).
+   - Capture a clean, high-resolution desktop viewport of the live feature or local dev server (`http://localhost:5173`) first. Capture mobile only when the announcement is specifically about mobile behavior.
 4. **Upload via Wrangler to Cloudflare R2**:
    - Use `bunx wrangler r2 object put` to upload captured image assets directly to the R2 bucket:
      ```bash
-     bunx wrangler r2 object put codex-cryptica-statics/discussions/<feature-name>/<image-file>.png --file <local-path> --remote
+     bunx wrangler r2 object put codex-cryptica-statics/announcements/<feature-name>-v1.png --file <local-path> --content-type=image/png --remote
      ```
    - Alternatively, place images in the appropriate directory and execute an upload helper script using `bunx wrangler r2 object put`.
 5. **Reference in Drafts**:
    - Insert direct markdown image links pointing to the R2 CDN or relative repo assets:
-     `![Feature Title](https://static.codexcryptica.com/discussions/<feature-name>/<image-file>.png)`
+     `![Feature Title](https://assets.codexcryptica.com/announcements/<feature-name>-v1.png)`
 
 ---
 
@@ -161,9 +175,9 @@ Prefer titles that sound native to Reddit. Mix patterns rather than defaulting t
 
 ---
 
-## Post Structure Template
+## Long-Form Post Structure Template
 
-Derived from top-performing GitHub Discussions (#2016, #1987) and Reddit announcements. Always keep formatting clean and direct.
+Use this structure only when the user asks for a devlog, technical write-up, or detailed release note. Use the Short Announcement Default above for routine feature announcements.
 
 ### Title
 

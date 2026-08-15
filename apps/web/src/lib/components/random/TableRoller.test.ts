@@ -3,6 +3,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { RandomSource, RollOutcome } from "random-source-engine";
+import {
+  getOracleChatDraft,
+  clearOracleChatDraft,
+} from "$lib/components/oracle/oracle-chat-input";
 
 import TableRoller from "./TableRoller.svelte";
 
@@ -70,6 +74,24 @@ describe("TableRoller result actions", () => {
         "Copied",
       ),
     );
+  });
+
+  it("dispatches to both VTT chat and Oracle chat by default on add to chat", async () => {
+    clearOracleChatDraft();
+    const sendChatMessage = vi.fn();
+    const session = {
+      vttEnabled: false,
+      sendChatMessage,
+    };
+    renderRoller({ session });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+    await fireEvent.click(screen.getByTestId("add-roll-result-to-chat"));
+
+    await waitFor(() =>
+      expect(sendChatMessage).toHaveBeenCalledWith("The bridge collapses"),
+    );
+    expect(getOracleChatDraft()).toBe("The bridge collapses");
   });
 
   it("keeps the copy action available when clipboard access fails", async () => {

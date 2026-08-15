@@ -1,10 +1,37 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { RandomSource } from "random-source-engine";
 
+const { openLightbox } = vi.hoisted(() => ({ openLightbox: vi.fn() }));
+
+// CardImage (rendered for every drawn card) resolves art through the vault
+// and opens pictures through the app's shared lightbox store; both are
+// reached for by module path rather than passed as props, so they need
+// mocking here the way every other test touching them does.
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: {
+    resolveImageUrl: vi.fn(async (path: string) => `blob:${path}`),
+    releaseImageUrl: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: { openLightbox },
+}));
+
 import DeckView from "./DeckView.svelte";
+import {
+  clearOracleChatDraft,
+  getOracleChatDraft,
+} from "$lib/components/oracle/oracle-chat-input";
 
 if (typeof Element !== "undefined" && !Element.prototype.animate) {
   Element.prototype.animate = () =>
@@ -138,5 +165,122 @@ describe("DeckView result actions", () => {
         "Copied",
       ),
     );
+  });
+
+  it("dispatches to both VTT chat and Oracle chat by default on add to chat", async () => {
+    clearOracleChatDraft();
+    const sendChatMessage = vi.fn();
+    const session = {
+      vttEnabled: false,
+      sendChatMessage,
+    };
+    const service = {
+      draw: vi.fn(async () => ({
+        cards: [
+          {
+            card: deckOf(1).cards![0],
+            reversed: false,
+            resolved: {
+              finalText: "The journey begins",
+              chain: [],
+              notices: [],
+            },
+          },
+        ],
+        positions: ["Present"],
+        exhausted: false,
+        empty: false,
+      })),
+      drawSpread: vi.fn(),
+      reset: vi.fn(),
+      remaining: vi.fn(async () => []),
+    };
+    render(DeckView, {
+      props: {
+        deck: deckOf(1),
+        service,
+        session,
+        ...stores(),
+      } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    await screen.findByTestId("add-draw-result-to-chat");
+    await fireEvent.click(screen.getByTestId("add-draw-result-to-chat"));
+
+    const text = "Present: Card 0: The journey begins";
+    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(text));
+    expect(getOracleChatDraft()).toBe(text);
+  });
+});
+
+describe("DeckView card art", () => {
+  function serviceDrawing(cardCount: number, imagePath?: string) {
+    const deck = deckOf(cardCount);
+    if (imagePath) deck.cards![0]!.imagePath = imagePath;
+    return {
+      deck,
+      service: {
+        draw: vi.fn(async () => ({
+          cards: deck.cards!.map((card) => ({
+            card,
+            reversed: false,
+            resolved: { finalText: card.body ?? "", chain: [], notices: [] },
+          })),
+          positions: undefined,
+          exhausted: false,
+          empty: false,
+        })),
+        drawSpread: vi.fn(),
+        reset: vi.fn(),
+        remaining: vi.fn(async () => []),
+      },
+    };
+  }
+
+  it("opens the lightbox when a drawn card's art is clicked", async () => {
+    openLightbox.mockClear();
+    const { deck, service } = serviceDrawing(2, "images/card-0.webp");
+    render(DeckView, { props: { deck, service, ...stores() } as never });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    const results = await screen.findByTestId("draw-results");
+    const zoom = await within(results).findByTestId("card-image-zoom");
+    await fireEvent.click(zoom);
+
+    expect(openLightbox).toHaveBeenCalledWith(
+      "blob:images/card-0.webp",
+      "Card 0",
+      expect.anything(),
+      "images/card-0.webp",
+    );
+  });
+
+  it("auto-opens the lightbox as the reveal for a single-card draw", async () => {
+    openLightbox.mockClear();
+    const { deck, service } = serviceDrawing(1, "images/card-0.webp");
+    render(DeckView, { props: { deck, service, ...stores() } as never });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+
+    await waitFor(() =>
+      expect(openLightbox).toHaveBeenCalledWith(
+        "blob:images/card-0.webp",
+        "Card 0",
+        null,
+        "images/card-0.webp",
+      ),
+    );
+  });
+
+  it("does not auto-open the lightbox for a multi-card draw", async () => {
+    openLightbox.mockClear();
+    const { deck, service } = serviceDrawing(2, "images/card-0.webp");
+    render(DeckView, { props: { deck, service, ...stores() } as never });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    await screen.findAllByTestId("drawn-card");
+
+    expect(openLightbox).not.toHaveBeenCalled();
   });
 });

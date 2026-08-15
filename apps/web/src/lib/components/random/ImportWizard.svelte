@@ -1,16 +1,21 @@
 <script lang="ts">
   import {
     detectFormat,
+    isImageFile,
     looksLikeCodexFile,
+    matchCardImages,
     parseCodexImport,
     parseImport,
+    titleFromFileName,
     type Card,
+    type CardImageMatchMethod,
     type CodexImportOk,
     type ColumnMapping,
     type ImportFormat,
     type RandomSource,
     type TableEntry,
   } from "random-source-engine";
+  import { collectDroppedItems } from "$lib/features/importer/vault-file-collector";
   import { randomSources } from "$lib/features/random";
   import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
@@ -56,10 +61,90 @@
    */
   let codex = $state<CodexImportOk | undefined>();
   let codexError = $state("");
+  let selectedFileName = $state("");
+  let isDraggingFile = $state(false);
 
-  /** Pictures waiting to be matched to a card by filename (FR-036). */
+  function handleFileDragOver(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer?.types?.includes("Files")) {
+      isDraggingFile = true;
+    }
+  }
+
+  function handleFileDragLeave(e: DragEvent) {
+    e.preventDefault();
+    isDraggingFile = false;
+  }
+
+  /**
+   * One place to put everything (feedback on #2264): a text file, a pile of
+   * card art, or a folder holding both. Pictures are sorted out from text by
+   * what they are rather than by which box they were dropped on, so nobody has
+   * to know in advance which half of the import they are doing.
+   */
+  async function handleFileDrop(e: DragEvent) {
+    e.preventDefault();
+    isDraggingFile = false;
+    const transfer = e.dataTransfer;
+    if (!transfer) return;
+    if (!transfer.items) {
+      // No entry API at all: loose files still arrive, folders never did.
+      acceptFiles(Array.from(transfer.files ?? []));
+      return;
+    }
+    // The folder walk lives here rather than in `dataTransfer.files`, which
+    // never exposes a dropped folder's contents at all.
+    const items = await collectDroppedItems(transfer);
+    acceptFiles(
+      items.map((item) => {
+        // The collector keys blobs by path; matching works on the file name, so
+        // the leaf of that path is what the picture is called.
+        const fileName = item.relativePath.split("/").pop() ?? "file";
+        return item.file instanceof File && item.file.name === fileName
+          ? item.file
+          : new File([item.file], fileName, { type: item.file.type });
+      }),
+    );
+  }
+
+  function acceptFiles(files: File[]) {
+    if (files.length === 0) return;
+    const pictures = kind === "deck" ? files.filter(isImageFile) : [];
+    if (pictures.length > 0) addImages(pictures);
+
+    // Whatever is not a picture is text to read; the first one wins, since a
+    // source is one document.
+    const text = files.find((file) => !pictures.includes(file));
+    if (text) void openFile(text);
+  }
+
+  /** A deck's import takes its text and its art through the same control. */
+  const fileAccept = $derived(
+    kind === "deck"
+      ? ".md,.txt,.tsv,.csv,text/*,image/*"
+      : ".md,.txt,.tsv,.csv,text/*",
+  );
+
+  function clearSelectedFile() {
+    selectedFileName = "";
+    codex = undefined;
+    codexError = "";
+    pasted = "";
+    clearImages();
+  }
+
+  /** Pictures waiting to be matched to a card (FR-036, issue 2264). */
   let images = $state<File[]>([]);
   let imageProblems = $state<string[]>([]);
+  /**
+   * Hand corrections to the automatic matching, keyed by the preview row
+   * index — the same key `choices` uses, and the one thing about a row that
+   * survives its own edits. Keying by title instead would collide whenever
+   * two cards shared a name, or had none yet. `-1` means "this card gets no
+   * picture", which is a real choice and not the same as never having been
+   * matched.
+   */
+  let imageOverrides = $state<Record<number, number>>({});
 
   let pasted = $state("");
   let name = $state("");
@@ -86,19 +171,6 @@
     return { title, body: parts.slice(1).join(" ").trim() };
   }
 
-  /** Matches "the-tower.png" to the card called "The Tower". */
-  function normalise(value: string): string {
-    return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
-  }
-
-  function imageFor(title: string): File | undefined {
-    const key = normalise(title);
-    if (!key) return undefined;
-    return images.find(
-      (file) => normalise(file.name.replace(/\.[^.]+$/, "")) === key,
-    );
-  }
-
   const columnCount = $derived.by(() => {
     const rows = preview?.rows ?? [];
     // Cell counts are not exposed by the preview, so the mapping controls offer
@@ -121,24 +193,53 @@
     name.trim() ? sources.findByName(name.trim()) : undefined,
   );
 
-  const entries = $derived.by<TableEntry[]>(() => {
-    const rows = preview?.rows ?? [];
-    const built: TableEntry[] = [];
-    for (const [index, row] of rows.entries()) {
-      const choice = choices[index];
-      if (choice?.skipped) continue;
-      const text = choice?.text ?? row.entry?.text;
-      if (text === undefined || text.trim().length === 0) continue;
-      built.push({
-        // Fresh ids: imported rows carry placeholder ids that would collide
-        // with an existing table's on a merge.
-        ...(row.entry ?? { weight: 1 }),
-        id: idGenerator.uuid(),
-        text,
-      });
-    }
-    return built;
-  });
+  /**
+   * The rows actually going in, paired with which row of the pasted preview
+   * each came from. The row index — not the built entry's id, which is fresh
+   * every time this recomputes, and not the card's title, which two cards can
+   * share or both leave blank — is what stays put across edits, so it is what
+   * a picture correction is keyed to below.
+   */
+  const filteredRows = $derived.by<{ rowIndex: number; entry: TableEntry }[]>(
+    () => {
+      const rows = preview?.rows ?? [];
+      const built: { rowIndex: number; entry: TableEntry }[] = [];
+      for (const [index, row] of rows.entries()) {
+        const choice = choices[index];
+        if (choice?.skipped) continue;
+        const text = choice?.text ?? row.entry?.text;
+        if (text === undefined || text.trim().length === 0) continue;
+        built.push({
+          rowIndex: index,
+          entry: {
+            // Fresh ids: imported rows carry placeholder ids that would
+            // collide with an existing table's on a merge.
+            ...(row.entry ?? { weight: 1 }),
+            id: idGenerator.uuid(),
+            text,
+          },
+        });
+      }
+      return built;
+    },
+  );
+
+  const entries = $derived(filteredRows.map((r) => r.entry));
+
+  /** A deck row is edited as its two halves, then written back as one line. */
+  function editCardPart(
+    index: number,
+    current: string,
+    part: "title" | "body",
+    value: string,
+  ) {
+    const { title, body } = splitCard(current);
+    const nextTitle = part === "title" ? value : title;
+    const nextBody = part === "body" ? value : body;
+    choose(index, {
+      text: nextBody ? `${nextTitle}\t${nextBody}` : nextTitle,
+    });
+  }
 
   function resolved(index: number): boolean {
     const choice = choices[index];
@@ -174,15 +275,103 @@
   }
 
   const builtCards = $derived.by<Card[]>(() =>
-    entries.map((entry) => {
+    filteredRows.map(({ entry }) => {
       const { title, body } = splitCard(entry.text);
       return { id: entry.id, title, body };
     }),
   );
 
+  /** `builtCards[i]` came from row `builtCardRows[i]` of the pasted preview. */
+  const builtCardRows = $derived(filteredRows.map((r) => r.rowIndex));
+
+  /**
+   * Which picture each card ends up with, automatic matching first and hand
+   * corrections on top. Nothing is written until Import, so this is the whole
+   * decision laid out where it can be argued with (issue 2264).
+   */
+  const assignments = $derived.by<
+    { fileIndex: number; method: CardImageMatchMethod | "chosen" }[]
+  >(() => {
+    const out: {
+      fileIndex: number;
+      method: CardImageMatchMethod | "chosen";
+    }[] = [];
+    if (images.length === 0) return out;
+
+    for (const match of matchCardImages(
+      builtCards.map((card) => card.title),
+      images.map((file) => file.name),
+    )) {
+      out[match.cardIndex] = {
+        fileIndex: match.fileIndex,
+        method: match.method,
+      };
+    }
+
+    // A hand-picked file wins, and is taken off whichever card the matcher had
+    // given it to: one picture, one card.
+    for (const [cardIndex, rowIndex] of builtCardRows.entries()) {
+      const override = imageOverrides[rowIndex];
+      if (override === undefined) continue;
+      if (override === -1) {
+        delete out[cardIndex];
+        continue;
+      }
+      for (const [other, assigned] of out.entries()) {
+        if (other !== cardIndex && assigned?.fileIndex === override) {
+          delete out[other];
+        }
+      }
+      out[cardIndex] = { fileIndex: override, method: "chosen" };
+    }
+    return out;
+  });
+
   const matchedImages = $derived(
-    builtCards.filter((card) => imageFor(card.title)).length,
+    assignments.filter((a) => a !== undefined).length,
   );
+
+  const unmatchedImages = $derived.by(() => {
+    const used = new Set(assignments.filter(Boolean).map((a) => a.fileIndex));
+    return images
+      .map((file, index) => ({ file, index }))
+      .filter(({ index }) => !used.has(index));
+  });
+
+  const cardsWithoutImage = $derived(
+    builtCards.filter((_, index) => !assignments[index]).length,
+  );
+
+  function addImages(incoming: File[]) {
+    const pictures = incoming.filter((file) => isImageFile(file));
+    const known = new Set(images.map((file) => file.name));
+    images = [...images, ...pictures.filter((file) => !known.has(file.name))];
+  }
+
+  function assignImage(rowIndex: number, value: number) {
+    imageOverrides = { ...imageOverrides, [rowIndex]: value };
+  }
+
+  function clearImages() {
+    images = [];
+    imageOverrides = {};
+  }
+
+  /**
+   * Turns the pictures nothing claimed into cards, by appending titles read off
+   * their file names to the paste box. Going through the paste box rather than
+   * around it keeps one path into the deck: the new rows are previewed, edited
+   * and matched exactly like pasted ones.
+   */
+  function createCardsFromImages() {
+    const titles = unmatchedImages.map(({ file }) =>
+      titleFromFileName(file.name),
+    );
+    if (titles.length === 0) return;
+    const prefix =
+      pasted.trim().length === 0 ? "" : `${pasted.replace(/\n+$/, "")}\n`;
+    pasted = `${prefix}${titles.join("\n")}`;
+  }
 
   /**
    * Saves each matched picture, then attaches it.
@@ -195,8 +384,8 @@
     const problems: string[] = [];
     const withImages: Card[] = [];
 
-    for (const card of cards) {
-      const file = imageFor(card.title);
+    for (const [index, card] of cards.entries()) {
+      const file = images[assignments[index]?.fileIndex ?? -1];
       if (!file) {
         withImages.push(card);
         continue;
@@ -219,7 +408,7 @@
     const current = preview;
     if (!current || entries.length === 0) return undefined;
 
-    if (kind === "deck") return buildDeck();
+    if (kind === "deck") return buildDeck(builtCards);
 
     const selection: RandomSource["selection"] =
       current.mode === "ranged"
@@ -243,17 +432,17 @@
     };
   }
 
-  function buildDeck(): RandomSource {
+  function buildDeck(cards: Card[]): RandomSource {
     const target = existing;
     if (target && collision === "merge") {
-      return { ...target, cards: [...(target.cards ?? []), ...builtCards] };
+      return { ...target, cards: [...(target.cards ?? []), ...cards] };
     }
     if (target && collision === "replace") {
-      return { ...target, cards: builtCards };
+      return { ...target, cards };
     }
     return {
       ...sources.create("deck", target ? uniqueName(name.trim()) : name.trim()),
-      cards: builtCards,
+      cards,
     };
   }
 
@@ -268,7 +457,11 @@
    * which quietly makes a .csv or .tsv on disk importable too.
    */
   async function openFile(file: File | undefined) {
-    if (!file) return;
+    if (!file) {
+      selectedFileName = "";
+      return;
+    }
+    selectedFileName = file.name;
     codex = undefined;
     codexError = "";
 
@@ -310,14 +503,17 @@
   }
 
   async function confirm() {
-    const built = build();
-    if (!built) return;
-    if (built.kind !== "deck") {
-      onImport(built);
+    if (kind !== "deck") {
+      const built = build();
+      if (built) onImport(built);
       return;
     }
+    if (entries.length === 0) return;
 
-    const cards = await attachImages(built.cards ?? []);
+    // Pictures are attached to the incoming cards *before* the deck is built,
+    // so a merge into an existing deck cannot shift the indexes out from under
+    // the matching.
+    const cards = await attachImages(builtCards);
     // Pictures that failed are worth saying out loud, but never worth holding
     // the cards back for.
     if (imageProblems.length > 0) {
@@ -326,7 +522,7 @@
         "error",
       );
     }
-    onImport({ ...built, cards });
+    onImport(buildDeck(cards));
   }
 </script>
 
@@ -338,7 +534,7 @@
     <h2
       class="font-header text-[11px] font-bold uppercase tracking-[0.2em] text-theme-text"
     >
-      Import a table
+      Import a {noun}
     </h2>
     <button
       type="button"
@@ -350,23 +546,131 @@
     </button>
   </div>
 
-  <label class="flex flex-col gap-1">
+  <div class="flex flex-col gap-1.5">
     <span
       class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
-      >Open a file</span
+      >{kind === "deck" ? "Open a file or a folder" : "Open a file"}</span
     >
-    <input
-      type="file"
-      accept=".md,.txt,.tsv,.csv,text/*"
-      class="font-body text-xs text-theme-text"
-      onchange={(e) => openFile(e.currentTarget.files?.[0])}
-      data-testid="import-file"
-    />
-    <span class="font-body text-[10px] text-theme-muted/70">
-      A file exported from Codex Cryptica comes back whole. Anything else lands
-      in the box below.
-    </span>
-  </label>
+    <!-- One drop target for the whole import: the text of the deck, its art, or
+         a folder holding both. What each file is decides where it goes. -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="flex flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed p-5 text-center transition-all duration-150 {isDraggingFile
+        ? 'border-theme-primary bg-theme-primary/10 shadow-inner'
+        : selectedFileName || images.length > 0
+          ? 'border-theme-primary/40 bg-theme-primary/5'
+          : 'border-theme-border/70 bg-theme-bg/40 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+      ondragover={handleFileDragOver}
+      ondragleave={handleFileDragLeave}
+      ondrop={handleFileDrop}
+      data-testid="import-file-dropzone"
+    >
+      {#if selectedFileName || images.length > 0}
+        <div class="flex flex-col items-center gap-2">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-theme-primary/20 text-theme-primary"
+          >
+            <span aria-hidden="true" class="icon-[lucide--file-check] h-5 w-5"
+            ></span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            {#if selectedFileName}
+              <span
+                class="font-mono text-xs font-semibold text-theme-text"
+                data-testid="import-file-selected"
+              >
+                {selectedFileName}
+              </span>
+            {/if}
+            <span class="font-body text-[10px] text-theme-muted">
+              {#if images.length > 0}
+                {images.length}
+                {images.length === 1 ? "picture" : "pictures"} ready{selectedFileName
+                  ? " · file loaded"
+                  : ""}
+              {:else}
+                File loaded ready for import
+              {/if}
+            </span>
+          </div>
+          <div class="mt-1 flex flex-wrap items-center justify-center gap-2">
+            <label
+              class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary shadow-sm"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--plus] h-3.5 w-3.5 text-theme-muted"
+              ></span>
+              <span>{kind === "deck" ? "Add more" : "Replace file"}</span>
+              <input
+                type="file"
+                accept={fileAccept}
+                multiple={kind === "deck"}
+                class="sr-only"
+                onchange={(e) =>
+                  acceptFiles(Array.from(e.currentTarget.files ?? []))}
+                data-testid="import-file"
+              />
+            </label>
+            <button
+              type="button"
+              onclick={clearSelectedFile}
+              class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500 shadow-sm"
+              data-testid="import-file-clear"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--trash-2] h-3.5 w-3.5"
+              ></span>
+              <span>Remove</span>
+            </button>
+          </div>
+        </div>
+      {:else}
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-theme-primary/10 text-theme-primary"
+        >
+          <span aria-hidden="true" class="icon-[lucide--upload-cloud] h-5 w-5"
+          ></span>
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          <p
+            class="font-header text-xs font-bold uppercase tracking-wider text-theme-text"
+          >
+            {kind === "deck"
+              ? "Drag a file, or a folder of card art, here"
+              : "Drag and drop your file here"}
+          </p>
+          <p class="font-body text-[10px] text-theme-muted/80">
+            {#if kind === "deck"}
+              A file exported from Codex Cryptica comes back whole, other text
+              lands in the paste box, and pictures are matched to cards by name.
+              A folder can hold both.
+            {:else}
+              A file exported from Codex Cryptica comes back whole. Anything
+              else lands in the paste box below.
+            {/if}
+          </p>
+        </div>
+        <label
+          class="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/15 px-4 py-2 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-sm"
+        >
+          <span aria-hidden="true" class="icon-[lucide--folder-open] h-4 w-4"
+          ></span>
+          <span>{kind === "deck" ? "Choose files" : "Choose file"}</span>
+          <input
+            type="file"
+            accept={fileAccept}
+            multiple={kind === "deck"}
+            class="sr-only"
+            onchange={(e) =>
+              acceptFiles(Array.from(e.currentTarget.files ?? []))}
+            data-testid="import-file"
+          />
+        </label>
+      {/if}
+    </div>
+  </div>
 
   {#if codexError}
     <p
@@ -458,7 +762,7 @@
       <input
         class="rounded border border-theme-border bg-theme-bg px-3 py-2 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
         bind:value={name}
-        placeholder="Wilderness encounters"
+        placeholder={kind === "deck" ? "Major Arcana" : "Wilderness encounters"}
         data-testid="import-name"
       />
     </label>
@@ -466,8 +770,14 @@
     <label class="flex flex-col gap-1">
       <span
         class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
-        >Paste your table</span
+        >{kind === "deck" ? "Paste your cards" : "Paste your table"}</span
       >
+      {#if kind === "deck"}
+        <span class="font-body text-[10px] text-theme-muted/80">
+          One card per line: its name, then a tab, then what it means. A card
+          with no meaning yet is fine.
+        </span>
+      {/if}
       <textarea
         rows="6"
         class="rounded border border-theme-border bg-theme-bg px-3 py-2 font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
@@ -476,31 +786,6 @@
         data-testid="import-paste"
       ></textarea>
     </label>
-
-    {#if preview && kind === "deck"}
-      <label class="flex flex-col gap-1">
-        <span
-          class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
-          >Pictures (matched to cards by file name)</span
-        >
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          class="font-body text-xs text-theme-text"
-          onchange={(e) => (images = Array.from(e.currentTarget.files ?? []))}
-          data-testid="import-images"
-        />
-        {#if images.length > 0}
-          <span
-            class="font-mono text-[10px] text-theme-muted"
-            data-testid="import-image-match"
-          >
-            {matchedImages} of {images.length} matched a card
-          </span>
-        {/if}
-      </label>
-    {/if}
 
     {#if preview && kind === "table"}
       <div class="flex flex-wrap items-end gap-4">
@@ -617,6 +902,40 @@
                   Skip
                 </button>
               </div>
+            {:else if kind === "deck"}
+              {@const text = choice?.text ?? row.entry?.text ?? row.raw}
+              {@const card = splitCard(text)}
+              <input
+                class="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 font-header text-xs font-bold text-theme-text focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                value={card.title}
+                oninput={(e) =>
+                  editCardPart(index, text, "title", e.currentTarget.value)}
+                aria-label="Card name for row {index + 1}"
+                data-testid="import-row-title"
+              />
+              <input
+                class="min-w-0 flex-[2] rounded border border-transparent bg-transparent px-1 py-0.5 font-body text-xs text-theme-muted focus:border-theme-primary focus:bg-theme-bg focus:text-theme-text focus:outline-none"
+                value={card.body}
+                placeholder="What it means"
+                oninput={(e) =>
+                  editCardPart(index, text, "body", e.currentTarget.value)}
+                aria-label="Card meaning for row {index + 1}"
+                data-testid="import-row-body"
+              />
+              <button
+                type="button"
+                class="shrink-0 rounded p-1 text-theme-muted transition-colors hover:text-red-500"
+                onclick={() => choose(index, { skipped: !choice?.skipped })}
+                aria-label="{choice?.skipped ? 'Include' : 'Skip'} row {index +
+                  1}"
+              >
+                <span
+                  aria-hidden="true"
+                  class="{choice?.skipped
+                    ? 'icon-[lucide--undo-2]'
+                    : 'icon-[lucide--trash-2]'} h-3.5 w-3.5"
+                ></span>
+              </button>
             {:else}
               <input
                 class="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 font-body text-xs text-theme-text focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
@@ -663,7 +982,7 @@
             "{existing.name}" already exists. What should happen to it?
           </p>
           <div class="flex flex-wrap gap-2">
-            {#each [{ id: "merge" as const, label: "Add to it" }, { id: "replace" as const, label: "Replace its entries" }, { id: "new" as const, label: "Save as a new table" }] as option}
+            {#each kind === "deck" ? [{ id: "merge" as const, label: "Add these cards to it" }, { id: "replace" as const, label: "Replace its cards" }, { id: "new" as const, label: "Save as a new deck" }] : [{ id: "merge" as const, label: "Add to it" }, { id: "replace" as const, label: "Replace its entries" }, { id: "new" as const, label: "Save as a new table" }] as option}
               <button
                 type="button"
                 class="rounded border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest transition-colors {collision ===
@@ -681,6 +1000,122 @@
       {/if}
     {/if}
 
+    {#if kind === "deck" && images.length > 0}
+      <!-- Card art in one go: what landed where, and a way to correct the rows
+           that are wrong (issue 2264). The pictures themselves come in through
+           the one dropzone at the top. -->
+      <div class="flex flex-col gap-1.5" data-testid="import-card-art">
+        <span
+          class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+          >Card pictures</span
+        >
+        <p class="font-body text-[10px] text-theme-muted/80">
+          Matched by file name, then by anything close, then by number. Pictures
+          are copied into your vault, so the deck's art travels with it.
+        </p>
+
+        {#if images.length > 0}
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            <span
+              class="font-mono text-[10px] text-theme-muted"
+              data-testid="import-image-match"
+            >
+              {matchedImages} of {images.length} matched a card{cardsWithoutImage >
+              0
+                ? ` · ${cardsWithoutImage} card${cardsWithoutImage === 1 ? "" : "s"} without a picture`
+                : ""}
+            </span>
+            <button
+              type="button"
+              onclick={clearImages}
+              class="rounded border border-theme-border/60 px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
+              data-testid="import-images-clear"
+            >
+              Remove pictures
+            </button>
+          </div>
+
+          {#if builtCards.length > 0}
+            <div
+              class="max-h-56 overflow-y-auto rounded border border-theme-border"
+              data-testid="import-image-preview"
+            >
+              {#each builtCards as card, index}
+                {@const assigned = assignments[index]}
+                <div
+                  class="flex items-center gap-2 border-b border-theme-border/40 px-2 py-1.5"
+                  data-testid="import-image-row"
+                >
+                  <span
+                    class="min-w-0 flex-1 truncate font-body text-xs text-theme-text"
+                    >{card.title || `Card ${index + 1}`}</span
+                  >
+                  {#if assigned && assigned.method !== "name" && assigned.method !== "chosen"}
+                    <span
+                      class="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 font-header text-[9px] uppercase tracking-widest text-amber-600 dark:text-amber-400"
+                      data-testid="import-image-guess"
+                      >{assigned.method === "order"
+                        ? "by number"
+                        : "close name"}</span
+                    >
+                  {/if}
+                  <select
+                    class="max-w-[45%] shrink-0 rounded border border-theme-border bg-theme-bg px-2 py-1 text-[11px] text-theme-text focus:border-theme-primary focus:outline-none"
+                    value={assigned ? String(assigned.fileIndex) : "-1"}
+                    onchange={(e) =>
+                      assignImage(
+                        builtCardRows[index] ?? index,
+                        Number(e.currentTarget.value),
+                      )}
+                    aria-label="Picture for {card.title || `card ${index + 1}`}"
+                    data-testid="import-image-select"
+                  >
+                    <option value="-1">No picture</option>
+                    {#each images as file, fileIndex}
+                      <option value={String(fileIndex)}>{file.name}</option>
+                    {/each}
+                  </select>
+                </div>
+              {/each}
+            </div>
+          {/if}
+
+          {#if unmatchedImages.length > 0}
+            <div
+              class="flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-3"
+              data-testid="import-images-unmatched"
+            >
+              <p
+                class="font-body text-[11px] text-amber-600 dark:text-amber-400"
+              >
+                {unmatchedImages.length}
+                {unmatchedImages.length === 1 ? "picture" : "pictures"} found no card:
+                {unmatchedImages
+                  .slice(0, 4)
+                  .map(({ file }) => file.name)
+                  .join(", ")}{unmatchedImages.length > 4
+                  ? `, and ${unmatchedImages.length - 4} more`
+                  : ""}
+              </p>
+              <div>
+                <button
+                  type="button"
+                  onclick={createCardsFromImages}
+                  class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2.5 py-1 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
+                  data-testid="import-images-make-cards"
+                >
+                  Make {unmatchedImages.length}
+                  {unmatchedImages.length === 1 ? "card" : "cards"} from {unmatchedImages.length ===
+                  1
+                    ? "it"
+                    : "them"}
+                </button>
+              </div>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    {/if}
     <div class="flex justify-end gap-2">
       <button
         type="button"
