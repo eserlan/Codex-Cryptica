@@ -4,7 +4,6 @@
     isImageFile,
     looksLikeCodexFile,
     matchCardImages,
-    normaliseName,
     parseCodexImport,
     parseImport,
     titleFromFileName,
@@ -138,13 +137,14 @@
   let images = $state<File[]>([]);
   let imageProblems = $state<string[]>([]);
   /**
-   * Hand corrections to the automatic matching, keyed by normalised card title
-   * rather than row index: rows get skipped and re-ordered while the preview is
-   * being fixed up, and a correction should follow the card it was made for.
-   * `-1` means "this card gets no picture", which is a real choice and not the
-   * same as never having been matched.
+   * Hand corrections to the automatic matching, keyed by the preview row
+   * index — the same key `choices` uses, and the one thing about a row that
+   * survives its own edits. Keying by title instead would collide whenever
+   * two cards shared a name, or had none yet. `-1` means "this card gets no
+   * picture", which is a real choice and not the same as never having been
+   * matched.
    */
-  let imageOverrides = $state<Record<string, number>>({});
+  let imageOverrides = $state<Record<number, number>>({});
 
   let pasted = $state("");
   let name = $state("");
@@ -193,24 +193,38 @@
     name.trim() ? sources.findByName(name.trim()) : undefined,
   );
 
-  const entries = $derived.by<TableEntry[]>(() => {
-    const rows = preview?.rows ?? [];
-    const built: TableEntry[] = [];
-    for (const [index, row] of rows.entries()) {
-      const choice = choices[index];
-      if (choice?.skipped) continue;
-      const text = choice?.text ?? row.entry?.text;
-      if (text === undefined || text.trim().length === 0) continue;
-      built.push({
-        // Fresh ids: imported rows carry placeholder ids that would collide
-        // with an existing table's on a merge.
-        ...(row.entry ?? { weight: 1 }),
-        id: idGenerator.uuid(),
-        text,
-      });
-    }
-    return built;
-  });
+  /**
+   * The rows actually going in, paired with which row of the pasted preview
+   * each came from. The row index — not the built entry's id, which is fresh
+   * every time this recomputes, and not the card's title, which two cards can
+   * share or both leave blank — is what stays put across edits, so it is what
+   * a picture correction is keyed to below.
+   */
+  const filteredRows = $derived.by<{ rowIndex: number; entry: TableEntry }[]>(
+    () => {
+      const rows = preview?.rows ?? [];
+      const built: { rowIndex: number; entry: TableEntry }[] = [];
+      for (const [index, row] of rows.entries()) {
+        const choice = choices[index];
+        if (choice?.skipped) continue;
+        const text = choice?.text ?? row.entry?.text;
+        if (text === undefined || text.trim().length === 0) continue;
+        built.push({
+          rowIndex: index,
+          entry: {
+            // Fresh ids: imported rows carry placeholder ids that would
+            // collide with an existing table's on a merge.
+            ...(row.entry ?? { weight: 1 }),
+            id: idGenerator.uuid(),
+            text,
+          },
+        });
+      }
+      return built;
+    },
+  );
+
+  const entries = $derived(filteredRows.map((r) => r.entry));
 
   /** A deck row is edited as its two halves, then written back as one line. */
   function editCardPart(
@@ -261,11 +275,14 @@
   }
 
   const builtCards = $derived.by<Card[]>(() =>
-    entries.map((entry) => {
+    filteredRows.map(({ entry }) => {
       const { title, body } = splitCard(entry.text);
       return { id: entry.id, title, body };
     }),
   );
+
+  /** `builtCards[i]` came from row `builtCardRows[i]` of the pasted preview. */
+  const builtCardRows = $derived(filteredRows.map((r) => r.rowIndex));
 
   /**
    * Which picture each card ends up with, automatic matching first and hand
@@ -293,8 +310,8 @@
 
     // A hand-picked file wins, and is taken off whichever card the matcher had
     // given it to: one picture, one card.
-    for (const [cardIndex, card] of builtCards.entries()) {
-      const override = imageOverrides[normaliseName(card.title)];
+    for (const [cardIndex, rowIndex] of builtCardRows.entries()) {
+      const override = imageOverrides[rowIndex];
       if (override === undefined) continue;
       if (override === -1) {
         delete out[cardIndex];
@@ -331,8 +348,8 @@
     images = [...images, ...pictures.filter((file) => !known.has(file.name))];
   }
 
-  function assignImage(title: string, value: number) {
-    imageOverrides = { ...imageOverrides, [normaliseName(title)]: value };
+  function assignImage(rowIndex: number, value: number) {
+    imageOverrides = { ...imageOverrides, [rowIndex]: value };
   }
 
   function clearImages() {
@@ -1046,7 +1063,10 @@
                     class="max-w-[45%] shrink-0 rounded border border-theme-border bg-theme-bg px-2 py-1 text-[11px] text-theme-text focus:border-theme-primary focus:outline-none"
                     value={assigned ? String(assigned.fileIndex) : "-1"}
                     onchange={(e) =>
-                      assignImage(card.title, Number(e.currentTarget.value))}
+                      assignImage(
+                        builtCardRows[index] ?? index,
+                        Number(e.currentTarget.value),
+                      )}
                     aria-label="Picture for {card.title || `card ${index + 1}`}"
                     data-testid="import-image-select"
                   >
