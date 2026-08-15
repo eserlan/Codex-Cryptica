@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
+  import { base } from "$app/paths";
   import type { Diagnostic, RandomSource } from "random-source-engine";
   import {
     ensureRandomSourcesLoaded,
@@ -35,6 +36,26 @@
   } = $props();
 
   const noun = $derived(kind === "table" ? "table" : "deck");
+
+  /**
+   * The two kinds share one Activity Bar slot, so switching between them
+   * happens here instead. Plain links rather than local state: each kind keeps
+   * its own URL, so a deck is still something you can bookmark and link to.
+   */
+  const KINDS = [
+    {
+      id: "table",
+      label: "Tables",
+      href: "/tables",
+      icon: "icon-[lucide--list-tree]",
+    },
+    {
+      id: "deck",
+      label: "Decks",
+      href: "/decks",
+      icon: "icon-[lucide--layers]",
+    },
+  ] as const;
 
   let query = $state("");
   let activeLabels = $state<string[]>([]);
@@ -243,14 +264,26 @@
   <header
     class="flex shrink-0 items-center justify-between gap-3 border-b border-theme-border bg-theme-surface p-4"
   >
-    <div class="flex items-center gap-2">
-      <span aria-hidden="true" class="{icon} h-5 w-5 text-theme-primary"></span>
-      <h1
-        class="font-header text-sm font-bold uppercase tracking-widest text-theme-text"
-      >
-        {heading}
-      </h1>
-    </div>
+    <h1 class="sr-only">{heading}</h1>
+    <nav
+      class="flex items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
+      aria-label="Random source kind"
+    >
+      {#each KINDS as option}
+        {@const current = option.id === kind}
+        <a
+          href="{base}{option.href}"
+          aria-current={current ? "page" : undefined}
+          class="flex items-center gap-1.5 rounded px-2.5 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest transition-colors {current
+            ? 'bg-theme-primary/15 text-theme-primary'
+            : 'text-theme-muted hover:text-theme-text'}"
+          data-testid="source-kind-{option.id}"
+        >
+          <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
+          {option.label}
+        </a>
+      {/each}
+    </nav>
     {#if saving}
       <span
         class="font-mono text-[9px] uppercase tracking-widest text-theme-muted/60"

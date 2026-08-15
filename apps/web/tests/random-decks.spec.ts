@@ -199,4 +199,20 @@ test.describe("Card decks", () => {
     await page.getByTestId("toggle-card").first().click();
     await expect(page.getByTestId("card-body")).toHaveValue("Sudden ruin.");
   });
+
+  // Tables and decks share one Activity Bar slot, so the workspace toggle is
+  // the only way across between them (#2247).
+  test("switches to tables and back from the workspace header", async ({
+    page,
+  }) => {
+    await page.getByTestId("source-kind-table").click();
+
+    await expect(page).toHaveURL(/\/tables\/?$/);
+    await expect(page.getByTestId("new-table")).toBeVisible();
+
+    await page.getByTestId("source-kind-deck").click();
+
+    await expect(page).toHaveURL(/\/decks\/?$/);
+    await expect(page.getByTestId("new-deck")).toBeVisible();
+  });
 });
