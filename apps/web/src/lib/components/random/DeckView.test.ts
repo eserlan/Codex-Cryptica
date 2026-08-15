@@ -1,10 +1,15 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { RandomSource } from "random-source-engine";
 
 import DeckView from "./DeckView.svelte";
+
+if (typeof Element !== "undefined" && !Element.prototype.animate) {
+  Element.prototype.animate = () =>
+    ({ finished: Promise.resolve(), cancel: () => {} }) as unknown as Animation;
+}
 
 function deckOf(cardCount: number): RandomSource {
   return {
@@ -82,5 +87,56 @@ describe("DeckView reshuffle", () => {
       expect((button as HTMLButtonElement).disabled).toBe(true),
     );
     release();
+  });
+});
+
+describe("DeckView result actions", () => {
+  it("sends and copies every card detail from a draw", async () => {
+    const addToChat = vi.fn(async () => {});
+    const copyText = vi.fn(async () => {});
+    const service = {
+      draw: vi.fn(async () => ({
+        cards: [
+          {
+            card: deckOf(1).cards![0],
+            reversed: true,
+            resolved: {
+              finalText: "A sudden reversal",
+              chain: [],
+              notices: [],
+            },
+          },
+        ],
+        positions: ["Past"],
+        exhausted: false,
+        empty: false,
+      })),
+      drawSpread: vi.fn(),
+      reset: vi.fn(),
+      remaining: vi.fn(async () => []),
+    };
+    render(DeckView, {
+      props: {
+        deck: deckOf(1),
+        service,
+        ...stores(),
+        addToChat,
+        copyText,
+      } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    await screen.findByTestId("add-draw-result-to-chat");
+    await fireEvent.click(screen.getByTestId("add-draw-result-to-chat"));
+    await fireEvent.click(screen.getByTestId("copy-draw-result"));
+
+    const text = "Past: Card 0 (reversed): A sudden reversal";
+    await waitFor(() => expect(addToChat).toHaveBeenCalledWith(text));
+    expect(copyText).toHaveBeenCalledWith(text);
+    await waitFor(() =>
+      expect(screen.getByTestId("copy-draw-result").textContent).toContain(
+        "Copied",
+      ),
+    );
   });
 });

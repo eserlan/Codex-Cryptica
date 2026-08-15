@@ -232,6 +232,9 @@ Create campaign-ready planets, moons, and artificial worlds with a clear physica
 ### Delve Spatial Canvas Builder
 Transform dungeon concepts into interactive spatial canvas maps. Open a generated dungeon concept and click 'Build Delve on Canvas' to create a .canvas layout with sector group frames, tactical Area role badges, custom passages (hidden, locked, vertical), and context-aware stocking. Every new delve ends with a dedicated Climax Area chosen by AI from the Location's established canon. Its editor records what is at stake, the players' decision, and possible outcomes, so the finale can be a confrontation, negotiation, ritual, revelation, crisis, siege, escape, or another decisive turn rather than a required boss fight. When the layout is ready, use Finalize Dossier to create a linked GM Note containing the original briefing, every populated sector and Area, room-level connections, climax outcomes, a fitted image of the complete map, and a link back to the canvas. Finalize again after edits to refresh the image and update the same Note.
 
+### Random Tables & Card Decks
+Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.
+
 ### Presentation Templates
 Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Item and equipment table fields keep repeatable rows together: add items, edit their cells, adjust counters, and roll dice from the table. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
 
@@ -674,6 +677,8 @@ The Lore Oracle supports several interactive commands to help you manage your wo
 - `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
 - `/connect`: The primary tool for building relationships.
 - `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
+- `/table [name]`: Roll one of your own roll tables, with the result inline in the transcript. No AI involved.
+- `/deck [name] [count]`: Draw from one of your own card decks, remembering what has already been drawn. No AI involved.
 
 ## Efficient Linking with /connect
 
@@ -1560,6 +1565,166 @@ Once Guest Character Chat is enabled, the **Character Chat** panel below it lets
 ## Review conversations
 
 Open the Character's **Chats** tab as the host to see synced guest conversation logs. You can edit or remove messages, delete a whole session, and promote a useful character response into a rumor draft.
+
+---
+
+### THE SHELF
+
+Built a monster you want in another campaign? A stash of magic items worth reusing? The Shelf carries entities from one vault into another without anything leaving the app.
+
+## Putting something on the Shelf
+
+Three ways in:
+
+- Open an entity and click **Send to Shelf** in its header
+- Select several entities in the **graph**, right-click, and choose **Send to Shelf**
+- Do the same from the **table**
+
+Shelving only reads — nothing in the vault you shelved from is changed.
+
+## Bringing it into another vault
+
+Switch to the vault you want the entity in, open the **Shelf** from the sidebar, tick the entries you want, and choose **Import into this vault**.
+
+Entries stay on the Shelf after you import them, so the same monster can go into several campaigns.
+
+## What travels with an entity
+
+Everything you wrote: its description and lore, labels, aliases, dates, images, sound bites, and its stat sheet — including the stat sheet template and its presentation, so the sheet looks the same in its new home.
+
+Links between entities travel too, with a couple of sensible limits:
+
+- If you shelve a group together, links **between those entities** are rebuilt.
+- A link pointing at something already in the destination reconnects by name.
+- If nothing matches, or more than one thing does, the link is left off and listed for you afterwards. It won't guess — a link quietly attached to the wrong entity is far harder to notice than one that's missing.
+
+## When names clash
+
+Importing never overwrites anything. If the destination already has an entity with the same title, the arriving one gets a number after it, and you're told which was renamed.
+
+If both vaults have a stat sheet template that differs, you're asked which to use before anything is written. Choosing the shelved one adds it alongside what you already have rather than replacing it.
+
+## Where the Shelf lives
+
+**In this browser, and nowhere else.** That matters:
+
+- It is **not a backup**. Use vault backups for that.
+- It **cannot send an entity to another person**, or to your other devices.
+- Clearing your browser's site data removes it.
+
+Think of it as a workbench you carry things across on, not a place to keep them. The Shelf shows how much space it's using, and you can remove single entries or clear it entirely at any time.
+
+---
+
+### ROLL TABLES & CARD DECKS
+
+Every table you have ever scribbled on an index card — wandering monsters, tavern names, what the storm blew in — can live in your vault and be rolled without leaving the app. Decks work the same way, but deal cards instead of rolling.
+
+None of this involves AI, and none of it needs a connection. It is dice and your own writing.
+
+## Making a table
+
+Open **Rolls & Decks**, click **New table**, and start adding entries. A table with entries can be rolled straight from the editor, so you can try it as you write it.
+
+Two ways to control how often something comes up:
+
+- **Weights** — give an entry a weight of 3 and it is picked three times as often as an entry weighted 1. Leave everything at 1 and it is a flat, even table.
+- **Ranges** — give explicit numbers instead: 1–70 wolves, 71–95 bandits, 96–100 something worse. Use this when you are copying a d100 table you already own and want the numbers to match the book.
+
+You can switch a table between the two and keep your entries.
+
+A weight of **0** is allowed and means what it looks like: keep the entry, never pick it. Useful for the thing you are saving for later.
+
+## One roll, a whole sentence
+
+Put another table's name in braces and a roll will fill it in:
+
+```
+A {creature} guarding {treasure}
+```
+
+Roll that and you get a full line — the creature comes from your creature table, the treasure from your treasure table. References can nest several deep, so a table can call a table that calls a table.
+
+After the roll you can see **which table produced each part**, and re-roll just the part you did not like without disturbing the rest. If you like the beast but not its hoard, re-roll the hoard.
+
+Two safety rails, both of which tell you plainly what happened:
+
+- If two tables reference each other in a loop, the roll still finishes and says it found a reference loop.
+- Nesting stops at 8 levels deep and says so. That is a different message from the loop one, so you can tell which problem you have.
+
+Renaming a table does not update tables that point at it. Before a rename goes through you will be told which tables would break, so you can decide.
+
+## Generating tables with AI
+
+Click **Generate with AI** (or **Generate entries** inside a table) to generate world-aware tables tailored to your setting.
+
+- **World-Grounded Lore**: The generator automatically references relevant characters, factions, and locations from your active vault.
+- **Sub-Table Integration**: If you have other tables or decks (e.g. `{treasure_minor}`, `{weather}`), the AI weaves matching `{source_name}` tokens directly into new entries.
+- **Dice Presets**: Quickly pick standard tabletop dice counts (d6, d8, d10, d12, d20) or choose any custom count from 2 to 50.
+- **Campaign Context**: Provide custom instructions and names that take highest priority.
+- **Staging Review**: Every generated row is displayed in an interactive staging preview before anything is added to your vault. Check, edit, or discard entries before accepting.
+
+## Building a table from something you already have
+
+**Import** takes a paste and turns it into a table. It reads three shapes:
+
+- a plain list, one entry per line
+- columns separated by tabs or commas, as you get from a spreadsheet
+- a Markdown table
+
+You see every row as it was understood **before anything is saved**, with a note on any row that did not come through cleanly. Fix them, skip them, or remap which column is which, then confirm.
+
+## Getting one back out
+
+**Export** hands you a single table or deck as a file, in one of four shapes:
+
+- **Codex file** — everything, and it imports straight back. This is the one for keeping a copy, or moving a table to another vault.
+- **Markdown table** — for pasting into notes or a post.
+- **Tab-separated** — for a spreadsheet, or another tool's importer.
+- **Plain lines** — just the text, one entry per line.
+
+The three sharing formats carry the words and not much else, so if your table pulls in another table with `{braces}`, you are told which ones before you download — the reference will not resolve for whoever opens it unless you send those too. Card pictures live in your vault and no text file can carry them, so a deck export says how many cards will arrive without their art.
+
+Import takes a file as well as a paste. Hand it a Codex file and the whole thing comes back — entries, weights, spreads, reversed meanings and all. Hand it anything else and the text lands in the paste box, so a `.csv` or `.tsv` sitting on your disk works too.
+
+A file you import is a **copy**. If you already have something by that name, the copy comes in renamed rather than quietly replacing what you had.
+
+## Decks
+
+A deck deals cards instead of rolling entries, and it deals **without replacement** — a drawn card does not come back until you shuffle. Drawn cards sit in the discard pile.
+
+That pile is part of your vault, not your browser session. Close the app mid-session, come back tomorrow, and the deck is exactly as you left it: same cards gone, same cards left. It travels with the vault, so a deck you push to Google Drive arrives on your other device mid-deck.
+
+**Reset** shuffles everything back in. When a deck runs out mid-draw it says so and offers the reshuffle rather than silently dealing nothing.
+
+Cards can also carry:
+
+- **A picture**, stored in your vault like any other image.
+- **A reversed meaning** — a second reading shown when the card comes up reversed, for decks where that matters.
+- **Spreads** — named positions dealt in one go, like Past / Present / Future. If the deck does not have enough cards left to fill the whole spread, it refuses rather than half-dealing it.
+
+You can paste a whole pile of cards in at once, the same way tables import.
+
+## Rolling from the chat
+
+In the Oracle chat:
+
+```
+/table Forest Encounters
+/deck Complications
+```
+
+The result appears inline in the transcript, where the rest of your session notes are. Add a number to deal several cards at once — `/deck Tarot 3`.
+
+Type a name slightly wrong and you are offered the closest matches rather than handed a silent wrong result. If nothing is close enough to be worth suggesting, it says the lookup failed instead of guessing.
+
+## A note on tables inside tables
+
+When a table references a **deck**, drawing from it that way does not deplete the deck. The reference is asking the deck a question, not dealing from it — so your carefully tracked discard pile is not quietly emptied by an unrelated encounter roll.
+
+## Where it all lives
+
+Tables and decks are plain files in your vault. You can read them, edit them by hand, back them up, and move them between vaults like anything else you have written.
 
 ---
 
