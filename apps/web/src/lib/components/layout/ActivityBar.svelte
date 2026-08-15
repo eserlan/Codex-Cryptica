@@ -18,8 +18,11 @@
    * dropped here and reached from the menu drawer instead; the rail is
    * vertical from `md:` up, where height is not the constraint.
    */
+  // `shrink-0` is load-bearing: without it flex shrinks these below the 44px
+  // minimum tap target long before the row ever overflows, so the scroll
+  // never engages and the bar quietly squashes instead.
   const shellClass = (item: NavItem) =>
-    `${item.placement === "overflow" ? "hidden md:flex" : "flex"} w-11 h-11 md:w-10 md:h-10 items-center justify-center rounded-md transition-all duration-200 group relative border`;
+    `${item.placement === "overflow" ? "hidden md:flex" : "flex"} shrink-0 w-11 h-11 md:w-10 md:h-10 items-center justify-center rounded-md transition-all duration-200 group relative border`;
 
   const stateClass = (active: boolean) =>
     active

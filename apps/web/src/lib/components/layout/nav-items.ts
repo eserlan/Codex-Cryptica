@@ -53,8 +53,10 @@ const stripSlash = (path: string) => path.replace(/\/+$/, "");
 export function matchesPath(href: string, pathname: string): boolean {
   const target = stripSlash(href);
   const current = stripSlash(pathname);
-  // The root has no segment to anchor on, so every path "starts with" it.
-  if (target === "") return current === "";
+  // The app root has no segment of its own to anchor on, so a prefix test
+  // would match every route beneath it. Compared against `base` rather than
+  // "" so this still holds if the app is ever served from a subpath.
+  if (target === stripSlash(base)) return current === target;
   return current === target || current.startsWith(`${target}/`);
 }
 
@@ -132,7 +134,10 @@ export function navItems(): NavItem[] {
       // slot and switch inside it.
       id: "random",
       icon: "icon-[lucide--dices]",
-      label: "Random",
+      // Not "Random": the drawer renders these labels as visible text, where
+      // a bare modifier would sit next to "Table" (the entity table) and read
+      // as the less table-ish of the two.
+      label: "Rolls & Decks",
       title: "Random Tables & Card Decks — roll and draw from your own",
       href: `${base}/tables`,
       alsoActiveFor: [`${base}/decks`],

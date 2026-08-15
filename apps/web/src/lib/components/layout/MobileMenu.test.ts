@@ -9,7 +9,8 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 // jsdom has no Web Animations API, which Svelte's transitions drive. The
 // drawer's open and close behaviour is the subject here, not its animation.
-vi.mock("svelte/transition", () => ({
+vi.mock("svelte/transition", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("svelte/transition")>()),
   fly: () => ({ duration: 0 }),
   fade: () => ({ duration: 0 }),
 }));

@@ -142,6 +142,16 @@ describe("ActivityBar", () => {
       expect(bar.className).toContain("overflow-x-auto");
       expect(bar.className).toContain("justify-center-safe");
     });
+
+    // Without this the row squashes below the 44px minimum tap target long
+    // before it overflows, so the scroll above never engages.
+    it("holds every item at its full size rather than letting it squash", () => {
+      render(ActivityBar);
+
+      for (const id of ["graph", "table", "explorer", "oracle"]) {
+        expect(classOf(id)).toContain("shrink-0");
+      }
+    });
   });
 
   it("does not render the AI Assessment shortcut", () => {

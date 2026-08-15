@@ -36,9 +36,10 @@ describe("nav items", () => {
 
     // The root has no segment to anchor on, so a prefix test matches the
     // entire app.
-    it("matches the root only at the root", () => {
+    it("matches the app root only at the root, not every route beneath it", () => {
       expect(matchesPath("/", "/")).toBe(true);
       expect(matchesPath("/", "/map")).toBe(false);
+      expect(matchesPath("/", "/tables/deep")).toBe(false);
     });
   });
 

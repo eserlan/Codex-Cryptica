@@ -43,8 +43,18 @@
    * its own URL, so a deck is still something you can bookmark and link to.
    */
   const KINDS = [
-    { id: "table", label: "Tables", icon: "icon-[lucide--list-tree]" },
-    { id: "deck", label: "Decks", icon: "icon-[lucide--layers]" },
+    {
+      id: "table",
+      label: "Tables",
+      href: "/tables",
+      icon: "icon-[lucide--list-tree]",
+    },
+    {
+      id: "deck",
+      label: "Decks",
+      href: "/decks",
+      icon: "icon-[lucide--layers]",
+    },
   ] as const;
 
   let query = $state("");
@@ -262,7 +272,7 @@
       {#each KINDS as option}
         {@const current = option.id === kind}
         <a
-          href="{base}/{option.id}s"
+          href="{base}{option.href}"
           aria-current={current ? "page" : undefined}
           class="flex items-center gap-1.5 rounded px-2.5 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest transition-colors {current
             ? 'bg-theme-primary/15 text-theme-primary'
