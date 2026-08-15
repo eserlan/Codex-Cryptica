@@ -174,12 +174,42 @@ The remaining topics from #2086, resequenced to satisfy its own cadence rule ("r
 3. **Settlement Generator** _(orig #7, generation)_ — Need: settlements containing reasons for characters to visit and interact with them. Tags: `#TTRPG #Worldbuilding`
 4. **Timeline** _(orig #11, organization)_ — Need: to understand how events in a setting affect one another over time. Tags: `#TTRPG #Worldbuilding`
 5. **Religion / Pantheon Generation** _(orig #8, generation)_ — Need: religions that influence the world rather than existing as background lore. Tags: `#TTRPG #Worldbuilding #Fantasy`
-6. **Adventure / Scenario Generation** _(orig #9, generation)_ — Need: something playable from the worldbuilding already created. Tags: `#TTRPG #RPGDesign`
-7. **Context-aware generation** _(orig #13, generation)_ — Need: generated material that knows about the world already created. Tags: `#TTRPG #Worldbuilding`
-8. **VTT** _(orig #12, play)_ — Need: to move from building the campaign into actually playing it without leaving the same environment. Tags: `#TTRPG #VTT`. Deliberately placed last before the ecosystem post — "now go play it" as the capstone of the individual-feature run.
-9. **Generator ecosystem / breadth** _(orig #14, gated — only after individual generators demonstrated)_ — Show how several generators chain together to build a campaign or setting. Tags: `#TTRPG #Worldbuilding`
+6. **Random Tables & Interactive Decks** _(spec #157, play/generation)_ — Need: quick random tables and card draws without leaving campaign notes. Tags: `#TTRPG #Worldbuilding #RPGDesign`
+7. **Adventure / Scenario Generation** _(orig #9, generation)_ — Need: something playable from the worldbuilding already created. Tags: `#TTRPG #RPGDesign`
+8. **Custom Stat Sheet Templates** _(spec #152, play/customization)_ — Need: reusable character/monster sheets tailored to any game system with inline rolls. Tags: `#TTRPG #Worldbuilding #RPGDesign`
+9. **Context-aware generation** _(orig #13, generation)_ — Need: generated material that knows about the world already created. Tags: `#TTRPG #Worldbuilding`
+10. **VTT** _(orig #12, play)_ — Need: to move from building the campaign into actually playing it without leaving the same environment. Tags: `#TTRPG #VTT`. Deliberately placed last before the ecosystem post — "now go play it" as the capstone of the individual-feature run.
+11. **Generator ecosystem / breadth** _(orig #14, gated — only after individual generators demonstrated)_ — Show how several generators chain together to build a campaign or setting. Tags: `#TTRPG #Worldbuilding`
 
 ## Drafted (not yet posted)
+
+### Random Tables & Interactive Decks (spec #157)
+
+- **Text:** I needed quick random encounter tables and card draws without leaving my campaign notes.
+
+  So I built Random Tables & Decks in Codex Cryptica. Roll weighted loot tables, draw tarot hands, and resolve nested references in your browser.
+
+  codexcryptica.com/tables
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png`
+- **Alt:** Codex Cryptica showing interactive table and deck rolling in the campaign workspace
+- **Note:** Spec #157 implementation. Supports markdown import, weighted entries, and interactive card spreads with zero backend dependencies.
+
+### Custom Stat Sheet Templates (ad hoc)
+
+- **Text:** Every RPG system needs different character and monster sheets, and generic templates never quite fit.
+
+  So I built custom Stat Sheet Templates in Codex Cryptica. Design reusable Markdown templates tailored to your game system with inline dice rolls.
+
+  codexcryptica.com/blog/custom-stat-sheet-templates
+
+  #TTRPG #Worldbuilding #RPGDesign
+
+- **Image:** `https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png`
+- **Alt:** Stat Sheet Templates manager in Codex Cryptica showing vault availability and default templates by category
+- **Note:** Sourced from official blog guide. Image is 450 KB PNG on CDN.
 
 ### Genre/theme breadth (ad hoc, not from #2086's numbered queue)
 
