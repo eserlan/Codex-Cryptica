@@ -212,7 +212,7 @@
       >
       <button
         class="text-[11px] font-bold text-theme-muted hover:text-red-500 uppercase transition-colors"
-        onclick={() => diceHistory.clearHistory("modal")}
+        onclick={() => diceHistory.clearHistory(["modal", "table"])}
       >
         Clear
       </button>

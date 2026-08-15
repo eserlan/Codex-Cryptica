@@ -1,8 +1,16 @@
 import type { OracleIntent } from "./types";
 
+/** Most cards one `/deck` command will deal. See the cap's use below. */
+const MAX_DRAW_COUNT = 100;
+
 export class OracleCommandParser {
   static parse(query: string, aiDisabled: boolean): OracleIntent {
     const q = query.toLowerCase().trim();
+    // Commands match against the trimmed, lowercased form, so any command that
+    // slices an argument out has to slice the trimmed form too. Slicing the raw
+    // input by a matched prefix's length is off by however much leading
+    // whitespace the user typed, and the caller does not trim before parsing.
+    const trimmed = query.trim();
 
     if (q === "/help") return { type: "help" };
     if (q === "/clear") return { type: "clear" };
@@ -16,6 +24,51 @@ export class OracleCommandParser {
           message: "Please specify a roll formula (e.g. /roll 1d20).",
         };
       return { type: "roll", formula };
+    }
+
+    // `/table` and `/deck` rather than `/draw`: `draw` is already routed to
+    // the visualization executor for image generation (#2247, research R5).
+    if (q === "/table" || q.startsWith("/table ")) {
+      const sourceName = trimmed.slice("/table".length).trim();
+      if (!sourceName) {
+        return {
+          type: "error",
+          message:
+            "Please name a table to roll (e.g. /table Forest Encounters).",
+        };
+      }
+      return { type: "roll-table", sourceName };
+    }
+
+    if (q === "/deck" || q.startsWith("/deck ")) {
+      const rest = trimmed.slice("/deck".length).trim();
+      if (!rest) {
+        return {
+          type: "error",
+          message:
+            "Please name a deck to draw from (e.g. /deck Complications).",
+        };
+      }
+      // A trailing number *may* be a card count ("/deck Tarot 3"), but it may
+      // equally be part of the name ("/deck Deck 52"). The parser cannot tell,
+      // so it reports both readings and lets the executor prefer whichever
+      // actually names a deck.
+      const withCount = rest.match(/^(.*?)\s+(\d+)$/);
+      if (withCount) {
+        return {
+          type: "draw-deck",
+          sourceName: rest,
+          countedName: withCount[1].trim(),
+          // Capped: a with-replacement draw loops once per card, each a
+          // rejection-sampled roll, so an unbounded count out of a typo would
+          // lock the thread rather than return a silly result.
+          drawCount: Math.min(
+            Math.max(Number(withCount[2]), 1),
+            MAX_DRAW_COUNT,
+          ),
+        };
+      }
+      return { type: "draw-deck", sourceName: rest };
     }
 
     if (q.startsWith("/create")) {

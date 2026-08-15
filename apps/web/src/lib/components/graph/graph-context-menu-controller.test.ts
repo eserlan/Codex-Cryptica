@@ -226,6 +226,10 @@ describe("GraphContextMenuController", () => {
     let tapStartHandler: any;
     let tapEndHandler: any;
     let tapHandler: any;
+    let currentTime = 1_000;
+    deps.clock = { now: () => currentTime };
+    controller = new GraphContextMenuController(() => cy, deps);
+
     const scratchData: Record<string, any> = {};
     cy.scratch = vi.fn((key: string, val?: any) => {
       if (val !== undefined) scratchData[key] = val;
@@ -256,7 +260,7 @@ describe("GraphContextMenuController", () => {
       renderedPosition: () => ({ x: 50, y: 50 }),
     };
 
-    const now = vi.spyOn(Date, "now").mockReturnValue(1_000);
+    currentTime = 1_000;
     tapStartHandler({});
     contextHandler({
       type: "taphold",
@@ -265,14 +269,13 @@ describe("GraphContextMenuController", () => {
     });
     expect(controller.contextMenuOpen).toBe(true);
 
-    now.mockReturnValue(2_000);
+    currentTime = 2_000;
     tapEndHandler({});
-    now.mockReturnValue(2_001);
+    currentTime = 2_001;
     tapHandler({});
 
     expect(controller.contextMenuOpen).toBe(true);
     expect(scratchData._lastCxtTap).toBe(2_000);
-    now.mockRestore();
   });
 
   it("closes the context menu for an ordinary tap", () => {
