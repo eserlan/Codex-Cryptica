@@ -173,10 +173,26 @@ describe("ActivityBar", () => {
       name: "Activity Bar",
     });
     expect(activityBar.className).toContain(
-      "pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]",
+      "pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))]",
     );
-    expect(activityBar.className).toContain("pt-2");
-    expect(activityBar.className).not.toContain("py-2");
+    expect(activityBar.className).toContain("pt-1");
+    expect(activityBar.className).not.toContain("py-1");
+  });
+
+  // 4px + 44px + 4px. The padding is what gives, not the buttons: the row is
+  // the last thing between a phone's content and the bottom of the screen, but
+  // a tap target under 44px is a different kind of cost.
+  it("stays 52px tall without shrinking its tap targets", () => {
+    render(ActivityBar);
+
+    const activityBar = screen.getByTestId("activity-bar");
+    expect(activityBar.className).toContain("min-h-13");
+    // min-h must not exceed the padding + button height, or it pads the bar
+    // back out to whatever it says.
+    expect(activityBar.className).not.toContain("min-h-14");
+    expect(screen.getByTestId("activity-bar-graph").className).toContain(
+      "h-11",
+    );
   });
 
   it("opens the Oracle sidebar when the Oracle shortcut is clicked", async () => {
