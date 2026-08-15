@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
@@ -78,5 +78,34 @@ describe("/table page", () => {
     expect(
       screen.getByTestId("entity-table-connections-e1").textContent?.trim(),
     ).toBe("0");
+  });
+
+  it("toggles the mobile filter panel and shows active filter badge", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const toggleBtn = screen.getByTestId("entity-table-mobile-filters-toggle");
+    expect(toggleBtn.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("entity-table-active-filter-badge")).toBeNull();
+
+    // Toggle open
+    await fireEvent.click(toggleBtn);
+    expect(toggleBtn.getAttribute("aria-expanded")).toBe("true");
+
+    // Click a type filter
+    const typeFilters = screen.getAllByTestId("entity-table-type-filter");
+    await fireEvent.click(typeFilters[0]);
+
+    // Active filter badge appears with count 1
+    const badge = screen.getByTestId("entity-table-active-filter-badge");
+    expect(badge.textContent?.trim()).toBe("1");
+
+    // Clear filters
+    const clearBtn = screen.getByTestId("entity-table-clear-filters");
+    await fireEvent.click(clearBtn);
+    expect(screen.queryByTestId("entity-table-active-filter-badge")).toBeNull();
   });
 });
