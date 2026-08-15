@@ -26,11 +26,6 @@ vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
     return { $$render: () => "<div data-testid='app-header'></div>" };
   },
 }));
-vi.mock("$lib/components/layout/AppFooter.svelte", () => ({
-  default: function AppFooterMock() {
-    return { $$render: () => "<div data-testid='app-footer'></div>" };
-  },
-}));
 vi.mock("$lib/components/layout/NotificationToast.svelte", () => ({
   default: function NotificationToastMock() {
     return { $$render: () => "" };
@@ -140,6 +135,8 @@ vi.mock("$lib/config/help-content", () => ({
 }));
 vi.mock("$lib/config", () => ({
   VERSION: "0.0.0",
+  PATREON_URL: "https://patreon.com/codexcryptica",
+  DISCORD_URL: "https://discord.gg/codexcryptica",
 }));
 vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [],
@@ -291,10 +288,10 @@ describe("+layout.svelte", () => {
     expect(screen.getByTestId("layout-children")).toBeTruthy();
   });
 
-  it("does not mount marketing footer chrome in the application shell", () => {
+  it("mounts the application footer in the standard application shell", () => {
     render(LayoutTestHost);
 
-    expect(screen.queryByTestId("app-footer")).toBeNull();
+    expect(screen.getByTestId("app-footer")).toBeTruthy();
   });
 
   it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {

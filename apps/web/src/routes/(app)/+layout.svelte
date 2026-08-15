@@ -29,6 +29,7 @@
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
+  import AppFooter from "$lib/components/layout/AppFooter.svelte";
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
@@ -709,6 +710,10 @@
         {/if}
       </main>
     </div>
+
+    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      <AppFooter />
+    {/if}
   </div>
 
   <!-- Modals rendered outside the inert wrapper -->
