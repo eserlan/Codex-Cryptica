@@ -26,15 +26,13 @@ class MemoryPersistence implements VaultThemePromptPersistence {
 }
 
 describe("VaultThemePromptStore", () => {
-  let now = 0;
   let persistence: MemoryPersistence;
   let store: VaultThemePromptStore;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    now = 0;
     persistence = new MemoryPersistence();
-    store = new VaultThemePromptStore(persistence, () => now, 15_000);
+    store = new VaultThemePromptStore(persistence, Date.now, 15_000);
   });
 
   afterEach(() => {
@@ -58,7 +56,6 @@ describe("VaultThemePromptStore", () => {
   it("does not prompt with fifteen minutes of activity if fewer than five entities exist", () => {
     store.startTracking("v1");
 
-    now = 15 * 60 * 1000;
     vi.advanceTimersByTime(15 * 60 * 1000);
 
     expect(store.shouldAutoPrompt("v1", 4)).toBe(false);
@@ -67,7 +64,6 @@ describe("VaultThemePromptStore", () => {
   it("prompts after fifteen minutes of tracked activity once the vault has at least five entities", () => {
     store.startTracking("v1");
 
-    now = 15 * 60 * 1000;
     vi.advanceTimersByTime(15 * 60 * 1000);
 
     expect(store.shouldAutoPrompt("v1", 5)).toBe(true);
@@ -77,7 +73,7 @@ describe("VaultThemePromptStore", () => {
     store.startTracking("v1");
     store.markDismissed("v1");
 
-    const reloaded = new VaultThemePromptStore(persistence, () => now, 15_000);
+    const reloaded = new VaultThemePromptStore(persistence, Date.now, 15_000);
     expect(reloaded.getRecord("v1").status).toBe("dismissed");
     expect(reloaded.shouldAutoPrompt("v1", 7)).toBe(false);
   });
@@ -86,14 +82,14 @@ describe("VaultThemePromptStore", () => {
     store.startTracking("v1");
     store.markApplied("v1");
 
-    const reloaded = new VaultThemePromptStore(persistence, () => now, 15_000);
+    const reloaded = new VaultThemePromptStore(persistence, Date.now, 15_000);
     expect(reloaded.getRecord("v1").status).toBe("applied");
     expect(reloaded.shouldAutoPrompt("v1", 7)).toBe(false);
   });
 
   it("commits elapsed time when tracking is paused", () => {
     store.startTracking("v1");
-    now = 2 * 60 * 1000;
+    vi.advanceTimersByTime(2 * 60 * 1000);
 
     store.pauseTracking();
 
