@@ -6,6 +6,9 @@
     diceHistory,
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
+  import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { copyTextToClipboard } from "$lib/utils/share-link";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
 
@@ -20,13 +23,26 @@
     source,
     sources = randomSources,
     history = diceHistory,
+    addToChat = async (text) => {
+      if (!addToOracleChatInput(text)) {
+        throw new Error("The Oracle chat is not available.");
+      }
+    },
+    copyText = async (text) => {
+      const copied = await copyTextToClipboard(text, navigator.clipboard);
+      if (!copied) throw new Error("Clipboard copy is unavailable.");
+    },
   }: {
     source: RandomSource;
     sources?: RandomSourceStore;
     history?: DiceHistoryStore;
+    addToChat?: (text: string) => Promise<void>;
+    copyText?: (text: string) => Promise<void>;
   } = $props();
 
   let outcome = $state<RollOutcome | undefined>();
+  let isAddingToChat = $state(false);
+  let copied = $state(false);
 
   const dieValue = $derived(outcome?.chain[0]?.dieValue);
 
@@ -41,6 +57,7 @@
   });
 
   const hasEntries = $derived((source.entries ?? []).length > 0);
+  const resultText = $derived(outcome?.finalText ?? "");
 
   /** True once a result was composed from more than one source. */
   const isComposed = $derived(
@@ -50,6 +67,7 @@
   async function roll() {
     const result = sources.roll(source);
     outcome = result;
+    copied = false;
     await record(result);
   }
 
@@ -61,7 +79,37 @@
     if (!outcome) return;
     const result = sources.rerollFragment(outcome, nodePath);
     outcome = result;
+    copied = false;
     await record(result);
+  }
+
+  async function addResultToChat() {
+    if (!resultText || isAddingToChat) return;
+    isAddingToChat = true;
+    try {
+      await addToChat(resultText);
+      notificationStore.notify("Result added to chat input.", "success");
+    } catch (error) {
+      console.error("[RandomSources] Could not add result to chat", error);
+      notificationStore.notify(
+        "That result could not be added to chat.",
+        "error",
+      );
+    } finally {
+      isAddingToChat = false;
+    }
+  }
+
+  async function copyResult() {
+    if (!resultText) return;
+    try {
+      await copyText(resultText);
+      copied = true;
+      notificationStore.notify("Result copied to clipboard.", "success");
+    } catch (error) {
+      console.error("[RandomSources] Could not copy result", error);
+      notificationStore.notify("That result could not be copied.", "error");
+    }
   }
 
   /** Writes the roll into the shared roll history (FR-018). */
@@ -141,6 +189,32 @@
       >
         {outcome.finalText}
       </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2 border-t border-theme-border/40 pt-3">
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        onclick={addResultToChat}
+        disabled={isAddingToChat}
+        aria-busy={isAddingToChat}
+        data-testid="add-roll-result-to-chat"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--message-square-plus] h-3.5 w-3.5"
+        ></span>
+        {isAddingToChat ? "Adding…" : "Add to chat"}
+      </button>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        onclick={copyResult}
+        data-testid="copy-roll-result"
+      >
+        <span aria-hidden="true" class="icon-[lucide--copy] h-3.5 w-3.5"></span>
+        {copied ? "Copied" : "Copy"}
+      </button>
     </div>
 
     {#if isComposed}

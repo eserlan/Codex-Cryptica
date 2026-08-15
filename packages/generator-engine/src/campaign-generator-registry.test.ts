@@ -57,6 +57,7 @@ describe("registry lookup", () => {
       "secret-society",
       "star-system",
       "alien-race",
+      "random-table",
     ]);
   });
 
@@ -1174,6 +1175,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "secret-society": "faction",
       "star-system": "location",
       "alien-race": "creature",
+      "random-table": "table",
     });
   });
 

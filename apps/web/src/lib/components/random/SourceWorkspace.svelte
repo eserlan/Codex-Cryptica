@@ -10,6 +10,9 @@
   } from "$lib/features/random";
   import { vault } from "$lib/stores/vault.svelte";
   import ImportWizard from "./ImportWizard.svelte";
+  import ExportDialog from "./ExportDialog.svelte";
+  import TableGenerateDialog from "./TableGenerateDialog.svelte";
+  import type { CandidateTableEntry } from "generator-engine";
   import {
     MODE_STORAGE_KEY,
     resolveMode,
@@ -137,6 +140,8 @@
   const saving = $derived(dirty || inFlight > 0);
   let deleteImpact = $state<RandomSource[] | undefined>();
   let importing = $state(false);
+  let exporting = $state(false);
+  let generatingTable = $state(false);
   let pendingRename = $state<
     { name: string; referencedBy: RandomSource[] } | undefined
   >();
@@ -192,6 +197,8 @@
     deleteImpact = undefined;
     pendingRename = undefined;
     importing = false;
+    exporting = false;
+    generatingTable = false;
     // Picking something is the end of browsing, so the list gets out of the
     // way and hands the screen to what was picked. Desktop ignores this.
     listOpen = false;
@@ -212,6 +219,25 @@
     select(source);
     openBuild();
     enqueue(() => randomSources.save(source));
+  }
+
+  function handleCreateGeneratedTable(
+    candidates: CandidateTableEntry[],
+    tableTitle?: string,
+    tableDescription?: string,
+  ) {
+    generatingTable = false;
+    const name = uniqueName(tableTitle?.trim() || `New ${noun}`);
+    const created = randomSources.create("table", name);
+    created.description = tableDescription;
+    created.entries = candidates.map((c) => ({
+      id: c.id || crypto.randomUUID(),
+      text: c.text,
+      weight: c.weight ?? 1,
+    }));
+    select(created);
+    openBuild();
+    enqueue(() => randomSources.save(created));
   }
 
   function uniqueName(base: string): string {
@@ -453,6 +479,24 @@
         New {noun}
       </button>
 
+      {#if kind === "table"}
+        <button
+          type="button"
+          onclick={() => {
+            generatingTable = true;
+            listOpen = false;
+          }}
+          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+          data-testid="generate-table-btn"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--sparkles] h-3.5 w-3.5 text-theme-primary"
+          ></span>
+          Generate with AI
+        </button>
+      {/if}
+
       {#if allowImport}
         <button
           type="button"
@@ -470,6 +514,25 @@
           Import
         </button>
       {/if}
+
+      <!-- Beside Import, because they are the same job in two directions.
+           Disabled rather than hidden when nothing is open, so it is
+           discoverable before it is needed (issue 2263). -->
+      <button
+        type="button"
+        onclick={() => {
+          exporting = true;
+          listOpen = false;
+        }}
+        disabled={!draft}
+        title={draft ? `Export "${draft.name}"` : `Open a ${noun} to export it`}
+        class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text"
+        data-testid="open-export"
+      >
+        <span aria-hidden="true" class="icon-[lucide--download] h-3.5 w-3.5"
+        ></span>
+        Export
+      </button>
 
       <ul class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {#each visible as source (source.id)}
@@ -494,7 +557,9 @@
     </aside>
 
     <section class="min-h-0 flex-1 overflow-y-auto p-4">
-      {#if importing}
+      {#if exporting && draft}
+        <ExportDialog source={draft} onClose={() => (exporting = false)} />
+      {:else if importing}
         <ImportWizard
           {kind}
           onImport={completeImport}
@@ -599,6 +664,15 @@
       {/if}
     </section>
   </div>
+
+  {#if kind === "table"}
+    <TableGenerateDialog
+      open={generatingTable}
+      mode="new"
+      onAccept={handleCreateGeneratedTable}
+      onClose={() => (generatingTable = false)}
+    />
+  {/if}
 </div>
 
 <style>

@@ -45,6 +45,16 @@ Two safety rails, both of which tell you plainly what happened:
 
 Renaming a table does not update tables that point at it. Before a rename goes through you will be told which tables would break, so you can decide.
 
+## Generating tables with AI
+
+Click **Generate with AI** (or **Generate entries** inside a table) to generate world-aware tables tailored to your setting.
+
+- **World-Grounded Lore**: The generator automatically references relevant characters, factions, and locations from your active vault.
+- **Sub-Table Integration**: If you have other tables or decks (e.g. `{treasure_minor}`, `{weather}`), the AI weaves matching `{source_name}` tokens directly into new entries.
+- **Dice Presets**: Quickly pick standard tabletop dice counts (d6, d8, d10, d12, d20) or choose any custom count from 2 to 50.
+- **Campaign Context**: Provide custom instructions and names that take highest priority.
+- **Staging Review**: Every generated row is displayed in an interactive staging preview before anything is added to your vault. Check, edit, or discard entries before accepting.
+
 ## Building a table from something you already have
 
 **Import** takes a paste and turns it into a table. It reads three shapes:
@@ -54,6 +64,21 @@ Renaming a table does not update tables that point at it. Before a rename goes t
 - a Markdown table
 
 You see every row as it was understood **before anything is saved**, with a note on any row that did not come through cleanly. Fix them, skip them, or remap which column is which, then confirm.
+
+## Getting one back out
+
+**Export** hands you a single table or deck as a file, in one of four shapes:
+
+- **Codex file** — everything, and it imports straight back. This is the one for keeping a copy, or moving a table to another vault.
+- **Markdown table** — for pasting into notes or a post.
+- **Tab-separated** — for a spreadsheet, or another tool's importer.
+- **Plain lines** — just the text, one entry per line.
+
+The three sharing formats carry the words and not much else, so if your table pulls in another table with `{braces}`, you are told which ones before you download — the reference will not resolve for whoever opens it unless you send those too. Card pictures live in your vault and no text file can carry them, so a deck export says how many cards will arrive without their art.
+
+Import takes a file as well as a paste. Hand it a Codex file and the whole thing comes back — entries, weights, spreads, reversed meanings and all. Hand it anything else and the text lands in the paste box, so a `.csv` or `.tsv` sitting on your disk works too.
+
+A file you import is a **copy**. If you already have something by that name, the copy comes in renamed rather than quietly replacing what you had.
 
 ## Decks
 
