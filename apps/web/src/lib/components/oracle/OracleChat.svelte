@@ -206,6 +206,7 @@
       if (!text) return;
 
       input = input.trim() ? `${input}\n${text}` : text;
+      event.preventDefault();
       tick().then(() => {
         adjustHeight();
         textArea?.focus();

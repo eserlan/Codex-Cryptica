@@ -46,6 +46,28 @@ describe("share-link helpers", () => {
     expect(textArea.remove).toHaveBeenCalled();
   });
 
+  it("returns false when the clipboard fallback throws", async () => {
+    const textArea = {
+      value: "",
+      style: {},
+      setAttribute: vi.fn(),
+      select: vi.fn(),
+      remove: vi.fn(),
+    };
+    const documentRef = {
+      body: { append: vi.fn() },
+      createElement: vi.fn(() => textArea),
+      execCommand: vi.fn(() => {
+        throw new Error("blocked");
+      }),
+    } as unknown as Document;
+
+    await expect(
+      copyTextToClipboard("hello", undefined, documentRef),
+    ).resolves.toBe(false);
+    expect(textArea.remove).toHaveBeenCalled();
+  });
+
   it("should copy the share link before waiting for host readiness", async () => {
     const onLink = vi.fn();
     const onCopied = vi.fn();

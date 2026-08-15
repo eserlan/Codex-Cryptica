@@ -40,7 +40,7 @@
     },
     copyText = async (text) => {
       const copied = await copyTextToClipboard(text, navigator.clipboard);
-      if (!copied) throw new Error("Clipboard access was denied.");
+      if (!copied) throw new Error("Clipboard copy is unavailable.");
     },
   }: {
     deck: RandomSource;

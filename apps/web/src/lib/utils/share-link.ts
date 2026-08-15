@@ -45,6 +45,9 @@ export async function copyTextToClipboard(
 
   try {
     return documentRef.execCommand("copy");
+  } catch (err) {
+    console.warn("[share-link] Clipboard fallback failed", err);
+    return false;
   } finally {
     textArea.remove();
   }
