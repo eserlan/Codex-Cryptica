@@ -36,6 +36,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
     },
   },
 }));
+vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
 vi.mock("$lib/config", () => ({
   SCHEMA_ORG: {},
   DISCORD_URL: "https://discord.gg/5UUMCChF2u",
