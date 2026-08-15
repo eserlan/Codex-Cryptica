@@ -202,7 +202,7 @@
 **Learning:** In Svelte `$derived` blocks, chaining `.filter(...).length` on potentially large arrays creates an entirely new intermediate array in memory just to count its elements. This causes unnecessary garbage collection pressure and CPU overhead on every reactive update.
 **Action:** Replace inline `.filter(...).length` derivations with `$derived.by()` utilizing an imperative `for` loop that iterates over the original array and increments a counter based on the filter logic. This reduces the memory complexity of the count from O(N) to O(1).
 
-## 2024-05-18 - Replacing chained array methods with imperative early-exit loops
+## 2026-08-14 - Replacing chained array methods with imperative early-exit loops
 
 **Learning:** When acting as the 'Bolt' persona, do not replace single native array methods like `array.filter()` or `array.every()` with verbose imperative loops, as this is a micro-optimization that degrades readability. Reserve imperative loop optimizations for replacing chained array methods (e.g., `.map().filter().slice()`), eliminating unnecessary allocations (e.g., `[...set].map()`), or introducing early exits to reduce algorithmic complexity (e.g., O(N) to O(K)).
 **Action:** When working with large datasets, replace chains of array mapping and filtering (like `[...set].map().filter().slice()`) with a single imperative `for...of` loop and an early `break` condition to avoid massive intermediate array allocations.
