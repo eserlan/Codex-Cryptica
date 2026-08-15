@@ -140,7 +140,7 @@
     <a
       {href}
       onclick={handleTitleClick}
-      class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded block truncate md:inline"
+      class="font-header text-sm font-semibold text-theme-text hover:text-theme-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 rounded block truncate md:inline md:whitespace-normal md:overflow-visible"
       data-testid="entity-table-row-link"
     >
       {entity.title}

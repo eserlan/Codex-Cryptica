@@ -504,6 +504,10 @@
       showIncompleteOnly ||
       hasActiveColumnFilters,
   );
+
+  const hasFilterPanel = $derived(
+    typeCounts.size > 0 || labelFilters.size > 0 || hasActiveFilters,
+  );
 </script>
 
 <svelte:head>
@@ -573,7 +577,9 @@
           type="button"
           onclick={() => (showMobileFilters = !showMobileFilters)}
           aria-expanded={showMobileFilters}
-          aria-controls="entity-table-filter-panel"
+          aria-controls={hasFilterPanel
+            ? "entity-table-filter-panel"
+            : undefined}
           data-testid="entity-table-mobile-filters-toggle"
           class="inline-flex md:hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 shrink-0 {showMobileFilters ||
           activeFilterCount > 0
@@ -624,7 +630,7 @@
         </p>
       {/if}
 
-      {#if typeCounts.size > 0 || labelFilters.size > 0 || hasActiveFilters}
+      {#if hasFilterPanel}
         <div
           id="entity-table-filter-panel"
           class="{showMobileFilters
