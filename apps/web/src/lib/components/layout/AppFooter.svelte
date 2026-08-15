@@ -5,7 +5,8 @@
 </script>
 
 <footer
-  class="px-6 py-4 bg-chrome-surface border-t border-chrome-border flex flex-col md:flex-row justify-between items-center gap-4 hidden md:flex"
+  class="px-6 py-4 bg-chrome-surface border-t border-chrome-border hidden md:flex md:flex-row justify-between items-center gap-4"
+  data-testid="app-footer"
 >
   <div
     class="text-[10px] font-sans text-chrome-muted uppercase tracking-widest"
