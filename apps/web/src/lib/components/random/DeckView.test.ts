@@ -5,6 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { RandomSource } from "random-source-engine";
 
 import DeckView from "./DeckView.svelte";
+import {
+  clearOracleChatDraft,
+  getOracleChatDraft,
+} from "$lib/components/oracle/oracle-chat-input";
 
 if (typeof Element !== "undefined" && !Element.prototype.animate) {
   Element.prototype.animate = () =>
@@ -138,5 +142,51 @@ describe("DeckView result actions", () => {
         "Copied",
       ),
     );
+  });
+
+  it("dispatches to both VTT chat and Oracle chat by default when VTT is enabled", async () => {
+    clearOracleChatDraft();
+    const sendChatMessage = vi.fn();
+    const session = {
+      vttEnabled: true,
+      sendChatMessage,
+    };
+    const service = {
+      draw: vi.fn(async () => ({
+        cards: [
+          {
+            card: deckOf(1).cards![0],
+            reversed: false,
+            resolved: {
+              finalText: "The journey begins",
+              chain: [],
+              notices: [],
+            },
+          },
+        ],
+        positions: ["Present"],
+        exhausted: false,
+        empty: false,
+      })),
+      drawSpread: vi.fn(),
+      reset: vi.fn(),
+      remaining: vi.fn(async () => []),
+    };
+    render(DeckView, {
+      props: {
+        deck: deckOf(1),
+        service,
+        session,
+        ...stores(),
+      } as never,
+    });
+
+    await fireEvent.click(screen.getByTestId("draw-cards"));
+    await screen.findByTestId("add-draw-result-to-chat");
+    await fireEvent.click(screen.getByTestId("add-draw-result-to-chat"));
+
+    const text = "Present: Card 0: The journey begins";
+    await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith(text));
+    expect(getOracleChatDraft()).toBe(text);
   });
 });
