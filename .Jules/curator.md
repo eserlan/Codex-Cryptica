@@ -1,3 +1,8 @@
+## 2025-02-15 - Extract Interfaces from God-File Config
+
+**Learning:** When dealing with large configuration files (like `seo-pages.ts`) that mix massive object dictionaries with type definitions, the type interfaces (e.g., `SEOPageData`, `SEOImportPageData`) can be safely extracted to a dedicated `seo-types.ts` sibling file. This isolates the type definitions from the raw data and improves readability without altering runtime behavior. The original file can simply import and re-export the types to preserve backward compatibility across the codebase.
+**Action:** Extract large or central type definitions out of data-heavy configuration files into dedicated sibling `*-types.ts` files, and re-export them from the original location to ensure safety.
+
 ## 2025-02-14 - Extract Pure Transformation Functions
 
 **Learning:** When a large Svelte or component controller file (`import-settings-controller.svelte.ts`) contains pure transformation functions (`mapThemeToGenre`) alongside stateful class/component logic, these functions can safely be extracted to sibling `.ts` files to reduce the god file's size and improve component scanability. Also if there are duplicate implementations of this pure function in test files (`ImportSettings.pack.test.ts`), they can be removed and all places updated to import from the newly created reusable file (`theme-mapper.ts`).
