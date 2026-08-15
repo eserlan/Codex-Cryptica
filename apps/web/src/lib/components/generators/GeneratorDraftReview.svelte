@@ -79,6 +79,28 @@
     </div>
   {/if}
 
+  {#if draft.contextProvenance?.length}
+    <div
+      class="flex items-center gap-2 rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-xs text-chrome-text"
+      data-testid="in-vault-provenance"
+    >
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--zap] h-4 w-4 text-chrome-accent shrink-0"
+      ></span>
+      <span class="text-chrome-muted">Used context:</span>
+      <div class="flex flex-wrap items-center gap-1.5 font-medium">
+        {#each draft.contextProvenance as item, i (item.id)}
+          <span class="text-chrome-text"
+            >{item.title}{#if i < draft.contextProvenance.length - 1}<span
+                class="text-chrome-muted font-normal">,</span
+              >{/if}</span
+          >
+        {/each}
+      </div>
+    </div>
+  {/if}
+
   <div class="flex flex-col gap-1">
     <label
       for="draft-title"

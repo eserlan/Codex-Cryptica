@@ -167,6 +167,21 @@ function mapOutputToDraft(
     request: GeneratorRunRequest,
   ): GeneratedDraft => {
     const availableIds = request.vaultContext?.categoryLabels?.map((c) => c.id);
+    const contextProvenance: Array<{ id: string; title: string }> = [];
+    if (request.vaultContext?.sourceEntity) {
+      contextProvenance.push({
+        id: request.vaultContext.sourceEntity.id,
+        title: request.vaultContext.sourceEntity.title,
+      });
+    }
+    if (request.vaultContext?.neighbors?.length) {
+      for (const n of request.vaultContext.neighbors) {
+        if (!contextProvenance.some((e) => e.id === n.id)) {
+          contextProvenance.push({ id: n.id, title: n.title });
+        }
+      }
+    }
+
     return {
       title: output.title,
       entityType: resolveEntityType(generatorId, availableIds),
@@ -188,6 +203,11 @@ function mapOutputToDraft(
       languageProfileVersion: output.languageProfileVersion,
       primaryLanguageId: request.vaultContext?.selectedLanguage?.id,
       primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
+      bodies: output.bodies ? [...output.bodies] : undefined,
+      starType: output.starType,
+      contextProvenance: contextProvenance.length
+        ? contextProvenance
+        : undefined,
     };
   };
 }
