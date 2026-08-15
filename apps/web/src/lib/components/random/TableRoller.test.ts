@@ -112,4 +112,46 @@ describe("TableRoller result actions", () => {
     );
     consoleError.mockRestore();
   });
+
+  it("records roll history with deterministic timestamp from injected clock", async () => {
+    const addResult = vi.fn(async () => {});
+    const clock = { now: () => 1700000000123 };
+    renderRoller({ history: { addResult }, clock });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    await waitFor(() =>
+      expect(addResult).toHaveBeenCalledWith(
+        expect.objectContaining({
+          total: 3,
+          formula: "d6",
+          timestamp: 1700000000123,
+        }),
+        "table",
+        expect.objectContaining({
+          label: "Complications",
+          source: expect.objectContaining({
+            sourceId: "table-1",
+            sourceName: "Complications",
+            finalText: "The bridge collapses",
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("does not record roll history when table has no entries", async () => {
+    const addResult = vi.fn(async () => {});
+    const emptySource: RandomSource = {
+      ...source,
+      entries: [],
+    };
+    renderRoller({ source: emptySource, history: { addResult } });
+
+    const rollButton = screen.getByTestId("roll-table") as HTMLButtonElement;
+    expect(rollButton.disabled).toBe(true);
+
+    await fireEvent.click(rollButton);
+    expect(addResult).not.toHaveBeenCalled();
+  });
 });

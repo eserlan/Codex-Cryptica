@@ -70,6 +70,7 @@
   );
 
   async function roll() {
+    if (!hasEntries) return;
     const result = sources.roll(source);
     outcome = result;
     copied = false;
