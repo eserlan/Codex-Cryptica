@@ -29,17 +29,34 @@ export interface CodexImportFailure {
 
 export type CodexImportResult = CodexImportOk | CodexImportFailure;
 
+/** The frontmatter block, when the file has a closed one. */
+const FRONTMATTER_BLOCK = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---/;
+
+/** How far to look when the block is not closed. Ours declares kind by line 4. */
+const UNCLOSED_LINE_LIMIT = 20;
+
 /**
  * Whether text is worth handing to `parseCodexImport` at all.
  *
- * Deliberately cheap and structural: the wizard uses it to decide which
- * preview to show while somebody is still pasting, so it must not depend on
- * the content being complete or valid yet.
+ * The `kind` line is looked for **inside the frontmatter only**. Scanning the
+ * whole document matched any Markdown note that happened to have frontmatter
+ * and the words `kind: table` somewhere in its body, which then failed to
+ * parse instead of falling through to the paste box where it belonged.
+ *
+ * A file whose frontmatter is not closed is still checked, over the first
+ * lines: a truncated export is better answered with "that file could not be
+ * read" than by dropping its contents into the paste box as if it were a list.
  */
 export function looksLikeCodexFile(text: string): boolean {
   const trimmed = text.trimStart();
   if (!trimmed.startsWith("---")) return false;
-  return /^\s*kind:\s*(table|deck)\s*$/m.test(trimmed);
+
+  const closed = trimmed.match(FRONTMATTER_BLOCK);
+  const block =
+    closed?.[1] ??
+    trimmed.split(/\r?\n/).slice(0, UNCLOSED_LINE_LIMIT).join("\n");
+
+  return /^[ \t]*kind:[ \t]*(table|deck)[ \t]*$/m.test(block);
 }
 
 /**

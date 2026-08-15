@@ -145,6 +145,49 @@ describe("export", () => {
         false,
       );
     });
+
+    /**
+     * The kind is read from the frontmatter, not from anywhere in the file.
+     * Scanning the whole document claimed an ordinary note that happened to
+     * mention `kind: table` in its body, which then failed to parse instead of
+     * falling through to the paste box where it belonged.
+     */
+    it("ignores a kind line in the body of an ordinary note", () => {
+      const note = [
+        "---",
+        "title: My campaign notes",
+        "---",
+        "",
+        "Ideas for random content:",
+        "",
+        "kind: table",
+        "- wandering monsters",
+      ].join("\n");
+
+      expect(looksLikeCodexFile(note)).toBe(false);
+    });
+
+    it("ignores a kind line with no frontmatter at all", () => {
+      expect(looksLikeCodexFile("kind: table\nsomething else")).toBe(false);
+    });
+
+    /**
+     * A truncated export is better answered with "that file could not be read"
+     * than by dropping its contents into the paste box as if it were a list.
+     */
+    it("still claims an export whose frontmatter was cut short", () => {
+      expect(
+        looksLikeCodexFile("---\nid: t1\nname: Omens\nkind: table\n"),
+      ).toBe(true);
+    });
+
+    it("does not go looking past the first lines of an unclosed block", () => {
+      const long = ["---", ...Array(40).fill("note: x"), "kind: table"].join(
+        "\n",
+      );
+
+      expect(looksLikeCodexFile(long)).toBe(false);
+    });
   });
 
   describe("share formats", () => {
