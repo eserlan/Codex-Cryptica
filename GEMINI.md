@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-14
+Auto-generated from all feature plans. Last updated: 2026-08-15
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai` (159-ai-world-aware-tables)
+- OPFS (Vault Files) & IndexedDB (via existing vault and random source stores; zero new database stores or schema flags) (159-ai-world-aware-tables)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator` (1515-table-missing-filters)
 - Transient client-side reactive state (persisted preset views deferred to #1518) (1515-table-missing-filters)
@@ -239,11 +242,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 159-ai-world-aware-tables: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai`
+
 - 1515-table-missing-filters: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator`
 
 - 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
-
-- 154-llm-session-ratelimit: Added TypeScript, Svelte 5 Runes, SvelteKit 2, Cloudflare Workers + Cloudflare Turnstile, Web Crypto API
 
 <!-- MANUAL ADDITIONS START -->
 
