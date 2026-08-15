@@ -167,14 +167,27 @@
     return randomSources.impactOf(renameModalTarget).referencedBy;
   });
 
+  const CONTEXT_MENU_WIDTH = 176;
+  const CONTEXT_MENU_HEIGHT = 272;
+
+  function showContextMenu(source: RandomSource, x: number, y: number) {
+    const maxX = browser
+      ? Math.max(0, window.innerWidth - CONTEXT_MENU_WIDTH)
+      : x;
+    const maxY = browser
+      ? Math.max(0, window.innerHeight - CONTEXT_MENU_HEIGHT)
+      : y;
+    contextMenu = {
+      x: Math.min(x, maxX),
+      y: Math.min(y, maxY),
+      source,
+    };
+  }
+
   function openContextMenu(e: MouseEvent, source: RandomSource) {
     e.preventDefault();
     e.stopPropagation();
-    contextMenu = {
-      x: e.clientX,
-      y: e.clientY,
-      source,
-    };
+    showContextMenu(source, e.clientX, e.clientY);
   }
 
   let longPressTimer: ReturnType<typeof setTimeout> | undefined;
@@ -200,11 +213,7 @@
           // ignore
         }
       }
-      contextMenu = {
-        x: clientX,
-        y: clientY,
-        source,
-      };
+      showContextMenu(source, clientX, clientY);
     }, 450);
   }
 
@@ -253,6 +262,15 @@
     renameModalTarget = null;
     renameModalDraft = "";
     renameModalError = "";
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (event.key !== "Escape") return;
+    if (deleteModalTarget) {
+      closeDeleteModal();
+    } else if (renameModalTarget) {
+      closeRenameModal();
+    }
   }
 
   function executeRename() {
@@ -491,17 +509,21 @@
   }
 
   function confirmDelete(source: RandomSource) {
-    clearTimeout(saveTimer);
-    dirty = false;
+    const removesSelectedSource = source.id === selectedId;
+    if (removesSelectedSource) flushPendingSave();
     enqueue(() => randomSources.remove(source));
     deleteImpact = undefined;
-    selectedId = undefined;
-    draft = undefined;
-    // Nothing is open now, so the list comes back rather than leaving a phone
-    // showing an empty pane with no way out of it.
-    listOpen = true;
+    if (removesSelectedSource) {
+      selectedId = undefined;
+      draft = undefined;
+      // Nothing is open now, so the list comes back rather than leaving a phone
+      // showing an empty pane with no way out of it.
+      listOpen = true;
+    }
   }
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <div class="flex h-full min-h-0 flex-col bg-theme-bg font-body">
   <header
@@ -717,11 +739,7 @@
               type="button"
               onclick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                contextMenu = {
-                  x: rect.right,
-                  y: rect.bottom,
-                  source,
-                };
+                showContextMenu(source, rect.right, rect.bottom);
               }}
               class="ml-1 flex h-7 w-7 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded p-1 text-theme-muted opacity-100 sm:opacity-0 transition-opacity hover:bg-theme-bg hover:text-theme-text group-hover:opacity-100 focus:opacity-100 active:scale-95"
               aria-label="Actions for {source.name}"
@@ -1028,9 +1046,8 @@
           onclick={() => {
             const target = contextMenu!.source;
             closeContextMenu();
-            draft = $state.snapshot(target) as RandomSource;
+            select(target);
             exporting = true;
-            listOpen = false;
           }}
           class="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
           data-testid="ctx-export"
@@ -1064,8 +1081,6 @@
     <div
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       onclick={closeDeleteModal}
-      onkeydown={(e) => e.key === "Escape" && closeDeleteModal()}
-      tabindex="-1"
     >
       <div
         class="w-full max-w-md rounded-xl border border-theme-border bg-theme-surface p-5 shadow-2xl animate-in zoom-in-95 duration-150"
@@ -1159,8 +1174,6 @@
     <div
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       onclick={closeRenameModal}
-      onkeydown={(e) => e.key === "Escape" && closeRenameModal()}
-      tabindex="-1"
     >
       <div
         class="w-full max-w-md rounded-xl border border-theme-border bg-theme-surface p-5 shadow-2xl animate-in zoom-in-95 duration-150"
