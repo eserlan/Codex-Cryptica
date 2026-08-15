@@ -23,6 +23,7 @@
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
   import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
+  import { buildAbsoluteUrl } from "$lib/seo/site";
   import SeoHead from "./SeoHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
   import {
@@ -620,9 +621,7 @@
 <SeoHead
   title={pageTitle}
   description={metaDescription}
-  canonicalUrl={canonicalPath
-    ? `https://codexcryptica.com${canonicalPath}`
-    : undefined}
+  canonicalUrl={canonicalPath ? buildAbsoluteUrl(canonicalPath) : undefined}
   image={ogImage}
   imageAlt={resolvedOgImageAlt}
   {keywords}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { getRobotsDirective } from "$lib/seo/site";
+  import { buildAbsoluteUrl, getRobotsDirective } from "$lib/seo/site";
 
   interface Props {
     title: string;
@@ -37,6 +37,14 @@
   }: Props = $props();
 
   const cleanBase = $derived(base.replace(/\/+$/, ""));
+  const resolvedCanonicalUrl = $derived(
+    canonicalUrl
+      ? canonicalUrl.startsWith("http://") ||
+        canonicalUrl.startsWith("https://")
+        ? canonicalUrl
+        : buildAbsoluteUrl(canonicalUrl)
+      : undefined,
+  );
   const jsonLdSnippets = $derived(
     Array.isArray(jsonLd)
       ? jsonLd.filter(
@@ -58,8 +66,8 @@
   {#if robots}
     <meta name="robots" content={robots} />
   {/if}
-  {#if canonicalUrl}
-    <link rel="canonical" href={canonicalUrl} />
+  {#if resolvedCanonicalUrl}
+    <link rel="canonical" href={resolvedCanonicalUrl} />
   {/if}
 
   <!-- Open Graph -->
@@ -67,8 +75,8 @@
   <meta property="og:site_name" content="Codex Cryptica" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  {#if canonicalUrl}
-    <meta property="og:url" content={canonicalUrl} />
+  {#if resolvedCanonicalUrl}
+    <meta property="og:url" content={resolvedCanonicalUrl} />
   {/if}
   {#if image}
     <meta property="og:image" content={image} />

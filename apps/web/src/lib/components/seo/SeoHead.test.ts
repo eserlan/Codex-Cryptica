@@ -103,4 +103,24 @@ describe("SeoHead component", () => {
     expect(scripts.length).toBe(1);
     expect(scripts[0].innerHTML).toContain("BlogPosting");
   });
+
+  it("normalizes relative canonicalUrl to an absolute URL", () => {
+    render(SeoHead, {
+      props: {
+        title: "RPG NPC Generator",
+        description: "Generate NPCs for your tabletop campaigns.",
+        canonicalUrl: "/generators/npc",
+      },
+    });
+
+    const canonicalLink = document.querySelector('link[rel="canonical"]');
+    expect(canonicalLink?.getAttribute("href")).toBe(
+      "https://codexcryptica.com/generators/npc",
+    );
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    expect(ogUrl?.getAttribute("content")).toBe(
+      "https://codexcryptica.com/generators/npc",
+    );
+  });
 });
