@@ -10,6 +10,8 @@
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import SourceIdentityFields from "./SourceIdentityFields.svelte";
   import TableRoller from "./TableRoller.svelte";
+  import TableGenerateDialog from "./TableGenerateDialog.svelte";
+  import type { CandidateTableEntry } from "generator-engine";
 
   /**
    * Authoring surface for one table (#2247, FR-005).
@@ -36,6 +38,7 @@
 
   let scrollTop = $state(0);
   let viewportHeight = $state(600);
+  let showGenerateDialog = $state(false);
 
   const entries = $derived(source.entries ?? []);
   const isRanged = $derived(source.selection?.mode === "ranged");
@@ -96,6 +99,28 @@
       entry.weight = 1;
     }
     updateEntries([...entries, entry]);
+  }
+
+  function handleAcceptGenerated(candidates: CandidateTableEntry[]) {
+    let nextEntries = [...entries];
+    let currentHighest = isRanged
+      ? entries.reduce((max, e) => Math.max(max, e.range?.max ?? 0), 0)
+      : 0;
+
+    for (const candidate of candidates) {
+      const newEntry: TableEntry = {
+        id: candidate.id || idGenerator.uuid(),
+        text: candidate.text,
+      };
+      if (isRanged) {
+        currentHighest += 1;
+        newEntry.range = { min: currentHighest, max: currentHighest };
+      } else {
+        newEntry.weight = candidate.weight ?? 1;
+      }
+      nextEntries.push(newEntry);
+    }
+    updateEntries(nextEntries);
   }
 
   function removeEntry(id: string) {
@@ -194,15 +219,29 @@
     >
       Entries ({entries.length})
     </span>
-    <button
-      type="button"
-      class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
-      onclick={addEntry}
-      data-testid="add-entry"
-    >
-      <span aria-hidden="true" class="icon-[lucide--plus] h-3 w-3"></span>
-      Add entry
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+        onclick={() => (showGenerateDialog = true)}
+        data-testid="table-generate-entries-btn"
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--sparkles] h-3 w-3 text-theme-primary"
+        ></span>
+        Generate entries
+      </button>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+        onclick={addEntry}
+        data-testid="add-entry"
+      >
+        <span aria-hidden="true" class="icon-[lucide--plus] h-3 w-3"></span>
+        Add entry
+      </button>
+    </div>
   </div>
 
   <div
@@ -341,6 +380,16 @@
   <!-- Rolling belongs beside authoring: a table is checked by rolling it, not
        by reading it (SC-010). -->
   <TableRoller {source} />
+
+  <TableGenerateDialog
+    open={showGenerateDialog}
+    mode="append"
+    existingTableName={source.name}
+    selectionMode={isRanged ? "ranged" : "weighted"}
+    existingRowCount={entries.length}
+    onAccept={handleAcceptGenerated}
+    onClose={() => (showGenerateDialog = false)}
+  />
 </div>
 
 <style>

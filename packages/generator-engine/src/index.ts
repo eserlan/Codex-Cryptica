@@ -35,6 +35,12 @@ export {
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
+  buildRandomTablePrompt,
+  parseRandomTableResponse,
+  generateRandomTableLocal,
+  type RandomTablePrompt,
+} from "./public-random-table";
+export {
   buildNpcPrompt,
   parseNpcResponse,
   generateNpcLocal,

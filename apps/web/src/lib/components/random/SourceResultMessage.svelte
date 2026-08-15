@@ -13,10 +13,16 @@
    */
   let {
     result,
+    entities,
+    onSelectEntity = (id: string) => {
+      vault.selectedEntityId = id;
+    },
     createEntity = (type, title, data) => vault.createEntity(type, title, data),
     isGuest = () => vault.isGuest,
   }: {
     result: RandomSourceRollPayload;
+    entities?: Array<{ id: string; title: string; category?: string }>;
+    onSelectEntity?: (id: string) => void;
     createEntity?: (
       type: string,
       title: string,
@@ -29,6 +35,92 @@
 
   const chain = $derived((result.chain ?? []) as ResolutionNode[]);
   const isComposed = $derived(chain.some((node) => node.children.length > 0));
+  const rawEntities = $derived(entities ?? vault.entities ?? []);
+  const availableEntities = $derived(
+    Array.isArray(rawEntities) ? rawEntities : Object.values(rawEntities ?? {}),
+  );
+
+  interface TextSegment {
+    type: "text" | "entity";
+    text: string;
+    entityId?: string;
+    category?: string;
+  }
+
+  const segments = $derived.by<TextSegment[]>(() => {
+    const raw = result.finalText ?? "";
+    const activeEntities = (availableEntities ?? []).filter(
+      (e: any) =>
+        e &&
+        e.title &&
+        typeof e.title === "string" &&
+        e.title.trim().length > 1,
+    );
+    if (activeEntities.length === 0 || !raw) {
+      return [{ type: "text", text: raw }];
+    }
+
+    const rawLower = raw.toLowerCase();
+    const candidateEntities = activeEntities.filter((e: any) =>
+      rawLower.includes(e.title.toLowerCase()),
+    );
+
+    if (candidateEntities.length === 0) {
+      return [{ type: "text", text: raw }];
+    }
+
+    // Sort entities by title length descending to match longest matches first
+    const sorted = [...candidateEntities].sort(
+      (a, b) => b.title.length - a.title.length,
+    );
+
+    // Escape regex special chars
+    const pattern = new RegExp(
+      `\\b(${sorted.map((e) => e.title.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")).join("|")})\\b`,
+      "gi",
+    );
+
+    const resultSegments: TextSegment[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = pattern.exec(raw)) !== null) {
+      if (match.index > lastIndex) {
+        resultSegments.push({
+          type: "text",
+          text: raw.slice(lastIndex, match.index),
+        });
+      }
+
+      const matchedText = match[0];
+      const matchedEntity = sorted.find(
+        (e) => e.title.toLowerCase() === matchedText.toLowerCase(),
+      );
+
+      if (matchedEntity) {
+        resultSegments.push({
+          type: "entity",
+          text: matchedText,
+          entityId: matchedEntity.id,
+          category:
+            (matchedEntity as any).category ?? (matchedEntity as any).type,
+        });
+      } else {
+        resultSegments.push({ type: "text", text: matchedText });
+      }
+
+      lastIndex = pattern.lastIndex;
+    }
+
+    if (lastIndex < raw.length) {
+      resultSegments.push({
+        type: "text",
+        text: raw.slice(lastIndex),
+      });
+    }
+
+    return resultSegments;
+  });
 
   /**
    * Turns a result into world content (FR-041).
@@ -79,7 +171,21 @@
     class="whitespace-pre-wrap font-body text-sm leading-relaxed text-theme-text"
     data-testid="source-result-text"
   >
-    {result.finalText}
+    {#each segments as segment}
+      {#if segment.type === "entity" && segment.entityId}
+        <button
+          type="button"
+          onclick={() => onSelectEntity(segment.entityId!)}
+          data-testid="entity-mention-{segment.entityId}"
+          class="inline-flex items-center gap-1 rounded bg-theme-primary/10 px-1 py-0.5 font-medium text-theme-primary transition-colors hover:bg-theme-primary/20 hover:underline align-baseline cursor-pointer"
+        >
+          <span class="icon-[lucide--book-open] h-3 w-3"></span>
+          {segment.text}
+        </button>
+      {:else}
+        {segment.text}
+      {/if}
+    {/each}
   </p>
 
   {#if result.drawnCards && result.drawnCards.length > 1}
