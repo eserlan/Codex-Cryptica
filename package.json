@@ -14,6 +14,7 @@
     "preinstall": "node -e \"if (!/bun/.test(process.env.npm_config_user_agent || '')) { console.error('\\u001b[31mError: Please use Bun to install dependencies in this repository (run \\`bun install\\`).\\u001b[0m\\n'); process.exit(1); }\"",
     "build": "bun run --filter '*' build",
     "dev": "bun run --filter web dev",
+    "dev:proxy": "wrangler dev --cwd apps/workers/oracle-proxy",
     "lint": "bun run --filter '*' lint",
     "lint:affected": "bun run --filter '*' lint -- --cache --cache-strategy content",
     "lint:types": "bun run --filter '*' lint:types",
