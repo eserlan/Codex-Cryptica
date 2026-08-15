@@ -45,6 +45,16 @@ Two safety rails, both of which tell you plainly what happened:
 
 Renaming a table does not update tables that point at it. Before a rename goes through you will be told which tables would break, so you can decide.
 
+## Generating tables with AI
+
+Click **Generate with AI** (or **Generate entries** inside a table) to generate world-aware tables tailored to your setting.
+
+- **World-Grounded Lore**: The generator automatically references relevant characters, factions, and locations from your active vault.
+- **Sub-Table Integration**: If you have other tables or decks (e.g. `{treasure_minor}`, `{weather}`), the AI weaves matching `{tableName}` tokens directly into new entries.
+- **Dice Presets**: Quickly pick standard tabletop dice counts (d6, d8, d10, d12, d20) or choose any custom count from 2 to 50.
+- **Campaign Context**: Provide custom instructions and names that take highest priority.
+- **Staging Review**: Every generated row is displayed in an interactive staging preview before anything is added to your vault. Check, edit, or discard entries before accepting.
+
 ## Building a table from something you already have
 
 **Import** takes a paste and turns it into a table. It reads three shapes:

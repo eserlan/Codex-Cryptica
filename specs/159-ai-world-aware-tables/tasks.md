@@ -14,8 +14,8 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 **Purpose**: Type definitions and generator registry configuration
 
-- [ ] T001 [P] Define transient generation types and candidate entry interfaces in `packages/generator-engine/src/campaign-generator-types.ts`
-- [ ] T002 [P] Register `random-table` generator metadata and defaults in `packages/generator-engine/src/campaign-generator-registry.ts`
+- [x] T001 [P] Define transient generation types and candidate entry interfaces in `packages/generator-engine/src/campaign-generator-types.ts`
+- [x] T002 [P] Register `random-table` generator metadata and defaults in `packages/generator-engine/src/campaign-generator-registry.ts`
 
 ---
 
@@ -23,9 +23,9 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 **Purpose**: Core LLM prompt construction, proper noun grounding, sub-table reference discovery, and response parsing in `generator-engine`
 
-- [ ] T003 [P] Write unit tests for table prompt generation and response parsing in `packages/generator-engine/src/public-random-table.test.ts`
-- [ ] T004 Implement `buildRandomTablePrompt`, `parseRandomTableResponse`, and `generateRandomTableLocal` in `packages/generator-engine/src/public-random-table.ts`
-- [ ] T005 Export `public-random-table` functions and types from `packages/generator-engine/src/index.ts`
+- [x] T003 [P] Write unit tests for table prompt generation and response parsing in `packages/generator-engine/src/public-random-table.test.ts`
+- [x] T004 Implement `buildRandomTablePrompt`, `parseRandomTableResponse`, and `generateRandomTableLocal` in `packages/generator-engine/src/public-random-table.ts`
+- [x] T005 Export `public-random-table` functions and types from `packages/generator-engine/src/index.ts`
 
 ---
 
@@ -37,13 +37,13 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 ### Tests for User Story 1
 
-- [ ] T006 [P] [US1] Unit test `TableGenerationService` with mocked search and AI client in `apps/web/src/lib/services/table-generation-service.test.ts`
+- [x] T006 [P] [US1] Unit test `TableGenerationService` with mocked search and AI client in `apps/web/src/lib/services/table-generation-service.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement `TableGenerationService` with constructor DI taking `aiClientManager`, `searchService`, `randomSources`, and `vault` in `apps/web/src/lib/services/table-generation-service.ts`
-- [ ] T008 [US1] Create `TableGenerateDialog.svelte` modal supporting topic input, dice presets (d6, d8, d10, d12, d20), custom count input (2–50), and campaign context in `apps/web/src/lib/components/random/TableGenerateDialog.svelte`
-- [ ] T009 [US1] Add "Generate entries" action button in `apps/web/src/lib/components/random/TableEditor.svelte` and `apps/web/src/lib/components/random/SourceWorkspace.svelte`
+- [x] T007 [US1] Implement `TableGenerationService` with constructor DI taking `aiClientManager`, `searchService`, `randomSources`, and `vault` in `apps/web/src/lib/services/table-generation-service.ts`
+- [x] T008 [US1] Create `TableGenerateDialog.svelte` modal supporting topic input, dice presets (d6, d8, d10, d12, d20), custom count input (2–50), and campaign context in `apps/web/src/lib/components/random/TableGenerateDialog.svelte`
+- [x] T009 [US1] Add "Generate entries" action button in `apps/web/src/lib/components/random/TableEditor.svelte` and `apps/web/src/lib/components/random/SourceWorkspace.svelte`
 
 **Checkpoint**: Users can open the generation dialog, submit a prompt, and receive AI-generated candidate entries grounded in their vault entities.
 
@@ -57,12 +57,12 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 ### Tests for User Story 2
 
-- [ ] T010 [P] [US2] Add unit test in `packages/generator-engine/src/public-random-table.test.ts` validating `{sub_table}` emission and parsing when `availableTables` are provided
+- [x] T010 [P] [US2] Add unit test in `packages/generator-engine/src/public-random-table.test.ts` validating `{sub_table}` emission and parsing when `availableTables` are provided
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] Update `buildRandomTablePrompt` in `packages/generator-engine/src/public-random-table.ts` to instruct the model to produce `{table_name}` tokens for matching available sources
-- [ ] T012 [US2] Update `TableGenerationService.ts` to fetch all available table and deck names from `randomSources` and feed them into `buildRandomTablePrompt`
+- [x] T011 [US2] Update `buildRandomTablePrompt` in `packages/generator-engine/src/public-random-table.ts` to instruct the model to produce `{table_name}` tokens for matching available sources
+- [x] T012 [US2] Update `TableGenerationService.ts` to fetch all available table and deck names from `randomSources` and feed them into `buildRandomTablePrompt`
 
 **Checkpoint**: Generated tables automatically wire into existing tables via nested `{sub_table}` references.
 
@@ -76,13 +76,13 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 ### Tests for User Story 3
 
-- [ ] T013 [P] [US3] Add unit test for staging preview selection, inline editing, and range calculation in `apps/web/src/lib/components/random/TableStagingPreview.test.ts`
+- [x] T013 [P] [US3] Add unit test for staging preview selection, inline editing, and range calculation in `apps/web/src/lib/components/random/TableStagingPreview.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T014 [US3] Create `TableStagingPreview.svelte` component displaying candidate rows with checkboxes, inline editable text, weight/range badges, and select/deselect all actions in `apps/web/src/lib/components/random/TableStagingPreview.svelte`
-- [ ] T015 [US3] Connect `TableGenerateDialog.svelte` to `TableStagingPreview.svelte`, supporting both new table creation and appending to the active table
-- [ ] T016 [US3] Compute contiguous numeric ranges automatically when accepting candidate rows into a ranged table
+- [x] T014 [US3] Create `TableStagingPreview.svelte` component displaying candidate rows with checkboxes, inline editable text, weight/range badges, and select/deselect all actions in `apps/web/src/lib/components/random/TableStagingPreview.svelte`
+- [x] T015 [US3] Connect `TableGenerateDialog.svelte` to `TableStagingPreview.svelte`, supporting both new table creation and appending to the active table
+- [x] T016 [US3] Compute contiguous numeric ranges automatically when accepting candidate rows into a ranged table
 
 **Checkpoint**: 100% of generated rows pass through human curation before being written to the vault.
 
@@ -96,11 +96,11 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 ### Tests for User Story 4
 
-- [ ] T017 [P] [US4] Add unit test in `apps/web/src/lib/components/random/SourceResultMessage.test.ts` asserting entity mention detection and link rendering
+- [x] T017 [P] [US4] Add unit test in `apps/web/src/lib/components/random/SourceResultMessage.test.ts` asserting entity mention detection and link rendering
 
 ### Implementation for User Story 4
 
-- [ ] T018 [US4] Enhance `SourceResultMessage.svelte` or `TableRoller.svelte` to match recognized entity titles against vault entities and render interactive chips in `apps/web/src/lib/components/random/SourceResultMessage.svelte`
+- [x] T018 [US4] Enhance `SourceResultMessage.svelte` or `TableRoller.svelte` to match recognized entity titles against vault entities and render interactive chips in `apps/web/src/lib/components/random/SourceResultMessage.svelte`
 
 **Checkpoint**: Rolled table outcomes provide one-click lore navigation to mentioned characters and locations.
 
@@ -114,8 +114,8 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 ### Implementation for User Story 5
 
-- [ ] T019 [US5] Add anti-determinism guidelines, temperature scaling, and variety directives to `public-random-table.ts`
-- [ ] T020 [P] [US5] Add test in `packages/generator-engine/src/public-random-table.test.ts` verifying variety instructions and local fallback diversity
+- [x] T019 [US5] Add anti-determinism guidelines, temperature scaling, and variety directives to `public-random-table.ts`
+- [x] T020 [P] [US5] Add test in `packages/generator-engine/src/public-random-table.test.ts` verifying variety instructions and local fallback diversity
 
 ---
 
@@ -123,6 +123,6 @@ Tasks are organized strictly by phase and user story to enable independent imple
 
 **Purpose**: Offline feedback, user help documentation, and end-to-end quality validation
 
-- [ ] T021 [P] Add user-facing help documentation for AI random table generation in `apps/web/src/lib/config/help-content.ts`
-- [ ] T022 Ensure disabled/offline tooltip handling on the "Generate entries" button when AI is disabled or client is offline
-- [ ] T023 Run full lint, type check, and unit test suites: `bun run lint && bun run lint:types && bun run test`
+- [x] T021 [P] Add user-facing help documentation for AI random table generation in `apps/web/src/lib/config/help-content.ts`
+- [x] T022 Ensure disabled/offline tooltip handling on the "Generate entries" button when AI is disabled or client is offline
+- [x] T023 Run full lint, type check, and unit test suites: `bun run lint && bun run lint:types && bun run test`
