@@ -7,3 +7,8 @@
 
 **Learning:** When a large Svelte component (`PresentationTemplateEditor.svelte`) contains significant inline parsing and AST walking logic (`parseCardsFromSource`) that maps data to a visual builder, this pure parsing logic can be safely extracted to a sibling `.ts` file (`visual-card-parser.ts`) to dramatically reduce the god file's size and improve component scanability. State dependencies (like `schema.fields`) should be refactored into function parameters.
 **Action:** Extract AST walking and parsing functions into sibling `.ts` files, passing any component state as explicit parameters.
+
+## 2025-02-15 - Extract Interfaces from God-File Config
+
+**Learning:** When dealing with large configuration files (like `seo-pages.ts`) that mix massive object dictionaries with type definitions, the type interfaces (e.g., `SEOPageData`, `SEOImportPageData`) can be safely extracted to a dedicated `seo-types.ts` sibling file. This isolates the type definitions from the raw data and improves readability without altering runtime behavior. The original file can simply import and re-export the types to preserve backward compatibility across the codebase.
+**Action:** Extract large or central type definitions out of data-heavy configuration files into dedicated sibling `*-types.ts` files, and re-export them from the original location to ensure safety.
