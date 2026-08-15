@@ -71,6 +71,20 @@
     { id: "build", label: "Build", icon: "icon-[lucide--pencil]" },
   ] as const;
 
+  /** Both toggles share one shape so the header reads as one control strip. */
+  const toggleClass = (current: boolean) =>
+    `flex items-center rounded px-2 py-1 font-header text-[10px] font-bold uppercase tracking-wider transition-colors ${
+      current
+        ? "bg-theme-primary/15 text-theme-primary"
+        : "text-theme-muted hover:text-theme-text"
+    }`;
+
+  /**
+   * Whether the list and its controls are showing. Only consulted below `md`;
+   * the desktop rail is always open.
+   */
+  let listOpen = $state(true);
+
   function setMode(next: SourceMode) {
     if (next === mode) return;
     mode = next;
@@ -178,6 +192,9 @@
     deleteImpact = undefined;
     pendingRename = undefined;
     importing = false;
+    // Picking something is the end of browsing, so the list gets out of the
+    // way and hands the screen to what was picked. Desktop ignores this.
+    listOpen = false;
   }
 
   function create() {
@@ -308,66 +325,98 @@
     deleteImpact = undefined;
     selectedId = undefined;
     draft = undefined;
+    // Nothing is open now, so the list comes back rather than leaving a phone
+    // showing an empty pane with no way out of it.
+    listOpen = true;
   }
 </script>
 
 <div class="flex h-full min-h-0 flex-col bg-theme-bg font-body">
   <header
-    class="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-theme-border bg-theme-surface p-4"
+    class="flex shrink-0 items-center justify-between gap-2 border-b border-theme-border bg-theme-surface px-3 py-2"
   >
     <h1 class="sr-only">{heading}</h1>
-    <nav
-      class="flex items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
-      aria-label="Random source kind"
-    >
-      {#each KINDS as option}
-        {@const current = option.id === kind}
-        <a
-          href="{base}{option.href}"
-          aria-current={current ? "page" : undefined}
-          class="flex items-center gap-1.5 rounded px-2.5 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest transition-colors {current
-            ? 'bg-theme-primary/15 text-theme-primary'
-            : 'text-theme-muted hover:text-theme-text'}"
-          data-testid="source-kind-{option.id}"
-        >
-          <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
-          {option.label}
-        </a>
-      {/each}
-    </nav>
 
-    <nav
-      class="flex items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
-      aria-label="Workspace mode"
-    >
-      {#each MODES as option}
-        {@const current = option.id === mode}
-        <button
-          type="button"
-          aria-pressed={current}
-          onclick={() => setMode(option.id)}
-          class="flex items-center gap-1.5 rounded px-2.5 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest transition-colors {current
-            ? 'bg-theme-primary/15 text-theme-primary'
-            : 'text-theme-muted hover:text-theme-text'}"
-          data-testid="source-mode-{option.id}"
-        >
-          <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
-          {option.label}
-        </button>
-      {/each}
-    </nav>
+    <!-- Both toggles on one row: on a phone this bar is pure chrome, and two
+         rows of it push the thing you came for below the fold. -->
+    <div class="flex min-w-0 items-center gap-1.5">
+      <nav
+        class="flex shrink-0 items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
+        aria-label="Random source kind"
+      >
+        {#each KINDS as option}
+          {@const current = option.id === kind}
+          <a
+            href="{base}{option.href}"
+            aria-current={current ? "page" : undefined}
+            class="{toggleClass(current)} gap-1"
+            data-testid="source-kind-{option.id}"
+          >
+            <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
+            {option.label}
+          </a>
+        {/each}
+      </nav>
+
+      <nav
+        class="flex shrink-0 items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
+        aria-label="Workspace mode"
+      >
+        {#each MODES as option}
+          {@const current = option.id === mode}
+          <button
+            type="button"
+            aria-pressed={current}
+            onclick={() => setMode(option.id)}
+            class="{toggleClass(current)} gap-1"
+            data-testid="source-mode-{option.id}"
+          >
+            <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
+            {option.label}
+          </button>
+        {/each}
+      </nav>
+    </div>
 
     {#if saving}
       <span
-        class="font-mono text-[9px] uppercase tracking-widest text-theme-muted/60"
+        class="shrink-0 font-mono text-[9px] uppercase tracking-widest text-theme-muted/60"
         data-testid="workspace-saving">Saving…</span
       >
     {/if}
   </header>
 
+  <!-- The list and its controls are chrome too. On a phone they collapse once
+       something is open, so the roll or the draw gets the screen; the rail is
+       always there from `md:` up, where there is width to spare. -->
+  <button
+    type="button"
+    onclick={() => (listOpen = !listOpen)}
+    aria-expanded={listOpen}
+    aria-controls="source-list"
+    class="flex shrink-0 items-center justify-between gap-2 border-b border-theme-border bg-theme-surface px-3 py-2 text-left md:hidden"
+    data-testid="toggle-source-list"
+  >
+    <span
+      class="min-w-0 truncate font-header text-[10px] font-bold uppercase tracking-widest text-theme-text"
+    >
+      {draft ? draft.name : `All ${noun}s`}
+      <span class="font-mono text-theme-muted/60">({all.length})</span>
+    </span>
+    <span
+      aria-hidden="true"
+      class="h-4 w-4 shrink-0 text-theme-muted {listOpen
+        ? 'icon-[lucide--chevron-up]'
+        : 'icon-[lucide--chevron-down]'}"
+    ></span>
+  </button>
+
   <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
     <aside
-      class="flex w-full shrink-0 flex-col gap-3 border-theme-border p-4 md:w-72 md:border-r"
+      id="source-list"
+      class="w-full shrink-0 flex-col gap-3 border-theme-border p-4 md:flex md:w-72 md:border-r {listOpen
+        ? 'flex'
+        : 'hidden'}"
     >
       <input
         class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
@@ -407,7 +456,10 @@
       {#if allowImport}
         <button
           type="button"
-          onclick={() => (importing = true)}
+          onclick={() => {
+            importing = true;
+            listOpen = false;
+          }}
           class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
           data-testid="open-import"
         >

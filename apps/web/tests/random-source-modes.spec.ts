@@ -10,7 +10,7 @@ import { test, expect, type Page } from "@playwright/test";
  * `random-tables.spec.ts` and `random-decks.spec.ts` already cover.
  */
 
-async function boot(page: Page, path: string) {
+async function boot(page: Page, path: string, width = 1440) {
   await page.addInitScript(() => {
     localStorage.setItem("codex_skip_landing", "true");
     localStorage.setItem("codex_guided_mode_active", "false");
@@ -20,7 +20,7 @@ async function boot(page: Page, path: string) {
     );
   });
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width, height: width < 768 ? 760 : 900 });
   await page.goto("/");
   await page.waitForFunction(() => (window as any).vault?.status === "idle");
   await page.goto(path);
@@ -164,6 +164,18 @@ test.describe("Workspace modes", () => {
       await expect(page.getByTestId("table-editor")).toBeHidden();
     });
 
+    // Collapsing is a phone measure; a wide screen keeps the rail and never
+    // shows the toggle at all.
+    test("keeps the rail open on a wide screen", async ({ page }) => {
+      await expect(page.getByTestId("toggle-source-list")).toBeHidden();
+
+      await newTable(page, "Omens", "A crow lands on the signpost.");
+
+      await expect(page.locator("#source-list")).toBeVisible();
+      await expect(page.getByTestId("new-table")).toBeVisible();
+      await expect(page.getByTestId("toggle-source-list")).toBeHidden();
+    });
+
     // The whole point of the default: somebody who has never chosen a mode
     // opens a table to roll it, not to rewrite it.
     test("opens an existing table ready to roll for someone with no preference", async ({
@@ -219,6 +231,60 @@ test.describe("Workspace modes", () => {
       await page.getByTestId("draw-cards").click();
       await expect(page.getByTestId("drawn-title")).toHaveText("Raven");
       await expect(page.getByTestId("deck-discarded")).toHaveText("1");
+    });
+  });
+  /**
+   * On a phone the header and the list are both chrome, and between them they
+   * were pushing the roll or the draw below the fold.
+   */
+  test.describe("phone layout", () => {
+    test.beforeEach(async ({ page }) => {
+      await boot(page, "/tables", 360);
+      await expect(page.getByTestId("toggle-source-list")).toBeVisible({
+        timeout: 30000,
+      });
+    });
+
+    test("keeps both toggles on one row", async ({ page }) => {
+      const kinds = page.getByRole("navigation", {
+        name: "Random source kind",
+      });
+      const modes = page.getByRole("navigation", { name: "Workspace mode" });
+
+      const kindsBox = await kinds.boundingBox();
+      const modesBox = await modes.boundingBox();
+
+      expect(kindsBox).not.toBeNull();
+      expect(modesBox).not.toBeNull();
+      // Same row, and the pair fits inside the viewport.
+      expect(Math.abs(kindsBox!.y - modesBox!.y)).toBeLessThan(2);
+      expect(modesBox!.x + modesBox!.width).toBeLessThanOrEqual(360);
+    });
+
+    test("shows the list while nothing is open, and gets out of the way once something is", async ({
+      page,
+    }) => {
+      const list = page.locator("#source-list");
+      await expect(list).toBeVisible();
+
+      await newTable(page, "Omens", "A crow lands on the signpost.");
+
+      await expect(list).toBeHidden();
+      await expect(page.getByTestId("toggle-source-list")).toContainText(
+        "Omens",
+      );
+    });
+
+    test("brings the list back on request", async ({ page }) => {
+      await newTable(page, "Omens", "A crow lands on the signpost.");
+      const list = page.locator("#source-list");
+      await expect(list).toBeHidden();
+
+      await page.getByTestId("toggle-source-list").click();
+
+      await expect(list).toBeVisible();
+      await expect(page.getByTestId("new-table")).toBeVisible();
+      await expect(page.getByTestId("table-search")).toBeVisible();
     });
   });
 });
