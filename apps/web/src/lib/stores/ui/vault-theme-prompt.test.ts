@@ -46,20 +46,31 @@ describe("VaultThemePromptStore", () => {
     store.startTracking("v1");
     expect(store.shouldAutoPrompt("v1", 0)).toBe(false);
     expect(store.shouldAutoPrompt("v1", 1)).toBe(false);
+    expect(store.shouldAutoPrompt("v1", 4)).toBe(false);
+    expect(store.shouldAutoPrompt("v1", 6)).toBe(false);
   });
 
-  it("prompts immediately after three entities even without five minutes of activity", () => {
+  it("prompts immediately after seven entities even without fifteen minutes of activity", () => {
     store.startTracking("v1");
-    expect(store.shouldAutoPrompt("v1", 3)).toBe(true);
+    expect(store.shouldAutoPrompt("v1", 7)).toBe(true);
   });
 
-  it("prompts after five minutes of tracked activity once the vault has content", () => {
+  it("does not prompt with fifteen minutes of activity if fewer than five entities exist", () => {
     store.startTracking("v1");
 
-    now = 5 * 60 * 1000;
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    now = 15 * 60 * 1000;
+    vi.advanceTimersByTime(15 * 60 * 1000);
 
-    expect(store.shouldAutoPrompt("v1", 1)).toBe(true);
+    expect(store.shouldAutoPrompt("v1", 4)).toBe(false);
+  });
+
+  it("prompts after fifteen minutes of tracked activity once the vault has at least five entities", () => {
+    store.startTracking("v1");
+
+    now = 15 * 60 * 1000;
+    vi.advanceTimersByTime(15 * 60 * 1000);
+
+    expect(store.shouldAutoPrompt("v1", 5)).toBe(true);
   });
 
   it("persists dismissal per vault and blocks future auto prompts", () => {
@@ -68,7 +79,7 @@ describe("VaultThemePromptStore", () => {
 
     const reloaded = new VaultThemePromptStore(persistence, () => now, 15_000);
     expect(reloaded.getRecord("v1").status).toBe("dismissed");
-    expect(reloaded.shouldAutoPrompt("v1", 3)).toBe(false);
+    expect(reloaded.shouldAutoPrompt("v1", 7)).toBe(false);
   });
 
   it("persists applied status per vault and blocks future auto prompts", () => {
@@ -77,7 +88,7 @@ describe("VaultThemePromptStore", () => {
 
     const reloaded = new VaultThemePromptStore(persistence, () => now, 15_000);
     expect(reloaded.getRecord("v1").status).toBe("applied");
-    expect(reloaded.shouldAutoPrompt("v1", 3)).toBe(false);
+    expect(reloaded.shouldAutoPrompt("v1", 7)).toBe(false);
   });
 
   it("commits elapsed time when tracking is paused", () => {

@@ -13,8 +13,9 @@ export interface VaultThemePromptPersistence {
 }
 
 const STORAGE_KEY_PREFIX = "codex_vault_theme_prompt_";
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
-const THREE_ENTITIES = 3;
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+const SEVEN_ENTITIES = 7;
+const MIN_ENTITIES_FOR_DURATION_PROMPT = 5;
 const SYNC_INTERVAL_MS = 15_000;
 
 export class VaultThemePromptStore {
@@ -87,8 +88,9 @@ export class VaultThemePromptStore {
     if (record.status !== "not_shown") return false;
 
     return (
-      entityCount >= THREE_ENTITIES ||
-      (entityCount >= 1 && record.activeMs >= FIVE_MINUTES_MS)
+      entityCount >= SEVEN_ENTITIES ||
+      (entityCount >= MIN_ENTITIES_FOR_DURATION_PROMPT &&
+        record.activeMs >= FIFTEEN_MINUTES_MS)
     );
   }
 
