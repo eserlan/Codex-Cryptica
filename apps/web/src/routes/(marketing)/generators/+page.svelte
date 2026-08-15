@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import SeoHead from "$lib/components/seo/SeoHead.svelte";
 
   const origin = "https://codexcryptica.com";
 
@@ -335,24 +336,22 @@
   });
 </script>
 
-<svelte:head>
-  <title
-    >RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica</title
-  >
-  <meta
-    name="description"
-    content="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
-  />
-  <link rel="canonical" href="https://codexcryptica.com/generators" />
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${itemListJsonLd}</scr` +
-    `ipt>`}
-  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html `<scr` +
-    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
-    `ipt>`}
-</svelte:head>
+<SeoHead
+  title="RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica"
+  description="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
+  canonicalUrl="https://codexcryptica.com/generators"
+  image="https://assets.codexcryptica.com/screenshots/feature-connect.jpg"
+  imageAlt="Codex Cryptica RPG generator tools overview"
+  keywords={[
+    "rpg generators",
+    "tabletop generators",
+    "npc generator",
+    "faction generator",
+    "dungeon generator",
+    "quest hook generator",
+  ]}
+  jsonLd={[itemListJsonLd, breadcrumbJsonLd]}
+/>
 
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"

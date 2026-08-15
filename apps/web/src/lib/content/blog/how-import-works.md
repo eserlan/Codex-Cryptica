@@ -15,6 +15,8 @@ keywords:
   - "AI Entity Extraction"
   - "Local-First RPG Tool"
 publishedAt: 2026-03-27T14:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/how-import-works/how-import-works-start.png"
+imageAlt: "Archive Controls and Import Button in Codex Cryptica"
 ---
 
 ![Archive Controls and Import Button](https://assets.codexcryptica.com/images/blog/how-import-works/how-import-works-start.png)

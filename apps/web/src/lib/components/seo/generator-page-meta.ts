@@ -44,6 +44,7 @@ export type SlugMetaEntry = {
    */
   ogImage?: string;
   ogImageAlt?: string;
+  keywords?: string[];
   faqs?: {
     question: string;
     answer: string;
@@ -84,6 +85,16 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/npc",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-npc.jpg",
+    ogImageAlt:
+      "Codex Cryptica RPG NPC generator showing a character draft with secret, motivation, and table-ready hook",
+    keywords: [
+      "rpg npc generator",
+      "npc generator",
+      "character generator",
+      "dnd npc",
+      "ttrpg npc creator",
+    ],
     faqs: [
       {
         question: "Does the D&D NPC generator require an account?",
@@ -124,6 +135,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Generate an inhabited place that answers three questions: why does it exist, who really controls it, and what is about to go wrong. Works for any genre — fantasy, cyberpunk, sci-fi, horror, post-apocalyptic, and more.",
     canonicalPath: "/generators/settlement",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-settlement.jpg",
+    ogImageAlt:
+      "Codex Cryptica settlement generator showing an inhabited place with district layout, tension, and power structures",
+    keywords: [
+      "rpg settlement generator",
+      "city generator",
+      "town generator",
+      "worldbuilding location creator",
+      "district generator",
+    ],
   },
   "magic-item": {
     pageTitle:
@@ -135,6 +157,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.",
     canonicalPath: "/generators/magic-item",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-magic-item.jpg",
+    ogImageAlt:
+      "Codex Cryptica magic item generator drafting fantasy relics and artifacts with lore, abilities, and campaign hooks",
+    keywords: [
+      "magic item generator",
+      "rpg loot generator",
+      "dnd magic items",
+      "fantasy weapon creator",
+      "rpg artifact tool",
+    ],
   },
   faction: {
     pageTitle:
@@ -146,6 +179,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
     canonicalPath: "/generators/faction",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-faction.jpg",
+    ogImageAlt:
+      "Codex Cryptica RPG faction generator showing an organization draft with agenda, internal conflict, and notable NPCs",
+    keywords: [
+      "rpg faction generator",
+      "fantasy guild generator",
+      "cyberpunk megacorp creator",
+      "secret organization generator",
+      "worldbuilding factions",
+    ],
     faqs: [
       {
         question: "What does the faction generator create?",
@@ -183,6 +227,16 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create campaign-ready adventure seeds and quest hooks. Set the genre, tone, threat, and twist, then import into your local vault.",
     canonicalPath: "/generators/quest",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-quest.jpg",
+    ogImageAlt:
+      "Codex Cryptica quest hook generator showing adventure seeds with twists, complications, and rewards",
+    keywords: [
+      "rpg quest hook generator",
+      "adventure seed generator",
+      "quest creator",
+      "dnd quest generator",
+      "ttrpg plot hooks",
+    ],
   },
   item: {
     pageTitle:
@@ -194,6 +248,16 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
     canonicalPath: "/generators/item",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-item.jpg",
+    ogImageAlt:
+      "Codex Cryptica loot and equipment generator drafting custom items and relics",
+    keywords: [
+      "rpg item generator",
+      "loot generator",
+      "rpg equipment",
+      "tabletop items",
+      "relic generator",
+    ],
   },
   "social-hub": {
     pageTitle:
@@ -205,6 +269,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
     canonicalPath: "/generators/social-hub",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-social-hub.jpg",
+    ogImageAlt:
+      "Codex Cryptica social hub generator showing an interactive venue draft with regulars and rumours",
+    keywords: [
+      "social hub generator",
+      "rpg venue generator",
+      "cyberpunk noodle bar",
+      "spaceport cantina",
+      "gathering place creator",
+    ],
   },
   world: {
     pageTitle:
@@ -216,6 +291,16 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a detailed sci-fi world for your campaign. Choose its environment, habitability, civilisation, and defining feature, then generate a place with conflicts, locations, and playable hooks.",
     canonicalPath: "/generators/world",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-world.jpg",
+    ogImageAlt:
+      "Codex Cryptica sci-fi world generator drafting planets, moons, environments, and civilizations",
+    keywords: [
+      "scifi world generator",
+      "planet generator",
+      "moon generator",
+      "scifi worldbuilding",
+      "alien world creator",
+    ],
   },
   kingdom: {
     pageTitle:
@@ -227,6 +312,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/kingdom",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-kingdom.jpg",
+    ogImageAlt:
+      "Codex Cryptica kingdom generator drafting fantasy realms with rulers, court factions, and borders",
+    keywords: [
+      "kingdom generator",
+      "fantasy realm creator",
+      "empire generator",
+      "worldbuilding kingdoms",
+      "rpg realm generator",
+    ],
   },
   nation: {
     pageTitle:
@@ -238,6 +334,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.",
     canonicalPath: "/generators/nation",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-nation.jpg",
+    ogImageAlt:
+      "Codex Cryptica nation generator drafting polities, megacorp states, and federations with power blocs",
+    keywords: [
+      "nation generator",
+      "rpg political entity generator",
+      "polity creator",
+      "worldbuilding nation",
+      "federation generator",
+    ],
   },
   tavern: {
     pageTitle:
@@ -249,6 +356,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/tavern",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-tavern.jpg",
+    ogImageAlt:
+      "Codex Cryptica tavern generator showing an alehouse with owner, regulars, rumours, and adventure hooks",
+    keywords: [
+      "rpg tavern generator",
+      "inn generator",
+      "fantasy tavern creator",
+      "alehouse generator",
+      "dnd tavern",
+    ],
   },
   "vampire-clan": {
     pageTitle:
@@ -260,6 +378,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/vampire-clan",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-vampire-clan.jpg",
+    ogImageAlt:
+      "Codex Cryptica vampire clan generator drafting occult bloodlines, covens, and dark agendas",
+    keywords: [
+      "vampire clan generator",
+      "rpg bloodline generator",
+      "occult coven creator",
+      "gothic horror faction",
+      "vampire faction",
+    ],
   },
   "nomad-clan": {
     pageTitle:
@@ -271,6 +400,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.",
     canonicalPath: "/generators/nomad-clan",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-nomad-clan.jpg",
+    ogImageAlt:
+      "Codex Cryptica cyberpunk nomad clan generator drafting road convoys, territory routes, and clan codes",
+    keywords: [
+      "cyberpunk nomad clan generator",
+      "road faction generator",
+      "convoy creator",
+      "post-apocalyptic clan",
+      "scifi nomad generator",
+    ],
     faqs: [
       {
         question: "What does the nomad clan generator create?",
@@ -309,6 +449,16 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.",
     canonicalPath: "/generators/names",
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-names.jpg",
+    ogImageAlt:
+      "Codex Cryptica RPG name generator generating character, place, and faction names across genres",
+    keywords: [
+      "rpg name generator",
+      "fantasy name creator",
+      "scifi character names",
+      "place name generator",
+      "faction name tool",
+    ],
   },
   "fantasy-names": {
     pageTitle:
@@ -320,6 +470,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.",
     canonicalPath: "/generators/fantasy-names",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-fantasy-names.jpg",
+    ogImageAlt:
+      "Codex Cryptica fantasy name generator generating names across cultural styles",
+    keywords: [
+      "fantasy name generator",
+      "dnd character names",
+      "worldbuilding name tool",
+      "fantasy place names",
+      "ttrpg names",
+    ],
   },
   "dnd-npc": {
     pageTitle:
@@ -331,6 +492,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/dnd-npc",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-dnd-npc.jpg",
+    ogImageAlt:
+      "Codex Cryptica D&D character generator drafting a fantasy NPC with ancestry, secrets, and quest hooks",
+    keywords: [
+      "dnd npc generator",
+      "5e npc generator",
+      "dungeons and dragons character generator",
+      "fantasy npc creator",
+      "dm prep tool",
+    ],
   },
   "pantheon-generator": {
     pageTitle:
@@ -342,6 +514,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready pantheon with alliances, cosmic conflicts, and detailed member deities. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/pantheon-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-pantheon-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica pantheon generator drafting divine assemblies, mythic hierarchies, and cosmic conflicts",
+    keywords: [
+      "rpg pantheon generator",
+      "deity assembly creator",
+      "mythology generator",
+      "divine hierarchy tool",
+      "worldbuilding gods",
+    ],
   },
   "god-generator": {
     pageTitle:
@@ -353,6 +536,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/god-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-god-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica deity generator drafting gods, spirits, domains, taboos, and holy symbols",
+    keywords: [
+      "god generator",
+      "deity generator",
+      "rpg god creator",
+      "mythic deity tool",
+      "domain and taboos generator",
+    ],
   },
   "ship-generator": {
     pageTitle:
@@ -364,6 +558,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready vessel for any RPG genre. Sci-fi starships, fantasy galleons, pirate sloops, steampunk airships — pick the role, scale, and condition and get a ship with a crew, a mission, a problem, and a secret.",
     canonicalPath: "/generators/ship-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-ship-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica ship generator drafting starships, galleons, and vessels with crew and secrets",
+    keywords: [
+      "rpg ship generator",
+      "starship generator",
+      "fantasy galleon creator",
+      "pirate vessel generator",
+      "airship creator",
+    ],
     faqs: [
       {
         question: "What does the ship generator create?",
@@ -402,6 +607,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready language profile for your world, culture, or species. Choose fantasy, cyberpunk, gothic noir, space opera, modern conspiracy, post-apocalyptic, or pirate foundations, then customize the result.",
     canonicalPath: "/generators/language-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-language-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica fictional language generator drafting pronunciation, naming rules, and vocabulary",
+    keywords: [
+      "fictional language generator",
+      "conlang generator",
+      "rpg language creator",
+      "worldbuilding naming language",
+      "fantasy language tool",
+    ],
     faqs: [
       {
         question: "What does the fictional language generator create?",
@@ -430,6 +646,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create an in-world news sheet as a printable player handout — a lead headline, short articles, street rumours, classifieds, and propaganda, shaped by who owns the press. Cyberpunk players know it as a screamsheet; it works just as well as a fantasy broadsheet or a station newsfeed. The GM version holds the truth behind the stories and the adventure hooks.",
     canonicalPath: "/generators/news-sheet-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-news-sheet-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica news sheet generator drafting player screamsheets, broadsheets, and GM hooks",
+    keywords: [
+      "news sheet generator",
+      "cyberpunk screamsheet",
+      "rpg town broadsheet",
+      "player handout generator",
+      "in-world newsfeed",
+    ],
     faqs: [
       {
         question: "What does the news sheet generator create?",
@@ -468,6 +695,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create rich, multi-layered dungeons, ancient ruins, abandoned facilities, or subterranean vaults for any RPG genre or world theme. Generates evocative premises, original histories, current operational states, signature landmarks, active conflicts, sectors, factions, hazards, secrets, treasures, and adventure hooks. Every generated delve can also become a fully explorable, room-by-room map — the interactive Dungeon Canvas is exclusive to Codex Cryptica, free to open once you're in the app.",
     canonicalPath: "/generators/dungeon-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-dungeon-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica dungeon & delve generator drafting complex subterranean sectors, hazards, and loot",
+    keywords: [
+      "dungeon generator",
+      "rpg delve generator",
+      "megadungeon creator",
+      "dnd dungeon generator",
+      "subterranean vault creator",
+    ],
     faqs: [
       {
         question: "What does the dungeon generator create?",
@@ -516,6 +754,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
     canonicalPath: "/generators/adventure-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica adventure idea generator drafting multi-layered scenarios, objectives, and outcomes",
+    keywords: [
+      "adventure idea generator",
+      "rpg scenario generator",
+      "campaign plot generator",
+      "dynamic adventure generator",
+      "ttrpg scenario creator",
+    ],
     faqs: [
       {
         question: "What does the adventure generator create?",
@@ -557,6 +806,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Turn an established situation into a fair, playable reversal or complication. Keep the facts that matter, overturn an assumption, and give the players new choices.",
     canonicalPath: "/generators/plot-twist-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-plot-twist-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica plot twist generator drafting playable story reversals, foreshadowing, and complications",
+    keywords: [
+      "plot twist generator",
+      "rpg plot twist",
+      "story complication generator",
+      "quest twist creator",
+      "tabletop plot reversals",
+    ],
   },
   "adventure-idea-generator": {
     pageTitle:
@@ -568,6 +828,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create rich, multi-layered adventure scenarios across any RPG genre or world theme. Generates initial situations, primary pressures, key locations, key actors, threats, discoveries, complications, stakes, and non-linear possible outcomes — a situation, not a plot.",
     canonicalPath: "/generators/adventure-generator",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
+    ogImageAlt:
+      "Codex Cryptica adventure idea generator drafting dynamic RPG situations, threats, and discoveries",
+    keywords: [
+      "adventure idea generator",
+      "rpg adventure concept",
+      "scenario seed generator",
+      "tabletop scenario tool",
+      "adventure prep",
+    ],
     faqs: [
       {
         question: "What does the adventure generator create?",
@@ -595,6 +866,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a campaign-ready political vote — a council of named voters with different motives, alliances, secrets, and demands, plus a deadline and a voting threshold. Works without login, then imports into your local vault.",
     canonicalPath: "/generators/council-vote",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-council-vote.jpg",
+    ogImageAlt:
+      "Codex Cryptica council vote generator drafting political quests, voting blocs, and leverage",
+    keywords: [
+      "council vote generator",
+      "political quest generator",
+      "voting bloc creator",
+      "rpg political intrigue",
+      "noble council tool",
+    ],
     faqs: [
       {
         question: "What does the council vote generator create?",
@@ -629,6 +911,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Build a reusable society with a belief, ritual, public cover, secret truth, and immediate hooks for your campaign.",
     canonicalPath: "/generators/secret-society",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-secret-society.jpg",
+    ogImageAlt:
+      "Codex Cryptica secret society generator drafting cults, hidden orders, rituals, and conspiracies",
+    keywords: [
+      "secret society generator",
+      "cult generator",
+      "conspiracy generator",
+      "occult order creator",
+      "rpg secret sect",
+    ],
     faqs: [
       {
         question: "What does the secret society generator create?",
@@ -662,6 +955,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introText:
       "Create a coherent sci-fi star system for your campaign — not just an astronomical inventory. Choose its system type, genre, civilisation level, character, and scientific realism, then generate a star (or stars), major bodies, factions, resources, hazards, and a system-wide conflict or mystery worth building a campaign around.",
     canonicalPath: "/generators/star-system",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-star-system.jpg",
+    ogImageAlt:
+      "Codex Cryptica star system generator drafting stellar bodies, space factions, hazards, and conflict",
+    keywords: [
+      "star system generator",
+      "solar system creator",
+      "scifi star system",
+      "space campaign generator",
+      "astronomical system creator",
+    ],
     faqs: [
       {
         question: "What does the star system generator create?",
@@ -705,6 +1009,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "https://assets.codexcryptica.com/screenshots/generator-alien-race.jpg",
     ogImageAlt:
       "The Codex Cryptica alien race generator with an example species drafted: overview, evolutionary origin, homeworld, biology, weaknesses, naming conventions, and archetypes beside the input controls",
+    keywords: [
+      "alien race generator",
+      "scifi alien creator",
+      "xenobiology generator",
+      "alien species worldbuilding",
+      "extraterrestrial species creator",
+    ],
     faqs: [
       {
         question: "What does the alien race generator create?",

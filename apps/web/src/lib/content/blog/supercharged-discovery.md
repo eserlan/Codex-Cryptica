@@ -14,6 +14,8 @@ keywords:
     "Local-First RPG Tool",
   ]
 publishedAt: 2026-03-18T12:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/filters-and-labels/filter-discovery-hero.png"
+imageAlt: "Knowledge Graph Discovery in Codex Cryptica"
 ---
 
 ![Knowledge Graph Discovery](https://assets.codexcryptica.com/images/blog/filters-and-labels/filter-discovery-hero.png)

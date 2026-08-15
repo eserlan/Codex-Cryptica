@@ -6,6 +6,8 @@ description: "Your campaign world can now live on Google Drive for seamless cros
 keywords:
   ["Google Drive", "Cloud Sync", "Vault Backup", "Local-First", "Privacy"]
 publishedAt: 2026-04-30T10:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/gdrive-cloud-sync/gdrive-cloud-sync-hero.png"
+imageAlt: "Codex Cryptica Cloud Sync Settings Panel"
 ---
 
 ![Cloud Sync Settings Panel](https://assets.codexcryptica.com/images/blog/gdrive-cloud-sync/gdrive-cloud-sync-hero.png)
