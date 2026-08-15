@@ -57,6 +57,35 @@
   let codex = $state<CodexImportOk | undefined>();
   let codexError = $state("");
   let selectedFileName = $state("");
+  let isDraggingFile = $state(false);
+
+  function handleFileDragOver(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer?.types?.includes("Files")) {
+      isDraggingFile = true;
+    }
+  }
+
+  function handleFileDragLeave(e: DragEvent) {
+    e.preventDefault();
+    isDraggingFile = false;
+  }
+
+  function handleFileDrop(e: DragEvent) {
+    e.preventDefault();
+    isDraggingFile = false;
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      openFile(file);
+    }
+  }
+
+  function clearSelectedFile() {
+    selectedFileName = "";
+    codex = undefined;
+    codexError = "";
+    pasted = "";
+  }
 
   /** Pictures waiting to be matched to a card by filename (FR-036). */
   let images = $state<File[]>([]);
@@ -360,42 +389,102 @@
       class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
       >Open a file</span
     >
-    <div class="flex flex-wrap items-center gap-2.5">
-      <label
-        class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3.5 py-2 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-sm"
-      >
-        <span aria-hidden="true" class="icon-[lucide--folder-open] h-4 w-4"
-        ></span>
-        <span>Choose file</span>
-        <input
-          type="file"
-          accept=".md,.txt,.tsv,.csv,text/*"
-          class="sr-only"
-          onchange={(e) => openFile(e.currentTarget.files?.[0])}
-          data-testid="import-file"
-        />
-      </label>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="flex flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed p-5 text-center transition-all duration-150 {isDraggingFile
+        ? 'border-theme-primary bg-theme-primary/10 shadow-inner'
+        : selectedFileName
+          ? 'border-theme-primary/40 bg-theme-primary/5'
+          : 'border-theme-border/70 bg-theme-bg/40 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+      ondragover={handleFileDragOver}
+      ondragleave={handleFileDragLeave}
+      ondrop={handleFileDrop}
+      data-testid="import-file-dropzone"
+    >
       {#if selectedFileName}
-        <span
-          class="inline-flex items-center gap-1.5 rounded-md border border-theme-border/60 bg-theme-bg/60 px-2.5 py-1 text-xs font-mono text-theme-text"
-          data-testid="import-file-selected"
-        >
-          <span
-            aria-hidden="true"
-            class="icon-[lucide--file-text] h-3.5 w-3.5 text-theme-muted"
-          ></span>
-          {selectedFileName}
-        </span>
+        <div class="flex flex-col items-center gap-2">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-theme-primary/20 text-theme-primary"
+          >
+            <span aria-hidden="true" class="icon-[lucide--file-check] h-5 w-5"
+            ></span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span
+              class="font-mono text-xs font-semibold text-theme-text"
+              data-testid="import-file-selected"
+            >
+              {selectedFileName}
+            </span>
+            <span class="font-body text-[10px] text-theme-muted">
+              File loaded ready for import
+            </span>
+          </div>
+          <div class="mt-1 flex items-center gap-2">
+            <label
+              class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary shadow-sm"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--refresh-cw] h-3.5 w-3.5 text-theme-muted"
+              ></span>
+              <span>Replace file</span>
+              <input
+                type="file"
+                accept=".md,.txt,.tsv,.csv,text/*"
+                class="sr-only"
+                onchange={(e) => openFile(e.currentTarget.files?.[0])}
+                data-testid="import-file"
+              />
+            </label>
+            <button
+              type="button"
+              onclick={clearSelectedFile}
+              class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500 shadow-sm"
+              data-testid="import-file-clear"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--trash-2] h-3.5 w-3.5"
+              ></span>
+              <span>Remove</span>
+            </button>
+          </div>
+        </div>
       {:else}
-        <span class="font-body text-xs italic text-theme-muted"
-          >No file chosen</span
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-theme-primary/10 text-theme-primary"
         >
+          <span aria-hidden="true" class="icon-[lucide--upload-cloud] h-5 w-5"
+          ></span>
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          <p
+            class="font-header text-xs font-bold uppercase tracking-wider text-theme-text"
+          >
+            Drag and drop your file here
+          </p>
+          <p class="font-body text-[10px] text-theme-muted/80">
+            A file exported from Codex Cryptica comes back whole. Anything else
+            lands in the paste box below.
+          </p>
+        </div>
+        <label
+          class="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/15 px-4 py-2 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-sm"
+        >
+          <span aria-hidden="true" class="icon-[lucide--folder-open] h-4 w-4"
+          ></span>
+          <span>Choose file</span>
+          <input
+            type="file"
+            accept=".md,.txt,.tsv,.csv,text/*"
+            class="sr-only"
+            onchange={(e) => openFile(e.currentTarget.files?.[0])}
+            data-testid="import-file"
+          />
+        </label>
       {/if}
     </div>
-    <span class="font-body text-[10px] text-theme-muted/70">
-      A file exported from Codex Cryptica comes back whole. Anything else lands
-      in the box below.
-    </span>
   </div>
 
   {#if codexError}
