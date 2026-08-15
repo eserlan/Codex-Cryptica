@@ -1,6 +1,6 @@
 # Feature Specification: AI-Generated World-Aware Random Tables
 
-**Feature Branch**: `2250-ai-world-aware-tables`  
+**Feature Branch**: `158-ai-world-aware-tables`  
 **Created**: 2026-08-15  
 **Status**: Draft  
 **Input**: GitHub Issue #2250 — "AI-generated world-aware random tables" (Follow-up expansion to #2247 / `157-random-tables-decks`)
