@@ -9,6 +9,7 @@ import type {
   DraftingEngine,
 } from "@codex/oracle-engine";
 import type { TextGenerationService, AspectRatio } from "schema";
+import type { AdventureManager } from "./adventure-manager.svelte";
 
 /** Advanced Art Direction settings a user may apply when revising a prompt. */
 export interface PromptRegenerationOptions {
@@ -118,6 +119,7 @@ export interface IOracleStore {
   readonly actions: any;
   readonly settingsManager: any;
   readonly revision: any;
+  readonly adventure: AdventureManager;
 
   // Lifecycle
   init(): Promise<void>;

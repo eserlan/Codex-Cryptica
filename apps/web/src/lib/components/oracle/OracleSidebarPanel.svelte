@@ -13,6 +13,7 @@
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
+  import AdventureSurface from "./adventure/AdventureSurface.svelte";
   import FeatureHint from "../help/FeatureHint.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -23,14 +24,18 @@
   const connectionHint = FEATURE_HINTS["oracle-connection-modes"];
 
   let showHint = $state(false);
-  let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
+  let activeTab = $state<"oracle" | "activity" | "chat" | "adventure">(
+    "oracle",
+  );
   let activityCount = $derived(discoveryPolicyStore.archiveActivityLog.length);
   let headerTitle = $derived(
     activeTab === "oracle"
       ? "Lore Oracle"
       : activeTab === "activity"
         ? "Lore Activity"
-        : "VTT Chat",
+        : activeTab === "chat"
+          ? "VTT Chat"
+          : "Adventure",
   );
 
   onMount(() => {
@@ -183,6 +188,16 @@
         >
       {/if}
     </button>
+    <button
+      type="button"
+      onclick={() => (activeTab = "adventure")}
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all {activeTab ===
+      'adventure'
+        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+        : 'text-theme-muted hover:text-theme-text'}"
+    >
+      Adventure
+    </button>
   </div>
 
   <!-- Chat Content -->
@@ -199,8 +214,10 @@
       />
     {:else if activeTab === "activity"}
       <ActivityLog />
-    {:else}
+    {:else if activeTab === "chat"}
       <VTTChat />
+    {:else}
+      <AdventureSurface />
     {/if}
   </div>
 

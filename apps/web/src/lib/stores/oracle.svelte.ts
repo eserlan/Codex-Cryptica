@@ -45,6 +45,10 @@ import { OracleContextManager } from "./oracle/context-manager.svelte";
 import { OracleActionManager } from "./oracle/action-manager.svelte";
 import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
 import { OracleRevisionManager } from "./oracle/revision-manager.svelte";
+import {
+  AdventureManager,
+  adventureManager as defaultAdventureManager,
+} from "./oracle/adventure-manager.svelte";
 
 export type { ChatMessage, UndoableAction };
 
@@ -56,6 +60,7 @@ export class OracleStore implements IOracleStore {
   actions: OracleActionManager;
   settingsManager: OracleSettingsManager;
   revision: OracleRevisionManager;
+  adventure: AdventureManager;
 
   // Reactive UI state
   get isOpen() {
@@ -204,6 +209,7 @@ export class OracleStore implements IOracleStore {
       actions?: OracleActionManager;
       settingsManager?: OracleSettingsManager;
       revision?: OracleRevisionManager;
+      adventure?: AdventureManager;
     } = {},
   ) {
     this._vault = deps.vault;
@@ -237,6 +243,7 @@ export class OracleStore implements IOracleStore {
     this.settingsManager =
       deps.settingsManager ?? new OracleSettingsManager(this);
     this.revision = deps.revision ?? new OracleRevisionManager(this);
+    this.adventure = deps.adventure ?? defaultAdventureManager;
 
     // Initialize Event Bus for Hybrid Communication
     if (
@@ -266,6 +273,7 @@ export class OracleStore implements IOracleStore {
     this.eventBus?.close();
     this.eventBus = null;
     this.chat.destroy();
+    void this.adventure.destroy();
     if (this.vaultSwitchedHandler && typeof window !== "undefined") {
       window.removeEventListener("vault-switched", this.vaultSwitchedHandler);
       this.vaultSwitchedHandler = null;
