@@ -58,9 +58,7 @@ export class VTTChatManager {
     };
   }
 
-  sendChatMessage(content: string, vttEnabled: boolean) {
-    if (!vttEnabled) return;
-
+  sendChatMessage(content: string, _vttEnabled?: boolean) {
     let roll = undefined;
     const trimmed = content.trim();
     if (trimmed.startsWith("/roll ")) {
@@ -82,10 +80,8 @@ export class VTTChatManager {
   sendResolvedRollMessage(
     formula: string,
     result: Pick<RollResult, "total" | "parts">,
-    vttEnabled: boolean,
+    _vttEnabled?: boolean,
   ) {
-    if (!vttEnabled) return;
-
     const payload = this.buildChatPayload(
       `/roll ${formula}`,
       this.createChatRoll(formula, result),
@@ -95,9 +91,7 @@ export class VTTChatManager {
     this.deps.emit(payload);
   }
 
-  clearChatMessages(vttEnabled: boolean) {
-    if (!vttEnabled) return;
-
+  clearChatMessages(_vttEnabled?: boolean) {
     this.chatMessages = [];
     this.deps.emit({
       type: "CHAT_CLEAR",

@@ -36,9 +36,7 @@
     idGenerator = systemIdGenerator,
     session = mapSession,
     addToChat = async (text) => {
-      if (session.vttEnabled) {
-        session.sendChatMessage(text);
-      }
+      session.sendChatMessage(text);
       addToOracleChatInput(text);
     },
     copyText = async (text) => {
