@@ -13,6 +13,7 @@
     type DiceHistoryStore,
   } from "$lib/stores/dice-history.svelte";
   import { addToOracleChatInput } from "$lib/components/oracle/oracle-chat-input";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { copyTextToClipboard } from "$lib/utils/share-link";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
@@ -33,7 +34,11 @@
     sources = randomSources,
     history = diceHistory,
     idGenerator = systemIdGenerator,
+    session = mapSession,
     addToChat = async (text) => {
+      if (session.vttEnabled) {
+        session.sendChatMessage(text);
+      }
       if (!addToOracleChatInput(text)) {
         throw new Error("The Oracle chat is not available.");
       }
@@ -50,6 +55,7 @@
     sources?: RandomSourceStore;
     history?: DiceHistoryStore;
     idGenerator?: IdGenerator;
+    session?: typeof mapSession;
     addToChat?: (text: string) => Promise<void>;
     copyText?: (text: string) => Promise<void>;
   } = $props();
