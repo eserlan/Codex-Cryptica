@@ -28,6 +28,79 @@ export interface AdventureAIClient {
   }>;
 }
 
+const patchSchema = {
+  type: "object",
+  required: ["add", "update", "removeIds"],
+  properties: {
+    add: { type: "array", items: { type: "object" } },
+    update: { type: "array", items: { type: "object" } },
+    removeIds: { type: "array", items: { type: "string" } },
+  },
+} as const;
+
+const adventureTurnResponseSchema = {
+  oneOf: [
+    {
+      type: "object",
+      required: [
+        "kind",
+        "narration",
+        "visiblePatch",
+        "hiddenPatch",
+        "revealSecretIds",
+        "provisionalFacts",
+        "sourceRecordIds",
+      ],
+      properties: {
+        kind: { type: "string", enum: ["complete"] },
+        narration: { type: "string" },
+        visiblePatch: {
+          type: "object",
+          properties: {
+            objectives: patchSchema,
+            activeCharacters: patchSchema,
+            knownFacts: patchSchema,
+            relationships: patchSchema,
+          },
+          required: [
+            "objectives",
+            "activeCharacters",
+            "knownFacts",
+            "relationships",
+          ],
+        },
+        hiddenPatch: {
+          type: "object",
+          properties: { secrets: patchSchema, gmThreads: patchSchema },
+          required: ["secrets", "gmThreads"],
+        },
+        revealSecretIds: { type: "array", items: { type: "string" } },
+        provisionalFacts: { type: "array", items: { type: "object" } },
+        sourceRecordIds: { type: "array", items: { type: "string" } },
+      },
+    },
+    {
+      type: "object",
+      required: ["kind", "uncertainty", "stakes", "sourceRecordIds"],
+      properties: {
+        kind: { type: "string", enum: ["roll-required"] },
+        setupNarration: { type: "string" },
+        uncertainty: { type: "string" },
+        stakes: { type: "string" },
+        dice: {
+          type: "object",
+          properties: {
+            expression: { type: "string" },
+            outcomeBands: { type: "array", items: { type: "object" } },
+          },
+          required: ["expression", "outcomeBands"],
+        },
+        sourceRecordIds: { type: "array", items: { type: "string" } },
+      },
+    },
+  ],
+} as const;
+
 export class AdventureTurnGenerationService {
   constructor(
     private readonly aiClient: AdventureAIClient = defaultAiClientManager,
@@ -52,13 +125,7 @@ export class AdventureTurnGenerationService {
       contents: [{ role: "user", parts: [{ text: prompt.serialized }] }],
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          required: ["kind"],
-          properties: {
-            kind: { type: "string", enum: ["complete", "roll-required"] },
-          },
-        },
+        responseSchema: adventureTurnResponseSchema,
       },
     });
     if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");

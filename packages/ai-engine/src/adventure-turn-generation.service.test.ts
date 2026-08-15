@@ -73,6 +73,10 @@ describe("AdventureTurnGenerationService", () => {
     });
     expect(result.kind).toBe("complete");
     expect(request.generationConfig.responseMimeType).toBe("application/json");
+    expect(request.generationConfig.responseSchema.oneOf).toHaveLength(2);
+    expect(request.generationConfig.responseSchema.oneOf[0].required).toContain(
+      "visiblePatch",
+    );
     expect(request).not.toHaveProperty("input");
     expect(request).not.toHaveProperty("previous_interaction_id");
     expect(request).not.toHaveProperty("store");

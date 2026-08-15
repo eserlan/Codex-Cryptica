@@ -27,8 +27,11 @@ export function detectHiddenLeakage(
   proposal: AdventureTurnProposal,
 ): HiddenLeakageFinding[] {
   const fields = strings(proposal);
+  const revealed = new Set(
+    proposal.kind === "complete" ? proposal.revealSecretIds : [],
+  );
   const hidden = session.hiddenState.secrets.filter(
-    (secret) => secret.status === "hidden",
+    (secret) => secret.status === "hidden" && !revealed.has(secret.id),
   );
   const findings: HiddenLeakageFinding[] = [];
   for (const secret of hidden) {

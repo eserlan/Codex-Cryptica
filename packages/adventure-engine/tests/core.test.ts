@@ -131,6 +131,23 @@ describe("adventure engine", () => {
     expect(!result.ok && result.errors[0]?.code).toBe("hidden-leakage");
   });
 
+  it("allows a secret to be mentioned when the turn explicitly reveals it", () => {
+    const result = applyCompletedTurn(
+      session(),
+      {
+        kind: "complete",
+        narration: "The ferryman serves the moon.",
+        visiblePatch: emptyPatch,
+        hiddenPatch: emptyHiddenPatch,
+        revealSecretIds: ["secret-1"],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      },
+      { turnId: "turn-reveal", inputId: "input-reveal", now },
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it("persists a roll result and prevents replacement or dismissal", () => {
     const pending = applyRollRequest(
       session(),

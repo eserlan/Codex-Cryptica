@@ -27,6 +27,8 @@ export class AdventureControlCoordinator {
 
   start(lease: AdventureControlLease): void {
     this.stopTimer();
+    this.channel?.close();
+    this.channel = null;
     this.lease = lease;
     this.keyValue = { vaultId: lease.vaultId, sessionId: lease.sessionId };
     this.channel = this.channelFactory(

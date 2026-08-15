@@ -104,6 +104,12 @@ export class AdventureManager {
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
 
+  private async verifyControl(): Promise<void> {
+    if (!this.lease || !(await this.deps.authority.verify(this.lease))) {
+      throw new Error("control-lost");
+    }
+  }
+
   constructor(deps: AdventureManagerDependencies = {}) {
     this.deps = {
       repository: deps.repository ?? adventureSessionRepository,
@@ -190,6 +196,7 @@ export class AdventureManager {
           : applyCompletedTurn(session, proposal, meta);
       if (!result.ok)
         throw new Error(result.errors[0]?.message ?? "opening-rejected");
+      await this.verifyControl();
       const saved = await this.deps.repository.save(
         session.revision,
         result.value,
@@ -250,8 +257,7 @@ export class AdventureManager {
     this.generationController?.abort();
     this.generationController = new AbortController();
     try {
-      if (!this.lease || !(await this.deps.authority.verify(this.lease)))
-        throw new Error("control-lost");
+      await this.verifyControl();
       const anchors = await this.deps.context.resolveAnchors(session);
       const relevant = await this.deps.context.resolveActionRelevant(
         session,
@@ -273,6 +279,7 @@ export class AdventureManager {
           : applyCompletedTurn(session, proposal, meta);
       if (!result.ok)
         throw new Error(result.errors[0]?.message ?? "turn-rejected");
+      await this.verifyControl();
       const saved = await this.deps.repository.save(
         session.revision,
         result.value,
@@ -299,6 +306,7 @@ export class AdventureManager {
 
   async recordRollOutcome(outcome: SuppliedRollOutcome): Promise<void> {
     if (!this.session?.pendingRoll || this.readOnly) return;
+    await this.verifyControl();
     const result = recordPendingRollOutcome(
       this.session,
       this.session.pendingRoll.inputId,
@@ -311,6 +319,7 @@ export class AdventureManager {
     );
     if (!result.ok)
       throw new Error(result.errors[0]?.message ?? "invalid-roll");
+    await this.verifyControl();
     const saved = await this.deps.repository.save(
       this.session.revision,
       result.value,
@@ -360,6 +369,7 @@ export class AdventureManager {
       });
       if (!result.ok)
         throw new Error(result.errors[0]?.message ?? "roll-rejected");
+      await this.verifyControl();
       const saved = await this.deps.repository.save(
         session.revision,
         result.value,

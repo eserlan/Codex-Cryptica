@@ -5,7 +5,9 @@
   let disabled = $derived(
     manager.readOnly ||
       manager.phase === "generating" ||
-      manager.phase === "offline",
+      manager.phase === "offline" ||
+      manager.phase === "awaiting-roll" ||
+      manager.phase === "ready-to-resolve",
   );
 </script>
 

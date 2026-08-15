@@ -45,10 +45,7 @@ function trimExcerpts(
 export function allocatePromptBudget(
   input: PromptBudgetInput,
 ): PromptBudgetResult {
-  if (
-    input.state.length > 36_000 ||
-    JSON.stringify(input.state).length > MAX_SERIALIZED_STATE_CHARS
-  ) {
+  if (input.state.length > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
   }
   const result = {

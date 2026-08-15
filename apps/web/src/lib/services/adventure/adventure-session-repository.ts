@@ -155,6 +155,15 @@ export class AdventureSessionRepository {
     await previous;
     try {
       const current = await this.load(session.vaultId, session.id);
+      if (current.condition === "unreadable") {
+        const listing = await this.list(session.vaultId);
+        if (listing.entries.some((entry) => entry.id === session.id)) {
+          return {
+            ok: false,
+            error: new Error("unreadable-session-preserved"),
+          };
+        }
+      }
       if (
         expectedRevision !== null &&
         current.condition !== "unreadable" &&
