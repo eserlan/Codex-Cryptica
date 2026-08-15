@@ -8,7 +8,7 @@ import DeckView from "./DeckView.svelte";
 
 if (typeof Element !== "undefined" && !Element.prototype.animate) {
   Element.prototype.animate = () =>
-    ({ finished: Promise.resolve(), cancel: () => {} }) as Animation;
+    ({ finished: Promise.resolve(), cancel: () => {} }) as unknown as Animation;
 }
 
 function deckOf(cardCount: number): RandomSource {
