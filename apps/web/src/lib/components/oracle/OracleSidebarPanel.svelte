@@ -98,6 +98,18 @@
           ></span>
         </button>
       {/if}
+      {#if activeTab === "chat" && mapSession.chatMessages.length > 0}
+        <button
+          type="button"
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
+          onclick={() => mapSession.clearChatMessages()}
+          title="Clear VTT chat"
+          aria-label="Clear VTT chat"
+        >
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+          ></span>
+        </button>
+      {/if}
 
       <!-- Pop out -->
       {#if activeTab === "oracle"}
@@ -154,18 +166,23 @@
           aria-label={`${activityCount} activity events`}>{activityCount}</span
         >
       {/if}
-    </button>
-    {#if mapSession.vttEnabled}
       <button
         onclick={() => (activeTab = "chat")}
         class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
-               {activeTab === 'chat'
+             {activeTab === 'chat'
           ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
           : 'text-theme-muted hover:text-theme-text'}"
       >
         VTT Chat
+        {#if mapSession.chatMessages.length > 0}
+          <span
+            class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+            aria-label={`${mapSession.chatMessages.length} chat messages`}
+            >{mapSession.chatMessages.length}</span
+          >
+        {/if}
       </button>
-    {/if}
+    </button>
   </div>
 
   <!-- Chat Content -->

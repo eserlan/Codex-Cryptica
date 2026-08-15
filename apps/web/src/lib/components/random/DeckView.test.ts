@@ -144,11 +144,11 @@ describe("DeckView result actions", () => {
     );
   });
 
-  it("dispatches to both VTT chat and Oracle chat by default when VTT is enabled", async () => {
+  it("dispatches to both VTT chat and Oracle chat by default on add to chat", async () => {
     clearOracleChatDraft();
     const sendChatMessage = vi.fn();
     const session = {
-      vttEnabled: true,
+      vttEnabled: false,
       sendChatMessage,
     };
     const service = {
