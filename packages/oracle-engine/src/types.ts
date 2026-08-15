@@ -65,6 +65,8 @@ export type OracleIntentType =
   | "help"
   | "clear"
   | "draw"
+  | "roll-table"
+  | "draw-deck"
   | "error";
 
 /**
@@ -84,6 +86,14 @@ export interface OracleIntent {
   formula?: string;
   sourceName?: string;
   targetName?: string;
+  /** Number of cards to draw for a `draw-deck` intent. Defaults to 1. */
+  drawCount?: number;
+  /**
+   * `sourceName` with a trailing number stripped, when one was present. The
+   * executor prefers whichever of the two actually names a deck, so a deck
+   * genuinely called "Deck 52" still resolves.
+   */
+  countedName?: string;
   label?: string;
   message?: string;
   instructions?: string;
@@ -182,6 +192,8 @@ export interface OracleExecutionContext {
   diceParser?: any;
   diceEngine?: any;
   diceHistory?: any;
+  /** Random table and deck access for the /table and /deck commands (#2247). */
+  randomSources?: any;
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;

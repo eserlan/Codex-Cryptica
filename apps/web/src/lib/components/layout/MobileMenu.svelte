@@ -8,8 +8,27 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import { isToolActive, isViewActive, navItems } from "./nav-items";
 
   let { isOpen = $bindable(false) } = $props();
+
+  /**
+   * The full index of the app's navigation, including the items the Activity
+   * Bar leaves out on a phone for want of width. Generated from the same list
+   * the bar uses — this section was four hardcoded links and had already
+   * drifted a feature and a half behind it.
+   */
+  const items = $derived(navItems());
+  const views = $derived(items.filter((i) => i.group === "view"));
+  const tools = $derived(items.filter((i) => i.group === "tool"));
+
+  const entryClass = (active: boolean) =>
+    `flex items-center gap-3 p-3 rounded border transition-all min-h-[44px] hover:border-theme-primary hover:bg-theme-primary/10 ${
+      active
+        ? "border-theme-primary bg-theme-primary/5 text-theme-primary"
+        : "border-theme-border text-theme-text"
+    }`;
 
   let closeButton = $state<HTMLButtonElement | null>(null);
   let lastFocusedElement = $state<HTMLElement | null>(null);
@@ -99,65 +118,57 @@
           Views
         </h3>
         <div class="grid grid-cols-1 gap-2">
-          <a
-            href="{base}/"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page
-              .url.pathname === `${base}/`
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--share-2] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Graph</span
+          {#each views as view}
+            <a
+              href={view.href}
+              class={entryClass(isViewActive(view, page.url.pathname))}
+              title={view.title ?? view.label}
+              data-testid="mobile-menu-{view.id}"
+              onclick={close}
             >
-          </a>
-          <a
-            href="{base}/map"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
-              `${base}/map`,
-            )
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--map] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Map</span
+              <span class="{view.icon} w-5 h-5" aria-hidden="true"></span>
+              <span
+                class="font-mono text-sm font-bold uppercase font-header tracking-wider"
+                >{view.label}</span
+              >
+            </a>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Sidecar Tools -->
+      <div class="flex flex-col gap-2">
+        <h3
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
+        >
+          Tools
+        </h3>
+        <div class="grid grid-cols-1 gap-2">
+          {#each tools as tool}
+            <button
+              type="button"
+              class={entryClass(isToolActive(tool))}
+              title={tool.title ?? tool.label}
+              data-testid="mobile-menu-{tool.id}"
+              onclick={() => {
+                tool.action?.();
+                close();
+              }}
             >
-          </a>
-          <a
-            href="{base}/canvas"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
-              `${base}/canvas`,
-            )
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--layout] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Canvas</span
-            >
-          </a>
-          <a
-            href="{base}/table"
-            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
-              `${base}/table`,
-            )
-              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
-              : 'text-theme-text'}"
-            onclick={close}
-          >
-            <span class="icon-[lucide--table] w-5 h-5"></span>
-            <span
-              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
-              >Table</span
-            >
-          </a>
+              <span class="{tool.icon} w-5 h-5" aria-hidden="true"></span>
+              <span
+                class="font-mono text-sm font-bold uppercase font-header tracking-wider"
+                >{tool.label}</span
+              >
+              {#if tool.id === "quicknote" && quickNoteStore.count > 0}
+                <span
+                  class="ml-auto rounded-full bg-theme-primary px-1.5 text-[10px] font-bold text-theme-bg"
+                >
+                  {quickNoteStore.count}
+                </span>
+              {/if}
+            </button>
+          {/each}
         </div>
       </div>
 

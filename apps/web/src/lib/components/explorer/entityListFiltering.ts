@@ -90,7 +90,69 @@ export function createEntityTextSearchRunner(
   };
 }
 
-type EntityWithPreview = Entity & { contentPreview?: string };
+export type EntityWithPreview = Entity & {
+  contentPreview?: string;
+  summary?: string;
+};
+
+export interface EntityMissingFields {
+  summary: boolean;
+  labels: boolean;
+  connections: boolean;
+  isIncomplete: boolean;
+}
+
+export type LabelFilterMode = "all" | "has_any" | "missing" | "has_none";
+export type ConnectionsFilterMode = "all" | "zero" | "has_connections";
+export type SummaryFilterMode = "all" | "has_summary" | "missing_summary";
+export type DateFilterMode = "all" | "has_date" | "missing_date";
+
+export interface TableColumnFilters {
+  nameQuery?: string;
+  typeValues?: Set<string>;
+  labelMode?: LabelFilterMode;
+  labelValues?: Set<string>;
+  connectionsMode?: ConnectionsFilterMode;
+  summaryMode?: SummaryFilterMode;
+  createdMode?: DateFilterMode;
+  modifiedMode?: DateFilterMode;
+}
+
+export interface ConnectionSummaryLike {
+  inbound?: number;
+  outbound?: number;
+  total?: number;
+}
+
+export function evaluateEntityMissingFields(
+  entity: EntityWithPreview,
+  connectionSummary?: ConnectionSummaryLike,
+): EntityMissingFields {
+  const hasSummary = Boolean(
+    entity.summary?.trim() ||
+    entity.contentPreview?.trim() ||
+    entity.content?.trim(),
+  );
+  const effectiveLabels: string[] = entity.labels?.length
+    ? entity.labels
+    : (entity.tags ?? []);
+  const hasLabels = effectiveLabels.length > 0;
+  const total =
+    connectionSummary?.total ??
+    (connectionSummary?.inbound ?? 0) + (connectionSummary?.outbound ?? 0);
+  const hasConnections = total > 0;
+
+  const summaryMissing = !hasSummary;
+  const labelsMissing = !hasLabels;
+  const connectionsMissing = !hasConnections;
+
+  return {
+    summary: summaryMissing,
+    labels: labelsMissing,
+    connections: connectionsMissing,
+    isIncomplete: summaryMissing || labelsMissing || connectionsMissing,
+  };
+}
 
 export interface FilterOptions {
   searchQuery: string;
@@ -104,6 +166,12 @@ export interface FilterOptions {
   textSearchUnavailable?: boolean;
   /** Worker request is in flight; use metadata-only matching until it resolves. */
   textSearchPending?: boolean;
+  /** Filter to incomplete entities (missing summary, labels, or connections). */
+  showIncompleteOnly?: boolean;
+  /** Column-level filters. */
+  columnFilters?: TableColumnFilters;
+  /** Connection counts for evaluating missing connections. */
+  connectionCounts?: Record<string, ConnectionSummaryLike>;
 }
 
 export function filterEntities(
@@ -120,6 +188,8 @@ export function filterEntities(
 
   const { labelTokens, textQuery: remainingTextQuery } =
     parseEntitySearchQuery(query);
+
+  const colFilters = options.columnFilters;
 
   for (let i = 0; i < allEntities.length; i++) {
     const e = allEntities[i];
@@ -141,18 +211,101 @@ export function filterEntities(
 
     // AND logic for sidebar label pills. Legacy entities without labels fall
     // back to tags, matching how label chips are rendered (Constitution XII).
-    const effectiveLabels = e.labels?.length ? e.labels : (e.tags ?? []);
+    const effectiveLabels: string[] = e.labels?.length
+      ? e.labels
+      : (e.tags ?? []);
     const matchesLabels =
       activeLabels.length === 0 ||
-      activeLabels.every((f) => effectiveLabels.includes(f));
+      activeLabels.every((f: string) => effectiveLabels.includes(f));
     if (!matchesLabels) continue;
 
     // Filter by specified label tokens (#label or @label). Legacy entities
     // without labels fall back to tags, matching the sidebar pill logic above.
-    const matchesLabelTokens = labelTokens.every((l) =>
-      effectiveLabels.some((label) => label.toLowerCase() === l),
+    const matchesLabelTokens = labelTokens.every((l: string) =>
+      effectiveLabels.some((label: string) => label.toLowerCase() === l),
     );
     if (!matchesLabelTokens) continue;
+
+    // Missing-data / incomplete entity filter
+    if (options.showIncompleteOnly) {
+      const missing = evaluateEntityMissingFields(
+        e,
+        options.connectionCounts?.[e.id],
+      );
+      if (!missing.isIncomplete) continue;
+    }
+
+    // Column-level filters
+    if (colFilters) {
+      if (colFilters.nameQuery?.trim()) {
+        const nameQ = colFilters.nameQuery.trim().toLowerCase();
+        if (!e.title.toLowerCase().includes(nameQ)) {
+          continue;
+        }
+      }
+
+      if (colFilters.typeValues && colFilters.typeValues.size > 0) {
+        if (!colFilters.typeValues.has(e.type)) {
+          continue;
+        }
+      }
+
+      if (
+        colFilters.labelMode === "missing" ||
+        colFilters.labelMode === "has_none"
+      ) {
+        if (effectiveLabels.length > 0) continue;
+      } else if (colFilters.labelMode === "has_any") {
+        if (effectiveLabels.length === 0) continue;
+        if (
+          colFilters.labelValues &&
+          colFilters.labelValues.size > 0 &&
+          !effectiveLabels.some((l: string) => colFilters.labelValues!.has(l))
+        ) {
+          continue;
+        }
+      }
+
+      if (colFilters.connectionsMode === "zero") {
+        const total =
+          options.connectionCounts?.[e.id]?.total ??
+          (options.connectionCounts?.[e.id]?.inbound ?? 0) +
+            (options.connectionCounts?.[e.id]?.outbound ?? 0);
+        if (total > 0) continue;
+      } else if (colFilters.connectionsMode === "has_connections") {
+        const total =
+          options.connectionCounts?.[e.id]?.total ??
+          (options.connectionCounts?.[e.id]?.inbound ?? 0) +
+            (options.connectionCounts?.[e.id]?.outbound ?? 0);
+        if (total === 0) continue;
+      }
+
+      if (colFilters.summaryMode === "missing_summary") {
+        const hasSummary = Boolean(
+          e.summary?.trim() || e.contentPreview?.trim() || e.content?.trim(),
+        );
+        if (hasSummary) continue;
+      } else if (colFilters.summaryMode === "has_summary") {
+        const hasSummary = Boolean(
+          e.summary?.trim() || e.contentPreview?.trim() || e.content?.trim(),
+        );
+        if (!hasSummary) continue;
+      }
+
+      if (colFilters.createdMode === "has_date") {
+        if (e.createdAt === undefined) continue;
+      } else if (colFilters.createdMode === "missing_date") {
+        if (e.createdAt !== undefined) continue;
+      }
+
+      if (colFilters.modifiedMode === "has_date") {
+        const modified = e.modifiedAt ?? e.updatedAt ?? e.lastUpdated;
+        if (modified === undefined) continue;
+      } else if (colFilters.modifiedMode === "missing_date") {
+        const modified = e.modifiedAt ?? e.updatedAt ?? e.lastUpdated;
+        if (modified !== undefined) continue;
+      }
+    }
 
     // Match remaining raw text queries (no longer checking e.tags)
     const matchesText =
@@ -161,18 +314,20 @@ export function filterEntities(
         ? options.textMatchIds.has(e.id)
         : options.textSearchUnavailable || options.textSearchPending
           ? e.title.toLowerCase().includes(remainingTextQuery) ||
-            e.labels?.some((l) =>
+            e.labels?.some((l: string) =>
               l.toLowerCase().includes(remainingTextQuery),
             ) ||
-            e.aliases?.some((a) => a.toLowerCase().includes(remainingTextQuery))
+            e.aliases?.some((a: string) =>
+              a.toLowerCase().includes(remainingTextQuery),
+            )
           : e.title.toLowerCase().includes(remainingTextQuery) ||
             (e.contentPreview ?? e.content)
               .toLowerCase()
               .includes(remainingTextQuery) ||
-            e.labels?.some((l) =>
+            e.labels?.some((l: string) =>
               l.toLowerCase().includes(remainingTextQuery),
             ) ||
-            e.aliases?.some((a) =>
+            e.aliases?.some((a: string) =>
               a.toLowerCase().includes(remainingTextQuery),
             ));
 

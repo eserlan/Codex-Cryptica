@@ -10,6 +10,8 @@
     countEntityTypes,
     createEntityTextSearchRunner,
     parseEntitySearchQuery,
+    evaluateEntityMissingFields,
+    type TableColumnFilters,
   } from "$lib/components/explorer/entityListFiltering";
   import { searchService } from "@codex/search-orchestrator";
   import type { SearchIndexProgress } from "@codex/search-engine";
@@ -35,6 +37,8 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   let labelFilters = $state<Set<string>>(new Set());
+  let showIncompleteOnly = $state(false);
+  let columnFilters = $state<TableColumnFilters>({});
   let textMatchIds = $state<Set<string> | null>(null);
   let textSearchPending = $state(false);
   let textSearchUnavailable = $state(false);
@@ -102,36 +106,6 @@
     };
   });
 
-  const typeCounts = $derived(
-    countEntityTypes(vault.allEntities, {
-      allowedTypes: null,
-      showDraftsOnly: false,
-    }),
-  );
-
-  const filtered = $derived(
-    filterEntities(vault.allEntities, {
-      searchQuery,
-      typeFilters,
-      labelFilters,
-      allowedTypes: null,
-      showDraftsOnly: false,
-      textMatchIds,
-      textSearchPending,
-      textSearchUnavailable,
-    }),
-  );
-
-  const searchStatusMessage = $derived(
-    textSearchPending
-      ? "Searching indexed content…"
-      : textSearchError
-        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
-        : indexProgress.isPartial && parsedSearchQuery.textQuery
-          ? "Search is still indexing; results will update as indexing finishes."
-          : null,
-  );
-
   const connectionCounts = $derived.by(() => {
     const inboundConnections = vault.inboundConnections ?? {};
 
@@ -161,6 +135,55 @@
 
     return result;
   });
+
+  const incompleteCount = $derived.by(() => {
+    let count = 0;
+    const entities = vault.allEntities;
+    for (let i = 0; i < entities.length; i++) {
+      if (
+        evaluateEntityMissingFields(
+          entities[i],
+          connectionCounts[entities[i].id],
+        ).isIncomplete
+      ) {
+        count++;
+      }
+    }
+    return count;
+  });
+
+  const typeCounts = $derived(
+    countEntityTypes(vault.allEntities, {
+      allowedTypes: null,
+      showDraftsOnly: false,
+    }),
+  );
+
+  const filtered = $derived(
+    filterEntities(vault.allEntities, {
+      searchQuery,
+      typeFilters,
+      labelFilters,
+      allowedTypes: null,
+      showDraftsOnly: false,
+      textMatchIds,
+      textSearchPending,
+      textSearchUnavailable,
+      showIncompleteOnly,
+      columnFilters,
+      connectionCounts,
+    }),
+  );
+
+  const searchStatusMessage = $derived(
+    textSearchPending
+      ? "Searching indexed content…"
+      : textSearchError
+        ? "Content search is temporarily unavailable; matching titles, aliases, and labels."
+        : indexProgress.isPartial && parsedSearchQuery.textQuery
+          ? "Search is still indexing; results will update as indexing finishes."
+          : null,
+  );
 
   const rows = $derived(sortEntities(filtered, sort, connectionCounts));
 
@@ -210,6 +233,8 @@
     void searchQuery;
     void typeFilters;
     void labelFilters;
+    void showIncompleteOnly;
+    void columnFilters;
     selectedIds = new Set();
     lastSelectedId = null;
     contextMenu = null;
@@ -421,11 +446,25 @@
     });
   }
 
+  function toggleIncompleteOnly() {
+    measureTableOperation("table_filter", () => {
+      showIncompleteOnly = !showIncompleteOnly;
+    });
+  }
+
+  function handleUpdateColumnFilters(newFilters: TableColumnFilters) {
+    measureTableOperation("table_filter", () => {
+      columnFilters = newFilters;
+    });
+  }
+
   function clearFilters() {
     measureTableOperation("table_filter", () => {
       searchQuery = "";
       typeFilters = new Set();
       labelFilters = new Set();
+      showIncompleteOnly = false;
+      columnFilters = {};
     });
   }
 
@@ -435,10 +474,26 @@
     });
   }
 
+  const hasActiveColumnFilters = $derived(
+    Boolean(
+      columnFilters.nameQuery ||
+      (columnFilters.typeValues && columnFilters.typeValues.size > 0) ||
+      (columnFilters.labelMode && columnFilters.labelMode !== "all") ||
+      (columnFilters.labelValues && columnFilters.labelValues.size > 0) ||
+      (columnFilters.connectionsMode &&
+        columnFilters.connectionsMode !== "all") ||
+      (columnFilters.summaryMode && columnFilters.summaryMode !== "all") ||
+      (columnFilters.createdMode && columnFilters.createdMode !== "all") ||
+      (columnFilters.modifiedMode && columnFilters.modifiedMode !== "all"),
+    ),
+  );
+
   const hasActiveFilters = $derived(
     searchQuery.trim().length > 0 ||
       typeFilters.size > 0 ||
-      labelFilters.size > 0,
+      labelFilters.size > 0 ||
+      showIncompleteOnly ||
+      hasActiveColumnFilters,
   );
 </script>
 
@@ -487,28 +542,54 @@
   {:else}
     <!-- Controls -->
     <div class="flex flex-col gap-3">
-      <div class="relative max-w-md">
-        <span
-          class="icon-[lucide--search] pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-theme-muted"
-          aria-hidden="true"
-        ></span>
-        <input
-          type="search"
-          value={searchQuery}
-          oninput={(event) => setSearchQuery(event.currentTarget.value)}
-          placeholder="Search by name, content, or #label…"
-          aria-label="Search entities"
-          data-testid="entity-table-search"
-          class="w-full rounded-lg border border-theme-border bg-theme-surface py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
-        />
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="relative min-w-[240px] max-w-md flex-1">
+          <span
+            class="icon-[lucide--search] pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-theme-muted"
+            aria-hidden="true"
+          ></span>
+          <input
+            type="search"
+            value={searchQuery}
+            oninput={(event) => setSearchQuery(event.currentTarget.value)}
+            placeholder="Search by name, content, or #label…"
+            aria-label="Search entities"
+            data-testid="entity-table-search"
+            class="w-full rounded-lg border border-theme-border bg-theme-surface py-2 pl-9 pr-3 text-sm text-theme-text placeholder:text-theme-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+          />
+        </div>
+
+        <button
+          type="button"
+          onclick={toggleIncompleteOnly}
+          aria-pressed={showIncompleteOnly}
+          data-testid="entity-table-incomplete-filter"
+          class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showIncompleteOnly
+            ? 'border-amber-500 bg-amber-500/15 text-amber-600 dark:text-amber-400'
+            : 'border-theme-border bg-theme-surface text-theme-muted hover:border-amber-500/50 hover:text-theme-text'}"
+        >
+          <span
+            class="icon-[lucide--alert-circle] h-3.5 w-3.5"
+            aria-hidden="true"
+          ></span>
+          Incomplete only
+          <span
+            class="rounded-full px-1.5 py-0.2 text-[10px] {showIncompleteOnly
+              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold'
+              : 'bg-theme-border text-theme-muted'}"
+          >
+            {incompleteCount}
+          </span>
+        </button>
       </div>
+
       {#if searchStatusMessage}
         <p class="text-[10px] text-theme-muted" aria-live="polite">
           {searchStatusMessage}
         </p>
       {/if}
 
-      {#if typeCounts.size > 0}
+      {#if typeCounts.size > 0 || labelFilters.size > 0 || hasActiveFilters}
         <div class="flex flex-wrap items-center gap-1.5">
           {#each [...typeCounts.entries()].sort( (a, b) => (a[0] ?? "").localeCompare(b[0] ?? "") ) as [type, count] (type)}
             {@const cat = categories.getCategory(type)}
@@ -551,9 +632,10 @@
             <button
               type="button"
               onclick={clearFilters}
+              data-testid="entity-table-clear-filters"
               class="ml-1 rounded text-xs text-theme-muted underline hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
             >
-              Clear
+              Clear all filters
             </button>
           {/if}
         </div>
@@ -615,6 +697,9 @@
           {vaultId}
           {sort}
           {connectionCounts}
+          {showIncompleteOnly}
+          {columnFilters}
+          onUpdateColumnFilters={handleUpdateColumnFilters}
           onSort={handleSort}
           {selectedIds}
           {allSelected}

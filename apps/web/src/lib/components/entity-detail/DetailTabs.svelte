@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { calendarEngine } from "chronology-engine";
@@ -12,6 +11,7 @@
     type EntityDetailTab,
     getTemporalLabel,
   } from "./detail-tabs";
+  import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
 
   let {
     entity,
@@ -119,19 +119,11 @@
 <div class="min-w-0 px-4 pt-2 pb-0 md:px-6 md:pt-4 md:pb-0">
   {#if isEditing}
     <div class="mb-2">
-      <label
-        class="block text-[10px] text-theme-secondary font-bold mb-1"
-        for="entity-type">CATEGORY</label
-      >
-      <select
-        id="entity-type"
+      <CategoryRadioGroup
         bind:value={editType}
-        class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full rounded"
-      >
-        {#each categories.list as cat (cat.id)}
-          <option value={cat.id}>{cat.label}</option>
-        {/each}
-      </select>
+        label="CATEGORY"
+        idPrefix="{idPrefix}-category"
+      />
     </div>
   {:else}
     <div

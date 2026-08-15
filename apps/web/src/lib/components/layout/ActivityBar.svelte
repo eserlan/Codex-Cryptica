@@ -1,159 +1,49 @@
 <script lang="ts">
-  import { vault } from "$lib/stores/vault.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { page } from "$app/state";
-  import { base } from "$app/paths";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import { guestVault } from "$lib/stores/guest-vault.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import {
+    isToolActive,
+    isViewActive,
+    navItems,
+    type NavItem,
+  } from "./nav-items";
 
-  interface NavItem {
-    id: string;
-    icon: string;
-    label: string;
-    /** Optional richer hover tooltip; falls back to `label` when unset. */
-    title?: string;
-    href?: string;
-    action?: () => void;
-  }
+  const items = $derived(navItems());
+  const views = $derived(items.filter((i) => i.group === "view"));
+  const tools = $derived(items.filter((i) => i.group === "tool"));
 
-  const views = $derived.by<NavItem[]>(() => {
-    return [
-      {
-        id: "graph",
-        icon: "icon-[lucide--network]",
-        label: "Graph",
-        title: "Knowledge Graph",
-        href:
-          sessionModeStore.isGuestMode && guestVault.publishId
-            ? `${base}/guest/${guestVault.publishId}`
-            : `${base}/`,
-      },
-      {
-        id: "map",
-        icon: "icon-[lucide--compass]",
-        label: "Map",
-        title: "World Map",
-        href: `${base}/map`,
-      },
-      {
-        id: "canvas",
-        icon: "icon-[lucide--layout]",
-        label: "Canvas",
-        title: "Spatial Canvas",
-        href: `${base}/canvas`,
-      },
-      {
-        id: "timeline",
-        icon: "icon-[lucide--calendar-days]",
-        label: "Timeline",
-        title: "World Chronology",
-        href: `${base}/timeline`,
-      },
-      {
-        id: "table",
-        icon: "icon-[lucide--table]",
-        label: "Table",
-        title: "Entity Table — overview, filter, and sort all entities",
-        href: `${base}/table`,
-      },
-    ];
-  });
+  /**
+   * This row does not wrap and does not scroll on its own, so every item added
+   * to it comes out of a phone's viewport width. Items marked `overflow` are
+   * dropped here and reached from the menu drawer instead; the rail is
+   * vertical from `md:` up, where height is not the constraint.
+   */
+  // `shrink-0` is load-bearing: without it flex shrinks these below the 44px
+  // minimum tap target long before the row ever overflows, so the scroll
+  // never engages and the bar quietly squashes instead.
+  const shellClass = (item: NavItem) =>
+    `${item.placement === "overflow" ? "hidden md:flex" : "flex"} shrink-0 w-11 h-11 md:w-10 md:h-10 items-center justify-center rounded-md transition-all duration-200 group relative border`;
 
-  const tools = $derived.by<NavItem[]>(() => {
-    const list: NavItem[] = [
-      {
-        id: "explorer",
-        icon: "icon-[lucide--database]",
-        label: "Entities",
-        title: "Entity Explorer",
-        action: () => layoutUIStore.toggleSidebarTool("explorer"),
-      },
-    ];
-
-    list.push({
-      id: "oracle",
-      icon: "icon-[lucide--sparkles]",
-      label: "Oracle",
-      title: vault.isGuest
-        ? "Lore Oracle — ask about the world lore you can see. AI is an assistive layer, never required."
-        : "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
-      action: () => layoutUIStore.toggleSidebarTool("oracle"),
-    });
-
-    if (!sessionModeStore.isGuestMode) {
-      list.push({
-        id: "shelf",
-        icon: "icon-[lucide--library]",
-        label: "Shelf",
-        title:
-          "The Shelf — carry entities between your vaults. Held in this browser; not a backup.",
-        action: () => layoutUIStore.toggleSidebarTool("shelf"),
-      });
-    }
-
-    if (!sessionModeStore.isGuestMode) {
-      list.push({
-        id: "quicknote",
-        icon: "icon-[lucide--zap]",
-        label: "Notes",
-        title: "QuickNote Scratchpad",
-        action: () => quickNoteStore.toggle(),
-      });
-    }
-
-    if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
-      list.push({
-        id: "guest-chat",
-        icon: "icon-[lucide--messages-square]",
-        label: "Chat",
-        title: "Guest Chat — speak with enabled characters in-character.",
-        action: () => {
-          if (sessionModeStore.isGuestMode) {
-            guestChatStore.showChatModal = !guestChatStore.showChatModal;
-            if (guestChatStore.showChatModal) {
-              layoutUIStore.leftSidebarOpen = false;
-            }
-            return;
-          }
-
-          if (layoutUIStore.mainViewMode === "guest-chat") {
-            layoutUIStore.mainViewMode = "visualization";
-          } else {
-            layoutUIStore.mainViewMode = "guest-chat";
-            layoutUIStore.leftSidebarOpen = false;
-          }
-        },
-      });
-    }
-
-    return list;
-  });
-
-  const isViewActive = (item: NavItem) => {
-    if (!item.href) return false;
-    if (item.id === "graph") return page.url.pathname === `${base}/`;
-    return page.url.pathname.startsWith(item.href);
-  };
+  const stateClass = (active: boolean) =>
+    active
+      ? "bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm"
+      : "border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10";
 </script>
 
 <nav
   class="bg-chrome-surface border-chrome-border flex shrink-0 z-[80]
-    flex-row md:flex-col items-center justify-center md:justify-start pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] md:py-4 gap-2 md:gap-4
-    w-full md:w-14 min-h-14 h-auto md:h-full border-t md:border-t-0 md:border-r"
+    flex-row md:flex-col items-center justify-center-safe md:justify-start pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))] md:py-4 gap-0 md:gap-4
+    w-full md:w-14 min-h-13 h-auto md:h-full border-t md:border-t-0 md:border-r
+    overflow-x-auto md:overflow-x-visible"
   aria-label="Activity Bar"
   data-testid="activity-bar"
 >
   <!-- Main Views -->
   {#each views as view}
-    {@const active = isViewActive(view)}
+    {@const active = isViewActive(view, page.url.pathname)}
     <a
       href={view.href}
-      class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
-        ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
-        : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
+      class="{shellClass(view)} {stateClass(active)}"
       aria-label={view.label}
       title={view.title ?? view.label}
       data-testid={`activity-bar-${view.id}`}
@@ -175,22 +65,15 @@
 
   <!-- Separator -->
   <div
-    class="w-px h-6 bg-chrome-border md:w-8 md:h-px my-1 md:my-2 opacity-50"
+    class="w-px h-6 bg-chrome-border md:w-8 md:h-px my-1 md:my-2 mx-0.5 md:mx-0 opacity-50 shrink-0"
   ></div>
 
   <!-- Sidecar Tools -->
   {#each tools as tool}
-    {@const active =
-      tool.id === "guest-chat"
-        ? sessionModeStore.isGuestMode
-          ? guestChatStore.showChatModal
-          : layoutUIStore.mainViewMode === "guest-chat"
-        : layoutUIStore.activeSidebarTool === tool.id}
+    {@const active = isToolActive(tool)}
     <button
       onclick={tool.action}
-      class="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
-        ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
-        : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
+      class="{shellClass(tool)} {stateClass(active)}"
       aria-label={tool.label}
       title={tool.title ?? tool.label}
       data-testid={`activity-bar-${tool.id}`}
