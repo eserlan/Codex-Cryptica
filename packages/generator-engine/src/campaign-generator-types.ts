@@ -211,6 +211,11 @@ export interface GeneratedDraft {
   bodies?: StarSystemBody[];
   /** Carried through from {@link GeneratorOutput.starType}. */
   starType?: string;
+  /**
+   * Source and direct neighbor entity references supplied from the vault context
+   * that grounded this generation.
+   */
+  contextProvenance?: Array<{ id: string; title: string }>;
 }
 
 /** The user's explicit decision to save a reviewed draft. */
