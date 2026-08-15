@@ -56,6 +56,7 @@
    */
   let codex = $state<CodexImportOk | undefined>();
   let codexError = $state("");
+  let selectedFileName = $state("");
 
   /** Pictures waiting to be matched to a card by filename (FR-036). */
   let images = $state<File[]>([]);
@@ -268,7 +269,11 @@
    * which quietly makes a .csv or .tsv on disk importable too.
    */
   async function openFile(file: File | undefined) {
-    if (!file) return;
+    if (!file) {
+      selectedFileName = "";
+      return;
+    }
+    selectedFileName = file.name;
     codex = undefined;
     codexError = "";
 
@@ -350,23 +355,48 @@
     </button>
   </div>
 
-  <label class="flex flex-col gap-1">
+  <div class="flex flex-col gap-1.5">
     <span
       class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
       >Open a file</span
     >
-    <input
-      type="file"
-      accept=".md,.txt,.tsv,.csv,text/*"
-      class="font-body text-xs text-theme-text"
-      onchange={(e) => openFile(e.currentTarget.files?.[0])}
-      data-testid="import-file"
-    />
+    <div class="flex flex-wrap items-center gap-2.5">
+      <label
+        class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3.5 py-2 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-sm"
+      >
+        <span aria-hidden="true" class="icon-[lucide--folder-open] h-4 w-4"
+        ></span>
+        <span>Choose file</span>
+        <input
+          type="file"
+          accept=".md,.txt,.tsv,.csv,text/*"
+          class="sr-only"
+          onchange={(e) => openFile(e.currentTarget.files?.[0])}
+          data-testid="import-file"
+        />
+      </label>
+      {#if selectedFileName}
+        <span
+          class="inline-flex items-center gap-1.5 rounded-md border border-theme-border/60 bg-theme-bg/60 px-2.5 py-1 text-xs font-mono text-theme-text"
+          data-testid="import-file-selected"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--file-text] h-3.5 w-3.5 text-theme-muted"
+          ></span>
+          {selectedFileName}
+        </span>
+      {:else}
+        <span class="font-body text-xs italic text-theme-muted"
+          >No file chosen</span
+        >
+      {/if}
+    </div>
     <span class="font-body text-[10px] text-theme-muted/70">
       A file exported from Codex Cryptica comes back whole. Anything else lands
       in the box below.
     </span>
-  </label>
+  </div>
 
   {#if codexError}
     <p
@@ -478,28 +508,40 @@
     </label>
 
     {#if preview && kind === "deck"}
-      <label class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1.5">
         <span
           class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
           >Pictures (matched to cards by file name)</span
         >
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          class="font-body text-xs text-theme-text"
-          onchange={(e) => (images = Array.from(e.currentTarget.files ?? []))}
-          data-testid="import-images"
-        />
-        {#if images.length > 0}
-          <span
-            class="font-mono text-[10px] text-theme-muted"
-            data-testid="import-image-match"
+        <div class="flex flex-wrap items-center gap-2.5">
+          <label
+            class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-border bg-theme-bg/60 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
           >
-            {matchedImages} of {images.length} matched a card
-          </span>
-        {/if}
-      </label>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--image-plus] h-4 w-4 text-theme-muted"
+            ></span>
+            <span>Choose images</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              class="sr-only"
+              onchange={(e) =>
+                (images = Array.from(e.currentTarget.files ?? []))}
+              data-testid="import-images"
+            />
+          </label>
+          {#if images.length > 0}
+            <span
+              class="font-mono text-[10px] text-theme-muted"
+              data-testid="import-image-match"
+            >
+              {matchedImages} of {images.length} matched a card
+            </span>
+          {/if}
+        </div>
+      </div>
     {/if}
 
     {#if preview && kind === "table"}
