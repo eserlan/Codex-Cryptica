@@ -10,4 +10,5 @@ export * from "./deck-service";
 export * from "./suggest";
 export * from "./import";
 export * from "./import/codex";
+export * from "./import/card-images";
 export * from "./export";

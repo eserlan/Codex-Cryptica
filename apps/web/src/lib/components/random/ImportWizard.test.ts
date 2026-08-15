@@ -102,4 +102,105 @@ describe("ImportWizard", () => {
       }),
     );
   });
+
+  describe("deck import", () => {
+    function renderDeck(onImport = vi.fn()) {
+      render(ImportWizard, {
+        props: { kind: "deck", onImport, onCancel: vi.fn() },
+      });
+      return onImport;
+    }
+
+    it("is a card view, not the table view", () => {
+      renderDeck();
+
+      expect(screen.getByText("Import a deck")).toBeDefined();
+      expect(screen.getByText("Paste your cards")).toBeDefined();
+      expect(
+        screen.getByText("Drag a file, or a folder of card art, here"),
+      ).toBeDefined();
+      // Table-only controls have no meaning for a deck.
+      expect(screen.queryByTestId("import-format-delimited")).toBeNull();
+    });
+
+    it("edits a pasted card as a name and a meaning", async () => {
+      renderDeck();
+
+      await fireEvent.input(screen.getByTestId("import-paste"), {
+        target: { value: "The Tower\tSudden ruin." },
+      });
+
+      const titles = screen.getAllByTestId("import-row-title");
+      const bodies = screen.getAllByTestId("import-row-body");
+      expect((titles[0] as HTMLInputElement).value).toBe("The Tower");
+      expect((bodies[0] as HTMLInputElement).value).toBe("Sudden ruin.");
+      expect(screen.queryByTestId("import-row-text")).toBeNull();
+    });
+
+    it("matches chosen pictures to cards and reports the leftovers", async () => {
+      renderDeck();
+
+      await fireEvent.input(screen.getByTestId("import-paste"), {
+        target: { value: "The Tower\nThe Star" },
+      });
+      await fireEvent.change(screen.getByTestId("import-file"), {
+        target: {
+          files: [
+            new File(["x"], "the-tower.png", { type: "image/png" }),
+            new File(["x"], "holiday.png", { type: "image/png" }),
+          ],
+        },
+      });
+
+      expect(
+        (await screen.findByTestId("import-image-match")).textContent,
+      ).toContain("1 of 2 matched a card");
+      expect(
+        screen.getByTestId("import-images-unmatched").textContent,
+      ).toContain("holiday.png");
+    });
+
+    it("makes cards out of the pictures nothing claimed", async () => {
+      renderDeck();
+
+      await fireEvent.input(screen.getByTestId("import-paste"), {
+        target: { value: "The Tower" },
+      });
+      await fireEvent.change(screen.getByTestId("import-file"), {
+        target: {
+          files: [new File(["x"], "the-star.png", { type: "image/png" })],
+        },
+      });
+
+      await fireEvent.click(
+        await screen.findByTestId("import-images-make-cards"),
+      );
+
+      const titles = screen.getAllByTestId("import-row-title");
+      expect(titles.map((el) => (el as HTMLInputElement).value)).toEqual([
+        "The Tower",
+        "The Star",
+      ]);
+    });
+
+    it("imports a deck of cards", async () => {
+      const onImport = renderDeck();
+
+      await fireEvent.input(screen.getByTestId("import-name"), {
+        target: { value: "Major Arcana" },
+      });
+      await fireEvent.input(screen.getByTestId("import-paste"), {
+        target: { value: "The Tower\tSudden ruin.\nThe Star\tHope." },
+      });
+      await fireEvent.click(screen.getByTestId("import-confirm"));
+
+      expect(onImport).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Major Arcana", kind: "deck" }),
+      );
+      expect(onImport.mock.calls[0][0].cards).toEqual([
+        expect.objectContaining({ title: "The Tower", body: "Sudden ruin." }),
+        expect.objectContaining({ title: "The Star", body: "Hope." }),
+      ]);
+    });
+  });
 });

@@ -331,16 +331,19 @@
   {#if outcome && outcome.cards.length > 0}
     <!-- A spread is a layout, not a list: each card sits in its position, with
          the position named beside it (FR-028). -->
+    {@const single = !outcome.positions && outcome.cards.length === 1}
     <ul
-      class="{outcome.positions
-        ? 'grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]'
-        : 'flex flex-col'} gap-2"
+      class="{single
+        ? 'flex justify-center'
+        : 'grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]'} gap-3"
       in:fade={{ duration: 150 }}
       data-testid={outcome.positions ? "spread-layout" : "draw-results"}
     >
       {#each outcome.cards as drawn, index}
         <li
-          class="rounded border border-theme-border bg-theme-bg p-3"
+          class="rounded border border-theme-border bg-theme-bg p-3 {single
+            ? 'w-full max-w-sm'
+            : ''}"
           data-testid="drawn-card"
         >
           {#if outcome.positions?.[index]}
@@ -351,18 +354,28 @@
               {outcome.positions[index]}
             </span>
           {/if}
-          <div class="flex items-start gap-3">
+          <!-- A drawn card is presented as a card: the art at full width, its
+               name underneath the way a name plate sits on a tarot card, and
+               the meaning below that. Click the art for it full size. -->
+          <div class="flex flex-col gap-2">
             <CardImage
               path={drawn.card.imagePath}
               alt="Picture on {drawn.card.title}"
-              className="h-20 w-20 shrink-0 rounded object-cover {drawn.reversed
+              title={drawn.card.title}
+              zoomable
+              autoZoom={single}
+              className="aspect-[5/7] w-full rounded-lg border border-theme-border/60 object-cover shadow-md {drawn.reversed
                 ? 'rotate-180'
                 : ''}"
             />
-            <div class="min-w-0 flex-1">
-              <div class="mb-1 flex flex-wrap items-center gap-2">
+            <div class="min-w-0">
+              <div
+                class="flex flex-wrap items-center justify-center gap-2 text-center"
+              >
                 <span
-                  class="font-header text-sm font-bold text-theme-text"
+                  class="font-header {single
+                    ? 'text-base'
+                    : 'text-sm'} font-bold text-theme-text"
                   data-testid="drawn-title"
                 >
                   {drawn.card.title}
@@ -376,12 +389,14 @@
                   </span>
                 {/if}
               </div>
-              <p
-                class="whitespace-pre-wrap font-body text-xs leading-relaxed text-theme-text"
-                data-testid="drawn-body"
-              >
-                {drawn.resolved.finalText}
-              </p>
+              {#if drawn.resolved.finalText.trim()}
+                <p
+                  class="mt-1.5 whitespace-pre-wrap font-body text-xs leading-relaxed text-theme-text"
+                  data-testid="drawn-body"
+                >
+                  {drawn.resolved.finalText}
+                </p>
+              {/if}
             </div>
           </div>
         </li>
@@ -514,10 +529,21 @@
       <ul class="mt-2 flex flex-wrap gap-1.5">
         {#each discarded as card}
           <li
-            class="rounded bg-theme-primary/10 px-2 py-0.5 font-body text-[10px] text-theme-primary"
+            class="overflow-hidden rounded bg-theme-primary/10 text-[10px] text-theme-primary"
             data-testid="discarded-card"
           >
-            {card.title || "Untitled card"}
+            <!-- The pill itself is the previewer: a thumbnail here is too small
+                 to read as art, so the whole name is what opens the picture. -->
+            <CardImage
+              path={card.imagePath}
+              alt="Picture on {card.title}"
+              title={card.title}
+              zoomable
+            >
+              <span class="block px-2 py-0.5 font-body"
+                >{card.title || "Untitled card"}</span
+              >
+            </CardImage>
           </li>
         {/each}
       </ul>
