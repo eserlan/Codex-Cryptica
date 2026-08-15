@@ -10,6 +10,8 @@ keywords:
   - "RPG Campaign Management"
   - "Codex Cryptica"
 publishedAt: 2026-07-31T14:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/custom-stat-sheet-templates/template-manager.png"
+imageAlt: "Stat Sheet Templates manager showing vault availability and default templates by category"
 ---
 
 At the table, the best character sheet is the one you can read in a glance and update without breaking the flow of play.
@@ -86,4 +88,4 @@ Until then, the best template is the one that reflects your actual session rhyth
 
 ### [Open Stat Sheets in Codex Cryptica →](/)
 
-_Want the practical walkthrough? Read the full [Stat Sheets help guide](/help#help/stat-sheets)._ 
+_Want the practical walkthrough? Read the full [Stat Sheets help guide](/help#help/stat-sheets)._

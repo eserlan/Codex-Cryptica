@@ -15,6 +15,8 @@ keywords:
     "D&D AI Tools",
   ]
 publishedAt: 2026-03-22T15:00:00Z
+image: "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png"
+imageAlt: "Lore Oracle Interface in Codex Cryptica"
 ---
 
 ![Lore Oracle Interface](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png)
