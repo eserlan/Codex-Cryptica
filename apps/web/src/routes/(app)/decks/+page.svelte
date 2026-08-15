@@ -1,6 +1,7 @@
 <script lang="ts">
   import SourceWorkspace from "$lib/components/random/SourceWorkspace.svelte";
   import CardEditor from "$lib/components/random/CardEditor.svelte";
+  import DeckUseView from "$lib/components/random/DeckUseView.svelte";
 </script>
 
 <svelte:head>
@@ -16,5 +17,9 @@
 >
   {#snippet editor({ source, diagnostics, onChange, onRename })}
     <CardEditor {source} {diagnostics} {onChange} {onRename} />
+  {/snippet}
+
+  {#snippet player({ source })}
+    <DeckUseView {source} />
   {/snippet}
 </SourceWorkspace>

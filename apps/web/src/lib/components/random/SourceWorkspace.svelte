@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
   import { base } from "$app/paths";
+  import { page } from "$app/state";
+  import { browser } from "$app/environment";
   import type { Diagnostic, RandomSource } from "random-source-engine";
   import {
     ensureRandomSourcesLoaded,
@@ -8,7 +10,13 @@
   } from "$lib/features/random";
   import { vault } from "$lib/stores/vault.svelte";
   import ImportWizard from "./ImportWizard.svelte";
-  import type { EditorContext } from "./source-workspace";
+  import {
+    MODE_STORAGE_KEY,
+    resolveMode,
+    type EditorContext,
+    type PlayerContext,
+    type SourceMode,
+  } from "./source-workspace";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   /**
@@ -26,6 +34,7 @@
     emptyBody,
     allowImport = false,
     editor,
+    player,
   }: {
     kind: "table" | "deck";
     heading: string;
@@ -33,9 +42,49 @@
     emptyBody: string;
     allowImport?: boolean;
     editor: Snippet<[EditorContext]>;
+    player: Snippet<[PlayerContext]>;
   } = $props();
 
   const noun = $derived(kind === "table" ? "table" : "deck");
+
+  /**
+   * Authoring and playing want opposite layouts, so they are two modes of this
+   * one shell rather than one screen doing both (issue 2258). The list, the
+   * search, the write queue and the prompts are shared; only the right pane
+   * swaps.
+   *
+   * A `?mode=build` link is honoured on arrival, but switching writes to
+   * storage rather than back to the URL. Changing the URL in this app costs a
+   * webfont request — measured, not assumed — and rolling a table has to work
+   * with the machine offline (FR-020, SC-005). Storage gets the half that
+   * actually matters: come back later and you are where you left off.
+   */
+  let mode = $state<SourceMode>(
+    resolveMode(
+      page.url.searchParams,
+      browser ? localStorage.getItem(MODE_STORAGE_KEY) : null,
+    ),
+  );
+
+  const MODES = [
+    { id: "use", label: "Use", icon: "icon-[lucide--dices]" },
+    { id: "build", label: "Build", icon: "icon-[lucide--pencil]" },
+  ] as const;
+
+  function setMode(next: SourceMode) {
+    if (next === mode) return;
+    mode = next;
+    if (browser) localStorage.setItem(MODE_STORAGE_KEY, next);
+  }
+
+  /**
+   * Authoring is what the author just asked for, so creating or importing
+   * overrides the play default rather than leaving them in a view with no way
+   * to type anything.
+   */
+  function openBuild() {
+    setMode("build");
+  }
 
   /**
    * The two kinds share one Activity Bar slot, so switching between them
@@ -136,6 +185,7 @@
     // Selected before it is written: the editor has to switch on the click, or
     // the first thing typed lands in the source the author just left.
     select(created);
+    openBuild();
     enqueue(() => randomSources.save(created));
   }
 
@@ -143,6 +193,7 @@
   function completeImport(source: RandomSource) {
     importing = false;
     select(source);
+    openBuild();
     enqueue(() => randomSources.save(source));
   }
 
@@ -262,7 +313,7 @@
 
 <div class="flex h-full min-h-0 flex-col bg-theme-bg font-body">
   <header
-    class="flex shrink-0 items-center justify-between gap-3 border-b border-theme-border bg-theme-surface p-4"
+    class="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-theme-border bg-theme-surface p-4"
   >
     <h1 class="sr-only">{heading}</h1>
     <nav
@@ -284,6 +335,28 @@
         </a>
       {/each}
     </nav>
+
+    <nav
+      class="flex items-center gap-0.5 rounded-md border border-theme-border bg-theme-bg p-0.5"
+      aria-label="Workspace mode"
+    >
+      {#each MODES as option}
+        {@const current = option.id === mode}
+        <button
+          type="button"
+          aria-pressed={current}
+          onclick={() => setMode(option.id)}
+          class="flex items-center gap-1.5 rounded px-2.5 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest transition-colors {current
+            ? 'bg-theme-primary/15 text-theme-primary'
+            : 'text-theme-muted hover:text-theme-text'}"
+          data-testid="source-mode-{option.id}"
+        >
+          <span aria-hidden="true" class="{option.icon} h-3.5 w-3.5"></span>
+          {option.label}
+        </button>
+      {/each}
+    </nav>
+
     {#if saving}
       <span
         class="font-mono text-[9px] uppercase tracking-widest text-theme-muted/60"
@@ -375,6 +448,8 @@
           onImport={completeImport}
           onCancel={() => (importing = false)}
         />
+      {:else if draft && mode === "use"}
+        {@render player({ source: draft })}
       {:else if draft}
         <div class="mb-3 flex justify-end">
           <button

@@ -1,6 +1,7 @@
 <script lang="ts">
   import SourceWorkspace from "$lib/components/random/SourceWorkspace.svelte";
   import TableEditor from "$lib/components/random/TableEditor.svelte";
+  import TableUseView from "$lib/components/random/TableUseView.svelte";
 </script>
 
 <svelte:head>
@@ -16,5 +17,9 @@
 >
   {#snippet editor({ source, diagnostics, onChange, onRename })}
     <TableEditor {source} {diagnostics} {onChange} {onRename} />
+  {/snippet}
+
+  {#snippet player({ source })}
+    <TableUseView {source} />
   {/snippet}
 </SourceWorkspace>
