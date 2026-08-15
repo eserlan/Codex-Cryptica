@@ -99,6 +99,51 @@ describe("ActivityBar", () => {
     });
   });
 
+  describe("phone overflow", () => {
+    const classOf = (id: string) =>
+      screen.getByTestId(`activity-bar-${id}`).className;
+
+    // The row does not wrap and every item costs viewport width, so the
+    // demoted ones are hidden below `md` and reached from the menu drawer.
+    it.each(["random", "shelf", "quicknote", "guest-chat"])(
+      "hides %s from the bar on a phone",
+      (id) => {
+        render(ActivityBar);
+
+        expect(classOf(id)).toContain("hidden md:flex");
+      },
+    );
+
+    it.each(["graph", "map", "canvas", "timeline", "table", "explorer"])(
+      "keeps %s in the bar on a phone",
+      (id) => {
+        render(ActivityBar);
+
+        expect(classOf(id)).not.toContain("hidden");
+      },
+    );
+
+    it("leaves room by keeping the phone bar under eight items", () => {
+      render(ActivityBar);
+
+      const onPhone = screen
+        .getByTestId("activity-bar")
+        .querySelectorAll("[data-testid^='activity-bar-']:not(.hidden)");
+
+      expect(onPhone.length).toBeLessThanOrEqual(8);
+    });
+
+    // Belt and braces: even demoted, a narrow enough phone could still
+    // overflow, and clipping with no way to scroll is what started this.
+    it("lets the bar scroll rather than clip when it overflows", () => {
+      render(ActivityBar);
+
+      const bar = screen.getByTestId("activity-bar");
+      expect(bar.className).toContain("overflow-x-auto");
+      expect(bar.className).toContain("justify-center-safe");
+    });
+  });
+
   it("does not render the AI Assessment shortcut", () => {
     render(ActivityBar);
     expect(screen.queryByTestId("activity-bar-ai-assessment")).toBeNull();
