@@ -168,7 +168,9 @@ function mapOutputToDraft(
   ): GeneratedDraft => {
     const availableIds = request.vaultContext?.categoryLabels?.map((c) => c.id);
     const contextProvenance: Array<{ id: string; title: string }> = [];
+    const seenIds = new Set<string>();
     if (request.vaultContext?.sourceEntity) {
+      seenIds.add(request.vaultContext.sourceEntity.id);
       contextProvenance.push({
         id: request.vaultContext.sourceEntity.id,
         title: request.vaultContext.sourceEntity.title,
@@ -176,7 +178,8 @@ function mapOutputToDraft(
     }
     if (request.vaultContext?.neighbors?.length) {
       for (const n of request.vaultContext.neighbors) {
-        if (!contextProvenance.some((e) => e.id === n.id)) {
+        if (!seenIds.has(n.id)) {
+          seenIds.add(n.id);
           contextProvenance.push({ id: n.id, title: n.title });
         }
       }

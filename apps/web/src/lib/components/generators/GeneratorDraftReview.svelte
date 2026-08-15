@@ -89,13 +89,12 @@
         class="icon-[lucide--zap] h-4 w-4 text-chrome-accent shrink-0"
       ></span>
       <span class="text-chrome-muted">Used context:</span>
-      <div class="flex flex-wrap items-center gap-1.5 font-medium">
+      <div class="flex flex-wrap items-center gap-x-1 gap-y-0.5 font-medium">
         {#each draft.contextProvenance as item, i (item.id)}
-          <span class="text-chrome-text"
-            >{item.title}{#if i < draft.contextProvenance.length - 1}<span
-                class="text-chrome-muted font-normal">,</span
-              >{/if}</span
-          >
+          <span class="text-chrome-text">{item.title}</span>
+          {#if i < draft.contextProvenance.length - 1}
+            <span class="text-chrome-muted font-normal mr-0.5">,</span>
+          {/if}
         {/each}
       </div>
     </div>
