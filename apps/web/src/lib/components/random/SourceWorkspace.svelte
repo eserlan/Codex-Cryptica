@@ -10,6 +10,7 @@
   } from "$lib/features/random";
   import { vault } from "$lib/stores/vault.svelte";
   import ImportWizard from "./ImportWizard.svelte";
+  import ExportDialog from "./ExportDialog.svelte";
   import TableGenerateDialog from "./TableGenerateDialog.svelte";
   import type { CandidateTableEntry } from "generator-engine";
   import {
@@ -139,6 +140,7 @@
   const saving = $derived(dirty || inFlight > 0);
   let deleteImpact = $state<RandomSource[] | undefined>();
   let importing = $state(false);
+  let exporting = $state(false);
   let generatingTable = $state(false);
   let pendingRename = $state<
     { name: string; referencedBy: RandomSource[] } | undefined
@@ -195,6 +197,8 @@
     deleteImpact = undefined;
     pendingRename = undefined;
     importing = false;
+    exporting = false;
+    generatingTable = false;
     // Picking something is the end of browsing, so the list gets out of the
     // way and hands the screen to what was picked. Desktop ignores this.
     listOpen = false;
@@ -511,6 +515,25 @@
         </button>
       {/if}
 
+      <!-- Beside Import, because they are the same job in two directions.
+           Disabled rather than hidden when nothing is open, so it is
+           discoverable before it is needed (issue 2263). -->
+      <button
+        type="button"
+        onclick={() => {
+          exporting = true;
+          listOpen = false;
+        }}
+        disabled={!draft}
+        title={draft ? `Export "${draft.name}"` : `Open a ${noun} to export it`}
+        class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text"
+        data-testid="open-export"
+      >
+        <span aria-hidden="true" class="icon-[lucide--download] h-3.5 w-3.5"
+        ></span>
+        Export
+      </button>
+
       <ul class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {#each visible as source (source.id)}
           <li>
@@ -534,7 +557,9 @@
     </aside>
 
     <section class="min-h-0 flex-1 overflow-y-auto p-4">
-      {#if importing}
+      {#if exporting && draft}
+        <ExportDialog source={draft} onClose={() => (exporting = false)} />
+      {:else if importing}
         <ImportWizard
           {kind}
           onImport={completeImport}
