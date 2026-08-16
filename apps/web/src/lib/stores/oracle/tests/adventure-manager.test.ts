@@ -141,7 +141,7 @@ describe("AdventureManager", () => {
       resolveFirst = resolve;
     });
     let firstSignal: AbortSignal | undefined;
-    const deps = dependencies();
+    const deps: any = dependencies();
     deps.generation = {
       async generate(request: any, options?: { signal?: AbortSignal }) {
         if (request.phase === "opening") return completeProposal;
