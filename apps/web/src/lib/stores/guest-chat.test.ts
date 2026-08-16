@@ -73,13 +73,12 @@ vi.mock("../utils/idb", () => {
       }),
       getAllFromIndex: vi
         .fn()
-        .mockImplementation(async (table, _indexName, characterId) => {
+        .mockImplementation(async (table, indexName, indexValue) => {
+          const field =
+            indexName === "by-speaker" ? "speakerCharacterId" : "characterId";
           const results: any[] = [];
           (globalThis as any).mockDbStore.forEach((value: any, k: string) => {
-            if (
-              k.startsWith(`${table}_`) &&
-              value.characterId === characterId
-            ) {
+            if (k.startsWith(`${table}_`) && value[field] === indexValue) {
               results.push(value);
             }
           });
@@ -247,6 +246,31 @@ describe("GuestChatStore", () => {
 
     const sessions = await store.listSessions("char-1");
     expect(sessions.map((s) => s.id)).toEqual(["newer", "older"]);
+  });
+
+  it("listSessionsAsSpeaker finds sessions where the character was the human's speaker, not the AI voice", async () => {
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_cross", {
+      id: "cross",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-1",
+      speakerCharacterId: "char-2",
+      characterTitle: "Blacksmith Joe",
+      messages: [],
+      lastUpdated: 100,
+    });
+    (globalThis as any).mockDbStore.set("guest_chat_transcripts_unrelated", {
+      id: "unrelated",
+      guestId: "guest-local",
+      guestName: "Invited Guest",
+      characterId: "char-3",
+      characterTitle: "Someone Else",
+      messages: [],
+      lastUpdated: 50,
+    });
+
+    const sessions = await store.listSessionsAsSpeaker("char-2");
+    expect(sessions.map((s) => s.id)).toEqual(["cross"]);
   });
 
   it("resumeSession swaps in the requested transcript and sets it active", async () => {
