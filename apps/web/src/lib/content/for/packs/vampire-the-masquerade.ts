@@ -12,12 +12,12 @@ export const vampireTheMasquerade: LandingPageConfig = {
       "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
   },
   hero: {
-    eyebrow: "Chronicle & Campaign Management",
+    eyebrow: "Chronicle Management",
     title: "Codex Cryptica for Vampire: The Masquerade",
     tagline:
       "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
     problemStatement:
-      "Standard campaign notes struggle when every NPC is connected to three secrets and four rival factions. When a Primogen member shifts their support, you shouldn’t have to manually update five separate documents to remember who owes what to whom.",
+      "Standard chronicle notes struggle when every NPC is connected to three secrets and four rival factions. When a Primogen shifts their support, you shouldn’t have to manually update five separate documents to remember who owes what to whom.",
   },
   useCases: [
     {
@@ -29,19 +29,19 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Domains & Hunting Grounds",
       description:
-        "Track Elysium sanctuaries, rack territories, clan domains, and contested havens across your nocturnal city.",
+        "Track Elysium, hunting grounds, clan domains, and contested havens across your nocturnal city.",
       icon: "icon-[lucide--map-pin]",
     },
     {
       title: "Touchstones & Mortal Connections",
       description:
-        "Keep track of coterie touchstones, human disguises, feeding grounds, and blackmail material alongside your campaign lore.",
+        "Keep track of Touchstones, mortal identities and connections, feeding arrangements, and compromising secrets alongside your chronicle lore.",
       icon: "icon-[lucide--heart-handshake]",
     },
     {
       title: "Session Notes & Secret Lore",
       description:
-        "Organise elder decrees, ancient lore fragments, coterie decisions, and private GM secrets in local-first storage.",
+        "Organise court decrees, political debts, coterie decisions, and private Storyteller notes in local-first storage.",
       icon: "icon-[lucide--book-open]",
     },
   ],
@@ -73,13 +73,13 @@ export const vampireTheMasquerade: LandingPageConfig = {
       },
       {
         label: "The Cinderhall Anarchs",
-        sublabel: "Faction • Anarch Cell",
+        sublabel: "Faction • Anarch Coterie",
         relation: "Owes favour to",
         category: "faction",
       },
       {
         label: "Sgt Iona Brack",
-        sublabel: "Mortal • Police Liaison",
+        sublabel: "Mortal • Police Contact",
         relation: "Blackmails",
         category: "character",
       },
@@ -89,28 +89,28 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Vampire Clan Generator",
       description:
-        "Generate bloodlines, clan histories, and founder lore for homebrew or custom VtM factions.",
+        "Generate custom bloodlines, faction histories, and founder lore for homebrew Vampire chronicles.",
       href: "/generators/vampire-clan",
       badge: "Generator",
     },
     {
       title: "NPC Generator",
       description:
-        "Spin up rival Kindred, Primogen members, and mortal assets with distinct motives and backgrounds.",
+        "Spin up rival Kindred, Primogen, and mortal assets with distinct motives and backgrounds.",
       href: "/generators/npc",
       badge: "Generator",
     },
     {
       title: "Settlement Generator",
       description:
-        "Use the Settlement Generator to create districts, domains, havens, and feeding grounds for your chronicle.",
+        "Generate districts, neighbourhoods, and urban locations you can adapt into domains, havens, and hunting grounds for your chronicle.",
       href: "/generators/settlement",
       badge: "Generator",
     },
     {
       title: "Secret Society Generator",
       description:
-        "Design secretive cults, Anarch cells, and conspiracy webs operating in the shadows.",
+        "Design cults, secret factions, and conspiracy networks operating behind the city's visible power structure.",
       href: "/generators/secret-society",
       badge: "Generator",
     },
@@ -118,7 +118,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
   cta: {
     title: "Organise Your Chronicle",
     description:
-      "Start managing your Vampire: The Masquerade campaign with local-first privacy and visual relationship graphs.",
+      "Start managing your Vampire: The Masquerade chronicle with local-first privacy and visual relationship graphs.",
     buttonText: "Try Codex Cryptica Free",
     buttonHref: "/app",
   },

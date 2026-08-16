@@ -74,6 +74,24 @@ describe("Landing Page Registry", () => {
       expect(vtm?.slug).toBe("vampire-the-masquerade");
       expect(vtm?.disclaimer).toContain("Paradox Interactive");
     });
+
+    it("uses authentic VtM terminology and Storyteller framing", () => {
+      const vtm = getLandingPage("vampire-the-masquerade")!;
+      const copy = JSON.stringify(vtm);
+
+      // Avoid non-native / outsider combinations
+      expect(copy).not.toMatch(/Primogen member/i);
+      expect(copy).not.toMatch(/Elysium sanctuary|Elysium sanctuaries/i);
+      expect(copy).not.toMatch(/human disguise|human disguises/i);
+      expect(copy).not.toMatch(/coterie touchstone/i);
+      expect(copy).not.toMatch(/Anarch cell/i);
+
+      // Verify authentic terminology presence
+      expect(vtm.hero.eyebrow).toBe("Chronicle Management");
+      expect(copy).toContain("Storyteller");
+      expect(copy).toContain("Touchstones");
+      expect(copy).toContain("Anarch Coterie");
+    });
   });
 
   describe("Fantasy Worldbuilding Pack", () => {
