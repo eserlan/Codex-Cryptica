@@ -29,21 +29,27 @@ export function summarizeBulkMutation(
       },
   );
 
+  // ⚡ Bolt Optimization: Replace chained .filter().map() with a single imperative loop
+  const succeededIds: string[] = [];
+  const failedIds: string[] = [];
+  const skippedIds: string[] = [];
+  const cancelledIds: string[] = [];
+
+  for (let i = 0; i < normalized.length; i++) {
+    const item = normalized[i];
+    if (item.status === "success") succeededIds.push(item.id);
+    else if (item.status === "failed") failedIds.push(item.id);
+    else if (item.status === "skipped") skippedIds.push(item.id);
+    else if (item.status === "cancelled") cancelledIds.push(item.id);
+  }
+
   return {
     requested: requestedIds.length,
     items: normalized,
-    succeededIds: normalized
-      .filter((item) => item.status === "success")
-      .map((item) => item.id),
-    failedIds: normalized
-      .filter((item) => item.status === "failed")
-      .map((item) => item.id),
-    skippedIds: normalized
-      .filter((item) => item.status === "skipped")
-      .map((item) => item.id),
-    cancelledIds: normalized
-      .filter((item) => item.status === "cancelled")
-      .map((item) => item.id),
+    succeededIds,
+    failedIds,
+    skippedIds,
+    cancelledIds,
   };
 }
 
