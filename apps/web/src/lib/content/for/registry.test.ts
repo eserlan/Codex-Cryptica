@@ -91,6 +91,7 @@ describe("Landing Page Registry", () => {
       expect(copy).toContain("Storyteller");
       expect(copy).toContain("Touchstones");
       expect(copy).toContain("Anarch Coterie");
+      expect(copy).toContain("Owes a major boon to");
     });
   });
 

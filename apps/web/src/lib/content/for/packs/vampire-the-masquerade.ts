@@ -9,13 +9,13 @@ export const vampireTheMasquerade: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Vampire: The Masquerade",
     description:
-      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
+      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one place.",
   },
   hero: {
     eyebrow: "Chronicle Management",
     title: "Codex Cryptica for Vampire: The Masquerade",
     tagline:
-      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one campaign space.",
+      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one place.",
     problemStatement:
       "Standard chronicle notes struggle when every NPC is connected to three secrets and four rival factions. When a Primogen shifts their support, you shouldn’t have to manually update five separate documents to remember who owes what to whom.",
   },
@@ -29,7 +29,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Domains & Hunting Grounds",
       description:
-        "Track Elysium, hunting grounds, clan domains, and contested havens across your nocturnal city.",
+        "Track Elysium, hunting grounds, domains and contested havens across your city.",
       icon: "icon-[lucide--map-pin]",
     },
     {
@@ -74,7 +74,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
       {
         label: "The Cinderhall Anarchs",
         sublabel: "Faction • Anarch Coterie",
-        relation: "Owes favour to",
+        relation: "Owes a major boon to",
         category: "faction",
       },
       {
@@ -89,7 +89,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Vampire Clan Generator",
       description:
-        "Generate custom bloodlines, faction histories, and founder lore for homebrew Vampire chronicles.",
+        "Create homebrew vampire lineages, faction histories and founder lore for custom chronicles.",
       href: "/generators/vampire-clan",
       badge: "Generator",
     },
