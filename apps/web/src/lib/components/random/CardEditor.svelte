@@ -111,7 +111,9 @@
 </script>
 
 <div class="flex flex-col gap-4" data-testid="deck-editor">
-  <SourceIdentityFields {source} {onChange} {onRename} />
+  {#key source.id}
+    <SourceIdentityFields {source} {onChange} {onRename} />
+  {/key}
 
   <div class="flex flex-wrap items-end gap-4">
     <div class="flex flex-col gap-1">

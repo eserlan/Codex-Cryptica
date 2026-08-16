@@ -52,6 +52,7 @@ async function nameTable(page: Page, name: string) {
 
 async function newTable(page: Page, name: string, ...entries: string[]) {
   await page.getByTestId("new-table").click();
+  await expect(page.getByTestId("table-editor")).toBeVisible();
   await nameTable(page, name);
   for (const [index, text] of entries.entries()) {
     await addEntry(page, index, text);
