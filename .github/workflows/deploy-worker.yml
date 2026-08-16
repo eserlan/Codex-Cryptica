@@ -60,6 +60,9 @@ jobs:
         id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # The deployment token cannot enumerate accounts, so Wrangler must
+          # receive the account used by the existing Pages deployment jobs.
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Worker name from wrangler.toml
           WORKER_NAME: oracle-proxy
         working-directory: apps/workers/oracle-proxy
