@@ -16,7 +16,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     tagline:
       "Build a fantasy setting without losing track of how it fits together. Connect realms, dynasties, religions, factions and centuries of history in one place.",
     problemStatement:
-      "When a setting spans multiple provinces, ancient bloodlines, rival faiths, and historical eras, flat notes and scattered documents break down. Codex Cryptica keeps your geography, factions, characters, and timelines interconnected so your world stays consistent.",
+      "When a setting spans multiple provinces, lineages, rival faiths, and historical eras, flat notes and scattered documents break down. Codex Cryptica keeps your geography, factions, characters, and timelines interconnected so your world stays consistent.",
   },
   useCases: [
     {
@@ -28,7 +28,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
     {
       title: "Realms, Dynasties & Political Factions",
       description:
-        "Track royal successions, disputed borders, feudal treaties, guild rivalries, and trade routes across your provinces.",
+        "Track royal successions, disputed borders, treaties, guild rivalries, and trade routes across your provinces.",
       icon: "icon-[lucide--crown]",
     },
     {
@@ -58,7 +58,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
       {
         label: "House Veren",
         sublabel: "Noble Dynasty",
-        relation: "Heir of",
+        relation: "Head of",
         category: "faction",
       },
       {
@@ -75,7 +75,7 @@ export const fantasyWorldbuilding: LandingPageConfig = {
       },
       {
         label: "Old Temple District",
-        sublabel: "Provincial Capital",
+        sublabel: "Capital District",
         relation: "Controls",
         category: "location",
       },

@@ -122,7 +122,7 @@ describe("Landing Page Registry", () => {
       expect(fantasy.exampleGraph).toBeDefined();
       expect(fantasy.exampleGraph?.steps).toHaveLength(5);
       expect(fantasy.exampleGraph?.steps[0].label).toBe("Queen Maera II");
-      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Heir of");
+      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Head of");
       expect(fantasy.exampleGraph?.steps[2].relation).toBe("Claims");
       expect(fantasy.exampleGraph?.steps[3].relation).toBe("Broke treaty with");
       expect(fantasy.exampleGraph?.steps[4].relation).toBe("Controls");
