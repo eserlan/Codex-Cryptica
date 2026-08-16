@@ -104,6 +104,30 @@ describe("Landing Page Registry", () => {
       expect(fantasy?.slug).toBe("fantasy-worldbuilding");
       expect(fantasy?.disclaimer).toBeUndefined();
     });
+
+    it("uses authentic worldbuilding terminology and concrete, system-agnostic setting concepts", () => {
+      const fantasy = getLandingPage("fantasy-worldbuilding")!;
+      const copy = JSON.stringify(fantasy);
+
+      // Verify authentic worldbuilding concepts
+      expect(fantasy.hero.eyebrow).toBe("Setting Lore & World Bible");
+      expect(copy).toContain("pantheons");
+      expect(copy).toContain("dynasties");
+      expect(copy).toContain("provinces");
+      expect(copy).toContain("genealogies");
+      expect(copy).toContain("schisms");
+      expect(copy).toContain("artefacts");
+      expect(copy).toContain("chronology");
+
+      // Verify graph structure
+      expect(fantasy.exampleGraph).toBeDefined();
+      expect(fantasy.exampleGraph?.steps).toHaveLength(5);
+      expect(fantasy.exampleGraph?.steps[0].label).toBe("High Queen Vaeloria");
+      expect(fantasy.exampleGraph?.steps[1].relation).toBe("Reigns from");
+      expect(fantasy.exampleGraph?.steps[2].relation).toBe("Opposed by");
+      expect(fantasy.exampleGraph?.steps[3].relation).toBe("Guards");
+      expect(fantasy.exampleGraph?.steps[4].relation).toBe("Advised by");
+    });
   });
 
   describe("Dungeons & Dragons Pack", () => {
