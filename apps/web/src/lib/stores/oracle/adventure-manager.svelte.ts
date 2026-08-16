@@ -123,6 +123,7 @@ export class AdventureManager {
 
   private readonly deps: Required<AdventureManagerDependencies>;
   private generationController: AbortController | null = null;
+  private activeRestoreRequest = 0;
 
   private async verifyControl(): Promise<void> {
     if (!this.lease || !(await this.deps.authority.verify(this.lease))) {
@@ -171,6 +172,7 @@ export class AdventureManager {
   }): Promise<AdventureSession> {
     if (!input.premise.trim() || !input.title.trim())
       throw new Error("premise-and-title-required");
+    this.activeRestoreRequest += 1;
     this.phase = "starting";
     this.errorMessage = null;
     const current = await this.deps.repository.list(input.vaultId);
@@ -251,6 +253,7 @@ export class AdventureManager {
         anchors,
         relevant,
       });
+      if (this.session?.id !== session.id) return;
       validateRollExpression(proposal);
       const meta: CommitMetadata = {
         turnId: newId(),
@@ -270,6 +273,7 @@ export class AdventureManager {
         result.value,
       );
       if (!saved.ok) throw saved.error;
+      if (this.session?.id !== session.id) return;
       this.session = saved.session;
       this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
     } catch (cause) {
@@ -279,6 +283,10 @@ export class AdventureManager {
         session.id,
         session.revision,
       );
+      if (this.session?.id !== session.id) {
+        if (archived.ok) void this.deps.clearGenerationInteraction(session.id);
+        return;
+      }
       if (archived.ok) {
         void this.deps.clearGenerationInteraction(session.id);
         this.session = null;
@@ -293,24 +301,43 @@ export class AdventureManager {
     }
   }
 
-  async open(vaultId: string, sessionId: string): Promise<void> {
+  async open(
+    vaultId: string,
+    sessionId: string,
+    isCurrent: () => boolean = () => true,
+  ): Promise<void> {
     const loaded = await this.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
-    this.session = loaded.session;
-    this.readOnly =
+    if (!isCurrent()) return;
+    const nextReadOnly =
       loaded.condition === "duplicate-active-conflict" ||
       loaded.session.status === "archived";
-    if (!this.readOnly && loaded.session.status === "active") {
+    let nextLease: AdventureControlLease | null = null;
+    let readOnly = nextReadOnly;
+    if (!readOnly && loaded.session.status === "active") {
       const acquired = await this.deps.authority.acquire({
         vaultId,
         sessionId,
       });
-      if (!acquired.ok) {
-        this.readOnly = true;
-      } else {
-        this.lease = acquired.lease;
-        this.deps.coordinator.start(acquired.lease);
+      if (!isCurrent()) {
+        if (acquired.ok) await this.deps.authority.release(acquired.lease);
+        return;
       }
+      if (!acquired.ok) {
+        readOnly = true;
+      } else {
+        nextLease = acquired.lease;
+      }
+    }
+    if (!isCurrent()) {
+      if (nextLease) await this.deps.authority.release(nextLease);
+      return;
+    }
+    this.session = loaded.session;
+    this.readOnly = readOnly;
+    if (nextLease) {
+      this.lease = nextLease;
+      this.deps.coordinator.start(nextLease);
     }
     this.phase = loaded.session.pendingRoll?.suppliedOutcome
       ? "ready-to-resolve"
@@ -320,18 +347,22 @@ export class AdventureManager {
     if (
       !this.readOnly &&
       loaded.session.pendingRoll?.suppliedOutcome &&
-      this.lease
+      this.lease &&
+      isCurrent()
     ) {
       await this.resolveRoll();
     }
   }
 
   async openActive(vaultId: string): Promise<boolean> {
+    const request = ++this.activeRestoreRequest;
+    const isCurrent = () => request === this.activeRestoreRequest;
     if (this.session?.vaultId === vaultId && this.session.status === "active") {
       return true;
     }
     if (this.session && this.session.vaultId !== vaultId) {
       await this.destroy();
+      if (!isCurrent()) return false;
       this.session = null;
       this.readOnly = false;
       this.draft = "";
@@ -340,9 +371,10 @@ export class AdventureManager {
       this.phase = "idle";
     }
     const { effectiveActiveId } = await this.deps.repository.list(vaultId);
+    if (!isCurrent()) return false;
     if (!effectiveActiveId) return false;
-    await this.open(vaultId, effectiveActiveId);
-    return true;
+    await this.open(vaultId, effectiveActiveId, isCurrent);
+    return isCurrent() && this.session?.vaultId === vaultId;
   }
 
   async submitAction(action = this.draft, preserveDraft = true): Promise<void> {

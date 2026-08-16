@@ -410,6 +410,51 @@ describe("AdventureManager", () => {
     expect(manager.draft).toBe("");
   });
 
+  it("keeps the newest vault restore when an earlier lookup resolves late", async () => {
+    const deps: any = dependencies();
+    let resolveFirst!: (value: {
+      effectiveActiveId: string | null;
+      entries: never[];
+    }) => void;
+    const firstListing = new Promise<{
+      effectiveActiveId: string | null;
+      entries: never[];
+    }>((resolve) => {
+      resolveFirst = resolve;
+    });
+    deps.repository.list = vi.fn((vaultId: string) =>
+      vaultId === "vault-1"
+        ? firstListing
+        : Promise.resolve({ effectiveActiveId: "active-2", entries: [] }),
+    );
+    deps.repository.load = vi.fn(
+      async (vaultId: string, sessionId: string) => ({
+        condition: "normal",
+        session: {
+          id: sessionId,
+          vaultId,
+          status: "active",
+          pendingRoll: null,
+        },
+      }),
+    );
+    const manager = new AdventureManager(deps);
+
+    const firstRestore = manager.openActive("vault-1");
+    const secondRestore = manager.openActive("vault-2");
+
+    await expect(secondRestore).resolves.toBe(true);
+    resolveFirst({ effectiveActiveId: "active-1", entries: [] });
+    await expect(firstRestore).resolves.toBe(false);
+
+    expect(manager.session?.id).toBe("active-2");
+    expect(manager.session?.vaultId).toBe("vault-2");
+    expect(deps.repository.load).not.toHaveBeenCalledWith(
+      "vault-1",
+      "active-1",
+    );
+  });
+
   it("automatically resolves a recorded roll when the adventure is resumed", async () => {
     const deps: any = dependencies();
     const generate = vi.fn(async (request: any) => {

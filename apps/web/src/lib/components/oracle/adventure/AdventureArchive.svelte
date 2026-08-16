@@ -3,7 +3,6 @@
     AdventureArchiveEntry,
     AdventureSessionRepository,
   } from "$lib/services/adventure/adventure-session-repository";
-  import { onMount } from "svelte";
   import AdventureTranscript from "./AdventureTranscript.svelte";
   import {
     createPlayerTranscript,
@@ -35,8 +34,12 @@
   let selectedSession = $state<AdventureSession | null>(null);
   let deletingId = $state<string | null>(null);
   let deleteError = $state<string | null>(null);
-  async function refresh() {
-    entries = (await repository.list(vaultId)).entries;
+  let refreshRequest = 0;
+  async function refresh(requestedVaultId = vaultId) {
+    const request = ++refreshRequest;
+    const result = await repository.list(requestedVaultId);
+    if (request !== refreshRequest || requestedVaultId !== vaultId) return;
+    entries = result.entries;
   }
   async function open(id: string) {
     selected = id;
@@ -80,8 +83,12 @@
     }
     await refresh();
   }
-  onMount(() => {
-    void refresh();
+  $effect(() => {
+    const requestedVaultId = vaultId;
+    selected = null;
+    selectedSession = null;
+    deleteError = null;
+    void refresh(requestedVaultId);
   });
 </script>
 
@@ -100,6 +107,7 @@
             class="flex min-h-12 min-w-0 flex-1 items-center justify-between rounded-md border border-theme-border px-3 text-left text-theme-primary"
             type="button"
             onclick={() => void open(entry.id)}
+            aria-label={`Open adventure ${entry.title}`}
             ><span>{entry.title}</span><span
               class="text-xs text-theme-secondary"
               >{entry.loadCondition === "unreadable"

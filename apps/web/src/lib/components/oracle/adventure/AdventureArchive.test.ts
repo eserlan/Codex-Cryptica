@@ -122,4 +122,46 @@ describe("AdventureArchive", () => {
 
     expect(onResume).toHaveBeenCalledWith("active-1");
   });
+
+  it("reloads entries and clears the selected transcript when the vault changes", async () => {
+    const repo = repository();
+    repo.list.mockImplementation(async (vaultId: string) => ({
+      effectiveActiveId: null,
+      entries:
+        vaultId === "vault-1"
+          ? [archivedEntry]
+          : [
+              {
+                ...archivedEntry,
+                id: "session-2",
+                title: "The Other Road",
+              },
+            ],
+    }));
+    repo.load.mockResolvedValue({
+      condition: "normal",
+      session: { id: "session-1", turns: [] },
+    });
+    const { rerender } = render(AdventureArchive, {
+      repository: repo as any,
+      vaultId: "vault-1",
+    });
+
+    await fireEvent.click(
+      await screen.findByRole("button", { name: "Open adventure The Road" }),
+    );
+    expect(screen.getByText(/this transcript is read-only/i)).toBeTruthy();
+
+    await rerender({ repository: repo as any, vaultId: "vault-2" });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Open adventure The Other Road" }),
+      ).toBeTruthy();
+    });
+    expect(screen.queryByText(/this transcript is read-only/i)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Open adventure The Road" }),
+    ).toBeNull();
+  });
 });
