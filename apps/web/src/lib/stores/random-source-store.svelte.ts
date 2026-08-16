@@ -113,16 +113,19 @@ export class RandomSourceStore {
   }
 
   roll(source: RandomSource): RollOutcome {
-    return this.engine.roll(source, this.resolutionContext());
+    return this.engine.roll($state.snapshot(source), this.resolutionContext());
   }
 
   rollMany(sources: RandomSource[]): RollOutcome {
-    return this.engine.rollMany(sources, this.resolutionContext());
+    return this.engine.rollMany(
+      $state.snapshot(sources),
+      this.resolutionContext(),
+    );
   }
 
   rerollFragment(outcome: RollOutcome, nodePath: number[]): RollOutcome {
     return this.engine.rerollFragment(
-      outcome,
+      $state.snapshot(outcome),
       nodePath,
       this.resolutionContext(),
     );

@@ -430,13 +430,15 @@
    * only after a pause reports it too late to help.
    */
   function onChange(next: RandomSource) {
-    draft = next;
-    diagnostics = randomSources.validate(next);
+    const normalized: RandomSource =
+      draft && draft.id === next.id ? { ...next, name: draft.name } : next;
+    draft = normalized;
+    diagnostics = randomSources.validate(normalized);
     dirty = true;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       dirty = false;
-      persist(next);
+      persist(normalized);
     }, 400);
   }
 
@@ -828,7 +830,7 @@
               onclick={() => openDeleteModal(draft!)}
               class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-[10px] uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
               title="Delete {noun}"
-              data-testid="delete-{noun}"
+              data-testid="header-delete-{noun}"
             >
               <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
               ></span>

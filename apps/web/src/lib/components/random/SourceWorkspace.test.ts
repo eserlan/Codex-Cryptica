@@ -301,4 +301,48 @@ describe("SourceWorkspace Organization and Actions", () => {
       ),
     );
   });
+
+  it("preserves draft name when child editor calls onChange with a stale name prop", async () => {
+    vi.useFakeTimers();
+    let capturedContext: any = null;
+
+    render(SourceWorkspace, {
+      props: {
+        kind: "table",
+        heading: "Random Tables",
+        icon: "icon-[lucide--list-tree]",
+        emptyBody: "No table open",
+        editor: ((...args: any[]) => {
+          const raw = args[1] ?? args[0];
+          capturedContext = typeof raw === "function" ? raw() : raw;
+        }) as never,
+        player: vi.fn(),
+      } as never,
+    });
+
+    // Create a new table
+    await fireEvent.click(screen.getByTestId("new-table"));
+
+    expect(capturedContext).not.toBeNull();
+    // Simulate rename committing to "Encounter"
+    capturedContext.onRename("Encounter");
+
+    // Child editor calls onChange with a stale snapshot (source.name still "New table")
+    capturedContext.onChange({
+      ...capturedContext.source,
+      name: "New table",
+      entries: [{ id: "e-1", text: "Dragon", weight: 1 }],
+    });
+
+    // Advance debounced save timer
+    await vi.advanceTimersByTimeAsync(500);
+
+    // Save must be called with "Encounter", not reverted to "New table"
+    expect(mockRandomSources.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Encounter",
+        entries: [expect.objectContaining({ text: "Dragon" })],
+      }),
+    );
+  });
 });
