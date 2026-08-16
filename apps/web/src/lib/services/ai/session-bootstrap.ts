@@ -36,6 +36,13 @@ const PROXY_URL =
   import.meta.env.VITE_ORACLE_PROXY_URL ||
   "https://oracle-proxy.espen-erlandsen.workers.dev";
 
+export function requiresCapabilitySession(proxyUrl: string): boolean {
+  if (!import.meta.env.DEV) return true;
+
+  const hostname = new URL(proxyUrl).hostname;
+  return hostname !== "localhost" && hostname !== "127.0.0.1";
+}
+
 let sessionManager: AiSessionManager | null = null;
 
 function relayTokenToWorkers(token: CachedToken | null): void {
@@ -44,7 +51,7 @@ function relayTokenToWorkers(token: CachedToken | null): void {
 }
 
 function ensureSessionManager(): AiSessionManager | null {
-  if (!browser) return null;
+  if (!browser || !requiresCapabilitySession(PROXY_URL)) return null;
   if (!sessionManager) {
     sessionManager = new AiSessionManager({
       proxyUrl: PROXY_URL,

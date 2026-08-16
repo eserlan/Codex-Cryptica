@@ -29,16 +29,30 @@ function trimText(value: string, limit: number): string {
     : `${value.slice(0, Math.max(0, limit - 1))}…`;
 }
 
+function parseJsonPayload(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
 function trimExcerpts(
   excerpts: ResolvedSourceExcerpt[],
-  limit: number,
+  contentLimit: number,
+  loreLimit: number,
 ): ResolvedSourceExcerpt[] {
-  let remaining = limit;
+  let contentRemaining = contentLimit;
+  let loreRemaining = loreLimit;
   return excerpts.flatMap((excerpt) => {
-    if (remaining <= 0) return [];
-    const content = trimText(excerpt.content, remaining);
-    remaining -= content.length;
-    return [{ ...excerpt, content }];
+    if (contentRemaining <= 0) return [];
+    const content = trimText(excerpt.content, contentRemaining);
+    contentRemaining -= content.length;
+    const lore = excerpt.lore
+      ? trimText(excerpt.lore, loreRemaining)
+      : undefined;
+    loreRemaining -= lore?.length ?? 0;
+    return [{ ...excerpt, content, ...(lore && { lore }) }];
   });
 }
 
@@ -51,13 +65,16 @@ export function allocatePromptBudget(
   const result = {
     behavior: trimText(input.behavior, 16_000),
     state: input.state,
-    anchors: trimExcerpts(input.anchors, 24_000),
-    relevant: trimExcerpts(input.relevant, 12_000),
+    anchors: trimExcerpts(input.anchors, 24_000, 8_000),
+    relevant: trimExcerpts(input.relevant, 12_000, 6_000),
     transcript: trimText(input.transcript, 8_000),
   };
   const serialized = JSON.stringify({
-    ...result,
-    input: trimText(input.input, 600),
+    state: parseJsonPayload(result.state),
+    anchors: result.anchors,
+    relevant: result.relevant,
+    transcript: parseJsonPayload(result.transcript),
+    input: parseJsonPayload(trimText(input.input, 600)),
   });
   if (serialized.length > MAX_GENERATION_INPUT_CHARS)
     throw new Error("generation-budget-exceeded");

@@ -30,11 +30,12 @@ import {
 } from "$lib/services/adventure/adventure-context-service";
 import { adventureTurnGenerationService } from "@codex/ai-engine";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
-import { diceEngine as defaultDiceEngine } from "dice-engine";
+import { diceEngine as defaultDiceEngine, diceParser } from "dice-engine";
 
 export interface AdventureManagerDependencies {
   repository?: AdventureSessionRepository;
   generation?: Pick<AdventureTurnGenerationService, "generate">;
+  clearGenerationInteraction?: (sessionId: string) => Promise<void>;
   context?: AdventureContextService;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;
@@ -44,6 +45,15 @@ export interface AdventureManagerDependencies {
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+function validateRollExpression(proposal: {
+  kind: string;
+  dice?: { expression: string };
+}): void {
+  if (proposal.kind === "roll-required" && proposal.dice) {
+    diceParser.parse(proposal.dice.expression);
+  }
 }
 
 function initialSession(input: {
@@ -94,11 +104,21 @@ export class AdventureManager {
   >("idle");
   draft = $state("");
   errorMessage = $state<string | null>(null);
+  lastRollResult = $state<string | null>(null);
   readOnly = $state(false);
   lease = $state<AdventureControlLease | null>(null);
 
   get transcript() {
     return this.session ? createPlayerTranscript(this.session) : null;
+  }
+
+  get suggestedActions() {
+    if (!this.session) return [];
+    return (
+      this.session.pendingRoll?.suggestedActions ??
+      this.session.turns.at(-1)?.suggestedActions ??
+      []
+    );
   }
 
   private readonly deps: Required<AdventureManagerDependencies>;
@@ -126,6 +146,14 @@ export class AdventureManager {
           return adventureTurnGenerationService.generate(request, options);
         },
       },
+      clearGenerationInteraction:
+        deps.clearGenerationInteraction ??
+        ((sessionId) =>
+          oracleBridge.isReady
+            ? oracleBridge.clearAdventureInteraction(sessionId)
+            : Promise.resolve(
+                adventureTurnGenerationService.clearInteraction(sessionId),
+              )),
       context: deps.context ?? adventureContextService,
       authority: deps.authority ?? adventureControlAuthority,
       coordinator: deps.coordinator ?? adventureControlCoordinator,
@@ -147,8 +175,39 @@ export class AdventureManager {
     this.errorMessage = null;
     const current = await this.deps.repository.list(input.vaultId);
     if (current.effectiveActiveId) {
-      this.phase = "ready";
-      throw new Error("active-adventure-exists");
+      const existing = await this.deps.repository.load(
+        input.vaultId,
+        current.effectiveActiveId,
+      );
+      const isIncompleteStart =
+        existing.condition !== "unreadable" &&
+        existing.session.status === "active" &&
+        existing.session.turns.length === 0;
+      if (isIncompleteStart) {
+        const recovery = await this.deps.authority.acquire({
+          vaultId: input.vaultId,
+          sessionId: existing.session.id,
+        });
+        if (recovery.ok) {
+          const archived = await this.deps.repository.archive(
+            input.vaultId,
+            existing.session.id,
+            existing.session.revision,
+          );
+          await this.deps.authority.release(recovery.lease);
+          if (!archived.ok) {
+            this.phase = "error";
+            this.errorMessage = archived.error.message;
+            throw archived.error;
+          }
+        } else {
+          this.phase = "ready";
+          throw new Error("active-adventure-exists");
+        }
+      } else {
+        this.phase = "ready";
+        throw new Error("active-adventure-exists");
+      }
     }
     const session = initialSession({ ...input, now: this.deps.now() });
     const saved = await this.deps.repository.save(null, session);
@@ -185,12 +244,14 @@ export class AdventureManager {
     this.phase = "generating";
     try {
       const anchors = await this.deps.context.resolveAnchors(session);
+      const relevant = await this.deps.context.resolveOpeningRelevant(session);
       const proposal = await this.deps.generation.generate({
         session,
         phase: "opening",
         anchors,
-        relevant: [],
+        relevant,
       });
+      validateRollExpression(proposal);
       const meta: CommitMetadata = {
         turnId: newId(),
         inputId: newId(),
@@ -212,8 +273,22 @@ export class AdventureManager {
       this.session = saved.session;
       this.phase = saved.session.pendingRoll ? "awaiting-roll" : "ready";
     } catch (cause) {
-      this.errorMessage =
-        cause instanceof Error ? cause.message : String(cause);
+      const message = cause instanceof Error ? cause.message : String(cause);
+      const archived = await this.deps.repository.archive(
+        session.vaultId,
+        session.id,
+        session.revision,
+      );
+      if (archived.ok) {
+        void this.deps.clearGenerationInteraction(session.id);
+        this.session = null;
+        this.readOnly = false;
+        await this.deps.coordinator.stop();
+        this.lease = null;
+      } else {
+        this.errorMessage = `${message}; failed to clean up the incomplete adventure: ${archived.error.message}`;
+      }
+      this.errorMessage ??= message;
       this.phase = this.errorMessage === "offline" ? "offline" : "error";
     }
   }
@@ -242,9 +317,35 @@ export class AdventureManager {
       : loaded.session.pendingRoll
         ? "awaiting-roll"
         : "ready";
+    if (
+      !this.readOnly &&
+      loaded.session.pendingRoll?.suppliedOutcome &&
+      this.lease
+    ) {
+      await this.resolveRoll();
+    }
   }
 
-  async submitAction(action = this.draft): Promise<void> {
+  async openActive(vaultId: string): Promise<boolean> {
+    if (this.session?.vaultId === vaultId && this.session.status === "active") {
+      return true;
+    }
+    if (this.session && this.session.vaultId !== vaultId) {
+      await this.destroy();
+      this.session = null;
+      this.readOnly = false;
+      this.draft = "";
+      this.errorMessage = null;
+      this.lastRollResult = null;
+      this.phase = "idle";
+    }
+    const { effectiveActiveId } = await this.deps.repository.list(vaultId);
+    if (!effectiveActiveId) return false;
+    await this.open(vaultId, effectiveActiveId);
+    return true;
+  }
+
+  async submitAction(action = this.draft, preserveDraft = true): Promise<void> {
     if (
       !this.session ||
       this.readOnly ||
@@ -253,12 +354,12 @@ export class AdventureManager {
     )
       return;
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      this.draft = action;
+      if (preserveDraft) this.draft = action;
       this.phase = "offline";
       return;
     }
     const session = this.session;
-    this.draft = action;
+    if (preserveDraft) this.draft = action;
     this.phase = "generating";
     this.errorMessage = null;
     this.generationController?.abort();
@@ -275,6 +376,7 @@ export class AdventureManager {
         { session, phase: "action", playerAction: action, anchors, relevant },
         { signal },
       );
+      validateRollExpression(proposal);
       if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
       const meta: CommitMetadata = {
         turnId: newId(),
@@ -315,35 +417,58 @@ export class AdventureManager {
     }
   }
 
+  async submitSuggestedAction(action: string): Promise<void> {
+    await this.submitAction(action, false);
+  }
+
   async recordRollOutcome(outcome: SuppliedRollOutcome): Promise<void> {
     if (!this.session?.pendingRoll || this.readOnly) return;
-    await this.verifyControl();
-    const result = recordPendingRollOutcome(
-      this.session,
-      this.session.pendingRoll.inputId,
-      outcome,
-      {
-        turnId: newId(),
-        inputId: this.session.pendingRoll.inputId,
-        now: this.deps.now(),
-      },
-    );
-    if (!result.ok)
-      throw new Error(result.errors[0]?.message ?? "invalid-roll");
-    await this.verifyControl();
-    const saved = await this.deps.repository.save(
-      this.session.revision,
-      result.value,
-    );
-    if (!saved.ok) throw saved.error;
-    this.session = saved.session;
-    this.phase = "ready-to-resolve";
+    try {
+      await this.verifyControl();
+      const result = recordPendingRollOutcome(
+        this.session,
+        this.session.pendingRoll.inputId,
+        outcome,
+        {
+          turnId: newId(),
+          inputId: this.session.pendingRoll.inputId,
+          now: this.deps.now(),
+        },
+      );
+      if (!result.ok)
+        throw new Error(result.errors[0]?.message ?? "invalid-roll");
+      await this.verifyControl();
+      const saved = await this.deps.repository.save(
+        this.session.revision,
+        result.value,
+      );
+      if (!saved.ok) throw saved.error;
+      this.session = saved.session;
+      this.errorMessage = null;
+      this.phase = "ready-to-resolve";
+      await this.resolveRoll();
+    } catch (cause) {
+      this.errorMessage =
+        cause instanceof Error
+          ? cause.message
+          : "Unable to record the roll outcome.";
+    }
   }
 
   async rollCodexDice(): Promise<void> {
     const expression = this.session?.pendingRoll?.dice?.expression;
     if (!expression || this.session?.pendingRoll?.suppliedOutcome) return;
-    const result = this.deps.dice.evaluate(expression);
+    let result: ReturnType<typeof this.deps.dice.evaluate>;
+    try {
+      result = this.deps.dice.evaluate(expression);
+    } catch (cause) {
+      this.errorMessage =
+        cause instanceof Error
+          ? `Invalid roll expression: ${cause.message}`
+          : "Invalid roll expression.";
+      return;
+    }
+    this.lastRollResult = `${expression} = ${result.total}`;
     await this.recordRollOutcome({
       kind: "numeric",
       value: result.total,
@@ -409,6 +534,8 @@ export class AdventureManager {
   cancel(): void {
     if (this.phase !== "generating") return;
     this.generationController?.abort();
+    if (this.session)
+      void this.deps.clearGenerationInteraction(this.session.id);
     this.generationController = null;
     this.errorMessage = null;
     this.phase = this.session?.pendingRoll?.suppliedOutcome
@@ -447,6 +574,7 @@ export class AdventureManager {
     );
     if (!result.ok) throw result.error;
     this.session = result.session;
+    void this.deps.clearGenerationInteraction(result.session.id);
     this.readOnly = true;
     await this.deps.coordinator.stop();
     this.lease = null;
