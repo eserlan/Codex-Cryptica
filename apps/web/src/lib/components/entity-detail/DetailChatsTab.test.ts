@@ -21,6 +21,7 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
     saveMessageEdit: vi.fn(),
     deleteMessage: vi.fn(),
     listSessions: vi.fn().mockResolvedValue([]),
+    listSessionsAsSpeaker: vi.fn().mockResolvedValue([]),
     resumeSession: vi.fn(),
     startNewSession: vi.fn(),
   },
@@ -81,6 +82,7 @@ describe("DetailChatsTab", () => {
       id: "t-1",
       guestId: "guest-abc123",
       guestName: "Alice",
+      characterId: character.id,
       lastUpdated: Date.now(),
       messages: [
         { id: "m-1", role: "user", content: "Hello there" },

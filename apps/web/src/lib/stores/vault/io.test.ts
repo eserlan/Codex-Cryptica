@@ -213,6 +213,52 @@ describe("VaultIO", () => {
     warnSpy.mockRestore();
   });
 
+  it("should load transcripts where the character is either the AI voice or the human's speaker (#2302)", async () => {
+    const transcriptFile = (data: unknown) => ({
+      kind: "file",
+      getFile: () =>
+        Promise.resolve({ text: () => Promise.resolve(JSON.stringify(data)) }),
+    });
+    const mockTranscriptsDir = {
+      entries: async function* () {
+        yield [
+          "guest-1_char-livia.json",
+          transcriptFile({
+            id: "t-1",
+            guestId: "guest-1",
+            characterId: "char-livia",
+            speakerCharacterId: "char-tao",
+            characterTitle: "Livia Varro",
+            messages: [],
+            lastUpdated: 200,
+          }),
+        ];
+        yield [
+          "guest-1_char-someone-else.json",
+          transcriptFile({
+            id: "t-2",
+            guestId: "guest-1",
+            characterId: "char-someone-else",
+            characterTitle: "Unrelated NPC",
+            messages: [],
+            lastUpdated: 100,
+          }),
+        ];
+      },
+    };
+    const mockCodexDir = {
+      getDirectoryHandle: vi.fn().mockResolvedValue(mockTranscriptsDir),
+    };
+    mockVaultHandle.getDirectoryHandle.mockResolvedValue(mockCodexDir);
+
+    const transcripts = await vaultIO.loadTranscriptsForCharacterFromDisk(
+      mockVaultHandle,
+      "char-tao",
+    );
+
+    expect(transcripts.map((t) => t.id)).toEqual(["t-1"]);
+  });
+
   describe("importFromFolder", () => {
     it("should import files and skip up-to-date ones", async () => {
       const mockLocalHandle = {

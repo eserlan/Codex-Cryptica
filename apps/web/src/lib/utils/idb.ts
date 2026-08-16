@@ -122,6 +122,7 @@ interface CodexDB extends DBSchema {
     value: GuestChatTranscript;
     indexes: {
       "by-character": string;
+      "by-speaker": string;
     };
   };
   publish_registry: {
@@ -168,7 +169,10 @@ export const DB_NAME = "CodexCryptica";
 // store never got created) to support vault-scoped stat sheet templates.
 // Bumped to 22 to add stat_sheet_presentation_templates (152-stat-sheet-templates).
 // Bumped to 23 to add shelf_entries and shelf_journal (156-entity-shelf).
-export const DB_VERSION = 23;
+// Bumped to 24 to add a by-speaker index on guest_chat_transcripts, so a
+// character's chat history can be queried both as the AI-voiced participant
+// and as the human's speaker character (#2302).
+export const DB_VERSION = 24;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -267,6 +271,12 @@ export function getDB() {
             keyPath: "id",
           });
           store.createIndex("by-character", "characterId");
+          store.createIndex("by-speaker", "speakerCharacterId");
+        } else if (oldVersion < 24) {
+          const store = transaction.objectStore("guest_chat_transcripts");
+          if (!store.indexNames.contains("by-speaker")) {
+            store.createIndex("by-speaker", "speakerCharacterId");
+          }
         }
 
         if (!db.objectStoreNames.contains("publish_registry")) {
