@@ -80,10 +80,14 @@ export const fileIOAdapter: IFileIOAdapter = {
     }
 
     const rawMeta = parsed.metadata as Record<string, unknown>;
-    const rawLabels = rawMeta.labels || rawMeta.tags || [];
-    const labels: string[] = Array.isArray(rawLabels)
-      ? rawLabels.filter((l): l is string => typeof l === "string")
+    const parsedLabels = Array.isArray(rawMeta.labels)
+      ? rawMeta.labels.filter((l): l is string => typeof l === "string")
       : [];
+    const parsedTags = Array.isArray(rawMeta.tags)
+      ? rawMeta.tags.filter((t): t is string => typeof t === "string")
+      : [];
+    const labels: string[] =
+      parsedLabels.length > 0 ? parsedLabels : parsedTags;
 
     const entity: LocalEntity = {
       ...parsed.metadata,

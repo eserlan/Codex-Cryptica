@@ -121,11 +121,12 @@ export async function droppedItemsToPackage(
       title: String(metadata.title),
       content,
       lore: typeof metadata.lore === "string" ? metadata.lore : undefined,
-      labels: Array.isArray(metadata.labels)
-        ? metadata.labels.map(String)
-        : Array.isArray(metadata.tags)
-          ? metadata.tags.map(String)
-          : [],
+      labels:
+        Array.isArray(metadata.labels) && metadata.labels.length > 0
+          ? metadata.labels.map(String)
+          : Array.isArray(metadata.tags)
+            ? metadata.tags.map(String)
+            : [],
       aliases: Array.isArray(metadata.aliases)
         ? metadata.aliases.map(String)
         : undefined,

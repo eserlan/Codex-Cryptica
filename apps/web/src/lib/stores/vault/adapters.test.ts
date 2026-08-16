@@ -173,6 +173,22 @@ describe("Adapters", () => {
       expect((entity as any).tags).toBeUndefined();
     });
 
+    it("folds legacy tags into labels when labels is an empty array", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e-legacy-empty-labels",
+          type: "person",
+          title: "Old Hero",
+          labels: [],
+          tags: ["veteran", "warrior"],
+        },
+        content: "hello",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toEqual(["veteran", "warrior"]);
+      expect((entity as any).tags).toBeUndefined();
+    });
+
     it("keeps type=note for a note with an unrelated `kind` sub-classification (e.g. SEO language entries)", () => {
       vi.mocked(markdown.parseMarkdown).mockReturnValue({
         metadata: {
