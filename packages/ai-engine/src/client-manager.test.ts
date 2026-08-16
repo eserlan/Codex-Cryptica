@@ -100,6 +100,27 @@ describe("DefaultAIClientManager", () => {
       expect(fetch).not.toHaveBeenCalled();
       expect(result).toEqual({ id: "i1", text: "ok" });
     });
+
+    it("appends the proxy's error code on interaction failure too", async () => {
+      // Character chat goes through sendInteraction, not generateContent —
+      // the code has to survive on this path as well for classifyApiError
+      // to recognize a blocked verification handshake there.
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+      } as any);
+
+      await expect(
+        manager.sendInteraction({ model: "m", input: "hi" }),
+      ).rejects.toThrow(
+        "[OracleProxy] Interaction failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
+      );
+    });
   });
 
   describe("createProxyModel", () => {
@@ -291,6 +312,30 @@ describe("DefaultAIClientManager", () => {
 
       await expect(model.generateContent("Test")).rejects.toThrow(
         "[OracleProxy] Request failed: Service unavailable",
+      );
+    });
+
+    it("appends the proxy's machine-readable error code so classifyApiError can pattern-match it", async () => {
+      // Regression: SESSION_TOKEN_MISSING/INVALID/EXPIRED used to be
+      // indistinguishable from any other generic failure once it reached
+      // the UI as "Generation failed. Please try again." — the code has to
+      // survive into the thrown message for the classifier to recognize it.
+      const mockResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: {
+            message: "A valid session token is required",
+            code: "SESSION_TOKEN_MISSING",
+          },
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+
+      await expect(model.generateContent("Test")).rejects.toThrow(
+        "[OracleProxy] Request failed: A valid session token is required (code: SESSION_TOKEN_MISSING)",
       );
     });
 
