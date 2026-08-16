@@ -91,6 +91,21 @@ export class GuestChatStore {
     return sessions.sort((a, b) => b.lastUpdated - a.lastUpdated);
   }
 
+  // Sessions where this character was the human's speaker character (i.e.
+  // the AI voiced a different character) — used to cross-list a shared
+  // conversation under both participating characters' chat history (#2302).
+  async listSessionsAsSpeaker(
+    speakerCharacterId: string,
+  ): Promise<GuestChatTranscript[]> {
+    const db = await getDB();
+    const sessions = await db.getAllFromIndex(
+      "guest_chat_transcripts",
+      "by-speaker",
+      speakerCharacterId,
+    );
+    return sessions.sort((a, b) => b.lastUpdated - a.lastUpdated);
+  }
+
   async resumeSession(characterId: string, transcriptId: string) {
     const db = await getDB();
     const transcript = await db.get("guest_chat_transcripts", transcriptId);

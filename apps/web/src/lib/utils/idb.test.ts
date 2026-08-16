@@ -37,10 +37,17 @@ describe("idb.ts utility", () => {
     expect(storeNames).toContain("dice_history");
 
     // Check indexes for a few
-    const tx = db.transaction("sync_registry", "readonly");
+    const tx = db.transaction(
+      ["sync_registry", "guest_chat_transcripts"],
+      "readonly",
+    );
     const syncStore = tx.objectStore("sync_registry");
     expect(Array.from(syncStore.indexNames)).toContain("by-vault");
     expect(Array.from(syncStore.indexNames)).toContain("by-remote-id");
+
+    const guestChatStore = tx.objectStore("guest_chat_transcripts");
+    expect(Array.from(guestChatStore.indexNames)).toContain("by-character");
+    expect(Array.from(guestChatStore.indexNames)).toContain("by-speaker");
   });
 
   it("should persist and retrieve a directory handle", async () => {

@@ -18,6 +18,9 @@
     void import("$lib/services/ai/session-bootstrap").then((m) =>
       m.initAiSession(),
     );
+    void import("$lib/services/mobile/capacitor-bridge").then((m) =>
+      m.capacitorBridge.init(),
+    );
   });
 </script>
 

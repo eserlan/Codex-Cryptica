@@ -35,6 +35,13 @@ vi.mock("$lib/stores/guest-chat.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/services/character-chat-export", () => ({
+  characterChatExportService: {
+    copyConversation: vi.fn().mockResolvedValue(true),
+    sendConversationToJournal: vi.fn().mockResolvedValue("new-note-id"),
+  },
+}));
+
 describe("CharacterChat", () => {
   const character = {
     id: "char-1",
@@ -181,6 +188,56 @@ describe("CharacterChat", () => {
       expect(guestChatStore.resumeSession).toHaveBeenCalledWith(
         "char-1",
         "transcript-other",
+      );
+    });
+
+    it("clicking Copy triggers characterChatExportService.copyConversation", async () => {
+      guestChatStore.transcripts = {
+        "char-1": {
+          ...activeTranscript,
+          messages: [
+            { id: "m1", role: "user", content: "Hello", timestamp: 1 },
+          ],
+        } as any,
+      };
+      render(CharacterChat, { entity: character });
+
+      const copyButton = screen.getByRole("button", {
+        name: "Copy conversation",
+      });
+      await fireEvent.click(copyButton);
+
+      const { characterChatExportService } =
+        await import("$lib/services/character-chat-export");
+      expect(characterChatExportService.copyConversation).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "transcript-active" }),
+        expect.objectContaining({ characterTitle: "Mara the Blacksmith" }),
+      );
+    });
+
+    it("clicking Journal triggers characterChatExportService.sendConversationToJournal", async () => {
+      guestChatStore.transcripts = {
+        "char-1": {
+          ...activeTranscript,
+          messages: [
+            { id: "m1", role: "user", content: "Hello", timestamp: 1 },
+          ],
+        } as any,
+      };
+      render(CharacterChat, { entity: character });
+
+      const journalButton = screen.getByRole("button", {
+        name: "Send to Journal",
+      });
+      await fireEvent.click(journalButton);
+
+      const { characterChatExportService } =
+        await import("$lib/services/character-chat-export");
+      expect(
+        characterChatExportService.sendConversationToJournal,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "transcript-active" }),
+        expect.objectContaining({ characterTitle: "Mara the Blacksmith" }),
       );
     });
   });
