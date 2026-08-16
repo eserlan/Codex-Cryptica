@@ -53,7 +53,6 @@ export function createEntity(
   const entity = {
     id,
     title,
-    tags: [],
     labels: [],
     connections: [],
     content: "",

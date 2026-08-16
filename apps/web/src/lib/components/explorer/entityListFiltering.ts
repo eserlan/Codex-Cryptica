@@ -135,7 +135,7 @@ export function evaluateEntityMissingFields(
   );
   const effectiveLabels: string[] = entity.labels?.length
     ? entity.labels
-    : (entity.tags ?? []);
+    : ((entity as { tags?: string[] }).tags ?? []);
   const hasLabels = effectiveLabels.length > 0;
   const total =
     connectionSummary?.total ??
@@ -213,7 +213,7 @@ export function filterEntities(
     // back to tags, matching how label chips are rendered (Constitution XII).
     const effectiveLabels: string[] = e.labels?.length
       ? e.labels
-      : (e.tags ?? []);
+      : ((e as { tags?: string[] }).tags ?? []);
     const matchesLabels =
       activeLabels.length === 0 ||
       activeLabels.every((f: string) => effectiveLabels.includes(f));

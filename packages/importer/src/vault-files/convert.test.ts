@@ -10,7 +10,7 @@ function md(
     id: "thistle",
     type: "Character",
     title: "Thistle",
-    tags: [],
+    labels: [],
     ...overrides,
   };
   const yaml = Object.entries(fields)

@@ -11,7 +11,6 @@ describe("ZenMode Hooks", () => {
     type: "npc",
     status: "active",
     connections: [],
-    tags: [],
     labels: [],
     aliases: [],
   };
