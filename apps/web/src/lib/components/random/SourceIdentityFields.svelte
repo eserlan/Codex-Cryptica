@@ -20,13 +20,19 @@
     onRename?: (name: string) => boolean;
   } = $props();
 
+  let lastCommittedName = $state(source.name);
   let nameDraft = $state(source.name);
   let labelDraft = $state("");
 
   // Follows the source: another source selected, or a rename that landed.
   $effect(() => {
     const name = source.name;
-    untrack(() => (nameDraft = name));
+    untrack(() => {
+      if (name !== lastCommittedName) {
+        lastCommittedName = name;
+        nameDraft = name;
+      }
+    });
   });
 
   function commitName() {
@@ -35,11 +41,15 @@
       nameDraft = source.name;
       return;
     }
+    lastCommittedName = name;
     if (!onRename) {
       onChange({ ...source, name });
       return;
     }
-    if (!onRename(name)) nameDraft = source.name;
+    if (!onRename(name)) {
+      nameDraft = source.name;
+      lastCommittedName = source.name;
+    }
   }
 
   function addLabel() {

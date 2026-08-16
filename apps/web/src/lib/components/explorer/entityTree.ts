@@ -103,7 +103,6 @@ export function buildEntityTree(
             title: title,
             status: "active",
             parent: virtualParent,
-            tags: [],
             labels: [],
             connections: [],
             content: "",

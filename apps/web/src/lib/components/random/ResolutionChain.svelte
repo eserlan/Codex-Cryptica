@@ -34,10 +34,12 @@
       <div class="flex items-start gap-2">
         <span
           class="mt-0.5 shrink-0 font-mono text-[9px] uppercase tracking-widest text-theme-muted/70"
-          data-testid="chain-source"
         >
-          {node.sourceName}{#if node.dieValue !== undefined}
-            <span class="text-theme-primary/70"> {node.dieValue}</span>
+          <span data-testid="chain-source">{node.sourceName}</span
+          >{#if node.dieValue !== undefined}
+            <span class="text-theme-primary/70" data-testid="chain-die-value">
+              {node.dieValue}</span
+            >
           {/if}
         </span>
         <span class="min-w-0 flex-1 font-body text-xs text-theme-text">

@@ -38,8 +38,8 @@ export interface RecentActivity {
   path: string;
   excerpt: string;
   type?: string;
-  tags: string[];
-  labels?: string[];
+  tags?: string[];
+  labels: string[];
   lastModified: number;
   image?: string;
   thumbnail?: string;
@@ -289,8 +289,8 @@ export class WorldServiceImplementation {
         path,
         excerpt: getExcerpt(content || ""),
         type: record.type,
-        tags: record.tags || [],
-        labels: record.labels || [],
+        tags: record.tags,
+        labels: record.labels?.length ? record.labels : record.tags || [],
         lastModified: record.lastModified,
         image: record.image,
         thumbnail: record.thumbnail,

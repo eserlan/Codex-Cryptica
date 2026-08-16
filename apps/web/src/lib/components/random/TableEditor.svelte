@@ -153,7 +153,9 @@
        cannot guess at, which is what this clause is for (Constitution IX). -->
   <FeatureHint hintId="random-tables-and-decks" />
 
-  <SourceIdentityFields {source} {onChange} {onRename} />
+  {#key source.id}
+    <SourceIdentityFields {source} {onChange} {onRename} />
+  {/key}
 
   <div class="flex flex-wrap items-end gap-4">
     <div class="flex flex-col gap-1">

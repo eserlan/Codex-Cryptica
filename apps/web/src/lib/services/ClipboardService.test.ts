@@ -56,7 +56,6 @@ describe("ClipboardService", () => {
       type: "npc",
       status: "active",
       connections: [],
-      tags: [],
       labels: [],
       aliases: [],
     };
