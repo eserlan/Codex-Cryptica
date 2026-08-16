@@ -2,6 +2,7 @@
   import type { Entity, GuestChatMessage, GuestChatTranscript } from "schema";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { characterChatExportService } from "$lib/services/character-chat-export";
   import { tick } from "svelte";
 
   let { entity } = $props<{ entity: Entity }>();
@@ -16,6 +17,8 @@
   let showSpeakerSwitcher = $state(false);
   let pendingSpeakerId = $state("");
   let isSwitchingSpeaker = $state(false);
+  let isCopying = $state(false);
+  let isSavingJournal = $state(false);
   let sessions = $state<GuestChatTranscript[]>([]);
   let isResuming = $state<string | null>(null);
 
@@ -113,6 +116,32 @@
       showSpeakerSwitcher = false;
     } finally {
       isSwitchingSpeaker = false;
+    }
+  }
+
+  async function copyChat() {
+    if (!transcript || isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(transcript, {
+        speakerName: speakerName ?? undefined,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
+
+  async function sendToJournal() {
+    if (!transcript || isSavingJournal) return;
+    isSavingJournal = true;
+    try {
+      await characterChatExportService.sendConversationToJournal(transcript, {
+        speakerName: speakerName ?? undefined,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isSavingJournal = false;
     }
   }
 
@@ -251,22 +280,53 @@
           >{speakerName ?? "Yourself"}</span
         >
       </p>
-      <button
-        type="button"
-        onclick={openSpeakerSwitcher}
-        class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
-      >
-        <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
-        ></span>
-        Sessions
-        {#if otherSessions.length > 0}
-          <span
-            class="rounded-full bg-theme-primary/20 px-1.5 text-theme-primary"
+      <div class="flex items-center gap-2">
+        {#if transcript?.messages?.length}
+          <button
+            type="button"
+            onclick={copyChat}
+            disabled={isCopying}
+            class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
+            title="Copy conversation"
+            aria-label="Copy conversation"
           >
-            {otherSessions.length}
-          </span>
+            <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"></span>
+            Copy
+          </button>
+          {#if !vault.isGuest}
+            <button
+              type="button"
+              onclick={sendToJournal}
+              disabled={isSavingJournal}
+              class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
+              title="Send to Journal"
+              aria-label="Send to Journal"
+            >
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--book-marked] w-3 h-3"
+              ></span>
+              Journal
+            </button>
+          {/if}
         {/if}
-      </button>
+        <button
+          type="button"
+          onclick={openSpeakerSwitcher}
+          class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+        >
+          <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
+          ></span>
+          Sessions
+          {#if otherSessions.length > 0}
+            <span
+              class="rounded-full bg-theme-primary/20 px-1.5 text-theme-primary"
+            >
+              {otherSessions.length}
+            </span>
+          {/if}
+        </button>
+      </div>
     </div>
 
     {#if showSpeakerSwitcher}

@@ -10,6 +10,7 @@
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { systemClock } from "$lib/utils/runtime-deps";
+  import { characterChatExportService } from "$lib/services/character-chat-export";
   import CharacterChat from "./CharacterChat.svelte";
   import GuestChatSettings from "./GuestChatSettings.svelte";
 
@@ -168,6 +169,48 @@
       await guestChatStore.deleteMessage(entity.id, messageId);
     }
   }
+
+  let isCopying = $state(false);
+  let isSavingJournal = $state(false);
+
+  async function copyHostTranscript(transcript: GuestChatTranscript) {
+    if (isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(transcript, {
+        speakerName: transcript.guestName,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
+
+  async function sendHostTranscriptToJournal(transcript: GuestChatTranscript) {
+    if (isSavingJournal) return;
+    isSavingJournal = true;
+    try {
+      await characterChatExportService.sendConversationToJournal(transcript, {
+        speakerName: transcript.guestName,
+        characterTitle: entity.title,
+      });
+    } finally {
+      isSavingJournal = false;
+    }
+  }
+
+  async function copyGuestTranscript() {
+    if (!guestTranscript || isCopying) return;
+    isCopying = true;
+    try {
+      await characterChatExportService.copyConversation(guestTranscript, {
+        speakerName: guestTranscript.guestName || "You",
+        characterTitle: entity.title,
+      });
+    } finally {
+      isCopying = false;
+    }
+  }
 </script>
 
 <div class="space-y-4">
@@ -254,18 +297,47 @@
                     >({transcript.guestId.slice(0, 6)})</span
                   >
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                   <span class="text-[10px] text-theme-muted">
                     {new Date(transcript.lastUpdated).toLocaleString()}
                   </span>
                   <button
                     type="button"
+                    onclick={() => copyHostTranscript(transcript)}
+                    disabled={isCopying}
+                    class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer disabled:opacity-50"
+                    title="Copy conversation"
+                    aria-label="Copy conversation"
+                  >
+                    <span
+                      class="icon-[lucide--copy] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick={() => sendHostTranscriptToJournal(transcript)}
+                    disabled={isSavingJournal}
+                    class="text-theme-muted hover:text-theme-primary p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer disabled:opacity-50"
+                    title="Send to Journal"
+                    aria-label="Send to Journal"
+                  >
+                    <span
+                      class="icon-[lucide--book-marked] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                  <button
+                    type="button"
                     onclick={() => deleteHostTranscript(transcript)}
-                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100"
+                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100 cursor-pointer"
                     title="Delete entire session logs"
                     aria-label="Delete entire session logs"
                   >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
+                    <span
+                      class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
                   </button>
                 </div>
               </div>
@@ -296,7 +368,10 @@
                             title="Edit message"
                             aria-label="Edit message"
                           >
-                            <span class="icon-[lucide--pencil] w-3 h-3" aria-hidden="true"></span>
+                            <span
+                              class="icon-[lucide--pencil] w-3 h-3"
+                              aria-hidden="true"
+                            ></span>
                           </button>
                           <button
                             type="button"
@@ -306,7 +381,10 @@
                             title="Delete message"
                             aria-label="Delete message"
                           >
-                            <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
+                            <span
+                              class="icon-[lucide--trash-2] w-3 h-3"
+                              aria-hidden="true"
+                            ></span>
                           </button>
                         {/if}
                         {#if msg.role === "assistant"}
@@ -317,7 +395,9 @@
                             class="text-[9px] font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
                             title="Promote this response to a rumor draft"
                           >
-                            <span class="icon-[lucide--sparkles] w-3 h-3" aria-hidden="true"
+                            <span
+                              class="icon-[lucide--sparkles] w-3 h-3"
+                              aria-hidden="true"
                             ></span>
                             Promote
                           </button>
@@ -409,6 +489,26 @@
         </div>
       {:else}
         <!-- Active Chat Window -->
+        <div class="flex justify-between items-center px-1 text-xs">
+          <span
+            class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+          >
+            Conversation
+          </span>
+          {#if guestTranscript?.messages?.length}
+            <button
+              type="button"
+              onclick={copyGuestTranscript}
+              class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+              title="Copy conversation"
+              aria-label="Copy conversation"
+            >
+              <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"
+              ></span>
+              Copy
+            </button>
+          {/if}
+        </div>
         <div
           bind:this={chatContainer}
           class="min-h-48 max-h-[40dvh] overflow-y-auto custom-scrollbar p-3 space-y-4 rounded-xl border border-theme-border/60 bg-theme-bg/10 sm:min-h-0 sm:max-h-none sm:flex-1"
@@ -435,7 +535,10 @@
                       title="Edit message"
                       aria-label="Edit message"
                     >
-                      <span class="icon-[lucide--pencil] w-3 h-3" aria-hidden="true"></span>
+                      <span
+                        class="icon-[lucide--pencil] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                     </button>
                     <button
                       type="button"
@@ -444,7 +547,10 @@
                       title="Delete message"
                       aria-label="Delete message"
                     >
-                      <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
+                      <span
+                        class="icon-[lucide--trash-2] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                     </button>
                   </div>
                 {/if}
