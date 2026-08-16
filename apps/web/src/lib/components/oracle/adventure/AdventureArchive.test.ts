@@ -1,8 +1,12 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureArchive from "./AdventureArchive.svelte";
+import type {
+  AdventureArchiveEntry,
+  AdventureListResult,
+} from "$lib/services/adventure/adventure-session-repository";
 
-const archivedEntry = {
+const archivedEntry: AdventureArchiveEntry = {
   id: "session-1",
   title: "The Road",
   status: "archived" as const,
@@ -13,7 +17,7 @@ const archivedEntry = {
 
 function repository() {
   return {
-    list: vi.fn(async () => ({
+    list: vi.fn(async (_vaultId: string): Promise<AdventureListResult> => ({
       effectiveActiveId: null,
       entries: [archivedEntry],
     })),
