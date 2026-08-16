@@ -29,6 +29,8 @@ export type AdventureLoadResult =
 export type AdventureSaveResult =
   { ok: true; session: AdventureSession } | { ok: false; error: Error };
 
+export type AdventureDeleteResult = { ok: true } | { ok: false; error: Error };
+
 export interface AdventureVaultRootResolver {
   (vaultId: string): Promise<FileSystemDirectoryHandle>;
 }
@@ -211,6 +213,62 @@ export class AdventureSessionRepository {
       updatedAt: new Date().toISOString(),
     };
     return this.save(expectedRevision, archived);
+  }
+
+  async deleteArchived(
+    vaultId: string,
+    sessionId: string,
+    expectedRevision: number,
+  ): Promise<AdventureDeleteResult> {
+    if (!isSafeSessionId(sessionId)) {
+      return { ok: false, error: new Error("invalid-session-id") };
+    }
+    const loaded = await this.load(vaultId, sessionId);
+    if (loaded.condition === "unreadable") {
+      return { ok: false, error: loaded.error };
+    }
+    if (loaded.session.status !== "archived") {
+      return {
+        ok: false,
+        error: new Error("active-session-cannot-be-deleted"),
+      };
+    }
+    if (loaded.session.revision !== expectedRevision) {
+      return { ok: false, error: new Error("revision-conflict") };
+    }
+    try {
+      const directory = await this.adventuresDirectory(vaultId);
+      await directory.removeEntry(`${sessionId}.json`);
+      return { ok: true };
+    } catch (cause) {
+      return {
+        ok: false,
+        error: cause instanceof Error ? cause : new Error(String(cause)),
+      };
+    }
+  }
+
+  async deleteUnreadable(
+    vaultId: string,
+    sessionId: string,
+  ): Promise<AdventureDeleteResult> {
+    if (!isSafeSessionId(sessionId)) {
+      return { ok: false, error: new Error("invalid-session-id") };
+    }
+    const loaded = await this.load(vaultId, sessionId);
+    if (loaded.condition !== "unreadable") {
+      return { ok: false, error: new Error("session-is-readable") };
+    }
+    try {
+      const directory = await this.adventuresDirectory(vaultId);
+      await directory.removeEntry(`${sessionId}.json`);
+      return { ok: true };
+    } catch (cause) {
+      return {
+        ok: false,
+        error: cause instanceof Error ? cause : new Error(String(cause)),
+      };
+    }
   }
 }
 

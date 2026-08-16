@@ -92,7 +92,8 @@
     page.url.pathname === `${base}/oracle` ||
       page.url.pathname === `${base}/help` ||
       page.url.pathname.startsWith(`${base}/help/`) ||
-      page.url.pathname === `${base}/import`,
+      page.url.pathname === `${base}/import` ||
+      page.url.pathname === `${base}/dice`,
   );
   const anyModalOpen = $derived(
     modalUIStore.isAnyModalOpen ||

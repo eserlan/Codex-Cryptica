@@ -8,16 +8,34 @@ export interface AdventureSourceResolver {
   getById(
     vaultId: string,
     recordId: string,
-  ): Promise<{ id: string; title: string; type: string; text: string } | null>;
+  ): Promise<{
+    id: string;
+    title: string;
+    type: string;
+    text: string;
+    lore?: string;
+  } | null>;
   search(
     vaultId: string,
     query: string,
     limit: number,
-  ): Promise<Array<{ id: string; title: string; type: string; text: string }>>;
+  ): Promise<
+    Array<{
+      id: string;
+      title: string;
+      type: string;
+      text: string;
+      lore?: string;
+    }>
+  >;
 }
 
 export class AdventureContextService {
-  constructor(private readonly resolver: AdventureSourceResolver) {}
+  constructor(private resolver: AdventureSourceResolver) {}
+
+  setResolver(resolver: AdventureSourceResolver): void {
+    this.resolver = resolver;
+  }
 
   async resolveAnchors(
     session: AdventureSession,
@@ -33,6 +51,7 @@ export class AdventureContextService {
         recordId: record.id,
         displayName: record.title,
         content: record.text.slice(0, 8_000),
+        lore: record.lore,
         role: reference.role,
       });
     }
@@ -53,6 +72,33 @@ export class AdventureContextService {
         recordId: record.id,
         displayName: record.title,
         content: record.text.slice(0, 4_000),
+        lore: record.lore,
+        role: "turn-source" as SourceRecordReference["role"],
+      }));
+  }
+
+  async resolveOpeningRelevant(
+    session: AdventureSession,
+  ): Promise<ResolvedSourceExcerpt[]> {
+    const playerCharacter = session.playerCharacter;
+    const characterContext =
+      playerCharacter.kind === "canonical"
+        ? playerCharacter.name
+        : `${playerCharacter.name} ${playerCharacter.description}`;
+    const query = [session.title, session.premise, characterContext]
+      .filter(Boolean)
+      .join(" ");
+    const records = await this.resolver.search(session.vaultId, query, 8);
+    const anchored = new Set(
+      session.sourceRecords.map((reference) => reference.recordId),
+    );
+    return records
+      .filter((record) => !anchored.has(record.id))
+      .map((record) => ({
+        recordId: record.id,
+        displayName: record.title,
+        content: record.text.slice(0, 4_000),
+        lore: record.lore,
         role: "turn-source" as SourceRecordReference["role"],
       }));
   }

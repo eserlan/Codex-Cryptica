@@ -26,26 +26,22 @@ export class InteractionExpiredError extends Error {
 export const INTERACTION_MODEL_KEY = "luna-fast";
 
 /**
- * Registry key for generator interactions specifically (2026-08-11).
- *
- * Split from {@link INTERACTION_MODEL_KEY} so the in-app campaign generators
- * can sit on Gemini alongside the public ones, for the same reason: the user
- * is waiting on a draft with nothing else to do, and Luna's latency is felt
- * there far more than in Oracle chat, which reads as conversational. Chat and
- * entity revision keep Luna via the key above.
+ * Named separately so generator callers can retain an explicit model choice
+ * in their request shape while sharing the same Luna conversation route as
+ * Oracle chat and entity revision.
  *
  * oracle-proxy's `handleInteraction` branches on the resolved model's
  * provider, so a Gemini key here routes to Gemini's Interactions API — the
  * original path, with the OpenAI Responses branch added alongside it later.
  */
-export const GENERATOR_INTERACTION_MODEL_KEY = "gemini-flash-lite";
+export const GENERATOR_INTERACTION_MODEL_KEY = INTERACTION_MODEL_KEY;
 
 /**
  * Sends a plain-text generateContent request through oracle-proxy's
  * provider-neutral operation pipeline (specs/153-llm-model-registry)
  * instead of the legacy Gemini-only `contents`/`generationConfig` shape.
- * The Worker resolves the actual model (Gemini today, potentially Luna or
- * another provider later) via its registry — no model name is sent, per
+ * The Worker resolves the actual model via its registry — no model name is
+ * sent, per
  * that pipeline's contract. Returns a response shaped like the Google SDK's
  * `GenerativeModel.generateContent()` result so callers see no interface
  * change.
@@ -136,7 +132,7 @@ async function sendViaOperationPipeline(params: {
     }));
     console.error("[OracleProxy] Request failed:", error);
     throw new Error(
-      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
     );
   }
 
@@ -175,6 +171,16 @@ async function sendViaOperationPipeline(params: {
     },
     rawResponse: data,
   };
+}
+
+/**
+ * Appends `(code: X)` to a thrown error message when the proxy supplied a
+ * machine-readable error code, so `classifyApiError` can pattern-match on
+ * it instead of the free-text message (which is prose meant for a human,
+ * not a stable identifier).
+ */
+function formatErrorCode(code: unknown): string {
+  return typeof code === "string" && code ? ` (code: ${code})` : "";
 }
 
 /** Adds `Authorization: Bearer <token>` without disturbing existing headers. */
@@ -319,7 +325,7 @@ export class DefaultAIClientManager {
         );
       }
       throw new Error(
-        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}`,
+        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}${formatErrorCode(data?.error?.code)}`,
       );
     }
 
@@ -554,7 +560,7 @@ export class DefaultAIClientManager {
             }));
             console.error("[OracleProxy] Request failed:", error);
             throw new Error(
-              `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+              `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
             );
           }
 

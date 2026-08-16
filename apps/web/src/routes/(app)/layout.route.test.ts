@@ -53,7 +53,9 @@ vi.mock("$lib/components/layout/MobileDemoBanner.svelte", () => ({
 }));
 vi.mock("$lib/components/modals/GlobalModalProvider.svelte", () => ({
   default: function GlobalModalProviderMock() {
-    return { $$render: () => "" };
+    return {
+      $$render: () => "<div data-testid='global-modal-provider'></div>",
+    };
   },
 }));
 vi.mock("$lib/components/vtt/GuestSessionBootstrap.svelte", () => ({
@@ -292,6 +294,17 @@ describe("+layout.svelte", () => {
     render(LayoutTestHost);
 
     expect(screen.getByTestId("app-footer")).toBeTruthy();
+  });
+
+  it("keeps the dice pop-out free of the application shell and global overlays", () => {
+    page.url = new URL("http://localhost/dice") as typeof page.url;
+
+    render(LayoutTestHost);
+
+    expect(screen.queryByTestId("app-header")).toBeNull();
+    expect(screen.queryByTestId("app-footer")).toBeNull();
+    expect(screen.queryByTestId("global-modal-provider")).toBeNull();
+    expect(quickNoteScratchpadMock).not.toHaveBeenCalled();
   });
 
   it("syncs --app-viewport-height from visualViewport instead of trusting 100dvh alone", () => {
