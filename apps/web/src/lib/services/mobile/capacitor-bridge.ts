@@ -3,6 +3,8 @@ import { App as CapApp } from "@capacitor/app";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { goto } from "$app/navigation";
 
+import { Share, type ShareOptions } from "@capacitor/share";
+
 export interface NativeRouter {
   (path: string): Promise<void> | void;
 }
@@ -25,6 +27,32 @@ export class CapacitorBridge {
 
   getPlatform(): "android" | "ios" | "web" {
     return Capacitor.getPlatform() as "android" | "ios" | "web";
+  }
+
+  async share(options: ShareOptions): Promise<boolean> {
+    if (this.isNative()) {
+      try {
+        await Share.share(options);
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    } else if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.share === "function"
+    ) {
+      try {
+        await navigator.share({
+          title: options.title,
+          text: options.text,
+          url: options.url,
+        });
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    }
+    return false;
   }
 
   async init(): Promise<void> {

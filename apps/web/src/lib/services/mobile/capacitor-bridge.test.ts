@@ -18,6 +18,12 @@ vi.mock("@capacitor/app", () => ({
   },
 }));
 
+vi.mock("@capacitor/share", () => ({
+  Share: {
+    share: vi.fn(),
+  },
+}));
+
 vi.mock("@capacitor/status-bar", () => ({
   StatusBar: {
     setStyle: vi.fn(),
@@ -131,5 +137,32 @@ describe("CapacitorBridge", () => {
 
     listeners["backButton"]?.({ canGoBack: false });
     expect(CapApp.exitApp).toHaveBeenCalled();
+  });
+
+  it("calls Share.share on native platform", async () => {
+    const { Share } = await import("@capacitor/share");
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+    vi.mocked(Share.share).mockResolvedValue({ activityType: "custom" });
+
+    const result = await bridge.share({
+      title: "Codex Note",
+      text: "Some lore",
+    });
+
+    expect(Share.share).toHaveBeenCalledWith({
+      title: "Codex Note",
+      text: "Some lore",
+    });
+    expect(result).toBe(true);
+  });
+
+  it("handles Share.share failure gracefully on native platform", async () => {
+    const { Share } = await import("@capacitor/share");
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+    vi.mocked(Share.share).mockRejectedValue(new Error("User cancelled"));
+
+    const result = await bridge.share({ title: "Codex Note" });
+
+    expect(result).toBe(false);
   });
 });
