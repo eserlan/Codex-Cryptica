@@ -33,7 +33,9 @@ export function getEntityModifiedAt(entity: Entity): number | undefined {
 
 /** Labels shown in the table; legacy entities without labels fall back to tags. */
 export function getEntityLabels(entity: Entity): string[] {
-  return entity.labels?.length ? entity.labels : (entity.tags ?? []);
+  return entity.labels?.length
+    ? entity.labels
+    : ((entity as { tags?: string[] }).tags ?? []);
 }
 
 /** Alphabetically first label without sorting a copy of the array. */

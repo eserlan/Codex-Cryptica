@@ -24,7 +24,7 @@ describe("Entity Schema Validation", () => {
       id: "npc-1",
       type: "npc",
       title: "Valid NPC",
-      tags: ["test"],
+      labels: ["test"],
       connections: [{ target: "loc-1", type: "located_in", strength: 1 }],
       content: "Some content",
     };

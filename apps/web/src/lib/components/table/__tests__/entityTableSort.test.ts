@@ -164,7 +164,12 @@ describe("sortEntities", () => {
       entity({ id: "n", title: "Nomad" }), // no labels
       entity({ id: "h", title: "Hero", labels: ["villain", "hero"] }),
       entity({ id: "m", title: "Mystic", labels: ["arcane"] }),
-      entity({ id: "l", title: "Legacy", labels: [], tags: ["old-tag"] }),
+      entity({
+        id: "l",
+        title: "Legacy",
+        labels: [],
+        tags: ["old-tag"],
+      } as any),
     ];
     expect(
       titles(sortEntities(labeled, { key: "labels", direction: "asc" })),

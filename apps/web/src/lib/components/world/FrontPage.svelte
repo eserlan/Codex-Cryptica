@@ -54,7 +54,6 @@
           id: e.id,
           title: e.title,
           path: "",
-          tags: e.tags,
           labels: e.labels,
           image: e.image,
           thumbnail: e.thumbnail,

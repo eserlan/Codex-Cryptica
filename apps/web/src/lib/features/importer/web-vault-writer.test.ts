@@ -48,7 +48,7 @@ describe("WebVaultWriter", () => {
     });
   });
 
-  it("maps labels separately from tags when creating entities", async () => {
+  it("maps labels when creating entities", async () => {
     const createEntity = vi.fn().mockResolvedValue("hero");
     const writer = new WebVaultWriter({
       entities: {},
@@ -61,7 +61,6 @@ describe("WebVaultWriter", () => {
       type: "character",
       title: "Hero",
       content: "Lore",
-      tags: [],
       labels: ["important", "npc"],
       image: "https://cdn.example.com/hero.png",
       thumbnail: "https://cdn.example.com/hero-thumb.png",
@@ -72,13 +71,15 @@ describe("WebVaultWriter", () => {
     expect(createEntity).toHaveBeenCalledWith("character", "Hero", {
       content: "Lore",
       lore: undefined,
-      tags: [],
       labels: ["important", "npc"],
+      aliases: undefined,
       image: "https://cdn.example.com/hero.png",
       thumbnail: "https://cdn.example.com/hero-thumb.png",
       metadata: undefined,
       discoverySource: "scabard:id:1",
       parent: undefined,
+      start_date: undefined,
+      end_date: undefined,
       connections: [],
     });
   });
@@ -110,7 +111,6 @@ describe("WebVaultWriter", () => {
         type: "character",
         title: "Hero",
         content: "Lore",
-        tags: [],
         labels: ["important"],
         image: "https://cdn.example.com/hero.png",
         thumbnail: "https://cdn.example.com/hero-thumb.png",
@@ -120,7 +120,6 @@ describe("WebVaultWriter", () => {
         type: "location",
         title: "Moon Harbor",
         content: "Harbor note",
-        tags: [],
         labels: ["port"],
         discoverySource: "scabard:id:2",
       },
@@ -135,7 +134,6 @@ describe("WebVaultWriter", () => {
           title: "Hero",
           content: "Lore",
           lore: undefined,
-          tags: [],
           labels: ["important"],
           aliases: undefined,
           image: "https://cdn.example.com/hero.png",
@@ -156,7 +154,6 @@ describe("WebVaultWriter", () => {
           title: "Moon Harbor",
           content: "Harbor note",
           lore: undefined,
-          tags: [],
           labels: ["port"],
           aliases: undefined,
           image: undefined,
@@ -205,14 +202,14 @@ describe("WebVaultWriter", () => {
         type: "character",
         title: "Hero",
         content: "Lore",
-        tags: [],
+        labels: [],
         discoverySource: "scabard:id:1",
       },
       {
         type: "location",
         title: "Moon Harbor",
         content: "Harbor note",
-        tags: [],
+        labels: [],
         discoverySource: "scabard:id:2",
       },
     ]);
@@ -607,7 +604,7 @@ describe("WebVaultWriter — dates and aliases (T008)", () => {
       type: "character",
       title: "Hero",
       content: "Lore",
-      tags: [],
+      labels: [],
       aliases: ["The Wanderer"],
       startDate: { year: 1142 },
       endDate: { year: 1150, month: 3, day: 18 },
@@ -638,7 +635,7 @@ describe("WebVaultWriter — dates and aliases (T008)", () => {
       type: "character",
       title: "Hero",
       content: "Lore",
-      tags: [],
+      labels: [],
       discoverySource: "cif:entity:tool:world:hero",
     });
 

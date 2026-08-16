@@ -54,7 +54,7 @@ export function mapDraftToFields(
   title: string;
   content: string;
   lore?: string;
-  tags: string[];
+  tags?: string[];
   labels: string[];
   aliases?: string[];
   image?: string;

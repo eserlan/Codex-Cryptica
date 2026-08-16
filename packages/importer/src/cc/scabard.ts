@@ -284,7 +284,6 @@ export function parseScabardExport(
       title: page.name || `Unnamed ${conceptStr}`,
       content,
       lore: lore || undefined,
-      tags: [],
       labels: [],
       image,
       thumbnail,

@@ -140,7 +140,6 @@ describe("Adapters", () => {
           id: "e1",
           type: "person",
           title: "The King",
-          tags: ["royal"],
           labels: ["important"],
           connections: ["e2"],
           lore: "Long ago...",
@@ -151,12 +150,43 @@ describe("Adapters", () => {
       expect(entity!.id).toBe("e1");
       expect(entity!.type).toBe("person");
       expect(entity!.title).toBe("The King");
-      expect(entity!.tags).toEqual(["royal"]);
       expect(entity!.labels).toEqual(["important"]);
+      expect((entity as any).tags).toBeUndefined();
       expect(entity!.connections).toEqual(["e2"]);
       expect(entity!.content).toBe("hello");
       expect(entity!.lore).toBe("Long ago...");
       expect(entity!._path).toEqual(["path"]);
+    });
+
+    it("folds legacy tags into labels when labels is missing", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e-legacy",
+          type: "person",
+          title: "Old Hero",
+          tags: ["veteran"],
+        },
+        content: "hello",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toEqual(["veteran"]);
+      expect((entity as any).tags).toBeUndefined();
+    });
+
+    it("folds legacy tags into labels when labels is an empty array", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e-legacy-empty-labels",
+          type: "person",
+          title: "Old Hero",
+          labels: [],
+          tags: ["veteran", "warrior"],
+        },
+        content: "hello",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toEqual(["veteran", "warrior"]);
+      expect((entity as any).tags).toBeUndefined();
     });
 
     it("keeps type=note for a note with an unrelated `kind` sub-classification (e.g. SEO language entries)", () => {
@@ -185,8 +215,8 @@ describe("Adapters", () => {
       expect(entity!.id).toBe("derived-id");
       expect(entity!.title).toBe("path");
       expect(entity!.type).toBe("note");
-      expect(entity!.tags).toEqual([]);
       expect(entity!.labels).toEqual([]);
+      expect((entity as any).tags).toBeUndefined();
       expect(entity!.connections).toEqual([]);
       expect(entity!.lore).toBe("");
       expect(entity!._path).toEqual(["path"]);
