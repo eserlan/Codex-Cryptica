@@ -136,7 +136,7 @@ async function sendViaOperationPipeline(params: {
     }));
     console.error("[OracleProxy] Request failed:", error);
     throw new Error(
-      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+      `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
     );
   }
 
@@ -175,6 +175,16 @@ async function sendViaOperationPipeline(params: {
     },
     rawResponse: data,
   };
+}
+
+/**
+ * Appends `(code: X)` to a thrown error message when the proxy supplied a
+ * machine-readable error code, so `classifyApiError` can pattern-match on
+ * it instead of the free-text message (which is prose meant for a human,
+ * not a stable identifier).
+ */
+function formatErrorCode(code: unknown): string {
+  return typeof code === "string" && code ? ` (code: ${code})` : "";
 }
 
 /** Adds `Authorization: Bearer <token>` without disturbing existing headers. */
@@ -319,7 +329,7 @@ export class DefaultAIClientManager {
         );
       }
       throw new Error(
-        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}`,
+        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}${formatErrorCode(data?.error?.code)}`,
       );
     }
 
@@ -554,7 +564,7 @@ export class DefaultAIClientManager {
             }));
             console.error("[OracleProxy] Request failed:", error);
             throw new Error(
-              `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}`,
+              `[OracleProxy] Request failed: ${error.error?.message || "Unknown error"}${formatErrorCode(error.error?.code)}`,
             );
           }
 
