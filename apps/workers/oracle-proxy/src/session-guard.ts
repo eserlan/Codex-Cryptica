@@ -6,7 +6,7 @@
  * testable without constructing Requests.
  */
 
-import { verifyTurnstile } from "./turnstile";
+import { verifyTurnstileWithDiagnostics } from "./turnstile";
 import {
   extractBearerToken,
   mintSessionToken,
@@ -74,13 +74,17 @@ export async function handleSessionRequest(
   };
   const turnstileToken = body?.turnstileToken;
 
-  const verified = await verifyTurnstile(
+  const verification = await verifyTurnstileWithDiagnostics(
     request,
     env.TURNSTILE_SECRET_KEY,
     SESSION_TURNSTILE_ACTION,
     turnstileToken,
   );
-  if (!verified) {
+  if (!verification.valid) {
+    console.warn("[Oracle Proxy] LLM session Turnstile verification failed", {
+      reason: verification.reason,
+      errorCodes: verification.errorCodes,
+    });
     return json(
       {
         error: {
@@ -125,6 +129,9 @@ export async function enforceLlmSession(
   const result = await verifySessionToken(env.SESSION_TOKEN_SECRET, token);
 
   if (!result.valid) {
+    console.warn("[Oracle Proxy] LLM session token rejected", {
+      code: result.code,
+    });
     return json(
       {
         error: {

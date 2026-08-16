@@ -11,19 +11,42 @@ export function isCodexHostname(hostname: string | undefined): boolean {
   );
 }
 
-export async function verifyTurnstile(
+/**
+ * A privacy-safe outcome for a Turnstile siteverify call. These values are
+ * suitable for Worker logs: they deliberately exclude challenge tokens, IP
+ * addresses, and request content.
+ */
+export interface TurnstileVerificationResult {
+  valid: boolean;
+  reason?: string;
+  errorCodes?: string[];
+}
+
+/**
+ * Verify a Turnstile response while retaining only safe diagnostic metadata.
+ *
+ * The caller may log `reason` and `errorCodes` to distinguish a client-side
+ * challenge failure from Cloudflare's siteverify response without exposing
+ * the one-time challenge token.
+ */
+export async function verifyTurnstileWithDiagnostics(
   request: Request,
   secretKey?: string,
   expectedAction?: string,
   tokenOverride?: string,
-): Promise<boolean> {
+): Promise<TurnstileVerificationResult> {
   const token = tokenOverride || request.headers.get("X-Turnstile-Token");
 
   if (!secretKey) {
-    return token === "dev-turnstile-token";
+    return token === "dev-turnstile-token"
+      ? { valid: true }
+      : { valid: false, reason: "development_token_rejected" };
   }
 
-  if (!token || token.length > 2_048) return false;
+  if (!token) return { valid: false, reason: "missing_token" };
+  if (token.length > 2_048) {
+    return { valid: false, reason: "token_too_large" };
+  }
 
   const form = new FormData();
   form.set("secret", secretKey);
@@ -38,17 +61,47 @@ export async function verifyTurnstile(
         body: form,
       },
     );
-    if (!response.ok) return false;
+    if (!response.ok) {
+      return { valid: false, reason: `siteverify_http_${response.status}` };
+    }
     const result = (await response.json()) as {
       success?: boolean;
       hostname?: string;
       action?: string;
+      "error-codes"?: string[];
     };
+    const errorCodes = Array.isArray(result["error-codes"])
+      ? result["error-codes"].filter(
+          (code): code is string => typeof code === "string",
+        )
+      : undefined;
     if (expectedAction && result.action !== expectedAction) {
-      return false;
+      return { valid: false, reason: "unexpected_action", errorCodes };
     }
-    return result.success === true && isCodexHostname(result.hostname);
+    if (!isCodexHostname(result.hostname)) {
+      return { valid: false, reason: "untrusted_hostname", errorCodes };
+    }
+    if (!result.success) {
+      return { valid: false, reason: "verification_rejected", errorCodes };
+    }
+    return { valid: true };
   } catch {
-    return false;
+    return { valid: false, reason: "siteverify_network_error" };
   }
+}
+
+export async function verifyTurnstile(
+  request: Request,
+  secretKey?: string,
+  expectedAction?: string,
+  tokenOverride?: string,
+): Promise<boolean> {
+  return (
+    await verifyTurnstileWithDiagnostics(
+      request,
+      secretKey,
+      expectedAction,
+      tokenOverride,
+    )
+  ).valid;
 }

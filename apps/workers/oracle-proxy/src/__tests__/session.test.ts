@@ -39,6 +39,10 @@ function makeLimiter(failAfter = Infinity) {
   };
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("session token crypto", () => {
   it("mints a token that verifies against the same secret", async () => {
     const { token, expiresAt } = await mintSessionToken(SECRET, "1.2.3.4");
@@ -179,6 +183,7 @@ describe("POST /api/session", () => {
   });
 
   it("refuses to issue a token when Turnstile fails", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     const request = makeRequest({
       body: { turnstileToken: "wrong-token" },
     });
@@ -193,6 +198,13 @@ describe("POST /api/session", () => {
     expect((await response.json()) as any).toMatchObject({
       error: { code: "TURNSTILE_INVALID" },
     });
+    expect(warning).toHaveBeenCalledWith(
+      "[Oracle Proxy] LLM session Turnstile verification failed",
+      {
+        reason: "development_token_rejected",
+        errorCodes: undefined,
+      },
+    );
   });
 
   it("reports a configuration error rather than issuing an unsigned token", async () => {
@@ -233,6 +245,7 @@ describe("LLM session guard", () => {
   });
 
   it("rejects a request with no token", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     const response = await enforceLlmSession(
       makeRequest({}),
       { SESSION_TOKEN_SECRET: SECRET },
@@ -243,6 +256,10 @@ describe("LLM session guard", () => {
     expect((await response!.json()) as any).toMatchObject({
       error: { code: "SESSION_TOKEN_MISSING" },
     });
+    expect(warning).toHaveBeenCalledWith(
+      "[Oracle Proxy] LLM session token rejected",
+      { code: "SESSION_TOKEN_MISSING" },
+    );
   });
 
   it("returns SESSION_TOKEN_EXPIRED so the client refreshes instead of erroring", async () => {
