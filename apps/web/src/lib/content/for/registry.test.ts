@@ -87,9 +87,11 @@ describe("Landing Page Registry", () => {
       expect(copy).not.toMatch(/Anarch cell/i);
 
       // Verify authentic terminology presence
-      expect(vtm.hero.eyebrow).toBe("Chronicle Management");
+      expect(vtm.hero.eyebrow).toBe("Edition-Agnostic Chronicle Management");
       expect(copy).toContain("Storyteller");
       expect(copy).toContain("Touchstones");
+      expect(copy).toContain("Humanity");
+      expect(copy).toContain("Masquerade");
       expect(copy).toContain("Anarch Coterie");
       expect(copy).toContain("Owes a major boon to");
     });

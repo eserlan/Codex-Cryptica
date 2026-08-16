@@ -9,39 +9,39 @@ export const vampireTheMasquerade: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Vampire: The Masquerade",
     description:
-      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one place.",
+      "Whether you run V5, V20, or classic Revised, manage your Vampire: The Masquerade chronicle in one connected, local-first workspace.",
   },
   hero: {
-    eyebrow: "Chronicle Management",
+    eyebrow: "Edition-Agnostic Chronicle Management",
     title: "Codex Cryptica for Vampire: The Masquerade",
     tagline:
-      "A Vampire chronicle quickly becomes a web of Kindred, coteries, domains, mortal contacts, favours and secrets. Keep that web connected in one place.",
+      "Whether you run V5, V20, or classic Revised, a Vampire chronicle quickly becomes a web of Kindred politics, hunting grounds, boons, and lethal secrets. Keep that web connected in one place.",
     problemStatement:
-      "Standard chronicle notes struggle when every NPC is connected to three secrets and four rival factions. When a Primogen shifts their support, you shouldn’t have to manually update five separate documents to remember who owes what to whom.",
+      "Standard notes break down when every Kindred is tied to three debts, two mortal Touchstones, and a rival faction. When a Primogen shifts allegiance or a Masquerade breach threatens the city, you shouldn’t have to scramble through scattered documents to know who holds leverage over whom.",
   },
   useCases: [
     {
       title: "Interactive Relationship Graph",
       description:
-        "Map Blood Bonds, sire-childe lineages, Primogen rivalries, and mortal assets visually so you never lose track of who influences whom.",
+        "Map Blood Bonds, sire-childe lineages, Primogen rivalries, and boons visually so you never lose track of who influences whom.",
       icon: "icon-[lucide--network]",
     },
     {
-      title: "Domains & Hunting Grounds",
+      title: "Domains, Elysium & Hunting Grounds",
       description:
-        "Track Elysium, hunting grounds, domains and contested havens across your city.",
+        "Track Elysium, feeding racks, clan territory, contested havens, and mortal herds across your city.",
       icon: "icon-[lucide--map-pin]",
     },
     {
-      title: "Touchstones & Mortal Connections",
+      title: "Touchstones & Humanity Anchors",
       description:
-        "Keep track of Touchstones, mortal identities and connections, feeding arrangements, and compromising secrets alongside your chronicle lore.",
+        "Anchor your coterie’s Humanity with mortal Touchstones and Convictions, tracking who keeps your Kindred grounded before the Beast takes hold.",
       icon: "icon-[lucide--heart-handshake]",
     },
     {
-      title: "Session Notes & Secret Lore",
+      title: "The Masquerade & Storyteller Secrets",
       description:
-        "Organise court decrees, political debts, coterie decisions, and private Storyteller notes in local-first storage.",
+        "Track Masquerade breaches, Second Inquisition pressure, court decrees, and private Storyteller plots in local-first storage.",
       icon: "icon-[lucide--book-open]",
     },
   ],
@@ -89,7 +89,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Vampire Clan Generator",
       description:
-        "Create homebrew vampire lineages, faction histories and founder lore for custom chronicles.",
+        "Create custom bloodlines, faction histories, and founder lore for homebrew Vampire clans.",
       href: "/generators/vampire-clan",
       badge: "Generator",
     },
@@ -101,9 +101,9 @@ export const vampireTheMasquerade: LandingPageConfig = {
       badge: "Generator",
     },
     {
-      title: "Settlement Generator",
+      title: "Domain & District Generator",
       description:
-        "Generate districts, neighbourhoods, and urban locations you can adapt into domains, havens, and hunting grounds for your chronicle.",
+        "Generate urban neighbourhoods, nightlife districts, and city blocks you can claim as domains, havens, and hunting grounds.",
       href: "/generators/settlement",
       badge: "Generator",
     },
@@ -116,10 +116,10 @@ export const vampireTheMasquerade: LandingPageConfig = {
     },
   ],
   cta: {
-    title: "Organise Your Chronicle",
+    title: "Claim Your Domain",
     description:
-      "Start managing your Vampire: The Masquerade chronicle with local-first privacy and visual relationship graphs.",
-    buttonText: "Try Codex Cryptica Free",
+      "Take command of your nocturnal city. Map bloodlines, track boons and breaches, and run your Vampire chronicle with complete local privacy.",
+    buttonText: "Start Your Chronicle Free",
     buttonHref: "/app",
   },
   disclaimer:
