@@ -189,24 +189,6 @@ function withBearerToken(
 }
 
 /**
- * Whether a 401 is specifically an expired capability token (the recoverable
- * case) rather than a missing or forged one.
- *
- * Reads a clone so the caller can still consume the original body when this
- * turns out not to be a refresh case.
- */
-async function isExpiredSessionToken(response: Response): Promise<boolean> {
-  try {
-    const body = (await response.clone().json()) as {
-      error?: { code?: string };
-    };
-    return body?.error?.code === "SESSION_TOKEN_EXPIRED";
-  } catch {
-    return false;
-  }
-}
-
-/**
  * DefaultAIClientManager manages connections to Google's Generative AI service.
  */
 export class DefaultAIClientManager {
@@ -254,10 +236,12 @@ export class DefaultAIClientManager {
    * exactly one place. Adding token logic at any individual call site instead
    * would guarantee one of them eventually gets missed.
    *
-   * On a 401 caused by an expired token it re-handshakes and replays the
-   * request **once**. A second 401 is returned to the caller: a persistently
-   * rejected token means something is actually wrong, and retrying it in a
-   * loop would hammer both Turnstile and the proxy.
+   * On any 401 — an expired token, a missing one (e.g. the Turnstile
+   * handshake failed, such as when an ad blocker blocks
+   * challenges.cloudflare.com), or a forged one — it re-handshakes and
+   * replays the request **once**. A second 401 is returned to the caller: a
+   * persistently rejected token means something is actually wrong, and
+   * retrying it in a loop would hammer both Turnstile and the proxy.
    *
    * An arrow property, not a method, because it is passed around as a bare
    * `doFetch` callback and must stay bound.
@@ -276,9 +260,6 @@ export class DefaultAIClientManager {
     if (init?.body !== undefined && typeof init.body !== "string") {
       return response;
     }
-
-    const expired = await isExpiredSessionToken(response);
-    if (!expired) return response;
 
     manager.invalidate();
     const freshToken = await manager.getToken();

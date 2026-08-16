@@ -453,6 +453,74 @@ describe("DefaultAIClientManager", () => {
     });
   });
 
+  describe("session token retry", () => {
+    it("retries once on any 401, not just an expired-token response", async () => {
+      // Regression: a missing token (e.g. the Turnstile handshake failed
+      // because an ad blocker blocks challenges.cloudflare.com) used to
+      // return the 401 straight to the caller — only SESSION_TOKEN_EXPIRED
+      // triggered a re-handshake.
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 401,
+          ok: false,
+          json: vi
+            .fn()
+            .mockResolvedValue({ error: { code: "SESSION_TOKEN_MISSING" } }),
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          ok: true,
+          json: vi.fn().mockResolvedValue({ content: "ok" }),
+        });
+
+      const sessionManager = {
+        getToken: vi
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce("fresh-token"),
+        invalidate: vi.fn(),
+      };
+
+      const isolated = new DefaultAIClientManager(
+        fetcher as any,
+        sessionManager as any,
+      );
+      const model = await isolated.getModel("", "gemini-1.5-pro");
+      const result = await model.generateContent("Test message");
+
+      expect(sessionManager.invalidate).toHaveBeenCalledOnce();
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      const retryInit = fetcher.mock.calls[1][1] as RequestInit;
+      const headers = new Headers(retryInit.headers);
+      expect(headers.get("Authorization")).toBe("Bearer fresh-token");
+      expect(result.response.text()).toBe("ok");
+    });
+
+    it("returns the 401 unchanged when the retry also can't get a token", async () => {
+      const fetcher = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        json: vi
+          .fn()
+          .mockResolvedValue({ error: { code: "SESSION_TOKEN_MISSING" } }),
+      });
+      const sessionManager = {
+        getToken: vi.fn().mockResolvedValue(null),
+        invalidate: vi.fn(),
+      };
+
+      const isolated = new DefaultAIClientManager(
+        fetcher as any,
+        sessionManager as any,
+      );
+      const model = await isolated.getModel("", "gemini-1.5-pro");
+
+      await expect(model.generateContent("Test")).rejects.toThrow();
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("startChat", () => {
     it("should include history in proxy sendMessageStream", async () => {
       const mockResponse = {

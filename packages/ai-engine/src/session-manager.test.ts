@@ -484,7 +484,12 @@ describe("DefaultAIClientManager token attachment", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("does not refresh on a 401 that is not an expiry", async () => {
+  it("retries once on a 401 that is not an expiry, then gives up", async () => {
+    // A missing or forged token retries exactly like an expired one — the
+    // proxy doesn't distinguish "no token" (e.g. the Turnstile handshake
+    // failed, such as an ad blocker blocking challenges.cloudflare.com) from
+    // "expired token" in a way the client should special-case. Only a second
+    // 401 in a row is treated as a genuine, non-recoverable failure.
     const fetcher = vi.fn(async () =>
       jsonResponse({ error: { code: "SESSION_TOKEN_INVALID" } }, 401),
     );
@@ -496,7 +501,7 @@ describe("DefaultAIClientManager token attachment", () => {
     await expect(
       client.sendInteraction({ model: "luna-fast", input: "hello" }),
     ).rejects.toThrow();
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it("passes non-401 failures straight through untouched", async () => {
