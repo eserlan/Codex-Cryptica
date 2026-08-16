@@ -221,6 +221,50 @@ describe("callOpenAi", () => {
     }
   });
 
+  it("uses JSON mode for schemas with an unsupported root oneOf", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"kind":"complete"}' } }],
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const result = await callOpenAi(
+      {
+        ...request,
+        operation: "structured-generation",
+        schema: {
+          oneOf: [
+            {
+              type: "object",
+              properties: { kind: { enum: ["complete"] } },
+            },
+            {
+              type: "object",
+              properties: { kind: { enum: ["roll-required"] } },
+            },
+          ],
+        },
+      },
+      model,
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.response_format).toEqual({ type: "json_object" });
+    expect(
+      sent.messages.some((message: { content: string }) =>
+        message.content.toLowerCase().includes("json"),
+      ),
+    ).toBe(true);
+    expect(result.ok).toBe(true);
+  });
+
   it("also enables JSON mode when a schema is present on a non-structured-generation operation", async () => {
     const fetcher = vi.fn(
       async () =>
@@ -476,7 +520,7 @@ describe("forwardInteractionToOpenAi", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it('requests json_object mode and guarantees "json" appears in instructions when responseMimeType is application/json', async () => {
+  it('requests json_object mode and guarantees "json" appears in the input when responseMimeType is application/json', async () => {
     const fetcher = vi.fn(
       async () =>
         new Response(JSON.stringify({ id: "resp_1", output: [] }), {
@@ -500,6 +544,9 @@ describe("forwardInteractionToOpenAi", () => {
     expect(sent.text).toEqual({ format: { type: "json_object" } });
     expect(sent.instructions).toBe(
       "Be a helpful oracle.\n\nRespond with valid JSON.",
+    );
+    expect(sent.input).toBe(
+      "Respond with valid JSON.\n\ngenerate a settlement",
     );
   });
 

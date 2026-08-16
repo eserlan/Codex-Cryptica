@@ -102,6 +102,7 @@ export interface PendingRoll {
   suppliedOutcome?: SuppliedRollOutcome;
   createdAt: string;
   outcomeRecordedAt?: string;
+  suggestedActions?: string[];
 }
 
 export interface CollectionPatch<T> {
@@ -137,6 +138,7 @@ export interface CommittedAdventureTurn {
   sourceRecordIds: string[];
   provisionalFactIds: string[];
   committedAt: string;
+  suggestedActions?: string[];
 }
 
 export interface AdventureSession {
@@ -167,6 +169,7 @@ export interface CompletedTurnProposal {
   revealSecretIds: string[];
   provisionalFacts: Omit<ProvisionalFact, "introducedOnTurnId">[];
   sourceRecordIds: string[];
+  suggestedActions?: string[];
 }
 
 export interface RollRequiredProposal {
@@ -176,6 +179,7 @@ export interface RollRequiredProposal {
   stakes: string;
   dice?: { expression: string; outcomeBands: OutcomeBand[] };
   sourceRecordIds: string[];
+  suggestedActions?: string[];
 }
 
 export type AdventureTurnProposal =
@@ -223,5 +227,7 @@ export interface ResolvedSourceExcerpt {
   recordId: string;
   displayName: string;
   content: string;
+  /** Vault lore is GM-only; never player-visible without a fictional reveal. */
+  lore?: string;
   role: SourceRecordReference["role"];
 }

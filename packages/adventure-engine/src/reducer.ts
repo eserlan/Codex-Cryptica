@@ -165,6 +165,7 @@ export function applyCompletedTurn(
     sourceRecordIds: proposal.sourceRecordIds,
     provisionalFactIds: provisionalFacts.map((fact) => fact.id),
     committedAt: now,
+    suggestedActions: proposal.suggestedActions,
   };
   candidate.turns = [...candidate.turns, turn];
   candidate.revision += 1;
@@ -209,6 +210,7 @@ export function applyRollRequest(
       : undefined,
     resolutionStatus: "awaiting-outcome",
     createdAt: meta.now,
+    suggestedActions: proposal.suggestedActions,
   };
   candidate.pendingRoll = pending;
   candidate.revision += 1;

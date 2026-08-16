@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AdventureManager } from "../adventure-manager.svelte";
 
 const now = "2026-08-16T12:00:00.000Z";
@@ -22,6 +22,20 @@ const completeProposal = {
   },
   revealSecretIds: [],
   provisionalFacts: [],
+  sourceRecordIds: [],
+};
+
+const rollProposal = {
+  kind: "roll-required" as const,
+  setupNarration: "The bridge groans beneath Mara's feet.",
+  uncertainty: "Can Mara cross before the span breaks?",
+  stakes: "A fall would carry Mara into the flooded ravine.",
+  dice: {
+    expression: "1d20",
+    outcomeBands: [
+      { id: "result", label: "The result determines the crossing." },
+    ],
+  },
   sourceRecordIds: [],
 };
 
@@ -54,6 +68,9 @@ function dependencies() {
         return [];
       },
       async resolveActionRelevant() {
+        return [];
+      },
+      async resolveOpeningRelevant() {
         return [];
       },
     },
@@ -109,6 +126,37 @@ describe("AdventureManager", () => {
     );
   });
 
+  it("supplies ranked vault records with the opening request", async () => {
+    const deps: any = dependencies();
+    const relevant = [
+      {
+        recordId: "bridge-1",
+        displayName: "Flooded Bridge",
+        content: "The bridge is watched.",
+        role: "turn-source",
+      },
+    ];
+    deps.context.resolveOpeningRelevant = async () => relevant;
+    const generate = vi.fn().mockResolvedValue(completeProposal);
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    expect(generate).toHaveBeenCalledWith(
+      expect.objectContaining({ phase: "opening", relevant }),
+    );
+  });
+
   it("keeps a typed action local when offline", async () => {
     const manager = new AdventureManager(dependencies() as any);
     await manager.start({
@@ -130,6 +178,326 @@ describe("AdventureManager", () => {
     expect(manager.draft).toBe("Wait for dawn");
   });
 
+  it("archives a failed opening so the adventure can be restarted", async () => {
+    const deps: any = dependencies();
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: { onLine: true },
+    });
+    let openingAttempts = 0;
+    deps.generation = {
+      async generate(request: any) {
+        if (request.phase !== "opening") return completeProposal;
+        openingAttempts += 1;
+        if (openingAttempts === 1) throw new Error("provider-unavailable");
+        return completeProposal;
+      },
+    };
+    const manager = new AdventureManager(deps);
+
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    expect(manager.session).toBeNull();
+    expect(manager.phase).toBe("error");
+    expect(manager.errorMessage).toBe("provider-unavailable");
+
+    await expect(
+      manager.start({
+        vaultId: "Road-2",
+        title: "Second road",
+        premise: "Try again",
+        playerCharacter: {
+          kind: "provisional",
+          name: "Mara",
+          description: "Guide",
+        },
+      }),
+    ).resolves.toBeDefined();
+    expect(manager.session?.turns).toHaveLength(1);
+  });
+
+  it("recovers a stale zero-turn active session before starting", async () => {
+    const deps: any = dependencies();
+    const stale = {
+      id: "stale-session",
+      vaultId: "vault-1",
+      status: "active",
+      turns: [],
+      revision: 0,
+    } as any;
+    let archivedId: string | null = null;
+    deps.repository.list = async () => ({
+      effectiveActiveId: stale.id,
+      entries: [],
+    });
+    deps.repository.load = async () => ({
+      condition: "normal",
+      session: stale,
+    });
+    deps.repository.archive = async (_vaultId: string, sessionId: string) => {
+      archivedId = sessionId;
+      return { ok: true, session: { ...stale, status: "archived" } };
+    };
+
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    expect(archivedId).toBe("stale-session");
+    expect(manager.session?.turns).toHaveLength(1);
+  });
+
+  it("resolves a recorded outcome immediately without a confirmation step", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async (request: any) => {
+      if (request.phase === "opening") return completeProposal;
+      if (request.phase === "action") return rollProposal;
+      return completeProposal;
+    });
+    deps.generation = { generate };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitAction("Cross the bridge");
+    await manager.recordRollOutcome({ kind: "numeric", value: 16 });
+
+    expect(generate).toHaveBeenCalledWith(
+      expect.objectContaining({ phase: "roll-resolution" }),
+      expect.anything(),
+    );
+    expect(manager.session?.pendingRoll).toBeNull();
+    expect(manager.session?.turns).toHaveLength(2);
+    expect(manager.phase).toBe("ready");
+  });
+
+  it("keeps a recorded outcome available for retry when resolution fails", async () => {
+    const deps: any = dependencies();
+    deps.generation = {
+      async generate(request: any) {
+        if (request.phase === "opening") return completeProposal;
+        if (request.phase === "action") return rollProposal;
+        throw new Error("provider-unavailable");
+      },
+    };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitAction("Cross the bridge");
+    await manager.recordRollOutcome({ kind: "numeric", value: 3 });
+
+    expect(manager.session?.pendingRoll?.suppliedOutcome?.value).toBe(3);
+    expect(manager.phase).toBe("error");
+    expect(manager.errorMessage).toBe("provider-unavailable");
+  });
+
+  it("restores an unresolved roll with its input controls available", async () => {
+    const deps: any = dependencies();
+    deps.generation = {
+      async generate(request: any) {
+        if (request.phase === "opening") return completeProposal;
+        if (request.phase === "action") return rollProposal;
+        return completeProposal;
+      },
+    };
+    const startingManager = new AdventureManager(deps);
+    await startingManager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    await startingManager.submitAction("Cross the bridge");
+
+    const resumedManager = new AdventureManager(deps);
+    await resumedManager.open("vault-1", startingManager.session!.id);
+
+    expect(resumedManager.phase).toBe("awaiting-roll");
+    expect(
+      resumedManager.session?.pendingRoll?.suppliedOutcome,
+    ).toBeUndefined();
+  });
+
+  it("opens the effective active adventure before a new one is started", async () => {
+    const deps: any = dependencies();
+    const activeSession = {
+      id: "active-adventure",
+      vaultId: "vault-1",
+      status: "active",
+      pendingRoll: null,
+    };
+    deps.repository.list = async () => ({
+      effectiveActiveId: activeSession.id,
+      entries: [],
+    });
+    deps.repository.load = async () => ({
+      condition: "normal",
+      session: activeSession,
+    });
+    const manager = new AdventureManager(deps);
+
+    await expect(manager.openActive("vault-1")).resolves.toBe(true);
+
+    expect(manager.session?.id).toBe(activeSession.id);
+  });
+
+  it("allows a new adventure when no active one exists", async () => {
+    const deps: any = dependencies();
+    deps.repository.list = async () => ({
+      effectiveActiveId: null,
+      entries: [],
+    });
+    const manager = new AdventureManager(deps);
+
+    await expect(manager.openActive("vault-1")).resolves.toBe(false);
+    expect(manager.session).toBeNull();
+  });
+
+  it("clears another vault's session before checking for an active adventure", async () => {
+    const deps: any = dependencies();
+    const stop = vi.fn(async () => undefined);
+    deps.coordinator.stop = stop;
+    deps.repository.list = async () => ({
+      effectiveActiveId: null,
+      entries: [],
+    });
+    const manager = new AdventureManager(deps);
+    manager.session = { vaultId: "vault-1", status: "active" } as any;
+    manager.draft = "Old action";
+
+    await expect(manager.openActive("vault-2")).resolves.toBe(false);
+
+    expect(stop).toHaveBeenCalledOnce();
+    expect(manager.session).toBeNull();
+    expect(manager.draft).toBe("");
+  });
+
+  it("keeps the newest vault restore when an earlier lookup resolves late", async () => {
+    const deps: any = dependencies();
+    let resolveFirst!: (value: {
+      effectiveActiveId: string | null;
+      entries: never[];
+    }) => void;
+    const firstListing = new Promise<{
+      effectiveActiveId: string | null;
+      entries: never[];
+    }>((resolve) => {
+      resolveFirst = resolve;
+    });
+    deps.repository.list = vi.fn((vaultId: string) =>
+      vaultId === "vault-1"
+        ? firstListing
+        : Promise.resolve({ effectiveActiveId: "active-2", entries: [] }),
+    );
+    deps.repository.load = vi.fn(
+      async (vaultId: string, sessionId: string) => ({
+        condition: "normal",
+        session: {
+          id: sessionId,
+          vaultId,
+          status: "active",
+          pendingRoll: null,
+        },
+      }),
+    );
+    const manager = new AdventureManager(deps);
+
+    const firstRestore = manager.openActive("vault-1");
+    const secondRestore = manager.openActive("vault-2");
+
+    await expect(secondRestore).resolves.toBe(true);
+    resolveFirst({ effectiveActiveId: "active-1", entries: [] });
+    await expect(firstRestore).resolves.toBe(false);
+
+    expect(manager.session?.id).toBe("active-2");
+    expect(manager.session?.vaultId).toBe("vault-2");
+    expect(deps.repository.load).not.toHaveBeenCalledWith(
+      "vault-1",
+      "active-1",
+    );
+  });
+
+  it("automatically resolves a recorded roll when the adventure is resumed", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async (request: any) => {
+      if (request.phase === "opening") return completeProposal;
+      if (request.phase === "action") return rollProposal;
+      return completeProposal;
+    });
+    deps.generation = { generate };
+    const startingManager = new AdventureManager(deps);
+    await startingManager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    await startingManager.submitAction("Cross the bridge");
+    const pendingSession = startingManager.session!;
+    deps.repository.load = async () => ({
+      condition: "normal",
+      session: {
+        ...pendingSession,
+        pendingRoll: {
+          ...pendingSession.pendingRoll!,
+          suppliedOutcome: { kind: "numeric", value: 16 },
+        },
+      },
+    });
+
+    const resumedManager = new AdventureManager(deps);
+    await resumedManager.open("vault-1", pendingSession.id);
+
+    expect(generate).toHaveBeenCalledWith(
+      expect.objectContaining({ phase: "roll-resolution" }),
+      expect.anything(),
+    );
+    expect(resumedManager.session?.pendingRoll).toBeNull();
+    expect(resumedManager.phase).toBe("ready");
+  });
+
   it("ignores a late cancelled response when a newer action is active", async () => {
     let actionCalls = 0;
     let resolveFirst!: (proposal: typeof completeProposal) => void;
@@ -142,6 +510,8 @@ describe("AdventureManager", () => {
     });
     let firstSignal: AbortSignal | undefined;
     const deps: any = dependencies();
+    const clearGenerationInteraction = vi.fn(async () => undefined);
+    deps.clearGenerationInteraction = clearGenerationInteraction;
     deps.generation = {
       async generate(request: any, options?: { signal?: AbortSignal }) {
         if (request.phase === "opening") return completeProposal;
@@ -182,6 +552,9 @@ describe("AdventureManager", () => {
     await first;
 
     expect(firstSignal?.aborted).toBe(true);
+    expect(clearGenerationInteraction).toHaveBeenCalledWith(
+      manager.session?.id,
+    );
     expect(manager.session?.turns.at(-1)?.playerAction).toBe("second action");
     expect(manager.errorMessage).toBeNull();
   });
