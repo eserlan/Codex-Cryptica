@@ -656,6 +656,13 @@
 <svelte:document
   onvisibilitychange={() => (isDocumentVisible = !document.hidden)}
 />
+<svelte:head>
+  <title>Codex Cryptica | AI RPG Campaign Manager</title>
+  <meta
+    name="description"
+    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with OpenAI/Luna."
+  />
+</svelte:head>
 <NavigationShortcuts />
 
 <div
